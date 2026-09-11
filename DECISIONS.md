@@ -13047,6 +13047,43 @@ change numbers), the `dnd/` link, and everything in the roadmap tiers.
 **Verified.** `node test/run.js`; `node tools/context/build.js --check`;
 served and opened a room: dotted terms in the copy, none inside an input.
 
+## D-210 — One federal tax table; every user switch starts on
+
+**Why.** The owner asked for a single correct tax table. Three files
+carried federal tax: `federal_brackets_2026.json` and `se_tax_2026.json`
+(transcribed from memory, marked unverified) and
+`effective_tax_rates_2026.json`, a flat rate by income band that Tier 0,
+the savings rate and eleven rooms used for take-home. Lane 2 had already
+written `tax_brackets.json` with every cell sourced (L-3, P-3, P-5) and
+nothing read it. The same session: the eight off-by-default feature
+switches go on, Dungeons & Dividends stays unlinked, the roadmap waits.
+
+**Decision.** `data/tax_brackets.json` is the only federal tax file; the
+three old ones are deleted. `shared/reference.js` builds the three shapes
+the engines already read (`federalBrackets`, `seTax`, `effectiveTaxRates`)
+as views of that file for `TAX_YEAR`, in `load()` and in a node
+`readSync()`. The bracket walk and the employee FICA live in
+`shared/reference.js` (`walkLadder`, `employeeFica`); `engines/tax.js`
+calls them. `lookupEffectiveTaxRate` computes federal income tax at the
+standard deduction plus payroll tax over gross; the bands are gone. It
+returns `incomeTaxRate` and `ficaRate`, which `engines/ledger.js` and
+`engines/selfemployed.js` read instead of subtracting a flat FICA share.
+The corpus fixtures do the same arithmetic by hand (`tests/tools/
+build-households.js`); the migration corpus recomputes `known` from the
+spec. The five user-scope switches in `data/features.json` default on;
+situation-scope switches are the gate's, not a default.
+
+**Replaces or removes.** Three data files. The demo's take-home moves
+from $4,860 to $4,956.83 a month (17.39% effective, was a 19% band).
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (28,654); `tests/`: corpus (0 findings),
+properties (7 pre-existing), data, migration, glossary, qr; `test/export.js`;
+`node test/forms.js` (530 on a clean run; the Express walk's "last pay
+landed" check is flaky in isolation on the previous commit too, see
+STATUS); twelve rooms opened in Chromium with no errors.
+
 ---
 
 # The Dungeons & Dividends entries

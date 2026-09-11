@@ -26,7 +26,8 @@
   'use strict';
 
   var TABLE_FILES = {
-    effectiveTaxRates: 'effective_tax_rates_2026.json',
+    taxBrackets: 'tax_brackets.json',
+    effectiveTaxRates: 'tax_brackets.json',
     retirementMilestones: 'retirement_milestones.json',
     milestones: 'milestones.json',
     ledgerRows: 'ledger-rows.json',
@@ -52,7 +53,7 @@
     budgetTemplates: 'budget_templates.json',
     debtRules: 'debt_rules.json',
     fireVariants: 'fire_variants.json',
-    seTax: 'se_tax_2026.json',
+    seTax: 'tax_brackets.json',
     goalTemplates: 'goal_templates.json',
     liquidityBenchmarks: 'liquidity_benchmarks.json',
     values: 'values.json',
@@ -66,7 +67,7 @@
     layouts: 'layouts.json',
     states: 'states.json',
     matchDefaults: 'match_defaults.json',
-    federalBrackets: 'federal_brackets_2026.json',
+    federalBrackets: 'tax_brackets.json',
     wealthMultiplier: 'wealth_multiplier.json',
     levelsOfWealth: 'levels_of_wealth.json',
     commonCosts: 'common_costs.json',
@@ -122,6 +123,104 @@
 
   var cache = {};
 
+
+  /* ---- The one federal tax table (D-210) ---------------------------------
+     data/tax_brackets.json is the only federal tax file: brackets, standard
+     deductions, capital gains, FICA and self-employment mechanics, by year,
+     every cell sourced. The engines were written against three older
+     shapes, so `federalBrackets`, `seTax` and `effectiveTaxRates` are VIEWS
+     of that one file, built here and nowhere else, for the year TAX_YEAR.
+     A name with no view is handed the file as it is. */
+  var TAX_YEAR = 2026;
+  function cellValue(c) {
+    return c && typeof c === 'object' && Object.prototype.hasOwnProperty.call(c, 'value') ? c.value : c;
+  }
+  function round6(x) { return Math.round(x * 1e6) / 1e6; }
+  function stamped(json, body) {
+    var out = { id: json.id, version: json.version, asOf: json.asOf, taxYear: TAX_YEAR,
+      source: json.source, confidence: json.confidence, confidenceNote: json.confidenceNote };
+    for (var k in body) { if (Object.prototype.hasOwnProperty.call(body, k)) out[k] = body[k]; }
+    return out;
+  }
+  var VIEWS = {
+    federalBrackets: function (json) {
+      var y = json.years[TAX_YEAR];
+      var brackets = {}, sd = {}, cg = {};
+      Object.keys(y.brackets).forEach(function (fs) {
+        brackets[fs] = cellValue(y.brackets[fs]).map(function (r) { return { upToTaxableIncome: r.upTo, rate: r.rate }; });
+        sd[fs] = cellValue(y.standardDeduction[fs]);
+        var g = cellValue(y.capitalGains[fs]);
+        cg[fs] = [{ upToTaxableIncome: g.zeroUpTo, rate: 0 }, { upToTaxableIncome: g.fifteenUpTo, rate: 0.15 }, { upToTaxableIncome: null, rate: 0.2 }];
+      });
+      return stamped(json, { unit: 'decimal fraction', standardDeduction: sd, brackets: brackets, capitalGains: cg, niit: cellValue(y.capitalGains.niit) });
+    },
+    seTax: function (json) {
+      var f = json.years[TAX_YEAR].fica, se = json.selfEmployment || {};
+      var ss = cellValue(f.socialSecurityRate), med = cellValue(f.medicareRate);
+      return stamped(json, {
+        netEarningsFactor: cellValue(f.selfEmploymentNetEarningsFactor),
+        socialSecurityRate: round6(ss * 2),
+        socialSecurityWageBase: cellValue(f.socialSecurityWageBase),
+        medicareRate: round6(med * 2),
+        additionalMedicare: { rate: cellValue(f.additionalMedicareRate), thresholds: cellValue(f.additionalMedicareThresholds) },
+        employeeFicaRate: round6(ss + med),
+        safeHarbor: cellValue(se.safeHarbor),
+        quarterlyDueDates: cellValue(se.quarterlyDueDates)
+      });
+    },
+    effectiveTaxRates: function (json) {
+      var v = VIEWS.federalBrackets(json);
+      v.fica = VIEWS.seTax(json);
+      v.precision = 'computed';
+      return v;
+    }
+  };
+  function view(name, json) { return VIEWS[name] ? VIEWS[name](json) : json; }
+
+  /** Node only: the table a room would get from load(), read from `dir`. */
+  function readSync(name, dir) {
+    var file = TABLE_FILES[name];
+    if (!file) throw new Error('Unknown reference table: ' + name);
+    if (typeof require !== 'function') throw new Error('readSync is for node; use load() in a browser.');
+    var fs = require('fs'), path = require('path');
+    return view(name, JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')));
+  }
+
+  /* ---- The two federal formulas, in one place --------------------------
+     walkLadder: an amount up a ladder of { upTo*, rate } rows, taxing the
+     slice that falls in each; `floorDollars` lets gains stack on top of
+     ordinary income. employeeFica: the employee's share of payroll tax,
+     Social Security capped at the wage base, additional Medicare over the
+     threshold. engines/tax.js and lookupEffectiveTaxRate both call these;
+     neither re-derives them. */
+  function walkLadder(ladder, amountDollars, topKey, floorDollars) {
+    var floor = floorDollars || 0;
+    var remaining = amountDollars, prevTop = 0, tax = 0, slices = [];
+    for (var i = 0; i < ladder.length && remaining > 0; i++) {
+      var top = ladder[i][topKey];
+      var lo = Math.max(prevTop, floor);
+      var hi = top === null ? Infinity : top;
+      var width = Math.max(0, Math.min(hi, floor + amountDollars) - lo);
+      if (width > 0) {
+        var slice = width * ladder[i].rate;
+        tax += slice; remaining -= width;
+        slices.push({ rate: ladder[i].rate, dollars: width, taxDollars: slice });
+      }
+      prevTop = hi;
+    }
+    return { taxDollars: tax, slices: slices, marginalRate: slices.length ? slices[slices.length - 1].rate : (ladder[0] ? ladder[0].rate : 0) };
+  }
+  function employeeFica(seTable, wagesDollars, filingStatus) {
+    var wages = Math.max(0, wagesDollars);
+    var ss = Math.min(wages, seTable.socialSecurityWageBase) * (seTable.socialSecurityRate / 2);
+    var med = wages * (seTable.medicareRate / 2);
+    var addl = 0;
+    var threshold = seTable.additionalMedicare && seTable.additionalMedicare.thresholds && seTable.additionalMedicare.thresholds[filingStatus];
+    if (Money.isEntered(threshold) && wages > threshold) addl = (wages - threshold) * seTable.additionalMedicare.rate;
+    return { socialSecurity: ss, medicare: med, additionalMedicare: addl, total: ss + med + addl,
+      cappedAtWageBase: wages > seTable.socialSecurityWageBase };
+  }
+
   /* Where this file itself was loaded from. data/ sits beside shared/, so
      resolving '../data/' against this URL gives the right path from ANY page,
      at any depth, without the room having to know how deep it is. */
@@ -163,6 +262,7 @@
     });
   }
 
+  var fetching = {};
   function load(names, basePath) {
     var wanted = names && names.length ? names : Object.keys(TABLE_FILES);
     var base = basePath === undefined ? defaultBase() : basePath;
@@ -170,12 +270,15 @@
       if (cache[name]) return Promise.resolve([name, cache[name]]);
       var file = TABLE_FILES[name];
       if (!file) return Promise.reject(new Error('Unknown reference table: ' + name));
-      return fetch(base + file).then(function (res) {
-        if (!res.ok) throw new Error('Could not load ' + file + ' (' + res.status + ')');
-        return res.json();
-      }).then(function (json) {
-        cache[name] = json;
-        return [name, json];
+      if (!fetching[file]) {
+        fetching[file] = fetch(base + file).then(function (res) {
+          if (!res.ok) throw new Error('Could not load ' + file + ' (' + res.status + ')');
+          return res.json();
+        });
+      }
+      return fetching[file].then(function (json) {
+        cache[name] = view(name, json);
+        return [name, cache[name]];
       });
     })).then(function (pairs) {
       var out = {};
@@ -190,8 +293,12 @@
     return r;
   }
 
-  /* ---- Effective tax rate ----------------------------------------------
-     Flat lookup by gross income band + filing status. SPEC.md §10.       */
+  /* ---- Effective tax rate --------------------------------------------
+     Federal income tax at the standard deduction plus the employee's
+     payroll tax, over gross: the same ladder and the same FICA the tax
+     engine walks (D-210). It used to be a flat lookup by income band
+     (SPEC.md §10); the bands are gone. Federal only, no credits, no state:
+     the Result says so. `table` is the effectiveTaxRates view.        */
 
   function lookupEffectiveTaxRate(table, grossAnnualIncomeDollars, filingStatus) {
     if (!table) return Money.incomplete('Tax reference table is not loaded.', ['effectiveTaxRates']);
@@ -201,22 +308,29 @@
     if (!filingStatus) {
       return Money.incomplete('Choose a filing status to estimate taxes.', ['filingStatus']);
     }
-    var bands = table.brackets[filingStatus];
-    if (!bands) {
+    var ladder = table.brackets && table.brackets[filingStatus];
+    var deduction = table.standardDeduction && table.standardDeduction[filingStatus];
+    if (!ladder || !Money.isEntered(deduction) || !table.fica) {
       return Money.incomplete('No tax table for filing status "' + filingStatus + '".', ['filingStatus']);
     }
-    for (var i = 0; i < bands.length; i++) {
-      var b = bands[i];
-      if (b.upToGrossIncome === null || grossAnnualIncomeDollars <= b.upToGrossIncome) {
-        return Money.ok(b.effectiveRate, {
-          referenceVersion: table.version,
-          referenceId: table.id,
-          precision: table.precision
-        });
-      }
-    }
-    /* Unreachable while the last band has upToGrossIncome === null. */
-    return Money.incomplete('Income is outside the tax reference table.', ['grossAnnualIncome']);
+    var gross = Math.max(0, grossAnnualIncomeDollars);
+    var taxable = Math.max(0, gross - deduction);
+    var w = walkLadder(ladder, taxable, 'upToTaxableIncome', 0);
+    var f = employeeFica(table.fica, gross, filingStatus);
+    var total = w.taxDollars + f.total;
+    return Money.ok(gross > 0 ? total / gross : 0, {
+      incomeTaxRate: gross > 0 ? w.taxDollars / gross : 0,
+      ficaRate: gross > 0 ? f.total / gross : 0,
+      marginalRate: w.marginalRate,
+      federalIncomeTaxDollars: w.taxDollars,
+      ficaDollars: f.total,
+      taxableIncomeDollars: taxable,
+      standardDeductionDollars: deduction,
+      federalOnly: true,
+      referenceVersion: table.version,
+      referenceId: table.id,
+      precision: 'computed'
+    });
   }
 
   /* ---- Retirement milestone --------------------------------------------
@@ -443,7 +557,12 @@
 
   return {
     TABLE_FILES: TABLE_FILES,
+    TAX_YEAR: TAX_YEAR,
     load: load,
+    view: view,
+    readSync: readSync,
+    walkLadder: walkLadder,
+    employeeFica: employeeFica,
     lookupEffectiveTaxRate: lookupEffectiveTaxRate,
     lookupRetirementMultiple: lookupRetirementMultiple,
     lookupNetWorthPercentile: lookupNetWorthPercentile,

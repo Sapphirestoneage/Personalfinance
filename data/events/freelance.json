@@ -337,8 +337,7 @@
   ],
   "horizonMonths": 120,
   "sources": [
-    "data/se_tax_2026.json",
-    "data/effective_tax_rates_2026.json",
+    "data/tax_brackets.json",
     "data/cobra_aca_2024.json",
     "data/triple_d.json",
     "data/return_bands.json"

@@ -6,7 +6,7 @@ paths:
 # Worth Learning (`credential`)
 File: rooms/credential.html · 484 lines
 Engines: projection, tier0, hourly, credential
-Reference data: federal_brackets_2026.json
+Reference data: tax_brackets.json
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), marginalRate (accounts)
 Latest decisions:

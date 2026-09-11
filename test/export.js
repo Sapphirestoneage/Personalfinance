@@ -31,10 +31,11 @@ function eq(name, a, b) {
 }
 
 const TABLES = {};
-[['effectiveTaxRates', 'effective_tax_rates_2026'], ['ratioBenchmarks', 'ratio_benchmarks'], ['fooRules', 'foo_rules'],
+[['ratioBenchmarks', 'ratio_benchmarks'], ['fooRules', 'foo_rules'],
  ['irsLimits', 'irs_limits_2026'], ['retirementMilestones', 'retirement_milestones'],
  ['netWorthPercentiles', 'net_worth_percentiles_scf_2022'], ['fireVariants', 'fire_variants'],
  ['expenseCategories', 'expense_categories']].forEach(([k, f]) => { TABLES[k] = require(path.join(ROOT, 'data', f + '.json')); });
+TABLES.effectiveTaxRates = require(path.join(ROOT, 'shared/reference.js')).readSync('effectiveTaxRates', path.join(ROOT, 'data'));
 
 function loadDemo() {
   Spine.reset();

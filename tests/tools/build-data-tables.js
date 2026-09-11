@@ -46,7 +46,7 @@ function markHistorical(v) {
    data/*.json to be in Reference.TABLE_FILES, and that file is outside
    this lane. states.json is already registered and stays where it is. */
 const LANE2 = path.join(DATA, 'lane2');
-const IN_ROOT = { 'states.json': true, 'return_bands.json': true, 'bands.json': true };
+const IN_ROOT = { 'states.json': true, 'return_bands.json': true, 'bands.json': true, 'tax_brackets.json': true };
 function write(name, obj) {
   const dir = IN_ROOT[name] ? DATA : LANE2;
   fs.mkdirSync(dir, { recursive: true });
@@ -348,11 +348,11 @@ function buildTaxBrackets() {
   const rates = [0.10, 0.12, 0.22, 0.24, 0.32, 0.35, 0.37];
   const table = (tops) => rates.map((r, i) => ({ rate: r, upTo: tops[i] === undefined ? null : tops[i] }));
   const TB = {
-    id: 'tax_brackets', version: '1.0', asOf: TODAY,
+    id: 'tax_brackets', version: '1.1', asOf: TODAY,
     source: 'Federal ordinary income brackets, standard deductions, long-term capital gains thresholds, and the FICA and self-employment tax rates and wage bases, current and prior year. Lane 2, section 3 (L-3).',
     confidence: 'sourced',
     confidenceNote: '2026 brackets, deductions and capital gains thresholds read from search results quoting Rev. Proc. 2025-32; the 2026 wage base from the SSA release; 2025 rows from memory of Rev. Proc. 2024-40 and the 2025 SSA release, with the standard deduction as raised by Pub. L. 119-21 (verify: true). Married filing separately rows are the single rows except the top threshold.',
-    note: 'data/federal_brackets_2026.json (brackets, standard deduction) and data/se_tax_2026.json (FICA and SE) are what engines/tax.js reads today. DECIDE: point the engine here and retire those two; tests/data.test.js asserts the shared 2026 figures agree. Brackets are the TOP of taxable income taxed at that rate (null = no ceiling). Taxable income = gross minus the standard deduction, nothing else.',
+    note: 'The one federal tax table (D-210). shared/reference.js builds the federalBrackets, seTax and effectiveTaxRates views from it for the year TAX_YEAR; no engine reads this file directly. Brackets are the TOP of taxable income taxed at that rate (null = no ceiling). Taxable income = gross minus the standard deduction, nothing else.',
     unit: 'US dollars; rates as decimal fractions',
     refresh: { month: 'October (inflation Rev. Proc. for the next tax year), October (SSA wage base with the COLA release)', against: 'the IRS annual inflation adjustment revenue procedure; ssa.gov/oact/cola/cbb.html.' },
     years: {
@@ -377,6 +377,7 @@ function buildTaxBrackets() {
           additionalMedicareRate: cell(0.009, '2026-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/questions-and-answers-for-the-additional-medicare-tax', 'sourced', { note: 'On wages and SE income above $200,000 (single), $250,000 (joint), $125,000 (separate); thresholds unindexed.' }),
           selfEmploymentRate: cell(0.153, '2026-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', 'sourced', { note: '12.4% Social Security to the wage base plus 2.9% Medicare, on 92.35% of net earnings; half is deductible.' }),
           selfEmploymentNetEarningsFactor: cell(0.9235, '2026-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', 'sourced')
+          additionalMedicareThresholds: cell({ single: 200000, married_joint: 250000, married_separate: 125000, head_of_household: 200000 }, '2026-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/questions-and-answers-for-the-additional-medicare-tax', 'sourced', { note: 'Unindexed statute; combined wages and self-employment earnings.' }),
         }
       },
       2025: {
@@ -399,9 +400,16 @@ function buildTaxBrackets() {
           additionalMedicareRate: cell(0.009, '2025-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/questions-and-answers-for-the-additional-medicare-tax', 'sourced'),
           selfEmploymentRate: cell(0.153, '2025-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', 'sourced'),
           selfEmploymentNetEarningsFactor: cell(0.9235, '2025-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', 'sourced')
+          additionalMedicareThresholds: cell({ single: 200000, married_joint: 250000, married_separate: 125000, head_of_household: 200000 }, '2025-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/questions-and-answers-for-the-additional-medicare-tax', 'sourced')
         }
       }
     }
+  };
+  TB.selfEmployment = {
+    note: 'Not indexed by year: the estimated-payment safe harbour shares and the four due dates. Read by engines/selfemployed.js through the seTax view.',
+    safeHarbor: cell({ currentYearShare: 0.9, priorYearShare: 1.0, priorYearShareHighIncome: 1.1, highIncomeAgiThreshold: 150000, highIncomeAgiThresholdMarriedSeparate: 75000 }, '2026-01-01', 'https://www.irs.gov/forms-pubs/about-form-1040-es', 'sourced',
+      { note: "Estimated payments avoid an underpayment penalty if they cover the lesser of 90% of this year's liability or 100% of last year's; 110% when last year's AGI exceeded the high-income threshold." }),
+    quarterlyDueDates: cell(['April 15', 'June 15', 'September 15', 'January 15'], '2026-01-01', 'https://www.irs.gov/forms-pubs/about-form-1040-es', 'sourced')
   };
   markHistorical(TB.years[2025]);
   write('tax_brackets.json', TB);

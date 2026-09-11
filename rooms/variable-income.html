@@ -29,8 +29,8 @@
              intake's guesses and says so (Gate.fillGuesses); the low and
              high boxes propose seven-tenths and thirteen-tenths of the
              average, the buffer proposes the table's three months.
-  5. CONFIG  data/variable_income_conventions.json, data/se_tax_2026.json,
-             data/effective_tax_rates_2026.json.
+  5. CONFIG  data/variable_income_conventions.json, data/tax_brackets.json,
+             data/tax_brackets.json.
 
   THE SHAPE (shared/room.js, frozen): one number, one chart, the lens,
   three inputs, the assumptions drawer with sources, why this matters at
@@ -260,7 +260,7 @@
       ];
       if (Money.isOk(p) && p.taxSetAside) {
         rows.push({ label: 'Tax set-aside, a month', value: Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAsideMonthlyCents) + ' (quarterly ' + Money.formatCents(p.taxSetAside.perQuarterCents) + ' ÷ 3)' : 'not estimated: ' + p.taxSetAside.reason,
-          source: 'the Self-Employed room’s quarterly estimate on ' + (Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAside.expectedNetProfitCents) + ' of ' + p.taxSetAside.profitBasis + ' read as profit (no expenses stored)' : 'your income') + ' — data/se_tax_2026.json v' + se.version + ' (' + se.confidence + '), data/effective_tax_rates_2026.json v' + (T.effectiveTaxRates || {}).version });
+          source: 'the Self-Employed room’s quarterly estimate on ' + (Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAside.expectedNetProfitCents) + ' of ' + p.taxSetAside.profitBasis + ' read as profit (no expenses stored)' : 'your income') + ' — data/tax_brackets.json v' + se.version + ' (' + se.confidence + '), data/tax_brackets.json v' + (T.effectiveTaxRates || {}).version });
       }
       return rows;
     },

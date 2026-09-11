@@ -593,7 +593,7 @@
     "data/col_index.json",
     "data/moving_cost.json",
     "data/state_brackets_2026.json",
-    "data/federal_brackets_2026.json",
+    "data/tax_brackets.json",
     "data/triple_d.json",
     "data/return_bands.json"
   ]

@@ -30,7 +30,7 @@ const NOW_MS = Date.UTC(2026, 8, 10, 12, 0, 0);
 /* ---- Tables ------------------------------------------------------------------ */
 const TABLES = {};
 Object.keys(Reference.TABLE_FILES).forEach(function (k) {
-  try { TABLES[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) { /* an engine that needs it says so */ }
+  try { TABLES[k] = Reference.readSync(k, path.join(ROOT, 'data')); } catch (e) { /* an engine that needs it says so */ }
 });
 ['accessRules:access_rules.json', 'confidenceWeights:confidence_weights.json', 'uiBenefits:ui_benefits.json', 'vpw:vpw.json'].forEach(function (pair) {
   const k = pair.split(':')[0], f = pair.split(':')[1];

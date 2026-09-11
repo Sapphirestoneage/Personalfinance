@@ -291,7 +291,7 @@
       if (!t.brackets || !t.brackets[v]) return null;
       return { value: v, unit: 'enum', display: v === 'single' ? 'Single' : 'Head of household',
         how: (v === 'single' ? 'One adult listed and nobody depending on you, so single' : 'One adult with someone depending on you, so head of household') + ', one of the four statuses the federal brackets know.',
-        sources: ['data/federal_brackets_2026.json'] };
+        sources: ['data/tax_brackets.json'] };
     },
     dependentsFromHousehold: function (c) {
       if (!c.D.Schema.primaryPerson(c.h) || c.D.Schema.householdOfTwo(c.h)) return null;
@@ -310,7 +310,7 @@
       var f = Tax.ordinaryTax(fed, gross, filing);
       if (!c.D.Money.isOk(f)) return null;
       var rate = f.marginalRate, bits = ['Federal ' + pct(f.marginalRate) + ' on the top dollar of ' + money(c.D, gross) + ' filing ' + filing.replace(/_/g, ' ')];
-      var sources = ['data/federal_brackets_2026.json'];
+      var sources = ['data/tax_brackets.json'];
       if (st && state) {
         var s = Tax.stateTax(st, state, f.taxableIncomeCents, filing);
         if (c.D.Money.isOk(s)) { rate += s.marginalRate; bits.push(state + ' ' + pct(s.marginalRate)); sources.push('data/state_brackets_2026.json'); }

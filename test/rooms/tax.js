@@ -64,7 +64,7 @@ module.exports = function (t) {
     check('shares sum to a whole dollar', p.shares.takeHome + p.shares.federal + p.shares.state + p.shares.fica + p.shares.preTax, 1, 1e-9);
     check('no withheld → no refund line', p.refundCents, null);
     checkTrue('other pre-tax blank is none, and flagged as not entered', p.otherPreTaxCents === 0 && p.otherPreTaxKnown === false);
-    checkTrue('the blunter table is carried for the drawer', p.blunt && p.blunt.rate === 0.19, JSON.stringify(p.blunt));
+    checkTrue('the quick estimate is carried for the drawer: 16.13% on $62,000, no state, no pre-tax', p.blunt && Math.abs(p.blunt.rate - 0.1613387097) < 1e-6 && p.blunt.cents === 1000300, JSON.stringify(p.blunt));
     checkTrue('and it differs from the computed rate', Math.abs(p.blunt.rate - p.value) > 0.001);
   })();
 

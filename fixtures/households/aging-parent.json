@@ -31,6 +31,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": 1,
@@ -51,6 +53,7 @@
   ],
   "filingStatus": "single",
   "state": "NJ",
+  "zip": null,
   "capturingFullMatch": true,
   "dependents": [
     {
@@ -74,7 +77,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_1",
@@ -89,7 +93,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_2",
@@ -104,7 +109,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [],
@@ -124,7 +130,8 @@
       "totalCents": 210000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -282,7 +289,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -294,6 +303,7 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": false,
     "undoStack": [],
     "redoStack": [],
@@ -320,20 +330,22 @@
       "monthlySpendingCents": 525000,
       "fiTargetCents": 157500000,
       "grossAnnualCents": 11000000,
-      "effectiveRate": 0.24,
-      "estimatedTaxCents": 2640000,
-      "takeHomeAnnualCents": 8360000,
-      "takeHomeMonthlyCents": 696667,
-      "savingsRate": 0.18727272727272729,
+      "effectiveRate": 0.21622727272727274,
+      "estimatedTaxCents": 2378500,
+      "takeHomeAnnualCents": 8621500,
+      "takeHomeMonthlyCents": 718458,
+      "savingsRate": 0.21104545454545454,
       "runwayMonths": 4.761904761904762,
       "runwayWholeMonths": 4,
       "netWorthCents": 26500000,
       "working": [
         "monthly spending = food $650 + accommodation $2,100 + transportation $400 + everything else $2,100 = $5,250",
         "FI target = $5,250 x 12 / 0.04 = $63,000 / 0.04 = $1,575,000",
-        "gross $110,000 single: band single up to $150,000 -> effective rate 0.24",
-        "estimated tax = $110,000 x 0.24 = $26,400; take-home = $110,000 - $26,400 = $83,600 a year, $6,966.67 a month",
-        "savings rate (excluding match) = ($83,600 - $63,000) / $110,000 = $20,600 / $110,000 = 0.1873",
+        "taxable = $110,000 - standard deduction $16,100 (single) = $93,900",
+        "federal income tax = $12,400 x 0.1 + $38,000 x 0.12 + $43,500 x 0.22 = $15,370",
+        "payroll tax = $110,000 x 0.062 + $110,000 x 0.0145 = $8,415",
+        "estimated tax = $23,785, an effective 21.62% of $110,000; take-home = $110,000 - $23,785 = $86,215 a year, $7,184.58 a month",
+        "savings rate (excluding match) = ($86,215 - $63,000) / $110,000 = $23,215 / $110,000 = 0.2110",
         "runway = cash $25,000 / $5,250 a month = 4.7619 months (4 whole months; Runway.project stops at 60)",
         "net worth = $25,000 + $30,000 + $210,000 - $0 = $265,000"
       ]

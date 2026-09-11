@@ -5,7 +5,7 @@ paths:
 # FOO Ladder (`foo-ladder`)
 File: rooms/foo-ladder.html · 75 lines
 Engines: projection, tier0
-Reference data: effective_tax_rates_2026.json, irs_limits_2026.json
+Reference data: irs_limits_2026.json, tax_brackets.json
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), employerMatch (start)
 Latest decisions:

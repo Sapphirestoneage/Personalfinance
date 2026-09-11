@@ -31,6 +31,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": 0.5,
@@ -78,6 +80,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": null,
@@ -98,6 +102,7 @@
   ],
   "filingStatus": "married_joint",
   "state": "TX",
+  "zip": null,
   "capturingFullMatch": true,
   "dependents": [
     {
@@ -124,7 +129,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_1",
@@ -139,7 +145,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_home2",
@@ -154,7 +161,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_3",
@@ -169,7 +177,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_4",
@@ -184,7 +193,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [
@@ -262,7 +272,8 @@
       "totalCents": 340000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -420,7 +431,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -432,6 +445,7 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": true,
     "undoStack": [],
     "redoStack": [],
@@ -458,20 +472,22 @@
       "monthlySpendingCents": 775000,
       "fiTargetCents": 232500000,
       "grossAnnualCents": 14000000,
-      "effectiveRate": 0.2,
-      "estimatedTaxCents": 2800000,
-      "takeHomeAnnualCents": 11200000,
-      "takeHomeMonthlyCents": 933333,
-      "savingsRate": 0.1357142857142857,
+      "effectiveRate": 0.17035714285714285,
+      "estimatedTaxCents": 2385000,
+      "takeHomeAnnualCents": 11615000,
+      "takeHomeMonthlyCents": 967917,
+      "savingsRate": 0.16535714285714287,
       "runwayMonths": 2.064516129032258,
       "runwayWholeMonths": 2,
       "netWorthCents": 27100000,
       "working": [
         "monthly spending = food $1,300 + accommodation $2,350 + transportation $700 + everything else $3,400 = $7,750",
         "FI target = $7,750 x 12 / 0.04 = $93,000 / 0.04 = $2,325,000",
-        "gross $140,000 married_joint: band married_joint up to $200,000 -> effective rate 0.2",
-        "estimated tax = $140,000 x 0.2 = $28,000; take-home = $140,000 - $28,000 = $112,000 a year, $9,333.33 a month",
-        "savings rate (excluding match) = ($112,000 - $93,000) / $140,000 = $19,000 / $140,000 = 0.1357",
+        "taxable = $140,000 - standard deduction $32,200 (married_joint) = $107,800",
+        "federal income tax = $24,800 x 0.1 + $76,000 x 0.12 + $7,000 x 0.22 = $13,140",
+        "payroll tax = $140,000 x 0.062 + $140,000 x 0.0145 = $10,710",
+        "estimated tax = $23,850, an effective 17.04% of $140,000; take-home = $140,000 - $23,850 = $116,150 a year, $9,679.17 a month",
+        "savings rate (excluding match) = ($116,150 - $93,000) / $140,000 = $23,150 / $140,000 = 0.1654",
         "runway = cash $16,000 / $7,750 a month = 2.0645 months (2 whole months; Runway.project stops at 60)",
         "net worth = $16,000 + $150,000 + $360,000 + $27,000 + $21,000 - ($260,000 + $24,000 + $19,000) = $574,000 - $303,000 = $271,000"
       ]

@@ -32,7 +32,10 @@ const Tier0 = require(path.join(ROOT, 'engines/tier0.js'));
 const Runway = require(path.join(ROOT, 'engines/runway.js'));
 const STRICT = process.env.CORPUS_STRICT === '1';
 const DIR = path.join(ROOT, 'fixtures', 'exports');
-const TABLES = { effectiveTaxRates: JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'effective_tax_rates_2026.json'), 'utf8')) };
+const B = require(path.join(__dirname, 'tools', 'build-households.js'));
+const SPECS = {};
+B.ARCHETYPES.concat(B.EDGES).forEach((spec) => { SPECS[spec.id] = spec; });
+const TABLES = { effectiveTaxRates: require(path.join(ROOT, 'shared/reference.js')).readSync('effectiveTaxRates', path.join(ROOT, 'data')) };
 
 let passed = 0;
 const failures = [];
@@ -67,7 +70,10 @@ files.forEach((f) => {
   let parsed;
   try { parsed = JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8')); ok(); } catch (e) { fail('read ' + f, e.message); return; }
   const lane = parsed.lane2 || {};
-  const k = lane.known || {};
+  /* The hand arithmetic is redone from the spec at test time (D-210): a
+     `known` block stored in the file is the arithmetic as it stood when
+     the export was built, and the tax table has moved since. */
+  const k = lane.specId && SPECS[lane.specId] ? B.known(SPECS[lane.specId]) : (lane.known || {});
   let h = null;
 
   if (lane.via === 'legacyStorage') {

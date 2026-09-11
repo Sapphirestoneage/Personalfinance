@@ -5,7 +5,7 @@ paths:
 # Income (`income`)
 File: rooms/income.html · 785 lines
 Engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget
-Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, se_tax_2026.json
+Reference data: expense_categories.json, tax_brackets.json
 Owns: ledgerIncome, incomeType, paySurvives
 Reads from other owners: filingStatus (start)
 Latest decisions:

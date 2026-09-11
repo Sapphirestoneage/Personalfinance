@@ -273,7 +273,7 @@
       ];
       if (Money.isOk(p) && p.other.basis !== 'none') {
         rows.push({ label: 'Other income, a month', value: Money.formatCents(p.other.cents) + (p.other.basis === 'gross' ? ' before tax' : ' after tax'),
-          source: p.other.basis === 'takeHome' ? 'a second adult’s pay less the flat effective-rate tax estimate (engines/tier0.js, data/effective_tax_rates_2026.json v' + T.effectiveTaxRates.version + ')' : 'a second adult’s pay; tax not estimated: ' + (p.other.reason || '') });
+          source: p.other.basis === 'takeHome' ? 'a second adult’s pay less the federal tax estimate (engines/tier0.js, data/tax_brackets.json v' + T.effectiveTaxRates.version + ')' : 'a second adult’s pay; tax not estimated: ' + (p.other.reason || '') });
       }
       if (health.type) {
         rows.push({ label: 'Health cover', value: (Ownership.field('healthCover').format(health.type)) + (Money.isEntered(health.monthlyCents) ? ', ' + Money.formatCents(health.monthlyCents) + ' a month' : ''),

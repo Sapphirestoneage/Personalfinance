@@ -4,7 +4,7 @@
   "asOf": "2026-09-09",
   "source": "Every switch the master build prompt names (sections 15 and 16). The schema always carries the shape; a switch decides whether a room renders it, asks for it, or an engine applies it. A user-scope switch lives under prefs and is toggled from Settings; a situation-scope switch is set by the situation gate and is not toggleable.",
   "confidence": "convention",
-  "confidenceNote": "Defaults are the prompt's: the beginner path starts with only the default-on set; the FI path starts with Accuracy and Horizon all on.",
+  "confidenceNote": "Every user-scope switch defaults on (D-210, the owner's call); Settings turns any off. The beginner path keeps only the default-on set, which is now all of them. Situation-scope switches are decided by the situation gate, not a default.",
   "note": "Read by shared/features.js (D-180). Features.on(id, household) is the only way an engine or room checks a switch; no room reads this file directly. Flipping any switch on and off leaves the household byte-identical: switches change rendering and engines, never stored facts. `group` is the Settings heading: Accuracy (what makes numbers more honest), Household (who is in it), Horizon (age and time), Advanced (what a beginner should not see). `situationWhen` is one of a few fixed phrases the library reads for a situation-scope switch.",
   "groups": [
     {
@@ -38,7 +38,7 @@
       "gloss": "A 401(k) dollar is not a whole dollar. Show what's left after the tax you'll owe on it."
     },
     "showNominal": {
-      "default": "off",
+      "default": "on",
       "scope": "user",
       "group": "horizon",
       "section": "15.2",
@@ -62,7 +62,7 @@
       "gloss": "50, 55, 59 and a half, 62, 65, 67, 70, 73: faint markers where a rule changes, with the rule on hover."
     },
     "sequenceRisk": {
-      "default": "off",
+      "default": "on",
       "scope": "user",
       "group": "accuracy",
       "section": "16.1",
@@ -137,7 +137,7 @@
       "gloss": "Losing a job usually comes with something: severance, unemployment, and the option to keep health cover for a while."
     },
     "agingParents": {
-      "default": "off",
+      "default": "on",
       "scope": "user",
       "group": "household",
       "section": "16.10",
@@ -145,7 +145,7 @@
       "gloss": "Helping a parent is a line most plans leave out until it's already happening."
     },
     "givingVehicles": {
-      "default": "off",
+      "default": "on",
       "scope": "user",
       "group": "advanced",
       "section": "16.11",
@@ -153,7 +153,7 @@
       "gloss": "There are ways to give that lower your tax bill more than writing a cheque."
     },
     "timeBudget": {
-      "default": "off",
+      "default": "on",
       "scope": "user",
       "group": "advanced",
       "section": "16.12",

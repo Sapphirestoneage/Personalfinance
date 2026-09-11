@@ -5,7 +5,7 @@ paths:
 # Cash Flow (`cash-flow`)
 File: rooms/cash-flow.html · 563 lines
 Engines: projection, tier0, cashflow, income, selfemployed, ledger, budget
-Reference data: effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
+Reference data: expense_categories.json, tax_brackets.json
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), monthlyDebtPayments (debt-payoff)
 Latest decisions:

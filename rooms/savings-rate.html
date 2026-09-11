@@ -22,7 +22,7 @@
   4. EMPTY   Each variant states independently what it is missing. An
              unanswered employer match makes the including-match variant
              incomplete rather than silently equal to the other one.
-  5. CONFIG  data/effective_tax_rates_2026.json, data/foo_rules.json
+  5. CONFIG  data/tax_brackets.json, data/foo_rules.json
              (the benchmark floor).
 
   §12.1 is RESOLVED as "build both", and says every surface must be explicit
@@ -148,8 +148,9 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is a flat effective-rate
-    lookup from <code>data/effective_tax_rates_2026.json</code>, not a real
+    Educational tool, not financial advice. Tax is federal income tax at
+    the standard deduction plus payroll tax, from
+    <code>data/tax_brackets.json</code>: no credits, no state, not a real
     return. Projections assume a steady return every year, which no real
     market has ever done. Your numbers stay in this browser.
   </p>

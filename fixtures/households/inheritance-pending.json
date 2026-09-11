@@ -31,6 +31,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": 0.5,
@@ -51,6 +53,7 @@
   ],
   "filingStatus": "single",
   "state": "MN",
+  "zip": null,
   "capturingFullMatch": true,
   "dependents": null,
   "community": {
@@ -70,7 +73,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_1",
@@ -85,7 +89,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [],
@@ -105,7 +110,8 @@
       "totalCents": 110000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -263,7 +269,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -275,6 +283,7 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": false,
     "undoStack": [],
     "redoStack": [],
@@ -301,20 +310,22 @@
       "monthlySpendingCents": 345000,
       "fiTargetCents": 103500000,
       "grossAnnualCents": 7000000,
-      "effectiveRate": 0.19,
-      "estimatedTaxCents": 1330000,
-      "takeHomeAnnualCents": 5670000,
-      "takeHomeMonthlyCents": 472500,
-      "savingsRate": 0.21857142857142858,
+      "effectiveRate": 0.17035714285714285,
+      "estimatedTaxCents": 1192500,
+      "takeHomeAnnualCents": 5807500,
+      "takeHomeMonthlyCents": 483958,
+      "savingsRate": 0.2382142857142857,
       "runwayMonths": 3.4782608695652173,
       "runwayWholeMonths": 3,
       "netWorthCents": 7200000,
       "working": [
         "monthly spending = food $550 + accommodation $1,500 + transportation $300 + everything else $1,100 = $3,450",
         "FI target = $3,450 x 12 / 0.04 = $41,400 / 0.04 = $1,035,000",
-        "gross $70,000 single: band single up to $75,000 -> effective rate 0.19",
-        "estimated tax = $70,000 x 0.19 = $13,300; take-home = $70,000 - $13,300 = $56,700 a year, $4,725 a month",
-        "savings rate (excluding match) = ($56,700 - $41,400) / $70,000 = $15,300 / $70,000 = 0.2186",
+        "taxable = $70,000 - standard deduction $16,100 (single) = $53,900",
+        "federal income tax = $12,400 x 0.1 + $38,000 x 0.12 + $3,500 x 0.22 = $6,570",
+        "payroll tax = $70,000 x 0.062 + $70,000 x 0.0145 = $5,355",
+        "estimated tax = $11,925, an effective 17.04% of $70,000; take-home = $70,000 - $11,925 = $58,075 a year, $4,839.58 a month",
+        "savings rate (excluding match) = ($58,075 - $41,400) / $70,000 = $16,675 / $70,000 = 0.2382",
         "runway = cash $12,000 / $3,450 a month = 3.4783 months (3 whole months; Runway.project stops at 60)",
         "net worth = $12,000 + $60,000 - $0 = $72,000 (the expected $300,000 inherited IRA is a block, not a fact)"
       ]

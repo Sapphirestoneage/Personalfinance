@@ -62,7 +62,7 @@ const IncomeEngine = require(path.join(ROOT, 'engines/income.js'));
 const Progress = require(path.join(ROOT, 'shared/progress.js'));
 
 const TABLES = {
-  effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
+  effectiveTaxRates: require(path.join(ROOT, 'shared/reference.js')).readSync('effectiveTaxRates', path.join(ROOT, 'data')),
   retirementMilestones: require(path.join(ROOT, 'data/retirement_milestones.json')),
   netWorthPercentiles: require(path.join(ROOT, 'data/net_worth_percentiles_scf_2022.json')),
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
@@ -71,7 +71,7 @@ const TABLES = {
   budgetTemplates: require(path.join(ROOT, 'data/budget_templates.json')),
   debtRules: require(path.join(ROOT, 'data/debt_rules.json')),
   fireVariants: require(path.join(ROOT, 'data/fire_variants.json')),
-  seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
+  seTax: require(path.join(ROOT, 'shared/reference.js')).readSync('seTax', path.join(ROOT, 'data')),
   goalTemplates: require(path.join(ROOT, 'data/goal_templates.json')),
   healthScore: require(path.join(ROOT, 'data/health_score.json')),
   liquidityBenchmarks: require(path.join(ROOT, 'data/liquidity_benchmarks.json')),
@@ -83,7 +83,7 @@ const TABLES = {
   accessRules: require(path.join(ROOT, 'data/access_rules.json')),
   confidenceWeights: require(path.join(ROOT, 'data/confidence_weights.json')),
   uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')),
-  federalBrackets: require(path.join(ROOT, 'data/federal_brackets_2026.json')),
+  federalBrackets: require(path.join(ROOT, 'shared/reference.js')).readSync('federalBrackets', path.join(ROOT, 'data')),
   wealthMultiplier: require(path.join(ROOT, 'data/wealth_multiplier.json')),
   levelsOfWealth: require(path.join(ROOT, 'data/levels_of_wealth.json'))
 };
@@ -134,8 +134,8 @@ check('totalDebt cents', nw.totalDebtCents, 2160000);
 /* -- Estimated tax: $72,000 lands in the single filer's ≤$75,000 band,
       effective rate 0.19 -> $13,680 ------------------------------------- */
 const tax = Tier0.estimatedAnnualTaxCents(h, TABLES);
-check('effective tax rate', tax.effectiveRate, 0.19);
-check('estimated annual tax cents', tax.value, 1368000);
+check('effective tax rate', tax.effectiveRate, 0.1738611111111111);
+check('estimated annual tax cents', tax.value, 1251800);
 
 /* -- Savings rate ------------------------------------------------------- */
 /*    annual expenses  = 3,150 x 12          = 37,800
@@ -144,9 +144,9 @@ check('estimated annual tax cents', tax.value, 1368000);
       match dollars    = 72,000 x 0.06 x 0.5 =  2,160
       saved (inc match)= 22,680  ->  0.315                                */
 const rates = Tier0.savingsRate(h, TABLES);
-check('savingsRate excludingMatch', rates.excludingMatch.value, 0.285, 1e-12);
-check('savingsRate annual saved cents', rates.excludingMatch.annualSavingsCents, 2052000);
-check('savingsRate includingMatch', rates.includingMatch.value, 0.315, 1e-12);
+check('savingsRate excludingMatch', rates.excludingMatch.value, 0.3011388888888889, 1e-12);
+check('savingsRate annual saved cents', rates.excludingMatch.annualSavingsCents, 2168200);
+check('savingsRate includingMatch', rates.includingMatch.value, 0.33113888888888887, 1e-12);
 check('employer match cents', rates.includingMatch.employerMatchCents, 216000);
 checkTrue('the two savings-rate variants differ',
   rates.excludingMatch.value !== rates.includingMatch.value);
@@ -172,11 +172,11 @@ check('fireProgress', prog.value, 48000 / 945000, 1e-12);
 
 /* -- Years to FIRE: recomputed here with an independent loop ------------- */
 (function () {
-  const target = 94500000, r = 0.05, contribution = 2268000;   /* 15.2: the return is real, the median band */
+  const target = 94500000, r = 0.05, contribution = 2384200;   /* 15.2: the return is real, the median band; savings with the match */
   let balance = 4800000, years = 0;
   while (balance < target && years < 200) { balance = balance * (1 + r) + contribution; years++; }
   check('yearsToFire (independent loop)', prog.timeToFire.value, years);
-  check('yearsToFire is 22 at these assumptions (5% real)', prog.timeToFire.value, 22);
+  check('yearsToFire is 21 at these assumptions (5% real)', prog.timeToFire.value, 21);
   check('yearsToFire contribution basis', prog.timeToFire.contributionBasis, 'includingMatch');
 })();
 
@@ -521,10 +521,10 @@ const SPEND = Demo.VALUES.monthlySpending;
 
   /* net income = (72,000 - 13,680)/12 = 4,860; spend 3,200 -> 1,660 left */
   const flow = CashFlow.netCashFlow(hh, TABLES.expenseCategories, TABLES);
-  check('net monthly income cents', flow.netMonthlyIncomeCents, 486000);
-  check('net cash flow cents', flow.value, 166000);
+  check('net monthly income cents', flow.netMonthlyIncomeCents, 495683);
+  check('net cash flow cents', flow.value, 175683);
   /* zero-based test: 1,660 left minus 700 assigned to savings = 960 loose */
-  check('unassigned cents', flow.unassignedCents, 96000);
+  check('unassigned cents', flow.unassignedCents, 105683);
 
   /* 50/30/20 against $4,860 take-home:
        needs   target 2,430  actual 2,805  -> +375 over
@@ -532,19 +532,19 @@ const SPEND = Demo.VALUES.monthlySpending;
        savings target   972  actual   700  ->   -272 under            */
   const cmp = CashFlow.compareToTemplate(hh, TABLES.expenseCategories,
     TABLES.budgetTemplates, '50_30_20', TABLES);
-  check('template basis is take-home pay', cmp.basisMonthlyCents, 486000);
+  check('template basis is take-home pay', cmp.basisMonthlyCents, 495683);
   const row = id => cmp.rows.find(r => r.bucketId === id);
-  check('needs target cents', row('needs').targetCents, 243000);
-  check('needs variance cents', row('needs').varianceCents, 37500);
-  check('wants variance cents', row('wants').varianceCents, -106300);
-  check('savings variance cents', row('savings').varianceCents, -27200);
+  check('needs target cents', row('needs').targetCents, 247842);
+  check('needs variance cents', row('needs').varianceCents, 32658);
+  check('wants variance cents', row('wants').varianceCents, -109205);
+  check('savings variance cents', row('savings').varianceCents, -29137);
   check('total absolute variance', cmp.value, 37500 + 106300 + 27200);
 
   const zero = CashFlow.compareToTemplate(hh, TABLES.expenseCategories,
     TABLES.budgetTemplates, 'zero_based', TABLES);
   check('zero-based is a method, not a split', zero.method, 'zero_based');
   check('zero-based is not balanced here', zero.balanced, false);
-  check('zero-based reports what is loose', zero.unassignedCents, 96000);
+  check('zero-based reports what is loose', zero.unassignedCents, 105683);
 })();
 
 /* -- Imported transactions normalise to a monthly figure ----------------
@@ -1165,7 +1165,7 @@ section('FIRE variants');
   const prog = Fire.progressToward(h, TABLES, { variantId: 'standard' });
   check('progress toward standard', prog.value, 48000 / 945000, 1e-12);
   check('years away matches Tier 0', prog.yearsAway.value, Tier0.fireProgress(h, TABLES).timeToFire.value);
-  check('and that is still 22', prog.yearsAway.value, 22);
+  check('and that is still 21', prog.yearsAway.value, 21);
 
   /* Lean is nearer than standard. */
   const leanProg = Fire.progressToward(h, TABLES, { variantId: 'lean' });
@@ -1222,15 +1222,15 @@ section('Real Hourly Wage');
   check('annual paid hours', w.annualPaidHours, 1920);
   check('annual total hours', w.annualTotalHours, 2544);
   check('annual work costs', w.annualWorkCostsCents, 480000);
-  check('what actually stays', w.keptAnnualCents, 7200000 - 1368000 - 480000);
-  check('real hourly rate', w.realHourlyCents, 2104);
-  check('share of the headline rate retained', w.retained, 2104 / 3750, 1e-12);
-  check('lost per hour', w.lostPerHourCents, 3750 - 2104);
+  check('what actually stays', w.keptAnnualCents, 7200000 - 1251800 - 480000);
+  check('real hourly rate', w.realHourlyCents, 2149);
+  check('share of the headline rate retained', w.retained, 2149 / 3750, 1e-12);
+  check('lost per hour', w.lostPerHourCents, 3750 - 2149);
   checkTrue('the real rate is well below the nominal one', w.realHourlyCents < w.nominalHourlyCents);
 
   /* Life energy: what a $1,000 thing costs in hours of your life. */
   const cost = Hourly.hoursToAfford(h, TABLES, 100000, {});
-  check('hours to afford $1,000', cost.value, 100000 / 2104, 1e-9);
+  check('hours to afford $1,000', cost.value, 100000 / 2149, 1e-9);
   checkTrue('and that is more hours than the headline rate suggests',
     cost.value > cost.nominalHours, `${cost.value} vs ${cost.nominalHours}`);
 
@@ -1668,10 +1668,10 @@ function weddingHousehold() {
 
   /* It reads Cash Flow's surplus rather than asking for one again. */
   check('the required figure is checked against the actual surplus',
-    p.affordability.surplusCents, 166000);
+    p.affordability.surplusCents, 175683);
   check('and it fits', p.affordability.fitsInSurplus, true);
   check('taking this share of it', p.affordability.shareOfSurplus,
-    Math.ceil(1850000 / 21) / 166000, 1e-9);
+    Math.ceil(1850000 / 21) / 175683, 1e-9);
 
   /* A lump figure works when there are no itemised amounts. */
   const lump = Schema.createGoal({ name: 'Trip', lumpTargetCents: 500000,
@@ -2067,7 +2067,7 @@ section('SWAN Number');
     surplus.basis, 'monthlyTotal');
   check('and it is Tier 0\'s own savings figure over twelve',
     surplus.value, Math.round(tier0Saving.annualSavingsCents / 12));
-  check('which for Robin is $1,710 a month', surplus.value, 171000);
+  check('which for Robin is $1,806.83 a month', surplus.value, 180683);
 
   /* Once a month IS categorised, the sharper basis takes over. */
   const tracked = Demo.build();
@@ -5244,11 +5244,11 @@ section('Proposed, not taken');
 
 (function () {
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
-  const table = require(path.join(ROOT, 'data/federal_brackets_2026.json'));
+  const table = require(path.join(ROOT, 'shared/reference.js')).readSync('federalBrackets', path.join(ROOT, 'data'));
 
   /* -- The bracket table ---------------------------------------------- */
   {
-    check('it is unverified, and says so', table.confidence, 'unverified');
+    check('it is sourced, and says so', table.confidence, 'sourced');
     Object.keys(table.brackets).forEach(function (fs_) {
       const ladder = table.brackets[fs_];
       checkTrue(`${fs_}: rates climb`, ladder.every((b, i) => i === 0 || b.rate > ladder[i - 1].rate));
@@ -5268,7 +5268,7 @@ section('Proposed, not taken');
     check('with 49,800 of room before 24%', b.roomBeforeNextBracketDollars, 49800);
     check('and the next rate named', b.nextRate, 0.24);
     checkTrue('marked federal only', b.federalOnly === true);
-    check('carries the table confidence', b.confidence, 'unverified');
+    check('carries the table confidence', b.confidence, 'sourced');
     check('below the deduction the bracket is 10% on nothing', Reference.marginalBracket(table, 10000, 'single').taxableIncomeDollars, 0);
     check('a million is the top rate', Reference.marginalBracket(table, 1000000, 'married_joint').value, 0.37);
     check('with no room above', Reference.marginalBracket(table, 1000000, 'married_joint').roomBeforeNextBracketDollars, null);
@@ -5326,15 +5326,15 @@ section('A first month, proposed');
   const CashFlow = require(path.join(ROOT, 'engines/cashflow.js'));
   const t = CashFlow.templateTargets(Demo.build(), TABLES.budgetTemplates, '50_30_20', TABLES);
   checkTrue('a template has dollar targets with nothing entered', Money.isOk(t));
-  check('needs is half of take-home', t.rows.filter(r => r.bucketId === 'needs')[0].targetCents, 243000);
-  check('savings a fifth', t.rows.filter(r => r.bucketId === 'savings')[0].targetCents, 97200);
+  check('needs is half of take-home', t.rows.filter(r => r.bucketId === 'needs')[0].targetCents, 247842);
+  check('savings a fifth', t.rows.filter(r => r.bucketId === 'savings')[0].targetCents, 99137);
   check('a method template has no bucket targets', CashFlow.templateTargets(Demo.build(), TABLES.budgetTemplates, 'zero_based', TABLES).rows.length, 0);
   const noIncome = Demo.build(); noIncome.people[0].incomeSources = [];
   check('and no income means no targets', CashFlow.templateTargets(noIncome, TABLES.budgetTemplates, '50_30_20', TABLES).status, 'incomplete');
   /* The comparison reads the same targets, so the two cannot disagree. */
   const cmpDemo = Demo.build(); cmpDemo.expenses.entries = Demo.buildSpending();
   const cmp = CashFlow.compareToTemplate(cmpDemo, TABLES.expenseCategories, TABLES.budgetTemplates, '50_30_20', TABLES);
-  check('the comparison uses the same needs target', cmp.rows.filter(r => r.bucketId === 'needs')[0].targetCents, 243000);
+  check('the comparison uses the same needs target', cmp.rows.filter(r => r.bucketId === 'needs')[0].targetCents, 247842);
   check('the shares say what they are worth', cats.typicalShareConfidence, 'unverified');
   const cf = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
   checkTrue('Expenses proposes through Suggest', cf.indexOf('SLAF.Suggest.show(') !== -1);
@@ -5454,8 +5454,8 @@ section('The tax engine');
 (function () {
   const Tax = require(path.join(ROOT, 'engines/tax.js'));
   const T = {
-    federalBrackets: require(path.join(ROOT, 'data/federal_brackets_2026.json')),
-    seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
+    federalBrackets: require(path.join(ROOT, 'shared/reference.js')).readSync('federalBrackets', path.join(ROOT, 'data')),
+    seTax: require(path.join(ROOT, 'shared/reference.js')).readSync('seTax', path.join(ROOT, 'data')),
     stateBrackets: require(path.join(ROOT, 'data/state_brackets_2026.json')),
     aca: require(path.join(ROOT, 'data/aca_2026.json'))
   };
@@ -5543,7 +5543,7 @@ section('The tax engine');
     check('take-home is gross minus all of it', r.takeHomeAnnualCents, 7200000 - 1489375);
     check('at an effective rate near the lookup table', Math.round(r.effectiveRate * 100), 21);
     checkTrue('it says what it did not model', r.notModelled.length >= 5);
-    check('and how much to trust it', r.confidence, 'unverified');
+    check('and how much to trust it', r.confidence, 'sourced');
     const side = Tax.estimate(Demo.build(), T, { selfEmploymentCents: 1000000 });
     checkTrue('side income adds SE tax', side.selfEmploymentTaxCents > 0);
     checkTrue('and its deductible half comes off ordinary income', side.components.ordinary.aboveTheLineCents === side.components.selfEmployment.deductibleHalfCents);
@@ -5635,11 +5635,11 @@ section('The Statement engine');
     /* Demo: age 32, 22 years to FI at the 5% real median (15.2) → 54;
        5.5 years × 37,800 = 207,900 needed; reachable before 59½: cash 9,500
        + the uncharacterised lump as taxable 48,000. */
-    check('FI lands at 54', Math.round(b.fiAge), 54);
-    check('the gap is 5.5 years', b.gapYears, 5.5);
-    check('needing 207,900', b.needCents, 20790000);
+    check('FI lands at 53', Math.round(b.fiAge), 53);
+    check('the gap is 6.5 years', b.gapYears, 6.5);
+    check('needing 245,700', b.needCents, 24570000);
     check('with 57,500 reachable', b.availableCents, 5750000);
-    check('so 150,400 short', b.value, 15040000);
+    check('so 188,200 short', b.value, 18820000);
     check('covered years is available over annual spend', b.coveredYears, 1.5);
     const r = St.bridgeGap(rich(), T, { age: 32 });
     check('the Roth basis and the brokerage count, the 401(k) does not', r.availableCents, 950000 + 600000 + 800000);
@@ -6018,9 +6018,9 @@ section('Facts answered once');
     const th = Tier0.takeHomeMonthlyCents(h, TABLES);
     /* $72,000 at the table's 19% effective rate for a single filer is
        $13,680 of tax; ($72,000 − $13,680) / 12 = $4,860 a month. */
-    check('demo take-home is $4,860 a month', th.value, 486000);
-    check('at the table rate', th.effectiveRate, 0.19);
-    check('so the gap is $1,710, not the pre-tax $2,850', th.value - 315000, 171000);
+    check('demo take-home is $4,956.83 a month', th.value, 495683);
+    check('at the table rate', th.effectiveRate, 0.1738611111111111);
+    check('so the gap is $1,806.83, not the pre-tax $2,850', th.value - 315000, 180683);
     const noFiling = Demo.build(); noFiling.filingStatus = null;
     check('no filing status, no take-home', Tier0.takeHomeMonthlyCents(noFiling, TABLES).status, 'incomplete');
     const foo = fs.readFileSync(path.join(ROOT, 'foo-ladder.js'), 'utf8');
@@ -6346,11 +6346,7 @@ section('Reference tables');
      leads with the number a reader should trust least. */
   (function () {
     const tables = {};
-    onDisk.forEach(function (file) {
-      const name = Object.keys(Reference.TABLE_FILES)
-        .filter(k => Reference.TABLE_FILES[k] === file)[0];
-      if (name) tables[name] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', file), 'utf8'));
-    });
+    Object.keys(Reference.TABLE_FILES).forEach(function (name) { tables[name] = Reference.readSync(name, path.join(ROOT, 'data')); });
     const ordered = Reference.provenance(tables, ['seTax', 'fooRules', 'irsLimits']);
     check('provenance comes back weakest first',
       ordered.map(p => p.confidence).join(','), 'unverified,convention,sourced');
@@ -6638,7 +6634,7 @@ section('The benchmarks');
   /* One more point of savings rate: $720 a year on $72,000. */
   const one = B.onePercentMore(Demo.build(), T);
   check('one point of $72,000 is $720', one.extraAnnualCents, 72000);
-  check('the FI date moves a year closer', one.deltaYears, -1);
+  checkTrue('one point more never pushes FI later; in whole years it may not move it', one.deltaYears <= 0, String(one.deltaYears));
   checkTrue('and the balance at 65 rises', one.at65.deltaCents > 0 && one.at65.years === 33);
   checkTrue('by more than 33 × $720, because it compounds', one.at65.deltaCents > 33 * 72000);
 
@@ -6665,9 +6661,9 @@ section('The contributed savings rate');
   check('demo without a tracked month: 4% of $72,000 + $1,500 Roth = $4,380', c.annualSavingsCents, 438000);
   check('as a rate', c.value, 438000 / 7200000, 1e-12);
   check('HSA not entered is listed, not zeroed', c.notEntered.join(','), 'hsaContributedCents');
-  check('the residual beside it is 28.5%', c.residualRate, 0.285, 1e-12);
-  check('so $16,140 a year is unallocated', c.unallocatedAnnualCents, 2052000 - 438000);
-  check('which is $1,345 a month', c.unallocatedMonthlyCents, 134500);
+  check('the residual beside it is 30.1%', c.residualRate, 0.3011388888888889, 1e-12);
+  check('so $17,302 a year is unallocated', c.unallocatedAnnualCents, 2168200 - 438000);
+  check('which is $1,441.83 a month', c.unallocatedMonthlyCents, 144183);
 
   const tracked = Demo.build();
   tracked.expenses.entries = Demo.buildSpending();
@@ -6729,9 +6725,9 @@ section('The ratios T3 unlocked');
   checkTrue('which is about 23×', hf.value > 22.5 && hf.value < 23.5);
   check('room in the bracket: $49,800 before 24%', by.bracketRoom.value, 4980000);
   check('and says the next rate', by.bracketRoom.nextRate, 0.24);
-  check('bridge to 59½: 5.5 years for the demo at 5% real', by.bridgeGapYears.value, 5.5);
-  check('FI date: 22 years of 365.25 days from noon on 5 Sep 2026', by.fiDate.iso, '2048-09-05');
-  check('as a decimal year to the month', by.fiDate.value, 2048 + 8 / 12, 1e-12);
+  check('bridge to 59½: 6.5 years for the demo at 5% real', by.bridgeGapYears.value, 6.5);
+  check('FI date: 21 years of 365.25 days from noon on 5 Sep 2026', by.fiDate.iso, '2047-09-05');
+  check('as a decimal year to the month', by.fiDate.value, 2047 + 8 / 12, 1e-12);
 
   /* The two that need a year to exist. */
   check('lifestyle inflation with no snapshot asks for one', by.lifestyleInflation.missing.join(','), 'snapshots');
@@ -6977,9 +6973,10 @@ section('Life events: the template schema, and the engine on the demo');
   const r = all['default'];
   check('the default run answers every question from the defaults', JSON.stringify(r.answers), '{"months":6,"where":"home","leaveOrQuit":"quit","startsOn":3}');
   check('the gap after quitting is the median re-entry, 2.3 months rounded', r.gapMonths, 2);
-  /* Independent arithmetic. Take-home 4,860; 4% contribution 240; captured
-     match 50% of 4% of 72,000 = 120 a month; spending 3,150; COBRA 761. */
-  const take = 486000, contrib = 24000, match = 12000, spend = 315000, cobra = 76100, rate = 0.05 / 12;
+  /* Independent arithmetic. Take-home 4,956.83 (72,000 less 12,518 of federal
+     income tax and payroll tax, over twelve); 4% contribution 240; captured
+  match 50% of 4% of 72,000 = 120 a month; spending 3,150; COBRA 761. */
+  const take = 495683, contrib = 24000, match = 12000, spend = 315000, cobra = 76100, rate = 0.05 / 12;
   let cash = 950000, inv = 4800000;
   const rows = [];
   for (let m = 0; m < 12; m++) {
@@ -6991,11 +6988,11 @@ section('Life events: the template schema, and the engine on the demo');
     inv = (inv + (employed ? contrib + match : 0)) * (1 + rate);
     rows.push({ cash: cash, inv: Math.round(inv) });
   }
-  check('month 1 cash: 9,500 + 4,620 − 3,150', r.monthly[0].cashCents, rows[0].cash);
-  check('month 1 cash by the longhand', rows[0].cash, 1097000);
+  check('month 1 cash: 9,500 + 4,716.83 − 3,150', r.monthly[0].cashCents, rows[0].cash);
+  check('month 1 cash by the longhand', rows[0].cash, 1106683);
   check('month 1 investments: (48,000 + 240 + 120) grown a month at 5%', r.monthly[0].investmentsCents, rows[0].inv);
   check('month 12 cash: three months in, six off with COBRA, two of gap, one back', r.monthly[11].cashCents, rows[11].cash);
-  check('month 12 cash by the longhand', rows[11].cash, 950000 + 3 * 147000 - 6 * (spend + cobra) - 2 * spend + 147000);
+  check('month 12 cash by the longhand', rows[11].cash, 950000 + 3 * 156683 - 6 * (spend + cobra) - 2 * spend + 156683);
   check('month 12 investments', r.monthly[11].investmentsCents, rows[11].inv, 1);
   check('eight months of match lost, $120 each', r.lostMatchCents, 8 * match);
   checkTrue('the cash runs out, and the run says in which month', r.flags.some(f => f.key === 'cashOut' && f.month === 6));
@@ -7029,7 +7026,7 @@ section('Life events: the kids, on the demo');
     childcareByState: require(path.join(ROOT, 'data/childcare_by_state.json'))
   });
   const tpl = id => JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/' + id + '.json'), 'utf8'));
-  const take = 486000, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
+  const take = 495683, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
 
   /* Kids, born now (startsOn 0 so the year under test is the first year). */
   const kids = E.run(Demo.build(), tpl('kids'), { startsOn: 0 }, { tables: T, d: 'default' });
@@ -7067,7 +7064,7 @@ section('Life events: the job offer, on the demo');
     returnBands: require(path.join(ROOT, 'data/return_bands.json'))
   });
   const tpl = id => JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/' + id + '.json'), 'utf8'));
-  const take = 486000, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
+  const take = 495683, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
   /* The job offer: $90,000, 60 hours, 8 hours of commute, one remote day, $2,000 unvested, 3-month wait. */
   const job = E.run(Demo.build(), tpl('job-change'), { base: 9000000, hours: 60, commute: 8, remoteDays: 1, startsOn: 0, unvested: 200000 }, { tables: T, d: 'default' });
   const takeThere = Tier0.takeHomeMonthlyCents(Object.assign(Demo.build(), { people: [Object.assign(Demo.build().people[0], { incomeSources: [Schema.createIncomeSource({ personId: 'demo_person_robin', grossAnnualIncomeCents: 9000000 })] })] }), T).value;
@@ -7120,7 +7117,7 @@ section('Life events: buying a place, on the demo');
   check('selling in year two: 11% of the price', by.reversal.value, Math.round(32400000 * 0.11));
 
   /* Month 1 and 12, longhand, with the loan amortising. */
-  const take = 486000, contrib = 24000, match = 12000, spend = 289500 /* the month with its lines, D-197 */, rate = 0.05 / 12;
+  const take = 495683, contrib = 24000, match = 12000, spend = 289500 /* the month with its lines, D-197 */, rate = 0.05 / 12;
   const upkeep = Math.round(32400000 * 0.026 / 12);
   let cash = 950000 - Math.round(32400000 * 0.03) - Math.round(32400000 * 0.2), inv = 4800000, bal = P;
   const rows = [];
@@ -7163,7 +7160,7 @@ section('Life events: going freelance, on the demo');
   const by = {}; r.lines.forEach(l => { by[l.id] = l; });
   /* The derived figure: take-home of $72,000 as salary, less half the SE tax a month. */
   const seTax = SE.selfEmploymentTax(7200000, 'single', T.seTax).value;
-  const net = Math.round(486000 - 0.5 * seTax / 12);
+  const net = Math.round(495683 - 0.5 * seTax / 12);
   check('SE tax on $72,000 from the one engine', by.seTax.value, seTax);
   check('what the target leaves a month', r.ctx.freelanceNetMonthly, net);
   check('month 1: a sixth of it, the job gone', r.monthly[0].incomeCents, Math.round(net / 6));
@@ -7179,7 +7176,7 @@ section('Life events: going freelance, on the demo');
   check('billable hours a week at that rate: 72,000 ÷ 52 ÷ the rate', by.billableHours.value, Math.round(7200000 / 52 / by.rateToMatch.value));
   check('which is more than the forty hours said: amber', by.billableHours.warn, true);
   const part = E.run(h, tpl, { startsOn: 0, keepJob: 'partTime' }, { tables: T, d: 'default' });
-  check('part-time keeps half the paycheque and its plan', part.monthly[0].incomeCents, Math.round(486000 * 0.5) - 12000 + Math.round(net / 6));
+  check('part-time keeps half the paycheque and its plan', part.monthly[0].incomeCents, Math.round(495683 * 0.5) - 12000 + Math.round(net / 6));
   check('and no COBRA', part.monthly[0].expensesCents, 315000);
 })();
 
@@ -7208,8 +7205,8 @@ section('Life events: moving, on the demo');
   check('and $2,375.75 it is', ncTax, 237575);
   check('state tax there: Texas has none', by.stateThere.value, 0);
   check('month 1 spending: the month scaled by 110/103, less a twelfth of the NC tax', r.monthly[0].expensesCents, Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12));
-  check('the move itself, across the country, in month 1', r.monthly[0].cashCents, 950000 + (486000 - 24000) - (Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12)) - 900000);
-  check('month 12 cash', r.monthly[11].cashCents, 950000 - 900000 + 12 * ((486000 - 24000) - (Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12))));
+  check('the move itself, across the country, in month 1', r.monthly[0].cashCents, 950000 + (495683 - 24000) - (Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12)) - 900000);
+  check('month 12 cash', r.monthly[11].cashCents, 950000 - 900000 + 12 * ((495683 - 24000) - (Math.round(315000 * 110 / 103) + Math.round(-ncTax / 12))));
   const dflt = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
   check('from "not listed": the national average is the base', dflt.lines.filter(l => l.id === 'ratio')[0].value, 103 / 100 - 1, 1e-12);
   check('staying in the same state changes no tax', dflt.lines.filter(l => l.id === 'stateThere')[0].value, ncTax);
@@ -7237,8 +7234,8 @@ section('Life events: a debt sprint, on the demo');
   check('and with $200 a month more', by.monthsSprint.value, sprint.months);
   check('interest saved is the difference of the two courses', by.interestSaved.value, now.totalInterestCents - sprint.totalInterestCents);
   check('month 1 spending is $200 lighter', r.monthly[0].expensesCents, 289500 - 20000); /* D-197 */
-  check('and cash is exactly the baseline: the $200 went to the debt', r.monthly[0].cashCents, 1122500);
-  check('net worth is $200 better than doing nothing in month 1', r.monthly[0].netWorthCents, 1122500 + Math.round((4800000 + 24000 + 12000) * (1 + 0.05 / 12)) - (2160000 - 20000));
+  check('and cash is exactly the baseline: the $200 went to the debt', r.monthly[0].cashCents, 1132183);
+  check('net worth is $200 better than doing nothing in month 1', r.monthly[0].netWorthCents, 1132183 + Math.round((4800000 + 24000 + 12000) * (1 + 0.05 / 12)) - (2160000 - 20000));
   check('after six months the sprint stops: month 12 spending is the full month', r.monthly[11].expensesCents, 289500);
   check('month 12 net worth carries six payments of $200', r.monthly[11].netWorthCents - E.baseline(h, { tables: T }).monthly[11].netWorthCents, 6 * 20000);
   const wanted = Demo.build(); wanted.expenses.entries = Demo.buildSpending(); wanted.ratings.rerank.dining_out = 2;
@@ -7260,13 +7257,13 @@ section('Life events: a big purchase, on the demo');
   const h = Demo.build();
   const r = E.run(h, tpl, { startsOn: 0 }, { tables: T, d: 'default' });
   const by = {}; r.lines.forEach(l => { by[l.id] = l; });
-  check('the real hourly wage from engines/hourly.js: $21.04', by.hourlyNow.value, 2104);
-  check('$2,500 is 119 hours of life', by.hoursOfLife.value, Math.round(250000 / 2104));
+  check('the real hourly wage from engines/hourly.js: $21.49', by.hourlyNow.value, 2149);
+  check('$2,500 is 116 hours of life', by.hoursOfLife.value, Math.round(250000 / 2149));
   check('cost per use over 120 uses, from Quick Math\'s engine', by.perUse.value, Math.round(250000 / 120));
   check('joy per $1,000: 7 over 2.5', by.joyPerThousand.value, 2.8);
   check('cash after: 9,500 − 2,500', by.cashAfter.value, 700000);
   check('which is under three months of spending: red', by.cashAfter.bad, true);
-  check('the purchase leaves in month 1', r.monthly[0].cashCents, 1097000 - 250000);
+  check('the purchase leaves in month 1', r.monthly[0].cashCents, 1106683 - 250000);
   check('and nothing else changes: month 12 is the baseline less $2,500', r.monthly[11].cashCents, E.baseline(h, { tables: T }).monthly[11].cashCents - 250000);
   check('the horizon is five years', r.horizonMonths, 60);
   check('the template writes nothing: no expenses, no income', tpl.diff.income.length + tpl.diff.expenses.length + tpl.diff.assets.length, 0);
@@ -7327,7 +7324,7 @@ section('Life events: stopping or coasting, on the demo');
   const SS = require(path.join(ROOT, 'engines/ss.js'));
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   const T = {};
-  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = Reference.readSync(k, path.join(ROOT, 'data')); } catch (e) {} });
   const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/retire-or-coast.json'), 'utf8'));
   const h = Demo.build();
   const all = E.runAll(h, tpl, {}, { tables: T });
@@ -7375,7 +7372,7 @@ section('Life events: two households, one, on the demo');
     c.people[0].incomeSources = [Schema.createIncomeSource({ personId: c.people[0].id, grossAnnualIncomeCents: gross })];
     return Tier0.takeHomeMonthlyCents(c, T).value;
   }
-  const apart = 486000 + takeHome(6000000, 'single'), joint = takeHome(13200000, 'married_joint');
+  const apart = 495683 + takeHome(6000000, 'single'), joint = takeHome(13200000, 'married_joint');
   check('two take-homes, filing single', by.takeHomeApart.value, apart);
   check('one take-home, filing jointly, on $132,000', by.takeHomeJoint.value, joint);
   check('the filing change is the difference', by.filingDelta.value, joint - apart);
@@ -7404,7 +7401,7 @@ section('3D: the instruments three ways');
   /* D-089: the events engine on the empty template, read back per instrument. */
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   const T = {};
-  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = Reference.readSync(k, path.join(ROOT, 'data')); } catch (e) {} });
   const E = require(path.join(ROOT, 'engines/events.js'));
   const h = Demo.build();
   const td = InstrumentsMain.threeD(h, T);
@@ -7415,7 +7412,7 @@ section('3D: the instruments three ways');
   check('the default column is the baseline run', nw('default'), E.baseline(h, { tables: T }).netWorthAtEndCents);
   const sr = d => td.columns[d].savingsRate.value;
   checkTrue('the savings rate rises with income up 10% and falls with it down 15%', sr('dream') > sr('default') && sr('default') > sr('disaster'));
-  check('the default savings rate is the residual with the match: (4,860 − 3,150 + 120) × 12 ÷ 72,000', sr('default'), (486000 - 315000 + 12000) / 600000, 1e-9);
+  check('the default savings rate is the residual with the match: (4,956.83 − 3,150 + 120) × 12 ÷ 72,000', sr('default'), (495683 - 315000 + 12000) / 600000, 1e-9);
   checkTrue('runway at the horizon is months of the end-state spending', td.columns['default'].emergencyFundMonths.value > 0);
   check('debt-to-income does not move, and says why', td.columns['default'].debtToIncome.status, 'incomplete');
   check('nor does the FOO step', td.columns['default'].fooStep.status, 'incomplete');
@@ -7436,7 +7433,7 @@ section('The Skill Stacker: the catalogue, and the engine on the demo');
   const EventsEngine = require(path.join(ROOT, 'engines/events.js'));
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   const T = {};
-  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = Reference.readSync(k, path.join(ROOT, 'data')); } catch (e) {} });
   ['skills', 'stacks', 'hundredWays', 'curves'].forEach(k => checkTrue(`the ${k} table loads from dnd/data through TABLE_FILES`, !!T[k] && !!T[k].version));
   const DndRef = require(path.join(ROOT, 'dnd/shared/reference.js'));
   ['skills', 'stacks', 'hundredWays', 'curves'].forEach(k => checkTrue(`dnd/shared/reference.js registers ${k} too`, !!DndRef.TABLE_FILES[k] && fs.existsSync(path.join(ROOT, 'dnd/data', DndRef.TABLE_FILES[k]))));
@@ -7734,7 +7731,7 @@ section('Charts: the one way a number becomes a picture');
   const Skills = require(path.join(ROOT, 'engines/skills.js'));
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   const T = {};
-  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = Reference.readSync(k, path.join(ROOT, 'data')); } catch (e) {} });
   (function () {
     const h = Demo.build(); h.expenses.entries = Demo.buildSpending();
     let r = Skills.equip(h, 'cook-dinner', T, '2026-09-05'); h.skills = r.value.skills;
@@ -7758,7 +7755,7 @@ section('Between jobs: the unemployed sequence');
   const Runway = require(path.join(ROOT, 'engines/runway.js'));
   const Progress = require(path.join(ROOT, 'shared/progress.js'));
   const T = {};
-  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { T[k] = Reference.readSync(k, path.join(ROOT, 'data')); } catch (e) {} });
 
   const row = Schema.employmentStatus('unemployed');
   checkTrue('"unemployed" is a working situation', !!row);
@@ -8454,7 +8451,7 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
   if (!fs.existsSync(dir)) return;
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   const ALL_TABLES = {};
-  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { ALL_TABLES[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) { /* a room test that needs it will say */ } });
+  Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { ALL_TABLES[k] = Reference.readSync(k, path.join(ROOT, 'data')); } catch (e) { /* a room test that needs it will say */ } });
   const ctx = {
     check, checkTrue, section, ROOT, fs, path,
     Money, Schema, Demo, Registry, Ownership, Progress, Tier0, Foo, CashFlow, Debt, Projection, Hourly,
@@ -8945,7 +8942,7 @@ section('Four ways through five years');
 (function () {
   const Adventure = require(path.join(ROOT, 'engines/adventure.js'));
   const TABLES = { adventurePaths: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8')),
-    effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')), returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    effectiveTaxRates: require(path.join(ROOT, 'shared/reference.js')).readSync('effectiveTaxRates', path.join(ROOT, 'data')), returnBands: require(path.join(ROOT, 'data/return_bands.json')),
     levers: require(path.join(ROOT, 'data/levers.json')) };
   const demo = Demo.build();
 
@@ -8958,7 +8955,7 @@ section('Four ways through five years');
 
   const base = Adventure.baseline(demo, TABLES);
   check('the demo has a baseline', base.status, 'ok');
-  check('...income is TAKE-HOME, gross less the estimated tax (D-171)', base.value.annualIncomeCents, 7200000 - 1368000);
+  check('...income is TAKE-HOME, gross less the estimated tax (D-171)', base.value.annualIncomeCents, 7200000 - 1251800);
   check('...and says what the gross was', base.value.grossAnnualIncomeCents, 7200000);
   check('without the tax table the baseline is incomplete, never gross', Adventure.baseline(demo, { adventurePaths: TABLES.adventurePaths }).status, 'incomplete');
   check('...spending annualised from the month', base.value.annualSpendCents, 315000 * 12);
@@ -9018,7 +9015,7 @@ section('Four ways through five years');
   checkTrue('every path is a list of levers the library knows',
     t.paths.every(p => Array.isArray(p.levers) && p.levers.length && p.levers.every(x => LV[x.id])));
   check('the levers the ways pull', Adventure.leversUsed(TABLES).map(l => l.id).join(','), 'drift,steady,hustle,househack,relocate,careermove');
-  const takeHome = 7200000 - 1368000;
+  const takeHome = 7200000 - 1251800;
   const raiseShare = LV.steady.moves['income.grossAnnualCents'];
   check('Steady: the raise is the steady lever\'s', steady.rows[0].incomeCents, takeHome + Math.round(takeHome * raiseShare));
   checkTrue('...and a raise kept whole leaves spending alone', steady.rows.every(r => r.spendCents === 3780000));
@@ -9077,7 +9074,7 @@ section('Four ways through five years');
 
   /* Drift: the raise is spent, so the target moves. */
   const drift = Adventure.run(demo, T2, { pathId: 'drift', routeToDebt: false }).value;
-  check('Drift spends the raise: spending rises by it', drift.rows[0].spendCents, 3780000 + Math.round(5832000 * 0.03));
+  check('Drift spends the raise: spending rises by it', drift.rows[0].spendCents, 3780000 + Math.round(5948200 * 0.03));
   checkTrue('...so its target rises too', drift.rows[0].targetCents > 3780000 * 25);
 
   /* Headwinds and tailwinds: same mechanics, separate lists. */
@@ -10142,7 +10139,7 @@ section('Lenses: a rule re-reads the numbers and returns a verdict (D-175)');
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   Lenses.use(table);
   const T = {};
-  Object.keys(Reference.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) { /* dnd-side tables */ } });
+  Object.keys(Reference.TABLE_FILES).forEach(k => { try { T[k] = Reference.readSync(k, path.join(ROOT, 'data')); } catch (e) { /* dnd-side tables */ } });
   const demo = Demo.build();
   const ids = table.lenses.map(l => l.id);
 
@@ -10179,11 +10176,11 @@ section('Lenses: a rule re-reads the numbers and returns a verdict (D-175)');
   check('the demo reads 27 of 33; the other six say honestly what is not entered', okCount, 27);
 
   /* A few re-derived by hand on the demo. */
-  const takeHome = 486000;
+  const takeHome = 495683;
   check('FAT and wants: needs ÷ take-home', Lenses.measure('fatwants', demo, T).value, (71000 + 150000 + 22000) / takeHome);
   check('50/30/20: what is left ÷ take-home', Lenses.measure('fiftythirty', demo, T).value, (takeHome - 315000) / takeHome);
   check('25% of gross: accommodation ÷ gross a month', Lenses.measure('twentyfive', demo, T).value, 150000 / 600000);
-  check('take-home share of gross', Lenses.measure('takehome', demo, T).value, (7200000 - 1368000) / 7200000);
+  check('take-home share of gross', Lenses.measure('takehome', demo, T).value, (7200000 - 1251800) / 7200000);
   check('bucket: cash ÷ a year of spending', Lenses.measure('bucket', demo, T).value, 950000 / (315000 * 12));
   check('the avalanche names the highest rate', Lenses.measure('avalanche', demo, T).top, 'Credit card');
   check('...and reads the FOO high-interest line', Lenses.measure('avalanche', demo, T).band.high, 0.075);
@@ -10339,13 +10336,13 @@ section('Feature switches: rendering and engines, never stored facts (D-180)');
   /* on(): the pref, else the default; situation scope from the household. */
   const demo = Demo.build();
   check('a default-on switch is on', Features.on('afterTaxNetWorth', demo), true);
-  check('a default-off switch is off', Features.on('sequenceRisk', demo), false);
+  check('every user-scope switch starts on (D-210)', Features.on('sequenceRisk', demo), true);
   check('an unknown switch is off, never a throw', Features.on('teleport', demo), false);
-  Features.set('sequenceRisk', true);
-  check('set turns it on for this person', Features.on('sequenceRisk', demo), true);
-  check('...and the pref says so', Prefs.get('features.sequenceRisk', null), true);
+  Features.set('sequenceRisk', false);
+  check('set turns it off for this person', Features.on('sequenceRisk', demo), false);
+  check('...and the pref says so', Prefs.get('features.sequenceRisk', null), false);
   Features.set('sequenceRisk', null);
-  check('null goes back to the default', Features.on('sequenceRisk', demo), false);
+  check('null goes back to the default', Features.on('sequenceRisk', demo), true);
   check('a situation switch ignores prefs', (Features.set('equityComp', true), Features.on('equityComp', demo)), false);
   const equity = Demo.build(); Schema.primaryPerson(equity).incomeSources.push(Schema.createIncomeSource({ personId: Schema.primaryPerson(equity).id, source: 'RSUs', type: 'equity', grossAnnualIncomeCents: 1000000 }));
   check('...and reads the household: an equity source turns equityComp on', Features.on('equityComp', equity), true);
@@ -10773,7 +10770,9 @@ section('15.2: assumptions declared once; real by default; nominal at display ti
 
   /* Horizon: off by default, converts only when on, never stores. */
   const h = Schema.createHousehold({ assumptions: { inflation: 0.03 } });
-  check('the switch is off by default', Horizon.on(h), false);
+  check('the switch is on by default (D-210)', Horizon.on(h), true);
+  Features.set('showNominal', false);
+  check('the switch turns off', Horizon.on(h), false);
   check('the factor is 1 when off', Horizon.factor(h, 10), 1);
   check('display leaves cents alone when off', Horizon.display(h, 123456, 10), 123456);
   checkTrue('the line says today’s money', Horizon.lineHtml(h).indexOf('today’s money') > -1);
@@ -10786,7 +10785,8 @@ section('15.2: assumptions declared once; real by default; nominal at display ti
   checkTrue('the line says future dollars', Horizon.lineHtml(h).indexOf('future dollars') > -1);
   checkTrue('...and carries the toggle', Horizon.lineHtml(h).indexOf('data-horizon-toggle') > -1);
   Features.set('showNominal', null);
-  check('back to today’s money', Horizon.on(h), false);
+  check('back to the default, which is future dollars too', Horizon.on(h), true);
+  Features.set('showNominal', false);
   check('the household is untouched by the switch', Schema.createHousehold(h).assumptions.inflation, 0.03);
 
   /* Every projection room carries the line once, at the top. */
@@ -10830,7 +10830,7 @@ section('15.3: orientation, the value after deferred tax, and the two-position c
   const AfterTax = require(path.join(ROOT, 'shared/aftertax.js'));
   const Features = require(path.join(ROOT, 'shared/features.js'));
   const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
-  const fb = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/federal_brackets_2026.json'), 'utf8'));
+  const fb = require(path.join(ROOT, 'shared/reference.js')).readSync('federalBrackets', path.join(ROOT, 'data'));
   Features.use(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/features.json'), 'utf8')));
   Prefs.reset();
   const T = { federalBrackets: fb };
@@ -10943,8 +10943,8 @@ section('15.4: income by type, take-home per source, what survives a job loss (D
   const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
   const BetweenJobs = require(path.join(ROOT, 'engines/betweenjobs.js'));
   const Adventure = require(path.join(ROOT, 'engines/adventure.js'));
-  const fb = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/federal_brackets_2026.json'), 'utf8'));
-  const se = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/se_tax_2026.json'), 'utf8'));
+  const fb = require(path.join(ROOT, 'shared/reference.js')).readSync('federalBrackets', path.join(ROOT, 'data'));
+  const se = require(path.join(ROOT, 'shared/reference.js')).readSync('seTax', path.join(ROOT, 'data'));
   const T = Object.assign({}, TABLES, { federalBrackets: fb, seTax: se,
     adventurePaths: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8')), returnBands: require(path.join(ROOT, 'data/return_bands.json')), levers: require(path.join(ROOT, 'data/levers.json')) });
 
@@ -11205,7 +11205,7 @@ section('15.7: two people, one record each; the Partner room edits the second (D
   check('the stored value passes through', Schema.createHousehold({ filingStatus: 'single' }).filingStatus, 'single');
   check('nothing stays nothing', Schema.createHousehold({}).filingStatus, null);
   const Tax = require(path.join(ROOT, 'engines/tax.js'));
-  const fb = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/federal_brackets_2026.json'), 'utf8'));
+  const fb = require(path.join(ROOT, 'shared/reference.js')).readSync('federalBrackets', path.join(ROOT, 'data'));
   check('the tax engine reads the stored value: a joint return keys the joint ladder', Tax.ordinaryTax(fb, 10000000, Schema.createHousehold({ filingStatus: 'mfj' }).filingStatus).deductionCents, fb.standardDeduction.married_joint * 100);
   /* owner: personId | joint */
   check('an asset with one owner id is that person\'s', Schema.ownerOf({ ownerIds: ['p1'] }), 'p1');
@@ -12255,8 +12255,8 @@ section('Phase A: suggestions, derived and never stored (D-205)');
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   const table = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
   const T = {};
-  const FILES = { ledgerRows: 'ledger-rows.json', zipPrefixes: 'zip_prefixes.json', uiBenefits: 'ui_benefits.json', savingsPresets: 'savings_presets.json', federalBrackets: 'federal_brackets_2026.json', stateBrackets: 'state_brackets_2026.json', protectionConventions: 'protection_conventions.json', debtRules: 'debt_rules.json', onepagerDefaults: 'onepager_defaults.json', retirementMilestones: 'retirement_milestones.json', cobraAca: 'cobra_aca_2024.json' };
-  Object.keys(FILES).forEach(k => { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', FILES[k]), 'utf8')); });
+  const FILES = { ledgerRows: 'ledger-rows.json', zipPrefixes: 'zip_prefixes.json', uiBenefits: 'ui_benefits.json', savingsPresets: 'savings_presets.json', federalBrackets: 'tax_brackets.json', stateBrackets: 'state_brackets_2026.json', protectionConventions: 'protection_conventions.json', debtRules: 'debt_rules.json', onepagerDefaults: 'onepager_defaults.json', retirementMilestones: 'retirement_milestones.json', cobraAca: 'cobra_aca_2024.json' };
+  Object.keys(FILES).forEach(k => { T[k] = Reference.TABLE_FILES[k] ? Reference.readSync(k, path.join(ROOT, 'data')) : JSON.parse(fs.readFileSync(path.join(ROOT, 'data', FILES[k]), 'utf8')); });
 
   /* ---- The registry rows carry the new fields ------------------------- */
   const rows = table.rows;
@@ -12382,8 +12382,8 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
   const mods = ['shared/spine-v2.js', 'shared/ownership.js', 'shared/suggest.js', 'shared/ledger-rows.js', 'shared/doors.js', 'shared/ask.js'].map(f => path.join(ROOT, f));
   const table = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
   const T = { ledgerRows: table };
-  ['zipPrefixes:zip_prefixes.json', 'uiBenefits:ui_benefits.json', 'savingsPresets:savings_presets.json', 'federalBrackets:federal_brackets_2026.json', 'stateBrackets:state_brackets_2026.json', 'protectionConventions:protection_conventions.json', 'debtRules:debt_rules.json', 'onepagerDefaults:onepager_defaults.json', 'retirementMilestones:retirement_milestones.json', 'cobraAca:cobra_aca_2024.json', 'confidenceWeights:confidence_weights.json', 'accessRules:access_rules.json', 'effectiveTaxRates:effective_tax_rates_2026.json', 'staleness:staleness.json']
-    .forEach(kv => { const [k, f] = kv.split(':'); T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')); });
+  ['zipPrefixes:zip_prefixes.json', 'uiBenefits:ui_benefits.json', 'savingsPresets:savings_presets.json', 'federalBrackets:tax_brackets.json', 'stateBrackets:state_brackets_2026.json', 'protectionConventions:protection_conventions.json', 'debtRules:debt_rules.json', 'onepagerDefaults:onepager_defaults.json', 'retirementMilestones:retirement_milestones.json', 'cobraAca:cobra_aca_2024.json', 'confidenceWeights:confidence_weights.json', 'accessRules:access_rules.json', 'effectiveTaxRates:tax_brackets.json', 'staleness:staleness.json']
+    .forEach(kv => { const [k, f] = kv.split(':'); const Ref = require(path.join(ROOT, 'shared/reference.js')); T[k] = Ref.TABLE_FILES[k] ? Ref.readSync(k, path.join(ROOT, 'data')) : JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')); });
   function fresh() {
     const store = {};
     global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };

@@ -39,8 +39,8 @@ function ok() { passed++; }
 function check(name, cond, detail) { if (cond) ok(); else failures.push(name + (detail ? '\n      ' + detail : '')); }
 function load(name) { return JSON.parse(fs.readFileSync(path.join(DATA, name), 'utf8')); }
 
-/* Five of the eight live under data/lane2/ until shared/reference.js registers them (docs/lane2-proposals.md P-5). */
-const FILES = ['states.json', 'milestones.json', 'lane2/aca.json', 'lane2/studentloans.json', 'lane2/contribution_limits.json', 'lane2/tax_brackets.json', 'return_bands.json', 'bands.json'];
+/* Four of the eight live under data/lane2/ until shared/reference.js registers them (docs/lane2-proposals.md P-5). */
+const FILES = ['states.json', 'milestones.json', 'lane2/aca.json', 'lane2/studentloans.json', 'lane2/contribution_limits.json', 'tax_brackets.json', 'return_bands.json', 'bands.json'];
 const isUrl = (s) => typeof s === 'string' && /^https?:\/\/\S+$/.test(s);
 const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s));
 
@@ -130,7 +130,7 @@ if (stale) notes.push(stale + ' cells are older than 18 months and say so (`stal
 
 /* ---- 3. Brackets monotonic, capital gains ordered ---------------------------------- */
 (function () {
-  const t = tables['lane2/tax_brackets.json'];
+  const t = tables['tax_brackets.json'];
   if (!t) return;
   Object.keys(t.years).forEach((y) => {
     const yr = t.years[y];
@@ -150,20 +150,15 @@ if (stale) notes.push(stale + ' cells are older than 18 months and say so (`stal
     check(y + ' wage base above $150,000', yr.fica.socialSecurityWageBase.value > 150000);
   });
   check('the wage base rose from 2025 to 2026', t.years[2026].fica.socialSecurityWageBase.value > t.years[2025].fica.socialSecurityWageBase.value);
-  /* Agreement with the engine's table. */
-  const fed = load('federal_brackets_2026.json');
-  Object.keys(fed.standardDeduction).forEach((fs) => check('2026 ' + fs + ' standard deduction agrees with federal_brackets_2026.json', fed.standardDeduction[fs] === t.years[2026].standardDeduction[fs].value, fed.standardDeduction[fs] + ' vs ' + t.years[2026].standardDeduction[fs].value));
-  Object.keys(fed.brackets || {}).forEach((fs) => {
-    const a = fed.brackets[fs], b = t.years[2026].brackets[fs] && t.years[2026].brackets[fs].value;
-    if (!b) return;
-    const same = a.length === b.length && a.every((r, i) => (r.upTo === undefined ? r.upToTaxableIncome : r.upTo) === b[i].upTo && r.rate === b[i].rate);
-    if (!same) notes.push('2026 ' + fs + ' brackets differ between tax_brackets.json (Rev. Proc. 2025-32 as read from search) and federal_brackets_2026.json (transcribed from memory): ' + JSON.stringify(a.map((r) => r.upTo === undefined ? r.upToTaxableIncome : r.upTo)) + ' vs ' + JSON.stringify(b.map((r) => r.upTo)) + '. DECIDE: which the engine reads.');
-    else ok();
+  /* The engines read this file through shared/reference.js views (D-210). */
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const fed = Reference.view('federalBrackets', t), se = Reference.view('seTax', t);
+  Object.keys(t.years[Reference.TAX_YEAR].brackets).forEach((fs) => {
+    check('federalBrackets view carries the ' + fs + ' ladder', fed.brackets[fs].length === 7 && fed.brackets[fs][6].upToTaxableIncome === null);
+    check('federalBrackets view carries the ' + fs + ' standard deduction', fed.standardDeduction[fs] === t.years[Reference.TAX_YEAR].standardDeduction[fs].value);
   });
-  const se = load('se_tax_2026.json');
-  const wb = se.socialSecurityWageBaseDollars || se.wageBase || se.socialSecurityWageBase || (se.socialSecurity && se.socialSecurity.wageBase);
-  if (wb !== undefined) check('2026 wage base agrees with se_tax_2026.json', wb === t.years[2026].fica.socialSecurityWageBase.value, wb + ' vs ' + t.years[2026].fica.socialSecurityWageBase.value);
-  else notes.push('se_tax_2026.json keys: ' + Object.keys(se).join(', ') + ' (no wage base key found to compare)');
+  check('seTax view doubles the employee shares', se.socialSecurityRate === 0.124 && se.medicareRate === 0.029 && se.employeeFicaRate === 0.0765, JSON.stringify([se.socialSecurityRate, se.medicareRate, se.employeeFicaRate]));
+  check('seTax view carries the safe harbour and the due dates', se.safeHarbor && se.safeHarbor.currentYearShare === 0.9 && se.quarterlyDueDates.length === 4);
   /* State brackets monotonic too. */
   const sb = load('state_brackets_2026.json');
   Object.keys(sb.states).forEach((c) => {

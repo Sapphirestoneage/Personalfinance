@@ -21,7 +21,7 @@
    net earnings, or forgetting the deductible half. Both are tested against a
    worked $100,000 example.
 
-   All rates and thresholds come from data/se_tax_2026.json.
+   All rates and thresholds come from data/tax_brackets.json.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -155,10 +155,9 @@
     var w2Fica = Math.round(o.w2SalaryCents * seTable.employeeFicaRate);
     var w2IncomeRate = Reference.lookupEffectiveTaxRate(taxTable, o.w2SalaryCents / 100, filingStatus);
     if (!Money.isOk(w2IncomeRate)) return w2IncomeRate;
-    /* The effective table already blends income tax and the employee FICA
-       half, so subtracting FICA again would double-count it. Income tax
-       alone is the table rate less the FICA share. */
-    var w2IncomeTaxRate = Math.max(0, w2IncomeRate.value - seTable.employeeFicaRate);
+    /* The effective rate blends income tax and the employee FICA half and
+       says which is which; income tax alone is its incomeTaxRate. */
+    var w2IncomeTaxRate = Money.isEntered(w2IncomeRate.incomeTaxRate) ? w2IncomeRate.incomeTaxRate : Math.max(0, w2IncomeRate.value - seTable.employeeFicaRate);
     var w2IncomeTax = Math.round(o.w2SalaryCents * w2IncomeTaxRate);
     var w2Net = o.w2SalaryCents - w2Fica - w2IncomeTax + benefits;
 
@@ -169,7 +168,7 @@
     var taxableAfterSeDeduction = Math.max(0, netProfit - se.deductibleHalfCents);
     var c1099Rate = Reference.lookupEffectiveTaxRate(taxTable, taxableAfterSeDeduction / 100, filingStatus);
     if (!Money.isOk(c1099Rate)) return c1099Rate;
-    var c1099IncomeTaxRate = Math.max(0, c1099Rate.value - seTable.employeeFicaRate);
+    var c1099IncomeTaxRate = Money.isEntered(c1099Rate.incomeTaxRate) ? c1099Rate.incomeTaxRate : Math.max(0, c1099Rate.value - seTable.employeeFicaRate);
     var c1099IncomeTax = Math.round(taxableAfterSeDeduction * c1099IncomeTaxRate);
     var c1099Net = netProfit - se.value - c1099IncomeTax;
 
@@ -226,7 +225,7 @@
     var taxable = Math.max(0, o.expectedNetProfitCents - se.deductibleHalfCents);
     var rate = Reference.lookupEffectiveTaxRate(taxTable, taxable / 100, filingStatus);
     if (!Money.isOk(rate)) return rate;
-    var incomeTaxRate = Math.max(0, rate.value - seTable.employeeFicaRate);
+    var incomeTaxRate = Money.isEntered(rate.incomeTaxRate) ? rate.incomeTaxRate : Math.max(0, rate.value - seTable.employeeFicaRate);
     var incomeTax = Math.round(taxable * incomeTaxRate);
     var thisYearLiability = se.value + incomeTax;
 

@@ -27,7 +27,7 @@
              intake's guesses and says so (Gate.fillGuesses); with no offer
              typed it says what it needs. The offer's commute and costs
              left blank carry the current job's; a typed 0 is a zero.
-  5. CONFIG  data/effective_tax_rates_2026.json, via the engines above.
+  5. CONFIG  data/tax_brackets.json, via the engines above.
 
   THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, five
   inputs, the assumptions drawer with sources, why this matters at your
@@ -246,7 +246,7 @@
       var r = CareerMove.compare(h, T);
       var tax = T.effectiveTaxRates;
       var work = currentWork(h);
-      var taxSource = 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')';
+      var taxSource = 'data/tax_brackets.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')';
       var o = r.offer || null, now = Money.isOk(r) ? r.now : null;
       var src = r.sources || {};
       var rows = [];

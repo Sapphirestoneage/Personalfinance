@@ -6,7 +6,7 @@ paths:
 # Variable Income (`variable-income`)
 File: rooms/variable-income.html · 290 lines
 Engines: projection, tier0, selfemployed, income, ledger, variableincome
-Reference data: effective_tax_rates_2026.json, se_tax_2026.json, variable_income_conventions.json
+Reference data: tax_brackets.json, variable_income_conventions.json
 Owns: incomeLow, incomeHigh, bufferMonths, variableWindow
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), ledgerIncome (income), monthlyExpenses (expenses)
 Latest decisions:

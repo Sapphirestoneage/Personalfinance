@@ -38,13 +38,13 @@ module.exports = function (t) {
        payment = 1,200 × 0.0075 ÷ (1 − 1.0075^−36) = $38.16
        interest = 38.16 × 36 − 1,200               = $173.76                */
   const demo = Demo.build();
-  check('the demo wage the hours lean on is $21.04', Hourly.realHourlyWage(demo, T, {}).realHourlyCents, 2104);
+  check('the demo wage the hours lean on is $21.49', Hourly.realHourlyWage(demo, T, {}).realHourlyCents, 2149);
 
   const six = Purchase.weigh(withPurchase(demo, { priceCents: 120000, monthsAway: 6 }), T);
   checkTrue('the demo computes', Money.isOk(six), six.reason);
   check('the value is the price', six.value, 120000);
-  check('57.03 hours of life', six.hours, 120000 / 2104, 1e-9);
-  check('… at the $21.04 wage', six.wageCents, 2104);
+  check('55.84 hours of life', six.hours, 120000 / 2149, 1e-9);
+  check('… at the $21.49 wage', six.wageCents, 2149);
   check('… the same reading the lens gives', six.hours, Lens.apply(120000, 'hours', demo, T).value, 1e-12);
   check('the floor is $9,450', six.floorCents, 945000);
   check('the full cushion is $18,900', six.fullCents, 1890000);

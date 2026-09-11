@@ -23,8 +23,8 @@
   4. EMPTY   Each of the two tools independently states what it needs. The
              quarterly figure works with no prior year at all — it just falls
              back to the current-year target and says so.
-  5. CONFIG  data/se_tax_2026.json (rates, wage base, safe-harbour shares,
-             due dates), data/effective_tax_rates_2026.json.
+  5. CONFIG  data/tax_brackets.json (rates, wage base, safe-harbour shares,
+             due dates), data/tax_brackets.json.
 -->
 <style>
   .room-back:hover { text-decoration: underline; }
@@ -135,10 +135,10 @@
 
   <p class="disclaimer">
     Educational tool, not financial advice, and definitely not a tax return.
-    Income tax is estimated from a flat effective-rate table with no
-    deductions or credits, and the Social Security wage base in
-    <code>data/se_tax_2026.json</code> is unverified for 2026 — check it
-    before relying on any figure above it. Your numbers stay in this browser.
+    Income tax is federal only, at the standard deduction with no credits;
+    every rate and the Social Security wage base come from
+    <code>data/tax_brackets.json</code>, each cell with its IRS or SSA
+    source. Your numbers stay in this browser.
   </p>
 </main>
 

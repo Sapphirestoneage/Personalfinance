@@ -117,17 +117,17 @@ module.exports = function (t) {
   const aff = p.affordability;
   check('the money can be projected', aff.status, 'ok');
   check('… from $48,000 invested', aff.investmentsCents, 4800000);
-  check('… saving $20,520 a year: Tier 0’s excluding-match figure', aff.annualSavingsCents, 2052000);
+  check('… saving $21,682 a year: Tier 0’s excluding-match figure', aff.annualSavingsCents, 2168200);
   check('… which is Tier 0’s own', aff.annualSavingsCents, Tier0.savingsRate(planned, T).excludingMatch.annualSavingsCents);
   check('… at the 5% real return', aff.annualRate, 0.05);
   const r = 0.05 / 12, g96 = Math.pow(1 + r, 96);
-  const byHand40 = 4800000 * g96 + 171000 * ((g96 - 1) / r);
-  check('… $272,885 at the start of the forties, within $50 of the closed form', p.rows[1].projectedCents, byHand40, 5000);
-  check('… ≈ $272,885 as a literal', p.rows[1].projectedCents, 27288509, 100);
+  const byHand40 = 4800000 * g96 + 180683 * ((g96 - 1) / r);
+  check('… $284,285 at the start of the forties, within $50 of the closed form', p.rows[1].projectedCents, byHand40, 5000);
+  check('… ≈ $284,285 as a literal', p.rows[1].projectedCents, 28428519, 100);
   check('… the thirties’ money is what is invested now', p.rows[0].projectedCents, 4800000);
   check('… and it is projection.js’s own path, not a second loop', p.rows[1].projectedCents,
-    Projection.pathCents({ startCents: 4800000, monthlyContributionCents: 171000, annualRate: 0.05, years: 63 }).years[8].balanceCents);
-  check('$42,000 by 40 against $272,885: the money outruns the plan', p.anyStrained, false);
+    Projection.pathCents({ startCents: 4800000, monthlyContributionCents: 180683, annualRate: 0.05, years: 63 }).years[8].balanceCents);
+  check('$42,000 by 40 against $284,285: the money outruns the plan', p.anyStrained, false);
   check('… no decade strained', p.rows.filter(x => x.strained).length, 0);
   /* FI number: 12 × 3,150 ÷ 0.04 = 945,000; 42,000 ÷ 945,000 = 4.44%. */
   check('the FI number is $945,000', p.fireNumberCents, 94500000);
@@ -146,10 +146,10 @@ module.exports = function (t) {
   demo.timeBuckets = Buckets.setDecadeCents(Buckets.setDecadeCents([], 30, 1200000), 40, 3000000);
   const dp = Buckets.plan(demo, T);
   check('the demo is 32 too', dp.age, 32);
-  check('… its basis includes the match: $22,680', dp.affordability.annualSavingsCents + '/' + dp.affordability.savingsVariant, '2268000/includingMatch');
-  const byHandDemo40 = 4800000 * g96 + 189000 * ((g96 - 1) / r);
-  check('… $294,078 at the start of the forties, by the same closed form', dp.rows[1].projectedCents, byHandDemo40, 5000);
-  check('… ≈ $294,078 as a literal', dp.rows[1].projectedCents, 29407767, 100);
+  check('… its basis includes the match: $23,842', dp.affordability.annualSavingsCents + '/' + dp.affordability.savingsVariant, '2384200/includingMatch');
+  const byHandDemo40 = 4800000 * g96 + 198683 * ((g96 - 1) / r);
+  check('… $305,478 at the start of the forties, by the same closed form', dp.rows[1].projectedCents, byHandDemo40, 5000);
+  check('… ≈ $305,478 as a literal', dp.rows[1].projectedCents, 30547848, 100);
 
   /* ---- A plan the money cannot keep up with ---------------------------------- */
   const big = person(32);
@@ -167,9 +167,9 @@ module.exports = function (t) {
   const stops = person(32, { targets: { retireAge: 36 } });
   stops.timeBuckets = Buckets.setDecadeCents([], 40, 100000);
   /* By hand: 48 months of saving, then 48 of growth only:
-     (48,000 × g48 + 1,710 × (g48 − 1)/r) × g48. */
+     (48,000 × g48 + 1,806.83 × (g48 − 1)/r) × g48. */
   const g48 = Math.pow(1 + r, 48);
-  const stopped = (4800000 * g48 + 171000 * ((g48 - 1) / r)) * g48;
+  const stopped = (4800000 * g48 + 180683 * ((g48 - 1) / r)) * g48;
   check('with a stop age of 36 the forties see four years of saving then growth alone', Buckets.plan(stops, T).rows[1].projectedCents, stopped, 5000);
   check('… the stop age is reported', Buckets.plan(stops, T).affordability.stopAge, 36);
 

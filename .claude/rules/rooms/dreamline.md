@@ -6,7 +6,7 @@ paths:
 # Price the Dream (`dreamline`)
 File: rooms/dreamline.html · 237 lines
 Engines: projection, tier0, hourly, dreamline
-Reference data: dreamline.json, effective_tax_rates_2026.json
+Reference data: dreamline.json, tax_brackets.json
 Owns: dreamsMonthly
 Reads from other owners: grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:

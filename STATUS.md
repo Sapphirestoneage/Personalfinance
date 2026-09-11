@@ -7,15 +7,18 @@ Updated: 2026-09-11
 - ~70 rooms live on GitHub Pages. Each room works on its own; the connections
   between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
 - Context system added. Sessions should no longer read the archives.
-- Clutter pass (D-209): nine dead root files gone; the glossary hover is live on
-  every room from the shared header mount. Still owner calls: the eight
-  off-by-default switches, the lane 2 tax tables (P-3/P-5/P-7), a link to dnd/.
+- Clutter pass (D-209, D-210): nine dead root files gone; the glossary hover is
+  live on every room; one federal tax table (`data/tax_brackets.json`, sourced)
+  feeds every tax figure; every user switch starts on. Owner decided: dnd/
+  stays separate and unlinked; the roadmap tiers wait.
 
 ## Freeze
 - ON. No new rooms, frameworks, or vocabularies until the first journey
   below works end to end.
 
 ## Next (top item first; one per session)
+0. `SLAF_ONLY=express node test/forms.js` fails about half its runs ("the last pay
+   landed" comes back null); same on the commit before D-210. Find the race.
 1. Decide who owns income sources once Start Here retires (Ledger or Income).
    OWNER DECISION NEEDED.
 2. Make logged income reconcile with typical income (known problem 1).

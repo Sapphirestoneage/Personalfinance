@@ -31,6 +31,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": null,
@@ -51,6 +53,7 @@
   ],
   "filingStatus": "single",
   "state": "NV",
+  "zip": null,
   "capturingFullMatch": null,
   "dependents": null,
   "community": {
@@ -70,7 +73,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [
@@ -110,7 +114,8 @@
       "totalCents": 70000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -268,7 +273,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -280,6 +287,7 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": true,
     "undoStack": [],
     "redoStack": [],
@@ -306,20 +314,22 @@
       "monthlySpendingCents": 270000,
       "fiTargetCents": 81000000,
       "grossAnnualCents": 5500000,
-      "effectiveRate": 0.19,
-      "estimatedTaxCents": 1045000,
-      "takeHomeAnnualCents": 4455000,
-      "takeHomeMonthlyCents": 371250,
-      "savingsRate": 0.22090909090909092,
+      "effectiveRate": 0.15686363636363637,
+      "estimatedTaxCents": 862750,
+      "takeHomeAnnualCents": 4637250,
+      "takeHomeMonthlyCents": 386438,
+      "savingsRate": 0.2540454545454545,
       "runwayMonths": 1.8518518518518519,
       "runwayWholeMonths": 1,
       "netWorthCents": -8500000,
       "working": [
         "monthly spending = food $500 + accommodation $1,200 + transportation $300 + everything else $700 = $2,700",
         "FI target = $2,700 x 12 / 0.04 = $32,400 / 0.04 = $810,000",
-        "gross $55,000 single: band single up to $75,000 -> effective rate 0.19",
-        "estimated tax = $55,000 x 0.19 = $10,450; take-home = $55,000 - $10,450 = $44,550 a year, $3,712.5 a month",
-        "savings rate (excluding match) = ($44,550 - $32,400) / $55,000 = $12,150 / $55,000 = 0.2209",
+        "taxable = $55,000 - standard deduction $16,100 (single) = $38,900",
+        "federal income tax = $12,400 x 0.1 + $26,500 x 0.12 = $4,420",
+        "payroll tax = $55,000 x 0.062 + $55,000 x 0.0145 = $4,207.5",
+        "estimated tax = $8,627.5, an effective 15.69% of $55,000; take-home = $55,000 - $8,627.5 = $46,372.5 a year, $3,864.38 a month",
+        "savings rate (excluding match) = ($46,372.5 - $32,400) / $55,000 = $13,972.5 / $55,000 = 0.2540",
         "runway = cash $5,000 / $2,700 a month = 1.8519 months (1 whole months; Runway.project stops at 60)",
         "net worth = $5,000 - $90,000 = -$85,000"
       ]

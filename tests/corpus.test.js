@@ -44,7 +44,7 @@ const STRICT = process.env.CORPUS_STRICT === '1';
 /* ---- Tables: every file the app registers, loaded the way run.js does ---- */
 const TABLES = {};
 Object.keys(Reference.TABLE_FILES).forEach(function (k) {
-  try { TABLES[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) { /* an engine that needs it says so */ }
+  try { TABLES[k] = Reference.readSync(k, path.join(ROOT, 'data')); } catch (e) { /* an engine that needs it says so */ }
 });
 /* Tables an engine takes by a name other than `tables`. Anything not here
    is passed as undefined, and a throw on such a call is "not callable
@@ -213,10 +213,10 @@ const report = {
   failures: failures.slice(),
   uncallable: uf.map((k) => { const u = uncallableByFn[k]; return { fn: u.fn, params: u.params, needs: u.needs }; }),
   notes: [
-    'The effective-rate table is flat by gross and filing status. The `state` field, a 1099 income type, and the SE tax do not change the estimate, so `self-employed-lumpy`, `house-hacker`, `variable-hustle` and `geo-arb` carry the same rate a W-2 earner in any state would. The fixtures agree with the engine because they use the same table; the note is that the table is approximate (its own `precision` says so), not that the engine is wrong. Section 3 (tax_brackets.json, states.json) is where a sharper figure would come from.',
+    'The quick tax estimate is federal income tax at the standard deduction plus the employee payroll tax (D-210). The `state` field, a 1099 income type and the SE tax do not enter it, so `self-employed-lumpy`, `house-hacker`, `variable-hustle` and `geo-arb` carry the same estimate a W-2 earner in any state would; the fixtures use the same arithmetic, so they agree. The Tax room is where state and SE come in.',
     '`retired-early` and `between-jobs` have no income source, so take-home and the savings rate are incomplete. Portfolio draws and unemployment benefits are not income sources in the current shape; the engines that read them (`decumulation`, `betweenjobs`) are swept but not compared to a known value here.',
     '`zero-income` types a gross of $0: the engine estimates $0 of tax and $0 of take-home and refuses a savings rate (zero denominator). Both match the fixture.',
-    '`forty-debts` sits exactly on the $75,000 single boundary. The table rule is `gross <= upToGrossIncome`, so it lands in the 0.19 band; the fixture says so in `band`.'
+    '`forty-debts` is $75,000 single: nothing special about that figure any more, since there are no bands.'
   ]
 };
 fs.mkdirSync(path.join(ROOT, 'tests', 'reports'), { recursive: true });

@@ -6,7 +6,7 @@ paths:
 # The Runway (`runway`)
 File: rooms/runway.html · 727 lines
 Engines: projection, tier0, cashflow, tax, runway, swan
-Reference data: effective_tax_rates_2026.json, expense_categories.json, liquidity_benchmarks.json
+Reference data: expense_categories.json, liquidity_benchmarks.json, tax_brackets.json
 Owns: nothing
 Reads from other owners: cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:

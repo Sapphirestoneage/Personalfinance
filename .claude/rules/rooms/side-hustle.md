@@ -6,7 +6,7 @@ paths:
 # Side Hustle (`side-hustle`)
 File: rooms/side-hustle.html · 505 lines
 Engines: projection, tier0, selfemployed, hourly, sidehustle
-Reference data: federal_brackets_2026.json, se_tax_2026.json
+Reference data: tax_brackets.json
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), marginalRate (accounts)
 Latest decisions:

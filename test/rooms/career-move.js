@@ -37,22 +37,22 @@ module.exports = function (t) {
   const h = withOffer(Demo.build(), { grossAnnualCents: 8000000, hoursPerWeek: 40, commuteHoursPerWeek: 0, workCostsMonthlyCents: 10000 });
   const r = CareerMove.compare(h, T);
   checkTrue('the worked case computes', Money.isOk(r), r.reason);
-  check('now, really: $21.04/h (the Real Hourly Wage figure)', r.now.realHourlyCents, 2104);
+  check('now, really: $21.49/h (the Real Hourly Wage figure)', r.now.realHourlyCents, 2149);
   check('now, on paper: $37.50/h', r.now.nominalHourlyCents, 3750);
-  check('now, kept a year: $53,520', r.now.keptAnnualCents, 5352000);
-  check('the offer, tax: $16,800', r.offer.estimatedTaxCents, 1680000);
+  check('now, kept a year: $54,682', r.now.keptAnnualCents, 5468200);
+  check('the offer, tax: $14,890', r.offer.estimatedTaxCents, 1489000);
   check('the offer, costs a year: $1,200', r.offer.annualWorkCostsCents, 120000);
-  check('the offer, kept a year: $62,000', r.offer.keptAnnualCents, 6200000);
+  check('the offer, kept a year: $63,910', r.offer.keptAnnualCents, 6391000);
   check('the offer, hours a week: 48 (unpaid 8 carried)', r.offer.totalHoursPerWeek, 48);
-  check('the offer, really: $26.91/h within $0.02', r.offer.realHourlyCents, 2691, 2);
+  check('the offer, really: $27.74/h within $0.02', r.offer.realHourlyCents, 2774, 2);
   check('the offer, on paper: $41.67/h', r.offer.nominalHourlyCents, 4167, 1);
-  check('the real difference an hour: +$5.87/h within $0.02', r.value, 587, 2);
+  check('the real difference an hour: +$6.25/h within $0.02', r.value, 625, 2);
   check('… and it is the value', r.differenceHourlyCents, r.value);
-  check('kept a year, more: $8,480', r.keptDifferenceAnnualCents, 848000);
-  check('take-home a year, now: $58,320', r.now.takeHomeAnnualCents, 5832000);
-  check('take-home a year, offer: $63,200', r.offer.takeHomeAnnualCents, 6320000);
-  check('take-home a month, now: $4,860', r.now.takeHomeMonthlyCents, 486000);
-  check('take-home difference a year: $4,880', r.takeHomeDifferenceAnnualCents, 488000);
+  check('kept a year, more: $9,228', r.keptDifferenceAnnualCents, 922800);
+  check('take-home a year, now: $59,482', r.now.takeHomeAnnualCents, 5948200);
+  check('take-home a year, offer: $65,110', r.offer.takeHomeAnnualCents, 6511000);
+  check('take-home a month, now: $4,956.83', r.now.takeHomeMonthlyCents, 495683);
+  check('take-home difference a year: $5,628', r.takeHomeDifferenceAnnualCents, 562800);
   check('the offer takes 5 hours a week fewer', r.hoursDifferencePerWeek, -5);
   check('the same function priced both: the current side equals Hourly on the household', r.now.realHourlyCents, Hourly.realHourlyWage(Demo.build(), T, {}).realHourlyCents);
 
@@ -63,23 +63,23 @@ module.exports = function (t) {
     for (let y = 1; y <= 100; y++) { const before = b; b = b * (1 + RATE) + contribution; if (b >= FIRE) return (y - 1) + (FIRE - before) / (b - before); }
     return null;
   }
-  const yNow = yearsTo(START, 2052000), yOff = yearsTo(START, 2540000);
-  checkTrue('FI, now: a little over 22 years', yNow > 22 && yNow < 22.5, String(yNow));
-  checkTrue('FI, offer: a little under 20 years', yOff > 19.5 && yOff < 20, String(yOff));
+  const yNow = yearsTo(START, 2168200), yOff = yearsTo(START, 2731000);
+  checkTrue('FI, now: a little over 21.5 years', yNow > 21.5 && yNow < 22, String(yNow));
+  checkTrue('FI, offer: a little under 19 years', yOff > 18.5 && yOff < 19, String(yOff));
   checkTrue('the FI move computes', Money.isOk(r.fi), r.fi.reason);
-  check('… savings on the now side, excluding the match: $20,520', r.fi.savingsNowCents, 2052000);
-  check('… savings on the offer side: $25,400', r.fi.savingsOfferCents, 2540000);
+  check('… savings on the now side, excluding the match: $21,682', r.fi.savingsNowCents, 2168200);
+  check('… savings on the offer side: $27,310', r.fi.savingsOfferCents, 2731000);
   check('… years now, within a day', r.fi.yearsNow, yNow, 1 / 365);
   check('… years with the offer, within a day', r.fi.yearsOffer, yOff, 1 / 365);
   check('… FI ' + Math.round((yNow - yOff) * 12) + ' months sooner', r.fiMonthsSooner, Math.round((yNow - yOff) * 12));
-  checkTrue('… which is thirty months, give or take one', Math.abs(r.fiMonthsSooner - 30) <= 1, String(r.fiMonthsSooner));
+  checkTrue('… which is thirty-two months, give or take one', Math.abs(r.fiMonthsSooner - 32) <= 1, String(r.fiMonthsSooner));
 
-  /* A $5,000 sign-on: 5,000 × (1 − 0.21) = $3,950 into investments in
-     year one on the offer side. */
+  /* A $5,000 sign-on: 5,000 less the offer's effective rate (18.61% on
+     $80,000 single) = $4,069.38 into investments in year one on the offer side. */
   const s = CareerMove.compare(withOffer(Demo.build(), { grossAnnualCents: 8000000, hoursPerWeek: 40, commuteHoursPerWeek: 0, workCostsMonthlyCents: 10000, signOnCents: 500000 }), T);
   check('sign-on $5,000 is read', s.offer.signOnCents, 500000);
-  check('… $3,950 after tax at the offer’s rate', s.offer.signOnNetCents, 395000);
-  check('… years with the offer and the sign-on, within a day', s.fi.yearsOffer, yearsTo(START + 395000, 2540000), 1 / 365);
+  check('… $4,069.38 after tax at the offer’s rate', s.offer.signOnNetCents, 406938);
+  check('… years with the offer and the sign-on, within a day', s.fi.yearsOffer, yearsTo(START + 406938, 2731000), 1 / 365);
   checkTrue('… which brings FI a little sooner still', s.fiMonthsSooner > r.fiMonthsSooner, s.fiMonthsSooner + ' vs ' + r.fiMonthsSooner);
   check('… and does not touch the hourly difference', s.value, r.value);
 
@@ -98,9 +98,9 @@ module.exports = function (t) {
        real  48,600 / 1,824 = $26.64/h  > $21.04/h, while kept a year is
        48,600 − 53,520 = −$4,920. */
   const low = CareerMove.compare(withOffer(Demo.build(), { grossAnnualCents: 6000000, hoursPerWeek: 30, commuteHoursPerWeek: 0, workCostsMonthlyCents: 0 }), T);
-  check('$60,000 at 30 h: really $26.64/h', low.offer.realHourlyCents, 2664, 1);
-  check('… wins the hour by $5.60', low.value, 560, 2);
-  check('… while keeping $4,920 a year less', low.keptDifferenceAnnualCents, -492000);
+  check('$60,000 at 30 h: really $27.63/h', low.offer.realHourlyCents, 2763, 1);
+  check('… wins the hour by $6.14', low.value, 614, 2);
+  check('… while keeping $4,292 a year less', low.keptDifferenceAnnualCents, -429200);
   checkTrue('… and FI moves later', low.fiMonthsSooner < 0, String(low.fiMonthsSooner));
   check('… costs typed as 0 are a zero, not carried', low.offer.annualWorkCostsCents, 0);
   check('… the sources say so', low.sources.costs + '/' + low.sources.commute + '/' + low.sources.hours, 'offer/offer/offer');
@@ -122,7 +122,7 @@ module.exports = function (t) {
   checkTrue('… saying the current job’s hours are not in', /current job’s hours are not in/.test(noNow.reason));
   checkTrue('… and still carries the offer’s rate', noNow.offer && noNow.offer.realHourlyCents > 0, JSON.stringify(noNow.offer && noNow.offer.realHourlyCents));
   /* $80,000 − 16,800 − 4,800 (costs carried) = 58,400 over (40 + 5 + 8) × 48 = 2,544 h = $22.96/h */
-  check('… at $22.96/h (costs and commute carried, unpaid hours carried, a standard week)', noNow.offer.realHourlyCents, 2296, 1);
+  check('… at $23.71/h (costs and commute carried, unpaid hours carried, a standard week)', noNow.offer.realHourlyCents, 2371, 1);
 
   /* Sign-on only: no gross → incomplete; the sign-on is not a comparison. */
   check('sign-on only → incomplete', CareerMove.compare(withOffer(Demo.build(), { signOnCents: 500000 }), T).status, 'incomplete');

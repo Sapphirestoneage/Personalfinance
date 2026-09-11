@@ -32,42 +32,43 @@ module.exports = function (t) {
 
   /* The brief's worked case: you $72,000, partner $48,000, shared $3,000 a
      month, filing jointly.
-       take-home, one at a time at married_joint (effective_tax_rates_2026):
-         $72,000 sits in the ≤$90,000 band at 14% → tax $10,080 → $61,920 a
-         year → $5,160 a month
-         $48,000 sits in the ≤$60,000 band at 11% → tax $5,280 → $42,720 a
-         year → $3,560 a month
-         together $8,720 a month
+       take-home, one at a time at married_joint (data/tax_brackets.json, D-210):
+         $72,000 − $32,200 deduction = $39,800 taxable → 10% of 24,800 +
+           12% of 15,000 = $4,280; payroll 7.65% = $5,508 → $9,788 tax →
+           $62,212 a year → $5,184.33 a month
+         $48,000 − $32,200 = $15,800 taxable → $1,580; payroll $3,672 →
+           $5,252 tax → $42,748 a year → $3,562.33 a month
+         together $8,746.67 a month
        proportional  3,000 × 72 ÷ 120 = $1,800 · 3,000 × 48 ÷ 120 = $1,200
-                     1,800 ÷ 5,160 = 34.88% · 1,200 ÷ 3,560 = 33.71%
-       equal         $1,500 each · 1,500 ÷ 5,160 = 29.07% · 1,500 ÷ 3,560 = 42.13%
-       pooled        $3,000 out of $8,720 in → $5,720 left
+                     1,800 ÷ 5,184.33 = 34.72% · 1,200 ÷ 3,562.33 = 33.69%
+       equal         $1,500 each · 1,500 ÷ 5,184.33 = 28.93% · 1,500 ÷ 3,562.33 = 42.11%
+       pooled        $3,000 out of $8,746.67 in → $5,746.67 left
        concentration 72,000 ÷ 120,000 = 0.6                                  */
   const prop = Partner.split(household({ you: 7200000, them: 4800000, shared: 300000, mode: 'proportional' }), T);
   checkTrue('the worked case computes in proportion', Money.isOk(prop), prop.reason);
   check('proportional: you pay $1,800', prop.people[0].shareCents, 180000);
   check('… they pay $1,200', prop.people[1].shareCents, 120000);
   check('… the number is your share', prop.value, 180000);
-  check('… your take-home $5,160', prop.people[0].takeHomeCents, 516000);
-  check('… theirs $3,560', prop.people[1].takeHomeCents, 356000);
-  check('… you keep $3,360', prop.people[0].keepsCents, 336000);
-  check('… they keep $2,360', prop.people[1].keepsCents, 236000);
-  check('… 34.88% of your take-home', prop.people[0].burden, 0.3488, 0.0001);
-  check('… 33.71% of theirs', prop.people[1].burden, 0.3371, 0.0001);
+  check('… your take-home $5,184.33', prop.people[0].takeHomeCents, 518433);
+  check('… theirs $3,562.33', prop.people[1].takeHomeCents, 356233);
+  check('… you keep $3,384.33', prop.people[0].keepsCents, 338433);
+  check('… they keep $2,362.33', prop.people[1].keepsCents, 236233);
+  check('… 34.72% of your take-home', prop.people[0].burden, 0.3472001203627084, 0.0001);
+  check('… 33.69% of theirs', prop.people[1].burden, 0.336858179899111, 0.0001);
   check('… income concentration 0.6', prop.concentration, 0.6, 1e-9);
   check('… the same figure the ratio engine gives', prop.concentration, Ratios.byId('incomeConcentration').compute(Ratios.context(household({ you: 7200000, them: 4800000 }), T)).value, 1e-12);
   check('… the shared month was typed', prop.sharedSource, 'typed');
   check('… the mode was chosen, nothing fell back', String(prop.modeChosen) + '/' + String(prop.modeFallback), 'proportional/null');
   check('… the lower earner is them', prop.lowerIndex + '/' + prop.higherIndex, '1/0');
   check('… no zone: neither share is heavy', prop.zone, null);
-  check('… the effective rates come back for the drawer', prop.people[0].effectiveRate + '/' + prop.people[1].effectiveRate, '0.14/0.11');
+  check('… the effective rates come back for the drawer', prop.people[0].effectiveRate.toFixed(4) + '/' + prop.people[1].effectiveRate.toFixed(4), '0.1359/0.1094');
 
   const eq = Partner.split(household({ you: 7200000, them: 4800000, shared: 300000, mode: 'equal' }), T);
   check('equal: $1,500 each', eq.people[0].shareCents + '/' + eq.people[1].shareCents, '150000/150000');
-  check('… you keep $3,660', eq.people[0].keepsCents, 366000);
-  check('… they keep $2,060', eq.people[1].keepsCents, 206000);
-  check('… the fairness note: 29.07% of the higher take-home', eq.people[eq.higherIndex].burden, 0.2907, 0.0001);
-  check('… against 42.13% of the lower', eq.people[eq.lowerIndex].burden, 0.4213, 0.0001);
+  check('… you keep $3,684.33', eq.people[0].keepsCents, 368433);
+  check('… they keep $2,062.33', eq.people[1].keepsCents, 206233);
+  check('… the fairness note: 28.93% of the higher take-home', eq.people[eq.higherIndex].burden, 0.28933343363559033, 0.0001);
+  check('… against 42.11% of the lower', eq.people[eq.lowerIndex].burden, 0.4210727248738887, 0.0001);
   check('… an odd cent goes to one side, and the halves still sum', (function () {
     const r = Partner.split(household({ you: 7200000, them: 4800000, shared: 300001, mode: 'equal' }), T);
     return r.people[0].shareCents + r.people[1].shareCents;
@@ -75,10 +76,10 @@ module.exports = function (t) {
 
   const pooled = Partner.split(household({ you: 7200000, them: 4800000, shared: 300000, mode: 'pooled' }), T);
   check('pooled: the number is the shared month', pooled.value, 300000);
-  check('… $8,720 in', pooled.poolInCents, 872000);
-  check('… $5,720 left', pooled.poolLeftCents, 572000);
+  check('… $8,746.66 in', pooled.poolInCents, 874666);
+  check('… $5,746.66 left', pooled.poolLeftCents, 574666);
   checkTrue('… no shares', pooled.people[0].shareCents === null && pooled.people[1].shareCents === null);
-  check('… the two take-homes still come back', pooled.totalTakeHomeCents, 872000);
+  check('… the two take-homes still come back', pooled.totalTakeHomeCents, 874666);
 
   section('Partner — edge cases');
 
@@ -121,10 +122,10 @@ module.exports = function (t) {
 
   /* Shared month larger than the two take-homes: out of pocket, zone out. */
   const big = Partner.split(household({ you: 7200000, them: 4800000, shared: 1000000, mode: 'equal' }), T);
-  check('shared $10,000 against $8,720 in → $1,280 out of pocket', big.outOfPocketCents, 128000);
+  check('shared $10,000 against $8,746.67 in → $1,253.34 out of pocket', big.outOfPocketCents, 125334);
   check('… zone out', big.zone, 'out');
-  check('… the lower earner keeps less than nothing: 3,560 − 5,000', big.people[1].keepsCents, -144000);
-  check('… pooled says the same: $1,280 short', Partner.split(household({ you: 7200000, them: 4800000, shared: 1000000, mode: 'pooled' }), T).poolLeftCents, -128000);
+  check('… the lower earner keeps less than nothing: 3,562.33 − 5,000', big.people[1].keepsCents, -143767);
+  check('… pooled says the same: $1,280 short', Partner.split(household({ you: 7200000, them: 4800000, shared: 1000000, mode: 'pooled' }), T).poolLeftCents, -125334);
   check('… and is out', Partner.split(household({ you: 7200000, them: 4800000, shared: 1000000, mode: 'pooled' }), T).zone, 'out');
 
   /* Heavy without being out: $6,000 halves against $3,560 → watch. */

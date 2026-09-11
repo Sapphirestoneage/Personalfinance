@@ -6,7 +6,7 @@ paths:
 # Money Calendar & Pay-Later (`calendar`)
 File: rooms/calendar.html · 267 lines
 Engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar
-Reference data: calendar_conventions.json, effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
+Reference data: calendar_conventions.json, expense_categories.json, tax_brackets.json
 Owns: payCadence, nextPayday, billsMonthly, payLaterDue
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), rentMonthly (expenses), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
 Latest decisions:

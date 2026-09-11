@@ -213,7 +213,7 @@
         { label: 'The pad', value: '× ' + Engine.buffer(T), source: tableSource + (d.confidenceNote ? ' — ' + d.confidenceNote : '') },
         { label: 'The horizon', value: Money.formatMonths(Engine.horizonMonths(T)), source: 'the timeline the exercise is written for; each dream is also shown as what it costs over it (convention, data/dreamline.json)' },
         { label: 'Real hourly wage', value: hrs && Money.isOk(hrs) ? perHour(hrs.wageCents) + ', ' + hours(hrs.hoursNow) + ' h a week now' : 'not in yet' + (hrs && hrs.reason ? ' — ' + hrs.reason : ''), source: 'Real Hourly Wage, with its own assumptions: the flat tax estimate, weeks a year, and every hour the job takes counted as work' },
-        { label: 'Take-home', value: g && Money.isOk(g) ? Money.formatCents(g.takeHomeMonthlyCents) + ' a month at ' + Money.formatRate(g.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + (tax.version || '?') + ' — ' + (tax.source || '') + ' (' + (tax.confidence || '') + ')' },
+        { label: 'Take-home', value: g && Money.isOk(g) ? Money.formatCents(g.takeHomeMonthlyCents) + ' a month at ' + Money.formatRate(g.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/tax_brackets.json v' + (tax.version || '?') + ' — ' + (tax.source || '') + ' (' + (tax.confidence || '') + ')' },
         { label: 'Weeks in a month', value: String(Math.round(Engine.WEEKS_PER_MONTH * 100) / 100), source: '52 ÷ 12: a monthly figure over a weekly rate (convention)' }
       ];
     },

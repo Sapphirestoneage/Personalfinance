@@ -51,8 +51,8 @@ module.exports = function (t) {
   const two = D.withSlot(D.withSlot([], 1, { monthlyCents: 80000, label: 'travel' }), 2, { monthlyCents: 60000 });
   const h = robin(two);
   check('the demo’s spending is the $3,150 the case assumes', Schema.monthlyExpensesCents(h).value, 315000);
-  check('the demo’s real hourly wage is $21.04/h', Hourly.realHourlyWage(h, TABLES).value, 2104);
-  check('the demo’s take-home is $4,860 a month', Tier0.takeHomeMonthlyCents(h, TABLES).value, 486000);
+  check('the demo’s real hourly wage is $21.49/h', Hourly.realHourlyWage(h, TABLES).value, 2149);
+  check('the demo’s take-home is $4,956.83 a month', Tier0.takeHomeMonthlyCents(h, TABLES).value, 495683);
 
   const dm = D.dreamsMonthlyCents(h);
   check('dreams a month: $1,400', dm.cents, 140000);
@@ -69,22 +69,22 @@ module.exports = function (t) {
 
   const g = D.gap(h, TABLES);
   checkTrue('the gap computes', Money.isOk(g), g.reason);
-  check('gap = 5,915 − 4,860 = $1,055 short', g.value, 105500);
+  check('gap = 5,915 − 4,956.83 = $958.17 short', g.value, 95817);
   checkTrue('… and it is short', g.short === true);
-  check('… take-home carried', g.takeHomeMonthlyCents, 486000);
+  check('… take-home carried', g.takeHomeMonthlyCents, 495683);
   check('zone: within 20% → watch', g.zone, 'watch');
 
   const hrs = D.hoursPerWeek(h, TABLES);
   checkTrue('the hours compute', Money.isOk(hrs), hrs.reason);
-  check('64.9 hours a week for the target at $21.04/h', hrs.value, 64.9);
-  check('… at the real rate', hrs.wageCents, 2104);
+  check('63.5 hours a week for the target at $21.49/h', hrs.value, 63.5);
+  check('… at the real rate', hrs.wageCents, 2149);
   check('… 53 hours a week now', hrs.hoursNow, 53);
   check('… 40 of them paid', hrs.paidHoursNow, 40);
-  check('dream 1: 8.8 hours a week', hrs.perDream[0].hoursPerWeek, 8.8);
-  check('dream 2: 6.6 hours a week', hrs.perDream[1].hoursPerWeek, 6.6);
-  check('spending: 34.5 hours a week', hrs.expensesHours, 34.5);
-  check('the pad: 15 hours a week', hrs.bufferHours, 15);
-  check('the dreams: 1,400 × 12 ÷ 52 ÷ 21.04 = 15.4 hours a week', hrs.dreamsHours, 15.4);
+  check('dream 1: 8.6 hours a week', hrs.perDream[0].hoursPerWeek, 8.6);
+  check('dream 2: 6.4 hours a week', hrs.perDream[1].hoursPerWeek, 6.4);
+  check('spending: 33.8 hours a week', hrs.expensesHours, 33.8);
+  check('the pad: 14.7 hours a week', hrs.bufferHours, 14.7);
+  check('the dreams: 1,400 × 12 ÷ 52 ÷ 21.49 = 15 hours a week', hrs.dreamsHours, 15);
   check('the same figure the draft constant gives, un-rounded', 591500 / 2104 / D.WEEKS_PER_MONTH, 64.87, 0.01);
 
   const hz = D.horizon(h, TABLES);
@@ -136,7 +136,7 @@ module.exports = function (t) {
   const nh = D.picture(noHours, TABLES);
   checkTrue('no paid hours → the target still shows', Money.isOk(nh) && nh.value === 591500);
   checkTrue('… the hours are incomplete and name the paid hours', !Money.isOk(nh.hours) && /paid for/.test(nh.hours.reason));
-  checkTrue('… the gap is still there', Money.isOk(nh.gap) && nh.gap.value === 105500);
+  checkTrue('… the gap is still there', Money.isOk(nh.gap) && nh.gap.value === 95817);
   checkTrue('… the zone still reads from the gap', nh.zone === 'watch');
 
   /* Take-home missing: spending but no income → the gap is incomplete, the

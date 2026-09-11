@@ -35,10 +35,10 @@ These take an argument the sweep has no real value for (a skill, a goal, a templ
 
 ### Notes the corpus itself raises
 
-- The effective-rate table is flat by gross and filing status. The `state` field, a 1099 income type, and the SE tax do not change the estimate, so `self-employed-lumpy`, `house-hacker`, `variable-hustle` and `geo-arb` carry the same rate a W-2 earner in any state would. The fixtures agree with the engine because they use the same table; the note is that the table is approximate (its own `precision` says so), not that the engine is wrong. Section 3 (tax_brackets.json, states.json) is where a sharper figure would come from.
+- The quick tax estimate is federal income tax at the standard deduction plus the employee payroll tax (D-210). The `state` field, a 1099 income type and the SE tax do not enter it, so `self-employed-lumpy`, `house-hacker`, `variable-hustle` and `geo-arb` carry the same estimate a W-2 earner in any state would; the fixtures use the same arithmetic, so they agree. The Tax room is where state and SE come in.
 - `retired-early` and `between-jobs` have no income source, so take-home and the savings rate are incomplete. Portfolio draws and unemployment benefits are not income sources in the current shape; the engines that read them (`decumulation`, `betweenjobs`) are swept but not compared to a known value here.
 - `zero-income` types a gross of $0: the engine estimates $0 of tax and $0 of take-home and refuses a savings rate (zero denominator). Both match the fixture.
-- `forty-debts` sits exactly on the $75,000 single boundary. The table rule is `gross <= upToGrossIncome`, so it lands in the 0.19 band; the fixture says so in `band`.
+- `forty-debts` is $75,000 single: nothing special about that figure any more, since there are no bands.
 
 ## Section 2: property tests
 
@@ -165,7 +165,7 @@ Seed 20260910, 100 cases per property, 66 files for 64 engines, 282 properties, 
 
 ## Section 3: sourced data tables
 
-3957 checks over 8 files. Source: `tests/data.test.js`. A note is a disagreement between a lane 2 table and the copy an engine reads today, or a cell the rule had to make an exception for; each carries a DECIDE:.
+3974 checks over 8 files. Source: `tests/data.test.js`. A note is a disagreement between a lane 2 table and the copy an engine reads today, or a cell the rule had to make an exception for; each carries a DECIDE:.
 
 ### Failures
 
@@ -178,10 +178,10 @@ None.
 - lane2/aca.json: 15 cells
 - lane2/studentloans.json: 40 cells
 - lane2/contribution_limits.json: 46 cells
-- lane2/tax_brackets.json: 38 cells
+- tax_brackets.json: 42 cells
 - return_bands.json: 1 cells
 - bands.json: 3 cells
-- 45 prior-year cells (2025 rows) are older than 18 months and marked `historical: true`: a closed year is a settled fact, not a stale one. DECIDE: whether the 18-month rule should read that way.
+- 46 prior-year cells (2025 rows) are older than 18 months and marked `historical: true`: a closed year is a settled fact, not a stale one. DECIDE: whether the 18-month rule should read that way.
 - 51 cells are older than 18 months and say so (`stale: true` with a DECIDE: note); every one is the childcare column, whose 2024 edition this session could not open. Not a pass: a flag for the May refresh.
 - states.json says OH is flat for 2026; state_brackets_2026.json says brackets (2025 edition): the 2026 change is not yet in the engine table
 - UI benefit cells differ from data/ui_benefits.json (the engine copy) in 26 states; states.json carries the July 2025 DOL edition plus the October 2025 increases, ui_benefits.json a 2025 recollection. DECIDE: which the engine reads.

@@ -31,6 +31,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": null,
@@ -51,6 +53,7 @@
   ],
   "filingStatus": "single",
   "state": "KS",
+  "zip": null,
   "capturingFullMatch": null,
   "dependents": null,
   "community": {
@@ -70,7 +73,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [],
@@ -90,7 +94,8 @@
       "totalCents": 30000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -248,7 +253,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -260,6 +267,7 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": false,
     "undoStack": [],
     "redoStack": [],
@@ -286,7 +294,7 @@
       "monthlySpendingCents": 170000,
       "fiTargetCents": 51000000,
       "grossAnnualCents": 0,
-      "effectiveRate": 0.08,
+      "effectiveRate": 0,
       "estimatedTaxCents": 0,
       "takeHomeAnnualCents": 0,
       "takeHomeMonthlyCents": 0,
@@ -297,8 +305,10 @@
       "working": [
         "monthly spending = food $400 + accommodation $900 + transportation $100 + everything else $300 = $1,700",
         "FI target = $1,700 x 12 / 0.04 = $20,400 / 0.04 = $510,000",
-        "gross $0 single: band single up to $15,000 (zero dollars sits in the first band) -> effective rate 0.08",
-        "estimated tax = $0 x 0.08 = $0; take-home = $0 - $0 = $0 a year, $0 a month",
+        "taxable = $0 - standard deduction $16,100 (single) = $0",
+        "federal income tax = nothing in the ladder = $0",
+        "payroll tax = $0 x 0.062 + $0 x 0.0145 = $0",
+        "estimated tax = $0, an effective 0.00% of $0; take-home = $0 - $0 = $0 a year, $0 a month",
         "savings rate: gross is zero, so no rate (a ratio with a zero denominator is incomplete, never 0)",
         "runway = cash $3,000 / $1,700 a month = 1.7647 months (1 whole months; Runway.project stops at 60)",
         "net worth = $3,000 - $0 = $3,000"

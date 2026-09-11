@@ -5,7 +5,7 @@ paths:
 # Going Self-Employed (`self-employed`)
 File: rooms/self-employed.html · 379 lines
 Engines: selfemployed
-Reference data: effective_tax_rates_2026.json, se_tax_2026.json
+Reference data: tax_brackets.json
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start)
 Latest decisions:

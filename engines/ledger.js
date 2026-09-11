@@ -9,7 +9,7 @@
      none   a gift, or anything unticked as taxable: net = gross.
      w2     withholding: gross × the household's effective rate — the same
             blended federal-plus-FICA lookup Tier 0 uses for take-home
-            (data/effective_tax_rates_2026.json), read at the household's
+            (data/tax_brackets.json), read at the household's
             annual gross so a $2,000 paycheque is withheld at the rate the
             year's pay lands in, not at the rate $2,000 a year would.
      se     self-employment: profit = gross − the costs of producing it (the
@@ -185,7 +185,7 @@
       /* Taxable as ordinary income, nothing withheld, and no payroll tax
          of either kind: the blended rate less the employee FICA share. */
       if (!T.seTax) return Money.incomplete('The self-employment tax table is not loaded.', ['seTax']);
-      var ordRate = Math.max(0, rate.value - (T.seTax.employeeFicaRate || 0));
+      var ordRate = Money.isEntered(rate.incomeTaxRate) ? rate.incomeTaxRate : Math.max(0, rate.value - (T.seTax.employeeFicaRate || 0));
       return done(gross * ordRate, gross, { rate: rate.value, incomeRate: ordRate, basis: annual.basis, annualGrossCents: annual.cents, referenceVersion: rate.referenceVersion || T.effectiveTaxRates.version, why: 'Unemployment is taxed as income but carries no Social Security or Medicare tax, and nothing is withheld unless you asked for it.' });
     }
     /* se: profit after costs, SE tax on the annualised profit (the wage base

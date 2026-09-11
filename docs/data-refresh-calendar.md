@@ -16,7 +16,7 @@ Which file to re-check in which month, and against what. Lane 2, section 3 (DECI
 | August | `data/lane2/aca.json` (applicable percentages) | The IRS revenue procedure under IRC 36B(b)(3)(A)(ii) for the next plan year; Congress.gov for premium tax credit legislation | Published in the summer for the following year |
 | August | `data/states.json` (`propertyTaxEffectiveRate`) | Tax Foundation property tax by state (Census ACS five-year) | The Tax Foundation piece follows the ACS release |
 | September | `data/bands.json` | Nothing external: re-read the `DECIDE:` lines with Eli | Opinions and readings of books; an annual look is enough |
-| October | `data/lane2/tax_brackets.json` | The IRS annual inflation adjustment revenue procedure (brackets, deductions, capital gains, gift exclusion); ssa.gov/oact/cola/cbb.html for the wage base | Both are announced in October with the COLA |
+| October | `data/tax_brackets.json` | The IRS annual inflation adjustment revenue procedure (brackets, deductions, capital gains, gift exclusion); ssa.gov/oact/cola/cbb.html for the wage base | Both are announced in October with the COLA |
 | October | `data/lane2/contribution_limits.json` (gift rows) | The same inflation revenue procedure, IRC 2503(b) | Same release |
 | November | `data/lane2/contribution_limits.json` (plan and IRA rows) | The IRS COLA notice for retirement plans (irs.gov newsroom) | Published in early November |
 | November | `data/states.json` (`acaBenchmarkSilver40MonthlyCents`) | KFF State Health Facts, marketplace average benchmark premiums, new plan year | Rates for the coming plan year are final by open enrollment |

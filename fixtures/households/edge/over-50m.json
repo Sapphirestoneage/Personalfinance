@@ -31,6 +31,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": null,
@@ -78,6 +80,7 @@
   ],
   "filingStatus": "married_joint",
   "state": "CT",
+  "zip": null,
   "capturingFullMatch": null,
   "dependents": [],
   "community": {
@@ -97,7 +100,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_1",
@@ -112,7 +116,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_2",
@@ -127,7 +132,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_3",
@@ -142,7 +148,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [],
@@ -162,7 +169,8 @@
       "totalCents": 4000000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -320,7 +328,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -332,6 +342,7 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": false,
     "undoStack": [],
     "redoStack": [],
@@ -358,20 +369,22 @@
       "monthlySpendingCents": 7300000,
       "fiTargetCents": 2190000000,
       "grossAnnualCents": 240000000,
-      "effectiveRate": 0.33,
-      "estimatedTaxCents": 79200000,
-      "takeHomeAnnualCents": 160800000,
-      "takeHomeMonthlyCents": 13400000,
-      "savingsRate": 0.305,
+      "effectiveRate": 0.359933125,
+      "estimatedTaxCents": 86383950,
+      "takeHomeAnnualCents": 153616050,
+      "takeHomeMonthlyCents": 12801338,
+      "savingsRate": 0.275066875,
       "runwayMonths": 20.54794520547945,
       "runwayWholeMonths": 20,
       "netWorthCents": 6050000000,
       "working": [
         "monthly spending = food $5,000 + accommodation $25,000 + transportation $3,000 + everything else $40,000 = $73,000",
         "FI target = $73,000 x 12 / 0.04 = $876,000 / 0.04 = $21,900,000",
-        "gross $2,400,000 married_joint: band married_joint above $500,000 (the open top band) -> effective rate 0.33",
-        "estimated tax = $2,400,000 x 0.33 = $792,000; take-home = $2,400,000 - $792,000 = $1,608,000 a year, $134,000 a month",
-        "savings rate (excluding match) = ($1,608,000 - $876,000) / $2,400,000 = $732,000 / $2,400,000 = 0.3050",
+        "taxable = $2,400,000 - standard deduction $32,200 (married_joint) = $2,367,800",
+        "federal income tax = $24,800 x 0.1 + $76,000 x 0.12 + $110,600 x 0.22 + $192,150 x 0.24 + $108,900 x 0.32 + $256,250 x 0.35 + $1,599,100 x 0.37 = $798,250.5",
+        "payroll tax = $184,500 x 0.062 + $2,400,000 x 0.0145 + $2,150,000 x 0.009 = $65,589",
+        "estimated tax = $863,839.5, an effective 35.99% of $2,400,000; take-home = $2,400,000 - $863,839.5 = $1,536,160.5 a year, $128,013.38 a month",
+        "savings rate (excluding match) = ($1,536,160.5 - $876,000) / $2,400,000 = $660,160.5 / $2,400,000 = 0.2751",
         "runway = cash $1,500,000 / $73,000 a month = 20.5479 months (20 whole months; Runway.project stops at 60)",
         "net worth = $1,500,000 + $38,000,000 + $9,000,000 + $12,000,000 - $0 = $60,500,000"
       ]

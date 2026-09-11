@@ -31,6 +31,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": 1,
@@ -78,6 +80,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": 0.5,
@@ -98,6 +102,7 @@
   ],
   "filingStatus": "married_joint",
   "state": "MA",
+  "zip": null,
   "capturingFullMatch": true,
   "dependents": [],
   "community": {
@@ -117,7 +122,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_1",
@@ -132,7 +138,8 @@
       "costBasisCents": 22000000,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_2",
@@ -147,7 +154,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [],
@@ -167,7 +175,8 @@
       "totalCents": 230000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -325,7 +334,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -337,6 +348,7 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": false,
     "undoStack": [],
     "redoStack": [],
@@ -363,20 +375,22 @@
       "monthlySpendingCents": 720000,
       "fiTargetCents": 216000000,
       "grossAnnualCents": 26000000,
-      "effectiveRate": 0.24,
-      "estimatedTaxCents": 6240000,
-      "takeHomeAnnualCents": 19760000,
-      "takeHomeMonthlyCents": 1646667,
-      "savingsRate": 0.4276923076923077,
+      "effectiveRate": 0.21218076923076923,
+      "estimatedTaxCents": 5516700,
+      "takeHomeAnnualCents": 20483300,
+      "takeHomeMonthlyCents": 1706942,
+      "savingsRate": 0.45551153846153847,
       "runwayMonths": 6.25,
       "runwayWholeMonths": 6,
       "netWorthCents": 117500000,
       "working": [
         "monthly spending = food $1,100 + accommodation $3,200 + transportation $600 + everything else $2,300 = $7,200",
         "FI target = $7,200 x 12 / 0.04 = $86,400 / 0.04 = $2,160,000",
-        "gross $260,000 married_joint: band married_joint up to $300,000 -> effective rate 0.24",
-        "estimated tax = $260,000 x 0.24 = $62,400; take-home = $260,000 - $62,400 = $197,600 a year, $16,466.67 a month",
-        "savings rate (excluding match) = ($197,600 - $86,400) / $260,000 = $111,200 / $260,000 = 0.4277",
+        "taxable = $260,000 - standard deduction $32,200 (married_joint) = $227,800",
+        "federal income tax = $24,800 x 0.1 + $76,000 x 0.12 + $110,600 x 0.22 + $16,400 x 0.24 = $39,868",
+        "payroll tax = $184,500 x 0.062 + $260,000 x 0.0145 + $10,000 x 0.009 = $15,299",
+        "estimated tax = $55,167, an effective 21.22% of $260,000; take-home = $260,000 - $55,167 = $204,833 a year, $17,069.42 a month",
+        "savings rate (excluding match) = ($204,833 - $86,400) / $260,000 = $118,433 / $260,000 = 0.4555",
         "runway = cash $45,000 / $7,200 a month = 6.2500 months (6 whole months; Runway.project stops at 60)",
         "net worth = $45,000 + $310,000 + $820,000 - $0 = $1,175,000"
       ]

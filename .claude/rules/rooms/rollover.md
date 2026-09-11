@@ -5,7 +5,7 @@ paths:
 # The Account You Left Behind (`rollover`)
 File: rooms/rollover.html · 755 lines
 Engines: projection, tier0, selfemployed, income, ledger, tax, taxroom
-Reference data: access_rules.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, rollover_options.json, se_tax_2026.json, +1 more
+Reference data: access_rules.json, fire_variants.json, rollover_options.json, state_brackets_2026.json, tax_brackets.json
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), marginalRate (accounts), retireAge (fire)
 Latest decisions:

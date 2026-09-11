@@ -31,6 +31,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": 1,
@@ -50,6 +52,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "1099",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": null,
@@ -70,6 +74,7 @@
   ],
   "filingStatus": "single",
   "state": "TX",
+  "zip": null,
   "capturingFullMatch": true,
   "dependents": null,
   "community": {
@@ -89,7 +94,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_1",
@@ -104,7 +110,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_fourplex",
@@ -119,7 +126,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [
@@ -159,7 +167,8 @@
       "totalCents": 90000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -329,7 +338,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -341,6 +352,7 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": true,
     "undoStack": [],
     "redoStack": [],
@@ -367,20 +379,22 @@
       "monthlySpendingCents": 460000,
       "fiTargetCents": 138000000,
       "grossAnnualCents": 10800000,
-      "effectiveRate": 0.24,
-      "estimatedTaxCents": 2592000,
-      "takeHomeAnnualCents": 8208000,
-      "takeHomeMonthlyCents": 684000,
-      "savingsRate": 0.24888888888888888,
+      "effectiveRate": 0.21474074074074073,
+      "estimatedTaxCents": 2319200,
+      "takeHomeAnnualCents": 8480800,
+      "takeHomeMonthlyCents": 706733,
+      "savingsRate": 0.27414814814814814,
       "runwayMonths": 3.9130434782608696,
       "runwayWholeMonths": 3,
       "netWorthCents": 17800000,
       "working": [
         "monthly spending = food $550 + accommodation $2,800 + transportation $350 + everything else $900 = $4,600",
         "FI target = $4,600 x 12 / 0.04 = $55,200 / 0.04 = $1,380,000",
-        "gross $108,000 single: band single up to $150,000 -> effective rate 0.24",
-        "estimated tax = $108,000 x 0.24 = $25,920; take-home = $108,000 - $25,920 = $82,080 a year, $6,840 a month",
-        "savings rate (excluding match) = ($82,080 - $55,200) / $108,000 = $26,880 / $108,000 = 0.2489",
+        "taxable = $108,000 - standard deduction $16,100 (single) = $91,900",
+        "federal income tax = $12,400 x 0.1 + $38,000 x 0.12 + $41,500 x 0.22 = $14,930",
+        "payroll tax = $108,000 x 0.062 + $108,000 x 0.0145 = $8,262",
+        "estimated tax = $23,192, an effective 21.47% of $108,000; take-home = $108,000 - $23,192 = $84,808 a year, $7,067.33 a month",
+        "savings rate (excluding match) = ($84,808 - $55,200) / $108,000 = $29,608 / $108,000 = 0.2741",
         "runway = cash $18,000 / $4,600 a month = 3.9130 months (3 whole months; Runway.project stops at 60)",
         "net worth = $18,000 + $40,000 + $520,000 - $400,000 = $178,000"
       ]

@@ -31,7 +31,7 @@
              intake's guesses and says so (Gate.fillGuesses). No split
              chosen reads as equal halves, and says it is the default.
   5. CONFIG  data/partner_conventions.json (the three modes, convention),
-             data/effective_tax_rates_2026.json (the tax estimate).
+             data/tax_brackets.json (the tax estimate).
 
   THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, two
   inputs, the assumptions drawer with sources, why this matters at your
@@ -141,7 +141,7 @@
   function pct(rate) { return Money.formatRate(rate, { decimals: 0 }); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function theirs(p) { return p.label === 'You' ? 'your' : esc(p.label) + '’s'; }
-  function taxSource(T) { var t = T.effectiveTaxRates; return 'data/effective_tax_rates_2026.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + ')'; }
+  function taxSource(T) { var t = T.effectiveTaxRates; return 'data/tax_brackets.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + ')'; }
 
   var COLOUR = { share: Charts.COLORS.spend, keeps: Charts.COLORS.target, pool: Charts.COLORS.contributed };
 

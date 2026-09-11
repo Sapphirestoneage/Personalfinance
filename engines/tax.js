@@ -2,11 +2,11 @@
    engines/tax.js — a federal income tax in named steps, and what it means
    for the next dollar.
    --------------------------------------------------------------------------
-   Until now the app had one tax number: the effective-rate LOOKUP in
-   data/effective_tax_rates_2026.json, a blend of income tax and FICA by
-   gross band. It is honest about being a blend and it stays: Tier0's
-   take-home and savings rate read it, and it is the fallback here when the
-   income lines a real computation needs are missing.
+   The quick figure the other rooms use (Tier0's take-home, the savings
+   rate) is Reference.lookupEffectiveTaxRate: the same ladder and the same
+   FICA as here, at the standard deduction with nothing else, from the one
+   federal table data/tax_brackets.json (D-210). This is the fuller
+   computation, with deductions, gains, state and the SE half.
 
    This is the computation. Each step is its own function with its own
    Result, so a room can show the working and a test can pin each line:
@@ -51,25 +51,16 @@
   function dollars(cents) { return cents / 100; }
   function cents(d) { return Math.round(d * 100); }
 
-  /* Walk an amount up a ladder of { upTo*, rate } rows, taxing the slice
-     that falls in each. `floorDollars` lets gains stack on top of ordinary
-     income: the ladder is entered at the floor rather than at zero. */
+  /* The ladder walk and the employee FICA live in shared/reference.js so
+     the quick estimate and this engine cannot drift apart (D-210). Looked
+     up at call time: a room may load its engines before shared/. */
+  function ref() {
+    if (typeof module === 'object' && module.exports) return require('../shared/reference.js');
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Reference;
+  }
   function walk(ladder, amountDollars, topKey, floorDollars) {
-    var floor = floorDollars || 0;
-    var remaining = amountDollars, prevTop = 0, tax = 0, slices = [];
-    for (var i = 0; i < ladder.length && remaining > 0; i++) {
-      var top = ladder[i][topKey];
-      var lo = Math.max(prevTop, floor);
-      var hi = top === null ? Infinity : top;
-      var width = Math.max(0, Math.min(hi, floor + amountDollars) - lo);
-      if (width > 0) {
-        var slice = width * ladder[i].rate;
-        tax += slice; remaining -= width;
-        slices.push({ rate: ladder[i].rate, dollars: width, taxDollars: slice });
-      }
-      prevTop = hi;
-    }
-    return { taxDollars: tax, slices: slices, marginalRate: slices.length ? slices[slices.length - 1].rate : (ladder[0] ? ladder[0].rate : 0) };
+    return ref().walkLadder(ladder, amountDollars, topKey, floorDollars);
   }
 
   /* ---- 1. Ordinary income --------------------------------------------------- */
@@ -128,17 +119,10 @@
   function fica(seTable, wagesCents, filingStatus) {
     if (!seTable) return Money.incomplete('Payroll tax table is not loaded.', ['seTax']);
     if (!Money.isEntered(wagesCents)) return Money.incomplete('Add your wages to compute payroll tax.', ['grossAnnualIncome']);
-    var wages = Math.max(0, dollars(wagesCents));
-    var ssRate = seTable.socialSecurityRate / 2;      /* the employee half */
-    var medRate = seTable.medicareRate / 2;
-    var ss = Math.min(wages, seTable.socialSecurityWageBase) * ssRate;
-    var med = wages * medRate;
-    var addl = 0;
-    var threshold = seTable.additionalMedicare && seTable.additionalMedicare.thresholds[filingStatus];
-    if (Money.isEntered(threshold) && wages > threshold) addl = (wages - threshold) * seTable.additionalMedicare.rate;
-    return Money.ok(cents(ss + med + addl), {
-      socialSecurityCents: cents(ss), medicareCents: cents(med), additionalMedicareCents: cents(addl),
-      cappedAtWageBase: wages > seTable.socialSecurityWageBase,
+    var f = ref().employeeFica(seTable, dollars(wagesCents), filingStatus);
+    return Money.ok(cents(f.total), {
+      socialSecurityCents: cents(f.socialSecurity), medicareCents: cents(f.medicare), additionalMedicareCents: cents(f.additionalMedicare),
+      cappedAtWageBase: f.cappedAtWageBase,
       employeeRate: seTable.employeeFicaRate,
       referenceVersion: seTable.version, confidence: seTable.confidence
     });

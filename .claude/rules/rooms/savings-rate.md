@@ -3,9 +3,9 @@ paths:
   - "rooms/savings-rate.html"
 ---
 # Savings Rate (`savings-rate`)
-File: rooms/savings-rate.html · 488 lines
+File: rooms/savings-rate.html · 489 lines
 Engines: projection, tier0, foo, hourly
-Reference data: effective_tax_rates_2026.json, foo_rules.json
+Reference data: foo_rules.json, tax_brackets.json
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), employerMatch (start), monthlyExpenses (expenses)
 Latest decisions:

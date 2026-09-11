@@ -5,7 +5,7 @@ paths:
 # Express (`express`)
 File: rooms/express.html · 442 lines · utility room
 Engines: tax, projection, tier0, statement, debt, hourly
-Reference data: debt_rules.json, effective_tax_rates_2026.json, ledger-rows.json
+Reference data: debt_rules.json, ledger-rows.json, tax_brackets.json
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), lastPay (start), contributionPercent (start), partnerDob (partner), debtBalance (debt-payoff), debtRate (debt-payoff), debtMinPayment (debt-payoff), assetValue (statement), +6 more
 Latest decisions:

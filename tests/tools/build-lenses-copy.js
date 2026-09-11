@@ -43,8 +43,7 @@ const SOURCES = {
   'convention (Harold Evensky)': { kind: 'convention', title: 'The bucket strategy', author: 'Harold Evensky', url: 'https://www.bogleheads.org/wiki/Bucket_strategy', where: 'Evensky and Katz, Retirement Income Redesigned' },
   'Mr. Money Mustache': { kind: 'blog', title: 'The Shockingly Simple Math Behind Early Retirement', author: 'Mr. Money Mustache (Pete Adeney)', url: 'https://www.mrmoneymustache.com/2012/01/13/the-shockingly-simple-math-behind-early-retirement/', where: 'The 2012 post and its savings rate table' },
   'data/levers.json (D-174)': { kind: 'app', title: 'The lever library', author: 'Eli', url: 'DECISIONS.md#D-174' },
-  'data/effective_tax_rates_2026.json': { kind: 'data', title: 'Effective tax rate table', author: 'This repo', url: 'data/effective_tax_rates_2026.json' },
-  'data/federal_brackets_2026.json': { kind: 'data', title: 'Federal brackets 2026', author: 'This repo', url: 'data/federal_brackets_2026.json' }
+  'data/tax_brackets.json': { kind: 'data', title: 'The federal tax table', author: 'This repo', url: 'data/tax_brackets.json' }
 };
 
 const out = {

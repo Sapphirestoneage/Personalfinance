@@ -38,8 +38,8 @@
   5. CONFIG  data/rollover_options.json (the four options, the trap, and the
              10% / 20% / 60-day / age-55 rates), data/access_rules.json (the
              penalty-free age, 59½ — held in ONE place in the repo),
-             data/federal_brackets_2026.json + data/state_brackets_2026.json
-             + data/se_tax_2026.json through the tax engine, and
+             data/tax_brackets.json + data/state_brackets_2026.json
+             + data/tax_brackets.json through the tax engine, and
              data/fire_variants.json for the stop age when none is set.
 
   THE ONE RULE. This room does not pick a winner. The reference data's own
@@ -594,7 +594,7 @@
           source: 'data/access_rules.json v' + acc.version + ' (' + acc.confidence + '), byTaxCharacter.pretax.accessAge — the same figure the Statement’s buckets and Drawing It Down read, held once' },
         { label: 'The income tax on the distribution',
           value: Money.isOk(c) ? Money.formatCents(c.federalCents) + ' federal' : 'not worked out',
-          source: 'engines/tax.js, run twice — your year as it stands, and the same year with the withdrawal stacked on top as ordinary income — and the difference taken. That is your marginal rate with room for the withdrawal to climb a bracket, which one multiplication would miss. Brackets from data/federal_brackets_2026.json v'
+          source: 'engines/tax.js, run twice — your year as it stands, and the same year with the withdrawal stacked on top as ordinary income — and the difference taken. That is your marginal rate with room for the withdrawal to climb a bracket, which one multiplication would miss. Brackets from data/tax_brackets.json v'
             + fed.version + ' (' + fed.confidence + ').' },
         { label: 'State income tax',
           value: Money.isOk(c) ? (c.stateIncluded ? Money.formatCents(c.stateCents) + ' (' + c.stateCode + ')' : 'not in the total') : 'not worked out',

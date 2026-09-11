@@ -31,7 +31,7 @@
              No date of birth means the ladder cannot apply the age gate
              and says so. Nothing is assumed silently.
   5. CONFIG  data/access_rules.json, confidence_weights.json,
-             ui_benefits.json (unverified), federal_brackets_2026.json
+             ui_benefits.json (unverified), tax_brackets.json
              (unverified), state_brackets_2026.json (unverified). Every
              figure from an unverified table says so beside the number.
 
@@ -650,7 +650,7 @@
       + (Money.isOk(est) && est.stateIncluded ? ' plus ' + (Math.round(est.components.state.marginalRate * 1000) / 10) + '% ' + h.state : '')
       + (b.roomBeforeNextBracketDollars !== null ? '; ' + Money.formatCents(b.roomBeforeNextBracketDollars * 100) + ' of room before ' + Math.round(b.nextRate * 100) + '%.' : '.')
       + (Money.isOk(est) ? ' All in — federal ' + fmt(est.federalIncomeTaxCents) + ', payroll ' + fmt(est.ficaCents) + (est.stateIncluded ? ', state ' + fmt(est.stateCents) : '') + ' — about ' + Money.formatRate(est.effectiveRate, { decimals: 1 }) + ' of gross.' : '');
-    caveat.textContent = 'Federal only, an estimate, from a bracket table that is unverified (data/federal_brackets_2026.json); the state figure applies the state schedule to federal taxable income and ignores state deductions and credits. Not a return.';
+    caveat.textContent = 'Federal only, an estimate, from the sourced bracket table (data/tax_brackets.json); the state figure applies the state schedule to federal taxable income and ignores state deductions and credits. Not a return.';
   }
 
   function renderWorst(h, all) {

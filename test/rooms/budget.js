@@ -17,7 +17,7 @@ module.exports = function (t) {
   let sheet = Budget.month(h, T, CAT, '2026-09', NOW);
   check('the sheet is the open month', sheet.status + '/' + sheet.canClose, 'open/true');
   const rowOf = (s, b) => s.rows.filter(r => r.bucket === b)[0];
-  check('income estimate is take-home a month, from Start Here', rowOf(sheet, 'income').estimatedCents + '/' + rowOf(sheet, 'income').estBasis, Math.round(7200000 * (1 - 0.19) / 12) + '/onboarding');
+  check('income estimate is take-home a month, from Start Here', rowOf(sheet, 'income').estimatedCents + '/' + rowOf(sheet, 'income').estBasis, Math.round((7200000 - 1251800) / 12) + '/onboarding');
   check('investments estimate is the workplace contribution', rowOf(sheet, 'investments').estimatedCents, Math.round(7200000 * 0.05 / 12));
   check('a bucket with no figure anywhere says what would give it one', Money.isEntered(rowOf(sheet, 'savings').estimatedCents) + '|' + typeof rowOf(sheet, 'savings').estReason, 'false|string');
   check('actuals are zero with nothing logged', sheet.rows.map(r => r.actualCents).join(','), '0,0,0,0,0');

@@ -463,8 +463,8 @@
         { label: 'Coming in, a month',
           value: g.known ? Money.formatCents(g.inCents) + ' after tax' : 'not known, and not guessed',
           source: g.known
-            ? 'gross pay less a flat effective-rate tax estimate, over twelve — the same lookup the rest of '
-              + 'the app uses, never a second one (engines/cashflow.js, data/effective_tax_rates_2026.json v'
+            ? 'gross pay less the federal tax estimate, over twelve — the same figure the rest of '
+              + 'the app uses, never a second one (engines/cashflow.js, data/tax_brackets.json v'
               + g.referenceVersion + ', ' + Math.round(g.effectiveRate * 1000) / 10 + '% effective)'
             : 'add your pay and filing status in Start Here and this fills itself in' },
         { label: 'Going out, a month',

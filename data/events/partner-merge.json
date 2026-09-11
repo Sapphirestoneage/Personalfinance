@@ -270,7 +270,7 @@
   ],
   "horizonMonths": 120,
   "sources": [
-    "data/effective_tax_rates_2026.json",
+    "data/tax_brackets.json",
     "data/triple_d.json",
     "data/return_bands.json"
   ]

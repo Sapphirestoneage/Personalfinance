@@ -430,11 +430,11 @@
       "forWhom": "Everyone with an income and a filing status.",
       "notForWhom": "Nobody: but self-employed take-home here is before quarterly estimates you set aside yourself.",
       "source": {
-        "asStated": "data/effective_tax_rates_2026.json",
+        "asStated": "data/tax_brackets.json",
         "kind": "data",
         "title": "Effective tax rate table",
         "author": "This repo",
-        "url": "data/effective_tax_rates_2026.json"
+        "url": "data/tax_brackets.json"
       }
     },
     {
@@ -493,11 +493,11 @@
       "forWhom": "Everyone with an income and a filing status.",
       "notForWhom": "Nobody: but a self-employed picture adds the self-employment tax the table already includes.",
       "source": {
-        "asStated": "data/federal_brackets_2026.json",
+        "asStated": "data/tax_brackets.json",
         "kind": "data",
         "title": "Federal brackets 2026",
         "author": "This repo",
-        "url": "data/federal_brackets_2026.json"
+        "url": "data/tax_brackets.json"
       }
     },
     {
@@ -524,11 +524,11 @@
       "forWhom": "Anyone weighing a Roth conversion, a bonus or extra work this year.",
       "notForWhom": "The top bracket: there is no next one.",
       "source": {
-        "asStated": "data/federal_brackets_2026.json",
+        "asStated": "data/tax_brackets.json",
         "kind": "data",
         "title": "Federal brackets 2026",
         "author": "This repo",
-        "url": "data/federal_brackets_2026.json"
+        "url": "data/tax_brackets.json"
       }
     },
     {

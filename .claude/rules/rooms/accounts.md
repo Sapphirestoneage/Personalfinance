@@ -6,7 +6,7 @@ paths:
 # Where It Goes & how it’s split (`accounts`)
 File: rooms/accounts.html · 580 lines
 Engines: selfemployed, accounts, projection, tier0, hourly
-Reference data: irs_limits_2026.json, se_tax_2026.json
+Reference data: irs_limits_2026.json, tax_brackets.json
 Owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), contributionPercent (start)
 Latest decisions:

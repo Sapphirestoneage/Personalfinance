@@ -22,7 +22,7 @@
   4. EMPTY   Every output states what it still needs. Expenses left blank
              are NOT read as zero — "it costs nothing" is a claim you make
              by typing 0.
-  5. CONFIG  data/se_tax_2026.json.
+  5. CONFIG  data/tax_brackets.json.
 
   The marginal rate is an INPUT, not a bracket lookup — the same call as
   capital gains in DECISIONS.md D-027. Inventing 2026 brackets would be
@@ -147,7 +147,7 @@
 
   <p class="disclaimer">
     Educational tool, not financial advice. Self-employment tax comes from
-    <code>data/se_tax_2026.json</code>; the marginal rate is yours to supply
+    <code>data/tax_brackets.json</code>; the marginal rate is yours to supply
     because 2026 brackets are not in this repo. Nothing here models
     deductions, credits, or what a business loss does to the rest of a
     return. Your numbers stay in this browser.
@@ -421,7 +421,7 @@
      answering it in either place answers it in both. D-052. */
 
   /* With no stored rate, the federal bracket is PROPOSED — muted, dashed,
-     "Use this" — from data/federal_brackets_2026.json: gross minus the
+     "Use this" — from data/tax_brackets.json: gross minus the
      standard deduction, walked up the ladder. Federal only, an estimate,
      and unverified until that table is checked against the IRS text; the
      source line says all three. Tapping it writes the shared rate exactly

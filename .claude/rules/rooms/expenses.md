@@ -5,7 +5,7 @@ paths:
 # Expenses (`expenses`)
 File: rooms/expenses.html · 1187 lines
 Engines: projection, tier0, cashflow, fire, income, selfemployed
-Reference data: budget_templates.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, se_tax_2026.json
+Reference data: budget_templates.json, expense_categories.json, fire_variants.json, tax_brackets.json
 Owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), capturingFullMatch (start), monthlyDebtPayments (debt-payoff)
 Latest decisions:

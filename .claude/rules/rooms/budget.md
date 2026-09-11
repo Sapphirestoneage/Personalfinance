@@ -6,7 +6,7 @@ paths:
 # Budget (`budget`)
 File: rooms/budget.html · 482 lines
 Engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget
-Reference data: budget_templates.json, car_costs.json, effective_tax_rates_2026.json, expense_categories.json, irs_limits_2026.json, savings_presets.json, +1 more
+Reference data: budget_templates.json, car_costs.json, expense_categories.json, irs_limits_2026.json, savings_presets.json, tax_brackets.json
 Owns: monthsClosed
 Reads from other owners: cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:

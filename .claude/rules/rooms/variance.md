@@ -6,7 +6,7 @@ paths:
 # Estimated vs Actual (`variance`)
 File: rooms/variance.html · 231 lines
 Engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance
-Reference data: effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
+Reference data: expense_categories.json, tax_brackets.json
 Owns: nothing
 Reads from other owners: nothing traced
 Latest decisions:
