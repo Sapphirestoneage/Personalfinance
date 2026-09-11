@@ -12996,6 +12996,33 @@ minimum) stamps no per-item provenance yet: the field ids are per row,
 not per item, so `meta.fields.debtMinPayment` describes the row; per-item
 provenance is a G2 concern.
 
+## D-208 — Express: the whole form at once, a second view of the same rows
+
+**Why.** FI people and coaches already know their numbers and want every
+question on one page, not a walk. The brief's Phase F.
+
+**Decision.** `rooms/express.html`: one scrolling form grouped by door (D,
+A, I, T, E, You) and level 1 to 4, each a fold open by default; only the
+rows that apply, toggled live; debts, accounts, sources and yearly lines
+repeatable with "+ Add another", named by lender and last four; a
+suggestion as a chip beside the box, never in it; every box saves on
+change through `Ownership.write`, a new item through `Ownership.addItem`
+(the list owner's constructor); a sticky bar with the understanding line
+and a jump menu. The front door offers "Walk me through it" (the First
+Round) and "Give me the whole form"; `prefs.path = fi` leads with Express.
+
+**Replaces or removes.** Nothing yet: STATUS.md already decided Start Here
+retires into the Ledger; the First Round and Express are the two ways in
+that replace it, and Start Here stays only until its owner role moves.
+
+**Stored shape.** No change. `Ownership.addItem(kind, fields)` and
+`removeItem(kind, id)` are new shared paths; Express owns no field.
+
+**Verified.** `node test/run.js`; `node test/forms.js` (Express and the
+First Round walks); the phone walk: the same five answers in the First
+Round and in Express give a byte-identical household, the situation
+toggle hides and shows rows without clearing anything typed.
+
 ---
 
 # The Dungeons & Dividends entries

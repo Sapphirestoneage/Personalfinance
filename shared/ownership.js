@@ -1133,6 +1133,29 @@
     return { owner: f.owner, path: pathOf(fieldId), declared: writers, agrees: writers.length === 0 ? null : writers.indexOf(f.owner) !== -1 };
   }
 
+  /* A new line in a list (a debt, an account, a source, a yearly line):
+     the list's owner room's own constructor and spine call, so Express
+     and the doors add through the owner exactly as they write. D-208. */
+  var LISTS = {
+    debt: { owner: 'debt-payoff', path: 'debt.items', add: function (f) { Spine.set('meta.hasDebt', true); return Spine.upsertDebt(Schema.createDebt(Object.assign({ label: 'A debt', type: 'other' }, f || {}))); } },
+    asset: { owner: 'statement', path: 'assets', add: function (f) { var p = primary(); return Spine.upsertAsset(Schema.createAsset(Object.assign({ label: 'An account', category: 'investment', ownerIds: [p.id] }, f || {}))); } },
+    incomeSource: { owner: 'start', path: 'income.grossAnnualCents', add: function (f) { var p = primary(); return Spine.upsertIncomeSource(p.id, Schema.createIncomeSource(Object.assign({ personId: p.id, source: 'A source', type: 'w2' }, f || {}))); } },
+    annualLine: { owner: 'expenses', path: 'expenses.annual[]', add: function (f) { return Spine.upsertAnnualLine(Object.assign({ label: 'A yearly cost' }, f || {})); } }
+  };
+  function addItem(kind, fields) {
+    var L = LISTS[kind];
+    if (!L) throw new Error('No such list: ' + kind);
+    var writers = Registry.writersOf ? Registry.writersOf(L.path) : [];
+    if (writers.length && writers.indexOf(L.owner) === -1) throw new Error('The registry does not list ' + L.owner + ' as a writer of ' + L.path);
+    return L.add(fields);
+  }
+  function removeItem(kind, id) {
+    if (!LISTS[kind]) throw new Error('No such list: ' + kind);
+    if (kind === 'annualLine') return Spine.removeAnnualLine(id);
+    if (kind === 'incomeSource') { var p = primary(); return Spine.upsertPerson({ id: p.id, incomeSources: (p.incomeSources || []).filter(function (s) { return s.id !== id; }) }); }
+    return Spine.removeById(kind === 'debt' ? 'debts' : 'assets', id);
+  }
+
   function write(fieldId, value, ctx) {
     var f = field(fieldId);
     if (!f || typeof f.write !== 'function') {
@@ -1257,6 +1280,9 @@
     FILING_LABELS: FILING_LABELS,
     readings: readings,
     write: write,
+    addItem: addItem,
+    removeItem: removeItem,
+    LISTS: LISTS,
     ownerOf: ownerOf,
     declaredWriters: declaredWriters,
     writable: writable,

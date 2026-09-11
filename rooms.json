@@ -13,6 +13,16 @@
       "order": 0.5
     },
     {
+      "id": "express",
+      "title": "Express",
+      "file": "rooms/express.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 0.6
+    },
+    {
       "id": "start",
       "title": "Start Here",
       "file": "rooms/start.html",

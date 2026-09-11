@@ -6281,7 +6281,7 @@ section('Room order');
   checkTrue('every room declares an order', orders.every(o => typeof o === 'number'));
   check('orders are unique', new Set(orders).size, orders.length);
   checkTrue('orders are ascending', orders.every((o, i) => i === 0 || o > orders[i - 1]));
-  check('the First Round comes first, Start Here (the long form) right behind it (D-206)', path_[0].id + ',' + path_[1].id, 'first-round,start');
+  check('the First Round comes first, Express beside it, Start Here (the older one-pager) behind (D-206, D-208)', path_.slice(0, 3).map(r => r.id).join(','), 'first-round,express,start');
   check('the Snapshot comes after the rooms that feed it',
     path_.findIndex(r => r.id === 'financial-snapshot') >
     Math.max(path_.findIndex(r => r.id === 'debt-payoff'), path_.findIndex(r => r.id === 'cash-flow')),
@@ -10242,7 +10242,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('every room appears in exactly one group', Registry.all().every(r => ids.filter(g => Registry.inGroup(g, null).some(x => x.id === r.id)).length === 1));
   check('...and every room appears', ids.reduce((n, g) => n + Registry.inGroup(g, null).length, 0), Registry.all().length);
   checkTrue('kind is still a property, no longer a heading', Registry.all().every(r => typeof r.kind === 'string') && !/'The path'|'About you'|'What it means'/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
-  check('Home: the Dashboard, Start Here and the First Round (the Ledger waits under Upkeep, D-186, D-206)', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,first-round,start');
+  check('Home: the Dashboard, the First Round, Express and Start Here (the Ledger waits under Upkeep, D-186, D-206, D-208)', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,express,first-round,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
@@ -12490,6 +12490,34 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
   checkTrue('the understanding line reads the weights file', /Doors\.understanding\(h, TABLES, SUGLIST, TABLES\.confidenceWeights\)/.test(led) && /You understand <b>/.test(led));
   checkTrue('the spheres are kept, under a fold, not deleted', /id="spheres-fold"/.test(led) && /Spheres\.state\(/.test(led) && fs.existsSync(path.join(ROOT, 'data/spheres.json')));
   checkTrue('search still finds any row', /LedgerRows\.rows\(Spine\.getProfile\(\), TABLES, \{ filter: 'all', query: query \}\)/.test(led));
+})();
+
+/* ==========================================================================
+   Phase F: Express, the whole form at once (D-208)
+   ========================================================================== */
+
+section('Express: a second view of the same rows (D-208)');
+
+(function () {
+  const html = fs.readFileSync(path.join(ROOT, 'rooms/express.html'), 'utf8');
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  checkTrue('registered in the home group beside the First Round, a utility, owning nothing', (function () { const r = Registry.byId('express'); return r && r.group === 'home' && r.utility === true && r.daite.writes.length === 0; })());
+  checkTrue('every write goes through Ownership.write or Ownership.addItem, never the spine', /Ownership\.write\(n\.row\.id, value, ctx\)/.test(html) && /Ownership\.addItem\(L\.kind, fields\)/.test(html) && !/Spine\.(set|upsert|batch|updateProfile)\(/.test(html.split('<script>')[1] || ''));
+  checkTrue('built once, declared', /LIVE-FORM: built once/.test(html) && /Nothing is rebuilt while a finger is in a box/.test(html));
+  checkTrue('no submit button; each field saves on change', !/type="submit"/.test(html) && /form\.addEventListener\('change'/.test(html));
+  checkTrue('six door shells with the registry’s ids, each level a fold open by default', ['D', 'A', 'I', 'T', 'E', 'you'].every(d => new RegExp('<details class="xdoor" id="x-' + d + '" open>').test(html)) && /details class="xlvl" id="x-' \+ esc\(d\.id\) \+ '-' \+ L \+ '" open/.test(html));
+  checkTrue('rows that stop applying are hidden, never rebuilt or cleared', /n\.el\.hidden = !applies/.test(html) && !/innerHTML = ''/.test(html.split('function paintApplies')[1].split('function paintSuggestions')[0]));
+  checkTrue('a suggestion is a chip beside the box, never typed into it', /Suggested ' \+ esc\(s\.display\) \+ ' · use it/.test(html) && /data-x-use/.test(html));
+  checkTrue('a sticky bar carries the understanding line and a jump menu', /class="xbar"/.test(html) && /position: sticky/.test(html) && /id="xjump"/.test(html) && /Doors\.understanding\(/.test(html));
+  checkTrue('lists are repeatable: debts, accounts, sources, yearly lines each get + Add another', /\+ Add another/.test(html) && /debts: \{ kind: 'debt'/.test(html) && /assets: \{ kind: 'asset'/.test(html) && /incomeSources: \{ kind: 'incomeSource'/.test(html) && /annualLines: \{ kind: 'annualLine'/.test(html));
+  checkTrue('a list item is named by lender and last four, never Card 1', /lender and last four/.test(html) && !/Card 1/.test(html));
+  checkTrue('every box carries its unit (gross or net, the period) beside it', /grossNet\(row\)/.test(html) && /gross, a year/.test(html) && /a month/.test(html));
+  checkTrue('an emptied box writes null, never zero', /if \(before !== null && before !== undefined\) write\(n, null, 'typed'\)/.test(html));
+  checkTrue('the one parser: Ask.parse, shared with the inline ask', /Ask\.parse\(row, raw\)/.test(html));
+  checkTrue('the front door offers both: walk me through it, give me the whole form; fi defaults to Express', (function () { const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'); return /Walk me through it/.test(idx) && /Give me the whole form/.test(idx) && /Prefs\.get\('door', null\) === 'fi'/.test(idx); })());
+  checkTrue('addItem goes through the list owner and the registry agrees', ['debt', 'asset', 'incomeSource', 'annualLine'].every(k => Own.LISTS[k] && Registry.writersOf(Own.LISTS[k].path).indexOf(Own.LISTS[k].owner) !== -1));
+  checkTrue('Express is in every arrangement beside the First Round', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('express') >= 0)); })());
 })();
 
 /* ==========================================================================

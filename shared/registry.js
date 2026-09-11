@@ -1654,6 +1654,31 @@
     ]
   });
 
+  /* Express (D-208): the whole form at once, a second VIEW of the same rows,
+     grouped by door and level, every field through its owner. */
+  ROOMS.push({
+    id: 'express',
+    group: 'home', aliases: ['express', 'whole form', 'all at once', 'the long form', 'everything'],
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 0.6,
+    title: 'Express',
+    blurb: 'Every question on one page, grouped by door and level. For anyone who already knows their numbers. The same rows the doors hold, the same owners.',
+    href: 'rooms/express.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    daite: { reads: [], writes: [] },
+    subsections: [
+      { id: 'x-D',   label: 'Debt' },
+      { id: 'x-A',   label: 'Assets' },
+      { id: 'x-I',   label: 'Income' },
+      { id: 'x-T',   label: 'Taxes' },
+      { id: 'x-E',   label: 'Expenses' },
+      { id: 'x-you', label: 'You' }
+    ]
+  });
+
   /* `needs` lists the shared fields a room reads before it can show its main
      output — the ids in shared/ownership.js, which know who owns each one and
      which question to land on. shared/progress.js turns that into "what is

@@ -4,18 +4,19 @@
 One line per room: id, title, lines, engines, owned fields, latest decisions.
 Full context for one: `node tools/context/pack.js <id>`.
 
-## Home (3)
+## Home (4)
 
 - **first-round** — The First Round (utility) · 302 lines · engines: tax · D-206
+- **express** — Express (utility) · 442 lines · engines: tax, projection, tier0, statement, debt, hourly · D-208
 - **start** — Start Here · 999 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
-- **dashboard** — The Dashboard · 1549 lines · no engines · DD-028, DD-026, DD-025
+- **dashboard** — The Dashboard · 1557 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
 
 - **debt-payoff** — Debt Payoff · 1776 lines · engines: projection, debt · owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-191, D-190, D-189
-- **expenses** — Expenses · 1187 lines · engines: projection, tier0, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-199, D-196, D-192
+- **expenses** — Expenses · 1187 lines · engines: projection, tier0, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-207, D-199, D-196
 - **cash-flow** — Cash Flow · 563 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget · D-192, D-181, D-163
-- **income** — Income · 785 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-198, D-195, D-194
+- **income** — Income · 785 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-207, D-198, D-195
 - **budget** — Budget · 482 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-130, D-129, D-128
 - **variance** — Estimated vs Actual · 231 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
 - **statement** — The Statement · 721 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
@@ -92,7 +93,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **doors** — Front Doors (utility) · 408 lines · engines: layouts · D-153
 - **walk** — The Walk-Through (utility) · 278 lines · no engines · D-169, D-149
 - **data** — Your Data (utility) · 455 lines · no engines · D-125
-- **ledger** — The Ledger (utility) · 316 lines · engines: projection, tier0, swan, variance, rerank, tax · D-186, D-185, D-183
+- **ledger** — The Ledger (utility) · 472 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly · D-207, D-186, D-185
 - **settings** — Settings (utility) · 179 lines · no engines · D-180
 - **refresh** — Refresh (utility) · 326 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, skills · D-181, D-081, D-080
 

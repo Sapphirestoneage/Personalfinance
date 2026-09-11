@@ -23,6 +23,7 @@
           "name": "The numbered path",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "debt-payoff",
@@ -120,6 +121,7 @@
           "name": "Applies to everyone",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "debt-payoff",
@@ -257,6 +259,7 @@
             "refresh",
             "settings",
             "first-round",
+            "express",
             "start",
             "ledger",
             "doors"
@@ -457,6 +460,7 @@
           "name": "None of the above",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "dashboard",
@@ -573,6 +577,7 @@
             "dashboard",
             "walk",
             "first-round",
+            "express",
             "start",
             "ledger",
             "ratios",
@@ -609,6 +614,7 @@
           "name": "Before the ladder",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "expenses",
@@ -753,6 +759,7 @@
             "refresh",
             "settings",
             "first-round",
+            "express",
             "start",
             "ledger",
             "health",
@@ -920,6 +927,7 @@
             "side-hustle",
             "sleep-at-night",
             "first-round",
+            "express",
             "start",
             "ledger",
             "student-loans",
@@ -971,6 +979,7 @@
           "name": "The hall",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "dashboard",
@@ -1215,6 +1224,7 @@
           "name": "Set up once",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "skill-tree",
@@ -1336,6 +1346,7 @@
           "name": "The app itself",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "data",
@@ -1441,6 +1452,7 @@
           "name": "Never finding out",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "dashboard",
@@ -1564,6 +1576,7 @@
           "name": "Nobody — just the numbers",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "dashboard",
@@ -1621,6 +1634,7 @@
           "name": "Layer 1",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "variance",
@@ -1810,6 +1824,7 @@
           "name": "Never asked about, always reachable",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "walk",
@@ -1875,6 +1890,7 @@
           "name": "One sitting",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "expenses",
@@ -1955,6 +1971,7 @@
           "name": "Needs nothing explained",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "income",
@@ -2065,6 +2082,7 @@
           "name": "Hub · Start Here",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "timeline",
@@ -2282,6 +2300,7 @@
           "name": "About the app, not about your money",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "walk",
@@ -2422,6 +2441,7 @@
           "name": "Always there, never in the way",
           "rooms": [
             "first-round",
+            "express",
             "start",
             "ledger",
             "walk",

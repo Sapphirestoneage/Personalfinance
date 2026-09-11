@@ -1197,6 +1197,40 @@ const CASES = [
         ['and it says something', /runway/.test(s.headline), true]
       ];
     }
+  },
+  {
+    /* EXPRESS (D-208): the whole form on one page, built once. Typing into
+       boxes across doors, a situation tap that hides and shows rows around
+       them, and adding a card block: the keyboard must stay open through
+       all of it. */
+    room: '/rooms/express.html',
+    container: '#xform',
+    seed: 'empty',
+    prepare: async (page) => { await page.waitForSelector('[data-x-row="dob"]'); },
+    fields: [
+      { sel: '[data-x-row="zip"] [data-x-input]', type: '12203' },
+      { sel: '[data-x-row="employmentStatus"] [data-x-val="unemployed"]', tap: true },
+      { sel: '[data-x-row="lastPay"] [data-x-input]', type: '95000' },
+      { sel: '[data-x-row="cashSavings"] [data-x-input]', type: '3000' },
+      { sel: '[data-x-add="debts"] [data-x-add-name]', type: 'Amex 1003' },
+      { sel: '[data-x-add="debts"] [data-x-add-btn]', tap: true },
+      { sel: '.xitem[data-x-list="debts"] [data-x-row="debtBalance"] [data-x-input]', type: '3200', fresh: true }
+    ],
+    expect: async (page) => {
+      const s = await page.evaluate(() => {
+        const h = SLAF.Spine.getProfile();
+        return { zip: h.zip, status: h.people[0].employmentStatus, lastPay: SLAF.Schema.unemploymentOf(h).lastGrossAnnualCents, cash: SLAF.Schema.cashCents(h).value,
+          debt: (h.debts[0] || {}).label + ':' + (h.debts[0] || {}).balanceCents, rows: document.querySelectorAll('[data-x-row]').length };
+      });
+      return [
+        ['the ZIP landed', s.zip, '12203'],
+        ['the situation landed', s.status, 'unemployed'],
+        ['the last pay landed', s.lastPay, 9500000],
+        ['cash landed', s.cash, 300000],
+        ['the card was added by name and its balance typed', s.debt, 'Amex 1003:320000'],
+        ['the form is long', s.rows > 60, true]
+      ];
+    }
   }
 ];
 
@@ -1449,6 +1483,9 @@ async function tagFields(page, container) {
     for (const f of c.fields) {
       /* A tap-only step (a Next button, a choice): tap and move on. */
       if (f.tap) { await page.tap(f.sel); await page.waitForTimeout(300); continue; }
+      /* A box that a tap just created (a new list block) is tagged now; the
+         guard then holds for the typing that follows, which is the point. */
+      if (f.fresh) await tagFields(page, c.container);
       const before = await page.getAttribute(f.sel, 'data-livetag');
       check(`${f.sel.split(' ').pop()} is tagged before the tap`, before !== null, true);
       await page.tap(f.sel);

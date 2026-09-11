@@ -86,7 +86,9 @@
     incomeType: { w2: 'W-2 job', '1099': '1099 / own work', passive: 'Passive', benefit: 'A benefit', pension: 'Pension', socialSecurity: 'Social Security', equity: 'Equity' },
     loanPlan: { standard: 'Standard', income_driven: 'Income-driven', aggressive: 'Aggressive' },
     splitMode: { equal: 'Equal halves', proportional: 'In proportion to income', pooled: 'One pool' },
-    payCadence: { weekly: 'Every week', fortnightly: 'Every two weeks', semimonthly: 'Twice a month', monthly: 'Monthly', irregular: 'Irregular' }
+    payCadence: { weekly: 'Every week', fortnightly: 'Every two weeks', semimonthly: 'Twice a month', monthly: 'Monthly', irregular: 'Irregular' },
+    employmentStatus: { employed: 'Working for an employer', selfEmployed: 'Self-employed', both: 'A job and my own work', unemployed: 'Between jobs', student: 'Student', retired: 'Retired' },
+    debtType: { credit_card: 'Credit card', student_loan: 'Student loan', auto: 'Car loan', mortgage: 'Mortgage', personal: 'Personal loan', medical: 'Medical', family: 'Owed to family', other: 'Other' }
   };
   function control(row, D) {
     var u = row.unit;
@@ -200,5 +202,5 @@
     }).catch(function () { return null; });
   }
 
-  return { pick: pick, parse: parse, mount: mount, ASKABLE_UNITS: ASKABLE_UNITS };
+  return { pick: pick, parse: parse, mount: mount, ASKABLE_UNITS: ASKABLE_UNITS, ENUM_LABELS: ENUM_LABELS };
 });
