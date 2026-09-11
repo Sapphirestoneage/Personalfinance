@@ -31,7 +31,7 @@
       href: 'rooms/start.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dob', 'you.situation'], writes: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dependents', 'you.dob', 'you.situation'] },
+      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dob', 'you.situation'], writes: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'income.sources[].lastPay', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dependents', 'you.dob', 'you.situation'] },
       subsections: [
         { id: 'q-employment',  label: 'Your situation' },
         { id: 'q-about',       label: 'About you' },
@@ -1619,6 +1619,32 @@
       { id: 'not-here', label: 'What these rooms do not do' },
       { id: 'who',      label: 'Who answers them' },
       { id: 'stage',    label: 'At your stage' }
+    ]
+  });
+
+  /* The First Round (D-206): five questions, one a screen, then one insight
+     and one door. Group home, ahead of Start Here, which stays the long form. */
+  ROOMS.push({
+    id: 'first-round',
+    group: 'home', aliases: ['first round', 'five questions', 'quick start', 'begin'],
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 0.5,
+    title: 'The First Round',
+    blurb: 'Five questions, under a minute, then one thing the numbers say and one door to open. Everything else fills in as you go.',
+    href: 'rooms/first-round.html',
+    tier: 0,
+    tags: ['income', 'cashflow'],
+    daite: { reads: ['you.dob', 'taxes.zip', 'you.situation', 'income.grossAnnualCents', 'income.sources[].lastPay', 'assets.cashCents'],
+             writes: ['you.dob', 'taxes.zip', 'you.situation', 'income.grossAnnualCents', 'income.sources[].lastPay', 'assets.cashCents'] },
+    subsections: [
+      { id: 'q-age',       label: 'Your age' },
+      { id: 'q-zip',       label: 'ZIP' },
+      { id: 'q-situation', label: 'Situation' },
+      { id: 'q-pay',       label: 'Pay' },
+      { id: 'q-cash',      label: 'Cash on hand' },
+      { id: 'insight',     label: 'The first thing the numbers say' }
     ]
   });
 

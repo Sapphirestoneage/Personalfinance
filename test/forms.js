@@ -1158,6 +1158,45 @@ const CASES = [
         ['and left no undo entry behind', /old plan|year you left/.test(undo), false]
       ];
     }
+  },
+  {
+    /* THE FIRST ROUND (D-206): five screens, one box each, all in the markup
+       from boot; script only toggles [hidden]. Typing on each screen has to
+       survive the Next tap that reveals the next one. */
+    room: '/rooms/first-round.html',
+    container: 'main',
+    seed: 'empty',
+    fields: [
+      { sel: '#in-age', type: '27' },
+      { sel: '[data-next="q-zip"]', tap: true },
+      { sel: '#in-zip', type: '12203' },
+      { sel: '[data-next="q-situation"]', tap: true },
+      { sel: '[data-situation="unemployed"]', tap: true },
+      { sel: '[data-next="q-pay"]', tap: true },
+      { sel: '#in-pay', type: '95000' },
+      { sel: '[data-next="q-cash"]', tap: true },
+      { sel: '#in-cash', type: '3000' }
+    ],
+    expect: async (page) => {
+      await page.tap('#btn-finish');
+      await page.waitForFunction(() => /runway|Nearly there/.test(document.getElementById('ins-headline').textContent), null, { timeout: 5000 });
+      const s = await page.evaluate(() => {
+        const h = SLAF.Spine.getProfile();
+        return { age: SLAF.Schema.primaryAge(h), zip: h.zip, status: h.people[0].employmentStatus,
+          lastPay: SLAF.Schema.unemploymentOf(h).lastGrossAnnualCents, cash: SLAF.Schema.cashCents(h).value,
+          headline: document.getElementById('ins-headline').textContent,
+          visible: [...document.querySelectorAll('.screen')].filter(e => !e.hidden).map(e => e.id).join(',') };
+      });
+      return [
+        ['the age landed as a birth date', s.age, 27],
+        ['the ZIP landed', s.zip, '12203'],
+        ['the situation landed', s.status, 'unemployed'],
+        ['the last pay landed on the person', s.lastPay, 9500000],
+        ['cash landed', s.cash, 300000],
+        ['one screen showing at the end: the insight', s.visible, 'insight'],
+        ['and it says something', /runway/.test(s.headline), true]
+      ];
+    }
   }
 ];
 
@@ -1408,6 +1447,8 @@ async function tagFields(page, container) {
     await tagFields(page, c.container);
 
     for (const f of c.fields) {
+      /* A tap-only step (a Next button, a choice): tap and move on. */
+      if (f.tap) { await page.tap(f.sel); await page.waitForTimeout(300); continue; }
       const before = await page.getAttribute(f.sel, 'data-livetag');
       check(`${f.sel.split(' ').pop()} is tagged before the tap`, before !== null, true);
       await page.tap(f.sel);

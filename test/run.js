@@ -6281,7 +6281,7 @@ section('Room order');
   checkTrue('every room declares an order', orders.every(o => typeof o === 'number'));
   check('orders are unique', new Set(orders).size, orders.length);
   checkTrue('orders are ascending', orders.every((o, i) => i === 0 || o > orders[i - 1]));
-  check('Start Here comes first', path_[0].id, 'start');
+  check('the First Round comes first, Start Here (the long form) right behind it (D-206)', path_[0].id + ',' + path_[1].id, 'first-round,start');
   check('the Snapshot comes after the rooms that feed it',
     path_.findIndex(r => r.id === 'financial-snapshot') >
     Math.max(path_.findIndex(r => r.id === 'debt-payoff'), path_.findIndex(r => r.id === 'cash-flow')),
@@ -10242,7 +10242,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('every room appears in exactly one group', Registry.all().every(r => ids.filter(g => Registry.inGroup(g, null).some(x => x.id === r.id)).length === 1));
   check('...and every room appears', ids.reduce((n, g) => n + Registry.inGroup(g, null).length, 0), Registry.all().length);
   checkTrue('kind is still a property, no longer a heading', Registry.all().every(r => typeof r.kind === 'string') && !/'The path'|'About you'|'What it means'/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
-  check('Home: the Dashboard and Start Here (the Ledger waits under Upkeep, D-186)', Registry.inGroup('home', null).map(r => r.id).join(','), 'dashboard,start');
+  check('Home: the Dashboard, Start Here and the First Round (the Ledger waits under Upkeep, D-186, D-206)', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,first-round,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
@@ -12255,7 +12255,7 @@ section('Phase A: suggestions, derived and never stored (D-205)');
   /* ---- The registry rows carry the new fields ------------------------- */
   const rows = table.rows;
   const SugSrc = require(sugPath);
-  check('exactly five first-round rows', rows.filter(r => r.round === 1).map(r => r.id).sort().join(','), 'cashSavings,dob,employmentStatus,grossAnnualIncome,zip');
+  check('the five first-round rows, with the last pay as the pay question between jobs', rows.filter(r => r.round === 1).map(r => r.id).sort().join(','), 'cashSavings,dob,employmentStatus,grossAnnualIncome,lastPay,zip');
   checkTrue('every row has a door in D A I T E you', rows.every(r => ['D', 'A', 'I', 'T', 'E', 'you'].indexOf(r.door) !== -1));
   checkTrue('every row has a level 1 to 4', rows.every(r => [1, 2, 3, 4].indexOf(r.level) !== -1));
   checkTrue('every row says whether it moves', rows.every(r => typeof r.moves === 'boolean'));

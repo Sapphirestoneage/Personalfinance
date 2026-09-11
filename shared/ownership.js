@@ -184,6 +184,16 @@
       applies: function (h) { return Schema.isUnemployed(h); },
       notApplicableBecause: 'You are working.'
     },
+    /* Between jobs, "Your last pay" is the first round's pay question (D-206):
+       it feeds the benefit estimate, the marginal rate and the milestones,
+       and lives on the person beside the benefit. Start Here owns it. */
+    lastPay: {
+      label: 'Your last pay, a year', owner: 'start', anchor: 'q-unemployed',
+      read: function (h) { var v = Schema.unemploymentOf(h).lastGrossAnnualCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['lastPay']); },
+      format: function (v) { return money(v) + '/yr'; },
+      applies: function (h) { return Schema.isUnemployed(h); },
+      notApplicableBecause: 'You are working.'
+    },
     cashSavings: {
       label: 'Cash & savings', owner: 'start', anchor: 'q-cash',
       read: function (h) { return Schema.cashCents(h); },
@@ -928,6 +938,7 @@
       return unemploymentPatch({ benefitWeeklyCents: Money.isEntered(v) ? Math.round(v) : null });
     },
     expectedSearchMonths: function (v) { return unemploymentPatch({ expectedSearchMonths: Money.isEntered(v) ? v : null }); },
+    lastPay: function (v) { return unemploymentPatch({ lastGrossAnnualCents: Money.isEntered(v) ? Math.round(v) : null }); },
     floorMonthly: function (v) { return unemploymentPatch({ floorMonthlyCents: Money.isEntered(v) ? Math.round(v) : null }); },
     payCadence: setAt('calendar.cadence', 'Paid'),
     nextPayday: setAt('calendar.nextPaydayDay', 'Next payday'),

@@ -3,6 +3,16 @@
   "note": "Generated from shared/registry.js and shared/ownership.js; do not edit by hand.",
   "rooms": [
     {
+      "id": "first-round",
+      "title": "The First Round",
+      "file": "rooms/first-round.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 0.5
+    },
+    {
       "id": "start",
       "title": "Start Here",
       "file": "rooms/start.html",
@@ -30,6 +40,7 @@
         "filingStatus",
         "grossAnnualIncome",
         "unemployment",
+        "lastPay",
         "cashSavings",
         "investments",
         "employmentStatus",

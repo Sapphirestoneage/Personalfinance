@@ -12864,6 +12864,58 @@ there); rooms that read it as a status string should check `kind ===
 'weekly'` on the result. `Ownership.write(fieldId, value, ctx)` takes a
 third argument naming the item for a repeat row.
 
+## D-206 — Phase B: the first round is five questions
+
+**Why.** The brief: the first round is five questions, time to first
+insight under 60 seconds, and nothing else. A user between jobs
+answered six things and that was enough to fill forty rows; the app asked
+for seventy. Start Here, the one-pager, stays as the long form; it is no
+longer the way in.
+
+**Decision.** `rooms/first-round.html`: five screens, one question each,
+big tap targets, built once in the markup and only revealed (LIVE-FORM:
+built once). Age (or the birth month and year, folded), ZIP, situation as
+four buttons (working, between jobs, self-employed, a mix), pay a year
+(the label turns into "Your last pay" between jobs), cash on hand. Each
+answer writes through its owner's path (`Ownership.write`), so Start Here
+still owns every one of them. Between jobs the pay lands on the person as
+the last pay: a new ownership field `lastPay` with its own ledger row,
+DAITE path `income.sources[].lastPay` and writer line, so the benefit
+estimate, the marginal rate and the milestones can read it while the
+gross-pay row does not apply. Skipping a screen is fine; a blank writes
+nothing and never erases.
+
+**Then one card.** `shared/doors.js` (new; Phase C builds the door
+screen on it) gives `firstInsight(h, tables)`: about how many months of
+runway, from the cash entered against a month's spending, suggested
+where it is not entered (the suggestion overlay, D-205), plus the weekly
+benefit between jobs. It says rough whenever a suggestion went into it
+and how many, and never makes a number from nothing: without cash, or
+without any spending figure, it says which. Under it, one sentence
+pointing at one door, from `recommend()`: the most expensive unknown. A
+card whose minimum is a guess costs more than any other blank, so Debt
+first; then whether there is any debt at all; then the benefit between
+jobs; then spending; then what is invested; then the tax facts; then the
+door with the most rows open. No list of what is missing anywhere in the
+flow.
+
+**The front door** now says "Start: five questions", with the full
+one-pager one quiet line below. The First Round sits in the home group
+ahead of Start Here, in every one of the twenty arrangements, in the
+sphere beside gross pay, and on the path first.
+
+**Tests.** Alexis: five screens, the insight immediately (1.6 seconds on
+a phone in the gate), zero lists of missing fields in the flow, every
+answer stored as the persona typed it. `test/forms.js` taps through the
+five screens with the keyboard staying open (a tap-only step was added to
+the walk for Next buttons and choices). The persona's card reads about
+five months of runway against suggested spending with $869 a week coming
+in, rough, with Debt as the door.
+
+**Compatibility.** One new ownership field, `lastPay`, reading
+`person.unemployment.lastGrossAnnualCents`, which Start Here already
+wrote. No stored shape changed.
+
 ---
 
 # The Dungeons & Dividends entries

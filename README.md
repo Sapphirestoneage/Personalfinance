@@ -76,10 +76,11 @@ version.json        The product version, major.minor; Schema.APP_VERSION matches
 .github/workflows/  test.yml runs the whole suite on every push; pages.yml publishes only after it is green, once the Pages source is switched to GitHub Actions and PAGES_VIA_ACTIONS is set (D-204)
 scripts/            extract-v63.mjs — the Skill Tree's data port: run it against an FI-Skill-Tree-v6.3.x page and it regenerates data/skill_tree.json and data/skill_links.json (31 trees, 665 skills, 312 lanes), merging skill_tree_app.json, this app's own 40 skills, which the exercises and the Stacker point at by id and which is edited by hand, never generated (D-139). seed-exercises.mjs seeds the exercise library. seed-skill-tree.mjs, which made the old 40-skill seed, is gone — running it would have overwritten the curriculum
 favicon.svg         Sapphire mark
-rooms/              One HTML file per room
+rooms/              One HTML file per room. first-round.html is the way in: five questions, one insight, one door (D-206); start.html is the long form
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
 shared/             The spine everything depends on
   qr.js               a QR code of the share link, drawn from the standard's tables, no library (D-201)
+  doors.js            the six doors (D, A, I, T, E, You): rows behind each, the headline, how far along, which to open next, and the first insight after the first round (D-206)
   suggest.js          a value the app proposes, shown but not taken (D-060), and since D-205 the rules that propose it: every answer fills more rows as suggestions, derived from data/ and never stored; one tap confirms through the owner
   backup.js           everything this browser holds as one file: every slaf. and dnd. key, save, load with a confirm and an undo, and the drift guard that warns on a dev host when a room writes outside those prefixes (D-202). On the Ledger and in Settings
   theme.css           navy-sapphire design tokens (colour + type)

@@ -236,6 +236,26 @@
       "unlocks": "take-home pay, the savings rate, the true hourly wage"
     },
     {
+      "id": "lastPay",
+      "label": "Your last pay, a year",
+      "letter": "I",
+      "family": "income",
+      "path": "income.sources[].lastPay",
+      "unit": "cents",
+      "kind": "know",
+      "appliesWhen": "situation == betweenJobs",
+      "pass": 1,
+      "minutes": 0.3,
+      "note": "The first round's pay question between jobs (D-206): the last job's gross pay a year, kept on the person beside the benefit. It feeds the benefit estimate, the marginal rate and the milestones.",
+      "door": "I",
+      "level": 1,
+      "round": 1,
+      "suggestFrom": null,
+      "askIn": "between-jobs",
+      "moves": false,
+      "unlocks": "the benefit estimate, the marginal rate and the milestones while between jobs"
+    },
+    {
       "id": "incomeType",
       "path": "income.sources[].type",
       "letter": "I",

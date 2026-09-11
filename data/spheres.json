@@ -21,6 +21,7 @@
           "employmentStatus",
           "state",
           "grossAnnualIncome",
+          "lastPay",
           "cashSavings",
           "hasDebt",
           "accommodationMonthly",
@@ -29,7 +30,7 @@
           "monthlyExpenses",
           "totalDebt"
         ],
-        "minutes": 5.0
+        "minutes": 5.3
       },
       "unlocks": [
         "dashboard",
