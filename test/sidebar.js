@@ -19,7 +19,10 @@ let passed = 0; const failures = [];
 function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (detail ? ' — ' + detail : '')); }
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  /* The sandbox's Chromium when it is there; otherwise the one Playwright
+     installed (CI runs `npx playwright install chromium`). */
+  const EXECUTABLE = process.env.SLAF_CHROMIUM || '/opt/pw-browsers/chromium';
+  const browser = await chromium.launch(require('fs').existsSync(EXECUTABLE) ? { executablePath: EXECUTABLE } : {});
   const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   page.on('dialog', d => d.accept());
