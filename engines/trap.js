@@ -125,10 +125,10 @@
       var ordinary = 0, conversion = 0, fromPretax = 0;
       if (pathId === 'ladder') {
         queue.forEach(function (q) { if (q.at === y) s.rothBasis += q.cents; });
-        conversion = Math.min(spend, Math.round(s.pretax));
+        conversion = Math.min(spend, Math.floor(s.pretax));
         if (conversion > 0) { s.pretax -= conversion; queue.push({ at: y + R.conversionSeasoningYears, cents: conversion }); ordinary += conversion; }
       }
-      if (pathId === 'sepp') { fromPretax = Math.min(sepp, Math.round(s.pretax)); s.pretax -= fromPretax; s.cash += fromPretax; ordinary += fromPretax; }
+      if (pathId === 'sepp') { fromPretax = Math.min(sepp, Math.floor(s.pretax)); s.pretax -= fromPretax; s.cash += fromPretax; ordinary += fromPretax; }
       var ord = Tax.ordinaryTax(p.tables.federalBrackets, ordinary, p.filingStatus);
       var ordTax = Money.isOk(ord) ? ord.value : 0;
       var need = spend + ordTax;

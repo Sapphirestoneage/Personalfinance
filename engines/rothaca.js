@@ -92,7 +92,7 @@
     var balance = p.pretaxCents, roth = 0;
     var rows = [], tax = 0, on = 0, off = 0, converted = 0;
     for (var age = p.startAge; age < MEDICARE_AGE; age++) {
-      var conv = Math.max(0, Math.min(conversionAnnualCents, Math.round(balance)));
+      var conv = Math.max(0, Math.min(conversionAnnualCents, Math.floor(balance)));
       var magi = p.otherIncomeCents + conv;
       var ord = Tax.ordinaryTax(p.tables.federalBrackets, magi, p.filingStatus);
       if (!Money.isOk(ord)) return ord;
