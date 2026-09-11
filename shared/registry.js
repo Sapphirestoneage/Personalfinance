@@ -1180,6 +1180,39 @@
     daite: { reads: ['assets.cashCents', 'assets', 'expenses', 'expenses.floor', 'income.grossAnnualCents', 'taxes.state', 'you.dob'], writes: [] },
     subsections: [{ id: 'months', label: 'Months of freedom' }, { id: 'dates', label: 'When you would have' }, { id: 'parts', label: 'What it is made of' }]
   });
+  /* The Middle Class Trap Test (K1, D-218): both sides of the debate on
+     the household's numbers, four paths to the pre-tax money, each with a
+     verdict and its range. */
+  ROOMS.push({
+    id: 'middle-class-trap',
+    group: 'decisions', subgroup: 'moves', aliases: ['middle class trap', 'trap', 'bridge', 'roth ladder', '72t', 'rule of 55', 'early retirement'],
+    appliesWhen: 'situation != student',
+    kind: 'explore',
+    needs: ['dob', 'monthlyExpenses'],
+    order: 33.7,
+    title: 'The Middle Class Trap Test',
+    blurb: 'Is a net worth that is mostly the house and the 401(k) a trap before 59 and a half, or a planning problem? Both sides on your numbers: bridge accounts, the Roth conversion ladder, 72(t) payments and the Rule of 55, year by year, each with a verdict and its range.',
+    href: 'rooms/middle-class-trap.html',
+    tier: 2,
+    tags: ['income'],
+    daite: { reads: ['assets', 'assets.invested', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob', 'plans.targets'], writes: [] },
+    subsections: [{ id: 'verdict', label: 'What the numbers say' }, { id: 'debate', label: 'The debate' }, { id: 'paths', label: 'Four paths' }, { id: 'years', label: 'Year by year' }, { id: 'assumptions', label: 'Assumptions' }]
+  });
+  /* The Referee (K3, D-218): debates as buttons, both sides on your numbers. */
+  ROOMS.push({
+    id: 'debates',
+    group: 'matters', aliases: ['referee', 'debate', 'debates', 'both sides', 'flip point', 'mortgage or invest', 'roth or traditional', 'rent or buy'],
+    kind: 'explore',
+    needs: [],
+    order: 48.5,
+    title: 'The Referee',
+    blurb: 'Money debates people already have, both sides stated fairly with their sources, run on your numbers: the answer as a range, the flip point where it changes, and how close you sit to it.',
+    href: 'rooms/debates.html',
+    tier: 2,
+    tags: ['income', 'debt'],
+    daite: { reads: ['assets.invested', 'debt.items', 'expenses', 'expenses.needs.accommodation', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
+    subsections: [{ id: 'pick', label: 'Pick a debate' }, { id: 'answer', label: 'The answer' }, { id: 'sides', label: 'Both sides' }]
+  });
   /* Tax — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'tax',

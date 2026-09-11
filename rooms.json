@@ -815,6 +815,19 @@
       "order": 33.5
     },
     {
+      "id": "middle-class-trap",
+      "title": "The Middle Class Trap Test",
+      "file": "rooms/middle-class-trap.html",
+      "reads": [
+        "dob",
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 33.7
+    },
+    {
       "id": "tax",
       "title": "Tax",
       "file": "rooms/tax.html",
@@ -1099,6 +1112,16 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 48
+    },
+    {
+      "id": "debates",
+      "title": "The Referee",
+      "file": "rooms/debates.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 48.5
     },
     {
       "id": "student-loans",

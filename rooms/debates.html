@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 21:52Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>The Referee · SPARKS</title>
+<meta name="description" content="Money debates people already argue about, each side stated fairly with its source, run on your own numbers: the answer as a range, the flip point where it changes, and how close you are to it."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. K3 (D-218).
+
+  1. READS   Whatever each debate names in data/debates.json: debts and
+             their rates, income and filing status, spending, investments,
+             the rent line, date of birth and the target age.
+  2. WRITES  Nothing. The price box (rent or buy) is this page's what-if.
+  3. CALLS   engines/debates.js, which runs each side through the shared
+             engines. No formula lives here.
+  4. EMPTY   A debate whose inputs are missing says which, and where.
+  5. CONFIG  data/debates.json (the sides and their sources),
+             data/return_bands.json (the range).
+
+  LIVE-FORM: built once. Buttons and one box, in the HTML.
+-->
+<style>
+  .list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  .sides { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  .side { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--text-sm); }
+  .side.is-answer { border-color: var(--color-accent); }
+  .side h3 { margin: 0 0 var(--space-1); font-size: var(--text-md); }
+  .side .line { margin-top: var(--space-2); font-weight: 600; }
+  .side small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: var(--space-2); }
+  .head-num { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-2) 0 0; }
+  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media (max-width: 480px) { .sides { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Referee</h1>
+  <p class="room-lede">Debates people already have about money, both sides stated fairly, run on your numbers. What the numbers say, the one figure the answer turns on, and how close you sit to it. Never "you should".</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <section class="slaf-card" id="pick">
+    <span class="slaf-eyebrow">Pick a debate</span>
+    <div class="list" id="d-list"></div>
+  </section>
+  <section class="slaf-card" id="answer" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow" id="d-name">The answer</span>
+    <p class="head-num" id="d-num"></p>
+    <p class="head-sub" id="d-sub"></p>
+    <p class="head-sub" id="d-flip"></p>
+    <div class="ask" id="d-ask" hidden style="margin-top:var(--space-3)"><label for="in-price">The price of the place you would buy</label>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-price" placeholder="e.g. 350,000" aria-label="Price of the place you would buy"/></span></div>
+    <p class="slaf-hint" id="d-share" style="margin:var(--space-3) 0 0"></p>
+  </section>
+  <section class="slaf-card" id="sides" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Both sides</span>
+    <div class="sides" id="d-sides"></div>
+  </section>
+  <p class="disclaimer">
+    Educational tool, not financial advice. Each side is a summary of a public argument, attributed to where it is made. Everything stays in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/trap.js"></script>
+<script src="../engines/debates.js"></script>
+<script src="../shared/sharecard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Debates = SLAF.Debates, ShareCard = SLAF.ShareCard;
+  var ROOM_ID = 'debates';
+  var TABLES = null, CURRENT = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
+  function fromHash() { var m = /#d=([a-zA-Z]+)/.exec(location.hash); return m ? m[1] : null; }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var list = Debates.list(TABLES);
+    if (!CURRENT) CURRENT = fromHash() || (list[0] && list[0].id);
+    el('d-list').innerHTML = list.map(function (d) { return '<button type="button" class="choice" data-debate="' + esc(d.id) + '" aria-pressed="' + (d.id === CURRENT ? 'true' : 'false') + '">' + esc(d.name) + '</button>'; }).join('');
+    var d = Debates.byId(TABLES, CURRENT);
+    if (!d) return;
+    el('d-ask').hidden = d.id !== 'rentVsBuy';
+    el('d-name').textContent = d.name + ': ' + d.question;
+    var r = Debates.run(d.id, h, TABLES, { priceCents: typed('in-price') });
+    el('d-share').innerHTML = '';
+    if (!Money.isOk(r)) {
+      el('d-num').textContent = 'Can’t run this one yet.'; el('d-sub').textContent = r.reason; el('d-flip').textContent = '';
+      el('d-sides').innerHTML = d.sides.map(function (s) { return '<div class="side"><h3>' + esc(s.label) + '</h3>' + esc(s.case) + '<small>' + esc(s.source) + '</small></div>'; }).join('');
+      return;
+    }
+    el('d-num').textContent = r.sentence;
+    el('d-num').setAttribute('data-answer', r.value);
+    el('d-sub').textContent = 'Range: ' + r.range;
+    el('d-flip').textContent = 'The flip point: ' + d.flip.label + '. ' + r.flip.words + '.';
+    el('d-sides').innerHTML = d.sides.map(function (s, i) {
+      var line = (r.sides || []).filter(function (x) { return x.id === s.id; })[0];
+      return '<div class="side' + (r.answerSide === s.id ? ' is-answer' : '') + '"><h3>' + esc(s.label) + (r.answerSide === s.id ? ' · what the numbers say' : '') + '</h3>' + esc(s.case) + (line ? '<div class="line">' + esc(line.line) + '</div>' : '') + '<small>' + esc(s.source) + '</small></div>';
+    }).join('');
+    var card = ShareCard.make('debate', h, TABLES, { debate: d.id, result: r });
+    if (card.ok) {
+      var href = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'progress-card.html#c=' + ShareCard.encode(card);
+      el('d-share').innerHTML = 'Share the verdict, no numbers: <a href="' + esc(href) + '" id="share-link">' + esc(card.title) + '</a>.';
+    }
+  }
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-debate]'); if (!b) return;
+    CURRENT = b.getAttribute('data-debate'); location.hash = 'd=' + CURRENT; render();
+  });
+  el('in-price').addEventListener('input', render);
+  window.addEventListener('hashchange', function () { var id = fromHash(); if (id) { CURRENT = id; render(); } });
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['debates', 'earlyAccessRules', 'federalBrackets', 'seTax', 'stateBrackets', 'aca', 'returnBands', 'effectiveTaxRates', 'priceToRent', 'fireVariants']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

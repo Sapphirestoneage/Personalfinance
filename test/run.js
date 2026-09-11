@@ -10260,7 +10260,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move, no Between Jobs', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move' || r.id === 'between-jobs'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 28);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 29);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13456,6 +13456,93 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   let shelved = 0;
   (function walk(x) { if (Array.isArray(x) && x.every(i => typeof i === 'string')) { Object.keys(pairs).forEach(k => { if (x.indexOf(k) > -1 && x[x.indexOf(k) + 1] === pairs[k]) shelved++; }); } if (Array.isArray(x)) x.forEach(walk); else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
   check('each is shelved beside its neighbour in all twenty arrangements', shelved, 80);
+})();
+
+/* ==========================================================================
+   K1, K3: the Middle Class Trap Test and the Referee (D-218)
+   ========================================================================== */
+section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
+(function () {
+  const Trap = require(path.join(ROOT, 'engines/trap.js'));
+  const Debates = require(path.join(ROOT, 'engines/debates.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  const R = T.earlyAccessRules;
+
+  /* -- the rules live in data, sourced ------------------------------------------------ */
+  checkTrue('every early-access rule has a source and a confidence', typeof R.source === 'string' && /72\(t\)/.test(R.source) && /408A/.test(R.source) && R.confidence === 'unverified');
+  checkTrue('the engine holds no rule of its own: no 59.5, no 0.10, no 0.05 inline', !/59\.5|0\.10\b|0\.05\b|\b5\b(?! \*)/.test(fs.readFileSync(path.join(ROOT, 'engines/trap.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/'[^']*'/g, '')));
+  check('the 72(t) payment on $900,000 at 52 by the amortization method at the 5% ceiling: level payment over 34.3 years, to the cent', Trap.seppPaymentCents(R, 90000000, 52), require(path.join(ROOT, 'engines/projection.js')).levelPaymentCents({ principalCents: 90000000, annualRate: 0.05, months: Math.round(34.3 * 12) }).value * 12);
+
+  /* -- the four households the brief names ------------------------------------------- */
+  function hh(o) {
+    return Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', dob: '1976-07-01', incomeSources: [Schema.createIncomeSource({ personId: 'p', grossAnnualIncomeCents: 12000000 })] })], filingStatus: 'married_joint',
+      expenses: { needs: { food: { monthlyCents: 100000 }, accommodation: { monthlyCents: 250000 }, transportation: { monthlyCents: 50000 } }, wants: { totalCents: 100000 } },
+      assets: o.assets, debts: o.debts || [], targets: { retireAge: o.retireAge } });
+  }
+  const trapped = hh({ retireAge: 52, assets: [Schema.createAsset({ label: 'Home', category: 'property', valueCents: 60000000 }), Schema.createAsset({ label: '401k', category: 'retirement', taxCharacter: 'pretax', valueCents: 90000000 }), Schema.createAsset({ label: 'Brokerage', category: 'investment', taxCharacter: 'taxable', valueCents: 6000000, costBasisCents: 4000000 }), Schema.createAsset({ label: 'Cash', category: 'cash', valueCents: 2000000 })], debts: [Schema.createDebt({ type: 'mortgage', balanceCents: 20000000, rate: 0.035 })] });
+  const soon = Trap.run(trapped, T, { age: 50 });
+  const by = (r, id) => r.paths.filter(p => p.id === id)[0];
+  checkTrue('large home equity and 401(k), small taxable, retiring in two years: Trapped under bridge accounts alone', Money.isOk(soon) && by(soon, 'bridge').verdict === 'Trapped' && by(soon, 'bridge').shortfallYears.length > 0);
+  checkTrue('...home equity is shown and not counted', soon.inputs.piles.homeEquityCents === 40000000 && soon.inputs.extraCashCents === 0);
+  checkTrue('...and the ladder cannot start in time: fewer years of bridge money than the seasoning period', by(soon, 'ladder').verdict === 'Trapped' && soon.bridgeYears < R.conversionSeasoningYears);
+  checkTrue('...the Rule of 55 is not available at 52, and says why', by(soon, 'rule55').available === false && /55/.test(by(soon, 'rule55').reason));
+  checkTrue('...every verdict carries its range across the three bands', soon.paths.filter(p => p.available).every(p => ['Trapped', 'Tight', 'Free'].indexOf(p.verdicts.p25) > -1 && p.verdicts.p75));
+  const lead = Trap.run(trapped, T, { age: 44, retireAge: 52 });
+  checkTrue('the same household with eight years of lead time: the ladder reaches Free', by(lead, 'ladder').verdict === 'Free' && lead.bridgeYears >= R.conversionSeasoningYears);
+  checkTrue('...what is saved until then landed in the bridge, and the assumption says so', lead.inputs.annualSavingsCents > 0 && lead.inputs.assumed.some(a => /lands in taxable/.test(a)));
+  const noBridgeH = hh({ retireAge: 52, assets: [Schema.createAsset({ category: 'retirement', taxCharacter: 'pretax', valueCents: 90000000 })] });
+  noBridgeH.people[0].incomeSources = [];
+  const noBridge = Trap.run(noBridgeH, T, { age: 50 });
+  checkTrue('no bridge money and two years: the ladder cannot start in time, the whole spend short through every seasoning year', by(noBridge, 'ladder').verdict === 'Trapped' && by(noBridge, 'ladder').shortfallYears.slice(0, R.conversionSeasoningYears).join(',') === '52,53,54,55,56' && by(noBridge, 'ladder').rows[0].shortfallCents >= noBridge.inputs.spendAnnualCents);
+  checkTrue('...and once conversions season, only the tax on the year\'s conversion is short', by(noBridge, 'ladder').rows[R.conversionSeasoningYears].shortfallCents === by(noBridge, 'ladder').rows[R.conversionSeasoningYears].taxCents);
+  const solid = Trap.run(hh({ retireAge: 52, assets: [Schema.createAsset({ category: 'retirement', taxCharacter: 'pretax', valueCents: 60000000 }), Schema.createAsset({ category: 'investment', taxCharacter: 'taxable', valueCents: 60000000, costBasisCents: 40000000 }), Schema.createAsset({ category: 'cash', valueCents: 5000000 })] }), T, { age: 50 });
+  checkTrue('a solid taxable bridge: Free under every available path', solid.paths.filter(p => p.available).every(p => p.verdict === 'Free'));
+  const at56 = Trap.run(trapped, T, { age: 50, retireAge: 56 });
+  checkTrue('leaving at 56: the Rule of 55 is available and Free', by(at56, 'rule55').available && by(at56, 'rule55').verdict === 'Free');
+  checkTrue('...turned off when the money is in an IRA', by(Trap.run(trapped, T, { age: 50, retireAge: 56, rule55: false }), 'rule55').available === false);
+  const sell = Trap.run(trapped, T, { age: 50, homeEquity: 'sell' });
+  checkTrue('selling the home counts the equity as cash, and bridge accounts alone get there', sell.inputs.extraCashCents === 40000000 && by(sell, 'bridge').verdict === 'Free');
+  checkTrue('borrowing counts the table\'s share of it', Trap.run(trapped, T, { age: 50, homeEquity: 'borrow' }).inputs.extraCashCents === Math.round(40000000 * R.homeEquity.borrowShareOfEquity));
+  checkTrue('the earliest age not trapped is found per path', by(soon, 'sepp').earliestAge === 50 && by(soon, 'ladder').earliestAge > 52);
+  checkTrue('every path totals its federal tax; the bridge alone pays none on cash and basis', by(soon, 'bridge').taxCents === 0 && by(soon, 'ladder').taxCents > 0 && by(soon, 'sepp').taxCents > 0);
+  checkTrue('no date of birth: incomplete, asking for it', Trap.run(Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult' })] }), T, {}).missing[0] === 'dob');
+  const trapRoom = fs.readFileSync(path.join(ROOT, 'rooms/middle-class-trap.html'), 'utf8');
+  checkTrue('the room names both sides with their sources, from the debates table', /middleClassTrap/.test(trapRoom) && /s\.source/.test(trapRoom));
+  checkTrue('...and writes nothing', trapRoom.indexOf('Spine.set(') === -1 && trapRoom.indexOf('Spine.updateProfile(') === -1);
+
+  /* -- K3: every debate has sources for every side and a flip point ------------------ */
+  const list = Debates.list(T);
+  check('seven debates in the starter set', list.length, 7);
+  checkTrue('every side has its best case and a source; every debate a flip point and an engine function', list.every(d => d.sides.length >= 2 && d.sides.every(s => s.case && s.source) && d.flip && d.flip.label && typeof Debates.FN[d.fn] === 'function'));
+  checkTrue('no side text carries an em-dash or "you should"', list.every(d => d.sides.every(s => s.case.indexOf('—') === -1 && !/you should/i.test(s.case))));
+  /* the flip: moving the key input across it changes the answer the expected way */
+  const withMortgage = rate => Schema.createHousehold(Object.assign({}, Demo.build(), { debts: [Schema.createDebt({ type: 'mortgage', balanceCents: 30000000, rate: rate })] }));
+  check('a 1% mortgage: invest, in every band', Debates.run('mortgageVsInvest', withMortgage(0.01), T).value, 'b');
+  check('a 9% mortgage: pay it off, in every band', Debates.run('mortgageVsInvest', withMortgage(0.09), T).value, 'a');
+  check('a 5% mortgage sits inside the bands: it depends', Debates.run('mortgageVsInvest', withMortgage(0.05), T).value, 'cantTell');
+  checkTrue('...and the flip point names the rate', /5\.0%/.test(Debates.run('mortgageVsInvest', withMortgage(0.05), T).flip.words));
+  const withLoan = rate => Schema.createHousehold(Object.assign({}, Demo.build(), { debts: [Schema.createDebt({ type: 'student_loan', balanceCents: 2000000, rate: rate })] }));
+  check('student loans at 1.5%: invest; at 9%: pay them off', Debates.run('studentLoansVsInvest', withLoan(0.015), T).value + Debates.run('studentLoansVsInvest', withLoan(0.09), T).value, 'ba');
+  const roth = Debates.run('rothVsTraditional', Demo.build(), T);
+  checkTrue('Roth or traditional on the demo: 22% now against 12% later says traditional', roth.value === 'a' && roth.flip.value === 0.22 && roth.flip.at === 0.12);
+  const rent = p => Debates.run('rentVsBuy', Demo.build(), T, { priceCents: p });
+  checkTrue('rent or buy moves with the price: cheap favours buying, dear favours renting, between is neutral', rent(15000000).value === 'a' && rent(60000000).value === 'b' && rent(30000000).value === 'cantTell');
+  checkTrue('...the ratio is the price over the yearly rent', rent(30000000).flip.value === Math.round(30000000 / (Schema.rentMonthlyCents(Demo.build()).cents * 12) * 10) / 10);
+  const omy = Debates.run('oneMoreYear', Demo.build(), T);
+  checkTrue('one more year on the demo: the pot does not support the spending yet, and the year closes a stated amount', omy.value === 'a' && omy.flip.distance < 0);
+  const four = Debates.run('fourPercent', Demo.build(), T);
+  checkTrue('4% or lower: never a side, always the years between', four.value === 'cantTell' && four.flip.distance > 0);
+  checkTrue('the trap debate runs the trap engine and answers solvable for the trapped household', Debates.run('middleClassTrap', trapped, T, { age: 50 }).value === 'b');
+  checkTrue('a missing input says which room to fill', !Money.isOk(Debates.run('mortgageVsInvest', Demo.build(), T)) && /Debt Payoff/.test(Debates.run('mortgageVsInvest', Demo.build(), T).reason));
+  /* shareable under the H8 rules */
+  const card = ShareCard.make('debate', Demo.build(), T, { debate: 'rothVsTraditional', result: roth });
+  checkTrue('a debate shares as its verdict only: no cents, renders from the fields alone', card.ok && ShareCard.leaks(ShareCard.link(card), Demo.build()).length === 0 && /Roth or traditional: traditional/.test(ShareCard.render(ShareCard.decode(ShareCard.encode(card))).title));
+  const debRoom = fs.readFileSync(path.join(ROOT, 'rooms/debates.html'), 'utf8');
+  checkTrue('the Referee never says "you should"', !/you should/i.test(debRoom.replace(/Never "you should"/, '')) && debRoom.indexOf('Spine.set(') === -1);
+  ['middle-class-trap', 'debates'].forEach(id => checkTrue(id + ' is registered', !!Registry.byId(id)));
 })();
 
 /* ==========================================================================

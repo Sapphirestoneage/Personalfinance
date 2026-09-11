@@ -120,6 +120,8 @@
     zipPrefixes: 'zip_prefixes.json',
     aca: 'aca_2026.json',
     downPayment: 'down_payment.json',
+    earlyAccessRules: 'early_access_rules_2026.json',
+    debates: 'debates.json',
     weddingDefaults: 'wedding_defaults.json',
     stateBrackets: 'state_brackets_2026.json'
   };

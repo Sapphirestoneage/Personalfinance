@@ -13347,6 +13347,42 @@ off changing only the benefit, the wedding build-up and its target
 month), the render, features and forms gates on the four rooms, the
 phone walk.
 
+## D-218 — K1, K3: the Middle Class Trap Test and the Referee
+
+**Why.** People already argue these debates on podcasts; the app can be
+the referee that runs both sides on the person's own numbers and never
+picks a side in general.
+
+**Decision.** `data/early_access_rules_2026.json` holds every rule for
+reaching retirement money early (the access age, the penalty, the
+seasoning years, the 72(t) method and rate ceiling, the Rule of 55 age,
+the single life expectancy table, the home-equity borrowing share), each
+with its statute or publication named and marked unverified.
+`engines/trap.js` runs four paths year by year from the retirement age to
+the access age: bridge accounts, the Roth conversion ladder, 72(t)
+payments and the Rule of 55, with lead-time savings landing in the bridge,
+federal tax from `engines/tax.js`, the 72(t) payment from
+`engines/projection.js`, verdicts Trapped / Tight / Free with the range
+across the three bands, and the earliest age not trapped per path.
+`rooms/middle-class-trap.html` names both sides with their sources and
+says what the numbers say. `data/debates.json` holds seven debates, each
+side's best case with its source, the fields read and the flip point;
+`engines/debates.js` runs each through the shared engines;
+`rooms/debates.html` shows both sides, the answer as a range, the flip
+point and the distance to it, shareable as the verdict only through a
+`debate` card.
+
+**Replaces or removes.** Nothing: two new rooms, two tables, two engines.
+
+**Stored shape.** No change to `slaf.household.v2`.
+
+**Verified.** `node test/run.js` (the brief's four households: trapped
+in two years under bridge alone, the ladder reaching Free with eight
+years of lead, the ladder unable to start with no bridge, Free under
+every path with a solid bridge; the 72(t) payment to the cent; each
+debate's answer flipping as the key input crosses its flip point), the
+render, features and forms gates on both rooms, the phone walk.
+
 ---
 
 # The Dungeons & Dividends entries

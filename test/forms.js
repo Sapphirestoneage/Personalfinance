@@ -1290,6 +1290,31 @@ const CASES = [
         ['built from 80 guests', /80 guests/.test(sub), true]
       ];
     }
+  },
+  {
+    /* THE MIDDLE CLASS TRAP TEST (K1, D-218): one age box, four paths
+       re-rendered into siblings. */
+    room: '/rooms/middle-class-trap.html',
+    container: '#verdict',
+    seed: 'demo',
+    fields: [{ sel: '#in-age', type: '50' }],
+    expect: async (page) => {
+      const paths = await page.evaluate(() => document.querySelectorAll('#t-paths li').length);
+      const hint = await page.evaluate(() => document.getElementById('t-age-hint').textContent);
+      return [['four paths', paths, 4], ['the typed age is the one bridged', /from 50 to/.test(hint), true]];
+    }
+  },
+  {
+    /* THE REFEREE (K3, D-218): the price box on rent or buy. */
+    room: '/rooms/debates.html',
+    container: '#answer',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('[data-debate="rentVsBuy"]'); },
+    fields: [{ sel: '#in-price', type: '150000' }],
+    expect: async (page) => {
+      const a = await page.evaluate(() => document.getElementById('d-num').getAttribute('data-answer'));
+      return [['a cheap place favours buying', a, 'a']];
+    }
   }
 ];
 

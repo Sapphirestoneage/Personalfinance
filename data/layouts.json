@@ -78,6 +78,7 @@
             "protection",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "tax",
             "estate",
             "giving",
@@ -95,6 +96,7 @@
             "dreamline",
             "reversibility",
             "unlearning",
+            "debates",
             "student-loans",
             "calendar",
             "history",
@@ -186,6 +188,7 @@
             "buckets",
             "reversibility",
             "unlearning",
+            "debates",
             "calendar",
             "history",
             "wrapped"
@@ -208,6 +211,7 @@
             "quit-fund",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "tax",
             "career-move",
             "partner",
@@ -348,7 +352,8 @@
             "week",
             "buckets",
             "giving",
-            "unlearning"
+            "unlearning",
+            "debates"
           ]
         },
         {
@@ -358,6 +363,7 @@
             "coast-date",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "estate",
             "protection",
             "tax",
@@ -466,6 +472,7 @@
             "estate",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "tax",
             "partner",
             "wedding",
@@ -500,6 +507,7 @@
             "skill-tree",
             "exercises",
             "unlearning",
+            "debates",
             "health"
           ]
         },
@@ -628,7 +636,9 @@
             "giving",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "unlearning",
+            "debates",
             "reversibility",
             "worth"
           ]
@@ -773,6 +783,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "worth",
             "reversibility",
             "rerank",
@@ -799,6 +810,7 @@
             "giving",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "get-help",
             "walk",
             "data",
@@ -890,6 +902,7 @@
             "career-move",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "estate",
             "protection",
             "partner",
@@ -912,6 +925,7 @@
             "exercises",
             "ratios",
             "unlearning",
+            "debates",
             "quick-math",
             "credential",
             "hassle",
@@ -988,6 +1002,7 @@
             "debt-payoff",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "week",
             "dreamline",
             "enough",
@@ -1047,6 +1062,7 @@
             "windfall",
             "buckets",
             "unlearning",
+            "debates",
             "variable-income",
             "car",
             "timeline",
@@ -1202,6 +1218,7 @@
             "estate",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "history",
             "wrapped"
           ]
@@ -1214,7 +1231,8 @@
             "week",
             "buckets",
             "rerank",
-            "unlearning"
+            "unlearning",
+            "debates"
           ],
           "note": "The part that is not about money at all."
         },
@@ -1306,12 +1324,14 @@
             "wedding",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "enough",
             "fulfillment",
             "week",
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "reversibility",
             "worth",
             "giving"
@@ -1430,6 +1450,7 @@
             "estate",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "doors"
           ]
         },
@@ -1462,6 +1483,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "giving",
             "what-if-life",
             "adventure",
@@ -1555,7 +1577,8 @@
             "wedding",
             "kids",
             "decumulation",
-            "roth-aca"
+            "roth-aca",
+            "middle-class-trap"
           ]
         },
         {
@@ -1569,6 +1592,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "worth",
             "reversibility",
             "giving"
@@ -1658,6 +1682,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "worth",
             "reversibility",
             "rerank",
@@ -1713,6 +1738,7 @@
             "protection",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "fire",
             "coast-date"
           ]
@@ -1815,7 +1841,8 @@
             "credit",
             "kids",
             "week",
-            "unlearning"
+            "unlearning",
+            "debates"
           ],
           "note": "Start Here is in this layer, not layer 0 — the front door has a prerequisite."
         },
@@ -1853,6 +1880,7 @@
             "protection",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "tax",
             "giving",
             "career-move",
@@ -1973,7 +2001,8 @@
             "wedding",
             "kids",
             "decumulation",
-            "roth-aca"
+            "roth-aca",
+            "middle-class-trap"
           ]
         },
         {
@@ -1987,6 +2016,7 @@
             "dreamline",
             "giving",
             "unlearning",
+            "debates",
             "worth",
             "reversibility"
           ]
@@ -2124,6 +2154,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "what-if-life",
             "adventure",
             "fire-lab",
@@ -2137,6 +2168,7 @@
             "variable-income",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "giving",
             "foo-ladder",
             "next-hundred",
@@ -2279,8 +2311,10 @@
             "dreamline",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "buckets",
-            "unlearning"
+            "unlearning",
+            "debates"
           ],
           "note": "Invented or borrowed vocabulary a stranger cannot decode from the words. Six rooms are effectively unnamed until you have been told what they are.",
           "warn": true
@@ -2357,6 +2391,7 @@
             "estate",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "windfall"
           ],
           "note": "What you hold and what protects it. Ten spokes.",
@@ -2416,6 +2451,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "worth",
             "reversibility",
             "giving",
@@ -2478,6 +2514,7 @@
             "adventure",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "big-purchase",
             "housing",
             "down-payment",
@@ -2514,6 +2551,7 @@
             "cant-pay",
             "get-help",
             "unlearning",
+            "debates",
             "reversibility",
             "values",
             "week",
@@ -2664,6 +2702,7 @@
             "adventure",
             "decumulation",
             "roth-aca",
+            "middle-class-trap",
             "ratios",
             "health"
           ]
@@ -2678,6 +2717,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "rerank",
             "worth",
             "reversibility"

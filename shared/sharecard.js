@@ -33,7 +33,7 @@
 })(typeof self !== 'undefined' ? self : null, function (D) {
   'use strict';
   var Money = D.Money, Schema = D.Schema, Tier0 = D.Tier0;
-  var TYPES = ['fiDate', 'savingsRate', 'debtFree', 'runway', 'understanding', 'wrapped', 'unlearn', 'race'];
+  var TYPES = ['fiDate', 'savingsRate', 'debtFree', 'runway', 'understanding', 'wrapped', 'unlearn', 'race', 'debate'];
   /* The only fields a card may carry. Everything is a ratio, a percent, a
      count of months or years, or a year; never cents. */
   var ALLOWED = { t: 'string', y: 'number', m: 'number', p: 'number', d: 'string', at: 'string', h: 'number', n: 'number', r: 'string', z: 'number', w: 'number' };
@@ -108,6 +108,15 @@
       card.line = '$' + card.fields.n + 'K by ' + card.fields.y + (card.fields.w && card.fields.z && card.fields.w !== card.fields.z ? ' (' + card.fields.w + ' to ' + card.fields.z + ')' : '') + '.';
       card.ok = true; return card;
     }
+    if (type === 'debate') {
+      /* K3 (D-218): the verdict only. d is the debate id, r the answer word, n the side index. */
+      var res = o.result, deb = res && res.debate;
+      if (!res || !Money.isOk(res) || !deb) return Object.assign(card, { reason: 'No debate result.' });
+      card.fields.d = String(deb.id); card.fields.r = res.value === 'a' ? 'a' : res.value === 'b' ? 'b' : 'x';
+      card.title = deb.name + ': ' + (res.answerSide ? deb.sides.filter(function (x) { return x.id === res.answerSide; })[0].label : 'it depends');
+      card.line = 'On my numbers, ' + deb.name.toLowerCase() + ' comes out: ' + (res.answerSide ? deb.sides.filter(function (x) { return x.id === res.answerSide; })[0].label.toLowerCase() : 'it depends') + '.';
+      card.ok = true; return card;
+    }
     if (type === 'understanding') {
       if (!D.Doors || !T.ledgerRows) return Object.assign(card, { reason: 'The rows are not loaded.' });
       var u = D.Doors.understanding(h, T, [], T.confidenceWeights);
@@ -139,7 +148,7 @@
     return Object.assign(card, { reason: 'No such card.' });
   }
   var RULE_NAMES = { four_percent: 'The 4% rule', fifty_thirty_twenty: '50/30/20', die_with_zero: 'Die With Zero', max_401k_first: 'Max your 401(k) first', six_months: 'Six months of expenses', pay_off_mortgage: 'Pay off the mortgage early', never_touch_ef: 'Never touch the emergency fund', save_ten_percent: 'Save 10%', hundred_minus_age: '100 minus your age in stocks' };
-  function all(household, tables, opts) { return TYPES.filter(function (t) { return t !== 'wrapped' && t !== 'unlearn' && t !== 'race'; }).map(function (t) { return make(t, household, tables, opts); }).filter(function (c) { return c.ok; }); }
+  function all(household, tables, opts) { return TYPES.filter(function (t) { return t !== 'wrapped' && t !== 'unlearn' && t !== 'race' && t !== 'debate'; }).map(function (t) { return make(t, household, tables, opts); }).filter(function (c) { return c.ok; }); }
   function clean(fields) {
     var out = {};
     Object.keys(fields || {}).forEach(function (k) { if (ALLOWED[k] && typeof fields[k] === ALLOWED[k]) out[k] = fields[k]; });
@@ -159,6 +168,7 @@
     if (f.t === 'debtFree') return { title: 'Debt-free: ' + (f.d ? monthWord(f.d) : 'soon'), line: typeof f.m === 'number' ? f.m + ' month' + (f.m === 1 ? '' : 's') + ' at the current pace.' : '' };
     if (f.t === 'runway') return { title: 'Runway: ' + f.m + ' months', line: 'Cash covers ' + f.m + ' month' + (f.m === 1 ? '' : 's') + ' of spending.' };
     if (f.t === 'understanding') return { title: f.p + '% of the picture', line: 'I understand ' + f.p + '% of my financial picture.' };
+    if (f.t === 'debate') { var names = { middleClassTrap: ['The Middle Class Trap', 'a trap', 'solvable'], mortgageVsInvest: ['Pay off the mortgage or invest', 'pay it off', 'invest'], rothVsTraditional: ['Roth or traditional', 'traditional', 'Roth'], fourPercent: ['4% or lower', '4% holds', 'lower'], oneMoreYear: ['One more year', 'one more year', 'go now'], rentVsBuy: ['Rent or buy', 'buy', 'rent'], studentLoansVsInvest: ['Pay off student loans or invest', 'pay them off', 'invest'] }; var nm = names[f.d] || [String(f.d), 'the first side', 'the second side']; var word = f.r === 'a' ? nm[1] : f.r === 'b' ? nm[2] : 'it depends'; return { title: nm[0] + ': ' + word, line: 'On my numbers, ' + nm[0].toLowerCase() + ' comes out: ' + word + '.' }; }
     if (f.t === 'race') return { title: 'My ' + (f.n === 100 ? 'first' : 'next') + ' $100K: ' + f.y, line: '$' + f.n + 'K by ' + f.y + (f.w && f.z && f.w !== f.z ? ' (' + f.w + ' to ' + f.z + ')' : '') + '.' };
     if (f.t === 'wrapped') {
       var days = Number(f.d);
