@@ -1165,7 +1165,11 @@
     if (o && o.agrees === false) {
       throw new Error('The registry does not list ' + f.owner + ' as a writer of ' + o.path + ' — fix shared/registry.js before writing ' + fieldId);
     }
-    return f.write(value, ctx || null);
+    var out = f.write(value, ctx || null);
+    /* One line of a repeat row got a value: its "not sure yet" is over (D-209).
+       The spine clears the field-level mark itself on save. */
+    if (ctx && ctx.itemId && value !== null && value !== undefined && Spine.notSureOf && Spine.notSureOf(fieldId + ':' + ctx.itemId)) Spine.setNotSure(fieldId + ':' + ctx.itemId, null);
+    return out;
   }
 
   function writable() {

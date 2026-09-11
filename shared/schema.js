@@ -43,7 +43,7 @@
      beside the version in every footer and in every backup, so a phone
      showing an old page can be told apart from a bug. version.json carries
      the same string; `node tools/stamp-build.js` sets both to today. D-202. */
-  var BUILD = '2026-09-11 19:29Z';
+  var BUILD = '2026-09-11 19:50Z';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -2167,6 +2167,18 @@
            that were never typed over. Read as real numbers everywhere and
            shown as guesses everywhere, until replaced. D-094. */
         guessed: {},
+        /* { fieldId or fieldId:itemId: { at, expectedBy } } — rows the person
+           marked "Not sure yet", with the month they expect to know by
+           (YYYY-MM) or null. Never a value: a row here is still blank in
+           every formula, and it counts for more than blank and less than
+           a number in the understanding line. Cleared the moment the row
+           gets a value. D-209. */
+        notSure: {},
+        /* The life change waiting for its short sheet (G2.6, D-209):
+           { field, from, to, at, dismissed } when the situation changed
+           and the rows that change meaning have not been walked yet;
+           null otherwise. Cleared by the sheet's Done. */
+        reopen: null,
         /* { fieldId: roomId } — the room that last changed the field, so
            the one-pager can show "from The Statement" beside a number it
            did not enter itself. D-095. */
@@ -2826,7 +2838,9 @@
      after this file. */
   /* 'suggested': a value the app guessed (shared/suggest.js) and the person
      confirmed with one tap; it is entered, at confidence roughly. D-205. */
-  var SOURCES = ['typed', 'pasted', 'imported', 'screenshot', 'migrated', 'block-default', 'quote', 'suggested'];
+  /* 'memory': the person typed it from memory, not from a statement (G2.7,
+     D-209): a real value, kept below confirmed until they look it up. */
+  var SOURCES = ['typed', 'pasted', 'imported', 'screenshot', 'migrated', 'block-default', 'quote', 'suggested', 'memory'];
   var CONFIDENCES = ['sure', 'roughly', 'unsure', 'unknown'];
   /* Rounding unit in cents for a figure built on inputs at this confidence:
      to the cent when sure, to the hundred when roughly or unsure, to the
@@ -2862,6 +2876,13 @@
    * asOf null and confidence 'unknown' when nothing is known about the
    * figure; never a guess at a date.
    */
+  /** The "Not sure yet" mark on a row, or null (D-209). key is a field id,
+      or fieldId:itemId for one line of a repeat row. */
+  function notSure(household, key) {
+    var m = (household && household.meta && household.meta.notSure) || {};
+    var v = m[key];
+    return v && typeof v === 'object' ? { at: v.at || null, expectedBy: v.expectedBy || null } : null;
+  }
   function meta(household, pathOrId) {
     var ids = fieldIdsFor(pathOrId);
     var fieldId = ids.length ? ids[0] : (typeof pathOrId === 'string' ? pathOrId : null);
@@ -2898,7 +2919,7 @@
 
   return {
     SCHEMA_VERSION: SCHEMA_VERSION,
-    SOURCES: SOURCES, CONFIDENCES: CONFIDENCES, ROUNDING: ROUNDING,
+    SOURCES: SOURCES, CONFIDENCES: CONFIDENCES, ROUNDING: ROUNDING, notSure: notSure,
     useFieldMap: useFieldMap, get: get, meta: meta, confidenceOf: confidenceOf, precisionOf: precisionOf, roundForConfidence: roundForConfidence,
     ASSUMPTION_DEFAULTS: ASSUMPTION_DEFAULTS,
     FIELDS: FIELDS,

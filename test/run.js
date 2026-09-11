@@ -10712,7 +10712,7 @@ section('15.1 / 15.10: as-of, source and confidence on every owned number (D-181
   check('...typed, from its room', Schema.meta(imported, 'cashSavings').source + '/' + Schema.meta(imported, 'cashSavings').room, 'typed/start');
   checkTrue('the migration is stamped once', !!imported.meta.fieldsMigratedAt);
   /* The vocabulary is fixed. */
-  check('eight sources, suggested last (D-205)', Schema.SOURCES.join(','), 'typed,pasted,imported,screenshot,migrated,block-default,quote,suggested');
+  check('nine sources, suggested then memory (D-205, D-209)', Schema.SOURCES.join(','), 'typed,pasted,imported,screenshot,migrated,block-default,quote,suggested,memory');
   check('four confidences', Schema.CONFIDENCES.join(','), 'sure,roughly,unsure,unknown');
   checkTrue('meta.fields is catalogued', !!Schema.FIELDS['meta.fields']);
   checkTrue('the undo log skips the facts', fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8').indexOf("'meta.fields': true") > -1);
@@ -11739,7 +11739,7 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
   checkTrue('a computed row is grey with its inputs named, each missing one a link', /is-computed/.test(html) && /LedgerRows\.inputsOf\(/.test(html) && /\(missing\)/.test(html));
   checkTrue('a lookup row shows its where sentence until entered', /row\.where/.test(html));
   checkTrue('every row shows the rooms that read it', /LedgerRows\.readersOf\(/.test(html) && /Read by/.test(html));
-  checkTrue('the status glyphs: sure, roughly, missing, computed, stale', /sure: '●', roughly: '◐', missing: '○', computed: '=', stale: '◌'/.test(html));
+  checkTrue('the status glyphs: sure, roughly, memory, missing, not sure yet, computed, stale', /sure: '●', roughly: '◐', memory: '◑', missing: '○', notSure: '\?', computed: '=', stale: '◌'/.test(html));
   checkTrue('a search box filters by label, built once', /LIVE-FORM: built once/.test(html) && /id="q"/.test(html) && (html.match(/<input/g) || []).length === 1);
   checkTrue('the Empyrean is one line with no number', /What Matters\. No numbers there\./.test(html));
   const NAMES = Sp.all().map(s => s.shadow.name);
@@ -12482,7 +12482,7 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
   const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
   checkTrue('the ask mounts from Progress.mount, so no room needs wiring, never on the Ledger or the First Round', /Ask\.mount\(roomId, host\)/.test(prog) && /\['ledger', 'first-round', 'start', 'express'\]/.test(prog));
   const askSrc = fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8');
-  checkTrue('the ask writes through the owner and declares LIVE-FORM', /Ownership\.write\(p\.row\.id, value, ctx\)/.test(askSrc) && /LIVE-FORM: built once/.test(askSrc) && !/Spine\.(set|upsert)/.test(askSrc));
+  checkTrue('the ask writes through the owner and declares LIVE-FORM (setNotSure is a mark, never a value)', /Ownership\.write\(p\.row\.id, value, ctx\)/.test(askSrc) && /LIVE-FORM: built once/.test(askSrc) && !/Spine\.(set(?!NotSure)|upsert)/.test(askSrc));
   checkTrue('at most one ask per visit', /doc\.getElementById\('slaf-ask'\)\) return null/.test(askSrc));
   const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   checkTrue('the Ledger home asks which door, shows six, one recommended with its reason', /Which one do you want to go into now\?/.test(led) && /id="door-you"/.test(led) && /is-recommended/.test(led) && /rec\.reason/.test(led));
@@ -12511,13 +12511,173 @@ section('Express: a second view of the same rows (D-208)');
   checkTrue('a suggestion is a chip beside the box, never typed into it', /Suggested ' \+ esc\(s\.display\) \+ ' · use it/.test(html) && /data-x-use/.test(html));
   checkTrue('a sticky bar carries the understanding line and a jump menu', /class="xbar"/.test(html) && /position: sticky/.test(html) && /id="xjump"/.test(html) && /Doors\.understanding\(/.test(html));
   checkTrue('lists are repeatable: debts, accounts, sources, yearly lines each get + Add another', /\+ Add another/.test(html) && /debts: \{ kind: 'debt'/.test(html) && /assets: \{ kind: 'asset'/.test(html) && /incomeSources: \{ kind: 'incomeSource'/.test(html) && /annualLines: \{ kind: 'annualLine'/.test(html));
-  checkTrue('a list item is named by lender and last four, never Card 1', /lender and last four/.test(html) && !/Card 1/.test(html));
-  checkTrue('every box carries its unit (gross or net, the period) beside it', /grossNet\(row\)/.test(html) && /gross, a year/.test(html) && /a month/.test(html));
+  checkTrue('a list item is named by lender and last four, never Card 1', /data-x-add-last4/.test(html) && /' ••' \+ last4/.test(html) && !/Card 1/.test(html));
+  checkTrue('every box carries its unit (gross or net, the period) beside it, from the one reader', /Ask\.unitHtml\(row, null, 'data-x-period'\)/.test(html) && /LedgerRows\.unitLabel\(row\)/.test(html));
   checkTrue('an emptied box writes null, never zero', /if \(before !== null && before !== undefined\) write\(n, null, 'typed'\)/.test(html));
   checkTrue('the one parser: Ask.parse, shared with the inline ask', /Ask\.parse\(row, raw\)/.test(html));
   checkTrue('the front door offers both: walk me through it, give me the whole form; fi defaults to Express', (function () { const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'); return /Walk me through it/.test(idx) && /Give me the whole form/.test(idx) && /Prefs\.get\('door', null\) === 'fi'/.test(idx); })());
   checkTrue('addItem goes through the list owner and the registry agrees', ['debt', 'asset', 'incomeSource', 'annualLine'].every(k => Own.LISTS[k] && Registry.writersOf(Own.LISTS[k].path).indexOf(Own.LISTS[k].owner) !== -1));
   checkTrue('Express is in every arrangement beside the First Round', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('express') >= 0)); })());
+})();
+
+/* ==========================================================================
+   G2: numbers that stay trustworthy (D-209)
+   ========================================================================== */
+section('G2: moving rows, the life-change sheet, not sure yet and from memory, units (D-209)');
+(function () {
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ask = require(path.join(ROOT, 'shared/ask.js'));
+  const Reopen = require(path.join(ROOT, 'shared/reopen.js'));
+  const Doors = require(path.join(ROOT, 'shared/doors.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  const T = Ref.loadSync ? Ref.loadSync() : (function () { const o = {}; Object.keys(Ref.TABLE_FILES).forEach(k => { try { o[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } }); return o; })();
+  LR.use(T.ledgerRows);
+  const rowsTable = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+
+  /* -- 5. moves: every row says, and the moving list is what the refresh walks */
+  checkTrue('every row says whether it moves', rowsTable.rows.every(r => r.moves === true || r.moves === false));
+  checkTrue('balances, rates and spending move', ['cashSavings', 'debtBalance', 'debtRate', 'foodMonthly', 'grossAnnualIncome'].every(id => LR.byId(id).moves === true));
+  checkTrue('age, ZIP and filing status do not', ['dob', 'zip', 'filingStatus', 'state', 'employmentStatus'].every(id => LR.byId(id).moves === false));
+  const hd = Demo.build();
+  const mv = LR.moving(hd, T);
+  checkTrue('the demo household has moving lines with a value', mv.length >= 5);
+  checkTrue('one line per debt, keyed by row and item', mv.filter(m => m.row.id === 'debtBalance').length === hd.debts.length && mv.filter(m => m.row.id === 'debtBalance').every(m => m.key === 'debtBalance:' + m.item.id));
+  checkTrue('no computed row is asked', mv.every(m => m.row.kind !== 'computed'));
+  checkTrue('no fixed row is asked', mv.every(m => m.row.moves === true));
+  checkTrue('a blank moving row is not in the list (it is a door’s question)', mv.every(m => Money.isEntered(m.value)));
+  const refresh = fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8');
+  checkTrue('the Refresh walks LedgerRows.moving, built once, and writes through the owner with the item id', /LedgerRows\.moving\(h, TABLES\)/.test(refresh) && /LIVE-FORM: built once/.test(refresh) && /Ownership\.write\(r\.row\.id, v, r\.item \? \{ itemId: r\.item\.id \} : null\)/.test(refresh));
+  checkTrue('an unchanged figure is re-confirmed, an empty box writes nothing', /else Spine\.confirm\(r\.row\.id\)/.test(refresh) && /if \(raw === ''\) return;/.test(refresh));
+  checkTrue('a since-last-time line per row, from the last refresh snapshot’s rows', /data-since/.test(refresh) && /LAST\.rows\[r\.key\]/.test(refresh) && /reason: 'refresh'/.test(refresh));
+  checkTrue('the snapshot record carries rows', /rows: \(entry && entry\.rows\) \|\| null/.test(fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8')));
+
+  /* -- 7. two more states besides blank ----------------------------------- */
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.reset && Spine.reset();
+  Spine.updateProfile(Schema.createHousehold());
+  Spine.ensurePrimaryPerson && Spine.ensurePrimaryPerson('You');
+  Spine.setNotSure('healthMonthly', { expectedBy: '2027-01' });
+  let h = Spine.getProfile();
+  check('not sure yet is a mark with the month, never a value', JSON.stringify(Schema.notSure(h, 'healthMonthly')).indexOf('"expectedBy":"2027-01"') > 0, true);
+  check('the row still reads incomplete, never zero', Money.isOk(Own.FIELDS.healthMonthly.read(h)), false);
+  const st = LR.status(h, LR.byId('healthMonthly'), T);
+  check('its state is notSure', st.state, 'notSure');
+  checkTrue('a bad month is dropped, the mark kept', (Spine.setNotSure('givingTarget', { expectedBy: 'soon' }) || {}).expectedBy === null);
+  checkTrue('it is not asked again before the month (parked)', Ask.parked(Spine.getProfile(), 'healthMonthly') === true);
+  Spine.setNotSure('healthMonthly', { expectedBy: '2020-01' });
+  checkTrue('a month that has passed reopens the question', Ask.parked(Spine.getProfile(), 'healthMonthly') === false);
+  Own.write('healthMonthly', 40000);
+  h = Spine.getProfile();
+  check('a value clears the mark', Schema.notSure(h, 'healthMonthly'), null);
+  check('and the row is sure', LR.status(h, LR.byId('healthMonthly'), T).state, 'sure');
+  Spine.tagWrite({ source: 'memory', confidence: 'roughly' });
+  Own.write('foodMonthly', 60000);
+  h = Spine.getProfile();
+  check('from memory is its own state', LR.status(h, LR.byId('foodMonthly'), T).state, 'memory');
+  check('with its value read as entered', Own.FIELDS.foodMonthly.read(h).value, 60000);
+  Spine.confirm('foodMonthly');
+  check('confirming lifts it to sure', LR.status(Spine.getProfile(), LR.byId('foodMonthly'), T).state, 'sure');
+  const W = T.confidenceWeights.rowStates;
+  checkTrue('both count for more than blank and less than confirmed', W.missing < W.notSure && W.notSure < W.memory && W.memory < W.sure);
+  checkTrue('not sure yet counts less than a suggestion, from memory less than roughly', W.notSure < W.suggested && W.memory < W.roughly);
+  /* the understanding line uses them */
+  const h2 = Schema.createHousehold(); h2.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })];
+  const u0 = Doors.understanding(h2, T, [], T.confidenceWeights).percent;
+  h2.meta.notSure = { cashSavings: { at: '2026-09-01T00:00:00Z', expectedBy: null } };
+  const u1 = Doors.understanding(h2, T, [], T.confidenceWeights).percent;
+  checkTrue('a not-sure mark raises the line a little, from nothing', u1 >= u0);
+  checkTrue('the item mark clears when the item gets a value', (function () {
+    Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+    const d = Own.addItem('debt', { label: 'Amex ••1003', type: 'credit_card' });
+    Spine.setNotSure('debtMinPayment:' + d.id, null); Spine.setNotSure('debtMinPayment:' + d.id, { expectedBy: null });
+    const p = Ask.pick(Spine.getProfile(), 'debt-payoff', T, []);
+    const parked = !p || p.row.id !== 'debtMinPayment';
+    Own.write('debtMinPayment', 6400, { itemId: d.id });
+    return parked && Schema.notSure(Spine.getProfile(), 'debtMinPayment:' + d.id) === null;
+  })());
+
+  /* -- 6. a life change reopens only what it touches ---------------------- */
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+  Own.write('employmentStatus', 'unemployed');
+  Own.write('cashSavings', 300000);
+  Own.write('zip', '12203');
+  check('no sheet before a change', Spine.reopenPending(), null);
+  Own.write('employmentStatus', 'employed');
+  const rec = Spine.reopenPending();
+  checkTrue('the change is recorded: from, to, when', rec && rec.field === 'employmentStatus' && rec.from === 'unemployed' && rec.to === 'employed' && typeof rec.at === 'string' && rec.dismissed === false);
+  h = Spine.getProfile();
+  check('cash was not cleared', Own.FIELDS.cashSavings.read(h).value, 300000);
+  check('the ZIP was not cleared', h.zip, '12203');
+  const rr = Reopen.rows(h, rec, T).map(r => r.id);
+  checkTrue('between jobs → working asks pay, the match, the workplace contribution and the health plan', ['grossAnnualIncome', 'employerMatch', 'contributionPercent', 'healthCover'].every(id => rr.indexOf(id) >= 0), rr.join(','));
+  checkTrue('and nothing that did not change meaning', ['cashSavings', 'zip', 'dob', 'foodMonthly', 'debtBalance'].every(id => rr.indexOf(id) === -1));
+  checkTrue('rows that no longer apply are not on the sheet', rr.indexOf('unemployment') === -1 && rr.indexOf('lastPay') === -1);
+  checkTrue('a computed row never is', rr.every(id => LR.byId(id).kind !== 'computed'));
+  checkTrue('the sheet loads the reopen map from the row registry', rowsTable.reopen.employmentStatus.rows.indexOf('employerMatch') >= 0 && typeof rowsTable.reopen.employmentStatus.why === 'string');
+  Own.write('employmentStatus', 'unemployed');
+  const back = Reopen.rows(Spine.getProfile(), Spine.reopenPending(), T).map(r => r.id);
+  checkTrue('and back: the benefit and the last pay come up, the match does not', back.indexOf('unemployment') >= 0 && back.indexOf('lastPay') >= 0 && back.indexOf('employerMatch') === -1, back.join(','));
+  Spine.setReopen(null);
+  check('Done clears it', Spine.reopenPending(), null);
+  const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('mounted from Progress on the next page, never on the First Round or Express', /Reopen\.mountLater\(host\)/.test(prog) && /\['first-round', 'express'\]\.indexOf\(roomId\) === -1 && !document\.getElementById\('slaf-reopen'\)/.test(prog));
+  const reopenSrc = fs.readFileSync(path.join(ROOT, 'shared/reopen.js'), 'utf8');
+  checkTrue('the sheet writes through the owner, built once', /D\.Ownership\.write\(n\.row\.id, v, null\)/.test(reopenSrc) && /LIVE-FORM: built once/.test(reopenSrc) && !/Spine\.(set(?!Reopen)|upsert)/.test(reopenSrc));
+
+  /* -- 8. units beside every box, period conversion, percent slips, names -- */
+  const cents = rowsTable.rows.filter(r => r.unit === 'cents' && r.kind !== 'computed');
+  checkTrue('every money row states gross or net or that it is a balance, and the period', cents.every(r => /^(gross|net), (a month|a year|a week|every two weeks)$|^a balance, today$|^a year$/.test(LR.unitLabel(r))), cents.filter(r => !/^(gross|net), |^a balance|^a year$/.test(LR.unitLabel(r))).map(r => r.id + '=' + LR.unitLabel(r)).join(' '));
+  check('gross pay is gross, a year', LR.unitLabel(LR.byId('grossAnnualIncome')), 'gross, a year');
+  check('food is net, a month', LR.unitLabel(LR.byId('foodMonthly')), 'net, a month');
+  check('the benefit is gross, a week', LR.unitLabel(LR.byId('unemployment')), 'gross, a week');
+  check('a balance has no period', LR.period(LR.byId('cashSavings')), null);
+  check('a week to a month: 52 over 12', Money.convertPeriod(50000, 'week', 'month'), 216667);
+  check('a year to a month', Money.convertPeriod(120000, 'year', 'month'), 10000);
+  check('a month to a year', Money.convertPeriod(100000, 'month', 'year'), 1200000);
+  check('every two weeks to a month: 26 over 12', Money.convertPeriod(100000, 'fortnight', 'month'), 216667);
+  check('blank converts to nothing', Money.convertPeriod(null, 'week', 'month'), null);
+  const conv = Ask.toRowPeriod(LR.byId('foodMonthly'), 15000, 'week');
+  check('typed a week into a monthly row: converted before saving', conv.value, 65000);
+  checkTrue('and it says so on screen', /\$150\.00 a week is \$650\.00 a month\./.test(conv.note) || /\$150 a week is \$650 a month\./.test(conv.note), conv.note);
+  check('same period: untouched', Ask.toRowPeriod(LR.byId('foodMonthly'), 15000, 'month').note, null);
+  const s1 = Ask.slip({ unit: 'rate', id: 'debtRate' }, '0.24');
+  checkTrue('0.24 on a rate box asks 24% or 0.24%', s1 && /24% or 0\.24%/.test(s1.question) && s1.options[0].value === 0.24 && s1.options[1].value === 0.0024);
+  const s2 = Ask.slip({ unit: 'rate', id: 'debtRate' }, '2499');
+  checkTrue('2499 asks 24.99%', s2 && s2.options[0].value === 0.2499 && s2.options[1].value === null);
+  check('24.99 reads one way, no question', Ask.slip({ unit: 'rate', id: 'debtRate' }, '24.99'), null);
+  const s3 = Ask.slip({ unit: 'percent', id: 'contributionPercent' }, '0.04');
+  checkTrue('0.04 on the whole-number contribution box offers 4', s3 && s3.options[0].value === 4);
+  check('a money box never asks', Ask.slip({ unit: 'cents' }, '0.5'), null);
+  check('a blank never asks', Ask.slip({ unit: 'rate' }, ''), null);
+  const askSrc2 = fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8');
+  const xp = fs.readFileSync(path.join(ROOT, 'rooms/express.html'), 'utf8');
+  checkTrue('the ask and Express both put the slip question before the write', /data-ask-slipopt/.test(askSrc2) && /data-x-slipopt/.test(xp) && /Ask\.slip\(row, raw\)/.test(xp));
+  checkTrue('both carry Not sure yet and from memory', /data-ask-notsure/.test(askSrc2) && /data-ask-memory/.test(askSrc2) && /data-x-notsure/.test(xp) && /data-x-memory/.test(xp));
+  checkTrue('from memory tags the write, never the value', /tagWrite\(\{ source: 'memory', confidence: 'roughly' \}\)/.test(askSrc2) && /tagWrite\(\{ source: 'memory', confidence: 'roughly' \}\)/.test(xp));
+  checkTrue('the period select beside a money box with a period, in the ask and Express', /data-ask-period/.test(askSrc2) && /data-x-period/.test(xp) && /Ask\.toRowPeriod\(row, v, per\.value\)/.test(xp));
+
+  /* -- 9. one fact, one question: a row with a value is never asked again -- */
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+  Own.write('employmentStatus', 'employed');
+  const askable = rowsTable.rows.filter(r => r.askIn && r.kind !== 'computed' && !r.repeat && ['cents', 'percent', 'rate', 'months', 'years', 'count', 'bool'].indexOf(r.unit) >= 0 && typeof Own.FIELDS[r.id].write === 'function');
+  const sample = { cents: 12345, percent: 6, rate: 0.05, months: 6, years: 20, count: 2, bool: true };
+  let askedAgain = [];
+  askable.forEach(r => {
+    try { Own.write(r.id, r.unit === 'percent' && r.id !== 'contributionPercent' ? 0.06 : sample[r.unit]); } catch (e) { return; }
+    const p = Ask.pick(Spine.getProfile(), r.askIn, T, []);
+    if (p && p.row.id === r.id) askedAgain.push(r.id);
+  });
+  checkTrue('after a value lands, no room asks that row again (' + askable.length + ' rows tried)', askedAgain.length === 0, askedAgain.join(','));
+  const bad = [];
+  rowsTable.rows.forEach(r => { if (r.askIn && r.kind !== 'computed' && !r.repeat) { const s = LR.status(Spine.getProfile(), r, T); if (s.state !== 'missing' && s.state !== 'notSure' && Ask.pick(Spine.getProfile(), r.askIn, T, []) && Ask.pick(Spine.getProfile(), r.askIn, T, []).row.id === r.id) bad.push(r.id); } });
+  checkTrue('and the ask never picks an entered row', bad.length === 0, bad.join(','));
+
+  /* -- 10. field budget: already the build gate (D-205) -------------------- */
+  checkTrue('every row names what it unlocks', rowsTable.rows.every(r => typeof r.unlocks === 'string' && r.unlocks.length > 0));
 })();
 
 /* ==========================================================================

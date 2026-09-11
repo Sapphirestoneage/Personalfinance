@@ -961,7 +961,7 @@
          hidden branch - is not part of the room yet, so it neither folds
          nor writes itself to the URL. */
       return n.tagName === 'SECTION' && n.id && !n.hidden
-        && n.id !== 'slaf-progress' && n.id !== 'slaf-notapply' && n.id !== 'slaf-ask'
+        && n.id !== 'slaf-progress' && n.id !== 'slaf-notapply' && n.id !== 'slaf-ask' && n.id !== 'slaf-reopen'
         && (typeof getComputedStyle !== 'function' || getComputedStyle(n).display !== 'none');
     });
     if (lifted) host.classList.add('slaf-folded');
@@ -1144,15 +1144,29 @@
        mounted from here so no room needs wiring. ask.js pulls in what the
        room does not carry. Never on the Ledger or the First Round, which
        ask their own way, and never twice. */
-    if (['ledger', 'first-round', 'start', 'express'].indexOf(roomId) === -1 && !document.getElementById('slaf-ask')) {
-      var askSrc = (typeof location !== 'undefined' && location.pathname.indexOf('/rooms/') !== -1 ? '../' : '') + 'shared/ask.js';
-      if (g.SLAF.Ask) g.SLAF.Ask.mount(roomId, host);
-      else {
+    var base = (typeof location !== 'undefined' && location.pathname.indexOf('/rooms/') !== -1 ? '../' : '');
+    function withAsk(fn) {
+      if (g.SLAF.Ask) { fn(); return; }
+      var sc = document.createElement('script');
+      sc.src = base + 'shared/ask.js';
+      sc.onload = fn;
+      document.head.appendChild(sc);
+    }
+    /* A life change waiting for its sheet (G2.6, D-209): shown on the next
+       page opened, before the room's own question. Not on the First Round or
+       Express, which show every row live already. */
+    var pendingChange = Spine && Spine.reopenPending ? Spine.reopenPending() : null;
+    if (pendingChange && !pendingChange.dismissed && ['first-round', 'express'].indexOf(roomId) === -1 && !document.getElementById('slaf-reopen')) {
+      withAsk(function () {
+        if (g.SLAF.Reopen) { g.SLAF.Reopen.mountLater(host); return; }
         var sc = document.createElement('script');
-        sc.src = askSrc;
-        sc.onload = function () { if (g.SLAF.Ask) g.SLAF.Ask.mount(roomId, host); };
+        sc.src = base + 'shared/reopen.js';
+        sc.onload = function () { if (g.SLAF.Reopen) g.SLAF.Reopen.mountLater(host); };
         document.head.appendChild(sc);
-      }
+      });
+    }
+    if (['ledger', 'first-round', 'start', 'express'].indexOf(roomId) === -1 && !document.getElementById('slaf-ask')) {
+      withAsk(function () { if (g.SLAF.Ask) g.SLAF.Ask.mount(roomId, host); });
     }
 
     /* A write during a tap (blur → save → change) used to repaint this

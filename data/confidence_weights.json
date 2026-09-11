@@ -17,7 +17,9 @@
     "roughly": 0.85,
     "stale": 0.7,
     "suggested": 0.5,
+    "memory": 0.75,
+    "notSure": 0.25,
     "missing": 0.0,
-    "note": "How much of the picture a Ledger row counts for in 'You understand X%' (D-207): a confirmed number in full, a rough or imported one most of the way, a stale one less, a suggestion the app made but the person has not confirmed half, a blank nothing. The same convention as the asset weights above: chosen so the words mean something, with no research behind the decimals."
+    "note": "How much of the picture a Ledger row counts for in 'You understand X%' (D-207): a confirmed number in full, a rough or imported one most of the way, one typed from memory a little less (D-209), a stale one less again, a suggestion the app made but the person has not confirmed half, a row marked not sure yet a quarter (it is still blank in every formula), a blank nothing. The same convention as the asset weights above: chosen so the words mean something, with no research behind the decimals."
   }
 }

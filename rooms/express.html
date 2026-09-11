@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 19:29Z"/>
+<meta name="slaf-build" content="2026-09-11 19:50Z"/>
 <title>Express · SPARKS</title>
 <meta name="description" content="Every question on one page, grouped by door and level, for anyone who already knows their numbers. The same rows the doors hold, the same owners."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -58,6 +58,10 @@
   .xrow:first-of-type { border-top: 0; }
   .xrow .lab { font-size: var(--text-sm); padding-top: 8px; }
   .xrow .lab .unit { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .xrow .xstates { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-top: var(--space-1); min-height: 20px; }
+  .xrow .xstates .slaf-btn--small { min-height: 32px; padding: 0 var(--space-2); font-size: var(--text-xs); }
+  .xrow .slaf-unit { margin-left: 0; }
+  .xadd [data-x-add-last4] { width: 6.5em; flex: 0 0 auto; }
   .xrow .lab .own { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
   .xrow .ctl .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
   .xrow .ctl input, .xrow .ctl select { font-size: var(--text-md); min-height: 44px; width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
@@ -177,19 +181,10 @@
     if (row.unit === 'bool') return v ? 'true' : 'false';
     return String(v);
   }
-  function unitWord(row) {
-    if (row.unit === 'cents') return /a year|a week/.test(row.label) ? '' : (/a month/.test(row.label) ? '' : 'dollars');
-    if (row.unit === 'percent' || row.unit === 'rate') return 'percent';
-    if (row.unit === 'months') return 'months'; if (row.unit === 'years') return 'years';
-    return '';
-  }
-  function grossNet(row) {
-    if (row.id === 'grossAnnualIncome' || row.id === 'lastPay') return 'gross, a year';
-    if (row.id === 'unemployment') return 'a week, before tax';
-    if (/Monthly$/.test(row.id) || /a month/.test(row.label)) return 'a month';
-    if (/a year/.test(row.label)) return 'a year';
-    return unitWord(row);
-  }
+  /* The unit beside every box comes from the one reader in
+     shared/ledger-rows.js (G2.8, D-209), the same words the ask and the
+     Refresh use; a period select where the row has a period. */
+  function unitHtml(row) { return Ask.unitHtml(row, null, 'data-x-period'); }
 
   /* ---- Building a control, once ----------------------------------------------- */
   function enumValues(row) {
@@ -214,14 +209,27 @@
     var affix = u === 'cents' ? '$' : (u === 'percent' || u === 'rate') ? '' : '';
     var suffix = (u === 'percent' || u === 'rate') ? '%' : u === 'months' ? 'mo' : u === 'years' ? 'yr' : '';
     var ph = u === 'cents' ? 'e.g. 1,200' : u === 'percent' ? 'e.g. 6' : u === 'rate' ? 'e.g. 24.99' : u === 'months' ? 'e.g. 6' : u === 'years' ? 'e.g. 20' : u === 'count' ? 'e.g. 2' : u === 'date' ? 'e.g. 15' : row.id === 'zip' ? 'e.g. 12203' : '';
-    return '<span class="slaf-input-shell">' + (affix ? '<span class="affix">' + affix + '</span>' : '') + '<input type="text" inputmode="' + (u === 'text' ? 'text' : 'decimal') + '" placeholder="' + esc(ph) + '" data-x-input aria-label="' + esc(row.label) + '"/>' + (suffix ? '<span class="affix">' + suffix + '</span>' : '') + '</span>';
+    return '<span class="slaf-input-shell">' + (affix ? '<span class="affix">' + affix + '</span>' : '') + '<input type="text" inputmode="' + (u === 'text' ? 'text' : 'decimal') + '" placeholder="' + esc(ph) + '" data-x-input aria-label="' + esc(row.label) + '"/>' + (suffix ? '<span class="affix">' + suffix + '</span>' : '') + '</span>'
+      + (u === 'cents' ? unitHtml(row) : '');
+  }
+  /* The two states besides blank (G2.7): "Not sure yet", with the month they
+     expect to know by, and "from memory" on the next save. Only on rows a
+     person types, never on a computed one. */
+  function statesHtml(row) {
+    if (row.kind === 'computed') return '';
+    return '<div class="xstates"><span class="slaf-state" data-x-state></span>'
+      + '<button type="button" class="slaf-btn slaf-btn--quiet slaf-btn--small" data-x-notsure>Not sure yet</button>'
+      + '<label class="x-memory"><input type="checkbox" data-x-memory/> from memory</label></div>'
+      + '<div class="x-when" data-x-when hidden><label>Expect to know by <input type="month" data-x-expected aria-label="Expected month"/></label> <button type="button" class="slaf-btn slaf-btn--small" data-x-notsure-save>Mark it</button></div>'
+      + '<div class="x-slip" data-x-slip hidden></div>';
   }
   function rowHtml(row, key, item) {
     var f = Ownership.FIELDS[row.id];
     var owner = f ? SLAF.Registry.byId(f.owner) : null;
     return '<div class="xrow" data-x-row="' + esc(row.id) + '" data-x-key="' + esc(key) + '"' + (item ? ' data-x-item="' + esc(item.id) + '"' : '') + '>'
-      + '<div class="lab">' + esc(row.label) + (grossNet(row) ? '<span class="unit">' + esc(grossNet(row)) + '</span>' : '') + (owner && row.kind !== 'computed' ? '<span class="own">owned by ' + esc(owner.title) + '</span>' : '') + '</div>'
+      + '<div class="lab">' + esc(row.label) + (row.unit !== 'cents' && LedgerRows.unitLabel(row) ? '<span class="unit">' + esc(LedgerRows.unitLabel(row)) + '</span>' : '') + (owner && row.kind !== 'computed' ? '<span class="own">owned by ' + esc(owner.title) + '</span>' : '') + '</div>'
       + '<div class="ctl">' + control(row, key) + '</div>'
+      + statesHtml(row)
       + '<div class="sug" data-x-sug hidden></div><div class="saved" data-x-saved></div></div>';
   }
   function itemLabel(kind, item) { return item.label || item.source || 'Unnamed'; }
@@ -234,7 +242,8 @@
     var L = LISTS[listKey];
     var type = L.kind === 'debt' ? '<select data-x-add-type aria-label="Kind of debt">' + Object.keys(Ask.ENUM_LABELS.debtType).map(function (k) { return '<option value="' + k + '">' + esc(Ask.ENUM_LABELS.debtType[k]) + '</option>'; }).join('') + '</select>'
       : L.kind === 'asset' ? '<select data-x-add-type aria-label="Kind of account"><option value="cash">Cash account</option><option value="investment">Investment account</option><option value="retirement">Retirement account</option><option value="property">Property</option><option value="other">Other</option></select>' : '';
-    return '<div class="xadd" data-x-add="' + esc(listKey) + '"><input type="text" placeholder="' + esc(L.kind === 'debt' ? 'Name it: lender and last four, e.g. Amex ••1003' : L.kind === 'asset' ? 'Name it: e.g. Fidelity Roth ••4471' : L.kind === 'incomeSource' ? 'Name it: e.g. Day job' : 'Name it: e.g. Car insurance') + '" data-x-add-name aria-label="Name"/>' + type + '<button type="button" class="slaf-btn" data-x-add-btn>+ Add another</button></div>';
+    var last4 = (L.kind === 'debt' || L.kind === 'asset') ? '<input type="text" inputmode="numeric" maxlength="4" placeholder="last four" data-x-add-last4 aria-label="Last four digits"/>' : '';
+    return '<div class="xadd" data-x-add="' + esc(listKey) + '"><input type="text" placeholder="' + esc(L.kind === 'debt' ? 'Lender, e.g. Amex' : L.kind === 'asset' ? 'Where it is, e.g. Fidelity Roth' : L.kind === 'incomeSource' ? 'Name it: e.g. Day job' : 'Name it: e.g. Car insurance') + '" data-x-add-name aria-label="Name"/>' + last4 + type + '<button type="button" class="slaf-btn" data-x-add-btn>+ Add another</button></div>';
   }
 
   /* ---- The whole form, built once ---------------------------------------------- */
@@ -301,6 +310,7 @@
       if (row.kind === 'computed') { var c = e.querySelector('[data-x-computed]'); var f = Ownership.FIELDS[row.id]; var r = f ? f.read(hh) : null; c.textContent = r && Money.isOk(r) ? (f.format ? f.format(r.value) : String(r.value)) : 'needs its inputs'; c.classList.toggle('is-blank', !(r && Money.isOk(r))); return; }
       var inp = e.querySelector('[data-x-input]');
       if (inp) { var d = display(row, v); if (inp.value !== d) inp.value = d; }
+      paintState(n, v);
       var ch = e.querySelector('[data-x-choices]');
       if (ch) Array.prototype.forEach.call(ch.querySelectorAll('[data-x-val]'), function (b) { b.setAttribute('aria-pressed', v !== null && v !== undefined && String(v) === b.getAttribute('data-x-val') ? 'true' : 'false'); });
       var mo = e.querySelector('[data-x-month]');
@@ -308,6 +318,26 @@
       var mt = e.querySelector('[data-x-match]');
       if (mt && v && typeof v === 'object') { mt.value = Money.isEntered(v.matchPercent) ? String(Math.round(v.matchPercent * 100)) : ''; e.querySelector('[data-x-cap]').value = Money.isEntered(v.matchCapPercentOfSalary) ? String(Math.round(v.matchCapPercentOfSalary * 100)) : ''; }
     });
+  }
+  /* The state word beside a row (G2.7): not sure yet (by when), from memory,
+     suggested, or nothing; the "Not sure yet" button only while blank. */
+  function paintState(n, v) {
+    var st = n.el.querySelector('[data-x-state]'); if (!st) return;
+    var key = n.itemId ? n.row.id + ':' + n.itemId : n.row.id;
+    var blank = v === null || v === undefined || v === '';
+    var ns = Schema.notSure(h(), key);
+    var m = blank ? null : Schema.meta(h(), n.row.id);
+    var word = '', cls = '';
+    if (blank && ns) { word = 'Not sure yet' + (ns.expectedBy ? ', by ' + monthWord(ns.expectedBy) : ''); cls = 'is-notSure'; }
+    else if (!blank && !n.itemId && m && m.source === 'memory' && m.confidence !== 'sure') { word = 'From memory'; cls = 'is-memory'; }
+    else if (!blank && !n.itemId && m && m.source === 'suggested' && m.confidence !== 'sure') { word = 'Suggested, not yet confirmed'; cls = ''; }
+    st.textContent = word; st.className = 'slaf-state ' + cls;
+    var nb = n.el.querySelector('[data-x-notsure]'); if (nb) nb.hidden = !blank || !!ns;
+    var mem = n.el.querySelector('.x-memory'); if (mem) mem.hidden = !!(m && m.source === 'memory' && m.confidence !== 'sure');
+  }
+  function monthWord(ym) {
+    var m = Number(String(ym).slice(5, 7)), y = String(ym).slice(0, 4);
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1] + ' ' + y;
   }
   function paintApplies() {
     var hh = h();
@@ -349,12 +379,15 @@
 
   /* ---- Writes: each through the owner ---------------------------------------------- */
   function said(n, text) { n.saved.textContent = text; setTimeout(function () { if (n.saved.textContent === text) n.saved.textContent = ''; }, 1600); }
-  function write(n, value, how) {
+  function write(n, value, how, note) {
     var ctx = n.itemId ? { itemId: n.itemId } : null;
+    var mem = n.el.querySelector('[data-x-memory]');
     try {
       if (how === 'suggested' && Spine.tagWrite) Spine.tagWrite({ source: 'suggested', confidence: 'roughly' });
+      else if (mem && mem.checked && value !== null && Spine.tagWrite) Spine.tagWrite({ source: 'memory', confidence: 'roughly' });
       Ownership.write(n.row.id, value, ctx);
-      said(n, value === null ? 'Cleared.' : 'Saved.');
+      if (mem) mem.checked = false;
+      said(n, (note ? note + ' ' : '') + (value === null ? 'Cleared.' : 'Saved.'));
     } catch (e) { said(n, 'Could not save: ' + e.message); }
   }
   function commitInput(n) {
@@ -365,12 +398,24 @@
       var before = current(row, itemOf(n));
       if (String(raw).trim() === '') { if (before !== null && before !== undefined) write(n, null, 'typed'); return; }
       var v;
+      /* An obvious percent slip is a plain question, not an error (G2.8). */
+      var sl = Ask.slip(row, raw), slipBox = e.querySelector('[data-x-slip]');
+      if (sl && slipBox) {
+        slipBox.hidden = false;
+        slipBox.innerHTML = '<p class="ask-q">' + esc(sl.question) + '</p><div class="choices">' + sl.options.map(function (o, i) { return '<button type="button" class="choice" data-x-slipopt="' + i + '">' + esc(o.label) + '</button>'; }).join('') + '</div>';
+        n.slip = sl;
+        return;
+      }
       if (row.unit === 'enum' || row.unit === 'text') v = raw.trim();
       else if (row.unit === 'date') v = Number(String(raw).replace(/\D/g, '')) || null;
       else v = Ask.parse(row, raw);
       if (v === null) { said(n, 'A number, please.'); return; }
-      if (v === before) return;
-      write(n, v, 'typed');
+      /* Typed in another period: converted to the row's own before saving. */
+      var per = e.querySelector('[data-x-period]');
+      var conv = row.unit === 'cents' && per ? Ask.toRowPeriod(row, v, per.value) : { value: v, note: null };
+      if (conv.note) { per.value = LedgerRows.period(row); }
+      if (conv.value === before) return;
+      write(n, conv.value, 'typed', conv.note);
       return;
     }
     var mo = e.querySelector('[data-x-month]');
@@ -383,12 +428,33 @@
     form.addEventListener('change', function (ev) {
       var r = ev.target.closest ? ev.target.closest('[data-x-key]') : null;
       if (!r) return;
+      /* The period select, the memory tick and the expected month are not
+         the value: changing them saves nothing by themselves. */
+      if (ev.target.hasAttribute('data-x-period') || ev.target.hasAttribute('data-x-memory') || ev.target.hasAttribute('data-x-expected')) return;
       var n = NODES[r.getAttribute('data-x-key')];
       if (n) commitInput(n);
     });
     form.addEventListener('click', function (ev) {
-      var t = ev.target.closest ? ev.target.closest('[data-x-val],[data-x-use],[data-x-add-btn],[data-x-remove]') : null;
+      var t = ev.target.closest ? ev.target.closest('[data-x-val],[data-x-use],[data-x-add-btn],[data-x-remove],[data-x-notsure],[data-x-notsure-save],[data-x-slipopt]') : null;
       if (!t) return;
+      if (t.hasAttribute('data-x-notsure')) { t.closest('[data-x-key]').querySelector('[data-x-when]').hidden = false; return; }
+      if (t.hasAttribute('data-x-notsure-save')) {
+        var nn = NODES[t.closest('[data-x-key]').getAttribute('data-x-key')];
+        var when = nn.el.querySelector('[data-x-expected]').value || null;
+        Spine.setNotSure(nn.itemId ? nn.row.id + ':' + nn.itemId : nn.row.id, { expectedBy: when });
+        nn.el.querySelector('[data-x-when]').hidden = true;
+        said(nn, 'Marked not sure yet. It stays blank, never zero.');
+        return;
+      }
+      if (t.hasAttribute('data-x-slipopt')) {
+        var ns = NODES[t.closest('[data-x-key]').getAttribute('data-x-key')];
+        var o = ns.slip && ns.slip.options[Number(t.getAttribute('data-x-slipopt'))];
+        var sb = ns.el.querySelector('[data-x-slip]'); sb.hidden = true; sb.innerHTML = ''; ns.slip = null;
+        if (!o) return;
+        if (o.value === null) { var ip = ns.el.querySelector('[data-x-input]'); ip.value = ''; ip.focus(); return; }
+        write(ns, o.value, 'typed');
+        return;
+      }
       if (t.hasAttribute('data-x-val')) {
         var n = NODES[t.closest('[data-x-key]').getAttribute('data-x-key')];
         var raw = t.getAttribute('data-x-val');
@@ -403,6 +469,10 @@
       if (t.hasAttribute('data-x-add-btn')) {
         var box = t.closest('[data-x-add]'), lk = box.getAttribute('data-x-add'), L = LISTS[lk];
         var name = String(box.querySelector('[data-x-add-name]').value || '').trim();
+        var l4 = box.querySelector('[data-x-add-last4]');
+        var last4 = l4 ? String(l4.value || '').replace(/\D/g, '').slice(-4) : '';
+        /* Named by lender and last four, "Amex ••1003", never a numbered card (G2.8). */
+        if (last4) name = (name || (L.kind === 'debt' ? 'Card' : 'Account')) + ' ••' + last4;
         var typeSel = box.querySelector('[data-x-add-type]');
         var fields = {};
         if (L.kind === 'incomeSource') fields.source = name || 'A source'; else fields.label = name || undefined;
@@ -411,6 +481,7 @@
         var rowsOf = L.rows.map(function (id) { return LedgerRows.byId(id); }).filter(Boolean);
         box.insertAdjacentHTML('beforebegin', itemHtml(lk, item, rowsOf));
         box.querySelector('[data-x-add-name]').value = '';
+        if (l4) l4.value = '';
         index(); paintValues(); paintApplies(); paintSuggestions(); paintBar();
         return;
       }

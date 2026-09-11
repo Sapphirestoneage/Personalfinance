@@ -99,23 +99,31 @@
       entered = list.length > 0;
       value = entered ? Money.ok(list.length, { items: list }) : Money.incomplete('Nothing listed yet.', [row.id]);
     }
-    if (!entered) return { state: 'missing', value: value, entered: false, meta: null, stale: false, days: null };
+    if (!entered) {
+      /* "Not sure yet" (G2.7, D-209): still no value, but the person said so,
+         with the month they expect to know by. Its own state, never a number. */
+      var ns = Schema.notSure ? Schema.notSure(h, row.id) : null;
+      if (ns) return { state: 'notSure', value: value, entered: false, meta: null, stale: false, days: null, notSure: ns };
+      return { state: 'missing', value: value, entered: false, meta: null, stale: false, days: null };
+    }
     var meta = Schema.meta ? Schema.meta(h, row.id) : { confidence: 'unknown', asOf: null, source: null };
     var st = Staleness && typeof Staleness.describe === 'function' ? Staleness.describe(h, row.id) : { stale: null, days: null };
     var state = meta.confidence === 'sure' ? 'sure' : 'roughly';
+    /* Typed from memory (D-209): a real value, below confirmed, its own word. */
+    if (meta.source === 'memory' && meta.confidence !== 'sure') state = 'memory';
     if (st && st.stale === true) state = 'stale';
     return { state: state, value: value, entered: true, meta: meta, stale: st ? st.stale === true : false, days: st ? st.days : null };
   }
   function withStatus(household, row, tables) {
     var s = status(household, row, tables);
-    return Object.assign({}, row, { status: s.state, result: s.value, meta: s.meta, stale: s.stale, days: s.days, entered: s.entered });
+    return Object.assign({}, row, { status: s.state, result: s.value, meta: s.meta, stale: s.stale, days: s.days, entered: s.entered, notSure: s.notSure || null });
   }
   var FILTERS = {
     all: function () { return true; },
-    rough: function (r) { return r.status === 'roughly' || r.status === 'stale'; },
-    missing: function (r) { return r.status === 'missing'; },
+    rough: function (r) { return r.status === 'roughly' || r.status === 'stale' || r.status === 'memory'; },
+    missing: function (r) { return r.status === 'missing' || r.status === 'notSure'; },
     stale: function (r) { return r.status === 'stale'; },
-    open: function (r) { return r.status === 'missing' || r.status === 'roughly' || r.status === 'stale'; }
+    open: function (r) { return r.status === 'missing' || r.status === 'notSure' || r.status === 'roughly' || r.status === 'stale' || r.status === 'memory'; }
   };
   /** The applicable rows, in pass order then file order, each with its status. */
   function rows(household, tables, opts) {
@@ -141,6 +149,66 @@
     var m = (list || []).reduce(function (t, r) { return t + (Money.isEntered(r.minutes) ? r.minutes : 0); }, 0);
     return Math.round(m * 2) / 2;
   }
+  /* ---- Units beside every box (G2.8, D-209) ---------------------------------
+     One place says what a money box means: gross or net, and the period.
+     A row may carry its own unitLabel and period in data/ledger-rows.json;
+     otherwise both are read off the id and the label. period is 'month',
+     'year', 'week' or null (a balance has no period). */
+  var PERIOD_WORDS = { month: 'a month', year: 'a year', week: 'a week', fortnight: 'every two weeks' };
+  function period(row) {
+    if (!row || row.unit !== 'cents') return null;
+    if (row.period) return row.period;
+    if (row.id === 'grossAnnualIncome' || row.id === 'lastPay' || row.id === 'annualLine' || /a year/.test(row.label || '')) return 'year';
+    if (row.id === 'unemployment' || /a week/.test(row.label || '')) return 'week';
+    if (/Monthly$/.test(row.id || '') || /a month/.test(row.label || '')) return 'month';
+    return null;
+  }
+  function unitLabel(row) {
+    if (!row) return '';
+    if (row.unitLabel) return row.unitLabel;
+    var u = row.unit;
+    if (u === 'cents') {
+      var p = period(row);
+      if (row.id === 'grossAnnualIncome' || row.id === 'lastPay') return 'gross, a year';
+      if (row.id === 'unemployment') return 'gross, a week';
+      if (row.id === 'ledgerIncome' || row.id === 'incomeLow' || row.id === 'incomeHigh') return 'net, a month';
+      if (row.id === 'withheld' || row.id === 'otherPreTax') return 'a year';
+      if (p) return 'net, ' + PERIOD_WORDS[p];
+      return 'a balance, today';
+    }
+    if (u === 'percent' || u === 'rate') return 'percent';
+    if (u === 'months') return 'months'; if (u === 'years') return 'years';
+    return '';
+  }
+  /** The rows a monthly refresh re-asks (G2.5): moves, enterable, applicable,
+      one line per item for a repeat row, only the lines that have a value. */
+  function moving(household, tables) {
+    var h = household || {};
+    var out = [];
+    rows(h, tables, { filter: 'all' }).forEach(function (r) {
+      if (!r.moves || r.kind === 'computed' || /^prefs\./.test(r.path)) return;
+      if (['cents', 'rate', 'count', 'percent'].indexOf(r.unit) === -1) return;
+      if (r.repeat) {
+        (items(h, r) || []).forEach(function (it) {
+          var v = itemValue(r, it);
+          if (Money.isEntered(v)) out.push({ key: r.id + ':' + it.id, row: r, item: it, value: v });
+        });
+        return;
+      }
+      if (r.entered && Money.isOk(r.result) && Money.isEntered(r.result.value) && typeof r.result.value !== 'object') out.push({ key: r.id, row: r, item: null, value: r.result.value });
+    });
+    return out;
+  }
+  /* The one map from a repeat row to the field on its item (Express, the
+     ask and the refresh all read it here). */
+  var ITEM_VALUE = { debtBalance: 'balanceCents', debtRate: 'rate', debtMinPayment: 'minPaymentCents', assetValue: 'valueCents', assetCharacter: 'taxCharacter', assetTier: 'tier', assetCostBasis: 'costBasisCents',
+    grossAnnualIncome: 'grossAnnualIncomeCents', incomeType: 'type', paySurvives: 'survivesJobLoss', annualLine: 'amountCents', futureIncome: 'amountCents' };
+  function itemValue(row, item) {
+    var k = ITEM_VALUE[row.id];
+    if (!k || !item) return null;
+    var v = item[k];
+    return v === undefined ? null : v;
+  }
   /** The rooms whose registry entry reads this row's field. */
   function readersOf(row) {
     if (!Registry || typeof Registry.all !== 'function') return [];
@@ -165,11 +233,12 @@
   /** The summary the Ledger's top line reads: counts by state and the minutes left. */
   function summary(household, tables) {
     var list = rows(household, tables, { filter: 'all' });
-    var by = { sure: 0, roughly: 0, missing: 0, computed: 0, stale: 0 };
+    var by = { sure: 0, roughly: 0, missing: 0, computed: 0, stale: 0, memory: 0, notSure: 0 };
     list.forEach(function (r) { by[r.status] = (by[r.status] || 0) + 1; });
     var open = list.filter(FILTERS.open);
     return { total: list.length, by: by, open: open.length, minutesLeft: minutes(open) };
   }
   return { use: use, table: table, all: all, byId: byId, applies: applies, items: items, status: status, rows: rows, next: next,
-    roughRows: roughRows, minutes: minutes, readersOf: readersOf, inputsOf: inputsOf, summary: summary, FILTERS: Object.keys(FILTERS) };
+    roughRows: roughRows, minutes: minutes, readersOf: readersOf, inputsOf: inputsOf, summary: summary, FILTERS: Object.keys(FILTERS),
+    period: period, unitLabel: unitLabel, moving: moving, itemValue: itemValue, ITEM_VALUE: ITEM_VALUE, PERIOD_WORDS: PERIOD_WORDS };
 });

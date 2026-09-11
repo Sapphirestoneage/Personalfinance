@@ -13023,6 +13023,46 @@ First Round walks); the phone walk: the same five answers in the First
 Round and in Express give a byte-identical household, the situation
 toggle hides and shows rows without clearing anything typed.
 
+## D-209 — G2: numbers that stay trustworthy (moving rows, the life-change sheet, two more states, units)
+
+**Why.** People stop trusting what they typed when it goes stale, gets
+asked again, or quietly turns wrong. The brief's G2, built alongside B to F.
+
+**Decision.** `rooms/refresh.html` walks only the rows with `moves: true`
+in `data/ledger-rows.json` (`LedgerRows.moving`), one line per debt,
+account, source or yearly cost, pre-filled, "Still true" re-confirms, a
+typed figure writes through `Ownership.write` with the item id, and a
+"since last time" line per row reads the last refresh snapshot's `rows`.
+A situation change records `meta.reopen`; `shared/reopen.js` shows one
+sheet on the next page with the rows in the registry's `reopen` map plus
+any row that newly applies; nothing is cleared. "Not sure yet" is a mark
+in `meta.notSure` with an expected month, never a value; "from memory" is
+source `memory` below confirmed; both weigh in `confidence_weights.rowStates`.
+`LedgerRows.unitLabel` and `period` put gross or net and the period beside
+every money box in the ask, Express and the Refresh; `Money.convertPeriod`
+converts a figure typed a week or a year before it saves; `Ask.slip` turns
+0.24 or 2499 on a percent box into a plain question. List items are named
+lender plus last four. `test/onefact.js` opens every askIn room after
+Express answered the rows and fails on any repeat question.
+
+**Replaces or removes.** The Refresh's fixed three boxes and its rough-rows
+list (15.10): the doors carry the rough rows now.
+
+**Stored shape.** `meta.notSure` (`{ key: { at, expectedBy } }`, key a field
+id or `fieldId:itemId`) and `meta.reopen` (`{ field, from, to, at, dismissed }`
+or null) added to `slaf.household.v2`; `memory` added to `Schema.SOURCES`;
+snapshots gain `rows` (null except on a refresh). Older households read with
+both absent, which every reader treats as none. `data/ledger-rows.json`
+gains a top-level `reopen` map. A future reader must treat a `notSure` row
+as blank in every formula.
+
+**Verified.** `node test/run.js` (28704), `node test/forms.js`,
+`node test/onefact.js` (58), `node test/render.js` on refresh, express and
+debt-payoff; the phone walk: a week's food converts to a month before
+saving, from memory and not sure yet show as words, the slip asks 24% or
+0.24%, the Refresh lists five moving lines and says what changed, the
+sheet after between jobs → working lists six rows and clears nothing.
+
 ---
 
 # The Dungeons & Dividends entries

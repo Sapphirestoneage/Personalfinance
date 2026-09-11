@@ -3,37 +3,36 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 19:29Z"/>
+<meta name="slaf-build" content="2026-09-11 19:50Z"/>
 <title>Refresh · SPARKS</title>
-<meta name="description" content="The three figures that move — cash, investments, what you owe — re-checked in under a minute."/>
+<meta name="description" content="Only the numbers that move: balances, rates, spending, pay. Pre-filled, one tap to confirm, with what changed since last time."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. BRIEF §1.4 "Refresh the three that move".
+  ROOM SPEC — SPEC.md §11. BRIEF §1.4 "Refresh", G2.5 (D-209).
 
-  1. READS   cash & savings, investments (Start Here) and every itemised
-             debt balance (Debt Payoff), each with the date it was last
-             confirmed (meta.confirmedAt, D-056).
-  2. WRITES  Those same records — through Ownership.write() for the two
-             assets, which is the identical function Start Here calls, and
-             Spine.upsertDebt() for balances, which is what Debt Payoff
-             calls. It is a second place to edit the SAME record, never a
-             second copy. A figure submitted unchanged is re-confirmed
-             (Spine.confirm) rather than re-written. Then one snapshot
-             carrying every dashboard instrument (shared/instruments.js).
-             DECISIONS.md D-057.
-  3. CALLS   shared/staleness.js for ages; shared/instruments.js for the
-             snapshot. No formula lives here.
-  4. EMPTY   A figure never entered shows an empty box with its placeholder;
-             Enter on an empty box skips it and writes nothing. No debts
-             means no debt rows and says so.
-  5. CONFIG  data/staleness.json — the review intervals and the list of
-             volatile fields this page walks.
+  1. READS   Every row that MOVES (moves: true in data/ledger-rows.json)
+             that has a value: balances, rates, spending, pay, one line per
+             debt, account, source or yearly cost; each with the date it
+             was last confirmed and what it read at the last refresh.
+  2. WRITES  Those same records, through Ownership.write() with the item
+             id where the row is one line per item, which is the identical
+             function every owner room calls. A second place to edit the
+             SAME record, never a second copy. A figure left as it stands
+             is re-confirmed (Spine.confirm), not re-written. Then one
+             snapshot carrying every dashboard instrument and the moving
+             rows as they stood, so the next refresh can say what changed.
+  3. CALLS   shared/ledger-rows.js for the rows; shared/staleness.js for
+             ages; shared/instruments.js for the snapshot. No formula here.
+  4. EMPTY   A moving row with no value is not asked here: it is a door's
+             question, and the page says how many wait at the doors. A box
+             emptied on this page writes nothing.
+  5. CONFIG  data/ledger-rows.json (moves), data/staleness.json (intervals).
 
-  LIVE-FORM: built once. The two asset boxes are in the HTML; the debt rows
-  are built one time at load from the household and only ever have their
-  .value written after that. Nothing is rebuilt while a finger is on it.
+  LIVE-FORM: built once. Every row is built one time at load from the
+  household and only ever has its .value written after that. Nothing is
+  rebuilt while a finger is on it.
 -->
 <style>
   .room-back:hover { text-decoration: underline; }
@@ -46,6 +45,14 @@
   .row .age.is-fresh { color: var(--color-positive); }
   .row .where { font-size: var(--text-xs); color: var(--color-text-faint); }
   .row .where a { color: var(--color-accent-hover); }
+  .row .ctl { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+  .row .ctl .slaf-input-shell { flex: 1 1 12em; }
+  .row .since { font-size: var(--text-xs); color: var(--color-text-muted); }
+  .row .since.is-up { color: var(--color-positive); }
+  .row .since.is-down { color: var(--color-caution); }
+  .row.is-confirmed .age { color: var(--color-positive); }
+  .still { min-height: 44px; white-space: nowrap; }
+  .summary { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); }
   .actions { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
   .empty { font-size: var(--text-sm); color: var(--color-text-faint); }
   .done-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
@@ -58,39 +65,19 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Refresh</h1>
-  <p class="room-lede">The three figures that move. Each box already holds the last number you gave — press Enter to say it still holds, or type the new one.</p>
+  <p class="room-lede">Only the numbers that move: balances, rates, spending, pay. Each box holds the last number you gave. Tap Still true, or type the new one.</p>
 </header>
 
 <main class="slaf-wrap">
   <div class="notice" id="load-notice" hidden></div>
 
-  <section class="slaf-card" id="rough" hidden>
-    <span class="slaf-eyebrow">First, the numbers you were not sure of</span>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">Rough, unconfirmed, or old</h2>
-    <p class="slaf-hint" style="margin:0 0 var(--space-2)">Each one was a guess, a paste, an import, or has not been looked at in a while. Confirm it as it stands, or open the room that owns it. (15.10, D-181)</p>
-    <div id="rough-rows"></div>
-  </section>
-
   <section class="slaf-card" id="fields">
-    <span class="slaf-eyebrow">The three that move</span>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">Still true?</h2>
-
-    <div class="row" id="row-cash">
-      <div class="top"><span class="nm">Cash &amp; savings</span><span class="age" id="age-cash"></span></div>
-      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
-        <input type="text" inputmode="decimal" data-field="cashSavings" placeholder="e.g. 9500" aria-label="Cash and savings"/></span>
-      <span class="where">Owned by <a href="start.html#q-cash">Start Here</a> — this box writes the same record.</span>
-    </div>
-
-    <div class="row" id="row-invest">
-      <div class="top"><span class="nm">Investments + retirement</span><span class="age" id="age-invest"></span></div>
-      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
-        <input type="text" inputmode="decimal" data-field="investments" placeholder="e.g. 48000" aria-label="Investments and retirement"/></span>
-      <span class="where">Owned by <a href="start.html#q-investments">Start Here</a>.</span>
-    </div>
-
-    <div id="debt-rows"></div>
-    <p class="empty" id="debt-empty" hidden>No debts listed. If there are any, <a href="debt-payoff.html#debts">add them in Debt Payoff</a>.</p>
+    <span class="slaf-eyebrow">The numbers that move</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-2)">Still true?</h2>
+    <p class="summary" id="since-line"></p>
+    <div id="rows"></div>
+    <p class="empty" id="rows-empty" hidden>Nothing that moves has a value yet. <a href="ledger.html">Open the doors</a> to enter the first ones.</p>
+    <p class="empty" id="blank-line" hidden></p>
   </section>
 
   <section class="slaf-card" id="done" style="margin-top:var(--space-4)">
@@ -119,6 +106,11 @@
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/staleness.js"></script>
 <script src="../shared/ownership.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/daite.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../shared/ledger-rows.js"></script>
+<script src="../shared/ask.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
@@ -139,164 +131,184 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
-      Ownership = SLAF.Ownership, Staleness = SLAF.Staleness, Instruments = SLAF.Instruments;
+      Ownership = SLAF.Ownership, Staleness = SLAF.Staleness, Instruments = SLAF.Instruments,
+      LedgerRows = SLAF.LedgerRows, Ask = SLAF.Ask;
 
   var ROOM_ID = 'refresh';
   var TABLES = null;
+  var ROWS = [];          /* { key, row, item, value, el, input } built once */
+  var LAST = null;        /* the last refresh snapshot, or null */
 
   function el(id) { return document.getElementById(id); }
   function esc(s) {
-    return String(s).replace(/[&<>"]/g, function (c) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
 
-  /* ---- Rows: two fixed, N debts built ONCE ------------------------------- */
+  /* ---- Which lines: the moving rows with a value, one per item ----------
+     Cash and investments are one figure each while the household holds one
+     account of that kind (the aggregate row is the account); with more, it
+     is one line per account and the aggregate is not asked twice. */
+  function lines(h) {
+    var all = LedgerRows.moving(h, TABLES);
+    var byCat = {};
+    (h.assets || []).forEach(function (a) { byCat[a.category] = (byCat[a.category] || 0) + 1; });
+    var manyCash = (byCat.cash || 0) > 1, manyInvest = ((byCat.investment || 0) + (byCat.retirement || 0)) > 1;
+    return all.filter(function (m) {
+      if (m.row.id === 'cashSavings') return !manyCash;
+      if (m.row.id === 'investments') return !manyInvest;
+      if (m.row.id === 'assetValue' && m.item) {
+        if (m.item.category === 'cash') return manyCash;
+        if (m.item.category === 'investment' || m.item.category === 'retirement') return manyInvest;
+      }
+      return true;
+    });
+  }
+  function lastRefresh() {
+    var all = Spine.listSnapshots();
+    for (var i = all.length - 1; i >= 0; i--) if (all[i].rows) return all[i];
+    return null;
+  }
+  function itemName(m) { return m.item ? (m.item.label || m.item.source || m.item.type || 'one line') : ''; }
+  function display(row, v) {
+    if (!Money.isEntered(v)) return '';
+    if (row.unit === 'cents') return Money.formatCents(v, { exact: true }).replace(/^\$/, '');
+    if (row.unit === 'rate' || (row.unit === 'percent' && row.id !== 'contributionPercent')) return String(Math.round(v * 10000) / 100);
+    return String(v);
+  }
+  function words(row, v) {
+    if (!Money.isEntered(v)) return 'blank';
+    if (row.unit === 'cents') return Money.formatCents(v);
+    if (row.unit === 'rate' || (row.unit === 'percent' && row.id !== 'contributionPercent')) return (Math.round(v * 10000) / 100) + '%';
+    return String(v);
+  }
+  function dayWord(iso) { return iso ? String(iso).slice(0, 10) : ''; }
 
-  var h0 = Spine.getProfile();
-  var debts = Schema.aggregatableDebts(h0);
-
-  (function buildDebtRows() {
-    var host = el('debt-rows');
-    el('debt-empty').hidden = debts.length > 0;
-    debts.forEach(function (d, i) {
+  /* ---- Build once ---------------------------------------------------------- */
+  function build() {
+    var h = Spine.getProfile();
+    LAST = lastRefresh();
+    var ms = lines(h);
+    var host = el('rows');
+    el('rows-empty').hidden = ms.length > 0;
+    ROWS = ms.map(function (m, i) {
       var row = document.createElement('div');
       row.className = 'row';
-      row.id = 'row-debt-' + i;
-      row.innerHTML = '<div class="top"><span class="nm">' + esc(d.label || 'Debt') + ' balance</span>'
-        + '<span class="age" id="age-debt-' + i + '"></span></div>'
-        + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
-        + '<input type="text" inputmode="decimal" data-field="debtBalance" data-debt="' + esc(d.id)
-        + '" placeholder="e.g. 3200" aria-label="' + esc(d.label || 'Debt') + ' balance"/></span>'
-        + '<span class="where">Owned by <a href="debt-payoff.html#debts">Debt Payoff</a>.</span>';
+      row.id = 'row-' + i;
+      var f = Ownership.FIELDS[m.row.id];
+      var owner = f ? SLAF.Registry.byId(f.owner) : null;
+      var affix = m.row.unit === 'cents' ? '$' : '';
+      var suffix = (m.row.unit === 'rate' || m.row.unit === 'percent') ? '%' : '';
+      row.innerHTML = '<div class="top"><span class="nm">' + esc(m.row.label) + (m.item ? ' · ' + esc(itemName(m)) : '') + '</span><span class="age" data-age></span></div>'
+        + '<div class="ctl"><span class="slaf-input-shell">' + (affix ? '<span class="slaf-affix">' + affix + '</span>' : '')
+        + '<input type="text" inputmode="decimal" data-field="' + esc(m.row.id) + '"' + (m.item ? ' data-item="' + esc(m.item.id) + '"' : '') + ' data-key="' + esc(m.key) + '" aria-label="' + esc(m.row.label + (m.item ? ' for ' + itemName(m) : '')) + '"/>'
+        + (suffix ? '<span class="slaf-affix">' + suffix + '</span>' : '') + '</span>'
+        + (LedgerRows.unitLabel(m.row) ? '<span class="slaf-unit">' + esc(LedgerRows.unitLabel(m.row)) + '</span>' : '')
+        + '<button type="button" class="slaf-btn slaf-btn--small still" data-still>Still true</button></div>'
+        + '<span class="since" data-since></span>'
+        + (owner ? '<span class="where">Owned by <a href="' + esc(owner.href) + '">' + esc(owner.title) + '</a>; this box writes the same record.</span>' : '');
       host.appendChild(row);
+      return { key: m.key, row: m.row, item: m.item, el: row, input: row.querySelector('input'), value: m.value };
     });
-  })();
+    var blank = LedgerRows.rows(h, TABLES, { filter: 'all' }).filter(function (r) { return r.moves && r.kind !== 'computed' && (r.status === 'missing' || r.status === 'notSure'); });
+    el('blank-line').hidden = blank.length === 0;
+    el('blank-line').innerHTML = blank.length + ' moving row' + (blank.length === 1 ? '' : 's') + ' still blank; the <a href="ledger.html">doors</a> ask ' + (blank.length === 1 ? 'it' : 'them') + '.';
+    paint();
+  }
 
-  function inputs() { return Array.prototype.slice.call(document.querySelectorAll('input[data-field]')); }
-
-  /* ---- Paint: values only, never while focused ---------------------------- */
-
-  function currentCents(node) {
+  /* ---- Values in, never under a finger --------------------------------------- */
+  function currentOf(r) {
     var h = Spine.getProfile();
-    var f = node.getAttribute('data-field');
-    if (f === 'debtBalance') {
-      var d = Schema.aggregatableDebts(h).filter(function (x) { return x.id === node.getAttribute('data-debt'); })[0];
-      return d && Money.isEntered(d.balanceCents) ? d.balanceCents : null;
+    if (r.item) {
+      var list = LedgerRows.items(h, r.row) || [];
+      var it = list.filter(function (x) { return x.id === r.item.id; })[0];
+      return it ? LedgerRows.itemValue(r.row, it) : null;
     }
-    var r = Ownership.field(f).read(h);
-    return Money.isOk(r) ? r.value : null;
+    var f = Ownership.FIELDS[r.row.id];
+    var res = f ? f.read(h) : null;
+    return res && Money.isOk(res) ? res.value : null;
   }
-
-  function paintAges() {
-    var h = Spine.getProfile();
-    function put(id, fieldId) {
-      var node = el(id); if (!node) return;
-      var a = Staleness.describe(h, fieldId);
-      node.textContent = a.label;
-      node.className = 'age' + (a.stale === true ? ' is-stale' : a.days === 0 && a.perField ? ' is-fresh' : '');
-    }
-    put('age-cash', 'cashSavings');
-    put('age-invest', 'investments');
-    debts.forEach(function (d, i) { put('age-debt-' + i, 'totalDebt'); });
-  }
-
-  /* 15.10: rough, unsure, unknown and stale figures first, each with its
-     confidence word, its age, a Confirm button and the room that owns it.
-     Buttons and links only, rebuilt on change: no input lives here. */
-  var ORDER = { unknown: 0, unsure: 1, roughly: 2, sure: 3 };
-  function roughRows(h) {
-    var ids = Object.keys(Ownership.FIELDS || {});
-    var rows = [];
-    ids.forEach(function (id) {
-      var d = Ownership.describe(id, h, ROOM_ID);
-      if (!d || !d.isSet || !d.applies) return;
-      var stale = d.age && d.age.stale === true;
-      if (d.level === 'sure' && !stale) return;
-      rows.push({ d: d, stale: stale, rank: ORDER[d.level] === undefined ? 3 : ORDER[d.level] });
-    });
-    rows.sort(function (a, b) { return a.rank - b.rank || (b.stale ? 1 : 0) - (a.stale ? 1 : 0) || a.d.label.localeCompare(b.d.label); });
-    return rows;
-  }
-  function paintRough() {
-    var host = el('rough-rows'), card = el('rough');
-    if (!host || !card) return;
-    var rows = roughRows(Spine.getProfile());
-    card.hidden = rows.length === 0;
-    host.innerHTML = rows.map(function (r) {
-      var d = r.d;
-      var why = d.level !== 'sure' ? (d.meta && d.meta.source ? d.meta.source + ', ' : '') + d.level : 'not looked at in a while';
-      return '<div class="row" data-rough="' + esc(d.fieldId) + '">'
-        + '<div class="top"><span class="nm">' + esc(d.label) + '</span><span class="age' + (r.stale ? ' is-stale' : '') + '">' + esc(d.age && d.age.label ? d.age.label : '') + '</span></div>'
-        + '<div class="slaf-row" style="display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap">'
-        + '<strong>' + esc(d.display) + '</strong>'
-        + '<span class="slaf-hint" style="margin:0">' + esc(why) + '</span>'
-        + '<button type="button" class="slaf-btn slaf-btn--small" data-confirm="' + esc(d.fieldId) + '">Confirm</button>'
-        + '<a class="slaf-hint" style="margin:0" href="' + esc(d.href) + '">' + esc(d.ownerTitle) + ' →</a>'
-        + '</div></div>';
-    }).join('');
-  }
-  document.addEventListener('click', function (evt) {
-    var b = evt.target && evt.target.closest ? evt.target.closest('[data-confirm]') : null;
-    if (!b) return;
-    Spine.confirm(b.getAttribute('data-confirm'));
-    paintRough();
-  });
-
   function paint() {
-    inputs().forEach(function (node) {
-      if (node === document.activeElement) return;
-      var c = currentCents(node);
-      node.value = Money.isEntered(c) ? Money.formatCents(c) : '';
+    var h = Spine.getProfile();
+    var changed = 0, same = 0;
+    ROWS.forEach(function (r) {
+      var v = currentOf(r);
+      if (r.input !== document.activeElement) r.input.value = display(r.row, v);
+      var a = Staleness.describe(h, r.row.id);
+      var age = r.el.querySelector('[data-age]');
+      age.textContent = a.label;
+      age.className = 'age' + (a.stale === true ? ' is-stale' : a.days === 0 && a.perField ? ' is-fresh' : '');
+      var since = r.el.querySelector('[data-since]');
+      var before = LAST && LAST.rows && Object.prototype.hasOwnProperty.call(LAST.rows, r.key) ? LAST.rows[r.key] : undefined;
+      if (before === undefined) { since.textContent = LAST ? 'New since last time.' : ''; since.className = 'since'; return; }
+      if (!Money.isEntered(v) || !Money.isEntered(before) || v === before) { since.textContent = 'Same as last time (' + dayWord(LAST.timestamp) + ').'; since.className = 'since'; same++; return; }
+      var d = v - before;
+      var dw = r.row.unit === 'cents' ? Money.formatCents(Math.abs(d)) : words(r.row, Math.abs(d));
+      since.textContent = 'Since last time (' + dayWord(LAST.timestamp) + '): ' + words(r.row, before) + ' → ' + words(r.row, v) + ', ' + (d > 0 ? 'up ' : 'down ') + dw + '.';
+      since.className = 'since ' + (d > 0 ? 'is-up' : 'is-down');
+      changed++;
     });
-    paintAges();
-    paintRough();
+    var line = el('since-line');
+    if (!ROWS.length) line.textContent = '';
+    else if (!LAST) line.textContent = 'First refresh: ' + ROWS.length + ' number' + (ROWS.length === 1 ? '' : 's') + ' to look at. Next time this line says what moved.';
+    else line.textContent = 'Since last time (' + dayWord(LAST.timestamp) + '): ' + changed + ' changed, ' + same + ' the same' + (ROWS.length - changed - same ? ', ' + (ROWS.length - changed - same) + ' new' : '') + '.';
   }
 
-  /* ---- Commit: changed → write; unchanged → confirm; empty → skip -------- */
-
-  function commit(node) {
-    var raw = String(node.value || '').trim();
-    if (raw === '') return;                             /* nothing said, nothing written */
-    var cents = Money.parseMoney(raw);
-    if (!Money.isEntered(cents)) return;
-    var f = node.getAttribute('data-field');
-    var before = currentCents(node);
-    if (f === 'debtBalance') {
-      if (cents !== before) Spine.upsertDebt({ id: node.getAttribute('data-debt'), balanceCents: cents });
-      else Spine.confirm('totalDebt');
-    } else if (cents !== before) {
-      Ownership.write(f, cents);
-    } else {
-      Spine.confirm(f);
-    }
-    node.value = Money.formatCents(cents);
+  /* ---- Commit: changed → write through the owner; unchanged → confirm; empty → skip */
+  function commit(r) {
+    var raw = String(r.input.value || '').trim();
+    if (raw === '') return;                                   /* nothing said, nothing written */
+    var v = Ask.parse(r.row, raw);
+    if (v === null) return;
+    var before = currentOf(r);
+    if (v !== before) Ownership.write(r.row.id, v, r.item ? { itemId: r.item.id } : null);
+    else Spine.confirm(r.row.id);
+    r.el.classList.add('is-confirmed');
+    r.input.value = display(r.row, v);
+  }
+  function still(r) {
+    var v = currentOf(r);
+    if (!Money.isEntered(v)) return;
+    Spine.confirm(r.row.id);
+    r.input.value = display(r.row, v);
+    r.el.classList.add('is-confirmed');
+    paint();
+  }
+  function rowOf(node) {
+    var box = node && node.closest ? node.closest('.row') : null;
+    return box ? ROWS.filter(function (r) { return r.el === box; })[0] : null;
   }
 
   document.addEventListener('focusout', function (evt) {
-    var node = evt.target;
-    if (node && node.getAttribute && node.getAttribute('data-field')) { commit(node); paintAges(); }
+    var r = rowOf(evt.target);
+    if (r && evt.target === r.input) { commit(r); paint(); }
   });
-
+  document.addEventListener('click', function (evt) {
+    var b = evt.target && evt.target.closest ? evt.target.closest('[data-still]') : null;
+    if (!b) return;
+    var r = rowOf(b);
+    if (r) still(r);
+  });
   /* Enter commits and moves to the next box; on the last box it finishes. */
   document.addEventListener('keydown', function (evt) {
     if (evt.key !== 'Enter') return;
-    var node = evt.target;
-    if (!node || !node.getAttribute || !node.getAttribute('data-field')) return;
+    var r = rowOf(evt.target);
+    if (!r || evt.target !== r.input) return;
     evt.preventDefault();
-    commit(node); paintAges();
-    var all = inputs();
-    var i = all.indexOf(node);
-    if (i >= 0 && i < all.length - 1) all[i + 1].focus();
+    commit(r); paint();
+    var i = ROWS.indexOf(r);
+    if (i >= 0 && i < ROWS.length - 1) ROWS[i + 1].input.focus();
     else el('btn-done').focus();
   });
 
-  /* ---- Finish: snapshot, then home ----------------------------------------- */
-
+  /* ---- Finish: snapshot with the rows as they stand, then home --------------- */
   el('btn-done').addEventListener('click', function () {
-    inputs().forEach(commit);
-    if (!TABLES) { el('done-note').textContent = 'Reference tables are still loading — one moment.'; return; }
-    Instruments.snapshot(Spine.getProfile(), TABLES);
+    ROWS.forEach(commit);
+    if (!TABLES) { el('done-note').textContent = 'Reference tables are still loading, one moment.'; return; }
+    var rows = {};
+    ROWS.forEach(function (r) { rows[r.key] = currentOf(r); });
+    Instruments.snapshot(Spine.getProfile(), TABLES, { rows: rows, reason: 'refresh' });
     var n = Spine.listSnapshots().length;
     el('done-note').textContent = 'Saved. Snapshot ' + n + ' taken.';
     window.location.href = '../index.html';
@@ -304,20 +316,20 @@
 
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
-  Spine.onChange(paint);
+  Spine.onChange(function () { if (ROWS.length) paint(); });
 
   Reference.load().then(function (t) {
     TABLES = t;
     Staleness.use(t.staleness);
-    paint();
-    var first = inputs()[0];
-    if (first && !location.hash) first.focus();
+    LedgerRows.use(t.ledgerRows);
+    build();
+    var first = ROWS[0];
+    if (first && !location.hash) first.input.focus();
   }).catch(function (err) {
     var notice = el('load-notice');
     notice.hidden = false;
     notice.className = 'notice is-error';
     notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
-    paint();
   });
 })();
 </script>
