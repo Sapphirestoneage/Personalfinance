@@ -13429,6 +13429,42 @@ cost and break-even with its range; the car's three parts and the price
 that fits), the render, features and forms gates on the five rooms, the
 phone walk.
 
+## D-220 — One CSV out, and the same CSV back in
+
+**Why.** The owner asked for a CSV export and a CSV import. The spreadsheet
+zip (D-210) already gave one CSV a door; nothing read a CSV back.
+
+**Decision.** `shared/csvexport.js` gains `single()` (every Ledger line as
+one CSV, the same columns as the zip), `fromText()` (the inverse of the
+export's value text, by the row's unit: dollars to the cent, a percent
+number to a rate, yes or no, a choice from the row's values, a date, a
+match from its words), `plan()` (each line matched to its row by id or
+by label and, for accounts, debts and pay, to its item by name; the value
+compared to what is held; one status a line: change, same, blank, worked
+out, no such row, no such item, enter it in its room, could not read),
+and `apply()` (every change through `Ownership.write`, in one undo
+batch). Your Data (`rooms/data.html`) gains "Download one CSV" and "Bring
+a CSV back in": choose a file, see every line and what it would do, then
+apply. A blank cell leaves the row as it is; nothing becomes a zero. An
+account, a debt or a source of pay the household does not hold yet is
+added from its amount line, named as the file names it and placed by
+the import keywords, and its other lines land on it; Start Here's totals
+are skipped when the file carries the account lines, so nothing doubles.
+The employer match now exports as its words, not the cents it earns.
+
+**Replaces or removes.** Nothing: the zip stays for anyone who wants one
+file a door.
+
+**Stored shape.** No change. Writes go through the owners' existing paths.
+
+**Verified.** `node test/run.js` (every exported value reads back to the
+same text; the demo's CSV into an empty household brings back its two
+accounts, two debts, pay, spending, filing status and date of birth to
+the cent; the same file again changes nothing and adds nothing twice; a
+two-column sheet by label; blank skipped, zero kept), the render,
+features and forms gates on Your Data, the phone walk (download, empty
+the household, bring the edited file back, one balance changed).
+
 ---
 
 # The Dungeons & Dividends entries

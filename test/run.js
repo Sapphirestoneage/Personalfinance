@@ -13622,6 +13622,67 @@ section('K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, 
 })();
 
 /* ==========================================================================
+   One CSV out, the same CSV back in (D-220)
+   ========================================================================== */
+section('One CSV out, the same CSV back in (D-220)');
+(function () {
+  const Csv = require(path.join(ROOT, 'shared/csvexport.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  LR.use(T.ledgerRows);
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  const demo = Demo.build();
+  const text = Csv.single(demo, T);
+  const lines = Csv.parse(text);
+  check('one CSV carries every line the spreadsheet zip does, under the same columns', lines.length, Csv.rows(demo, T).length);
+  checkTrue('...and the same header', text.split('\r\n')[0] === Csv.COLUMNS.join(','));
+  /* the inverse of every unit */
+  const rowOf = id => LR.byId(id);
+  check('dollars read back to the cent', Csv.fromText(rowOf('cashSavings'), '1,234.56'), 123456);
+  check('a percent number reads back to a rate', Csv.fromText(rowOf('debtRate'), '24.99'), 0.2499);
+  check('the contribution percent stays a whole number', Csv.fromText(rowOf('contributionPercent'), '6'), 6);
+  check('yes and no read back', Csv.fromText(rowOf('hasDebt'), 'yes') + ':' + Csv.fromText(rowOf('hasDebt'), 'no'), 'true:false');
+  check('a match reads back from its words', JSON.stringify(Csv.fromText(rowOf('employerMatch'), '50% of the first 6%')), '{"matchPercent":0.5,"matchCapPercentOfSalary":0.06}');
+  checkTrue('a choice outside the row\'s values is refused, and says which are allowed', /w2/.test(Csv.fromText(rowOf('incomeType'), 'salary').bad));
+  checkTrue('a blank cell is null: leave it as it is', Csv.fromText(rowOf('cashSavings'), '') === null && Csv.fromText(rowOf('cashSavings'), '   ') === null);
+  checkTrue('every value the export writes reads back to the same text', Csv.rows(demo, T).filter(l => l.value !== '' && l.unit !== 'formula').every(l => { const v = Csv.fromText(rowOf(l.row), l.value); return !(v && v.bad) && Csv.valueText(rowOf(l.row), v) === l.value; }));
+  /* the round trip into an empty household */
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+  const p1 = Csv.plan(text, Spine.getProfile(), T);
+  checkTrue('the plan names what will change, what is computed, and which items are new', p1.counts.change > 10 && p1.counts.computed > 0 && p1.counts.add > 0);
+  checkTrue('...a new account, debt or source of pay is added from its amount line, and its other lines follow it', p1.entries.filter(e => e.status === 'add').some(e => e.row === 'assetValue') && p1.entries.filter(e => e.status === 'add').some(e => e.row === 'debtRate' && /new item above/.test(e.why)));
+  checkTrue('...nothing is written by planning', Spine.getProfile().assets.length === 0);
+  const n1 = Csv.apply(p1, Spine);
+  check('applying writes each change through its owner and adds each new item', n1, p1.counts.change + p1.counts.add);
+  const after = Spine.getProfile();
+  checkTrue('the household now carries the demo\'s single-value rows: cash, spending, filing status, date of birth', Schema.cashCents(after).value === 950000 && Schema.monthlyExpensesCents(after).value === 315000 && after.filingStatus === demo.filingStatus && Schema.adults(after)[0].dob === Schema.adults(demo)[0].dob);
+  checkTrue('...the demo\'s two accounts, two debts and its pay came back by name, to the cent', after.assets.length === 2 && after.debts.length === 2 && after.assets.filter(a => a.label === 'Savings account')[0].valueCents === 950000 && after.debts.filter(d => d.label === 'Credit card')[0].balanceCents === 320000 && Schema.grossAnnualIncomeCents(after).value === Schema.grossAnnualIncomeCents(demo).value);
+  checkTrue('...a new account is placed by its name through the import keywords (savings reads as cash), and the rate lands on the new debt', after.assets.filter(a => a.label === 'Savings account')[0].category === 'cash' && after.debts.filter(d => d.label === 'Credit card')[0].rate === demo.debts.filter(d => d.label === 'Credit card')[0].rate);
+  checkTrue('...Start Here\'s totals are not written a second time when the file carries the account lines', p1.entries.filter(e => e.row === 'cashSavings' || e.row === 'investments').every(e => e.status === 'covered'));
+  checkTrue('the match exports as its words and reads back', Csv.rows(demo, T).filter(l => l.row === 'employerMatch')[0].value === '50% of the first 6%' && p1.entries.filter(e => e.row === 'employerMatch')[0].status === 'change');
+  const p2 = Csv.plan(text, Spine.getProfile(), T);
+  checkTrue('the same file again changes nothing that landed, and adds nothing twice', !p2.counts.add && !p2.entries.some(e => e.status === 'change' && p1.entries.filter(x => x.status === 'change' || x.status === 'add').some(x => x.row === e.row && x.item === e.item)));
+  /* a hand-made sheet by label */
+  const byLabel = Csv.plan('label,value\r\nCash and savings,"4,000"\r\nAnyone depending on your income,\r\nNope,3\r\n', Spine.getProfile(), T);
+  check('a two-column sheet matches rows by label; a blank is skipped; an unknown row is named', byLabel.entries.map(e => e.status).join(','), 'change,skip,unknown');
+  check('...and the value is read by the row\'s unit', byLabel.entries[0].value, 400000);
+  Csv.apply(byLabel, Spine);
+  check('...applied to the cent, onto the cash account the import made', Schema.cashCents(Spine.getProfile()).value, 400000);
+  checkTrue('a total like the month\'s spending is worked out from its lines, so a sheet cannot set it directly', Csv.plan('label,value\r\n"Spending, a month","4,000"\r\n', Spine.getProfile(), T).entries[0].status === 'computed');
+  checkTrue('a zero typed is a zero, a blank is not', Csv.fromText(rowOf('cashSavings'), '0') === 0);
+  checkTrue('nothing in the module reaches the network', !/fetch\(|XMLHttpRequest|sendBeacon/.test(fs.readFileSync(path.join(ROOT, 'shared/csvexport.js'), 'utf8')));
+  const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
+  checkTrue('Your Data downloads one CSV and previews a CSV before applying it', /btn-csv\b/.test(dataHtml) && /csv-file/.test(dataHtml) && /CsvExport\.plan\(/.test(dataHtml) && /CsvExport\.apply\(/.test(dataHtml) && /Apply the changes/.test(dataHtml));
+  Spine.reset();
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 
