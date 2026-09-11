@@ -2101,36 +2101,9 @@
         },
         {
           "name": "the same charge every month for N months is one subscription with N charges, a rhythm the engine names, whole cents a year",
-          "ok": false,
-          "numRuns": 1,
-          "seed": 20260910,
-          "counterexample": {
-            "spec": {
-              "people": [
-                {
-                  "year": 1950,
-                  "status": "employed",
-                  "income": []
-                }
-              ],
-              "filingStatus": "single",
-              "state": "CA",
-              "assets": [],
-              "debts": [],
-              "fat": {
-                "food": 0,
-                "accommodation": 0,
-                "transportation": null,
-                "wants": 0
-              },
-              "hasDebt": null,
-              "contributionPercent": null
-            },
-            "n": 3,
-            "cents": 100,
-            "day": 1
-          },
-          "reason": "rhythm monthly"
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
         }
       ]
     },
@@ -2627,5 +2600,5 @@
     }
   ],
   "totalProperties": 324,
-  "failedProperties": 8
+  "failedProperties": 7
 }

@@ -6,7 +6,7 @@
 const H = require('./_harness.js');
 const { fc, prop, Schema, TABLES, arbSpec, build } = H;
 const S = H.engine('subscriptions');
-const rhythms = Array.isArray(S.RHYTHMS) ? S.RHYTHMS : Object.keys(S.RHYTHMS || {});
+const rhythms = (S.RHYTHMS || []).map((r) => (r && r.id) || r);
 const statuses = Array.isArray(S.STATUSES) ? S.STATUSES : Object.keys(S.STATUSES || {});
 
 function withLog(spec, entries) {

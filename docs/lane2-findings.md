@@ -42,7 +42,7 @@ These take an argument the sweep has no real value for (a skill, a goal, a templ
 
 ## Section 2: property tests
 
-Seed 20260910, 100 cases per property, 76 files for 74 engines, 324 properties, 8 failing. Source: `tests/properties/run.js`. A failing row carries the shrunk spec (dollars) that breaks it; `tests/properties/_harness.js` `build()` turns it back into a household.
+Seed 20260910, 100 cases per property, 76 files for 74 engines, 324 properties, 7 failing. Source: `tests/properties/run.js`. A failing row carries the shrunk spec (dollars) that breaks it; `tests/properties/_harness.js` `build()` turns it back into a household.
 
 ### Failing properties
 
@@ -77,11 +77,6 @@ Seed 20260910, 100 cases per property, 76 files for 74 engines, 324 properties, 
 
 - Reason: available.13.returnOnEffortCents = 2911.0512129380054, available.14.returnOnEffortCents = 1951.219512195122, available.15.returnOnEffortCents = 1940.7008086253368
 - Minimal spec: `{"people":[{"year":1950,"status":"employed","income":[]}],"filingStatus":"single","state":"CA","assets":[],"debts":[],"fat":{"food":0,"accommodation":0,"transportation":null,"wants":0},"hasDebt":null,"contributionPercent":null}`
-
-**subscriptions: the same charge every month for N months is one subscription with N charges, a rhythm the engine names, whole cents a year**
-
-- Reason: rhythm monthly
-- Minimal spec: `{"spec":{"people":[{"year":1950,"status":"employed","income":[]}],"filingStatus":"single","state":"CA","assets":[],"debts":[],"fat":{"food":0,"accommodation":0,"transportation":null,"wants":0},"hasDebt":null,"contributionPercent":null},"n":3,"cents":100,"day":1}`
 
 **tier0: cents in, cents out: no *Cents field carries a fraction**
 
@@ -162,7 +157,7 @@ Seed 20260910, 100 cases per property, 76 files for 74 engines, 324 properties, 
 | statement | no throw, no NaN or Infinity, on any valid household (7 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction; confidence-weighted net worth never exceeds plain net worth (weights are at most 1); the portfolios add up to every valued asset, each in exactly one bucket |
 | statements | no throw, no NaN or Infinity, on any valid household (5 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | studentloans | no throw, no NaN or Infinity, on any valid household (2 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
-| subscriptions | no throw, no NaN or Infinity, on any valid household (2 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction; an empty log finds nothing and leaks nothing; FAIL: the same charge every month for N months is one subscription with N charges, a rhythm the engine names, whole cents a year |
+| subscriptions | no throw, no NaN or Infinity, on any valid household (2 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction; an empty log finds nothing and leaks nothing; the same charge every month for N months is one subscription with N charges, a rhythm the engine names, whole cents a year |
 | swan | no throw, no NaN or Infinity, on any valid household (4 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | tax | no throw, no NaN or Infinity, on any valid household (5 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction; ordinary tax never exceeds the income it is charged on and never falls as income rises; FICA is at most 7.65% of wages plus the additional Medicare tax, and never negative; the whole estimate never exceeds gross and never falls as gross rises; capital gains tax is zero on no gain and never negative; the same input gives the same estimate twice |
 | taxroom | no throw, no NaN or Infinity, on any valid household (2 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
