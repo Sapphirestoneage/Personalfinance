@@ -1590,7 +1590,7 @@
      no field (D-125). A utility, off the path like Refresh (D-057). */
   ROOMS.push({
     id: 'data',
-    group: 'upkeep', aliases: ['export', 'import', 'backup', 'json', 'csv', 'your data'],
+    group: 'upkeep', aliases: ['export', 'import', 'backup', 'json', 'csv', 'your data', 'bank csv', 'statement download'],
     kind: 'core',
     utility: true,
     needs: [],
@@ -1605,6 +1605,8 @@
       { id: 'out',   label: 'Take it with you' },
       { id: 'file',  label: 'Load a file' },
       { id: 'paste', label: 'Paste in new numbers' },
+      { id: 'bank',  label: 'Bank CSV' },
+      { id: 'sheet', label: 'A spreadsheet, and the app' },
       { id: 'reset', label: 'Start over' }
     ]
   });
@@ -1811,6 +1813,27 @@
     subsections: [
       { id: 'rows-card', label: 'The numbers that move' },
       { id: 'since',     label: 'Since last time' }
+    ]
+  });
+
+  /* The Subscription Finder (J5, D-215): repeating charges from the dated
+     log, each priced a year and in hours; confirm, dismiss, or a reminder
+     to cancel. Owns household.subscriptions. */
+  ROOMS.push({
+    id: 'subscriptions',
+    group: 'decisions', subgroup: 'moves', aliases: ['subscriptions', 'recurring', 'repeating charges', 'leak', 'cancel'],
+    kind: 'about-you',
+    needs: ['monthlyExpenses'],
+    order: 12.7,
+    title: 'Subscription Finder',
+    blurb: 'Charges that repeat on a rhythm at about the same amount, from your logged or imported spending, each with its yearly cost and its cost in hours of work. Confirm, dismiss, or set a reminder to cancel.',
+    href: 'rooms/subscriptions.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['plans.subscriptions'] },
+    subsections: [
+      { id: 'leak',  label: 'The leak line' },
+      { id: 'found', label: 'Found' }
     ]
   });
 

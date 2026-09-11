@@ -96,7 +96,7 @@
     rentAlternative: 'plans.housing', homePrice: 'plans.housing', downPct: 'plans.housing', mortgageRate: 'plans.housing',
     purchasePrice: 'plans.purchase', purchaseMonths: 'plans.purchase', purchaseRate: 'plans.purchase',
     enoughMonthly: 'plans.enough', designedHours: 'plans.week', bucketsPlanned: 'plans.buckets', dreamsMonthly: 'plans.dreams',
-    reversibilityDecision: 'plans.reversibility', unlearningDropped: 'plans.unlearning',
+    reversibilityDecision: 'plans.reversibility', unlearningDropped: 'plans.unlearning', subscriptionDecision: 'plans.subscriptions',
     plannedAnnualDraw: 'plans.decumulation', socialSecurityAt: 'plans.decumulation', rerankCut: 'plans.rerank',
     /* prefs, progress */
     historyCompareTo: 'prefs.history',

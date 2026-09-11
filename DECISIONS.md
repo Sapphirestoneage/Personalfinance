@@ -13236,6 +13236,40 @@ the FI card carry their range from the return bands beside the point.
 **Verified.** `node test/run.js`, `node test/comeback.js` (9), render and
 features gates on comeback and the Ledger; the phone walk.
 
+## D-215 — J4, J5: bank CSV import on-device, the subscription finder
+
+**Why.** The two things reviews ask for most after "don't lose my data":
+get the numbers in from the bank without typing, and show me what I am
+paying for every month without noticing.
+
+**Decision.** `engines/bankcsv.js`: a CSV from a bank or card site is
+parsed in the browser (comma, semicolon or tab; quoted fields), the
+columns guessed from the headings and remembered per bank by their
+signature in a preference, every line previewed, spending written to the
+expense log as dated entries with the date from the file, deposits shown
+and left out, and a line already in the log (same date, amount and
+description) skipped, so the same file twice changes nothing. Three
+invented layouts are fixtures. `engines/subscriptions.js`: charges that
+repeat weekly, fortnightly, monthly, quarterly or yearly at a similar
+amount (within 15%), each with its yearly cost and its hours of work at
+the real wage; the person confirms, dismisses, or marks "cancel this",
+a reminder stored on the household and never an action; the Expenses
+door's level 4 and Money Wrapped read the leak line. `rooms/subscriptions.html`
+owns the decisions; Your Data gains the Bank CSV section.
+
+**Replaces or removes.** Nothing.
+
+**Stored shape.** `household.subscriptions` added to `slaf.household.v2`:
+`[{ key, status: confirmed | dismissed | cancel, label, yearlyCents, at }]`,
+normalised by the constructor; absent reads as empty. Log entries from a
+bank import carry `source: 'log'`, `categorizedBy: 'bank-csv'`, `period:
+'once'` and their `date`. Prefs gain `bankcsv.maps`.
+
+**Verified.** `node test/run.js` (three layouts give one result; the same
+statement twice changes nothing; the finder names the two monthly charges
+and prices them), render and features gates on the two rooms, the phone
+walk with the fixture file.
+
 ---
 
 # The Dungeons & Dividends entries

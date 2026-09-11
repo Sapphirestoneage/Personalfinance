@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 20:47Z"/>
+<meta name="slaf-build" content="2026-09-11 20:55Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Your Data · SPARKS</title>
@@ -90,6 +90,30 @@
     <textarea id="share-out" class="share-out" rows="3" readonly hidden aria-label="Share link"></textarea>
     <div class="qr-out" id="qr-out" hidden></div>
     <p class="slaf-hint" id="qr-note" hidden></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="bank">
+    <span class="slaf-eyebrow">Bank CSV, on-device</span>
+    <h2 style="margin:var(--space-2) 0 0">Drop in a statement download</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A CSV from your bank or card site is read here, in this browser; nothing is sent. Columns are matched once per bank and remembered. Every line is shown before anything saves; spending lands in the log with its date from the file; a line already in the log is skipped, so the same file twice changes nothing.</p>
+    <div class="data-actions">
+      <label class="slaf-btn" for="bank-file" style="cursor:pointer">Choose a CSV…</label>
+      <input type="file" id="bank-file" accept=".csv,text/csv" hidden/>
+    </div>
+    <div id="bank-map" hidden style="margin-top:var(--space-3);display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:var(--space-2)">
+      <label class="slaf-hint" style="margin:0">Date <select id="bank-date" aria-label="Date column"></select></label>
+      <label class="slaf-hint" style="margin:0">Description <select id="bank-desc" aria-label="Description column"></select></label>
+      <label class="slaf-hint" style="margin:0">Amount <select id="bank-amount" aria-label="Amount column"></select></label>
+      <label class="slaf-hint" style="margin:0">Money out <select id="bank-debit" aria-label="Debit column"></select></label>
+      <label class="slaf-hint" style="margin:0">Money in <select id="bank-credit" aria-label="Credit column"></select></label>
+    </div>
+    <p class="tally" id="bank-tally" hidden></p>
+    <div id="bank-preview" style="overflow-x:auto"></div>
+    <div class="data-actions" id="bank-actions" hidden>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-bank-import">Import the new lines</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-bank-cancel">Clear</button>
+    </div>
+    <p class="data-note" id="bank-note" hidden></p>
   </section>
 
   <section class="slaf-card card-gap" id="sheet">
@@ -182,6 +206,7 @@
 <script src="../shared/ledger-rows.js"></script>
 <script src="../shared/doors.js"></script>
 <script src="../shared/csvexport.js"></script>
+<script src="../engines/bankcsv.js"></script>
 <script>
 (function () {
   'use strict';
@@ -230,6 +255,60 @@
       note('out-note', err.message, 'is-error');
     });
   });
+  /* Bank CSV (J4, D-215): parse here, map once per bank, preview, dedupe. */
+  var BANK = { parsed: null, map: null, lines: [] };
+  var MAP_KEYS = ['date', 'desc', 'amount', 'debit', 'credit'];
+  var MAP_FIELD = { date: 'date', desc: 'description', amount: 'amount', debit: 'debit', credit: 'credit' };
+  function bankSelects() {
+    var opts = '<option value="-1">none</option>' + BANK.parsed.headers.map(function (h, i) { return '<option value="' + i + '">' + esc(h) + '</option>'; }).join('');
+    MAP_KEYS.forEach(function (k) { var sel = el('bank-' + k); sel.innerHTML = opts; sel.value = String(BANK.map[MAP_FIELD[k]]); });
+  }
+  function bankReadMap() { var m = {}; MAP_KEYS.forEach(function (k) { m[MAP_FIELD[k]] = Number(el('bank-' + k).value); }); return m; }
+  function bankPreview() {
+    if (!BANK.parsed) return;
+    BANK.map = bankReadMap();
+    SLAF.Reference.load(['importKeywords', 'expenseCategories']).then(function (t) {
+      BANK.lines = SLAF.BankCsv.entries(BANK.parsed, BANK.map, Spine.getProfile(), t);
+      var fresh = BANK.lines.filter(function (l) { return l.kind === 'expense' && !l.duplicate; });
+      var dup = BANK.lines.filter(function (l) { return l.duplicate; }).length;
+      var skip = BANK.lines.filter(function (l) { return l.kind !== 'expense'; }).length;
+      el('bank-tally').hidden = false;
+      el('bank-tally').textContent = fresh.length + ' new spending line' + (fresh.length === 1 ? '' : 's') + (dup ? ', ' + dup + ' already in the log' : '') + (skip ? ', ' + skip + ' left out (deposits or no date)' : '') + '.';
+      el('bank-preview').innerHTML = '<table class="slaf-table"><thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Files under</th><th></th></tr></thead><tbody>' + BANK.lines.slice(0, 200).map(function (l) {
+        return '<tr' + (l.kind !== 'expense' || l.duplicate ? ' style="opacity:.55"' : '') + '><td>' + esc(l.date || '?') + '</td><td>' + esc(l.description) + '</td><td>' + (l.cents !== null ? esc(Money.formatCents(l.cents)) : l.signed !== null ? esc(Money.formatCents(l.signed)) : '') + '</td><td>' + esc(l.categoryId || '') + '</td><td class="slaf-hint">' + esc(l.why || '') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+      el('bank-actions').hidden = false;
+      el('btn-bank-import').disabled = fresh.length === 0;
+      el('btn-bank-import').textContent = 'Import ' + fresh.length + ' new line' + (fresh.length === 1 ? '' : 's');
+    });
+  }
+  el('bank-file').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      BANK.parsed = SLAF.BankCsv.parse(String(reader.result || ''));
+      if (!BANK.parsed.headers.length) { note('bank-note', 'That file has no rows I can read.', 'is-error'); return; }
+      var sig = SLAF.BankCsv.signature(BANK.parsed.headers);
+      var remembered = (SLAF.Prefs.get('bankcsv.maps', {}) || {})[sig];
+      BANK.map = remembered || SLAF.BankCsv.guessMap(BANK.parsed.headers);
+      el('bank-map').hidden = false;
+      bankSelects();
+      note('bank-note', remembered ? 'Columns remembered from the last file with these headings.' : 'Columns guessed from the headings; change any that are wrong.', 'is-good');
+      bankPreview();
+    };
+    reader.readAsText(f);
+    this.value = '';
+  });
+  MAP_KEYS.forEach(function (k) { el('bank-' + k).addEventListener('change', bankPreview); });
+  el('btn-bank-import').addEventListener('click', function () {
+    if (!BANK.parsed) return;
+    var n = SLAF.BankCsv.apply(BANK.lines, Spine);
+    var maps = SLAF.Prefs.get('bankcsv.maps', {}) || {}; maps[SLAF.BankCsv.signature(BANK.parsed.headers)] = BANK.map; SLAF.Prefs.set('bankcsv.maps', maps);
+    note('bank-note', 'Imported ' + n + ' line' + (n === 1 ? '' : 's') + ' into the log, each dated from the file. The Subscription Finder reads them.', 'is-good');
+    bankPreview();
+  });
+  el('btn-bank-cancel').addEventListener('click', function () { BANK = { parsed: null, map: null, lines: [] }; el('bank-map').hidden = true; el('bank-preview').innerHTML = ''; el('bank-tally').hidden = true; el('bank-actions').hidden = true; note('bank-note', ''); });
+
   /* The spreadsheet zip (J1, D-210): one CSV a door and a readme, from the
      same rows the Ledger shows, through shared/csvexport.js. */
   el('btn-sheet').addEventListener('click', function () {

@@ -21,14 +21,15 @@
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Tier0: require('./tier0.js'), Hourly: require('./hourly.js'), SinceLast: require('./sincelast.js') };
+    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Tier0: require('./tier0.js'), Hourly: require('./hourly.js'), SinceLast: require('./sincelast.js'),
+      Subscriptions: (function () { try { return require('./subscriptions.js'); } catch (e) { return null; } })() };
   } else {
-    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema, Tier0: root.SLAF && root.SLAF.Tier0, Hourly: root.SLAF && root.SLAF.Hourly, SinceLast: root.SLAF && root.SLAF.SinceLast };
+    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema, Tier0: root.SLAF && root.SLAF.Tier0, Hourly: root.SLAF && root.SLAF.Hourly, SinceLast: root.SLAF && root.SLAF.SinceLast, Subscriptions: root.SLAF && root.SLAF.Subscriptions };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Hourly, deps.SinceLast);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Hourly, deps.SinceLast, deps.Subscriptions);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Wrapped = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Hourly, SinceLast) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Hourly, SinceLast, Subscriptions) {
   'use strict';
   var DAYS_PER_YEAR = 365.25;
   function householdAt(snap) {
@@ -94,6 +95,9 @@
       lines.push({ id: 'earned', value: null, unit: 'percent', text: 'Biggest earned change: needs a snapshot from earlier in the year.' });
       lines.push({ id: 'learned', value: null, unit: 'count', text: 'Numbers learned: needs a snapshot from earlier in the year.' });
     }
+    /* 5. the leak line (J5, D-215): only when the finder found something. */
+    var leak = Subscriptions && Subscriptions.leak ? Subscriptions.leak(h, tables) : null;
+    if (leak && leak.count) lines.push({ id: 'leak', value: leak.hours !== null ? leak.hours : leak.count, unit: leak.hours !== null ? 'hours' : 'count', text: leak.count + ' repeating charge' + (leak.count === 1 ? '' : 's') + (leak.hours !== null ? ' took about ' + leak.hours + ' hours of work this year.' : ' found in the log this year.') });
     return { year: y, lines: lines, ok: lines.every(function (l) { return l.value !== null; }), missing: missing, snapshots: snaps.length };
   }
   return { year: year, priciest: priciest, householdAt: householdAt, inYear: inYear };
