@@ -25,7 +25,7 @@
       Doors: (function () { try { return require('./doors.js'); } catch (e) { return null; } })() };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, Tier0: S.Tier0, Ownership: S.Ownership, Debt: S.Debt, Doors: S.Doors };
+    deps = { Money: S.Money, Schema: S.Schema, Tier0: S.Tier0, Ownership: S.Ownership, Debt: S.Debt, Doors: S.Doors, Race: S.Race };
   }
   var api = factory(deps);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
@@ -33,7 +33,7 @@
 })(typeof self !== 'undefined' ? self : null, function (D) {
   'use strict';
   var Money = D.Money, Schema = D.Schema, Tier0 = D.Tier0;
-  var TYPES = ['fiDate', 'savingsRate', 'debtFree', 'runway', 'understanding', 'wrapped', 'unlearn'];
+  var TYPES = ['fiDate', 'savingsRate', 'debtFree', 'runway', 'understanding', 'wrapped', 'unlearn', 'race'];
   /* The only fields a card may carry. Everything is a ratio, a percent, a
      count of months or years, or a year; never cents. */
   var ALLOWED = { t: 'string', y: 'number', m: 'number', p: 'number', d: 'string', at: 'string', h: 'number', n: 'number', r: 'string', z: 'number', w: 'number' };
@@ -94,6 +94,20 @@
       card.line = 'Cash covers ' + months + ' month' + (months === 1 ? '' : 's') + ' of spending.';
       card.ok = true; return card;
     }
+    if (type === 'race') {
+      /* K4 (D-217): dates only. n is the rung in $100K, y its year, w and z the range. */
+      var Race = D.Race || (typeof require === 'function' ? (function () { try { return require('../engines/race.js'); } catch (e) { return null; } })() : null);
+      if (!Race) return Object.assign(card, { reason: 'The race engine is not loaded.' });
+      var race = Race.rungs(h, T, { investedOnly: !!o.investedOnly });
+      if (!Money.isOk(race) || !race.rows.length) return Object.assign(card, { reason: Money.isOk(race) ? (race.pastTop ? 'Past the last rung already.' : 'Not reachable at this pace.') : race.reason });
+      var row = race.rows[0];
+      card.fields.n = row.rungCents / 100000; card.fields.y = Number(row.date.slice(0, 4));
+      if (row.range.fastDate) card.fields.w = Number(row.range.fastDate.slice(0, 4));
+      if (row.range.slowDate) card.fields.z = Number(row.range.slowDate.slice(0, 4));
+      card.title = 'My ' + (card.fields.n === 100 ? 'first' : 'next') + ' $100K: ' + card.fields.y;
+      card.line = '$' + card.fields.n + 'K by ' + card.fields.y + (card.fields.w && card.fields.z && card.fields.w !== card.fields.z ? ' (' + card.fields.w + ' to ' + card.fields.z + ')' : '') + '.';
+      card.ok = true; return card;
+    }
     if (type === 'understanding') {
       if (!D.Doors || !T.ledgerRows) return Object.assign(card, { reason: 'The rows are not loaded.' });
       var u = D.Doors.understanding(h, T, [], T.confidenceWeights);
@@ -125,7 +139,7 @@
     return Object.assign(card, { reason: 'No such card.' });
   }
   var RULE_NAMES = { four_percent: 'The 4% rule', fifty_thirty_twenty: '50/30/20', die_with_zero: 'Die With Zero', max_401k_first: 'Max your 401(k) first', six_months: 'Six months of expenses', pay_off_mortgage: 'Pay off the mortgage early', never_touch_ef: 'Never touch the emergency fund', save_ten_percent: 'Save 10%', hundred_minus_age: '100 minus your age in stocks' };
-  function all(household, tables, opts) { return TYPES.filter(function (t) { return t !== 'wrapped' && t !== 'unlearn'; }).map(function (t) { return make(t, household, tables, opts); }).filter(function (c) { return c.ok; }); }
+  function all(household, tables, opts) { return TYPES.filter(function (t) { return t !== 'wrapped' && t !== 'unlearn' && t !== 'race'; }).map(function (t) { return make(t, household, tables, opts); }).filter(function (c) { return c.ok; }); }
   function clean(fields) {
     var out = {};
     Object.keys(fields || {}).forEach(function (k) { if (ALLOWED[k] && typeof fields[k] === ALLOWED[k]) out[k] = fields[k]; });
@@ -145,6 +159,7 @@
     if (f.t === 'debtFree') return { title: 'Debt-free: ' + (f.d ? monthWord(f.d) : 'soon'), line: typeof f.m === 'number' ? f.m + ' month' + (f.m === 1 ? '' : 's') + ' at the current pace.' : '' };
     if (f.t === 'runway') return { title: 'Runway: ' + f.m + ' months', line: 'Cash covers ' + f.m + ' month' + (f.m === 1 ? '' : 's') + ' of spending.' };
     if (f.t === 'understanding') return { title: f.p + '% of the picture', line: 'I understand ' + f.p + '% of my financial picture.' };
+    if (f.t === 'race') return { title: 'My ' + (f.n === 100 ? 'first' : 'next') + ' $100K: ' + f.y, line: '$' + f.n + 'K by ' + f.y + (f.w && f.z && f.w !== f.z ? ' (' + f.w + ' to ' + f.z + ')' : '') + '.' };
     if (f.t === 'wrapped') {
       var days = Number(f.d);
       return { title: 'Money Wrapped ' + (f.y || ''), line: (isNaN(days) ? '' : (days >= 0 ? days + ' days of freedom bought. ' : Math.abs(days) + ' days of freedom given back. '))

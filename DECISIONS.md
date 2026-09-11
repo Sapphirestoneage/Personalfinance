@@ -13308,6 +13308,45 @@ baseline, the capped conversion, every empty state), the render,
 features and forms gates on both rooms, the phone walk (both views,
 the viewer switch remembered across a reload, the switch off).
 
+## D-217 — K4, K6, K7, K11: one countdown, four skins
+
+**Why.** Every "when can I afford it" in the brief is the same sum with a
+different name, and a suite that lets each room walk its own months ends
+up with four answers to one question.
+
+**Decision.** `engines/countdown.js` holds the one `goalCountdown()`:
+target, set aside, a month's contribution, what it earns, the return
+bands for a range, and a `monthlyNeededCents()` for the honest
+alternative when a date is out of reach. Four skins on it, each a
+standalone room writing nothing to the household: `engines/race.js` and
+`rooms/race.html` (the next $100K rung and every rung to $1M, saving and
+growth split at each, shareable as dates only through a `race` card);
+`engines/downpayment.js` and `rooms/down-payment.html` (3.5% FHA, 5%, 10%
+and 20% down, each with closing costs, reserves and the payment from
+`engines/housing.js`; a home block on request); `engines/quitfund.js`
+and `rooms/quit-fund.html` (months of freedom on the free tiers of the
+reachable-money waterfall over the floor month plus COBRA cover; laid
+off counts the state benefit, quit counts none); `engines/wedding.js`
+and `rooms/wedding.html` (a total or a build-up from
+`data/wedding_defaults.json`, each extra table in dollars and FI days
+through the lens; a marriage block on request). Cash goals count at 0%,
+so their range collapses on purpose. `test/run.js` fails the build if a
+skin walks its own months.
+
+**Replaces or removes.** Nothing: four new rooms and one shared engine.
+
+**Stored shape.** No change to `slaf.household.v2`. New tables
+`data/down_payment.json` and `data/wedding_defaults.json`, both marked
+unverified. The scenarios store may gain a home or marriage block from
+the two rooms that offer one.
+
+**Verified.** `node test/run.js` (the countdown by hand, the demo's
+rungs shrinking with growth taking over, the 20%-down payment to the
+cent and its 78 months, family help moving every date, quit versus laid
+off changing only the benefit, the wedding build-up and its target
+month), the render, features and forms gates on the four rooms, the
+phone walk.
+
 ---
 
 # The Dungeons & Dividends entries

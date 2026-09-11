@@ -605,6 +605,20 @@
       "order": 25.7
     },
     {
+      "id": "race",
+      "title": "The Race to $100K",
+      "file": "rooms/race.html",
+      "reads": [
+        "cashSavings",
+        "monthlyExpenses",
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 25.9
+    },
+    {
       "id": "runway",
       "title": "The Runway",
       "file": "rooms/runway.html",
@@ -734,6 +748,19 @@
       ],
       "dashboardNumber": "runwayDays",
       "order": 31
+    },
+    {
+      "id": "quit-fund",
+      "title": "The Quit Fund",
+      "file": "rooms/quit-fund.html",
+      "reads": [
+        "cashSavings",
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 31.5
     },
     {
       "id": "protection",
@@ -876,6 +903,16 @@
       "order": 38
     },
     {
+      "id": "wedding",
+      "title": "Wedding Countdown",
+      "file": "rooms/wedding.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 38.5
+    },
+    {
       "id": "kids",
       "title": "Kids and Tuition",
       "file": "rooms/kids.html",
@@ -911,6 +948,16 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 40
+    },
+    {
+      "id": "down-payment",
+      "title": "Down Payment Countdown",
+      "file": "rooms/down-payment.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 40.5
     },
     {
       "id": "big-purchase",

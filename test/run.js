@@ -10246,7 +10246,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
-  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements,next-hundred,coast-date,rank-guess');
+  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements,next-hundred,coast-date,rank-guess,race');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
@@ -10260,7 +10260,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move, no Between Jobs', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move' || r.id === 'between-jobs'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 25);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 28);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13351,6 +13351,111 @@ section('J7, J8: two views of Partner, Roth conversions before 65 (D-216)');
   const shelves = [];
   (function walk(x) { if (Array.isArray(x)) { if (x.indexOf('decumulation') > -1) shelves.push(x); x.forEach(walk); } else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
   checkTrue('...in every arrangement, right after it', shelves.length === 20 && shelves.every(a => a[a.indexOf('decumulation') + 1] === 'roth-aca'));
+})();
+
+/* ==========================================================================
+   K4, K6, K7, K11: one countdown, four skins (D-217)
+   ========================================================================== */
+section('K4, K6, K7, K11: one countdown, four skins (D-217)');
+(function () {
+  const Countdown = require(path.join(ROOT, 'engines/countdown.js'));
+  const Race = require(path.join(ROOT, 'engines/race.js'));
+  const DownPayment = require(path.join(ROOT, 'engines/downpayment.js'));
+  const QuitFund = require(path.join(ROOT, 'engines/quitfund.js'));
+  const Wedding = require(path.join(ROOT, 'engines/wedding.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+
+  /* -- the one countdown, by hand ----------------------------------------------- */
+  const cd = Countdown.goalCountdown({ targetCents: 2000000, savedCents: 500000, monthlyContributionCents: 50000, annualRate: 0, from: '2026-09' });
+  check('$20,000 less $5,000 at $500 a month: 30 months', cd.months, 30);
+  check('...from September 2026 that is March 2029', cd.date, '2029-03');
+  check('...a cash goal has no range: both ends are the same month', cd.range.fastDate + '|' + cd.range.slowDate, '2029-03|2029-03');
+  check('the month that would land it in a year: $1,250', cd.monthlyNeededCents(12), 125000);
+  check('nothing in and nothing growing: never, not a far-off date', Countdown.goalCountdown({ targetCents: 100, savedCents: 0, monthlyContributionCents: 0 }).neverAtThisPace, true);
+  check('already there: reached now', Countdown.goalCountdown({ targetCents: 100, savedCents: 100 }).reachedNow, true);
+  const banded = Countdown.goalCountdown({ targetCents: 10000000, savedCents: 4800000, monthlyContributionCents: 100000, annualRate: 0.05, bands: { p25: 0.02, p50: 0.05, p75: 0.08 }, from: '2026-09' });
+  checkTrue('an invested goal carries its range: the good decade lands first, the poor one last', banded.range.fastMonths < banded.months && banded.months < banded.range.slowMonths);
+  /* every skin is a skin: no countdown walks its own months */
+  ['race', 'downpayment', 'quitfund', 'wedding'].forEach(function (e) {
+    const src = fs.readFileSync(path.join(ROOT, 'engines/' + e + '.js'), 'utf8');
+    checkTrue(e + ' dates through goalCountdown and never walks months itself', /Countdown\.goalCountdown\(/.test(src) && !/Math\.pow\(/.test(src) && !/for \(var m = /.test(src));
+  });
+  ['race', 'down-payment', 'quit-fund', 'wedding'].forEach(function (r) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms/' + r + '.html'), 'utf8');
+    checkTrue('rooms/' + r + '.html computes no date of its own', !/Math\.pow\(/.test(src) && src.indexOf('Spine.set(') === -1 && /LIVE-FORM: built once/.test(src));
+  });
+
+  /* -- K4: the race on the demo (steady saving) ------------------------------------ */
+  const race = Race.rungs(Demo.build(), T, { from: '2026-09' });
+  checkTrue('the demo races from its net worth with what it saves a month', Money.isOk(race) && race.basis === 'netWorth' && race.monthlyCents > 0);
+  check('ten rungs to $1 million', race.rows.length, 10);
+  checkTrue('after the first (partial) rung, each gap is shorter than the one before', race.rows.slice(1).every((x, i) => i === 0 || x.gapMonths <= race.rows[i].gapMonths));
+  checkTrue('every rung splits into what was saved and what grew, and the two add to the rung', race.rows.every(x => x.contributedCents + x.grownCents === x.rungCents - (x === race.rows[0] ? race.startCents : x.rungCents - Race.RUNG_CENTS)));
+  checkTrue('growth first does more of the work at a later rung, and from there on', race.firstGrowthLeadsRungCents > race.rows[0].rungCents && race.rows.filter(x => x.rungCents >= race.firstGrowthLeadsRungCents).every(x => x.growthLeads));
+  checkTrue('each date carries its range, good decade first', race.rows.every(x => x.range.fastDate <= x.date && x.date <= x.range.slowDate));
+  const nothing = Race.rungs(Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult' })], assets: [Schema.createAsset({ category: 'cash', valueCents: 100 })], debts: [Schema.createDebt({ balanceCents: 100 })] }), T, { from: '2026-09', monthlyContributionCents: 0 });
+  check('saving nothing from nothing: not reachable at this pace, never a date', nothing.neverAtThisPace + ':' + nothing.rows.length + ':' + nothing.value, 'true:0:null');
+  checkTrue('...with the monthly saving that would reach $100K in five years: under $1,666.67, because what goes in grows too', nothing.monthlyNeededCents === Countdown.monthlyNeededCents(10000000, 0, nothing.rate, 60) && nothing.monthlyNeededCents < 166667 && nothing.monthlyNeededCents > 140000);
+  const invested = Race.rungs(Demo.build(), T, { from: '2026-09', investedOnly: true });
+  checkTrue('invested money only races from the investments, not net worth', Money.isOk(invested) && invested.basis === 'invested' && invested.startCents === Schema.investmentsCents(Demo.build()).value && invested.startCents !== race.startCents);
+  const card = ShareCard.make('race', Demo.build(), T, {});
+  checkTrue('the race shares as dates only: a rung and a year, no cents', card.ok && card.fields.n === 100 && card.fields.y === Number(race.rows[0].date.slice(0, 4)) && ShareCard.leaks(ShareCard.link(card), Demo.build()).length === 0);
+  checkTrue('...and the card renders from its fields alone', /first \$100K: \d{4}/.test(ShareCard.render(ShareCard.decode(ShareCard.encode(card))).title));
+
+  /* -- K6: the down payment, by hand -------------------------------------------------
+     $400,000 at 6.5% over 30 years. 20% down = $80,000; closing 3% = $12,000;
+     P&I on $320,000 = $2,022.62; tax 1.1%/12 = $366.67; insurance 0.5%/12 = $166.67;
+     no mortgage insurance; $2,555.96 a month; two months in reserve $5,111.92;
+     needs $97,111.92. $20,000 saved and $1,000 a month: 78 months. */
+  const dp = DownPayment.plan(T, { priceCents: 40000000, savedCents: 2000000, monthlyCents: 100000, rate: 0.065, from: '2026-09' });
+  const twenty = dp.options.filter(o => o.pct === 0.2)[0];
+  check('20% down: the payment to the cent', twenty.paymentCents, 255596);
+  check('...two months of it in reserve', twenty.reservesCents, 511192);
+  check('...what the lender needs in cash', twenty.neededCents, 9711192);
+  check('...78 months away at $1,000 a month', twenty.months, 78);
+  checkTrue('a bigger down payment moves the date later and the principal and interest lower', dp.options.every((o, i) => i === 0 || (o.months >= dp.options[i - 1].months && o.principalInterestCents < dp.options[i - 1].principalInterestCents)));
+  checkTrue('...and the whole payment lower from 5% up (FHA at 3.5% carries a cheaper premium than private insurance at 5%)', dp.options.slice(1).every((o, i) => i === 0 || o.paymentCents < dp.options.slice(1)[i - 1].paymentCents));
+  checkTrue('under 20% there is mortgage insurance; at 20% there is none', dp.options.filter(o => o.pct < 0.2).every(o => o.miCents > 0) && twenty.miCents === 0);
+  const helped = DownPayment.plan(T, { priceCents: 40000000, savedCents: 2000000, monthlyCents: 100000, familyHelpCents: 2000000, rate: 0.065, from: '2026-09' });
+  checkTrue('family help moves every date earlier', helped.options.every((o, i) => (o.months || 0) <= (dp.options[i].months || 0)));
+  const stuck = DownPayment.plan(T, { priceCents: 40000000, savedCents: 0, monthlyCents: 0, from: '2026-09' });
+  checkTrue('nothing going in: not at this pace, with the monthly that would do it in five years', stuck.options.every(o => o.neverAtThisPace && o.monthlyNeededCents > 0 && o.date === null));
+  checkTrue('no price: it asks for one', !Money.isOk(DownPayment.plan(T, {})) && DownPayment.plan(T, {}).missing[0] === 'price');
+  checkTrue('every rate comes from a table, none inline', /T\.downPayment|D\.pmiAnnualRate|H\.closingCostRate/.test(fs.readFileSync(path.join(ROOT, 'engines/downpayment.js'), 'utf8')) && !/0\.0075|0\.0055|0\.03\b/.test(fs.readFileSync(path.join(ROOT, 'engines/downpayment.js'), 'utf8')));
+
+  /* -- K7: the quit fund on the demo -------------------------------------------------- */
+  const quit = QuitFund.plan(Demo.build(), T, { mode: 'quit', from: '2026-09' });
+  const laid = QuitFund.plan(Demo.build(), T, { mode: 'laidOff', from: '2026-09' });
+  checkTrue('the demo\'s free money is its cash', Money.isOk(quit) && quit.freeCents === 950000 && quit.freeTiers.map(t => t.id).join(',') === 'cash');
+  check('the month is the household month plus single COBRA cover', quit.monthCents, 315000 + T.cobraAca.monthly.cobraSingleCents);
+  check('months of freedom, to a tenth', quit.value, Math.round(950000 / quit.monthCents * 10) / 10);
+  checkTrue('quitting counts no benefit, and says why', quit.benefit.totalCents === 0 && /disqualif/.test(quit.benefit.reason));
+  checkTrue('laid off in NC: half of pay up to the state cap, for the state\'s weeks', laid.benefit.weeklyCents === Math.min(T.uiBenefits.states.NC.maxWeeklyDollars * 100, Math.round(Money.toCents(Demo.VALUES ? Demo.VALUES.grossAnnualIncome : 0) / 52 * 0.5)) && laid.benefit.weeks === T.uiBenefits.states.NC.weeks);
+  checkTrue('...which lengthens the months of freedom', laid.value > quit.value);
+  checkTrue('...and nothing else changes: the same free money, month and cover', laid.freeCents === quit.freeCents && laid.monthCents === quit.monthCents && laid.coverCents === quit.coverCents);
+  check('three targets: 3, 6, 12 months', quit.targets.map(t => t.months).join(','), '3,6,12');
+  checkTrue('each target is that many months less the benefit, dated through the countdown from the free money', laid.targets.every(t => t.targetCents === Math.max(0, t.months * laid.monthCents - laid.benefit.totalCents)) && quit.targets.every((t, i) => i === 0 || t.date >= quit.targets[i - 1].date));
+
+  /* -- K11: the wedding on the demo ---------------------------------------------------- */
+  const w = Wedding.plan(Demo.build(), T, { savedCents: 500000, monthlyCents: 80000, from: '2026-09', targetDate: '2028-06' });
+  check('the default build-up: 115 guests at $150, $15,000 fixed, a $5,200 ring', w.totalCents, 115 * 15000 + 1500000 + 520000);
+  check('$32,450 to go at $800 a month: 41 months', w.months, 41);
+  checkTrue('not in time for June 2028, and the monthly that would be: $32,450 over 21 months', w.onTime === false && w.monthlyForTargetCents === Math.ceil(3245000 / 21));
+  const wf = Wedding.plan(Demo.build(), T, { savedCents: 500000, monthlyCents: 80000, familyCents: 1000000, from: '2026-09', targetDate: '2028-06' });
+  checkTrue('family contributions, typed, move the date earlier', wf.months < w.months);
+  checkTrue('a table of eight costs eight guests, priced in FI days through the lens', w.perTableCents === 8 * 15000 && typeof w.perTableFiDays === 'number' && w.perTableFiDays > 0);
+  check('a typed total wins over the build-up', Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).source + ':' + Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).reachedNow, 'typed:true');
+  checkTrue('the defaults table is tagged, every figure editable from the page', T.weddingDefaults.confidence === 'unverified' && /in-perguest/.test(fs.readFileSync(path.join(ROOT, 'rooms/wedding.html'), 'utf8')));
+  /* registry and shelves */
+  ['race', 'down-payment', 'quit-fund', 'wedding'].forEach(function (id) { checkTrue(id + ' is registered', !!Registry.byId(id)); });
+  const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
+  const pairs = { 'rank-guess': 'race', 'between-jobs': 'quit-fund', housing: 'down-payment', partner: 'wedding' };
+  let shelved = 0;
+  (function walk(x) { if (Array.isArray(x) && x.every(i => typeof i === 'string')) { Object.keys(pairs).forEach(k => { if (x.indexOf(k) > -1 && x[x.indexOf(k) + 1] === pairs[k]) shelved++; }); } if (Array.isArray(x)) x.forEach(walk); else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
+  check('each is shelved beside its neighbour in all twenty arrangements', shelved, 80);
 })();
 
 /* ==========================================================================

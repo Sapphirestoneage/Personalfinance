@@ -30,7 +30,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **student-loans** — Student Loan Decision · 268 lines · engines: projection, tier0, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-120
 - **calendar** — Money Calendar & Pay-Later · 269 lines · engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-130, D-121
 
-## Scorecard (11)
+## Scorecard (12)
 
 - **financial-snapshot** — Financial Snapshot · 863 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath · D-056, D-036, D-008
 - **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-156
@@ -42,9 +42,10 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **next-hundred** — Your Next $100 · 132 lines · engines: projection, tier0, foo, next100 · D-211
 - **coast-date** — Your Coast Date · 123 lines · engines: projection, tier0, coast · D-213
 - **rank-guess** — Where Do You Think You Rank? · 115 lines · engines: projection, tier0, rankguess · D-213
+- **race** — The Race to $100K · 153 lines · engines: projection, tier0, countdown, race · D-217
 - **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-143, D-081
 
-## Decisions (25)
+## Decisions (28)
 
 - **hassle** — Worth the Hassle · 499 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
 - **quick-math** — Quick Math · 447 lines · engines: projection, quickmath, tier0, hourly · D-062, D-022
@@ -60,15 +61,18 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **what-if-life** — What If, Life · 551 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events · D-146, D-091, D-087
 - **timeline** — What Comes Next · 504 lines · engines: timeline · owns: futureIncome · D-152
 - **between-jobs** — Between Jobs · 299 lines · engines: projection, tier0, hourly, tax, runway, betweenjobs · owns: expectedSearchMonths, floorMonthly · D-102
+- **quit-fund** — The Quit Fund · 137 lines · engines: selfemployed, tax, projection, tier0, debt, cashflow, reachable, countdown, quitfund · D-217
 - **protection** — Protection · 268 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-103, D-098, D-094
 - **decumulation** — Drawing It Down · 274 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-104, D-098, D-094
-- **roth-aca** — Roth Conversions Before 65 · 204 lines · engines: selfemployed, tax, rothaca · D-216
+- **roth-aca** — Roth Conversions Before 65 · 207 lines · engines: selfemployed, tax, rothaca · D-216
 - **estate** — Estate Basics · 218 lines · engines: projection, tier0, hourly, estate · owns: beneficiariesSet, willExists, poaExists · D-106, D-098, D-094
 - **giving** — Giving · 261 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget · D-107, D-098, D-094
 - **career-move** — Career Move · 292 lines · engines: projection, tier0, hourly, careermove · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-108
 - **partner** — Partner · 381 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner · owns: partnerName, partnerDob, splitMode, sharedMonthly · D-216, D-181, D-179
+- **wedding** — Wedding Countdown · 175 lines · engines: projection, tier0, hourly, countdown, wedding · D-217
 - **kids** — Kids and Tuition · 245 lines · engines: projection, tier0, kids · owns: tuitionTarget, tuitionSaved, tuitionMonthly · D-110
 - **housing** — Housing Decision · 330 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing · owns: rentAlternative, homePrice, downPct, mortgageRate · D-130, D-111
+- **down-payment** — Down Payment Countdown · 152 lines · engines: projection, tier0, debt, cashflow, ratios, housing, countdown, downpayment · D-217
 - **big-purchase** — Big Purchase · 264 lines · engines: projection, tier0, hourly, quickmath, purchase · owns: purchasePrice, purchaseMonths, purchaseRate · D-129, D-112
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 

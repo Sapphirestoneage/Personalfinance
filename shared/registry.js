@@ -1163,6 +1163,23 @@
     ]
   });
 
+  /* The Quit Fund (K7, D-217): months of freedom on money that costs
+     nothing to reach, with cover counted, and the dates to 3, 6 and 12. */
+  ROOMS.push({
+    id: 'quit-fund',
+    group: 'decisions', subgroup: 'work', aliases: ['quit', 'quit fund', 'freedom fund', 'f-you money', 'walk away', 'laid off'],
+    appliesWhen: 'situation != retired',
+    kind: 'read',
+    needs: ['cashSavings', 'monthlyExpenses'],
+    order: 31.5,
+    title: 'The Quit Fund',
+    blurb: 'How many months you could walk away for, on money that costs nothing to reach, with the floor month and health cover counted; when you would have three, six and twelve; and what changes if you are laid off instead.',
+    href: 'rooms/quit-fund.html',
+    tier: 2,
+    tags: ['cashflow', 'income'],
+    daite: { reads: ['assets.cashCents', 'assets', 'expenses', 'expenses.floor', 'income.grossAnnualCents', 'taxes.state', 'you.dob'], writes: [] },
+    subsections: [{ id: 'months', label: 'Months of freedom' }, { id: 'dates', label: 'When you would have' }, { id: 'parts', label: 'What it is made of' }]
+  });
   /* Tax — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'tax',
@@ -1284,6 +1301,22 @@
       ]
   });
 
+  /* Wedding Countdown (K11, D-217): a total or a build-up, dated through the
+     one countdown; each extra table in dollars and FI days. */
+  ROOMS.push({
+    id: 'wedding',
+    group: 'decisions', subgroup: 'family', aliases: ['wedding', 'engagement', 'ring', 'guests', 'marry'],
+    kind: 'explore',
+    needs: [],
+    order: 38.5,
+    title: 'Wedding Countdown',
+    blurb: 'The date the wedding is paid for with no debt, from a total or from guests, fixed costs and the ring, and what every extra table costs in dollars and in days of financial independence.',
+    href: 'rooms/wedding.html',
+    tier: 2,
+    tags: ['cashflow'],
+    daite: { reads: ['expenses', 'income.grossAnnualCents', 'assets.invested'], writes: [] },
+    subsections: [{ id: 'date', label: 'Affordable, with no debt' }, { id: 'inputs', label: 'The wedding, and the fund' }, { id: 'tables', label: 'Every extra table' }]
+  });
   /* Kids and Tuition — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'kids',
@@ -1329,6 +1362,23 @@
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
       ]
+  });
+
+  /* Down Payment Countdown (K6, D-217): what each way in needs in cash, the
+     date at the pace, and the payment at each. */
+  ROOMS.push({
+    id: 'down-payment',
+    group: 'decisions', subgroup: 'moves', aliases: ['down payment', 'save for a house', 'fha', 'pmi', 'closing costs', 'first home'],
+    kind: 'explore',
+    needs: [],
+    order: 40.5,
+    title: 'Down Payment Countdown',
+    blurb: 'For a home price, the date you could buy at 3.5%, 5%, 10% and 20% down, each with closing costs and the lender’s reserves counted, and the monthly payment at each with tax, insurance and mortgage insurance where it applies.',
+    href: 'rooms/down-payment.html',
+    tier: 2,
+    tags: ['cashflow'],
+    daite: { reads: ['taxes.state'], writes: [] },
+    subsections: [{ id: 'inputs', label: 'The home, and the fund' }, { id: 'options', label: 'Four ways in' }]
   });
 
   /* Big Purchase — the second wave of tranche rooms (D-099). */
@@ -1806,6 +1856,22 @@
     tags: ['cashflow'],
     daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
     subsections: [{ id: 'date', label: 'Coast date' }, { id: 'reverse', label: 'The reverse view' }]
+  });
+  /* The Race to $100K (K4, D-217): the next rung and every rung to $1M, dated
+     through the one countdown, with saving and growth split at each. */
+  ROOMS.push({
+    id: 'race',
+    group: 'scorecard', aliases: ['race', '100k', 'first 100k', 'rungs', 'million'],
+    kind: 'read',
+    needs: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'],
+    order: 25.9,
+    title: 'The Race to $100K',
+    blurb: 'The date your net worth reaches its next $100,000 rung, then every rung to $1 million, with what came from saving and what came from growth at each. The first $100K is the hardest; this shows why.',
+    href: 'rooms/race.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['assets', 'assets.cashCents', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus'], writes: [] },
+    subsections: [{ id: 'next', label: 'The next rung' }, { id: 'rungs', label: 'Every rung to $1 million' }]
   });
   /* Where Do You Think You Rank? (I3, D-213): the guess before the survey. */
   ROOMS.push({

@@ -4,7 +4,7 @@ paths:
   - "engines/rothaca.js"
 ---
 # Roth Conversions Before 65 (`roth-aca`)
-File: rooms/roth-aca.html · 204 lines
+File: rooms/roth-aca.html · 207 lines
 Engines: selfemployed, tax, rothaca
 Reference data: aca_2026.json, effective_tax_rates_2026.json, federal_brackets_2026.json, return_bands.json, se_tax_2026.json
 Owns: nothing

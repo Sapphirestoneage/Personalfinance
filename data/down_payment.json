@@ -1,0 +1,19 @@
+{
+  "id": "down_payment",
+  "version": "2026.0",
+  "asOf": "2026-01-01",
+  "source": "What a lender asks for beyond the price: FHA loans from 3.5% down (HUD Handbook 4000.1) with an annual mortgage insurance premium of 0.55% for most 30-year loans (HUD Mortgagee Letter 2023-05); conventional loans from 3% to 5% down with private mortgage insurance until 20% equity, commonly 0.3% to 1.5% of the loan a year (Freddie Mac and consumer guides, the midpoint used here); two months of principal, interest, taxes and insurance held in reserve (Fannie Mae Selling Guide B3-4.1). Closing costs, property tax and insurance come from data/housing_conventions.json, never a second copy.",
+  "confidence": "unverified",
+  "confidenceNote": "Recalled figures, rounded; not checked against the handbooks line by line. Mortgage insurance varies with credit score and the loan; reserves vary by lender and loan type. A planning shape, never a quote.",
+  "note": "Read by engines/downpayment.js (D-217). Each option is a down payment share with the insurance it carries under 20%: fha (the FHA premium on the loan), pmi (private mortgage insurance on the loan), none.",
+  "options": [
+    { "pct": 0.035, "label": "3.5% down (FHA)", "insurance": "fha" },
+    { "pct": 0.05, "label": "5% down", "insurance": "pmi" },
+    { "pct": 0.10, "label": "10% down", "insurance": "pmi" },
+    { "pct": 0.20, "label": "20% down", "insurance": "none" }
+  ],
+  "pmiAnnualRate": 0.0075,
+  "fhaAnnualMipRate": 0.0055,
+  "reservesMonths": 2,
+  "termYears": 30
+}

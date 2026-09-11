@@ -1,7 +1,6 @@
 ---
 paths:
   - "rooms/housing.html"
-  - "engines/housing.js"
 ---
 # Housing Decision (`housing`)
 File: rooms/housing.html · 330 lines

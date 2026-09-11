@@ -1251,6 +1251,45 @@ const CASES = [
         ['a row a year to 65', rows > 0, true]
       ];
     }
+  },
+  {
+    /* DOWN PAYMENT COUNTDOWN (K6, D-217): five boxes, re-rendered into a
+       sibling list on every keystroke. */
+    room: '/rooms/down-payment.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '#in-price', type: '400000' },
+      { sel: '#in-saved', type: '20000' },
+      { sel: '#in-monthly', type: '1000' }
+    ],
+    expect: async (page) => {
+      const n = await page.evaluate(() => document.querySelectorAll('#d-opts li').length);
+      const twenty = await page.evaluate(() => (document.querySelector('#d-opts li[data-pct="0.2"] .when') || {}).textContent || '');
+      return [
+        ['four ways in', n, 4],
+        ['the 20% date is a month and a year', /^[A-Z][a-z]+ \d{4}$/.test(twenty), true]
+      ];
+    }
+  },
+  {
+    /* WEDDING COUNTDOWN (K11, D-217): nine boxes and a slider. */
+    room: '/rooms/wedding.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '#in-guests', type: '80' },
+      { sel: '#in-saved', type: '5000' },
+      { sel: '#in-monthly', type: '800' }
+    ],
+    expect: async (page) => {
+      const num = await page.evaluate(() => document.getElementById('w-num').textContent);
+      const sub = await page.evaluate(() => document.getElementById('w-sub').textContent);
+      return [
+        ['a date is shown', /^[A-Z][a-z]+ \d{4}\.$/.test(num), true],
+        ['built from 80 guests', /80 guests/.test(sub), true]
+      ];
+    }
   }
 ];
 

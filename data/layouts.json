@@ -35,6 +35,7 @@
             "variance",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "statement",
             "reachable",
@@ -73,6 +74,7 @@
             "adventure",
             "timeline",
             "between-jobs",
+            "quit-fund",
             "protection",
             "decumulation",
             "roth-aca",
@@ -81,8 +83,10 @@
             "giving",
             "career-move",
             "partner",
+            "wedding",
             "kids",
             "housing",
+            "down-payment",
             "big-purchase",
             "variable-income",
             "enough",
@@ -142,6 +146,7 @@
             "variance",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "statement",
             "reachable",
@@ -174,6 +179,7 @@
             "estate",
             "giving",
             "housing",
+            "down-payment",
             "big-purchase",
             "enough",
             "week",
@@ -199,11 +205,13 @@
             "credential",
             "accounts",
             "between-jobs",
+            "quit-fund",
             "decumulation",
             "roth-aca",
             "tax",
             "career-move",
             "partner",
+            "wedding",
             "kids",
             "variable-income",
             "dreamline",
@@ -245,6 +253,7 @@
             "dashboard",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "health",
             "ratios",
@@ -294,6 +303,7 @@
             "big-purchase",
             "car",
             "housing",
+            "down-payment",
             "kids",
             "quick-math",
             "hassle",
@@ -322,6 +332,7 @@
           "rooms": [
             "cant-pay",
             "between-jobs",
+            "quit-fund",
             "get-help",
             "variable-income",
             "sleep-at-night"
@@ -351,7 +362,8 @@
             "protection",
             "tax",
             "rollover",
-            "partner"
+            "partner",
+            "wedding"
           ]
         },
         {
@@ -392,7 +404,8 @@
             "hassle",
             "credential",
             "timeline",
-            "between-jobs"
+            "between-jobs",
+            "quit-fund"
           ]
         },
         {
@@ -407,7 +420,8 @@
             "calendar",
             "big-purchase",
             "car",
-            "housing"
+            "housing",
+            "down-payment"
           ]
         },
         {
@@ -454,6 +468,7 @@
             "roth-aca",
             "tax",
             "partner",
+            "wedding",
             "kids"
           ]
         },
@@ -507,6 +522,7 @@
             "get-help",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "doors"
           ],
@@ -532,6 +548,7 @@
           "rooms": [
             "cant-pay",
             "between-jobs",
+            "quit-fund",
             "runway",
             "get-help",
             "credit"
@@ -554,6 +571,7 @@
             "settings",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements"
           ]
         },
@@ -585,8 +603,10 @@
             "statement",
             "reachable",
             "housing",
+            "down-payment",
             "kids",
             "partner",
+            "wedding",
             "timeline",
             "what-if-life",
             "adventure",
@@ -671,6 +691,7 @@
             "calendar",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "dashboard"
           ],
@@ -738,7 +759,8 @@
             "student-loans",
             "big-purchase",
             "car",
-            "housing"
+            "housing",
+            "down-payment"
           ]
         },
         {
@@ -770,7 +792,9 @@
             "adventure",
             "windfall",
             "between-jobs",
+            "quit-fund",
             "partner",
+            "wedding",
             "estate",
             "giving",
             "decumulation",
@@ -809,6 +833,7 @@
             "dashboard",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "walk",
             "refresh",
@@ -860,6 +885,7 @@
             "big-purchase",
             "car",
             "housing",
+            "down-payment",
             "kids",
             "career-move",
             "decumulation",
@@ -867,11 +893,13 @@
             "estate",
             "protection",
             "partner",
+            "wedding",
             "windfall",
             "self-employed",
             "side-hustle",
             "variable-income",
-            "between-jobs"
+            "between-jobs",
+            "quit-fund"
           ],
           "note": "A third of the app behind one word — the price of a tidy tab bar.",
           "warn": true
@@ -950,6 +978,7 @@
           "name": "Everything, A–Z",
           "rooms": [
             "between-jobs",
+            "quit-fund",
             "big-purchase",
             "budget",
             "career-move",
@@ -969,6 +998,7 @@
             "exercises",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "fire-lab",
             "fire",
@@ -982,10 +1012,12 @@
             "history",
             "wrapped",
             "housing",
+            "down-payment",
             "income",
             "kids",
             "calendar",
             "partner",
+            "wedding",
             "protection",
             "quick-math",
             "real-hourly-wage",
@@ -1058,6 +1090,7 @@
             "walk",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "doors"
           ],
@@ -1087,7 +1120,8 @@
             "protection",
             "cant-pay",
             "credit",
-            "between-jobs"
+            "between-jobs",
+            "quit-fund"
           ],
           "note": "What you lie awake about."
         },
@@ -1114,6 +1148,7 @@
             "car",
             "big-purchase",
             "housing",
+            "down-payment",
             "rollover",
             "student-loans",
             "debt-payoff"
@@ -1140,6 +1175,7 @@
           "name": "The living room",
           "rooms": [
             "partner",
+            "wedding",
             "kids",
             "giving",
             "values"
@@ -1227,6 +1263,7 @@
             "debt-payoff",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements"
           ]
         },
@@ -1266,6 +1303,7 @@
             "values",
             "estate",
             "partner",
+            "wedding",
             "decumulation",
             "roth-aca",
             "enough",
@@ -1283,9 +1321,11 @@
           "name": "When something happens",
           "rooms": [
             "between-jobs",
+            "quit-fund",
             "cant-pay",
             "career-move",
             "housing",
+            "down-payment",
             "big-purchase",
             "car",
             "kids",
@@ -1351,6 +1391,7 @@
             "reachable",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "variance",
             "quick-math"
@@ -1363,6 +1404,7 @@
             "hassle",
             "big-purchase",
             "housing",
+            "down-payment",
             "car",
             "student-loans",
             "rollover",
@@ -1432,10 +1474,12 @@
           "rooms": [
             "cant-pay",
             "between-jobs",
+            "quit-fund",
             "sleep-at-night",
             "get-help",
             "variable-income",
             "partner",
+            "wedding",
             "kids"
           ]
         },
@@ -1483,6 +1527,7 @@
           "name": "The income stopping",
           "rooms": [
             "between-jobs",
+            "quit-fund",
             "sleep-at-night",
             "variable-income",
             "self-employed",
@@ -1507,6 +1552,7 @@
             "protection",
             "estate",
             "partner",
+            "wedding",
             "kids",
             "decumulation",
             "roth-aca"
@@ -1546,8 +1592,10 @@
             "what-if-life",
             "adventure",
             "housing",
+            "down-payment",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "ratios",
             "health"
@@ -1623,10 +1671,12 @@
           "name": "Someone you love",
           "rooms": [
             "partner",
+            "wedding",
             "kids",
             "giving",
             "estate",
-            "housing"
+            "housing",
+            "down-payment"
           ]
         },
         {
@@ -1636,6 +1686,7 @@
             "career-move",
             "credential",
             "between-jobs",
+            "quit-fund",
             "side-hustle",
             "self-employed",
             "variable-income",
@@ -1700,6 +1751,7 @@
             "calendar",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "sleep-at-night",
             "refresh",
@@ -1772,6 +1824,7 @@
           "rooms": [
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "statement",
             "reachable",
@@ -1796,6 +1849,7 @@
             "adventure",
             "timeline",
             "between-jobs",
+            "quit-fund",
             "protection",
             "decumulation",
             "roth-aca",
@@ -1803,7 +1857,9 @@
             "giving",
             "career-move",
             "partner",
+            "wedding",
             "housing",
+            "down-payment",
             "big-purchase",
             "variable-income",
             "enough",
@@ -1858,6 +1914,7 @@
           "rooms": [
             "cant-pay",
             "between-jobs",
+            "quit-fund",
             "runway",
             "get-help",
             "expenses",
@@ -1889,6 +1946,7 @@
             "big-purchase",
             "car",
             "housing",
+            "down-payment",
             "student-loans"
           ]
         },
@@ -1912,6 +1970,7 @@
             "protection",
             "estate",
             "partner",
+            "wedding",
             "kids",
             "decumulation",
             "roth-aca"
@@ -1948,6 +2007,7 @@
             "health",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "dashboard"
           ]
@@ -1997,6 +2057,7 @@
             "settings",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "dashboard",
             "health",
@@ -2047,7 +2108,9 @@
             "timeline",
             "big-purchase",
             "housing",
-            "between-jobs"
+            "down-payment",
+            "between-jobs",
+            "quit-fund"
           ]
         },
         {
@@ -2066,6 +2129,7 @@
             "fire-lab",
             "estate",
             "partner",
+            "wedding",
             "kids",
             "career-move",
             "self-employed",
@@ -2128,6 +2192,7 @@
             "tax",
             "giving",
             "partner",
+            "wedding",
             "credit",
             "calendar",
             "history",
@@ -2140,10 +2205,12 @@
             "progress-card",
             "get-help",
             "housing",
+            "down-payment",
             "car",
             "big-purchase",
             "kids",
             "between-jobs",
+            "quit-fund",
             "career-move",
             "side-hustle",
             "self-employed",
@@ -2154,6 +2221,7 @@
             "reachable",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "variable-income",
             "variance",
@@ -2240,8 +2308,10 @@
             "ledger",
             "timeline",
             "partner",
+            "wedding",
             "kids",
             "between-jobs",
+            "quit-fund",
             "variable-income",
             "self-employed",
             "side-hustle",
@@ -2301,7 +2371,8 @@
             "cant-pay",
             "car",
             "big-purchase",
-            "housing"
+            "housing",
+            "down-payment"
           ],
           "note": "What you owe and what you are about to owe. Six spokes.",
           "hub": "debt-payoff"
@@ -2312,6 +2383,7 @@
             "dashboard",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "ratios",
             "health",
@@ -2384,6 +2456,7 @@
             "savings-rate",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "credit",
             "runway",
@@ -2407,6 +2480,7 @@
             "roth-aca",
             "big-purchase",
             "housing",
+            "down-payment",
             "car",
             "student-loans",
             "rollover",
@@ -2449,7 +2523,8 @@
             "dreamline",
             "giving",
             "estate",
-            "partner"
+            "partner",
+            "wedding"
           ],
           "note": "Nothing to be wrong about arithmetically. Judge these as advice, not as sums."
         },
@@ -2457,6 +2532,7 @@
           "name": "Nothing yet, and it says so",
           "rooms": [
             "between-jobs",
+            "quit-fund",
             "variable-income",
             "self-employed",
             "side-hustle",
@@ -2513,6 +2589,7 @@
           "name": "Wrong right now › Work changed",
           "rooms": [
             "between-jobs",
+            "quit-fund",
             "career-move",
             "self-employed",
             "side-hustle",
@@ -2526,6 +2603,7 @@
           "rooms": [
             "get-help",
             "partner",
+            "wedding",
             "kids",
             "giving",
             "estate"
@@ -2546,6 +2624,7 @@
             "dashboard",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements"
           ]
         },
@@ -2568,7 +2647,8 @@
             "student-loans",
             "car",
             "big-purchase",
-            "housing"
+            "housing",
+            "down-payment"
           ]
         },
         {

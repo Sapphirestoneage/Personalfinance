@@ -5,14 +5,14 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 112. Traced: 103. No other room mentions it: **51**.
+Fields: 112. Traced: 103. No other room mentions it: **52**.
 
 
 ## accounts (7)
 
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by statement, reachable, side-hustle, credential, rollover, roth-aca, ledger
+- `marginalRate` — Marginal tax rate · read by statement, side-hustle, credential, rollover, roth-aca
 - `allocationStocks` — Target: stocks · **no other room mentions it**
 - `allocationBonds` — Target: bonds · **no other room mentions it**
 - `allocationCash` — Target: cash · **no other room mentions it**
@@ -86,8 +86,8 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 ## expenses (8)
 
-- `rentMonthly` — Rent or mortgage, a month · read by financial-snapshot, housing, calendar
-- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, savings-rate, sleep-at-night, fire, fire-lab, real-hourly-wage, ratios, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, health, what-if-life, between-jobs, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, buckets, dreamline, reversibility, unlearning, calendar
+- `rentMonthly` — Rent or mortgage, a month · read by housing, calendar
+- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, savings-rate, sleep-at-night, fire, fire-lab, real-hourly-wage, ratios, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, health, what-if-life, between-jobs, quit-fund, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, buckets, dreamline, reversibility, unlearning, calendar
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
@@ -113,7 +113,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `rentAlternative` — A place you would rent instead, a month · **no other room mentions it**
 - `homePrice` — The place, its price · **no other room mentions it**
-- `downPct` — Down payment, share of price · read by financial-snapshot
+- `downPct` — Down payment, share of price · **no other room mentions it**
 - `mortgageRate` — Mortgage rate · read by unlearning
 
 ## income (3)
@@ -170,11 +170,11 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, savings-rate, fire, fire-lab, real-hourly-wage, self-employed, reachable, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, tax, career-move, partner, wrapped, ledger
-- `grossAnnualIncome` — Gross annual income · read by first-round, express, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, reachable, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, foo-ladder, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, protection, decumulation, roth-aca, tax, giving, career-move, partner, housing, big-purchase, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, ledger
+- `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, savings-rate, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, tax, career-move, partner, wrapped
+- `grossAnnualIncome` — Gross annual income · read by first-round, express, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, foo-ladder, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, quit-fund, protection, decumulation, roth-aca, tax, giving, career-move, partner, housing, big-purchase, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, ledger
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by first-round
-- `cashSavings` — Cash & savings · read by first-round, budget, financial-snapshot, statements, statement, sleep-at-night, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, between-jobs, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, ledger, refresh
+- `cashSavings` — Cash & savings · read by first-round, budget, financial-snapshot, statements, statement, sleep-at-night, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, between-jobs, quit-fund, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, ledger, refresh
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by first-round, between-jobs, tax, unlearning, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, savings-rate, foo-ladder, next-hundred, unlearning
@@ -188,11 +188,11 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `otherAssets` — Property & other assets · read by statements, estate
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
-- `netWorth` — Net worth · read by financial-snapshot, statements, dashboard, rank-guess, what-if-life, history, ledger
+- `netWorth` — Net worth · read by financial-snapshot, statements, dashboard, rank-guess, race, what-if-life, history, ledger
 - `assetValue` — What each account or thing is worth · read by express, refresh
 - `assetCharacter` — How it is taxed on the way out · read by express
 - `assetTier` — Which pile it sits in · read by express
-- `assetCostBasis` — Cost basis · read by express, reachable, ledger
+- `assetCostBasis` — Cost basis · read by express, ledger
 
 ## student-loans (4)
 
