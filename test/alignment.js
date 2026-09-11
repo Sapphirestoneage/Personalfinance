@@ -149,6 +149,11 @@ const EQUAL_HEIGHT = [
     for (const [page, sel] of EQUAL_HEIGHT) {
       await p.goto(BASE + page, { waitUntil: 'networkidle' });
       await p.waitForTimeout(600);
+      /* A long room folds its later sections behind "Show the rest" (D-170);
+         a folded section has no height, and measuring it would pass for
+         nothing. Unfold first. */
+      await p.evaluate(() => { const b = document.getElementById('showrest'); if (b) b.click(); });
+      await p.waitForTimeout(200);
       const rows = await p.evaluate((sel) => {
         const out = [];
         document.querySelectorAll(sel).forEach(grid => {
