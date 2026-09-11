@@ -13383,6 +13383,52 @@ every path with a solid bridge; the 72(t) payment to the cent; each
 debate's answer flipping as the key input crosses its flip point), the
 render, features and forms gates on both rooms, the phone walk.
 
+## D-219 — K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, the car
+
+**Why.** The rest of Phase K: the "one pager out" half of the suite's core
+goal, and four decisions people bring to a friend who is good with money.
+
+**Decision.** `engines/onepager.js` and `rooms/one-pager.html`: one page
+of the household for an audience (partner, coach, lender prep, planner,
+podcast), Private with full numbers or Public with ratios, percentages
+and time only (checked against the share-card leak rule), any section
+switchable, a print stylesheet, and a Private file in the shape Your Data
+imports so a coach opens it as an intake. Every figure comes from the
+engine that owns it; blanks stay blank. `engines/microretirement.js` and
+`rooms/micro-retirement.html`: the fund for a 1 to 12 month break (the
+break, cover, less income, plus the re-entry cushion), the ready date
+through the one countdown, the FI move through the lens, the
+career-momentum cost as a range from `data/career_momentum.json`, and a
+sabbatical block on request. `engines/offers.js` and
+`rooms/offer-compare.html`: two to four offers priced on a copy of the
+household holding each pay (the one take-home figure, the true match
+salary × cap × rate, equity as a range, less premiums and the commute),
+per real hour with the commute in the hours, the FI date under each, the
+one line that decides it; accepting writes the pay and the state and
+records the life change for the reopen sheet. `engines/degree.js` and
+`rooms/degree.html`: a degree as a sum, break-even age and lifetime
+difference by 65 as ranges, the FI date with and without.
+`engines/firstcar.js` and `rooms/first-car.html`: 20/3/8 through the one
+rule call in `engines/quickmath.js`, each part inside or outside, the
+price that fits, the gap in FI days, new against used from the
+depreciation curve in `data/car_costs.json`.
+
+**Replaces or removes.** Nothing: five new rooms. The 20/3/8 figures sit
+both in `data/car_costs.json` and as the constant Quick Math has always
+carried; a later pass should make the engine read the table.
+
+**Stored shape.** No change to `slaf.household.v2`. Offer Compare writes
+existing fields only (the primary's first income source and the state)
+and `meta.reopen`. New table `data/career_momentum.json`, marked
+unverified.
+
+**Verified.** `node test/run.js` (the Public page with no cents, the
+Private page to the cent, blanks and "not sure yet"; the six-month fund
+and the zero-momentum case; the two match formulas by hand; the degree's
+cost and break-even with its range; the car's three parts and the price
+that fits), the render, features and forms gates on the five rooms, the
+phone walk.
+
 ---
 
 # The Dungeons & Dividends entries

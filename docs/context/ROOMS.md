@@ -45,7 +45,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **race** — The Race to $100K · 156 lines · engines: projection, tier0, countdown, race · D-217
 - **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-143, D-081
 
-## Decisions (29)
+## Decisions (33)
 
 - **hassle** — Worth the Hassle · 499 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
 - **quick-math** — Quick Math · 447 lines · engines: projection, quickmath, tier0, hourly · D-062, D-022
@@ -62,6 +62,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **timeline** — What Comes Next · 504 lines · engines: timeline · owns: futureIncome · D-152
 - **between-jobs** — Between Jobs · 299 lines · engines: projection, tier0, hourly, tax, runway, betweenjobs · owns: expectedSearchMonths, floorMonthly · D-102
 - **quit-fund** — The Quit Fund · 140 lines · engines: selfemployed, tax, projection, tier0, debt, cashflow, reachable, countdown, quitfund · D-217
+- **micro-retirement** — Micro-Retirement Planner · 167 lines · engines: projection, tier0, hourly, countdown, microretirement · D-219
 - **protection** — Protection · 268 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-103, D-098, D-094
 - **decumulation** — Drawing It Down · 274 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-104, D-098, D-094
 - **roth-aca** — Roth Conversions Before 65 · 207 lines · engines: selfemployed, tax, rothaca · D-216
@@ -69,12 +70,15 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **estate** — Estate Basics · 218 lines · engines: projection, tier0, hourly, estate · owns: beneficiariesSet, willExists, poaExists · D-106, D-098, D-094
 - **giving** — Giving · 261 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget · D-107, D-098, D-094
 - **career-move** — Career Move · 292 lines · engines: projection, tier0, hourly, careermove · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-108
+- **offer-compare** — Offer Compare · 189 lines · engines: projection, tier0, offers · D-219
+- **degree** — The Degree Decision · 154 lines · engines: projection, tier0, degree · D-219
 - **partner** — Partner · 381 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner · owns: partnerName, partnerDob, splitMode, sharedMonthly · D-216, D-181, D-179
 - **wedding** — Wedding Countdown · 178 lines · engines: projection, tier0, hourly, countdown, wedding · D-217
 - **kids** — Kids and Tuition · 245 lines · engines: projection, tier0, kids · owns: tuitionTarget, tuitionSaved, tuitionMonthly · D-110
 - **housing** — Housing Decision · 330 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing · owns: rentAlternative, homePrice, downPct, mortgageRate · D-130, D-111
 - **down-payment** — Down Payment Countdown · 155 lines · engines: projection, tier0, debt, cashflow, ratios, housing, countdown, downpayment · D-217
 - **big-purchase** — Big Purchase · 264 lines · engines: projection, tier0, hourly, quickmath, purchase · owns: purchasePrice, purchaseMonths, purchaseRate · D-129, D-112
+- **first-car** — The First Car Check · 148 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-219
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 
 ## What Matters (12)
@@ -98,7 +102,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **skill-tree** — The Skill Tree · 610 lines · engines: projection, tier0, foo, skilltree · owns: skillsDone · D-141, D-140, D-139
 - **exercises** — Exercises · 211 lines · engines: projection, tier0, foo, skilltree, income, selfemployed, tax, fire, statement, vpw, decumulation, cashflow, events, exercises · owns: exercisesDone · D-141, D-139, D-136
 
-## Upkeep (11)
+## Upkeep (12)
 
 - **get-help** — Get Help (utility) · 121 lines · no engines · D-097
 - **history** — History · 231 lines · engines: projection, tier0, hourly, foo, cashflow, fire, statement, benchmarks, ratios, events, skills, history · owns: historyCompareTo · D-122, D-101
@@ -107,6 +111,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **walk** — The Walk-Through (utility) · 280 lines · no engines · D-169, D-149
 - **data** — Your Data (utility) · 572 lines · engines: tax, bankcsv · D-125
 - **ledger** — The Ledger (utility) · 496 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing · D-207, D-186, D-185
+- **one-pager** — The One-Pager · 173 lines · engines: selfemployed, tax, projection, tier0, debt, cashflow, ratios, trap, onepager · D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 - **progress-card** — Progress Card (utility) · 140 lines · engines: projection, tier0, tax, debt · D-212
 - **comeback** — Welcome Back (utility) · 195 lines · engines: tax, projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, skills, sincelast · D-214

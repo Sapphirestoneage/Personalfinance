@@ -10250,7 +10250,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
-  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk,wrapped,ledger,progress-card,comeback');
+  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk,wrapped,ledger,one-pager,progress-card,comeback');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
@@ -10260,7 +10260,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move, no Between Jobs', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move' || r.id === 'between-jobs'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 29);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 33);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13543,6 +13543,82 @@ section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
   const debRoom = fs.readFileSync(path.join(ROOT, 'rooms/debates.html'), 'utf8');
   checkTrue('the Referee never says "you should"', !/you should/i.test(debRoom.replace(/Never "you should"/, '')) && debRoom.indexOf('Spine.set(') === -1);
   ['middle-class-trap', 'debates'].forEach(id => checkTrue(id + ' is registered', !!Registry.byId(id)));
+})();
+
+/* ==========================================================================
+   K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, the car (D-219)
+   ========================================================================== */
+section('K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, the car (D-219)');
+(function () {
+  const OnePager = require(path.join(ROOT, 'engines/onepager.js'));
+  const Micro = require(path.join(ROOT, 'engines/microretirement.js'));
+  const Offers = require(path.join(ROOT, 'engines/offers.js'));
+  const Degree = require(path.join(ROOT, 'engines/degree.js'));
+  const FirstCar = require(path.join(ROOT, 'engines/firstcar.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  const demo = Demo.build();
+
+  /* -- K2: the One-Pager ---------------------------------------------------------- */
+  const priv = OnePager.build(demo, T, { audience: 'coach', version: 'private' });
+  const pub = OnePager.build(demo, T, { audience: 'coach', version: 'public' });
+  check('the coach preset shows every section', priv.sectionsOn.join(','), OnePager.SECTIONS.map(s => s.id).join(','));
+  checkTrue('the Public version contains no cents value from the household', ShareCard.leaks(OnePager.text(pub), demo).length === 0 && !/\$/.test(OnePager.text(pub)));
+  const rowOf = (built, sec, label) => built.value.filter(s => s.id === sec)[0].rows.filter(r => r.label === label)[0];
+  checkTrue('the Private version matches the Ledger to the cent', rowOf(priv, 'income', 'Gross income, a year').value === Schema.grossAnnualIncomeCents(demo).value && rowOf(priv, 'cashflow', 'Spending, a month').value === Schema.monthlyExpensesCents(demo).value && rowOf(priv, 'assets', 'Cash').value === 950000);
+  checkTrue('blanks show as blank, never $0', rowOf(priv, 'assets', 'Pre-tax').blank === true && rowOf(priv, 'assets', 'Pre-tax').text === '' && !/\$0\b/.test(OnePager.text(priv)));
+  const unsure = Schema.createHousehold(Object.assign({}, demo, { expenses: Schema.createExpenses({}), meta: Object.assign({}, demo.meta, { notSure: { monthlyExpenses: { at: 1, expectedBy: null } } }) }));
+  checkTrue('not sure yet shows as words', rowOf(OnePager.build(unsure, T, { audience: 'coach' }), 'cashflow', 'Spending, a month').text === 'not sure yet');
+  checkTrue('presets decide the sections and any can be switched off', OnePager.build(demo, T, { audience: 'partner' }).sectionsOn.join(',') === 'story,cashflow,debts,goals' && OnePager.build(demo, T, { audience: 'partner', sections: { debts: false, ratios: true } }).sectionsOn.join(',') === 'story,cashflow,goals,ratios');
+  checkTrue('lender prep carries debt-to-income and credit notes', OnePager.build(demo, T, { audience: 'lender' }).sectionsOn.indexOf('credit') > -1 && rowOf(OnePager.build(demo, T, { audience: 'lender' }), 'debts', 'Debt-to-income').kind === 'rate');
+  const opRoom = fs.readFileSync(path.join(ROOT, 'rooms/one-pager.html'), 'utf8');
+  checkTrue('the Private file is the shape Your Data imports, so a coach can open it as an intake', /Spine\.exportObject\(\)/.test(opRoom) && /onePager/.test(opRoom));
+  checkTrue('the page has a print stylesheet and writes nothing', /@media print/.test(opRoom) && opRoom.indexOf('Spine.set(') === -1);
+
+  /* -- K5: the break -------------------------------------------------------------------- */
+  const six = Micro.plan(demo, T, { months: 6, from: '2026-09' });
+  checkTrue('a six-month break with no income: a fund at least six months of break spending plus the cushion', Money.isOk(six) && six.fundCents >= 6 * six.spendMonthlyCents + six.cushionCents && six.breakCents === 6 * (six.spendMonthlyCents + six.coverMonthlyCents));
+  checkTrue('...the cushion is the median re-entry gap in months of spending', six.cushionCents === Math.round(T.reentryGap.medianMonths * six.spendMonthlyCents));
+  const zero = Micro.plan(demo, T, { months: 6, from: '2026-09', momentumRate: 0 });
+  checkTrue('a momentum cost of zero removes that line and changes nothing else', zero.momentum.cents === 0 && zero.fundCents === six.fundCents && zero.readyDate === six.readyDate && zero.fiMovesMonths === six.fiMovesMonths);
+  checkTrue('the momentum cost is always a range from the table', six.momentum.lowCents < six.momentum.highCents && six.momentum.lowRate === T.careerMomentum.penaltyPerYearOfBreak.low);
+  checkTrue('both sides: the weeks bought and the ready date through the one countdown', six.weeksBought === 26 && /^\d{4}-\d{2}$/.test(six.readyDate));
+  checkTrue('income during the break lowers the fund', Micro.plan(demo, T, { months: 6, incomeMonthlyCents: 100000 }).fundCents < six.fundCents);
+
+  /* -- K8: the offers -------------------------------------------------------------------- */
+  check('a 50%-up-to-6% match on $100,000 is $3,000: salary × cap × rate', Schema.employerMatchCents(Offers.household(demo, { baseCents: 10000000, matchRate: 0.5, matchCapPct: 0.06 })).value, 300000);
+  check('a dollar-for-dollar match to 4% is $4,000', Schema.employerMatchCents(Offers.household(demo, { baseCents: 10000000, matchRate: 1, matchCapPct: 0.04 })).value, 400000);
+  const cmp = Offers.compare(demo, T, { offers: [
+    { label: 'A', baseCents: 10000000, matchRate: 0.5, matchCapPct: 0.06, healthMonthlyCents: 20000, commuteMonthlyCents: 15000, commuteMinutesPerDay: 60, ptoDays: 15, remoteDays: 0, state: 'NC' },
+    { label: 'B', baseCents: 9500000, bonusCents: 500000, matchRate: 1, matchCapPct: 0.04, equityLowCents: 500000, equityHighCents: 2000000, healthMonthlyCents: 10000, ptoDays: 25, remoteDays: 5, state: 'TX' }
+  ] });
+  checkTrue('two offers priced, each with a value range, a per-hour figure with the commute in the hours, and an FI date', Money.isOk(cmp) && cmp.offers.every(o => o.ok && o.valueLowCents <= o.valueHighCents && o.hoursAYear > 0 && o.fiYears !== null) && cmp.offers[0].commuteHoursAYear > 0 && cmp.offers[1].commuteHoursAYear === 0);
+  checkTrue('the one line that decides it is named', cmp.decider && cmp.decider.label && cmp.decider.diffCents > 0);
+  checkTrue('one offer is not a comparison', !Money.isOk(Offers.compare(demo, T, { offers: [{ baseCents: 100 }] })));
+  const ocRoom = fs.readFileSync(path.join(ROOT, 'rooms/offer-compare.html'), 'utf8');
+  checkTrue('accepting an offer writes the pay and records the life change for the reopen sheet', /Spine\.upsertIncomeSource\(/.test(ocRoom) && /Spine\.setReopen\(\{ field: 'grossAnnualIncome', from: 'offer-compare'/.test(ocRoom));
+
+  /* -- K9: the degree -------------------------------------------------------------------- */
+  const deg = Degree.decide(demo, T, { age: 30, tuitionCents: 6000000, years: 2, loanCents: 4000000, loanRate: 0.06, withLowCents: 9500000, withHighCents: 11000000 });
+  check('the cost: tuition, two years of pay given up, the loan interest over ten years', deg.costCents, 6000000 + 2 * 7200000 + deg.interestCents);
+  checkTrue('...the interest is the level payment engine\'s, not a second formula', deg.interestCents === require(path.join(ROOT, 'engines/projection.js')).levelPaymentCents({ principalCents: 4000000, annualRate: 0.06, months: 120 }).value * 120 - 4000000);
+  checkTrue('break-even at the middle, with its range', deg.breakEvenAge === Math.round((32 + deg.costCents / deg.gainMidCents) * 10) / 10 && deg.breakEvenLowAge < deg.breakEvenAge && deg.breakEvenAge < deg.breakEvenHighAge);
+  checkTrue('zero salary difference: does not break even', Degree.decide(demo, T, { age: 30, tuitionCents: 6000000, years: 2, withLowCents: 7200000 }).breakEvenAge === null);
+  checkTrue('employer-paid tuition moves break-even earlier', Degree.decide(demo, T, { age: 30, tuitionCents: 6000000, years: 2, loanCents: 4000000, loanRate: 0.06, withLowCents: 9500000, withHighCents: 11000000, employerHelpCents: 3000000 }).breakEvenAge < deg.breakEvenAge);
+  checkTrue('the FI date with and without, the study years counted', deg.fiWithYears !== null && deg.fiWithoutYears !== null);
+
+  /* -- K10: the car ---------------------------------------------------------------------- */
+  const car = FirstCar.check(demo, T, { priceCents: 3000000, downCents: 300000, termMonths: 60, loanRate: 0.07, insuranceMonthlyCents: 15000, gasMonthlyCents: 12000 });
+  check('30,000 with 3,000 down over 60 months on $72,000 of pay: all three parts outside', car.parts.map(p => p.inside).join(','), 'false,false,false');
+  checkTrue('...neutral words: inside or outside, never red', /inside|outside/.test(fs.readFileSync(path.join(ROOT, 'rooms/first-car.html'), 'utf8')) && !/is-red|color-critical/.test(fs.readFileSync(path.join(ROOT, 'rooms/first-car.html'), 'utf8')));
+  checkTrue('the rule test is the one call Quick Math makes', /QuickMath\.carRule2038\(/.test(fs.readFileSync(path.join(ROOT, 'engines/firstcar.js'), 'utf8')));
+  checkTrue('the highest price that fits all three, and the gap priced in FI days', car.maxAffordablePriceCents > 0 && car.gapCents === 3000000 - car.maxAffordablePriceCents && car.gapFiDays > 0);
+  checkTrue('maintenance estimated from the AAA shares when not typed', car.maintenanceEstimated && car.maintenanceCents === Math.round((15000 + 12000) / (0.25 + 0.24) * 0.2));
+  checkTrue('new against used at the same budget from the depreciation curve', car.newVsUsed.newLossCents === Math.round(3000000 * (1 - FirstCar.retained(T.carCosts, 5))) && car.newVsUsed.usedListNewCents === Math.round(3000000 / FirstCar.retained(T.carCosts, 3)));
+  checkTrue('inside all three at a fitting price', FirstCar.check(demo, T, { priceCents: 1500000, downCents: 300000, termMonths: 36, loanRate: 0.06 }).insideAll);
+  ['one-pager', 'micro-retirement', 'offer-compare', 'degree', 'first-car'].forEach(id => checkTrue(id + ' is registered', !!Registry.byId(id)));
 })();
 
 /* ==========================================================================

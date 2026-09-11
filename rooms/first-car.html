@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 22:09Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>The First Car Check · SPARKS</title>
+<meta name="description" content="The 20/3/8 rule as a lens on the car you are weighing: each part inside or outside, the highest price that fits all three, what the gap costs in FI days, and new against used at the same budget."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. K10 (D-219).
+
+  1. READS   Gross income (for the 8%), the savings basis for the FI-days
+             lens.
+  2. WRITES  Nothing. Every box is this page's what-if.
+  3. CALLS   engines/firstcar.js, on engines/quickmath.js carRule2038
+             (the one 20/3/8 test) and data/car_costs.json.
+  4. EMPTY   No price: it asks. No income: the 8% part says so.
+  5. CONFIG  data/car_costs.json (the rule's words, the running-cost
+             shares, the depreciation curve).
+
+  LIVE-FORM: built once. Seven boxes, in the HTML; only .value is set.
+-->
+<style>
+  .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
+  .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  ul.parts { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.parts li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ul.parts li:first-child { border-top: none; }
+  ul.parts .state { font-weight: 600; }
+  ul.parts small { grid-column: 1 / -1; color: var(--color-text-muted); font-size: var(--text-xs); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media (max-width: 480px) { .ask { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The First Car Check</h1>
+  <p class="room-lede">Twenty percent down, three years at most, under eight percent of what you earn. Each part inside or outside, the price that fits, and what the gap costs.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <section class="slaf-card" id="check">
+    <span class="slaf-eyebrow">20 / 3 / 8</span>
+    <p class="head-num" id="c-num"></p>
+    <p class="head-sub" id="c-sub"></p>
+    <ul class="parts" id="c-parts"></ul>
+  </section>
+  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The car</span>
+    <div class="ask">
+      <div><label for="in-price">Price</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-price" placeholder="e.g. 30,000" aria-label="Price"/></span></div>
+      <div><label for="in-down">Down payment</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-down" placeholder="e.g. 6,000" aria-label="Down payment"/></span></div>
+      <div><label for="in-term">Loan term, months</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-term" placeholder="e.g. 36" aria-label="Loan term in months"/></span></div>
+      <div><label for="in-rate">Loan rate</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-rate" placeholder="e.g. 7" aria-label="Loan rate"/><span class="slaf-affix">%</span></span></div>
+      <div><label for="in-ins">Insurance a month</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-ins" placeholder="e.g. 150" aria-label="Insurance a month"/></span></div>
+      <div><label for="in-gas">Fuel or charging a month</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-gas" placeholder="e.g. 120" aria-label="Fuel a month"/></span></div>
+      <div><label for="in-maint">Maintenance a month</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-maint" placeholder="estimated from the rest" aria-label="Maintenance a month"/></span>
+        <span class="slaf-hint" id="c-maint-hint"></span></div>
+    </div>
+  </section>
+  <section class="slaf-card" id="newused" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">New against used, same budget</span>
+    <p class="head-sub" id="c-newused"></p>
+  </section>
+  <p class="disclaimer">
+    Educational tool, not financial advice. The rule is a convention, not a law; the depreciation curve is a shape, not a prediction about one car. Everything stays in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script src="../engines/firstcar.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, FirstCar = SLAF.FirstCar;
+  var ROOM_ID = 'first-car';
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
+  function num(id) { var t = String(el(id).value || '').replace(/[^0-9.]/g, ''); return t === '' ? null : Number(t); }
+  function render() {
+    if (!TABLES) return;
+    var rate = num('in-rate');
+    var r = FirstCar.check(Spine.getProfile(), TABLES, { priceCents: typed('in-price'), downCents: typed('in-down'), termMonths: num('in-term'), loanRate: rate === null ? null : rate / 100, insuranceMonthlyCents: typed('in-ins'), gasMonthlyCents: typed('in-gas'), maintenanceMonthlyCents: typed('in-maint') });
+    if (!Money.isOk(r)) { el('c-num').textContent = 'Not yet.'; el('c-sub').textContent = r.reason; el('c-parts').innerHTML = ''; el('c-newused').textContent = ''; el('c-maint-hint').textContent = ''; return; }
+    el('c-num').textContent = r.insideAll ? 'Inside all three.' : r.value + ' of 3 inside.';
+    el('c-num').setAttribute('data-inside', String(r.value));
+    var sub = 'The highest price that fits all three parts: ' + Money.formatCents(r.maxAffordablePriceCents) + '.';
+    if (r.gapCents) sub += ' This one is ' + Money.formatCents(r.gapCents) + ' over that' + (r.gapFiDays !== null ? ', about ' + r.gapFiDays + ' days of financial independence' : '') + '.';
+    sub += ' All in, ' + Money.formatCents(r.allInMonthlyCents) + ' a month' + (r.allInShare !== null ? ' (' + Money.formatRate(r.allInShare, { decimals: 1 }) + ' of gross pay, ' + (r.allInInside ? 'inside' : 'outside') + ' the 8% when insurance, fuel and maintenance are counted)' : '') + '.';
+    el('c-sub').textContent = sub;
+    var words = { down: 'down', term: 'term', payment: 'payment' };
+    el('c-parts').innerHTML = r.parts.map(function (p) {
+      var detail = p.key === 'down' ? Math.round(p.actual * 100) + '% down against ' + Math.round(p.target * 100) + '%' + (p.shortfallCents ? ', ' + Money.formatCents(p.shortfallCents) + ' short' : '')
+        : p.key === 'term' ? p.actual + ' months against ' + p.target
+        : (p.actual === null ? 'no payment' : Money.formatCents(p.actual) + ' a month against ' + Money.formatCents(p.target)) + (p.overByCents ? ', ' + Money.formatCents(p.overByCents) + ' over' : '');
+      return '<li><span>' + esc(p.label) + '</span><span class="state">' + (p.inside ? 'inside' : 'outside') + '</span><small>' + esc(detail) + '</small></li>';
+    }).join('');
+    el('c-maint-hint').textContent = r.maintenanceEstimated && r.maintenanceEstimateCents ? 'Estimated at ' + Money.formatCents(r.maintenanceEstimateCents) + ' from the AAA cost shares; type your own to replace it.' : '';
+    var nu = r.newVsUsed;
+    el('c-newused').textContent = nu.newLossCents !== null ? 'New at ' + Money.formatCents(r.priceCents) + ': about ' + Money.formatCents(nu.newLossCents) + ' lost to depreciation over ' + nu.holdYears + ' years. The same ' + Money.formatCents(r.priceCents) + ' buys a ' + nu.usedAgeYears + '-year-old car that listed near ' + Money.formatCents(nu.usedListNewCents) + ' new, losing about ' + Money.formatCents(nu.usedLossCents) + ' over the same years.' : '';
+  }
+  ['in-price', 'in-down', 'in-term', 'in-rate', 'in-ins', 'in-gas', 'in-maint'].forEach(function (id) { el(id).addEventListener('input', render); });
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['carCosts', 'effectiveTaxRates', 'federalBrackets', 'fireVariants', 'returnBands']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

@@ -946,6 +946,41 @@
     ]
   });
 
+  /* The First Car Check (K10, D-219): 20/3/8 as a lens, the price that fits,
+     the gap in FI days, new against used at the same budget. */
+  ROOMS.push({
+    id: 'first-car',
+    group: 'decisions', subgroup: 'moves', aliases: ['first car', '20/3/8', 'car check', 'car loan', 'new or used'],
+    kind: 'explore',
+    needs: ['grossAnnualIncome'],
+    order: 41.5,
+    title: 'The First Car Check',
+    blurb: 'The 20/3/8 rule as a lens on the car you are weighing: each part inside or outside, the highest price that fits all three, what the gap costs in days of financial independence, and new against used at the same budget.',
+    href: 'rooms/first-car.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['income.grossAnnualCents', 'expenses', 'assets.invested', 'taxes.filingStatus'], writes: [] },
+    subsections: [{ id: 'check', label: '20 / 3 / 8' }, { id: 'inputs', label: 'The car' }, { id: 'newused', label: 'New against used' }]
+  });
+
+  /* The Degree Decision (K9, D-219): a degree as a sum, the break-even age
+     and the lifetime difference as ranges, the FI date with and without. */
+  ROOMS.push({
+    id: 'degree',
+    group: 'decisions', subgroup: 'work', aliases: ['degree', 'masters', 'mba', 'go back to school', 'tuition', 'break-even'],
+    appliesWhen: 'situation != retired',
+    kind: 'explore',
+    needs: ['dob'],
+    order: 37.7,
+    title: 'The Degree Decision',
+    blurb: 'A degree as a sum: tuition, the pay given up, the loan and employer help against the pay with it and without it, each a range. The break-even age, the lifetime difference by 65, and the FI date with and without.',
+    href: 'rooms/degree.html',
+    tier: 2,
+    tags: ['income'],
+    daite: { reads: ['income.grossAnnualCents', 'you.dob', 'expenses', 'taxes.filingStatus', 'assets.invested'], writes: [] },
+    subsections: [{ id: 'answer', label: 'Break-even' }, { id: 'inputs', label: 'The degree' }, { id: 'sum', label: 'The sum' }]
+  });
+
   /* The Timeline — jobs and benefits as dated periods that stack, and the
      months they add up to (D-152). It OWNS futureIncome[], which used to be
      edited on The Statement: a dated period belongs in the room that draws
@@ -1180,6 +1215,24 @@
     daite: { reads: ['assets.cashCents', 'assets', 'expenses', 'expenses.floor', 'income.grossAnnualCents', 'taxes.state', 'you.dob'], writes: [] },
     subsections: [{ id: 'months', label: 'Months of freedom' }, { id: 'dates', label: 'When you would have' }, { id: 'parts', label: 'What it is made of' }]
   });
+
+  /* Micro-Retirement Planner (K5, D-219): a planned break of 1 to 12 months,
+     what it costs and what it buys on one screen. */
+  ROOMS.push({
+    id: 'micro-retirement',
+    group: 'decisions', subgroup: 'work', aliases: ['micro-retirement', 'mini retirement', 'sabbatical', 'break', 'gap year', 'time off'],
+    appliesWhen: 'situation != retired',
+    kind: 'explore',
+    needs: ['monthlyExpenses'],
+    order: 31.7,
+    title: 'Micro-Retirement Planner',
+    blurb: 'A planned break from work of one to twelve months: the fund it needs with health cover and a re-entry cushion, the date you would be ready, how far the FI date moves, the career-momentum cost as a range, and what the break buys in weeks.',
+    href: 'rooms/micro-retirement.html',
+    tier: 2,
+    tags: ['cashflow', 'income'],
+    daite: { reads: ['expenses', 'assets.cashCents', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob', 'assets.invested'], writes: [] },
+    subsections: [{ id: 'fund', label: 'The fund' }, { id: 'sides', label: 'Both sides' }]
+  });
   /* The Middle Class Trap Test (K1, D-218): both sides of the debate on
      the household's numbers, four paths to the pre-tax money, each with a
      verdict and its range. */
@@ -1306,6 +1359,24 @@
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
       ]
+  });
+
+  /* Offer Compare (K8, D-219): two to four offers priced as what they are
+     worth in a year and per real hour, with the FI date under each. */
+  ROOMS.push({
+    id: 'offer-compare',
+    group: 'decisions', subgroup: 'work', aliases: ['offer', 'offers', 'job offer', 'compare offers', 'match', 'equity', 'negotiate'],
+    appliesWhen: 'situation != retired',
+    kind: 'explore',
+    needs: [],
+    order: 37.5,
+    title: 'Offer Compare',
+    blurb: 'Two to four job offers side by side: each one’s real yearly value after the match, health premiums and the commute, its value per real hour, the FI date under each, and the one line that decides it.',
+    href: 'rooms/offer-compare.html',
+    tier: 2,
+    tags: ['income'],
+    daite: { reads: ['expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state', 'assets.invested'], writes: ['income.grossAnnualCents', 'income.sources[].employerMatch', 'taxes.state'] },
+    subsections: [{ id: 'decider', label: 'What decides it' }, { id: 'offers', label: 'The offers' }, { id: 'results', label: 'Side by side' }]
   });
 
   /* Partner — the second wave of tranche rooms (D-099). */
@@ -1721,6 +1792,23 @@
       { id: 'sheet', label: 'A spreadsheet, and the app' },
       { id: 'reset', label: 'Start over' }
     ]
+  });
+
+  /* The One-Pager (K2, D-219): one page of the household for any
+     conversation; Private with full numbers, Public with ratios and time. */
+  ROOMS.push({
+    id: 'one-pager',
+    group: 'upkeep', aliases: ['one pager', 'one-pager', 'snapshot page', 'print', 'share with a coach', 'lender', 'planner'],
+    kind: 'read',
+    needs: ['grossAnnualIncome'],
+    order: 98.3,
+    title: 'The One-Pager',
+    blurb: 'One page of your money for any conversation: a partner, a coach, a lender, a planner, a podcast. Private with full numbers, or Public with ratios, percentages and time only. Print it, or hand over the file.',
+    href: 'rooms/one-pager.html',
+    tier: 1,
+    tags: ['income', 'cashflow', 'debt'],
+    daite: { reads: ['assets', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state', 'you.dob', 'you.situation', 'plans.targets'], writes: [] },
+    subsections: [{ id: 'audience', label: 'Who is it for' }, { id: 'page', label: 'The page' }]
   });
 
   /* Where every room's out-of-scope line points (D-097). Reads the gate for

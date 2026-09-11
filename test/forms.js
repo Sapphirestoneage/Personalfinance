@@ -1315,6 +1315,50 @@ const CASES = [
       const a = await page.evaluate(() => document.getElementById('d-num').getAttribute('data-answer'));
       return [['a cheap place favours buying', a, 'a']];
     }
+  },
+  {
+    /* MICRO-RETIREMENT PLANNER (K5, D-219): six boxes. */
+    room: '/rooms/micro-retirement.html',
+    container: '#fund',
+    seed: 'demo',
+    fields: [{ sel: '#in-months', type: '6' }, { sel: '#in-income', type: '500' }],
+    expect: async (page) => {
+      const fund = await page.evaluate(() => Number(document.getElementById('m-sub').getAttribute('data-fund')));
+      return [['a fund is priced', fund > 0, true]];
+    }
+  },
+  {
+    /* OFFER COMPARE (K8, D-219): four columns built once, two shown. */
+    room: '/rooms/offer-compare.html',
+    container: '#offers',
+    seed: 'demo',
+    fields: [{ sel: '#o0-base', type: '95000' }, { sel: '#o1-base', type: '100000' }, { sel: '#o1-commute', type: '200' }],
+    expect: async (page) => {
+      const best = await page.evaluate(() => document.getElementById('o-num').getAttribute('data-best'));
+      return [['a best offer is named', best === '0' || best === '1', true]];
+    }
+  },
+  {
+    /* THE DEGREE DECISION (K9, D-219): ten boxes. */
+    room: '/rooms/degree.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [{ sel: '#in-tuition', type: '60000' }, { sel: '#in-years', type: '2' }, { sel: '#in-with-low', type: '95000' }],
+    expect: async (page) => {
+      const be = await page.evaluate(() => document.getElementById('g-num').getAttribute('data-breakeven'));
+      return [['a break-even age', /^\d+(\.\d)?$/.test(be), true]];
+    }
+  },
+  {
+    /* THE FIRST CAR CHECK (K10, D-219): seven boxes. */
+    room: '/rooms/first-car.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [{ sel: '#in-price', type: '30000' }, { sel: '#in-down', type: '6000' }, { sel: '#in-term', type: '36' }],
+    expect: async (page) => {
+      const n = await page.evaluate(() => document.querySelectorAll('#c-parts li').length);
+      return [['three parts', n, 3]];
+    }
   }
 ];
 
