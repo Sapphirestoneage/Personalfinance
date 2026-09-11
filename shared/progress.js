@@ -1155,6 +1155,31 @@
       }
     }
 
+    /* The glossary hover (D-209): shared/glossary.json has one plain
+       sentence per term the rooms put on screen, and lane 2 (P-6) left it
+       loaded by nothing. Mounted from here so no room needs wiring: after
+       the page has loaded, the first occurrence of each term inside <main>
+       becomes an <abbr title> — text nodes only, never an input, so D-034
+       holds — capped at forty so a long page is not a field of dots. A
+       second pass on hashchange covers a fold that just opened. Silent when
+       the file is not there (dnd/ carries no glossary). */
+    function glossaryPass() {
+      if (!g.SLAF.Glossary) return;
+      g.SLAF.Glossary.load(sharedBase).then(function (G) {
+        G.mark(document.querySelector('main'), { max: 40 });
+      }).catch(function () {});
+    }
+    var sharedBase = (typeof location !== 'undefined' && location.pathname.indexOf('/rooms/') !== -1 ? '../' : '') + 'shared/';
+    if (typeof g.addEventListener === 'function' && !document.getElementById('slaf-glossary')) {
+      g.addEventListener('load', function () {
+        var gs = document.createElement('script');
+        gs.id = 'slaf-glossary';
+        gs.src = sharedBase + 'glossary.js';
+        gs.onload = function () { glossaryPass(); g.addEventListener('hashchange', glossaryPass); };
+        document.head.appendChild(gs);
+      });
+    }
+
     /* A write during a tap (blur → save → change) used to repaint this
        strip synchronously. When an item drops off the list the document
        gets shorter; if the page is scrolled near the bottom the browser

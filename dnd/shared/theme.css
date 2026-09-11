@@ -1278,3 +1278,8 @@ a:hover { color: var(--sapphire-100); }
 .slaf-approx a { color: inherit; text-decoration: underline dotted; }
 .slaf-owned-conf { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
 .slaf-owned--unknown .slaf-owned-value, .slaf-owned--unsure .slaf-owned-value { font-style: italic; }
+
+/* The glossary hover (D-209): a dotted term, a native title tooltip, a
+   long-press on a phone, reachable by keyboard. */
+abbr.slaf-gloss { text-decoration: underline dotted; text-underline-offset: 0.15em; cursor: help; }
+abbr.slaf-gloss:focus { outline: 2px solid var(--slaf-accent, #4a7); outline-offset: 2px; }

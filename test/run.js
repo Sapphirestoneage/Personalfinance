@@ -5228,6 +5228,12 @@ section('Eleven cards');
     const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
     checkTrue('the footer strip defers its repaint', /setTimeout\([\s\S]{0,400}paint\(\)/.test(prog));
     checkTrue('and holds its height across it', prog.indexOf('box.style.minHeight = held') !== -1);
+    /* The glossary hover is mounted from here, after load, text nodes only (D-209). */
+    checkTrue('the glossary is loaded from the header mount, not per room',
+      /addEventListener\('load'[\s\S]{0,300}glossary\.js/.test(prog) && /Glossary\.load\(sharedBase\)[\s\S]{0,120}mark\(document\.querySelector\('main'\), \{ max: 40 \}\)/.test(prog));
+    checkTrue('and the vendored theme carries the gloss style',
+      fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8').indexOf('abbr.slaf-gloss') !== -1
+      && fs.readFileSync(path.join(ROOT, 'dnd/shared/theme.css'), 'utf8').indexOf('abbr.slaf-gloss') !== -1);
     const sug = fs.readFileSync(path.join(ROOT, 'shared/suggest.js'), 'utf8');
     checkTrue('a suggestion chip keeps its space when off', sug.indexOf("'is-off'") !== -1 && sug.indexOf('chip.hidden = true') === -1);
     checkTrue('and a focused box is never marked suggested', /node === document\.activeElement\) \{ chipFor\(node\); return; \}/.test(sug));

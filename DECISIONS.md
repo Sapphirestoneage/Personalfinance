@@ -13023,6 +13023,30 @@ First Round walks); the phone walk: the same five answers in the First
 Round and in Express give a byte-identical household, the situation
 toggle hides and shows rows without clearing anything typed.
 
+## D-209 — The clutter pass: dead files out, the glossary switched on
+
+**Why.** The owner asked what was shelved or never activated, then asked for
+it cleaned out. Nine files at the root were read by nothing: the original JSX
+of the FOO calculator (`Inheritance FOO`), a Google Drive sync config no room
+read (`sync.json`), and seven audit screenshots. The glossary (lane 2, L-4)
+was written and tested and loaded by no page.
+
+**Decision.** Delete the nine files; git history keeps them. Mount the
+glossary hover from `shared/progress.js` (the one mount point every room
+reaches, D-170) after `load`, capped at forty terms, text nodes only; the
+style goes in `shared/theme.css` and its vendored copy. No room file
+changes. `ROADMAP.md`'s stale "twenty-five rooms are live" table becomes a
+pointer to `docs/context/ROOMS.md`. Left alone, as owner decisions: the
+eight off-by-default switches, the lane 2 tax tables (P-3/P-5/P-7, they
+change numbers), the `dnd/` link, and everything in the roadmap tiers.
+
+**Replaces or removes.** Nine root files. No screen or field.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`; `node tools/context/build.js --check`;
+served and opened a room: dotted terms in the copy, none inside an input.
+
 ---
 
 # The Dungeons & Dividends entries

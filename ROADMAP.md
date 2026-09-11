@@ -18,15 +18,11 @@ lives here, separately, and is kept honest against `shared/registry.js`.
 
 ## What is actually built, as of the last commit
 
-Twenty-five rooms are live. Against this document's own tiers:
-
-| Tier | In this doc | Shipped | What's shipped |
-|---|---|---|---|
-| **0** — MVP snapshot | 10 inputs, 9 outputs, FOO ladder, 5 flags | **all of it** | Start Here, Financial Snapshot, FOO Ladder |
-| **1** — fully modular | 29 | **21** | Net Worth · Savings Rate · FIRE variants · Debt Calculator · Credit Card view · HYSA Switch · Cash Flow · Budget templates · Return on Hassle · Girl Math (cost per use) · Snapshot/save-state · Rule of Five · $30k/$90k · 20/3/8 · Real Hourly Wage · W2 vs 1099 · Quarterly Estimated Tax · Retroactive Worth · Prospective Worth · Lump Sum vs DCA · FAT FIRE template |
-| **1.5** — one self-report | 3 | **3** | SWAN Number · Fulfillment Curve · Financial Health Score |
-| **2** — a few decisions | 23 | **14** | Side Hustle · Solo 401(k) · Roth vs Traditional vs Brokerage · Wedding · Dream Calculator · Convenience Method · Zombie Apocalypse framing · Values vs Spending Audit · Career ROI · Skills Calculator · Leave-Job · Unemployment · Start-Business · Travel |
-| **3 and up** | ~280 | **1** | Regret calc (Tier 4) — not a build of its own: it is `Worth.regrets()`, the same records filtered to low ratings. Everything else is out of `SPEC.md` scope |
+The live list is generated, not kept here: `docs/context/ROOMS.md` (every
+registered room, its group and owner fields) and `shared/registry.js` are
+the truth. The tier table that used to sit here said twenty-five rooms and
+was three times out of date; it is gone (D-209). The tranche table below is
+history and stays.
 
 **Build tranches from `BRIEF.md`** (the work order layered on top of the tiers):
 

@@ -7,6 +7,9 @@ Updated: 2026-09-11
 - ~70 rooms live on GitHub Pages. Each room works on its own; the connections
   between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
 - Context system added. Sessions should no longer read the archives.
+- Clutter pass (D-209): nine dead root files gone; the glossary hover is live on
+  every room from the shared header mount. Still owner calls: the eight
+  off-by-default switches, the lane 2 tax tables (P-3/P-5/P-7), a link to dnd/.
 
 ## Freeze
 - ON. No new rooms, frameworks, or vocabularies until the first journey
