@@ -12703,6 +12703,84 @@ download the file instead, saying so: find it in Downloads and send it
 from there, or open the page in Chrome or Safari and try Send again.
 "Permission denied" never reaches the screen.
 
+## D-204 — G1: protect the data that already exists
+
+**Why.** The Ledger rework brief (five questions, DAITE doors, progressive
+fill) opens with a hardening pass, G1, because the biggest problem with
+entering a lot of data is that people stop trusting what they typed. Four
+things could lose or corrupt a household today. Three are fixed here; the
+fourth (a domain of its own) needs the owner, below.
+
+**1. Dates on the person's clock.** `toISOString()` is UTC. In New York
+anything saved after 8pm got tomorrow's date and the last evening of a
+month landed in the next month. Thirteen sites stamped a day that way.
+`Schema.localDay(when)` and `Schema.localMonth(when)` are now the only
+way to stamp today (a day string passes through, a Date is formatted in
+local time, nonsense is null). Arithmetic on a YYYY-MM-DD string (a day
+plus n days, a month later) goes through `Schema.isoDayUTC(date)`, which
+formats UTC parts without touching the clock, so day maths stays
+timezone-free. Export filenames carry the local day too. `test/run.js`
+fails on `toISOString().slice`, `.substr`, `.substring` or `.split`
+anywhere the app runs, and runs a child process at 11:30pm on Aug 31 in
+America/New_York to prove the day reads Aug 31 while UTC would have said
+September.
+
+**2. Surviving Safari's seven-day wipe.** Safari drops a site's storage
+after seven days without a visit unless the site is persistent or on the
+Home Screen, and this app's rhythm is monthly. The spine now calls
+`navigator.storage.persist()` once per session, on the first real write,
+and remembers the answer in Prefs (`storage.persisted`); `storageState()`
+reports it. On iPhone Safari that is not installed, every room shows one
+quiet line, once, with "Add to Home Screen" and a Got it that sets
+`a2hs.seen`; never a popup, never on an installed web app. Every export
+(the backup, Your Data's file, Send) notes the moment in Prefs
+(`backup.lastExportAt`); the Backup box's idle line reads it back and,
+past thirty days, says the copy is old and worth refreshing. And the
+spine takes an automatic snapshot before a bulk change: before an import
+(Replace), before a merge (Add), and before a change of situation. Each
+carries a `reason` ('before-import', 'before-merge',
+'before-situation-change'; null for one the person froze), is skipped when
+there is nothing to keep, and is not doubled within a minute. On Replace
+the file's snapshots become the snapshots, as they always did, plus the
+one just taken, so a wrong file is one snapshot from the numbers it
+replaced. A backup load has its own undo stash (D-202) instead.
+
+**3. The page and the core must be the same build.** Every HTML file now
+carries `<meta name="slaf-build">` with the same stamp as `Schema.BUILD`
+(`node tools/stamp-build.js` writes all 84 pages, the schema, its vendored
+copy and version.json). At load the spine compares the two; a mismatch, a
+half-finished deploy or a cached old page over a new core, sets
+`storageState()` to `stale-page`, not writable, and every room shows
+"Updating, reload in a moment" at the top with a Reload button. The
+session still reads and still works in memory; nothing reaches storage
+until the two agree. No meta at all (a test, a bare page) is not a
+mismatch.
+
+**4. Gating the deploy.** `.github/workflows/test.yml` runs the whole suite
+on every push and pull request: the unit suite, the D&D suite, the export
+suite, lane 2, and the browser gates against a local server.
+`.github/workflows/pages.yml` publishes to Pages only after that job is
+green, and only once the owner switches the repository's Pages source to
+"GitHub Actions" and sets the repository variable `PAGES_VIA_ACTIONS` to
+`true`; until both, the branch publish carries on as before and the deploy
+job is skipped. Flipping the switch is a Pages setting, which the brief
+says to ask about first.
+
+**Not done here, waiting on the owner.** A domain of its own (G1.1):
+everything at sapphirestoneage.github.io is one origin, so any page ever
+hosted there can read the household. Moving Money Rooms to a subdomain of
+stresslessaboutmoney.com and the D&D sheet out of this repo needs DNS and
+a Pages setting; the migration (an export on the old origin with a link to
+the new one) is a small build once the domain exists.
+
+**Compatibility.** No stored household field changed. A snapshot record
+gains an optional `reason` (string or null); older records without it
+read as null. Two new Prefs keys: `storage.persisted` (boolean) and
+`backup.lastExportAt` (ISO timestamp), plus `a2hs.seen` (boolean). One
+new storage status, `stale-page`. Rooms that call `storageState()` see two
+new fields, `pageBuild` and `coreBuild`, and `persisted`.
+`shared/roomexport.js` now takes the schema as a dependency.
+
 ---
 
 # The Dungeons & Dividends entries

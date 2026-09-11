@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 18:36Z"/>
 <title>What If, Life · SPARKS</title>
 <meta name="description" content="A sabbatical, a move, a second income — one life event at a time, run three ways: dream, default, disaster."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -456,12 +457,12 @@
     var startsOn = null;
     if (Money.isEntered(answers.startsOn)) {
       var d = new Date(); d.setMonth(d.getMonth() + Math.round(answers.startsOn));
-      startsOn = d.toISOString().slice(0, 10);
+      startsOn = Schema.localDay(d);
     }
     Spine.upsertScenario(Schema.createScenario({
       name: t.title + (summary(t, answers) ? ' — ' + summary(t, answers) : ''),
       startsOn: startsOn,
-      diff: { templateId: t.id, answers: answers, disasterLine: state.disasterLine || null, savedOn: new Date().toISOString().slice(0, 10) }
+      diff: { templateId: t.id, answers: answers, disasterLine: state.disasterLine || null, savedOn: Schema.localDay() }
     }));
     el('save-note').textContent = 'Saved.';
     render();

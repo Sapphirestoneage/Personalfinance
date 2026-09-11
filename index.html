@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 18:36Z"/>
 <title>SPARKS · Money rooms</title>
 <meta name="description" content="Every threshold ratio as one shape, plus altitude, fuel, engine load and thrust."/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
@@ -1104,7 +1105,9 @@
     n.className = 'data-note' + (isError ? ' is-error' : '');
   }
 
+  function noteExport() { try { SLAF.Prefs.set('backup.lastExportAt', new Date().toISOString()); } catch (e) { /* fine */ } }
   function downloadFile() {
+    noteExport();
     var blob = new Blob([Spine.exportJSON()], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -1120,6 +1123,7 @@
   if (typeof navigator.share === 'function') el('btn-send').hidden = false;
   el('btn-send').addEventListener('click', function () {
     Spine.sendToDevice().then(function (r) {
+      noteExport();
       note(r.how === 'file' ? 'Sent as a file. On the other device, open Your Data and choose it under Load a file.' : 'Sent as a link. Open it on the other device and choose Load.');
     }).catch(function (err) {
       if (err && err.name === 'AbortError') return;

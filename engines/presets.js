@@ -72,8 +72,8 @@
   function isoDay(now) {
     if (!now) return undefined;
     if (typeof now === 'string') return now.slice(0, 10);
-    var d = new Date(now);
-    return isNaN(d.getTime()) ? undefined : d.toISOString().slice(0, 10);
+    var day = Schema.localDay(now);
+    return day === null ? undefined : day;
   }
   function emergencyFund(h, T) {
     var P = T && T.savingsPresets && T.savingsPresets.emergencyFund;

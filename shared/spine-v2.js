@@ -158,6 +158,48 @@
 
   var storage = { status: 'fresh', storedVersion: null, targetVersion: null, writable: true };
 
+  /* ---- The page and the core must be the same build (D-204) --------------
+     Every HTML file carries <meta name="slaf-build"> and the schema carries
+     Schema.BUILD. A half-finished deploy, or a cached old page over a new
+     core, is the one case where a write could reshape a household with
+     code that was never tested together. So a mismatch refuses to write:
+     the session still reads, the footer says "Updating, reload in a
+     moment", and nothing is saved until the two agree. */
+  function pageBuild() {
+    if (typeof document === 'undefined' || !document.querySelector) return null;
+    var m = document.querySelector('meta[name="slaf-build"]');
+    return m && m.getAttribute('content') ? m.getAttribute('content') : null;
+  }
+  function stalePage() {
+    var page = pageBuild();
+    var core = Schema.BUILD || null;
+    if (!page || !core || page === core) return null;
+    return { page: page, core: core };
+  }
+
+  /* ---- Ask the browser to keep the data (D-204) ---------------------------
+     Safari drops a site's storage after seven days without a visit unless
+     the site is "persistent" or installed to the Home Screen. Asked once
+     per session, on the first real write; the answer is remembered in
+     Prefs where the module is loaded, so a room can say which it is. */
+  var persistAsked = false;
+  var persistResult = null;
+  function requestPersist() {
+    if (persistAsked) return;
+    persistAsked = true;
+    try {
+      if (typeof navigator === 'undefined' || !navigator.storage || typeof navigator.storage.persist !== 'function') return;
+      var p = navigator.storage.persist();
+      if (!p || typeof p.then !== 'function') return;
+      p.then(function (granted) {
+        persistResult = granted === true;
+        var g = typeof self !== 'undefined' ? self : (typeof global !== 'undefined' ? global : null);
+        var Prefs = g && g.SLAF && g.SLAF.Prefs;
+        if (Prefs && Prefs.set) Prefs.set('storage.persisted', persistResult);
+      }).catch(function () { /* the answer is no */ });
+    } catch (e) { /* no storage manager here */ }
+  }
+
   /**
    * Bring a parsed blob up to the current schema version, or refuse.
    * Returns { ok: true, household } or { ok: false, reason, storedVersion }.
@@ -223,6 +265,8 @@
   function load() {
     if (cache) return cache;
     loadUncached();
+    var stale = stalePage();
+    if (stale) storage = { status: 'stale-page', storedVersion: storage.storedVersion, targetVersion: storage.targetVersion, writable: false, pageBuild: stale.page, coreBuild: stale.core };
     lastSaved = clone(cache);
     /* First reading of every owned field, so the first save() has
        something to compare against. See registerFieldReaders(). */
@@ -530,6 +574,7 @@
       return;
     }
     writeRaw(STORAGE_KEY, JSON.stringify(cache));
+    requestPersist();
   }
 
   /**
@@ -549,7 +594,10 @@
       storedVersion: storage.storedVersion,
       targetVersion: storage.targetVersion,
       writable: storage.writable,
-      quarantineKey: storage.writable ? null : QUARANTINE_KEY
+      quarantineKey: storage.status === 'corrupt' || storage.status === 'ahead' || storage.status === 'no-migration' ? QUARANTINE_KEY : null,
+      pageBuild: storage.pageBuild || pageBuild(),
+      coreBuild: Schema.BUILD || null,
+      persisted: persistResult
     };
   }
 
@@ -762,6 +810,11 @@
 
   function upsertPerson(person) {
     var h = load();
+    var before = person && person.id ? Schema.personById(h, person.id) : null;
+    if (before && before.employmentStatus && person.employmentStatus !== undefined
+        && person.employmentStatus !== null && person.employmentStatus !== before.employmentStatus) {
+      autoSnapshot('before-situation-change');
+    }
     var result = upsertIn(h.people, person);
     save(); notify();
     return result;
@@ -1079,7 +1132,7 @@
     var h = load();
     h.skillTree = Schema.createSkillTree(h.skillTree || {});
     if (on === false || on === null) delete h.skillTree.state[id];
-    else h.skillTree.state[id] = { state: 'done', on: typeof on === 'string' && on ? on : new Date().toISOString().slice(0, 10), by: by === 'proof' ? 'proof' : 'self' };
+    else h.skillTree.state[id] = { state: 'done', on: typeof on === 'string' && on ? on : Schema.localDay(), by: by === 'proof' ? 'proof' : 'self' };
     pendingLabel = label || ((on === false || on === null ? 'Reopened skill: ' : 'Skill done: ') + id);
     save(); notify();
     return h.skillTree.state[id] || null;
@@ -1090,7 +1143,7 @@
     h.exercises = Schema.createExercisesLog(h.exercises || {});
     if (done === false) { delete h.exercises.done[id]; delete h.exercises.results[id]; }
     else {
-      h.exercises.done[id] = typeof done === 'string' && done ? done : new Date().toISOString().slice(0, 10);
+      h.exercises.done[id] = typeof done === 'string' && done ? done : Schema.localDay();
       if (result && typeof result === 'object') h.exercises.results[id] = result;
     }
     pendingLabel = label || ((done === false ? 'Undid exercise: ' : 'Exercise done: ') + id);
@@ -1388,11 +1441,26 @@
       fields: (entry && entry.fields) || (function () { load(); return readings(); })(),
       assumptionsUsed: (entry && entry.assumptionsUsed) || null,
       referenceVersions: (entry && entry.referenceVersions) || null,
-      computedOutputs: (entry && entry.computedOutputs) || null
+      computedOutputs: (entry && entry.computedOutputs) || null,
+      /* Why it was taken: null for one the person froze on purpose, or
+         'before-import', 'before-merge', 'before-situation-change' for
+         the automatic one the spine takes ahead of a bulk change (D-204). */
+      reason: (entry && entry.reason) || null
     };
     all.push(record);
     writeRaw(SNAPSHOT_KEY, JSON.stringify(all));
     return record;
+  }
+  /* The automatic snapshot: only when there is something to keep, and
+     never twice within a minute for the same reason (a double tap). */
+  function autoSnapshot(reason) {
+    var h = load();
+    var anything = (h.people || []).length || (h.assets || []).length || (h.debts || []).length
+      || (h.expenses && (h.expenses.entries || []).length);
+    if (!anything) return null;
+    var last = latestSnapshot();
+    if (last && last.reason === reason && (Date.now() - Date.parse(last.timestamp)) < 60000) return last;
+    return appendSnapshot({ reason: reason });
   }
 
   /* Snapshots are READ BACK now, not just written. Two reads:
@@ -1465,8 +1533,8 @@
 
   function exportFilename(now) {
     var d = now ? new Date(now) : new Date();
-    var iso = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
-    return 'slaf-household-' + iso.slice(0, 10) + '.json';
+    if (isNaN(d.getTime())) d = new Date();
+    return 'slaf-household-' + Schema.localDay(d) + '.json';
   }
 
   /**
@@ -1514,6 +1582,7 @@
     var check = inspectImport(text);
     if (!check.ok) return check;
     if (!Importer || typeof Importer.merge !== 'function') return { ok: false, reason: 'The importer is not loaded.' };
+    autoSnapshot('before-merge');
     var merged = Importer.merge(getProfile(), Schema.createHousehold(check.household));
     var h = load();
     var keep = { undoStack: h.meta.undoStack || [], redoStack: h.meta.redoStack || [], visitedRooms: h.meta.visitedRooms || [] };
@@ -1534,8 +1603,16 @@
   function importJSON(text) {
     var check = inspectImport(text);
     if (!check.ok) return check;
+    /* What was here is frozen first, so a wrong file is one snapshot away
+       from the numbers it replaced. The file's snapshots do not lose it. */
+    var kept = autoSnapshot('before-import');
+    var snaps = (check.snapshots || []).slice();
+    if (kept && !snaps.some(function (s) { return s && s.id === kept.id; })) {
+      snaps.push(kept);
+      snaps.sort(function (a, b) { return String(a.timestamp).localeCompare(String(b.timestamp)); });
+    }
     writeRaw(STORAGE_KEY, JSON.stringify(check.household));
-    writeRaw(SNAPSHOT_KEY, JSON.stringify(check.snapshots));
+    writeRaw(SNAPSHOT_KEY, JSON.stringify(snaps));
     cache = null;
     lastReadings = null;
     load();
@@ -1769,6 +1846,8 @@
     assignCategoryToValue: assignCategoryToValue,
     listSnapshots: listSnapshots,
     appendSnapshot: appendSnapshot,
+    autoSnapshot: autoSnapshot,
+    stalePage: stalePage,
     latestSnapshot: latestSnapshot,
     snapshotDelta: snapshotDelta,
     registerFieldReaders: registerFieldReaders,

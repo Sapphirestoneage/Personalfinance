@@ -1059,6 +1059,42 @@
     return hit ? hit.id : null;
   }
 
+  /* ---- Two guards every room carries (D-204) ------------------------------
+     1. The page and the shared core are different builds: the spine has
+        already refused to write; this says so at the top of the page, once,
+        with a reload button. Nothing else on the page changes.
+     2. iPhone Safari drops a site's storage after seven days away unless
+        the site is on the Home Screen. One quiet line, once, dismissable,
+        never a popup; installed web apps never see it. */
+  function mountGuards(g, Spine) {
+    var Prefs = g.SLAF && g.SLAF.Prefs;
+    var state = Spine.storageState ? Spine.storageState() : null;
+    var main = document.querySelector('main') || document.querySelector('.wrap') || document.body;
+    if (state && state.status === 'stale-page' && !document.getElementById('slaf-stale')) {
+      var box = document.createElement('div');
+      box.id = 'slaf-stale';
+      box.className = 'slaf-stale';
+      box.setAttribute('role', 'status');
+      box.innerHTML = '<b>Updating, reload in a moment.</b> This page is one build and the app underneath it is another (page ' + escapeHtml(state.pageBuild) + ', app ' + escapeHtml(state.coreBuild) + '). Nothing is saved until they match. '
+        + '<button type="button" class="slaf-btn" id="slaf-stale-reload">Reload</button>';
+      main.insertBefore(box, main.firstChild);
+      box.querySelector('#slaf-stale-reload').addEventListener('click', function () { try { g.location.reload(); } catch (e) { /* fine */ } });
+    }
+    var ua = g.navigator && g.navigator.userAgent ? g.navigator.userAgent : '';
+    var iphoneSafari = /iPhone|iPad|iPod/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+    var installed = g.navigator && g.navigator.standalone === true;
+    var seen = Prefs && Prefs.get ? Prefs.get('a2hs.seen', false) : true;
+    if (iphoneSafari && !installed && !seen && !document.getElementById('slaf-a2hs')) {
+      var line = document.createElement('p');
+      line.id = 'slaf-a2hs';
+      line.className = 'slaf-a2hs';
+      line.innerHTML = 'On an iPhone, Safari clears a site\u2019s saved numbers after seven days away, unless the site is on your Home Screen. Tap Share, then <b>Add to Home Screen</b>, and it keeps them. '
+        + '<button type="button" class="slaf-btn slaf-btn--quiet" id="slaf-a2hs-ok">Got it</button>';
+      main.insertBefore(line, main.firstChild);
+      line.querySelector('#slaf-a2hs-ok').addEventListener('click', function () { if (Prefs && Prefs.set) Prefs.set('a2hs.seen', true); line.remove(); });
+    }
+  }
+
   /**
    * mount(roomId) — put the strip at the end of the page and keep it live.
    *
@@ -1074,6 +1110,7 @@
     var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
     var Spine = g && g.SLAF && g.SLAF.Spine;
     if (!Spine) return null;
+    mountGuards(g, Spine);
 
     /* Rooms use <main>; the FOO ladder builds into #root > .wrap. Try the
        shapes this app actually has rather than assuming one. */

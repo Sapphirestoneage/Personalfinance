@@ -114,6 +114,25 @@ function loadDemo() {
   ok('a cancel is still a cancel, not a refusal', !!cancel && cancel.name === 'AbortError' && !cancel.blocked);
   if (origNav) Object.defineProperty(global, 'navigator', origNav); else delete global.navigator;
   delete global.File;
+  /* D-204: the browser is asked to keep the data on the first write, and the answer is remembered. */
+  {
+    let asked = 0;
+    setNav({ storage: { persist: () => { asked++; return Promise.resolve(true); } } });
+    const recorded = {};
+    global.SLAF = { Prefs: { set: (k, v) => { recorded[k] = v; }, get: (k, d) => (k in recorded ? recorded[k] : d) } };
+    global.localStorage = { _s: {}, getItem(k) { return k in this._s ? this._s[k] : null; }, setItem(k, v) { this._s[k] = String(v); }, removeItem(k) { delete this._s[k]; } };
+    const spinePath = require('path').join(__dirname, '..', 'shared', 'spine-v2.js');
+    delete require.cache[require.resolve(spinePath)];
+    const Sp = require(spinePath);
+    Sp.ensurePrimaryPerson('You');
+    Sp.set('people.0.age', 40, 'age');
+    await new Promise(r => setTimeout(r, 0));
+    ok('persist() was asked once on the first write', asked === 1);
+    ok('and the answer is remembered in Prefs', recorded['storage.persisted'] === true);
+    ok('and readable from the spine', Sp.storageState().persisted === true);
+    delete require.cache[require.resolve(spinePath)]; delete global.localStorage; delete global.SLAF;
+    if (origNav) Object.defineProperty(global, 'navigator', origNav); else delete global.navigator;
+  }
   const sizeBytes = Buffer.byteLength(frag);
   ok('a full household with a snapshot fits well under 8 KB (' + sizeBytes + ' bytes)', sizeBytes < 8192);
 

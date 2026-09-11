@@ -43,7 +43,7 @@
      beside the version in every footer and in every backup, so a phone
      showing an old page can be told apart from a bug. version.json carries
      the same string; `node tools/stamp-build.js` sets both to today. D-202. */
-  var BUILD = '2026-09-10 21:10Z';
+  var BUILD = '2026-09-11 18:36Z';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -2711,12 +2711,34 @@
     var years = Money.isEntered(hit.years) ? hit.years : hit.age;
     return { years: years, months: hit.months || 0, assumed: assumed };
   }
+  /* ---- Calendar days, on the person's clock (D-204) ----------------------
+     toISOString() is UTC. In New York anything saved after 8pm got
+     tomorrow's date, and the last evening of a month landed in the next
+     month. So: a "today" stamp is ALWAYS localDay() or localMonth(), and
+     arithmetic on a YYYY-MM-DD string (a day plus n days, a month later)
+     goes through isoDayUTC(), which formats a Date's UTC parts without
+     ever touching the clock. test/run.js fails on a UTC slice of the clock. */
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function localDay(when) {
+    if (typeof when === 'string' && /^\d{4}-\d{2}-\d{2}/.test(when)) return when.slice(0, 10);
+    var d = when === undefined || when === null ? new Date() : new Date(when);
+    if (isNaN(d.getTime())) return null;
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+  function localMonth(when) {
+    var day = localDay(when);
+    return day ? day.slice(0, 7) : null;
+  }
+  function isoDayUTC(d) {
+    if (!(d instanceof Date) || isNaN(d.getTime())) return null;
+    return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate());
+  }
   function addMonthsIso(iso, months) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
     if (!m) return null;
     var d = new Date(Date.UTC(+m[1], +m[2] - 1 + months, +m[3]));
     if (isNaN(d.getTime())) return null;
-    return d.toISOString().slice(0, 10);
+    return isoDayUTC(d);
   }
   /**
    * milestones(person, table, opts) → [{ id, label, age, ageYears,
@@ -2954,6 +2976,9 @@
     createWalk: createWalk,
     APP_VERSION: APP_VERSION,
     BUILD: BUILD,
+    localDay: localDay,
+    localMonth: localMonth,
+    isoDayUTC: isoDayUTC,
     createExercisesLog: createExercisesLog,
     createVariableIncomePlan: createVariableIncomePlan,
     SPLIT_MODES: SPLIT_MODES,

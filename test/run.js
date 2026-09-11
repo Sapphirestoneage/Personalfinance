@@ -12056,6 +12056,177 @@ section('Backup: one file for every key (D-202)');
 })();
 
 /* ==========================================================================
+   G1: protect the data (D-204)
+   ========================================================================== */
+
+section('G1: local days, the build gate, persistence, automatic snapshots (D-204)');
+
+(function () {
+  const { execFileSync } = require('child_process');
+  const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+  const backupPath = path.join(ROOT, 'shared/backup.js');
+
+  /* ---- 3. Dates on the person's clock ------------------------------------ */
+  check('localDay formats a Date in local time', Schema.localDay(new Date(2026, 7, 31, 23, 30)), '2026-08-31');
+  check('localMonth too', Schema.localMonth(new Date(2026, 7, 31, 23, 30)), '2026-08');
+  check('a day string passes through', Schema.localDay('2026-02-03'), '2026-02-03');
+  check('a timestamp string keeps its day', Schema.localDay('2026-02-03T23:59:00'), '2026-02-03');
+  check('nonsense is null, never a date', Schema.localDay('soon'), null);
+  check('isoDayUTC formats UTC parts for day arithmetic', Schema.isoDayUTC(new Date(Date.UTC(2026, 0, 31))), '2026-01-31');
+  /* The clock at 11:30pm on Aug 31 in New York. A child process, because
+     TZ must be set before the first Date in a process. */
+  const script = `
+    const S = require(${JSON.stringify(path.join(ROOT, 'shared/schema.js'))});
+    const Sp = require(${JSON.stringify(spinePath)});
+    const d = new Date(2026, 7, 31, 23, 30);
+    console.log(JSON.stringify({ utc: d.toISOString().slice(0, 10), day: S.localDay(d), month: S.localMonth(d), file: Sp.exportFilename(d), tz: Intl.DateTimeFormat().resolvedOptions().timeZone }));`;
+  const out = JSON.parse(execFileSync(process.execPath, ['-e', script], { env: Object.assign({}, process.env, { TZ: 'America/New_York' }), encoding: 'utf8' }).trim());
+  check('the child ran in New York', out.tz, 'America/New_York');
+  check('UTC would have said September', out.utc, '2026-09-01');
+  check('localDay says Aug 31', out.day, '2026-08-31');
+  check('localMonth says August', out.month, '2026-08');
+  check('the export filename carries Aug 31', out.file, 'slaf-household-2026-08-31.json');
+  /* The lint: no UTC slice of the clock anywhere the app runs. */
+  {
+    const files = [];
+    function walk(dir) {
+      fs.readdirSync(dir).forEach(f => {
+        const p = path.join(dir, f);
+        if (f === 'node_modules' || f === 'vendor' || f === '.git') return;
+        if (fs.statSync(p).isDirectory()) walk(p); else if (/\.(js|html)$/.test(f)) files.push(p);
+      });
+    }
+    ['index.html', 'map.html', 'foo-ladder.js'].forEach(f => { if (fs.existsSync(path.join(ROOT, f))) files.push(path.join(ROOT, f)); });
+    ['rooms', 'shared', 'engines', 'dnd'].forEach(d => { if (fs.existsSync(path.join(ROOT, d))) walk(path.join(ROOT, d)); });
+    const hits = [];
+    files.forEach(p => {
+      const text = fs.readFileSync(p, 'utf8');
+      const re = /toISOString\(\)\s*\.\s*(slice|substr|substring|split)\s*\(/g;
+      let m; while ((m = re.exec(text))) hits.push(path.relative(ROOT, p) + ':' + text.slice(0, m.index).split('\n').length);
+    });
+    checkTrue('no toISOString().slice (or substr, substring, split) anywhere the app runs', hits.length === 0, hits.join(', '));
+  }
+
+  /* ---- 4. The page and the core must agree ------------------------------ */
+  const htmlFiles = [];
+  ['index.html', 'map.html'].forEach(f => { if (fs.existsSync(path.join(ROOT, f))) htmlFiles.push(f); });
+  ['rooms', 'dnd'].forEach(d => fs.readdirSync(path.join(ROOT, d)).filter(f => f.endsWith('.html')).forEach(f => htmlFiles.push(d + '/' + f)));
+  const unstamped = htmlFiles.filter(f => !new RegExp('<meta name="slaf-build" content="' + Schema.BUILD.replace(/[-:. ]/g, m => '\\' + m) + '"/>').test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
+  checkTrue('every one of ' + htmlFiles.length + ' pages carries the same build stamp as the core', unstamped.length === 0, unstamped.join(', '));
+  function fakeStorage(seed) {
+    const store = Object.assign({}, seed || {});
+    return { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; }, key: (i) => Object.keys(store)[i] === undefined ? null : Object.keys(store)[i], get length() { return Object.keys(store).length; }, store };
+  }
+  function freshSpine(seed, pageStamp) {
+    const s = fakeStorage(seed);
+    global.localStorage = s;
+    if (pageStamp !== undefined) global.document = { querySelector: (q) => q === 'meta[name="slaf-build"]' ? { getAttribute: () => pageStamp } : null };
+    delete require.cache[require.resolve(spinePath)];
+    const Spine = require(spinePath);
+    return { s, Spine };
+  }
+  function done() { delete global.localStorage; delete global.document; delete global.SLAF; delete require.cache[require.resolve(spinePath)]; }
+  {
+    const { s, Spine } = freshSpine({}, 'some-older-build');
+    const st = Spine.storageState();
+    check('a page from another build: status stale-page', st.status, 'stale-page');
+    checkTrue('and not writable, naming both builds', st.writable === false && st.pageBuild === 'some-older-build' && st.coreBuild === Schema.BUILD);
+    Spine.ensurePrimaryPerson('You');
+    Spine.set('people.0.age', 31, 'age');
+    checkTrue('a write under a stale page reaches nothing in storage', !('slaf.household.v2' in s.store));
+    check('though the session still reads its own value', Spine.getProfile().people[0].age, 31);
+    done();
+  }
+  {
+    const { s, Spine } = freshSpine({}, Schema.BUILD);
+    checkTrue('the same build: writable', Spine.storageState().writable === true && Spine.storageState().status === 'fresh');
+    Spine.ensurePrimaryPerson('You');
+    checkTrue('and a write lands', 'slaf.household.v2' in s.store);
+    done();
+  }
+  {
+    const { Spine } = freshSpine({});
+    checkTrue('no meta at all (a test, a bare page): writable', Spine.storageState().writable === true && Spine.storageState().pageBuild === null);
+    done();
+  }
+  const wf = fs.readFileSync(path.join(ROOT, '.github/workflows/test.yml'), 'utf8');
+  const pg = fs.readFileSync(path.join(ROOT, '.github/workflows/pages.yml'), 'utf8');
+  checkTrue('the test workflow runs the unit suite, the D&D suite, lane 2 and the browser gates', /node test\/run\.js/.test(wf) && /dnd\/test\/run\.js/.test(wf) && /npm test/.test(wf) && /test\/forms\.js/.test(wf));
+  checkTrue('the Pages workflow waits on the suite and is off until the switch is flipped', /needs: test/.test(pg) && /uses: \.\/\.github\/workflows\/test\.yml/.test(pg) && /PAGES_VIA_ACTIONS/.test(pg));
+  const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('every room says Updating, reload in a moment, on a stale page', /Updating, reload in a moment\./.test(prog) && /stale-page/.test(prog) && /slaf-stale-reload/.test(prog));
+
+  /* ---- 2. Survive Safari ------------------------------------------------ */
+  {
+    const origNav = Object.getOwnPropertyDescriptor(global, 'navigator');
+    let asked = 0;
+    Object.defineProperty(global, 'navigator', { value: { storage: { persist: () => { asked++; return Promise.resolve(true); } } }, configurable: true, writable: true });
+    const recorded = {};
+    global.SLAF = { Prefs: { set: (k, v) => { recorded[k] = v; }, get: (k, d) => (k in recorded ? recorded[k] : d) } };
+    const { Spine } = freshSpine({});
+    Spine.ensurePrimaryPerson('You');
+    Spine.set('people.0.age', 40, 'age');
+    Spine.set('people.0.age', 41, 'age');
+    check('persist() is asked once, on the first write', asked, 1);
+    done();
+    if (origNav) Object.defineProperty(global, 'navigator', origNav); else delete global.navigator;
+    /* The answer arrives on a microtask; test/export.js, which is async, checks it is remembered. */
+    checkTrue('iPhone Safari gets the Home Screen line once, dismissable, never when installed', /Add to Home Screen/.test(prog) && /a2hs\.seen/.test(prog) && /navigator\.standalone === true/.test(prog));
+
+    /* The export nudge. */
+    {
+      const P = {}; global.SLAF = { Schema, Prefs: { set: (k, v) => { P[k] = v; }, get: (k, d) => (k in P ? P[k] : d) } };
+      global.localStorage = fakeStorage({ 'slaf.household.v2': '{}' });
+      delete require.cache[require.resolve(backupPath)];
+      const B = require(backupPath);
+      check('no copy yet: says so', B.exportAgeLine(), 'No copy saved from this browser yet.');
+      B.noteExport('2026-09-01T12:00:00Z');
+      check('today: quiet', B.exportAgeLine('2026-09-01T18:00:00Z'), 'A copy was saved today.');
+      check('twelve days: quiet', B.exportAgeLine('2026-09-13T12:00:00Z'), 'A copy was saved 12 days ago.');
+      check('forty-five days: a nudge', B.exportAgeLine('2026-10-16T12:00:00Z'), 'The last copy is 45 days old. Worth saving a fresh one.');
+      check('the age in days', B.exportAgeDays('2026-10-16T12:00:00Z'), 45);
+      delete require.cache[require.resolve(backupPath)]; delete global.localStorage; delete global.SLAF;
+      ['rooms/data.html', 'index.html'].forEach(f => checkTrue(f + ' records every export and send', (fs.readFileSync(path.join(ROOT, f), 'utf8').match(/noteExport\(\)/g) || []).length >= 2));
+    }
+  }
+  {
+      /* ---- Automatic snapshots before a bulk change ---------------------- */
+      {
+        const { Spine } = freshSpine({});
+        Spine.ensurePrimaryPerson('You');
+        Spine.upsertPerson({ id: Spine.getProfile().people[0].id, employmentStatus: 'employed' });
+        check('no snapshot yet: setting a status the first time is not a change of situation', Spine.listSnapshots().length, 0);
+        Spine.upsertPerson({ id: Spine.getProfile().people[0].id, employmentStatus: 'unemployed' });
+        check('a situation change froze what was there', Spine.listSnapshots().length, 1);
+        check('with its reason', Spine.listSnapshots()[0].reason, 'before-situation-change');
+        Spine.upsertPerson({ id: Spine.getProfile().people[0].id, employmentStatus: 'employed' });
+        check('a second change within a minute does not double up', Spine.listSnapshots().length, 1);
+        const file = JSON.stringify({ format: 'slaf-export', exportVersion: 1, schemaVersion: Schema.SCHEMA_VERSION, household: Schema.createHousehold({}), snapshots: [] });
+        const r = Spine.importJSON(file);
+        checkTrue('an import loads', r.ok, r.reason);
+        const snaps = Spine.listSnapshots();
+        check('the import kept the automatic snapshot even though the file had none', snaps.filter(x => x.reason === 'before-import').length, 1);
+        /* Replace has always made the file's snapshots the snapshots; the
+           one taken just before is the way back to what was replaced. */
+        check('and that is the one snapshot after a replace', snaps.length, 1);
+        done();
+      }
+      {
+        const { Spine } = freshSpine({});
+        check('an empty household takes no automatic snapshot', Spine.autoSnapshot('before-import'), null);
+        done();
+      }
+      {
+        const { Spine } = freshSpine({});
+        Spine.ensurePrimaryPerson('You');
+        const snap = Spine.appendSnapshot({});
+        check('a snapshot the person froze has no reason', snap.reason, null);
+        done();
+      }
+  }
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

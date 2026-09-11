@@ -1,0 +1,38 @@
+# Every push and pull request runs the whole suite (D-204). The Pages
+# publish in pages.yml waits on this same job, so a red suite never ships.
+name: test
+on:
+  push:
+  pull_request:
+  workflow_call:
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Unit, D&D, export
+        run: |
+          node test/run.js
+          node dnd/test/run.js
+          node test/export.js
+      - name: Lane 2 (corpus, properties, data, glossary, migration, QR)
+        working-directory: tests
+        run: |
+          npm ci
+          npm test
+      - name: Browser gates
+        run: |
+          npm install --no-save playwright@1.49.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8765 >/dev/null 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8765/index.html >/dev/null && break; sleep 1; done
+          export NODE_PATH="$PWD/node_modules"
+          node test/render.js
+          node test/features.js
+          node test/sidebar.js
+          node test/forms.js
+          node test/alignment.js

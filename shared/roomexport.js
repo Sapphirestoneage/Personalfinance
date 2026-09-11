@@ -37,19 +37,21 @@
     deps = {
       Money: require('./money.js'),
       Registry: require('./registry.js'),
-      Ownership: require('./ownership.js')
+      Ownership: require('./ownership.js'),
+      Schema: require('./schema.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Registry: root.SLAF && root.SLAF.Registry,
-      Ownership: root.SLAF && root.SLAF.Ownership
+      Ownership: root.SLAF && root.SLAF.Ownership,
+      Schema: root.SLAF && root.SLAF.Schema
     };
   }
-  var api = factory(deps.Money, deps.Registry, deps.Ownership);
+  var api = factory(deps.Money, deps.Registry, deps.Ownership, deps.Schema);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.RoomExport = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Registry, Ownership) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Registry, Ownership, Schema) {
   'use strict';
 
   /* A room may register extra rows of its own — a debt schedule, a set of
@@ -125,7 +127,7 @@
     var room = Registry.byId(roomId) || { title: roomId };
     var m = meta || {};
     var head = ['# ' + room.title,
-                '# exported ' + (m.on || new Date().toISOString().slice(0, 10)),
+                '# exported ' + (m.on || Schema.localDay()),
                 '# ' + (m.version ? 'Money Rooms v' + m.version : 'Money Rooms'),
                 '# A blank value means NOT ENTERED. It does not mean zero.'];
     var cols = ['Section', 'Figure', 'Value', 'Amount (cents)', 'Status', 'Owned by', 'Note'];
@@ -173,7 +175,6 @@
     if (typeof document === 'undefined' || !host) return null;
     var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
     var Spine = g && g.SLAF && g.SLAF.Spine;
-    var Schema = g && g.SLAF && g.SLAF.Schema;
     if (!Spine) return null;
     var room = Registry.byId(roomId);
     if (!room) return null;
@@ -197,7 +198,7 @@
       if (!b) return;
       var what = b.getAttribute('data-x');
       var h = Spine.getProfile();
-      var meta = { version: Schema && Schema.APP_VERSION, on: new Date().toISOString().slice(0, 10) };
+      var meta = { version: Schema && Schema.APP_VERSION, on: Schema.localDay() };
       var base = slug(room.title) + '-' + meta.on;
       if (what === 'csv') download(base + '.csv', csv(roomId, h, meta), 'text/csv');
       else if (what === 'json') download(base + '.json', json(roomId, h, meta), 'application/json');

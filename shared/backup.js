@@ -120,9 +120,11 @@
   }
   function toJSON(now) { return JSON.stringify(build(now), null, 2); }
   function filename(now) {
+    var S = slaf().Schema;
     var d = now ? new Date(now) : new Date();
-    var iso = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
-    return 'money-rooms-backup-' + iso.slice(0, 10) + '.json';
+    if (isNaN(d.getTime())) d = new Date();
+    var day = S && S.localDay ? S.localDay(d) : d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    return 'money-rooms-backup-' + day + '.json';
   }
 
   /* ---- Checking a file ---------------------------------------------------
@@ -280,6 +282,32 @@
     return 'It ' + s + (c.same ? ', and leaves ' + things(c.same) + ' as they are.' : '.');
   }
 
+  /* ---- When was a copy last saved? (D-204) --------------------------------
+     Every export in the app (this file, Your Data's file, Send) notes the
+     moment in Prefs. The widget's idle line reads it back: quiet when the
+     copy is recent, a nudge past thirty days, never a popup. */
+  var EXPORT_PREF = 'backup.lastExportAt';
+  var NUDGE_AFTER_DAYS = 30;
+  function prefs() { var S = slaf(); return S.Prefs && S.Prefs.get ? S.Prefs : null; }
+  function noteExport(when) {
+    var P = prefs(); if (!P) return;
+    P.set(EXPORT_PREF, (when ? new Date(when) : new Date()).toISOString());
+  }
+  function lastExportAt() { var P = prefs(); return P ? P.get(EXPORT_PREF, null) : null; }
+  function exportAgeDays(now) {
+    var at = lastExportAt(); if (!at) return null;
+    var t = Date.parse(at); if (isNaN(t)) return null;
+    return Math.floor(((now ? new Date(now) : new Date()).getTime() - t) / 86400000);
+  }
+  function exportAgeLine(now) {
+    var days = exportAgeDays(now);
+    if (days === null) return keys().length ? 'No copy saved from this browser yet.' : '';
+    if (days < 1) return 'A copy was saved today.';
+    if (days === 1) return 'A copy was saved yesterday.';
+    if (days < NUDGE_AFTER_DAYS) return 'A copy was saved ' + days + ' days ago.';
+    return 'The last copy is ' + days + ' days old. Worth saving a fresh one.';
+  }
+
   function mount(host, opts) {
     var doc = g().document;
     if (!doc) return null;
@@ -304,6 +332,7 @@
       var u = undoAvailable();
       undoBtn.hidden = !u;
       if (u && !status.textContent) say('Loaded a copy' + (u.at ? ' on ' + shortDate(u.at) : '') + '. Undo is here until the next load.');
+      else if (!status.textContent) say(exportAgeLine());
     }
 
     q('save').addEventListener('click', function () {
@@ -318,6 +347,7 @@
         a.href = url; a.download = name;
         doc.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        noteExport();
         say('Saved ' + name + ' (' + things(n) + '). Keep it where you keep a bank statement.', 'is-good');
       } catch (e) { say('This browser would not hand over the file: ' + (e && e.message ? e.message : e), 'is-error'); }
     });
@@ -376,6 +406,10 @@
     isDev: isDev,
     driftGuard: driftGuard,
     countsSentence: countsSentence,
+    noteExport: noteExport,
+    lastExportAt: lastExportAt,
+    exportAgeDays: exportAgeDays,
+    exportAgeLine: exportAgeLine,
     mount: mount
   };
 });

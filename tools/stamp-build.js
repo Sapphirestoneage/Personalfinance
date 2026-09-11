@@ -33,3 +33,25 @@ replace('shared/schema.js', /var BUILD = '\d{4}-\d{2}-\d{2}[^']*';/, "var BUILD 
 fs.copyFileSync(path.join(ROOT, 'shared/schema.js'), path.join(ROOT, 'dnd/shared/schema.js'));
 console.log('copied    dnd/shared/schema.js');
 replace('version.json', /"build": "\d{4}-\d{2}-\d{2}[^"]*"/, '"build": "' + stamp + '"');
+
+/* Every HTML file carries the same stamp as a meta tag, right after the
+   viewport meta, so the spine can tell a cached old page from the core it
+   loaded (D-204). Inserted where missing, replaced where present. */
+const META = '<meta name="slaf-build" content="' + stamp + '"/>';
+const pages = [];
+['index.html', 'map.html'].forEach(f => { if (fs.existsSync(path.join(ROOT, f))) pages.push(f); });
+['rooms', 'dnd'].forEach(d => {
+  const dir = path.join(ROOT, d);
+  if (fs.existsSync(dir)) fs.readdirSync(dir).filter(f => f.endsWith('.html')).forEach(f => pages.push(d + '/' + f));
+});
+let stampedPages = 0;
+pages.forEach(f => {
+  const p = path.join(ROOT, f);
+  const before = fs.readFileSync(p, 'utf8');
+  let after;
+  if (/<meta name="slaf-build" content="[^"]*"\/>/.test(before)) after = before.replace(/<meta name="slaf-build" content="[^"]*"\/>/, META);
+  else if (/<meta name="viewport"[^>]*>/.test(before)) after = before.replace(/(<meta name="viewport"[^>]*>)/, '$1\n' + META);
+  else { console.error(f + ': no viewport meta to stamp after'); process.exit(1); }
+  if (after !== before) { fs.writeFileSync(p, after); stampedPages++; }
+});
+console.log('stamped   ' + stampedPages + ' of ' + pages.length + ' pages');

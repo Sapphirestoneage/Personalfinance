@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 18:36Z"/>
 <title>Your Data · SPARKS</title>
 <meta name="description" content="Every way numbers get in or out of this browser: a file, a share link, or a pasted statement sorted into the debt, account, expense or income it is."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -176,7 +177,9 @@
   function shortDate(iso) { var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
 
   /* ---- Out: a file, a link (the dashboard's own code, D-059) ------------ */
+  function noteExport() { try { SLAF.Prefs.set('backup.lastExportAt', new Date().toISOString()); } catch (e) { /* fine */ } }
   function downloadFile() {
+    noteExport();
     var blob = new Blob([Spine.exportJSON()], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -193,6 +196,7 @@
   if (typeof navigator.share === 'function') el('btn-send').hidden = false;
   el('btn-send').addEventListener('click', function () {
     Spine.sendToDevice().then(function (r) {
+      noteExport();
       note('out-note', r.how === 'file' ? 'Sent as a file. On the other device, open Your Data and choose it under Load a file.' : 'Sent as a link. Open it on the other device and choose Load.', 'is-good');
     }).catch(function (err) {
       if (err && err.name === 'AbortError') return;
