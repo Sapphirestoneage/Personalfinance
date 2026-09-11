@@ -6,6 +6,13 @@
   "confidence": "convention",
   "confidenceNote": "A registry, not a measurement. kind says how a row is entered (know: from your head; lookup: fetched, with the where sentence; computed: never typed, read from an engine with its inputs named). pass is the walk-through's order (data/walk_stages.json): 1 what is true right now, 2 make it hard to go backwards, 3 the rest. minutes is a rough cost to enter. appliesWhen uses the same fixed phrases as data/levers.json (shared/levers.js, appliesWhen), and a failing row is absent, not greyed.",
   "note": "id is the ownership field id, so the row reads and writes through the one map every room already uses; aliases names a second ownership id that reads the same path. repeat says a row is one line per item (debts, assets, incomeSources, futureIncome, annualLines). family is the DAITE family, or you for the situation rows, which carry no letter and sit first. Plans, preferences and progress paths are not rows: they are what a decision room asks for its own what-if, not facts about the household (D-183). door (D, A, I, T, E, you) and level (1 how much, 2 where it sits, 3 what it is made of, 4 what it costs and where it came from) are the doors' depth order; round 1 marks the five first-round rows; suggestFrom names a shared/suggest.js rule that can guess the row; askIn names the room that asks it in context; moves says whether a monthly refresh should re-ask it; unlocks names the insight the row feeds, and a row without one fails the build. D-205.",
+  "reopen": {
+    "note": "G2.6 (D-209): when the field named here changes, the rows listed change meaning and get one short sheet (shared/reopen.js), together with any row that newly applies under the new answer. Nothing is cleared; each row shows what it holds and the person confirms or types over it.",
+    "employmentStatus": {
+      "why": "Pay, the match, the workplace contribution and health cover all mean something different once the job changes.",
+      "rows": ["grossAnnualIncome", "employerMatch", "contributionPercent", "healthCover", "healthMonthly", "lastPay", "unemployment", "paySurvives"]
+    }
+  },
   "kinds": [
     "know",
     "lookup",

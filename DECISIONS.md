@@ -12996,6 +12996,73 @@ minimum) stamps no per-item provenance yet: the field ids are per row,
 not per item, so `meta.fields.debtMinPayment` describes the row; per-item
 provenance is a G2 concern.
 
+## D-208 — Express: the whole form at once, a second view of the same rows
+
+**Why.** FI people and coaches already know their numbers and want every
+question on one page, not a walk. The brief's Phase F.
+
+**Decision.** `rooms/express.html`: one scrolling form grouped by door (D,
+A, I, T, E, You) and level 1 to 4, each a fold open by default; only the
+rows that apply, toggled live; debts, accounts, sources and yearly lines
+repeatable with "+ Add another", named by lender and last four; a
+suggestion as a chip beside the box, never in it; every box saves on
+change through `Ownership.write`, a new item through `Ownership.addItem`
+(the list owner's constructor); a sticky bar with the understanding line
+and a jump menu. The front door offers "Walk me through it" (the First
+Round) and "Give me the whole form"; `prefs.path = fi` leads with Express.
+
+**Replaces or removes.** Nothing yet: STATUS.md already decided Start Here
+retires into the Ledger; the First Round and Express are the two ways in
+that replace it, and Start Here stays only until its owner role moves.
+
+**Stored shape.** No change. `Ownership.addItem(kind, fields)` and
+`removeItem(kind, id)` are new shared paths; Express owns no field.
+
+**Verified.** `node test/run.js`; `node test/forms.js` (Express and the
+First Round walks); the phone walk: the same five answers in the First
+Round and in Express give a byte-identical household, the situation
+toggle hides and shows rows without clearing anything typed.
+
+## D-209 — G2: numbers that stay trustworthy (moving rows, the life-change sheet, two more states, units)
+
+**Why.** People stop trusting what they typed when it goes stale, gets
+asked again, or quietly turns wrong. The brief's G2, built alongside B to F.
+
+**Decision.** `rooms/refresh.html` walks only the rows with `moves: true`
+in `data/ledger-rows.json` (`LedgerRows.moving`), one line per debt,
+account, source or yearly cost, pre-filled, "Still true" re-confirms, a
+typed figure writes through `Ownership.write` with the item id, and a
+"since last time" line per row reads the last refresh snapshot's `rows`.
+A situation change records `meta.reopen`; `shared/reopen.js` shows one
+sheet on the next page with the rows in the registry's `reopen` map plus
+any row that newly applies; nothing is cleared. "Not sure yet" is a mark
+in `meta.notSure` with an expected month, never a value; "from memory" is
+source `memory` below confirmed; both weigh in `confidence_weights.rowStates`.
+`LedgerRows.unitLabel` and `period` put gross or net and the period beside
+every money box in the ask, Express and the Refresh; `Money.convertPeriod`
+converts a figure typed a week or a year before it saves; `Ask.slip` turns
+0.24 or 2499 on a percent box into a plain question. List items are named
+lender plus last four. `test/onefact.js` opens every askIn room after
+Express answered the rows and fails on any repeat question.
+
+**Replaces or removes.** The Refresh's fixed three boxes and its rough-rows
+list (15.10): the doors carry the rough rows now.
+
+**Stored shape.** `meta.notSure` (`{ key: { at, expectedBy } }`, key a field
+id or `fieldId:itemId`) and `meta.reopen` (`{ field, from, to, at, dismissed }`
+or null) added to `slaf.household.v2`; `memory` added to `Schema.SOURCES`;
+snapshots gain `rows` (null except on a refresh). Older households read with
+both absent, which every reader treats as none. `data/ledger-rows.json`
+gains a top-level `reopen` map. A future reader must treat a `notSure` row
+as blank in every formula.
+
+**Verified.** `node test/run.js` (28704), `node test/forms.js`,
+`node test/onefact.js` (58), `node test/render.js` on refresh, express and
+debt-payoff; the phone walk: a week's food converts to a month before
+saving, from memory and not sure yet show as words, the slip asks 24% or
+0.24%, the Refresh lists five moving lines and says what changed, the
+sheet after between jobs → working lists six rows and clears nothing.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -923,7 +923,8 @@
 
   /* A utility page: reached from the dashboard's staleness line and from
      the room-to-room nav, never listed on the map's groups — it asks for
-     nothing new, it re-asks the three figures that move. It writes those
+     nothing new, it re-asks the figures that move (moves: true in
+     data/ledger-rows.json, D-209). It writes those
      through the owner's own write path (Ownership.write), so it is not a
      second editor of a second copy. DECISIONS.md D-057. */
   ROOMS.push({
@@ -934,13 +935,13 @@
     needs: ['cashSavings', 'investments', 'totalDebt'],
     order: 99,   /* always last on the path (D-057), whatever rooms are added */
     title: 'Refresh',
-    blurb: 'The three figures that move — cash, investments, what you owe — re-checked in under a minute, and a snapshot taken so the dashboard can say what changed.',
+    blurb: 'Only the numbers that move: balances, rates, spending, pay. Each pre-filled with what you gave last time, one tap to confirm, a line saying what changed since, and a snapshot taken so the dashboard can say what moved.',
     href: 'rooms/refresh.html',
     tier: 0,
     tags: ['cashflow', 'debt'],
     daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets.cashCents', 'assets.invested', 'debt.items'] },
     subsections: [
-      { id: 'fields', label: 'The three that move' },
+      { id: 'fields', label: 'The numbers that move' },
       { id: 'done',   label: 'Snapshot' }
     ]
   });
@@ -1651,6 +1652,31 @@
       { id: 'q-pay',       label: 'Pay' },
       { id: 'q-cash',      label: 'Cash on hand' },
       { id: 'insight',     label: 'The first thing the numbers say' }
+    ]
+  });
+
+  /* Express (D-208): the whole form at once, a second VIEW of the same rows,
+     grouped by door and level, every field through its owner. */
+  ROOMS.push({
+    id: 'express',
+    group: 'home', aliases: ['express', 'whole form', 'all at once', 'the long form', 'everything'],
+    kind: 'core',
+    utility: true,
+    needs: [],
+    order: 0.6,
+    title: 'Express',
+    blurb: 'Every question on one page, grouped by door and level. For anyone who already knows their numbers. The same rows the doors hold, the same owners.',
+    href: 'rooms/express.html',
+    tier: 0,
+    tags: ['income', 'cashflow', 'debt'],
+    daite: { reads: [], writes: [] },
+    subsections: [
+      { id: 'x-D',   label: 'Debt' },
+      { id: 'x-A',   label: 'Assets' },
+      { id: 'x-I',   label: 'Income' },
+      { id: 'x-T',   label: 'Taxes' },
+      { id: 'x-E',   label: 'Expenses' },
+      { id: 'x-you', label: 'You' }
     ]
   });
 

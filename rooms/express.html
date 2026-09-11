@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 19:50Z"/>
+<title>Express · SPARKS</title>
+<meta name="description" content="Every question on one page, grouped by door and level, for anyone who already knows their numbers. The same rows the doors hold, the same owners."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-208 (the Ledger rework, Phase F).
+
+  1. READS   Every enterable Ledger row (data/ledger-rows.json), grouped by
+             door (D, A, I, T, E, You) and level 1 to 4, only the rows that
+             apply (appliesWhen), live.
+  2. WRITES  Every field through its owner's write path (Ownership.write);
+             a new debt, account, source or yearly line through the list
+             owner's constructor (Ownership.addItem). Express owns nothing.
+             It is a second VIEW of the same rows, not a second store.
+  3. CALLS   shared/suggest.js for the chips beside a blank box; shared/
+             ask.js for the one parser every typed value goes through;
+             shared/doors.js for the understanding line.
+  4. EMPTY   Every box starts empty with a format-only placeholder. Blank
+             stays blank; skipping a field is always fine. A box the person
+             empties writes null (a deliberate clear), never zero.
+  5. CONFIG  The suggestion engine's tables (Suggest.TABLES) plus states.
+
+  A sticky bar holds the understanding line and a jump menu to each door.
+  Every field saves on its own when you leave it; no submit button. A
+  suggestion appears as a chip ("Suggested $869 a week · use it"), never
+  typed into the box. Changing an answer like the situation reveals or
+  hides the rows it affects, live, without clearing anything typed.
+
+  LIVE-FORM: built once — every control is created once at boot (and once
+  per list item when added) and only ever has its .value written or its
+  [hidden] toggled. Nothing is rebuilt while a finger is in a box.
+-->
+<style>
+  main { max-width: 720px; }
+  .xbar { position: sticky; top: 0; z-index: 4; background: var(--color-bg); border-bottom: 1px solid var(--color-border); padding: var(--space-2) 0; display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+  .xbar .pct { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .xbar .pct b { color: var(--color-text); font-family: var(--font-display); font-weight: 500; }
+  .xbar .jump { display: flex; gap: var(--space-1); margin-left: auto; flex-wrap: wrap; }
+  .xbar .jump a { font-family: var(--font-display); font-size: var(--text-sm); text-decoration: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px 10px; color: var(--color-text-muted); }
+  .xbar .jump a:hover { color: var(--color-text); border-color: var(--color-border-active); }
+  details.xdoor { margin-top: var(--space-4); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: 0 var(--space-3) var(--space-3); }
+  details.xdoor > summary { cursor: pointer; list-style: none; padding: var(--space-3) 0; display: flex; gap: var(--space-2); align-items: baseline; }
+  details.xdoor > summary::-webkit-details-marker { display: none; }
+  details.xdoor > summary .letter { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-accent-hover); }
+  details.xdoor > summary .label { font-family: var(--font-display); font-size: var(--text-lg); }
+  details.xdoor > summary .say { font-size: var(--text-xs); color: var(--color-text-faint); }
+  details.xdoor > summary .count { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-faint); }
+  details.xlvl { margin-top: var(--space-2); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
+  details.xlvl > summary { cursor: pointer; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: var(--space-1) 0; }
+  .xrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-2) var(--space-3); align-items: start; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  .xrow:first-of-type { border-top: 0; }
+  .xrow .lab { font-size: var(--text-sm); padding-top: 8px; }
+  .xrow .lab .unit { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .xrow .xstates { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-top: var(--space-1); min-height: 20px; }
+  .xrow .xstates .slaf-btn--small { min-height: 32px; padding: 0 var(--space-2); font-size: var(--text-xs); }
+  .xrow .slaf-unit { margin-left: 0; }
+  .xadd [data-x-add-last4] { width: 6.5em; flex: 0 0 auto; }
+  .xrow .lab .own { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .xrow .ctl .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
+  .xrow .ctl input, .xrow .ctl select { font-size: var(--text-md); min-height: 44px; width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
+  .xrow .ctl .affix { color: var(--color-text-faint); font-size: var(--text-sm); white-space: nowrap; }
+  .xrow .ctl .choices .choice { min-height: 40px; font-size: var(--text-xs); }
+  .xrow .ctl .computed { font-family: var(--font-display); color: var(--color-text-muted); padding-top: 8px; }
+  .xrow .ctl .computed.is-blank { color: var(--color-text-faint); font-style: italic; font-family: var(--font-body); font-size: var(--text-sm); }
+  .xrow .sug { grid-column: 2; font-size: var(--text-xs); }
+  .xrow .sug .slaf-use-this { font-size: var(--text-xs); }
+  .xrow .sug .how { color: var(--color-text-faint); display: block; margin-top: 2px; }
+  .xrow .saved { grid-column: 2; font-size: var(--text-xs); color: var(--color-positive); min-height: 1em; }
+  .xitem { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-sm); }
+  .xitem .xhead { display: flex; gap: var(--space-2); align-items: baseline; }
+  .xitem .xhead b { font-family: var(--font-display); font-weight: 500; }
+  .xitem .xhead .kind { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .xitem .xhead .rm { margin-left: auto; font-size: var(--text-xs); }
+  .xadd { margin-top: var(--space-2); display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+  .xadd input, .xadd select { font-size: var(--text-sm); min-height: 40px; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
+  .xadd input { flex: 1 1 160px; }
+  .xhint { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  .switch { font-size: var(--text-sm); margin: var(--space-2) 0 0; }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media (max-width: 480px) { .xrow { grid-template-columns: 1fr; } .xrow .sug, .xrow .saved { grid-column: 1; } }
+</style>
+</head>
+<body class="slaf">
+<main class="slaf-room" data-fold="own">
+  <a class="room-back" href="../index.html">← Home</a>
+  <header class="slaf-room-head">
+    <span class="slaf-eyebrow">Home</span>
+    <h1>Express</h1>
+    <p class="slaf-lede">Every question on one page, grouped by door and level. Fill what you know, skip the rest; each box saves the moment you leave it.</p>
+    <p class="switch">Rather be walked through it? <a href="first-round.html">Five questions, one a screen.</a></p>
+  </header>
+
+  <div class="xbar" id="xbar">
+    <span class="pct" id="xpct">You understand <b>…</b> of your financial picture.</span>
+    <nav class="jump" id="xjump" aria-label="Jump to a door"></nav>
+  </div>
+
+  <div id="xform">
+    <details class="xdoor" id="x-D" open><summary><span class="letter">D</span><span class="label">Debt</span><span class="say">what you owe</span><span class="count" data-x-count="D"></span></summary><div class="xbody"></div></details>
+    <details class="xdoor" id="x-A" open><summary><span class="letter">A</span><span class="label">Assets</span><span class="say">what you own</span><span class="count" data-x-count="A"></span></summary><div class="xbody"></div></details>
+    <details class="xdoor" id="x-I" open><summary><span class="letter">I</span><span class="label">Income</span><span class="say">what comes in</span><span class="count" data-x-count="I"></span></summary><div class="xbody"></div></details>
+    <details class="xdoor" id="x-T" open><summary><span class="letter">T</span><span class="label">Taxes</span><span class="say">what the state takes</span><span class="count" data-x-count="T"></span></summary><div class="xbody"></div></details>
+    <details class="xdoor" id="x-E" open><summary><span class="letter">E</span><span class="label">Expenses</span><span class="say">what goes out</span><span class="count" data-x-count="E"></span></summary><div class="xbody"></div></details>
+    <details class="xdoor" id="x-you" open><summary><span class="letter">You</span><span class="label">You</span><span class="say">who this is for</span><span class="count" data-x-count="you"></span></summary><div class="xbody"></div></details>
+  </div>
+
+  <p class="disclaimer">Not financial advice. Nothing here is sent anywhere; every figure stays in this browser.</p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/daite.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/ledger-rows.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/ask.js"></script>
+<script src="../shared/doors.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Reference = SLAF.Reference,
+      LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Ask = SLAF.Ask, Doors = SLAF.Doors, Progress = SLAF.Progress;
+  var ROOM_ID = 'express';
+  var TABLES = null;
+  var NODES = {};        /* rowId or rowId:itemId → { row, el, input, sug, saved } */
+  var LISTS = { debts: { kind: 'debt', rows: ['debtBalance', 'debtRate', 'debtMinPayment'], label: 'Debts', level: 2, door: 'D' },
+                assets: { kind: 'asset', rows: ['assetValue', 'assetCharacter', 'assetTier', 'assetCostBasis'], label: 'Accounts and things owned', level: 2, door: 'A' },
+                incomeSources: { kind: 'incomeSource', rows: ['grossAnnualIncome', 'incomeType', 'paySurvives'], label: 'Sources of pay', level: 1, door: 'I' },
+                annualLines: { kind: 'annualLine', rows: ['annualLine'], label: 'Once-a-year costs', level: 3, door: 'E' } };
+  var ITEM_ROWS = {};
+  Object.keys(LISTS).forEach(function (k) { LISTS[k].rows.forEach(function (r) { ITEM_ROWS[r] = k; }); });
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function h() { return Spine.getProfile(); }
+  function money(c) { return Money.formatCents(c, { exact: true }).replace(/^\$/, ''); }
+
+  /* ---- Reading a row's current value for the box ----------------------------- */
+  function itemValue(row, item) {
+    if (row.id === 'debtBalance') return item.balanceCents; if (row.id === 'debtRate') return item.rate; if (row.id === 'debtMinPayment') return item.minPaymentCents;
+    if (row.id === 'assetValue') return item.valueCents; if (row.id === 'assetCharacter') return item.taxCharacter; if (row.id === 'assetTier') return item.tier; if (row.id === 'assetCostBasis') return item.costBasisCents;
+    if (row.id === 'grossAnnualIncome') return item.grossAnnualIncomeCents; if (row.id === 'incomeType') return item.type; if (row.id === 'paySurvives') return item.survivesJobLoss;
+    if (row.id === 'annualLine') return item.amountCents;
+    return null;
+  }
+  function current(row, item) {
+    if (item) { var v = itemValue(row, item); return v === undefined ? null : v; }
+    var f = Ownership.FIELDS[row.id];
+    if (!f) return null;
+    var r = f.read(h());
+    return Money.isOk(r) ? r.value : null;
+  }
+  function display(row, v) {
+    if (v === null || v === undefined) return '';
+    if (row.unit === 'cents') return money(v);
+    if (row.unit === 'rate') return String(Math.round(v * 10000) / 100);
+    if (row.unit === 'percent') return row.id === 'contributionPercent' ? String(v) : String(Math.round(v * 10000) / 100);
+    if (row.unit === 'bool') return v ? 'true' : 'false';
+    return String(v);
+  }
+  /* The unit beside every box comes from the one reader in
+     shared/ledger-rows.js (G2.8, D-209), the same words the ask and the
+     Refresh use; a period select where the row has a period. */
+  function unitHtml(row) { return Ask.unitHtml(row, null, 'data-x-period'); }
+
+  /* ---- Building a control, once ----------------------------------------------- */
+  function enumValues(row) {
+    if (row.id === 'state') return (TABLES.states.states || []).map(function (s) { return { v: s.code, l: s.code + ' ' + s.name }; });
+    var labels = Ask.ENUM_LABELS[row.id] || {};
+    var vals = row.values || Object.keys(labels);
+    return vals.map(function (v) { return { v: v, l: labels[v] || v }; });
+  }
+  function control(row, key) {
+    var u = row.unit;
+    if (row.kind === 'computed') return '<span class="computed" data-x-computed></span>';
+    if (u === 'bool') return '<div class="choices" data-x-choices><button type="button" class="choice" data-x-val="true" aria-pressed="false">Yes</button><button type="button" class="choice" data-x-val="false" aria-pressed="false">No</button></div>';
+    if (u === 'enum') {
+      var vals = enumValues(row);
+      if (vals.length > 8) return '<select data-x-input aria-label="' + esc(row.label) + '"><option value="">Choose…</option>' + vals.map(function (o) { return '<option value="' + esc(o.v) + '">' + esc(o.l) + '</option>'; }).join('') + '</select>';
+      return '<div class="choices" data-x-choices>' + vals.map(function (o) { return '<button type="button" class="choice" data-x-val="' + esc(o.v) + '" aria-pressed="false">' + esc(o.l) + '</button>'; }).join('') + '</div>';
+    }
+    if (u === 'date' && (row.id === 'dob' || row.id === 'partnerDob')) {
+      return '<span class="slaf-input-shell"><select data-x-month aria-label="Month"><option value="">Month</option>' + ['01','02','03','04','05','06','07','08','09','10','11','12'].map(function (m, i) { return '<option value="' + m + '">' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][i] + '</option>'; }).join('') + '</select><input type="text" inputmode="numeric" placeholder="Year, e.g. 1992" data-x-year aria-label="Year"/></span>';
+    }
+    if (u === 'formula') return '<span class="slaf-input-shell"><input type="text" inputmode="decimal" placeholder="e.g. 50" data-x-match aria-label="Match, cents on the dollar"/><span class="affix">% of the first</span><input type="text" inputmode="decimal" placeholder="e.g. 6" data-x-cap aria-label="Cap, share of pay"/><span class="affix">% of pay</span></span>';
+    var affix = u === 'cents' ? '$' : (u === 'percent' || u === 'rate') ? '' : '';
+    var suffix = (u === 'percent' || u === 'rate') ? '%' : u === 'months' ? 'mo' : u === 'years' ? 'yr' : '';
+    var ph = u === 'cents' ? 'e.g. 1,200' : u === 'percent' ? 'e.g. 6' : u === 'rate' ? 'e.g. 24.99' : u === 'months' ? 'e.g. 6' : u === 'years' ? 'e.g. 20' : u === 'count' ? 'e.g. 2' : u === 'date' ? 'e.g. 15' : row.id === 'zip' ? 'e.g. 12203' : '';
+    return '<span class="slaf-input-shell">' + (affix ? '<span class="affix">' + affix + '</span>' : '') + '<input type="text" inputmode="' + (u === 'text' ? 'text' : 'decimal') + '" placeholder="' + esc(ph) + '" data-x-input aria-label="' + esc(row.label) + '"/>' + (suffix ? '<span class="affix">' + suffix + '</span>' : '') + '</span>'
+      + (u === 'cents' ? unitHtml(row) : '');
+  }
+  /* The two states besides blank (G2.7): "Not sure yet", with the month they
+     expect to know by, and "from memory" on the next save. Only on rows a
+     person types, never on a computed one. */
+  function statesHtml(row) {
+    if (row.kind === 'computed') return '';
+    return '<div class="xstates"><span class="slaf-state" data-x-state></span>'
+      + '<button type="button" class="slaf-btn slaf-btn--quiet slaf-btn--small" data-x-notsure>Not sure yet</button>'
+      + '<label class="x-memory"><input type="checkbox" data-x-memory/> from memory</label></div>'
+      + '<div class="x-when" data-x-when hidden><label>Expect to know by <input type="month" data-x-expected aria-label="Expected month"/></label> <button type="button" class="slaf-btn slaf-btn--small" data-x-notsure-save>Mark it</button></div>'
+      + '<div class="x-slip" data-x-slip hidden></div>';
+  }
+  function rowHtml(row, key, item) {
+    var f = Ownership.FIELDS[row.id];
+    var owner = f ? SLAF.Registry.byId(f.owner) : null;
+    return '<div class="xrow" data-x-row="' + esc(row.id) + '" data-x-key="' + esc(key) + '"' + (item ? ' data-x-item="' + esc(item.id) + '"' : '') + '>'
+      + '<div class="lab">' + esc(row.label) + (row.unit !== 'cents' && LedgerRows.unitLabel(row) ? '<span class="unit">' + esc(LedgerRows.unitLabel(row)) + '</span>' : '') + (owner && row.kind !== 'computed' ? '<span class="own">owned by ' + esc(owner.title) + '</span>' : '') + '</div>'
+      + '<div class="ctl">' + control(row, key) + '</div>'
+      + statesHtml(row)
+      + '<div class="sug" data-x-sug hidden></div><div class="saved" data-x-saved></div></div>';
+  }
+  function itemLabel(kind, item) { return item.label || item.source || 'Unnamed'; }
+  function itemHtml(listKey, item, rows) {
+    var L = LISTS[listKey];
+    return '<div class="xitem" data-x-list="' + esc(listKey) + '" data-x-itemid="' + esc(item.id) + '"><div class="xhead"><b>' + esc(itemLabel(L.kind, item)) + '</b>' + (item.type ? '<span class="kind">' + esc((Ask.ENUM_LABELS.debtType || {})[item.type] || item.type) + '</span>' : '') + '<button type="button" class="slaf-btn slaf-btn--quiet rm" data-x-remove>Remove</button></div>'
+      + rows.map(function (r) { return rowHtml(r, r.id + ':' + item.id, item); }).join('') + '</div>';
+  }
+  function addHtml(listKey) {
+    var L = LISTS[listKey];
+    var type = L.kind === 'debt' ? '<select data-x-add-type aria-label="Kind of debt">' + Object.keys(Ask.ENUM_LABELS.debtType).map(function (k) { return '<option value="' + k + '">' + esc(Ask.ENUM_LABELS.debtType[k]) + '</option>'; }).join('') + '</select>'
+      : L.kind === 'asset' ? '<select data-x-add-type aria-label="Kind of account"><option value="cash">Cash account</option><option value="investment">Investment account</option><option value="retirement">Retirement account</option><option value="property">Property</option><option value="other">Other</option></select>' : '';
+    var last4 = (L.kind === 'debt' || L.kind === 'asset') ? '<input type="text" inputmode="numeric" maxlength="4" placeholder="last four" data-x-add-last4 aria-label="Last four digits"/>' : '';
+    return '<div class="xadd" data-x-add="' + esc(listKey) + '"><input type="text" placeholder="' + esc(L.kind === 'debt' ? 'Lender, e.g. Amex' : L.kind === 'asset' ? 'Where it is, e.g. Fidelity Roth' : L.kind === 'incomeSource' ? 'Name it: e.g. Day job' : 'Name it: e.g. Car insurance') + '" data-x-add-name aria-label="Name"/>' + last4 + type + '<button type="button" class="slaf-btn" data-x-add-btn>+ Add another</button></div>';
+  }
+
+  /* ---- The whole form, built once ---------------------------------------------- */
+  function build() {
+    var hh = h();
+    var all = LedgerRows.all().filter(function (r) { return !/^prefs\./.test(r.path); });
+    Doors.DOORS.forEach(function (d) {
+      var mine = all.filter(function (r) { return r.door === d.id; });
+      var out = '';
+      [1, 2, 3, 4].forEach(function (L) {
+        var rows = mine.filter(function (r) { return r.level === L; });
+        if (!rows.length) return;
+        out += '<details class="xlvl" id="x-' + esc(d.id) + '-' + L + '" open><summary>Level ' + L + ' · ' + esc(Doors.LEVELS[L - 1].label) + '</summary>';
+        var listsHere = {};
+        rows.forEach(function (r) {
+          if (ITEM_ROWS[r.id]) { listsHere[ITEM_ROWS[r.id]] = true; }
+          /* Gross pay is one line per source; with no source yet it is one
+             plain box, whose owner path creates the first source. */
+          if (ITEM_ROWS[r.id] && r.id !== 'grossAnnualIncome') return;
+          out += rowHtml(r, r.id, null);
+        });
+        Object.keys(listsHere).forEach(function (lk) {
+          var Lst = LISTS[lk];
+          var items = LedgerRows.items(hh, { repeat: lk }) || [];
+          var rowsOf = Lst.rows.map(function (id) { return LedgerRows.byId(id); }).filter(Boolean);
+          out += '<div class="xlist" data-x-listhost="' + esc(lk) + '"><p class="xhint">' + esc(Lst.label) + ': one block each, the fields together.</p>'
+            + items.map(function (it) { return itemHtml(lk, it, rowsOf); }).join('') + addHtml(lk) + '</div>';
+        });
+        out += '</details>';
+      });
+      document.querySelector('#x-' + d.id + ' .xbody').innerHTML = out;
+    });
+    el('xjump').innerHTML = Doors.DOORS.map(function (d) { return '<a href="#x-' + esc(d.id) + '">' + esc(d.letter) + '</a>'; }).join('');
+    index();
+    wire();
+    paintValues();
+    paintApplies();
+    paintSuggestions();
+    paintBar();
+  }
+  function index() {
+    NODES = {};
+    Array.prototype.forEach.call(document.querySelectorAll('[data-x-row]'), function (n) {
+      var row = LedgerRows.byId(n.getAttribute('data-x-row'));
+      NODES[n.getAttribute('data-x-key')] = { row: row, el: n, itemId: n.getAttribute('data-x-item') || null, sug: n.querySelector('[data-x-sug]'), saved: n.querySelector('[data-x-saved]') };
+    });
+  }
+  function itemOf(node) {
+    if (!node.itemId) return null;
+    var lk = ITEM_ROWS[node.row.id];
+    return (LedgerRows.items(h(), { repeat: lk }) || []).filter(function (it) { return it.id === node.itemId; })[0] || null;
+  }
+
+  /* ---- Values in, never under a finger ------------------------------------------ */
+  function paintValues() {
+    var hh = h();
+    Object.keys(NODES).forEach(function (key) {
+      var n = NODES[key], row = n.row, e = n.el;
+      var a = document.activeElement;
+      if (a && e.contains(a) && (a.tagName === 'INPUT' || a.tagName === 'SELECT')) return;
+      var item = itemOf(n);
+      if (n.itemId && !item) return;
+      var v = current(row, item);
+      if (row.kind === 'computed') { var c = e.querySelector('[data-x-computed]'); var f = Ownership.FIELDS[row.id]; var r = f ? f.read(hh) : null; c.textContent = r && Money.isOk(r) ? (f.format ? f.format(r.value) : String(r.value)) : 'needs its inputs'; c.classList.toggle('is-blank', !(r && Money.isOk(r))); return; }
+      var inp = e.querySelector('[data-x-input]');
+      if (inp) { var d = display(row, v); if (inp.value !== d) inp.value = d; }
+      paintState(n, v);
+      var ch = e.querySelector('[data-x-choices]');
+      if (ch) Array.prototype.forEach.call(ch.querySelectorAll('[data-x-val]'), function (b) { b.setAttribute('aria-pressed', v !== null && v !== undefined && String(v) === b.getAttribute('data-x-val') ? 'true' : 'false'); });
+      var mo = e.querySelector('[data-x-month]');
+      if (mo && typeof v === 'string' && /^\d{4}-\d{2}/.test(v)) { mo.value = v.slice(5, 7); e.querySelector('[data-x-year]').value = v.slice(0, 4); }
+      var mt = e.querySelector('[data-x-match]');
+      if (mt && v && typeof v === 'object') { mt.value = Money.isEntered(v.matchPercent) ? String(Math.round(v.matchPercent * 100)) : ''; e.querySelector('[data-x-cap]').value = Money.isEntered(v.matchCapPercentOfSalary) ? String(Math.round(v.matchCapPercentOfSalary * 100)) : ''; }
+    });
+  }
+  /* The state word beside a row (G2.7): not sure yet (by when), from memory,
+     suggested, or nothing; the "Not sure yet" button only while blank. */
+  function paintState(n, v) {
+    var st = n.el.querySelector('[data-x-state]'); if (!st) return;
+    var key = n.itemId ? n.row.id + ':' + n.itemId : n.row.id;
+    var blank = v === null || v === undefined || v === '';
+    var ns = Schema.notSure(h(), key);
+    var m = blank ? null : Schema.meta(h(), n.row.id);
+    var word = '', cls = '';
+    if (blank && ns) { word = 'Not sure yet' + (ns.expectedBy ? ', by ' + monthWord(ns.expectedBy) : ''); cls = 'is-notSure'; }
+    else if (!blank && !n.itemId && m && m.source === 'memory' && m.confidence !== 'sure') { word = 'From memory'; cls = 'is-memory'; }
+    else if (!blank && !n.itemId && m && m.source === 'suggested' && m.confidence !== 'sure') { word = 'Suggested, not yet confirmed'; cls = ''; }
+    st.textContent = word; st.className = 'slaf-state ' + cls;
+    var nb = n.el.querySelector('[data-x-notsure]'); if (nb) nb.hidden = !blank || !!ns;
+    var mem = n.el.querySelector('.x-memory'); if (mem) mem.hidden = !!(m && m.source === 'memory' && m.confidence !== 'sure');
+  }
+  function monthWord(ym) {
+    var m = Number(String(ym).slice(5, 7)), y = String(ym).slice(0, 4);
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1] + ' ' + y;
+  }
+  function paintApplies() {
+    var hh = h();
+    Object.keys(NODES).forEach(function (key) {
+      var n = NODES[key];
+      var applies = LedgerRows.applies(n.row, hh);
+      var f = Ownership.FIELDS[n.row.id];
+      if (applies && f && typeof f.applies === 'function') applies = f.applies(hh);
+      if (key === 'grossAnnualIncome' && (LedgerRows.items(hh, { repeat: 'incomeSources' }) || []).length) applies = false;
+      n.el.hidden = !applies;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('details.xlvl'), function (lv) {
+      var any = Array.prototype.some.call(lv.querySelectorAll('.xrow, .xadd'), function (r) { return !r.hidden; });
+      lv.hidden = !any;
+    });
+    Doors.DOORS.forEach(function (d) {
+      var c = Doors.counts(hh, TABLES, d.id, []);
+      var cnt = document.querySelector('[data-x-count="' + d.id + '"]');
+      if (cnt) cnt.textContent = c.known + ' of ' + c.total + ' known';
+    });
+  }
+  var SUG = {};
+  function paintSuggestions() {
+    var list = Suggest.suggestions(h(), TABLES);
+    SUG = {};
+    list.forEach(function (s) { SUG[s.key] = s; });
+    Object.keys(NODES).forEach(function (key) {
+      var n = NODES[key], s = SUG[key];
+      if (!n.sug) return;
+      if (s && !s.na) { n.sug.hidden = false; n.sug.innerHTML = '<button type="button" class="slaf-use-this" data-x-use="' + esc(key) + '">Suggested ' + esc(s.display) + ' · use it</button><span class="how">' + esc(s.how) + '</span>'; }
+      else if (s && s.na) { n.sug.hidden = false; n.sug.innerHTML = '<span class="how">' + esc(s.display) + ': ' + esc(s.how) + '</span>'; }
+      else { n.sug.hidden = true; n.sug.innerHTML = ''; }
+    });
+  }
+  function paintBar() {
+    var u = Doors.understanding(h(), TABLES, Suggest.suggestions(h(), TABLES), TABLES.confidenceWeights);
+    el('xpct').innerHTML = 'You understand <b>' + u.percent + '%</b> of your financial picture.';
+  }
+
+  /* ---- Writes: each through the owner ---------------------------------------------- */
+  function said(n, text) { n.saved.textContent = text; setTimeout(function () { if (n.saved.textContent === text) n.saved.textContent = ''; }, 1600); }
+  function write(n, value, how, note) {
+    var ctx = n.itemId ? { itemId: n.itemId } : null;
+    var mem = n.el.querySelector('[data-x-memory]');
+    try {
+      if (how === 'suggested' && Spine.tagWrite) Spine.tagWrite({ source: 'suggested', confidence: 'roughly' });
+      else if (mem && mem.checked && value !== null && Spine.tagWrite) Spine.tagWrite({ source: 'memory', confidence: 'roughly' });
+      Ownership.write(n.row.id, value, ctx);
+      if (mem) mem.checked = false;
+      said(n, (note ? note + ' ' : '') + (value === null ? 'Cleared.' : 'Saved.'));
+    } catch (e) { said(n, 'Could not save: ' + e.message); }
+  }
+  function commitInput(n) {
+    var e = n.el, row = n.row;
+    var inp = e.querySelector('[data-x-input]');
+    if (inp) {
+      var raw = inp.value;
+      var before = current(row, itemOf(n));
+      if (String(raw).trim() === '') { if (before !== null && before !== undefined) write(n, null, 'typed'); return; }
+      var v;
+      /* An obvious percent slip is a plain question, not an error (G2.8). */
+      var sl = Ask.slip(row, raw), slipBox = e.querySelector('[data-x-slip]');
+      if (sl && slipBox) {
+        slipBox.hidden = false;
+        slipBox.innerHTML = '<p class="ask-q">' + esc(sl.question) + '</p><div class="choices">' + sl.options.map(function (o, i) { return '<button type="button" class="choice" data-x-slipopt="' + i + '">' + esc(o.label) + '</button>'; }).join('') + '</div>';
+        n.slip = sl;
+        return;
+      }
+      if (row.unit === 'enum' || row.unit === 'text') v = raw.trim();
+      else if (row.unit === 'date') v = Number(String(raw).replace(/\D/g, '')) || null;
+      else v = Ask.parse(row, raw);
+      if (v === null) { said(n, 'A number, please.'); return; }
+      /* Typed in another period: converted to the row's own before saving. */
+      var per = e.querySelector('[data-x-period]');
+      var conv = row.unit === 'cents' && per ? Ask.toRowPeriod(row, v, per.value) : { value: v, note: null };
+      if (conv.note) { per.value = LedgerRows.period(row); }
+      if (conv.value === before) return;
+      write(n, conv.value, 'typed', conv.note);
+      return;
+    }
+    var mo = e.querySelector('[data-x-month]');
+    if (mo) { var y = String(e.querySelector('[data-x-year]').value || '').replace(/\D/g, ''); if (mo.value && y.length === 4) { var dob = y + '-' + mo.value + '-01'; if (dob !== current(row, null)) write(n, dob, 'typed'); } return; }
+    var mt = e.querySelector('[data-x-match]');
+    if (mt) { var m = Number(mt.value), c = Number(e.querySelector('[data-x-cap]').value); if (mt.value !== '' && e.querySelector('[data-x-cap]').value !== '' && !isNaN(m) && !isNaN(c)) write(n, { matchPercent: m / 100, matchCapPercentOfSalary: c / 100 }, 'typed'); }
+  }
+  function wire() {
+    var form = el('xform');
+    form.addEventListener('change', function (ev) {
+      var r = ev.target.closest ? ev.target.closest('[data-x-key]') : null;
+      if (!r) return;
+      /* The period select, the memory tick and the expected month are not
+         the value: changing them saves nothing by themselves. */
+      if (ev.target.hasAttribute('data-x-period') || ev.target.hasAttribute('data-x-memory') || ev.target.hasAttribute('data-x-expected')) return;
+      var n = NODES[r.getAttribute('data-x-key')];
+      if (n) commitInput(n);
+    });
+    form.addEventListener('click', function (ev) {
+      var t = ev.target.closest ? ev.target.closest('[data-x-val],[data-x-use],[data-x-add-btn],[data-x-remove],[data-x-notsure],[data-x-notsure-save],[data-x-slipopt]') : null;
+      if (!t) return;
+      if (t.hasAttribute('data-x-notsure')) { t.closest('[data-x-key]').querySelector('[data-x-when]').hidden = false; return; }
+      if (t.hasAttribute('data-x-notsure-save')) {
+        var nn = NODES[t.closest('[data-x-key]').getAttribute('data-x-key')];
+        var when = nn.el.querySelector('[data-x-expected]').value || null;
+        Spine.setNotSure(nn.itemId ? nn.row.id + ':' + nn.itemId : nn.row.id, { expectedBy: when });
+        nn.el.querySelector('[data-x-when]').hidden = true;
+        said(nn, 'Marked not sure yet. It stays blank, never zero.');
+        return;
+      }
+      if (t.hasAttribute('data-x-slipopt')) {
+        var ns = NODES[t.closest('[data-x-key]').getAttribute('data-x-key')];
+        var o = ns.slip && ns.slip.options[Number(t.getAttribute('data-x-slipopt'))];
+        var sb = ns.el.querySelector('[data-x-slip]'); sb.hidden = true; sb.innerHTML = ''; ns.slip = null;
+        if (!o) return;
+        if (o.value === null) { var ip = ns.el.querySelector('[data-x-input]'); ip.value = ''; ip.focus(); return; }
+        write(ns, o.value, 'typed');
+        return;
+      }
+      if (t.hasAttribute('data-x-val')) {
+        var n = NODES[t.closest('[data-x-key]').getAttribute('data-x-key')];
+        var raw = t.getAttribute('data-x-val');
+        write(n, n.row.unit === 'bool' ? raw === 'true' : raw, 'typed');
+        return;
+      }
+      if (t.hasAttribute('data-x-use')) {
+        var key = t.getAttribute('data-x-use'), s = SUG[key], n2 = NODES[key];
+        if (s && n2) write(n2, s.value, 'suggested');
+        return;
+      }
+      if (t.hasAttribute('data-x-add-btn')) {
+        var box = t.closest('[data-x-add]'), lk = box.getAttribute('data-x-add'), L = LISTS[lk];
+        var name = String(box.querySelector('[data-x-add-name]').value || '').trim();
+        var l4 = box.querySelector('[data-x-add-last4]');
+        var last4 = l4 ? String(l4.value || '').replace(/\D/g, '').slice(-4) : '';
+        /* Named by lender and last four, "Amex ••1003", never a numbered card (G2.8). */
+        if (last4) name = (name || (L.kind === 'debt' ? 'Card' : 'Account')) + ' ••' + last4;
+        var typeSel = box.querySelector('[data-x-add-type]');
+        var fields = {};
+        if (L.kind === 'incomeSource') fields.source = name || 'A source'; else fields.label = name || undefined;
+        if (typeSel) { if (L.kind === 'debt') fields.type = typeSel.value; else fields.category = typeSel.value; }
+        var item = Ownership.addItem(L.kind, fields);
+        var rowsOf = L.rows.map(function (id) { return LedgerRows.byId(id); }).filter(Boolean);
+        box.insertAdjacentHTML('beforebegin', itemHtml(lk, item, rowsOf));
+        box.querySelector('[data-x-add-name]').value = '';
+        if (l4) l4.value = '';
+        index(); paintValues(); paintApplies(); paintSuggestions(); paintBar();
+        return;
+      }
+      if (t.hasAttribute('data-x-remove')) {
+        var it = t.closest('[data-x-itemid]'), lk2 = it.getAttribute('data-x-list');
+        if (!window.confirm('Remove ' + it.querySelector('.xhead b').textContent + '? Undo brings it back.')) return;
+        Ownership.removeItem(LISTS[lk2].kind, it.getAttribute('data-x-itemid'));
+        it.remove();
+        index(); paintApplies(); paintSuggestions(); paintBar();
+      }
+    });
+  }
+
+  Spine.registerRoom(ROOM_ID);
+  Progress.mountHeader(ROOM_ID);
+  Progress.mount(ROOM_ID);
+  Reference.load(Suggest.TABLES.concat(['states', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates'])).then(function (t) {
+    TABLES = t;
+    LedgerRows.use(t.ledgerRows);
+    build();
+    /* A change anywhere (another tab, undo, a chip) repaints values and
+       what applies, never rebuilding a control, never under a finger. */
+    Spine.onChange(function () { paintValues(); paintApplies(); paintSuggestions(); paintBar(); });
+  });
+})();
+</script>
+</body>
+</html>

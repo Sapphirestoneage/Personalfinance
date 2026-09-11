@@ -35,4 +35,5 @@ jobs:
           node test/features.js
           node test/sidebar.js
           node test/forms.js
+          node test/onefact.js
           node test/alignment.js

@@ -75,7 +75,7 @@
     var known = 0, total = 0, suggested = 0, byLevel = {};
     var sm = suggestedKeys(sug);
     list.forEach(function (r) {
-      var isKnown = r.status === 'sure' || r.status === 'roughly' || r.status === 'stale' || (r.status === 'computed' && Money.isOk(r.result));
+      var isKnown = r.status === 'sure' || r.status === 'roughly' || r.status === 'memory' || r.status === 'stale' || (r.status === 'computed' && Money.isOk(r.result));
       total++;
       if (isKnown) known++;
       else if (sm[r.id] && !sm[r.id].na) suggested++;
@@ -175,12 +175,13 @@
      data/confidence_weights.json (rowStates); nothing here is a badge, the
      line only says how much of the picture the numbers cover. */
   function understanding(household, tables, sug, weights) {
-    var w = (weights && weights.rowStates) || { sure: 1, roughly: 0.85, stale: 0.7, suggested: 0.5, missing: 0 };
+    var w = (weights && weights.rowStates) || { sure: 1, roughly: 0.85, memory: 0.75, stale: 0.7, suggested: 0.5, notSure: 0.25, missing: 0 };
     var sm = suggestedKeys(sug);
     var all = LedgerRows.rows(household, tables, { filter: 'all' }).filter(function (r) { return r.kind !== 'computed' && !/^prefs\./.test(r.path); });
     var sum = 0, byDoor = {};
     all.forEach(function (r) {
-      var k = r.status === 'sure' ? 'sure' : r.status === 'roughly' ? 'roughly' : r.status === 'stale' ? 'stale' : (sm[r.id] && !sm[r.id].na ? 'suggested' : 'missing');
+      var k = r.status === 'sure' ? 'sure' : r.status === 'roughly' ? 'roughly' : r.status === 'memory' ? 'memory' : r.status === 'stale' ? 'stale'
+        : (sm[r.id] && !sm[r.id].na ? 'suggested' : r.status === 'notSure' ? 'notSure' : 'missing');
       var v = w[k] || 0;
       sum += v;
       var d = byDoor[r.door] || (byDoor[r.door] = { sum: 0, n: 0 });
@@ -214,7 +215,7 @@
   function isBlank(household, row) {
     if (row.kind === 'computed') return false;
     if (row.repeat && ITEM_MISSING[row.id]) return itemsMissing(household, row).length > 0;
-    return row.status === 'missing';
+    return row.status === 'missing' || row.status === 'notSure';
   }
   function levelOf(list, household) {
     for (var L = 1; L <= 4; L++) {

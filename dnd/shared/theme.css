@@ -1219,7 +1219,23 @@ a:hover { color: var(--sapphire-100); }
 .slaf-ask .ask-ctl .choices .choice { min-height: 48px; }
 .slaf-ask .ask-sug { margin-top: var(--space-2); }
 .slaf-ask .ask-how { display: block; margin-top: var(--space-1); }
-.slaf-ask .ask-acts { display: flex; gap: var(--space-2); margin-top: var(--space-3); align-items: center; }
+.slaf-ask .ask-acts { display: flex; gap: var(--space-2); margin-top: var(--space-3); align-items: center; flex-wrap: wrap; }
+/* The unit beside every money box, the from-memory tick, the slip question,
+   the not-sure-yet month (G2.7, G2.8; D-209). Shared by the ask, Express
+   and the Refresh so the words read the same everywhere. */
+.slaf-unit { display: inline-flex; align-items: center; gap: 4px; margin-left: var(--space-2); font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+.slaf-unit select { font-size: var(--text-xs); min-height: 32px; padding: 2px var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text-muted); }
+.ask-memory, .x-memory { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-xs); color: var(--color-text-muted); }
+.ask-memory input, .x-memory input { width: 18px; height: 18px; margin: 0; }
+.ask-slip, .x-slip { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-sm); }
+.ask-slip .ask-q, .x-slip .ask-q { font-family: var(--font-display); font-size: var(--text-sm); margin: 0 0 var(--space-2); }
+.ask-slip .choices, .x-slip .choices { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.ask-slip .choice, .x-slip .choice { min-height: 40px; padding: 0 var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
+.ask-when, .x-when { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-top: var(--space-2); font-size: var(--text-sm); }
+.ask-when input[type="month"], .x-when input[type="month"] { min-height: 40px; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
+.slaf-state { font-size: var(--text-xs); color: var(--color-text-faint); }
+.slaf-state.is-notSure { color: var(--color-warning, #d97706); }
+.slaf-state.is-memory { color: var(--color-text-muted); }
 .slaf-ask .ask-note { margin-top: var(--space-2); }
 
 /* ---- Two guards every room carries (D-204) ---------------------------- */

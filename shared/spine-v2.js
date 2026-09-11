@@ -381,6 +381,8 @@
           if (cache.meta.guessed && cache.meta.guessed[id]) delete cache.meta.guessed[id];
           if (current[id] === null || current[id] === undefined) { delete cache.meta.fields[id]; return; }
           cache.meta.fields[id] = { asOf: tag.asOf || now, source: tag.source, confidence: tag.confidence, room: currentRoom || null };
+          /* A value arrived: "not sure yet" no longer applies (D-209). */
+          if (cache.meta.notSure && cache.meta.notSure[id]) delete cache.meta.notSure[id];
         }
       });
     }
@@ -401,6 +403,24 @@
     save(); notify();
     return h.meta.confirmedAt[fieldId];
   }
+  /** "Not sure yet" on a row (G2.7, D-209): no value, never zero, with the
+      month the person expects to know by (YYYY-MM) or null. key is a field
+      id or fieldId:itemId. Pass null as opts to take the mark off. */
+  function setNotSure(key, opts) {
+    var h = load();
+    h.meta.notSure = h.meta.notSure || {};
+    if (opts === null) { delete h.meta.notSure[key]; }
+    else {
+      var by = opts && opts.expectedBy ? String(opts.expectedBy) : null;
+      h.meta.notSure[key] = { at: new Date().toISOString(), expectedBy: by && /^\d{4}-\d{2}$/.test(by) ? by : null };
+    }
+    save(); notify();
+    return h.meta.notSure[key] || null;
+  }
+  function notSureOf(key) { return Schema.notSure(load(), key); }
+  /** The life change waiting for its sheet (G2.6, D-209): the record, or null. */
+  function reopenPending() { var h = load(); return h.meta.reopen && typeof h.meta.reopen === 'object' ? h.meta.reopen : null; }
+  function setReopen(rec) { var h = load(); h.meta.reopen = rec || null; save(); notify(); return h.meta.reopen; }
   /** Change the facts about a number without changing the number:
       "roughly, for now", a statement date, where it came from. */
   function setFieldMeta(fieldId, patch) {
@@ -814,6 +834,11 @@
     if (before && before.employmentStatus && person.employmentStatus !== undefined
         && person.employmentStatus !== null && person.employmentStatus !== before.employmentStatus) {
       autoSnapshot('before-situation-change');
+      /* The rows that change meaning get one short sheet, nothing is
+         cleared (G2.6, D-209). Only the primary adult's situation. */
+      if (before.role === 'adult' && Schema.primaryPerson(h) && Schema.primaryPerson(h).id === before.id) {
+        h.meta.reopen = { field: 'employmentStatus', from: before.employmentStatus, to: person.employmentStatus, at: new Date().toISOString(), dismissed: false };
+      }
     }
     var result = upsertIn(h.people, person);
     save(); notify();
@@ -1445,7 +1470,11 @@
       /* Why it was taken: null for one the person froze on purpose, or
          'before-import', 'before-merge', 'before-situation-change' for
          the automatic one the spine takes ahead of a bulk change (D-204). */
-      reason: (entry && entry.reason) || null
+      reason: (entry && entry.reason) || null,
+      /* The moving rows as the Refresh saw them, by row key (fieldId or
+         fieldId:itemId), so the next refresh can say what changed since
+         last time, line by line (G2.5, D-209). null on every other snapshot. */
+      rows: (entry && entry.rows) || null
     };
     all.push(record);
     writeRaw(SNAPSHOT_KEY, JSON.stringify(all));
@@ -1847,6 +1876,7 @@
     listSnapshots: listSnapshots,
     appendSnapshot: appendSnapshot,
     autoSnapshot: autoSnapshot,
+    setNotSure: setNotSure, notSureOf: notSureOf, reopenPending: reopenPending, setReopen: setReopen,
     stalePage: stalePage,
     latestSnapshot: latestSnapshot,
     snapshotDelta: snapshotDelta,

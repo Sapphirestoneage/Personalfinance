@@ -104,14 +104,14 @@ section can be read with `sed -n START,ENDp FILE` instead of the whole file.
   - Phone and desktop, measured (D-136) [152-168]
   - What people ask about that this does not answer (the coverage gap) [169-240]
 
-## README.md (246 lines)
+## README.md (247 lines)
 
 - SPARKS / SLAF [1-10]
   - Live [11-23]
   - Run it locally [24-33]
   - Changing things [34-66]
-  - Layout [67-170]
-  - No dependencies, and no build step anywhere [171-186]
-  - Verify [187-228]
-  - Rules that are easy to break [229-240]
-  - Not financial advice [241-246]
+  - Layout [67-171]
+  - No dependencies, and no build step anywhere [172-187]
+  - Verify [188-229]
+  - Rules that are easy to break [230-241]
+  - Not financial advice [242-247]

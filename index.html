@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 19:21Z"/>
+<meta name="slaf-build" content="2026-09-11 19:50Z"/>
 <title>SPARKS · Money rooms</title>
 <meta name="description" content="Every threshold ratio as one shape, plus altitude, fuel, engine load and thrust."/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
@@ -269,10 +269,11 @@
     <h2>One set of numbers. Every tool reads it.</h2>
     <p>Answer a short set of questions once — what you earn, spend, hold and owe — and every room opens already filled in, from your runway to your FI year. Nothing leaves this browser.</p>
     <div class="cta">
-      <a class="slaf-btn slaf-btn--primary" id="btn-start" href="rooms/first-round.html">Start: five questions →</a>
-      <button type="button" class="slaf-btn" id="btn-example">See it with example numbers</button>
+      <a class="slaf-btn slaf-btn--primary" id="btn-start" href="rooms/first-round.html">Walk me through it →</a>
+      <a class="slaf-btn" id="btn-express" href="rooms/express.html">Give me the whole form</a>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-example">See it with example numbers</button>
     </div>
-    <p class="resume"><a href="rooms/start.html" id="btn-long-form">Know your numbers already? The full one-pager.</a></p>
+    <p class="resume"><a href="rooms/start.html" id="btn-long-form">The older one-pager is still here.</a></p>
     <p class="resume" id="resume" hidden></p>
     <p class="privacy">Educational tool, not financial advice. Your figures are stored only in this browser — there is no account and no server.
       Have a saved file or a share link? <a href="#your-data">Load it below.</a></p>
@@ -976,7 +977,7 @@
       : 'Not frozen yet. Freeze once and the panel can say what moved.';
     el('age-line').innerHTML = '<span>' + left + '</span>'
       + '<span class="' + (justFroze ? 'froze' : '') + '" id="freeze-say">' + frozen + '</span>'
-      + '<span><a href="' + Ownership.linkTo('refresh') + '">Refresh the three that move →</a> '
+      + '<span><a href="' + Ownership.linkTo('refresh') + '">Refresh what moves →</a> '
       + '<button type="button" id="btn-freeze" title="Take a snapshot so the panel can say what changed">Freeze today\u2019s numbers</button></span>';
     el('btn-freeze').addEventListener('click', function () {
       Instruments.snapshot(Spine.getProfile(), TABLES);
@@ -1194,6 +1195,13 @@
     });
   })();
 
+  /* prefs.path = fi defaults to Express (D-208): the whole form leads. */
+  try {
+    if (SLAF.Prefs && SLAF.Prefs.get('door', null) === 'fi') {
+      el('btn-express').classList.add('slaf-btn--primary');
+      el('btn-start').classList.remove('slaf-btn--primary');
+    }
+  } catch (e) { /* fine */ }
   el('btn-example').addEventListener('click', function () {
     if (!window.confirm('Fill every answer with the example household, Robin Sparks? This replaces anything you have entered.')) return;
     var d = SLAF.DemoPersona.build();

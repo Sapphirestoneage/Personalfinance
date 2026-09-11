@@ -100,6 +100,17 @@
   /** Sum a list of cent amounts. Entries that were never entered are skipped,
    *  NOT coerced to zero — and the count of real entries is reported back so a
    *  caller can tell "nothing entered" from "entered as zero". */
+  /* One period to another, in cents (G2.8, D-209): the only place a weekly,
+     fortnightly, monthly or yearly figure is converted. A year is 12 months,
+     52 weeks, 26 fortnights; the result is rounded to the cent. */
+  var PERIODS_PER_YEAR = { year: 1, month: 12, fortnight: 26, week: 52 };
+  function convertPeriod(cents, from, to) {
+    if (!isEntered(cents)) return null;
+    var a = PERIODS_PER_YEAR[from], b = PERIODS_PER_YEAR[to];
+    if (!a || !b) return null;
+    if (from === to) return Math.round(cents);
+    return Math.round(cents * a / b);
+  }
   function sumCents(list) {
     var total = 0, counted = 0;
     for (var i = 0; i < (list || []).length; i++) {
@@ -222,6 +233,7 @@
     parseMoney: parseMoney,
     parseRatePercent: parseRatePercent,
     sumCents: sumCents,
+    convertPeriod: convertPeriod, PERIODS_PER_YEAR: PERIODS_PER_YEAR,
     safeDivide: safeDivide,
     formatCents: formatCents,
     formatAsTime: formatAsTime,
