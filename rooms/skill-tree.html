@@ -129,7 +129,13 @@
   .node.is-bypassed .n-name { color: var(--color-text-subtle); }
   .node.is-fogged { background: var(--color-surface); border: none; cursor: default; }
   .node.is-fogged .n-icon { background: none; color: var(--color-text-faint); opacity: .4; font-size: 16px; }
-  .node.is-dim { opacity: .6; }
+  /* Dimming by opacity put the locked names at about 2:1. A node that is
+     out of reach now says so with a faded frame, and keeps its name
+     readable — the name is the only way to tell one node from another.
+     D-222. */
+  .node.is-dim { border-color: var(--color-border); background: var(--color-surface); }
+  .node.is-dim .n-name { color: var(--color-text-subtle); }
+  .node.is-locked .n-name { color: var(--color-text-subtle); }
   .node.is-picked { outline: 2px solid var(--color-accent); outline-offset: 2px; }
   .node:focus-visible { outline: 2px solid var(--color-focus-ring); }
 

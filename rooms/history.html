@@ -184,9 +184,9 @@
 
     assumptions: function (h, T) {
       return [
-        { label: 'A snapshot holds', value: History.frozenNames().length + ' instruments and every owned field', source: History.frozenNames().join(', ') + ' — shared/instruments.js' },
+        { label: 'A snapshot holds', value: History.frozenNames().length + ' instruments and every owned field', source: History.frozenNames().join(', ') + ' — the panel’s own list of readings' },
         { label: '“Now”', value: 'recomputed', source: 'from the household as it is, never a stored figure' },
-        { label: 'The log', value: 'this browser’s', source: 'meta.undoStack, capped at 100; an export or share code leaves it behind (D-094)' },
+        { label: 'The log', value: 'this browser’s', source: 'meta.undoStack, capped at 100; an export or share code leaves it behind' },
         { label: 'Snapshots', value: 'this browser’s', source: 'kept beside the household; a share code carries them' }
       ];
     },

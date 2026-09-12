@@ -221,19 +221,19 @@
       var stateRow = ok && p.stateIncluded ? (p.stateType === 'none' ? 'no income tax' : p.stateType === 'flat' ? 'flat, on federal taxable income' : 'graduated, on federal taxable income')
         : 'not in — ' + (ok && p.state && p.state.reason ? p.state.reason : 'no state yet');
       var rows = [
-        { label: 'Federal brackets', value: fed.taxYear + ', ' + (ok ? pct0(p.bracket.rate) + ' marginal' : 'not computed yet'), source: 'data/federal_brackets_2026.json v' + fed.version + ', as of ' + fed.asOf + ' (' + fed.confidence + ')' },
+        { label: 'Federal brackets', value: fed.taxYear + ', ' + (ok ? pct0(p.bracket.rate) + ' marginal' : 'not computed yet'), source: 'the 2026 federal tax brackets v' + fed.version + ', as of ' + fed.asOf + ' (' + fed.confidence + ')' },
         { label: 'Standard deduction', value: ok ? Money.formatCents(p.deductionCents) + ' taken off before the ladder' : 'from the federal table', source: 'the same table; itemising is not modelled' },
-        { label: 'State', value: stateRow, source: 'data/state_brackets_2026.json v' + st.version + ' (' + st.confidence + ') — ' + st.confidenceNote.split('.')[0] + '.' },
+        { label: 'State', value: stateRow, source: 'the 2026 state tax brackets v' + st.version + ' (' + st.confidence + ') — ' + st.confidenceNote.split('.')[0] + '.' },
         { label: 'Payroll tax', value: ok && p.selfEmploymentTaxCents > 0
             ? 'both halves: ' + pctExact(se.socialSecurityRate + se.medicareRate) + ' of 92.35% of profit, Social Security capped at ' + Money.formatCents(se.socialSecurityWageBase * 100)
             : pctExact(se.employeeFicaRate) + ' employee side, Social Security capped at ' + Money.formatCents(se.socialSecurityWageBase * 100),
-          source: 'data/se_tax_2026.json v' + se.version + ' (' + se.confidence + '; the wage base is the figure to re-check)' },
+          source: 'the 2026 self-employment tax rules v' + se.version + ' (' + se.confidence + '; the wage base is the figure to re-check)' },
         { label: 'Workplace pre-tax', value: ok && p.workplacePercent !== null ? p.workplacePercent + '% of wages = ' + Money.formatCents(p.workplacePreTaxCents) : 'not entered — nothing taken off', source: 'your workplace contribution, from Start Here, treated as pre-tax' },
         { label: 'Other pre-tax', value: ok && p.otherPreTaxKnown ? Money.formatCents(p.otherPreTaxCents) : 'blank, so none', source: 'yours, above' }
       ];
       if (ok && p.blunt) {
         rows.push({ label: 'The blunter estimate', value: pct(p.blunt.rate) + ' (' + Money.formatCents(p.blunt.cents) + ') vs ' + pct(p.value) + ' here',
-          source: 'data/effective_tax_rates_2026.json v' + eff.version + ' (' + eff.confidence + ') — a flat lookup by income band that blends federal and FICA and ignores state, deductions and pre-tax money. Real Hourly Wage and the savings rate use it; this room computes instead, so the two differ.' });
+          source: 'the 2026 average tax-rate table v' + eff.version + ' (' + eff.confidence + ') — a flat lookup by income band that blends federal and FICA and ignores state, deductions and pre-tax money. Real Hourly Wage and the savings rate use it; this room computes instead, so the two differ.' });
       }
       return rows;
     },

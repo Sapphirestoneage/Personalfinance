@@ -44,7 +44,9 @@
   ol.ranked .lab { font-weight: 600; }
   ol.ranked .why, ol.ranked .note { font-size: var(--text-sm); color: var(--color-text-muted); margin: 2px 0 0; }
   ol.ranked .note { color: var(--color-text-faint); }
-  ol.ranked li.is-done { opacity: .6; }
+  /* Colour, not opacity: faint text at .6 is unreadable. D-222. */
+  ol.ranked li.is-done { color: var(--color-text-muted); }
+  ol.ranked li.is-done .rate small { color: var(--color-text-muted); }
   .missing { font-size: var(--text-sm); color: var(--color-text-muted); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>

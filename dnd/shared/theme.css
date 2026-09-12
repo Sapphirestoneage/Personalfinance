@@ -481,7 +481,9 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .slaf-owned-from {
   grid-area: from;
   font-size: var(--text-xs);
-  color: var(--color-text-faint);
+  /* It names the room you must go to, so it has to be readable: the faint
+     token did not clear 4.5:1 at this size on a raised card. D-222. */
+  color: var(--color-text-subtle);
 }
 
 .slaf-owned:hover .slaf-owned-from { color: var(--color-accent-hover); }
@@ -682,7 +684,16 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 
 /* Bars: label · track · value, one row each. */
 .slaf-bars .row { display: grid; grid-template-columns: minmax(72px, 32%) 1fr auto; gap: var(--space-2); align-items: center; padding: 5px 0; }
-.slaf-bars .row.is-empty { opacity: .6; }
+/* Not opacity. It multiplies every colour in the row, and on text already
+   set in the faint token it fell to roughly 2:1 — so the rows saying what
+   you have NOT filled in were the least readable text in the app, across
+   six rooms, from this one line. The row still reads as unfilled: the
+   label is muted and the value says so in words. Every character now
+   clears 4.5:1. D-222. */
+.slaf-bars .row.is-empty { color: var(--color-text-muted); }
+.slaf-bars .row.is-empty .lbl,
+.slaf-bars .row.is-empty .lbl small,
+.slaf-bars .row.is-empty .val { color: var(--color-text-muted); }
 .slaf-bars .lbl { font-size: var(--text-sm); color: var(--color-text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slaf-bars .lbl small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); white-space: normal; }
 .slaf-bars .track { position: relative; height: 12px; border-radius: 6px; background: rgba(5, 15, 34, 0.55); box-shadow: inset 0 0 0 1px var(--color-border); overflow: hidden; }
@@ -968,7 +979,7 @@ a.slaf-math-chip:hover { border-color: var(--color-accent); }
 .slaf-menu-group > summary::-webkit-details-marker { display: none; }
 .slaf-menu-group > summary::before { content: '▸'; font-size: 10px; transition: transform .12s; }
 .slaf-menu-group[open] > summary::before { transform: rotate(90deg); }
-.slaf-menu-group > summary small { text-transform: none; letter-spacing: 0; font-size: var(--text-xs); color: var(--color-text-faint); opacity: .8; }
+.slaf-menu-group > summary small { text-transform: none; letter-spacing: 0; font-size: var(--text-xs); color: var(--color-text-subtle); }
 .slaf-menu-group > summary:hover { color: var(--color-text); }
 .slaf-menu-groupbody { padding-bottom: var(--space-2); }
 .slaf-menu-sub { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; padding: 0 var(--space-3) 0 calc(var(--space-3) + 6px); font-weight: 600; }

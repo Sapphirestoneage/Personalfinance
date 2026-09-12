@@ -6,12 +6,12 @@ Report only, nothing fixed (lane 2, section 6, DECISIONS.md L-6). axe-core 4 wit
 
 | | |
 |---|---|
-| Rooms audited | 68 (0 redirect stubs skipped) |
-| Rooms with no axe violation | 53 |
-| Rooms with a serious or critical violation | 12 |
+| Rooms audited | 92 (0 redirect stubs skipped) |
+| Rooms with no axe violation | 72 |
+| Rooms with a serious or critical violation | 13 |
 | Distinct rules failed | 8 |
-| Rooms where every tab stop shows a focus ring | 66 |
-| Rooms where the menu is reachable by keyboard | 68 |
+| Rooms where every tab stop shows a focus ring | 91 |
+| Rooms where the menu is reachable by keyboard | 90 |
 | Rooms with a keyboard trap | 0 |
 | Rooms with a page error while auditing | 0 |
 
@@ -19,87 +19,111 @@ Report only, nothing fixed (lane 2, section 6, DECISIONS.md L-6). axe-core 4 wit
 
 | rule | severity | rooms | nodes | one-line fix |
 |---|---|---|---|---|
-| `color-contrast` | serious | 11 | 16 | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-| `heading-order` | moderate | 3 | 3 | Do not skip a heading level; an h3 under an h1 needs an h2 between them. |
+| `color-contrast` | serious | 12 | 21 | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
+| `heading-order` | moderate | 7 | 7 | Do not skip a heading level; an h3 under an h1 needs an h2 between them. |
 | `empty-table-header` | minor | 1 | 2 | Table header text should not be empty |
 | `definition-list` | serious | 1 | 1 | <dl> elements must only directly contain properly-ordered <dt> and <dd> groups, <script>, <template> or <div> elements |
 | `nested-interactive` | serious | 1 | 1 | Do not nest a button or link inside another; split them. |
 | `aria-prohibited-attr` | serious | 1 | 1 | Elements must only use permitted ARIA attributes |
 | `landmark-one-main` | moderate | 1 | 1 | Wrap the room content in one <main>. |
-| `region` | moderate | 1 | 11 | Put every piece of content inside a landmark (main, nav, header, footer, aside). |
+| `region` | moderate | 1 | 10 | Put every piece of content inside a landmark (main, nav, header, footer, aside). |
 
 ## Structure, every room
 
 | room | lang | main | h1 | heading skips | zoomable | inputs without a label | buttons without a name | links without a name | images without alt | positive tabindex |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start | en | 1 | 1 | 0 | yes | 0/30 | 6/31 | 0/75 | 0/0 | 0 |
-| debt-payoff | en | 1 | 1 | 0 | yes | 0/4 | 0/17 | 0/77 | 0/0 | 0 |
-| cash-flow | en | 1 | 1 | 0 | yes | 0/90 | 3/33 | 1/80 | 0/0 | 0 |
-| income | en | 1 | 1 | 0 | yes | 0/13 | 0/11 | 0/81 | 0/0 | 0 |
-| budget | en | 1 | 1 | 0 | yes | 0/1 | 0/26 | 0/86 | 0/0 | 0 |
-| variance | en | 1 | 1 | 0 | yes | 0/2 | 0/12 | 0/80 | 0/0 | 0 |
-| financial-snapshot | en | 1 | 1 | 0 | yes | 0/1 | 0/38 | 0/100 | 0/0 | 0 |
-| statements | en | 1 | 1 | 0 | yes | 0/1 | 0/11 | 0/80 | 0/0 | 0 |
-| statement | en | 1 | 1 | 1 | yes | 0/25 | 0/11 | 0/90 | 0/0 | 0 |
-| savings-rate | en | 1 | 1 | 0 | yes | 0/1 | 0/11 | 0/85 | 0/0 | 0 |
-| sleep-at-night | en | 1 | 1 | 0 | yes | 0/8 | 0/11 | 0/83 | 0/0 | 0 |
-| fire | en | 1 | 1 | 0 | yes | 0/6 | 0/17 | 0/83 | 0/0 | 0 |
-| fire-lab | en | 1 | 1 | 0 | yes | 0/2 | 0/11 | 0/80 | 0/0 | 0 |
-| real-hourly-wage | en | 1 | 1 | 0 | yes | 0/8 | 0/11 | 0/84 | 0/0 | 0 |
-| hassle | en | 1 | 1 | 0 | yes | 0/15 | 0/20 | 0/82 | 0/0 | 0 |
-| quick-math | en | 1 | 1 | 0 | yes | 0/16 | 0/14 | 0/81 | 0/0 | 0 |
-| self-employed | en | 1 | 1 | 0 | yes | 0/9 | 0/11 | 0/84 | 0/0 | 0 |
-| side-hustle | en | 1 | 1 | 0 | yes | 0/5 | 0/11 | 0/82 | 0/0 | 0 |
-| ratios | en | 1 | 1 | 0 | yes | 0/1 | 0/53 | 0/184 | 0/0 | 0 |
-| dashboard | en | 1 | 1 | 0 | yes | 0/3 | 4/39 | 71/162 | 0/0 | 0 |
-| credential | en | 1 | 1 | 0 | yes | 0/8 | 0/11 | 0/80 | 0/0 | 0 |
-| accounts | en | 1 | 1 | 0 | yes | 0/17 | 0/14 | 0/83 | 0/0 | 0 |
-| fulfillment | en | 1 | 1 | 0 | yes | 0/1 | 0/8 | 0/82 | 0/0 | 0 |
-| rerank | en | 1 | 1 | 0 | yes | 0/20 | 0/31 | 0/85 | 0/0 | 0 |
-| stacker | en | 1 | 1 | 0 | yes | 0/1 | 0/93 | 0/88 | 0/0 | 0 |
-| skill-tree | en | 1 | 1 | 0 | yes | 0/2 | 0/31 | 0/83 | 0/0 | 0 |
-| exercises | en | 1 | 1 | 0 | yes | 0/3 | 0/57 | 0/183 | 0/0 | 0 |
-| values | en | 1 | 1 | 0 | yes | 0/1 | 0/17 | 0/80 | 0/0 | 0 |
-| goals | en | 1 | 1 | 0 | yes | 0/1 | 0/13 | 0/79 | 0/0 | 0 |
-| foo-ladder | en | 0 | 1 | 0 | yes | 0/12 | 0/23 | 0/90 | 0/0 | 0 |
-| worth | en | 1 | 1 | 0 | yes | 0/1 | 0/10 | 0/80 | 0/0 | 0 |
-| windfall | en | 1 | 1 | 0 | yes | 0/5 | 0/13 | 0/79 | 0/0 | 0 |
-| runway | en | 1 | 1 | 0 | yes | 0/15 | 0/14 | 0/81 | 0/0 | 0 |
-| car | en | 1 | 1 | 1 | yes | 0/5 | 0/11 | 0/81 | 0/0 | 0 |
-| credit | en | 1 | 1 | 0 | yes | 0/1 | 0/11 | 0/85 | 0/0 | 0 |
-| cant-pay | en | 1 | 1 | 1 | yes | 0/1 | 0/8 | 0/87 | 0/0 | 0 |
-| rollover | en | 1 | 1 | 1 | yes | 0/3 | 0/11 | 0/85 | 0/0 | 0 |
-| health | en | 1 | 1 | 0 | yes | 0/1 | 0/8 | 0/82 | 0/0 | 0 |
-| what-if-life | en | 1 | 1 | 0 | yes | 0/7 | 0/24 | 0/84 | 0/0 | 0 |
-| timeline | en | 1 | 1 | 0 | yes | 0/1 | 0/8 | 0/80 | 0/0 | 0 |
-| get-help | en | 1 | 1 | 0 | yes | 0/1 | 0/7 | 0/79 | 0/0 | 0 |
-| between-jobs | en | 1 | 1 | 0 | yes | 0/3 | 0/14 | 0/90 | 0/0 | 0 |
-| protection | en | 1 | 1 | 0 | yes | 0/3 | 0/11 | 0/91 | 0/0 | 0 |
-| decumulation | en | 1 | 1 | 0 | yes | 0/4 | 0/14 | 0/88 | 0/0 | 0 |
-| tax | en | 1 | 1 | 0 | yes | 0/3 | 0/11 | 0/85 | 0/0 | 0 |
-| estate | en | 1 | 1 | 0 | yes | 0/1 | 0/17 | 0/85 | 0/0 | 0 |
-| giving | en | 1 | 1 | 0 | yes | 0/3 | 0/12 | 0/83 | 0/0 | 0 |
-| career-move | en | 1 | 1 | 0 | yes | 0/6 | 0/13 | 0/84 | 0/0 | 0 |
-| partner | en | 1 | 1 | 0 | yes | 0/2 | 0/15 | 0/84 | 0/0 | 0 |
-| kids | en | 1 | 1 | 0 | yes | 0/4 | 0/12 | 0/86 | 0/0 | 0 |
-| housing | en | 1 | 1 | 0 | yes | 0/5 | 0/15 | 0/85 | 0/0 | 0 |
-| big-purchase | en | 1 | 1 | 0 | yes | 0/5 | 0/11 | 2/86 | 0/0 | 0 |
-| variable-income | en | 1 | 1 | 0 | yes | 0/5 | 0/15 | 0/87 | 0/0 | 0 |
-| enough | en | 1 | 1 | 0 | yes | 0/2 | 0/14 | 0/85 | 0/0 | 0 |
-| adventure | en | 1 | 1 | 0 | yes | 0/1 | 0/28 | 0/82 | 0/0 | 0 |
-| week | en | 1 | 1 | 0 | yes | 0/14 | 0/23 | 0/83 | 0/0 | 0 |
-| buckets | en | 1 | 1 | 0 | yes | 0/8 | 0/17 | 0/83 | 0/0 | 0 |
-| dreamline | en | 1 | 1 | 0 | yes | 0/11 | 0/11 | 0/84 | 0/0 | 0 |
-| reversibility | en | 1 | 1 | 0 | yes | 0/5 | 0/11 | 0/85 | 0/0 | 0 |
-| unlearning | en | 1 | 1 | 0 | yes | 0/2 | 0/13 | 0/85 | 0/0 | 0 |
-| student-loans | en | 1 | 1 | 0 | yes | 0/5 | 0/14 | 0/87 | 0/0 | 0 |
-| calendar | en | 1 | 1 | 0 | yes | 0/3 | 0/11 | 0/86 | 0/0 | 0 |
-| history | en | 1 | 1 | 0 | yes | 0/2 | 0/12 | 0/83 | 0/0 | 0 |
-| doors | en | 1 | 1 | 0 | yes | 0/2 | 0/27 | 0/141 | 0/0 | 0 |
-| walk | en | 1 | 1 | 0 | yes | 0/1 | 0/43 | 0/116 | 0/0 | 0 |
-| data | en | 1 | 1 | 0 | yes | 0/6 | 0/16 | 0/79 | 0/0 | 0 |
-| settings | en | 1 | 1 | 0 | yes | 0/1 | 0/23 | 0/128 | 0/0 | 0 |
-| refresh | en | 1 | 1 | 0 | yes | 0/3 | 0/8 | 0/81 | 0/0 | 0 |
+| first-round | en | 1 | 1 | 0 | yes | 0/7 | 3/23 | 1/100 | 0/0 | 0 |
+| express | en | 1 | 1 | 0 | yes | 0/232 | 3/223 | 1/108 | 0/0 | 0 |
+| start | en | 1 | 1 | 0 | yes | 0/30 | 9/38 | 1/104 | 0/0 | 0 |
+| debt-payoff | en | 1 | 1 | 0 | yes | 0/5 | 7/16 | 1/104 | 0/0 | 0 |
+| expenses | en | 1 | 1 | 1 | yes | 0/89 | 12/40 | 3/107 | 0/0 | 0 |
+| cash-flow | en | 1 | 1 | 0 | yes | 0/12 | 3/9 | 1/107 | 0/0 | 0 |
+| income | en | 1 | 1 | 1 | yes | 0/18 | 5/17 | 1/107 | 0/0 | 0 |
+| budget | en | 1 | 1 | 0 | yes | 0/1 | 3/26 | 1/110 | 0/0 | 0 |
+| variance | en | 1 | 1 | 0 | yes | 0/2 | 3/12 | 1/104 | 0/0 | 0 |
+| financial-snapshot | en | 1 | 1 | 0 | yes | 0/1 | 3/40 | 1/124 | 0/0 | 0 |
+| statements | en | 1 | 1 | 0 | yes | 0/1 | 3/11 | 1/104 | 0/0 | 0 |
+| statement | en | 1 | 1 | 1 | yes | 0/27 | 3/28 | 1/114 | 0/0 | 0 |
+| savings-rate | en | 1 | 1 | 0 | yes | 0/1 | 3/11 | 1/109 | 0/0 | 0 |
+| sleep-at-night | en | 1 | 1 | 0 | yes | 0/11 | 3/16 | 1/107 | 0/0 | 0 |
+| fire | en | 1 | 1 | 0 | yes | 0/9 | 3/24 | 1/107 | 0/0 | 0 |
+| fire-lab | en | 1 | 1 | 0 | yes | 0/2 | 3/12 | 1/104 | 0/0 | 0 |
+| real-hourly-wage | en | 1 | 1 | 0 | yes | 0/8 | 3/11 | 1/112 | 0/0 | 0 |
+| hassle | en | 1 | 1 | 0 | yes | 0/15 | 3/20 | 1/106 | 0/0 | 0 |
+| quick-math | en | 1 | 1 | 0 | yes | 0/16 | 3/14 | 1/105 | 0/0 | 0 |
+| self-employed | en | 1 | 1 | 0 | yes | 0/9 | 0/11 | 0/108 | 0/0 | 0 |
+| reachable | en | 1 | 1 | 0 | yes | 0/3 | 3/7 | 1/103 | 0/0 | 0 |
+| subscriptions | en | 1 | 1 | 0 | yes | 0/1 | 3/7 | 1/105 | 0/0 | 0 |
+| side-hustle | en | 1 | 1 | 0 | yes | 0/5 | 3/11 | 1/106 | 0/0 | 0 |
+| ratios | en | 1 | 1 | 0 | yes | 0/1 | 3/53 | 1/208 | 0/0 | 0 |
+| dashboard | en | 1 | 1 | 0 | yes | 0/3 | 10/42 | 72/187 | 0/0 | 0 |
+| credential | en | 1 | 1 | 0 | yes | 0/8 | 3/11 | 1/104 | 0/0 | 0 |
+| accounts | en | 1 | 1 | 0 | yes | 0/20 | 3/19 | 1/107 | 0/0 | 0 |
+| fulfillment | en | 1 | 1 | 0 | yes | 0/1 | 3/8 | 1/106 | 0/0 | 0 |
+| rerank | en | 1 | 1 | 0 | yes | 0/20 | 3/31 | 1/109 | 0/0 | 0 |
+| stacker | en | 1 | 1 | 0 | yes | 0/1 | 3/93 | 1/112 | 0/0 | 0 |
+| skill-tree | en | 1 | 1 | 0 | yes | 0/2 | 3/31 | 1/107 | 0/0 | 0 |
+| exercises | en | 1 | 1 | 0 | yes | 0/3 | 3/57 | 1/207 | 0/0 | 0 |
+| values | en | 1 | 1 | 0 | yes | 0/1 | 3/17 | 1/104 | 0/0 | 0 |
+| goals | en | 1 | 1 | 0 | yes | 0/1 | 3/13 | 1/103 | 0/0 | 0 |
+| foo-ladder | en | 0 | 1 | 0 | yes | 0/12 | 3/23 | 1/114 | 0/0 | 0 |
+| next-hundred | en | 1 | 1 | 0 | yes | 0/1 | 3/7 | 1/105 | 0/0 | 0 |
+| worth | en | 1 | 1 | 0 | yes | 0/1 | 3/10 | 1/104 | 0/0 | 0 |
+| windfall | en | 1 | 1 | 0 | yes | 0/5 | 3/13 | 1/103 | 0/0 | 0 |
+| coast-date | en | 1 | 1 | 0 | yes | 0/2 | 3/7 | 1/103 | 0/0 | 0 |
+| rank-guess | en | 1 | 1 | 0 | yes | 0/2 | 3/8 | 1/103 | 0/0 | 0 |
+| race | en | 1 | 1 | 0 | yes | 0/1 | 3/9 | 1/104 | 0/0 | 0 |
+| runway | en | 1 | 1 | 0 | yes | 0/15 | 3/14 | 1/105 | 0/0 | 0 |
+| car | en | 1 | 1 | 1 | yes | 0/5 | 3/11 | 1/107 | 0/0 | 0 |
+| credit | en | 1 | 1 | 0 | yes | 0/1 | 3/11 | 1/111 | 0/0 | 0 |
+| cant-pay | en | 1 | 1 | 1 | yes | 0/1 | 3/8 | 1/115 | 0/0 | 0 |
+| rollover | en | 1 | 1 | 1 | yes | 0/3 | 3/11 | 1/113 | 0/0 | 0 |
+| health | en | 1 | 1 | 0 | yes | 0/1 | 3/8 | 1/106 | 0/0 | 0 |
+| what-if-life | en | 1 | 1 | 0 | yes | 0/7 | 3/25 | 1/108 | 0/0 | 0 |
+| timeline | en | 1 | 1 | 0 | yes | 0/1 | 3/8 | 1/104 | 0/0 | 0 |
+| get-help | en | 1 | 1 | 0 | yes | 0/1 | 3/7 | 1/103 | 0/0 | 0 |
+| between-jobs | en | 1 | 1 | 0 | yes | 0/3 | 0/14 | 0/119 | 0/0 | 0 |
+| quit-fund | en | 1 | 1 | 0 | yes | 0/1 | 3/9 | 1/103 | 0/0 | 0 |
+| micro-retirement | en | 1 | 1 | 1 | yes | 0/7 | 3/8 | 1/103 | 0/0 | 0 |
+| protection | en | 1 | 1 | 0 | yes | 0/5 | 3/21 | 1/122 | 0/0 | 0 |
+| decumulation | en | 1 | 1 | 0 | yes | 0/4 | 0/15 | 0/119 | 0/0 | 0 |
+| roth-aca | en | 1 | 1 | 0 | yes | 0/5 | 3/9 | 1/104 | 0/0 | 0 |
+| middle-class-trap | en | 1 | 1 | 1 | yes | 0/2 | 3/13 | 1/103 | 0/0 | 0 |
+| tax | en | 1 | 1 | 0 | yes | 0/7 | 3/15 | 1/117 | 0/0 | 0 |
+| estate | en | 1 | 1 | 0 | yes | 0/3 | 3/23 | 1/112 | 0/0 | 0 |
+| giving | en | 1 | 1 | 0 | yes | 0/6 | 3/16 | 1/110 | 0/0 | 0 |
+| career-move | en | 1 | 1 | 0 | yes | 0/6 | 3/13 | 1/113 | 0/0 | 0 |
+| offer-compare | en | 1 | 1 | 0 | yes | 0/61 | 3/8 | 1/103 | 0/0 | 0 |
+| degree | en | 1 | 1 | 0 | yes | 0/11 | 3/7 | 1/103 | 0/0 | 0 |
+| partner | en | 1 | 1 | 0 | yes | 0/6 | 3/27 | 1/113 | 0/0 | 0 |
+| wedding | en | 1 | 1 | 0 | yes | 0/11 | 3/8 | 1/103 | 0/0 | 0 |
+| kids | en | 1 | 1 | 0 | yes | 0/4 | 0/12 | 0/114 | 0/0 | 0 |
+| housing | en | 1 | 1 | 0 | yes | 0/5 | 3/15 | 1/117 | 0/0 | 0 |
+| down-payment | en | 1 | 1 | 0 | yes | 0/6 | 3/8 | 1/103 | 0/0 | 0 |
+| big-purchase | en | 1 | 1 | 0 | yes | 0/5 | 3/11 | 3/115 | 0/0 | 0 |
+| first-car | en | 1 | 1 | 0 | yes | 0/8 | 3/7 | 1/103 | 0/0 | 0 |
+| variable-income | en | 1 | 1 | 0 | yes | 0/8 | 0/20 | 0/116 | 0/0 | 0 |
+| enough | en | 1 | 1 | 0 | yes | 0/2 | 3/14 | 1/112 | 0/0 | 0 |
+| adventure | en | 1 | 1 | 0 | yes | 0/1 | 3/29 | 1/106 | 0/0 | 0 |
+| week | en | 1 | 1 | 0 | yes | 0/14 | 3/23 | 1/110 | 0/0 | 0 |
+| buckets | en | 1 | 1 | 0 | yes | 0/8 | 3/17 | 1/112 | 0/0 | 0 |
+| dreamline | en | 1 | 1 | 0 | yes | 0/11 | 3/11 | 1/112 | 0/0 | 0 |
+| reversibility | en | 1 | 1 | 0 | yes | 0/5 | 3/11 | 1/114 | 0/0 | 0 |
+| unlearning | en | 1 | 1 | 0 | yes | 0/2 | 3/15 | 1/113 | 0/0 | 0 |
+| debates | en | 1 | 1 | 1 | yes | 0/2 | 3/14 | 1/103 | 0/0 | 0 |
+| student-loans | en | 1 | 1 | 0 | yes | 0/5 | 0/14 | 0/116 | 0/0 | 0 |
+| calendar | en | 1 | 1 | 0 | yes | 0/5 | 3/20 | 1/116 | 0/0 | 0 |
+| history | en | 1 | 1 | 0 | yes | 0/2 | 3/12 | 1/113 | 0/0 | 0 |
+| wrapped | en | 1 | 1 | 0 | yes | 0/2 | 3/8 | 1/103 | 0/0 | 0 |
+| doors | en | 1 | 1 | 0 | yes | 0/2 | 3/27 | 1/189 | 0/0 | 0 |
+| walk | en | 1 | 1 | 0 | yes | 0/1 | 3/45 | 1/142 | 0/0 | 0 |
+| data | en | 1 | 1 | 0 | yes | 0/13 | 3/23 | 1/104 | 0/0 | 0 |
+| ledger | en | 1 | 1 | 0 | yes | 0/3 | 6/25 | 133/242 | 0/0 | 0 |
+| one-pager | en | 1 | 1 | 0 | yes | 0/1 | 3/26 | 1/103 | 0/0 | 0 |
+| settings | en | 1 | 1 | 0 | yes | 0/2 | 3/30 | 1/168 | 0/0 | 0 |
+| progress-card | en | 1 | 1 | 0 | yes | 0/1 | 3/11 | 1/107 | 0/0 | 0 |
+| comeback | en | 1 | 1 | 0 | yes | 0/13 | 3/20 | 1/104 | 0/0 | 0 |
+| refresh | en | 1 | 1 | 0 | yes | 0/11 | 3/18 | 1/113 | 0/0 | 0 |
 
 ## Keyboard pass, every room
 
@@ -107,76 +131,108 @@ Tab up to 45 times from the top of the page, waiting 200ms after each for the tr
 
 | room | tab stops | without a ring | menu reachable | first input reachable | Escape closes the menu | trap |
 |---|---|---|---|---|---|---|
+| first-round | 5 | 0 | no | yes | yes | no |
+| express | 45 | 0 | yes | yes | yes | no |
 | start | 45 | 0 | yes | yes | yes | no |
-| debt-payoff | 10 | 0 | yes | yes | yes | no |
-| cash-flow | 29 | 0 | yes | yes | yes | no |
-| income | 22 | 0 | yes | yes | yes | no |
-| budget | 20 | 0 | yes | no | yes | no |
-| variance | 34 | 0 | yes | yes | yes | no |
+| debt-payoff | 8 | 0 | yes | yes | yes | no |
+| expenses | 14 | 0 | yes | yes | yes | no |
+| cash-flow | 22 | 0 | yes | yes | yes | no |
+| income | 15 | 0 | yes | yes | yes | no |
+| budget | 34 | 0 | yes | no | yes | no |
+| variance | 14 | 0 | yes | yes | yes | no |
 | financial-snapshot | 45 | 0 | yes | no | yes | no |
-| statements | 16 | 0 | yes | no | yes | no |
-| statement | 31 | 0 | yes | yes | yes | no |
-| savings-rate | 30 | 0 | yes | no | yes | no |
-| sleep-at-night | 19 | 0 | yes | yes | yes | no |
-| fire | 26 | 0 | yes | yes | yes | no |
-| fire-lab | 32 | 0 | yes | yes | yes | no |
-| real-hourly-wage | 23 | 0 | yes | yes | yes | no |
-| hassle | 37 | 11 | yes | yes | yes | no |
+| statements | 13 | 0 | yes | no | yes | no |
+| statement | 45 | 0 | yes | yes | yes | no |
+| savings-rate | 12 | 0 | yes | no | yes | no |
+| sleep-at-night | 22 | 0 | yes | yes | yes | no |
+| fire | 31 | 0 | yes | yes | yes | no |
+| fire-lab | 28 | 0 | yes | yes | yes | no |
+| real-hourly-wage | 24 | 0 | yes | yes | yes | no |
+| hassle | 34 | 11 | yes | yes | yes | no |
 | quick-math | 45 | 0 | yes | yes | yes | no |
 | self-employed | 8 | 0 | yes | no | yes | no |
-| side-hustle | 19 | 0 | yes | yes | yes | no |
+| reachable | 9 | 0 | yes | yes | yes | no |
+| subscriptions | 9 | 0 | yes | no | yes | no |
+| side-hustle | 32 | 0 | yes | yes | yes | no |
 | ratios | 45 | 0 | yes | no | yes | no |
-| dashboard | 20 | 0 | yes | no | yes | no |
-| credential | 42 | 0 | yes | yes | yes | no |
-| accounts | 35 | 0 | yes | yes | yes | no |
-| fulfillment | 13 | 0 | yes | no | yes | no |
+| dashboard | 16 | 0 | yes | no | yes | no |
+| credential | 18 | 0 | yes | yes | yes | no |
+| accounts | 45 | 0 | yes | yes | yes | no |
+| fulfillment | 10 | 0 | yes | no | yes | no |
 | rerank | 45 | 0 | yes | yes | yes | no |
 | stacker | 45 | 0 | yes | no | yes | no |
-| skill-tree | 45 | 0 | yes | yes | yes | no |
+| skill-tree | 24 | 0 | yes | yes | yes | no |
 | exercises | 45 | 0 | yes | yes | yes | no |
-| values | 20 | 0 | yes | no | yes | no |
-| goals | 16 | 0 | yes | no | yes | no |
-| foo-ladder | 38 | 0 | yes | yes | yes | no |
-| worth | 26 | 0 | yes | no | yes | no |
-| windfall | 20 | 0 | yes | yes | yes | no |
-| runway | 26 | 0 | yes | yes | yes | no |
-| car | 40 | 0 | yes | yes | yes | no |
-| credit | 17 | 0 | yes | no | yes | no |
-| cant-pay | 16 | 0 | yes | no | yes | no |
-| rollover | 32 | 0 | yes | no | yes | no |
-| health | 11 | 0 | yes | no | yes | no |
-| what-if-life | 32 | 0 | yes | yes | yes | no |
-| timeline | 24 | 0 | yes | no | yes | no |
-| get-help | 10 | 0 | yes | no | yes | no |
+| values | 17 | 0 | yes | no | yes | no |
+| goals | 26 | 0 | yes | no | yes | no |
+| foo-ladder | 35 | 0 | yes | yes | yes | no |
+| next-hundred | 9 | 0 | yes | no | yes | no |
+| worth | 20 | 0 | yes | no | yes | no |
+| windfall | 17 | 0 | yes | yes | yes | no |
+| coast-date | 8 | 0 | yes | yes | yes | no |
+| rank-guess | 18 | 0 | yes | yes | yes | no |
+| race | 10 | 0 | yes | no | yes | no |
+| runway | 23 | 0 | yes | yes | yes | no |
+| car | 38 | 0 | yes | yes | yes | no |
+| credit | 16 | 0 | yes | no | yes | no |
+| cant-pay | 17 | 0 | yes | no | yes | no |
+| rollover | 34 | 0 | yes | no | yes | no |
+| health | 8 | 0 | yes | no | yes | no |
+| what-if-life | 30 | 0 | yes | yes | yes | no |
+| timeline | 18 | 0 | yes | no | yes | no |
+| get-help | 7 | 0 | yes | no | yes | no |
 | between-jobs | 8 | 0 | yes | no | yes | no |
-| protection | 40 | 0 | yes | yes | yes | no |
-| decumulation | 8 | 0 | yes | no | yes | no |
-| tax | 18 | 0 | yes | yes | yes | no |
-| estate | 45 | 0 | yes | no | yes | no |
-| giving | 10 | 0 | yes | yes | yes | no |
-| career-move | 23 | 0 | yes | yes | yes | no |
-| partner | 22 | 0 | yes | yes | yes | no |
-| kids | 8 | 0 | yes | no | yes | no |
-| housing | 45 | 0 | yes | yes | yes | no |
-| big-purchase | 21 | 0 | yes | yes | yes | no |
+| quit-fund | 18 | 0 | yes | no | yes | no |
+| micro-retirement | 13 | 0 | yes | yes | yes | no |
+| protection | 33 | 0 | yes | yes | yes | no |
+| decumulation | 16 | 0 | yes | no | yes | no |
+| roth-aca | 13 | 0 | yes | yes | yes | no |
+| middle-class-trap | 14 | 0 | yes | yes | yes | no |
+| tax | 45 | 0 | yes | yes | yes | no |
+| estate | 28 | 0 | yes | yes | yes | no |
+| giving | 18 | 0 | yes | yes | yes | no |
+| career-move | 25 | 0 | yes | yes | yes | no |
+| offer-compare | 38 | 0 | yes | yes | yes | no |
+| degree | 34 | 0 | yes | yes | yes | no |
+| partner | 39 | 0 | yes | yes | yes | no |
+| wedding | 18 | 0 | yes | yes | yes | no |
+| kids | 16 | 0 | yes | no | yes | no |
+| housing | 29 | 0 | yes | yes | yes | no |
+| down-payment | 12 | 0 | yes | yes | yes | no |
+| big-purchase | 45 | 0 | yes | yes | yes | no |
+| first-car | 14 | 0 | yes | yes | yes | no |
 | variable-income | 8 | 0 | yes | no | yes | no |
 | enough | 23 | 0 | yes | yes | yes | no |
 | adventure | 45 | 0 | yes | no | yes | no |
 | week | 27 | 0 | yes | yes | yes | no |
-| buckets | 27 | 0 | yes | yes | yes | no |
-| dreamline | 24 | 0 | yes | yes | yes | no |
-| reversibility | 38 | 0 | yes | yes | yes | no |
-| unlearning | 21 | 0 | yes | yes | yes | no |
-| student-loans | 8 | 0 | yes | no | yes | no |
-| calendar | 40 | 0 | yes | yes | yes | no |
-| history | 18 | 0 | yes | yes | yes | no |
+| buckets | 29 | 0 | yes | yes | yes | no |
+| dreamline | 25 | 0 | yes | yes | yes | no |
+| reversibility | 42 | 0 | yes | yes | yes | no |
+| unlearning | 22 | 0 | yes | yes | yes | no |
+| debates | 14 | 0 | yes | no | yes | no |
+| student-loans | 16 | 0 | yes | no | yes | no |
+| calendar | 31 | 0 | yes | yes | yes | no |
+| history | 21 | 0 | yes | yes | yes | no |
+| wrapped | 16 | 0 | yes | yes | yes | no |
 | doors | 45 | 0 | yes | no | yes | no |
 | walk | 45 | 0 | yes | no | yes | no |
-| data | 16 | 0 | yes | yes | yes | no |
+| data | 14 | 0 | yes | yes | yes | no |
+| ledger | 18 | 0 | yes | yes | yes | no |
+| one-pager | 45 | 0 | yes | no | yes | no |
 | settings | 45 | 0 | yes | no | yes | no |
-| refresh | 26 | 1 | yes | yes | yes | no |
+| progress-card | 15 | 0 | yes | no | yes | no |
+| comeback | 32 | 0 | yes | yes | yes | no |
+| refresh | 33 | 0 | no | yes | yes | no |
 
 ## Per room
+
+### first-round (`rooms/first-round.html`)
+
+No axe violation.
+
+### express (`rooms/express.html`)
+
+No axe violation.
 
 ### start (`rooms/start.html`)
 
@@ -187,6 +243,12 @@ Tab up to 45 times from the top of the page, waiting 200ms after each for the tr
 ### debt-payoff (`rooms/debt-payoff.html`)
 
 No axe violation.
+
+### expenses (`rooms/expenses.html`)
+
+| rule | severity | nodes | first target | one-line fix |
+|---|---|---|---|---|
+| `heading-order` | moderate | 1 | `.eva-title` | Do not skip a heading level; an h3 under an h1 needs an h2 between them. |
 
 ### cash-flow (`rooms/cash-flow.html`)
 
@@ -259,6 +321,14 @@ No axe violation.
 
 No axe violation.
 
+### reachable (`rooms/reachable.html`)
+
+No axe violation.
+
+### subscriptions (`rooms/subscriptions.html`)
+
+No axe violation.
+
 ### side-hustle (`rooms/side-hustle.html`)
 
 No axe violation.
@@ -318,13 +388,31 @@ No axe violation.
 |---|---|---|---|---|
 | `color-contrast` | serious | 2 | `.card-active > .grid2 > .slaf-field:nth-child(1) > .slaf-own` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
 | `landmark-one-main` | moderate | 1 | `html` | Wrap the room content in one <main>. |
-| `region` | moderate | 11 | `.card-active` | Put every piece of content inside a landmark (main, nav, header, footer, aside). |
+| `region` | moderate | 10 | `.card-active` | Put every piece of content inside a landmark (main, nav, header, footer, aside). |
+
+### next-hundred (`rooms/next-hundred.html`)
+
+| rule | severity | nodes | first target | one-line fix |
+|---|---|---|---|---|
+| `color-contrast` | serious | 5 | `.is-done > .rate > small` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
 
 ### worth (`rooms/worth.html`)
 
 No axe violation.
 
 ### windfall (`rooms/windfall.html`)
+
+No axe violation.
+
+### coast-date (`rooms/coast-date.html`)
+
+No axe violation.
+
+### rank-guess (`rooms/rank-guess.html`)
+
+No axe violation.
+
+### race (`rooms/race.html`)
 
 No axe violation.
 
@@ -375,6 +463,16 @@ No axe violation.
 
 No axe violation.
 
+### quit-fund (`rooms/quit-fund.html`)
+
+No axe violation.
+
+### micro-retirement (`rooms/micro-retirement.html`)
+
+| rule | severity | nodes | first target | one-line fix |
+|---|---|---|---|---|
+| `heading-order` | moderate | 1 | `div:nth-child(1) > h3` | Do not skip a heading level; an h3 under an h1 needs an h2 between them. |
+
 ### protection (`rooms/protection.html`)
 
 | rule | severity | nodes | first target | one-line fix |
@@ -384,6 +482,16 @@ No axe violation.
 ### decumulation (`rooms/decumulation.html`)
 
 No axe violation.
+
+### roth-aca (`rooms/roth-aca.html`)
+
+No axe violation.
+
+### middle-class-trap (`rooms/middle-class-trap.html`)
+
+| rule | severity | nodes | first target | one-line fix |
+|---|---|---|---|---|
+| `heading-order` | moderate | 1 | `.side:nth-child(1) > h3` | Do not skip a heading level; an h3 under an h1 needs an h2 between them. |
 
 ### tax (`rooms/tax.html`)
 
@@ -403,7 +511,19 @@ No axe violation.
 
 No axe violation.
 
+### offer-compare (`rooms/offer-compare.html`)
+
+No axe violation.
+
+### degree (`rooms/degree.html`)
+
+No axe violation.
+
 ### partner (`rooms/partner.html`)
+
+No axe violation.
+
+### wedding (`rooms/wedding.html`)
 
 No axe violation.
 
@@ -415,7 +535,15 @@ No axe violation.
 
 No axe violation.
 
+### down-payment (`rooms/down-payment.html`)
+
+No axe violation.
+
 ### big-purchase (`rooms/big-purchase.html`)
+
+No axe violation.
+
+### first-car (`rooms/first-car.html`)
 
 No axe violation.
 
@@ -453,6 +581,12 @@ No axe violation.
 
 No axe violation.
 
+### debates (`rooms/debates.html`)
+
+| rule | severity | nodes | first target | one-line fix |
+|---|---|---|---|---|
+| `heading-order` | moderate | 1 | `.side:nth-child(1) > h3` | Do not skip a heading level; an h3 under an h1 needs an h2 between them. |
+
 ### student-loans (`rooms/student-loans.html`)
 
 No axe violation.
@@ -462,6 +596,10 @@ No axe violation.
 No axe violation.
 
 ### history (`rooms/history.html`)
+
+No axe violation.
+
+### wrapped (`rooms/wrapped.html`)
 
 No axe violation.
 
@@ -479,13 +617,27 @@ No axe violation.
 
 No axe violation.
 
+### ledger (`rooms/ledger.html`)
+
+No axe violation.
+
+### one-pager (`rooms/one-pager.html`)
+
+No axe violation.
+
 ### settings (`rooms/settings.html`)
+
+No axe violation.
+
+### progress-card (`rooms/progress-card.html`)
+
+No axe violation.
+
+### comeback (`rooms/comeback.html`)
 
 No axe violation.
 
 ### refresh (`rooms/refresh.html`)
 
 No axe violation.
-
-Focus without a visible ring: INPUT "Cash and savings". Fix: keep a :focus-visible outline on the shared control classes in shared/theme.css.
 

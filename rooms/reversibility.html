@@ -261,12 +261,12 @@
       var d = decision(h);
       var rows = [
         { label: 'Every undo figure', value: 'a convention, not a quote', source: table.confidenceNote + ' — our table of decisions and what undoing them costs, version ' + table.version + ' (' + table.confidence + ')' },
-        { label: 'A door', value: '≤ ' + Engine.DOOR.spendMonths + ' month of spending and ≤ ' + Engine.DOOR.months + ' month to undo', source: 'the verdict’s thresholds (convention, engines/reversibility.js)' },
+        { label: 'A door', value: '≤ ' + Engine.DOOR.spendMonths + ' month of spending and ≤ ' + Engine.DOOR.months + ' month to undo', source: 'the verdict’s thresholds (convention, this page)' },
         { label: 'A one-way street', value: '> ' + Engine.ONE_WAY.spendMonths + ' months of spending or > ' + Engine.ONE_WAY.months + ' months to undo', source: 'or anything the table marks irreversible; everything between is a heavy door (convention)' }
       ];
       if (!d) return rows;
       rows.push({ label: 'Cost to undo, ' + d.label.toLowerCase(), value: Engine.describe(d.undoCents, d), source: d.why + ' (our table of decisions and what undoing them costs)' });
-      rows.push({ label: 'Months to undo', value: d.undoMonths === null ? 'no figure' : Engine.describe(d.undoMonths, d) + (typeof d.undoMonths === 'number' ? ' months' : ''), source: 'data/reversibility.json — ' + d.label.toLowerCase() });
+      rows.push({ label: 'Months to undo', value: d.undoMonths === null ? 'no figure' : Engine.describe(d.undoMonths, d) + (typeof d.undoMonths === 'number' ? ' months' : ''), source: 'our table of how hard each decision is to undo — ' + d.label.toLowerCase() });
       Engine.references(d).forEach(function (ref) {
         var node = T[ref.table], resolved = true;
         var ans = Engine.answers(d, plan(h).given, h, T).answers;
