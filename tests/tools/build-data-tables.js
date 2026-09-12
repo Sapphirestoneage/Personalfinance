@@ -46,7 +46,7 @@ function markHistorical(v) {
    data/*.json to be in Reference.TABLE_FILES, and that file is outside
    this lane. states.json is already registered and stays where it is. */
 const LANE2 = path.join(DATA, 'lane2');
-const IN_ROOT = { 'states.json': true, 'return_bands.json': true, 'bands.json': true, 'tax_brackets.json': true, 'aca.json': true, 'milestones.json': true };
+const IN_ROOT = { 'states.json': true, 'return_bands.json': true, 'bands.json': true, 'tax_brackets.json': true, 'aca.json': true, 'milestones.json': true, 'contribution_limits.json': true };
 function write(name, obj) {
   const dir = IN_ROOT[name] ? DATA : LANE2;
   fs.mkdirSync(dir, { recursive: true });
@@ -89,6 +89,7 @@ const SRC = {
   bankrateAuto: 'https://www.bankrate.com/insurance/car/states/',
   meric: 'https://meric.mo.gov/data/cost-living-data-series',
   dolSigpros: 'https://oui.doleta.gov/unemploy/statelaws.asp',
+  irsSolo401k: 'https://www.irs.gov/retirement-plans/one-participant-401k-plans',
   dolSigprosJan2025: 'https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/January2025.pdf',
   dolSigprosJul2025: 'https://oui.doleta.gov/unemploy/content/sigpros/2020-2029/July2025.pdf',
   kffBenchmark: 'https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/',
@@ -318,7 +319,7 @@ function buildContributionLimits() {
     source: 'IRS annual cost-of-living limits for workplace plans, IRAs, HSAs and the gift tax annual exclusion (which sets 529 gifting), current and prior year. Lane 2, section 3 (L-3).',
     confidence: 'sourced',
     confidenceNote: '2026 figures read from search results quoting IRS Notice 2025-67, Rev. Proc. 2025-19 and Rev. Proc. 2025-32; 2025 figures from memory of Notice 2024-80, Rev. Proc. 2024-25 and Rev. Proc. 2024-40 (verify: true).',
-    note: 'data/irs_limits_2026.json is the file engines/presets.js reads today (elective401k, ira, hsa, annualAdditions). DECIDE: point it here and retire that file; tests/data.test.js asserts the shared figures agree.',
+    note: 'The one contribution-limits table (D-221). engines/presets.js, engines/accounts.js and the FOO room read it through the `irsLimits` view in shared/reference.js, which flattens LIMIT_YEAR down to the flat `limits` shape they were written against. data/irs_limits_2026.json is retired.',
     unit: 'US dollars a year',
     refresh: { month: 'November (Notice for the next plan year), May (HSA Rev. Proc.), October (gift exclusion in the inflation Rev. Proc.)', against: 'irs.gov newsroom COLA release; Rev. Proc. for HSA limits under IRC 223(g); the annual inflation adjustment Rev. Proc. for IRC 2503(b).' },
     years: {
@@ -344,6 +345,12 @@ function buildContributionLimits() {
         giftAnnualExclusion: gift25(19000), gift529FiveYearElection: gift25(95000)
       }
     }
+  };
+  /* D-221: not an IRS limit but the rule that decides what a sole
+     proprietor may put in as the employer, carried over from
+     data/irs_limits_2026.json when that file was retired. */
+  CL.conventions = {
+    soloEmployerShareSoleProprietor: cell(0.2, '2026-01-01', SRC.irsSolo401k, 'sourced', { unit: 'share of net earnings', note: 'Twenty percent, NOT twenty-five. The 25% figure applies to a corporation\'s W2 wages; a sole proprietor\'s base is net earnings AFTER the employer contribution itself, and 25/(1+25) resolves to 20%. Getting that wrong is the classic Solo 401(k) error.' })
   };
   markHistorical(CL.years[2025]);
   write('contribution_limits.json', CL);

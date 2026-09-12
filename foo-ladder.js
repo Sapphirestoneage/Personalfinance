@@ -36,7 +36,7 @@
      each one is visible and editable below. */
   var ASSUMPTIONS = { efMonths: 3, growthRate: 7 };
 
-  /* Fallback IRS limits, replaced by data/irs_limits_2026.json once it
+  /* Fallback IRS limits, replaced by data/contribution_limits.json once it
      loads. Kept only so the page renders before the fetch resolves. */
   var FALLBACK_LIMITS = { k401: 24500, k401Catchup: 8000, ira: 7500,
                           iraCatchup: 1100, hsaSelf: 4400, hsaFamily: 8750 };
@@ -694,7 +694,7 @@
     var assumeBody = h('div', { style: { padding: '0 var(--space-4) var(--space-4)' } }, [
       h('p', { class: 'needs', style: { marginTop: '0' } }, [
         "These carry system defaults because they're assumptions, not facts about you. Limits load from ",
-        h('code', { text: 'data/irs_limits_2026.json' }), '.'
+        h('code', { text: 'data/contribution_limits.json' }), '.'
       ]),
       h('div', { class: 'grid2' }, [
         field({ label: 'Emergency fund target', suffix: 'mo',

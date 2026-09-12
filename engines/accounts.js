@@ -126,7 +126,7 @@
      The classic error here is using 25%. That is the figure for a
      corporation contributing on W2 wages. A sole proprietor's base is net
      earnings AFTER the employer contribution itself, and 25/(1+0.25) = 20%.
-     The rate lives in data/irs_limits_2026.json so it is stated, not buried. */
+     The rate lives in data/contribution_limits.json so it is stated, not buried. */
 
   function solo401k(opts) {
     var o = opts || {};

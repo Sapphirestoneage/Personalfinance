@@ -165,7 +165,7 @@ Seed 20260910, 100 cases per property, 66 files for 64 engines, 282 properties, 
 
 ## Section 3: sourced data tables
 
-4094 checks over 8 files. Source: `tests/data.test.js`. A note is a disagreement between a lane 2 table and the copy an engine reads today, or a cell the rule had to make an exception for; each carries a DECIDE:.
+4090 checks over 8 files. Source: `tests/data.test.js`. A note is a disagreement between a lane 2 table and the copy an engine reads today, or a cell the rule had to make an exception for; each carries a DECIDE:.
 
 ### Failures
 
@@ -177,14 +177,13 @@ None.
 - milestones.json: 10 cells
 - aca.json: 15 cells
 - lane2/studentloans.json: 40 cells
-- lane2/contribution_limits.json: 46 cells
+- contribution_limits.json: 47 cells
 - tax_brackets.json: 42 cells
 - return_bands.json: 1 cells
 - bands.json: 3 cells
 - 46 prior-year cells (2025 rows) are older than 18 months and marked `historical: true`: a closed year is a settled fact, not a stale one. DECIDE: whether the 18-month rule should read that way.
 - 51 cells are older than 18 months and say so (`stale: true` with a DECIDE: note); every one is the childcare column, whose 2024 edition this session could not open. Not a pass: a flag for the May refresh.
 - states.json says OH is flat for 2026; state_brackets_2026.json says brackets (2025 edition): the 2026 change is not yet in the engine table
-- 2026 annualAdditions415c: contribution_limits.json says 72000 (IRS Notice 2025-67 as read from search), irs_limits_2026.json says 70000 (carried from the FOO room). DECIDE: which the engine reads.
 
 ## Section 4: the gloss dictionary and the lookup sentences
 

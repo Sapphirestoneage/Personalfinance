@@ -65,7 +65,7 @@ const TABLES = {
   effectiveTaxRates: require(path.join(ROOT, 'shared/reference.js')).readSync('effectiveTaxRates', path.join(ROOT, 'data')),
   retirementMilestones: require(path.join(ROOT, 'data/retirement_milestones.json')),
   netWorthPercentiles: require(path.join(ROOT, 'data/net_worth_percentiles_scf_2022.json')),
-  irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
+  irsLimits: require(path.join(ROOT, 'shared/reference.js')).readSync('irsLimits', path.join(ROOT, 'data')),
   fooRules: require(path.join(ROOT, 'data/foo_rules.json')),
   expenseCategories: require(path.join(ROOT, 'data/expense_categories.json')),
   budgetTemplates: require(path.join(ROOT, 'data/budget_templates.json')),
@@ -79,7 +79,7 @@ const TABLES = {
   hassleDefaults: require(path.join(ROOT, 'data/hassle_defaults.json')),
   ratioBenchmarks: require(path.join(ROOT, 'data/ratio_benchmarks.json')),
   ratioExplainers: require(path.join(ROOT, 'data/ratio_explainers.json')),
-  irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
+  irsLimits: require(path.join(ROOT, 'shared/reference.js')).readSync('irsLimits', path.join(ROOT, 'data')),
   accessRules: require(path.join(ROOT, 'data/access_rules.json')),
   confidenceWeights: require(path.join(ROOT, 'data/confidence_weights.json')),
   uiBenefits: require(path.join(ROOT, 'shared/reference.js')).readSync('uiBenefits', path.join(ROOT, 'data')),
@@ -6356,10 +6356,12 @@ section('Reference tables');
   (function () {
     const tables = {};
     Object.keys(Reference.TABLE_FILES).forEach(function (name) { tables[name] = Reference.readSync(name, path.join(ROOT, 'data')); });
-    const ordered = Reference.provenance(tables, ['seTax', 'fooRules', 'irsLimits']);
+    /* D-221: the contribution limits are sourced now, so the unverified
+       example is the state bracket schedule, the last table still recalled. */
+    const ordered = Reference.provenance(tables, ['seTax', 'fooRules', 'stateBrackets', 'irsLimits']);
     check('provenance comes back weakest first',
-      ordered.map(p => p.confidence).join(','), 'unverified,convention,sourced');
-    check('and carries the table id', ordered[0].id, 'irs_limits');
+      ordered.map(p => p.confidence).join(','), 'unverified,convention,sourced,sourced');
+    check('and carries the table id', ordered[0].id, 'state_brackets');
     checkTrue('and a label a room can print', ordered.every(p => p.label && p.label.length));
     check('an absent table yields nothing rather than a fake entry',
       Reference.provenance(tables, ['notATable']).length, 0);
@@ -9061,7 +9063,7 @@ section('Four ways through five years');
     !/annualRaiseReal\s*[:=]\s*0|600000|50000|0\.40?\b|0\.03\b|year === 1 \? 0\.5/.test(engineSrc.replace(/\/\*[\s\S]*?\*\//g, '')));
 
   /* ---- v2 (D-176): the mechanics the brief names, each re-derived by hand. */
-  const T2 = { ...TABLES, fooRules: require(path.join(ROOT, 'data/foo_rules.json')), irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) };
+  const T2 = { ...TABLES, fooRules: require(path.join(ROOT, 'data/foo_rules.json')), irsLimits: require(path.join(ROOT, 'shared/reference.js')).readSync('irsLimits', path.join(ROOT, 'data')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) };
   const b2 = Adventure.baseline(demo, T2).value;
   check('the baseline splits cash from what is invested', [b2.cashCents, b2.investedCents].join(','), '950000,4800000');
   check('...and states the target as years of spending', b2.targetYears, 25);

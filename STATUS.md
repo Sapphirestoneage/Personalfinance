@@ -7,10 +7,10 @@ Updated: 2026-09-12
 - ~70 rooms live on GitHub Pages. Each room works on its own; the connections
   between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
 - Context system added. Sessions should no longer read the archives.
-- Clutter pass (D-209, D-210, D-219, D-220): nine dead root files gone; the
+- Clutter pass (D-209/210, D-219/220/221): nine dead root files gone; the
   glossary hover is live everywhere; one sourced table now feeds each of tax,
-  ACA and unemployment (`tax_brackets.json`, `aca.json`, `states.json`), and the
-  duplicates are deleted. Owner decided: dnd/ stays separate; roadmap waits.
+  ACA, unemployment and contribution limits, and all four duplicates are
+  deleted. Owner decided: dnd/ stays separate; the roadmap tiers wait.
 
 ## Freeze
 - ON. No new rooms, frameworks, or vocabularies until the first journey

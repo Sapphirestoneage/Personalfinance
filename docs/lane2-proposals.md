@@ -51,7 +51,7 @@ Section 3 wrote eight sourced tables. Five of them overlap a table an engine alr
 | New table (lane 2) | Engine copy today | Reader | Disagreement found | Proposed change |
 |---|---|---|---|---|
 | `data/tax_brackets.json` | `data/tax_brackets.json`, `data/tax_brackets.json` | `engines/tax.js` (`tables.federalBrackets`, `tables.seTax`) | None on 2026 brackets or deductions after the head-of-household 32% top was corrected to $256,200 | Register `taxBrackets` in `Reference.TABLE_FILES`; in `engines/tax.js` read `tables.taxBrackets.years[year].brackets[fs].value` and `.standardDeduction[fs].value` with `year` from `opts.taxYear` (default 2026); retire the two old files once test/run.js is moved |
-| `data/lane2/contribution_limits.json` | `data/irs_limits_2026.json` | `engines/presets.js`, the FOO room | `annualAdditions`: 72,000 (Notice 2025-67) vs 70,000 (carried from the FOO room) | Register `contributionLimits`; read `years[2026].elective401k.value` and so on; fix `annualAdditions` to 72,000 in the old file meanwhile |
+| `data/contribution_limits.json` | ~~`data/irs_limits_2026.json`~~ | `engines/presets.js`, `engines/accounts.js`, the FOO room | `annualAdditions` was 70,000 against 72,000 (Notice 2025-67) | **APPLIED (D-221).** `irsLimits` is a VIEW of `data/contribution_limits.json` in `shared/reference.js` for `LIMIT_YEAR`, flattened to the `limits` shape the readers use; the solo-401(k) employer share moves to a `conventions` block on that file; `irs_limits_2026.json` is deleted. |
 | `data/aca.json` | ~~`data/aca_2026.json`~~ | `engines/tax.js` (`acaCliff`), `engines/protection.js` (`marketplace`) | Top applicable percentage was 8.66% against 9.96% (Rev. Proc. 2025-25) | **APPLIED (D-219).** The table moved to `data/aca.json`, `aca` is a VIEW in `shared/reference.js` that picks the plan year and the guidelines that price it, `acaCliff` interpolates inside a band and takes a region, and `aca_2026.json` is deleted. |
 | `data/states.json` (`uiWeeklyMaxCents`, `uiMaxWeeks`) | ~~`data/ui_benefits.json`~~ | `shared/gate.js`, `engines/statement.js`, `engines/betweenjobs.js`, `shared/suggest.js` | 26 states differed (the old file was a 2025 recollection; these cells carry the July 2025 DOL edition plus the October 2025 MA and NY increases) | **APPLIED (D-220).** `uiBenefits` is a VIEW of `states.json` in `shared/reference.js`, built from the two columns plus a new `conventions` block that holds the replacement rate, the high-quarter divisor and the waiting week; `ui_benefits.json` is deleted. |
 | `data/states.json` (`childcareInfantCenterMonthlyCents`) | `data/childcare_by_state.json` | `engines/kids.js` | None (copied); both are the 2023 edition and stale | Refresh both from Child Care Aware "Price of Care 2024" in May; then read from states.json and retire the old file |
@@ -67,14 +67,14 @@ The lane asks for current and prior year in `contribution_limits.json` and `tax_
 
 ## P-5: move the five section 3 tables into `data/` and register them
 
-**Applied for `tax_brackets.json` (D-210) and `aca.json` (D-219).** The other three still live under `data/lane2/`.
+**Applied for `tax_brackets.json` (D-210), `aca.json` (D-219) and `contribution_limits.json` (D-221).** `milestones.json` moved with them; only `studentloans.json` still lives under `data/lane2/`.
 
 `test/run.js` requires every `data/*.json` to be registered in `Reference.TABLE_FILES`, and `shared/reference.js` is outside lane 2, so the five new tables are under `data/lane2/` for now. The change, once the master build wants them loadable by a room:
 
 ```
 git mv data/lane2/aca.json data/aca.json          # done, D-219
-git mv data/lane2/contribution_limits.json data/contribution_limits.json
-git mv data/lane2/milestones.json data/milestones.json
+git mv data/lane2/contribution_limits.json data/contribution_limits.json  # done, D-221
+git mv data/lane2/milestones.json data/milestones.json                    # done
 git mv data/lane2/studentloans.json data/studentloans.json
 git mv data/tax_brackets.json data/tax_brackets.json
 ```
@@ -83,8 +83,8 @@ and in `shared/reference.js` `TABLE_FILES`:
 
 ```js
     aca: 'aca.json',                     /* done, D-219 */
-    contributionLimits: 'contribution_limits.json',
-    milestones: 'milestones.json',
+    irsLimits: 'contribution_limits.json',   /* done, D-221 */
+    milestones: 'milestones.json',           /* done */
     studentLoans: 'studentloans.json',
     taxBrackets: 'tax_brackets.json',
 ```

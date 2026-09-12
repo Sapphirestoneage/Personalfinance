@@ -5,7 +5,7 @@
   "source": "IRS annual cost-of-living limits for workplace plans, IRAs, HSAs and the gift tax annual exclusion (which sets 529 gifting), current and prior year. Lane 2, section 3 (L-3).",
   "confidence": "sourced",
   "confidenceNote": "2026 figures read from search results quoting IRS Notice 2025-67, Rev. Proc. 2025-19 and Rev. Proc. 2025-32; 2025 figures from memory of Notice 2024-80, Rev. Proc. 2024-25 and Rev. Proc. 2024-40 (verify: true).",
-  "note": "data/irs_limits_2026.json is the file engines/presets.js reads today (elective401k, ira, hsa, annualAdditions). DECIDE: point it here and retire that file; tests/data.test.js asserts the shared figures agree.",
+  "note": "The one contribution-limits table (D-221). engines/presets.js, engines/accounts.js and the FOO room read it through the `irsLimits` view in shared/reference.js, which flattens LIMIT_YEAR down to the flat `limits` shape they were written against. data/irs_limits_2026.json is retired.",
   "unit": "US dollars a year",
   "refresh": {
     "month": "November (Notice for the next plan year), May (HSA Rev. Proc.), October (gift exclusion in the inflation Rev. Proc.)",
@@ -406,6 +406,16 @@
         "confidence": "sourced",
         "note": "Five times the annual exclusion, elected on Form 709 (IRC 529(c)(2)(B))."
       }
+    }
+  },
+  "conventions": {
+    "soloEmployerShareSoleProprietor": {
+      "value": 0.2,
+      "asOf": "2026-01-01",
+      "source": "https://www.irs.gov/retirement-plans/one-participant-401k-plans",
+      "confidence": "sourced",
+      "unit": "share of net earnings",
+      "note": "Twenty percent, NOT twenty-five. The 25% figure applies to a corporation's W2 wages; a sole proprietor's base is net earnings AFTER the employer contribution itself, and 25/(1+25) resolves to 20%. Getting that wrong is the classic Solo 401(k) error."
     }
   }
 }

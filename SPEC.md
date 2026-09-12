@@ -289,7 +289,7 @@ already shipped:**
 Some outputs are pure formulas (Net Worth); some need externally maintained
 data (percentile tables, state benefit tables, COL indices, depreciation
 curves, IRS limits). Every reference table becomes a config file/data source,
-versioned by year where relevant (`irs_limits_2026.json`), never hardcoded
+versioned by year where relevant (`contribution_limits.json`), never hardcoded
 inline in a calculator function. None of these need to exist for MVP, but the
 shape — "pulls from config, not code" — has to be right from Tier 0 so Tier 2
 doesn't have to undo it. Covers: age-bucketed retirement milestones, net

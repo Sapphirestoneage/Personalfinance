@@ -13440,6 +13440,36 @@ moved from a $703 cap to $780, Arkansas from 16 weeks to 12.
 
 ---
 
+## D-221 — One contribution-limits table, and a cap two years out of date
+
+**Why.** `data/irs_limits_2026.json` said of itself "Carried from the existing
+FOO room; not re-checked against the IRS notice", and "The annual-additions
+figure is the least certain". It was right: it held $70,000, which is the 2025
+figure. Notice 2025-67 sets $72,000 for 2026, and
+`data/lane2/contribution_limits.json` had it, sourced, with nothing reading it.
+
+**Decision.** `data/contribution_limits.json` is the one table, both years,
+every cell carrying the notice or revenue procedure that set it. `irsLimits` is
+a VIEW of it in `shared/reference.js` for `LIMIT_YEAR`, flattened to the same
+`limits` object `engines/presets.js`, `engines/accounts.js` and the FOO room
+already read, so no engine and no room moved. The solo-401(k) employer share —
+20% of net earnings, not 25%, which is not an IRS limit but the rule that
+decides what a sole proprietor may put in — moves to a `conventions` block on
+that file with its own source. `data/irs_limits_2026.json` is deleted. Four
+more limits reach the engines for the first time: the 60-to-63 catch-up, the
+HSA catch-up at 55, the compensation limit and the SIMPLE limits.
+
+**Replaces or removes.** One data file. No room, field or question changes.
+
+**Stored shape.** No change. Contribution limits are reference data.
+
+**Verified.** `node test/run.js` 29,441; `export` 33; `data.test.js` 4,090 with
+the last of the three P-3 disagreements gone from the findings; `corpus`,
+`migration`, `glossary`, `qr`; `render` 432; `forms` 532. A Solo 401(k) at the
+cap is $72,000 now, not $70,000.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

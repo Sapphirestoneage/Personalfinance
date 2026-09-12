@@ -32,10 +32,11 @@ function eq(name, a, b) {
 
 const TABLES = {};
 [['ratioBenchmarks', 'ratio_benchmarks'], ['fooRules', 'foo_rules'],
- ['irsLimits', 'irs_limits_2026'], ['retirementMilestones', 'retirement_milestones'],
+ ['retirementMilestones', 'retirement_milestones'],
  ['netWorthPercentiles', 'net_worth_percentiles_scf_2022'], ['fireVariants', 'fire_variants'],
  ['expenseCategories', 'expense_categories']].forEach(([k, f]) => { TABLES[k] = require(path.join(ROOT, 'data', f + '.json')); });
 TABLES.effectiveTaxRates = require(path.join(ROOT, 'shared/reference.js')).readSync('effectiveTaxRates', path.join(ROOT, 'data'));
+TABLES.irsLimits = require(path.join(ROOT, 'shared/reference.js')).readSync('irsLimits', path.join(ROOT, 'data'));
 
 function loadDemo() {
   Spine.reset();

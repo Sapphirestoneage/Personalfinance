@@ -33,7 +33,7 @@
     ledgerRows: 'ledger-rows.json',
     spheres: 'spheres.json',
     netWorthPercentiles: 'net_worth_percentiles_scf_2022.json',
-    irsLimits: 'irs_limits_2026.json',
+    irsLimits: 'contribution_limits.json',
     savingsPresets: 'savings_presets.json',
     adventurePaths: 'adventure_paths.json',
     /* The Skill Tree and the Exercise Library (D-131). */
@@ -242,6 +242,42 @@
     out.confidence = 'sourced';
     out.confidenceNote = 'The weekly maximum and the maximum weeks are the DOL Significant Provisions compilation of July 2025 with the later 2025 increases; the three conventions beside them are recalled and say so. Benefits depend on base-period wages; the maximum is a ceiling.';
     delete out.taxYear;
+    return out;
+  };
+
+  /* ---- One contribution-limits table (D-221) -----------------------------
+     data/contribution_limits.json carries both years, every cell sourced to
+     the IRS notice or revenue procedure that set it. `irsLimits` is the flat
+     shape engines/presets.js, engines/accounts.js and the FOO room were
+     written against, for LIMIT_YEAR. data/irs_limits_2026.json is retired;
+     its annual-additions figure was $70,000, two years out of date. */
+  var LIMIT_YEAR = 2026;
+  VIEWS.irsLimits = function (json) {
+    var y = json.years[LIMIT_YEAR], conv = json.conventions || {};
+    var out = stamped(json, {
+      taxYear: LIMIT_YEAR,
+      unit: 'US dollars per year',
+      note: 'Built from data/contribution_limits.json (D-221), which carries every figure with the IRS notice that set it. Never inline these in a calculator. annualAdditions is the overall cap on employee deferral plus employer contribution to one plan.',
+      limits: {
+        elective401k: cellValue(y.elective401k),
+        elective401kCatchup50Plus: cellValue(y.catchup50Plus),
+        elective401kCatchup60to63: cellValue(y.catchup60to63),
+        ira: cellValue(y.ira),
+        iraCatchup50Plus: cellValue(y.iraCatchup50Plus),
+        hsaSelfOnly: cellValue(y.hsaSelfOnly),
+        hsaFamily: cellValue(y.hsaFamily),
+        hsaCatchup55Plus: cellValue(y.hsaCatchup55Plus),
+        annualAdditions: cellValue(y.annualAdditions415c),
+        compensationLimit: cellValue(y.compensationLimit401a17),
+        simpleIra: cellValue(y.simpleIra),
+        simpleCatchup50Plus: cellValue(y.simpleCatchup50Plus),
+        giftAnnualExclusion: cellValue(y.giftAnnualExclusion),
+        gift529FiveYearElection: cellValue(y.gift529FiveYearElection),
+        soloEmployerShareSoleProprietor: cellValue(conv.soloEmployerShareSoleProprietor)
+      },
+      soloShareNote: conv.soloEmployerShareSoleProprietor ? conv.soloEmployerShareSoleProprietor.note : null,
+      precision: 'sourced'
+    });
     return out;
   };
   function view(name, json) { return VIEWS[name] ? VIEWS[name](json) : json; }
