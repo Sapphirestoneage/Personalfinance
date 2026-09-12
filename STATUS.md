@@ -30,7 +30,7 @@ Updated: 2026-09-12
    then goals, wedding and big purchase before any deep module.
 3. Step 6: the Back Half, once the shell has stopped moving. The biggest
    engine change in the programme; D-228 is its brief.
-5. Older and still open: logged income does not reach the headline numbers;
+4. Older and still open: logged income does not reach the headline numbers;
    the first journey end to end; a monthly close that prompts a backup.
 
 ## Panel notes not yet answered
