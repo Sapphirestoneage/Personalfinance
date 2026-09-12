@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-12 07:54Z"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>The Cushion · SPARKS</title>
@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11, §13 Tier 1.5 and Tier 2. DECISIONS.md D-230.
+  ROOM SPEC — SPEC.md §11, §13 Tier 1.5 and Tier 2. DECISIONS.md D-232.
 
   ONE NUMBER, FOUR READINGS. The Runway, Between Jobs, The Quit Fund and
   Sleep At Night each answered "how long could you not earn" and each drew a
@@ -30,7 +30,7 @@
   1. READS   cash, a month's spending, the unemployment facts Start Here
              owns, and the free tiers of the reachable-money waterfall.
   2. WRITES  seven fields, all moved here from the rooms that became
-             readings (D-230): person.unemployment.expectedSearchMonths and
+             readings (D-232): person.unemployment.expectedSearchMonths and
              .floorMonthlyCents, household.swan, and the four cover figures.
              The how-long reading still writes NOTHING — a job you might
              leave is not a fact about your household.
@@ -52,11 +52,10 @@
   See D-034.
 -->
 <style>
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   #view-how-long section[id], #view-job-hunting section[id], #view-by-choice section[id], #view-at-3am section[id] { scroll-margin-top: var(--space-4); }
 
-  /* ---- How long, from rooms/runway.html (D-230) ------------------------- */
+  /* ---- How long, from rooms/runway.html (D-232) ------------------------- */
   
   #view-how-long .room-back:hover { text-decoration: underline; }
   
@@ -120,18 +119,14 @@
   #view-how-long .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   
   #view-how-long .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  
-  #view-how-long .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 
-  /* ---- While job hunting, from rooms/between-jobs.html (D-230) ---------- */
+  /* ---- While job hunting, from rooms/between-jobs.html (D-232) ---------- */
   
   #view-job-hunting section[id] { scroll-margin-top: var(--space-4); }
   
   #view-job-hunting .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  
-  #view-job-hunting .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 
-  /* ---- By choice, from rooms/quit-fund.html (D-230) --------------------- */
+  /* ---- By choice, from rooms/quit-fund.html (D-232) --------------------- */
   
   #view-by-choice .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
   
@@ -146,10 +141,8 @@
   #view-by-choice ul.plain .amt { font-variant-numeric: tabular-nums; }
   
   #view-by-choice ul.plain small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
-  
-  #view-by-choice .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 
-  /* ---- At 3am, from rooms/sleep-at-night.html (D-230) ------------------- */
+  /* ---- At 3am, from rooms/sleep-at-night.html (D-232) ------------------- */
   
   #view-at-3am .room-back:hover { text-decoration: underline; }
   
@@ -231,8 +224,6 @@
   #view-at-3am .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
   
   #view-at-3am .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  
-  #view-at-3am .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -644,7 +635,7 @@
 <script src="../engines/quitfund.js"></script>
 <script src="../engines/foo.js"></script>
 <script>
-/* ---- Four readings, one number (D-230) ------------------------------------
+/* ---- Four readings, one number (D-232) ------------------------------------
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands: #the-plan and #out-fix came from The Runway, #inputs
    and #chart from Between Jobs, #months and #dates from The Quit Fund,
@@ -678,7 +669,7 @@
 </script>
 
 <script>
-/* ---- HOW LONG: page-local, writes nothing (D-230) ----------------------
+/* ---- HOW LONG: page-local, writes nothing (D-232) ----------------------
    A job you might leave is not a fact about your household, so every box in
    this reading is previewed and none of it is saved. The three readings
    beside it DO write, each through its owner. */
@@ -1144,7 +1135,7 @@
   }
   function readUnemployment(h) { return Schema.unemploymentOf(h); }
 
-  /* This is a READING now, not a room (D-230), so it is never refused: the
+  /* This is a READING now, not a room (D-232), so it is never refused: the
      question "how long while job hunting" is one an employed person is
      entitled to ask, and refusing it was only ever right when it cost a
      whole page. Anyone not actually between jobs gets the same arithmetic
@@ -1353,7 +1344,7 @@
       CashFlow = SLAF.CashFlow, Swan = SLAF.Swan;
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
-  var ROOM_ID = 'runway';   /* the room this reading lives in (D-230) */
+  var ROOM_ID = 'runway';   /* the room this reading lives in (D-232) */
   var TABLES = null;
 
   function el(id) { return document.getElementById(id); }

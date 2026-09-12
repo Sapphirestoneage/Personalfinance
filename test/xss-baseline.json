@@ -1,5 +1,5 @@
 {
-  "note": "The ratchet (G3.12, D-210): innerHTML assignments that concatenate a variable without an escape helper in the same statement, per file. A file may only go down. A new spot fails the build; fix it with esc() or lower the count here on purpose, in the same commit, and say why. D-228 to D-231 moved spots BETWEEN files as eleven rooms became readings of four: the retired rooms are redirects holding nothing, and their counts were added to the room each moved into. The repo total did not change and no file may now spend a budget it did not earn.",
+  "note": "The ratchet (G3.12, D-210): innerHTML assignments that concatenate a variable without an escape helper in the same statement, per file. A file may only go down. A new spot fails the build; fix it with esc() or lower the count here on purpose, in the same commit, and say why. D-230 to D-233 moved spots BETWEEN files as eleven rooms became readings of four: the retired rooms are redirects holding nothing, and their counts were added to the room each moved into. The repo total did not change and no file may now spend a budget it did not earn.",
   "asOf": "2026-09-12",
   "counts": {
     "dnd/campaign.html": 2,

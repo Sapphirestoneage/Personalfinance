@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-12 07:54Z"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
 <title>SPARKS · Money rooms</title>
@@ -1079,7 +1079,7 @@
     if (due !== null && panelReady(h) && !/comeback=seen/.test(location.search)) {
       /* Clear the mark here so a bounce back to this page does not send you
          round again, and carry the fact of the return in the URL so the
-         since-last-time view knows to open warmly (D-214, D-228). */
+         since-last-time view knows to open warmly (D-214, D-230). */
       try { SLAF.Prefs.set('comeback.due', null); } catch (e) { /* fine */ }
       window.location.replace('rooms/ledger.html?comeback=1#since-last-time');
       return false;

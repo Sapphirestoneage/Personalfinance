@@ -3060,7 +3060,7 @@ section('Ratios');
   const invested = explained.find(r => r.id === 'investedShare');
   checkTrue('invested share is over total assets, so it cannot pass 100%', invested.ok && invested.value <= 1);
   check('and the old net-worth denominator is gone', RatiosEngine.byId('investmentToNetWorth'), null);
-  /* Every Ratio is a reading of The Scorecard since D-231. */
+  /* Every Ratio is a reading of The Scorecard since D-233. */
   ['index.html', 'rooms/financial-snapshot.html'].forEach(f => {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
     checkTrue(`${f} loads shared/explain.js`, /shared\/explain\.js/.test(src));
@@ -5012,7 +5012,7 @@ section('Age, and the three that move');
     const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
     checkTrue('Start Here writes cash through the same path', start.indexOf("Ownership.write('cashSavings'") !== -1);
     checkTrue('and no longer has its own asset writer', start.indexOf('function writeAsset') === -1);
-    /* Refresh is the Ledger's since-last-time view now (D-228); the rule it
+    /* Refresh is the Ledger's since-last-time view now (D-230); the rule it
        is here to prove — a second PLACE to edit a record is fine, a second
        COPY of it is not — is the same rule and the same write path. */
     const ledger = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
@@ -5093,7 +5093,7 @@ section('Age, and the three that move');
       checkTrue(`the next-action card can say ${f.key}`, dash.indexOf(f.key + ':') !== -1));
   }
 
-  /* -- Refresh is the Ledger's since-last-time view, not a room (D-228) ----
+  /* -- Refresh is the Ledger's since-last-time view, not a room (D-230) ----
      It was never a room with a number in it: it re-asked the figures that
      move and wrote them through their owners. So it is a hat the Ledger
      wears, and the volatile list it walks is checked where that list lives
@@ -5295,12 +5295,12 @@ section('Proposed, not taken');
     checkTrue('Seed exposes mount()', typeof Seed.mount === 'function');
     checkTrue('seed.js never touches the spine', !/Spine\.|updateProfile|upsert|localStorage/.test(seedSrc));
     checkTrue('it shows through Suggest', seedSrc.indexOf('Suggest.show(') !== -1);
-    ['runway', 'financial-snapshot', 'self-employed'].forEach(function (room) {   /* Quick Math is a Scorecard reading, D-231 */
+    ['runway', 'financial-snapshot', 'self-employed'].forEach(function (room) {   /* Quick Math is a Scorecard reading, D-233 */
       const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
       checkTrue(`${room} mounts the seed toggle`, html.indexOf('SLAF.Seed.mount(') !== -1);
       checkTrue(`${room} loads seed.js after suggest.js`, html.indexOf('shared/suggest.js') !== -1 && html.indexOf('shared/suggest.js') < html.indexOf('shared/seed.js'));
       /* The Cushion's other three readings DO write, each through its owner
-         (D-230); the how-long reading is the page-local one and says so
+         (D-232); the how-long reading is the page-local one and says so
          between its markers, which is the part this rule is about. */
       const local = room === 'runway'
         ? html.slice(html.indexOf('---- HOW LONG:'), html.indexOf('---- end HOW LONG ----'))
@@ -5792,7 +5792,7 @@ section('What is finished');
 
     /* A room that reads nothing shared is not "incomplete" — it is never
        blocked, which is a different state and says so. */
-    const solo = Progress.forRoom('offer-compare', h);   /* Quick Math became a Scorecard reading, D-231 */
+    const solo = Progress.forRoom('offer-compare', h);   /* Quick Math became a Scorecard reading, D-233 */
     checkTrue('a standalone room is flagged as standalone', solo.standalone);
     checkTrue('and counts as complete rather than as behind', solo.complete);
     check('unknown room ids return nothing', Progress.forRoom('no-such-room', h), null);
@@ -6273,7 +6273,7 @@ function builtCardId(roomId, id) {
   Object.keys(OWNED_INPUT_MARKERS).forEach(function (roomId) {
     const room = Registry.byId(roomId);
     let html = fs.readFileSync(path.join(ROOT, room.href), 'utf8');
-    /* The Scorecard holds five other readings since D-231, two of which have
+    /* The Scorecard holds five other readings since D-233, two of which have
        boxes of their own; the rule is about the nine numbers. */
     if (roomId === 'financial-snapshot') {
       html = html.slice(html.indexOf('<section id="view-the-nine"'), html.indexOf('<!-- ============== SAVINGS RATE'));
@@ -6285,7 +6285,7 @@ function builtCardId(roomId, id) {
   });
 
   /* The nine-numbers reading must take no input at all — it is a dashboard.
-     The Scorecard around it does hold two boxes since D-231, both in
+     The Scorecard around it does hold two boxes since D-233, both in
      readings that ask nothing of the household: Quick Math's page-local
      sums and the rank guess, which is a preference. So the rule is checked
      on the reading it was always about. */
@@ -6319,7 +6319,7 @@ section('Room order');
   checkTrue('every room declares an order', orders.every(o => typeof o === 'number'));
   check('orders are unique', new Set(orders).size, orders.length);
   checkTrue('orders are ascending', orders.every((o, i) => i === 0 || o > orders[i - 1]));
-  check('the Ledger comes first and Start Here (the older one-pager) behind it (D-206, D-208, D-228)', path_.slice(0, 2).map(r => r.id).join(','), 'ledger,start');
+  check('the Ledger comes first and Start Here (the older one-pager) behind it (D-206, D-208, D-230)', path_.slice(0, 2).map(r => r.id).join(','), 'ledger,start');
   check('the Snapshot comes after the rooms that feed it',
     path_.findIndex(r => r.id === 'financial-snapshot') >
     Math.max(path_.findIndex(r => r.id === 'debt-payoff'), path_.findIndex(r => r.id === 'cash-flow')),
@@ -6532,7 +6532,7 @@ section('The Coverage Checkup, and how it is split');
 
 (function () {
   /* D-071: four facts about cover, asked on the Cushion's at-3am reading
-     since D-230; a target mix, owned by Where It Goes. Both stored, both
+     since D-232; a target mix, owned by Where It Goes. Both stored, both
      read-only elsewhere. */
   ['oopMax', 'termLife', 'disabilityMonthly', 'umbrella'].forEach(function (f) {
     check(`${f} is owned by The Cushion`, Ownership.field(f).owner, 'runway');
@@ -8475,7 +8475,7 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
   checkTrue('Get Help is a room', !!help);
   check('… optional, owning nothing', help.kind + '/' + help.needs.length, 'explore/0');
   /* Refresh was the last thing on the path until it became a view of the
-     Ledger (D-228); Your Data is the upkeep tail now. */
+     Ledger (D-230); Your Data is the upkeep tail now. */
   check('… before the upkeep tail on the path', help.order < Registry.byId('data').order, true);
   checkTrue('… and names kinds of help, never a firm', (function () { const g = fs.readFileSync(path.join(ROOT, 'rooms/get-help.html'), 'utf8'); return /fee-only fiduciary/.test(g) && !/https?:\/\//.test(g.replace(/<link[^>]*>/g, '')); })());
   checkTrue('the template points its scope line there', /Registry\.byId\('get-help'\)/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
@@ -9754,7 +9754,7 @@ section('Front Doors — twenty arrangements, no room lost');
     checkTrue('tree parents come from the group names, not a second list',
       b.groups.filter(g => g.parent).every(g => g.fullName.indexOf(g.parent + ' › ') === 0));
 
-    /* Front Doors is the Ledger's arrangements view since D-228: shelving is
+    /* Front Doors is the Ledger's arrangements view since D-230: shelving is
        a way of MOVING through the rooms, never a room with a number in it,
        so it was the clearest case in the whole cut list. Everything this
        block used to assert about rooms/doors.html is asserted about that
@@ -10042,7 +10042,7 @@ section('The Walk-Through — a route with an end');
 
   /* -- the room, and the strip ------------------------------------------- */
   (function () {
-    /* The Walk-Through is the Ledger's route view since D-228. Its list is
+    /* The Walk-Through is the Ledger's route view since D-230. Its list is
        still rebuilt wholesale on every change, so the rule that matters is
        that the rebuilt PART holds no text input — the Ledger as a whole now
        holds plenty, in views the route never repaints. */
@@ -10466,17 +10466,17 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('kind is still a property, no longer a heading', Registry.all().every(r => typeof r.kind === 'string') && !/'The path'|'About you'|'What it means'/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
   /* Four doors stood side by side under Home and it was the single thing
      that lost people most (D-186). There is one now: the Ledger, which the
-     First Round and Express became views of (D-228). */
+     First Round and Express became views of (D-230). */
   check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
-  /* Your Next $100 became a reading of What The Next Dollar Does (D-229). */
+  /* Your Next $100 became a reading of What The Next Dollar Does (D-231). */
   check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,foo-ladder,fire,fire-lab,statements,coast-date,race');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
-  check('Upkeep, with Front Doors, the Walk-Through, Refresh and Welcome Back gone into the Ledger (D-228)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,history,settings,get-help,wrapped,one-pager,progress-card');
+  check('Upkeep, with Front Doors, the Walk-Through, Refresh and Welcome Back gone into the Ledger (D-230)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,history,settings,get-help,wrapped,one-pager,progress-card');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
@@ -10486,7 +10486,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 29);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 30);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -11952,11 +11952,11 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
   const Sp = require(path.join(ROOT, 'shared/spheres.js'));
   const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   const room = Registry.byId('ledger');
-  checkTrue('the Ledger is the one door under Home since D-228, where four used to stand', room && room.group === 'home' && room.utility === true && room.href === 'rooms/ledger.html');
+  checkTrue('the Ledger is the one door under Home since D-230, where four used to stand', room && room.group === 'home' && room.utility === true && room.href === 'rooms/ledger.html');
   checkTrue('...reading every DAITE money and situation path, and writing only through the owners', room.daite.reads.length > 30 && room.daite.writes.length > 0 && /Ownership\.write/.test(html));
   checkTrue('...and needing nothing, so it opens on an empty household', Array.isArray(room.needs) && room.needs.length === 0);
   const body = html.split('<body')[1];
-  /* The Ledger wears six hats since D-228, and five of them are other rooms'
+  /* The Ledger wears six hats since D-230, and five of them are other rooms'
      copy, other rooms' inputs and other rooms' em dashes. These checks were
      always about the DOORS view — the Ledger's own screen — so they say so
      now rather than reading the whole file and failing on borrowed words. */
@@ -12728,7 +12728,7 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
    Phase F: Express, the whole form at once (D-208)
    ========================================================================== */
 
-section('All at once: a second view of the same rows (D-208, a Ledger view since D-228)');
+section('All at once: a second view of the same rows (D-208, a Ledger view since D-230)');
 
 (function () {
   const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
@@ -13685,11 +13685,11 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   checkTrue('the defaults table is tagged, every figure editable from the page', T.weddingDefaults.confidence === 'unverified' && /in-perguest/.test(fs.readFileSync(path.join(ROOT, 'rooms/wedding.html'), 'utf8')));
   /* registry and shelves */
   ['race', 'down-payment', 'wedding'].forEach(function (id) { checkTrue(id + ' is registered', !!Registry.byId(id)); });
-  checkTrue('the Quit Fund is the Cushion\'s by-choice reading now (D-230)', !Registry.byId('quit-fund') && Registry.byId('runway').subsections.some(x => x.id === 'view-by-choice'));
+  checkTrue('the Quit Fund is the Cushion\'s by-choice reading now (D-232)', !Registry.byId('quit-fund') && Registry.byId('runway').subsections.some(x => x.id === 'view-by-choice'));
   const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
   /* Two of the four pairs have become one room each: Between Jobs beside
-     The Quit Fund is The Cushion (D-230), and Where Do You Think You Rank
-     beside The Race is a Scorecard reading beside a room (D-231). What is
+     The Quit Fund is The Cushion (D-232), and Where Do You Think You Rank
+     beside The Race is a Scorecard reading beside a room (D-233). What is
      left to check is that the two real pairs are still shelved together. */
   const pairs = { housing: 'down-payment', partner: 'wedding' };
   let shelved = 0;
@@ -14045,7 +14045,7 @@ section('The CSV round trip made resilient (D-221)');
 /* ==========================================================================
    The thirty: docs/room-map.json against the app that exists
    --------------------------------------------------------------------------
-   93 rooms became 30 by a test, not by taste (DECISIONS.md D-227). The map
+   93 rooms became 30 by a test, not by taste (DECISIONS.md D-229). The map
    is the contract: every registry room is either one of the thirty or named
    in exactly one survivor's `absorbs`. This section is the drift alarm. It
    fails when a new room is added without saying what it replaces, when a
@@ -14125,8 +14125,12 @@ section('The thirty (docs/room-map.json)');
   /* The count the whole exercise is named after. */
   const merged = MAP.rooms.reduce((n, r) => n + (r.done || []).length, 0);
   const toGo = MAP.rooms.reduce((n, r) => n + r.absorbs.length, 0) - merged;
-  check('93 rooms are accounted for: thirty, plus what they absorb, plus the Net Worth redirect',
-    MAP.rooms.length + merged + toGo + 1, 93);
+  /* 93 when the map was written. The Deal (D-227) landed on main while the
+     merge was running and is named under Housing, so the ledger is 94 now.
+     The literal stays a literal on purpose: a room added without a place on
+     the map still fails here, which is the whole point of the alarm. */
+  check('every room is accounted for: thirty, plus what they absorb, plus the Net Worth redirect',
+    MAP.rooms.length + merged + toGo + 1, 94);
   check('and the registry holds exactly the survivors plus what has not merged yet',
     Object.keys(live).length, MAP.rooms.length + toGo);
 
@@ -14142,12 +14146,64 @@ section('The thirty (docs/room-map.json)');
 
   /* The order of the six sessions, because doing the Back Half while the
      Decision Room shell moves underneath it is the one sequencing mistake
-     that costs a rebuild (D-226). */
+     that costs a rebuild (D-228). */
   check('six merge sessions, in order', MAP.order.map(o => o.step).join(','), '1,2,3,4,5,6');
   MAP.order.forEach(function (o) {
     checkTrue(`step ${o.step} targets a survivor`, survivors[o.target]);
   });
   check('the Back Half is built last and read first', MAP.order[5].target, 'decumulation');
+})();
+
+/* ==========================================================================
+   Every class a page names has a rule somewhere (D-226)
+   ========================================================================== */
+section('Every class a page names has a rule somewhere (D-226)');
+(function () {
+  /* The Ledger, Express and First Round each named their page wrapper
+     .slaf-room and their header .slaf-room-head. Neither existed in any
+     stylesheet, so those three rooms ran edge to edge on a phone with no
+     measure and no gutter, and nobody noticed for months. A class in the
+     markup that nothing defines is either a layout that silently does not
+     happen or a name left behind; both are worth knowing about. */
+  const cssText = fs.readdirSync(path.join(ROOT, 'shared')).filter(f => /\.css$/.test(f))
+    .map(f => fs.readFileSync(path.join(ROOT, 'shared', f), 'utf8')).join('\n');
+  const classesIn = (text) => { const out = new Set(); const re = /\.(-?[_a-zA-Z][\w-]*)/g; let m; while ((m = re.exec(text))) out.add(m[1]); return out; };
+  const shared = classesIn(cssText);
+  /* Names kept on purpose: a hook a script looks for, or a box that carries
+     its own style inline. Each one is listed so the list can only get
+     shorter; a new name that nothing defines fails the build. */
+  const HOOKS = {
+    'index.html': ['dash'],
+    'rooms/data.html': ['form-grid', 'wide'],
+    'rooms/debt-payoff.html': ['grid-2'],
+    'rooms/ledger.html': ['xbody'],   /* Express is a Ledger view now (D-230); the hook moved with its markup */
+    'rooms/fire.html': ['why'],
+    'rooms/middle-class-trap.html': ['plain'],
+    'rooms/unlearning.html': ['acts']
+  };
+  const pages = ['index.html', 'map.html'].concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
+  const orphans = [];
+  pages.forEach(rel => {
+    const raw = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const known = new Set(shared);
+    (raw.match(/<style[\s\S]*?<\/style>/g) || []).forEach(b => classesIn(b).forEach(c => known.add(c)));
+    (HOOKS[rel] || []).forEach(c => known.add(c));
+    /* Static markup only: a class built inside a script is that script's business. */
+    const markup = raw.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, '');
+    const used = new Set();
+    const re = /\bclass="([^"{}]*)"/g;
+    let m;
+    while ((m = re.exec(markup))) m[1].split(/\s+/).forEach(c => { if (c) used.add(c); });
+    [...used].filter(c => !known.has(c)).forEach(c => orphans.push(rel + ' names .' + c));
+  });
+  check('no page names a class that no stylesheet defines', orphans.join('; '), '');
+  const listed = Object.keys(HOOKS).reduce((n, k) => n + HOOKS[k].length, 0);
+  checkTrue('the names kept on purpose are few, and each is a script hook or a box styled inline: ' + listed, listed <= 8);
+  /* The wrapper the three door rooms name, and the small print every room
+     shows, are defined once and shared. */
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the page body, its header and its lede have a rule under both names they are given', /\.slaf-room\s*\{/.test(theme) && /\.slaf-room-head\s*\{/.test(theme) && /\.slaf-lede/.test(theme));
+  checkTrue('the small print under a room is defined once, in the theme, not copied into every room', /^\.disclaimer \{/m.test(theme) && fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).every(f => !/^\s*\.disclaimer \{/m.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
 })();
 
 /* ==========================================================================

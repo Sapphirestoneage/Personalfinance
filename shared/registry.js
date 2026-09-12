@@ -486,10 +486,10 @@
       ]
     },
     /* The Ledger (18.4, 18.5; D-185): every number the app can hold, one
-       row each, in nine spheres. Six ways in, one set of rows (D-228). */
+       row each, in nine spheres. Six ways in, one set of rows (D-230). */
     {
       id: 'ledger',
-      /* Home, not Upkeep, since D-228: three doors side by side under Home
+      /* Home, not Upkeep, since D-230: three doors side by side under Home
          was what lost people (D-186), and there is now one door. The First
          Round, Express, Front Doors and the Walk-Through are its views. */
       group: 'home', aliases: ['ledger', 'the ledger', 'rows', 'spheres', 'progress',
@@ -511,7 +511,7 @@
       daite: { reads: ["assets","assets.allocation","assets.cashCents","assets.contributions.hsa","assets.contributions.pretax","assets.contributions.roth","assets.invested","assets.property","debt.items","debt.items[].minimumCents","debt.items[].plan","debt.none","expenses","expenses.floor","expenses.giving","expenses.insurance","expenses.log","expenses.months","expenses.needs.accommodation","expenses.needs.food","expenses.needs.transportation","expenses.shared","expenses.wants","expenses.wants.therapy","income.cadence","income.future","income.grossAnnualCents","income.ledger","income.sources[].benefit","income.sources[].employerMatch","income.variable","taxes.filingStatus","taxes.marginalRate","taxes.otherPreTax","taxes.state","taxes.withheld","taxes.zip","you.cover","you.dependents","you.dob","you.estate","you.partner","you.situation"],
                /* It owns none of these. Round 1, all at once and since last
                   time each write through Ownership.write, which is the owner's
-                  own path — one record, never a second copy (D-228). */
+                  own path — one record, never a second copy (D-230). */
                writes: ["assets.cashCents","assets.invested","debt.items","expenses","income.grossAnnualCents","income.sources[].lastPay","taxes.zip","you.dob","you.situation"] },
       subsections: [
         { id: 'doors-home',   label: 'The six doors' },
@@ -735,7 +735,7 @@
         { id: 'reading',     label: 'Reading from elsewhere' }
       ]
     },
-    /* The Cushion (D-230): four readings of one number. The Runway, Between
+    /* The Cushion (D-232): four readings of one number. The Runway, Between
        Jobs, The Quit Fund and Sleep At Night each answered how long you
        could stop earning; the aliases carry all four so a search for any of
        them lands, and the seven fields the last two owned are owned here. */
@@ -780,7 +780,7 @@
     {
       id: 'foo-ladder',
       features: ['matchVesting'],
-      /* One question at three amounts since D-229: the next $100, every
+      /* One question at three amounts since D-231: the next $100, every
          month from here, a lump sum. The aliases carry the two rooms that
          became readings so a search for either still lands. */
       group: 'scorecard', aliases: ['foo', 'order of operations', 'next dollar', 'ladder',
@@ -1262,6 +1262,33 @@
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
       ]
+  });
+
+  /* The Deal — Tier 17 (D-227). Housing Decision asks whether to buy where
+     you live; this asks whether a building pays, and what living in one
+     unit of it would cost. Both sit on engines/ownership.js. */
+  ROOMS.push({
+    id: 'property',
+    group: 'decisions', subgroup: 'home',
+    aliases: ['rental', 'landlord', 'house hack', 'investment property', 'deal', 'cap rate', 'real estate'],
+    kind: 'about-you',
+    needs: [],
+    order: 40.7,
+    title: 'The Deal',
+    blurb: 'A property priced the way it actually runs: the reserves a listing leaves out, the four ways it pays, what breaks it, and what living in one unit would cost against renting.',
+    href: 'rooms/property.html',
+    tier: 2,
+    tags: ['cashflow'],
+    daite: { reads: [], writes: ['assets.property'] },
+    subsections: [
+      { id: 'deal',        label: 'The deal' },
+      { id: 'month',       label: 'What it costs a month' },
+      { id: 'letting',     label: 'Let it out' },
+      { id: 'return',      label: 'The four ways it pays' },
+      { id: 'stress',      label: 'What breaks it' },
+      { id: 'hack',        label: 'Live in one, let the rest' },
+      { id: 'assumptions', label: 'Where the rates come from' }
+    ]
   });
 
   /* Housing Decision — the second wave of tranche rooms (D-099). */
@@ -1852,7 +1879,7 @@
     'real-hourly-wage': ['hours'],
     hassle: ['hours'],
     fire: ['savingsRate'],
-    /* Between Jobs became the Cushion's while-job-hunting reading (D-230),
+    /* Between Jobs became the Cushion's while-job-hunting reading (D-232),
        which anyone may open: it reads as if the pay stopped today and says
        so. The Cushion itself requires nothing. */
     protection: ['protection'],

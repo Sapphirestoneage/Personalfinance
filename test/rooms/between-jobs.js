@@ -204,7 +204,7 @@ module.exports = function (t) {
   }
 
   /* -- The engine still refuses; the READING asks it a hypothetical --------
-     Between Jobs became the Cushion's while-job-hunting reading (D-230). The
+     Between Jobs became the Cushion's while-job-hunting reading (D-232). The
      engine is unchanged: handed an employed household with no vouching, it
      refuses, and that is still the rule about not inventing a situation.
      What changed is that the reading vouches — asBetweenJobs — and says in a

@@ -3,7 +3,7 @@ paths:
   - "rooms/tax.html"
 ---
 # Tax (`tax`)
-File: rooms/tax.html · 259 lines
+File: rooms/tax.html · 258 lines
 Engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly
 Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, se_tax_2026.json, state_brackets_2026.json
 Owns: otherPreTax, withheld

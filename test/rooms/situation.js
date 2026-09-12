@@ -53,7 +53,7 @@ module.exports = function (t) {
 
   /* The six situations, and what each turns off. Written out rather than
      computed, so a change to the gate has to be agreed to here too.
-     Between Jobs left this list in D-230: it is a reading of The Cushion
+     Between Jobs left this list in D-232: it is a reading of The Cushion
      now, and The Cushion applies to everyone — the question "how long while
      job hunting" is one an employed person is entitled to ask. */
   var EXPECTED = {

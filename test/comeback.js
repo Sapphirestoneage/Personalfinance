@@ -42,7 +42,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   }, ahead);
   await page.goto(BASE + '/index.html', { waitUntil: 'networkidle' });
   await page.waitForTimeout(800);
-  /* Welcome Back is the Ledger's since-last-time view since D-228; the warm
+  /* Welcome Back is the Ledger's since-last-time view since D-230; the warm
      opening survived the merge and appears only when you were SENT here
      after a gap, which is the state this test sets up. */
   check('the front door opens on the since-last-time view', /rooms\/ledger\.html\?comeback=1#since-last-time/.test(page.url()), page.url());

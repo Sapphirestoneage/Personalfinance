@@ -3,7 +3,7 @@ paths:
   - "rooms/get-help.html"
 ---
 # Get Help (`get-help`)
-File: rooms/get-help.html · 121 lines · utility room
+File: rooms/get-help.html · 120 lines · utility room
 Engines: none
 Reference data: none
 Owns: nothing

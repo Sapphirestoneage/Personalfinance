@@ -31,7 +31,7 @@
                                spine, for a room that exists for one
        part: true              (optional) this is ONE READING inside a room
                                that registers itself, not the room. Added by
-                               the 93-to-30 merge (D-227): a merged room owns
+                               the 93-to-30 merge (D-229): a merged room owns
                                the registration, the sidebar and the hash,
                                and a reading that claimed any of them would
                                claim them twice. Everything else is the same.
@@ -350,7 +350,7 @@
     if (!spec.part) window.addEventListener('hashchange', jumpToHash);
 
     /* A reading inside a merged room leaves registration, the sidebar and
-       the hash to the room it sits in (D-230). Two registerRoom calls on one
+       the hash to the room it sits in (D-232). Two registerRoom calls on one
        page mark the same room visited twice and mount a second sidebar. */
     if (!spec.part) {
       Spine.registerRoom(ROOM_ID);

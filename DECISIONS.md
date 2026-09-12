@@ -13678,7 +13678,79 @@ figure checked by the month-by-month loop and by the closed-form annuity
 independently. Twelve properties, including that letting one more unit
 can never make you pay more.
 
-## D-226 — You cannot size the mountain until you know how you come down it
+## D-226 — The Ledger's doors, and the gutter three rooms never had
+
+**Why.** The owner sent a photo of the Ledger on a phone. Every door read
+"DDebt … what you owe$41,940total owed6 of 10", the ring sat on top of the
+words, half of each tile was empty, and the whole page ran edge to edge with
+no margin. Two faults, both invisible to every test the app had.
+
+**Decision.** A door tile is a column now, not a run of inline spans: the
+letter and the name on one line with the ring in its own corner above its
+count, the say line under them, and the number anchored to the bottom so a
+row of tiles lines up (`rooms/ledger.html`). The You door writes its name
+once instead of twice. `.slaf-room`, `.slaf-room-head` and `.slaf-lede` —
+the names the Ledger, Express and First Round give their page body, header
+and lede — had no rule in any stylesheet, so those three rooms had no
+measure and no side padding; they are defined in `shared/theme.css` beside
+the `.slaf-wrap` they are the same thing as. `.disclaimer` is defined once
+there too, which eighty rooms carried their own identical copy of and seven
+carried none. The undo pair is one floating bar on its own surface rather
+than two translucent rings, and it appears with the first change instead of
+sitting empty on top of a figure.
+
+**Replaces or removes.** Eighty copies of the same small-print rule.
+`.slaf-note`, which nothing defined, gives way to `.slaf-hint`, which does.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (a new section: no page names a class that
+no stylesheet defines, with the eight script hooks and inline-styled boxes
+listed so the list can only shorten — the check that would have caught this
+the day it was written), the render, features and forms gates, and the
+Ledger, Express and First Round photographed at phone width before and
+after.
+
+## D-227 — The Deal: a room that shows the figure and the figure beside it
+
+**Why.** D-224 and D-225 put honest underwriting in the engine, where
+nobody could see it. The thing worth showing is not a cap rate. It is two
+numbers next to each other: what a listing says a place clears, and what
+it actually does.
+
+**Decision.** `rooms/property.html`, "The Deal", in Decisions → Home,
+beside Housing Decision. Housing asks whether to buy where you live; this
+asks whether a building pays. Both sit on `engines/ownership.js` and the
+room holds no arithmetic of its own. Six readings: the month line by
+line, letting it out (the advertised figure and the real one side by
+side, with the gap itemised), the four ways it pays, what breaks it,
+living in one unit and letting the rest, and where every rate came from.
+Nothing appears until it can be computed, and the page names which of the
+price, the down payment or the rate is missing.
+
+Built once, per D-034: eleven boxes in the markup, only ever read and
+written, with the readings rendered around them.
+
+**Replaces or removes.** Nothing, and this is a new room under the
+freeze. It earns that by being the only place any of Tier 17 is visible;
+the engine was shipped in D-223 to D-225 with no way to reach it.
+
+**Stored shape.** `household.property[]` records gain the terms of a deal
+being weighed: `label`, `priceCents`, `downPct`, `rate`,
+`hoaMonthlyCents`, `yourRentMonthlyCents`, `unitRentsCents[]`,
+`yearsHeld`, `marginalRate`, `appreciationRate`. Every one is additive
+and null on a record written before this, which therefore reads exactly
+as it did; `engines/statement.js` is unchanged by it. The room writes
+through `Spine.upsertProperty` and owns no field another room owns.
+
+**Verified.** Unit suite 30,610; `test/render.js`, `sidebar`, `onefact`,
+`xss` and `alignment` all pass with the room in the registry and in all
+twenty arrangements. A phone walk types the deal and reads it back: the
+price, the share, the rate and the rent land as cents and decimals, the
+listing figure reads $714 and the real one a loss of $481, and both
+survive a reload. A new case in `test/forms.js` holds that.
+
+## D-228 — You cannot size the mountain until you know how you come down it
 
 **Why.** Every room hangs off one multiplication: spending × 25. That number
 is wrong for a pre-FI household in five ways at once — the drawdown is taxed
@@ -13712,7 +13784,7 @@ remaining merges are built in, recorded before any of them moves.
 **Open, and owner's to answer.** Galloway's objection stands: model the
 version where the floor is means-tested, or the room sells comfort.
 
-## D-227 — What earns the right to be a room: five rules, one anti-rule, thirty rooms
+## D-229 — What earns the right to be a room: five rules, one anti-rule, thirty rooms
 
 **Why.** 93 rooms, each working alone, connected badly. Nothing said what a
 room WAS, so every idea became one. Without a test, the freeze can only say
@@ -13741,14 +13813,14 @@ data, so it is not in `data/` and no room loads it.
 
 **Verified.** `node test/run.js` (30,847 checks), `node test/forms.js`.
 
-## D-228 — The Ledger swallows navigation: six pages become six hats
+## D-230 — The Ledger swallows navigation: six pages become six hats
 
 **Why.** Four onboarding doors were live at once and two pages asked the
 identical question. Front Doors, the Walk-Through, the First Round and
 Express were ways IN, not rooms with a number; Refresh and Welcome Back
 walked the same moving rows, wrote through the same owners and took the same
 snapshot, differing only in row order and which line they drew. Rule 5 of
-D-227, and a straight duplicate.
+D-229, and a straight duplicate.
 
 **Decision.** `rooms/ledger.html` is one page with six views, routed by hash
 and never rebuilt: the doors (default), `#round-1` (was First Round),
@@ -13765,7 +13837,7 @@ to the views.
 
 **The warm opening survives.** Welcome Back's copy was not decoration: being
 SENT here after a gap is a different moment from coming looking, and the
-anti-rule in D-227 is about exactly that. So the view opens with "Welcome
+anti-rule in D-229 is about exactly that. So the view opens with "Welcome
 back." and the two-minute line when the dashboard sent you, and with the
 plain refresh line otherwise. The dashboard clears `comeback.due` before
 redirecting so a bounce back does not loop, and carries the fact of the
@@ -13788,7 +13860,7 @@ box each keep the keyboard open), and `node test/comeback.js`,
 `test/xss.js`, `test/onefact.js`, `test/render.js`, `test/alignment.js`.
 Every view and all six redirects loaded at 390px with a clean console.
 
-## D-229 — What The Next Dollar Does: one question at three amounts
+## D-231 — What The Next Dollar Does: one question at three amounts
 
 **Why.** Your Next $100, the FOO Ladder and The Windfall asked one question
 — where does the next dollar go — at three sizes, in three rooms, off three
@@ -13819,7 +13891,7 @@ checks; the ladder's build-once inputs and the lump-sum boxes both hold
 their text). All three readings and both redirects loaded at 390px with a
 clean console, each showing the same step number as the ladder itself.
 
-## D-230 — The Cushion: four readings of one number
+## D-232 — The Cushion: four readings of one number
 
 **Why.** The Runway, Between Jobs, The Quit Fund and Sleep At Night all
 answered "how long could you not earn" and each drew its own conclusion from
@@ -13855,11 +13927,11 @@ text and land on the household). All four readings, the three redirects and
 the ownership deep links `#coverage`, `#inputs` and `#am-number` loaded at
 390px with a clean console.
 
-## D-231 — The Scorecard: six readings, one measuring stick, simplest first
+## D-233 — The Scorecard: six readings, one measuring stick, simplest first
 
 **Why.** The Financial Snapshot, The Score, Every Ratio, Savings Rate, Quick
 Math and Where Do You Think You Rank all read numbers already entered and
-none asked for anything new. Rule 1 of D-227 (same fields, different framing)
+none asked for anything new. Rule 1 of D-229 (same fields, different framing)
 and rule 3 (a lens is not a room) both apply, twice over.
 
 **Decision.** `rooms/financial-snapshot.html` becomes **The Scorecard**, six
@@ -13888,6 +13960,7 @@ earn.
 checks), `node tools/context/build.js --check`. All six readings, the five
 redirects and the deep links `#draftt`, `#out-rate`, `#out-wealth`, `#habit`
 and `#guess` loaded at 390px with a clean console.
+
 
 ---
 

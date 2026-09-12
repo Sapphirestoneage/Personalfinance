@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-12 07:54Z"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>The Scorecard · SPARKS</title>
@@ -12,12 +12,12 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-173 (DRAFTT), D-231 (the merge).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-173 (DRAFTT), D-233 (the merge).
 
   ONE MEASURING STICK, SIX READINGS. The Financial Snapshot, The Score,
   Every Ratio, Savings Rate, Quick Math and Where Do You Think You Rank all
   read the numbers already entered and none of them asked for anything new.
-  Rule 1 and rule 3 of D-227: same fields, different framing, and a lens is
+  Rule 1 and rule 3 of D-229: same fields, different framing, and a lens is
   not a room. They are six readings on one strip now, the simplest first:
 
     #the-score       one number, its pillars, and where the points are
@@ -37,7 +37,7 @@
              rather than a zero.
   5. CONFIG  the reference tables each engine names; nothing inline.
 
-  THE SIMPLEST READING IS THE DEFAULT (D-227, and the panel note that a
+  THE SIMPLEST READING IS THE DEFAULT (D-229, and the panel note that a
   merge is only good news if the toggles open on the plainest thing). One
   number opens the room; the nine are one tap away, where they used to be
   the first thing on the screen.
@@ -46,12 +46,11 @@
   and the rank guess — and both are in the markup and never replaced.
 -->
 <style>
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   #view-the-score section[id], #view-the-nine section[id], #view-savings-rate section[id],
   #view-every-ratio section[id], #view-quick-math section[id], #view-where-you-rank section[id] { scroll-margin-top: var(--space-4); }
 
-  /* ---- The score, from rooms/health.html (D-231) ------------------------ */
+  /* ---- The score, from rooms/health.html (D-233) ------------------------ */
   
   #view-the-score .room-back:hover { text-decoration: underline; }
   
@@ -132,10 +131,8 @@
   #view-the-score .empty { color: var(--color-text-faint); font-size: var(--text-sm); margin-top: var(--space-3); }
   
   #view-the-score .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  
-  #view-the-score .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 
-  /* ---- The nine, from rooms/financial-snapshot.html (D-231) ------------- */
+  /* ---- The nine, from rooms/financial-snapshot.html (D-233) ------------- */
   
   #view-the-nine .room-back:hover { text-decoration: underline; }
   
@@ -256,9 +253,6 @@
   #view-the-nine .handoff-cold span:last-child { font-size: var(--text-sm); color: var(--color-text-muted); }
   
   #view-the-nine .handoff-cold:hover { border-color: var(--color-focus-ring); }
-
-  
-  #view-the-nine .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
   
   #view-the-nine .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
   @media (max-width: 380px) { 
@@ -274,7 +268,7 @@
   
   #view-the-nine .three .sub { font-size: var(--text-xs); color: var(--color-text-muted); }
 
-  /* ---- Savings rate, from rooms/savings-rate.html (D-231) --------------- */
+  /* ---- Savings rate, from rooms/savings-rate.html (D-233) --------------- */
   
   #view-savings-rate .room-back:hover { text-decoration: underline; }
   
@@ -349,10 +343,8 @@
   #view-savings-rate .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   
   #view-savings-rate .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  
-  #view-savings-rate .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 
-  /* ---- Every ratio, from rooms/ratios.html (D-231) ---------------------- */
+  /* ---- Every ratio, from rooms/ratios.html (D-233) ---------------------- */
   
   #view-every-ratio .room-back:hover { text-decoration: underline; }
   
@@ -424,10 +416,8 @@
   #view-every-ratio .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
   
   #view-every-ratio .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  
-  #view-every-ratio .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 
-  /* ---- Quick math, from rooms/quick-math.html (D-231) ------------------- */
+  /* ---- Quick math, from rooms/quick-math.html (D-233) ------------------- */
   
   #view-quick-math .room-back:hover { text-decoration: underline; }
   
@@ -487,10 +477,8 @@
 
   
   #view-quick-math .rule-statement { font-size: var(--text-sm); color: var(--color-text-muted); font-style: italic; margin: var(--space-2) 0 0; }
-  
-  #view-quick-math .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 
-  /* ---- Where you rank, from rooms/rank-guess.html (D-231) --------------- */
+  /* ---- Where you rank, from rooms/rank-guess.html (D-233) --------------- */
   
   #view-where-you-rank .slider { width: 100%; margin: var(--space-3) 0; }
   
@@ -507,8 +495,6 @@
   #view-where-you-rank .reveal .box small { color: var(--color-text-faint); }
   
   #view-where-you-rank .line { margin-top: var(--space-3); font-size: var(--text-md); }
-  
-  #view-where-you-rank .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -1046,7 +1032,7 @@
 <script src="../shared/seed.js"></script>
 <script src="../engines/rankguess.js"></script>
 <script>
-/* ---- Six readings, one measuring stick (D-231) ----------------------------
+/* ---- Six readings, one measuring stick (D-233) ----------------------------
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands: #out-score came from The Score, #out-net-worth and
    #draftt from the Snapshot, #out-rate from Savings Rate, #out-wealth from
@@ -1085,7 +1071,7 @@
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
       Ownership = SLAF.Ownership, Health = SLAF.Health;
 
-  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-231) */
+  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-233) */
   var TABLES = null;
 
   function el(id) { return document.getElementById(id); }
@@ -1767,7 +1753,7 @@
 
 
   /* Deep links: the router at the top of the page owns the hash for all six
-     readings now (D-231), so no reading scrolls on its own. */
+     readings now (D-233), so no reading scrolls on its own. */
 
   /* ---------- boot ------------------------------------------------------- */
 
@@ -1807,7 +1793,7 @@
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
       Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Charts = SLAF.Charts;
 
-  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-231) */
+  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-233) */
   var TABLES = null;
   var MONTHS = 12;
 
@@ -2107,7 +2093,7 @@
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
       Ownership = SLAF.Ownership, Ratios = SLAF.Ratios, Charts = SLAF.Charts, Explain = SLAF.Explain;
 
-  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-231) */
+  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-233) */
   var TABLES = null;
 
   /* Which list each ratio belongs in. A ratio not named here still computes
@@ -2333,7 +2319,7 @@
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
       Q = SLAF.QuickMath;
 
-  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-231) */
+  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-233) */
   var TABLES = null;
   function el(id) { return document.getElementById(id); }
 
@@ -2569,7 +2555,7 @@
 (function () {
   'use strict';
   var Spine = SLAF.Spine, Reference = SLAF.Reference, RankGuess = SLAF.RankGuess, Prefs = SLAF.Prefs;
-  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-231) */
+  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-233) */
   var TABLES = null;
   function el(id) { return document.getElementById(id); }
   function word() { var b = RankGuess.band(Number(el('in-guess').value)); el('g-word').textContent = b ? 'You think: ' + b.label + '.' : ''; }

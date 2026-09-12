@@ -3,17 +3,17 @@
 Updated: 2026-09-12
 
 ## Where it stands
-- **93 → 30 is the programme.** The reframe (D-226): you cannot size the
+- **93 → 30 is the programme.** The reframe (D-228): you cannot size the
   mountain until you know how you come down it, so the Back Half defines the
   target and The Number becomes a read-out of it. The room test and the
-  thirty are D-227 and `docs/room-map.json`, which `test/run.js` checks
+  thirty are D-229 and `docs/room-map.json`, which `test/run.js` checks
   against the registry every run. That map is the cut list: `absorbs` minus
   `done` is what is left, `held` says what is not moving yet, and why.
-- **Four of the six merges are done; 92 registry rooms → 76.** D-228, the
-  Ledger swallowed navigation. D-230, The Cushion is four readings of one
-  number, seven field owners moved with their boxes. D-229, What The Next
+- **Four of the six merges are done; 92 registry rooms → 76.** D-230, the
+  Ledger swallowed navigation. D-232, The Cushion is four readings of one
+  number, seven field owners moved with their boxes. D-231, What The Next
   Dollar Does is one question at three amounts, the FOO step above all
-  three. D-231, The Scorecard is six readings of the same entered numbers
+  three. D-233, The Scorecard is six readings of the same entered numbers
   and opens on the plainest. Every old URL redirects, hash and all.
   `.slaf-hats` is the one reading strip; `part: true` in `shared/room.js`
   lets a template room become a reading.
@@ -29,7 +29,7 @@ Updated: 2026-09-12
 2. Step 5: the Decision Room shell — one shell, five outputs on every block,
    then goals, wedding and big purchase before any deep module.
 3. Step 6: the Back Half, once the shell has stopped moving. The biggest
-   engine change in the programme; D-226 is its brief.
+   engine change in the programme; D-228 is its brief.
 5. Older and still open: logged income does not reach the headline numbers;
    the first journey end to end; a monthly close that prompts a backup.
 

@@ -745,7 +745,7 @@ const CASES = [
         || document.body.innerText.includes('in cash & savings.'));
       /* Count inside the ladder reading only: the lump-sum reading next door
          has its own "what the waiting cash earns" box, which is a different
-         question and not a second place to enter the balance (D-229). */
+         question and not a second place to enter the balance (D-231). */
       const oneCashRow = await page.evaluate(() =>
         Array.from(document.querySelectorAll('#view-ladder .slaf-label'))
           .filter(l => /cash/i.test(l.textContent)).length);
@@ -1362,6 +1362,42 @@ const CASES = [
     expect: async (page) => {
       const n = await page.evaluate(() => document.querySelectorAll('#c-parts li').length);
       return [['three parts', n, 3]];
+    }
+  },
+  {
+    /* The Deal (D-227): eleven boxes, all built once, all writing to one
+       property record. The figures below are the hand-checked ones from
+       test/run.js, so a tap that goes astray shows up as a wrong reading
+       rather than only as a lost keystroke. */
+    room: '/rooms/property.html',
+    container: '#deal',
+    seed: 'empty',
+    fields: [
+      { sel: '#in-price', type: '320000' },
+      { sel: '#in-down', type: '20' },
+      { sel: '#in-rate', type: '6.9' }
+    ],
+    expect: async (page) => {
+      await page.tap('#in-rent'); await page.waitForTimeout(200);
+      await page.keyboard.type('2400', { delay: 15 });
+      await page.evaluate(() => document.activeElement.blur());
+      await page.waitForTimeout(400);
+      const s = await page.evaluate(() => {
+        const p = (SLAF.Spine.getProfile().property || [])[0] || {};
+        return { price: p.priceCents, down: p.downPct, rate: p.rate, rent: p.rentMonthlyCents,
+          adv: document.getElementById('adv').textContent,
+          real: document.getElementById('real').textContent,
+          monthShown: !document.getElementById('month').hidden };
+      });
+      return [
+        ['the price landed as cents', s.price, 32000000],
+        ['the down payment landed as a share', s.down, 0.2],
+        ['the rate landed as a decimal', s.rate, 0.069],
+        ['the rent landed', s.rent, 240000],
+        ['the month appeared', s.monthShown, true],
+        ['the listing figure reads $714', /714/.test(s.adv), true],
+        ['and the real one reads a loss of $481', /481/.test(s.real), true]
+      ];
     }
   }
 ];

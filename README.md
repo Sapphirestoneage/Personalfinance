@@ -68,7 +68,7 @@ typing in it.
 
 ```
 index.html          The front door: the Dashboard once it has what it needs, the intake landing until then (D-058)
-foo-ladder.js       The FOO ladder's logic — one of the three readings inside rooms/foo-ladder.html, What The Next Dollar Does (D-229): build() once, paint() on every change
+foo-ladder.js       The FOO ladder's logic — one of the three readings inside rooms/foo-ladder.html, What The Next Dollar Does (D-231): build() once, paint() on every change
 map.html            Room directory: next-unfinished first, then the groups, tag filter
 MONEY-MAP.md        The discovery map that preceded the ledger build (D-128, revised in D-129); where it and the build spec differ, the decisions are what shipped
 DESIGN-AUDIT.md     The design-audit brief: everything the app is and does, for a reviewer who has never seen the repo
@@ -76,7 +76,7 @@ version.json        The product version, major.minor; Schema.APP_VERSION matches
 .github/workflows/  test.yml runs the whole suite on every push; pages.yml publishes only after it is green, once the Pages source is switched to GitHub Actions and PAGES_VIA_ACTIONS is set (D-204)
 scripts/            extract-v63.mjs — the Skill Tree's data port: run it against an FI-Skill-Tree-v6.3.x page and it regenerates data/skill_tree.json and data/skill_links.json (31 trees, 665 skills, 312 lanes), merging skill_tree_app.json, this app's own 40 skills, which the exercises and the Stacker point at by id and which is edited by hand, never generated (D-139). seed-exercises.mjs seeds the exercise library. seed-skill-tree.mjs, which made the old 40-skill seed, is gone — running it would have overwritten the curriculum
 favicon.svg         Sapphire mark
-rooms/              One HTML file per room. ledger.html is the way in and wears six hats (D-228): the six doors, #round-1 (five questions, one insight, one door, D-206), #all-at-once (the whole form, the same rows through the same owners, D-208), #since-last-time (what has moved, D-209 + D-214), #arrangements (twenty shelvings, D-153) and #route (the short way through, D-149). start.html is the older one-pager, still to retire into it. Merged rooms stay on disk as redirects, never deleted (D-227)
+rooms/              One HTML file per room. ledger.html is the way in and wears six hats (D-230): the six doors, #round-1 (five questions, one insight, one door, D-206), #all-at-once (the whole form, the same rows through the same owners, D-208), #since-last-time (what has moved, D-209 + D-214), #arrangements (twenty shelvings, D-153) and #route (the short way through, D-149). start.html is the older one-pager, still to retire into it. Merged rooms stay on disk as redirects, never deleted (D-227)
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
 shared/             The spine everything depends on
   qr.js               a QR code of the share link, drawn from the standard's tables, no library (D-201)
@@ -123,7 +123,7 @@ engines/            Shared calculation engines — one function per concept
   selfemployed.js     SE tax in visible steps, W2 vs 1099, quarterly + safe harbour
   goals.js            the shared Goal Costing Engine — wedding, deposit, trip
   accounts.js         Roth vs Traditional vs taxable, Solo 401k limits
-  swan.js             the self-reported sleep-at-night target, beside the maths (the Cushion's at-3am reading, D-230)
+  swan.js             the self-reported sleep-at-night target, beside the maths (the Cushion's at-3am reading, D-232)
   values.js           stated values against a categorised month — no score
   fulfillment.js      spend against a 1-10 joy rating, and the four corners
   hassle.js           what a money-saving chore pays per hour of your life

@@ -306,7 +306,7 @@
     },
 
     /* The Coverage Checkup (D-071): four facts about your cover, asked on
-       the Cushion's at-3am reading since D-230, read by the Statement's
+       the Cushion's at-3am reading since D-232, read by the Statement's
        worst plausible year. Sleep At Night became that reading; the owner
        moved with the boxes, which is the only way ownership ever moves. */
     oopMax: {
@@ -356,7 +356,7 @@
     },
 
     /* ---- The tranche rooms (D-098): each owns the facts it asks. ----
-       Between Jobs became the Cushion's while-job-hunting reading (D-230),
+       Between Jobs became the Cushion's while-job-hunting reading (D-232),
        so these two moved with the two boxes that ask them. They no longer
        stop applying when you are employed: the reading runs as if the pay
        stopped today, and the two numbers it needs are much easier to think

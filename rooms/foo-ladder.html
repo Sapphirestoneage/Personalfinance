@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-12 07:54Z"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>What The Next Dollar Does · SPARKS</title>
@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11. DECISIONS.md D-010 (why two ladder engines
-  exist), D-229 (the merge).
+  exist), D-231 (the merge).
 
   1. READS   the household through engines/next100.js (the ranked scale),
              foo-ladder.js's own month-by-month waterfall (when each step
@@ -30,7 +30,7 @@
   5. CONFIG  data/foo_rules.json, data/return_bands.json,
              data/irs_limits_2026.json, data/effective_tax_rates_2026.json.
 
-  THE THREE AMOUNTS (D-229): the $100 question, the ladder and the windfall
+  THE THREE AMOUNTS (D-231): the $100 question, the ladder and the windfall
   question were three rooms asking one question at three sizes, and three
   rooms could answer it three different ways. They are one reading strip
   now, and the FOO step number stands above all three, because people
@@ -44,10 +44,9 @@
   .step-line { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
   .step-line b { color: var(--color-text); font-family: var(--font-display); font-weight: 500; }
   .step-line.is-blank { color: var(--color-text-faint); font-style: italic; }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
   #view-windfall .room-back:hover { text-decoration: underline; }
 
-  /* ---- The next $100, from rooms/next-hundred.html (D-229) --------------- */
+  /* ---- The next $100, from rooms/next-hundred.html (D-231) --------------- */
   
   #view-next100 .say { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-2) 0 var(--space-3); }
   
@@ -77,10 +76,8 @@
   #view-next100 ol.ranked li.is-done { opacity: .6; }
   
   #view-next100 .missing { font-size: var(--text-sm); color: var(--color-text-muted); }
-  
-  #view-next100 .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 
-  /* ---- A lump sum, from rooms/windfall.html (D-229) ---------------------- */
+  /* ---- A lump sum, from rooms/windfall.html (D-231) ---------------------- */
   
   #view-windfall .room-back:hover { text-decoration: underline; }
   
@@ -119,10 +116,8 @@
   #view-windfall .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   
   #view-windfall .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  
-  #view-windfall .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 
-  /* ---- Every month from here, the ladder's own shell (D-229) ------------- */
+  /* ---- Every month from here, the ladder's own shell (D-231) ------------- */
   
   #view-ladder .page { min-height: 100vh; }
   
@@ -315,7 +310,7 @@
 <script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
-/* ---- The three amounts: one question, one strip (D-229) -------------------
+/* ---- The three amounts: one question, one strip (D-231) -------------------
    Which reading is on screen is read off the hash and nothing else, so every
    old link lands: #ranked and #how came from Your Next $100, #the-money and
    #out-when from The Windfall. Switching hides and shows; nothing is rebuilt,
@@ -364,7 +359,7 @@
   window.addEventListener('hashchange', route);
   route();
   /* The room registers and mounts once, here — foo-ladder.js is one of its
-     three readings now, not a room of its own (D-229). */
+     three readings now, not a room of its own (D-231). */
   Spine.registerRoom('foo-ladder');
   if (SLAF.Progress) SLAF.Progress.mount('foo-ladder');
   Spine.onChange(paintStep);

@@ -234,7 +234,7 @@ up. They are the next thing, and they are harder than what came before them.
 
 **And a route through it all.** Fifty-nine rooms is a library, which is the
 one thing a newcomer cannot use. The route view (`rooms/ledger.html#route`,
-D-149, D-228) is the short way
+D-149, D-230) is the short way
 round: five sets, only the steps that apply to your situation, 15–20 of them
 depending on who you are, with somewhere to say when each is done. Nothing is
 locked behind it.

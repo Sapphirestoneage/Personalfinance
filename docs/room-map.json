@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "decision": "D-227",
+  "decision": "D-229",
   "asOf": "2026-09-12",
   "what": "The thirty rooms the suite is merging down to, and what each one absorbs. Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app.",
   "howToRead": {
@@ -57,7 +57,7 @@
     { "n": 7, "id": "cash-flow", "title": "The Month", "group": "facts", "absorbs": ["calendar"], "done": [] },
     { "n": 8, "id": "budget", "title": "The Close", "group": "facts", "absorbs": ["variance", "history"], "done": [] },
     { "n": 9, "id": "statement", "title": "The Statement", "group": "facts", "absorbs": ["accounts", "statements"], "done": [],
-      "note": "rooms/net-worth.html is already a redirect here and is not in the registry. Accounts merges upward because where the next dollar lands moves the target (D-226)." },
+      "note": "rooms/net-worth.html is already a redirect here and is not in the registry. Accounts merges upward because where the next dollar lands moves the target (D-228)." },
     { "n": 10, "id": "tax", "title": "Tax", "group": "facts", "absorbs": [], "done": [] },
 
     { "n": 11, "id": "financial-snapshot", "title": "The Scorecard", "group": "scorecard",
@@ -68,10 +68,10 @@
 
     { "n": 13, "id": "decumulation", "title": "The Back Half", "group": "back-half",
       "absorbs": ["roth-aca", "middle-class-trap", "reachable"], "done": [],
-      "note": "Runs first in the journey, built last of the merges (D-226)." },
+      "note": "Runs first in the journey, built last of the merges (D-228)." },
     { "n": 14, "id": "fire", "title": "The Number", "group": "back-half",
       "absorbs": ["fire-lab", "coast-date", "enough", "race"], "done": [],
-      "note": "Becomes a read-out of what the Back Half produced, with the naive 25x answer beside it (D-226)." },
+      "note": "Becomes a read-out of what the Back Half produced, with the naive 25x answer beside it (D-228)." },
     { "n": 15, "id": "runway", "title": "The Cushion", "group": "back-half",
       "absorbs": ["between-jobs", "quit-fund", "sleep-at-night"],
       "done": ["between-jobs", "quit-fund", "sleep-at-night"],
@@ -83,8 +83,8 @@
     { "n": 17, "id": "goals", "title": "The Decision Room", "group": "decisions",
       "absorbs": ["wedding", "reversibility", "what-if-life", "worth", "hassle", "adventure", "timeline"], "done": [],
       "note": "One shell, many block types; five outputs on every block. Reversibility becomes a field on every block, not a room." },
-    { "n": 18, "id": "housing", "title": "Housing", "group": "decisions", "absorbs": ["down-payment"], "done": [],
-      "note": "The house hack (D-225) already ships inside this room; it never became a room of its own." },
+    { "n": 18, "id": "housing", "title": "Housing", "group": "decisions", "absorbs": ["down-payment", "property"], "done": [],
+      "note": "The house hack (D-225) already ships inside this room; it never became a room of its own. The Deal (D-227) arrived on main after this map was written and is named here by rule 1: it and Housing sit on the same engines/ownership.js arithmetic and differ in framing — whether a building pays, against whether to buy where you live. Naming it is not a verdict on shipping it; it is what the map is for." },
     { "n": 19, "id": "car", "title": "Wheels", "group": "decisions", "absorbs": ["first-car"], "done": [] },
     { "n": 20, "id": "career-move", "title": "Work", "group": "decisions",
       "absorbs": ["offer-compare", "side-hustle", "self-employed", "credential", "degree", "micro-retirement", "rollover"], "done": [],

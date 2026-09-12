@@ -3,7 +3,7 @@ paths:
   - "rooms/expenses.html"
 ---
 # Expenses (`expenses`)
-File: rooms/expenses.html · 1189 lines
+File: rooms/expenses.html · 1188 lines
 Engines: projection, tier0, cashflow, fire, income, selfemployed
 Reference data: budget_templates.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, se_tax_2026.json
 Owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine

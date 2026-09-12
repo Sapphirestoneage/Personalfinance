@@ -4,7 +4,7 @@ paths:
   - "engines/reversibility.js"
 ---
 # Can It Be Undone (`reversibility`)
-File: rooms/reversibility.html · 329 lines
+File: rooms/reversibility.html · 328 lines
 Engines: projection, tier0, cashflow, hourly, events, reversibility
 Reference data: expense_categories.json, housing_conventions.json, moving_cost.json, reentry_gap.json, reversibility.json, triple_d.json
 Owns: reversibilityDecision
