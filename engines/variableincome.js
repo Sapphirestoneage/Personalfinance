@@ -177,6 +177,23 @@
     var fe = o.entries === false ? null : fromEntries(h, { now: o.now, window: o.window });
     var observed = !!(fe && fe.count >= 1);
     if (observed) { low = fe.lowCents; high = fe.highCents; averageCents = fe.averageCents; }
+
+    /* Put the three figures on one basis. A low and a high typed against the
+       variable SOURCE describe that source alone, while the average falls
+       back to the whole household's gross over twelve — so a photographer
+       with a day job read "low $400 · average $5,300 · high $1,500", a high
+       month a third of the average, which cannot happen. Whatever else
+       arrives every month is added to both ends, because the salary this
+       room sets has to cover the whole month's spending. D-226. */
+    var steadyCents = 0;
+    if (!observed && avg.basis === 'gross' && source && Money.isEntered(source.grossAnnualIncomeCents)) {
+      var grossAll = Schema.grossAnnualIncomeCents(h);
+      if (Money.isOk(grossAll)) {
+        steadyCents = Math.max(0, Math.round((grossAll.value - source.grossAnnualIncomeCents) / MONTHS));
+        if (Money.isEntered(low)) low += steadyCents;
+        if (Money.isEntered(high)) high += steadyCents;
+      }
+    }
     var spendingR = Schema.monthlyExpensesCents(h);
     var spending = Money.isOk(spendingR) ? spendingR.value : null;
     var cashR = Schema.cashCents(h);
@@ -226,6 +243,7 @@
       grossAnnualIncomeCents: Money.isEntered(avg.grossAnnualIncomeCents) ? avg.grossAnnualIncomeCents : null,
       lowCents: low,
       highCents: high,
+      steadyCents: steadyCents,
       spendingCents: spending,
       spendingReason: Money.isOk(spendingR) ? null : spendingR.reason,
       cashCents: cash,

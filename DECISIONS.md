@@ -13584,6 +13584,30 @@ matrix and two room lists agreed to the change. In the browser the ladder
 now reads "$18,000 above 7.5% APR", matching the dashboard, and the
 drawdown room opens for a 61-year-old who is still working.
 
+## D-226 — A low month, a high month and an average, on one basis
+
+**Why.** On a household with a day job and a side business, Variable Income
+printed "low $400 · average $5,300 · high $1,500" — a high month a third of
+the average, which cannot happen. The low and high are typed against the
+variable source and describe it alone; the average falls back to the whole
+household's gross over twelve.
+
+**Decision.** `engines/variableincome.js`: when the average is on the
+household basis and the low and high came from one source, whatever else
+arrives every month is added to both ends, so all three measure the same
+thing — a whole month's income. Reported as `steadyCents`. Figures observed
+from the ledger are already household-wide and are untouched.
+
+**Replaces or removes.** Removes a line that contradicted itself. No new
+room, screen or field.
+
+**Stored shape.** No change to `slaf.household.v2`.
+
+**Verified.** `node test/run.js` (30,310). The same household now reads
+"low $4,700 · average $5,300 · high $5,800 · a low month clears spending",
+and the salary it proposes moves from spending to the low month, which is
+the convention the room states.
+
 ---
 
 # The Dungeons & Dividends entries
