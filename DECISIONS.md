@@ -13522,6 +13522,38 @@ $415, 9 months) get the gap; solvent households keep their ladder step or
 flag unchanged; the retiree keeps the drawdown branch and the job-seeker
 the runway.
 
+## D-224 — One definition of what leaves each month
+
+**Why.** A persona audit found two engines disagreeing about the same
+household in opposite directions. `engines/cashflow.js`'s fallback basis
+measured against essential expenses, which never hold a debt minimum, so
+When It Won't All Get Paid told a household $415 short that it had "$1,800"
+left. `engines/foo.js` added every minimum to expenses, which charges a
+homeowner their mortgage twice, because accommodation is defined as "rent,
+or mortgage plus tax plus insurance, one number".
+
+**Decision.** `shared/schema.js` gains
+`monthlyDebtPaymentsOutsideExpensesCents(household, tables)`: the minimums
+of debts whose payment is not already inside an expense bucket. The rule is
+`data/import_keywords.json` `monthlyMeansExpense`, which already stated it
+in those words for the importer — mortgage maps to housing, every other
+type to null. `engines/foo.js` step 0 and `engines/cashflow.js`'s
+`monthlyTotal` basis both read it; the categorised basis already counted
+minimums as a derived category and is unchanged. Four rooms now load the
+table: cant-pay, debt-payoff, budget and the FOO ladder.
+
+**Replaces or removes.** Removes the two contradictory definitions of what
+is free each month. No new room, screen or field.
+
+**Stored shape.** No change to `slaf.household.v2`.
+
+**Verified.** `node test/run.js` (30,245), with the old assertions rewritten
+to the corrected figure and a new guard that a mortgage minimum is not
+added on top of accommodation. In the browser: the crisis room now reads
+"$400 short — $5,900 comes in and $6,300 has to go out" where it read "No
+gap"; a homeowner whose only debt is a mortgage is no longer reported as
+short.
+
 ---
 
 # The Dungeons & Dividends entries

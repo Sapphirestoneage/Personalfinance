@@ -84,9 +84,14 @@
     var hi = highInterestDebts(household, t);
 
     /* --- Step 0: cover basic living expenses -----------------------------
-       Net monthly income after estimated tax, against expenses plus debt
-       minimums. Uses the same tax lookup as the savings rate, not a second
-       one. */
+       Net monthly income after estimated tax, against expenses plus the debt
+       minimums that are not already inside them. Uses the same tax lookup as
+       the savings rate, not a second one.
+
+       It used to add EVERY minimum, which charged a homeowner their mortgage
+       twice: the accommodation box is defined as "rent, or mortgage plus tax
+       plus insurance, one number", so the payment is already in there.
+       Schema keeps the one rule. D-224. */
     (function () {
       if (!Money.isOk(gross) || !Money.isOk(expenses)) {
         steps.push(unknown('cover_basics',
@@ -101,7 +106,8 @@
         return;
       }
       var netMonthly = (gross.value - tax.value) / 12;
-      var outgoings = expenses.value + (Money.isOk(payments) ? payments.value : 0);
+      var outside = Schema.monthlyDebtPaymentsOutsideExpensesCents(household, tables);
+      var outgoings = expenses.value + (Money.isOk(outside) ? outside.value : 0);
       steps.push(netMonthly >= outgoings
         ? met('cover_basics', { netMonthlyIncomeCents: Math.round(netMonthly), monthlyOutgoingsCents: outgoings })
         : unmet('cover_basics', { netMonthlyIncomeCents: Math.round(netMonthly), monthlyOutgoingsCents: outgoings }));

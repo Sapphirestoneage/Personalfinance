@@ -68,6 +68,7 @@ const TABLES = {
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
   fooRules: require(path.join(ROOT, 'data/foo_rules.json')),
   expenseCategories: require(path.join(ROOT, 'data/expense_categories.json')),
+  importKeywords: require(path.join(ROOT, 'data/import_keywords.json')),
   budgetTemplates: require(path.join(ROOT, 'data/budget_templates.json')),
   debtRules: require(path.join(ROOT, 'data/debt_rules.json')),
   fireVariants: require(path.join(ROOT, 'data/fire_variants.json')),
@@ -739,7 +740,7 @@ const RULES = TABLES.debtRules;
   checkTrue('...the estimate leans on the intake guesses, so a pay is enough for a figure', /SLAF\.Gate\.fillGuesses\(h, TABLES, null\)/.test(page));
   checkTrue('...and the two figures show under the box, each saying what it came from', /id="extra-basis"/.test(page) && /row\('Estimate'/.test(page) && /row\('Realized'/.test(page) && /closed month/.test(page) && /guessed, fix it in Start Here/.test(page));
   checkTrue('...a stale engine falls back to the typed figure, never a crash', /typeof Debt\.extraCapacity !== 'function'/.test(page));
-  checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults'\]\)/.test(page));
+  checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults', 'importKeywords'\]\)/.test(page));
   checkTrue('a second ring: interest over the whole plan, by debt, from the payoffs (D-190)', /Interest over the plan, by debt/.test(page) && /p\.interestPaidCents/.test(page) && /plan\.totalInterestCents\), small: 'until it is all gone'/.test(page));
 })();
 
@@ -2060,14 +2061,28 @@ section('SWAN Number');
 
   /* -- "What's left over" is one function, not a second definition -------
         Robin has no categorised month, so the surplus falls back to Tier 0's
-        own annual savings figure: 72,000 − 37,800 expenses − tax, over 12.  */
+        own annual savings figure: 72,000 − 37,800 expenses − tax, over 12 —
+        LESS the debt minimums that are not inside those expenses. That basis
+        measures against essential expenses, which never hold a minimum, so
+        without the subtraction it reported money that was already promised
+        to a lender: the crisis room told a household $415 short that it had
+        $1,825 spare. D-224.  */
   const surplus = CashFlow.monthlySurplusCents(base, TABLES.expenseCategories, TABLES);
   const tier0Saving = Tier0.savingsRate(base, TABLES).excludingMatch;
+  const robinMinimums = Schema.monthlyDebtPaymentsOutsideExpensesCents(base, TABLES);
   check('with no categories, the surplus falls back to the monthly total',
     surplus.basis, 'monthlyTotal');
-  check('and it is Tier 0\'s own savings figure over twelve',
-    surplus.value, Math.round(tier0Saving.annualSavingsCents / 12));
-  check('which for Robin is $1,710 a month', surplus.value, 171000);
+  check('and it is Tier 0\'s savings figure over twelve, less the minimums',
+    surplus.value, Math.round(tier0Saving.annualSavingsCents / 12) - robinMinimums.value);
+  check('Robin owes $305 a month in minimums, none of it inside the buckets',
+    robinMinimums.value, 30500);
+  check('so what is free is $1,405 a month, not $1,710', surplus.value, 140500);
+  /* A mortgage payment is already inside accommodation, so it is not
+     subtracted twice: a homeowner's minimums net to nothing extra. */
+  const homeowner = Schema.createHousehold();
+  homeowner.debts = [Schema.createDebt({ id: 'm', type: 'mortgage', balanceCents: 30000000, minPaymentCents: 190000 })];
+  check('a mortgage minimum is not added on top of accommodation',
+    Schema.monthlyDebtPaymentsOutsideExpensesCents(homeowner, TABLES).value, 0);
 
   /* Once a month IS categorised, the sharper basis takes over. */
   const tracked = Demo.build();

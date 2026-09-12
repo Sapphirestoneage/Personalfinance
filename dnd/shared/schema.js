@@ -2425,6 +2425,40 @@
     return Money.ok(summed.total);
   }
 
+  /**
+   * The part of the monthly debt minimums that is NOT already inside one of
+   * the four expense buckets.
+   *
+   * A mortgage payment is part of accommodation by this app's own
+   * definition of that box — "rent, or mortgage plus tax plus insurance,
+   * one number" — so adding the mortgage minimum to the expense total
+   * counts it twice. Every other kind of debt sits outside the buckets and
+   * has to be added. Two engines had this wrong in opposite directions:
+   * the ladder added every minimum (charging a homeowner their mortgage
+   * twice) and the cash-flow surplus added none (telling a household with
+   * $2,240 of minimums that it had $1,825 spare).
+   *
+   * The mapping is `data/import_keywords.json` `monthlyMeansExpense`, which
+   * already states this rule in those words for the importer: a debt type
+   * maps to the expense category its payment line belongs in, or null to
+   * keep it a debt with its own minimum. One rule, read by both. D-224.
+   */
+  function monthlyDebtPaymentsOutsideExpensesCents(household, tables) {
+    var all = aggregatableDebts(household);
+    if (!all.length) {
+      return saidNoDebt(household) ? Money.ok(0, { none: true })
+        : Money.incomplete('Add your monthly minimum payments to see this.', ['monthlyDebtPayments']);
+    }
+    var map = (tables && tables.importKeywords && tables.importKeywords.monthlyMeansExpense) || null;
+    if (!map) return monthlyDebtPaymentsCents(household);
+    var outside = all.filter(function (d) { return !map[d.type || 'other']; });
+    var summed = Money.sumCents(outside.map(function (d) { return d.minPaymentCents; }));
+    return Money.ok(summed.total, {
+      counted: summed.counted,
+      insideExpenses: all.length - outside.length
+    });
+  }
+
   function grossAnnualIncomeCents(household) {
     var summed = Money.sumCents(allIncomeSources(household).map(function (s) {
       return s.grossAnnualIncomeCents;
@@ -3097,6 +3131,7 @@
     investmentsCents: investmentsCents,
     totalDebtCents: totalDebtCents,
     monthlyDebtPaymentsCents: monthlyDebtPaymentsCents,
+    monthlyDebtPaymentsOutsideExpensesCents: monthlyDebtPaymentsOutsideExpensesCents,
     grossAnnualIncomeCents: grossAnnualIncomeCents,
     estimatedAnnualTaxCents: estimatedAnnualTaxCents,
     takeHomeAnnualCents: takeHomeAnnualCents,

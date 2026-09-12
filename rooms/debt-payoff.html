@@ -1750,7 +1750,7 @@
 
   SLAF.Progress.mount(ROOM_ID);
 
-  Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults']).then(function (tables) {
+  Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults', 'importKeywords']).then(function (tables) {
     TABLES = tables;
     RULES = tables.debtRules;
     FOO = tables.fooRules || null;

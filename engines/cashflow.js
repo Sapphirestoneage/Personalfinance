@@ -293,8 +293,20 @@
     }
     var rate = Tier0.savingsRate(household, tables).excludingMatch;
     if (!Money.isOk(rate)) return rate;
-    return Money.ok(Math.round(rate.annualSavingsCents / MONTHS_PER_YEAR), {
+    /* This basis measures against ESSENTIAL expenses, which never include a
+       debt minimum — so on its own it reported $1,825 free to a household
+       that was $415 short once its $2,240 of minimums were counted. The
+       crisis room, the ladder's waterfall and the payoff plan's extra all
+       read this figure, and all three were wrong in the same direction for
+       anyone carrying debt. The categorised basis above already counts
+       minimums as a derived category, so only this one needs them; the
+       mortgage is excluded because accommodation already holds it. D-224. */
+    var debt = Schema.monthlyDebtPaymentsOutsideExpensesCents(household, tables);
+    var debtCents = Money.isOk(debt) ? debt.value : 0;
+    return Money.ok(Math.round(rate.annualSavingsCents / MONTHS_PER_YEAR) - debtCents, {
       basis: 'monthlyTotal',
+      debtMinimumsCents: debtCents,
+      debtMinimumsKnown: Money.isOk(debt),
       annualSavingsCents: rate.annualSavingsCents,
       expenseSource: rate.expenseSource,
       note: 'measured against essential expenses only'

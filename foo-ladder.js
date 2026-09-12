@@ -917,7 +917,7 @@
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(function (h0) { state.household = h0; paint(); });
 
-  Reference.load(['irsLimits', 'effectiveTaxRates']).then(function (t) {
+  Reference.load(['irsLimits', 'effectiveTaxRates', 'importKeywords']).then(function (t) {
     state.tables = t;
     var L = t.irsLimits.limits;
     state.limits = {
