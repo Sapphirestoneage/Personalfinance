@@ -808,7 +808,7 @@
         "socialSecurityAt"
       ],
       "requires": [
-        "decumulation"
+        "drawdownPlanning"
       ],
       "dashboardNumber": "withdrawalRate",
       "order": 33

@@ -217,7 +217,7 @@
       function take(need) { var a = Math.min(rem, Math.max(0, need)); rem -= a; return a; }
       var a1 = take(state.deductibleTarget - s.cash);
       if (a1 > 0) { s.cash += a1; rows.push({ label: 'Step 1 · Deductible cash', amt: a1 }); }
-      var high = s.debts.filter(function (x) { return x.apr > 6 && x.balance > 0; })
+      var high = s.debts.filter(function (x) { return x.apr > HIGH_INTEREST_PCT && x.balance > 0; })
         .sort(function (a, b) { return b.apr - a.apr; });
       for (var i = 0; i < high.length; i++) {
         var p = take(high[i].balance);
@@ -236,7 +236,7 @@
         var a8 = take(state.prepaidTarget - s.prepaid);
         if (a8 > 0) { s.prepaid += a8; rows.push({ label: 'Step 8 · Prepaid future expenses', amt: a8 }); }
       }
-      var low = s.debts.filter(function (x) { return x.apr <= 6 && x.balance > 0; })
+      var low = s.debts.filter(function (x) { return x.apr <= HIGH_INTEREST_PCT && x.balance > 0; })
         .sort(function (a, b) { return b.apr - a.apr; });
       for (var j = 0; j < low.length; j++) {
         var p2 = take(low[j].balance);
@@ -266,13 +266,13 @@
           var av = d.gap - committed, ok = false;
           if (step === 0 && cash >= state.deductibleTarget) ok = true;
           else if (step === 1) { if (s2need <= 0) ok = true; else if (av >= s2need) { committed += s2need; ok = true; } }
-          else if (step === 2 && !dbts.some(function (x) { return x.apr > 6 && x.balance > 0.5; })) ok = true;
+          else if (step === 2 && !dbts.some(function (x) { return x.apr > HIGH_INTEREST_PCT && x.balance > 0.5; })) ok = true;
           else if (step === 3 && ef >= state.efMonths * d.mExpenses) ok = true;
           else if (step === 4) { if (s5need <= 0) ok = true; else if (av >= s5need) { committed += s5need; ok = true; } }
           else if (step === 5) { if (s6need <= 0) ok = true; else if (av >= s6need) { committed += s6need; ok = true; } }
           else if (step === 6) { if (s7need <= 0) ok = true; else if (av >= s7need) { committed += s7need; ok = true; } }
           else if (step === 7 && (!d.prepaidSet || prepaid >= state.prepaidTarget)) ok = true;
-          else if (step === 8 && !dbts.some(function (x) { return x.apr <= 6 && x.balance > 0.5; })) ok = true;
+          else if (step === 8 && !dbts.some(function (x) { return x.apr <= HIGH_INTEREST_PCT && x.balance > 0.5; })) ok = true;
           if (!ok) return;
           done[step] = m; step++;
         }
@@ -291,7 +291,7 @@
           else if (step === 2 || step === 8) {
             var pool = avail;
             var pick = dbts.filter(function (x) {
-              return (step === 2 ? x.apr > 6 : x.apr <= 6) && x.balance > 0;
+              return (step === 2 ? x.apr > HIGH_INTEREST_PCT : x.apr <= HIGH_INTEREST_PCT) && x.balance > 0;
             }).sort(function (a, b) { return b.apr - a.apr; });
             for (var q = 0; q < pick.length; q++) {
               var pay = Math.min(pool, pick[q].balance);
@@ -333,8 +333,8 @@
     var s2gapMo = (entered(d.matchCapPct) && entered(state.contribPct) && entered(d.mIncome))
       ? Math.max(0, ((d.matchCapPct - state.contribPct) / 100) * d.mIncome) : null;
     var rated = d.debts.filter(function (x) { return entered(x.balance) && entered(x.apr) && x.balance > 0; });
-    var high = rated.filter(function (x) { return x.apr > 6; });
-    var low = rated.filter(function (x) { return x.apr <= 6; });
+    var high = rated.filter(function (x) { return x.apr > HIGH_INTEREST_PCT; });
+    var low = rated.filter(function (x) { return x.apr <= HIGH_INTEREST_PCT; });
     var st = state;
 
     return [
@@ -366,7 +366,7 @@
         build: function () { return {
           sub: d.saidNoDebt && d.debts.length === 0 ? 'No debt. Clear.'
             : high.length === 0 ? 'No high-interest debt. Clear.'
-            : fmt(high.reduce(function (s, x) { return s + x.balance; }, 0)) + ' above 6% APR — highest '
+            : fmt(high.reduce(function (s, x) { return s + x.balance; }, 0)) + ' above ' + HIGH_INTEREST_PCT + '% APR — highest '
               + Math.max.apply(null, high.map(function (x) { return x.apr; })).toFixed(1) + '%.',
           pct: high.length === 0 ? 100 : 0,
           act: high.length ? 'Waterfall attacks highest APR first (avalanche).' : 'Stay clear.' }; } },
@@ -839,9 +839,9 @@
           h('span', { style: { flex: '1', fontSize: 'var(--text-base)' }, text: x.name }),
           entered(x.apr) ? h('span', { style: { fontSize: 'var(--text-xs)', padding: '2px 8px',
             borderRadius: '999px',
-            background: x.apr > 6 ? 'rgba(229,72,77,0.2)' : 'rgba(30,58,138,0.5)',
-            color: x.apr > 6 ? 'var(--color-critical)' : 'var(--color-text-muted)' },
-            text: x.apr > 6 ? 'Step 3' : 'Step 9' }) : null
+            background: x.apr > HIGH_INTEREST_PCT ? 'rgba(229,72,77,0.2)' : 'rgba(30,58,138,0.5)',
+            color: x.apr > HIGH_INTEREST_PCT ? 'var(--color-critical)' : 'var(--color-text-muted)' },
+            text: x.apr > HIGH_INTEREST_PCT ? 'Step 3' : 'Step 9' }) : null
         ]),
         h('div', { style: { display: 'flex', gap: 'var(--space-4)', fontSize: 'var(--text-sm)',
           color: 'var(--color-text-muted)', fontVariantNumeric: 'tabular-nums' } }, [
@@ -912,13 +912,24 @@
   build();
   paint();
 
+  /* What counts as high-interest debt was typed in as `apr > 6` in eleven
+     places here, while every other room read 0.075 from data/foo_rules.json.
+     Same household, same minute: this room said "$18,000 above 6% APR" and
+     the dashboard said "compounds above 7.5%". The table owns the figure —
+     reference data lives in data/, never inline — and this is the fallback
+     only until it loads. D-225. */
+  var HIGH_INTEREST_PCT = 7.5;
+
   Spine.registerRoom(ROOM_ID);
 
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(function (h0) { state.household = h0; paint(); });
 
-  Reference.load(['irsLimits', 'effectiveTaxRates', 'importKeywords']).then(function (t) {
+  Reference.load(['irsLimits', 'effectiveTaxRates', 'importKeywords', 'fooRules']).then(function (t) {
     state.tables = t;
+    if (t.fooRules && t.fooRules.thresholds && typeof t.fooRules.thresholds.highInterestDebtRate === 'number') {
+      HIGH_INTEREST_PCT = t.fooRules.thresholds.highInterestDebtRate * 100;
+    }
     var L = t.irsLimits.limits;
     state.limits = {
       k401: L.elective401k, k401Catchup: L.elective401kCatchup50Plus,

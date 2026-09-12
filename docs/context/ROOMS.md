@@ -64,7 +64,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **quit-fund** — The Quit Fund · 142 lines · engines: selfemployed, tax, projection, tier0, debt, cashflow, reachable, countdown, quitfund · D-217
 - **micro-retirement** — Micro-Retirement Planner · 169 lines · engines: projection, tier0, hourly, countdown, microretirement · D-219
 - **protection** — Protection · 268 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-103, D-098, D-094
-- **decumulation** — Drawing It Down · 279 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-104, D-098, D-094
+- **decumulation** — Drawing It Down · 279 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-225, D-104, D-098
 - **roth-aca** — Roth Conversions Before 65 · 207 lines · engines: selfemployed, tax, rothaca · D-221, D-216
 - **middle-class-trap** — The Middle Class Trap Test · 207 lines · engines: selfemployed, tax, projection, tier0, trap · D-218
 - **estate** — Estate Basics · 218 lines · engines: projection, tier0, hourly, estate · owns: beneficiariesSet, willExists, poaExists · D-106, D-098, D-094

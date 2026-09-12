@@ -2145,7 +2145,7 @@
     fire: ['savingsRate'],
     'between-jobs': ['unemployment'],
     protection: ['protection'],
-    decumulation: ['decumulation'],
+    decumulation: ['drawdownPlanning'],
     tax: ['income'],
     'career-move': ['career'],
     partner: ['partner'],

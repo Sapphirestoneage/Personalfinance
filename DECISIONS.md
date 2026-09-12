@@ -13554,6 +13554,36 @@ added on top of accommodation. In the browser: the crisis room now reads
 gap"; a homeowner whose only debt is a mortgage is no longer reported as
 short.
 
+## D-225 — The room you need before you decide, and one threshold
+
+**Why.** Two Sides of FI's audience is people at or near their number
+working out whether they can stop. Drawing It Down was gated on having
+already retired, so it told them "not for you right now, you said you are
+employed" and opened only once the decision was irreversible. Separately,
+the FOO ladder room judged high-interest debt at 6% while every other room
+read 7.5% from the table — the same household was told both in one session.
+
+**Decision.** `shared/gate.js` splits one key into two: `decumulation`
+stays "is this household drawing down", which is what the withdrawal-rate
+reading needs, and a new `drawdownPlanning` branch — everyone but a student
+— is what `rooms/decumulation.html` requires. `engines/ratios.js` answers a
+non-retiree with where the question is asked instead of "a number for a
+retiree". `foo-ladder.js` reads `fooRules.thresholds.highInterestDebtRate`
+and uses it in all eleven places, including the sentence on screen; the
+typed 7.5 is a fallback until the table loads.
+
+**Replaces or removes.** Removes a gate that shut the planning room to the
+people planning, and the second definition of high-interest debt.
+
+**Stored shape.** No change to `slaf.household.v2`. `Registry.requires`
+for decumulation moves from `decumulation` to `drawdownPlanning`; the
+generated `rooms.json` is rebuilt.
+
+**Verified.** `node test/run.js` (30,279), with the hand-written situation
+matrix and two room lists agreed to the change. In the browser the ladder
+now reads "$18,000 above 7.5% APR", matching the dashboard, and the
+drawdown room opens for a 61-year-old who is still working.
+
 ---
 
 # The Dungeons & Dividends entries

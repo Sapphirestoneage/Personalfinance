@@ -53,18 +53,22 @@ module.exports = function (t) {
 
   /* The six situations, and what each turns off. Written out rather than
      computed, so a change to the gate has to be agreed to here too. */
+  /* Drawing It Down is absent only for a student (D-225): the question
+     "can I stop, and what happens when I do" belongs to the people still
+     working who are deciding, not only to those who already went. The
+     withdrawal-rate READING still belongs to a retiree alone. */
   var EXPECTED = {
-    employed:     ['self-employed', 'between-jobs', 'decumulation', 'partner', 'kids', 'variable-income'],
-    selfEmployed: ['accounts', 'between-jobs', 'decumulation', 'partner', 'kids'],
+    employed:     ['self-employed', 'between-jobs', 'partner', 'kids', 'variable-income'],
+    selfEmployed: ['accounts', 'between-jobs', 'partner', 'kids'],
     unemployed:   ['savings-rate', 'fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner', 'kids',
+                   'credential', 'accounts', 'tax', 'career-move', 'partner', 'kids',
                    'variable-income', 'dreamline'],
     student:      ['self-employed', 'accounts', 'between-jobs', 'protection', 'decumulation', 'partner',
                    'kids', 'variable-income'],
     retired:      ['savings-rate', 'fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
                    'credential', 'accounts', 'between-jobs', 'career-move', 'partner', 'kids',
                    'variable-income', 'dreamline'],
-    both:         ['between-jobs', 'decumulation', 'partner', 'kids']
+    both:         ['between-jobs', 'partner', 'kids']
   };
   Object.keys(EXPECTED).forEach(function (status) {
     var h = household(status);

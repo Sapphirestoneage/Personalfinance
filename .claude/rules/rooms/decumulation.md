@@ -10,6 +10,7 @@ Reference data: confidence_weights.json, expense_categories.json, fire_variants.
 Owns: stockShare, plannedAnnualDraw, socialSecurityAt
 Reads from other owners: grossAnnualIncome (start), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:
+  - D-225 — The room you need before you decide, and one threshold
   - D-104 — Decumulation: the age the money lasts to
   - D-098 — The first six tranche rooms: what each owns, before it is built
   - D-094 — One pager in, one pager out: the core

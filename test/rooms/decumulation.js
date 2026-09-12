@@ -135,10 +135,13 @@ module.exports = function (t) {
   try { empty = Decumulation.plan(Schema.createHousehold({}), TABLES, OPTS); } catch (e) { threw = true; }
   checkTrue('an empty household gets a reason, not a throw', !threw && empty && !Money.isOk(empty) && typeof empty.reason === 'string' && empty.reason.length > 0);
   checkTrue('… and no tables at all is still a reason', (function () { try { const r = Decumulation.plan(Schema.createHousehold({}), {}, OPTS); return !Money.isOk(r) && !!r.reason; } catch (e) { return false; } })());
-  checkTrue('an employed household is told this is a retiree’s number', (function () {
+  /* An employed household still gets no rate — nothing is being drawn — but
+     the reason now says where the question IS answered, because the people
+     who ask it are deciding whether they could stop. D-225. */
+  checkTrue('an employed household is told nothing is being drawn, and where to ask', (function () {
     const h = retiree({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'employed', dob: '1990-06-01', incomeSources: [Schema.createIncomeSource({ grossAnnualIncomeCents: 6000000 })] })] });
     const r = Decumulation.plan(h, TABLES, OPTS);
-    return !Money.isOk(r) && /retiree/.test(r.reason);
+    return !Money.isOk(r) && /Nothing is being drawn yet/.test(r.reason) && /What If, Life/.test(r.reason);
   })());
   checkTrue('the Result never carries a status key in its extras', Object.keys(p).filter(k => k === 'status').length === 1);
 
