@@ -92,7 +92,7 @@ function boobyTrap(v, key) {
   check('the booby-trapped backup loaded', loaded === true);
 
   /* 3. The rooms that render the most, with the trap in every label. */
-  const heavy = ['index.html', 'map.html', 'rooms/ledger.html', 'rooms/express.html', 'rooms/refresh.html', 'rooms/data.html', 'rooms/statement.html', 'rooms/debt-payoff.html', 'rooms/history.html', 'rooms/timeline.html', 'rooms/income.html', 'rooms/expenses.html', 'rooms/cash-flow.html', 'rooms/settings.html', 'rooms/first-round.html', 'rooms/calendar.html', 'rooms/budget.html', 'rooms/planner.html', 'rooms/what-if-life.html', 'rooms/rerank.html'];
+  const heavy = ['index.html', 'map.html', 'rooms/ledger.html', 'rooms/data.html', 'rooms/statement.html', 'rooms/debt-payoff.html', 'rooms/history.html', 'rooms/timeline.html', 'rooms/income.html', 'rooms/expenses.html', 'rooms/cash-flow.html', 'rooms/settings.html', 'rooms/calendar.html', 'rooms/budget.html', 'rooms/planner.html', 'rooms/what-if-life.html', 'rooms/rerank.html'];
   for (const f of heavy) {
     if (!fs.existsSync(path.join(ROOT, f))) continue;
     try { await page.goto(BASE + '/' + f, { waitUntil: 'networkidle', timeout: 20000 }); } catch (e) { continue; }

@@ -32,7 +32,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   page.on('dialog', d => d.accept());
 
   /* Answer every askable, non-repeat row in Express, through the owner. */
-  await page.goto(BASE + '/rooms/express.html', { waitUntil: 'networkidle' });
+  await page.goto(BASE + '/rooms/ledger.html#all-at-once', { waitUntil: 'networkidle' });
   await page.waitForSelector('[data-x-row="dob"]');
   const written = await page.evaluate((rows) => {
     const Own = SLAF.Ownership, Spine = SLAF.Spine;

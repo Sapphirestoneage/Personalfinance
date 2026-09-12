@@ -13763,6 +13763,15 @@ the walk's last step point at the Ledger; `data/layouts.json` sheds six ids
 from all twenty arrangements; the dashboard, the map and the skill tree link
 to the views.
 
+**The warm opening survives.** Welcome Back's copy was not decoration: being
+SENT here after a gap is a different moment from coming looking, and the
+anti-rule in D-227 is about exactly that. So the view opens with "Welcome
+back." and the two-minute line when the dashboard sent you, and with the
+plain refresh line otherwise. The dashboard clears `comeback.due` before
+redirecting so a bounce back does not loop, and carries the fact of the
+return as `?comeback=1`. No word in either wording names a lapse;
+`test/comeback.js` still holds the copy to that.
+
 **Stored shape.** No change. One rename in a snapshot's own field:
 `reason: 'refresh'` and `reason: 'comeback'` are written as
 `'since-last-time'`. Nothing reads `reason` to decide anything — it is a
@@ -13773,10 +13782,11 @@ their deltas still compute.
 it is NOT merged here: it owns 17 shared fields and where those owners go is
 the owner's decision at the top of STATUS.md.
 
-**Verified.** `node test/run.js` (30,847 checks), `node test/forms.js` (604
-checks in a real browser: Round 1, all at once, since last time and the
-arrangements search box each keep the keyboard open). Every view and all six
-redirects loaded at 390px with a clean console.
+**Verified.** `node test/run.js`, `node test/forms.js` (604 checks in a real
+browser: Round 1, all at once, since last time and the arrangements search
+box each keep the keyboard open), and `node test/comeback.js`,
+`test/xss.js`, `test/onefact.js`, `test/render.js`, `test/alignment.js`.
+Every view and all six redirects loaded at 390px with a clean console.
 
 ## D-229 — What The Next Dollar Does: one question at three amounts
 

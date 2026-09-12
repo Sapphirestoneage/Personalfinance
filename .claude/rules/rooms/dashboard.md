@@ -3,7 +3,7 @@ paths:
   - "index.html"
 ---
 # The Dashboard (`dashboard`)
-File: index.html · 1567 lines
+File: index.html · 1570 lines
 Engines: none
 Reference data: advice_translator.json, ratio_benchmarks.json
 Owns: nothing

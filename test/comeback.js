@@ -42,30 +42,36 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   }, ahead);
   await page.goto(BASE + '/index.html', { waitUntil: 'networkidle' });
   await page.waitForTimeout(800);
-  check('the front door opens on the Comeback', /rooms\/comeback\.html/.test(page.url()), page.url());
-  if (!/comeback/.test(page.url())) { await page.goto(BASE + '/rooms/comeback.html', { waitUntil: 'networkidle' }); }
-  await page.waitForSelector('#rows .row', { timeout: 10000 }).catch(() => null);
+  /* Welcome Back is the Ledger's since-last-time view since D-228; the warm
+     opening survived the merge and appears only when you were SENT here
+     after a gap, which is the state this test sets up. */
+  check('the front door opens on the since-last-time view', /rooms\/ledger\.html\?comeback=1#since-last-time/.test(page.url()), page.url());
+  if (!/since-last-time/.test(page.url())) { await page.goto(BASE + '/rooms/ledger.html#since-last-time', { waitUntil: 'networkidle' }); }
+  await page.waitForSelector('#rows-moving .row', { timeout: 10000 }).catch(() => null);
   const seen = await page.evaluate(() => ({
-    fields: Array.from(document.querySelectorAll('#rows input[data-field]')).map(i => i.getAttribute('data-field')),
-    text: document.body.innerText,
-    title: document.querySelector('h1').textContent,
+    fields: Array.from(document.querySelectorAll('#rows-moving input[data-field]')).map(i => i.getAttribute('data-field')),
+    text: document.getElementById('view-since').innerText,
+    title: document.getElementById('since-head').textContent,
     strip: (document.getElementById('strip') || {}).textContent
   }));
   const moving = {}; rows.forEach(r => { moving[r.id] = r.moves; });
   check('it asks only moving rows', seen.fields.length > 0 && seen.fields.every(f => moving[f] === true), seen.fields.filter(f => moving[f] !== true).join(','));
   check('it opens on Welcome back', /Welcome back/.test(seen.title));
+  check('and the warm opening is only for a return, not for every visit',
+    /id="since-head" hidden/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')));
   check('it says about 2 minutes', /About 2 minutes/.test(seen.text));
   const lower = seen.text.toLowerCase();
   const hits = BANNED.filter(w => lower.indexOf(w) !== -1);
   check('no banned word on the page', hits.length === 0, hits.join(','));
-  const src = fs.readFileSync(path.join(ROOT, 'rooms/comeback.html'), 'utf8').toLowerCase().split('<script src')[0];
+  const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  const src = led.slice(led.indexOf('<section id="view-since"'), led.indexOf('<!-- ================= ARRANGEMENTS')).toLowerCase();
   const srcHits = BANNED.filter(w => src.indexOf(w) !== -1);
   check('and none in the page source copy', srcHits.length === 0, srcHits.join(','));
   check('it ends on the since-last-time strip', typeof seen.strip === 'string' && seen.strip.length > 10);
   /* Once: a second visit the same day does not come back here. */
   await page.goto(BASE + '/index.html?comeback=seen', { waitUntil: 'networkidle' });
   await page.goto(BASE + '/index.html', { waitUntil: 'networkidle' }); await page.waitForTimeout(500);
-  check('the Comeback shows once per return', !/comeback\.html/.test(page.url()), page.url());
+  check('the Comeback shows once per return', !/since-last-time/.test(page.url()), page.url());
   await browser.close();
   console.log('\n' + '─'.repeat(66));
   if (failures.length) { console.log('✗ ' + failures.length + ' failed, ' + passed + ' passed\n'); failures.forEach((f, i) => console.log('  ' + (i + 1) + '. ' + f)); process.exit(1); }

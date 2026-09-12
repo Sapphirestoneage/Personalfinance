@@ -139,6 +139,7 @@
   #view-express { max-width: 720px; }
   #view-round1 { max-width: 560px; }
   #view-round1 .switch, #view-express .switch { font-size: var(--text-sm); margin: var(--space-2) 0 0; }
+  #view-since .since-head { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0 0 var(--space-1); }
   #view-since .strip { font-size: var(--text-md); margin: var(--space-2) 0 0; }
   #view-since .moved { font-size: var(--text-xs); color: var(--color-text-muted); }
   #view-since .moved.is-up { color: var(--color-positive); }
@@ -691,7 +692,8 @@
 
   <!-- ====== SINCE LAST TIME (was rooms/refresh.html + comeback.html) ==== -->
   <section id="view-since" hidden>
-  <p class="slaf-lede">Only the numbers that move: balances, rates, spending, pay — oldest first. Each box holds the last number you gave. Tap Still true, or type the new one.</p>
+  <h2 class="since-head" id="since-head" hidden>Welcome back.</h2>
+  <p class="slaf-lede" id="since-lede">Only the numbers that move: balances, rates, spending, pay — oldest first. Each box holds the last number you gave. Tap Still true, or type the new one.</p>
 
   <section class="slaf-card" id="fields">
     <span class="slaf-eyebrow">The numbers that move</span>
@@ -1833,6 +1835,22 @@
     el('done-note').textContent = 'Saved. Snapshot ' + n + ' taken.';
     window.location.href = '../index.html';
   });
+
+  /* Sent here after a gap rather than having come looking: the same rows,
+     the warmer opening (D-214, kept through the merge in D-228). Nothing in
+     either wording names a lapse — a month not visited is not a failure, a
+     gap or a broken streak, and test/comeback.js holds the copy to that. */
+  (function () {
+    var sent = /[?&]comeback=1(&|$)/.test(location.search);
+    if (!sent) {
+      var due = null;
+      try { due = Prefs ? Prefs.get('comeback.due', null) : null; } catch (e) { /* fine */ }
+      sent = due !== null && due !== undefined;
+    }
+    if (!sent) return;
+    el('since-head').hidden = false;
+    el('since-lede').textContent = 'Here is what changed. About 2 minutes: only the numbers that move, the oldest first. Tap Still true, or type the new one.';
+  })();
 
   Spine.onChange(function () { if (ROWS.length) paint(); });
 
