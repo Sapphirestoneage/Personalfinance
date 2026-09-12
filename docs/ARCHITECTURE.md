@@ -68,5 +68,6 @@ render; engines never write. Undo snapshots sit under `slaf.snapshots.v1`.
    trace cannot see, the rest are dead ends.
 5. Four onboarding doors are live at once: Start Here, Front Doors (`doors`),
    Walk-Through (`walk`) and the Ledger.
-6. Data lives only in this browser. The one reminder is a 30-day nudge inside
-   the Backup panel on Ledger and Settings; nothing prompts at a monthly close.
+6. Data lives only in this browser. Two reminders: the 30-day nudge inside the
+   Backup panel on Ledger and Settings, and the offer at a monthly close
+   (D-225). Neither is a popup; both are a line and a button.

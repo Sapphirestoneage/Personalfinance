@@ -11952,7 +11952,29 @@ section('Backup: one file for every key (D-202)');
     console.warn = w; delete global.location;
     check('on a dev host the guard returns the stray key', stray.join(','), 'somebody.else');
     checkTrue('and says which, and what to do', /somebody\.else/.test(warned) && /in no backup/.test(warned));
+    /* D-225: one way out, so a room can offer a copy at the right moment
+       without writing a second download. With no document it says so
+       rather than throwing, and it never opens a dialog of its own. */
+    const offPage = Backup.save();
+    checkTrue('save() off a page reports rather than throws', offPage.ok === false && /no page/i.test(offPage.reason));
+    checkTrue('and the widget is the only thing that opens a file picker',
+      !/window\.confirm|window\.alert|window\.prompt/.test(fs.readFileSync(path.join(ROOT, 'shared/backup.js'), 'utf8')));
     done();
+  }
+
+  /* ---- The close offers a copy (D-225) --------------------------------- */
+  {
+    const budget = fs.readFileSync(path.join(ROOT, 'rooms/budget.html'), 'utf8');
+    checkTrue('the Budget room loads the backup file', /shared\/backup\.js/.test(budget));
+    checkTrue('and offers a copy only after a month closes',
+      /if \(r\.ok\) offerBackup\(payload\.label\)/.test(budget) && /id="close-backup" hidden/.test(budget));
+    checkTrue('through the one save, not a second download',
+      /SLAF\.Backup\.save\(\)/.test(budget) && !/URL\.createObjectURL/.test(budget));
+    checkTrue('and says how old the last copy is rather than nagging blind',
+      /exportAgeDays\(\)/.test(budget) && !/window\.confirm\('Save/.test(budget));
+    const backupSrc = fs.readFileSync(path.join(ROOT, 'shared/backup.js'), 'utf8');
+    checkTrue('the widget itself goes through save() too, so there is one path',
+      (backupSrc.match(/URL\.createObjectURL/g) || []).length === 1);
   }
 
   /* ---- Load: counts, apply, undo --------------------------------------- */

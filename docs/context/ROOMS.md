@@ -17,7 +17,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **expenses** — Expenses · 1187 lines · engines: projection, tier0, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-207, D-199, D-196
 - **cash-flow** — Cash Flow · 563 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget · D-192, D-181, D-163
 - **income** — Income · 785 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-215, D-207, D-198
-- **budget** — Budget · 482 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-130, D-129, D-128
+- **budget** — Budget · 519 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-225, D-130, D-129
 - **variance** — Estimated vs Actual · 231 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
 - **statement** — The Statement · 722 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
 - **real-hourly-wage** — Real Hourly Wage · 249 lines · engines: projection, tier0, hourly · D-054, D-021, D-001

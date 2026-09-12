@@ -8,7 +8,7 @@ Updated: 2026-09-12
   between them are the weak spot (docs/ARCHITECTURE.md "Known problems").
 - Lane 2 is landed except one row: the lens copy and the lookup sentences are
   folded in (D-222, D-223) and every sourced table is live. `data/lane2/
-  studentloans.json` stays parked pending Next item 5.
+  studentloans.json` stays parked pending Next item 4.
 - Clutter pass (D-209/210, D-219/220/221): nine dead root files gone; the
   glossary hover is live everywhere; one sourced table now feeds each of tax,
   ACA, unemployment and contribution limits, and all four duplicates are
@@ -29,8 +29,7 @@ Updated: 2026-09-12
 2. Make logged income reconcile with typical income (known problem 1).
 3. First journey works end to end: about 8 questions in, a FOO step and an FI
    date range out. Add a node test for it.
-4. Monthly close prompts a backup export.
-5. Student loans: name the plans (RAP, IBR, PAYE, ICR) and ask when the loans
+4. Student loans: name the plans (RAP, IBR, PAYE, ICR) and ask when the loans
    were disbursed, or keep the room's stated scope of three shapes and no plan
    names? Naming them adds a question and a vocabulary. OWNER DECISION NEEDED.
 

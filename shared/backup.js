@@ -308,6 +308,32 @@
     return 'The last copy is ' + days + ' days old. Worth saving a fresh one.';
   }
 
+  /* ---- Handing the file over (D-225) -------------------------------------
+     The widget's Save button was the only way out of here, so a room that
+     wanted to offer a copy at the right moment would have had to write a
+     second download. One function: it builds the file, hands it to the
+     browser, notes the moment in Prefs and reports what happened. It never
+     opens a dialog of its own — a room decides when to offer. */
+  function save() {
+    var doc = g().document;
+    if (!doc) return { ok: false, reason: 'There is no page to hand a file to.', count: 0, name: null };
+    var n = keys().length;
+    if (!n) return { ok: false, reason: 'Nothing to save yet: this browser holds no figures.', count: 0, name: null };
+    var name = filename();
+    try {
+      var blob = new Blob([toJSON()], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = doc.createElement('a');
+      a.href = url; a.download = name;
+      doc.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      noteExport();
+      return { ok: true, name: name, count: n, reason: null };
+    } catch (e) {
+      return { ok: false, name: name, count: n, reason: 'This browser would not hand over the file: ' + (e && e.message ? e.message : e) };
+    }
+  }
+
   function mount(host, opts) {
     var doc = g().document;
     if (!doc) return null;
@@ -336,20 +362,9 @@
     }
 
     q('save').addEventListener('click', function () {
-      var n = keys().length;
-      if (!n) { say('Nothing to save yet: this browser holds no figures.', 'is-error'); return; }
-      var text = toJSON();
-      var name = filename();
-      try {
-        var blob = new Blob([text], { type: 'application/json' });
-        var url = URL.createObjectURL(blob);
-        var a = doc.createElement('a');
-        a.href = url; a.download = name;
-        doc.body.appendChild(a); a.click(); a.remove();
-        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-        noteExport();
-        say('Saved ' + name + ' (' + things(n) + '). Keep it where you keep a bank statement.', 'is-good');
-      } catch (e) { say('This browser would not hand over the file: ' + (e && e.message ? e.message : e), 'is-error'); }
+      var r = save();
+      say(r.ok ? 'Saved ' + r.name + ' (' + things(r.count) + '). Keep it where you keep a bank statement.' : r.reason,
+        r.ok ? 'is-good' : 'is-error');
     });
     q('load').addEventListener('click', function () { file.value = ''; file.click(); });
     file.addEventListener('change', function () {
@@ -410,6 +425,7 @@
     lastExportAt: lastExportAt,
     exportAgeDays: exportAgeDays,
     exportAgeLine: exportAgeLine,
+    save: save,
     mount: mount
   };
 });

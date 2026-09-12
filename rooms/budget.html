@@ -146,6 +146,14 @@
     <p class="slaf-hint" id="close-hint" style="margin:var(--space-2) 0 0"></p>
     <div style="margin-top:var(--space-3)"><button type="button" class="slaf-btn slaf-btn--primary" id="btn-close" hidden>Close</button></div>
     <p class="say" id="close-say" hidden></p>
+    <!-- D-225: the one moment in the year a person is looking at a finished
+         record is the moment a copy is worth having. A button and a line,
+         never a dialog. -->
+    <div id="close-backup" hidden style="margin-top:var(--space-3)">
+      <p class="slaf-hint" id="close-backup-hint" style="margin:0 0 var(--space-2)"></p>
+      <button type="button" class="slaf-btn" id="btn-close-backup">Save a copy</button>
+      <p class="say" id="close-backup-say" hidden></p>
+    </div>
   </section>
 
   <section class="slaf-card card-gap" id="months">
@@ -170,6 +178,7 @@
 <script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
+<script src="../shared/backup.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
@@ -423,7 +432,35 @@
     say.hidden = false;
     say.className = 'say' + (r.ok ? ' is-good' : '');
     say.textContent = r.ok ? payload.label + ' is closed. Next month’s estimates start from its actuals.' : r.reason;
+    if (r.ok) offerBackup(payload.label);
     render();
+  });
+
+  /* ---- The copy, offered at the close (D-225) ---------------------------
+     Every figure lives in one browser and is one "clear browsing data" from
+     gone (shared/backup.js). The 30-day nudge inside the Backup panel is
+     the only reminder, and it only speaks to someone already on the Ledger
+     or Settings. A closed month is the one moment in the month when the
+     record is finished and worth keeping, so the offer belongs here: a
+     button and a line about the last copy, never a dialog. */
+  function offerBackup(label) {
+    var box = el('close-backup');
+    if (!box || !SLAF.Backup) return;
+    var days = SLAF.Backup.exportAgeDays();
+    box.hidden = false;
+    el('close-backup-hint').textContent = label + ' is on the record now, and the record lives only in this browser. '
+      + (days === null ? 'No copy has been saved from here yet.'
+        : days < 1 ? 'The last copy was saved today, so this one is optional.'
+        : 'The last copy is ' + days + (days === 1 ? ' day' : ' days') + ' old.');
+    el('close-backup-say').hidden = true;
+  }
+  el('btn-close-backup').addEventListener('click', function () {
+    var say = el('close-backup-say');
+    var r = SLAF.Backup ? SLAF.Backup.save() : { ok: false, reason: 'The backup file is not loaded on this page.' };
+    say.hidden = false;
+    say.className = 'say' + (r.ok ? ' is-good' : '');
+    say.textContent = r.ok ? 'Saved ' + r.name + '. Keep it where you keep a bank statement.' : r.reason;
+    if (r.ok) el('close-backup-hint').textContent = 'A copy was saved just now.';
   });
 
   function shortDate(iso) { var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }

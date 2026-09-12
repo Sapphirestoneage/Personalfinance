@@ -13569,6 +13569,36 @@ which reads "the 2025 federal poverty guideline for a household of 3".
 
 ---
 
+## D-225 — A copy offered at the close, and one way out for the file
+
+**Why.** Every figure lives in one browser and is one "clear browsing data"
+from gone. The only reminder was the thirty-day nudge inside the Backup panel,
+which speaks only to someone already standing on the Ledger or Settings. The
+one moment in the month when a person is looking at a finished record is the
+moment they close it, and nothing was said there.
+
+**Decision.** `shared/backup.js` gains `save()`: build the file, hand it to the
+browser, note the moment in Prefs, report what happened. The widget's own Save
+button goes through it, so there is exactly one `createObjectURL` in the app
+and a room can offer a copy without writing a second download. `rooms/budget.html`
+loads the file and, after a month closes and only then, shows a line and a
+button: what the record is, how old the last copy is, and Save a copy. Never a
+dialog — the file's own rule.
+
+**Replaces or removes.** Nothing removed. One button on a card that is already
+there, shown only after a close, on a room that already had the close.
+
+**Stored shape.** No change. `backup.lastExportAt` in Prefs was already written
+by every export path.
+
+**Verified.** `node test/run.js` 29,590; driven on a Pixel 7: the panel stays
+hidden until the month closes, then downloads
+`money-rooms-backup-2026-09-12.json` and the line changes to "A copy was saved
+just now"; the Backup widget still saves on Settings and on the Ledger after
+the refactor.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

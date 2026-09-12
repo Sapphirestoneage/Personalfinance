@@ -4,12 +4,13 @@ paths:
   - "engines/presets.js"
 ---
 # Budget (`budget`)
-File: rooms/budget.html · 482 lines
+File: rooms/budget.html · 519 lines
 Engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget
 Reference data: budget_templates.json, car_costs.json, contribution_limits.json, expense_categories.json, savings_presets.json, tax_brackets.json
 Owns: monthsClosed
 Reads from other owners: cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:
+  - D-225 — A copy offered at the close, and one way out for the file
   - D-130 — What was pushed off, built: dates that are only estimated or potential, the calendar from the ledger, one month of spending, one rent, what the log moved, N/A in its owner room, an emergency-fund preset
   - D-129 — The ledger, revised: four ways to be taxed, three things an expense can produce, a budget of cards with presets, N/A and the what-if
   - D-128 — The ledger: income entries, the expense log, the reflected budget, the month closed
