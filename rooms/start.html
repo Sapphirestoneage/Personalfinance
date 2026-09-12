@@ -265,6 +265,21 @@
   function yearOptions(from, to) { var out = [['', 'Year']]; for (var y = from; y >= to; y--) out.push([String(y), String(y)]); return out; }
   function basisOptions() { return Income.BASES.map(function (b) { return [b.id, b.label]; }); }
 
+  /* The kind of pay, and whether it survives losing the job. It was written
+     out three times, once in each pay card. One copy now, with the second
+     question dropped where it cannot apply: a pension does not stop when a
+     job goes, because there is no job — and shared/schema.js already
+     derives the right answer from the income type, so asking was noise.
+     D-222. */
+  function payKindHtml(opts) {
+    var out = '<div data-paytype style="margin-top:var(--space-2)">'
+      + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?');
+    if (!opts || opts.survives !== false) {
+      out += choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…');
+    }
+    return out + '</div>';
+  }
+
   var BODY = {
     about: function () {
       var thisYear = new Date().getFullYear();
@@ -278,8 +293,7 @@
       return '<p class="q-help">However you are actually paid. It becomes a year underneath. “Not earning right now” is an answer, and so is “it varies”.</p>'
         + '<div class="row">' + moneyInput('pay', 'You are paid', 'e.g. 62,000', 'What you are paid') + select('basis', 'How often', basisOptions(), 'How often you are paid') + '</div>'
         + '<label class="slaf-field" data-hours hidden><span class="slaf-label">Hours a week</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" data-ctl="hours" placeholder="e.g. 40" aria-label="Hours a week"/></span></label>'
-        + '<div data-paytype style="margin-top:var(--space-2)">' + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?')
-        + choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…') + '</div>'
+        + payKindHtml()
         + '<p class="field-note" data-note="pay"></p>';
     },
     ownWork: function () {
@@ -289,16 +303,14 @@
     retiredPay: function () {
       return '<p class="q-help">Pension, Social Security, an annuity, what you draw down — all of it, together.</p>'
         + '<div class="row">' + moneyInput('pay', 'Coming in', 'e.g. 3,500', 'What comes in') + select('basis', 'How often', basisOptions(), 'How often') + '</div>'
-        + '<div data-paytype style="margin-top:var(--space-2)">' + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?')
-        + choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…') + '</div>'
+        + payKindHtml({ survives: false })
         + '<p class="field-note" data-note="pay"></p>';
     },
     studentPay: function () {
       return '<p class="q-help">A part-time job, a stipend, help from family that arrives like pay. Nothing is an answer too.</p>'
         + '<div class="row">' + moneyInput('pay', 'Coming in', 'e.g. 600', 'What comes in') + select('basis', 'How often', basisOptions(), 'How often') + '</div>'
         + '<label class="slaf-field" data-hours hidden><span class="slaf-label">Hours a week</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" data-ctl="hours" placeholder="e.g. 15" aria-label="Hours a week"/></span></label>'
-        + '<div data-paytype style="margin-top:var(--space-2)">' + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?')
-        + choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…') + '</div>'
+        + payKindHtml()
         + '<p class="field-note" data-note="pay"></p>';
     },
     betweenJobs: function () {
@@ -348,7 +360,7 @@
       + '<label class="slaf-field" data-ages hidden style="margin-top:var(--space-2)"><span class="slaf-label">Their ages' + badge('ages') + '</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" data-ctl="ages" placeholder="e.g. 4, 9" aria-label="Ages of dependents"/></span></label>'
       + '<p class="field-note">Term life, childcare and the like only come up when someone does.</p>'
       + '<label class="slaf-field" style="margin-top:var(--space-2)"><span class="slaf-label">ZIP, if you like</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" maxlength="5" data-ctl="zip" placeholder="e.g. 27601" aria-label="ZIP code"/></span></label>'
-      + '<p class="field-note">Your state sets the tax, childcare, property tax and insurance figures; a ZIP is kept for when a finer table exists.</p>'
+      + '<p class="field-note">Your state sets the tax, childcare, property tax and insurance figures. A ZIP fills the state in for you.</p>'
       + '<span class="sub-label">A second job, or other pay</span>'
       + '<div class="row">' + moneyInput('secondJob', 'It pays', 'e.g. 8,000', 'A second job or other pay') + select('secondBasis', 'How often', basisOptions(), 'How often the second job pays') + '</div>'
       + '<span class="sub-label">Anything big and one-off coming?</span>'

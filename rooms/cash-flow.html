@@ -222,13 +222,14 @@
   function renderGlance(h, summary, flow) {
     var inc = Tier0.takeHomeMonthlyCents(h, TABLES);
     var money = function (v) { return Money.formatCents(v); };
-    var left = Money.isOk(flow) ? Money.ok(flow.value) : (Money.isOk(inc) && Money.isOk(summary) ? Money.ok(inc.value - summary.spendMonthlyCents) : Money.incomplete(!Money.isOk(inc) ? 'Needs your income, in Start Here.' : 'Type the four numbers in Expenses.'));
     /* Goes out is the four numbers (D-172) plus the debt minimums, which
-       are not expenses but do leave the account; left is what remains. */
+       are not expenses but do leave the account; left is what remains.
+       `left` was worked out twice here, the first result thrown away
+       unread; only the second was ever shown. D-222. */
     var fatTotal = Schema.fat(h).totalCents;
     var mins = Schema.monthlyDebtPaymentsCents(h);
     var out = Money.isOk(fatTotal) ? Money.ok(fatTotal.value + (Money.isOk(mins) ? mins.value : 0)) : Money.incomplete('Type the four numbers in Expenses.');
-    left = Money.isOk(inc) && Money.isOk(out) ? Money.ok(inc.value - out.value) : Money.incomplete(!Money.isOk(inc) ? 'Needs your income, in Start Here.' : 'Type the four numbers in Expenses.');
+    var left = Money.isOk(inc) && Money.isOk(out) ? Money.ok(inc.value - out.value) : Money.incomplete(!Money.isOk(inc) ? 'Needs your income, in Start Here.' : 'Type the four numbers in Expenses.');
     el('glance-tiles').innerHTML =
       tile('Comes in', Money.isOk(inc) ? inc : Money.incomplete('Add your income in Start Here.'), money, Money.isOk(inc) ? 'take-home, after ' + Money.formatRate(inc.effectiveRate, { decimals: 0 }) + ' tax' : '')
       + tile('Goes out', out, money, Money.isOk(out) ? 'the four numbers, from Expenses' + (Money.isOk(mins) && mins.value > 0 ? ' + ' + Money.formatCents(mins.value) + ' debt minimums' : '') : '')
@@ -494,11 +495,11 @@
     el('manage-log').hidden = !manageOpen;
     el('btn-manage-log').setAttribute('aria-pressed', String(manageOpen));
     if (manageOpen) el('manage-log').innerHTML = Manage.panel(logItems(h), manageState);
-    var due = Manage.suggestArchive(logItems(h).filter(function (it) { return it.once; }), function (m) { return Budget.isClosed(h, m); }, (h.ledger || {}).dismissed)
-      /* Only recurring lines are worth asking about: a one-time receipt in a closed month is simply history. */
-      .filter(function () { return false; });
+    /* Only recurring lines are worth asking about: a one-time receipt in a
+       closed month is simply history. The one-time list was still being
+       built and then filtered away to nothing on every paint. D-222. */
     var recurringDone = CashFlow.logEntries(h).filter(function (e) { return e.active !== false && e.period === 'monthly' && e.date && Budget.isClosed(h, e.date.slice(0, 7)) && ((h.ledger || {}).dismissed || []).indexOf(e.id) === -1 && e.linkedIncomeId && !Ledger.activeEntries(h).some(function (x) { return x.id === e.linkedIncomeId; }); });
-    el('log-prompts').innerHTML = due.concat(recurringDone.map(function (e) { var it = logItems(h).filter(function (x) { return x.id === e.id; })[0]; return it; })).map(function (it) {
+    el('log-prompts').innerHTML = recurringDone.map(function (e) { var it = logItems(h).filter(function (x) { return x.id === e.id; })[0]; return it; }).map(function (it) {
       return '<div class="slaf-archive-prompt"><span>' + esc(it.label) + ' repeats every month for an income entry that is set aside.<small>Set it aside too?</small></span>'
         + '<span class="slaf-manage-acts"><button type="button" class="slaf-manage-act" data-prompt="archive" data-id="' + esc(it.id) + '">Set aside</button><button type="button" class="slaf-manage-act" data-prompt="dismiss" data-id="' + esc(it.id) + '">Not now</button></span></div>';
     }).join('');
@@ -555,8 +556,8 @@
     var notice = el('load-notice');
     notice.hidden = false;
     notice.className = 'notice is-error';
-    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
-      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+    notice.textContent = 'Couldn’t load this page’s reference numbers (' + err.message
+      + '). Reload the page; if it keeps happening, open the app from its web address rather than from a file on your computer.';
   });
 })();
 </script>

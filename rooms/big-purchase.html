@@ -151,28 +151,31 @@
     return { value: Money.formatCents(r.priceCents), basis: 'add your spending in Start Here to read this in life' };
   }
 
+  /* The sub-line used to chain up to eight middle-dot clauses. It now says
+     the price and one verdict, because the cash before and after is already
+     the chart, the interest and the spending are in the amounts list, and
+     the term, the date and the 20/3/8 result are in the assumptions. D-222. */
+  function verdict(r) {
+    if (r.financed && r.paymentCents !== null) {
+      return 'financed at ' + Money.formatRate(r.financeRate, { decimals: 1 }) + ' over ' + r.termMonths + ' months: <strong>' + Money.formatCents(r.paymentCents) + '/mo</strong>';
+    }
+    if (r.affordToday) return 'you can afford it today and stay above the floor';
+    if (r.monthlySavingCents !== null) return '<strong>' + Money.formatCents(r.monthlySavingCents) + ' a month</strong> for ' + r.monthsAway + ' months to have it without dipping under';
+    if (r.cashAfterCents !== null && r.floorCents !== null) {
+      return 'cash after: <strong>' + Money.formatCents(r.cashAfterCents) + '</strong>, ' + (r.cashShortOfFloor ? 'under' : 'above') + ' the ' + r.cushion.floorMonths + '-month floor of ' + Money.formatCents(r.floorCents);
+    }
+    return esc(r.cashReason || r.spendReason || '');
+  }
+  function carRuleWords(r) {
+    if (!r.carRule) return null;
+    var pay = r.carRule.checks.filter(function (c) { return c.key === 'payment'; })[0];
+    var termLeg = r.carRule.checks.filter(function (c) { return c.key === 'term'; })[0];
+    return 'the payment is ' + (pay && pay.pass ? 'under' : 'over') + ' the 8% cap of ' + Money.formatCents(r.carRule.paymentCapCents) + '/mo' + (termLeg && !termLeg.pass ? ', and ' + r.termMonths + ' months is past the rule’s three years' : '');
+  }
   function subLine(r) {
     var bits = ['<strong>' + Money.formatCents(r.priceCents) + '</strong>' + (r.kind ? ' for ' + esc(kindName(r.kind)) : '')];
-    if (r.hours !== null && r.fiDisplay) bits.push(esc(r.fiDisplay));
-    if (r.cashAfterCents !== null && r.floorCents !== null) {
-      var after = r.financed ? 'cash stays at <strong>' + Money.formatCents(r.cashAfterCents) + '</strong> — nothing leaves up front'
-        : 'cash after: <strong>' + Money.formatCents(r.cashAfterCents) + '</strong>, ' + (r.cashShortOfFloor ? 'under' : 'above') + ' the ' + r.cushion.floorMonths + '-month floor of ' + Money.formatCents(r.floorCents);
-      bits.push(after);
-      if (r.affordToday) bits.push('you can afford it today and stay above the floor');
-      else if (r.monthlySavingCents !== null) bits.push('or <strong>' + Money.formatCents(r.monthlySavingCents) + ' a month</strong> for ' + r.monthsAway + ' months to have it without dipping under');
-      else if (!r.financed) bits.push(Money.formatCents(r.needCents) + ' more than the cash above the floor — add months until you buy to see the monthly');
-    } else if (r.cashReason || r.spendReason) {
-      bits.push(esc(r.cashReason || r.spendReason));
-    }
-    if (r.financed && r.paymentCents !== null) {
-      bits.push('financed at ' + Money.formatRate(r.financeRate, { decimals: 1 }) + ' over ' + r.termMonths + ' months: <strong>' + Money.formatCents(r.paymentCents) + '/mo</strong>, ' + Money.formatCents(r.totalInterestCents) + ' of interest');
-      if (r.carRule) {
-        var pay = r.carRule.checks.filter(function (c) { return c.key === 'payment'; })[0];
-        var termLeg = r.carRule.checks.filter(function (c) { return c.key === 'term'; })[0];
-        bits.push('20/3/8: the payment is ' + (pay && pay.pass ? 'under' : 'over') + ' the 8% cap of ' + Money.formatCents(r.carRule.paymentCapCents) + '/mo' + (termLeg && !termLeg.pass ? ', and ' + r.termMonths + ' months is past the rule’s three years' : ''));
-      }
-    }
-    if (!r.monthsKnown) bits.push('no date yet, so priced as if today');
+    var v = verdict(r);
+    if (v) bits.push(v);
     return bits.join(' · ');
   }
 
@@ -185,7 +188,7 @@
       var r = Purchase.weigh(h, T);
       if (!Money.isOk(r)) return { label: 'What it costs in life', value: null, reason: r.reason };
       var head = headline(r);
-      return { label: 'What it costs in life', value: head.value, sub: esc(head.basis) + ' · ' + subLine(r), zone: r.zone, result: r };
+      return { label: 'What it costs in life', value: head.value, sub: subLine(r) + ' — ' + esc(head.basis), zone: r.zone, result: r };
     },
 
     chart: function (h, T) {
@@ -236,12 +239,14 @@
       var p = readPlan(h);
       var a = Schema.resolveAssumptions(h);
       return [
-        { label: 'The cushion', value: Purchase.CUSHION.floorMonths + ' months of spending is the floor, ' + Purchase.CUSHION.fullMonths + ' the full fund', source: 'the 3–6 month convention in mainstream guidance and the FOO’s emergency-fund rung; data/liquidity_benchmarks.json draws the same bands (convention)' },
-        { label: 'Finance term', value: Purchase.termFor(p.label) + ' months', source: (p.label === 'car' ? 'a car loan runs about five years' : 'a personal loan or store credit runs about three') + ' — an assumption this room makes, not a quote (convention). Interest is the level payment × the term, less the price, from engines/projection.js' },
+        { label: 'The cushion', value: Purchase.CUSHION.floorMonths + ' months of spending is the floor, ' + Purchase.CUSHION.fullMonths + ' the full fund', source: 'the 3–6 month convention in mainstream guidance and the FOO’s emergency-fund rung; the app’s cushion bands draw the same lines (convention)' },
+        { label: 'Finance term', value: Purchase.termFor(p.label) + ' months', source: (p.label === 'car' ? 'a car loan runs about five years' : 'a personal loan or store credit runs about three') + ' — an assumption this room makes, not a quote (convention). Interest is the level payment × the term, less the price' },
         { label: 'When it is paid', value: !Money.isEntered(p.monthsAway) ? 'no date yet — priced as if today' : p.monthsAway === 0 ? 'today, in one go' : 'in ' + p.monthsAway + ' months, saved from the cash above the floor', source: 'the monthly is the shortfall ÷ the months, rounded up to the cent; paid in cash means the whole price leaves at once' },
-        { label: 'Hours of life', value: Money.isOk(r) && r.wageCents !== null ? Money.formatCents(r.wageCents, { decimals: 2 }) + ' an hour, your real rate' : 'no wage in this situation', source: 'Real Hourly Wage: pay after tax and the costs of working, over every hour the job takes (engines/hourly.js)' },
-        { label: 'Real return, for the FI lens', value: Money.formatRate(a.returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
-      ];
+        { label: 'Hours of life', value: Money.isOk(r) && r.wageCents !== null ? Money.formatCents(r.wageCents, { decimals: 2 }) + ' an hour, your real rate' : 'no wage in this situation', source: 'Real Hourly Wage: pay after tax and the costs of working, over every hour the job takes' },
+        /* Moved off the headline sub-line, which was too long to read. D-222. */
+        (Money.isOk(r) && r.carRule ? { label: 'The 20/3/8 test', value: carRuleWords(r), source: '20% down, three years, 8% of take-home — the same test Quick Math and the Car room run' } : null),
+        { label: 'Real return, for the FI lens', value: Money.formatRate(a.returnReal, { decimals: 0 }), source: 'the app’s long-run return after inflation, the one figure every room shares' }
+      ].filter(function (x) { return x; });
     },
 
     why: function (h, T, situation) {

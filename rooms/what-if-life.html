@@ -130,8 +130,8 @@
 
   <p class="disclaimer">
     Educational tool, not financial advice. The three columns are three
-    assumption bundles (data/triple_d.json), not forecasts; the return bands
-    are planning conventions. Your numbers stay in this browser.
+    bundles of assumptions, not forecasts; the return ranges are planning
+    conventions. Your numbers stay in this browser.
   </p>
 </main>
 
@@ -202,7 +202,7 @@
     el('event-list').innerHTML = EVENTS.list.map(function (t) {
       return '<button type="button" data-event="' + esc(t.id) + '" aria-pressed="' + (t.id === state.templateId) + '">' + esc(t.title) + '<small>' + esc(t.blurb || '') + '</small></button>';
     }).join('');
-    el('pick-why').textContent = EVENTS.list.length + ' event' + (EVENTS.list.length === 1 ? '' : 's') + ' so far. Each is a template in data/events/: its questions, and what it does to a month.';
+    el('pick-why').textContent = EVENTS.list.length + ' event' + (EVENTS.list.length === 1 ? '' : 's') + ' so far. Each one comes with its own questions and what it does to a month.';
   }
   el('event-list').addEventListener('click', function (evt) {
     var btn = evt.target.closest('[data-event]');

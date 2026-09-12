@@ -151,7 +151,9 @@
     <span class="slaf-eyebrow">Every skill</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">By lever</h2>
     <p class="slaf-hint" style="margin:0 0 var(--space-3)">
-      Each skill trains one of the seven levers. A once-skill the household
+      Each skill trains one of seven ways to move money: earning more, keeping
+      more, building assets, letting them compound, property, steadying the
+      base, and taking a measured bet. A once-skill the household
       already proves is marked done here without asking; a habit is logged a
       day at a time; a periodic one comes due again. Best return on effort
       first, within a lever.
@@ -242,8 +244,15 @@
   var ROOM_ID = 'stacker';
   var TABLES = null;
   var lever = 'all';
-  var LEVERS = [['all', 'All'], ['earner', 'Earner'], ['keeper', 'Keeper'], ['builder', 'Builder'], ['compounder', 'Compounder'],
-                ['landholder', 'Landholder'], ['anchor', 'Anchor'], ['speculator', 'Speculator']];
+  /* D-222: the seven levers used to be shown by their in-house names alone
+     (Earner, Keeper, Compounder, Landholder…), which mean nothing to a reader
+     seeing them for the first time. Same seven groups, same ids underneath;
+     only the words on screen changed. */
+  var LEVERS = [['all', 'All'], ['earner', 'Earn more'], ['keeper', 'Keep more'], ['builder', 'Build assets'], ['compounder', 'Let it compound'],
+                ['landholder', 'Property'], ['anchor', 'Steady the base'], ['speculator', 'Take a bet']];
+  var LEVER_WORDS = { earner: 'earning more', keeper: 'keeping more', builder: 'building assets', compounder: 'letting it compound',
+                      landholder: 'property', anchor: 'steadying the base', speculator: 'taking a bet' };
+  function leverWords(id) { return LEVER_WORDS[id] || id; }
 
   function el(id) { return document.getElementById(id); }
   function esc(s) {
@@ -306,7 +315,7 @@
         meta.push('<span class="auto' + (line.automated ? ' is-on' : '') + '" data-auto="' + esc(s.id) + '" role="button" tabindex="0">' + (line.automated ? 'runs by itself' : 'runs by itself?') + '</span>');
       }
       return '<div class="line" data-skill-line="' + esc(s.id) + '"><span class="nm">' + esc(s.name) + stateChip(line.state, s, stored)
-        + '<small>' + esc(s.kind === 'habit' ? 'habit · ' + s.lever : s.kind === 'once' ? 'once · ' + s.lever : 'every ' + s.everyDays + ' days · ' + s.lever) + '</small></span>'
+        + '<small>' + esc(s.kind === 'habit' ? 'habit · ' + leverWords(s.lever) : s.kind === 'once' ? 'once · ' + leverWords(s.lever) : 'every ' + s.everyDays + ' days · ' + leverWords(s.lever)) + '</small></span>'
         + '<span class="acts">' + acts + '</span><span class="meta">' + meta.join('') + '</span></div>';
     }).join('');
 
@@ -320,7 +329,7 @@
     if (Money.isOk(t.next) && t.equippedCount < t.maxEquipped) {
       card.hidden = false;
       el('next-name').textContent = t.next.value.name;
-      el('next-why').textContent = t.next.why + (t.next.fooStep !== null ? ' · you are at FOO step ' + t.next.fooStep : '');
+      el('next-why').textContent = t.next.why + (t.next.fooStep !== null ? ' · you are at step ' + t.next.fooStep + ' of the order of operations' : '');
       el('btn-next').setAttribute('data-skill', t.next.value.id);
     } else {
       card.hidden = true;
@@ -387,7 +396,7 @@
     if (need.length) meta.push('<span>first: ' + esc(need.join(', ')) + '</span>');
     if (s.synergy && s.synergy.length) meta.push('<span>×' + s.synergy[0].multiplier + ' with ' + esc((Skills.byId(TABLES, s.synergy[0].with) || {}).name || s.synergy[0].with) + '</span>');
     return '<div class="line" data-skill-row="' + esc(s.id) + '"><span class="nm">' + esc(s.name) + stateChip(st, s, stored)
-      + '<small>' + esc(s.kind + ' · ' + s.lever + (s.fooStep ? ' · FOO step ' + s.fooStep : '') + ' · ' + s.source) + '</small></span>'
+      + '<small>' + esc(s.kind + ' · ' + leverWords(s.lever) + (s.fooStep ? ' · step ' + s.fooStep + ' of the order of operations' : '') + ' · ' + s.source) + '</small></span>'
       + '<span class="acts">' + acts + '</span><span class="meta">' + meta.join('') + '</span></div>';
   }
 
@@ -495,7 +504,7 @@
       x: { label: 'practice days', format: function (v) { return String(Math.round(v)); } },
       y: { min: 0, max: 1, format: function (v) { return Math.round(v * 100) + '%'; } }
     });
-    el('curve-cap-p').textContent = 'A logistic: slow at first, fastest around day ' + c.logistic.midpointDays + ', then levelling. ' + (best ? 'Your longest-logged habit is at ' + best + ' day' + (best === 1 ? '' : 's') + ', ' + Math.round(100 * Skills.capability(TABLES, best)) + '% of the way.' : 'No habit logged yet.');
+    el('curve-cap-p').textContent = 'An S-curve: slow at first, fastest around day ' + c.logistic.midpointDays + ', then levelling. ' + (best ? 'Your longest-logged habit is at ' + best + ' day' + (best === 1 ? '' : 's') + ', ' + Math.round(100 * Skills.capability(TABLES, best)) + '% of the way.' : 'No habit logged yet.');
     /* 3. The ledger, grown to 65 along the wealth multiplier. */
     var total = Skills.ledgerTotalCents(hh);
     var fv = Skills.ledgerFutureValue(hh, TABLES);

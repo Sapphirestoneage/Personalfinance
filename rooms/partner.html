@@ -236,7 +236,7 @@
   function pct(rate) { return Money.formatRate(rate, { decimals: 0 }); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function theirs(p) { return p.label === 'You' ? 'your' : esc(p.label) + '’s'; }
-  function taxSource(T) { var t = T.effectiveTaxRates; return 'data/effective_tax_rates_2026.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + ')'; }
+  function taxSource(T) { var t = T.effectiveTaxRates; return 'our 2026 average-rate table, version ' + t.version + ' — ' + t.source + ' (' + t.confidence + ')'; }
 
   var COLOUR = { share: Charts.COLORS.spend, keeps: Charts.COLORS.target, pool: Charts.COLORS.contributed };
 
@@ -259,19 +259,18 @@
         } else {
           sub = 'What comes in is not estimated yet: ' + esc(you.takeHomeReason || them.takeHomeReason || '');
         }
-        if (s.sharedSource === 'household') sub += '. The shared month is the household month until you type it';
         return { label: 'One pool', value: value, sub: sub, zone: s.zone, result: s };
       }
+      /* D-222: the sub-line is two clauses, never a chain. Everything else the
+         split needs to admit — which mode is in force, whether it fell back,
+         where the shared month came from, the watch line — is a row in the
+         assumptions drawer below, so it is said once, not twice. */
       sub = '<strong>' + esc(you.label) + '</strong> ' + (you.label === 'You' ? 'pay' : 'pays') + ' ' + Money.formatCents(you.shareCents)
         + ' · <strong>' + esc(them.label) + '</strong> pays ' + Money.formatCents(them.shareCents) + ' of the shared ' + shared + ' a month';
-      if (you.burden !== null && them.burden !== null) sub += ' · ' + pct(you.burden) + ' of ' + theirs(you) + ' take-home, ' + pct(them.burden) + ' of ' + theirs(them);
-      else if (you.takeHomeReason || them.takeHomeReason) sub += '. Take-home is not estimated yet: ' + esc(you.takeHomeReason || them.takeHomeReason);
-      if (s.modeFallback) sub += '. <strong>' + esc(s.modeFallback) + '</strong>';
-      if (s.zeroEarner) sub += '. ' + esc(s.zeroEarner) + ' has no pay entered above zero, so in proportion to income their share is nothing';
-      if (s.outOfPocketCents !== null) sub += '. <strong>The shared month is ' + Money.formatCents(s.outOfPocketCents) + ' more than the two take-homes together</strong> — the rest is out of pocket, from savings';
-      else if (s.heavy.length) sub += '. More than half of ' + (s.heavy.length === 2 ? 'both take-homes' : (s.heavy[0] === 'You' ? 'your take-home' : esc(s.heavy[0]) + '’s take-home')) + ' goes to the shared month';
-      if (s.modeChosen === null) sub += '. Halves is the default until you choose a split';
-      if (s.sharedSource === 'household') sub += '. The shared month is the household month until you type it';
+      if (s.outOfPocketCents !== null) sub += ' · <strong>' + Money.formatCents(s.outOfPocketCents) + ' more than you both bring home</strong>, so the rest comes from savings';
+      else if (s.zeroEarner) sub += ' · ' + esc(s.zeroEarner) + ' has no pay entered, so their share is nothing';
+      else if (you.burden !== null && them.burden !== null) sub += ' · ' + pct(you.burden) + ' of ' + theirs(you) + ' take-home, ' + pct(them.burden) + ' of ' + theirs(them);
+      else if (you.takeHomeReason || them.takeHomeReason) sub += ' · take-home is not estimated yet: ' + esc(you.takeHomeReason || them.takeHomeReason);
       return { label: you.label === 'You' ? 'Your share' : you.label + '’s share', value: Money.formatCents(you.shareCents), sub: sub, zone: s.zone, result: s };
     },
 
@@ -343,7 +342,7 @@
       var row = Partner.convention(T, mode);
       var rows = [
         { label: 'How you split', value: Partner.modeLabel(mode) + (Money.isOk(s) && s.modeChosen === null ? ' (the default until you choose)' : Money.isOk(s) && s.modeFallback ? ' (fell back from ' + Partner.modeLabel(s.modeChosen).toLowerCase() + ')' : ''),
-          source: (row ? row.sentence + ' ' + row.whenChosen + ' — ' : '') + 'data/partner_conventions.json v' + conv.version + ' (' + conv.confidence + ')' },
+          source: (row ? row.sentence + ' ' + row.whenChosen + ' — ' : '') + 'our table of splitting conventions, version ' + conv.version + ' (' + conv.confidence + ')' },
         { label: 'The shared month', value: Money.isOk(s) ? Money.formatCents(s.sharedCents) : 'not known yet',
           source: Money.isOk(s) && s.sharedSource === 'typed' ? 'yours' : 'the household month from Start Here, until you type the shared costs' }
       ];
@@ -353,9 +352,11 @@
             source: 'estimated one person at a time at the household filing status (' + (h.filingStatus || 'not chosen') + '). An approximation: a joint return taxes the combined income, not each pay on its own. ' + taxSource(T) });
         });
         rows.push({ label: 'One paycheque', value: s.concentration !== null ? Money.formatRate(s.concentration, { decimals: 0 }) + ' of household income' : 'not known yet' + (s.concentrationReason ? ' — ' + s.concentrationReason : ''),
-          source: 'engines/ratios.js incomeConcentration: largest income ÷ household income' });
+          source: 'the largest income divided by the household income' });
       }
-      rows.push({ label: 'The watch line', value: Money.formatRate(Partner.HEAVY_SHARE, { decimals: 0 }) + ' of a take-home', source: 'a share above half of what one of you brings home is flagged (convention)' });
+      rows.push({ label: 'The watch line', value: Money.formatRate(Partner.HEAVY_SHARE, { decimals: 0 }) + ' of a take-home',
+        source: 'a share above half of what one of you brings home is flagged (convention)'
+          + (Money.isOk(s) && s.heavy.length ? '. Right now more than half of ' + (s.heavy.length === 2 ? 'both take-homes' : (s.heavy[0] === 'You' ? 'your take-home' : esc(s.heavy[0]) + '’s take-home')) + ' goes to the shared month' : '') });
       return rows;
     },
 

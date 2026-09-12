@@ -412,7 +412,7 @@
     el('tailwinds').innerHTML = Adventure.tailwinds(TABLES).map(mk).join('');
     document.querySelectorAll('[data-returns]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-returns') === state.returns)); });
     var r = Bands.rates(TABLES);
-    el('returns-note').textContent = r ? (Money.formatRate(rateFor(state.returns), { decimals: 1 }) + ' a year real, from data/return_bands.json v' + r.version) : '';
+    el('returns-note').textContent = r ? (Money.formatRate(rateFor(state.returns), { decimals: 1 }) + ' a year real, from the long-run return bands') : '';
   }
 
   function paintSteppers(v) {
@@ -560,7 +560,7 @@
       '<p class="slaf-note">' + esc(t.source) + '</p>'
       + '<p class="slaf-note"><strong>Confidence: ' + esc(t.confidence) + '.</strong> ' + esc(t.confidenceNote) + '</p>'
       + '<ul class="slaf-note">'
-      + '<li>Returns: ' + (r ? 'low ' + Money.formatRate(r.low, { decimals: 1 }) + ', likely ' + Money.formatRate(r.likely, { decimals: 1 }) + ', high ' + Money.formatRate(r.high, { decimals: 1 }) + ' a year after inflation, from data/return_bands.json v' + esc(r.version) + '. In play: <strong>' + esc(state.returns) + '</strong>.' : (t.returnRateReal * 100).toFixed(0) + '% a year after inflation.') + '</li>'
+      + '<li>Returns: ' + (r ? 'low ' + Money.formatRate(r.low, { decimals: 1 }) + ', likely ' + Money.formatRate(r.likely, { decimals: 1 }) + ', high ' + Money.formatRate(r.high, { decimals: 1 }) + ' a year after inflation, from the long-run return bands. In play: <strong>' + esc(state.returns) + '</strong>.' : (t.returnRateReal * 100).toFixed(0) + '% a year after inflation.') + '</li>'
       + '<li>Saving is take-home minus spending, never gross. The target: a year of spending divided by ' + (t.withdrawalRate * 100).toFixed(0) + '%, the same arithmetic the FIRE room uses; a raise not kept is spent, which moves it.</li>'
       + '<li>Cash and investments are kept apart. A crash hits what is invested only. A lost job draws on cash first, month by month, then sells taxable investments (net of the gains tax when the rates are known), and only then borrows: the year says “borrowing from month N” and the pot is never quietly drawn below zero. Retirement money is never sold in these five years. Side income that survives a job loss keeps paying through it.</li>'
       + '<li>The house hack cuts your rent or mortgage line from Expenses. ' + esc(t.accommodationShareFallbackNote) + '</li>'
@@ -588,7 +588,7 @@
         + worth + '. ' + (lv.survivesJobLoss ? 'Keeps paying if the job goes' : 'Stops with the job') + '; ' + esc(lv.flex) + '.'
         + (SLAF.Levers.applies(lv.id, h()) ? '' : ' <em>Not offered to you yet: ' + esc(lv.appliesWhen) + '.</em>') + '</li>';
     }).join('');
-    return '<p class="slaf-note"><strong>The levers.</strong> ' + esc(L.source) + ' data/levers.json v' + esc(L.version) + ' (' + esc(L.confidence) + ').</p>'
+    return '<p class="slaf-note"><strong>The levers.</strong> ' + esc(L.source) + ' (' + esc(L.confidence) + ').</p>'
       + '<ul class="slaf-note">' + rows + '</ul>';
   }
 

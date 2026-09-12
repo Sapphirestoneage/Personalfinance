@@ -312,7 +312,7 @@
     var out = '<li class="row is-' + st + '" data-row="' + esc(row.id) + '" data-status="' + st + '">'
       + '<span class="g" title="' + esc(WORD[st]) + '">' + GLYPH[st] + '</span>' + lab + valCell;
     if (sug) {
-      out += '<span class="small how"><details><summary>How I guessed this</summary>' + esc(sug.how) + ' <span class="src">' + esc(sug.sources.join(', ')) + '</span></details></span>';
+      out += '<span class="small how"><details><summary>How I guessed this</summary>' + esc(sug.how) + ' <span class="src">' + esc(Suggest.sourceLabel(sug.sources)) + '</span></details></span>';
     }
     if (st === 'computed') {
       var inputs = LedgerRows.inputsOf(row, Spine.getProfile(), TABLES);
@@ -423,7 +423,7 @@
       out += '<div class="group"><h3>Confirm these</h3><ul class="rows">' + v.confirm.map(function (s) {
         return '<li class="row is-suggested" data-row="' + esc(s.rowId) + '" data-status="suggested"><span class="g" title="suggested, not yet yours">' + GLYPH.suggested + '</span><span class="lab">' + esc(s.label) + '</span>'
           + '<span class="val is-suggested"><button type="button" class="slaf-btn slaf-btn--quiet use-it" data-use="' + esc(s.key) + '">' + esc(s.display) + ' · use it</button></span>'
-          + '<span class="small how"><details><summary>How I guessed this</summary>' + esc(s.how) + ' <span class="src">' + esc(s.sources.join(', ')) + '</span></details></span></li>';
+          + '<span class="small how"><details><summary>How I guessed this</summary>' + esc(s.how) + ' <span class="src">' + esc(Suggest.sourceLabel(s.sources)) + '</span></details></span></li>';
       }).join('') + '</ul></div>';
     }
     if (v.add.length) {

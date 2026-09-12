@@ -207,7 +207,7 @@
   <section class="slaf-card" id="future" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Money that is coming</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">A pension, Social Security, an annuity</h2>
-    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Not net worth, not income yet. Listed so the bridge and the FI date can read it later; nothing here is counted anywhere else. Read-only here — these are dated periods, and they are edited in <a href="timeline.html#out-periods">What Comes Next</a>, which draws them on a grid (D-152).</p>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">Not net worth, not income yet. Listed so the bridge and the FI date can read it later; nothing here is counted anywhere else. Read-only here — these are dated periods, and they are edited in <a href="timeline.html#out-periods">What Comes Next</a>, which draws them on a grid.</p>
     <div id="future-list"></div>
     <a class="slaf-btn" href="timeline.html#out-periods" style="width:100%;display:block;text-align:center;box-sizing:border-box">Add or change a period in What Comes Next →</a>
   </section>
@@ -361,7 +361,7 @@
         + (mine ? '<button type="button" class="asset-remove" data-remove="' + a.id + '" aria-label="Remove">✕</button>' : '')
         + '</div>'
         + '<div class="asset-grid">' + valueCell + typeCell
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Which pile it sits in</span>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">How soon you could reach it</span>'
         + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="tier" aria-label="Pile">'
         + tierOptions(a) + '</select></span></label>'
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">How sure it is worth that</span>'
@@ -382,7 +382,7 @@
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Reachable from age</span>'
         + '<span class="slaf-input-shell"><input type="text" inputmode="decimal" data-asset="' + a.id + '" data-field="accessAgeOverride" value="' + (Money.isEntered(a.accessAgeOverride) ? a.accessAgeOverride : '') + '" placeholder="' + (Money.isEntered(access) ? 'rule: ' + access : 'no age gate') + '" aria-label="Access age override"/></span></label>'
         + '</div></details>'
-        + '<p class="asset-sub">' + (rule ? 'Filed under ' + esc((rules.buckets.filter(function (b) { return b.id === rule.bucket; })[0] || {}).label || rule.bucket)
+        + '<p class="asset-sub">' + (rule ? 'Counted as ' + esc((rules.buckets.filter(function (b) { return b.id === rule.bucket; })[0] || {}).label || rule.bucket)
           + (Money.isEntered(access) ? ' · reachable from ' + access : ' · no age gate') : '') + '</p>'
         + '</div>';
     }).join('');
@@ -536,7 +536,7 @@
           }).join('') + '</ul>' : '<p class="blurb">Nothing here.</p>')
         + '</div>';
     }).join('');
-    el('portfolio-why').textContent = 'Weights: guaranteed counts in full, 85%+ at 0.85, "don\'t count on it" at half, "probably zero" at nothing — a convention (data/confidence_weights.json), shown beside the plain figure, never instead of it.';
+    el('portfolio-why').textContent = 'Weights: guaranteed counts in full, 85%+ at 0.85, "don\'t count on it" at half, "probably zero" at nothing — a convention, not a measurement, shown beside the plain figure, never instead of it.';
   }
 
   /* The three portfolios as shares of what is owned, with the plain net
@@ -652,7 +652,7 @@
       + (Money.isOk(est) && est.stateIncluded ? ' plus ' + (Math.round(est.components.state.marginalRate * 1000) / 10) + '% ' + h.state : '')
       + (b.roomBeforeNextBracketDollars !== null ? '; ' + Money.formatCents(b.roomBeforeNextBracketDollars * 100) + ' of room before ' + Math.round(b.nextRate * 100) + '%.' : '.')
       + (Money.isOk(est) ? ' All in — federal ' + fmt(est.federalIncomeTaxCents) + ', payroll ' + fmt(est.ficaCents) + (est.stateIncluded ? ', state ' + fmt(est.stateCents) : '') + ' — about ' + Money.formatRate(est.effectiveRate, { decimals: 1 }) + ' of gross.' : '');
-    caveat.textContent = 'Federal only, an estimate, from a bracket table that is unverified (data/federal_brackets_2026.json); the state figure applies the state schedule to federal taxable income and ignores state deductions and credits. Not a return.';
+    caveat.textContent = 'Federal only, an estimate, from a bracket table that is unverified; the state figure applies the state schedule to federal taxable income and ignores state deductions and credits. Not a return.';
   }
 
   function renderWorst(h, all) {
@@ -665,7 +665,7 @@
       : 'No state unemployment benefit was counted' + (h.state ? '.' : ' — add your state in Start Here.'))
       + (w.oopMaxKnown ? '' : ' Add your health plan\'s out-of-pocket maximum in Sleep At Night to price a bad health year too.')
       + ' This replaces "3–6 months" as the cushion test once these inputs exist.';
-    el('worst-caveat').textContent = 'The benefit is an estimate from an unverified table of state maximums (data/ui_benefits.json); the real figure depends on your base-period wages.';
+    el('worst-caveat').textContent = 'The benefit is an estimate from an unverified table of state maximums; the real figure depends on your base-period wages.';
   }
 
   function renderNow() {
@@ -681,7 +681,7 @@
     renderWorst(h, all);
     el('reading-list').innerHTML = ['cashSavings', 'investments', 'totalDebt', 'monthlyExpenses', 'highestDeductible', 'dob']
       .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
-    el('print-date').textContent = 'Statement as of ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' — signed by nobody.';
+    el('print-date').textContent = 'Statement as of ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' — put together by you, checked and signed by nobody.';
   }
 
   var renderQueued = false;

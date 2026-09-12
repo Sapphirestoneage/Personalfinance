@@ -178,7 +178,7 @@
     var L = SLAF.Levers.get('househack');
     if (!L) return [];
     var share = Money.formatRate(Math.abs(L.moves['expenses.needs.accommodation']), { decimals: 0 });
-    var src = 'data/levers.json v' + T.levers.version + ' (' + (T.levers.confidence || 'unverified') + ')';
+    var src = 'the app’s six levers (' + (T.levers.confidence || 'unverified') + ')';
     if (!SLAF.Levers.applies('househack', h)) {
       return [{ label: 'The house hack', value: 'housing down ' + share + ' — not weighed yet', source: 'a lever for a place you own or a price you have typed above; ' + src }];
     }
@@ -202,12 +202,10 @@
       var bits = [];
       bits.push('own <strong>' + money(r.ownCents) + '</strong> (of which ' + money(r.unrecoverableCents) + ' unrecoverable)');
       bits.push(r.rentIsNone ? 'rent <strong>no rent</strong>' : 'rent <strong>' + money(r.rentCents) + '</strong>' + (r.rentSource === 'expenses' ? ' (the housing line in Expenses)' : r.rentSource === 'housing' ? ' (typed here)' : ''));
-      if (r.priceToRent !== null) bits.push('price-to-rent ' + (Math.round(r.priceToRent * 10) / 10) + ' (' + ptrWords(r.priceToRentBand) + ')');
-      if (r.housingRatio !== null) bits.push(Money.formatRate(r.housingRatio, { decimals: 0 }) + ' of gross');
-      var downBit = money(r.downCents) + ' down';
-      if (r.yearsToDown !== null) downBit += ', ' + years(r.yearsToDown);
-      else if (r.neverAtThisPace) downBit += ', never at this pace';
-      bits.push(downBit);
+      /* Price-to-rent, the share of gross and the down payment were three
+          more middle-dot clauses. The down payment is in the amounts list and
+          both bands are in the assumptions, so the sub-line keeps owning
+          against renting — the comparison the headline makes. D-222. */
       var sub = bits.join(' · ');
       var notes = [];
       if (r.rentIsNone) notes.push('Start Here says you pay no rent, so this weighs owning against nothing: every dollar of owning is new. Type a rent above to weigh it against renting a place instead');
@@ -255,7 +253,7 @@
           if (!ptr || !Money.isEntered(ptr.ratio)) return null;
           var rent = Money.isEntered(p.rentMonthlyCents) ? { value: p.rentMonthlyCents, source: 'your rent' } : rentGuess(h);
           if (!rent) return null;
-          return { value: Math.round(rent.value * MONTHS * ptr.ratio), source: ptr.ratio + '× a year of ' + rent.source + ' (data/price_to_rent.json, ' + ptr.confidence + ')' };
+          return { value: Math.round(rent.value * MONTHS * ptr.ratio), source: ptr.ratio + '× a year of ' + rent.source + ' (the price-to-rent convention, ' + ptr.confidence + ')' };
         } },
       { ctl: 'downPct', label: 'Down payment, share of price', kind: 'pct', placeholder: 'e.g. 20',
         read: function (h) { return plan(h).downPct; },
@@ -267,7 +265,7 @@
         propose: function (h, T) {
           var m = T && T.mortgageRates;
           if (!m || !Money.isEntered(m.thirtyYearFixed)) return null;
-          return { value: m.thirtyYearFixed, source: 'the 30-year average as of ' + m.asOf + ' (data/mortgage_rates.json, ' + m.confidence + ')' };
+          return { value: m.thirtyYearFixed, source: 'the 30-year average as of ' + m.asOf + ' (' + m.confidence + ')' };
         } }
     ],
 
@@ -285,7 +283,8 @@
 
     assumptions: function (h, T) {
       var c = T.housingConventions || {}, m = T.mortgageRates || {}, ptr = T.priceToRent || {}, b = T.ratioBenchmarks || {};
-      var src = 'data/housing_conventions.json v' + c.version + ' — ' + (c.confidence || 'unverified');
+      var compared = Housing.compare(h, T), cmp = Money.isOk(compared) ? compared : null;
+      var src = 'the housing conventions the app carries, ' + (c.confidence || 'unverified');
       var band = b.bands && b.bands.housingRatio;
       var ptrBands = ptr.bands || {};
       var pct = function (v) { return Money.formatRate(v, { decimals: 1 }); };
@@ -293,19 +292,22 @@
         (function () {
           var st = Schema.stateCell(T, h.state, 'propertyTaxEffectiveRate');
           return st
-            ? { label: 'Property tax', value: pct(st.value) + ' of price a year in ' + st.name, source: 'the state\u2019s effective rate on owner-occupied housing, data/states.json as of ' + st.asOf + ' (' + st.source + '; ' + (st.verify ? 'recalled, to verify' : st.confidence) + ')' }
+            ? { label: 'Property tax', value: pct(st.value) + ' of price a year in ' + st.name, source: 'the state\u2019s effective rate on owner-occupied housing, as of ' + st.asOf + ' (' + st.source + '; ' + (st.verify ? 'recalled, to verify' : st.confidence) + ')' }
             : { label: 'Property tax', value: pct(c.propertyTaxRate) + ' of price a year', source: 'the US average effective rate; by state it runs from under 0.3% to over 2% (' + src + '). Set your state in Start Here for the state rate.' };
         })(),
         { label: 'Insurance', value: pct(c.insuranceRate) + ' of price a year', source: 'a national rule of thumb (' + src + ')' },
         { label: 'Maintenance', value: pct(c.maintenanceRate) + ' of price a year', source: 'the "1% rule" (' + src + ')' },
         { label: 'Closing costs', value: pct(c.closingCostRate) + ' of price', source: 'a national rule of thumb (' + src + ')' },
         { label: 'The term', value: Money.isEntered(c.termMonths) ? (c.termMonths / MONTHS) + ' years, fixed' : '—', source: 'the 30-year convention (' + src + ')' },
-        { label: 'The rate proposed', value: Money.formatRate(m.thirtyYearFixed, { decimals: 2 }), source: 'the 30-year average as of ' + m.asOf + ' — data/mortgage_rates.json v' + m.version + ' (' + (m.confidence || 'unverified') + '). Rates move weekly; yours is the one to type.' },
-        { label: 'Price-to-rent bands', value: 'under ' + ptrBands.buyingFavouredBelow + ' buying favoured, over ' + ptrBands.rentingFavouredAbove + ' renting favoured', source: 'data/price_to_rent.json v' + ptr.version + ' (' + (ptr.confidence || 'unverified') + '); the price proposed is ' + ptr.ratio + '× a year of rent' },
-        { label: 'The housing ratio', value: band ? 'good to ' + Money.formatRate(band.good, { decimals: 0 }) + ', watch to ' + Money.formatRate(band.warn, { decimals: 0 }) : '—', source: 'the 28% front-end rule — data/ratio_benchmarks.json v' + b.version + ' (' + (b.confidence || 'convention') + '), the band the Ratios room reads' },
+        /* These three carried the figure itself on the headline sub-line,
+           which ran to five middle-dot clauses; the figure now sits beside
+           the band that reads it. D-222. */
+        { label: 'The rate proposed', value: Money.formatRate(m.thirtyYearFixed, { decimals: 2 }), source: 'the 30-year average as of ' + m.asOf + ' (' + (m.confidence || 'unverified') + '). Rates move weekly; yours is the one to type.' },
+        { label: 'Price-to-rent', value: (cmp && cmp.priceToRent !== null ? 'yours ' + (Math.round(cmp.priceToRent * 10) / 10) + ' (' + ptrWords(cmp.priceToRentBand) + '); ' : '') + 'under ' + ptrBands.buyingFavouredBelow + ' buying favoured, over ' + ptrBands.rentingFavouredAbove + ' renting favoured', source: 'the price-to-rent convention (' + (ptr.confidence || 'unverified') + '); the price proposed is ' + ptr.ratio + '× a year of rent' },
+        { label: 'The housing ratio', value: (cmp && cmp.housingRatio !== null ? 'yours ' + Money.formatRate(cmp.housingRatio, { decimals: 0 }) + ' of gross; ' : '') + (band ? 'good to ' + Money.formatRate(band.good, { decimals: 0 }) + ', watch to ' + Money.formatRate(band.warn, { decimals: 0 }) : '—'), source: 'the 28% front-end rule (' + (b.confidence || 'convention') + '), the band the Ratios room reads' },
         { label: 'The down payment', value: '20% proposed', source: 'the 20% convention: the share at which a lender stops asking for mortgage insurance' },
         { label: 'The cash floor', value: c.guardrails ? c.guardrails.emergencyFundMonths + ' months of spending' : '—', source: 'the emergency-fund floor after closing (' + src + ')' },
-        { label: 'Years to the down payment', value: 'shortfall ÷ a year of savings', source: 'a year of savings is the lens’s basis (engines/tier0.js savingsRate, the match counted when known); no growth on the cash, no rise in the price' },
+        { label: 'Years to the down payment', value: cmp && cmp.yearsToDown !== null ? years(cmp.yearsToDown) : cmp && cmp.neverAtThisPace ? 'never at this pace' : 'shortfall ÷ a year of savings', source: 'a year of savings is the lens’s basis, the same savings rate the dashboard shows, with the match counted when known; no growth on the cash, no rise in the price' },
         { label: 'Prices and rents', value: 'held still', source: 'the price does not change and the rent does not rise — this is one month, weighed today, not a forecast' }
       ].concat(leverRow(h, T));
     },

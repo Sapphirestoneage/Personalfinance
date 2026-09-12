@@ -186,7 +186,7 @@
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(function () { if (ROWS.length) paint(); });
   Reference.load().then(function (t) { TABLES = t; Staleness.use(t.staleness); LedgerRows.use(t.ledgerRows); build(); }).catch(function (err) {
-    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load this page’s reference numbers (' + err.message + '). Reload the page.';
   });
 })();
 </script>

@@ -506,7 +506,35 @@
     return D.Ownership.write(s.rowId, s.value, s.itemId ? { itemId: s.itemId } : null);
   }
 
+  /* A source, in words. The owner is not a coder, so "How I guessed this"
+     should not end in a filename — but the file list is still what
+     test/run.js checks exists, so `sources` keeps the paths and this names
+     them for the screen. Anything unmapped falls back to its own name
+     without the folder or the extension. D-222. */
+  var SOURCE_NAMES = {
+    'data/zip_prefixes.json': 'the postal service\u2019s ZIP ranges',
+    'data/savings_presets.json': 'our saving rules of thumb',
+    'data/ui_benefits.json': 'the state unemployment tables',
+    'data/ledger-rows.json': 'the app\u2019s own list of numbers',
+    'data/protection_conventions.json': 'the usual insurance conventions',
+    'data/federal_brackets_2026.json': 'the 2026 federal tax brackets',
+    'data/state_brackets_2026.json': 'the 2026 state tax brackets',
+    'data/debt_rules.json': 'the usual debt conventions',
+    'data/onepager_defaults.json': 'our starting figures for a household like yours',
+    'data/retirement_milestones.json': 'the common retirement milestones',
+    'data/cobra_aca_2024.json': 'published COBRA and marketplace prices'
+  };
+  function sourceLabel(paths) {
+    var list = (Array.isArray(paths) ? paths : [paths]).filter(Boolean).map(function (f) {
+      return SOURCE_NAMES[f] || String(f).replace(/^data\//, '').replace(/\.json$/, '').replace(/[_-]+/g, ' ');
+    });
+    if (!list.length) return '';
+    if (list.length === 1) return 'From ' + list[0] + '.';
+    return 'From ' + list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1] + '.';
+  }
+
   return {
+    sourceLabel: sourceLabel,
     show: show,
     clear: clear,
     isSuggested: isSuggested,

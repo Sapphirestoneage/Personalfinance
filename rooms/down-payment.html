@@ -132,7 +132,23 @@
         + '<small>' + esc(Money.formatCents(o.paymentCents)) + ' a month: ' + esc(Money.formatCents(o.principalInterestCents)) + ' principal and interest, ' + esc(Money.formatCents(o.taxCents)) + ' tax, ' + esc(Money.formatCents(o.insuranceCents)) + ' insurance' + (o.miCents ? ', ' + esc(Money.formatCents(o.miCents)) + ' mortgage insurance' : '') + '.</small></li>';
     }).join('');
   }
-  ['in-price', 'in-saved', 'in-monthly', 'in-family', 'in-rate'].forEach(function (id) { el(id).addEventListener('input', render); });
+  /* One repaint after the typing pauses instead of one per keystroke; change
+     and blur still repaint at once, so nothing is lost on leaving a field.
+     D-222. */
+  var repaintTimer = null;
+  function renderSoon() {
+    if (repaintTimer) clearTimeout(repaintTimer);
+    repaintTimer = setTimeout(function () { repaintTimer = null; render(); }, 200);
+  }
+  function renderNow() {
+    if (repaintTimer) { clearTimeout(repaintTimer); repaintTimer = null; }
+    render();
+  }
+  ['in-price', 'in-saved', 'in-monthly', 'in-family', 'in-rate'].forEach(function (id) {
+    el(id).addEventListener('input', renderSoon);
+    el(id).addEventListener('change', renderNow);
+    el(id).addEventListener('blur', renderNow);
+  });
   el('add-block').addEventListener('click', function () {
     if (!LAST) return;
     var twenty = LAST.options.filter(function (o) { return o.pct === 0.2; })[0] || LAST.options[LAST.options.length - 1];
@@ -146,7 +162,7 @@
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
   Reference.load(['downPayment', 'housingConventions', 'mortgageRates', 'blockHome', 'states']).then(function (t) { TABLES = t; Blocks.use(t); render(); }).catch(function (err) {
-    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load this page’s reference numbers (' + err.message + '). Reload the page.';
   });
 })();
 </script>

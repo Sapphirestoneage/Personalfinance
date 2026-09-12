@@ -163,9 +163,8 @@
 
   <p class="disclaimer">
     Educational tool, not financial advice. The hassle weighting is a stated
-    convention, not a finding — see the note in
-    <code>data/hassle_defaults.json</code> — and the plain rate is always
-    shown beside it. Your numbers stay in this browser.
+    convention, not a finding, and the plain rate is always shown beside it.
+    Your numbers stay in this browser.
   </p>
 </main>
 
@@ -490,7 +489,7 @@
     var notice = el('load-notice');
     notice.hidden = false;
     notice.className = 'notice is-error';
-    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+    notice.textContent = 'Couldn’t load this page’s reference numbers (' + err.message + '). Reload the page.';
   });
 })();
 </script>

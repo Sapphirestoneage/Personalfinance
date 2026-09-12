@@ -166,9 +166,10 @@
           ? 'proposed from your joy curve — type your own to keep it'
           : 'a stand-in: 85% of spending, a convention — type your own');
       }
-      parts.push('spending ' + fmt(two.spendMonthlyCents));
-      parts.push('FI on enough <strong>' + fmt(two.enoughFiCents) + '</strong>' + inYears(two.yearsToEnough));
-      parts.push('FI on spending ' + fmt(two.spendFiCents) + inYears(two.yearsToSpend));
+      /* Spending, the two FI numbers, the years note and the joy-curve aside
+          used to be six more middle-dot clauses. Spending and the gap are in
+          the amounts list and both FI numbers are lines on the chart, so the
+          sub-line keeps the proposal note and the gap only. D-222. */
       if (two.enoughAboveSpending) {
         parts.push('<strong>enough above spending</strong>: the gap runs the other way — ' + fmt(-two.gapCents) + ' more'
           + (two.yearsGap !== null ? ' and ' + years1(-two.yearsGap) + ' years longer' : ''));
@@ -176,13 +177,6 @@
         parts.push('enough equals spending: one number, not two');
       } else {
         parts.push('the gap: <strong>' + fmt(two.gapCents) + '</strong>' + (two.yearsGap !== null ? ', ' + years1(two.yearsGap) + ' years' : '') + ' — the cost of not knowing your enough');
-      }
-      if (two.yearsReason) parts.push(two.yearsReason);
-      if (two.source !== 'curve') {
-        var c = Enough.fromCurve(h, T);
-        parts.push(Money.isOk(c)
-          ? 'the joy curve would say ' + fmt(c.value) + ' (' + joyLink() + ')'
-          : 'the joy curve cannot propose yet: ' + c.reason + ' (' + joyLink() + ')');
       }
       return { label: 'Enough, a month', value: fmt(two.enoughMonthlyCents), sub: parts.join(' · '),
         zone: two.enoughBelowSpending ? 'good' : null, result: two };
@@ -246,10 +240,10 @@
       var c = Enough.fromCurve(h, T);
       var Q = Fulfillment.QUADRANTS;
       var rows = [
-        { label: 'Withdrawal rate', value: Money.formatRate(a.swrRate, { decimals: 1 }), source: 'assumptions.swrRate — both FI numbers are a year of the month ÷ this rate, through Tier0.fireNumber (default 4%, a convention)' },
-        { label: 'Real return, for the years', value: Money.formatRate(a.returnReal, { decimals: 1 }), source: 'assumptions.returnReal (D-094) — the lens’s rate, so the years here and the months bought or pushed there agree' },
-        { label: 'This year’s savings', value: Money.isOk(two) && two.contribution ? fmt(two.contribution.annualSavingsCents) + ' a year' : 'not known yet', source: Money.isOk(two) && two.contribution ? 'Tier0.savingsRate, ' + (two.contribution.basis === 'includingMatch' ? 'with the employer match' : 'without a match') + ' — the same basis as the lens and the dashboard' : (Money.isOk(two) && two.yearsReason) || 'income, expenses and filing status' },
-        { label: 'The lines the curve drops', value: Q.expensive.label + ' and ' + Q.small_meh.label, source: 'the two low-joy quadrants of the joy curve (engines/fulfillment.js: below the 5.5 joy midpoint); never a line marked essential in data/expense_categories.json' },
+        { label: 'Withdrawal rate', value: Money.formatRate(a.swrRate, { decimals: 1 }), source: 'the app’s withdrawal rate — both FI numbers are a year of the month ÷ this rate, worked out the same way everywhere (default 4%, a convention)' },
+        { label: 'Real return, for the years', value: Money.formatRate(a.returnReal, { decimals: 1 }), source: 'the app’s long-run return after inflation — the lens’s rate, so the years here and the months bought or pushed there agree' },
+        { label: 'This year’s savings', value: Money.isOk(two) && two.contribution ? fmt(two.contribution.annualSavingsCents) + ' a year' : 'not known yet', source: Money.isOk(two) && two.contribution ? 'your savings rate, ' + (two.contribution.basis === 'includingMatch' ? 'with the employer match' : 'without a match') + ' — the same basis as the lens and the dashboard' : (Money.isOk(two) && two.yearsReason) || 'income, expenses and filing status' },
+        { label: 'The lines the curve drops', value: Q.expensive.label + ' and ' + Q.small_meh.label, source: 'the two low-joy quadrants of the joy curve, below the 5.5 joy midpoint; never a line marked essential' },
         { label: 'The stand-in', value: Money.formatRate(Enough.CONVENTION_SHARE, { decimals: 0 }) + ' of spending', source: 'most people’s enough sits under their spending — a convention, shown until the curve can speak and never written' }
       ];
       if (Money.isOk(c)) rows.push({ label: 'The curve’s thresholds', value: 'spend line ' + fmt(c.spendLineCents) + ', joy line ' + c.joyLine, source: 'the median monthly spend across the rated lines and the midpoint of the 1-10 scale; ' + c.ratedCount + ' rated, ' + fmt(c.droppedMonthlyCents) + ' a month dropped' });

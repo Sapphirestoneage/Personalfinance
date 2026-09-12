@@ -423,8 +423,21 @@
 
   /* The range is created once in the markup and only ever read, so the live
      form rule has nothing to guard here (D-034). */
+  /* Dragging the slider used to redraw the whole page, twenty grid cells
+     included, on every pixel of travel. It now redraws once the drag pauses;
+     letting go repaints at once. D-222. */
+  var swrTimer = null;
+  function swrRender() {
+    if (swrTimer) clearTimeout(swrTimer);
+    swrTimer = setTimeout(function () { swrTimer = null; render(); }, 200);
+  }
   el('swr-range').addEventListener('input', function (e) {
     swrPreview = Number(e.target.value) / 10000;
+    swrRender();
+  });
+  el('swr-range').addEventListener('change', function (e) {
+    swrPreview = Number(e.target.value) / 10000;
+    if (swrTimer) { clearTimeout(swrTimer); swrTimer = null; }
     render();
   });
 
@@ -453,8 +466,8 @@
   }).catch(function (err) {
     var n = el('load-notice');
     n.hidden = false; n.className = 'notice is-error';
-    n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
-      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+    n.textContent = 'Couldn’t load this page’s reference numbers (' + err.message
+      + '). Reload the page; if it keeps happening, open the app from its web address rather than from a file on your computer.';
   });
 })();
 </script>

@@ -133,9 +133,11 @@
     if (!el('in-cover').value && r.coverSource === 'cobra') el('in-cover').placeholder = 'COBRA ' + Money.formatCents(r.coverMonthlyCents, { exact: true }).replace(/^\$/, '');
     el('m-num').textContent = Money.formatCents(r.fundCents) + '.';
     var ready = r.reachedNow ? 'You have it now.' : r.neverAtThisPace ? 'Not at the current pace: ' + Money.formatCents(r.monthlyNeededCents) + ' a month would have it in five years.' : 'Ready by ' + monthWord(r.readyDate) + ' at ' + Money.formatCents(r.monthlyCents) + ' a month on top of ' + Money.formatCents(r.cashCents || 0) + ' of cash.';
-    el('m-sub').textContent = r.months + ' month' + (r.months === 1 ? '' : 's') + ' at ' + Money.formatCents(r.spendMonthlyCents) + ' a month' + (r.spendSource === 'household' ? ' (your household month)' : '') + ' plus ' + Money.formatCents(r.coverMonthlyCents) + ' of cover' + (r.incomeMonthlyCents ? ', less ' + Money.formatCents(r.incomeMonthlyCents) + ' coming in' : '') + ', and a ' + Money.formatCents(r.cushionCents) + ' cushion for the ' + r.cushionMonths + ' months a return usually takes. ' + ready;
+    /* D-222: two clauses. The cushion is its own line in the costs below, so
+       the sub-line no longer spells it out again. */
+    el('m-sub').textContent = r.months + ' month' + (r.months === 1 ? '' : 's') + ' at ' + Money.formatCents(r.spendMonthlyCents) + ' a month' + (r.spendSource === 'household' ? ' (your household month)' : '') + ' plus ' + Money.formatCents(r.coverMonthlyCents) + ' of cover' + (r.incomeMonthlyCents ? ', less ' + Money.formatCents(r.incomeMonthlyCents) + ' coming in' : '') + '. ' + ready;
     el('m-sub').setAttribute('data-fund', String(r.fundCents));
-    var costs = [li('The break itself', Money.formatCents(r.breakCents)), li('Re-entry cushion', Money.formatCents(r.cushionCents))];
+    var costs = [li('The break itself', Money.formatCents(r.breakCents)), li('Re-entry cushion, ' + r.cushionMonths + ' months a return usually takes', Money.formatCents(r.cushionCents))];
     if (r.fiMovesMonths !== null) costs.push(li('FI date moves', r.fiMovesMonths + ' month' + (r.fiMovesMonths === 1 ? '' : 's') + ' later'));
     else if (r.fiReason) costs.push(li('FI date moves', 'not known: ' + r.fiReason));
     if (r.momentum && r.momentum.cents > 0) costs.push(li('Career momentum, to ' + r.endAge, Money.formatCents(r.momentum.lowCents) + ' to ' + Money.formatCents(r.momentum.highCents)));

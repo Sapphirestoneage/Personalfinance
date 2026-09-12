@@ -233,14 +233,14 @@
       var c = conv(T), rules = T.debtRules;
       var r = StudentLoans.compare(h, T, {});
       var ok = Money.isOk(r);
-      var src = 'data/student_loan_conventions.json v' + c.version + ' (' + c.confidence + ')';
+      var src = 'our table of student-loan conventions, version ' + c.version + ' (' + c.confidence + ')';
       var rows = [
         { label: 'The standard term', value: years(c.standardTermYears), source: 'the level-payment shape of a federal standard plan — ' + src },
         { label: 'Income-driven share', value: Money.formatRate(ok ? r.share : c.idrShareOfDiscretionary, { decimals: 0 }) + ' of discretionary income', source: ok && r.shareSource === 'yours' ? 'yours' : 'the common figure — ' + src },
         { label: 'Discretionary income', value: 'earnings above ' + Money.formatRate(c.discretionaryPovertyMultiple, { decimals: 0 }) + ' of a ' + Money.formatCents(Math.round(c.povertyLineDollars * 100)) + ' poverty line', source: 'a round poverty line for one person, the shape of the rule and not any year\'s table — ' + src },
         { label: 'Forgiveness after', value: ok && r.forgivenessNone ? 'never' : years(ok ? r.forgivenessYears : c.forgivenessYears), source: ok && r.forgivenessSource === 'yours' ? 'yours' : 'the usual horizon; ' + c.forgivenessYearsGraduate + ' for graduate loans — ' + src },
         { label: 'Extra a month', value: ok ? Money.formatCents(r.extraMonthlyCents) : Money.EM_DASH, source: ok && r.extraEntered ? 'yours' : 'nothing until you type one; the aggressive plan equals the standard one' },
-        { label: 'The payoff arithmetic', value: 'month by month, interest at rate ÷ 12', source: 'engines/debt.js, data/debt_rules.json v' + rules.version + ' (' + rules.confidence + '); the same run Debt Payoff shows' },
+        { label: 'The payoff arithmetic', value: 'month by month, interest at rate ÷ 12', source: 'the same month-by-month payoff run the Debt Payoff room uses, under rules version ' + rules.version + ' (' + rules.confidence + ')' },
         { label: 'Income', value: ok && r.incomeKnown ? Money.formatCents(r.grossAnnualCents) + ' a year, held flat' : 'not entered', source: ok && r.incomeKnown ? 'Start Here; the income-driven payment does not rise with a raise here (convention)' : 'add it in Start Here for the income-driven line' },
         { label: 'Tax on a forgiven balance', value: 'not modelled', source: 'a written-off balance may count as income that year; named, not priced' }
       ];

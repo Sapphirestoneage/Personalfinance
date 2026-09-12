@@ -189,17 +189,17 @@
       if (p.sustainable) {
         sub = 'What comes in covers the month' + (p.other.cents > 0 ? ' — ' + Money.formatCents(p.other.cents) + ' a month of other income against ' + Money.formatCents(p.monthlyExpensesCents) + ' going out' : '') + '; the cash is not being drawn down. The search you expect: ' + search + '.';
       } else {
-        sub = '<strong>' + months(p.runwayMonths) + '</strong> at ' + Money.formatCents(p.monthlyExpensesCents) + ' a month'
-          + ' · <strong>' + (p.floorSustainable ? 'covered' : months(p.floorRunwayMonths)) + '</strong> at the floor of ' + Money.formatCents(p.floorCents)
-          + (p.floorAtOrAboveSpending ? ' (no lower than your spending, so no gain)' : p.floorGainMonths === 0 ? ' (no whole month gained)' : '')
-          + ' · the search you expect: <strong>' + search + '</strong>.';
-        sub += ' The cash runs out around <strong>' + longDate(p.cashOutDate) + '</strong>.';
+        /* The floor and the expected search were two more middle-dot clauses
+           here; both are rows in the assumptions below, so the sub-line keeps
+           the runway and the verdict on it. D-222. */
+        sub = '<strong>' + months(p.runwayMonths) + '</strong> at ' + Money.formatCents(p.monthlyExpensesCents) + ' a month';
         if (p.gapMonths !== null) {
-          sub += p.gapMonths < 0
-            ? ' <strong>Short by ' + months(Math.abs(p.gapMonths)) + '</strong>: the search you expect outlasts the money' + (!p.floorSustainable && p.floorRunwayMonths >= p.expectedSearchMonths ? ' at this spending, though not at the floor' : '') + '.'
-            : p.gapMonths < 1 ? ' <strong>Barely covered</strong> — ' + months(p.gapMonths) + ' to spare.'
-            : ' Covered, with <strong>' + months(p.gapMonths) + ' to spare</strong>.';
+          sub += ' · ' + (p.gapMonths < 0
+            ? '<strong>short by ' + months(Math.abs(p.gapMonths)) + '</strong>: the search you expect outlasts the money' + (!p.floorSustainable && p.floorRunwayMonths >= p.expectedSearchMonths ? ' at this spending, though not at the floor' : '')
+            : p.gapMonths < 1 ? '<strong>barely covered</strong> — ' + months(p.gapMonths) + ' to spare'
+            : 'covered, with <strong>' + months(p.gapMonths) + ' to spare</strong>');
         }
+        sub += '. The cash runs out around <strong>' + longDate(p.cashOutDate) + '</strong>.';
       }
       sub += ' ' + benefitLine(p) + beyondCashLine(p);
       return { label: 'Days the money lasts', value: p.sustainable ? 'Covered' : p.value.toLocaleString('en-US') + ' days', sub: sub, zone: p.zone, result: p };
@@ -259,23 +259,23 @@
       var health = (h.insurance || {}).health || {};
       var rows = [
         { label: 'A typical search', value: gap ? months(gap.medianMonths) + ' (median), ' + months(gap.meanMonths) + ' on average' : 'not loaded',
-          source: gap ? 'data/reentry_gap.json v' + gap.version + ' — ' + gap.source + ' (' + gap.confidence + ')' : '' },
+          source: gap ? gap.source + ' (' + gap.confidence + ')' : '' },
         { label: 'The search compared against', value: Money.isOk(p) && p.expectedSearchMonths !== null ? months(p.expectedSearchMonths) : 'not said yet',
           source: Money.isEntered(u.expectedSearchMonths) ? 'yours' : 'the typical search above, until you type yours' },
-        { label: 'The floor', value: Money.isOk(p) ? Money.formatCents(p.floorCents) + ' a month' : 'not known yet',
+        { label: 'The floor', value: Money.isOk(p) ? Money.formatCents(p.floorCents) + ' a month, ' + (p.floorSustainable ? 'covered' : months(p.floorRunwayMonths) + ' of runway') + (p.floorAtOrAboveSpending ? ' (no lower than your spending, so no gain)' : p.floorGainMonths === 0 ? ' (no whole month gained)' : '') : 'not known yet',
           source: Money.isEntered(u.floorMonthlyCents) ? 'yours' : Math.round(BetweenJobs.FLOOR_SHARE * 100) + '% of your spending, a bare-minimum month (convention)' },
         { label: 'The benefit, a month', value: Money.isOk(p) && p.benefit.monthlyCents > 0 ? Money.formatCents(p.benefit.monthlyCents) + ' for ' + months(p.benefit.months) : 'none counted',
-          source: 'weekly × 52 ÷ 12, for the weeks left, from what you looked up in Start Here — never a figure this page guessed (D-092)' },
+          source: 'weekly × 52 ÷ 12, for the weeks left, from what you looked up in Start Here — never a figure this page guessed' },
         { label: 'The shape of the months', value: laidOff.label,
-          source: 'engines/runway.js laid-off preset: severance lands before month 1, the benefit pays each month until its weeks are up and then stops, spending goes out every month, nothing else changes' },
+          source: 'the laid-off shape the app uses everywhere: severance lands before month 1, the benefit pays each month until its weeks are up and then stops, spending goes out every month, nothing else changes' },
         { label: 'Interest on the cash', value: 'none',
-          source: 'left out on purpose; over the months a runway covers it is small, and leaving it out errs short (engines/runway.js)' },
+          source: 'left out on purpose; over the months a runway covers it is small, and leaving it out errs short' },
         { label: 'Days in a month', value: (Math.round(BetweenJobs.DAYS_PER_MONTH * 100) / 100) + '',
-          source: '365.25 ÷ 12, the same constant as the dashboard’s lead (shared/instruments.js)' }
+          source: '365.25 ÷ 12, the same figure the dashboard’s lead uses' }
       ];
       if (Money.isOk(p) && p.other.basis !== 'none') {
         rows.push({ label: 'Other income, a month', value: Money.formatCents(p.other.cents) + (p.other.basis === 'gross' ? ' before tax' : ' after tax'),
-          source: p.other.basis === 'takeHome' ? 'a second adult’s pay less the flat effective-rate tax estimate (engines/tier0.js, data/effective_tax_rates_2026.json v' + T.effectiveTaxRates.version + ')' : 'a second adult’s pay; tax not estimated: ' + (p.other.reason || '') });
+          source: p.other.basis === 'takeHome' ? 'a second adult’s pay less the flat effective-rate tax estimate the whole app uses' : 'a second adult’s pay; tax not estimated: ' + (p.other.reason || '') });
       }
       if (health.type) {
         rows.push({ label: 'Health cover', value: (Ownership.field('healthCover').format(health.type)) + (Money.isEntered(health.monthlyCents) ? ', ' + Money.formatCents(health.monthlyCents) + ' a month' : ''),

@@ -214,14 +214,14 @@
         careWords = Money.isEntered(cc.cents) ? perMonth(cc.cents) + (cc.source === 'state' ? ' in ' + h.state : ', the national figure' + (h.state ? '' : ' (no state entered)')) : (cc.reason || 'not priced');
       }
       var rows = [
-        { label: 'What a child costs', value: bandWords, source: cost ? 'data/child_cost.json v' + cost.version + ', as of ' + cost.asOf + ' — ' + cost.source + ' (' + cost.confidence + ': ' + cost.confidenceNote + ')' : 'data/child_cost.json' },
-        { label: 'Childcare while under five', value: careWords, source: care ? 'data/childcare_by_state.json v' + care.version + ', as of ' + care.asOf + ' — ' + care.source + ' (' + care.confidence + ')' : 'data/childcare_by_state.json' },
-        { label: 'Real return on tuition saving', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094) — a real rate, so the target is in today’s dollars' },
+        { label: 'What a child costs', value: bandWords, source: cost ? 'our cost-of-a-child table, version ' + cost.version + ', as of ' + cost.asOf + ' — ' + cost.source + ' (' + cost.confidence + ': ' + cost.confidenceNote + ')' : 'our cost-of-a-child table' },
+        { label: 'Childcare while under five', value: careWords, source: care ? 'our childcare-by-state table, version ' + care.version + ', as of ' + care.asOf + ' — ' + care.source + ' (' + care.confidence + ')' : 'our childcare-by-state table' },
+        { label: 'Real return on tuition saving', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'the return assumption the household holds — a rate after inflation, so the target is in today’s dollars' },
         { label: 'Saving stops at 18', value: 'each child’s target is due on their 18th birthday', source: 'a convention; the cost bands end there too' },
         { label: 'The target is per child', value: 'one pot saved, to the oldest first', source: 'one saved figure for the household lands on the first bill first (convention)' },
-        { label: 'College saving convention', value: cost && cost.college && cost.college.half ? money(cost.college.half.monthlyCents) + ' a month from birth for ' + cost.college.half.label.toLowerCase() : 'not loaded', source: 'data/child_cost.json — a planning convention, not a cost; it gives no lump sum, so no target is proposed' }
+        { label: 'College saving convention', value: cost && cost.college && cost.college.half ? money(cost.college.half.monthlyCents) + ' a month from birth for ' + cost.college.half.label.toLowerCase() : 'not loaded', source: 'our cost-of-a-child table — a planning convention, not a cost; it gives no lump sum, so no target is proposed' }
       ];
-      if (Money.isOk(p) && p.daySchool) rows.push({ label: 'Day school', value: Money.isEntered(cost.privateSchoolMonthlyCents) ? perMonth(cost.privateSchoolMonthlyCents) + ' per child from 5 to 17' : 'in the picture, not priced', source: 'data/child_cost.json privateSchoolMonthlyCents — an average private-school tuition, not a school’s price' });
+      if (Money.isOk(p) && p.daySchool) rows.push({ label: 'Day school', value: Money.isEntered(cost.privateSchoolMonthlyCents) ? perMonth(cost.privateSchoolMonthlyCents) + ' per child from 5 to 17' : 'in the picture, not priced', source: 'our cost-of-a-child table — an average private-school tuition, not a school’s price' });
       return rows;
     },
 

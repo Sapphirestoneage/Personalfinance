@@ -149,7 +149,7 @@
 
     number: function (h, T) {
       var w = Hourly.realHourlyWage(h, T, {});
-      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
+      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason };   /* D-222: the old ternary added '' either way — dead, so it went. */
       var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
         + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
       if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
@@ -225,10 +225,10 @@
       var tax = T.effectiveTaxRates;
       var work = readWork(h);
       return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
+        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'our 2026 average-rate table, version ' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
         { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
         { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
-        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'the return assumption the household holds, after inflation' }
       ];
     },
 

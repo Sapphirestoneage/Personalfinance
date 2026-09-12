@@ -183,7 +183,7 @@
 
     assumptions: function (h, T) {
       var t = T.estateBasics;
-      var src = 'data/estate_basics.json v' + t.version + ' — ' + t.confidence + '; ' + t.source;
+      var src = t.confidence + '; ' + t.source;
       var rows = (t.categories || []).map(function (c) {
         var route = (t.routes || []).filter(function (x) { return x.id === c.passesBy; })[0];
         return { label: c.label, value: route ? route.label.toLowerCase() : c.passesBy, source: c.note + ' (' + t.confidence + ')' };

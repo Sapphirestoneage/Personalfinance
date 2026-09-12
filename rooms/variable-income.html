@@ -172,21 +172,15 @@
         'average <strong>' + Money.formatCents(p.averageMonthCents) + '</strong>',
         'high <strong>' + (Money.isEntered(p.highCents) ? Money.formatCents(p.highCents) : 'not entered') + '</strong>'
       ];
+      /* D-222: the sub-line is the three months and one thing to do next. The
+         buffer, the shortfall and the set-aside are already rows in the list
+         of amounts, and the rest moved into the assumptions drawer below. */
       var sub = parts.join(' · ');
-      if (Money.isEntered(p.bufferNeededCents)) {
-        sub += ' · buffer <strong>' + Money.formatCents(p.bufferNeededCents) + '</strong> for ' + months(p.bufferMonths) + ' of the gap';
-        if (Money.isEntered(p.bufferHeldCents)) {
-          sub += ', you hold <strong>' + Money.formatCents(p.bufferHeldCents) + '</strong>';
-          if (p.cushionCompetes) sub += ' — the ' + months(p.cushionMonths) + ' emergency cushion comes first and takes ' + (p.freeCashCents === 0 ? 'all of the cash' : 'most of it');
-        } else sub += ' (add your cash to see what you hold)';
-      } else sub += ' · add a buffer in months to size it';
-      if (!Money.isEntered(p.spendingCents)) sub += ' · spending is not in yet, so the low month stands as the salary';
-      else if (p.shortfallCents > 0) {
-        sub += ' · a low month is <strong>' + Money.formatCents(p.shortfallCents) + '</strong> short of spending, so spending is the salary; the cash covers '
-          + (Money.isEntered(p.lowMonthsCovered) ? '<strong>' + count(p.lowMonthsCovered, 'low month') + '</strong> in a row' : 'an unknown number of them — add your cash');
-      } else sub += ' · a low month clears spending; the cash covers every one';
       if (p.lowAboveAverage) sub += ' · the low month is above the average, so there is no gap to buffer — check the two';
-      if (Money.isEntered(p.taxSetAsideMonthlyCents)) sub += ' · <strong>' + Money.formatCents(p.taxSetAsideMonthlyCents) + '</strong> a month comes off the top for the quarterly';
+      else if (!Money.isEntered(p.spendingCents)) sub += ' · spending is not in yet, so the low month stands as the salary';
+      else if (p.shortfallCents > 0) sub += ' · a low month is <strong>' + Money.formatCents(p.shortfallCents) + '</strong> short of spending, so spending is the salary';
+      else if (!Money.isEntered(p.bufferNeededCents)) sub += ' · add a buffer in months to size it';
+      else sub += ' · a low month clears spending';
       return { label: 'The salary to pay yourself', value: Money.formatCents(p.salaryCents) + ' a month', sub: sub, zone: p.zone, result: p };
     },
 
@@ -252,17 +246,32 @@
       var c = T.variableIncomeConventions || {};
       var g = VI.propose(h, T);
       var se = T.seTax || {};
-      var conv = 'data/variable_income_conventions.json v' + c.version + ' — ' + c.confidence;
+      var conv = 'our table of variable-income conventions, version ' + c.version + ' — ' + c.confidence;
       var rows = [
         { label: 'The salary', value: 'the low month', source: (c.payYourself && c.payYourself.rule) + ' ' + conv },
         { label: 'Buffer', value: (c.buffer ? c.buffer.usualMonths + ' months usual, ' + c.buffer.fullMonths + ' full' : '3 usual, 6 full') + ' — of the low-to-average gap', source: conv },
         { label: 'Emergency cushion, first', value: count(Money.isEntered(c.emergencyCushionMonths) ? c.emergencyCushionMonths : 3, 'month') + ' of spending', source: 'cash beyond it is what is free for the buffer ' + conv },
-        { label: 'The average month', value: Money.isOk(p) ? Money.formatCents(p.averageMonthCents) : 'not known yet', source: Money.isOk(p) && p.averageBasis === 'source' ? 'your own-work source, entered as a month on average (D-094)' : 'gross annual income ÷ 12 (Start Here)' },
+        { label: 'The average month', value: Money.isOk(p) ? Money.formatCents(p.averageMonthCents) : 'not known yet', source: Money.isOk(p) && p.averageBasis === 'source' ? 'your own-work source, entered as a month on average' : 'gross annual income ÷ 12 (Start Here)' },
         { label: 'Low and high, proposed', value: Money.isEntered(g.lowCents) ? Money.formatCents(g.lowCents) + ' / ' + Money.formatCents(g.highCents) : 'need an average first', source: Math.round(g.lowShare * 100) + '% and ' + Math.round(g.highShare * 100) + '% of the average — only until yours replace them ' + conv }
       ];
+      /* D-222: these three used to hang off the headline sub-line. They are
+         detail, so they live here now and the headline stays two clauses. */
+      if (Money.isOk(p) && Money.isEntered(p.bufferNeededCents)) {
+        rows.push({ label: 'The buffer, needed against held', value: Money.formatCents(p.bufferNeededCents) + ' for ' + months(p.bufferMonths) + ' of the gap' + (Money.isEntered(p.bufferHeldCents) ? ', you hold ' + Money.formatCents(p.bufferHeldCents) : ''),
+          source: Money.isEntered(p.bufferHeldCents)
+            ? (p.cushionCompetes ? 'the ' + months(p.cushionMonths) + ' emergency cushion comes first and takes ' + (p.freeCashCents === 0 ? 'all of the cash' : 'most of it') : 'your cash beyond the emergency cushion')
+            : 'add your cash to see what you hold' });
+      }
+      if (Money.isOk(p) && p.shortfallCents > 0) {
+        rows.push({ label: 'Low months the cash covers', value: Money.isEntered(p.lowMonthsCovered) ? count(p.lowMonthsCovered, 'low month') + ' in a row' : 'not known yet',
+          source: Money.isEntered(p.lowMonthsCovered) ? 'your cash against a low month’s shortfall against spending' : 'add your cash and this can be counted' });
+      }
+      if (Money.isOk(p) && p.observed) {
+        rows.push({ label: 'Where the months come from', value: p.entries.entries + (p.entries.entries === 1 ? ' entry' : ' entries') + ' over ' + p.entries.count + (p.entries.count === 1 ? ' month' : ' months'), source: 'logged in Income; nothing is added here' });
+      }
       if (Money.isOk(p) && p.taxSetAside) {
         rows.push({ label: 'Tax set-aside, a month', value: Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAsideMonthlyCents) + ' (quarterly ' + Money.formatCents(p.taxSetAside.perQuarterCents) + ' ÷ 3)' : 'not estimated: ' + p.taxSetAside.reason,
-          source: 'the Self-Employed room’s quarterly estimate on ' + (Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAside.expectedNetProfitCents) + ' of ' + p.taxSetAside.profitBasis + ' read as profit (no expenses stored)' : 'your income') + ' — data/se_tax_2026.json v' + se.version + ' (' + se.confidence + '), data/effective_tax_rates_2026.json v' + (T.effectiveTaxRates || {}).version });
+          source: 'the Self-Employed room’s quarterly estimate on ' + (Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAside.expectedNetProfitCents) + ' of ' + p.taxSetAside.profitBasis + ' read as profit (no expenses stored)' : 'your income') + ' — our 2026 self-employment tax table, version ' + se.version + ' (' + se.confidence + '), and our 2026 average-rate table, version ' + (T.effectiveTaxRates || {}).version });
       }
       return rows;
     },

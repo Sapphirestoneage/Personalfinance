@@ -142,6 +142,16 @@
   function readDec(h) { return (h && h.decumulation) || {}; }
   function set(key, value) { Spine.set('decumulation.' + key, value); }
   function ageLabel(a) { return 'age ' + a; }
+  /* 15.9: the phases the draw crosses, one sentence; only the ages that
+     change what a draw can do, in plain words. D-181. Moved off the headline
+     sub-line, which chained eight sentences, into the assumptions. D-222. */
+  var PHASE_WORDS = { penaltyFree: 'the penalty ends at 59 and a half', ssEarly: 'Social Security can start at 62', medicare: 'Medicare at 65', fullRetirementAge: 'full Social Security', rmd: 'required withdrawals begin' };
+  function phasesCrossed(p) {
+    if (!Money.isOk(p)) return '';
+    var crossed = (p.phases || []).slice(1).filter(function (ph) { return PHASE_WORDS[p.phases[p.phases.indexOf(ph) - 1].endsAt]; });
+    if (!crossed.length) return '';
+    return crossed.map(function (ph) { var id = p.phases[p.phases.indexOf(ph) - 1].endsAt; return PHASE_WORDS[id] + (id === 'fullRetirementAge' || id === 'rmd' ? ' at ' + ph.fromAge : '') + ' (year ' + ph.fromYear + ')'; }).join(', ');
+  }
 
   /* ---- guesses, as a retiree --------------------------------------------------
      The template fills an empty spine with the intake's guesses, and with the
@@ -164,25 +174,19 @@
       var p = planFor(h, T);
       var label = 'The age the money lasts to';
       if (!Money.isOk(p)) return { label: label, value: null, reason: p.reason };
-      var sub = 'Draw <strong>' + Money.formatCents(p.drawCents) + '</strong> a year = <strong>' + Money.formatRate(p.withdrawalRate, { decimals: 1 }) + '</strong> of ' + Money.formatCents(p.investmentsCents);
-      if (p.vpw) sub += '; VPW allows <strong>' + Money.formatCents(p.vpw.allowedCents) + '</strong> at ' + ageLabel(p.vpw.age);
-      if (p.covered) sub += '. Income covers spending, so nothing is drawn' + (p.planned ? ' — the planned draw is zero' : '');
-      else if (p.planned) sub += '. Your planned figure' + (Money.isEntered(p.computedDrawCents) && p.computedDrawCents !== p.drawCents ? '; spending not covered by income is ' + Money.formatCents(p.computedDrawCents) : '');
-      if (p.socialSecurityInYears !== null) sub += '. This draw runs until Social Security starts at ' + p.socialSecurityAt + ', ' + p.socialSecurityInYears + ' year' + (p.socialSecurityInYears === 1 ? '' : 's') + ' from now; no benefit is estimated here';
-      if (p.stockShareClamped) sub += '. The share in stocks was read as ' + Math.round(p.stockShare * 100) + '%';
+      /* This chained up to eight sentences. The VPW figure, the share in
+         stocks, Social Security and the ages the draw crosses are all rows
+         in the assumptions below, so the sub-line keeps the draw and how
+         long it lasts. D-222. */
+      var sub = p.covered
+        ? 'Income covers spending, so nothing is drawn' + (p.planned ? ' — the planned draw is zero' : '')
+        : 'Draw <strong>' + Money.formatCents(p.drawCents) + '</strong> a year = <strong>' + Money.formatRate(p.withdrawalRate, { decimals: 1 }) + '</strong> of ' + Money.formatCents(p.investmentsCents);
       var value, tail = '';
       if (p.never) value = 'Outlasts you';
       else if (p.lastsToAge !== null) value = String(p.lastsToAge);
       else { value = Math.round(p.yearsUntilEmpty) + ' years'; tail = ' <a href="' + Ownership.linkTo('start', 'q-about') + '">Add your birth date for the age →</a>'; }
       if (!p.never) sub += '. ' + (Math.round(p.yearsUntilEmpty * 10) / 10) + ' years at a ' + Money.formatRate(p.returnReal, { decimals: 0 }) + ' real return';
       else sub += '. At a ' + Money.formatRate(p.returnReal, { decimals: 0 }) + ' real return the draw never empties the investments';
-      /* 15.9: the phases the draw crosses, one sentence; only the ages
-         that change what a draw can do, in plain words. D-181. */
-      var PHASE_WORDS = { penaltyFree: 'the penalty ends at 59 and a half', ssEarly: 'Social Security can start at 62', medicare: 'Medicare at 65', fullRetirementAge: 'full Social Security', rmd: 'required withdrawals begin' };
-      var crossed = (p.phases || []).slice(1).filter(function (ph) { return PHASE_WORDS[p.phases[p.phases.indexOf(ph) - 1].endsAt]; });
-      if (crossed.length) {
-        tail += ' On the way: ' + crossed.map(function (ph) { var id = p.phases[p.phases.indexOf(ph) - 1].endsAt; return PHASE_WORDS[id] + (id === 'fullRetirementAge' || id === 'rmd' ? ' at ' + ph.fromAge : '') + ' (year ' + ph.fromYear + ')'; }).join(', ') + '.';
-      }
       return { label: label, value: value, sub: sub + tail, zone: p.zone === 'none' ? null : p.zone, result: p };
     },
 
@@ -249,13 +253,14 @@
       var vpw = T.vpwTable, bands = T.ratioBenchmarks, band = bands && bands.bands && bands.bands.withdrawalRate;
       var share = Decumulation.stockShareOf(readDec(h));
       return [
-        { label: 'Real return', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094) — one steady rate, no bad decades' },
-        { label: 'The VPW table', value: Money.isOk(p) && p.vpw ? Money.formatRate(p.vpw.percentage, { decimals: 1 }) + ' at ' + ageLabel(p.vpw.age) + ', ' + Math.round(share.value * 100) + '% stocks' : 'needs your age', source: vpw ? 'data/vpw_table.json v' + vpw.version + ' — ' + vpw.confidence + ': ' + vpw.confidenceNote : 'data/vpw_table.json' },
+        { label: 'Real return', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'the app’s long-run return after inflation — one steady rate, no bad decades' },
+        { label: 'The VPW table', value: Money.isOk(p) && p.vpw ? Money.formatRate(p.vpw.percentage, { decimals: 1 }) + ' at ' + ageLabel(p.vpw.age) + ', ' + Math.round(share.value * 100) + '% stocks — it would allow ' + Money.formatCents(p.vpw.allowedCents) + ' a year' : 'needs your age', source: vpw ? vpw.confidence + ': ' + vpw.confidenceNote : 'the variable-percentage withdrawal table' },
         { label: 'Share in stocks', value: Math.round(share.value * 100) + '%', source: share.entered ? (share.clamped ? 'yours, read within 0–100%' : 'yours') : 'the table’s middle column (convention)' },
-        { label: 'The withdrawal band', value: band ? Money.formatRate(band.good, { decimals: 0 }) + ' good / ' + Money.formatRate(band.warn, { decimals: 0 }) + ' watch' : '—', source: bands ? 'data/ratio_benchmarks.json v' + bands.version + ' — ' + (band && band.note ? band.note : bands.source) + ' (' + bands.confidence + ')' : 'data/ratio_benchmarks.json' },
+        { label: 'The withdrawal band', value: band ? Money.formatRate(band.good, { decimals: 0 }) + ' good / ' + Money.formatRate(band.warn, { decimals: 0 }) + ' watch' : '—', source: bands ? (band && band.note ? band.note : bands.source) + ' (' + bands.confidence + ')' : 'the app’s comfortable ranges' },
         { label: 'Tax on withdrawals', value: 'none modelled', source: 'every figure here is pre-tax; a traditional 401(k) or IRA draw is taxed as income and the after-tax draw is smaller' },
-        { label: 'Social Security', value: 'not estimated', source: 'engines/ss.js estimates from a working salary and a retiree’s income here is already the pension or benefit; the age you enter is used only to note when the draw changes' }
-      ];
+        { label: 'Social Security', value: Money.isOk(p) && p.socialSecurityInYears !== null ? 'not estimated; this draw runs until it starts at ' + p.socialSecurityAt + ', ' + p.socialSecurityInYears + ' year' + (p.socialSecurityInYears === 1 ? '' : 's') + ' from now' : 'not estimated', source: 'the app’s Social Security estimate works from a working salary, and a retiree’s income here is already the pension or benefit; the age you enter is used only to note when the draw changes' },
+        { label: 'The draw itself', value: Money.isOk(p) && p.planned ? 'your planned figure' + (Money.isEntered(p.computedDrawCents) && p.computedDrawCents !== p.drawCents ? '; spending not covered by income is ' + Money.formatCents(p.computedDrawCents) : '') : 'spending not covered by income', source: 'a figure you plan to draw overrides the one worked out from spending; leave it blank and the gap between spending and income is the draw' }
+      ].concat(phasesCrossed(p) ? [{ label: 'On the way', value: phasesCrossed(p), source: 'only the ages that change what a draw can do — the penalty, Social Security, Medicare, required withdrawals' }] : []);
     },
 
     why: function (h, T, situation) {

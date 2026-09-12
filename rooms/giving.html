@@ -232,11 +232,11 @@
       var t = T.givingConventions || {};
       var conv = Giving.conventions(null, T);
       var shares = Money.isOk(conv) ? conv.rows.map(function (c) { return c.label; }).join(', ') : '—';
-      var source = 'data/giving_conventions.json v' + t.version + ' — ' + (t.confidence || 'unverified');
+      var source = 'the giving conventions the app carries (' + (t.confidence || 'unverified') + ')';
       return [
         { label: 'The conventions', value: shares + ' of gross', source: source + '. ' + (t.confidenceNote || '') },
         { label: 'Out of', value: 'gross income, not take-home', source: 'This room reads a share of gross; Expenses’ giving rate reads gifts over take-home, so the two shares differ (convention)' },
-        { label: 'Real return, for the FI cost', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal, through the lens (D-094)' },
+        { label: 'Real return, for the FI cost', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'the app’s long-run return after inflation, through the lens' },
         { label: 'The tax deduction', value: 'not modelled', source: (t.deduction && t.deduction.note) || 'Deductible only when itemising.' }
       ];
     },

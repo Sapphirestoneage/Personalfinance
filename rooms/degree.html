@@ -145,7 +145,7 @@
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
   Reference.load(['effectiveTaxRates', 'federalBrackets', 'fireVariants', 'returnBands']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
-    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load this page’s reference numbers (' + err.message + '). Reload the page.';
   });
 })();
 </script>

@@ -150,8 +150,8 @@
   </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax is a flat effective-rate
-    lookup from <code>data/effective_tax_rates_2026.json</code>, not a real
+    Educational tool, not financial advice. Tax is looked up as one
+    average rate for your income from a 2026 table, not worked out return by
     return. Projections assume a steady return every year, which no real
     market has ever done. Your numbers stay in this browser.
   </p>
@@ -317,7 +317,7 @@
     el('bench-why').textContent = 'The benchmark is '
       + Money.formatRate(t.savingsRateBenchmarkLow, { decimals: 0 }) + '–'
       + Money.formatRate(t.savingsRateBenchmarkFloor, { decimals: 0 })
-      + ', from data/foo_rules.json, and it is measured on your money only — '
+      + ', the figure in the order-of-operations guide we follow, and it is measured on your money only — '
       + 'employer match dollars are excluded, which is the harder test.';
   }
 

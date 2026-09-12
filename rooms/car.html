@@ -426,7 +426,7 @@
       return [
         { label: 'The depreciation curve',
           value: t.depreciation.length + ' points, ' + Charts.percent(1 - one.retainedShare) + ' gone by year one',
-          source: 'data/car_costs.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + '). '
+          source: t.source + ' (' + t.confidence + '). '
             + t.note },
         { label: 'Years the table does not list',
           value: 'straight line between the ones it does',
@@ -436,7 +436,7 @@
         (function () {
           var st = Schema.stateCell(T, h.state, 'autoInsuranceFullCoverageAnnualCents');
           return st
-            ? { label: 'Insurance, full coverage, in ' + st.name, value: Money.formatCents(st.value) + ' a year, the state average', source: 'data/states.json as of ' + st.asOf + ' (' + st.source + '; ' + (st.verify ? 'recalled, to verify' : st.confidence) + '). Your own quote beats it: it depends on the car, the record and the postcode.' }
+            ? { label: 'Insurance, full coverage, in ' + st.name, value: Money.formatCents(st.value) + ' a year, the state average', source: 'the state averages the app carries, as of ' + st.asOf + ' (' + st.source + '; ' + (st.verify ? 'recalled, to verify' : st.confidence) + '). Your own quote beats it: it depends on the car, the record and the postcode.' }
             : { label: 'Insurance', value: 'not priced here', source: 'Set your state in Start Here for the state average; your own quote beats it.' };
         })(),
         { label: 'The running-cost shares',
@@ -445,9 +445,9 @@
             + 'no dollar total is shown, because nothing on this page knows your mileage or your premium.' },
         { label: 'The 20/3/8 test',
           value: g.what,
-          source: 'data/car_costs.json v' + t.version + ' (' + t.confidence + '). ' + g.why },
+          source: t.source + ' (' + t.confidence + '). ' + g.why },
         { label: 'Where the test is computed',
-          value: 'engines/quickmath.js — carRule2038',
+          value: 'once, in the app’s shared 20/3/8 check',
           source: 'The same call Quick Math and Big Purchase make, so the rule is calculated in one place '
             + 'and cannot drift between rooms.' },
         { label: 'The rate, when you have not given one',
@@ -461,7 +461,7 @@
         { label: 'What this page keeps',
           value: 'nothing',
           source: 'The price, the deposit, the rate and the term are page state and are gone when the tab '
-            + 'closes. A car you are considering is a what-if, and a what-if is never written (D-052).' }
+            + 'closes. A car you are considering is a what-if, and a what-if is never written down.' }
       ];
     },
 

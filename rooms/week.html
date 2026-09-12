@@ -189,7 +189,7 @@
       propose: function (h, T) {
         var t = Week.tableBlock(T, def.id);
         if (!t || !Money.isEntered(t.hours) || t.hours <= 0) return null;
-        return { value: t.hours, source: 'a typical week — data/week_blocks.json (' + (T.weekBlocks.confidence || 'convention') + ')' };
+        return { value: t.hours, source: 'a typical week, from our starter table (' + (T.weekBlocks.confidence || 'convention') + ')' };
       } };
   }
   function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
@@ -207,11 +207,10 @@
       var parts = [];
       parts.push('<strong>' + hoursText(d.hours) + ' of ' + d.hoursInWeek + '</strong> hours placed' + (d.overHours ? ' — <strong>more hours than the week has</strong>; ' + hoursText(d.hours - d.hoursInWeek) + ' over, so nothing is unplaced' : ''));
       parts.push(d.nowMonthlyCents !== null ? 'against <strong>' + Money.formatCents(d.nowMonthlyCents) + '</strong> now' : 'no month to compare it against yet');
-      if (d.wageApplies && d.hoursOfItself !== null) parts.push('the week costs <strong>' + hoursText(d.hoursOfItself) + ' hours of itself</strong> at ' + perHour(d.realHourlyCents));
-      if (d.fiCents !== null) parts.push('FI on this week <strong>' + Money.formatCents(d.fiCents) + '</strong>');
+      /* D-222: two clauses. The FI figure is already a line in the amounts
+         below, and the hours-of-itself, unpriced blocks and tracked-month
+         caveats are rows in the assumptions drawer. */
       var sub = parts.join(' · ');
-      if (d.unpricedCount > 0) sub += '. ' + d.unpricedCount + (d.unpricedCount === 1 ? ' block has' : ' blocks have') + ' hours and no cost — priced $0, not blank: ' + d.unpricedLabels.join(', ');
-      if (!d.tracked) sub += '. Costs come from a tracked month; without one only what is stored on a block counts';
       return { label: 'The designed week, a month', value: Money.formatCents(d.monthlyCents), sub: sub, zone: null, result: d };
     },
 
@@ -250,10 +249,14 @@
       var d = Week.design(h, T);
       var a = Schema.resolveAssumptions(h);
       return [
-        { label: 'The starter blocks', value: Week.tableBlocks(T).length + ' blocks, ' + Week.hoursInWeek(T) + ' hours', source: 'data/week_blocks.json v' + t.version + ' — ' + t.confidence + ': ' + t.confidenceNote },
+        { label: 'The starter blocks', value: Week.tableBlocks(T).length + ' blocks, ' + Week.hoursInWeek(T) + ' hours', source: 'our starter table of blocks, version ' + t.version + ' — ' + t.confidence + ': ' + t.confidenceNote },
         { label: 'Weeks in a month', value: Week.WEEKS + ' ÷ ' + Week.MONTHS + ' = ' + (Math.round(Week.WEEKS / Week.MONTHS * 1000) / 1000), source: 'a week priced × 52 ÷ 12 is a month (convention)' },
-        { label: 'A block’s cost', value: Money.isOk(d) && d.tracked ? 'your tracked line' : 'none tracked yet', source: 'the tracked month for the block’s category (Cash Flow), stored on the block when the hours are written; the table proposes no cost, so a block without a line is priced $0 and said' },
-        { label: 'Withdrawal rate, for the FI number', value: Money.formatRate(a.swrRate, { decimals: 1 }), source: 'assumptions.swrRate (D-094) through Tier0.fireNumber' },
+        { label: 'A block’s cost', value: Money.isOk(d) && d.tracked ? 'your tracked line' : 'none tracked yet', source: 'the tracked month for the block’s category (Cash Flow), stored on the block when the hours are written; the table proposes no cost, so a block without a line is priced $0 and said'
+            + (Money.isOk(d) && !d.tracked ? '. Without a tracked month, only what is stored on a block counts' : '')
+            + (Money.isOk(d) && d.unpricedCount > 0 ? '. ' + d.unpricedCount + (d.unpricedCount === 1 ? ' block has' : ' blocks have') + ' hours and no cost — priced $0, not blank: ' + d.unpricedLabels.join(', ') : '') },
+        /* D-222: moved off the headline sub-line, which now stops at two clauses. */
+        { label: 'The week, in hours of itself', value: Money.isOk(d) && d.wageApplies && d.hoursOfItself !== null ? hoursText(d.hoursOfItself) + ' hours' : 'not priced for this situation', source: Money.isOk(d) && d.realHourlyCents !== null ? 'the designed month divided by ' + perHour(d.realHourlyCents) + ', your real hourly rate' : 'needs a real hourly rate' },
+        { label: 'Withdrawal rate, for the FI number', value: Money.formatRate(a.swrRate, { decimals: 1 }), source: 'the withdrawal rate the household holds, used for the FI number' },
         { label: 'The hourly rate', value: Money.isOk(d) && d.realHourlyCents !== null ? perHour(d.realHourlyCents) : (Money.isOk(d) && !d.wageApplies ? 'none for this situation' : 'not known yet'), source: 'Real Hourly Wage — the real rate, not the headline' }
       ];
     },

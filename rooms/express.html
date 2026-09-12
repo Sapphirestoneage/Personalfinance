@@ -150,7 +150,7 @@
   var ROOM_ID = 'express';
   var TABLES = null;
   var NODES = {};        /* rowId or rowId:itemId → { row, el, input, sug, saved } */
-  var LISTS = { debts: { kind: 'debt', rows: ['debtBalance', 'debtRate', 'debtMinPayment'], label: 'Debts', level: 2, door: 'D' },
+  var LISTS = { debts: { kind: 'debt', rows: ['debtBalance', 'debtRate', 'debtMinPayment'], label: 'Debts', level: 2, door: 'D', gate: 'totalDebt' },
                 assets: { kind: 'asset', rows: ['assetValue', 'assetCharacter', 'assetTier', 'assetCostBasis'], label: 'Accounts and things owned', level: 2, door: 'A' },
                 incomeSources: { kind: 'incomeSource', rows: ['grossAnnualIncome', 'incomeType', 'paySurvives'], label: 'Sources of pay', level: 1, door: 'I' },
                 annualLines: { kind: 'annualLine', rows: ['annualLine'], label: 'Once-a-year costs', level: 3, door: 'E' } };
@@ -227,10 +227,13 @@
       + '<div class="x-slip" data-x-slip hidden></div>';
   }
   function rowHtml(row, key, item) {
-    var f = Ownership.FIELDS[row.id];
-    var owner = f ? SLAF.Registry.byId(f.owner) : null;
     return '<div class="xrow" data-x-row="' + esc(row.id) + '" data-x-key="' + esc(key) + '"' + (item ? ' data-x-item="' + esc(item.id) + '"' : '') + '>'
-      + '<div class="lab">' + esc(row.label) + (row.unit !== 'cents' && LedgerRows.unitLabel(row) ? '<span class="unit">' + esc(LedgerRows.unitLabel(row)) + '</span>' : '') + (owner && row.kind !== 'computed' ? '<span class="own">owned by ' + esc(owner.title) + '</span>' : '') + '</div>'
+      /* No "owned by Start Here" line. Every one of the 120 rows here has an
+         owner, so the line appeared on all of them and told the reader
+         nothing they could act on — they are typing into this page, and the
+         value lands in the same place either way. The Ledger names owners,
+         where that is the point of the screen. D-222. */
+      + '<div class="lab">' + esc(row.label) + (row.unit !== 'cents' && LedgerRows.unitLabel(row) ? '<span class="unit">' + esc(LedgerRows.unitLabel(row)) + '</span>' : '') + '</div>'
       + '<div class="ctl">' + control(row, key) + '</div>'
       + statesHtml(row)
       + '<div class="sug" data-x-sug hidden></div><div class="saved" data-x-saved></div></div>';
@@ -252,9 +255,30 @@
   /* ---- The whole form, built once ---------------------------------------------- */
   function build() {
     var hh = h();
-    var all = LedgerRows.all().filter(function (r) { return !/^prefs\./.test(r.path); });
+    /* Questions only. Twelve of the eighty rows are computed — net worth,
+       total debt, the monthly spend — and a worked-out number is not a
+       question. Sitting in the form they read as boxes someone had failed
+       to fill in ("Property and other things owned — needs its inputs"),
+       and one of them, net worth, appeared as an underlined figure in the
+       middle of the Assets fields. They are all on the Ledger and the
+       dashboard, which is where a result belongs. D-222. */
+    var all = LedgerRows.all().filter(function (r) { return !/^prefs\./.test(r.path) && r.kind !== 'computed'; });
     Doors.DOORS.forEach(function (d) {
       var mine = all.filter(function (r) { return r.door === d.id; });
+      /* Where each repeat block belongs: the level it declares, or failing
+         that the earliest level any of its own rows sits at. It used to be
+         drawn under EVERY level holding one of its rows, so a debt's
+         balance (level 2) and its rate (level 3) each pulled in the whole
+         Debts form — the same fields, twice, on the same screen. Three of
+         the four blocks were doubled. D-222. */
+      var listLevel = {};
+      mine.forEach(function (r) {
+        var lk = ITEM_ROWS[r.id];
+        if (!lk) return;
+        var want = LISTS[lk].level;
+        listLevel[lk] = listLevel[lk] === undefined ? r.level : Math.min(listLevel[lk], r.level);
+        if (want === r.level) listLevel[lk] = want;
+      });
       var out = '';
       [1, 2, 3, 4].forEach(function (L) {
         var rows = mine.filter(function (r) { return r.level === L; });
@@ -269,6 +293,7 @@
           out += rowHtml(r, r.id, null);
         });
         Object.keys(listsHere).forEach(function (lk) {
+          if (listLevel[lk] !== L) return;
           var Lst = LISTS[lk];
           var items = LedgerRows.items(hh, { repeat: lk }) || [];
           var rowsOf = Lst.rows.map(function (id) { return LedgerRows.byId(id); }).filter(Boolean);
@@ -352,8 +377,21 @@
       if (key === 'grossAnnualIncome' && (LedgerRows.items(hh, { repeat: 'incomeSources' }) || []).length) applies = false;
       n.el.hidden = !applies;
     });
+    /* A repeat block the SITUATION has ruled out goes away: after "Any debt:
+       No" the Debts form, its hint and its "+ Add another" stayed on screen
+       asking for a lender and a balance. The gate is the governing field's
+       own applies rule, not whether any row currently applies — with no
+       debts entered yet none of them do, and that is precisely when the
+       Add block has to be there. D-222. */
+    Array.prototype.forEach.call(document.querySelectorAll('[data-x-listhost]'), function (host) {
+      var gate = (LISTS[host.getAttribute('data-x-listhost')] || {}).gate;
+      var f = gate ? Ownership.FIELDS[gate] : null;
+      host.hidden = !!(f && typeof f.applies === 'function' && !f.applies(hh));
+    });
     Array.prototype.forEach.call(document.querySelectorAll('details.xlvl'), function (lv) {
-      var any = Array.prototype.some.call(lv.querySelectorAll('.xrow, .xadd'), function (r) { return !r.hidden; });
+      var any = Array.prototype.some.call(lv.querySelectorAll('.xrow, .xadd'), function (r) {
+        return !r.hidden && !(r.closest('[data-x-listhost]') || {}).hidden;
+      });
       lv.hidden = !any;
     });
     Doors.DOORS.forEach(function (d) {

@@ -78,7 +78,7 @@
     <h2 style="margin:var(--space-2) 0 var(--space-2)">Still true?</h2>
     <p class="summary" id="since-line"></p>
     <div id="rows"></div>
-    <p class="empty" id="rows-empty" hidden>Nothing that moves has a value yet. <a href="ledger.html">Open the doors</a> to enter the first ones.</p>
+    <p class="empty" id="rows-empty" hidden>Nothing that moves has a value yet. <a href="ledger.html">Open the Ledger</a> to enter the first ones.</p>
     <p class="empty" id="blank-line" hidden></p>
   </section>
 
@@ -215,7 +215,7 @@
     });
     var blank = LedgerRows.rows(h, TABLES, { filter: 'all' }).filter(function (r) { return r.moves && r.kind !== 'computed' && (r.status === 'missing' || r.status === 'notSure'); });
     el('blank-line').hidden = blank.length === 0;
-    el('blank-line').innerHTML = blank.length + ' moving row' + (blank.length === 1 ? '' : 's') + ' still blank; the <a href="ledger.html">doors</a> ask ' + (blank.length === 1 ? 'it' : 'them') + '.';
+    el('blank-line').innerHTML = blank.length + ' moving row' + (blank.length === 1 ? '' : 's') + ' still blank; the <a href="ledger.html">Ledger</a> asks ' + (blank.length === 1 ? 'for it' : 'for them') + '.';
     paint();
   }
 

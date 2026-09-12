@@ -318,13 +318,11 @@
 
     var note = el('when-note');
     note.hidden = false;
+    /* D-222: one line, not five sentences restating the figure above it. */
     note.innerHTML = '<strong>That threshold is your cash rate, exactly.</strong> '
-      + 'Money waiting to be invested is not sitting still — it is earning '
+      + 'Money waiting to be invested is earning '
       + Money.formatRate(r.cashAnnualRate, { decimals: 1 })
-      + ' in the account it is waiting in. So spreading a lump sum is just a blend of '
-      + 'the market and your savings account, and a blend beats the pure thing exactly '
-      + 'when the thing you blended in does better. Not usually, not on average: exactly. '
-      + 'Over ' + r.months + ' months that means the market would have to come in under '
+      + ' where it waits, so over ' + r.months + ' months the market would have to come in under '
       + Money.formatRate(r.breakEvenTotalDrop, { decimals: 1 }) + ' in total.';
   }
 

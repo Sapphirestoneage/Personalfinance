@@ -109,7 +109,7 @@
       return '<li class="' + (l.value === null ? 'is-missing' : '') + '">' + (big ? '<span class="big">' + esc(big) + '</span>' : '') + esc(l.text) + '</li>';
     }).join('');
     el('btn-copy').hidden = !LAST.ok;
-    el('w-note').textContent = LAST.ok ? '' : (LAST.snapshots ? 'This year has ' + LAST.snapshots + ' snapshot' + (LAST.snapshots === 1 ? '' : 's') + '; the lines that need an earlier one say so.' : 'No snapshot this year yet. Freeze one on the dashboard or finish a Refresh, and come back.');
+    el('w-note').textContent = LAST.ok ? '' : (LAST.snapshots ? 'This year has ' + LAST.snapshots + ' snapshot' + (LAST.snapshots === 1 ? '' : 's') + '; the lines that need an earlier one say so.' : 'No snapshot this year yet. Save one on the dashboard or finish a Refresh, and come back.');
   }
   el('btn-copy').addEventListener('click', function () {
     var card = ShareCard.make('wrapped', Spine.getProfile(), TABLES, { wrapped: LAST });

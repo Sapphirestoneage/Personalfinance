@@ -237,7 +237,7 @@
 
     assumptions: function (h, T) {
       var c = T.protectionConventions || {};
-      var src = 'data/protection_conventions.json v' + c.version + ' — ' + (c.confidence || 'unverified');
+      var src = 'our table of protection conventions, version ' + c.version + ' — ' + (c.confidence || 'unverified');
       var ins = h.insurance || {};
       return [
         { label: 'If you could not work', value: Money.formatRate(c.disabilityReplacementShare, { decimals: 0 }) + ' of gross pay, a month', source: 'the share a long-term disability policy is sold to replace (' + src + ')' },

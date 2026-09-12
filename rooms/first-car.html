@@ -134,12 +134,28 @@
     var nu = r.newVsUsed;
     el('c-newused').textContent = nu.newLossCents !== null ? 'New at ' + Money.formatCents(r.priceCents) + ': about ' + Money.formatCents(nu.newLossCents) + ' lost to depreciation over ' + nu.holdYears + ' years. The same ' + Money.formatCents(r.priceCents) + ' buys a ' + nu.usedAgeYears + '-year-old car that listed near ' + Money.formatCents(nu.usedListNewCents) + ' new, losing about ' + Money.formatCents(nu.usedLossCents) + ' over the same years.' : '';
   }
-  ['in-price', 'in-down', 'in-term', 'in-rate', 'in-ins', 'in-gas', 'in-maint'].forEach(function (id) { el(id).addEventListener('input', render); });
+  /* One repaint after the typing pauses instead of one per keystroke; change
+     and blur still repaint at once, so nothing is lost on leaving a field.
+     D-222. */
+  var repaintTimer = null;
+  function renderSoon() {
+    if (repaintTimer) clearTimeout(repaintTimer);
+    repaintTimer = setTimeout(function () { repaintTimer = null; render(); }, 200);
+  }
+  function renderNow() {
+    if (repaintTimer) { clearTimeout(repaintTimer); repaintTimer = null; }
+    render();
+  }
+  ['in-price', 'in-down', 'in-term', 'in-rate', 'in-ins', 'in-gas', 'in-maint'].forEach(function (id) {
+    el(id).addEventListener('input', renderSoon);
+    el(id).addEventListener('change', renderNow);
+    el(id).addEventListener('blur', renderNow);
+  });
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
   Reference.load(['carCosts', 'effectiveTaxRates', 'federalBrackets', 'fireVariants', 'returnBands']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
-    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load this page’s reference numbers (' + err.message + '). Reload the page.';
   });
 })();
 </script>

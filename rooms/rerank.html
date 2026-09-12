@@ -274,7 +274,7 @@
       if (!node) return;
       Suggest.show(node, {
         value: line.monthlyCents, display: fmt(line.monthlyCents),
-        source: 'an everyday figure (data/common_costs.json, ' + TABLES.commonCosts.confidence + ')' + (Money.isEntered(l.scale) ? ', scaled to your essentials' : ''),
+        source: 'an everyday figure from our list of common costs (' + TABLES.commonCosts.confidence + ')' + (Money.isEntered(l.scale) ? ', scaled to your essentials' : ''),
         onUse: function (cents) { writeLine(line.id, line.categoryId, line.label, cents); render(); }
       });
     });
@@ -571,7 +571,7 @@
       }
       return '<div class="flagged"><span class="tag ' + r.flag + '">' + r.flag + '</span>' + (r.need ? '<span class="tag need">need</span>' : '') + '<strong>' + esc(r.label) + '</strong><p>' + esc(copy) + '</p></div>';
     }).join('') : '<p class="slaf-reason">Nothing flagged: what costs the most is also what gives you the most, or nothing trails by enough to say.</p>';
-    el('gap-why').textContent = 'Threshold: max(3, a quarter of the rated lines) = ' + a.threshold + '. ' + (a.valueOrder === 'hand' ? 'Value order is yours, from stage 3.' : 'Value order is by rating; reorder in stage 3 to overrule it.');
+    el('gap-why').textContent = 'A line is flagged only if it is at least ' + a.threshold + ' places apart on the two lists — three places, or a quarter of the lines you rated, whichever is more. ' + (a.valueOrder === 'hand' ? 'Value order is yours, from stage 3.' : 'Value order is by rating; reorder in stage 3 to overrule it.');
   }
 
   /* ---- Render ------------------------------------------------------------ */

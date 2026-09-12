@@ -109,7 +109,9 @@
     if (!Money.isOk(r)) { el('q-num').textContent = 'Not yet.'; el('q-sub').textContent = r.reason; el('q-benefit').textContent = ''; el('q-dates').innerHTML = ''; el('q-parts').innerHTML = ''; return; }
     el('q-num').textContent = r.value + ' month' + (r.value === 1 ? '' : 's') + '.';
     el('q-num').setAttribute('data-months', String(r.value));
-    el('q-sub').textContent = Money.formatCents(r.freeCents) + ' you could reach at no cost' + (r.benefit.totalCents ? ' plus ' + Money.formatCents(r.benefit.totalCents) + ' of unemployment benefit' : '') + ', against a month of ' + Money.formatCents(r.monthCents) + ': the ' + (r.floorSource === 'floor' ? 'floor' : 'household') + ' month of ' + Money.formatCents(r.floorCents) + ' plus ' + Money.formatCents(r.coverCents) + ' of health cover at the COBRA price' + (r.marketplaceCents ? ' (a marketplace plan can be nearer ' + Money.formatCents(r.marketplaceCents) + ')' : '') + '.';
+    /* D-222: two clauses, not six. What the month is made of is the list of
+       parts below, so the sub-line no longer repeats it. */
+    el('q-sub').textContent = Money.formatCents(r.freeCents) + ' you could reach at no cost' + (r.benefit.totalCents ? ' plus ' + Money.formatCents(r.benefit.totalCents) + ' of unemployment benefit' : '') + ', against a month of ' + Money.formatCents(r.monthCents) + '.';
     el('q-benefit').textContent = MODE === 'laidOff'
       ? (r.benefit.totalCents ? 'Laid off: about ' + Money.formatCents(r.benefit.weeklyCents) + ' a week for ' + r.benefit.weeks + ' weeks in ' + r.benefit.state + ', at half your pay up to the state cap. An estimate from the state maximum, not a promise.' : 'Laid off: ' + (r.benefit.reason || 'no benefit counted.'))
       : 'Quitting usually disqualifies an unemployment claim, so none is counted. Nothing else changes between the two.';
@@ -120,7 +122,7 @@
     var parts = r.freeTiers.map(function (t) { return '<li><span>' + esc(t.label) + '<small>free to reach</small></span><span class="amt">' + esc(Money.formatCents(t.cents)) + '</span></li>'; });
     if (!parts.length) parts.push('<li><span>Nothing free to reach yet<small>cash and Roth contributions count here</small></span><span class="amt"></span></li>');
     parts.push('<li><span>The month<small>' + (r.floorSource === 'floor' ? 'the fixed lines from Cash Flow' : 'the household month; mark fixed lines in Cash Flow for a floor') + '</small></span><span class="amt">' + esc(Money.formatCents(r.floorCents)) + '</span></li>');
-    parts.push('<li><span>Health cover<small>COBRA, ' + esc(r.coverKind) + ', data/cobra_aca_2024.json</small></span><span class="amt">' + esc(Money.formatCents(r.coverCents)) + '</span></li>');
+    parts.push('<li><span>Health cover<small>COBRA, ' + esc(r.coverKind) + ', at published 2024 prices' + (r.marketplaceCents ? '; a marketplace plan can be nearer ' + esc(Money.formatCents(r.marketplaceCents)) : '') + '</small></span><span class="amt">' + esc(Money.formatCents(r.coverCents)) + '</span></li>');
     el('q-parts').innerHTML = parts.join('');
   }
   document.addEventListener('click', function (evt) {

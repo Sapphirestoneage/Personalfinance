@@ -107,14 +107,14 @@
       el('c-sub').setAttribute('data-range', word(hi) + '|' + word(lo));
     }
     el('c-rev').textContent = 'With no more contributions, today’s retirement money grows to about ' + Money.formatCents(r.noMoreContributions.atTargetAgeCents) + ' by ' + r.targetAge + ', in today’s dollars.';
-    el('c-assume').textContent = 'At ' + (Math.round(r.returnReal * 1000) / 10) + '% a year real (after inflation), from data/return_bands.json. Its own formula, not a FIRE variant.';
+    el('c-assume').textContent = 'At ' + (Math.round(r.returnReal * 1000) / 10) + '% a year real (after inflation), from the long-run return bands. Its own formula, not a FIRE variant.';
   }
   el('in-age').addEventListener('input', render);
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
   Reference.load(['fireVariants', 'returnBands', 'effectiveTaxRates', 'federalBrackets']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
-    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load this page’s reference numbers (' + err.message + '). Reload the page.';
   });
 })();
 </script>

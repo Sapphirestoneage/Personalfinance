@@ -236,11 +236,11 @@
       var a = Schema.resolveAssumptions(h);
       var aff = Buckets.affordability(h, T);
       return [
-        { label: 'The proposals', value: 'typical experiences, a decade at a time', source: 'data/bucket_ideas.json v' + (ideas.version || '?') + ' — ' + (ideas.source || '') + ' (' + (ideas.confidence || 'convention') + ')' },
-        { label: 'Real return', value: Money.formatRate(a.returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094), the same figure the lens uses' },
+        { label: 'The proposals', value: 'typical experiences, a decade at a time', source: (ideas.source || '') + ' (' + (ideas.confidence || 'convention') + ')' },
+        { label: 'Real return', value: Money.formatRate(a.returnReal, { decimals: 0 }), source: 'the app’s long-run return after inflation, the same figure the lens uses' },
         { label: 'Saved a year', value: Money.isOk(aff) ? Money.formatCents(aff.annualSavingsCents) + (aff.savingsVariant === 'includingMatch' ? ', including the match' : '') : 'not projected yet', source: 'Tier 0’s savings rate from your income, spending and estimated tax — yours, read from Start Here' + (Money.isOk(aff) && aff.stopAge !== null ? '; contributions stop at ' + aff.stopAge + ', your stop age' : '') },
         { label: 'When a decade is paid for', value: 'at its start', source: 'a decade’s plan is read as spent in its first year, against the balance projected there (convention)' },
-        { label: 'The last decade', value: 'the one before ' + Buckets.PLAN_AGE, source: 'PLAN_AGE in engines/buckets.js — a planning horizon, not a life expectancy (convention)' }
+        { label: 'The last decade', value: 'the one before ' + Buckets.PLAN_AGE, source: 'a planning horizon this page sets, not a life expectancy (convention)' }
       ];
     },
 

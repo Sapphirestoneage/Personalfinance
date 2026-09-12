@@ -116,7 +116,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Financial Snapshot</h1>
-  <p class="room-lede">Ten numbers in. Nine out — including the one that says which step you're actually standing on.</p>
+  <p class="room-lede">Nothing to type. Every number you have already entered, read back as a scorecard — including the one that says which step you're actually standing on.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -270,8 +270,8 @@
 
   <p class="disclaimer">
     Educational tool, not financial advice. Tax rates, percentile bands and
-    contribution limits are approximations — see <code>data/</code> for what
-    each one is actually worth. Your numbers stay in this browser.
+    contribution limits are approximations; every card says below it where its
+    figure comes from. Your numbers stay in this browser.
   </p>
   <p class="disclaimer" id="provenance"></p>
 </main>
@@ -329,13 +329,8 @@
   ];
   var TABLES = null;
 
-  /* Stable ids for the single records this room keeps inside the itemised
-     arrays. Using fixed ids means editing a field updates that record
-     rather than appending a duplicate. */
-  var CASH_ID = 'tier0_cash';
-  var INVEST_ID = 'tier0_investments';
-  var DEBT_ID = 'tier0_debt_lump';
-  var INCOME_ID = 'tier0_income_primary';
+  /* The four fixed record ids that used to live here went with the last
+     typed input: this room writes nothing now, so nothing read them. D-222. */
 
   /* ---------- the borrowed numbers ---------------------------------------
      This room owns NOTHING. Every figure below belongs to another room and
@@ -724,7 +719,7 @@
         + (one.at65 ? ' · ' + Money.formatCents(one.at65.deltaCents) + ' more at 65' : '')]);
     }
     el('benchmarks-more').innerHTML = rows.length
-      ? dl(rows) + '<p class="slaf-reason">The multiplier is the Money Guy convention in data/wealth_multiplier.json: a return that starts at 10% at 20 and falls to 5.5% by 65. A convention, not a forecast.</p>'
+      ? dl(rows) + '<p class="slaf-reason">The multiplier is the Money Guy convention: a return that starts at 10% at 20 and falls to 5.5% by 65. A convention, not a forecast.</p>'
       : '';
   }
 
@@ -853,8 +848,8 @@
     var notice = el('load-notice');
     notice.hidden = false;
     notice.className = 'notice is-error';
-    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
-      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+    notice.textContent = 'Couldn’t load this page’s reference numbers (' + err.message
+      + '). Reload the page; if it keeps happening, open the app from its web address rather than from a file on your computer.';
   });
 })();
 </script>

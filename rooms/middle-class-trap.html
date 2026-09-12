@@ -174,14 +174,19 @@
     }).join('') : '';
     var R = TABLES.earlyAccessRules;
     var rows = [
-      'Access age ' + R.accessAge + ', penalty ' + Money.formatRate(R.penaltyRate, { decimals: 0 }) + ' under it, ' + R.conversionSeasoningYears + ' years before a conversion can be spent, 72(t) by the ' + R.sepp.methodUsed.replace(/([A-Z])/g, ' $1').toLowerCase() + ' method at ' + Money.formatRate(R.sepp.maxRate, { decimals: 0 }) + ', the Rule of 55 from ' + R.ruleOf55.separationAge + ': data/early_access_rules_2026.json v' + R.version + ' (' + R.confidence + ').',
-      'Invested money grows at ' + Money.formatRate(I.rate, { decimals: 1 }) + ' real; the range runs a poor decade (' + Money.formatRate(I.bands.p25, { decimals: 0 }) + ') to a good one (' + Money.formatRate(I.bands.p75, { decimals: 0 }) + '), data/return_bands.json. Cash does not grow.',
+      'Access age ' + R.accessAge + ', penalty ' + Money.formatRate(R.penaltyRate, { decimals: 0 }) + ' under it, ' + R.conversionSeasoningYears + ' years before a conversion can be spent, 72(t) by the ' + R.sepp.methodUsed.replace(/([A-Z])/g, ' $1').toLowerCase() + ' method at ' + Money.formatRate(R.sepp.maxRate, { decimals: 0 }) + ', the Rule of 55 from ' + R.ruleOf55.separationAge + ': our 2026 early-access rules, version ' + R.version + ' (' + R.confidence + ').',
+      'Invested money grows at ' + Money.formatRate(I.rate, { decimals: 1 }) + ' real; the range runs a poor decade (' + Money.formatRate(I.bands.p25, { decimals: 0 }) + ') to a good one (' + Money.formatRate(I.bands.p75, { decimals: 0 }) + '), from the historical range we hold. Cash does not grow.',
       'Federal ordinary tax at the ' + I.filingStatus + ' ladder on conversions and pre-tax withdrawals; the capital gains stack on taxable draws. No state tax.',
       'Spending stays ' + Money.formatCents(I.spendAnnualCents) + ' a year in today\'s dollars; a shortfall year is a year the path\'s own sources cannot cover it.'
     ].concat(I.assumed);
     el('t-assume').innerHTML = rows.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
   }
-  el('in-age').addEventListener('input', render);
+  /* D-222: typing in the age box re-ran four whole projections on every
+     keystroke. The redraw now waits for a 200ms pause; leaving the field still
+     redraws at once, so nothing typed is ever left unshown. */
+  var ageTimer = null;
+  el('in-age').addEventListener('input', function () { clearTimeout(ageTimer); ageTimer = setTimeout(render, 200); });
+  el('in-age').addEventListener('change', function () { clearTimeout(ageTimer); ageTimer = null; render(); });
   document.addEventListener('click', function (evt) {
     var e = evt.target.closest('[data-equity]'), r = evt.target.closest('[data-rule55]'), p = evt.target.closest('[data-path]');
     if (e) EQUITY = e.getAttribute('data-equity');

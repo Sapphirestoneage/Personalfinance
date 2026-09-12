@@ -159,7 +159,12 @@
         + '<p style="margin:var(--space-2) 0 0"><button type="button" class="slaf-btn slaf-btn--quiet" data-accept="' + i + '">Accept this offer</button></p></div>';
     }).join('');
   }
-  el('offer-grid').addEventListener('input', render);
+  /* D-222: every keystroke in any offer box re-ran an FI projection for every
+     offer on screen. The redraw now waits for a 200ms pause; leaving a field
+     (change) still redraws at once, so nothing typed is left unshown. */
+  var gridTimer = null;
+  el('offer-grid').addEventListener('input', function () { clearTimeout(gridTimer); gridTimer = setTimeout(render, 200); });
+  el('offer-grid').addEventListener('change', function () { clearTimeout(gridTimer); gridTimer = null; render(); });
   el('btn-more').addEventListener('click', function () { SHOWN = Math.min(4, SHOWN + 1); render(); });
   document.addEventListener('click', function (evt) {
     var b = evt.target.closest('[data-accept]'); if (!b || !LAST) return;

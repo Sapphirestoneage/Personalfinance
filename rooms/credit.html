@@ -371,23 +371,23 @@
       return [
         { label: 'The five weights',
           value: list.map(function (f) { return Money.formatRate(f.share, { decimals: 0 }); }).join(' / '),
-          source: 'data/credit_factors.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + ')' },
+          source: t.source + ' (' + t.confidence + ')' },
         { label: 'Why there is no score',
           value: 'none is computed',
           source: t.confidenceNote },
         { label: 'How much of it is visible here',
           value: Money.formatRate(seenWeight, { decimals: 0 }) + ' of the weight, ' + seen.length + ' of ' + list.length + ' factors',
-          source: 'The factors marked youCanSee in data/credit_factors.json. The other ' + (list.length - seen.length)
+          source: 'The factors this page can read from what you have entered. The other ' + (list.length - seen.length)
             + ' are named and left blank rather than estimated.' },
         { label: 'The two figures',
-          value: 'engines/ratios.js',
-          source: 'The same call the dashboard and the Ratio Glossary make, so one number is calculated in one place. Utilisation counts only the cards with a limit entered, on both sides (D-045).' },
+          value: 'worked out once, in one place',
+          source: 'The same calculation the dashboard and the Ratio Glossary use, so one number is never worked out twice. Utilisation counts only the cards with a limit entered, on both sides.' },
         { label: 'The bands on them',
           value: 'comfortable at or below ' + Money.formatRate(bands.bands.creditUtilization.good, { decimals: 0 }),
-          source: 'data/ratio_benchmarks.json v' + bands.version + ' (' + bands.confidence + ') — ' + bands.bands.creditUtilization.note },
+          source: '(' + bands.confidence + ') — ' + bands.bands.creditUtilization.note },
         { label: 'How long things stay',
           value: t.howLongThingsStay.length + ' reporting periods',
-          source: 'Set by the Fair Credit Reporting Act, not by a scoring model — the periods in data/credit_factors.json v' + t.version + ' (' + t.confidence + ').' }
+          source: 'Set by the Fair Credit Reporting Act, not by a scoring model (' + t.confidence + ').' }
       ];
     },
 

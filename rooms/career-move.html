@@ -148,7 +148,7 @@
     var g = Schema.grossAnnualIncomeCents(h);
     if (!Money.isOk(g) || g.value <= 0) return null;
     var share = L.moves['income.grossAnnualCents'];
-    return { value: Math.round(g.value * (1 + share)), source: 'the Change jobs lever: ' + Money.formatRate(share, { decimals: 0 }) + ' more than you earn now (data/levers.json)' };
+    return { value: Math.round(g.value * (1 + share)), source: 'the Change jobs lever: ' + Money.formatRate(share, { decimals: 0 }) + ' more than you earn now' };
   }
   function leverRow(h, T) {
     if (!T.levers || !SLAF.Levers) return [];
@@ -156,7 +156,7 @@
     var L = SLAF.Levers.get('careermove');
     if (!L) return [];
     var share = Money.formatRate(L.moves['income.grossAnnualCents'], { decimals: 0 });
-    var src = 'data/levers.json v' + T.levers.version + ' (' + (T.levers.confidence || 'unverified') + ')';
+    var src = 'the app’s six levers (' + (T.levers.confidence || 'unverified') + ')';
     var typed = Money.isEntered(offer(h).grossAnnualCents);
     var gain = SLAF.Levers.monthlyGainCents('careermove', h);
     return [{ label: 'The offer proposed', value: typed ? 'yours, typed above' : share + ' more than now' + (Money.isOk(gain) ? ', about ' + Money.formatCents(gain.value) + ' a month before tax' : ''),
@@ -248,7 +248,7 @@
       var r = CareerMove.compare(h, T);
       var tax = T.effectiveTaxRates;
       var work = currentWork(h);
-      var taxSource = 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')';
+      var taxSource = tax.source + ' (' + tax.confidence + ')';
       var o = r.offer || null, now = Money.isOk(r) ? r.now : null;
       var src = r.sources || {};
       var rows = [];
@@ -269,7 +269,7 @@
       if (Money.isEntered(work.decompressHoursPerWeek) && work.decompressHoursPerWeek > 0) carried.push(work.decompressHoursPerWeek + ' h decompressing');
       rows.push({ label: 'Unpaid hours around the job', value: carried.length ? carried.join(', ') + ' a week' : 'none', source: 'carried over from your current job (Real Hourly Wage); the offer is assumed to take the same' });
       rows.push({ label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours, on both jobs' : 'the default: 52 less four weeks of leave and holidays (convention), on both jobs' });
-      rows.push({ label: 'Real return, for the FI move', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' });
+      rows.push({ label: 'Real return, for the FI move', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'the app’s long-run return after inflation, the one figure every room shares' });
       return rows.concat(leverRow(h, T));
     },
 

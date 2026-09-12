@@ -40,7 +40,10 @@
              placement and no ratio verdict — every rule is unknown and the
              number says so rather than showing a count.
   5. CONFIG  data/unlearning.json (the rules), data/foo_rules.json (the
-             ladder), data/ratio_benchmarks.json (the bands).
+             ladder), data/ratio_benchmarks.json (the bands),
+             data/advice_translator.json (the dashboard's learn/unlearn line).
+             D-222: the drawer now names these tables in plain words on screen;
+             the file names stay here, for us, not for the reader.
 
   THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, two
   inputs, the assumptions drawer with sources, why this matters at your
@@ -115,7 +118,7 @@
   <section class="slaf-card" id="rules" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">The popular rules, on your numbers</span>
     <h2 style="margin:var(--space-2) 0 0">Does it apply to you now?</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Each rule as people say it, who said it, and whether your rows put it in play now, not yet, or behind you. A rule that needs a blank number says so and names it. From <code>data/advice.json</code>.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Each rule as people say it, who said it, and whether your rows put it in play now, not yet, or behind you. A rule that needs a blank number says so and names it.</p>
     <ul class="rulelist" id="rulelist"></ul>
   </section>
 
@@ -342,10 +345,10 @@
       var rows = [
         { label: 'The rules', value: u.rules.length + ' rules, v' + u.version, source: u.source + ' (' + u.confidence + ')' },
         { label: 'A rule’s step range', value: 'a judgement', source: u.confidenceNote },
-        { label: 'Your step', value: where, source: 'engines/foo.js against data/foo_rules.json v' + foo.version + ' — ' + foo.source + ' (' + foo.confidence + ')' + (c.range && c.step === null ? '. The ladder stopped on a step it could not judge, so rules are sorted against the range you could be in' : '') },
-        { label: 'Your bands', value: zoneIds.length ? zoneIds.map(function (id) { return id + ' ' + c.zones[id]; }).join(', ') : 'no ratio has a verdict yet', source: 'engines/ratios.js against data/ratio_benchmarks.json v' + bands.version + ' (' + bands.confidence + '). ' + bands.confidenceNote },
+        { label: 'Your step', value: where, source: 'your place on the order-of-operations ladder, version ' + foo.version + ' — ' + foo.source + ' (' + foo.confidence + ')' + (c.range && c.step === null ? '. The ladder stopped on a step it could not judge, so rules are sorted against the range you could be in' : '') },
+        { label: 'Your bands', value: zoneIds.length ? zoneIds.map(function (id) { return id + ' ' + c.zones[id]; }).join(', ') : 'no ratio has a verdict yet', source: 'your ratios against the published benchmark bands, version ' + bands.version + ' (' + bands.confidence + '). ' + bands.confidenceNote },
         { label: 'The dashboard’s learn/unlearn line', value: pick && Money.isOk(pick) ? pick.item.headline + ' (' + pick.item.kind + ')' : 'nothing to translate yet',
-          source: 'engines/advice.js + data/advice_translator.json' + (adv ? ' v' + adv.version : '') + ' (D-096): one piece of advice restated for your numbers. It is the top line of this ladder; this room sorts the whole table and does not repeat its items. Home → the third block.' }
+          source: 'our advice translator' + (adv ? ', version ' + adv.version : '') + ': one piece of advice restated for your numbers. It is the top line of this ladder; this room sorts the whole table and does not repeat its items. Home → the third block.' }
       ];
       return rows;
     },

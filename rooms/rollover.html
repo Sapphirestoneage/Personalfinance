@@ -582,7 +582,7 @@
       var rows = [
         { label: 'The four options and the trap',
           value: t.options.length + ' options, ordered by how often each is right',
-          source: 'data/rollover_options.json v' + t.version + ' (' + t.confidence + ') — ' + t.note },
+          source: 'our table of the four options, version ' + t.version + ' (' + t.confidence + ') — ' + t.note },
         { label: 'Which one is best',
           value: 'not decided here',
           source: t.confidenceNote },
@@ -590,18 +590,18 @@
           value: Money.formatRate(r.earlyWithdrawalPenalty, { decimals: 0 }) + ' penalty · '
             + Money.formatRate(r.mandatoryWithholding, { decimals: 0 }) + ' withheld · '
             + r.indirectRolloverDays + ' days · age ' + r.ruleOfFiftyFiveAge,
-          source: 'data/rollover_options.json v' + t.version + ' rates (' + t.confidence + ')' },
+          source: 'the rates in our table of the four options, version ' + t.version + ' (' + t.confidence + ')' },
         { label: 'The penalty-free age',
           value: ageLabel(free),
-          source: 'data/access_rules.json v' + acc.version + ' (' + acc.confidence + '), byTaxCharacter.pretax.accessAge — the same figure the Statement’s buckets and Drawing It Down read, held once' },
+          source: 'our table of access ages, version ' + acc.version + ' (' + acc.confidence + ') — the same figure the Statement’s buckets and Drawing It Down read, held once' },
         { label: 'The income tax on the distribution',
           value: Money.isOk(c) ? Money.formatCents(c.federalCents) + ' federal' : 'not worked out',
-          source: 'engines/tax.js, run twice — your year as it stands, and the same year with the withdrawal stacked on top as ordinary income — and the difference taken. That is your marginal rate with room for the withdrawal to climb a bracket, which one multiplication would miss. Brackets from data/federal_brackets_2026.json v'
+          source: 'the tax estimate run twice — your year as it stands, and the same year with the withdrawal stacked on top as ordinary income — and the difference taken. That is your marginal rate with room for the withdrawal to climb a bracket, which one multiplication would miss. Brackets from our 2026 federal table, version '
             + fed.version + ' (' + fed.confidence + ').' },
         { label: 'State income tax',
           value: Money.isOk(c) ? (c.stateIncluded ? Money.formatCents(c.stateCents) + ' (' + c.stateCode + ')' : 'not in the total') : 'not worked out',
           source: Money.isOk(c) && c.stateIncluded
-            ? 'data/state_brackets_2026.json v' + T.stateBrackets.version + ' (' + T.stateBrackets.confidence + '), applied to federal taxable income as a stand-in for state taxable income. No local tax, no state credits.'
+            ? 'our 2026 state-tax table, version ' + T.stateBrackets.version + ' (' + T.stateBrackets.confidence + '), applied to federal taxable income as a stand-in for state taxable income. No local tax, no state credits.'
             : 'No state schedule was applied, so the total above is federal and penalty only. Set your state in Start Here and it joins the figure.' },
         { label: 'The 20% withheld',
           value: Money.isOk(c) ? Money.formatCents(c.withheldCents) : 'not worked out',
@@ -609,14 +609,14 @@
         { label: 'Left alone, projected at',
           value: Money.formatRate(a.returnReal, { decimals: 0 }) + ' real'
             + (Money.isOk(fv) ? ', to age ' + fv.toAge + ' (' + fv.years + ' years)' : ''),
-          source: 'engines/projection.js, the one compounding loop in the app. assumptions.returnReal (D-094) is a REAL return, so the figure is in today’s money. '
+          source: 'the one compounding calculation in the app. The return the household holds is after inflation, so the figure is in today’s money. '
             + (Money.isOk(fv) && fv.fromYourTarget
                 ? 'The age is the one you set in FIRE Number.'
                 : 'No stop age is set, so this uses ' + ((fire && fire.defaults && fire.defaults.coastTargetAge) || '—')
-                  + ' from data/fire_variants.json v' + (fire ? fire.version : '?') + ' (' + (fire ? fire.confidence : '?') + '). Set your own in FIRE Number and it follows that instead.') },
+                  + ' from our table of FIRE variants, version ' + (fire ? fire.version : '?') + ' (' + (fire ? fire.confidence : '?') + '). Set your own in FIRE Number and it follows that instead.') },
         { label: 'What this room stores',
           value: 'nothing',
-          source: 'It owns no field in shared/ownership.js and never writes the household. The balance is a what-if and D-052 says a what-if is thrown away.' }
+          source: 'This room owns no saved number and never writes to your household. The balance you type here is a what-if, and a what-if is thrown away when you leave.' }
       ];
       if (Money.isOk(c)) {
         rows.push({ label: 'What the tax figure does not model',
