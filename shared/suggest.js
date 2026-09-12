@@ -389,7 +389,7 @@
       var v = Math.min(cap, raw);
       return { value: v, unit: 'cents', display: money(c.D, v) + ' a week',
         how: 'Your highest quarter of pay (' + money(c.D, hq) + ') ÷ ' + div + ' is ' + money(c.D, raw) + ' a week' + (raw > cap ? ', capped at ' + state + '’s maximum of ' + money(c.D, cap) : ', under ' + state + '’s maximum of ' + money(c.D, cap)) + '. An estimate; the state decides.',
-        sources: ['data/ui_benefits.json'], dependsOn: c.leaned('state') };
+        sources: ['data/states.json'], dependsOn: c.leaned('state') };
     },
     matchNotApplicable: function (c) {
       if (!c.D.Schema.isUnemployed(c.h)) return null;

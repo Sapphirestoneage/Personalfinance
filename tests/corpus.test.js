@@ -54,9 +54,11 @@ const ARG_BY_NAME = {
   templates: TABLES.budgetTemplates, thresholds: TABLES.fooRules && TABLES.fooRules.thresholds,
   opts: undefined, localOverrides: undefined, prefs: undefined, now: undefined, nowMs: undefined, today: undefined
 };
-/* Three tables test/run.js loads by hand because shared/reference.js does not
-   register them (noted in docs/lane2-proposals.md). */
-['accessRules:access_rules.json', 'confidenceWeights:confidence_weights.json', 'uiBenefits:ui_benefits.json'].forEach(function (pair) {
+/* Two tables test/run.js loads by hand because shared/reference.js does not
+   register them (noted in docs/lane2-proposals.md). uiBenefits used to be a
+   third; it is a VIEW of states.json now (D-220) and comes from the loop
+   above, so loading the raw file here would overwrite it. */
+['accessRules:access_rules.json', 'confidenceWeights:confidence_weights.json'].forEach(function (pair) {
   const k = pair.split(':')[0], f = pair.split(':')[1];
   try { TABLES[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')); } catch (e) { /* as above */ }
 });

@@ -7,7 +7,7 @@ paths:
 # Between Jobs (`between-jobs`)
 File: rooms/between-jobs.html · 297 lines
 Engines: projection, tier0, hourly, tax, runway, betweenjobs
-Reference data: protection_conventions.json, reentry_gap.json, tax_brackets.json, ui_benefits.json
+Reference data: protection_conventions.json, reentry_gap.json, states.json, tax_brackets.json
 Owns: lastDayWorked, severanceCents, ptoPayoutCents, expectedSearchMonths, floorMonthly
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), employmentStatus (start), healthCover (protection), healthMonthly (protection), monthlyExpenses (expenses)
 Latest decisions:

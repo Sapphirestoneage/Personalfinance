@@ -4,7 +4,7 @@ paths:
   - "engines/presets.js"
 ---
 # The Statement (`statement`)
-File: rooms/statement.html · 721 lines
+File: rooms/statement.html · 722 lines
 Engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget
 Reference data: access_rules.json, car_costs.json, confidence_weights.json, expense_categories.json, fire_variants.json, savings_presets.json, +2 more
 Owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis

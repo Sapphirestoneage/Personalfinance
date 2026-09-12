@@ -406,7 +406,7 @@ your life (at your real hourly wage), or months of FI.
 | You put in | 6% | enough to take the whole match |
 | Filing status | single, or joint with a partner | from "two of us" |
 | Any debt | no; yes for students | convention |
-| Between jobs: weekly benefit, weeks | the state's cap and duration | data/ui_benefits.json, by state |
+| Between jobs: weekly benefit, weeks | the state's cap and duration | data/states.json, by state |
 | Between jobs: last pay | $62,000 | US median |
 | State | suggested from the browser locale where possible, shown never stored | D-060 |
 

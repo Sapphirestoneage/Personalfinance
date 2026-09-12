@@ -69,6 +69,32 @@
       "note": "KFF State Health Facts, 2026 plan year, county figures weighted by plan selections. National average $625."
     }
   },
+  "conventions": {
+    "uiReplacementRate": {
+      "value": 0.5,
+      "asOf": "2025-07-01",
+      "source": "https://oui.doleta.gov/unemploy/statelaws.asp",
+      "confidence": "recalled",
+      "verify": true,
+      "note": "Most states replace roughly half of the base-period weekly wage up to the cap. A convention, not a per-state table: formulas differ and several states pay a different fraction of a different base."
+    },
+    "uiHighQuarterDivisor": {
+      "value": 26,
+      "asOf": "2025-07-01",
+      "source": "https://oui.doleta.gov/unemploy/statelaws.asp",
+      "confidence": "recalled",
+      "verify": true,
+      "note": "The weekly benefit most states pay is the highest-earning calendar quarter of the base period divided by 26, capped at the state maximum. With only an annual pay figure the high quarter is taken as pay divided by 4. Read by shared/suggest.js (rule unemploymentWeekly). D-205."
+    },
+    "uiWaitingWeeks": {
+      "value": 1,
+      "asOf": "2025-07-01",
+      "source": "https://oui.doleta.gov/unemploy/statelaws.asp",
+      "confidence": "recalled",
+      "verify": true,
+      "note": "Most states hold back one unpaid week at the start of a claim; several have none and a few suspended theirs. A convention, so a benefit end date built on it is an estimate and every room that shows one says so. D-213."
+    }
+  },
   "states": [
     {
       "code": "AL",

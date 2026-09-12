@@ -181,6 +181,16 @@ function buildStates() {
     note: 'Rendered as a select in Start Here (code and name only). Rooms that key on state read a column cell as `states[i].<column>.value`; `other` is for anyone outside the fifty-one and carries no columns.',
     refresh: { month: 'February', against: 'Tax Foundation 2026 state rates (incomeTax), Tax Foundation property tax data (propertyTaxEffectiveRate), Child Care Aware Price of Care (childcare), Bankrate auto study (autoInsurance), MERIC annual index (costOfLivingIndex), DOL Significant Provisions January edition (ui*), KFF benchmark premiums for the new plan year (aca*).' },
     columns,
+    /* D-220: the three national UI conventions that data/ui_benefits.json
+       used to carry beside its own per-state table. The per-state numbers
+       are the uiWeeklyMaxCents and uiMaxWeeks columns above; these are the
+       rules that apply everywhere, and shared/reference.js builds the
+       `uiBenefits` view out of both. */
+    conventions: {
+      uiReplacementRate: cell(0.5, '2025-07-01', SRC.dolSigpros, 'recalled', { note: 'Most states replace roughly half of the base-period weekly wage up to the cap. A convention, not a per-state table: formulas differ and several states pay a different fraction of a different base.' }),
+      uiHighQuarterDivisor: cell(26, '2025-07-01', SRC.dolSigpros, 'recalled', { note: 'The weekly benefit most states pay is the highest-earning calendar quarter of the base period divided by 26, capped at the state maximum. With only an annual pay figure the high quarter is taken as pay divided by 4. Read by shared/suggest.js (rule unemploymentWeekly). D-205.' }),
+      uiWaitingWeeks: cell(1, '2025-07-01', SRC.dolSigpros, 'recalled', { note: 'Most states hold back one unpaid week at the start of a claim; several have none and a few suspended theirs. A convention, so a benefit end date built on it is an estimate and every room that shows one says so. D-213.' })
+    },
     states: states.concat(other)
   });
 }

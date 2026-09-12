@@ -81,9 +81,10 @@
      month is a deadline shown on the wrong day.
 
      Nothing here is a fact about the household and nothing is stored. The
-     benefit duration and the waiting week come from data/ui_benefits.json,
-     which says of itself that it is unverified, so `estimated` is true on
-     the way out and the room prints the state agency link beside it. */
+     benefit duration comes from the sourced DOL columns in data/states.json
+     and the waiting week from the convention beside them (D-220), but what
+     a claim actually pays follows base-period wages, so `estimated` is true
+     on the way out and the room prints the state agency link beside it. */
   /* Whole days, local midnight to local midnight. Counting from a
      timestamp instead put every deadline half a day out and so one day
      wrong for half of each day, which on a 60-day window is the
@@ -153,9 +154,10 @@
       severanceThroughDate: severanceThrough,
       /* Already in the store as a status, so it is read, never asked twice. */
       claimFiled: u.benefitStatus === null ? null : (u.benefitStatus === 'receiving' || u.benefitStatus === 'applied'),
-      /* The benefit figures lean on an unverified table, so say so. */
+      /* The cap and the weeks are sourced (D-220), but what you are actually
+         paid follows your base-period wages, so this is still an estimate. */
       estimated: true,
-      benefitSource: ui ? 'data/ui_benefits.json v' + (ui.version || '?') + ' (' + (ui.confidence || 'unverified') + ')' : null,
+      benefitSource: ui ? 'data/states.json v' + (ui.version || '?') + ' (' + (ui.confidence || 'unverified') + ')' : null,
       missingState: !h.state,
       windowSource: 'data/protection_conventions.json'
     });

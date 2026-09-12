@@ -13410,6 +13410,36 @@ of the cliff driven in Chromium with no console error.
 
 ---
 
+## D-220 — One unemployment table, and 26 states that were wrong
+
+**Why.** Two files held the state unemployment maximums. `data/ui_benefits.json`
+said of itself it was "transcribed from memory"; `data/states.json` carries the
+same two figures from the DOL's July 2025 compilation with the later increases.
+They disagreed in 26 states, and `tests/data.test.js` had been printing that on
+every run. The engines read the recollection.
+
+**Decision.** `uiBenefits` is a VIEW of `data/states.json` in
+`shared/reference.js`, built from `uiWeeklyMaxCents` and `uiMaxWeeks` plus a
+new `conventions` block on that file holding the three national rules the old
+file also carried: the replacement rate, the high-quarter divisor and the
+waiting week, each with its own source and note. The view hands back the shape
+its four readers were written against (`shared/gate.js`, `engines/statement.js`,
+`engines/betweenjobs.js`, `shared/suggest.js`), so no engine and no room moved.
+`data/ui_benefits.json` is deleted. The Statement's caveat and the between-jobs
+`benefitSource` say where the figures come from now, and both still say the
+answer is an estimate, because a real claim follows base-period wages.
+
+**Replaces or removes.** One data file. No room, field or question changes.
+
+**Stored shape.** No change. Nothing about unemployment is stored.
+
+**Verified.** `node test/run.js` 29,410; `export` 33; `data.test.js` 4,094 with
+the 26-state disagreement gone and every state asserted to reach the engines in
+dollars; `corpus`, `migration`, `glossary`, `qr`; `forms.js` 532. Connecticut
+moved from a $703 cap to $780, Arkansas from 16 weeks to 12.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

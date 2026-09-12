@@ -5,7 +5,7 @@ paths:
 # Start Here (`start`)
 File: rooms/start.html · 999 lines
 Engines: income
-Reference data: match_defaults.json, onepager_defaults.json, retirement_milestones.json, states.json, ui_benefits.json
+Reference data: match_defaults.json, onepager_defaults.json, retirement_milestones.json, states.json
 Owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents
 Reads from other owners: severanceCents (between-jobs), totalDebt (debt-payoff), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses), debtBalance (debt-payoff), debtRate (debt-payoff), paySurvives (income)
 Latest decisions:

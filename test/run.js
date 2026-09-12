@@ -82,7 +82,7 @@ const TABLES = {
   irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
   accessRules: require(path.join(ROOT, 'data/access_rules.json')),
   confidenceWeights: require(path.join(ROOT, 'data/confidence_weights.json')),
-  uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')),
+  uiBenefits: require(path.join(ROOT, 'shared/reference.js')).readSync('uiBenefits', path.join(ROOT, 'data')),
   federalBrackets: require(path.join(ROOT, 'shared/reference.js')).readSync('federalBrackets', path.join(ROOT, 'data')),
   wealthMultiplier: require(path.join(ROOT, 'data/wealth_multiplier.json')),
   levelsOfWealth: require(path.join(ROOT, 'data/levels_of_wealth.json'))
@@ -5357,7 +5357,7 @@ section('The Statement: shape and tables');
 (function () {
   const rules = require(path.join(ROOT, 'data/access_rules.json'));
   const weights = require(path.join(ROOT, 'data/confidence_weights.json'));
-  const ui = require(path.join(ROOT, 'data/ui_benefits.json'));
+  const ui = require(path.join(ROOT, 'shared/reference.js')).readSync('uiBenefits', path.join(ROOT, 'data'));
   const aca = require(path.join(ROOT, 'shared/reference.js')).readSync('aca', path.join(ROOT, 'data'));
   const st = require(path.join(ROOT, 'data/state_brackets_2026.json'));
   const states = require(path.join(ROOT, 'data/states.json'));
@@ -5446,7 +5446,10 @@ section('The Statement: shape and tables');
     /* D-219: the ACA table is sourced now (Rev. Proc. 2025-25), so it no
        longer belongs with the two that still admit they are recalled. */
     checkTrue('the ACA table is sourced and says which plan year', aca.confidence === 'sourced' && aca.planYear === 2026 && aca.guidelineYear === 2025);
-    checkTrue('the other two still admit they are unverified', ui.confidence === 'unverified' && st.confidence === 'unverified');
+    /* D-220: the UI cells are the DOL compilation now, so the view says
+       sourced too. The state bracket schedule is the one still recalled. */
+    checkTrue('the unemployment view is sourced and carries every state', ui.confidence === 'sourced' && Object.keys(ui.states).length === 51);
+    checkTrue('the state bracket schedule still admits it is unverified', st.confidence === 'unverified');
     checkTrue('ACA applicable percentages climb with income', aca.applicablePercentage.every((r, i) => r.to >= r.from && (i === 0 || r.from >= aca.applicablePercentage[i - 1].to)));
     checkTrue('the bands meet end to end, with no gap and no overlap', aca.applicablePercentage.every((r, i) => i === 0 ? r.fromFpl === 0 : r.fromFpl === aca.applicablePercentage[i - 1].toFpl));
     check('and end at the cliff', aca.applicablePercentage[aca.applicablePercentage.length - 1].toFpl, aca.cliffMultiple);
@@ -5567,7 +5570,7 @@ section('The Statement engine');
   const T = Object.assign({}, TABLES, {
     accessRules: require(path.join(ROOT, 'data/access_rules.json')),
     confidenceWeights: require(path.join(ROOT, 'data/confidence_weights.json')),
-    uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json'))
+    uiBenefits: require(path.join(ROOT, 'shared/reference.js')).readSync('uiBenefits', path.join(ROOT, 'data'))
   });
   function rich() {
     const h = Demo.build();
@@ -5667,7 +5670,7 @@ section('The Statement engine');
     check('net of benefit', w.netCents, 1720000);
     check('short after cash', w.value, 770000);
     checkTrue('and it says the out-of-pocket max is unknown', w.oopMaxKnown === false);
-    checkTrue('and how much to trust the benefit', w.benefitConfidence === 'unverified');
+    checkTrue('and how much to trust the benefit', w.benefitConfidence === 'sourced'); /* D-220 */
     const oop = Demo.build(); oop.insurance.oopMaxCents = 800000;
     check('an out-of-pocket max adds to the cost', St.worstPlausibleYear(oop, T).costCents, 2940000);
     const noState = Demo.build(); noState.state = null;
@@ -6548,7 +6551,7 @@ section('The Coverage Checkup, and how it is split');
 
   /* The worst plausible year reads the out-of-pocket maximum from here. */
   const St = require(path.join(ROOT, 'engines/statement.js'));
-  const T = Object.assign({}, TABLES, { uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')) });
+  const T = Object.assign({}, TABLES, { uiBenefits: require(path.join(ROOT, 'shared/reference.js')).readSync('uiBenefits', path.join(ROOT, 'data')) });
   const without = St.worstPlausibleYear(Demo.build(), T);
   const withOop = St.worstPlausibleYear(h, T);
   checkTrue('and the year costs exactly that much more', Money.isOk(without) && Money.isOk(withOop) && withOop.value - without.value === 800000);
@@ -8101,7 +8104,7 @@ section('Core (D-094): the gate — exists() per situation');
   check('the demo is six rooms short — no own work, not between jobs, not drawing down, alone, nobody depending', gone(Demo.build()), 'between-jobs,decumulation,estate,giving,kids,partner,self-employed,variable-income');
 
   /* Guesses: a default for every guessable control, from the tables. */
-  const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
+  const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'shared/reference.js')).readSync('uiBenefits', path.join(ROOT, 'data')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
   const g = Gate.guesses('employed', hh('employed'), tables);
   check('employed pay is guessed at the median', g.pay.value, 6200000);
   check('spending is 55% of gross a month', g.spending.value, Math.round(6200000 / 12 * 0.55));
@@ -8305,7 +8308,7 @@ section('The dashboard (D-096): four blocks, the leads, the translator');
   const Gate = require(path.join(ROOT, 'shared/gate.js'));
   const Advice = require(path.join(ROOT, 'engines/advice.js'));
   const Ratios = require(path.join(ROOT, 'engines/ratios.js'));
-  const T = Object.assign({}, TABLES, { adviceTranslator: require(path.join(ROOT, 'data/advice_translator.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), reentryGap: require(path.join(ROOT, 'data/reentry_gap.json')), debtRules: require(path.join(ROOT, 'data/debt_rules.json')) });
+  const T = Object.assign({}, TABLES, { adviceTranslator: require(path.join(ROOT, 'data/advice_translator.json')), uiBenefits: require(path.join(ROOT, 'shared/reference.js')).readSync('uiBenefits', path.join(ROOT, 'data')), reentryGap: require(path.join(ROOT, 'data/reentry_gap.json')), debtRules: require(path.join(ROOT, 'data/debt_rules.json')) });
   const NOW = Date.parse('2026-09-05T12:00:00Z');
   function hh(status, extra) {
     const h = Schema.createHousehold(Object.assign({ state: 'NC', filingStatus: 'single', meta: { hasDebt: false, noRent: false },
@@ -8411,7 +8414,7 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
 (function () {
   const Gate = require(path.join(ROOT, 'shared/gate.js'));
   const Room = require(path.join(ROOT, 'shared/room.js'));
-  const T = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
+  const T = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'shared/reference.js')).readSync('uiBenefits', path.join(ROOT, 'data')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
 
   /* Standalone: an empty spine renders with the intake's guesses, and says
      which. The spine is untouched. */
@@ -12273,7 +12276,7 @@ section('Phase A: suggestions, derived and never stored (D-205)');
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   const table = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
   const T = {};
-  const FILES = { ledgerRows: 'ledger-rows.json', zipPrefixes: 'zip_prefixes.json', uiBenefits: 'ui_benefits.json', savingsPresets: 'savings_presets.json', federalBrackets: 'tax_brackets.json', stateBrackets: 'state_brackets_2026.json', protectionConventions: 'protection_conventions.json', debtRules: 'debt_rules.json', onepagerDefaults: 'onepager_defaults.json', retirementMilestones: 'retirement_milestones.json', cobraAca: 'cobra_aca_2024.json' };
+  const FILES = { ledgerRows: 'ledger-rows.json', zipPrefixes: 'zip_prefixes.json', uiBenefits: 'states.json', savingsPresets: 'savings_presets.json', federalBrackets: 'tax_brackets.json', stateBrackets: 'state_brackets_2026.json', protectionConventions: 'protection_conventions.json', debtRules: 'debt_rules.json', onepagerDefaults: 'onepager_defaults.json', retirementMilestones: 'retirement_milestones.json', cobraAca: 'cobra_aca_2024.json' };
   Object.keys(FILES).forEach(k => { T[k] = Reference.TABLE_FILES[k] ? Reference.readSync(k, path.join(ROOT, 'data')) : JSON.parse(fs.readFileSync(path.join(ROOT, 'data', FILES[k]), 'utf8')); });
 
   /* ---- The registry rows carry the new fields ------------------------- */
@@ -12400,7 +12403,7 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
   const mods = ['shared/spine-v2.js', 'shared/ownership.js', 'shared/suggest.js', 'shared/ledger-rows.js', 'shared/doors.js', 'shared/ask.js'].map(f => path.join(ROOT, f));
   const table = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
   const T = { ledgerRows: table };
-  ['zipPrefixes:zip_prefixes.json', 'uiBenefits:ui_benefits.json', 'savingsPresets:savings_presets.json', 'federalBrackets:tax_brackets.json', 'stateBrackets:state_brackets_2026.json', 'protectionConventions:protection_conventions.json', 'debtRules:debt_rules.json', 'onepagerDefaults:onepager_defaults.json', 'retirementMilestones:retirement_milestones.json', 'cobraAca:cobra_aca_2024.json', 'confidenceWeights:confidence_weights.json', 'accessRules:access_rules.json', 'effectiveTaxRates:tax_brackets.json', 'staleness:staleness.json']
+  ['zipPrefixes:zip_prefixes.json', 'uiBenefits:states.json', 'savingsPresets:savings_presets.json', 'federalBrackets:tax_brackets.json', 'stateBrackets:state_brackets_2026.json', 'protectionConventions:protection_conventions.json', 'debtRules:debt_rules.json', 'onepagerDefaults:onepager_defaults.json', 'retirementMilestones:retirement_milestones.json', 'cobraAca:cobra_aca_2024.json', 'confidenceWeights:confidence_weights.json', 'accessRules:access_rules.json', 'effectiveTaxRates:tax_brackets.json', 'staleness:staleness.json']
     .forEach(kv => { const [k, f] = kv.split(':'); const Ref = require(path.join(ROOT, 'shared/reference.js')); T[k] = Ref.TABLE_FILES[k] ? Ref.readSync(k, path.join(ROOT, 'data')) : JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')); });
   function fresh() {
     const store = {};
@@ -12994,7 +12997,7 @@ section('The last day worked, and what falls out of it (D-213)');
 (function () {
   const BJ = require(path.join(ROOT, 'engines/betweenjobs.js'));
   const T = {
-    uiBenefits: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ui_benefits.json'), 'utf8')),
+    uiBenefits: require(path.join(ROOT, 'shared/reference.js')).readSync('uiBenefits', path.join(ROOT, 'data')),
     protectionConventions: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/protection_conventions.json'), 'utf8'))
   };
   /* Both windows are statute, so they live in data/ with their citation and
@@ -13046,7 +13049,7 @@ section('The last day worked, and what falls out of it (D-213)');
   check('...running through 31 Aug', r.severanceThroughDate, '2026-08-31');
   check('a filed claim is read from the status, never asked twice', r.claimFiled, true);
   checkTrue('the benefit figures say they are estimates and name the table',
-    r.estimated === true && /ui_benefits\.json/.test(r.benefitSource));
+    r.estimated === true && /states\.json/.test(r.benefitSource));
 
   /* Past both windows, the answer is that they closed — not a negative count
      dressed up as time remaining. */

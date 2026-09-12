@@ -19,7 +19,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **income** — Income · 785 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-215, D-207, D-198
 - **budget** — Budget · 482 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-130, D-129, D-128
 - **variance** — Estimated vs Actual · 231 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
-- **statement** — The Statement · 721 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
+- **statement** — The Statement · 722 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
 - **real-hourly-wage** — Real Hourly Wage · 249 lines · engines: projection, tier0, hourly · D-054, D-021, D-001
 - **accounts** — Where It Goes & how it’s split · 580 lines · engines: selfemployed, accounts, projection, tier0, hourly · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand · D-130, D-071, D-062
 - **credit** — Your Credit File · 474 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-147

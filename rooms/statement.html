@@ -31,9 +31,10 @@
              No date of birth means the ladder cannot apply the age gate
              and says so. Nothing is assumed silently.
   5. CONFIG  data/access_rules.json, confidence_weights.json,
-             ui_benefits.json (unverified), tax_brackets.json
-             (unverified), state_brackets_2026.json (unverified). Every
-             figure from an unverified table says so beside the number.
+             states.json (the UI columns, sourced: D-220),
+             tax_brackets.json (sourced), state_brackets_2026.json
+             (unverified). Every figure from an unverified table says so
+             beside the number.
 
   LIVE-FORM: guarded. #asset-list and #future-list are variable-length and
   rebuilt through SLAF.LiveForm.guard(); every other control is written in
@@ -663,7 +664,7 @@
       : 'No state unemployment benefit was counted' + (h.state ? '.' : ' — add your state in Start Here.'))
       + (w.oopMaxKnown ? '' : ' Add your health plan\'s out-of-pocket maximum in Sleep At Night to price a bad health year too.')
       + ' This replaces "3–6 months" as the cushion test once these inputs exist.';
-    el('worst-caveat').textContent = 'The benefit is an estimate from an unverified table of state maximums (data/ui_benefits.json); the real figure depends on your base-period wages.';
+    el('worst-caveat').textContent = 'The cap and the weeks are the Department of Labor\'s July 2025 compilation (data/states.json); what a claim actually pays follows your base-period wages, so this is an estimate.';
   }
 
   function renderNow() {

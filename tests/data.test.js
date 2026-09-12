@@ -119,13 +119,15 @@ if (stale) notes.push(stale + ' cells are older than 18 months and say so (`stal
   });
   const cc = load('childcare_by_state.json');
   CODES.forEach((c) => check(c + ' childcare agrees with childcare_by_state.json', byCode[c].childcareInfantCenterMonthlyCents.value === cc.states[c].monthlyCents));
-  const ui = load('ui_benefits.json');
-  let uiDiff = 0;
+  /* D-220: these columns ARE the engine's table now — ui_benefits.json is
+     retired and `uiBenefits` is a view of this file. What is left to check
+     is that the view hands the engines back every state, in dollars. */
+  const ui = require(path.join(ROOT, 'shared/reference.js')).readSync('uiBenefits', path.join(ROOT, 'data'));
   CODES.forEach((c) => {
-    const old = ui.states[c]; if (!old) return;
-    if (old.maxWeeklyDollars * 100 !== byCode[c].uiWeeklyMaxCents.value || old.weeks !== byCode[c].uiMaxWeeks.value) uiDiff++;
+    check(c + ' weekly maximum reaches the engines in dollars', ui.states[c].maxWeeklyDollars * 100 === byCode[c].uiWeeklyMaxCents.value);
+    check(c + ' maximum weeks reaches the engines', ui.states[c].weeks === byCode[c].uiMaxWeeks.value);
   });
-  notes.push('UI benefit cells differ from data/ui_benefits.json (the engine copy) in ' + uiDiff + ' states; states.json carries the July 2025 DOL edition plus the October 2025 increases, ui_benefits.json a 2025 recollection. DECIDE: which the engine reads.');
+  check('the view carries the three national conventions', ui.replacementRate > 0 && ui.waitingWeeks !== null && ui.estimate.highQuarterDivisor > 0);
 })();
 
 /* ---- 3. Brackets monotonic, capital gains ordered ---------------------------------- */

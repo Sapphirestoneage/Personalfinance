@@ -115,7 +115,7 @@
     calendarConventions: 'calendar_conventions.json',
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
-    uiBenefits: 'ui_benefits.json',
+    uiBenefits: 'states.json',
     zipPrefixes: 'zip_prefixes.json',
     aca: 'aca.json',
     stateBrackets: 'state_brackets_2026.json'
@@ -207,6 +207,40 @@
       currentLaw: json.currentLaw ? cellValue(json.currentLaw.changeDate) : null,
       currentLawNote: json.currentLaw && json.currentLaw.changeDate ? json.currentLaw.changeDate.note : null
     });
+    delete out.taxYear;
+    return out;
+  };
+
+  /* ---- One unemployment table (D-220) ------------------------------------
+     data/states.json carries uiWeeklyMaxCents and uiMaxWeeks per state from
+     the July 2025 DOL compilation, and the three national conventions that
+     used to sit beside a second per-state table in data/ui_benefits.json.
+     That file disagreed with this one in 26 states and is gone; `uiBenefits`
+     is the shape its readers were written against, built here. */
+  VIEWS.uiBenefits = function (json) {
+    var conv = json.conventions || {};
+    var byCode = {};
+    (json.states || []).forEach(function (row) {
+      var max = row.uiWeeklyMaxCents, weeks = row.uiMaxWeeks;
+      if (!max || !weeks) return;
+      byCode[row.code] = { maxWeeklyDollars: cellValue(max) / 100, weeks: cellValue(weeks),
+        note: weeks.note || null, asOf: cellValue(max.asOf) };
+    });
+    var out = stamped(json, {
+      note: 'Built from data/states.json (D-220). Expected weekly benefit is about min(maxWeeklyDollars, replacementRate x prior weekly wage). The maximum is a ceiling, not a promise: the real figure follows base-period wages.',
+      replacementRate: cellValue(conv.uiReplacementRate),
+      replacementRateNote: conv.uiReplacementRate ? conv.uiReplacementRate.note : null,
+      estimate: { method: 'high_quarter_over_26', highQuarterDivisor: cellValue(conv.uiHighQuarterDivisor),
+        note: conv.uiHighQuarterDivisor ? conv.uiHighQuarterDivisor.note : null },
+      waitingWeeks: cellValue(conv.uiWaitingWeeks),
+      waitingWeeksNote: conv.uiWaitingWeeks ? conv.uiWaitingWeeks.note : null,
+      states: byCode
+    });
+    /* The per-state cells are the sourced DOL edition even though the file
+       as a whole is unverified for its other columns, so the caption a room
+       prints beside a benefit should say so. */
+    out.confidence = 'sourced';
+    out.confidenceNote = 'The weekly maximum and the maximum weeks are the DOL Significant Provisions compilation of July 2025 with the later 2025 increases; the three conventions beside them are recalled and say so. Benefits depend on base-period wages; the maximum is a ceiling.';
     delete out.taxYear;
     return out;
   };

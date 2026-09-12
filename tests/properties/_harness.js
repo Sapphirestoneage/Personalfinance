@@ -32,7 +32,8 @@ const TABLES = {};
 Object.keys(Reference.TABLE_FILES).forEach(function (k) {
   try { TABLES[k] = Reference.readSync(k, path.join(ROOT, 'data')); } catch (e) { /* an engine that needs it says so */ }
 });
-['accessRules:access_rules.json', 'confidenceWeights:confidence_weights.json', 'uiBenefits:ui_benefits.json', 'vpw:vpw.json'].forEach(function (pair) {
+/* uiBenefits is a VIEW of states.json (D-220): it comes from the loop above. */
+['accessRules:access_rules.json', 'confidenceWeights:confidence_weights.json', 'vpw:vpw.json'].forEach(function (pair) {
   const k = pair.split(':')[0], f = pair.split(':')[1];
   try { TABLES[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')); } catch (e) { /* optional */ }
 });
