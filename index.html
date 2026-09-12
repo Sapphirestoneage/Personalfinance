@@ -794,7 +794,11 @@
       ? 'What is coming in covers the month; the cash is not being drawn down.'
       : 'The money lasts <strong>' + months + ' month' + (months === 1 ? '' : 's') + '</strong> at ' + Money.formatCents(Schema.monthlyExpensesCents(h).value) + ' a month'
         + (bareMonths !== null && bareMonths !== months ? ' (' + bareMonths + ' on cash alone)' : '') + '.';
-    if (gap) say += ' A search typically runs <strong>' + gap.medianMonths + ' months</strong>, ' + gap.meanMonths + ' on average (' + gap.confidence + ').';
+    /* "(unverified)" is this app's own word for how sure a reference table
+       is, and printing it raw told the reader their runway was in doubt.
+       Say what it means instead, and only when it is worth saying. D-222. */
+    if (gap) say += ' A search typically runs <strong>' + gap.medianMonths + ' months</strong>, ' + gap.meanMonths + ' on average'
+      + (gap.confidence === 'unverified' ? ' (a rough figure for everyone, not for your field)' : '') + '.';
     if (!Money.isOk(ben)) say += ' ' + esc(ben.reason);
     return { say: say, room: Registry.byId('between-jobs') ? 'between-jobs' : 'runway', anchor: Registry.byId('between-jobs') ? 'number' : 'the-plan', go: 'See the runway, month by month →',
       critical: !sustainable && gap && months < gap.medianMonths };
