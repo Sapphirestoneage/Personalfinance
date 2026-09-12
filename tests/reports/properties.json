@@ -2,10 +2,11 @@
   "seed": 20260910,
   "numRuns": 100,
   "engines": 87,
-  "files": 89,
+  "files": 90,
   "missingFiles": [],
   "extraFiles": [
     "blocks",
+    "csv",
     "levers"
   ],
   "suites": [
@@ -527,6 +528,66 @@
       "properties": [
         {
           "name": "credentialROI on random inputs: no throw, no NaN, whole cents, the same answer twice",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "csv",
+      "notes": [],
+      "properties": [
+        {
+          "name": "any table of cells written by cell() and read back by parse() comes back exactly as it went in",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same text read twice gives the same table, and a file with no lines is no lines, never a throw",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "an amount written any way a person or a spreadsheet writes it reads back to the same cents",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a word for nothing is blank and a word that is not a number is refused: neither is ever a number, and never zero",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a date written any common way reads to the day meant, and a day that does not exist is refused",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every row of an export reads back as the value it was written from: the round trip changes no number",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "planning an import never touches the household, and a file nobody edited asks for no change",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "any text at all can be handed to the importer: it answers, it never throws",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the bank importer and the sheet importer read one file the same way, through the one reader",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -3019,6 +3080,6 @@
       ]
     }
   ],
-  "totalProperties": 381,
+  "totalProperties": 390,
   "failedProperties": 7
 }

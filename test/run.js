@@ -13641,7 +13641,7 @@ section('One CSV out, the same CSV back in (D-220)');
   const text = Csv.single(demo, T);
   const lines = Csv.parse(text);
   check('one CSV carries every line the spreadsheet zip does, under the same columns', lines.length, Csv.rows(demo, T).length);
-  checkTrue('...and the same header', text.split('\r\n')[0] === Csv.COLUMNS.join(','));
+  checkTrue('...and the same header, behind the byte-order mark Excel needs', text.charAt(0) === '\ufeff' && text.split('\r\n')[0].slice(1) === Csv.COLUMNS.join(','));
   /* the inverse of every unit */
   const rowOf = id => LR.byId(id);
   check('dollars read back to the cent', Csv.fromText(rowOf('cashSavings'), '1,234.56'), 123456);
@@ -13656,10 +13656,10 @@ section('One CSV out, the same CSV back in (D-220)');
   Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
   const p1 = Csv.plan(text, Spine.getProfile(), T);
   checkTrue('the plan names what will change, what is computed, and which items are new', p1.counts.change > 10 && p1.counts.computed > 0 && p1.counts.add > 0);
-  checkTrue('...a new account, debt or source of pay is added from its amount line, and its other lines follow it', p1.entries.filter(e => e.status === 'add').some(e => e.row === 'assetValue') && p1.entries.filter(e => e.status === 'add').some(e => e.row === 'debtRate' && /new item above/.test(e.why)));
+  checkTrue('...a new account, debt or source of pay is added from its amount line, and its other lines follow it', p1.entries.filter(e => e.status === 'add').some(e => e.row === 'assetValue') && p1.entries.filter(e => e.status === 'add').some(e => e.row === 'debtRate' && /on the new item/.test(e.why)));
   checkTrue('...nothing is written by planning', Spine.getProfile().assets.length === 0);
   const n1 = Csv.apply(p1, Spine);
-  check('applying writes each change through its owner and adds each new item', n1, p1.counts.change + p1.counts.add);
+  check('applying writes each change through its owner and adds each new item', n1.applied + ':' + n1.failed.length, (p1.counts.change + p1.counts.add) + ':0');
   const after = Spine.getProfile();
   checkTrue('the household now carries the demo\'s single-value rows: cash, spending, filing status, date of birth', Schema.cashCents(after).value === 950000 && Schema.monthlyExpensesCents(after).value === 315000 && after.filingStatus === demo.filingStatus && Schema.adults(after)[0].dob === Schema.adults(demo)[0].dob);
   checkTrue('...the demo\'s two accounts, two debts and its pay came back by name, to the cent', after.assets.length === 2 && after.debts.length === 2 && after.assets.filter(a => a.label === 'Savings account')[0].valueCents === 950000 && after.debts.filter(d => d.label === 'Credit card')[0].balanceCents === 320000 && Schema.grossAnnualIncomeCents(after).value === Schema.grossAnnualIncomeCents(demo).value);
@@ -13679,6 +13679,127 @@ section('One CSV out, the same CSV back in (D-220)');
   checkTrue('nothing in the module reaches the network', !/fetch\(|XMLHttpRequest|sendBeacon/.test(fs.readFileSync(path.join(ROOT, 'shared/csvexport.js'), 'utf8')));
   const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
   checkTrue('Your Data downloads one CSV and previews a CSV before applying it', /btn-csv\b/.test(dataHtml) && /csv-file/.test(dataHtml) && /CsvExport\.plan\(/.test(dataHtml) && /CsvExport\.apply\(/.test(dataHtml) && /Apply the changes/.test(dataHtml));
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   The CSV round trip made resilient (D-221)
+   ========================================================================== */
+section('The CSV round trip made resilient (D-221)');
+(function () {
+  const C = require(path.join(ROOT, 'shared/csv.js'));
+  const Csv = require(path.join(ROOT, 'shared/csvexport.js'));
+  const BankCsv = require(path.join(ROOT, 'engines/bankcsv.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  LR.use(T.ledgerRows);
+  const BOM = '﻿';
+  const fixture = n => fs.readFileSync(path.join(ROOT, 'test/fixtures', n), 'utf8');
+  /* -- one reader for every spreadsheet's CSV ---------------------------------------- */
+  const p1 = C.parse(BOM + 'row;label;value\r\ndob;"Month; and year";1994-04-12\r\n\r\ncash;;"1.234,56"\r\nrow;label;value\r\nx;y\r\na;b;c;d;e\r');
+  check('a byte-order mark, semicolons, CRLF, a quoted delimiter, a blank row, a repeated header, a short row, a long row and a bare CR at the end all read', JSON.stringify(p1.rows) + '|' + p1.delimiter, '[["dob","Month; and year","1994-04-12"],["cash","","1.234,56"],["x","y",""],["a","b","c"]]|;');
+  check('...each row remembers its line in the file', p1.lineOf.join(','), '2,4,6,7');
+  check('a tab-separated file with a newline inside quotes', JSON.stringify(C.parse('a\tb\n1\t"x\ny"\n2\t3').rows), '[["1","x\\ny"],["2","3"]]');
+  check('Excel\'s sep= hint on line one, and headers with odd case and spaces', JSON.stringify(C.records('sep=;\nRow ;Value\n a ; 1 \n')), '[{"_n":3,"row":"a","value":"1"}]');
+  check('a bare-CR file (an old Mac) and a pipe-separated one', C.parse('a|b\r1|2\r3|4').rows.length + ':' + C.parse('a|b\r1|2\r3|4').delimiter, '2:|');
+  /* -- numbers, any way a person or a spreadsheet writes them ------------------------ */
+  const amounts = [['$1,234.56', 123456], ['(1,234.56)', -123456], ['1 234,56', 123456], ['1.234,56', 123456], ['1,234', 123400], ['1,5', 150], ['24.99', 2499], ['12k', 1200000], ['1.2m', 120000000], ['1.2E+06', 120000000], ['−5', -500], ["'1234", 123400], ['6 months', 600], ['1234/mo', 123400], ['$ 4,000 a month', 400000], ['USD 1,200', 120000], ['$-5', -500], ['12.345', 1235], ['', null], ['-', null], ['n/a', null], ['?', null], ['abc', undefined], ['=B2*12', undefined], ['1.2.3.4', undefined]];
+  checkTrue('every common way of writing an amount reads to the cent, a word for nothing is blank, and a word is not a number: ' + amounts.map(a => a[0]).join(' | '), amounts.every(a => C.amount(a[0]) === a[1]));
+  checkTrue('a percent sign is noticed and the decimals are counted', C.number('24.99%').percent && C.number('24.99%').value === 24.99 && C.number('12.345').decimals === 3);
+  const dates = [['2026-06-03', '2026-06-03'], ['6/3/2026', '2026-06-03'], ['03.06.2026', '2026-06-03'], ['13/6/2026', '2026-06-13'], ['3 Jun 2026', '2026-06-03'], ['June 3, 2026', '2026-06-03'], ['3-Jun-26', '2026-06-03'], ['46106', '2026-03-25'], ['2026/06/03', '2026-06-03'], ['20260603', '2026-06-03'], ['', null], ['nope', undefined], ['2026-13-01', undefined], ['2026-02-30', undefined]];
+  checkTrue('every common way of writing a date reads to YYYY-MM-DD, including an Excel serial, and an impossible date is refused', dates.every(d => C.date(d[0]) === d[1]));
+  check('a bare month or year is allowed only where the row allows it: 2026-06, Jun 2026 and 1990', [C.date('2026-06', { partial: true }), C.date('Jun 2026', { partial: true }), C.date('1990', { partial: true }), C.date('2026-06')].join(','), '2026-06-01,2026-06-01,1990-07-01,');
+  checkTrue('a zip or a workbook is known for what it is, before any parsing', C.looksBinary('PKrest') && C.looksBinary('ab\u0000cd') && C.looksBinary('%PDF-1.7') && !C.looksBinary('row,value\n'));
+  checkTrue('the bank importer reads through the same reader: three layouts still parse, and a bracketed negative still reads', BankCsv.parse(fixture('bank-c.csv')).delimiter === ';' && BankCsv.cents('(15.49)') === -1549 && BankCsv.parseDate('3 Jun 2026') === '2026-06-03');
+  checkTrue('...and the two parsers are one: engines/bankcsv.js has no splitter of its own', !/function splitLine|function detectDelimiter/.test(fs.readFileSync(path.join(ROOT, 'engines/bankcsv.js'), 'utf8')));
+  /* -- a cell as the row's own value ------------------------------------------------- */
+  const row = id => LR.byId(id);
+  const rd = (id, t) => Csv.read(row(id), t, T);
+  check('a rate is read as it is written, never multiplied by a hundred on a hunch: 24.99 and 24.99% are both 24.99%, and 0.5 is half a percent, with a note saying how to write fifty', [rd('debtRate', '24.99').value, rd('debtRate', '24.99%').value, rd('debtRate', '0.5').value, /read as 0.5%; write 50 or 50%/.test(rd('debtRate', '0.5').warn)].join(','), '0.2499,0.2499,0.005,true');
+  checkTrue('...so a real rate under one percent survives the trip: 0.1% stays 0.1%', Csv.valueText(row('debtRate'), rd('debtRate', '0.1').value) === '0.1');
+  checkTrue('a rate over 100 or under 0 is refused and says what it wanted', /between 0 and 100/.test(rd('debtRate', '2499').bad) && /zero or more/.test(rd('debtRate', '-5').bad));
+  checkTrue('the contribution percent stays a whole number', rd('contributionPercent', '6').value === 6 && rd('contributionPercent', '6%').value === 6);
+  checkTrue('an amount below zero, above a billion, or with a percent sign is refused with its reason', /zero or more/.test(rd('cashSavings', '(500)').bad) && /billion/.test(rd('cashSavings', '2,000,000,000').bad) && /dollars, not a percent/.test(rd('cashSavings', '5%').bad));
+  checkTrue('a third decimal is rounded to the cent and said so', rd('cashSavings', '12.345').value === 1235 && /rounded to the cent/.test(rd('cashSavings', '12.345').warn));
+  checkTrue('yes in every spelling a spreadsheet uses: TRUE, Y, x, 1, checked; and no', ['TRUE', 'Y', 'x', '1', 'checked', 'on'].every(t => rd('hasDebt', t).value === true) && ['FALSE', 'N', '0', 'off'].every(t => rd('hasDebt', t).value === false) && /yes or no/.test(rd('hasDebt', 'maybe').bad));
+  checkTrue('a choice by its id, its label, a nickname or its state name: married_joint, "Married, filing jointly", mfj, North Carolina, "every two weeks", "through work"', rd('filingStatus', 'Married, filing jointly').value === 'married_joint' && rd('filingStatus', 'mfj').value === 'married_joint' && rd('filingStatus', 'MARRIED_JOINT').value === 'married_joint' && rd('state', 'North Carolina').value === 'NC' && rd('state', 'nc').value === 'NC' && rd('payCadence', 'every two weeks').value === 'fortnightly' && rd('healthCover', 'through work').value === 'employer' && rd('employmentStatus', 'Self-employed or freelance').value === 'selfEmployed');
+  checkTrue('a choice the row does not have is refused, and the message lists the choices in words', /one of Single, Married, filing jointly/.test(rd('filingStatus', 'divorced').bad) && /one of w2, 1099/.test(rd('incomeType', 'salary').bad));
+  checkTrue('a ZIP that lost its leading zero in a spreadsheet gets it back, with a note; a ZIP+4 is trimmed; letters are refused', rd('zip', '2134').value === '02134' && /leading zero/.test(rd('zip', '2134').warn) && rd('zip', '02134-1234').value === '02134' && /five-digit/.test(rd('zip', 'ABC').bad));
+  checkTrue('the next payday is a day of the month: 15, 15th, "the 15th", or the day of a full date', rd('nextPayday', '15').value === 15 && rd('nextPayday', '15th').value === 15 && rd('nextPayday', 'the 15th').value === 15 && rd('nextPayday', '2026-06-15').value === 15 && /15th of each month/.test(rd('nextPayday', '2026-06-15').warn) && /1 to 31/.test(rd('nextPayday', '32').bad));
+  checkTrue('a birth date from any spelling, a bare year with a note, and never in the future', rd('dob', '4/12/1994').value === '1994-04-12' && rd('dob', '1994').value === '1994-07-01' && /July 1994/.test(rd('dob', '1994').warn) && /in the past/.test(rd('dob', '2099-01-01').bad));
+  checkTrue('a match in words, loosely: "100% up to 3%", "50 of first 6", "none"', rd('employerMatch', '100% up to 3%').value.matchCapPercentOfSalary === 0.03 && rd('employerMatch', '50 of first 6').value.matchPercent === 0.5 && rd('employerMatch', 'none').value.matchPercent === 0);
+  checkTrue('a count is rounded to a whole number with a note, and an absurd one refused', rd('dependents', '2.5').value === 3 && /rounded to 3/.test(rd('dependents', '2.5').warn) && /up to 50/.test(rd('dependents', '500').bad));
+  checkTrue('a formula in a cell is named as such', /not a formula/.test(rd('cashSavings', '=B2*12').bad) && /not a formula/.test(rd('debtRate', '=B2').bad));
+  checkTrue('the "will be" column shows each value as the app will: $9,750, 24.99%, Married, filing jointly, the 15th, 6 months', [Csv.shown(row('cashSavings'), 975000, T), Csv.shown(row('debtRate'), 0.2499, T), Csv.shown(row('filingStatus'), 'married_joint', T), Csv.shown(row('nextPayday'), 15, T), Csv.shown(row('bufferMonths'), 6, T)].join('|') === '$9,750|24.99%|Married, filing jointly|the 15th|6 months');
+  /* -- finding the row a line means -------------------------------------------------- */
+  const idx = Csv.rowIndex();
+  const find = w => { const f = Csv.findRow(idx, '', w); return (f.row ? f.row.id : '-') + ':' + (f.how || '-') + (f.near ? ':' + f.near : ''); };
+  check('a row by a whole word of its label, a typo, the words in any order, the owner\'s own label, or the id in any case', [find('Filing'), find('intrest rate'), find('rent a month'), find('Date of birth'), Csv.findRow(idx, 'DebtRate', '').row.id + ':' + Csv.findRow(idx, 'DebtRate', '').how, find('cash & savings')].join(' '), 'filingStatus:near debtRate:near accommodationMonthly:near dob:label debtRate:id cashSavings:label');
+  check('...and a word that is no row is no row, without a silly suggestion; a near miss gets one', find('Nope') + ' ' + find('filing statuss'), '-:- filingStatus:near');
+  /* -- a German Excel: BOM, semicolons, decimal commas, dotted dates, a sorted sheet ---- */
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.updateProfile(Demo.build());
+  const de = Csv.plan(fixture('sheet-excel-de.csv'), Spine.getProfile(), T);
+  check('the sheet reads: semicolons, 9.750,00 to the cent, 22,90% as the rate held, the blank row and the repeated header dropped, the short and long rows kept', de.delimiter + ' ' + JSON.stringify(de.counts) + ' ' + de.entries.length, '; {"change":6,"add":2,"same":3} 11');
+  checkTrue('a new debt\'s rate line sits above its balance line (the sheet was sorted) and still lands on the new debt', de.entries.filter(e => e.item === 'Car loan').map(e => e.row + ':' + e.status).join(',') === 'debtRate:add,debtBalance:add' && de.entries.filter(e => e.item === 'Car loan')[0].value === 0.0625);
+  checkTrue('an account is found by its item_id even with its name as the sheet had it; a date as 12.04.1994 reads day-first; 0,06 is read as written; 2134 as 02134; "every two weeks" as fortnightly; 15. as the 15th', de.entries.filter(e => e.row === 'assetValue')[0].itemId === 'demo_asset_cash' && de.entries.filter(e => e.row === 'dob')[0].status === 'same' && de.entries.filter(e => e.row === 'contributionPercent')[0].value === 0.06 && de.entries.filter(e => e.row === 'zip')[0].value === '02134' && de.entries.filter(e => e.row === 'payCadence')[0].value === 'fortnightly' && de.entries.filter(e => e.row === 'nextPayday')[0].value === 15);
+  const r1 = Csv.apply(de, Spine);
+  const h1 = Spine.getProfile();
+  check('applying: every line lands, none fails', r1.applied + ':' + r1.added + ':' + r1.failed.length, '8:1:0');
+  checkTrue('...the car loan exists with its balance and rate, the savings account moved to $9,750, the calendar has its cadence and day, the ZIP its zero', h1.debts.length === 3 && h1.debts.filter(d => d.label === 'Car loan')[0].balanceCents === 1200000 && h1.debts.filter(d => d.label === 'Car loan')[0].rate === 0.0625 && h1.assets.filter(a => a.id === 'demo_asset_cash')[0].valueCents === 975000 && h1.calendar.cadence === 'fortnightly' && h1.calendar.nextPaydayDay === 15 && h1.zip === '02134' && h1.retirement.contributionPercent === 0.06);
+  const de2 = Csv.plan(fixture('sheet-excel-de.csv'), Spine.getProfile(), T);
+  check('the same sheet again changes nothing and adds nothing', (de2.counts.change || 0) + (de2.counts.add || 0), 0);
+  checkTrue('every value the file brought says it came from a file, not from typing', ['cashSavings', 'zip', 'contributionPercent'].every(id => ((Spine.getProfile().meta.fields || {})[id] || {}).source === 'imported'));
+  check('the whole import is one step in the undo stack', (Spine.getProfile().meta.undoStack || []).slice(-1)[0].label, 'CSV import: 8 lines');
+  Spine.undo();
+  const undone = Spine.getProfile();
+  checkTrue('...and one undo takes all of it back: the car loan gone, the savings account as it was, no ZIP', undone.debts.length === 2 && undone.assets.filter(a => a.id === 'demo_asset_cash')[0].valueCents === 950000 && !undone.zip && undone.calendar.cadence === null);
+  /* -- a hand-typed sheet with its own headers, and every kind of slip ---------------- */
+  Spine.updateProfile(Demo.build());
+  const hand = Csv.plan(fixture('sheet-hand.csv'), Spine.getProfile(), T);
+  check('a hand-typed sheet headed Name, Which, Amount, Notes is read by those names', hand.entries.map(e => e.status).join(','), 'duplicate,change,same,bad,bad,change,change,change,change,unknown,change,change,skip,change,change,same');
+  checkTrue('...a line typed twice: the last one counts; a formula and a bracketed negative are refused with their reasons; a word that is no row says so', /last one counts/.test(hand.entries[0].why) && /not a formula/.test(hand.entries[3].why) && /zero or more/.test(hand.entries[4].why) && /no row called that/.test(hand.entries[9].why));
+  checkTrue('...a balance 100 times what is held is flagged, not refused; a half person is rounded and said; a choice by its label lands', /100 times/.test(hand.entries[5].warn) && hand.entries[6].value === 3 && hand.entries[7].value === 'employer' && hand.entries[1].value === 'married_joint' && /Filing status/.test(hand.entries[1].warn));
+  const r2 = Csv.apply(hand, Spine);
+  const h2 = Spine.getProfile();
+  checkTrue('...applied: cash $4,500, married filing jointly, three dependents, cover through work, pay survives, a 100% match to 3%, $2,000 Roth, self-employed', r2.failed.length === 0 && Schema.cashCents(h2).value === 450000 && h2.filingStatus === 'married_joint' && h2.dependents.length === 3 && h2.insurance.health.type === 'employer' && Schema.primaryPerson(h2).incomeSources[0].survivesJobLoss === true && Schema.primaryPerson(h2).incomeSources[0].employerMatch.matchCapPercentOfSalary === 0.03 && h2.retirement.rothContributedCents === 200000 && Schema.primaryPerson(h2).employmentStatus === 'selfEmployed');
+  /* -- the wrong file, an empty file, two items with one name, a refused write -------- */
+  check('a bank statement in the sheet box, a file with no usable header, and an empty file are each named', [Csv.plan(fixture('bank-a.csv'), h2, T).problem, Csv.plan('just some text\nmore', h2, T).problem, Csv.plan('', h2, T).problem, Csv.plan('row,value\n', h2, T).problem].join(','), 'bank,noHeader,empty,empty');
+  Spine.upsertDebt(Schema.createDebt({ label: 'Credit card', balanceCents: 100000 }));
+  const amb = Csv.plan('label,item,value\nBalance,Credit card,5000\nBalance,Student loan,1\n', Spine.getProfile(), T);
+  checkTrue('two debts called Credit card: the line is held back and says to rename one or use item_id; the other line still reads', amb.entries[0].status === 'ambiguous' && /two items/.test(amb.entries[0].why) && amb.entries[1].status === 'change');
+  const byId = Csv.plan('label,item,value,item_id\nBalance,Credit card,5000,demo_debt_1\n', Spine.getProfile(), T);
+  checkTrue('...and with item_id the same line lands on the one meant', byId.entries[0].status === 'change' && byId.entries[0].itemId === 'demo_debt_1');
+  const bogus = Csv.plan('label,value\nCash and savings,7000\n', Spine.getProfile(), T);
+  bogus.entries.push({ n: 2, line: 3, row: 'noSuchRow', label: 'x', item: '', itemId: null, status: 'change', value: 1, create: null });
+  const r3 = Csv.apply(bogus, Spine);
+  checkTrue('a write the owner refuses is reported by line, and the other lines still land', r3.applied === 1 && r3.failed.length === 1 && r3.failed[0].line === 3 && Schema.cashCents(Spine.getProfile()).value === 700000);
+  const sigA = Csv.signature(Csv.plan('label,value\nCash and savings,8000\n', Spine.getProfile(), T));
+  Spine.updateProfile(Object.assign(Spine.getProfile(), { zip: '27601' }));
+  const sigB = Csv.signature(Csv.plan('label,value\nCash and savings,8000\n', Spine.getProfile(), T));
+  const sigC = Csv.signature(Csv.plan('label,value\nCash and savings,9000\n', Spine.getProfile(), T));
+  checkTrue('a plan\'s signature is the same while what it would write is the same, and differs when the file or the app moved', sigA === sigB && sigA !== sigC);
+  const held = Schema.cashCents(Spine.getProfile()).value / 100;
+  const agrees = Csv.plan('label,item,value\nCash and savings,,9000\nWhat each account or thing is worth,Savings account,9000\n', Spine.getProfile(), T);
+  const differs = Csv.plan('label,item,value\nCash and savings,,12500\nWhat each account or thing is worth,Savings account,9000\n', Spine.getProfile(), T);
+  const alone = Csv.plan('label,value\nCash and savings,12500\n', Spine.getProfile(), T);
+  checkTrue('a total the app works out from the accounts is left to them whenever the file lists the accounts, and a total that disagrees with them says so rather than winning and being undone next time', agrees.entries[0].status === 'covered' && differs.entries[0].status === 'covered' && /do not come to/.test(differs.entries[0].why) && differs.entries[1].status === 'change');
+  checkTrue('...and a sheet that names only the total, with no account lines, sets it', alone.entries[0].status === 'change' && alone.entries[0].value === 1250000 && held > 0);
+  const clean = Csv.plan(Csv.single(Spine.getProfile(), T), Spine.getProfile(), T);
+  checkTrue('an export nobody edited comes back with nothing to change and nothing needing a look: every line is already so, blank, worked out, or a total the accounts set', clean.problems === 0 && !clean.counts.change && !clean.counts.add && (clean.counts.same + clean.counts.skip + clean.counts.computed + clean.counts.covered) === clean.entries.length);
+  /* -- the export side: a BOM for Excel, item_id, nextPayday, the readme --------------- */
+  const demo2 = Demo.build(); demo2.calendar.nextPaydayDay = 15;
+  const single = Csv.single(demo2, T);
+  checkTrue('the export starts with the byte-order mark Excel needs, every zip file too, and carries item_id last', single.charAt(0) === BOM && Object.keys(Csv.files(demo2, T)).filter(k => /\.csv$/.test(k)).every(k => Csv.files(demo2, T)[k].charAt(0) === BOM) && Csv.COLUMNS[Csv.COLUMNS.length - 1] === 'item_id');
+  checkTrue('the next payday exports as its day and reads back as it (it used to be refused as not a date)', Csv.rows(demo2, T).filter(l => l.row === 'nextPayday')[0].value === '15' && Csv.plan(single, Demo.build(), T).entries.filter(e => e.row === 'nextPayday')[0].status === 'change');
+  checkTrue('the readme names item_id and says how a file comes back', /item_id/.test(Csv.readme(demo2, T)) && /Bringing a file back/.test(Csv.readme(demo2, T)));
+  const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
+  checkTrue('Your Data loads the shared reader, refuses a workbook, sends a bank file to the other box, re-reads the file before applying, and shows only the lines that need a look on request', /shared\/csv\.js/.test(dataHtml) && /looksBinary/.test(dataHtml) && /Bring it in through Bank CSV/.test(dataHtml) && /CsvExport\.signature\(/.test(dataHtml) && /Show only the lines that need a look/.test(dataHtml) && /reader\.onerror/.test(dataHtml));
   Spine.reset();
 })();
 

@@ -17,39 +17,18 @@
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Importer: require('../shared/importer.js') };
+    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Importer: require('../shared/importer.js'), Csv: require('../shared/csv.js') };
   } else {
-    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema, Importer: root.SLAF && root.SLAF.Importer };
+    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema, Importer: root.SLAF && root.SLAF.Importer, Csv: root.SLAF && root.SLAF.Csv };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Importer);
+  var api = factory(deps.Money, deps.Schema, deps.Importer, deps.Csv);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.BankCsv = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Importer) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Importer, Csv) {
   'use strict';
-  function detectDelimiter(head) {
-    var c = { ',': (head.match(/,/g) || []).length, ';': (head.match(/;/g) || []).length, '\t': (head.match(/\t/g) || []).length };
-    return c[';'] > c[','] && c[';'] >= c['\t'] ? ';' : (c['\t'] > c[','] ? '\t' : ',');
-  }
-  function splitLine(line, d) {
-    var out = [], field = '', q = false;
-    for (var i = 0; i < line.length; i++) {
-      var ch = line[i];
-      if (q) { if (ch === '"') { if (line[i + 1] === '"') { field += '"'; i++; } else q = false; } else field += ch; }
-      else if (ch === '"') q = true;
-      else if (ch === d) { out.push(field); field = ''; }
-      else field += ch;
-    }
-    out.push(field);
-    return out.map(function (f) { return f.trim(); });
-  }
-  function parse(text) {
-    var lines = String(text || '').replace(/^﻿/, '').split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
-    if (!lines.length) return { delimiter: ',', headers: [], rows: [] };
-    var d = detectDelimiter(lines[0]);
-    var headers = splitLine(lines[0], d);
-    var rows = lines.slice(1).map(function (l) { return splitLine(l, d); }).filter(function (r) { return r.some(function (c) { return c !== ''; }); });
-    return { delimiter: d, headers: headers, rows: rows };
-  }
+  /* One reader for every CSV (shared/csv.js, D-221): the delimiter, the
+     byte-order mark, quotes across lines and ragged rows are its job. */
+  function parse(text) { var p = Csv.parse(text); return { delimiter: p.delimiter, headers: p.headers, rows: p.rows }; }
   function norm(s) { return String(s || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim(); }
   function signature(headers) { return (headers || []).map(norm).join('|'); }
   var WORDS = {
@@ -69,21 +48,10 @@
     });
     return map;
   }
-  /* Dates: ISO, US month/day/year, and day.month.year; anything else is
-     left blank and the line is shown as needing a date, never guessed. */
-  function parseDate(s) {
-    var t = String(s || '').trim(), m;
-    if ((m = /^(\d{4})-(\d{2})-(\d{2})/.exec(t))) return m[1] + '-' + m[2] + '-' + m[3];
-    if ((m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t))) return m[3] + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2);
-    if ((m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(t))) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
-    return null;
-  }
-  function cents(s) {
-    var t = String(s || '').replace(/[$,\s]/g, '').replace(/^\((.*)\)$/, '-$1');
-    if (t === '' || t === '-') return null;
-    var n = Number(t);
-    return isNaN(n) ? null : Math.round(n * 100);
-  }
+  /* Dates and amounts, any common way (shared/csv.js); a date that cannot
+     be read is left blank and the line is shown as needing one, never guessed. */
+  function parseDate(s) { return Csv.date(s) || null; }
+  function cents(s) { var c = Csv.amount(s); return c === undefined ? null : c; }
   function descKey(s) { return norm(s).replace(/\b\d+\b/g, '').replace(/\s+/g, ' ').trim(); }
   function key(e) { return e.date + '|' + e.cents + '|' + descKey(e.description); }
   function categoryOf(description, amountCents, tables) {

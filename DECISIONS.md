@@ -13465,6 +13465,56 @@ two-column sheet by label; blank skipped, zero kept), the render,
 features and forms gates on Your Data, the phone walk (download, empty
 the household, bring the edited file back, one balance changed).
 
+## D-221 — The CSV round trip, made to survive a real spreadsheet
+
+**Why.** The round trip (D-220) assumed a file that left the app and came
+back untouched. A real one goes through Excel, Numbers or Sheets in
+somebody's locale: a byte-order mark, semicolons, decimal commas, dates
+rewritten, a ZIP with its leading zero eaten, rows sorted, a header pasted
+twice, the wrong file chosen altogether.
+
+**Decision.** One reader for every CSV in the app, `shared/csv.js`:
+delimiter (comma, semicolon, tab, pipe, or Excel's `sep=` line), byte-order
+mark, CRLF / LF / bare CR, quotes across lines, ragged rows padded, a
+repeated header dropped, and one loose reader each for a number
+(`$1,234.56`, `(1,234.56)`, `1.234,56`, `12k`, `1.2E+06`, `6 months`,
+`'1234`) and a date (ISO, `6/3/2026`, `3.6.2026`, `3 Jun 2026`, an Excel
+serial). `engines/bankcsv.js` now reads through it too, so the bank box and
+the sheet box read a file the same way. `shared/csvexport.js` gains
+`read()`, which turns a cell into the row's own value with a reason when it
+cannot (`{ value, blank, bad, warn }`): a choice by its id, its label, a
+nickname or a state's name; yes in every spelling a spreadsheet uses; a ZIP
+given back its leading zero; the next payday as a day of the month; a
+percent read as written, never multiplied by a hundred on a hunch. Rows are
+found by id, by label, by a whole word of a label or by a typo, and items by
+a new `item_id` column so a renamed account still lands. `plan()` names what
+each line would do by its line number in the file, `apply()` reports what
+landed and what its owner refused, and Your Data (`rooms/data.html`) shows
+the file's value beside what is held and what it will become, with a filter
+for the lines that need a look. Every imported value is stamped `imported`.
+
+**Replaces or removes.** `engines/bankcsv.js` loses its own splitter,
+delimiter guess, date reader and amount reader: four duplicates gone.
+`fromText()` stays as a thin call on `read()` for anything still using it.
+
+**Stored shape.** No change to `slaf.household.v2`. The export gains an
+`item_id` column (last) and a byte-order mark, so a file from an older
+build still reads; a file from this one carries the ids that make a renamed
+account land where it belongs.
+
+**Verified.** `node test/run.js` (a section of its own: the reader on every
+malformed file shape, every unit read back, a German Excel fixture with
+semicolons and decimal commas applied end to end, a hand-typed sheet under
+its own column names, the wrong file in each box, two items with one name,
+a refused write, one undo taking the whole import back), `node
+dnd/test/run.js`, `node test/export.js`, `node test/jan1.js`, `cd tests &&
+npm test` (nine properties in `tests/properties/csv.test.js`, which found a
+0.1% rate being read as 10%, "not sure" read as a number, a one-column data
+row dropped as a header, and a negative net worth refused), the render,
+features, forms and XSS gates on Your Data, and a phone walk: download,
+re-save the file as another locale's Excel would, bring it back, apply,
+undo.
+
 ---
 
 # The Dungeons & Dividends entries

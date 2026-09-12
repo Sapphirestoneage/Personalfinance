@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 22:47Z"/>
+<meta name="slaf-build" content="2026-09-12 03:55Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Your Data · SPARKS</title>
@@ -45,6 +45,8 @@
   .data-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
   .data-note.is-error { color: var(--color-critical); }
   .data-note.is-good { color: var(--color-positive); }
+  .data-note.is-warn, .is-warn { color: var(--color-caution); }
+  tr.is-problem td { background: color-mix(in srgb, var(--color-caution) 10%, transparent); }
   .qr-out { margin-top: var(--space-3); max-width: 360px; }
   .qr-out svg { width: 100%; height: auto; display: block; border-radius: var(--radius-sm); }
   .share-out { width: 100%; margin-top: var(--space-3); font-family: var(--font-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); resize: vertical; box-sizing: border-box; }
@@ -127,7 +129,7 @@
     </div>
     <p class="data-note" id="sheet-note" hidden></p>
     <h3 style="margin:var(--space-4) 0 0">Bring a CSV back in</h3>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The same CSV, edited in a spreadsheet, comes back here: each line goes to the row it names (by the row column, or by its label) and, for an account, a debt or a source of pay, to the item with that name. Every line is shown before anything saves. A blank cell leaves the row as it is; nothing becomes a zero. One undo takes the whole lot back.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The same CSV, edited in any spreadsheet, comes back here: each line goes to the row it names (by the row column, or by its label) and, for an account, a debt or a source of pay, to the item with that name. Sort it, add lines, write numbers any way you like ($1,234.56, 24.99%, 6/3/2026, yes): every line is shown, with what it would do, before anything saves. A blank cell leaves the row as it is; nothing becomes a zero. One undo takes the whole lot back.</p>
     <div class="data-actions">
       <label class="slaf-btn" for="csv-file" style="cursor:pointer">Choose a CSV…</label>
       <input type="file" id="csv-file" accept=".csv,text/csv" hidden/>
@@ -219,6 +221,7 @@
 <script src="../shared/staleness.js"></script>
 <script src="../shared/ledger-rows.js"></script>
 <script src="../shared/doors.js"></script>
+<script src="../shared/csv.js"></script>
 <script src="../shared/csvexport.js"></script>
 <script src="../engines/bankcsv.js"></script>
 <script>
@@ -299,9 +302,14 @@
   el('bank-file').addEventListener('change', function () {
     var f = this.files && this.files[0]; if (!f) return;
     var reader = new FileReader();
+    reader.onerror = function () { note('bank-note', 'The file could not be read from disk. Try choosing it again.', 'is-error'); };
     reader.onload = function () {
-      BANK.parsed = SLAF.BankCsv.parse(String(reader.result || ''));
+      var text = String(reader.result || '');
+      if (SLAF.Csv.looksBinary(text)) { note('bank-note', 'That is not a CSV. Most bank sites offer CSV beside PDF and Excel; choose CSV.', 'is-error'); return; }
+      BANK.parsed = SLAF.BankCsv.parse(text);
       if (!BANK.parsed.headers.length) { note('bank-note', 'That file has no rows I can read.', 'is-error'); return; }
+      var keys = BANK.parsed.headers.map(SLAF.Csv.headerKey);
+      if (keys.indexOf('row') > -1 && keys.indexOf('value') > -1 && keys.indexOf('unit') > -1) { note('bank-note', 'That is a Money Rooms sheet, not a bank statement. Bring it in below, under "Bring a CSV back in".', 'is-error'); return; }
       var sig = SLAF.BankCsv.signature(BANK.parsed.headers);
       var remembered = (SLAF.Prefs.get('bankcsv.maps', {}) || {})[sig];
       BANK.map = remembered || SLAF.BankCsv.guessMap(BANK.parsed.headers);
@@ -337,43 +345,92 @@
       note('sheet-note', 'Downloaded ' + a.download + ': every row on one sheet. Edit the value column and bring it back below.', 'is-good');
     }).catch(function (err) { note('sheet-note', 'Could not build the CSV: ' + err.message, 'is-error'); });
   });
-  var CSV = { plan: null };
-  var STATUS_WORDS = { change: 'will change', add: 'new, will be added', same: 'already so', covered: 'a total the account lines set', skip: 'blank, left as is', computed: 'worked out, not typed', unknown: 'no such row', noItem: 'no such item', noWrite: 'enter it in its room', bad: 'could not read' };
+  var CSV = { plan: null, text: '', busy: false, problemsOnly: false };
+  var STATUS_WORDS = { change: 'will change', add: 'new, will be added', same: 'already so', covered: 'a total the account lines set', skip: 'blank, left as is', computed: 'worked out, not typed', pref: 'a setting', unknown: 'no such row', noItem: 'no such item', ambiguous: 'two items with that name', duplicate: 'listed twice', noWrite: 'enter it in its room', bad: 'could not read' };
+  var PROBLEM = { unknown: true, noItem: true, ambiguous: true, bad: true, noWrite: true };
+  function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
+  function roomLink(id) { var r = id && SLAF.Registry && SLAF.Registry.byId ? SLAF.Registry.byId(id) : null; return r ? '<a href="' + esc(id) + '.html">' + esc(r.label || id) + '</a>' : ''; }
   function csvPreview() {
     if (!CSV.plan) return;
-    var c = CSV.plan.counts, ch = (c.change || 0) + (c.add || 0);
+    var c = CSV.plan.counts, ch = (c.change || 0) + (c.add || 0), left = CSV.plan.problems;
+    var quiet = (c.same || 0) + (c.skip || 0) + (c.covered || 0) + (c.computed || 0) + (c.pref || 0) + (c.duplicate || 0);
+    var parts = [plural(ch, 'line') + ' will change'];
+    if (c.add) parts.push(plural(c.add, 'new item line'));
+    if (c.same) parts.push(c.same + ' already so');
+    if (c.skip) parts.push(c.skip + ' blank');
+    if (left) parts.push(left + ' cannot be read (shown below)');
     el('csv-tally').hidden = false;
-    el('csv-tally').textContent = ch + ' row' + (ch === 1 ? '' : 's') + ' will change' + (c.same ? ', ' + c.same + ' already so' : '') + (c.skip ? ', ' + c.skip + ' blank' : '') + ((c.unknown || 0) + (c.noItem || 0) + (c.bad || 0) + (c.noWrite || 0) + (c.computed || 0) ? ', ' + ((c.unknown || 0) + (c.noItem || 0) + (c.bad || 0) + (c.noWrite || 0) + (c.computed || 0)) + ' left out' : '') + '.';
-    el('csv-preview').innerHTML = '<table class="slaf-table"><thead><tr><th>Row</th><th>Item</th><th>Now</th><th>In the file</th><th></th></tr></thead><tbody>' + CSV.plan.entries.slice(0, 300).map(function (e) {
-      return '<tr' + (e.status !== 'change' && e.status !== 'add' ? ' style="opacity:.55"' : '') + '><td>' + esc(e.label) + '</td><td>' + esc(e.item) + '</td><td>' + esc(e.before) + '</td><td>' + esc(e.text) + '</td><td class="slaf-hint">' + esc(STATUS_WORDS[e.status] || e.status) + (e.why && e.status !== 'change' && e.status !== 'same' && e.status !== 'add' ? ': ' + esc(e.why) : '') + '</td></tr>';
-    }).join('') + '</tbody></table>';
+    el('csv-tally').textContent = parts.join(', ') + '.' + (quiet && !left ? ' The rest is as it is.' : '');
+    var shown = CSV.plan.entries.filter(function (e) { return !CSV.problemsOnly || PROBLEM[e.status] || e.warn; });
+    var head = '<table class="slaf-table"><thead><tr><th>Line</th><th>Row</th><th>Item</th><th>Now</th><th>In the file</th><th>Will be</th><th></th></tr></thead><tbody>';
+    var filter = left || CSV.plan.entries.some(function (e) { return e.warn; }) ? '<label class="slaf-hint" style="display:block;margin:var(--space-2) 0"><input type="checkbox" id="csv-problems"' + (CSV.problemsOnly ? ' checked' : '') + '> Show only the lines that need a look</label>' : '';
+    el('csv-preview').innerHTML = filter + head + shown.slice(0, 400).map(function (e) {
+      var live = e.status === 'change' || e.status === 'add';
+      var why = esc(STATUS_WORDS[e.status] || e.status) + (e.why && e.status !== 'same' && e.status !== 'change' ? ': ' + esc(e.why) : '') + (e.status === 'noWrite' && e.room ? ' (' + roomLink(e.room) + ')' : '') + (e.warn ? '<br><span class="is-warn">' + esc(e.warn) + '</span>' : '');
+      return '<tr' + (!live ? ' style="opacity:.6"' : '') + (PROBLEM[e.status] ? ' class="is-problem"' : '') + '><td class="slaf-hint">' + esc(e.line) + '</td><td>' + esc(e.label) + '</td><td>' + esc(e.item) + '</td><td>' + esc(e.before) + '</td><td>' + esc(e.text) + '</td><td>' + (live ? esc(e.after) : '') + '</td><td class="slaf-hint">' + why + '</td></tr>';
+    }).join('') + '</tbody></table>' + (shown.length > 400 ? '<p class="slaf-hint">And ' + (shown.length - 400) + ' more lines, read the same way.</p>' : '');
+    var box = document.getElementById('csv-problems');
+    if (box) box.addEventListener('change', function () { CSV.problemsOnly = box.checked; csvPreview(); });
     el('csv-actions').hidden = false;
-    el('btn-csv-apply').disabled = ch === 0;
-    el('btn-csv-apply').textContent = 'Apply ' + ch + ' change' + (ch === 1 ? '' : 's');
+    el('btn-csv-apply').disabled = ch === 0 || CSV.busy;
+    el('btn-csv-apply').textContent = 'Apply ' + plural(ch, 'change');
+  }
+  function csvClear() { CSV.plan = null; CSV.text = ''; CSV.problemsOnly = false; el('csv-preview').innerHTML = ''; el('csv-tally').hidden = true; el('csv-actions').hidden = true; }
+  /* The same file, read against the household as it is now. */
+  function csvPlan(text) {
+    return SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights', 'importKeywords', 'states']).then(function (t) {
+      SLAF.LedgerRows.use(t.ledgerRows);
+      return SLAF.CsvExport.plan(text, Spine.getProfile(), t);
+    });
+  }
+  function csvProblemNote(p) {
+    if (p.problem === 'bank') return 'That looks like a bank statement (dates, descriptions, amounts). Bring it in through Bank CSV, above.';
+    if (p.problem === 'noHeader') return 'That file has no header I can use. The first line needs a row or label column and a value column; the CSV this page downloads has both. Its columns were: ' + p.headers.slice(0, 8).join(', ') + (p.headers.length > 8 ? ', ...' : '') + '.';
+    return 'That file has no lines I can read below the header.';
   }
   el('csv-file').addEventListener('change', function () {
-    var f = this.files && this.files[0]; if (!f) return;
+    var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { note('csv-note', 'That file is ' + Math.round(f.size / 1048576) + ' MB; a Money Rooms sheet is a few hundred lines. Is it the right file?', 'is-error'); return; }
     var reader = new FileReader();
+    reader.onerror = function () { note('csv-note', 'The file could not be read from disk. Try choosing it again.', 'is-error'); };
     reader.onload = function () {
       var text = String(reader.result || '');
-      SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights']).then(function (t) {
-        SLAF.LedgerRows.use(t.ledgerRows);
-        CSV.plan = SLAF.CsvExport.plan(text, Spine.getProfile(), t);
-        if (!CSV.plan.entries.length) { note('csv-note', 'That file has no rows I can read. It needs a header line with row or label, and value.', 'is-error'); return; }
-        note('csv-note', '');
+      if (SLAF.Csv.looksBinary(text)) { note('csv-note', /^PK/.test(text) ? 'That is a zip or an Excel workbook, not a CSV. From the zip, unzip it and choose one of the .csv files; from Excel, use File, Save As, CSV UTF-8.' : 'That file is not text. Save it as CSV first.', 'is-error'); return; }
+      csvClear();
+      csvPlan(text).then(function (p) {
+        if (p.problem) { note('csv-note', csvProblemNote(p), 'is-error'); return; }
+        CSV.plan = p; CSV.text = text;
+        note('csv-note', p.problems ? plural(p.problems, 'line') + ' could not be placed; each says why. Everything else is ready.' : '');
         csvPreview();
       }).catch(function (err) { note('csv-note', 'Could not read the CSV: ' + err.message, 'is-error'); });
     };
     reader.readAsText(f);
-    this.value = '';
   });
   el('btn-csv-apply').addEventListener('click', function () {
-    if (!CSV.plan) return;
-    var n = SLAF.CsvExport.apply(CSV.plan, Spine);
-    note('csv-note', 'Applied ' + n + ' change' + (n === 1 ? '' : 's') + ', each through the room that owns it. Undo takes them all back at once.', 'is-good');
-    SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights']).then(function (t) { CSV.plan = SLAF.CsvExport.plan(SLAF.CsvExport.csv(CSV.plan.entries.map(function (e) { return { door: '', level: '', row: e.row || e.label, label: e.label, item: e.item, value: e.text, unit: '', state: '', as_of: '', source: '' }; })), Spine.getProfile(), t); csvPreview(); });
+    if (!CSV.plan || CSV.busy) return;
+    CSV.busy = true; el('btn-csv-apply').disabled = true;
+    var wanted = SLAF.CsvExport.signature(CSV.plan);
+    /* Read the file again against the household as it is now: a number that
+       moved in another tab since the preview is shown, not written over. */
+    csvPlan(CSV.text).then(function (fresh) {
+      if (SLAF.CsvExport.signature(fresh) !== wanted) {
+        CSV.plan = fresh; CSV.busy = false; csvPreview();
+        note('csv-note', 'Something changed in the app since this preview. It has been read again: check it, then apply.', 'is-warn');
+        return;
+      }
+      var r = SLAF.CsvExport.apply(fresh, Spine);
+      return csvPlan(CSV.text).then(function (after) {
+        CSV.plan = after; CSV.busy = false; CSV.problemsOnly = false; csvPreview();
+        var stray = after.entries.filter(function (e) { return e.status === 'change' || e.status === 'add'; }).length;
+        var msg = 'Applied ' + plural(r.applied, 'line') + (r.added ? ', ' + plural(r.added, 'new item') : '') + ', each through the room that owns it. Undo takes them all back at once.';
+        if (r.failed.length) msg += ' ' + plural(r.failed.length, 'line') + ' could not be written: ' + r.failed.slice(0, 3).map(function (x) { return 'line ' + x.line + ' (' + x.label + (x.item ? ', ' + x.item : '') + '): ' + x.why; }).join('; ') + (r.failed.length > 3 ? '; ...' : '');
+        else if (stray) msg += ' ' + plural(stray, 'line') + ' still reads as a change: look at the preview.';
+        else if (r.applied) msg += ' Read back: every line landed.';
+        note('csv-note', msg, r.failed.length || stray ? 'is-warn' : 'is-good');
+      });
+    }).catch(function (err) { CSV.busy = false; el('btn-csv-apply').disabled = false; note('csv-note', 'Could not apply: ' + err.message, 'is-error'); });
   });
-  el('btn-csv-cancel').addEventListener('click', function () { CSV.plan = null; el('csv-preview').innerHTML = ''; el('csv-tally').hidden = true; el('csv-actions').hidden = true; note('csv-note', ''); });
+  el('btn-csv-cancel').addEventListener('click', function () { csvClear(); note('csv-note', ''); });
 
   /* The spreadsheet zip (J1, D-210): one CSV a door and a readme, from the
      same rows the Ledger shows, through shared/csvexport.js. */
