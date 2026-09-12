@@ -2,15 +2,16 @@
 paths:
   - "rooms/financial-snapshot.html"
   - "engines/draftt.js"
+  - "engines/health.js"
+  - "engines/rankguess.js"
 ---
-# Financial Snapshot (`financial-snapshot`)
-File: rooms/financial-snapshot.html · 863 lines
-Engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath
-Reference data: bands.json, car_costs.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, +6 more
+# The Scorecard (`financial-snapshot`)
+File: rooms/financial-snapshot.html · 2598 lines
+Engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess
+Reference data: bands.json, car_costs.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +11 more
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), employerMatch (start), capturingFullMatch (start), totalDebt (debt-payoff), monthlyDebtPayments (debt-payoff), netWorth (statement), +2 more
 Latest decisions:
-  - D-056 — Time exists: every owned field knows when it was last confirmed, and snapshots are read back
+  - D-231 — The Scorecard: six readings, one measuring stick, simplest first
   - D-036 — Confidence as a field, and the Snapshot bug that hid behind a notice
-  - D-008 — `capturingFullMatch`: an input Tier 0 needs but does not list
 Full context: node tools/context/pack.js financial-snapshot

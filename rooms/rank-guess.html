@@ -7,108 +7,33 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Where Do You Think You Rank? · SPARKS</title>
-<meta name="description" content="Before the survey answer: guess where you rank for your age on a slider, then see the guess beside the real band. Bands, never ranks."/>
+<meta name="description" content="Where Do You Think You Rank is a reading of The Scorecard now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. I3 (D-213).
-
-  1. READS   Net worth (its terms) and the date of birth, for the survey
-             band from data/net_worth_percentiles_scf_2022.json.
-  2. WRITES  Nothing to the household. The guess is a preference
-             (prefs rank.guess), local to this browser like every pref.
-  3. CALLS   engines/rankguess.js. No formula lives here.
-  4. EMPTY   No net worth or no date of birth: the slider still works and
-             the reveal says what it needs. Nothing is shown as a rank.
-  5. CONFIG  data/net_worth_percentiles_scf_2022.json.
-
-  LIVE-FORM: built once. One slider, in the HTML.
+  REDIRECT — Where Do You Think You Rank is a reading of The Scorecard (rooms/financial-snapshot.html#where-you-rank, DECISIONS.md D-231).
+  Six rooms read the same entered numbers through six measuring sticks and
+  none of them asked for anything new, which makes five of them lenses and
+  one of them a room. The file stays so every link already out in the world
+  keeps landing, hash included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  .slider { width: 100%; margin: var(--space-3) 0; }
-  .guess { font-family: var(--font-display); font-size: var(--text-xl); margin: 0; }
-  .reveal { margin-top: var(--space-4); }
-  .reveal .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-  .reveal .box { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md, 10px); }
-  .reveal .box b { display: block; font-family: var(--font-display); font-size: var(--text-lg); }
-  .reveal .box small { color: var(--color-text-faint); }
-  .line { margin-top: var(--space-3); font-size: var(--text-md); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
-</style>
+<meta http-equiv="refresh" content="0; url=financial-snapshot.html#where-you-rank"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>Where Do You Think You Rank?</h1>
-  <p class="room-lede">Guess first. Then the survey. Most people are wrong in one direction, and knowing which is the useful part.</p>
-</header>
-
 <main class="slaf-wrap">
-  <section class="slaf-card" id="guess">
-    <span class="slaf-eyebrow">Your guess</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">For people your age, where does your net worth sit? 0 is the very bottom, 100 the very top.</p>
-    <input type="range" min="0" max="100" step="5" value="50" id="in-guess" class="slider" aria-label="Your guess, 0 to 100"/>
-    <p class="guess" id="g-word"></p>
-    <button type="button" class="slaf-btn slaf-btn--primary" id="btn-reveal">Show me the survey</button>
-  </section>
-  <section class="slaf-card reveal" id="reveal" hidden style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Guess beside survey</span>
-    <div class="row"><div class="box"><small>You guessed</small><b id="r-guess"></b></div><div class="box"><small>The survey says</small><b id="r-real"></b></div></div>
-    <p class="line" id="r-line"></p>
-    <p class="slaf-hint" id="r-src" style="margin:var(--space-2) 0 0"></p>
-  </section>
-  <p class="disclaimer">
-    Educational tool, not financial advice. Bands, never ranks; the survey
-    breakpoints are approximations. Your guess stays in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">Where Do You Think You Rank is a reading of The Scorecard now.
+    <a href="financial-snapshot.html#where-you-rank" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/rankguess.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Spine = SLAF.Spine, Reference = SLAF.Reference, RankGuess = SLAF.RankGuess, Prefs = SLAF.Prefs;
-  var ROOM_ID = 'rank-guess';
-  var TABLES = null;
-  function el(id) { return document.getElementById(id); }
-  function word() { var b = RankGuess.band(Number(el('in-guess').value)); el('g-word').textContent = b ? 'You think: ' + b.label + '.' : ''; }
-  function reveal() {
-    if (!TABLES) return;
-    var g = Number(el('in-guess').value);
-    try { Prefs.set('rank.guess', g); } catch (e) { /* fine */ }
-    var r = RankGuess.compare(g, Spine.getProfile(), TABLES);
-    el('reveal').hidden = false;
-    el('r-guess').textContent = r.guess ? r.guess.label : '';
-    if (r.status !== 'ok') { el('r-real').textContent = 'not yet'; el('r-line').textContent = r.reason; el('r-src').textContent = ''; return; }
-    el('r-real').textContent = r.real.label;
-    el('r-line').textContent = r.line;
-    el('r-src').textContent = 'Federal Reserve Survey of Consumer Finances, ' + r.referenceVersion + ', for ' + r.realBandLabel + '. Bands, never ranks: ' + r.precision;
-  }
-  el('in-guess').addEventListener('input', word);
-  el('btn-reveal').addEventListener('click', reveal);
-  Spine.registerRoom(ROOM_ID);
-  SLAF.Progress.mount(ROOM_ID);
-  var prior = Prefs ? Prefs.get('rank.guess', null) : null;
-  if (typeof prior === 'number') el('in-guess').value = String(prior);
-  word();
-  Reference.load(['netWorthPercentiles']).then(function (t) { TABLES = t; }).catch(function () { /* the reveal says so */ });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#guess': '#guess', '#reveal': '#reveal' };
+    var hash = location.hash || '';
+    var target = 'financial-snapshot.html' + (map[hash] || '#where-you-rank');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

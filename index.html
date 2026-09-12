@@ -389,7 +389,7 @@
       band, and nothing here adds them together. Adding them up is a different
       question with a different answer — it needs weights, the weights depend on
       your age, and every one of them is a judgement call. That lives in
-      <a href="rooms/health.html">The Score</a>, which shows its weighting rather than
+      <a href="rooms/financial-snapshot.html#the-score">The Score</a>, which shows its weighting rather than
       hiding it. Picking weights here to make a tidier shape would be answering
       that question by accident.
     </div>
@@ -527,7 +527,7 @@
 
   /* Every number opens the room it came from: the instrument → room map. */
   var OPENS = {
-    netWorth: ['statement', 'portfolios'], savingsRate: ['savings-rate', 'rate'], emergencyFundMonths: ['runway', 'the-plan'],
+    netWorth: ['statement', 'portfolios'], savingsRate: ['financial-snapshot', 'out-rate'], emergencyFundMonths: ['runway', 'the-plan'],
     debtToIncome: ['debt-payoff', 'debts'], fiEtaYear: ['fire', 'targets'], fooStep: ['foo-ladder', null],
     ownersPay: ['self-employed', 'quarterly'], runwayDays: ['runway', 'bj-number'], loanTrajectory: ['student-loans', 'number'], withdrawalRate: ['decumulation', 'number']
   };
@@ -611,7 +611,7 @@
     el('radar-legend').innerHTML = pts.map(function (p, i) {
       var row = p.row;
       return '<li><span class="n">' + (i + 1) + '</span>'
-        + '<span><a class="rname" href="' + Ownership.linkTo('ratios', 'r-' + p.id) + '">' + esc(p.label) + '</a>' + Explain.button(p.id) + '</span>'
+        + '<span><a class="rname" href="' + Ownership.linkTo('financial-snapshot', 'r-' + p.id) + '">' + esc(p.label) + '</a>' + Explain.button(p.id) + '</span>'
         + '<span class="v is-' + p.zone + '">' + esc(showRatio(p)) + '</span>'
         + (row ? '<span class="xp">' + Explain.panel(row, h, 'dashboard', { band: bandWords(row) }) + '</span>' : '')
         + '</li>';
@@ -929,7 +929,7 @@
     var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
     var rows = [];
     if (Money.isOk(spend)) rows.push(['A month of spending', spend.value, 'expenses', 'spending']);
-    if (Money.isOk(basis) && basis.annualSavingsCents > 0 && Gate.exists(h, 'savingsRate')) rows.push(['A year of saving', basis.annualSavingsCents, 'savings-rate', 'rate']);
+    if (Money.isOk(basis) && basis.annualSavingsCents > 0 && Gate.exists(h, 'savingsRate')) rows.push(['A year of saving', basis.annualSavingsCents, 'financial-snapshot', 'out-rate']);
     var one = Schema.oneOffEntry(h);
     if (one) rows.push([one.direction === 'out' ? 'The one-off going out' : 'The one-off coming in', one.cents, 'start', 'q-fine-tune']);
     el('date-lensed').innerHTML = rows.map(function (r) {
@@ -1326,7 +1326,7 @@
       var tail = '';
       if (r.notYet && r.notYet.length) {
         tail = ' <span class="dim">' + r.notYet.length + ' more ' + (r.notYet.length === 1 ? 'has a healthy range but is' : 'have a healthy range but are')
-          + ' waiting on something you have not entered — <a href="rooms/ratios.html">see which →</a></span>';
+          + ' waiting on something you have not entered — <a href="rooms/financial-snapshot.html#every-ratio">see which →</a></span>';
       }
       el('radar-desc').innerHTML = 'Of the <strong>' + drawn + '</strong> that could be worked out from what you have entered, '
         + parts.join('; ') + '.' + tail;
@@ -1496,7 +1496,7 @@
     el('weather-list').innerHTML = rows.map(function (r) {
       var zone = r.row.verdict.zone;
       var cls = zone === 'good' ? ' is-good' : zone === 'out' ? ' is-out' : '';
-      return '<li><span class="nm"><a class="rname" href="' + Ownership.linkTo('ratios', 'r-' + r.row.id) + '">' + esc(r.row.label) + '</a>' + Explain.button(r.row.id) + '</span>'
+      return '<li><span class="nm"><a class="rname" href="' + Ownership.linkTo('financial-snapshot', 'r-' + r.row.id) + '">' + esc(r.row.label) + '</a>' + Explain.button(r.row.id) + '</span>'
         + '<span class="v' + cls + '">' + showRatio(r.row) + '</span>'
         + '<span class="meta">' + esc(r.blurb)
         + (r.row.ok ? '' : ' · ' + esc(r.row.result.reason)) + '</span>'

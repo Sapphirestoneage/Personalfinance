@@ -13845,6 +13845,40 @@ text and land on the household). All four readings, the three redirects and
 the ownership deep links `#coverage`, `#inputs` and `#am-number` loaded at
 390px with a clean console.
 
+## D-231 — The Scorecard: six readings, one measuring stick, simplest first
+
+**Why.** The Financial Snapshot, The Score, Every Ratio, Savings Rate, Quick
+Math and Where Do You Think You Rank all read numbers already entered and
+none asked for anything new. Rule 1 of D-227 (same fields, different framing)
+and rule 3 (a lens is not a room) both apply, twice over.
+
+**Decision.** `rooms/financial-snapshot.html` becomes **The Scorecard**, six
+readings on the hats strip: `#the-score` (default), `#the-nine`,
+`#savings-rate`, `#every-ratio`, `#quick-math`, `#where-you-rank`. The
+default is the panel note made literal — one number opens the room and the
+nine are one tap away, where they used to be the first thing on the screen.
+The room still owns no field and writes nothing to the household; the two
+boxes it now holds are Quick Math's page-local sums and the rank guess,
+which is a preference. `REQUIRES['savings-rate']` goes: a reading of a room
+everyone can open cannot require a situation.
+
+**Replaces or removes.** Five registry rooms (81 → 76), each a redirect
+carrying its deep links. The dashboard's ratio links, its savings-rate lead
+and the skill tree's number links point at the readings.
+
+**Stored shape.** No change. Nothing here was ever stored.
+
+**The ratchet.** `test/xss-baseline.json` records where each remaining
+unescaped `innerHTML` lives, per file. Six spots moved from three retired
+rooms into this one; the baseline moves with them and its note says so. The
+repo total is unchanged at 58 and no file may now spend a budget it did not
+earn.
+
+**Verified.** `node test/run.js` (30,839 checks), `node test/forms.js` (604
+checks), `node tools/context/build.js --check`. All six readings, the five
+redirects and the deep links `#draftt`, `#out-rate`, `#out-wealth`, `#habit`
+and `#guess` loaded at 390px with a clean console.
+
 ---
 
 # The Dungeons & Dividends entries

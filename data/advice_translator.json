@@ -67,7 +67,7 @@
       ],
       "headline": "“Pay yourself first.”",
       "body": "Your savings rate is {savingsRate}; the floor most guidance uses is {floor}. For you the gap is {gapMonthly} a month, moved before the month starts rather than found at its end.",
-      "room": "savings-rate",
+      "room": "financial-snapshot",
       "anchor": "rate"
     },
     {

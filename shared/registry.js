@@ -55,13 +55,25 @@
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'dob', 'filingStatus'],
       order: 4,
-      title: 'Financial Snapshot',
-      blurb: 'The payoff: nine numbers read off everything you\u2019ve entered. Net worth, savings rate, runway, FIRE number, and which rung you\u2019re on.',
+      title: 'The Scorecard',
+      blurb: 'Everything you have entered, read back six ways: one score, the nine numbers, the savings rate, every ratio, five quick sums, and where you think you rank. Nothing here asks for a new figure.',
       href: 'rooms/financial-snapshot.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
       daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
       subsections: [
+        { id: 'view-the-score',       label: 'The score' },
+        { id: 'view-the-nine',        label: 'The nine numbers' },
+        { id: 'view-savings-rate',    label: 'Savings rate' },
+        { id: 'view-every-ratio',     label: 'Every ratio' },
+        { id: 'view-quick-math',      label: 'Quick math' },
+        { id: 'view-where-you-rank',  label: 'Where you rank' },
+        { id: 'out-score',            label: 'Everything, at once' },
+        { id: 'out-pillars',          label: 'What the score is made of' },
+        { id: 'out-rate',             label: 'The savings rate' },
+        { id: 'out-wealth',           label: 'The wealth ratios' },
+        { id: 'habit',                label: 'A habit, compounded' },
+        { id: 'guess',                label: 'Your guess' },
         { id: 'draftt',               label: 'DRAFTT' },
         { id: 'lenses',               label: 'Lenses' },
         { id: 'inputs',               label: 'Your numbers' },
@@ -320,26 +332,6 @@
       ]
     },
     {
-      id: 'savings-rate',
-      group: 'scorecard', aliases: ['savings rate', 'how much saved'],
-      kind: 'read',
-      needs: ['grossAnnualIncome', 'monthlyExpenses'],
-      order: 6,
-      title: 'Savings Rate',
-      blurb: 'The share of your income that stays yours \u2014 both ways of counting it, and what one more point of it is worth.',
-      href: 'rooms/savings-rate.html',
-      tier: 0,
-      tags: ['income', 'cashflow'],
-      daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: [] },
-      subsections: [
-        { id: 'out-rate',      label: 'Your rate' },
-        { id: 'breakdown',     label: 'Where it comes from' },
-        { id: 'out-benchmark', label: 'Against the benchmark' },
-        { id: 'what-if',       label: 'What one more point is worth' },
-        { id: 'reading',       label: 'Reading from elsewhere' }
-      ]
-    },
-    {
       id: 'fire-lab',
       features: ['showNominal', 'sequenceRisk'],
       group: 'scorecard', aliases: ['lab', 'variants', 'lean', 'fat', 'coast', 'barista'],
@@ -424,27 +416,6 @@
         { id: 'out-wage',  label: 'Against an hour of your life' },
         { id: 'presets',   label: 'Common ones' },
         { id: 'reading',   label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'quick-math',
-      group: 'decisions', subgroup: 'moves', aliases: ['quick', 'rule of thumb', 'car rule', 'back of envelope'],
-      kind: 'explore',
-      needs: [],
-      order: 11,
-      title: 'Quick Math',
-      blurb: 'Four small answers: is switching savings accounts worth it, what that thing costs per use, whether you can afford the car, and the rule of five.',
-      href: 'rooms/quick-math.html',
-      tier: 1,
-      tags: ['cashflow'],
-      daite: { reads: [], writes: [] },
-      subsections: [
-        { id: 'hysa',    label: 'Switching savings accounts' },
-        { id: 'peruse',  label: 'Cost per use' },
-        { id: 'car',     label: 'The 20/3/8 rule' },
-        { id: 'five',    label: 'The rule of five' },
-        { id: 'habit',   label: 'The $30k / $90k rule' },
-        { id: 'reading', label: 'Reading from elsewhere' }
       ]
     },
     {
@@ -599,27 +570,6 @@
         { id: 'spending',    label: 'What the money serves' },
         { id: 'out-compare', label: 'The two lists' },
         { id: 'out-unclaimed', label: 'Serving nothing you named' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'ratios',
-      group: 'scorecard', aliases: ['ratios', 'dti', 'emergency fund', 'benchmarks'],
-      kind: 'read',
-      needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
-      order: 14,
-      title: 'Every Ratio',
-      blurb: 'Thirty ratios people actually quote, computed from what you have already entered \u2014 with the two this app refuses to guess at named as such.',
-      href: 'rooms/ratios.html',
-      tier: 1,
-      tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents'], writes: [] },
-      subsections: [
-        { id: 'summary',     label: 'How many are answerable' },
-        { id: 'out-lending', label: 'What a lender looks at' },
-        { id: 'out-safety',  label: 'How much cushion' },
-        { id: 'out-wealth',  label: 'What you own' },
-        { id: 'out-blocked', label: 'What this cannot answer' },
         { id: 'reading',     label: 'Reading from elsewhere' }
       ]
     },
@@ -825,27 +775,6 @@
         { id: 'coverage',    label: 'Coverage checkup' },
         { id: 'out-gap',     label: 'Getting there' },
         { id: 'hl-reading',  label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'health',
-      group: 'scorecard', aliases: ['score', 'health', 'grade'],
-      kind: 'read',
-      needs: ['dob', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
-      order: 27,
-      title: 'The Score',
-      blurb: 'One number for the whole picture, weighted for the decade you\u2019re in \u2014 and every part of how it was arrived at.',
-      href: 'rooms/health.html',
-      tier: 1,
-      tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'expenses', 'income.grossAnnualCents', 'you.dob'], writes: [] },
-      subsections: [
-        { id: 'out-score',    label: 'Everything, at once' },
-        { id: 'out-pillars',  label: 'What it is made of' },
-        { id: 'out-headroom', label: 'Where the points are' },
-        { id: 'out-cohorts',  label: 'How much the weighting matters' },
-        { id: 'out-missing',  label: 'What is not in it' },
-        { id: 'reading',      label: 'Reading from elsewhere' }
       ]
     },
     {
@@ -1813,22 +1742,6 @@
     daite: { reads: ['assets', 'assets.cashCents', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus'], writes: [] },
     subsections: [{ id: 'next', label: 'The next rung' }, { id: 'rungs', label: 'Every rung to $1 million' }]
   });
-  /* Where Do You Think You Rank? (I3, D-213): the guess before the survey. */
-  ROOMS.push({
-    id: 'rank-guess',
-    group: 'scorecard', aliases: ['rank', 'guess', 'percentile', 'dysmorphia', 'where do I rank'],
-    kind: 'explore',
-    needs: ['dob'],
-    order: 25.7,
-    title: 'Where Do You Think You Rank?',
-    blurb: 'Guess where your net worth sits for your age on a slider, then see the guess beside the survey band. Bands, never ranks; no shame words.',
-    href: 'rooms/rank-guess.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'you.dob'], writes: [] },
-    subsections: [{ id: 'guess', label: 'Your guess' }, { id: 'reveal', label: 'Guess beside survey' }]
-  });
-
   /* The Subscription Finder (J5, D-215): repeating charges from the dated
      log, each priced a year and in hours; confirm, dismiss, or a reminder
      to cancel. Owns household.subscriptions. */
@@ -1880,8 +1793,8 @@
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
     numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
-    scorecard: ['financial-snapshot', 'savings-rate', 'ratios', 'health', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
-    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'runway', 'decumulation', 'quick-math', 'adventure', 'what-if-life', 'timeline'],
+    scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
+    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
     levelup: ['skill-tree', 'stacker', 'exercises'],
     upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
@@ -1938,7 +1851,6 @@
     'side-hustle': ['career'],
     'real-hourly-wage': ['hours'],
     hassle: ['hours'],
-    'savings-rate': ['savingsRate'],
     fire: ['savingsRate'],
     /* Between Jobs became the Cushion's while-job-hunting reading (D-230),
        which anyone may open: it reads as if the pay stopped today and says

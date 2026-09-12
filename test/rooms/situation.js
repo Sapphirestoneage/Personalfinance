@@ -59,12 +59,12 @@ module.exports = function (t) {
   var EXPECTED = {
     employed:     ['self-employed', 'decumulation', 'partner', 'kids', 'variable-income'],
     selfEmployed: ['accounts', 'decumulation', 'partner', 'kids'],
-    unemployed:   ['savings-rate', 'fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
+    unemployed:   ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
                    'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner', 'kids',
                    'variable-income', 'dreamline'],
     student:      ['self-employed', 'accounts', 'protection', 'decumulation', 'partner',
                    'kids', 'variable-income'],
-    retired:      ['savings-rate', 'fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
+    retired:      ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
                    'credential', 'accounts', 'career-move', 'partner', 'kids',
                    'variable-income', 'dreamline'],
     both:         ['decumulation', 'partner', 'kids']

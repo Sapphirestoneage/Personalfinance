@@ -6,123 +6,597 @@
 <meta name="slaf-build" content="2026-09-12 07:54Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Financial Snapshot · SPARKS</title>
-<meta name="description" content="Ten inputs in, nine numbers out. Net worth, savings rate, runway, FIRE number, and where you actually sit on the ladder."/>
+<title>The Scorecard · SPARKS</title>
+<meta name="description" content="One measuring stick, six readings: the score, the nine numbers, the savings rate, every ratio, the quick sums, and where you think you rank."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — the five questions from SPEC.md §11, answered before building.
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-173 (DRAFTT), D-231 (the merge).
 
-  1. READS   Everything in the household: people[].dob, filingStatus, state,
-             incomeSources[].grossAnnualIncomeCents and .employerMatch,
-             assets[] (cash + investment categories), debts[]
-             (balance / rate / minPayment), the four expense numbers (D-172),
-             assumptions, capturingFullMatch.
-  2. WRITES  Raw inputs only, never a computed field. Each Tier 0 lump sum is
-             stored as a single record inside the itemised array it belongs
-             to — one cash asset, one investment asset, one debt — so the
-             Debt Calculator can later replace that one record with many
-             without a schema change (SPEC.md §9 item 2).
-  3. CALLS   engines/tier0.js and engines/foo.js. No calculation is written
-             in this file; if a number is needed here, it comes from an
-             engine.
-  4. EMPTY   Every input ships blank with a format-only placeholder. Every
-             output shows an em dash plus the reason it can't compute yet.
-             Nothing shows $0, 0%, NaN, or a figure from last session.
-  5. CONFIG  data/effective_tax_rates_2026.json, retirement_milestones.json,
-             net_worth_percentiles_scf_2022.json, foo_rules.json,
-             irs_limits_2026.json — loaded through shared/reference.js.
+  ONE MEASURING STICK, SIX READINGS. The Financial Snapshot, The Score,
+  Every Ratio, Savings Rate, Quick Math and Where Do You Think You Rank all
+  read the numbers already entered and none of them asked for anything new.
+  Rule 1 and rule 3 of D-227: same fields, different framing, and a lens is
+  not a room. They are six readings on one strip now, the simplest first:
+
+    #the-score       one number, its pillars, and where the points are
+    #the-nine        nine numbers at once, and the DRAFTT shares
+    #savings-rate    the rate two ways, against the benchmark, and what if
+    #every-ratio     every ratio, by zone, with what each one blocks
+    #quick-math      five sums a calculator would do badly
+    #where-you-rank  what you guessed, against the survey band
+
+  1. READS   everything already entered, through the engines. No reading
+             asks for a figure of its own.
+  2. WRITES  nothing at all. Six read-only readings; the whole room owns no
+             field, which is why this merge moved no owner.
+  3. CALLS   engines/tier0.js, health.js, ratios.js, benchmarks.js,
+             quickmath.js, rankguess.js, foo.js and the snapshot's own.
+  4. EMPTY   every reading says which figure it lacks and shows nothing
+             rather than a zero.
+  5. CONFIG  the reference tables each engine names; nothing inline.
+
+  THE SIMPLEST READING IS THE DEFAULT (D-227, and the panel note that a
+  merge is only good news if the toggles open on the plainest thing). One
+  number opens the room; the nine are one tap away, where they used to be
+  the first thing on the screen.
+
+  LIVE-FORM: built once. Only two readings hold inputs at all — Quick Math
+  and the rank guess — and both are in the markup and never replaced.
 -->
 <style>
-  .room-back:hover { text-decoration: underline; }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; font-size: var(--text-base); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  #view-the-score section[id], #view-the-nine section[id], #view-savings-rate section[id],
+  #view-every-ratio section[id], #view-quick-math section[id], #view-where-you-rank section[id] { scroll-margin-top: var(--space-4); }
 
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-  @media (max-width: 380px) { .grid-2 { grid-template-columns: 1fr; } }
+  /* ---- The score, from rooms/health.html (D-231) ------------------------ */
+  
+  #view-the-score .room-back:hover { text-decoration: underline; }
+  
+  #view-the-score section[id] { scroll-margin-top: var(--space-4); }
 
-  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+  
+  #view-the-score .big { font-family: var(--font-display); font-size: 4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  
+  #view-the-score .big .of { font-size: var(--text-lg); color: var(--color-text-faint); }
+  
+  #view-the-score .band { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); margin-top: var(--space-2); }
+  
+  #view-the-score .band.is-strong { color: var(--color-positive); }
+  
+  #view-the-score .band.is-strained { color: var(--color-critical); }
 
-  .out-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
-  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
-  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
-  .out-detail dt { color: var(--color-text-faint); }
-  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  
+  #view-the-score ul.bars { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-score ul.bars li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-score ul.bars li:first-child { border-top: none; }
+  
+  #view-the-score ul.bars .top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  
+  #view-the-score ul.bars .nm { font-size: var(--text-sm); font-weight: 600; }
+  
+  #view-the-score ul.bars .wt { font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-score ul.bars .track { position: relative; height: 8px; border-radius: var(--radius-pill); background: rgba(0,0,0,.22); box-shadow: inset 0 0 0 1px var(--color-border); margin-top: var(--space-2); overflow: hidden; }
+  
+  #view-the-score ul.bars .fill { position: absolute; inset: 0 auto 0 0; border-radius: var(--radius-pill); background: var(--color-accent); }
+  
+  #view-the-score ul.bars .fill.is-good { background: var(--color-positive); }
+  
+  #view-the-score ul.bars .fill.is-bad { background: var(--color-critical); }
+  
+  #view-the-score ul.bars .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
+  
+  #view-the-score ul.bars li.is-absent .track { opacity: .35; }
+  
+  #view-the-score ul.bars .parts { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
 
-  .stack-bar { display: flex; height: 10px; border-radius: var(--radius-pill); overflow: hidden; background: rgba(30,58,138,.4); margin-top: var(--space-3); }
-  .stack-bar > i { display: block; height: 100%; }
-  .stack-key { display: flex; gap: var(--space-4); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-subtle); }
-  .stack-key span::before { content: '●'; margin-right: 6px; }
+  
+  #view-the-score ol.headroom { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); counter-reset: h; }
+  
+  #view-the-score ol.headroom li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-score ol.headroom li:first-child { border-top: none; }
+  
+  #view-the-score ol.headroom .pts { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-score ol.headroom .meta { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  
+  #view-the-score table.grid { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-the-score table.grid th { text-align: right; font-weight: 500; font-size: var(--text-xs); color: var(--color-text-faint); padding: 0 0 var(--space-2); }
+  
+  #view-the-score table.grid th:first-child { text-align: left; }
+  
+  #view-the-score table.grid td { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-score table.grid td:first-child { text-align: left; white-space: normal; }
+  
+  #view-the-score table.grid td + td,
+  #view-the-score table.grid th + th { padding-left: var(--space-3); }
+  
+  #view-the-score table.grid tr.is-here td { background: var(--color-surface-active); }
+  
+  #view-the-score .table-scroll { overflow-x: auto; }
+
+  
+  #view-the-score .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-the-score .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  
+  #view-the-score .empty { color: var(--color-text-faint); font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-the-score .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-the-score .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* ---- The nine, from rooms/financial-snapshot.html (D-231) ------------- */
+  
+  #view-the-nine .room-back:hover { text-decoration: underline; }
+  
+  #view-the-nine .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; font-size: var(--text-base); }
+
+  
+  #view-the-nine .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  @media (max-width: 380px) { 
+  #view-the-nine .grid-2 { grid-template-columns: 1fr; } }
+
+  
+  #view-the-nine .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+  
+  #view-the-nine .out-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  
+  #view-the-nine .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-nine .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-the-nine .out-detail dt { color: var(--color-text-faint); }
+  
+  #view-the-nine .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  
+  #view-the-nine .stack-bar { display: flex; height: 10px; border-radius: var(--radius-pill); overflow: hidden; background: rgba(30,58,138,.4); margin-top: var(--space-3); }
+  
+  #view-the-nine .stack-bar > i { display: block; height: 100%; }
+  
+  #view-the-nine .stack-key { display: flex; gap: var(--space-4); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-subtle); }
+  
+  #view-the-nine .stack-key span::before { content: '●'; margin-right: 6px; }
 
   /* DRAFTT (D-173): seven rows, no chart. letter · label · share · band · verdict · owner */
-  .draftt { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  .draftt .dr { display: grid; grid-template-columns: 2em minmax(0, 1fr) auto auto auto; gap: var(--space-1) var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
-  .draftt .dr:first-child { border-top: none; }
-  .draftt .dr-letter { font-family: var(--font-display); font-weight: 700; color: var(--color-accent-hover); }
-  .draftt .dr-label { font-size: var(--text-sm); }
-  .draftt .dr-label small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
-  .draftt .dr-share { font-family: var(--font-display); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
-  .draftt .dr-share.is-incomplete { font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); max-width: 12em; }
-  .draftt .dr-band { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
-  .draftt .dr-verdict { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; white-space: nowrap; }
-  .draftt .is-in .dr-verdict { color: var(--color-positive); }
-  .draftt .is-over .dr-verdict { color: var(--color-critical-text); }
-  .draftt .is-under .dr-verdict { color: var(--color-caution); }
-  .draftt .dr-foot { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; font-size: var(--text-xs); color: var(--color-text-faint); }
-  .draftt .dr-foot a { color: var(--color-accent-hover); text-decoration: none; }
-  .draftt .dr-foot .slaf-lens-btn { min-height: 28px; padding: 0 8px; }
+  
+  #view-the-nine .draftt { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-nine .draftt .dr { display: grid; grid-template-columns: 2em minmax(0, 1fr) auto auto auto; gap: var(--space-1) var(--space-3); align-items: baseline; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-nine .draftt .dr:first-child { border-top: none; }
+  
+  #view-the-nine .draftt .dr-letter { font-family: var(--font-display); font-weight: 700; color: var(--color-accent-hover); }
+  
+  #view-the-nine .draftt .dr-label { font-size: var(--text-sm); }
+  
+  #view-the-nine .draftt .dr-label small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  
+  #view-the-nine .draftt .dr-share { font-family: var(--font-display); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
+  
+  #view-the-nine .draftt .dr-share.is-incomplete { font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); max-width: 12em; }
+  
+  #view-the-nine .draftt .dr-band { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
+  
+  #view-the-nine .draftt .dr-verdict { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; white-space: nowrap; }
+  
+  #view-the-nine .draftt .is-in .dr-verdict { color: var(--color-positive); }
+  
+  #view-the-nine .draftt .is-over .dr-verdict { color: var(--color-critical-text); }
+  
+  #view-the-nine .draftt .is-under .dr-verdict { color: var(--color-caution); }
+  
+  #view-the-nine .draftt .dr-foot { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-the-nine .draftt .dr-foot a { color: var(--color-accent-hover); text-decoration: none; }
+  
+  #view-the-nine .draftt .dr-foot .slaf-lens-btn { min-height: 28px; padding: 0 8px; }
   @media (max-width: 520px) {
-    .draftt .dr { grid-template-columns: 2em minmax(0, 1fr) auto; }
-    .draftt .dr-band, .draftt .dr-verdict { grid-column: 2 / -1; }
+    
+  #view-the-nine .draftt .dr { grid-template-columns: 2em minmax(0, 1fr) auto; }
+    
+  #view-the-nine .draftt .dr-band,
+  #view-the-nine .draftt .dr-verdict { grid-column: 2 / -1; }
   }
-  .ladder { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  .ladder li { display: flex; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
-  .ladder li:first-child { border-top: none; }
-  .ladder .mark { flex-shrink: 0; width: 1.4em; text-align: center; font-weight: 600; }
-  .ladder .met .mark { color: var(--color-positive); }
-  .ladder .unmet .mark { color: var(--color-caution); }
-  .ladder .unknown .mark { color: var(--color-text-faint); }
-  .ladder .unmet { color: var(--color-text); }
-  .ladder .met, .ladder .unknown { color: var(--color-text-subtle); }
-  .ladder .why { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 2px; }
+  
+  #view-the-nine .ladder { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-nine .ladder li { display: flex; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  
+  #view-the-nine .ladder li:first-child { border-top: none; }
+  
+  #view-the-nine .ladder .mark { flex-shrink: 0; width: 1.4em; text-align: center; font-weight: 600; }
+  
+  #view-the-nine .ladder .met .mark { color: var(--color-positive); }
+  
+  #view-the-nine .ladder .unmet .mark { color: var(--color-caution); }
+  
+  #view-the-nine .ladder .unknown .mark { color: var(--color-text-faint); }
+  
+  #view-the-nine .ladder .unmet { color: var(--color-text); }
+  
+  #view-the-nine .ladder .met,
+  #view-the-nine .ladder .unknown { color: var(--color-text-subtle); }
+  
+  #view-the-nine .ladder .why { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 2px; }
 
-  .variant-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
-  .variant-row:first-of-type { border-top: none; }
-  .variant-label { font-size: var(--text-sm); color: var(--color-text-muted); }
-  .variant-value { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
-  .variant-value.is-incomplete { color: var(--color-text-faint); font-size: var(--text-md); }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-the-nine .variant-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-nine .variant-row:first-of-type { border-top: none; }
+  
+  #view-the-nine .variant-label { font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-nine .variant-value { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+  
+  #view-the-nine .variant-value.is-incomplete { color: var(--color-text-faint); font-size: var(--text-md); }
+  
+  #view-the-nine .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
   /* Deep-linked sections shouldn't land flush against the viewport edge. */
-  section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-nine section[id] { scroll-margin-top: var(--space-4); }
 
-  .handoff-cold { display: block; text-decoration: none; color: inherit; border: 1px solid var(--color-border-active); background: var(--color-surface-active); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4); }
-  .handoff-cold strong { display: block; font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-2) 0 var(--space-1); }
-  .handoff-cold span:last-child { font-size: var(--text-sm); color: var(--color-text-muted); }
-  .handoff-cold:hover { border-color: var(--color-focus-ring); }
+  
+  #view-the-nine .handoff-cold { display: block; text-decoration: none; color: inherit; border: 1px solid var(--color-border-active); background: var(--color-surface-active); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-4); }
+  
+  #view-the-nine .handoff-cold strong { display: block; font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-2) 0 var(--space-1); }
+  
+  #view-the-nine .handoff-cold span:last-child { font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-nine .handoff-cold:hover { border-color: var(--color-focus-ring); }
 
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
-  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
-  @media (max-width: 380px) { .three { grid-template-columns: 1fr; } }
-  .three .cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .three .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); min-height: 2.6em; }
-  .three .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; }
-  .three .big.is-incomplete { color: var(--color-text-faint); }
-  .three .sub { font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-the-nine .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  
+  #view-the-nine .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+  @media (max-width: 380px) { 
+  #view-the-nine .three { grid-template-columns: 1fr; } }
+  
+  #view-the-nine .three .cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  
+  #view-the-nine .three .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); min-height: 2.6em; }
+  
+  #view-the-nine .three .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; }
+  
+  #view-the-nine .three .big.is-incomplete { color: var(--color-text-faint); }
+  
+  #view-the-nine .three .sub { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  /* ---- Savings rate, from rooms/savings-rate.html (D-231) --------------- */
+  
+  #view-savings-rate .room-back:hover { text-decoration: underline; }
+  
+  #view-savings-rate section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-savings-rate .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; margin-top: var(--space-3); }
+  @media (max-width: 400px) { 
+  #view-savings-rate .pair { grid-template-columns: 1fr; } }
+  
+  #view-savings-rate .pair > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
+  
+  #view-savings-rate .pair > div.lead { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  
+  #view-savings-rate .pair .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  
+  #view-savings-rate .pair .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  
+  #view-savings-rate .pair .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); }
+  
+  #view-savings-rate .pair .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+
+  
+  #view-savings-rate .stack { display: flex; height: 26px; border-radius: var(--radius-sm); overflow: hidden; margin-top: var(--space-3); background: rgba(30,58,138,.4); }
+  
+  #view-savings-rate .stack > span { height: 100%; }
+  
+  #view-savings-rate .seg-tax { background: var(--color-text-faint); }
+  
+  #view-savings-rate .seg-spend { background: rgba(46,111,232,.45); }
+  
+  #view-savings-rate .seg-save { background: var(--color-accent); }
+  
+  #view-savings-rate .key { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-savings-rate .key span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: baseline; }
+  
+  #view-savings-rate .key .k-tax::before { background: var(--color-text-faint); }
+  
+  #view-savings-rate .key .k-spend::before { background: rgba(46,111,232,.45); }
+  
+  #view-savings-rate .key .k-save::before { background: var(--color-accent); }
+
+  
+  #view-savings-rate .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-savings-rate .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-savings-rate .out-detail dt { color: var(--color-text-faint); }
+  
+  #view-savings-rate .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  
+  #view-savings-rate table.whatif { width: 100%; border-collapse: collapse; margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-savings-rate table.whatif th { text-align: left; font-weight: 600; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-faint); padding-bottom: var(--space-2); }
+  
+  #view-savings-rate table.whatif th:not(:first-child),
+  #view-savings-rate table.whatif td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+  
+  #view-savings-rate table.whatif td { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-savings-rate table.whatif tr.now td { color: var(--color-text-muted); }
+  
+  #view-savings-rate table.whatif .gain { color: var(--color-accent-hover); }
+
+  
+  #view-savings-rate .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-savings-rate .flag--warn { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-savings-rate .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  
+  #view-savings-rate .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-savings-rate .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* ---- Every ratio, from rooms/ratios.html (D-231) ---------------------- */
+  
+  #view-every-ratio .room-back:hover { text-decoration: underline; }
+  
+  #view-every-ratio section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-every-ratio .tally { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
+  
+  #view-every-ratio .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  
+  #view-every-ratio ul.ratios { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-every-ratio ul.ratios li { padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); }
+  
+  #view-every-ratio ul.ratios li:last-child { border-bottom: none; }
+  
+  #view-every-ratio .r-head { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); align-items: baseline; }
+  
+  #view-every-ratio .r-name { font-size: var(--text-sm); font-weight: 600; }
+  
+  #view-every-ratio .r-val { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-every-ratio .r-val.is-good { color: var(--color-positive); }
+  
+  #view-every-ratio .r-val.is-watch { color: var(--color-caution); }
+  
+  #view-every-ratio .r-val.is-out { color: var(--color-critical); }
+  
+  #view-every-ratio .r-val.is-none { color: var(--color-text); }
+  
+  #view-every-ratio .r-val.is-blank { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  
+  #view-every-ratio .r-formula { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 2px; }
+  
+  #view-every-ratio .r-note { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+  
+  #view-every-ratio .r-band { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+
+  /* The bar labels are ratio names, which are long; let them wrap rather
+     than truncate on a phone. */
+  
+  #view-every-ratio .slaf-bars .row { grid-template-columns: minmax(96px, 38%) 1fr auto; }
+  
+  #view-every-ratio .slaf-bars .lbl { white-space: normal; line-height: 1.2; }
+
+  
+  #view-every-ratio .zonebar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: var(--space-3); border-radius: var(--radius-pill); overflow: hidden; }
+  
+  #view-every-ratio .zonebar span { height: 10px; }
+  
+  #view-every-ratio .z-good { background: var(--color-positive); }
+  
+  #view-every-ratio .z-watch { background: var(--color-caution); }
+  
+  #view-every-ratio .z-out { background: var(--color-critical); }
+  
+  #view-every-ratio .zonekey { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-every-ratio .zonekey span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+  
+  #view-every-ratio .zonekey .k-good::before { background: var(--color-positive); }
+  
+  #view-every-ratio .zonekey .k-watch::before { background: var(--color-caution); }
+  
+  #view-every-ratio .zonekey .k-out::before { background: var(--color-critical); }
+
+  
+  #view-every-ratio .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-every-ratio .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-every-ratio .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* ---- Quick math, from rooms/quick-math.html (D-231) ------------------- */
+  
+  #view-quick-math .room-back:hover { text-decoration: underline; }
+  
+  #view-quick-math section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-quick-math .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  
+  #view-quick-math .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: stretch; }
+  @media (max-width: 380px) { 
+  #view-quick-math .grid-2,
+  #view-quick-math .grid-3 { grid-template-columns: 1fr; } }
+
+  
+  #view-quick-math .answer { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-3); }
+  
+  #view-quick-math .answer.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  
+  #view-quick-math .answer.good { color: var(--color-positive); }
+  
+  #view-quick-math .answer.bad { color: var(--color-caution); }
+
+  
+  #view-quick-math .out-detail { margin-top: var(--space-2); font-size: var(--text-sm); }
+  
+  #view-quick-math .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-quick-math .out-detail dt { color: var(--color-text-faint); }
+  
+  #view-quick-math .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  
+  #view-quick-math ul.legs { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-quick-math ul.legs li { display: flex; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  
+  #view-quick-math ul.legs li:first-child { border-top: none; }
+  
+  #view-quick-math ul.legs .mark { width: 1.4em; flex-shrink: 0; text-align: center; font-weight: 600; }
+  
+  #view-quick-math ul.legs .pass .mark { color: var(--color-positive); }
+  
+  #view-quick-math ul.legs .fail .mark { color: var(--color-caution); }
+  
+  #view-quick-math ul.legs .why { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 2px; }
+
+  
+  #view-quick-math .two-ends { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-quick-math .two-ends > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  
+  #view-quick-math .two-ends .lbl { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); display: block; }
+  
+  #view-quick-math .two-ends .val { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; display: block; margin-top: 2px; }
+  
+  #view-quick-math .two-ends .sub { font-size: var(--text-xs); color: var(--color-text-faint); display: block; margin-top: 2px; }
+
+  
+  #view-quick-math .rule-statement { font-size: var(--text-sm); color: var(--color-text-muted); font-style: italic; margin: var(--space-2) 0 0; }
+  
+  #view-quick-math .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* ---- Where you rank, from rooms/rank-guess.html (D-231) --------------- */
+  
+  #view-where-you-rank .slider { width: 100%; margin: var(--space-3) 0; }
+  
+  #view-where-you-rank .guess { font-family: var(--font-display); font-size: var(--text-xl); margin: 0; }
+  
+  #view-where-you-rank .reveal { margin-top: var(--space-4); }
+  
+  #view-where-you-rank .reveal .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  
+  #view-where-you-rank .reveal .box { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md, 10px); }
+  
+  #view-where-you-rank .reveal .box b { display: block; font-family: var(--font-display); font-size: var(--text-lg); }
+  
+  #view-where-you-rank .reveal .box small { color: var(--color-text-faint); }
+  
+  #view-where-you-rank .line { margin-top: var(--space-3); font-size: var(--text-md); }
+  
+  #view-where-you-rank .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>Financial Snapshot</h1>
-  <p class="room-lede">Ten numbers in. Nine out — including the one that says which step you're actually standing on.</p>
+  <h1>The Scorecard</h1>
+  <p class="room-lede">
+    Everything you have entered, read back six ways. Nothing here asks you
+    for a new figure; every reading is the same numbers under a different
+    measuring stick.
+  </p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Six readings of the same numbers">
+    <a href="#the-score"      data-view="view-the-score">The score</a>
+    <a href="#the-nine"       data-view="view-the-nine">The nine numbers</a>
+    <a href="#savings-rate"   data-view="view-savings-rate">Savings rate</a>
+    <a href="#every-ratio"    data-view="view-every-ratio">Every ratio</a>
+    <a href="#quick-math"     data-view="view-quick-math">Quick math</a>
+    <a href="#where-you-rank" data-view="view-where-you-rank">Where you rank</a>
+  </nav>
 
   <div class="notice" id="load-notice" hidden></div>
 
+  <!-- ================= THE SCORE (was rooms/health.html) ================= -->
+  <section id="view-the-score">
+  <p class="slaf-lede">One number for the whole picture, weighted for the decade you’re in — and every part of how it was arrived at.</p>
+  <section class="slaf-card" id="out-score">
+    <span class="slaf-eyebrow">Everything, at once</span>
+    <div class="big" id="score-figure">—</div>
+    <div class="band" id="score-band" hidden></div>
+    <p class="slaf-reason" id="score-reason"></p>
+    <div class="flag" id="score-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="out-pillars">
+    <span class="slaf-eyebrow">What it’s made of</span>
+    <h2 style="margin:var(--space-2) 0 0">Six pillars, weighted for your age</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Each bar is how close that pillar is to where convention says it
+      should be. The percentage beside it is how much of the score it
+      carries at your age — and a pillar with nothing to measure is left
+      out entirely rather than counted as a zero.
+    </p>
+    <ul class="bars" id="pillars"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-headroom">
+    <span class="slaf-eyebrow">Where the points are</span>
+    <h2 style="margin:var(--space-2) 0 0">What would move it most</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Points still on the table, pillar by pillar: how much the score would
+      rise if that pillar were all the way to its benchmark. It is weight
+      times distance, so a heavily weighted pillar that is nearly there can
+      be worth less than a light one that is nowhere near.
+    </p>
+    <ol class="headroom" id="headroom"></ol>
+  </section>
+
+  <section class="slaf-card" id="out-cohorts">
+    <span class="slaf-eyebrow">How much the weighting matters</span>
+    <h2 style="margin:var(--space-2) 0 0">The same numbers, scored at every age</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Nothing about your finances changes down this table — only the
+      weights do. The spread is the size of the judgement built into the
+      score, shown rather than hidden.
+    </p>
+    <div class="table-scroll"><table class="grid" id="cohorts"><tbody></tbody></table></div>
+    <p class="why" id="cohorts-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-missing">
+    <span class="slaf-eyebrow">What isn’t in it</span>
+    <h2 style="margin:var(--space-2) 0 0">The parts with nothing to measure</h2>
+    <div id="missing-body"></div>
+  </section>
+
+  <section class="slaf-card" id="h-reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="h-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ======== THE NINE NUMBERS (was rooms/financial-snapshot.html) ======= -->
+  <section id="view-the-nine" hidden>
+  <p class="slaf-lede">The payoff: nine numbers read off everything you’ve entered. Net worth, savings rate, runway, FIRE number, and which rung you’re on.</p>
   <a class="handoff-cold" id="cold-start" href="start.html" hidden>
     <span class="slaf-eyebrow">Nothing entered yet</span>
     <strong>Start Here — a few short questions</strong>
@@ -267,13 +741,265 @@
     <button type="button" class="slaf-btn slaf-btn--primary" id="btn-snapshot">Save a snapshot</button>
     <span class="slaf-hint" id="snapshot-note" style="align-self:center"></span>
   </div>
+  </section>
+
+  <!-- ============== SAVINGS RATE (was rooms/savings-rate.html) =========== -->
+  <section id="view-savings-rate" hidden>
+  <p class="slaf-lede">The share of your pay that does not get spent, two ways — and what a different one would do.</p>
+  <section class="slaf-card" id="out-rate">
+    <span class="slaf-eyebrow">Your rate</span>
+    <h2 style="margin:var(--space-2) 0 0">Two honest answers</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Whether employer match dollars count as <em>you</em> saving is a real
+      disagreement, so SPARKS computes it both ways and never quietly picks
+      one. The left figure is the conservative read and is what the rest of
+      the app uses when it has to choose.
+    </p>
+    <div class="pair">
+      <div class="lead">
+        <span class="cap">Your money only</span>
+        <span class="big" id="r-ex">—</span>
+        <span class="sub" id="r-ex-sub"></span>
+      </div>
+      <div>
+        <span class="cap">Including the match</span>
+        <span class="big" id="r-in">—</span>
+        <span class="sub" id="r-in-sub"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="breakdown">
+    <span class="slaf-eyebrow">Where it comes from</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">A year of gross pay</h2>
+    <div class="stack" id="b-stack"></div>
+    <div class="key">
+      <span class="k-tax">Tax</span><span class="k-spend">Spending</span><span class="k-save">Saved</span>
+    </div>
+    <div id="b-chart"></div>
+    <div class="out-detail" id="b-detail"></div>
+    <p class="why" id="b-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-benchmark">
+    <span class="slaf-eyebrow">Against the benchmark</span>
+    <h2 style="margin:var(--space-2) 0 0">How it reads</h2>
+    <div class="flag" id="bench-note" hidden></div>
+    <p class="why" id="bench-why"></p>
+  </section>
+
+  <section class="slaf-card" id="what-if">
+    <span class="slaf-eyebrow">What one more point is worth</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Spend less, and it counts twice</h2>
+    <p class="slaf-hint" style="margin:0">
+      Cutting spending raises what you put away <em>and</em> lowers the
+      number you are aiming at, because the target is built from what a year
+      of your life costs. That is why a point of savings rate moves the date
+      so much more than a point of return does. Nothing here is saved — it
+      is a look, not a change.
+    </p>
+    <div id="wi-body"></div>
+    <div id="wi-chart"></div>
+    <p class="why" id="wi-why"></p>
+    <div id="wi-bands"></div>
+    <div id="wi-lens"></div>
+  </section>
+
+  <section class="slaf-card" id="sr-reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="sr-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ================ EVERY RATIO (was rooms/ratios.html) ================ -->
+  <section id="view-every-ratio" hidden>
+  <p class="slaf-lede">Every ratio the app can work out, by zone, with what each one blocks until it moves.</p>
+  <section class="slaf-card" id="summary">
+    <span class="slaf-eyebrow">How many are answerable</span>
+    <div class="tally" id="tally">—</div>
+    <p class="why" id="tally-why"></p>
+    <div class="zonebar" id="zonebar" hidden></div>
+    <div class="zonekey" id="zonekey" hidden>
+      <span class="k-good">Comfortable</span><span class="k-watch">Worth a look</span><span class="k-out">Outside the usual range</span>
+    </div>
+    <div class="flag">
+      <strong>A band is a prompt, not a verdict.</strong> These thresholds are lending
+      conventions and rules of thumb — the 28/36 mortgage rules, the 3-6 month
+      emergency fund. Several of them are wrong for particular lives by design, and
+      a ratio with no convention worth quoting is shown with no colour at all
+      rather than being given a made-up one.
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out-lending">
+    <span class="slaf-eyebrow">What a lender looks at</span>
+    <h2 style="margin:var(--space-2) 0 0">Ratios with a threshold behind them</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      These four have real numbers attached because underwriters use them. That
+      makes them the most quotable and the most over-read.
+    </p>
+    <div id="bars-lending"></div>
+    <ul class="ratios" id="list-lending"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-safety">
+    <span class="slaf-eyebrow">How much cushion</span>
+    <h2 style="margin:var(--space-2) 0 0">Time, not money</h2>
+    <div id="bars-safety"></div>
+    <ul class="ratios" id="list-safety"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-wealth">
+    <span class="slaf-eyebrow">What you own</span>
+    <h2 style="margin:var(--space-2) 0 0">Shape of the balance sheet</h2>
+    <div id="bars-wealth"></div>
+    <ul class="ratios" id="list-wealth"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-blocked">
+    <span class="slaf-eyebrow">What this cannot answer</span>
+    <h2 style="margin:var(--space-2) 0 0">Two ratios, deliberately blank</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Both are computable in principle and neither is computed here, because
+      doing it would mean standing in a number nobody entered. A believable
+      wrong answer is worse than a missing one.
+    </p>
+    <ul class="ratios" id="list-blocked"></ul>
+  </section>
+
+  <section class="slaf-card" id="ra-reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Nothing is typed on this page. Every figure comes from a room that owns it.
+    </p>
+    <div id="ra-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ============== QUICK MATH (was rooms/quick-math.html) =============== -->
+  <section id="view-quick-math" hidden>
+  <p class="slaf-lede">Five sums a calculator does badly, done properly — each one small enough to answer in a minute.</p>
+  <section class="slaf-card" id="hysa">
+    <span class="slaf-eyebrow">Switching savings accounts</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Is it worth moving?</h2>
+    <div id="seed-host" hidden></div>
+    <div class="grid-3">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Balance</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="h-balance" placeholder="e.g. 9500" aria-label="Balance"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Rate now</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="h-old" placeholder="e.g. 0.5" aria-label="Current rate"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">New rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="h-new" placeholder="e.g. 4.5" aria-label="New rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <div class="grid-2" style="margin-top:var(--space-2)">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Days in transit</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="h-days" placeholder="e.g. 5" aria-label="Days in transit"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Any fee to move</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="h-fee" placeholder="e.g. 0" aria-label="Fee to move"/></span></label>
+    </div>
+    <div class="answer" id="hysa-answer">—</div>
+    <div class="out-detail" id="hysa-detail"></div>
+  </section>
+
+  <section class="slaf-card" id="peruse">
+    <span class="slaf-eyebrow">Cost per use</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What does it really cost?</h2>
+    <div class="grid-3">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">It costs</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="u-price" placeholder="e.g. 1200" aria-label="Price"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Times used</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="u-uses" placeholder="e.g. 200" aria-label="Number of uses"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Over</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="u-months" placeholder="e.g. 24" aria-label="Months owned"/><span class="slaf-affix">mo</span></span></label>
+    </div>
+    <div class="answer" id="use-answer">—</div>
+    <div class="out-detail" id="use-detail"></div>
+  </section>
+
+  <section class="slaf-card" id="car">
+    <span class="slaf-eyebrow">The 20/3/8 rule</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Can you afford the car?</h2>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Car price</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-price" placeholder="e.g. 22000" aria-label="Car price"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Money down</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-down" placeholder="e.g. 4400" aria-label="Down payment"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Loan length</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="c-term" placeholder="36" aria-label="Loan term in months"/><span class="slaf-affix">mo</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Interest rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="c-rate" placeholder="e.g. 6" aria-label="Loan interest rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <div class="answer" id="car-answer">—</div>
+    <ul class="legs" id="car-legs"></ul>
+    <div class="out-detail" id="car-detail"></div>
+    <p class="rule-statement">20% down, paid off in 3 years, payment under 8% of gross pay.</p>
+  </section>
+
+  <section class="slaf-card" id="five">
+    <span class="slaf-eyebrow">The rule of five</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Could you buy five?</h2>
+    <label class="slaf-field"><span class="slaf-label">The thing costs</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-price" placeholder="e.g. 2000" aria-label="Price"/></span></label>
+    <div class="answer" id="five-answer">—</div>
+    <div class="out-detail" id="five-detail"></div>
+    <p class="rule-statement" id="five-rule"></p>
+  </section>
+
+  <section class="slaf-card" id="habit">
+    <span class="slaf-eyebrow">The $30k / $90k rule</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What does a habit really cost?</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Any recurring spend gets counted twice: your retirement pot has to be
+      bigger to fund it forever, <em>and</em> that money never got to compound.
+      Same dollars, both ends.
+    </p>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">It costs, a month</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="b-amount" placeholder="e.g. 100" aria-label="Monthly amount"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Over how long</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="b-years" placeholder="to age 65" aria-label="Years"/><span class="slaf-affix">yrs</span></span></label>
+    </div>
+    <div class="two-ends" id="habit-ends" hidden>
+      <div><span class="lbl">Bigger pot needed</span><span class="val" id="habit-fire">—</span>
+        <span class="sub">to fund it forever</span></div>
+      <div><span class="lbl">Or invested instead</span><span class="val" id="habit-invested">—</span>
+        <span class="sub" id="habit-invested-sub"></span></div>
+    </div>
+    <div class="answer" id="habit-answer">—</div>
+    <div class="out-detail" id="habit-detail"></div>
+    <div id="habit-bands"></div>
+    <div id="habit-lens"></div>
+  </section>
+
+  <section class="slaf-card" id="qm-reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="qm-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ========== WHERE YOU RANK (was rooms/rank-guess.html) =============== -->
+  <section id="view-where-you-rank" hidden>
+  <p class="slaf-lede">Guess first, then look. The gap between the two is the interesting part.</p>
+  <section class="slaf-card" id="guess">
+    <span class="slaf-eyebrow">Your guess</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">For people your age, where does your net worth sit? 0 is the very bottom, 100 the very top.</p>
+    <input type="range" min="0" max="100" step="5" value="50" id="in-guess" class="slider" aria-label="Your guess, 0 to 100"/>
+    <p class="guess" id="g-word"></p>
+    <button type="button" class="slaf-btn slaf-btn--primary" id="btn-reveal">Show me the survey</button>
+  </section>
+  <section class="slaf-card reveal" id="reveal" hidden style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Guess beside survey</span>
+    <div class="row"><div class="box"><small>You guessed</small><b id="r-guess"></b></div><div class="box"><small>The survey says</small><b id="r-real"></b></div></div>
+    <p class="line" id="r-line"></p>
+    <p class="slaf-hint" id="r-src" style="margin:var(--space-2) 0 0"></p>
+  </section>
+  </section>
 
   <p class="disclaimer">
-    Educational tool, not financial advice. Tax rates, percentile bands and
-    contribution limits are approximations — see <code>data/</code> for what
-    each one is actually worth. Your numbers stay in this browser.
+    Educational tool, not financial advice. Every figure here is read from
+    what you have entered elsewhere; nothing on this page is stored and
+    nothing is sent anywhere.
   </p>
-  <p class="disclaimer" id="provenance"></p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -311,6 +1037,228 @@
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../engines/health.js"></script>
+<script src="../shared/explain.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/seed.js"></script>
+<script src="../engines/rankguess.js"></script>
+<script>
+/* ---- Six readings, one measuring stick (D-231) ----------------------------
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands: #out-score came from The Score, #out-net-worth and
+   #draftt from the Snapshot, #out-rate from Savings Rate, #out-wealth from
+   Every Ratio, #habit from Quick Math, #guess from the rank question.
+   Switching hides and shows and rebuilds nothing. The simplest reading is
+   first and is the default: one number, not nine. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-the-nine',       match: /^#(the-nine|draftt|out-net-worth|out-savings-rate|out-emergency-fund|out-dti|out-fire|out-foo|out-retirement|out-percentile|out-benchmarks|out-flags|out-fire-progress|lenses|provenance|inputs|three-|cold-start|nw-|pct-|fire-bar|sr-|ef-swan|snapshot-note|ladder-list|flags-body|benchmarks-more|fp-lens)/ },
+    { id: 'view-savings-rate',   match: /^#(savings-rate|out-rate|out-benchmark|breakdown|what-if|b-|r-in|r-ex|bench-|wi-)/ },
+    { id: 'view-every-ratio',    match: /^#(every-ratio|out-wealth|out-safety|out-lending|out-blocked|summary|tally|zone|bars-|list-|ra-)/ },
+    { id: 'view-quick-math',     match: /^#(quick-math|habit|car|five|hysa|peruse|use-|u-|c-|f-|h-|qm-|seed-host)/ },
+    { id: 'view-where-you-rank', match: /^#(where-you-rank|guess|reveal|in-guess|btn-reveal|g-word)/ },
+    { id: 'view-the-score',      match: /.*/ }
+  ];
+  function route() {
+    var h = location.hash || '';
+    var on = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) { var d = t.closest('details'); if (d) d.open = true; t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Health = SLAF.Health;
+
+  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-231) */
+  var TABLES = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function pct(x) { return Math.round(x * 100) + '%'; }
+
+  function toneOf(score) {
+    return score >= 0.85 ? ' is-good' : score < 0.5 ? ' is-bad' : '';
+  }
+
+  function renderScore(s) {
+    var fig = el('score-figure'), band = el('score-band'), reason = el('score-reason');
+    if (!Money.isOk(s)) {
+      fig.textContent = Money.EM_DASH;
+      fig.classList.add('slaf-figure--incomplete');
+      band.hidden = true;
+      reason.innerHTML = esc(s.reason)
+        + (s.missing.indexOf('dob') !== -1
+          ? ' <a href="' + Ownership.linkTo('start', 'q-dob') + '">Add your date of birth →</a>'
+          : '');
+      el('score-note').hidden = true;
+      return;
+    }
+    fig.classList.remove('slaf-figure--incomplete');
+    fig.innerHTML = s.value + '<span class="of"> / 100</span>';
+    band.hidden = false;
+    band.className = 'band is-' + s.band.id;
+    band.textContent = s.band.label;
+    reason.textContent = s.band.blurb + ' Weighted for ' + s.cohort.label.toLowerCase()
+      + (Money.isEntered(s.age) ? ' — you’re ' + s.age + '.' : '.')
+      + ' Built from ' + s.ratiosCounted + ' ratios across '
+      + s.availablePillars.length + ' of ' + s.pillars.length + ' pillars.';
+
+    var note = el('score-note');
+    note.hidden = false;
+    note.innerHTML = '<strong>' + esc(s.cohort.label) + ':</strong> ' + esc(s.cohort.note);
+  }
+
+  function renderPillars(s) {
+    if (!Money.isOk(s)) { el('pillars').innerHTML = ''; return; }
+    el('pillars').innerHTML = s.pillars.map(function (p) {
+      var width = p.available ? Math.max(2, Math.round(p.score * 100)) : 0;
+      return '<li class="' + (p.available ? '' : 'is-absent') + '">'
+        + '<div class="top"><span class="nm">' + esc(p.label) + '</span>'
+        + '<span class="wt">' + (p.available ? Math.round(p.score * 100) + ' / 100 · ' : '')
+        + pct(p.weight) + ' of the score</span></div>'
+        + '<div class="track"><div class="fill' + (p.available ? toneOf(p.score) : '')
+        + '" style="width:' + width + '%"></div></div>'
+        + '<div class="sub">' + esc(p.blurb) + '</div>'
+        + (p.available
+            ? '<div class="parts">' + p.counted.map(function (c) {
+                return esc(c.label) + ' ' + Math.round(c.score * 100);
+              }).join(' · ') + '</div>'
+            : '<div class="parts">Nothing here can be worked out yet, so it is left out of '
+              + 'the score rather than counted as a zero.</div>')
+        + '</li>';
+    }).join('');
+  }
+
+  function renderHeadroom(s) {
+    if (!Money.isOk(s)) { el('headroom').innerHTML = ''; return; }
+    var rows = s.headroom.filter(function (r) { return r.pointsAvailable >= 0.05; });
+    if (!rows.length) {
+      el('headroom').innerHTML = '<li><span>Every pillar that can be measured is at or past '
+        + 'its benchmark.</span><span class="pts">—</span></li>';
+      return;
+    }
+    el('headroom').innerHTML = rows.map(function (r) {
+      return '<li><span>' + esc(r.label) + '</span>'
+        + '<span class="pts">+' + (Math.round(r.pointsAvailable * 10) / 10) + '</span>'
+        + '<span class="meta">' + (r.weakest
+            ? 'Furthest from its mark: ' + esc(r.weakest.label)
+              + ' at ' + Math.round(r.weakest.score * 100) + ' of 100.'
+            : '') + '</span></li>';
+    }).join('');
+  }
+
+  function renderCohorts(s) {
+    var across = Health.acrossCohorts(Spine.getProfile(), TABLES);
+    var body = el('cohorts').querySelector('tbody');
+    if (!Money.isOk(across)) { body.innerHTML = ''; el('cohorts-why').textContent = ''; return; }
+
+    var scores = [];
+    body.innerHTML = '<tr><th>Scored as</th><th>Score</th><th>Heaviest pillar</th></tr>'
+      + across.value.map(function (row) {
+        var r = row.result;
+        var ok = Money.isOk(r);
+        if (ok) scores.push(r.value);
+        var heaviest = Object.keys(row.cohort.weights).reduce(function (best, id) {
+          return (best === null || row.cohort.weights[id] > row.cohort.weights[best]) ? id : best;
+        }, null);
+        var label = heaviest;
+        (TABLES.healthScore.pillars || []).forEach(function (p) {
+          if (p.id === heaviest) label = p.label;
+        });
+        return '<tr class="' + (row.cohort.id === across.ownCohortId ? 'is-here' : '') + '">'
+          + '<td>' + esc(row.cohort.label) + '</td>'
+          + '<td>' + (ok ? r.value : Money.EM_DASH) + '</td>'
+          + '<td>' + esc(label) + ' ' + pct(row.cohort.weights[heaviest]) + '</td></tr>';
+      }).join('');
+
+    if (scores.length > 1) {
+      var lo = Math.min.apply(null, scores), hi = Math.max.apply(null, scores);
+      el('cohorts-why').textContent = 'The same finances score between ' + lo + ' and ' + hi
+        + ' depending only on which decade’s weights are applied — a spread of ' + (hi - lo)
+        + ' points. That gap is the weighting, not you. It is the reason this page shows the '
+        + 'pillars above rather than only the number.';
+    } else {
+      el('cohorts-why').textContent = '';
+    }
+  }
+
+  function renderMissing(s) {
+    var body = el('missing-body');
+    if (!Money.isOk(s)) { body.innerHTML = ''; return; }
+    if (!s.missingPillars.length) {
+      body.innerHTML = '<p class="why">Every pillar had something to measure. The score covers '
+        + pct(s.coverage) + ' of its own weight.</p>';
+      return;
+    }
+    body.innerHTML = '<p class="why">These had nothing that could be worked out, so their '
+      + 'weight was spread across the rest. The score covers ' + pct(s.coverage)
+      + ' of its own weight; it needs at least ' + pct(s.minCoverage) + ' to show at all.</p>'
+      + '<ul class="bars">' + s.missingPillars.map(function (p) {
+        var whys = p.skipped.filter(function (k) { return k.label; }).slice(0, 3);
+        return '<li class="is-absent"><div class="top"><span class="nm">' + esc(p.label)
+          + '</span><span class="wt">' + pct(p.weight) + ' redistributed</span></div>'
+          + '<div class="parts">' + (whys.length
+              ? whys.map(function (k) { return esc(k.label) + ' — ' + esc(k.why); }).join('<br/>')
+              : 'Nothing in this pillar could be computed.') + '</div></li>';
+      }).join('') + '</ul>';
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var s = Health.score(h, TABLES);
+    renderScore(s);
+    renderPillars(s);
+    renderHeadroom(s);
+    renderCohorts(s);
+    renderMissing(s);
+    el('h-reading-list').innerHTML = ['dob', 'grossAnnualIncome', 'monthlyExpenses']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+
+
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
 <script>
 (function () {
   'use strict';
@@ -818,14 +1766,8 @@
   });
 
 
-  /* ---------- deep links ------------------------------------------------- */
-
-  function jumpToHash() {
-    if (!location.hash) return;
-    var target = document.getElementById(location.hash.slice(1));
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  window.addEventListener('hashchange', jumpToHash);
+  /* Deep links: the router at the top of the page owns the hash for all six
+     readings now (D-231), so no reading scrolls on its own. */
 
   /* ---------- boot ------------------------------------------------------- */
 
@@ -848,7 +1790,6 @@
               { label: 'Still to go', cents: Math.max(0, r.fireNumberCents - r.investmentsCents) }];
     }, function () { return TABLES; });
     render();
-    jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');
     notice.hidden = false;
@@ -856,6 +1797,800 @@
     notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
       + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
   });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Charts = SLAF.Charts;
+
+  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-231) */
+  var TABLES = null;
+  var MONTHS = 12;
+
+  /* SPEC.md §12.1: each surface decides which variant it leads with and says
+     so. This room leads with excluding-match — the conservative read, and
+     the one engines/foo.js already uses for the benchmark flag — but shows
+     both at the same size because this is the room about the number. */
+  var LEAD_VARIANT = 'excludingMatch';
+
+  function el(id) { return document.getElementById(id); }
+
+  function years(n) {
+    var r = Math.round(n * 10) / 10;
+    return r + (r === 1 ? ' year' : ' years');
+  }
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function setRate(nodeId, subId, result, sub) {
+    var node = el(nodeId);
+    if (Money.isOk(result)) {
+      node.className = 'big';
+      node.textContent = Money.formatRate(result.value, { decimals: 1 });
+      el(subId).textContent = sub(result);
+    } else {
+      node.className = 'big is-incomplete';
+      node.textContent = Money.EM_DASH;
+      el(subId).textContent = result.reason || '';
+    }
+  }
+
+  function renderRates(rates) {
+    setRate('r-ex', 'r-ex-sub', rates.excludingMatch, function (r) {
+      return Money.formatCents(r.annualSavingsCents) + ' a year, out of '
+        + Money.formatCents(r.grossAnnualIncomeCents) + ' gross';
+    });
+    setRate('r-in', 'r-in-sub', rates.includingMatch, function (r) {
+      return Money.formatCents(r.annualSavingsCents) + ' a year, including '
+        + Money.formatCents(r.employerMatchCents) + ' from your employer';
+    });
+  }
+
+  function renderBreakdown(rates) {
+    var r = rates[LEAD_VARIANT];
+    if (!Money.isOk(r)) {
+      el('b-stack').innerHTML = '';
+      el('b-chart').innerHTML = '';
+      el('b-detail').innerHTML = '';
+      el('b-why').textContent = r.reason || '';
+      return;
+    }
+    var gross = r.grossAnnualIncomeCents;
+    var saved = r.annualSavingsCents;
+    /* Saved can be negative — spending more than you take home is a real
+       result, and a bar cannot show it, so the stack shows what is spent
+       and the detail states the shortfall. */
+    var parts = [
+      ['seg-tax', r.estimatedTaxCents],
+      ['seg-spend', r.annualExpensesCents],
+      ['seg-save', Math.max(0, saved)]
+    ];
+    var shown = parts.reduce(function (s, p) { return s + p[1]; }, 0);
+    el('b-stack').innerHTML = parts.map(function (p) {
+      return '<span class="' + p[0] + '" style="width:' + (shown === 0 ? 0 : p[1] / shown * 100) + '%"></span>';
+    }).join('');
+
+    /* The same three figures as shares of gross — the engine's, not a
+       second sum: tax + spending + saved is gross by construction. A
+       shortfall has no share of a whole, so that case gets no ring; the
+       sentence under the detail says what happened instead. Saved is the
+       lead variant, your money only. */
+    el('b-chart').innerHTML = saved < 0 ? '' : Charts.donut({
+      title: 'Where a year of gross pay goes',
+      slices: [
+        { label: 'Tax', value: r.estimatedTaxCents, color: Charts.COLORS.series[7],
+          note: 'flat effective rate' },
+        { label: 'Spending', value: r.annualExpensesCents, color: Charts.COLORS.spend },
+        { label: 'Saved', value: saved, color: Charts.COLORS.target, note: 'your money only' }
+      ],
+      center: { big: Money.formatCents(gross), small: 'gross a year' }
+    });
+
+    el('b-detail').innerHTML = dl([
+      ['Gross pay', Money.formatCents(gross)],
+      ['Estimated tax at ' + Money.formatRate(r.effectiveRate, { decimals: 1 }),
+        '−' + Money.formatCents(r.estimatedTaxCents)],
+      ['Spending, ' + Money.formatCents(Math.round(r.annualExpensesCents / MONTHS)) + ' a month',
+        '−' + Money.formatCents(r.annualExpensesCents)],
+      ['What stays yours', Money.formatCents(saved)]
+    ]);
+
+    el('b-why').textContent = saved < 0
+      ? 'That is a shortfall, not a rate — you are spending '
+        + Money.formatCents(-saved) + ' a year more than you take home. '
+        + 'Everything below this line is arithmetic about a gap.'
+      : 'Expenses are the ' + (r.expenseSource === 'closed'
+          ? 'average of the months you have closed in Budget'
+          : r.expenseSource === 'tracked'
+          ? 'tracked figure from a categorised month'
+          : 'estimate you entered')
+        + ', times twelve. Tax is a flat effective-rate lookup, not a return.';
+  }
+
+  function renderBenchmark(h, rates) {
+    var t = TABLES.fooRules.thresholds;
+    var flags = Foo.evaluate(h, TABLES).flags || [];
+    var hit = flags.filter(function (f) { return f.key === 'savings_rate_below_benchmark'; })[0];
+    var r = rates.excludingMatch;
+    var note = el('bench-note');
+
+    if (!Money.isOk(r)) {
+      note.hidden = true;
+      el('bench-why').textContent = r.reason || '';
+      return;
+    }
+    note.hidden = false;
+    if (hit) {
+      note.className = 'flag flag--warn';
+      note.innerHTML = '<strong>' + hit.label + '</strong> — ' + hit.guidance;
+    } else {
+      note.className = 'flag';
+      note.innerHTML = '<strong>At or above the benchmark.</strong> '
+        + Money.formatRate(r.value, { decimals: 1 }) + ' clears the '
+        + Money.formatRate(t.savingsRateBenchmarkFloor, { decimals: 0 })
+        + ' figure most guidance names as the floor.';
+    }
+    el('bench-why').textContent = 'The benchmark is '
+      + Money.formatRate(t.savingsRateBenchmarkLow, { decimals: 0 }) + '–'
+      + Money.formatRate(t.savingsRateBenchmarkFloor, { decimals: 0 })
+      + ', from data/foo_rules.json, and it is measured on your money only — '
+      + 'employer match dollars are excluded, which is the harder test.';
+  }
+
+  /* ---- What one more point is worth --------------------------------------
+     Each row is the SAME household with spending moved, run through the SAME
+     engines. No hypothetical has its own formula, and none of it is stored.
+     SPEC.md §8, §12.2. */
+
+  function renderWhatIf(h, rates) {
+    var base = rates[LEAD_VARIANT];
+    var gross = Money.isOk(base) ? base.grossAnnualIncomeCents : null;
+    var baseYears = Tier0.yearsToFire(h, TABLES);
+
+    if (!Money.isOk(base) || !Money.isEntered(gross) || gross <= 0) {
+      el('wi-body').innerHTML = '';
+      el('wi-chart').innerHTML = '';
+      el('wi-why').textContent = Money.isOk(base)
+        ? 'This needs a gross income above zero.'
+        : (base.reason || '');
+      return;
+    }
+    /* A projection that never reaches the target is exactly the case where
+       the rest of this table is worth seeing, so it is not a reason to stop
+       rendering — only a reason for that one row to read —. */
+    var rows = [{ points: 0, label: 'Now', rate: base.value, household: h,
+                  fire: Tier0.fireNumber(h), years: baseYears }];
+
+    [1, 5, 10].forEach(function (points) {
+      var deltaCents = -Math.round(gross * (points / 100) / MONTHS);
+      var what = Schema.withMonthlyExpensesDeltaCents(h, deltaCents);
+      var wr = Tier0.savingsRate(what, TABLES)[LEAD_VARIANT];
+      rows.push({
+        points: points,
+        label: '+' + points + ' point' + (points === 1 ? '' : 's'),
+        monthlyCutCents: -deltaCents,
+        rate: Money.isOk(wr) ? wr.value : null,
+        household: what,
+        fire: Tier0.fireNumber(what),
+        years: Tier0.yearsToFire(what, TABLES)
+      });
+    });
+
+    el('wi-body').innerHTML = '<table class="whatif">'
+      + '<thead><tr><th>Spending</th><th>Rate</th><th>Target</th><th>Work-optional in</th></tr></thead>'
+      + '<tbody>' + rows.map(function (row) {
+        var saved = Money.isOk(row.years) && Money.isOk(baseYears)
+          ? baseYears.value - row.years.value : null;
+        return '<tr class="' + (row.points === 0 ? 'now' : '') + '">'
+          + '<td>' + row.label
+          + (row.monthlyCutCents
+            ? '<br><span style="font-size:var(--text-xs);color:var(--color-text-faint)">−'
+              + Money.formatCents(row.monthlyCutCents) + '/mo</span>'
+            : '') + '</td>'
+          + '<td>' + (Money.isEntered(row.rate) ? Money.formatRate(row.rate, { decimals: 1 }) : Money.EM_DASH) + '</td>'
+          + '<td>' + (Money.isOk(row.fire) ? Money.formatCents(row.fire.value) : Money.EM_DASH) + '</td>'
+          + '<td>' + (Money.isOk(row.years)
+            ? years(row.years.value)
+              + (saved && saved > 0.05
+                ? '<br><span class="gain">' + years(saved) + ' sooner</span>'
+                : '')
+            : Money.EM_DASH) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+
+    /* The same rows as bars. The date is the figure that moves, so the bars
+       are years to work-optional when any row has one; before the
+       projection can run they fall back to the rate itself. A row whose
+       projection never arrives is an empty bar, not a zero. */
+    var anyYears = rows.some(function (row) { return Money.isOk(row.years); });
+    el('wi-chart').innerHTML = Charts.bars({
+      title: anyYears ? 'Work-optional in' : 'Savings rate',
+      rows: rows.map(function (row) {
+        return {
+          label: row.label,
+          note: (Money.isEntered(row.rate) ? Money.formatRate(row.rate, { decimals: 1 }) + ' saved' : '')
+            /* A word joiner after the minus: a phone-width label would
+               otherwise break the line between the sign and the dollars. */
+            + (row.monthlyCutCents ? ' · −\u2060' + Money.formatCents(row.monthlyCutCents) + '/mo' : ''),
+          value: anyYears
+            ? (Money.isOk(row.years) ? row.years.value : null)
+            : (Money.isEntered(row.rate) ? row.rate : null),
+          color: row.points === 0 ? Charts.COLORS.contributed : Charts.COLORS.target
+        };
+      }),
+      format: anyYears ? years : function (v) { return Money.formatRate(v, { decimals: 1 }); }
+    });
+
+    var ten = rows[rows.length - 1];
+    var baseFire = Tier0.fireNumber(h);
+    /* The date three ways - low, likely, high real return - beside the one
+       the rows above assume. D-170. */
+    el('wi-bands').innerHTML = Money.isOk(baseYears)
+      ? SLAF.Bands.lineHtml(TABLES, function (rate) { return Tier0.yearsToFire(h, TABLES, { expectedReturnRate: rate }); },
+          function (v) { return v === 0 ? 'already there' : years(v); }, { lead: 'Years to FI, three ways' })
+      : '';
+    if (!Money.isOk(baseYears)) {
+      el('wi-why').textContent = baseYears.reason
+        + ' Cutting spending is what changes that: it raises what goes in and '
+        + 'lowers the target at the same time, which is what the rows above show.';
+      return;
+    }
+    el('wi-why').textContent = Money.isOk(ten.years) && Money.isOk(baseFire) && Money.isOk(ten.fire)
+      ? 'Ten points here is ' + Money.formatCents(ten.monthlyCutCents)
+        + ' a month. It moves the date by '
+        + years(baseYears.value - ten.years.value)
+        + ', and it lowers the target by '
+        + Money.formatCents(baseFire.value - ten.fire.value)
+        + ' — both from the same cut. Contributions assume the '
+        + (baseYears.contributionBasis === 'includingMatch'
+          ? 'including-match figure, since those dollars really do land in the account'
+          : 'your-money-only figure')
+        + ', growing at ' + Money.formatRate(baseYears.expectedReturnRate, { decimals: 0 }) + ' a year.'
+      : '';
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var rates = Tier0.savingsRate(h, TABLES);
+    renderRates(rates);
+    renderBreakdown(rates);
+    renderBenchmark(h, rates);
+    renderWhatIf(h, rates);
+    el('sr-reading-list').innerHTML =
+      ['grossAnnualIncome', 'monthlyExpenses', 'filingStatus', 'employerMatch', 'investments']
+        .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+
+
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    SLAF.Lens.mountStrip('wi-lens', function (h) {
+      var rates = Tier0.savingsRate(h, TABLES);
+      var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
+      var fire = Tier0.fireNumber(h);
+      var rows = [];
+      if (Money.isOk(basis)) rows.push({ label: 'Saved a year', cents: basis.annualSavingsCents });
+      if (Money.isOk(fire)) rows.push({ label: 'The number', cents: fire.value, href: 'fire.html#out-target' });
+      return rows;
+    }, function () { return TABLES; });
+    renderNow();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Ratios = SLAF.Ratios, Charts = SLAF.Charts, Explain = SLAF.Explain;
+
+  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-231) */
+  var TABLES = null;
+
+  /* Which list each ratio belongs in. A ratio not named here still computes
+     — it just lands in the balance-sheet list, which is the catch-all. */
+  var LENDING = ['debtToIncome', 'housingRatio', 'backEndRatio', 'carPaymentToIncome'];
+  var SAFETY = ['emergencyFundMonths', 'runwayMonths', 'liquidityRatio', 'currentRatio',
+                'burnRateCents', 'personalCashFlowRatio', 'savingsRate', 'fiRatio',
+                'safeWithdrawalRate', 'ruleOf72'];
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* A decimal year (2045 + month/12) as "Sep 2045". */
+  function monthYear(v) {
+    var year = Math.floor(v), month = Math.round((v - year) * 12);
+    if (month === 12) { year++; month = 0; }
+    return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month] + ' ' + year;
+  }
+
+  function show(row) {
+    if (!row.ok) return Money.EM_DASH;
+    switch (row.unit) {
+      case 'rate':     return Money.formatRate(row.value, { decimals: 1 });
+      case 'months':   return Money.formatMonths(row.value);
+      case 'multiple': return Money.formatMultiple(row.value);
+      case 'cents':    return Money.formatCents(row.value) + '/mo';
+      case 'years':    return (Math.round(row.value * 10) / 10) + ' years';
+      case 'dollars':  return Money.formatCents(row.value);
+      case 'date':     return monthYear(row.value);
+      default:         return String(row.value);
+    }
+  }
+
+  /* The band, said in the same unit as the figure above it. */
+  function bandText(row) {
+    var b = row.verdict.band;
+    if (!b || b.good === null) return b && b.note ? b.note : '';
+    function u(v) {
+      return row.unit === 'rate' ? Money.formatRate(v, { decimals: 0 })
+        : row.unit === 'months' ? v + ' months'
+        : row.unit === 'multiple' ? v + 'x'
+        : row.unit === 'dollars' ? Money.formatCents(v) : String(v);
+    }
+    var aim = b.direction === 'lower' ? 'Comfortable at or below ' + u(b.good)
+      : 'Comfortable at or above ' + u(b.good);
+    return aim + '. ' + (b.note || '');
+  }
+
+  /* Each row: the name with its ⓘ, the figure, the formula, and — behind
+     the button — what it is, why it matters, what moves it, and a link to
+     every number it reads (shared/explain.js). The row's id is the ratio's,
+     so the dashboard can deep-link to it. */
+  function renderList(nodeId, rows) {
+    var h = Spine.getProfile();
+    el(nodeId).innerHTML = rows.map(function (r) {
+      var zone = r.ok ? r.verdict.zone : 'blank';
+      return '<li id="r-' + esc(r.id) + '"><div class="r-head">'
+        + '<span class="r-name">' + esc(r.label) + Explain.button(r.id) + '</span>'
+        + '<span class="r-val is-' + zone + '">' + esc(show(r)) + '</span>'
+        + '</div>'
+        + '<div class="r-formula">' + esc(r.formula) + '</div>'
+        + (!r.ok ? '<div class="r-note">' + esc(r.result.reason || '') + '</div>' : '')
+        + (r.note ? '<div class="r-note">' + esc(r.note) + '</div>' : '')
+        + (r.ok && bandText(r) ? '<div class="r-band">' + esc(bandText(r)) + '</div>' : '')
+        + Explain.panel(r, h, ROOM_ID, { band: bandText(r) })
+        + '</li>';
+    }).join('');
+    Explain.bind(el(nodeId));
+  }
+
+  /* ---- The bars ----------------------------------------------------------
+     One Charts.bars per unit inside a group, because a rate and a count of
+     months cannot share an axis. The comfortable range from the band is
+     the faint green zone; the bar takes the colour of its verdict; a ratio
+     that cannot compute says what it needs instead of drawing a stand-in. */
+  var UNIT_FORMAT = {
+    rate:     function (v) { return Money.formatRate(v, { decimals: 1 }); },
+    months:   function (v) { return (Math.round(v * 10) / 10) + ' mo'; },
+    multiple: function (v) { return (Math.round(v * 100) / 100) + '×'; }
+  };
+  var UNIT_WORD = { rate: 'Rates', months: 'Months', multiple: 'Multiples' };
+  var ZONE_COLOR = {
+    good: Charts.COLORS.target, watch: Charts.COLORS.spend,
+    out: Charts.COLORS.debt, none: Charts.COLORS.contributed
+  };
+
+  function needsText(row) {
+    var missing = (row.result && row.result.missing) || [];
+    var names = missing.map(function (id) {
+      var f = Ownership.FIELDS[id];
+      return f && f.label ? f.label.toLowerCase()
+        : id.replace(/([A-Z])/g, ' $1').toLowerCase();
+    });
+    return 'needs ' + (names.length ? names.join(', ') : 'more');
+  }
+
+  function renderBars(nodeId, rows) {
+    var byUnit = {};
+    rows.forEach(function (r) {
+      if (!UNIT_FORMAT[r.unit] || r.unavailable) return;
+      (byUnit[r.unit] = byUnit[r.unit] || []).push(r);
+    });
+    var units = Object.keys(UNIT_FORMAT).filter(function (u) { return byUnit[u]; });
+    el(nodeId).innerHTML = units.map(function (unit) {
+      var group = byUnit[unit];
+      var top = 0;
+      var bars = group.map(function (r) {
+        var band = r.verdict.band, zones = [];
+        if (r.ok) top = Math.max(top, r.value);
+        if (band && band.good !== null && band.warn !== null) {
+          top = Math.max(top, band.warn, band.good * 1.25);
+          zones.push(band.direction === 'lower'
+            ? { from: 0, to: band.good, color: Charts.COLORS.target }
+            : { from: band.good, to: Infinity, color: Charts.COLORS.target });
+        }
+        return {
+          label: r.label,
+          value: r.ok ? r.value : null,
+          color: ZONE_COLOR[r.ok ? r.verdict.zone : 'none'],
+          zones: zones,
+          empty: r.ok ? null : needsText(r)
+        };
+      });
+      return (units.length > 1 ? '<div class="r-band" style="margin-top:var(--space-3)">' + esc(UNIT_WORD[unit]) + '</div>' : '')
+        + Charts.bars({ rows: bars, format: UNIT_FORMAT[unit], max: top > 0 ? top : null });
+    }).join('');
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var a = Ratios.all(h, TABLES, { snapshots: Spine.listSnapshots() });
+    var rows = a.rows;
+
+    el('tally').textContent = a.value + ' of ' + a.total + ' answerable';
+    var scored = rows.filter(function (r) { return r.ok && r.verdict.zone !== 'none'; });
+    var counts = { good: 0, watch: 0, out: 0 };
+    scored.forEach(function (r) { counts[r.verdict.zone]++; });
+
+    el('tally-why').textContent = a.value === 0
+      ? 'Nothing is entered yet. Start Here fills most of this page in one pass.'
+      : scored.length === 0
+        ? 'None of what computed has a threshold worth quoting against it.'
+        : counts.good + ' comfortable, ' + counts.watch + ' worth a look, '
+          + counts.out + ' outside the usual range — of the ' + scored.length
+          + ' that have a band at all. The other ' + (a.value - scored.length)
+          + ' computed but carry no convention.';
+
+    var total = scored.length;
+    el('zonebar').hidden = total === 0;
+    el('zonekey').hidden = total === 0;
+    if (total > 0) {
+      el('zonebar').style.gridTemplateColumns =
+        [counts.good, counts.watch, counts.out].map(function (n) {
+          return Math.max(n, 0) + 'fr';
+        }).join(' ');
+      el('zonebar').innerHTML = ['good', 'watch', 'out'].map(function (z) {
+        return counts[z] > 0 ? '<span class="z-' + z + '"></span>' : '';
+      }).join('');
+    }
+
+    function pick(ids) {
+      return ids.map(function (id) {
+        return rows.filter(function (r) { return r.id === id; })[0];
+      }).filter(Boolean);
+    }
+    var blocked = rows.filter(function (r) { return r.unavailable; });
+    var lending = pick(LENDING);
+    var safety = pick(SAFETY);
+    var taken = {};
+    lending.concat(safety, blocked).forEach(function (r) { taken[r.id] = true; });
+    var wealth = rows.filter(function (r) { return !taken[r.id]; });
+
+    renderBars('bars-lending', lending);
+    renderBars('bars-safety', safety);
+    renderBars('bars-wealth', wealth);
+    var open = {};
+    Array.prototype.forEach.call(document.querySelectorAll('[data-explain-panel]:not([hidden])'), function (p) { open[p.getAttribute('data-explain-panel')] = true; });
+    renderList('list-lending', lending);
+    renderList('list-safety', safety);
+    renderList('list-wealth', wealth);
+    renderList('list-blocked', blocked);
+    Object.keys(open).forEach(function (id) {
+      var p = document.querySelector('[data-explain-panel="' + id + '"]'), b = document.querySelector('[data-explain="' + id + '"]');
+      if (p) p.hidden = false;
+      if (b) { b.setAttribute('aria-expanded', 'true'); b.classList.add('is-open'); }
+    });
+
+    el('ra-reading-list').innerHTML =
+      ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'monthlyDebtPayments']
+        .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+
+    el('ra-provenance').innerHTML = Reference.provenance(TABLES,
+      ['ratioBenchmarks', 'ratioExplainers', 'effectiveTaxRates', 'retirementMilestones'])
+      .map(function (p) {
+        return '<strong>' + p.id + '</strong> v' + p.version + ' — ' + p.label + '. ' + p.note;
+      }).join('<br/>');
+  }
+
+
+
+  Spine.onChange(renderNow);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      Q = SLAF.QuickMath;
+
+  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-231) */
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+
+  /* Every field here belongs to the one-off question being asked, so it is
+     room state rather than household data — nothing is written to the spine. */
+  var v = {};
+
+  function bind(id, kind) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      var raw = v[id];
+      node.value = !Money.isEntered(raw) ? ''
+        : kind === 'money' ? String(raw / 100)
+        : kind === 'rate' ? String(Math.round(raw * 10000) / 100)
+        : String(raw);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      v[id] = raw === '' ? null
+        : kind === 'money' ? Money.parseMoney(raw)
+        : kind === 'rate' ? Money.parseRatePercent(raw)
+        : (Number.isFinite(Number(raw)) ? Number(raw) : null);
+      node.value = !Money.isEntered(v[id]) ? ''
+        : kind === 'money' ? Money.formatCents(v[id])
+        : kind === 'rate' ? Money.formatRate(v[id], { decimals: 2 }).replace(/\.?0+%$/, '%')
+        : String(v[id]);
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  }
+
+  /* The balance you might move is the cash you already told Start Here
+     about — proposed, not taken. D-062. */
+  var seed = SLAF.Seed.mount({
+    roomId: ROOM_ID, host: el('seed-host'),
+    seeds: function () {
+      var cash = SLAF.Schema.cashCents(Spine.getProfile());
+      return [{ node: el('h-balance'),
+        value: Money.isOk(cash) ? cash.value : null, display: Money.isOk(cash) ? Money.formatCents(cash.value) : '',
+        source: 'your cash & savings, from Start Here',
+        apply: function (c) { v['h-balance'] = c; el('h-balance').value = Money.formatCents(c); render(); } }];
+    }
+  });
+  Spine.onChange(function () { seed.refresh(); });
+
+  [['h-balance', 'money'], ['h-old', 'rate'], ['h-new', 'rate'], ['h-days', 'number'], ['h-fee', 'money'],
+   ['u-price', 'money'], ['u-uses', 'number'], ['u-months', 'number'],
+   ['c-price', 'money'], ['c-down', 'money'], ['c-term', 'number'], ['c-rate', 'rate'],
+   ['f-price', 'money'],
+   ['b-amount', 'money'], ['b-years', 'number']].forEach(function (spec) { bind(spec[0], spec[1]); });
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function setAnswer(id, result, text, tone) {
+    var node = el(id);
+    var ok = Money.isOk(result);
+    node.textContent = ok ? text : (result.reason || Money.EM_DASH);
+    node.className = 'answer' + (ok ? (tone ? ' ' + tone : '') : ' is-incomplete');
+    return ok;
+  }
+
+  function renderHysa() {
+    var r = Q.hysaSwitch({
+      balanceCents: v['h-balance'], currentApy: v['h-old'], newApy: v['h-new'],
+      daysInTransit: v['h-days'], frictionCostCents: v['h-fee']
+    });
+    var ok = setAnswer('hysa-answer', r,
+      Money.isOk(r) ? (r.firstYearNetCents >= 0 ? '+' : '−')
+        + Money.formatCents(Math.abs(r.firstYearNetCents)) + ' in year one' : '',
+      Money.isOk(r) && r.worthIt ? 'good' : 'bad');
+    if (!ok) { el('hysa-detail').innerHTML = ''; return; }
+    var rows = [
+      ['Extra interest a year', Money.formatCents(r.annualGainCents)],
+      ['Lost while it moves', '−' + Money.formatCents(r.transitCostCents)]
+    ];
+    if (r.frictionCostCents > 0) rows.push(['Fee to move', '−' + Money.formatCents(r.frictionCostCents)]);
+    if (Money.isOk(r.breakEvenDays)) {
+      rows.push(['Pays for itself in', (Math.round(r.breakEvenDays.value * 10) / 10) + ' days']);
+    }
+    rows.push(['Every year after', Money.formatCents(r.ongoingAnnualCents)]);
+    el('hysa-detail').innerHTML = dl(rows);
+  }
+
+  function renderPerUse() {
+    var r = Q.costPerUse({ priceCents: v['u-price'], uses: v['u-uses'], overMonths: v['u-months'] });
+    var ok = setAnswer('use-answer', r, Money.isOk(r) ? Money.formatCents(r.value, { decimals: 2 }) + ' a use' : '');
+    if (!ok) { el('use-detail').innerHTML = ''; return; }
+    var rows = [];
+    if (Money.isEntered(r.perMonthCents)) {
+      rows.push(['Per month you own it', Money.formatCents(r.perMonthCents)]);
+    }
+    var toTen = Q.usesToReach(r.priceCents, 1000);
+    if (Money.isOk(toTen)) rows.push(['Uses to get under $10 each', toTen.value]);
+    el('use-detail').innerHTML = rows.length ? dl(rows) : '';
+  }
+
+  function renderCar(h) {
+    var r = Q.carRule2038(h, {
+      carPriceCents: v['c-price'], downPaymentCents: v['c-down'],
+      termMonths: v['c-term'], loanRate: v['c-rate']
+    });
+    if (!Money.isOk(r)) {
+      setAnswer('car-answer', r, '');
+      el('car-legs').innerHTML = ''; el('car-detail').innerHTML = '';
+      return;
+    }
+    if (!r.priceEntered) {
+      el('car-answer').textContent = 'Up to ' + Money.formatCents(r.maxAffordablePriceCents);
+      el('car-answer').className = 'answer';
+      el('car-legs').innerHTML = '';
+      el('car-detail').innerHTML = dl([
+        ['Most you should pay a month', Money.formatCents(r.paymentCapCents)],
+        ['On gross pay of', Money.formatCents(r.monthlyGrossCents) + '/mo']
+      ]) + '<p class="slaf-reason">Enter a car above to check a specific one.</p>';
+      return;
+    }
+    el('car-answer').textContent = r.passesAll ? 'Passes all three'
+      : r.value + ' of 3 — ' + (3 - r.value) + ' to fix';
+    el('car-answer').className = 'answer ' + (r.passesAll ? 'good' : 'bad');
+
+    el('car-legs').innerHTML = r.checks.map(function (c) {
+      var why = '';
+      if (!c.pass && c.key === 'down') why = 'That is ' + Money.formatRate(c.actual, { decimals: 0 })
+        + ' down. ' + Money.formatCents(c.shortfallCents) + ' more would do it.';
+      if (!c.pass && c.key === 'term') why = c.actual + ' months is ' + (c.actual - c.target) + ' too many.';
+      if (!c.pass && c.key === 'payment') why = Money.formatCents(c.actual) + '/mo is '
+        + Money.formatCents(c.overByCents) + ' over the ' + Money.formatCents(c.target) + ' cap.';
+      return '<li class="' + (c.pass ? 'pass' : 'fail') + '">'
+        + '<span class="mark">' + (c.pass ? '✓' : '→') + '</span>'
+        + '<span>' + c.label + (why ? '<span class="why">' + why + '</span>' : '') + '</span></li>';
+    }).join('');
+
+    el('car-detail').innerHTML = dl([
+      ['Borrowing', Money.formatCents(r.loanCents)],
+      ['Monthly payment', Money.formatCents(r.monthlyPaymentCents)],
+      ['Interest over the term', Money.formatCents(r.totalInterestCents)],
+      ['The rule would allow', 'up to ' + Money.formatCents(r.maxAffordablePriceCents)]
+    ]);
+  }
+
+  function renderFive(h) {
+    var r = Q.ruleOfFive(h, v['f-price']);
+    var ok = setAnswer('five-answer', r,
+      Money.isOk(r) ? (r.passes ? 'Yes — you could buy ' + r.howManyYouCouldBuy
+                                : 'No — you could buy ' + r.howManyYouCouldBuy) : '',
+      Money.isOk(r) && r.passes ? 'good' : 'bad');
+    el('five-rule').textContent = Money.isOk(r) ? r.rule.statement : Q.RULE_OF_FIVE.statement;
+    if (!ok) { el('five-detail').innerHTML = ''; return; }
+    var rows = [
+      ['Your cash', Money.formatCents(r.cashCents)],
+      ['Five of them', Money.formatCents(r.neededCents)]
+    ];
+    if (!r.passes) rows.push(['Short by', Money.formatCents(r.shortfallCents)]);
+    el('five-detail').innerHTML = dl(rows);
+  }
+
+  function renderHabit(h) {
+    var r = Q.recurringHabit(h, TABLES, {
+      monthlyAmountCents: v['b-amount'], years: v['b-years']
+    });
+    var ends = el('habit-ends');
+    if (!Money.isOk(r)) {
+      ends.hidden = true;
+      setAnswer('habit-answer', r, '');
+      el('habit-detail').innerHTML = '';
+      el('habit-bands').innerHTML = '';
+      return;
+    }
+    ends.hidden = false;
+    /* The invested figure three ways - low, likely, high real return. D-170. */
+    el('habit-bands').innerHTML = SLAF.Bands.lineHtml(TABLES, function (rate) {
+      var x = Q.recurringHabit(h, TABLES, { monthlyAmountCents: v['b-amount'], years: v['b-years'], localOverrides: { expectedReturnRate: rate } });
+      return Money.isOk(x) ? Money.ok(x.investedInsteadCents) : x;
+    }, Money.formatCents, { lead: 'Invested instead, three ways' });
+    el('habit-fire').textContent = Money.formatCents(r.fireNumberAdditionCents);
+    el('habit-invested').textContent = Money.formatCents(r.investedInsteadCents);
+    el('habit-invested-sub').textContent = 'over ' + Math.round(r.years) + ' years';
+
+    el('habit-answer').className = 'answer bad';
+    el('habit-answer').textContent = Money.formatCents(r.totalSwingCents) + ' either way';
+
+    el('habit-detail').innerHTML = dl([
+      ['A year of it', Money.formatCents(r.annualCostCents)],
+      ['At a ' + Money.formatRate(r.swrRate, { decimals: 1 }) + ' withdrawal rate',
+        Money.formatCents(r.fireNumberAdditionCents) + ' more needed'],
+      ['You\u2019d have paid in', Money.formatCents(r.contributedCents)],
+      ['Growth on top', Money.formatCents(r.growthCents)]
+    ]) + '<p class="slaf-reason">The pot figure is exact — it falls straight out of the '
+      + 'withdrawal rate and doesn\u2019t depend on returns at all. The invested figure '
+      + 'assumes ' + Money.formatRate(r.expectedReturnRate, { decimals: 0 })
+      + ' a year over ' + Math.round(r.years) + ' years ('
+      + r.horizonBasis + '), so it moves if either does.</p>';
+  }
+
+  function render() {
+    var h = Spine.getProfile();
+    el('qm-reading-list').innerHTML = ['grossAnnualIncome', 'cashSavings']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+    renderHysa();
+    renderPerUse();
+    renderCar(h);
+    renderFive(h);
+    renderHabit(h);
+  }
+
+
+
+  Spine.onChange(render);
+  render();
+  /* The band table is the only table this room reads; nothing else here
+     waits on a fetch, so the page paints first and the three-way line
+     arrives when it does. D-170. */
+  SLAF.Reference.load(['returnBands']).then(function (tables) {
+    TABLES = tables;
+    render();
+    SLAF.Lens.mountStrip('habit-lens', function (h) {
+      var r = Q.recurringHabit(h, TABLES, { monthlyAmountCents: v['b-amount'], years: v['b-years'] });
+      if (!Money.isOk(r)) return [];
+      return [{ label: 'A year of it', cents: r.annualCostCents }, { label: 'Invested instead', cents: r.investedInsteadCents }];
+    }, function () { return TABLES; });
+  }).catch(function (err) { if (window.console && console.warn) console.warn('quick-math: ' + err.message); });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Spine = SLAF.Spine, Reference = SLAF.Reference, RankGuess = SLAF.RankGuess, Prefs = SLAF.Prefs;
+  var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-231) */
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function word() { var b = RankGuess.band(Number(el('in-guess').value)); el('g-word').textContent = b ? 'You think: ' + b.label + '.' : ''; }
+  function reveal() {
+    if (!TABLES) return;
+    var g = Number(el('in-guess').value);
+    try { Prefs.set('rank.guess', g); } catch (e) { /* fine */ }
+    var r = RankGuess.compare(g, Spine.getProfile(), TABLES);
+    el('reveal').hidden = false;
+    el('r-guess').textContent = r.guess ? r.guess.label : '';
+    if (r.status !== 'ok') { el('r-real').textContent = 'not yet'; el('r-line').textContent = r.reason; el('r-src').textContent = ''; return; }
+    el('r-real').textContent = r.real.label;
+    el('r-line').textContent = r.line;
+    el('r-src').textContent = 'Federal Reserve Survey of Consumer Finances, ' + r.referenceVersion + ', for ' + r.realBandLabel + '. Bands, never ranks: ' + r.precision;
+  }
+  el('in-guess').addEventListener('input', word);
+  el('btn-reveal').addEventListener('click', reveal);
+  var prior = Prefs ? Prefs.get('rank.guess', null) : null;
+  if (typeof prior === 'number') el('in-guess').value = String(prior);
+  word();
+  Reference.load(['netWorthPercentiles']).then(function (t) { TABLES = t; }).catch(function () { /* the reveal says so */ });
 })();
 </script>
 </body>

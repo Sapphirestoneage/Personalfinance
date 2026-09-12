@@ -38,7 +38,7 @@
       "goal": "What leaves, where it lands, and what is taken on the way. This is the machine that moves money while you are not watching.",
       "rooms": [
         "accounts",
-        "savings-rate",
+        "financial-snapshot",
         "tax",
         "student-loans"
       ]

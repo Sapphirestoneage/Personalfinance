@@ -145,7 +145,7 @@
     },
     {
       "id": "financial-snapshot",
-      "title": "Financial Snapshot",
+      "title": "The Scorecard",
       "file": "rooms/financial-snapshot.html",
       "reads": [
         "grossAnnualIncome",
@@ -158,7 +158,7 @@
       ],
       "writes": [],
       "requires": [],
-      "dashboardNumber": null,
+      "dashboardNumber": "savingsRate",
       "order": 4
     },
     {
@@ -198,21 +198,6 @@
       "requires": [],
       "dashboardNumber": "netWorth",
       "order": 5
-    },
-    {
-      "id": "savings-rate",
-      "title": "Savings Rate",
-      "file": "rooms/savings-rate.html",
-      "reads": [
-        "grossAnnualIncome",
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [
-        "savingsRate"
-      ],
-      "dashboardNumber": "savingsRate",
-      "order": 6
     },
     {
       "id": "fire",
@@ -275,16 +260,6 @@
       "order": 10
     },
     {
-      "id": "quick-math",
-      "title": "Quick Math",
-      "file": "rooms/quick-math.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 11
-    },
-    {
       "id": "self-employed",
       "title": "Going Self-Employed",
       "file": "rooms/self-employed.html",
@@ -338,22 +313,6 @@
       ],
       "dashboardNumber": null,
       "order": 13
-    },
-    {
-      "id": "ratios",
-      "title": "Every Ratio",
-      "file": "rooms/ratios.html",
-      "reads": [
-        "grossAnnualIncome",
-        "monthlyExpenses",
-        "cashSavings",
-        "investments",
-        "totalDebt"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 14
     },
     {
       "id": "dashboard",
@@ -542,18 +501,6 @@
       "order": 25.5
     },
     {
-      "id": "rank-guess",
-      "title": "Where Do You Think You Rank?",
-      "file": "rooms/rank-guess.html",
-      "reads": [
-        "dob"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 25.7
-    },
-    {
       "id": "race",
       "title": "The Race to $100K",
       "file": "rooms/race.html",
@@ -631,22 +578,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 26.8
-    },
-    {
-      "id": "health",
-      "title": "The Score",
-      "file": "rooms/health.html",
-      "reads": [
-        "dob",
-        "grossAnnualIncome",
-        "monthlyExpenses",
-        "cashSavings",
-        "investments"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 27
     },
     {
       "id": "what-if-life",

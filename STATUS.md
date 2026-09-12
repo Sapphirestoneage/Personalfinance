@@ -5,20 +5,20 @@ Updated: 2026-09-12
 ## Where it stands
 - **93 → 30 is the programme.** The reframe (D-226): you cannot size the
   mountain until you know how you come down it, so the Back Half defines the
-  target and The Number becomes a read-out of it. The test for what earns the
-  right to be a room, and the thirty that survive it, are D-227 and
-  `docs/room-map.json`, which `test/run.js` checks against the registry on
-  every run. That map is the cut list now: `absorbs` minus `done` is what is
-  left, `held` says what is deliberately not moving yet and why.
-- **Steps 1, 2 and 4 of six are done; 92 registry rooms → 81.** D-228, the
-  Ledger swallowed navigation (six ways in, one page). D-230, The Cushion is
-  four readings of one number and seven field owners moved with their boxes.
-  D-229, What The Next Dollar Does is one question at three amounts with the
-  FOO step above all three. Every old URL redirects, hash and all.
+  target and The Number becomes a read-out of it. The room test and the
+  thirty are D-227 and `docs/room-map.json`, which `test/run.js` checks
+  against the registry every run. That map is the cut list: `absorbs` minus
+  `done` is what is left, `held` says what is not moving yet, and why.
+- **Four of the six merges are done; 92 registry rooms → 76.** D-228, the
+  Ledger swallowed navigation. D-230, The Cushion is four readings of one
+  number, seven field owners moved with their boxes. D-229, What The Next
+  Dollar Does is one question at three amounts, the FOO step above all
+  three. D-231, The Scorecard is six readings of the same entered numbers
+  and opens on the plainest. Every old URL redirects, hash and all.
   `.slaf-hats` is the one reading strip; `part: true` in `shared/room.js`
   lets a template room become a reading.
-- The Ledger rework brief is built through Phase K; H6, I6, I7, I8 wait.
-  Still on the owner: the Pages switch, the domain (G1.1), a LICENSE (G3.14).
+- Ledger rework brief: built through Phase K; H6, I6, I7, I8 wait. On the
+  owner: the Pages switch, the domain (G1.1), a LICENSE (G3.14).
 
 ## Freeze
 - ON, and the merge is how it is honoured: every session leaves fewer screens.
@@ -26,10 +26,10 @@ Updated: 2026-09-12
 ## Next (top item first; one per session)
 1. **Who owns Start Here's 17 fields once it retires into the Ledger?**
    OWNER DECISION NEEDED. The only thing blocking the last room of step 1.
-2. Step 3: The Scorecard (6 → 1) — `financial-snapshot` absorbs `health`,
-   `ratios`, `savings-rate`, `quick-math`, `rank-guess`.
-3. Step 5: the Decision Room shell, then goals, wedding, big purchase.
-4. Step 6: the Back Half. Not before the shell has stopped moving.
+2. Step 5: the Decision Room shell — one shell, five outputs on every block,
+   then goals, wedding and big purchase before any deep module.
+3. Step 6: the Back Half, once the shell has stopped moving. The biggest
+   engine change in the programme; D-226 is its brief.
 5. Older and still open: logged income does not reach the headline numbers;
    the first journey end to end; a monthly close that prompts a backup.
 

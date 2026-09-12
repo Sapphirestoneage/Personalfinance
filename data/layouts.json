@@ -32,21 +32,17 @@
             "budget",
             "variance",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "statement",
             "reachable",
-            "savings-rate",
             "fire",
             "coast-date",
             "fire-lab",
             "real-hourly-wage",
             "hassle",
-            "quick-math",
             "self-employed",
             "side-hustle",
-            "ratios",
             "dashboard",
             "credential",
             "degree",
@@ -66,7 +62,6 @@
             "credit",
             "cant-pay",
             "rollover",
-            "health",
             "what-if-life",
             "adventure",
             "timeline",
@@ -139,14 +134,11 @@
             "budget",
             "variance",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "statement",
             "reachable",
             "fire-lab",
-            "quick-math",
-            "ratios",
             "dashboard",
             "fulfillment",
             "rerank",
@@ -163,7 +155,6 @@
             "credit",
             "cant-pay",
             "rollover",
-            "health",
             "what-if-life",
             "adventure",
             "timeline",
@@ -188,7 +179,6 @@
         {
           "name": "Appears for some situations only",
           "rooms": [
-            "savings-rate",
             "fire",
             "coast-date",
             "real-hourly-wage",
@@ -244,13 +234,9 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
-            "health",
-            "ratios",
             "runway",
-            "savings-rate",
             "statement",
             "reachable",
             "credit"
@@ -291,7 +277,6 @@
             "housing",
             "down-payment",
             "kids",
-            "quick-math",
             "hassle",
             "worth",
             "student-loans"
@@ -427,7 +412,6 @@
           "name": "Keep",
           "rooms": [
             "runway",
-            "savings-rate",
             "accounts",
             "statement",
             "reachable"
@@ -442,8 +426,7 @@
             "foo-ladder",
             "rollover",
             "what-if-life",
-            "adventure",
-            "ratios"
+            "adventure"
           ]
         },
         {
@@ -473,7 +456,6 @@
           "name": "Decide",
           "rooms": [
             "worth",
-            "quick-math",
             "reversibility",
             "goals",
             "dreamline",
@@ -488,8 +470,7 @@
             "skill-tree",
             "exercises",
             "unlearning",
-            "debates",
-            "health"
+            "debates"
           ]
         },
         {
@@ -506,7 +487,6 @@
             "wrapped",
             "get-help",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements"
           ],
@@ -551,7 +531,6 @@
             "debt-payoff",
             "settings",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements"
           ]
@@ -559,7 +538,6 @@
         {
           "name": "This year",
           "rooms": [
-            "savings-rate",
             "accounts",
             "tax",
             "protection",
@@ -623,9 +601,6 @@
             "dashboard",
             "start",
             "ledger",
-            "ratios",
-            "health",
-            "quick-math",
             "data",
             "one-pager",
             "progress-card",
@@ -668,7 +643,6 @@
             "variance",
             "calendar",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "dashboard"
@@ -698,8 +672,7 @@
         {
           "name": "4 · Emergency reserves",
           "rooms": [
-            "runway",
-            "savings-rate"
+            "runway"
           ]
         },
         {
@@ -722,9 +695,7 @@
           "rooms": [
             "statement",
             "reachable",
-            "fire-lab",
-            "ratios",
-            "health"
+            "fire-lab"
           ]
         },
         {
@@ -754,7 +725,6 @@
             "worth",
             "reversibility",
             "rerank",
-            "quick-math",
             "hassle",
             "real-hourly-wage",
             "stacker",
@@ -808,13 +778,11 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "settings",
             "start",
-            "ledger",
-            "health"
+            "ledger"
           ]
         },
         {
@@ -831,7 +799,6 @@
             "statement",
             "reachable",
             "accounts",
-            "savings-rate",
             "credit",
             "runway",
             "cant-pay",
@@ -880,10 +847,8 @@
             "stacker",
             "skill-tree",
             "exercises",
-            "ratios",
             "unlearning",
             "debates",
-            "quick-math",
             "credential",
             "degree",
             "hassle",
@@ -966,10 +931,8 @@
             "fulfillment",
             "estate",
             "variance",
-            "ratios",
             "exercises",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "fire-lab",
@@ -990,11 +953,9 @@
             "partner",
             "wedding",
             "protection",
-            "quick-math",
             "real-hourly-wage",
             "settings",
             "reversibility",
-            "savings-rate",
             "side-hustle",
             "start",
             "ledger",
@@ -1004,7 +965,6 @@
             "dashboard",
             "rerank",
             "runway",
-            "health",
             "stacker",
             "skill-tree",
             "statement",
@@ -1053,7 +1013,6 @@
             "ledger",
             "dashboard",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements"
           ],
@@ -1089,11 +1048,8 @@
           "rooms": [
             "statement",
             "reachable",
-            "savings-rate",
             "accounts",
             "tax",
-            "ratios",
-            "health",
             "fire",
             "coast-date",
             "fire-lab",
@@ -1151,8 +1107,7 @@
             "goals",
             "dreamline",
             "reversibility",
-            "worth",
-            "quick-math"
+            "worth"
           ],
           "note": "Looking out at what has not happened yet."
         },
@@ -1223,7 +1178,6 @@
             "settings",
             "debt-payoff",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements"
           ]
@@ -1233,11 +1187,8 @@
           "rooms": [
             "statement",
             "reachable",
-            "savings-rate",
             "runway",
-            "credit",
-            "ratios",
-            "health"
+            "credit"
           ]
         },
         {
@@ -1302,7 +1253,6 @@
             "degree",
             "hassle",
             "real-hourly-wage",
-            "quick-math",
             "get-help"
           ],
           "note": "A third of the app, and none of it can be put in a diary. This is the bay that argues for S-3 or S-5 instead.",
@@ -1339,21 +1289,16 @@
           "name": "A number you didn’t have",
           "rooms": [
             "real-hourly-wage",
-            "savings-rate",
             "fire",
             "coast-date",
             "runway",
             "credit",
-            "health",
-            "ratios",
             "statement",
             "reachable",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
-            "variance",
-            "quick-math"
+            "variance"
           ]
         },
         {
@@ -1538,7 +1483,6 @@
             "fire",
             "coast-date",
             "fire-lab",
-            "savings-rate",
             "accounts",
             "tax",
             "statement",
@@ -1550,11 +1494,8 @@
             "housing",
             "down-payment",
             "financial-snapshot",
-            "rank-guess",
             "race",
-            "statements",
-            "ratios",
-            "health"
+            "statements"
           ]
         },
         {
@@ -1572,7 +1513,6 @@
             "history",
             "wrapped",
             "get-help",
-            "quick-math",
             "real-hourly-wage",
             "hassle",
             "credential",
@@ -1613,7 +1553,6 @@
             "worth",
             "reversibility",
             "rerank",
-            "quick-math",
             "stacker",
             "skill-tree",
             "exercises"
@@ -1678,14 +1617,11 @@
             "statement",
             "reachable",
             "fire-lab",
-            "savings-rate",
             "runway",
             "what-if-life",
             "adventure",
             "goals",
-            "foo-ladder",
-            "ratios",
-            "health"
+            "foo-ladder"
           ]
         },
         {
@@ -1701,7 +1637,6 @@
             "variance",
             "calendar",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "settings",
@@ -1736,7 +1671,6 @@
             "subscriptions",
             "income",
             "budget",
-            "quick-math",
             "stacker",
             "skill-tree",
             "exercises",
@@ -1768,12 +1702,10 @@
           "name": "Layer 2",
           "rooms": [
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "statement",
             "reachable",
-            "savings-rate",
             "fire",
             "coast-date",
             "fire-lab",
@@ -1781,7 +1713,6 @@
             "hassle",
             "self-employed",
             "side-hustle",
-            "ratios",
             "dashboard",
             "credential",
             "degree",
@@ -1790,7 +1721,6 @@
             "runway",
             "car",
             "first-car",
-            "health",
             "what-if-life",
             "adventure",
             "timeline",
@@ -1901,7 +1831,6 @@
             "statement",
             "reachable",
             "accounts",
-            "savings-rate",
             "credit",
             "debt-payoff",
             "rollover",
@@ -1947,10 +1876,7 @@
             "goals",
             "what-if-life",
             "adventure",
-            "ratios",
-            "health",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "dashboard"
@@ -1967,7 +1893,6 @@
             "progress-card",
             "history",
             "wrapped",
-            "quick-math",
             "stacker",
             "skill-tree",
             "exercises"
@@ -1990,17 +1915,12 @@
         {
           "name": "Under a minute",
           "rooms": [
-            "quick-math",
             "settings",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "dashboard",
-            "health",
             "credit",
-            "ratios",
-            "savings-rate",
             "runway"
           ],
           "note": "Everything already computed. You are reading, not typing."
@@ -2149,16 +2069,13 @@
             "self-employed",
             "student-loans",
             "debt-payoff",
-            "savings-rate",
             "statement",
             "reachable",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "variable-income",
             "variance",
-            "quick-math",
             "cant-pay",
             "dashboard",
             "estate"
@@ -2174,8 +2091,6 @@
             "runway",
             "rollover",
             "accounts",
-            "health",
-            "ratios",
             "timeline"
           ],
           "note": "Fine once, annoying if nobody ever defines it."
@@ -2264,8 +2179,7 @@
             "rerank",
             "settings",
             "real-hourly-wage",
-            "hassle",
-            "quick-math"
+            "hassle"
           ],
           "note": "The month as it actually happens. Nine spokes.",
           "hub": "cash-flow"
@@ -2276,7 +2190,6 @@
             "statement",
             "reachable",
             "accounts",
-            "savings-rate",
             "runway",
             "rollover",
             "tax",
@@ -2310,11 +2223,8 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
-            "ratios",
-            "health",
             "fire",
             "coast-date",
             "fire-lab",
@@ -2380,9 +2290,7 @@
             "reachable",
             "debt-payoff",
             "calendar",
-            "savings-rate",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements",
             "credit",
@@ -2421,12 +2329,9 @@
           "rooms": [
             "tax",
             "protection",
-            "health",
-            "ratios",
             "dashboard",
             "real-hourly-wage",
             "hassle",
-            "quick-math",
             "credential",
             "degree",
             "worth",
@@ -2543,7 +2448,6 @@
             "settings",
             "dashboard",
             "financial-snapshot",
-            "rank-guess",
             "race",
             "statements"
           ]
@@ -2554,7 +2458,6 @@
             "statement",
             "reachable",
             "accounts",
-            "savings-rate",
             "tax",
             "protection"
           ]
@@ -2583,9 +2486,7 @@
             "adventure",
             "decumulation",
             "roth-aca",
-            "middle-class-trap",
-            "ratios",
-            "health"
+            "middle-class-trap"
           ]
         },
         {
@@ -2613,8 +2514,7 @@
             "credential",
             "degree",
             "real-hourly-wage",
-            "hassle",
-            "quick-math"
+            "hassle"
           ]
         },
         {

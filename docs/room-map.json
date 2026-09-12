@@ -20,7 +20,7 @@
   "order": [
     { "step": 1, "target": "ledger", "title": "The Ledger swallows navigation", "state": "shipped-in-part" },
     { "step": 2, "target": "runway", "title": "The Cushion, four readings of one number", "state": "shipped" },
-    { "step": 3, "target": "financial-snapshot", "title": "The Scorecard", "state": "todo" },
+    { "step": 3, "target": "financial-snapshot", "title": "The Scorecard", "state": "shipped" },
     { "step": 4, "target": "foo-ladder", "title": "What The Next Dollar Does", "state": "shipped" },
     { "step": 5, "target": "goals", "title": "The Decision Room shell, then three easy block types", "state": "todo" },
     { "step": 6, "target": "decumulation", "title": "The Back Half, which then defines the target every other room reads", "state": "todo" }
@@ -60,7 +60,9 @@
     { "n": 10, "id": "tax", "title": "Tax", "group": "facts", "absorbs": [], "done": [] },
 
     { "n": 11, "id": "financial-snapshot", "title": "The Scorecard", "group": "scorecard",
-      "absorbs": ["health", "ratios", "savings-rate", "quick-math", "rank-guess"], "done": [] },
+      "absorbs": ["health", "ratios", "savings-rate", "quick-math", "rank-guess"],
+      "done": ["health", "ratios", "savings-rate", "quick-math", "rank-guess"],
+      "note": "The simplest reading is the default: one score opens the room, the nine numbers are one tap away." },
     { "n": 12, "id": "one-pager", "title": "The Card", "group": "scorecard", "absorbs": ["progress-card", "wrapped"], "done": [] },
 
     { "n": 13, "id": "decumulation", "title": "The Back Half", "group": "back-half",

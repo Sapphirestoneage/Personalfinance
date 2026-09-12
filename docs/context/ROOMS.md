@@ -29,24 +29,19 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **student-loans** — Student Loan Decision · 268 lines · engines: projection, tier0, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-120
 - **calendar** — Money Calendar & Pay-Later · 269 lines · engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-130, D-121
 
-## Scorecard (11)
+## Scorecard (7)
 
-- **financial-snapshot** — Financial Snapshot · 863 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath · D-056, D-036, D-008
+- **financial-snapshot** — The Scorecard · 2598 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-231, D-036, D-007
 - **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-156
-- **savings-rate** — Savings Rate · 490 lines · engines: projection, tier0, foo, hourly · D-130, D-091, D-054
 - **fire** — FIRE Number · 532 lines · engines: projection, tier0, fire, selfemployed, tax, hourly · owns: retireAge, coastAge · D-226, D-162, D-161
 - **fire-lab** — FIRE Lab · 463 lines · engines: projection, tier0, cashflow, fire, hourly · D-226, D-138
-- **ratios** — Every Ratio · 410 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-143, D-139, D-136
 - **foo-ladder** — What The Next Dollar Does · 700 lines · engines: projection, tier0, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-229, D-058, D-054
 - **coast-date** — Your Coast Date · 123 lines · engines: projection, tier0, coast · D-213
-- **rank-guess** — Where Do You Think You Rank? · 115 lines · engines: projection, tier0, rankguess · D-213
 - **race** — The Race to $100K · 156 lines · engines: projection, tier0, countdown, race · D-217
-- **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-143, D-081
 
-## Decisions (30)
+## Decisions (29)
 
 - **hassle** — Worth the Hassle · 499 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
-- **quick-math** — Quick Math · 447 lines · engines: projection, quickmath, tier0, hourly · D-062, D-022
 - **self-employed** — Going Self-Employed · 381 lines · engines: selfemployed · D-062
 - **reachable** — Reachable Money · 151 lines · engines: selfemployed, tax, reachable · D-226, D-212
 - **subscriptions** — Subscription Finder · 126 lines · engines: projection, tier0, selfemployed, tax, hourly, subscriptions · D-215
@@ -106,7 +101,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 - **progress-card** — Progress Card (utility) · 140 lines · engines: projection, tier0, tax, debt · D-212
 
-## Files in rooms/ not in the registry (13)
+## Files in rooms/ not in the registry (18)
 
 - rooms/between-jobs.html
 - rooms/comeback.html
@@ -114,10 +109,15 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/doors.html
 - rooms/express.html
 - rooms/first-round.html
+- rooms/health.html
 - rooms/net-worth.html
 - rooms/next-hundred.html
+- rooms/quick-math.html
 - rooms/quit-fund.html
+- rooms/rank-guess.html
+- rooms/ratios.html
 - rooms/refresh.html
+- rooms/savings-rate.html
 - rooms/sleep-at-night.html
 - rooms/walk.html
 - rooms/windfall.html

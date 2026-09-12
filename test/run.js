@@ -3060,7 +3060,8 @@ section('Ratios');
   const invested = explained.find(r => r.id === 'investedShare');
   checkTrue('invested share is over total assets, so it cannot pass 100%', invested.ok && invested.value <= 1);
   check('and the old net-worth denominator is gone', RatiosEngine.byId('investmentToNetWorth'), null);
-  ['index.html', 'rooms/ratios.html'].forEach(f => {
+  /* Every Ratio is a reading of The Scorecard since D-231. */
+  ['index.html', 'rooms/financial-snapshot.html'].forEach(f => {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
     checkTrue(`${f} loads shared/explain.js`, /shared\/explain\.js/.test(src));
     checkTrue(`${f} puts the ⓘ on its ratio rows`, /Explain\.button\(/.test(src) && /Explain\.panel\(/.test(src));
@@ -5294,7 +5295,7 @@ section('Proposed, not taken');
     checkTrue('Seed exposes mount()', typeof Seed.mount === 'function');
     checkTrue('seed.js never touches the spine', !/Spine\.|updateProfile|upsert|localStorage/.test(seedSrc));
     checkTrue('it shows through Suggest', seedSrc.indexOf('Suggest.show(') !== -1);
-    ['runway', 'quick-math', 'self-employed'].forEach(function (room) {
+    ['runway', 'financial-snapshot', 'self-employed'].forEach(function (room) {   /* Quick Math is a Scorecard reading, D-231 */
       const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
       checkTrue(`${room} mounts the seed toggle`, html.indexOf('SLAF.Seed.mount(') !== -1);
       checkTrue(`${room} loads seed.js after suggest.js`, html.indexOf('shared/suggest.js') !== -1 && html.indexOf('shared/suggest.js') < html.indexOf('shared/seed.js'));
@@ -5791,7 +5792,7 @@ section('What is finished');
 
     /* A room that reads nothing shared is not "incomplete" — it is never
        blocked, which is a different state and says so. */
-    const solo = Progress.forRoom('quick-math', h);
+    const solo = Progress.forRoom('offer-compare', h);   /* Quick Math became a Scorecard reading, D-231 */
     checkTrue('a standalone room is flagged as standalone', solo.standalone);
     checkTrue('and counts as complete rather than as behind', solo.complete);
     check('unknown room ids return nothing', Progress.forRoom('no-such-room', h), null);
@@ -6271,17 +6272,30 @@ function builtCardId(roomId, id) {
   };
   Object.keys(OWNED_INPUT_MARKERS).forEach(function (roomId) {
     const room = Registry.byId(roomId);
-    const html = fs.readFileSync(path.join(ROOT, room.href), 'utf8');
+    let html = fs.readFileSync(path.join(ROOT, room.href), 'utf8');
+    /* The Scorecard holds five other readings since D-231, two of which have
+       boxes of their own; the rule is about the nine numbers. */
+    if (roomId === 'financial-snapshot') {
+      html = html.slice(html.indexOf('<section id="view-the-nine"'), html.indexOf('<!-- ============== SAVINGS RATE'));
+    }
     OWNED_INPUT_MARKERS[roomId].forEach(function (re) {
       checkTrue(`${roomId} has no input matching ${re}`, !re.test(html),
         'a room is taking input for a field it does not own');
     });
   });
 
-  /* The Financial Snapshot must take no input at all — it is a dashboard. */
+  /* The nine-numbers reading must take no input at all — it is a dashboard.
+     The Scorecard around it does hold two boxes since D-231, both in
+     readings that ask nothing of the household: Quick Math's page-local
+     sums and the rank guess, which is a preference. So the rule is checked
+     on the reading it was always about. */
   const snapHtml = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
-  const snapInputs = (snapHtml.match(/<input|<select/g) || []).length;
-  check('the Financial Snapshot has no input elements', snapInputs, 0);
+  const nine = snapHtml.slice(snapHtml.indexOf('<section id="view-the-nine"'), snapHtml.indexOf('<!-- ============== SAVINGS RATE'));
+  checkTrue('the nine-numbers reading is where it was', nine.length > 1000);
+  const snapInputs = (nine.match(/<input|<select/g) || []).length;
+  check('the nine numbers take no input', snapInputs, 0);
+  checkTrue('and neither box anywhere in the room writes a household field',
+    !/Ownership\.write\(/.test(snapHtml) && !/Spine\.(updateProfile|upsert[A-Za-z]+|set)\(/.test(snapHtml));
 
   /* Debt minimums specifically: derived, owned by Debt Payoff, uneditable
      in Cash Flow. This is the case that started all of it. */
@@ -8095,7 +8109,7 @@ section('Core (D-094): the gate — exists() per situation');
   check('unanswered: every room but the ones that need a fact (a partner, a dependent)', gone(none), 'kids,partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  check('retired: the working rooms are gone', gone(hh('retired')), 'accounts,career-move,credential,dreamline,fire,hassle,kids,partner,real-hourly-wage,savings-rate,self-employed,side-hustle,variable-income');
+  check('retired: the working rooms are gone', gone(hh('retired')), 'accounts,career-move,credential,dreamline,fire,hassle,kids,partner,real-hourly-wage,self-employed,side-hustle,variable-income');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
   check('employed, alone, no dependents: own work, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'decumulation,kids,partner,self-employed,variable-income');
@@ -10458,7 +10472,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
   /* Your Next $100 became a reading of What The Next Dollar Does (D-229). */
-  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements,coast-date,rank-guess,race');
+  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,foo-ladder,fire,fire-lab,statements,coast-date,race');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
@@ -10472,7 +10486,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 30);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 29);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13304,7 +13318,7 @@ section('I1, I3, I4, I5: Money Wrapped, where do you think you rank, your coast 
   checkTrue('below the median the copy says what the next band takes, never how far behind', /The next band, above the middle, takes about \$[\d,]+ more\./.test(rg.line) && !/behind|only|just/.test(rg.line));
   checkTrue('a right guess says so', RankGuess.compare(40, hd, T).same === true);
   checkTrue('no date of birth: the reveal says what it needs', RankGuess.compare(50, Schema.createHousehold(), T).status === 'incomplete');
-  checkTrue('the guess is a preference, never a household field', /Prefs\.set\('rank\.guess'/.test(fs.readFileSync(path.join(ROOT, 'rooms/rank-guess.html'), 'utf8')) && !/Ownership\.write|Spine\.(set|upsert)/.test(fs.readFileSync(path.join(ROOT, 'rooms/rank-guess.html'), 'utf8')));
+  checkTrue('the guess is a preference, never a household field', (function () { const sc = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8'); return /Prefs\.set\('rank\.guess'/.test(sc) && !/Ownership\.write|Spine\.(set|upsert)/.test(sc); })());
 
   /* -- I5: the quiz ------------------------------------------------------------------ */
   const uh = fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8');
@@ -13673,13 +13687,14 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   ['race', 'down-payment', 'wedding'].forEach(function (id) { checkTrue(id + ' is registered', !!Registry.byId(id)); });
   checkTrue('the Quit Fund is the Cushion\'s by-choice reading now (D-230)', !Registry.byId('quit-fund') && Registry.byId('runway').subsections.some(x => x.id === 'view-by-choice'));
   const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
-  /* The Quit Fund used to be shelved beside Between Jobs; both are readings
-     of The Cushion now, so the pair is one room and there is nothing to
-     shelve beside anything (D-230). */
-  const pairs = { 'rank-guess': 'race', housing: 'down-payment', partner: 'wedding' };
+  /* Two of the four pairs have become one room each: Between Jobs beside
+     The Quit Fund is The Cushion (D-230), and Where Do You Think You Rank
+     beside The Race is a Scorecard reading beside a room (D-231). What is
+     left to check is that the two real pairs are still shelved together. */
+  const pairs = { housing: 'down-payment', partner: 'wedding' };
   let shelved = 0;
   (function walk(x) { if (Array.isArray(x) && x.every(i => typeof i === 'string')) { Object.keys(pairs).forEach(k => { if (x.indexOf(k) > -1 && x[x.indexOf(k) + 1] === pairs[k]) shelved++; }); } if (Array.isArray(x)) x.forEach(walk); else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
-  check('each is shelved beside its neighbour in all twenty arrangements', shelved, 60);
+  check('each is shelved beside its neighbour in all twenty arrangements', shelved, 40);
 })();
 
 /* ==========================================================================

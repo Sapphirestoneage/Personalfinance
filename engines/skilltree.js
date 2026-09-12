@@ -167,11 +167,11 @@
   /* An `unlocks` entry names a room or a household number this skill
      improves. Anything else is dropped rather than drawn: an entry the chip
      row cannot address became a chip reading "#" with no label pointing at
-     `ratios.html#r-undefined`, which looks like a link and is not one. */
+     `financial-snapshot.html#r-undefined`, which looks like a link and is not one. */
   function chips(skill, roomTitle) {
     return (skill.unlocks || []).map(function (u) {
       if (u.room) return { kind: 'room', id: u.room, label: roomTitle ? roomTitle(u.room) : u.room, href: u.room + '.html' };
-      if (u.number) return { kind: 'number', id: u.number, label: NUMBER_WORDS[u.number] || u.number, href: 'ratios.html#r-' + u.number };
+      if (u.number) return { kind: 'number', id: u.number, label: NUMBER_WORDS[u.number] || u.number, href: 'financial-snapshot.html#r-' + u.number };
       return null;
     }).filter(Boolean);
   }
