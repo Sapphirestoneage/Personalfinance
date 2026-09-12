@@ -26,8 +26,9 @@
              intake's guesses for a student (guessAs) and says so; with no
              loan listed the number says so and points at Debt Payoff.
   5. CONFIG  data/student_loan_conventions.json (the term, the share, the
-             poverty line and its multiple, the horizon) and
-             data/debt_rules.json (the simulation's limits).
+             multiple, the horizon), data/aca.json for the poverty line the
+             discretionary threshold is measured from (by household size and
+             region, D-224), and data/debt_rules.json (the limits).
 
   THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, four
   inputs, the assumptions drawer with sources, why this matters at your
@@ -156,7 +157,7 @@
   Room.mount({
     id: 'student-loans',
     guessAs: 'student',
-    tables: ['studentLoanConventions', 'debtRules', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    tables: ['studentLoanConventions', 'debtRules', 'aca', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
     reads: ['totalDebt', 'monthlyDebtPayments', 'grossAnnualIncome'],
 
     number: function (h, T) {
@@ -235,7 +236,14 @@
       var rows = [
         { label: 'The standard term', value: years(c.standardTermYears), source: 'the level-payment shape of a federal standard plan — ' + src },
         { label: 'Income-driven share', value: Money.formatRate(ok ? r.share : c.idrShareOfDiscretionary, { decimals: 0 }) + ' of discretionary income', source: ok && r.shareSource === 'yours' ? 'yours' : 'the common figure — ' + src },
-        { label: 'Discretionary income', value: 'earnings above ' + Money.formatRate(c.discretionaryPovertyMultiple, { decimals: 0 }) + ' of a ' + Money.formatCents(Math.round(c.povertyLineDollars * 100)) + ' poverty line', source: 'a round poverty line for one person, the shape of the rule and not any year\'s table — ' + src },
+        /* D-224: the line is the real HHS guideline for this household's
+           size and region when data/aca.json is loaded, and the round
+           number only when it is not. The row says which, because the two
+           are far apart: $15,000 for everyone against $32,150 for four. */
+        { label: 'Discretionary income', value: 'earnings above ' + Money.formatRate(c.discretionaryPovertyMultiple, { decimals: 0 }) + ' of a ' + Money.formatCents(ok ? r.povertyCents : Math.round(c.povertyLineDollars * 100)) + ' poverty line',
+          source: ok && r.povertySource === 'guideline'
+            ? 'the ' + r.povertyGuidelineYear + ' federal poverty guideline for a household of ' + r.povertyHouseholdSize + (r.povertyRegion === 'contiguous' ? '' : ' in ' + (r.povertyRegion === 'alaska' ? 'Alaska' : 'Hawaii')) + ' — data/aca.json'
+            : 'a round poverty line for one person, the shape of the rule and not any year\'s table — ' + src },
         { label: 'Forgiveness after', value: ok && r.forgivenessNone ? 'never' : years(ok ? r.forgivenessYears : c.forgivenessYears), source: ok && r.forgivenessSource === 'yours' ? 'yours' : 'the usual horizon; ' + c.forgivenessYearsGraduate + ' for graduate loans — ' + src },
         { label: 'Extra a month', value: ok ? Money.formatCents(r.extraMonthlyCents) : Money.EM_DASH, source: ok && r.extraEntered ? 'yours' : 'nothing until you type one; the aggressive plan equals the standard one' },
         { label: 'The payoff arithmetic', value: 'month by month, interest at rate ÷ 12', source: 'engines/debt.js, data/debt_rules.json v' + rules.version + ' (' + rules.confidence + '); the same run Debt Payoff shows' },

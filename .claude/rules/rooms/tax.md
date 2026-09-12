@@ -5,7 +5,7 @@ paths:
 # Tax (`tax`)
 File: rooms/tax.html · 256 lines
 Engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly
-Reference data: state_brackets_2026.json, tax_brackets.json
+Reference data: aca.json, state_brackets_2026.json, tax_brackets.json
 Owns: otherPreTax, withheld
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), employmentStatus (start), contributionPercent (start)
 Latest decisions:

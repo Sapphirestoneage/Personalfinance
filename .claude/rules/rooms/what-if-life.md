@@ -6,7 +6,7 @@ paths:
 # What If, Life (`what-if-life`)
 File: rooms/what-if-life.html · 549 lines
 Engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events
-Reference data: car_costs.json, debt_rules.json, expense_categories.json, fire_variants.json, tax_brackets.json, triple_d.json
+Reference data: aca.json, car_costs.json, debt_rules.json, expense_categories.json, fire_variants.json, tax_brackets.json, +1 more
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), contributionPercent (start), totalDebt (debt-payoff), netWorth (statement), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:

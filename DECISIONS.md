@@ -13531,6 +13531,44 @@ sideways scroll.
 
 ---
 
+## D-224 — The poverty line a family is actually measured against
+
+**Why.** `engines/studentloans.js` worked the income-driven payment from
+`povertyLineDollars: 15000` in `data/student_loan_conventions.json`, a round
+number for a household of ONE, applied to every household. A family of four is
+measured against $32,150. On $40,000 that is the difference between a payment
+of $137.71 a month and no payment at all, and the room showed the first to
+everyone. `data/aca.json` has carried the real guidelines, by size and region,
+since D-219.
+
+**Decision.** `Tax.povertyLine(acaTable, size, region)` is the one place the
+HHS guideline is worked out; `acaCliff` now calls it too, so the ACA cliff and
+the student-loan threshold cannot drift apart. `engines/studentloans.js`
+measures discretionary income from it for the household's own size and region,
+falls back to the conventions figure when `data/aca.json` is not loaded, and
+returns `povertySource`, `povertyHouseholdSize`, `povertyRegion` and
+`povertyGuidelineYear`. The Student Loan room loads `aca` and its assumptions
+row names the guideline and the size it used, or says it is the round number.
+
+**The rest of P-3's last row is an OWNER DECISION.** Picking a named plan out
+of `data/lane2/studentloans.json` by disbursement date needs a new question and
+a new vocabulary (RAP, IBR, PAYE, ICR), and `rooms/student-loans.html` states
+as its scope that it does not know the current plan names and compares three
+shapes instead. That file stays parked until the owner replaces that scope.
+STATUS Next item 5.
+
+**Replaces or removes.** The round poverty line becomes a fallback. No room,
+field or question changes.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` 29,544, including the payment re-derived by
+hand at one, three and four people, Alaska's higher line, and the fallback
+saying it is a fallback; the room driven on a Pixel 7 with two dependants,
+which reads "the 2025 federal poverty guideline for a household of 3".
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

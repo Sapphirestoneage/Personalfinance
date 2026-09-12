@@ -180,14 +180,30 @@
    * `region` is 'contiguous' (the default), 'alaska' or 'hawaii': the
    * poverty guidelines differ there and so does everything read off them.
    */
-  function acaCliff(table, magiCents, householdSize, region) {
-    if (!table) return Money.incomplete('ACA table is not loaded.', ['aca']);
-    if (!Money.isEntered(magiCents)) return Money.incomplete('Add your income to check the subsidy ceiling.', ['grossAnnualIncome']);
+  /**
+   * povertyLine(table, householdSize, region) — the HHS poverty guideline in
+   * DOLLARS for a household of that size, from data/aca.json. One formula,
+   * one function (D-224): the ACA cliff and the student-loan income-driven
+   * threshold are both a multiple of this line and neither re-derives it.
+   * Null when the table is not loaded, so a caller can fall back and say so.
+   */
+  function povertyLine(table, householdSize, region) {
+    if (!table) return null;
     var size = Math.max(1, householdSize || 1);
     var byRegion = table.fplByRegion || {};
     var name = region && byRegion[region] ? region : 'contiguous';
     var row = byRegion[name] || table.fpl;
-    var fpl = row.base + row.perAdditionalPerson * (size - 1);
+    if (!row || !Money.isEntered(row.base) || !Money.isEntered(row.perAdditionalPerson)) return null;
+    return { dollars: row.base + row.perAdditionalPerson * (size - 1), region: name, householdSize: size,
+      guidelineYear: table.guidelineYear === undefined ? null : table.guidelineYear };
+  }
+
+  function acaCliff(table, magiCents, householdSize, region) {
+    if (!table) return Money.incomplete('ACA table is not loaded.', ['aca']);
+    if (!Money.isEntered(magiCents)) return Money.incomplete('Add your income to check the subsidy ceiling.', ['grossAnnualIncome']);
+    var line = povertyLine(table, householdSize, region);
+    if (!line) return Money.incomplete('The ACA table has no poverty guideline.', ['aca']);
+    var size = line.householdSize, name = line.region, fpl = line.dollars;
     var multiple = dollars(magiCents) / fpl;
     var cliffDollars = fpl * table.cliffMultiple;
     var over = multiple > table.cliffMultiple;
@@ -449,6 +465,7 @@
     fica: fica,
     stateTax: stateTax,
     acaCliff: acaCliff,
+    povertyLine: povertyLine,
     applicableFraction: applicableFraction,
     estimate: estimate,
     _walk: walk

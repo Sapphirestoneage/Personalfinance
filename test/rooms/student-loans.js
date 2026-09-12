@@ -27,9 +27,14 @@ module.exports = function (t) {
   check('… in about 120 months', Math.abs(std.months - 120) <= 1, true);
   check('… total paid about $25,456', Math.round(std.totalPaidCents / 10000), Math.round(2545600 / 10000), 2);
   checkTrue('… equal to the debt engine on the loans alone', std.months === Debt.simulate(SL.loansOnly(student(), c.loans), T.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 0 }).months);
-  /* Income-driven at $40,000: discretionary = 40,000 − 1.5 × 15,000 = 17,500; 10% ÷ 12 = $145.83. */
-  check('income-driven discretionary income', idr.discretionaryCents, 1750000);
-  check('… payment $145.83 a month', idr.monthlyPaymentCents, 14583);
+  /* D-224: the line is the HHS guideline for the household, not the round
+     $15,000. One adult, no dependants: $15,650. Income-driven at $40,000 is
+     40,000 − 1.5 × 15,650 = 16,525 discretionary; 10% ÷ 12 = $137.71. */
+  check('the poverty line is the guideline, not the round number', c.povertyCents, 1565000);
+  check('… and says so', c.povertySource, 'guideline');
+  check('… for a household of one', c.povertyHouseholdSize, 1);
+  check('income-driven discretionary income', idr.discretionaryCents, 1652500);
+  check('… payment $137.71 a month', idr.monthlyPaymentCents, 13771);
   check('… month 1 interest $83.33', idr.firstMonthInterestCents, 8333);
   checkTrue('… amortises (payment above interest)', idr.negativeAmortisation === false);
   checkTrue('… and clears before 20 years, so nothing is forgiven', idr.clears && idr.forgivenCents === 0 && idr.months < 240);
@@ -43,12 +48,32 @@ module.exports = function (t) {
   check('… so it is recommended', c2.recommendedId, 'aggressive');
   checkTrue('… the clear year is after now', c2.plans.aggressive.clearYear >= 2028);
 
+  /* A household of four is measured from a line more than twice as high, so
+     the same income leaves far less discretionary and the payment falls. A
+     round line for one person had every family paying a single person's
+     share, which is the bug this closes. */
+  const family = student(); family.dependents = [{ age: 6 }, { age: 9 }, { age: 12 }];
+  const cf = SL.compare(family, T, { now: NOW });
+  check('four people: the line is 15,650 + three times 5,500', cf.povertyCents, 3215000);
+  check('… so discretionary on $40,000 is nothing at all', cf.plans.income_driven.discretionaryCents, 0);
+  checkTrue('… and the payment is zero, not a single person\'s $137.71',
+    cf.plans.income_driven.monthlyPaymentCents === 0 && cf.plans.income_driven.belowThreshold === true);
+  const ak = student({ state: 'AK' }); ak.dependents = [{ age: 6 }, { age: 9 }, { age: 12 }];
+  const ca = SL.compare(ak, T, { now: NOW });
+  checkTrue('Alaska has its own guideline, and it is higher', ca.povertyRegion === 'alaska' && ca.povertyCents > cf.povertyCents);
+
+  /* Without the ACA table the round convention stands, and the result says
+     which line it used rather than passing a fallback off as the guideline. */
+  const noTable = SL.compare(student(), { studentLoanConventions: T.studentLoanConventions, debtRules: T.debtRules }, { now: NOW });
+  check('no table: the round line', noTable.povertyCents, 1500000);
+  check('… and it does not claim to be the guideline', noTable.povertySource, 'convention');
+
   /* Negative amortisation: a $60,000 loan at 7% on a $25,000 income. */
   const big = student({ debts: [Schema.createDebt({ id: 'loan', label: 'Loans', balanceCents: 6000000, rate: 0.07, minPaymentCents: null, type: 'student_loan', ownerIds: ['p1'] })],
     people: [Schema.createPerson({ id: 'p1', role: 'adult', employmentStatus: 'student', incomeSources: [Schema.createIncomeSource({ id: 'i1', personId: 'p1', grossAnnualIncomeCents: 2500000 })] })] });
   const c3 = SL.compare(big, T, { now: NOW });
-  check('discretionary on $25,000: $2,500', c3.plans.income_driven.discretionaryCents, 250000);
-  check('… $20.83 a month', c3.plans.income_driven.monthlyPaymentCents, 2083);
+  check('discretionary on $25,000: $1,525', c3.plans.income_driven.discretionaryCents, 152500);
+  check('… $12.71 a month', c3.plans.income_driven.monthlyPaymentCents, 1271);
   checkTrue('… below the $350 of month-one interest: negative amortisation', c3.plans.income_driven.negativeAmortisation === true);
   checkTrue('… forgiven after 20 years, more than was borrowed', !c3.plans.income_driven.clears && c3.plans.income_driven.forgivenCents > 6000000);
   checkTrue('… the standard plan derives its minimum from the term', c3.derivedMinimumIds.indexOf('loan') !== -1);

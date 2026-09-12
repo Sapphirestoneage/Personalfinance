@@ -57,7 +57,7 @@ Section 3 wrote eight sourced tables. Five of them overlap a table an engine alr
 | `data/states.json` (`childcareInfantCenterMonthlyCents`) | `data/childcare_by_state.json` | `engines/kids.js` | None (copied); both are the 2023 edition and stale | Refresh both from Child Care Aware "Price of Care 2024" in May; then read from states.json and retire the old file |
 | `data/states.json` (`incomeTax`) | `data/state_brackets_2026.json` | `engines/tax.js` (`stateTax`) | Ohio is flat in 2026; the engine table (2025 edition) still has brackets; eight states cut rates on 2026-01-01 (IN, KY, MS, MT, NE, NC, OH, OK) | Update `state_brackets_2026.json` from the Tax Foundation 2026 edition in February; states.json keeps only type and top rate so there is one schedule |
 | `data/lane2/milestones.json` | none | none yet | n/a | Section 15.9 (milestones on every timeline) reads it |
-| `data/lane2/studentloans.json` | `data/student_loan_conventions.json` | `engines/studentloans.js` | The conventions file is shapes with round numbers by design | Let the engine pick a plan from `plans[]` by loan disbursement date (RAP from 2026-07-01, IBR before) and fall back to the conventions |
+| `data/lane2/studentloans.json` | `data/student_loan_conventions.json` | `engines/studentloans.js` | The conventions file is shapes with round numbers by design | **PART APPLIED (D-224), the rest is an OWNER DECISION.** Applied: the one round number that was wrong for a real household, the $15,000 poverty line, now comes from `data/aca.json` by size and region. Not applied: picking a named plan from `plans[]` by disbursement date. That needs a new question (when the loans were disbursed) and a new vocabulary (RAP, IBR, PAYE, ICR), and `rooms/student-loans.html` states as its scope that it does **not** know "the current income-driven plan names" and compares three shapes instead. Replacing that scope is the owner's call, not a table move. |
 
 DECIDE: master build. None of these is applied from lane 2.
 
@@ -67,7 +67,7 @@ The lane asks for current and prior year in `contribution_limits.json` and `tax_
 
 ## P-5: move the five section 3 tables into `data/` and register them
 
-**Applied for `tax_brackets.json` (D-210), `aca.json` (D-219) and `contribution_limits.json` (D-221).** `milestones.json` moved with them; only `studentloans.json` still lives under `data/lane2/`.
+**Applied for `tax_brackets.json` (D-210), `aca.json` (D-219) and `contribution_limits.json` (D-221).** `milestones.json` moved with them. Only `studentloans.json` still lives under `data/lane2/`, and it stays there until the owner answers the P-3 row above: moving it in would register a table nothing is allowed to read yet.
 
 `test/run.js` requires every `data/*.json` to be registered in `Reference.TABLE_FILES`, and `shared/reference.js` is outside lane 2, so the five new tables are under `data/lane2/` for now. The change, once the master build wants them loadable by a room:
 

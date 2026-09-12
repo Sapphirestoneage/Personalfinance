@@ -23,28 +23,43 @@
    it is the one loop here, incomeDriven(), documented beside the code.
 
    Every figure that is not the person's comes from
-   data/student_loan_conventions.json (the term, the share, the poverty
-   line and its multiple, the horizon) and data/debt_rules.json (the
-   simulation's limits), and each is marked convention. Income does not
-   grow; a forgiven balance may be taxed and that tax is not modelled.
+   data/student_loan_conventions.json (the term, the share, the multiple,
+   the horizon) and data/debt_rules.json (the simulation's limits), and
+   each is marked convention. The one exception is the poverty line the
+   discretionary threshold is measured from: that is the HHS guideline for
+   this household's size and region, from data/aca.json through
+   Tax.povertyLine (D-224), and the conventions file's round $15,000 is the
+   fallback when the table is not loaded. `povertySource` says which.
+   Income does not grow; a forgiven balance may be taxed and that tax is
+   not modelled.
    Integer cents throughout. Pure functions returning Money Results.
    ========================================================================== */
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
     deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'),
-             Debt: require('./debt.js'), Projection: require('./projection.js') };
+             Debt: require('./debt.js'), Projection: require('./projection.js'), Tax: require('./tax.js') };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, Debt: S.Debt, Projection: S.Projection };
+    deps = { Money: S.Money, Schema: S.Schema, Debt: S.Debt, Projection: S.Projection, Tax: S.Tax };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Debt, deps.Projection);
+  var api = factory(deps.Money, deps.Schema, deps.Debt, deps.Projection, deps.Tax);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.StudentLoans = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Debt, Projection) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Debt, Projection, Tax) {
   'use strict';
 
   var MONTHS = 12;
+  /* Alaska and Hawaii have their own poverty guidelines, and everything
+     measured from the line moves with them (D-219, D-224). */
+  var REGION = { AK: 'alaska', HI: 'hawaii' };
+  /* Resolved at call time: a room may load this file before engines/tax.js. */
+  function taxModule() {
+    if (Tax && typeof Tax.povertyLine === 'function') return Tax;
+    if (typeof module === 'object' && module.exports) { try { return require('./tax.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Tax && typeof g.SLAF.Tax.povertyLine === 'function' ? g.SLAF.Tax : null;
+  }
   var INTAKE_DEBT_ID = 'intake_debt';   /* the one-pager's lump, rooms/start.html */
   var PLAN_IDS = ['standard', 'income_driven', 'aggressive'];
   var PLAN_LABELS = { standard: 'Standard', income_driven: 'Income-driven', aggressive: 'Aggressive' };
@@ -249,7 +264,17 @@
     var share = Money.isEntered(settings.idrShare) ? settings.idrShare : conv.idrShareOfDiscretionary;
     var forgivenessYears = Money.isEntered(settings.forgivenessYears) ? settings.forgivenessYears : conv.forgivenessYears;
     var forgivenessNone = !(forgivenessYears > 0);
-    var povertyCents = Math.round(conv.povertyLineDollars * 100);
+
+    /* D-224: the poverty line the income-driven payment is measured from.
+       The conventions file rounds it to $15,000 for a household of one and
+       has no answer for a household of four, which made the payment more
+       than twice what it should be for a family. data/aca.json carries the
+       HHS guideline by size and region, sourced, so that is the line when
+       the table is loaded; the round number is the fallback and the result
+       says which it used. */
+    var size = Math.max(1, Schema.adults(h).length + ((h.dependents || []).length));
+    var line = taxModule() && T.aca ? taxModule().povertyLine(T.aca, size, REGION[h.state] || 'contiguous') : null;
+    var povertyCents = line ? Math.round(line.dollars * 100) : Math.round(conv.povertyLineDollars * 100);
     var maxMonths = (rules.limits && rules.limits.maxMonths) || DEFAULT_MAX_MONTHS;
 
     var mins = standardMinimums(loans, conv);
@@ -310,6 +335,10 @@
       grossAnnualCents: Money.isOk(gross) ? gross.value : null,
       incomeKnown: Money.isOk(gross),
       povertyCents: povertyCents,
+      povertySource: line ? 'guideline' : 'convention',
+      povertyHouseholdSize: line ? line.householdSize : 1,
+      povertyRegion: line ? line.region : null,
+      povertyGuidelineYear: line ? line.guidelineYear : null,
       thresholdCents: Math.round(povertyCents * conv.discretionaryPovertyMultiple),
       conventions: conv,
       referenceVersion: conv.version

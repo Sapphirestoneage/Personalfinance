@@ -27,7 +27,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **rollover** — The Account You Left Behind · 755 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom · D-150
 - **tax** — Tax · 256 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly · owns: otherPreTax, withheld · D-150, D-142, D-129
 - **variable-income** — Variable Income · 290 lines · engines: projection, tier0, selfemployed, income, ledger, variableincome · owns: incomeLow, incomeHigh, bufferMonths, variableWindow · D-128, D-113
-- **student-loans** — Student Loan Decision · 266 lines · engines: projection, tier0, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-120
+- **student-loans** — Student Loan Decision · 274 lines · engines: projection, tier0, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-224, D-120
 - **calendar** — Money Calendar & Pay-Later · 267 lines · engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-130, D-121
 
 ## Scorecard (8)
