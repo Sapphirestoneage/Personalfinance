@@ -13973,6 +13973,114 @@ section('The CSV round trip made resilient (D-221)');
 })();
 
 /* ==========================================================================
+   The thirty: docs/room-map.json against the app that exists
+   --------------------------------------------------------------------------
+   93 rooms became 30 by a test, not by taste (DECISIONS.md D-227). The map
+   is the contract: every registry room is either one of the thirty or named
+   in exactly one survivor's `absorbs`. This section is the drift alarm. It
+   fails when a new room is added without saying what it replaces, when a
+   merge ships without marking its `done`, and when a room is marked merged
+   while it is still live in the registry — which is the failure that would
+   otherwise let the map read as finished work that nobody did.
+   ========================================================================== */
+section('The thirty (docs/room-map.json)');
+
+(function () {
+  const MAP = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/room-map.json'), 'utf8'));
+  const live = {};
+  Registry.all().forEach(r => { live[r.id] = r; });
+
+  check('the map lands on thirty rooms', MAP.rooms.length, 30);
+  check('numbered 1 to 30', MAP.rooms.map(r => r.n).join(','),
+    Array.from({ length: 30 }, (_, i) => i + 1).join(','));
+
+  /* Every survivor is a room that exists now and keeps its id through the
+     merge: the id is what ownership.js, the registry and every deep link
+     already point at, and renaming it would be a second move disguised as
+     one. The TITLE is what changes. */
+  MAP.rooms.forEach(function (r) {
+    checkTrue(`survivor ${r.id} is a live room`, !!live[r.id],
+      'a survivor that is not in the registry means the map is ahead of the app');
+    checkTrue(`survivor ${r.id} is in a group the map declares`,
+      MAP.groups.some(g => g.id === r.group));
+  });
+
+  /* No room absorbed twice, and nothing absorbs itself. Two survivors
+     claiming the same room is how one field ends up with two owners. */
+  const claimedBy = {};
+  MAP.rooms.forEach(function (r) {
+    r.absorbs.forEach(function (id) {
+      checkTrue(`${r.id} does not absorb itself`, id !== r.id);
+      checkTrue(`${id} is absorbed once, by ${r.id}`, !claimedBy[id],
+        `also claimed by ${claimedBy[id]}`);
+      claimedBy[id] = r.id;
+    });
+  });
+
+  /* The accounting: every live room is a survivor or is claimed, and every
+     claimed room is either still live (not merged yet) or a redirect file
+     (merged). Both directions, or the map drifts silently in one of them. */
+  const survivors = {};
+  MAP.rooms.forEach(r => { survivors[r.id] = true; });
+  Object.keys(live).forEach(function (id) {
+    checkTrue(`live room ${id} is on the map`, survivors[id] || claimedBy[id],
+      'a room the map does not name is a room nobody decided to keep — CLAUDE.md: what does it replace?');
+  });
+
+  MAP.rooms.forEach(function (r) {
+    const done = r.done || [];
+    done.forEach(function (id) {
+      checkTrue(`${r.id} absorbs ${id}, which it lists`, r.absorbs.indexOf(id) !== -1);
+      checkTrue(`${id} is merged, so it is out of the registry`, !live[id]);
+      const stub = path.join(ROOT, 'rooms', id + '.html');
+      checkTrue(`${id} is a redirect, not a deleted file`, fs.existsSync(stub),
+        'the links are out in the world; a merged room redirects, it never 404s');
+      const html = fs.readFileSync(stub, 'utf8');
+      checkTrue(`${id} redirects to ${r.id}`,
+        new RegExp('url=(\\.\\./)?' + (r.id === 'dashboard' ? 'index' : r.id) + '\\.html').test(html));
+      checkTrue(`${id} says where it went in words too`, /Open it →|Open the|→<\/a>/.test(html));
+    });
+    r.absorbs.filter(id => done.indexOf(id) === -1).forEach(function (id) {
+      checkTrue(`${id} is not merged yet, so it is still a live room`, !!live[id],
+        'it is gone from the registry but not marked done in docs/room-map.json');
+    });
+    Object.keys(r.held || {}).forEach(function (id) {
+      checkTrue(`${r.id} holds ${id} back, which it also absorbs`, r.absorbs.indexOf(id) !== -1);
+      checkTrue(`${id} is held back, so it is still live`, !!live[id]);
+      checkTrue(`and the map says why ${id} is held`, String(r.held[id]).length > 30);
+      checkTrue(`a held room is never also marked done`, done.indexOf(id) === -1);
+    });
+  });
+
+  /* The count the whole exercise is named after. */
+  const merged = MAP.rooms.reduce((n, r) => n + (r.done || []).length, 0);
+  const toGo = MAP.rooms.reduce((n, r) => n + r.absorbs.length, 0) - merged;
+  check('93 rooms are accounted for: thirty, plus what they absorb, plus the Net Worth redirect',
+    MAP.rooms.length + merged + toGo + 1, 93);
+  check('and the registry holds exactly the survivors plus what has not merged yet',
+    Object.keys(live).length, MAP.rooms.length + toGo);
+
+  /* The five rules and the anti-rule are written down where the next session
+     reads them, not only in a chat log. */
+  checkTrue('the map carries the test for what earns the right to be a room', MAP.rules.length === 6);
+  checkTrue('including the anti-rule, which outranks the five',
+    MAP.rules.some(r => /ANTI-RULE/.test(r) && /emotional register/.test(r)));
+  checkTrue('When It Won\'t All Get Paid absorbs nothing and is absorbed by nothing',
+    !claimedBy['cant-pay'] && survivors['cant-pay']
+    && MAP.rooms.filter(r => r.id === 'cant-pay')[0].absorbs.length === 0);
+  checkTrue('Get Help stands alone too', !claimedBy['get-help'] && survivors['get-help']);
+
+  /* The order of the six sessions, because doing the Back Half while the
+     Decision Room shell moves underneath it is the one sequencing mistake
+     that costs a rebuild (D-226). */
+  check('six merge sessions, in order', MAP.order.map(o => o.step).join(','), '1,2,3,4,5,6');
+  MAP.order.forEach(function (o) {
+    checkTrue(`step ${o.step} targets a survivor`, survivors[o.target]);
+  });
+  check('the Back Half is built last and read first', MAP.order[5].target, 'decumulation');
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

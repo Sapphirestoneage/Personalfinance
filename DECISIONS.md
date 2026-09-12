@@ -13678,6 +13678,106 @@ figure checked by the month-by-month loop and by the closed-form annuity
 independently. Twelve properties, including that letting one more unit
 can never make you pay more.
 
+## D-226 — You cannot size the mountain until you know how you come down it
+
+**Why.** Every room hangs off one multiplication: spending × 25. That number
+is wrong for a pre-FI household in five ways at once — the drawdown is taxed
+and the multiplier is not; the money can be behind a 59½ wall (the Middle
+Class Trap is an accumulation problem found in decumulation, too late to fix
+cheaply); Social Security, a pension and a mortgage that ends make the pot a
+bridge, not a perpetuity; marketplace cover before 65 is a marginal tax on
+every reported dollar; and spending is not flat.
+
+**Decision.** The chain runs backwards from today. The Back Half
+(`rooms/decumulation.html`, absorbing `roth-aca`, `middle-class-trap`,
+`reachable`) asks what the money must cover and when, what reaches you after
+tax by account, what floors arrive later, and what a bad first five years
+does — and the target FALLS OUT of that. The Number (`rooms/fire.html`)
+becomes a read-out of it with the naive 25x beside it, labelled, and one
+sentence on the gap. Accounts merges up into the balance sheet and into What
+The Next Dollar Does, because where the next dollar lands moves the target.
+Reachable Money and the trap test become a standing Dashboard diagnostic.
+Build it LAST of the six merges and read it FIRST in the journey.
+
+**Replaces or removes.** The 4% rule as the app's source of truth; four rooms
+(`roth-aca`, `middle-class-trap`, `reachable`, `fire-lab`) as destinations
+rather than views.
+
+**Stored shape.** No change yet. The Back Half's inputs will need a
+compatibility note in their own entry when 6 ships; nothing is stored now.
+
+**Verified.** `node test/run.js`. No code in this entry — it is the order the
+remaining merges are built in, recorded before any of them moves.
+
+**Open, and owner's to answer.** Galloway's objection stands: model the
+version where the floor is means-tested, or the room sells comfort.
+
+## D-227 — What earns the right to be a room: five rules, one anti-rule, thirty rooms
+
+**Why.** 93 rooms, each working alone, connected badly. Nothing said what a
+room WAS, so every idea became one. Without a test, the freeze can only say
+no; it cannot say what to merge.
+
+**Decision.** A room must fail all five of these or it is a view:
+(1) same fields, different framing is one room with a toggle;
+(2) before and after of one decision is one room with a time axis;
+(3) a lens is a toggle;
+(4) a single fact is a card in the room where that fact changes a decision;
+(5) navigation is not a room.
+The anti-rule outranks all five: **a room with a different emotional register
+does not merge, even when the math is identical** — which is why When It
+Won't All Get Paid stands alone. `docs/room-map.json` holds the resulting
+thirty, what each absorbs, what has already merged, and what is held back
+with the reason. `test/run.js` checks it against `shared/registry.js` on
+every run: no room absorbed twice, every live room named, and a room marked
+merged must be out of the registry AND still on disk as a redirect.
+
+**Replaces or removes.** 62 rooms become views, toggles, block types and
+cards. Nothing is deleted: every merged room stays as a redirect, because
+the links are already out in the world.
+
+**Stored shape.** No change. `docs/room-map.json` is a plan, not reference
+data, so it is not in `data/` and no room loads it.
+
+**Verified.** `node test/run.js` (30,847 checks), `node test/forms.js`.
+
+## D-228 — The Ledger swallows navigation: six pages become six hats
+
+**Why.** Four onboarding doors were live at once and two pages asked the
+identical question. Front Doors, the Walk-Through, the First Round and
+Express were ways IN, not rooms with a number; Refresh and Welcome Back
+walked the same moving rows, wrote through the same owners and took the same
+snapshot, differing only in row order and which line they drew. Rule 5 of
+D-227, and a straight duplicate.
+
+**Decision.** `rooms/ledger.html` is one page with six views, routed by hash
+and never rebuilt: the doors (default), `#round-1` (was First Round),
+`#all-at-once` (was Express), `#since-last-time` (Refresh and Welcome Back,
+now one), `#arrangements` (was Front Doors), `#route` (was the Walk-Through).
+It moves to group `home` at order 0.5 — one door where four stood. Every view
+writes through `Ownership.write`; not one is a second store. The six old
+files stay as redirects that carry their deep-link hashes across.
+
+**Replaces or removes.** Six registry rooms (92 → 86). `Progress.UPKEEP` and
+the walk's last step point at the Ledger; `data/layouts.json` sheds six ids
+from all twenty arrangements; the dashboard, the map and the skill tree link
+to the views.
+
+**Stored shape.** No change. One rename in a snapshot's own field:
+`reason: 'refresh'` and `reason: 'comeback'` are written as
+`'since-last-time'`. Nothing reads `reason` to decide anything — it is a
+label on `slaf.snapshots.v1` entries — so older snapshots stay readable and
+their deltas still compute.
+
+**Held back.** Start Here is the seventh room the map gives the Ledger, and
+it is NOT merged here: it owns 17 shared fields and where those owners go is
+the owner's decision at the top of STATUS.md.
+
+**Verified.** `node test/run.js` (30,847 checks), `node test/forms.js` (604
+checks in a real browser: Round 1, all at once, since last time and the
+arrangements search box each keep the keyboard open). Every view and all six
+redirects loaded at 390px with a clean console.
+
 ---
 
 # The Dungeons & Dividends entries

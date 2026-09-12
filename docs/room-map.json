@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "decision": "D-227",
+  "asOf": "2026-09-12",
+  "what": "The thirty rooms the suite is merging down to, and what each one absorbs. Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app.",
+  "howToRead": {
+    "survivors": "One entry per surviving room. 'id' is its registry id and stays its id; 'title' is what it is called after the merge (the registry may still carry the old title until that merge ships).",
+    "absorbs": "Registry ids that become a view, a toggle, a block type or a card inside the survivor. Every one of them ends as a redirect file, never a deleted file: the links are out in the world.",
+    "done": "The subset of 'absorbs' that has already been retired. A room in 'done' must be a redirect and must be gone from the registry; a room in 'absorbs' but not 'done' must still be a live registry room. That pair is the drift alarm.",
+    "held": "Absorbed rooms that are deliberately NOT being retired yet, each with the reason. A held room stays live until the reason is cleared."
+  },
+  "rules": [
+    "Same fields, different framing is one room with a toggle, not two rooms.",
+    "Before and after of one decision is one room with a time axis.",
+    "A lens is a toggle, not a room.",
+    "A single fact is a card inside the room where that fact changes a decision.",
+    "Navigation is not a room.",
+    "ANTI-RULE, and it outranks the five: a room with a different emotional register does not merge, even when the math is identical."
+  ],
+  "order": [
+    { "step": 1, "target": "ledger", "title": "The Ledger swallows navigation", "state": "todo" },
+    { "step": 2, "target": "runway", "title": "The Cushion, four readings of one number", "state": "todo" },
+    { "step": 3, "target": "financial-snapshot", "title": "The Scorecard", "state": "todo" },
+    { "step": 4, "target": "foo-ladder", "title": "What The Next Dollar Does", "state": "todo" },
+    { "step": 5, "target": "goals", "title": "The Decision Room shell, then three easy block types", "state": "todo" },
+    { "step": 6, "target": "decumulation", "title": "The Back Half, which then defines the target every other room reads", "state": "todo" }
+  ],
+  "groups": [
+    { "id": "way-in", "title": "The way in" },
+    { "id": "facts", "title": "The facts" },
+    { "id": "scorecard", "title": "The scorecard" },
+    { "id": "back-half", "title": "The back half (runs first)" },
+    { "id": "decisions", "title": "Decisions (one shell, block types inside)" },
+    { "id": "meaning", "title": "Meaning" },
+    { "id": "levelup", "title": "Level up" },
+    { "id": "alone", "title": "Standing alone on purpose" }
+  ],
+  "rooms": [
+    {
+      "n": 1, "id": "ledger", "title": "The Ledger", "group": "way-in",
+      "absorbs": ["start", "first-round", "express", "doors", "walk", "comeback", "refresh"],
+      "done": [],
+      "held": { "start": "Start Here owns 17 shared fields, more than any other room. Where those owners go is the open question at the top of STATUS.md, and it is the owner's to answer, not a session's to guess." },
+      "note": "First Round is Round 1, Express is the all-at-once door, Welcome Back and Refresh are one 'since last time'."
+    },
+    { "n": 2, "id": "dashboard", "title": "The Dashboard", "group": "way-in", "absorbs": [], "done": [],
+      "note": "Gains the one next thing and the reachability diagnostic when step 6 lands." },
+    { "n": 3, "id": "settings", "title": "Settings", "group": "way-in", "absorbs": [], "done": [], "note": "Infrastructure. Merging it makes it findable by nobody." },
+    { "n": 4, "id": "data", "title": "Your Data", "group": "way-in", "absorbs": [], "done": [], "note": "Infrastructure, same reason." },
+
+    { "n": 5, "id": "income", "title": "Income", "group": "facts",
+      "absorbs": ["variable-income", "real-hourly-wage"], "done": [],
+      "note": "Variable income is a mode when pay is irregular; the real hourly wage is the conversion the whole app reads." },
+    { "n": 6, "id": "expenses", "title": "Expenses", "group": "facts", "absorbs": ["subscriptions"], "done": [],
+      "note": "The subscription finder is a finder over the expense log." },
+    { "n": 7, "id": "cash-flow", "title": "The Month", "group": "facts", "absorbs": ["calendar"], "done": [] },
+    { "n": 8, "id": "budget", "title": "The Close", "group": "facts", "absorbs": ["variance", "history"], "done": [] },
+    { "n": 9, "id": "statement", "title": "The Statement", "group": "facts", "absorbs": ["accounts", "statements"], "done": [],
+      "note": "rooms/net-worth.html is already a redirect here and is not in the registry. Accounts merges upward because where the next dollar lands moves the target (D-226)." },
+    { "n": 10, "id": "tax", "title": "Tax", "group": "facts", "absorbs": [], "done": [] },
+
+    { "n": 11, "id": "financial-snapshot", "title": "The Scorecard", "group": "scorecard",
+      "absorbs": ["health", "ratios", "savings-rate", "quick-math", "rank-guess"], "done": [] },
+    { "n": 12, "id": "one-pager", "title": "The Card", "group": "scorecard", "absorbs": ["progress-card", "wrapped"], "done": [] },
+
+    { "n": 13, "id": "decumulation", "title": "The Back Half", "group": "back-half",
+      "absorbs": ["roth-aca", "middle-class-trap", "reachable"], "done": [],
+      "note": "Runs first in the journey, built last of the merges (D-226)." },
+    { "n": 14, "id": "fire", "title": "The Number", "group": "back-half",
+      "absorbs": ["fire-lab", "coast-date", "enough", "race"], "done": [],
+      "note": "Becomes a read-out of what the Back Half produced, with the naive 25x answer beside it (D-226)." },
+    { "n": 15, "id": "runway", "title": "The Cushion", "group": "back-half",
+      "absorbs": ["between-jobs", "quit-fund", "sleep-at-night"], "done": [],
+      "note": "Four readings of one number: how long can you not earn. The toggle is the insight; four rooms hid it." },
+    { "n": 16, "id": "foo-ladder", "title": "What The Next Dollar Does", "group": "back-half",
+      "absorbs": ["next-hundred", "windfall"], "done": [],
+      "note": "One question at three amounts. The FOO step number stays visible everywhere." },
+
+    { "n": 17, "id": "goals", "title": "The Decision Room", "group": "decisions",
+      "absorbs": ["wedding", "reversibility", "what-if-life", "worth", "hassle", "adventure", "timeline"], "done": [],
+      "note": "One shell, many block types; five outputs on every block. Reversibility becomes a field on every block, not a room." },
+    { "n": 18, "id": "housing", "title": "Housing", "group": "decisions", "absorbs": ["down-payment"], "done": [],
+      "note": "The house hack (D-225) already ships inside this room; it never became a room of its own." },
+    { "n": 19, "id": "car", "title": "Wheels", "group": "decisions", "absorbs": ["first-car"], "done": [] },
+    { "n": 20, "id": "career-move", "title": "Work", "group": "decisions",
+      "absorbs": ["offer-compare", "side-hustle", "self-employed", "credential", "degree", "micro-retirement", "rollover"], "done": [],
+      "note": "Eight old rooms, every one about a job. Nothing here is about building something that pays you; that gap is now more visible, not less." },
+    { "n": 21, "id": "debt-payoff", "title": "Debt", "group": "decisions", "absorbs": ["student-loans", "credit"], "done": [] },
+    { "n": 22, "id": "big-purchase", "title": "Big Purchase", "group": "decisions", "absorbs": ["dreamline"], "done": [],
+      "note": "Pricing the thing you want is the same form." },
+    { "n": 23, "id": "partner", "title": "Family", "group": "decisions", "absorbs": ["kids"], "done": [] },
+
+    { "n": 24, "id": "values", "title": "What Matters", "group": "meaning", "absorbs": ["fulfillment", "rerank", "giving"], "done": [] },
+    { "n": 25, "id": "week", "title": "The Life", "group": "meaning", "absorbs": ["buckets"], "done": [] },
+
+    { "n": 26, "id": "skill-tree", "title": "The Skill Tree", "group": "levelup", "absorbs": ["stacker", "exercises"], "done": [] },
+    { "n": 27, "id": "debates", "title": "The Referee", "group": "levelup", "absorbs": ["unlearning"], "done": [],
+      "note": "Does this advice still apply to you is the same question as which side are you on." },
+
+    { "n": 28, "id": "protection", "title": "Protection", "group": "alone", "absorbs": ["estate"], "done": [] },
+    { "n": 29, "id": "cant-pay", "title": "When It Won't All Get Paid", "group": "alone", "absorbs": [], "done": [],
+      "note": "The anti-rule. Different register, different failure cost. Never behind a toggle." },
+    { "n": 30, "id": "get-help", "title": "Get Help", "group": "alone", "absorbs": [], "done": [],
+      "note": "Its independence is the point." }
+  ]
+}
