@@ -563,7 +563,7 @@
       "door": "I",
       "level": 3,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "windowFromConvention",
       "askIn": "variable-income",
       "moves": false,
       "unlocks": "the rolling average the variable-income view reads"
@@ -712,7 +712,7 @@
       "door": "A",
       "level": 2,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "tierFromCharacter",
       "askIn": "statement",
       "moves": false,
       "unlocks": "the liquidity ladder: cash, taxable, retirement, property"
@@ -1141,7 +1141,7 @@
       "door": "D",
       "level": 3,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "loanPlanFromIncome",
       "askIn": "student-loans",
       "moves": false,
       "unlocks": "the student loan trajectory under the plan chosen"
@@ -1240,7 +1240,7 @@
       "door": "T",
       "level": 3,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "preTaxFromSeTax",
       "askIn": "tax",
       "moves": true,
       "unlocks": "taxable income after the deductions the paycheck already takes"
@@ -1280,7 +1280,7 @@
       "door": "E",
       "level": 2,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "foodFromTypical",
       "askIn": "expenses",
       "moves": true,
       "unlocks": "the FAT floor: the minimum viable month"
@@ -1302,7 +1302,7 @@
       "door": "E",
       "level": 2,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "accommodationFromTypical",
       "askIn": "expenses",
       "moves": true,
       "unlocks": "the FAT floor, and the housing share of spending"
@@ -1321,7 +1321,7 @@
       "door": "E",
       "level": 2,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "transportFromTypical",
       "askIn": "expenses",
       "moves": true,
       "unlocks": "the FAT floor, and the car rules"
@@ -1589,7 +1589,7 @@
       "door": "E",
       "level": 3,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "givingFromAverage",
       "askIn": "giving",
       "moves": false,
       "unlocks": "the giving rate beside the savings rate"
@@ -1627,7 +1627,7 @@
       "door": "E",
       "level": 2,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "splitFromIncomes",
       "askIn": "partner",
       "moves": false,
       "unlocks": "each partner’s share of the shared month"

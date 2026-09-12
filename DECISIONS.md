@@ -13190,6 +13190,48 @@ Aug. `test/export.js`; the lane 2 suites; Express driven in Chromium — the
 rows absent for a fresh household, present after tapping "between jobs", the
 date stored as `2026-08-12`.
 
+## D-214 — The derivation ledger: nine rows stop starting blank
+
+**Why.** The brief lists 32 fields rendered as empty inputs that a table in
+`data/` could answer. Checked one by one: 10 already had a rule, and 13 more
+are already proposed by their own room through `Room.mount`'s `propose` (the
+search from `reentry_gap`, the draw and Social Security age from the VPW
+table, the loan shares from the loan conventions, the shared month from
+spending). Those did not need a second mechanism. Nine rows were genuinely
+blank with a table behind them.
+
+**Decision.** Nine rules in `shared/suggest.js`, each attached to its row by
+`suggestFrom`, each naming its file and shown as a suggestion that is only
+stored when tapped (D-205): the three needs buckets from `common_costs.json`;
+the rolling window from `variable_income_conventions.json`; the split mode
+from the two incomes against `partner_conventions.json`; the giving share
+from `giving_conventions.json`; the loan plan as the lower of the standard
+and income-driven payments from `student_loan_conventions.json`; other
+pre-tax as the deductible half from `engines/selfemployed.js`; and an asset's
+pile read off its own `taxCharacter`.
+
+**Not done, on purpose.** `rothContributed` and `hsaContributed` stay asked:
+`irs_limits_2026.json` holds CAPS, and suggesting a cap as a contribution
+would overstate the savings rate. Both rows are `kind: lookup` — go and read
+the statement. `beneficiariesSet` stays asked: no table knows whose paperwork
+is signed. `therapyMonthly` stays asked: the costs table has no therapy line.
+Cost-of-living scaling is not applied anywhere: `col_index.json` is 40 named
+cities and nothing stores which city you are in, so the rent figure is
+national and says so.
+
+**Replaces or removes.** Nine blank inputs become one tap each. No field, row
+or room added.
+
+**Stored shape.** No change. A suggestion is never written until tapped, and
+then it is tagged `source: suggested, confidence: roughly`.
+
+**Verified.** `node test/run.js` (29,051), including each figure re-derived
+from its table by hand, both sides of the split and the loan-plan decision,
+and an assertion that the four excluded rows still carry no rule.
+`test/export.js`; the lane 2 suites; Express in Chromium: three chips reading
+"Suggested $1,750 a month · use it", and tapping one stored 52000 tagged
+suggested/roughly.
+
 ---
 
 # The Dungeons & Dividends entries

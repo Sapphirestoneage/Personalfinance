@@ -210,17 +210,151 @@
       return {
         Money: require('./money.js'), Schema: require('./schema.js'), Ownership: require('./ownership.js'),
         Tax: require('../engines/tax.js'), Spine: require('./spine-v2.js'),
+        /* D-214: the derivation ledger reads the SE-tax half from the one
+           engine that derives it, and the situation from the one gate. */
+        SelfEmployed: (function () { try { return require('../engines/selfemployed.js'); } catch (e) { return null; } })(),
+        Gate: (function () { try { return require('./gate.js'); } catch (e) { return null; } })(),
         LedgerRows: (function () { try { return require('./ledger-rows.js'); } catch (e) { return null; } })()
       };
     }
     var g = typeof self !== 'undefined' ? self : null;
     var S = g && g.SLAF ? g.SLAF : {};
-    return { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, Tax: S.Tax, Spine: S.Spine, LedgerRows: S.LedgerRows };
+    return { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, Tax: S.Tax, Spine: S.Spine,
+      SelfEmployed: S.SelfEmployed || null, Gate: S.Gate || null, LedgerRows: S.LedgerRows };
   }
   function pct(r) { return Math.round(r * 1000) / 10 + '%'; }
   function money(D, c) { return D.Money.formatCents(c); }
 
   var RULES = {
+    /* ---- The derivation ledger (D-214) ---------------------------------
+       Rows the intake rendered blank while a table in data/ already knew a
+       reasonable first figure. Each is a SUGGESTION: it carries where it
+       came from and is never stored until tapped (D-205). None invents a
+       fact about this household. */
+
+    /* The three needs buckets, from the typical month. NOT scaled by
+       cost of living: data/col_index.json is an index of 40 named cities
+       and nothing in the app stores which city you are in, so scaling by
+       it would be a guess dressed as arithmetic. National, and it says so. */
+    accommodationFromTypical: function (c) {
+      var t = c.tables.commonCosts;
+      if (!t) return null;
+      var line = (t.lines || []).filter(function (l) { return l.id === 'rent_or_mortgage'; })[0];
+      if (!line || !c.D.Money.isEntered(line.monthlyCents)) return null;
+      return { value: line.monthlyCents, unit: 'cents', display: money(c.D, line.monthlyCents) + ' a month',
+        how: 'The typical rent or mortgage in the common-costs table, nationally. Yours is almost certainly different: this is somewhere to start, not a guess at your rent.',
+        sources: ['data/common_costs.json'] };
+    },
+    foodFromTypical: function (c) {
+      var t = c.tables.commonCosts;
+      if (!t) return null;
+      var line = (t.lines || []).filter(function (l) { return l.id === 'groceries'; })[0];
+      if (!line || !c.D.Money.isEntered(line.monthlyCents)) return null;
+      return { value: line.monthlyCents, unit: 'cents', display: money(c.D, line.monthlyCents) + ' a month',
+        how: 'Groceries in the common-costs table. Eating out belongs in everything else, not here.',
+        sources: ['data/common_costs.json'] };
+    },
+    transportFromTypical: function (c) {
+      var t = c.tables.commonCosts;
+      if (!t) return null;
+      var lines = (t.lines || []).filter(function (l) { return l.categoryId === 'transportation'; });
+      if (!lines.length) return null;
+      var v = lines.reduce(function (n, l) { return n + (c.D.Money.isEntered(l.monthlyCents) ? l.monthlyCents : 0); }, 0);
+      if (v <= 0) return null;
+      return { value: v, unit: 'cents', display: money(c.D, v) + ' a month',
+        how: 'The transportation lines in the common-costs table added up: ' + lines.map(function (l) { return l.label.toLowerCase(); }).join(' and ') + '.',
+        sources: ['data/common_costs.json'] };
+    },
+    /* The window a variable income is averaged over. */
+    windowFromConvention: function (c) {
+      var t = c.tables.variableIncomeConventions && c.tables.variableIncomeConventions.buffer;
+      if (!t || !c.D.Money.isEntered(t.usualMonths)) return null;
+      return { value: t.usualMonths, unit: 'months', display: t.usualMonths + ' months',
+        how: 'The usual window in the variable-income conventions: ' + t.usualMonths + ' months is enough history to see the swing without burying this month in it.',
+        sources: ['data/variable_income_conventions.json'] };
+    },
+    /* How two people split what they share. The conventions file says equal
+       is chosen when the incomes are close and proportional when they are
+       far apart, so the two incomes already answer it. */
+    splitFromIncomes: function (c) {
+      var t = c.tables.partnerConventions;
+      if (!t || !c.D.Schema.householdOfTwo(c.h)) return null;
+      var pay = (c.h.people || []).slice(0, 2).map(function (p) {
+        return (p.incomeSources || []).reduce(function (n, src) {
+          return n + (c.D.Money.isEntered(src.grossAnnualIncomeCents) ? src.grossAnnualIncomeCents : 0);
+        }, 0);
+      });
+      if (pay.length < 2 || pay[0] <= 0 || pay[1] <= 0) return null;
+      var hi = Math.max(pay[0], pay[1]), lo = Math.min(pay[0], pay[1]);
+      var close = lo / hi >= 0.8;
+      var mode = (t.modes || []).filter(function (m) { return m.id === (close ? 'equal' : 'proportional'); })[0];
+      if (!mode) return null;
+      return { value: mode.id, unit: 'enum', display: mode.label,
+        how: close
+          ? 'The two incomes are within a fifth of each other, and that is when people choose an equal split.'
+          : 'One income is more than a fifth larger than the other, and that is when people choose to split in proportion.',
+        sources: ['data/partner_conventions.json'] };
+    },
+    /* Giving: the table's own proposed share, which is the US average. */
+    givingFromAverage: function (c) {
+      var t = c.tables.givingConventions;
+      if (!t) return null;
+      var share = (t.shares || []).filter(function (x) { return x.id === t.proposeId; })[0];
+      if (!share || !c.D.Money.isEntered(share.pct)) return null;
+      return { value: share.pct, unit: 'percent', display: share.label,
+        how: share.label + ' is ' + share.note + '. Somewhere to start, not a target anybody set for you.',
+        sources: ['data/giving_conventions.json'] };
+    },
+    /* A repayment plan: standard, unless an income-driven payment would be
+       lower, which is the whole reason income-driven plans exist. */
+    loanPlanFromIncome: function (c) {
+      var t = c.tables.studentLoanConventions;
+      if (!t) return null;
+      var loans = (c.h.debts || []).filter(function (d) { return d.type === 'student_loan'; });
+      if (!loans.length) return null;
+      var bal = loans.reduce(function (n, d) { return n + (c.D.Money.isEntered(d.balanceCents) ? d.balanceCents : 0); }, 0);
+      var gross = c.real('grossAnnualIncome');
+      if (bal <= 0 || !c.D.Money.isEntered(gross)) return null;
+      var standard = Math.round(bal / (t.standardTermYears * 12));
+      var floor = t.povertyLineDollars * 100 * t.discretionaryPovertyMultiple;
+      var idr = Math.round(Math.max(0, gross - floor) * t.idrShareOfDiscretionary / 12);
+      var driven = idr < standard;
+      return { value: driven ? 'income_driven' : 'standard', unit: 'enum',
+        display: driven ? 'Income-driven' : 'Standard',
+        how: driven
+          ? 'An income-driven payment works out around ' + money(c.D, idr) + ' a month against ' + money(c.D, standard) + ' on the standard ' + t.standardTermYears + '-year plan, so it is the lower one.'
+          : 'The standard ' + t.standardTermYears + '-year payment of about ' + money(c.D, standard) + ' a month is already at or below an income-driven one, so there is nothing to gain by switching.',
+        sources: ['data/student_loan_conventions.json'] };
+    },
+    /* Pre-tax money beyond the workplace plan: on own work, the deductible
+       half of the self-employment tax, from the one engine that derives it. */
+    preTaxFromSeTax: function (c) {
+      var SE = c.D.SelfEmployed, se = c.tables.seTax;
+      if (!SE || !se) return null;
+      var sit = c.D.Gate ? c.D.Gate.situationOf(c.h) : null;
+      if (sit !== 'selfEmployed' && sit !== 'mixed') return null;
+      var gross = c.real('grossAnnualIncome');
+      if (!c.D.Money.isEntered(gross) || gross <= 0) return null;
+      var r = SE.selfEmploymentTax(gross, c.h.filingStatus || 'single', se);
+      if (!c.D.Money.isOk(r) || !c.D.Money.isEntered(r.deductibleHalfCents) || r.deductibleHalfCents <= 0) return null;
+      return { value: r.deductibleHalfCents, unit: 'cents', display: money(c.D, r.deductibleHalfCents) + ' a year',
+        how: 'Half the self-employment tax comes off before income tax, standing in for the half an employer would have paid. On ' + money(c.D, gross) + ' that is ' + money(c.D, r.deductibleHalfCents) + '.',
+        sources: ['data/tax_brackets.json'] };
+    },
+    /* Which pile an asset sits in follows from what the row already says it
+       is, so this reads the row rather than looking anything up. */
+    tierFromCharacter: function (c) {
+      var a = c.item;
+      if (!a || !a.taxCharacter) return null;
+      var MAP = { cash: 'cash', taxable: 'taxable', pretax: 'retirement', roth: 'retirement',
+        hsa: 'retirement', '529': 'other', daf: 'other', property: 'property', business: 'other' };
+      var tier = MAP[a.taxCharacter];
+      if (!tier) return null;
+      var LABEL = { cash: 'Cash', taxable: 'Taxable', retirement: 'Retirement', property: 'Property', other: 'Other' };
+      return { value: tier, unit: 'enum', display: LABEL[tier],
+        how: 'It is already marked ' + a.taxCharacter + ', and that sits in the ' + LABEL[tier].toLowerCase() + ' pile.',
+        sources: ['shared/ownership.js'] };
+    },
     zipToState: function (c) {
       var t = c.tables.zipPrefixes, zip = c.real('zip');
       if (!t || !zip) return null;
@@ -516,7 +650,9 @@
     CLASS_SHELL: CLS_SHELL,
     CLASS_CHIP: CLS_CHIP,
     RULES: RULES,
-    TABLES: ['ledgerRows', 'zipPrefixes', 'uiBenefits', 'savingsPresets', 'federalBrackets', 'stateBrackets', 'protectionConventions', 'debtRules', 'onepagerDefaults', 'retirementMilestones', 'cobraAca'],
+    TABLES: ['ledgerRows', 'zipPrefixes', 'uiBenefits', 'savingsPresets', 'federalBrackets', 'stateBrackets', 'protectionConventions', 'debtRules', 'onepagerDefaults', 'retirementMilestones', 'cobraAca',
+      /* D-214: the derivation ledger's tables. */
+      'commonCosts', 'variableIncomeConventions', 'partnerConventions', 'givingConventions', 'studentLoanConventions', 'seTax'],
     suggestions: suggestions,
     forRow: forRow,
     overlay: overlay,

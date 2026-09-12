@@ -12535,6 +12535,141 @@ section('Express: a second view of the same rows (D-208)');
   checkTrue('Express is in every arrangement beside the First Round', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('express') >= 0)); })());
 })();
 
+section('The derivation ledger (D-214)');
+
+/* The brief: a row the intake renders blank when a table in data/ already
+   knows a reasonable first figure is a question that should not be asked.
+   Nine rows now carry a rule. Each must produce a figure, say where it came
+   from, and never be written until it is tapped. */
+(function () {
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const Sug = require(path.join(ROOT, 'shared/suggest.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const T = {};
+  Sug.TABLES.forEach(function (k) { try { T[k] = Ref.readSync(k, path.join(ROOT, 'data')); } catch (e) { /* named below */ } });
+  checkTrue('every table the rules name is registered and loadable',
+    Sug.TABLES.every((k) => !!T[k]), Sug.TABLES.filter((k) => !T[k]).join(','));
+  LR.use(T.ledgerRows);
+  const rows = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')).rows;
+
+  const WIRED = {
+    accommodationMonthly: 'accommodationFromTypical', foodMonthly: 'foodFromTypical',
+    transportationMonthly: 'transportFromTypical', variableWindow: 'windowFromConvention',
+    splitMode: 'splitFromIncomes', givingPct: 'givingFromAverage',
+    loanPlan: 'loanPlanFromIncome', otherPreTax: 'preTaxFromSeTax', assetTier: 'tierFromCharacter'
+  };
+  Object.keys(WIRED).forEach(function (id) {
+    const row = rows.filter((r) => r.id === id)[0];
+    checkTrue(id + ' has a row carrying its rule', !!row && row.suggestFrom === WIRED[id],
+      row && String(row.suggestFrom));
+    checkTrue(WIRED[id] + ' exists', typeof Sug.RULES[WIRED[id]] === 'function');
+  });
+
+  function adult(h, over) {
+    h.people.push(Schema.createPerson(Object.assign({ label: 'You', role: 'adult', employmentStatus: 'employed' }, over || {})));
+    return h;
+  }
+  function paid(cents, id) {
+    return Schema.createIncomeSource({ personId: id || 'p', grossAnnualIncomeCents: cents });
+  }
+  function byRow(h) {
+    const out = {};
+    Sug.suggestions(h, T, {}).forEach(function (s) { out[s.rowId] = s; });
+    return out;
+  }
+
+  /* The three needs buckets, against the table read by hand. */
+  const cc = T.commonCosts.lines;
+  const rent = cc.filter((l) => l.id === 'rent_or_mortgage')[0].monthlyCents;
+  const food = cc.filter((l) => l.id === 'groceries')[0].monthlyCents;
+  const trans = cc.filter((l) => l.categoryId === 'transportation')
+    .reduce((n, l) => n + l.monthlyCents, 0);
+  const base = byRow(adult(Schema.createHousehold({ state: 'NC' }), { incomeSources: [paid(6200000)] }));
+  check('the rent suggestion is the table line', base.accommodationMonthly.value, rent);
+  check('food is the groceries line, not groceries plus eating out', base.foodMonthly.value, food);
+  check('transport adds the transportation lines', base.transportationMonthly.value, trans);
+  checkTrue('each names data/common_costs.json',
+    ['accommodationMonthly', 'foodMonthly', 'transportationMonthly']
+      .every((id) => base[id].sources.indexOf('data/common_costs.json') > -1));
+  /* No city is stored anywhere, so nothing is scaled by cost of living and
+     the sentence does not pretend otherwise. */
+  checkTrue('the rent sentence says it is national, not local',
+    /nationally/.test(base.accommodationMonthly.how));
+  checkTrue('no rule reads the cost-of-living index while no city is stored',
+    !/colIndex/.test(fs.readFileSync(path.join(ROOT, 'shared/suggest.js'), 'utf8')));
+
+  /* Two adults: the split follows from the two incomes. */
+  const close = adult(Schema.createHousehold({}), { incomeSources: [paid(7000000, 'a')] });
+  close.people.push(Schema.createPerson({ label: 'Sam', role: 'adult', employmentStatus: 'employed', incomeSources: [paid(6800000, 'b')] }));
+  check('incomes within a fifth suggest an equal split', byRow(close).splitMode.value, 'equal');
+  const far = JSON.parse(JSON.stringify(close));
+  far.people[1].incomeSources[0].grossAnnualIncomeCents = 2000000;
+  check('incomes far apart suggest splitting in proportion', byRow(far).splitMode.value, 'proportional');
+  check('one adult gets no split suggestion at all', byRow(adult(Schema.createHousehold({}), { incomeSources: [paid(6200000)] })).splitMode, undefined);
+
+  /* A loan plan: the lower of the two payments, worked out by hand. */
+  const slc = T.studentLoanConventions;
+  const loan = adult(Schema.createHousehold({}), { incomeSources: [paid(3200000)] });
+  loan.debts = [Schema.createDebt({ label: 'Fed', balanceCents: 4500000, type: 'student_loan' })];
+  const standard = Math.round(4500000 / (slc.standardTermYears * 12));
+  const idr = Math.round(Math.max(0, 3200000 - slc.povertyLineDollars * 100 * slc.discretionaryPovertyMultiple) * slc.idrShareOfDiscretionary / 12);
+  checkTrue('the hand arithmetic says income-driven is lower here', idr < standard, idr + ' vs ' + standard);
+  check('...and the rule says income-driven', byRow(loan).loanPlan.value, 'income_driven');
+  const rich = JSON.parse(JSON.stringify(loan));
+  rich.people[0].incomeSources[0].grossAnnualIncomeCents = 25000000;
+  check('on a high income the standard plan is the lower one', byRow(rich).loanPlan.value, 'standard');
+  check('no student loan, no plan suggestion', byRow(adult(Schema.createHousehold({}), { incomeSources: [paid(3200000)] })).loanPlan, undefined);
+
+  /* Pre-tax on own work: the deductible half, from the one SE engine. */
+  const SE = require(path.join(ROOT, 'engines/selfemployed.js'));
+  const own = adult(Schema.createHousehold({ state: 'TX', filingStatus: 'single' }), { employmentStatus: 'selfEmployed', incomeSources: [paid(8000000)] });
+  const half = SE.selfEmploymentTax(8000000, 'single', T.seTax).deductibleHalfCents;
+  check('the pre-tax suggestion is the SE engine’s own half', byRow(own).otherPreTax.value, half);
+  check('an employee gets no SE half suggested', byRow(adult(Schema.createHousehold({}), { incomeSources: [paid(8000000)] })).otherPreTax, undefined);
+
+  /* An asset's pile follows from what the row already says it is. */
+  const withAssets = adult(Schema.createHousehold({}), {});
+  withAssets.assets = [
+    Schema.createAsset({ category: 'investment', valueCents: 4800000, taxCharacter: 'pretax', label: '401k' }),
+    Schema.createAsset({ category: 'cash', valueCents: 900000, taxCharacter: 'cash', label: 'Savings' })
+  ];
+  const tiers = Sug.suggestions(withAssets, T, {}).filter((s) => s.rowId === 'assetTier');
+  check('one tier suggestion per asset', tiers.length, 2);
+  check('a pre-tax account sits in retirement', tiers.filter((s) => /401k/.test(s.label))[0].value, 'retirement');
+  check('cash sits in cash', tiers.filter((s) => /Savings/.test(s.label))[0].value, 'cash');
+
+  /* Every one of the nine, whenever it fires, carries its provenance and is
+     marked a suggestion rather than a fact. */
+  [base, byRow(close), byRow(loan), byRow(own)].forEach(function (set) {
+    Object.keys(set).forEach(function (id) {
+      if (!WIRED[id]) return;
+      const s = set[id];
+      checkTrue(id + ': marked a suggestion, never a fact', s.confidence === 'suggested');
+      checkTrue(id + ': names at least one source', (s.sources || []).length > 0);
+      checkTrue(id + ': says how in a sentence', typeof s.how === 'string' && s.how.length > 20);
+    });
+  });
+
+  /* And a suggestion never becomes a stored value on its own (D-205). */
+  checkTrue('the suggestion half of suggest.js still never writes',
+    !/Spine\.set|Ownership\.write/.test(
+      fs.readFileSync(path.join(ROOT, 'shared/suggest.js'), 'utf8').split('var RULES')[1].split('function suggestions')[0]));
+
+  /* What the brief asked for that is NOT done, and why. A table cannot know
+     these, so asking is the honest thing: the contribution limits are caps,
+     not contributions; no table knows whose paperwork is signed; and there
+     is no therapy line in the costs table. */
+  ['rothContributed', 'hsaContributed', 'beneficiariesSet', 'therapyMonthly'].forEach(function (id) {
+    const row = rows.filter((r) => r.id === id)[0];
+    check(id + ' is still asked, not guessed', row && row.suggestFrom, null);
+  });
+  checkTrue('the contribution rows say to look them up rather than estimate',
+    rows.filter((r) => r.id === 'rothContributed')[0].kind === 'lookup'
+    && rows.filter((r) => r.id === 'hsaContributed')[0].kind === 'lookup');
+  checkTrue('no rule reads a contribution limit as if it were a contribution',
+    !/irsLimits/.test(fs.readFileSync(path.join(ROOT, 'shared/suggest.js'), 'utf8')));
+})();
+
 section('The last day worked, and what falls out of it (D-213)');
 
 (function () {
