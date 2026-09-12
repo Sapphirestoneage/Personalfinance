@@ -278,7 +278,7 @@
       "level": 1,
       "round": 1,
       "suggestFrom": null,
-      "askIn": "between-jobs",
+      "askIn": "runway",
       "moves": false,
       "unlocks": "the benefit estimate, the marginal rate and the milestones while between jobs"
     },
@@ -408,7 +408,7 @@
       "level": 1,
       "round": null,
       "suggestFrom": "unemploymentWeekly",
-      "askIn": "between-jobs",
+      "askIn": "runway",
       "moves": true,
       "unlocks": "the runway between jobs"
     },
@@ -1519,7 +1519,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": "floorFromConvention",
-      "askIn": "between-jobs",
+      "askIn": "runway",
       "moves": true,
       "unlocks": "the runway at the floor"
     },
@@ -1580,7 +1580,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": "deductibleTypical",
-      "askIn": "sleep-at-night",
+      "askIn": "runway",
       "moves": false,
       "unlocks": "the first thing a cash cushion has to cover"
     },
@@ -1601,7 +1601,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "sleep-at-night",
+      "askIn": "runway",
       "moves": false,
       "unlocks": "the worst plausible year’s medical line"
     },
@@ -1622,7 +1622,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": "termLifeBetweenJobs",
-      "askIn": "sleep-at-night",
+      "askIn": "runway",
       "moves": false,
       "unlocks": "the life-cover gap against ten times income"
     },
@@ -1643,7 +1643,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": "disabilityBetweenJobs",
-      "askIn": "sleep-at-night",
+      "askIn": "runway",
       "moves": false,
       "unlocks": "the disability-cover gap against 60% of pay"
     },
@@ -1664,7 +1664,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "sleep-at-night",
+      "askIn": "runway",
       "moves": false,
       "unlocks": "the liability gap"
     },

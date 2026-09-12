@@ -19,7 +19,7 @@
   ],
   "order": [
     { "step": 1, "target": "ledger", "title": "The Ledger swallows navigation", "state": "shipped-in-part" },
-    { "step": 2, "target": "runway", "title": "The Cushion, four readings of one number", "state": "todo" },
+    { "step": 2, "target": "runway", "title": "The Cushion, four readings of one number", "state": "shipped" },
     { "step": 3, "target": "financial-snapshot", "title": "The Scorecard", "state": "todo" },
     { "step": 4, "target": "foo-ladder", "title": "What The Next Dollar Does", "state": "shipped" },
     { "step": 5, "target": "goals", "title": "The Decision Room shell, then three easy block types", "state": "todo" },
@@ -70,7 +70,8 @@
       "absorbs": ["fire-lab", "coast-date", "enough", "race"], "done": [],
       "note": "Becomes a read-out of what the Back Half produced, with the naive 25x answer beside it (D-226)." },
     { "n": 15, "id": "runway", "title": "The Cushion", "group": "back-half",
-      "absorbs": ["between-jobs", "quit-fund", "sleep-at-night"], "done": [],
+      "absorbs": ["between-jobs", "quit-fund", "sleep-at-night"],
+      "done": ["between-jobs", "quit-fund", "sleep-at-night"],
       "note": "Four readings of one number: how long can you not earn. The toggle is the insight; four rooms hid it." },
     { "n": 16, "id": "foo-ladder", "title": "What The Next Dollar Does", "group": "back-half",
       "absorbs": ["next-hundred", "windfall"], "done": ["next-hundred", "windfall"],

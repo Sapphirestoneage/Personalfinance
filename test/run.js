@@ -2081,9 +2081,9 @@ section('SWAN Number');
 
   /* -- Ownership: exactly one room may edit it --------------------------- */
   check('the SWAN target is owned by Sleep At Night',
-    Ownership.field('swanTarget').owner, 'sleep-at-night');
+    Ownership.field('swanTarget').owner, 'runway');
   check('and Sleep At Night owns only the number and the four coverage facts (D-071; who depends on you went back to the one-pager, D-095)',
-    Ownership.ownedBy('sleep-at-night').sort().join(','), 'disabilityMonthly,oopMax,swanTarget,termLife,umbrella');
+    Ownership.ownedBy('runway').sort().join(','), 'disabilityMonthly,expectedSearchMonths,floorMonthly,oopMax,swanTarget,termLife,umbrella');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
   check('and it is not editable there', chip.isOwnHere, false);
@@ -5206,7 +5206,7 @@ section('Eleven cards');
     ['contributionPercent', 'highestDeductible', 'hasDebt', 'dob', 'state', 'employerMatch'].forEach(f =>
       check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
     check('Sleep At Night reads the deductible as a chip',
-      fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
+      fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
     check('Where It Goes reads the contribution as a chip',
       fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8').indexOf("Ownership.chip('contributionPercent'") !== -1, true);
     checkTrue('and has no box for it',
@@ -5298,7 +5298,14 @@ section('Proposed, not taken');
       const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
       checkTrue(`${room} mounts the seed toggle`, html.indexOf('SLAF.Seed.mount(') !== -1);
       checkTrue(`${room} loads seed.js after suggest.js`, html.indexOf('shared/suggest.js') !== -1 && html.indexOf('shared/suggest.js') < html.indexOf('shared/seed.js'));
-      checkTrue(`${room} still writes nothing to the household`, !/Spine\.(updateProfile|upsert[A-Za-z]+|setMonthlyExpenses)\(/.test(html.replace(/\/\*[\s\S]*?\*\//g, '')));
+      /* The Cushion's other three readings DO write, each through its owner
+         (D-230); the how-long reading is the page-local one and says so
+         between its markers, which is the part this rule is about. */
+      const local = room === 'runway'
+        ? html.slice(html.indexOf('---- HOW LONG:'), html.indexOf('---- end HOW LONG ----'))
+        : html;
+      checkTrue(`${room} is the marked page-local reading`, local.length > 500);
+      checkTrue(`${room} still writes nothing to the household`, !/Spine\.(updateProfile|upsert[A-Za-z]+|setMonthlyExpenses)\(/.test(local.replace(/\/\*[\s\S]*?\*\//g, '')));
     });
     const se = fs.readFileSync(path.join(ROOT, 'rooms/self-employed.html'), 'utf8');
     checkTrue('W2 vs 1099 no longer writes the salary straight into the box', !/v\['w-salary'\] = gross\.value/.test(se));
@@ -6510,24 +6517,27 @@ section('Targets, owned by FIRE');
 section('The Coverage Checkup, and how it is split');
 
 (function () {
-  /* D-071: four facts about cover, owned by Sleep At Night; a target mix,
-     owned by Where It Goes. Both stored, both read-only elsewhere. */
+  /* D-071: four facts about cover, asked on the Cushion's at-3am reading
+     since D-230; a target mix, owned by Where It Goes. Both stored, both
+     read-only elsewhere. */
   ['oopMax', 'termLife', 'disabilityMonthly', 'umbrella'].forEach(function (f) {
-    check(`${f} is owned by Sleep At Night`, Ownership.field(f).owner, 'sleep-at-night');
+    check(`${f} is owned by The Cushion`, Ownership.field(f).owner, 'runway');
     check(`${f} links to the coverage card`, Ownership.field(f).anchor, 'coverage');
   });
   ['allocationStocks', 'allocationBonds', 'allocationCash', 'rebalanceBand'].forEach(function (f) {
     check(`${f} is owned by Where It Goes`, Ownership.field(f).owner, 'accounts');
     check(`${f} links to the allocation card`, Ownership.field(f).anchor, 'allocation');
   });
-  const san = fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8');
+  const san = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
   const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
   checkTrue('the coverage card exists', /id="coverage"/.test(san));
   checkTrue('the allocation card exists', /id="allocation"/.test(acc));
   checkTrue('the deductible is still asked in Start Here, not here', !/data-field="highestDeductible"|id="c-deductible"/.test(san)
     && Ownership.field('highestDeductible').owner === 'start');
+  checkTrue('Sleep At Night redirects to the reading it became',
+    /url=runway\.html#at-3am/.test(fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8')));
   checkTrue('Where It Goes says so in its title', /how it.s split/.test(Registry.byId('accounts').title));
-  checkTrue('Sleep At Night lists the checkup', Registry.byId('sleep-at-night').subsections.some(s => s.id === 'coverage'));
+  checkTrue('The Cushion lists the checkup', Registry.byId('runway').subsections.some(s => s.id === 'coverage'));
   checkTrue('Where It Goes lists the split', Registry.byId('accounts').subsections.some(s => s.id === 'allocation'));
 
   const h = Demo.build();
@@ -6539,7 +6549,7 @@ section('The Coverage Checkup, and how it is split');
   h.insurance.disabilityMonthlyCents = 300000;
   check('a monthly benefit is formatted per month', Ownership.field('disabilityMonthly').format(300000), '$3,000/mo');
   const elsewhere = Ownership.describe('oopMax', Object.assign(h, { insurance: Object.assign(h.insurance, { oopMaxCents: 800000 }) }), 'statement');
-  checkTrue('elsewhere it is a read-only chip linking home', !elsewhere.mine && /sleep-at-night\.html(\?[^#]*)?#coverage$/.test(elsewhere.href));
+  checkTrue('elsewhere it is a read-only chip linking home', !elsewhere.mine && /runway\.html(\?[^#]*)?#coverage$/.test(elsewhere.href));
 
   /* The mix, checked by one function. */
   check('no mix: incomplete', Schema.allocationStatus(h).status, 'incomplete');
@@ -7849,10 +7859,10 @@ section('Between jobs: the unemployed sequence');
   check('dependents starts unasked', Schema.createHousehold({}).dependents, null);
   check('… and "no" is kept as an empty list, not blank (D-094)', JSON.stringify(Schema.createHousehold({ dependents: false }).dependents), '[]');
   const alone = Schema.createHousehold({ dependents: false });
-  checkTrue('term life does not apply when nobody depends on the income', !Ownership.describe('termLife', alone, 'sleep-at-night').applies);
-  checkTrue('… and does when someone does, or when unasked', Ownership.describe('termLife', Schema.createHousehold({ dependents: true }), 'sleep-at-night').applies && Ownership.describe('termLife', Schema.createHousehold({}), 'sleep-at-night').applies);
+  checkTrue('term life does not apply when nobody depends on the income', !Ownership.describe('termLife', alone, 'runway').applies);
+  checkTrue('… and does when someone does, or when unasked', Ownership.describe('termLife', Schema.createHousehold({ dependents: true }), 'runway').applies && Ownership.describe('termLife', Schema.createHousehold({}), 'runway').applies);
   checkTrue('Start Here asks it, in the fine-tune drawer', /id="q-fine-tune"/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')) && /choices\('dependents'/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')) && Registry.byId('start').subsections.some(x => x.id === 'q-fine-tune'));
-  checkTrue('Sleep At Night says so instead of asking', /Nobody depends on your income/.test(fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8')));
+  checkTrue('the at-3am reading says so instead of asking', /Nobody depends on your income/.test(fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8')));
   checkTrue('… and unemploymentOf never returns undefined for a raw person', Schema.unemploymentOf(Schema.createHousehold({ people: [{ id: 'x', employmentStatus: 'unemployed', role: 'adult' }] })).since === null);
 })();
 
@@ -8082,19 +8092,19 @@ section('Core (D-094): the gate — exists() per situation');
   /* Rooms whose requires are absent are not in the map. */
   const all = Registry.all().length;
   function gone(h) { const ids = Registry.forHousehold(h).map(r => r.id); return Registry.all().map(r => r.id).filter(id => ids.indexOf(id) === -1).sort().join(','); }
-  check('unanswered: every room but the ones that need a fact (a status, a partner, a dependent)', gone(none), 'between-jobs,kids,partner');
+  check('unanswered: every room but the ones that need a fact (a partner, a dependent)', gone(none), 'kids,partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  check('retired: the working rooms are gone, and Between Jobs', gone(hh('retired')), 'accounts,between-jobs,career-move,credential,dreamline,fire,hassle,kids,partner,real-hourly-wage,savings-rate,self-employed,side-hustle,variable-income');
+  check('retired: the working rooms are gone', gone(hh('retired')), 'accounts,career-move,credential,dreamline,fire,hassle,kids,partner,real-hourly-wage,savings-rate,self-employed,side-hustle,variable-income');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
-  check('employed, alone, no dependents: own work, between jobs, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'between-jobs,decumulation,kids,partner,self-employed,variable-income');
+  check('employed, alone, no dependents: own work, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'decumulation,kids,partner,self-employed,variable-income');
   checkTrue('self-employed: the 401(k) room is gone', Registry.forHousehold(hh('selfEmployed')).map(r => r.id).indexOf('accounts') === -1);
   checkTrue('every requires key is a branch', Object.keys(Registry.REQUIRES).every(id => Registry.REQUIRES[id].every(k => Gate.BRANCHES.indexOf(k) !== -1)));
   checkTrue('every requires room is a room', Object.keys(Registry.REQUIRES).every(id => !!Registry.byId(id)));
   check('byTag with a household filters the same way', Registry.byTag('all', hh('retired')).length, retiredRooms.length);
   check('byTag without one is every room', Registry.byTag('all').length, all);
-  check('the demo is six rooms short — no own work, not between jobs, not drawing down, alone, nobody depending', gone(Demo.build()), 'between-jobs,decumulation,kids,partner,self-employed,variable-income');
+  check('the demo is five rooms short — no own work, not drawing down, alone, nobody depending', gone(Demo.build()), 'decumulation,kids,partner,self-employed,variable-income');
 
   /* Guesses: a default for every guessable control, from the tables. */
   const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
@@ -8187,8 +8197,8 @@ section('Core (D-094): the schema branches and their migrations');
   check('"yes" from before is one person of unknown age', JSON.stringify(Schema.createHousehold({ dependents: true }).dependents), '[{"age":null}]');
   check('"no" is an empty list', JSON.stringify(Schema.createHousehold({ dependents: false }).dependents), '[]');
   check('a list keeps its ages', JSON.stringify(Schema.createHousehold({ dependents: [{ age: 4 }, { age: 12 }] }).dependents), '[{"age":4},{"age":12}]');
-  check('term life applies to a bare "yes"', Ownership.describe('termLife', Object.assign(Schema.createHousehold({}), { dependents: true }), 'sleep-at-night').applies, true);
-  check('… not to a bare "no"', Ownership.describe('termLife', Object.assign(Schema.createHousehold({}), { dependents: false }), 'sleep-at-night').applies, false);
+  check('term life applies to a bare "yes"', Ownership.describe('termLife', Object.assign(Schema.createHousehold({}), { dependents: true }), 'runway').applies, true);
+  check('… not to a bare "no"', Ownership.describe('termLife', Object.assign(Schema.createHousehold({}), { dependents: false }), 'runway').applies, false);
   check('dependents reads a bare "no" as none', Ownership.field('dependents').read(Object.assign(Schema.createHousehold({}), { dependents: false })).value, 0);
   check('… and formats it', Ownership.field('dependents').format(0), 'No');
   check('… two people', Ownership.field('dependents').format(2), '2 people');
@@ -10459,10 +10469,10 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
 
   /* The situation gate: absent, not greyed. */
   check('retired: no Work subgroup at all', Registry.inGroup('decisions', 'retired').filter(r => r.subgroup === 'work').length, 0);
-  checkTrue('...no Career Move, no Between Jobs', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move' || r.id === 'between-jobs'));
+  checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 32);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 30);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -11563,7 +11573,7 @@ section('15.8: every asset in one of five piles; one runway draws them in order 
   checkTrue('the ladder is a view of tierOf, not of the liquidity rating', /Schema\.tierOf\(a\)/.test(stSrc) && !/assetLiquidity/.test(stSrc));
   const room = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
   checkTrue('the Statement edits the pile, not the liquidity rating', /data-field="tier"/.test(room) && !/data-field="liquidity"/.test(room));
-  ['rooms/runway.html', 'rooms/between-jobs.html'].forEach(f => {
+  ['rooms/runway.html'].forEach(f => {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
     checkTrue(f + ' loads the tax engine for the rates and says before/after tax', /engines\/tax\.js/.test(src) && /before tax/.test(src));
   });
@@ -13660,12 +13670,16 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   check('a typed total wins over the build-up', Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).source + ':' + Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).reachedNow, 'typed:true');
   checkTrue('the defaults table is tagged, every figure editable from the page', T.weddingDefaults.confidence === 'unverified' && /in-perguest/.test(fs.readFileSync(path.join(ROOT, 'rooms/wedding.html'), 'utf8')));
   /* registry and shelves */
-  ['race', 'down-payment', 'quit-fund', 'wedding'].forEach(function (id) { checkTrue(id + ' is registered', !!Registry.byId(id)); });
+  ['race', 'down-payment', 'wedding'].forEach(function (id) { checkTrue(id + ' is registered', !!Registry.byId(id)); });
+  checkTrue('the Quit Fund is the Cushion\'s by-choice reading now (D-230)', !Registry.byId('quit-fund') && Registry.byId('runway').subsections.some(x => x.id === 'view-by-choice'));
   const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
-  const pairs = { 'rank-guess': 'race', 'between-jobs': 'quit-fund', housing: 'down-payment', partner: 'wedding' };
+  /* The Quit Fund used to be shelved beside Between Jobs; both are readings
+     of The Cushion now, so the pair is one room and there is nothing to
+     shelve beside anything (D-230). */
+  const pairs = { 'rank-guess': 'race', housing: 'down-payment', partner: 'wedding' };
   let shelved = 0;
   (function walk(x) { if (Array.isArray(x) && x.every(i => typeof i === 'string')) { Object.keys(pairs).forEach(k => { if (x.indexOf(k) > -1 && x[x.indexOf(k) + 1] === pairs[k]) shelved++; }); } if (Array.isArray(x)) x.forEach(walk); else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
-  check('each is shelved beside its neighbour in all twenty arrangements', shelved, 80);
+  check('each is shelved beside its neighbour in all twenty arrangements', shelved, 60);
 })();
 
 /* ==========================================================================

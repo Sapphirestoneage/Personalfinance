@@ -8,7 +8,7 @@ File: rooms/statement.html · 723 lines
 Engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget
 Reference data: access_rules.json, car_costs.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, +4 more
 Owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis
-Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), marginalRate (accounts), highestDeductible (start), oopMax (sleep-at-night), totalDebt (debt-payoff), futureIncome (timeline), +1 more
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), marginalRate (accounts), highestDeductible (start), oopMax (runway), totalDebt (debt-payoff), futureIncome (timeline), +1 more
 Latest decisions:
   - D-157 — The menu you could read the page through
   - D-152 — What Comes Next: a life as periods, and the months they add up to

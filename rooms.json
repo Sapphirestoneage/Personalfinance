@@ -215,25 +215,6 @@
       "order": 6
     },
     {
-      "id": "sleep-at-night",
-      "title": "Sleep At Night",
-      "file": "rooms/sleep-at-night.html",
-      "reads": [
-        "monthlyExpenses",
-        "cashSavings"
-      ],
-      "writes": [
-        "oopMax",
-        "termLife",
-        "disabilityMonthly",
-        "umbrella",
-        "swanTarget"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 7
-    },
-    {
       "id": "fire",
       "title": "FIRE Number",
       "file": "rooms/fire.html",
@@ -588,13 +569,21 @@
     },
     {
       "id": "runway",
-      "title": "The Runway",
+      "title": "The Cushion",
       "file": "rooms/runway.html",
       "reads": [
         "cashSavings",
         "monthlyExpenses"
       ],
-      "writes": [],
+      "writes": [
+        "oopMax",
+        "termLife",
+        "disabilityMonthly",
+        "umbrella",
+        "expectedSearchMonths",
+        "floorMonthly",
+        "swanTarget"
+      ],
       "requires": [],
       "dashboardNumber": "emergencyFundMonths",
       "order": 26
@@ -697,38 +686,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 29
-    },
-    {
-      "id": "between-jobs",
-      "title": "Between Jobs",
-      "file": "rooms/between-jobs.html",
-      "reads": [
-        "unemployment",
-        "monthlyExpenses",
-        "cashSavings"
-      ],
-      "writes": [
-        "expectedSearchMonths",
-        "floorMonthly"
-      ],
-      "requires": [
-        "unemployment"
-      ],
-      "dashboardNumber": "runwayDays",
-      "order": 31
-    },
-    {
-      "id": "quit-fund",
-      "title": "The Quit Fund",
-      "file": "rooms/quit-fund.html",
-      "reads": [
-        "cashSavings",
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 31.5
     },
     {
       "id": "micro-retirement",

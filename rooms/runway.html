@@ -6,85 +6,260 @@
 <meta name="slaf-build" content="2026-09-12 07:54Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>The Runway · SPARKS</title>
-<meta name="description" content="How long the money lasts when the income stops — quitting, laid off, or starting something."/>
+<title>The Cushion · SPARKS</title>
+<meta name="description" content="How long could you not earn? Four readings of one number: plainly, while job hunting, by choice, and the amount that stops the 3am arithmetic."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11, §13 Tier 2 (Leave-Job, Unemployment,
-  Start-Business — three tools, one engine, per §8).
+  ROOM SPEC — SPEC.md §11, §13 Tier 1.5 and Tier 2. DECISIONS.md D-230.
 
-  1. READS   cash and monthly expenses from the household. Both can be
-             previewed differently here; neither is written back.
-  2. WRITES  nothing. Every input is page-local — a job you might leave is
-             not a fact about your household. Same pattern as FIRE's
-             assumption preview (SPEC.md §12.2).
-  3. CALLS   engines/runway.js.
-  4. EMPTY   No cash or no expenses → says which and links to its owner.
-  5. CONFIG  None. The two figures that WOULD need reference tables — the
-             state unemployment benefit and what health cover costs once
-             the employer stops paying — are typed in, with the page saying
-             plainly that it will not guess at them. SPEC.md §10 flags both
-             as maintenance dependencies; D-036 is the rule about not
-             fabricating them.
+  ONE NUMBER, FOUR READINGS. The Runway, Between Jobs, The Quit Fund and
+  Sleep At Night each answered "how long could you not earn" and each drew a
+  different conclusion from it. They are four readings on one strip now, the
+  plainest first:
 
-  LIVE-FORM: built once. Every control is in the HTML below and is never
-  replaced — switching scenario only toggles [hidden] on field groups that
-  already exist, and the script only ever writes .value. See D-034.
+    #how-long     cash against the month, and what would buy more of it
+    #job-hunting  the same runway against a search, with the benefit,
+                  the severance and the floor month (engines/betweenjobs.js)
+    #by-choice    what it takes to walk away, and the dates you get there
+                  (engines/quitfund.js)
+    #at-3am       the amount you named against what the cash covers, and
+                  what stands behind you (engines/swan.js)
+
+  1. READS   cash, a month's spending, the unemployment facts Start Here
+             owns, and the free tiers of the reachable-money waterfall.
+  2. WRITES  seven fields, all moved here from the rooms that became
+             readings (D-230): person.unemployment.expectedSearchMonths and
+             .floorMonthlyCents, household.swan, and the four cover figures.
+             The how-long reading still writes NOTHING — a job you might
+             leave is not a fact about your household.
+  3. CALLS   engines/runway.js, engines/betweenjobs.js, engines/quitfund.js,
+             engines/swan.js, engines/countdown.js.
+  4. EMPTY   No cash or no spending: each reading says which it lacks and
+             shows no figure. The job-hunting reading says in a line above
+             the number when it is reading as if the pay stopped today.
+  5. CONFIG  data/reentry_gap.json, data/cobra_aca_2024.json,
+             data/ui_benefits.json, data/access_rules.json,
+             data/liquidity_benchmarks.json. The two figures that would need
+             tables and do not get them — the state benefit and what health
+             cover costs once the employer stops paying — are typed in, and
+             the page says plainly it will not guess them (D-036).
+
+  LIVE-FORM: built once, which is why the readings are [hidden] rather than
+  rendered on demand: three of the four hold live inputs. Every control is
+  in the markup or built one time and only ever has its .value written.
+  See D-034.
 -->
 <style>
-  .room-back:hover { text-decoration: underline; }
-  section[id] { scroll-margin-top: var(--space-4); }
-
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-  @media (max-width: 460px) { .grid2 { grid-template-columns: 1fr; } }
-  .group { margin-top: var(--space-3); }
-  .group > .slaf-label { display: block; margin-bottom: var(--space-2); }
-  .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
-
-  .scenario-note { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-3); }
-
-  ul.milestones { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
-  ul.milestones li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
-  ul.milestones li .w { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text-muted); }
-
-  table.grid { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
-  table.grid th { text-align: right; font-weight: 500; font-size: var(--text-xs); color: var(--color-text-faint); padding: 0 0 var(--space-2); }
-  table.grid th:first-child { text-align: left; }
-  table.grid td { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  table.grid td:first-child { text-align: left; white-space: normal; }
-  table.grid td + td, table.grid th + th { padding-left: var(--space-3); }
-  table.grid tr.is-here td { background: var(--color-surface-active); }
-  .table-scroll { overflow-x: auto; }
-
-  .levers { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
-  @media (max-width: 460px) { .levers { grid-template-columns: 1fr; } }
-  .levers > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
-  .levers .lv { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
-  .levers .lb { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
-
-  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
-  .flag.is-bad { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  #view-how-long section[id], #view-job-hunting section[id], #view-by-choice section[id], #view-at-3am section[id] { scroll-margin-top: var(--space-4); }
+
+  /* ---- How long, from rooms/runway.html (D-230) ------------------------- */
+  
+  #view-how-long .room-back:hover { text-decoration: underline; }
+  
+  #view-how-long section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-how-long .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  @media (max-width: 460px) { 
+  #view-how-long .grid2 { grid-template-columns: 1fr; } }
+  
+  #view-how-long .group { margin-top: var(--space-3); }
+  
+  #view-how-long .group > .slaf-label { display: block; margin-bottom: var(--space-2); }
+  
+  #view-how-long .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+
+  
+  #view-how-long .scenario-note { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-3); }
+
+  
+  #view-how-long ul.milestones { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-how-long ul.milestones li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-how-long ul.milestones li .w { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text-muted); }
+
+  
+  #view-how-long table.grid { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-how-long table.grid th { text-align: right; font-weight: 500; font-size: var(--text-xs); color: var(--color-text-faint); padding: 0 0 var(--space-2); }
+  
+  #view-how-long table.grid th:first-child { text-align: left; }
+  
+  #view-how-long table.grid td { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-how-long table.grid td:first-child { text-align: left; white-space: normal; }
+  
+  #view-how-long table.grid td + td,
+  #view-how-long table.grid th + th { padding-left: var(--space-3); }
+  
+  #view-how-long table.grid tr.is-here td { background: var(--color-surface-active); }
+  
+  #view-how-long .table-scroll { overflow-x: auto; }
+
+  
+  #view-how-long .levers { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  @media (max-width: 460px) { 
+  #view-how-long .levers { grid-template-columns: 1fr; } }
+  
+  #view-how-long .levers > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  
+  #view-how-long .levers .lv { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+  
+  #view-how-long .levers .lb { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+
+  
+  #view-how-long .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-how-long .flag.is-bad { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-how-long .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  
+  #view-how-long .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-how-long .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* ---- While job hunting, from rooms/between-jobs.html (D-230) ---------- */
+  
+  #view-job-hunting section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-job-hunting .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-job-hunting .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* ---- By choice, from rooms/quit-fund.html (D-230) --------------------- */
+  
+  #view-by-choice .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  
+  #view-by-choice .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-by-choice ul.plain { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-by-choice ul.plain li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-by-choice ul.plain li:first-child { border-top: none; }
+  
+  #view-by-choice ul.plain .amt { font-variant-numeric: tabular-nums; }
+  
+  #view-by-choice ul.plain small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  
+  #view-by-choice .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* ---- At 3am, from rooms/sleep-at-night.html (D-230) ------------------- */
+  
+  #view-at-3am .room-back:hover { text-decoration: underline; }
+  
+  #view-at-3am section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-at-3am .basis { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-3); }
+  
+  #view-at-3am .basis button { text-align: center; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
+  
+  #view-at-3am .basis button:hover { border-color: var(--color-border-active); }
+  
+  #view-at-3am .basis button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+  
+  #view-at-3am .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; margin-top: var(--space-3); }
+  @media (max-width: 380px) { 
+  #view-at-3am .pair { grid-template-columns: 1fr; } }
+  
+  #view-at-3am .pair > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
+  
+  #view-at-3am .pair .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  
+  #view-at-3am .pair .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  
+  #view-at-3am .pair .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); }
+  
+  #view-at-3am .pair .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+
+  
+  #view-at-3am .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
+  
+  #view-at-3am .verdict.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  
+  #view-at-3am .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  
+  #view-at-3am .cover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; margin-top: var(--space-3); }
+  @media (max-width: 380px) { 
+  #view-at-3am .cover-grid { grid-template-columns: 1fr; } }
+  
+  #view-at-3am .cover-read dl { display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); margin: var(--space-3) 0 0; }
+  
+  #view-at-3am .cover-read dt { color: var(--color-text-faint); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; align-self: baseline; }
+  
+  #view-at-3am .cover-read dd { margin: 0; font-size: var(--text-sm); }
+  
+  #view-at-3am .cover-read a { color: var(--color-accent-hover); text-decoration: underline; }
+
+  
+  #view-at-3am .track { position: relative; height: 12px; border-radius: var(--radius-pill); background: rgba(30,58,138,.4); overflow: hidden; margin-top: var(--space-3); }
+  
+  #view-at-3am .track > .fill { height: 100%; background: var(--color-accent); }
+  
+  #view-at-3am .track-ends { display: flex; justify-content: space-between; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+
+  
+  #view-at-3am ul.miles { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-at-3am ul.miles li { display: grid; grid-template-columns: 1fr auto auto; gap: var(--space-2); align-items: baseline; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  
+  #view-at-3am ul.miles li:last-child { border-bottom: none; }
+  
+  #view-at-3am ul.miles .amt { font-variant-numeric: tabular-nums; }
+  
+  #view-at-3am ul.miles .mark { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  
+  #view-at-3am ul.miles .mark.hit { color: var(--color-accent-hover); }
+
+  
+  #view-at-3am .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-at-3am .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-at-3am .out-detail dt { color: var(--color-text-faint); }
+  
+  #view-at-3am .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  
+  #view-at-3am .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-at-3am .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-at-3am .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>The Runway</h1>
+  <h1>The Cushion</h1>
   <p class="room-lede">
-    The income stops. The bills don’t. How many months is that, and what
-    would buy you more of them?
+    The income stops. The bills don’t. How long is that — and the same
+    question asked four ways, because the answer changes depending on why
+    the earning stopped.
   </p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Four readings of one number">
+    <a href="#how-long"    data-view="view-how-long">How long</a>
+    <a href="#job-hunting" data-view="view-job-hunting">While job hunting</a>
+    <a href="#by-choice"   data-view="view-by-choice">By choice</a>
+    <a href="#at-3am"      data-view="view-at-3am">At 3am</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
 
+  <!-- ================= HOW LONG (was rooms/runway.html) ================== -->
+  <section id="view-how-long">
+  <p class="slaf-lede">The plain reading: what you can spend, against what a month costs, and what would buy you more months.</p>
   <section class="slaf-card" id="the-plan">
     <span class="slaf-eyebrow">What’s happening</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">The situation</h2>
@@ -234,16 +409,205 @@
     </p>
   </section>
 
-  <section class="slaf-card" id="reading">
+  <section class="slaf-card" id="hl-reading">
     <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="hl-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ============ WHILE JOB HUNTING (was rooms/between-jobs.html) ======== -->
+  <section id="view-job-hunting" hidden>
+  <p class="slaf-lede">The runway against the search: the day the cash runs out, with the benefit and severance counted, and the floor you could drop to.</p>
+  <div class="room-standalone" id="room-standalone" hidden></div>
+
+  <section class="slaf-card" id="bj-number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">The day the cash runs out</span>
+      <div id="room-lens"></div>
+    </div>
+    <div class="room-number" id="room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Cash, month by month</span>
+    <div id="room-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The search and the floor</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Two numbers only you know: how long you expect the search to take, and the least a month could cost if it came to that. Both start as guesses until you type yours.</p>
+    <div id="room-inputs"></div>
+  </section>
+
+  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Through the lens</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, or as months of FI bought or pushed.</p>
+    <ul class="room-amounts" id="room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="room-why" hidden></p>
+  <p class="room-scope" id="room-scope"></p>
+
+  <section class="slaf-card" id="bj-reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ================ BY CHOICE (was rooms/quit-fund.html) =============== -->
+  <section id="view-by-choice" hidden>
+  <p class="slaf-lede">How many months you could walk away for, on money that costs nothing to reach, with the floor month and health cover counted. And when you would have three, six and twelve.</p>
+  <section class="slaf-card" id="months">
+    <span class="slaf-eyebrow">Months of freedom</span>
+    <p class="head-num" id="q-num"></p>
+    <p class="head-sub" id="q-sub"></p>
+    <div class="choices" id="mode-choices" style="margin-top:var(--space-3)">
+      <button type="button" class="choice" data-mode="quit" aria-pressed="true">If I quit</button>
+      <button type="button" class="choice" data-mode="laidOff" aria-pressed="false">If I am laid off</button>
+    </div>
+    <p class="slaf-hint" id="q-benefit" style="margin:var(--space-2) 0 0"></p>
+  </section>
+  <section class="slaf-card" id="dates" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">When you would have</span>
+    <ul class="plain" id="q-dates"></ul>
+  </section>
+  <section class="slaf-card" id="parts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What it is made of</span>
+    <ul class="plain" id="q-parts"></ul>
+  </section>
+  </section>
+
+  <!-- ================ AT 3AM (was rooms/sleep-at-night.html) ============= -->
+  <section id="view-at-3am" hidden>
+  <p class="slaf-lede">The amount of cash that stops the 3am arithmetic — your number, beside the one the maths produces.</p>
+  <section class="slaf-card" id="am-number">
+    <span class="slaf-eyebrow">Your number</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What amount would let you stop thinking about it?</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Not what a rule says. What <em>you</em> would need sitting in cash to
+      stop doing the arithmetic at 3am. There is no wrong answer here — this
+      is a feeling, stored as a number, and nothing else in SPARKS overwrites
+      it.
+    </p>
+
+    <div class="basis" role="group" aria-label="How to name your number">
+      <button type="button" data-basis="amount" aria-pressed="false">A cash amount</button>
+      <button type="button" data-basis="months" aria-pressed="false">Months of expenses</button>
+    </div>
+
+    <label class="slaf-field" id="field-amount" hidden><span class="slaf-label">The amount</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-amount" placeholder="e.g. 15000" aria-label="Your sleep-at-night amount"/></span></label>
+
+    <label class="slaf-field" id="field-months" hidden><span class="slaf-label">Months of cover</span>
+      <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-months" placeholder="e.g. 6" aria-label="Months of cover"/><span class="slaf-affix">months</span></span></label>
+
+    <label class="slaf-field" id="field-note" hidden><span class="slaf-label">Why that number <span style="color:var(--color-text-faint)">(optional)</span></span>
+      <span class="slaf-input-shell"><input type="text" id="in-note" maxlength="140" placeholder="e.g. six months without a paycheque" aria-label="Why that number"/></span></label>
+
+    <div class="slaf-field-row" style="margin-top:var(--space-3)">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="am-btn-clear" hidden>Clear my number</button>
+    </div>
+
+    <div class="flag" id="band-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="deductible">
+    <span class="slaf-eyebrow">Your highest deductible</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">The first thing this cushion has to cover</h2>
+    <p class="slaf-hint" style="margin:0">
+      Before a cushion is months of expenses, it is one insurance excess —
+      health, car or home, whichever is largest. The FOO ladder's very first
+      step is exactly this, and it reads the number from here rather than
+      asking you for it again.
+    </p>
+    <div id="deductible-chip" style="margin-top:var(--space-3)"></div>
+    <p class="why" id="deductible-read"></p>
+  </section>
+
+  <section class="slaf-card" id="coverage">
+    <span class="slaf-eyebrow">Coverage checkup</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What a bad year can cost, and what stands behind you</h2>
+    <p class="slaf-hint" style="margin:0">
+      Four facts about your cover, asked here once. The Statement's worst
+      plausible year reads the out-of-pocket maximum from this card. Leave
+      blank what you do not have — blank means "not entered", never zero,
+      and the read-out says so.
+    </p>
+    <div class="cover-grid">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Health out-of-pocket max</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-oop" placeholder="e.g. 8000" aria-label="Health out-of-pocket maximum"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Term life in force</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-life" placeholder="e.g. 500000" aria-label="Term life cover in force"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Disability benefit, a month</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-disability" placeholder="e.g. 3000" aria-label="Long-term disability benefit per month"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Umbrella liability policy?</span>
+        <span class="slaf-input-shell"><select id="c-umbrella" aria-label="Umbrella policy">
+          <option value="">Not sure</option><option value="yes">Yes</option><option value="no">No</option>
+        </select></span></label>
+    </div>
+    <div class="cover-read" id="coverage-read"></div>
+  </section>
+
+  <section class="slaf-card" id="am-out-compare">
+    <span class="slaf-eyebrow">Yours vs. the maths</span>
+    <h2 style="margin:var(--space-2) 0 0">Two different questions</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      The left one is what you said you need. The right one is what your cash
+      currently covers, at your current spending. They are allowed to
+      disagree — that gap is the useful part.
+    </p>
+    <div class="pair">
+      <div>
+        <span class="cap">Your number</span>
+        <span class="big" id="c-target">—</span>
+        <span class="sub" id="c-target-sub"></span>
+      </div>
+      <div>
+        <span class="cap">Cash on hand covers</span>
+        <span class="big" id="c-computed">—</span>
+        <span class="sub" id="c-computed-sub"></span>
+      </div>
+    </div>
+    <div class="track" id="c-track" hidden><span class="fill" id="c-fill" style="width:0"></span></div>
+    <div class="track-ends" id="c-ends" hidden><span id="c-end-left"></span><span id="c-end-right"></span></div>
+    <p class="why" id="c-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-gap">
+    <span class="slaf-eyebrow">Getting there</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What closing the gap takes</h2>
+    <div class="verdict" id="g-verdict">—</div>
+    <p class="why" id="g-why"></p>
+    <div class="out-detail" id="g-detail"></div>
+  </section>
+
+  <section class="slaf-card" id="am-milestones">
+    <span class="slaf-eyebrow">The usual milestones</span>
+    <h2 style="margin:var(--space-2) 0 0">Where the rules of thumb sit</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      Context, not a grade. If your number is above or below all of these,
+      that is information about your life, not a mistake in your maths.
+    </p>
+    <ul class="miles" id="m-list"></ul>
+    <p class="why" id="m-why"></p>
+  </section>
+
+  <section class="slaf-card" id="am-reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="am-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
   </section>
 
   <p class="disclaimer">
     Educational tool, not financial advice. Interest on the cushion is left
     out on purpose — over a few months it is small, and a safety calculation
-    should err short. Your numbers stay in this browser, and this page saves
-    none of them.
+    should err short. The benefit is the figure you looked up, not one this
+    page guessed. Your numbers stay in this browser.
   </p>
 </main>
 
@@ -269,7 +633,55 @@
 <script src="../engines/runway.js"></script>
 <script src="../engines/swan.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/betweenjobs.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/room.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../engines/reachable.js"></script>
+<script src="../engines/countdown.js"></script>
+<script src="../engines/quitfund.js"></script>
+<script src="../engines/foo.js"></script>
 <script>
+/* ---- Four readings, one number (D-230) ------------------------------------
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands: #the-plan and #out-fix came from The Runway, #inputs
+   and #chart from Between Jobs, #months and #dates from The Quit Fund,
+   #coverage and #out-gap from Sleep At Night. Switching hides and shows and
+   rebuilds nothing, because three of the four hold live inputs (D-034).
+   The plainest reading is first and is the default. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-job-hunting', match: /^#(job-hunting|bj-number|chart|inputs|amounts|assumptions|bj-reading|room-)/ },
+    { id: 'view-by-choice',   match: /^#(by-choice|months|dates|parts|q-)/ },
+    { id: 'view-at-3am',      match: /^#(at-3am|am-|deductible|coverage|out-gap|c-|g-|m-|in-|field-|band-note)/ },
+    { id: 'view-how-long',    match: /.*/ }
+  ];
+  function route() {
+    var h = location.hash || '';
+    var on = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    /* A deep link to a card INSIDE a reading still scrolls to it, once the
+       reading it lives in is the one on screen. */
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) { var d = t.closest('details'); if (d) d.open = true; t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+})();
+</script>
+
+<script>
+/* ---- HOW LONG: page-local, writes nothing (D-230) ----------------------
+   A job you might leave is not a fact about your household, so every box in
+   this reading is previewed and none of it is saved. The three readings
+   beside it DO write, each through its owner. */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
@@ -663,7 +1075,7 @@
     renderFix(r);
     renderCompare(presets);
 
-    el('reading-list').innerHTML = ['cashSavings', 'monthlyExpenses']
+    el('hl-reading-list').innerHTML = ['cashSavings', 'monthlyExpenses']
       .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
   }
 
@@ -673,13 +1085,6 @@
     queued = true;
     setTimeout(function () { queued = false; renderNow(); }, 0);
   }
-
-  function jumpToHash() {
-    if (!location.hash) return;
-    var t = document.getElementById(location.hash.slice(1));
-    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  window.addEventListener('hashchange', jumpToHash);
 
   Spine.registerRoom(ROOM_ID);
 
@@ -715,7 +1120,599 @@
     TABLES = tables;
     prefillFromFacts();
     renderNow();
-    jumpToHash();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+/* ---- end HOW LONG ---- */
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      BetweenJobs = SLAF.BetweenJobs, Charts = SLAF.Charts, Room = SLAF.Room;
+
+  /* ---- writes: this room owns two fields of person.unemployment ------------- */
+  function writeUnemployment(patch) {
+    var person = Spine.ensurePrimaryPerson('You');
+    var current = Schema.unemploymentOf(Spine.getProfile());
+    Spine.upsertPerson({ id: person.id, unemployment: Object.assign({}, current, patch) });
+  }
+  function readUnemployment(h) { return Schema.unemploymentOf(h); }
+
+  /* This is a READING now, not a room (D-230), so it is never refused: the
+     question "how long while job hunting" is one an employed person is
+     entitled to ask, and refusing it was only ever right when it cost a
+     whole page. Anyone not actually between jobs gets the same arithmetic
+     run as if the pay stopped today, said in a line above the number so it
+     is never mistaken for a fact. The template's standalone render invents
+     an employed person when the spine is empty; that copy is treated the
+     same way. */
+  function planOf(h, T) {
+    var guessedPerson = !Schema.isUnemployed(h);
+    /* 15.8: the rates for the piles behind the cash. D-181. */
+    var rates = SLAF.Tax && T.federalBrackets ? SLAF.Tax.withdrawalRates(h, T) : null;
+    return BetweenJobs.plan(h, T, { asBetweenJobs: guessedPerson, rates: Money.isOk(rates) ? rates : null });
+  }
+  function beyondCashLine(p) {
+    var t = p.beyondCash;
+    if (!t || !Money.isOk(t)) return '';
+    var steps = t.steps.filter(function (s) { return s.tier !== 'cash' && s.grossCents > 0; });
+    if (!steps.length) return '';
+    return ' Behind the cash: ' + steps.map(function (s) {
+      var how = t.taxApplied ? 'after tax' : 'before tax';
+      if (s.penaltyCents) how += ' and a ' + Money.formatCents(s.penaltyCents) + ' early penalty';
+      return months(s.monthsThis) + ' more from ' + s.label.toLowerCase() + ' (' + Money.formatCents(s.netCents) + ', ' + how + ')';
+    }).join(', then ') + '. Property is never sold for this.';
+  }
+  function longDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return '';
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+  function months(n) { return Money.formatMonths(n); }
+  function benefitLine(p) {
+    var b = p.benefit;
+    if (b.state === 'counted') return 'The benefit, ' + Money.formatCents(b.monthlyCents) + ' a month, runs ' + months(b.months) + (p.benefitEndDate ? ', to about ' + longDate(p.benefitEndDate) : '') + '.';
+    if (b.state === 'none') return 'No benefit is counted — Start Here says ' + (b.status === 'ineligible' ? 'not eligible' : 'not applied') + '.';
+    if (b.state === 'noWeeks') return 'The benefit is not counted yet: ' + b.reason;
+    return 'No benefit is counted: ' + (b.reason || 'not asked yet') + '.';
+  }
+
+  Room.mount({
+    id: 'runway',
+    part: true,
+    tables: ['reentryGap', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'federalBrackets', 'accessRules'],
+    reads: ['unemployment', 'monthlyExpenses', 'cashSavings', 'dependents', 'healthCover', 'healthMonthly'],
+
+    number: function (h, T) {
+      var p = planOf(h, T);
+      var asIf = !Schema.isUnemployed(h);
+      if (!Money.isOk(p)) return { label: 'Days the money lasts', value: null, reason: p.reason };
+      var search = p.expectedSearchMonths === null ? 'not said yet' : months(p.expectedSearchMonths) + (p.expectedSource === 'typical' ? ' (typical — type yours below)' : '');
+      var sub;
+      if (p.sustainable) {
+        sub = 'What comes in covers the month' + (p.other.cents > 0 ? ' — ' + Money.formatCents(p.other.cents) + ' a month of other income against ' + Money.formatCents(p.monthlyExpensesCents) + ' going out' : '') + '; the cash is not being drawn down. The search you expect: ' + search + '.';
+      } else {
+        sub = '<strong>' + months(p.runwayMonths) + '</strong> at ' + Money.formatCents(p.monthlyExpensesCents) + ' a month'
+          + ' · <strong>' + (p.floorSustainable ? 'covered' : months(p.floorRunwayMonths)) + '</strong> at the floor of ' + Money.formatCents(p.floorCents)
+          + (p.floorAtOrAboveSpending ? ' (no lower than your spending, so no gain)' : p.floorGainMonths === 0 ? ' (no whole month gained)' : '')
+          + ' · the search you expect: <strong>' + search + '</strong>.';
+        sub += ' The cash runs out around <strong>' + longDate(p.cashOutDate) + '</strong>.';
+        if (p.gapMonths !== null) {
+          sub += p.gapMonths < 0
+            ? ' <strong>Short by ' + months(Math.abs(p.gapMonths)) + '</strong>: the search you expect outlasts the money' + (!p.floorSustainable && p.floorRunwayMonths >= p.expectedSearchMonths ? ' at this spending, though not at the floor' : '') + '.'
+            : p.gapMonths < 1 ? ' <strong>Barely covered</strong> — ' + months(p.gapMonths) + ' to spare.'
+            : ' Covered, with <strong>' + months(p.gapMonths) + ' to spare</strong>.';
+        }
+      }
+      sub += ' ' + benefitLine(p) + beyondCashLine(p);
+      if (asIf) sub = 'You are not between jobs, so this reads as if the pay stopped today. ' + sub;
+      return { label: 'Days the money lasts', value: p.sustainable ? 'Covered' : p.value.toLocaleString('en-US') + ' days', sub: sub, zone: p.zone, result: p };
+    },
+
+    chart: function (h, T) {
+      var p = planOf(h, T);
+      if (!Money.isOk(p)) return Charts.area({ series: [], empty: p.reason });
+      var far = Math.max(p.expectedSearchMonths || 0, p.sustainable ? 0 : p.runwayMonths, p.floorSustainable ? 0 : p.floorRunwayMonths, p.benefit.months);
+      var horizon = Math.min(p.horizonMonths, Math.max(p.sustainable ? 12 : 6, Math.ceil(far) + 2));
+      var vLines = p.expectedSearchMonths !== null && p.expectedSearchMonths <= horizon
+        ? [{ x: p.expectedSearchMonths, label: 'the search, ' + months(p.expectedSearchMonths) }] : [];
+      return Charts.area({
+        title: 'Cash month by month, at your spending and at the floor',
+        series: [
+          { id: 'spend', label: 'At ' + Money.formatCents(p.monthlyExpensesCents) + ' a month', color: Charts.COLORS.cash, fill: true, points: BetweenJobs.balancePoints(p.base, horizon) },
+          { id: 'floor', label: 'At the floor, ' + Money.formatCents(p.floorCents), color: Charts.COLORS.target, fill: false, dash: true, points: BetweenJobs.balancePoints(p.floorRun, horizon) }
+        ],
+        hLines: [{ y: 0, label: 'empty', color: Charts.COLORS.debt }],
+        vLines: vLines,
+        x: { label: 'months from now', format: function (v) { return String(v); } }
+      });
+    },
+
+    inputs: [
+      { ctl: 'expectedSearchMonths', label: 'Expected search, months', kind: 'number', placeholder: 'e.g. 3', affix: 'mo',
+        hint: 'Your best guess at how long until the next pay cheque. The typical search is proposed until you type yours.',
+        read: function (h) { return readUnemployment(h).expectedSearchMonths; },
+        write: function (v) { writeUnemployment({ expectedSearchMonths: v === null || v <= 0 ? null : v }); },
+        propose: function (h, T) { return BetweenJobs.proposeSearchMonths(T); } },
+      { ctl: 'floorMonthlyCents', label: 'The floor, a month', kind: 'money', placeholder: 'e.g. 2,100',
+        hint: 'The bare-minimum month: rent, food, the lights, the minimums — what it costs if everything cuttable is cut.',
+        read: function (h) { return readUnemployment(h).floorMonthlyCents; },
+        write: function (v) { writeUnemployment({ floorMonthlyCents: v === null || v < 0 ? null : v }); },
+        propose: function (h, T) { return BetweenJobs.proposeFloorCents(h); } }
+    ],
+
+    amounts: function (h, T) {
+      var p = planOf(h, T);
+      var rows = [];
+      var spend = Schema.monthlyExpensesCents(h);
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
+      if (Money.isOk(p)) {
+        rows.push({ label: 'The floor month' + (p.floorSource === 'convention' ? ', proposed' : ''), cents: p.floorCents, href: p.floorSource === 'yours' ? null : '#inputs' });
+        if (p.severanceCents > 0) rows.push({ label: 'Severance in hand', cents: p.severanceCents, href: Ownership.linkTo('start', 'q-unemployed') });
+        if (p.benefit.monthlyCents > 0) rows.push({ label: 'The benefit, a month', cents: p.benefit.monthlyCents, href: Ownership.linkTo('start', 'q-unemployed') });
+        if (p.other.cents > 0) rows.push({ label: 'Other income, a month' + (p.other.basis === 'gross' ? ' (before tax)' : ''), cents: p.other.cents, href: Ownership.linkTo('start', 'q-partner') });
+      }
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var p = planOf(h, T);
+      var gap = T.reentryGap;
+      var laidOff = SLAF.Runway.PRESETS.laid_off;
+      var u = readUnemployment(h);
+      var health = (h.insurance || {}).health || {};
+      var rows = [
+        { label: 'A typical search', value: gap ? months(gap.medianMonths) + ' (median), ' + months(gap.meanMonths) + ' on average' : 'not loaded',
+          source: gap ? 'data/reentry_gap.json v' + gap.version + ' — ' + gap.source + ' (' + gap.confidence + ')' : '' },
+        { label: 'The search compared against', value: Money.isOk(p) && p.expectedSearchMonths !== null ? months(p.expectedSearchMonths) : 'not said yet',
+          source: Money.isEntered(u.expectedSearchMonths) ? 'yours' : 'the typical search above, until you type yours' },
+        { label: 'The floor', value: Money.isOk(p) ? Money.formatCents(p.floorCents) + ' a month' : 'not known yet',
+          source: Money.isEntered(u.floorMonthlyCents) ? 'yours' : Math.round(BetweenJobs.FLOOR_SHARE * 100) + '% of your spending, a bare-minimum month (convention)' },
+        { label: 'The benefit, a month', value: Money.isOk(p) && p.benefit.monthlyCents > 0 ? Money.formatCents(p.benefit.monthlyCents) + ' for ' + months(p.benefit.months) : 'none counted',
+          source: 'weekly × 52 ÷ 12, for the weeks left, from what you looked up in Start Here — never a figure this page guessed (D-092)' },
+        { label: 'The shape of the months', value: laidOff.label,
+          source: 'engines/runway.js laid-off preset: severance lands before month 1, the benefit pays each month until its weeks are up and then stops, spending goes out every month, nothing else changes' },
+        { label: 'Interest on the cash', value: 'none',
+          source: 'left out on purpose; over the months a runway covers it is small, and leaving it out errs short (engines/runway.js)' },
+        { label: 'Days in a month', value: (Math.round(BetweenJobs.DAYS_PER_MONTH * 100) / 100) + '',
+          source: '365.25 ÷ 12, the same constant as the dashboard’s lead (shared/instruments.js)' }
+      ];
+      if (Money.isOk(p) && p.other.basis !== 'none') {
+        rows.push({ label: 'Other income, a month', value: Money.formatCents(p.other.cents) + (p.other.basis === 'gross' ? ' before tax' : ' after tax'),
+          source: p.other.basis === 'takeHome' ? 'a second adult’s pay less the flat effective-rate tax estimate (engines/tier0.js, data/effective_tax_rates_2026.json v' + T.effectiveTaxRates.version + ')' : 'a second adult’s pay; tax not estimated: ' + (p.other.reason || '') });
+      }
+      if (health.type) {
+        rows.push({ label: 'Health cover', value: (Ownership.field('healthCover').format(health.type)) + (Money.isEntered(health.monthlyCents) ? ', ' + Money.formatCents(health.monthlyCents) + ' a month' : ''),
+          source: 'read from Protection; assumed to be inside your monthly spending, not added on top of it' });
+      }
+      return rows;
+    },
+
+    why: function (h, T, situation) {
+      return {
+        betweenJobs: 'Between jobs, the savings rate and the FI date stop meaning anything for a while; the only number is whether the money outlasts the search. This reading puts the two side by side — the day the cash runs out, with the benefit and the severance counted, against how long you expect the search to take — and shows the floor you could drop to if the search runs long.'
+      }[situation] || 'Read this one before you need it. The two numbers it asks for, how long a search takes and what a bare-minimum month costs, are much harder to think about clearly on the day the job ends.';
+    },
+
+    scope: 'This reading does not file for benefits, price COBRA against the marketplace, or plan the search itself.'
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, QuitFund = SLAF.QuitFund;
+  var TABLES = null, MODE = 'quit';
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
+  function render() {
+    if (!TABLES) return;
+    Array.prototype.forEach.call(el('mode-choices').querySelectorAll('[data-mode]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === MODE ? 'true' : 'false'); });
+    var r = QuitFund.plan(Spine.getProfile(), TABLES, { mode: MODE });
+    if (!Money.isOk(r)) { el('q-num').textContent = 'Not yet.'; el('q-sub').textContent = r.reason; el('q-benefit').textContent = ''; el('q-dates').innerHTML = ''; el('q-parts').innerHTML = ''; return; }
+    el('q-num').textContent = r.value + ' month' + (r.value === 1 ? '' : 's') + '.';
+    el('q-num').setAttribute('data-months', String(r.value));
+    el('q-sub').textContent = Money.formatCents(r.freeCents) + ' you could reach at no cost' + (r.benefit.totalCents ? ' plus ' + Money.formatCents(r.benefit.totalCents) + ' of unemployment benefit' : '') + ', against a month of ' + Money.formatCents(r.monthCents) + ': the ' + (r.floorSource === 'floor' ? 'floor' : 'household') + ' month of ' + Money.formatCents(r.floorCents) + ' plus ' + Money.formatCents(r.coverCents) + ' of health cover at the COBRA price' + (r.marketplaceCents ? ' (a marketplace plan can be nearer ' + Money.formatCents(r.marketplaceCents) + ')' : '') + '.';
+    el('q-benefit').textContent = MODE === 'laidOff'
+      ? (r.benefit.totalCents ? 'Laid off: about ' + Money.formatCents(r.benefit.weeklyCents) + ' a week for ' + r.benefit.weeks + ' weeks in ' + r.benefit.state + ', at half your pay up to the state cap. An estimate from the state maximum, not a promise.' : 'Laid off: ' + (r.benefit.reason || 'no benefit counted.'))
+      : 'Quitting usually disqualifies an unemployment claim, so none is counted. Nothing else changes between the two.';
+    el('q-dates').innerHTML = r.targets.map(function (t) {
+      var when = t.reachedNow ? 'now' : t.neverAtThisPace ? 'not at this pace: ' + Money.formatCents(t.monthlyNeededCents) + ' a month would get there in five years' : monthWord(t.date);
+      return '<li><span>' + t.months + ' months<small>' + esc(Money.formatCents(t.targetCents)) + ' in the fund' + (r.savingsKnown ? ', at ' + esc(Money.formatCents(r.monthlyCents)) + ' a month' : ', with nothing known to be going in') + '</small></span><span class="amt">' + esc(when) + '</span></li>';
+    }).join('');
+    var parts = r.freeTiers.map(function (t) { return '<li><span>' + esc(t.label) + '<small>free to reach</small></span><span class="amt">' + esc(Money.formatCents(t.cents)) + '</span></li>'; });
+    if (!parts.length) parts.push('<li><span>Nothing free to reach yet<small>cash and Roth contributions count here</small></span><span class="amt"></span></li>');
+    parts.push('<li><span>The month<small>' + (r.floorSource === 'floor' ? 'the fixed lines from Cash Flow' : 'the household month; mark fixed lines in Cash Flow for a floor') + '</small></span><span class="amt">' + esc(Money.formatCents(r.floorCents)) + '</span></li>');
+    parts.push('<li><span>Health cover<small>COBRA, ' + esc(r.coverKind) + ', data/cobra_aca_2024.json</small></span><span class="amt">' + esc(Money.formatCents(r.coverCents)) + '</span></li>');
+    el('q-parts').innerHTML = parts.join('');
+  }
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-mode]'); if (!b) return;
+    MODE = b.getAttribute('data-mode') === 'laidOff' ? 'laidOff' : 'quit'; render();
+  });
+  Spine.onChange(render);
+  Reference.load(['accessRules', 'federalBrackets', 'seTax', 'stateBrackets', 'aca', 'effectiveTaxRates', 'expenseCategories', 'debtRules', 'cobraAca', 'uiBenefits']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      CashFlow = SLAF.CashFlow, Swan = SLAF.Swan;
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  var ROOM_ID = 'runway';   /* the room this reading lives in (D-230) */
+  var TABLES = null;
+
+  function el(id) { return document.getElementById(id); }
+
+  /* ---- Writing the number ---------------------------------------------- */
+
+  function currentBasis() {
+    var s = Spine.getProfile().swan || {};
+    return s.basis || null;
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.basis button'), function (b) {
+    b.addEventListener('click', function () {
+      var basis = b.getAttribute('data-basis');
+      /* Switching basis does NOT carry the old figure across — a $15,000
+         answer and a "6 months" answer are two different sentences, and
+         converting one into the other would put words in someone's mouth. */
+      if (basis !== currentBasis()) Spine.setSwanTarget({ basis: basis });
+      render();
+      var focus = el(basis === 'amount' ? 'in-amount' : 'in-months');
+      if (focus) focus.focus();
+    });
+  });
+
+  function bindMoney(id, write) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      var v = node.getAttribute('data-raw');
+      node.value = v === null || v === '' ? '' : String(Number(v) / 100);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      write(Money.parseMoney(node.value.trim()));
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  }
+
+  bindMoney('in-amount', function (cents) {
+    Spine.setSwanTarget({ basis: 'amount', targetCents: cents });
+    render();
+  });
+
+  (function () {
+    var node = el('in-months');
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      var n = raw === '' ? null : Number(raw.replace(/[^0-9.]/g, ''));
+      Spine.setSwanTarget({
+        basis: 'months',
+        targetMonths: (n === null || !Number.isFinite(n)) ? null : n
+      });
+      render();
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  })();
+
+  el('in-note').addEventListener('blur', function () {
+    var text = el('in-note').value.trim();
+    Spine.setSwanTarget({ note: text === '' ? null : text });
+  });
+
+  el('am-btn-clear').addEventListener('click', function () {
+    Spine.setSwanTarget({ basis: null, note: null });
+    render();
+  });
+
+  /* ---- The Coverage Checkup (D-071) -------------------------------------
+     LIVE-FORM: built once — the four controls are in the HTML above and
+     only ever have their .value set, never while one of them has focus. */
+
+  var COVER_MONEY = [['c-oop', 'oopMaxCents'], ['c-life', 'termLifeCents'], ['c-disability', 'disabilityMonthlyCents']];
+
+  COVER_MONEY.forEach(function (spec) {
+    bindMoney(spec[0], function (cents) {
+      var current = (Spine.getProfile().insurance || {})[spec[1]];
+      if ((current === undefined ? null : current) !== cents) {
+        var patch = {}; patch[spec[1]] = cents;
+        Spine.updateProfile({ insurance: patch });
+      }
+      render();
+    });
+  });
+
+  el('c-umbrella').addEventListener('change', function () {
+    var v = el('c-umbrella').value;
+    Spine.updateProfile({ insurance: { umbrella: v === '' ? null : v === 'yes' } });
+    render();
+  });
+
+  function paintCoverage(h) {
+    var ins = h.insurance || {};
+    COVER_MONEY.forEach(function (spec) {
+      var node = el(spec[0]);
+      if (document.activeElement === node) return;
+      var v = ins[spec[1]];
+      node.setAttribute('data-raw', Money.isEntered(v) ? String(v) : '');
+      node.value = Money.isEntered(v) ? Money.formatCents(v) : '';
+    });
+    var sel = el('c-umbrella');
+    if (document.activeElement !== sel) sel.value = ins.umbrella === true ? 'yes' : ins.umbrella === false ? 'no' : '';
+
+    var rows = [];
+    var cash = Schema.cashCents(h);
+    var monthly = Schema.monthlyExpensesCents(h);
+    if (Money.isEntered(ins.oopMaxCents)) {
+      rows.push(['A bad health year', Money.isOk(cash)
+        ? (cash.value >= ins.oopMaxCents
+            ? 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket \u2014 your cash clears it.'
+            : 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket \u2014 ' + Money.formatCents(ins.oopMaxCents - cash.value) + ' more than you hold in cash.')
+        : 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket. Add your cash in Start Here to see whether it clears.']);
+    } else {
+      rows.push(['A bad health year', 'Not priced \u2014 no out-of-pocket maximum entered.']);
+    }
+    if (Array.isArray(h.dependents) && h.dependents.length === 0) {
+      rows.push(['If you died', 'Nobody depends on your income, so term life is not a gap here' + (Money.isEntered(ins.termLifeCents) ? ' \u2014 the ' + Money.formatCents(ins.termLifeCents) + ' in force is a choice, not a need.' : '.')]);
+    } else if (Money.isEntered(ins.termLifeCents)) {
+      rows.push(['If you died', Money.isOk(monthly) && monthly.value > 0
+        ? Money.formatCents(ins.termLifeCents) + ' of term life \u2014 ' + (Math.round(ins.termLifeCents / (monthly.value * 12) * 10) / 10) + ' years of your household\u2019s spending.'
+        : Money.formatCents(ins.termLifeCents) + ' of term life. Add monthly expenses to see how many years that is.']);
+    } else {
+      rows.push(['If you died', 'No term life entered.' + (h.dependents === null ? ' Whether anyone depends on your income is asked in Start Here.' : '')]);
+    }
+    if (Money.isEntered(ins.disabilityMonthlyCents)) {
+      rows.push(['If you could not work', Money.isOk(monthly) && monthly.value > 0
+        ? Money.formatCents(ins.disabilityMonthlyCents) + '/mo of disability benefit \u2014 ' + Money.formatRate(ins.disabilityMonthlyCents / monthly.value, { decimals: 0 }) + ' of what you spend.'
+        : Money.formatCents(ins.disabilityMonthlyCents) + '/mo of disability benefit.']);
+    } else {
+      rows.push(['If you could not work', 'No disability benefit entered.']);
+    }
+    rows.push(['If you were sued', ins.umbrella === true ? 'An umbrella policy stands behind you.'
+      : ins.umbrella === false ? 'No umbrella policy.' : 'Not answered.']);
+    el('coverage-read').innerHTML = dl(rows)
+      + '<p class="why">The Statement prices the worst plausible year \u2014 deductible, out-of-pocket maximum, six months of essentials, less the unemployment benefit \u2014 <a href="statement.html#worst-year">from these numbers \u2192</a></p>';
+  }
+
+  /* ---- Rendering -------------------------------------------------------- */
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function renderInputs(h) {
+    var s = h.swan || {};
+    Array.prototype.forEach.call(document.querySelectorAll('.basis button'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-basis') === s.basis));
+    });
+    el('field-amount').hidden = s.basis !== 'amount';
+    el('field-months').hidden = s.basis !== 'months';
+    el('field-note').hidden = !s.basis;
+    el('am-btn-clear').hidden = !s.basis;
+
+    var amount = el('in-amount');
+    if (document.activeElement !== amount) {
+      amount.setAttribute('data-raw', Money.isEntered(s.targetCents) ? String(s.targetCents) : '');
+      amount.value = Money.isEntered(s.targetCents) ? Money.formatCents(s.targetCents) : '';
+    }
+    var months = el('in-months');
+    if (document.activeElement !== months) {
+      months.value = Money.isEntered(s.targetMonths) ? String(s.targetMonths) : '';
+    }
+    var note = el('in-note');
+    if (document.activeElement !== note) note.value = s.note || '';
+  }
+
+  function renderBand(h) {
+    var node = el('band-note');
+    var b = Swan.band(h, TABLES.liquidityBenchmarks);
+    if (b.status !== 'ok') { node.hidden = true; return; }
+    var months = Swan.targetMonths(h);
+    node.hidden = false;
+    node.innerHTML = '<strong>' + esc(b.label) + '</strong> — ' + esc(b.blurb)
+      + (Money.isOk(months)
+        ? ' Yours works out at about ' + esc(Money.formatMonths(months.value)) + ' of cover.'
+        : '');
+  }
+
+  function renderCompare(h) {
+    var c = Swan.compare(h);
+    var target = Swan.targetCents(h);
+    var months = Swan.targetMonths(h);
+    var computed = SLAF.Tier0.emergencyFundMonths(h);
+
+    var tNode = el('c-target');
+    if (Money.isOk(target)) {
+      tNode.className = 'big';
+      tNode.textContent = Money.formatCents(target.value);
+      el('c-target-sub').textContent = Money.isOk(months)
+        ? 'about ' + Money.formatMonths(months.value) + ' of spending'
+        : 'add your monthly expenses to see that in months';
+    } else {
+      tNode.className = 'big is-incomplete';
+      tNode.textContent = Money.EM_DASH;
+      el('c-target-sub').textContent = target.reason || '';
+    }
+
+    var cNode = el('c-computed');
+    if (Money.isOk(computed)) {
+      cNode.className = 'big';
+      cNode.textContent = Money.formatMonths(computed.value);
+      el('c-computed-sub').textContent = Money.formatCents(computed.cashCents)
+        + ' ÷ ' + Money.formatCents(computed.monthlyExpensesCents) + ' a month';
+    } else {
+      cNode.className = 'big is-incomplete';
+      cNode.textContent = Money.EM_DASH;
+      el('c-computed-sub').textContent = computed.reason || '';
+    }
+
+    var track = el('c-track'), ends = el('c-ends');
+    if (!Money.isOk(c) || !Money.isEntered(c.value)) {
+      track.hidden = true; ends.hidden = true;
+      /* A target of zero is an answer, not a blank — there is just no
+         percentage of it to fill a bar with. */
+      el('c-why').textContent = !Money.isOk(c) ? (c.reason || '')
+        : c.targetCents === 0
+          ? 'You’ve said zero, and that is a real answer — there is nothing here '
+            + 'to work towards. Your ' + Money.formatCents(c.cashCents)
+            + ' in cash is doing something else.'
+          : '';
+      return;
+    }
+    track.hidden = false; ends.hidden = false;
+    el('c-fill').style.width = Math.max(0, Math.min(100, c.value * 100)) + '%';
+    el('c-end-left').textContent = Money.formatCents(c.cashCents) + ' in cash';
+    el('c-end-right').textContent = Money.formatCents(c.targetCents) + ' — your number';
+    el('c-why').textContent = c.metTarget
+      ? 'You are at your number, with ' + Money.formatCents(-c.gapCents) + ' beyond it. '
+        + 'Anything past this point is a different decision — it is no longer buying you sleep.'
+      : 'You are ' + Money.formatRate(c.value, { decimals: 0 }) + ' of the way there. '
+        + Money.formatCents(c.gapCents) + ' still to go.';
+  }
+
+  function renderGap(h) {
+    var c = Swan.compare(h);
+    var verdict = el('g-verdict');
+    if (!Money.isOk(c)) {
+      verdict.className = 'verdict is-incomplete';
+      verdict.textContent = c.reason || Money.EM_DASH;
+      el('g-why').textContent = '';
+      el('g-detail').innerHTML = '';
+      return;
+    }
+    if (c.metTarget) {
+      verdict.className = 'verdict';
+      verdict.textContent = 'You’re already there.';
+      el('g-why').textContent = 'Nothing more needs to go into cash for this. '
+        + 'The next dollar is free to do something else.';
+      el('g-detail').innerHTML = dl([
+        ['Your number', Money.formatCents(c.targetCents)],
+        ['Cash on hand', Money.formatCents(c.cashCents)],
+        ['Past it by', Money.formatCents(-c.gapCents)]
+      ]);
+      return;
+    }
+
+    /* What's left over each month — one shared function, in Cash Flow,
+       which also tells us which basis it managed to use. Not typed again
+       here, and not recomputed here either. */
+    var flow = CashFlow.monthlySurplusCents(h, TABLES.expenseCategories, TABLES);
+    var saving = Money.isOk(flow) ? flow.value : null;
+    var t = Swan.timeToTarget(c.gapCents, saving);
+
+    verdict.className = Money.isOk(t) ? 'verdict' : 'verdict is-incomplete';
+    verdict.textContent = Money.isOk(t)
+      ? Money.formatMonths(t.value) + ' at what you have left over'
+      : (t.reason || Money.EM_DASH);
+
+    el('g-why').textContent = Money.isOk(t)
+      ? 'At ' + Money.formatCents(saving) + ' a month left after tax and spending, '
+        + 'and assuming none of it goes anywhere else.'
+        + (flow.basis === 'monthlyTotal'
+          ? ' That is measured against your essential expenses only — categorise a '
+            + 'month in Expenses and this gets sharper, and probably smaller.'
+          : '')
+      : 'This needs what’s left over each month, which comes from Expenses.';
+
+    el('g-detail').innerHTML = dl([
+      ['Your number', Money.formatCents(c.targetCents)],
+      ['Cash on hand', Money.formatCents(c.cashCents)],
+      ['Still to go', Money.formatCents(c.gapCents)],
+      ['Left over each month', Money.isOk(flow) ? Money.formatCents(flow.value) : Money.EM_DASH]
+    ]);
+  }
+
+  function renderMilestones(h) {
+    var m = Swan.milestones(h, TABLES.liquidityBenchmarks);
+    if (!Money.isOk(m)) {
+      el('m-list').innerHTML = '';
+      el('m-why').textContent = m.reason || '';
+      return;
+    }
+    el('m-why').textContent = '';
+    el('m-list').innerHTML = m.value.map(function (row) {
+      return '<li><span>' + esc(row.label) + ' of expenses</span>'
+        + '<span class="amt">' + esc(Money.formatCents(row.cents)) + '</span>'
+        + '<span class="mark' + (row.reachedByCash ? ' hit' : '') + '">'
+        + (row.reachedByCash ? 'cash covers it'
+           : row.reachedByTarget === true ? 'inside your number' : '')
+        + '</span></li>';
+    }).join('');
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderInputs(h);
+    paintCoverage(h);
+    renderBand(h);
+    renderCompare(h);
+    renderGap(h);
+    renderMilestones(h);
+    el('am-reading-list').innerHTML = ['cashSavings', 'monthlyExpenses']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  /* Coalesced so a re-render triggered from inside a blur handler never
+     rips the focused node out from under the browser. */
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+
+  /* The deductible. A fact, asked once in Start Here (D-061) and read here
+     as a chip that links back to the question. This room used to own the
+     box; the ownership map says who does now, and this just renders it. */
+  (function () {
+    function paintDeductible() {
+      var h = Spine.getProfile();
+      var chip = el('deductible-chip');
+      if (chip) chip.innerHTML = Ownership.chip('highestDeductible', h, ROOM_ID);
+      var read = el('deductible-read');
+      if (!read) return;
+      var cash = Schema.cashCents(h);
+      var ded = (h.insurance || {}).highestDeductibleCents;
+      if (!Money.isEntered(ded) || !Money.isOk(cash)) { read.textContent = ''; return; }
+      read.textContent = cash.value >= ded
+        ? 'Covered — your ' + Money.formatCents(cash.value) + ' in cash clears it.'
+        : Money.formatCents(ded - cash.value) + ' short: you hold '
+          + Money.formatCents(cash.value) + ' against a ' + Money.formatCents(ded)
+          + ' excess.';
+    }
+    Spine.onChange(paintDeductible);
+    paintDeductible();
+  })();
+
+
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    renderNow();
   }).catch(function (err) {
     var notice = el('load-notice');
     notice.hidden = false;

@@ -54,8 +54,8 @@ const EQUAL_HEIGHT = [
   ['/rooms/savings-rate.html', '.pair'],
   ['/', '.instruments'],
   ['/rooms/hassle.html', '.rates'],
-  ['/rooms/sleep-at-night.html', '.pair'],
-  ['/rooms/sleep-at-night.html', '.cover-grid'],
+  ['/rooms/runway.html#at-3am', '.pair'],
+  ['/rooms/runway.html#at-3am', '.cover-grid'],
   ['/rooms/financial-snapshot.html', '.three'],
   ['/rooms/rerank.html', '.rate-row'],
   ['/rooms/rerank.html', '.pair'],
@@ -65,7 +65,7 @@ const EQUAL_HEIGHT = [
   ['/rooms/stacker.html', '.three'],
   ['/rooms/values.html', '.two'],
   ['/rooms/fulfillment.html', '.quads'],
-  ['/rooms/sleep-at-night.html', '.basis']
+  ['/rooms/runway.html#at-3am', '.basis']
 ];
 (async () => {
   if (!chromium) {

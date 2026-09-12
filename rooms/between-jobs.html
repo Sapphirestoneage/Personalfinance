@@ -7,292 +7,33 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Between Jobs · SPARKS</title>
-<meta name="description" content="The runway against the search: the day the cash runs out, with the benefit and severance counted, and the floor you could drop to."/>
+<meta name="description" content="Between Jobs is the while-job-hunting reading of The Cushion now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. Built on the frozen template (D-097).
-
-  1. READS   The between-jobs facts Start Here owns (since, benefit status,
-             the benefit a week and its weeks left, severance, last pay);
-             a month's spending; cash; dependents; health cover and what
-             it costs (Protection owns those — read only, never written).
-  2. WRITES  It OWNS person.unemployment.expectedSearchMonths and
-             person.unemployment.floorMonthlyCents — how long the search is
-             expected to take, and the bare-minimum month. Nothing else.
-  3. CALLS   engines/betweenjobs.js, which puts the question to
-             engines/runway.js (the laid-off preset, twice: at spending and
-             at the floor), Schema.benefitMonthlyCents for the benefit as a
-             month, and engines/tier0.js for a partner's pay after tax.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses for cash and spending, no benefit and no
-             severance, and says so (Gate.fillGuesses). Answered as anything
-             but between jobs, it says the room is not for that situation
-             and nothing else — the six-situation rule.
-  5. CONFIG  data/reentry_gap.json (the typical search). The 70% floor is a
-             named convention in the engine, not a table.
-
-  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, two
-  inputs, the assumptions drawer with sources, why this matters at your
-  stage, one out-of-scope line to Get Help. The ids below are the deep links.
-
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
-  THEMING: none this pass. A theme is a class on <body> and a palette in
-  shared/theme.css.
+  REDIRECT — Between Jobs is the while-job-hunting reading of The Cushion (rooms/runway.html#job-hunting, DECISIONS.md D-230).
+  Four rooms asked how long you could stop earning and each drew its own
+  conclusion; they are four readings of one number now, on one strip. The
+  file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  section[id] { scroll-margin-top: var(--space-4); }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
-</style>
+<meta http-equiv="refresh" content="0; url=runway.html#job-hunting"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Between Jobs</h1>
-  <p class="room-lede">The runway against the search: the day the cash runs out, with the benefit and severance counted, and the floor you could drop to.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <div class="room-standalone" id="room-standalone" hidden></div>
-
-  <section class="slaf-card" id="number">
-    <div class="room-head-row">
-      <span class="slaf-eyebrow">The day the cash runs out</span>
-      <div id="room-lens"></div>
-    </div>
-    <div class="room-number" id="room-number"></div>
-  </section>
-
-  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Cash, month by month</span>
-    <div id="room-chart"></div>
-  </section>
-
-  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The search and the floor</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Two numbers only you know: how long you expect the search to take, and the least a month could cost if it came to that. Both start as guesses until you type yours.</p>
-    <div id="room-inputs"></div>
-  </section>
-
-  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Through the lens</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, or as months of FI bought or pushed.</p>
-    <ul class="room-amounts" id="room-amounts"></ul>
-  </section>
-
-  <details class="room-drawer" id="assumptions">
-    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
-    <div class="room-assumptions-body" id="room-assumptions"></div>
-  </details>
-
-  <p class="room-why" id="room-why" hidden></p>
-  <p class="room-scope" id="room-scope"></p>
-
-  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">What this is reading</span>
-    <div id="reading-list" style="margin-top:var(--space-3)"></div>
-  </section>
-
-  <p class="disclaimer">
-    Educational tool, not financial advice. The benefit is the figure you
-    looked up, not one this page guessed; the runway leaves out interest on
-    the cash. Your numbers stay in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">Between Jobs is the while-job-hunting reading of The Cushion now.
+    <a href="runway.html#job-hunting" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/suggest.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../engines/tax.js"></script>
-<script src="../engines/runway.js"></script>
-<script src="../engines/betweenjobs.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../shared/charts.js"></script>
-<script src="../shared/room.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      BetweenJobs = SLAF.BetweenJobs, Charts = SLAF.Charts, Room = SLAF.Room;
-
-  /* ---- writes: this room owns two fields of person.unemployment ------------- */
-  function writeUnemployment(patch) {
-    var person = Spine.ensurePrimaryPerson('You');
-    var current = Schema.unemploymentOf(Spine.getProfile());
-    Spine.upsertPerson({ id: person.id, unemployment: Object.assign({}, current, patch) });
-  }
-  function readUnemployment(h) { return Schema.unemploymentOf(h); }
-
-  /* The template's standalone render invents an employed person when the
-     spine is empty; the engine is told to treat that copy as between jobs
-     (with no pay counted) rather than refuse it. A REAL answer that is not
-     "between jobs" is refused, and the room says nothing else. */
-  function planOf(h, T) {
-    var guessedPerson = !!(h.meta && h.meta.standalone && h.meta.standalone.indexOf('employmentStatus') >= 0);
-    /* 15.8: the rates for the piles behind the cash. D-181. */
-    var rates = SLAF.Tax && T.federalBrackets ? SLAF.Tax.withdrawalRates(h, T) : null;
-    return BetweenJobs.plan(h, T, { asBetweenJobs: guessedPerson, rates: Money.isOk(rates) ? rates : null });
-  }
-  function beyondCashLine(p) {
-    var t = p.beyondCash;
-    if (!t || !Money.isOk(t)) return '';
-    var steps = t.steps.filter(function (s) { return s.tier !== 'cash' && s.grossCents > 0; });
-    if (!steps.length) return '';
-    return ' Behind the cash: ' + steps.map(function (s) {
-      var how = t.taxApplied ? 'after tax' : 'before tax';
-      if (s.penaltyCents) how += ' and a ' + Money.formatCents(s.penaltyCents) + ' early penalty';
-      return months(s.monthsThis) + ' more from ' + s.label.toLowerCase() + ' (' + Money.formatCents(s.netCents) + ', ' + how + ')';
-    }).join(', then ') + '. Property is never sold for this.';
-  }
-  function longDate(iso) {
-    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
-    if (!m) return '';
-    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  }
-  function months(n) { return Money.formatMonths(n); }
-  function benefitLine(p) {
-    var b = p.benefit;
-    if (b.state === 'counted') return 'The benefit, ' + Money.formatCents(b.monthlyCents) + ' a month, runs ' + months(b.months) + (p.benefitEndDate ? ', to about ' + longDate(p.benefitEndDate) : '') + '.';
-    if (b.state === 'none') return 'No benefit is counted — Start Here says ' + (b.status === 'ineligible' ? 'not eligible' : 'not applied') + '.';
-    if (b.state === 'noWeeks') return 'The benefit is not counted yet: ' + b.reason;
-    return 'No benefit is counted: ' + (b.reason || 'not asked yet') + '.';
-  }
-
-  Room.mount({
-    id: 'between-jobs',
-    tables: ['reentryGap', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'federalBrackets', 'accessRules'],
-    reads: ['unemployment', 'monthlyExpenses', 'cashSavings', 'dependents', 'healthCover', 'healthMonthly'],
-
-    number: function (h, T) {
-      var p = planOf(h, T);
-      if (!Money.isOk(p)) return { label: 'Days the money lasts', value: null, reason: p.reason };
-      var search = p.expectedSearchMonths === null ? 'not said yet' : months(p.expectedSearchMonths) + (p.expectedSource === 'typical' ? ' (typical — type yours below)' : '');
-      var sub;
-      if (p.sustainable) {
-        sub = 'What comes in covers the month' + (p.other.cents > 0 ? ' — ' + Money.formatCents(p.other.cents) + ' a month of other income against ' + Money.formatCents(p.monthlyExpensesCents) + ' going out' : '') + '; the cash is not being drawn down. The search you expect: ' + search + '.';
-      } else {
-        sub = '<strong>' + months(p.runwayMonths) + '</strong> at ' + Money.formatCents(p.monthlyExpensesCents) + ' a month'
-          + ' · <strong>' + (p.floorSustainable ? 'covered' : months(p.floorRunwayMonths)) + '</strong> at the floor of ' + Money.formatCents(p.floorCents)
-          + (p.floorAtOrAboveSpending ? ' (no lower than your spending, so no gain)' : p.floorGainMonths === 0 ? ' (no whole month gained)' : '')
-          + ' · the search you expect: <strong>' + search + '</strong>.';
-        sub += ' The cash runs out around <strong>' + longDate(p.cashOutDate) + '</strong>.';
-        if (p.gapMonths !== null) {
-          sub += p.gapMonths < 0
-            ? ' <strong>Short by ' + months(Math.abs(p.gapMonths)) + '</strong>: the search you expect outlasts the money' + (!p.floorSustainable && p.floorRunwayMonths >= p.expectedSearchMonths ? ' at this spending, though not at the floor' : '') + '.'
-            : p.gapMonths < 1 ? ' <strong>Barely covered</strong> — ' + months(p.gapMonths) + ' to spare.'
-            : ' Covered, with <strong>' + months(p.gapMonths) + ' to spare</strong>.';
-        }
-      }
-      sub += ' ' + benefitLine(p) + beyondCashLine(p);
-      return { label: 'Days the money lasts', value: p.sustainable ? 'Covered' : p.value.toLocaleString('en-US') + ' days', sub: sub, zone: p.zone, result: p };
-    },
-
-    chart: function (h, T) {
-      var p = planOf(h, T);
-      if (!Money.isOk(p)) return Charts.area({ series: [], empty: p.reason });
-      var far = Math.max(p.expectedSearchMonths || 0, p.sustainable ? 0 : p.runwayMonths, p.floorSustainable ? 0 : p.floorRunwayMonths, p.benefit.months);
-      var horizon = Math.min(p.horizonMonths, Math.max(p.sustainable ? 12 : 6, Math.ceil(far) + 2));
-      var vLines = p.expectedSearchMonths !== null && p.expectedSearchMonths <= horizon
-        ? [{ x: p.expectedSearchMonths, label: 'the search, ' + months(p.expectedSearchMonths) }] : [];
-      return Charts.area({
-        title: 'Cash month by month, at your spending and at the floor',
-        series: [
-          { id: 'spend', label: 'At ' + Money.formatCents(p.monthlyExpensesCents) + ' a month', color: Charts.COLORS.cash, fill: true, points: BetweenJobs.balancePoints(p.base, horizon) },
-          { id: 'floor', label: 'At the floor, ' + Money.formatCents(p.floorCents), color: Charts.COLORS.target, fill: false, dash: true, points: BetweenJobs.balancePoints(p.floorRun, horizon) }
-        ],
-        hLines: [{ y: 0, label: 'empty', color: Charts.COLORS.debt }],
-        vLines: vLines,
-        x: { label: 'months from now', format: function (v) { return String(v); } }
-      });
-    },
-
-    inputs: [
-      { ctl: 'expectedSearchMonths', label: 'Expected search, months', kind: 'number', placeholder: 'e.g. 3', affix: 'mo',
-        hint: 'Your best guess at how long until the next pay cheque. The typical search is proposed until you type yours.',
-        read: function (h) { return readUnemployment(h).expectedSearchMonths; },
-        write: function (v) { writeUnemployment({ expectedSearchMonths: v === null || v <= 0 ? null : v }); },
-        propose: function (h, T) { return BetweenJobs.proposeSearchMonths(T); } },
-      { ctl: 'floorMonthlyCents', label: 'The floor, a month', kind: 'money', placeholder: 'e.g. 2,100',
-        hint: 'The bare-minimum month: rent, food, the lights, the minimums — what it costs if everything cuttable is cut.',
-        read: function (h) { return readUnemployment(h).floorMonthlyCents; },
-        write: function (v) { writeUnemployment({ floorMonthlyCents: v === null || v < 0 ? null : v }); },
-        propose: function (h, T) { return BetweenJobs.proposeFloorCents(h); } }
-    ],
-
-    amounts: function (h, T) {
-      var p = planOf(h, T);
-      var rows = [];
-      var spend = Schema.monthlyExpensesCents(h);
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
-      if (Money.isOk(p)) {
-        rows.push({ label: 'The floor month' + (p.floorSource === 'convention' ? ', proposed' : ''), cents: p.floorCents, href: p.floorSource === 'yours' ? null : '#inputs' });
-        if (p.severanceCents > 0) rows.push({ label: 'Severance in hand', cents: p.severanceCents, href: Ownership.linkTo('start', 'q-unemployed') });
-        if (p.benefit.monthlyCents > 0) rows.push({ label: 'The benefit, a month', cents: p.benefit.monthlyCents, href: Ownership.linkTo('start', 'q-unemployed') });
-        if (p.other.cents > 0) rows.push({ label: 'Other income, a month' + (p.other.basis === 'gross' ? ' (before tax)' : ''), cents: p.other.cents, href: Ownership.linkTo('start', 'q-partner') });
-      }
-      return rows;
-    },
-
-    assumptions: function (h, T) {
-      var p = planOf(h, T);
-      var gap = T.reentryGap;
-      var laidOff = SLAF.Runway.PRESETS.laid_off;
-      var u = readUnemployment(h);
-      var health = (h.insurance || {}).health || {};
-      var rows = [
-        { label: 'A typical search', value: gap ? months(gap.medianMonths) + ' (median), ' + months(gap.meanMonths) + ' on average' : 'not loaded',
-          source: gap ? 'data/reentry_gap.json v' + gap.version + ' — ' + gap.source + ' (' + gap.confidence + ')' : '' },
-        { label: 'The search compared against', value: Money.isOk(p) && p.expectedSearchMonths !== null ? months(p.expectedSearchMonths) : 'not said yet',
-          source: Money.isEntered(u.expectedSearchMonths) ? 'yours' : 'the typical search above, until you type yours' },
-        { label: 'The floor', value: Money.isOk(p) ? Money.formatCents(p.floorCents) + ' a month' : 'not known yet',
-          source: Money.isEntered(u.floorMonthlyCents) ? 'yours' : Math.round(BetweenJobs.FLOOR_SHARE * 100) + '% of your spending, a bare-minimum month (convention)' },
-        { label: 'The benefit, a month', value: Money.isOk(p) && p.benefit.monthlyCents > 0 ? Money.formatCents(p.benefit.monthlyCents) + ' for ' + months(p.benefit.months) : 'none counted',
-          source: 'weekly × 52 ÷ 12, for the weeks left, from what you looked up in Start Here — never a figure this page guessed (D-092)' },
-        { label: 'The shape of the months', value: laidOff.label,
-          source: 'engines/runway.js laid-off preset: severance lands before month 1, the benefit pays each month until its weeks are up and then stops, spending goes out every month, nothing else changes' },
-        { label: 'Interest on the cash', value: 'none',
-          source: 'left out on purpose; over the months a runway covers it is small, and leaving it out errs short (engines/runway.js)' },
-        { label: 'Days in a month', value: (Math.round(BetweenJobs.DAYS_PER_MONTH * 100) / 100) + '',
-          source: '365.25 ÷ 12, the same constant as the dashboard’s lead (shared/instruments.js)' }
-      ];
-      if (Money.isOk(p) && p.other.basis !== 'none') {
-        rows.push({ label: 'Other income, a month', value: Money.formatCents(p.other.cents) + (p.other.basis === 'gross' ? ' before tax' : ' after tax'),
-          source: p.other.basis === 'takeHome' ? 'a second adult’s pay less the flat effective-rate tax estimate (engines/tier0.js, data/effective_tax_rates_2026.json v' + T.effectiveTaxRates.version + ')' : 'a second adult’s pay; tax not estimated: ' + (p.other.reason || '') });
-      }
-      if (health.type) {
-        rows.push({ label: 'Health cover', value: (Ownership.field('healthCover').format(health.type)) + (Money.isEntered(health.monthlyCents) ? ', ' + Money.formatCents(health.monthlyCents) + ' a month' : ''),
-          source: 'read from Protection; assumed to be inside your monthly spending, not added on top of it' });
-      }
-      return rows;
-    },
-
-    why: function (h, T, situation) {
-      return {
-        betweenJobs: 'Between jobs, the savings rate and the FI date stop meaning anything for a while; the only number is whether the money outlasts the search. This room puts the two side by side — the day the cash runs out, with the benefit and the severance counted, against how long you expect the search to take — and shows the floor you could drop to if the search runs long.'
-      }[situation] || '';
-    },
-
-    scope: 'This room does not file for benefits, price COBRA against the marketplace, or plan the search itself.'
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#number': '#bj-number', '#chart': '#chart', '#inputs': '#inputs', '#amounts': '#amounts', '#assumptions': '#assumptions', '#reading': '#bj-reading' };
+    var hash = location.hash || '';
+    var target = 'runway.html' + (map[hash] || '#job-hunting');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

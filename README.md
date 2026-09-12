@@ -57,7 +57,7 @@ $ node test/run.js
 Fix that, run again, and it asks for the next thing: a deep-link anchor that
 exists, a filter tag, a `registerRoom()` call, the shared stylesheet, and
 every module its scripts depend on. Copy the shape of an existing room —
-`rooms/sleep-at-night.html` is a good small one to start from.
+`rooms/protection.html` is a good small one to start from.
 
 **The four rules that will bite you** are in `CLAUDE.md`, enforced by tests,
 and worth reading before shared code: empty is not zero, no `|| 0` in a
@@ -123,7 +123,7 @@ engines/            Shared calculation engines — one function per concept
   selfemployed.js     SE tax in visible steps, W2 vs 1099, quarterly + safe harbour
   goals.js            the shared Goal Costing Engine — wedding, deposit, trip
   accounts.js         Roth vs Traditional vs taxable, Solo 401k limits
-  swan.js             the self-reported sleep-at-night target, beside the maths
+  swan.js             the self-reported sleep-at-night target, beside the maths (the Cushion's at-3am reading, D-230)
   values.js           stated values against a categorised month — no score
   fulfillment.js      spend against a 1-10 joy rating, and the four corners
   hassle.js           what a money-saving chore pays per hour of your life

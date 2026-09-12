@@ -267,7 +267,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/sleep-at-night.html',
+    room: '/rooms/runway.html#at-3am',
     container: '#coverage',
     seed: 'demo',
     fields: [
@@ -531,7 +531,7 @@ const CASES = [
   },
   {
     /* Between Jobs (D-098): the two owned boxes land on person.unemployment. */
-    room: '/rooms/between-jobs.html',
+    room: '/rooms/runway.html#job-hunting',
     container: '#room-inputs',
     seed: 'demo',
     prepare: async (page) => {

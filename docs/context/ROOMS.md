@@ -43,7 +43,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **race** — The Race to $100K · 156 lines · engines: projection, tier0, countdown, race · D-217
 - **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-143, D-081
 
-## Decisions (32)
+## Decisions (30)
 
 - **hassle** — Worth the Hassle · 499 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
 - **quick-math** — Quick Math · 447 lines · engines: projection, quickmath, tier0, hourly · D-062, D-022
@@ -53,12 +53,10 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **side-hustle** — Side Hustle · 507 lines · engines: projection, tier0, selfemployed, hourly, sidehustle · D-062, D-033
 - **credential** — Worth Learning · 486 lines · engines: projection, tier0, hourly, credential · D-062
 - **worth** — Worth It · 607 lines · engines: projection, tier0, hourly, worth
-- **runway** — The Runway · 729 lines · engines: projection, tier0, cashflow, tax, runway, swan · D-130, D-082, D-062
+- **runway** — The Cushion · 1726 lines · engines: projection, tier0, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-230, D-130, D-082
 - **car** — What A Car Costs · 656 lines · engines: projection, tier0, hourly, quickmath · D-151
 - **what-if-life** — What If, Life · 551 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events · D-146, D-091, D-087
 - **timeline** — What Comes Next · 504 lines · engines: timeline · owns: futureIncome · D-152
-- **between-jobs** — Between Jobs · 299 lines · engines: projection, tier0, hourly, tax, runway, betweenjobs · owns: expectedSearchMonths, floorMonthly · D-102
-- **quit-fund** — The Quit Fund · 140 lines · engines: selfemployed, tax, projection, tier0, debt, cashflow, reachable, countdown, quitfund · D-217
 - **micro-retirement** — Micro-Retirement Planner · 167 lines · engines: projection, tier0, hourly, countdown, microretirement · D-219
 - **protection** — Protection · 268 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-103, D-098, D-094
 - **decumulation** — Drawing It Down · 274 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-226, D-104, D-098
@@ -78,9 +76,8 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **first-car** — The First Car Check · 148 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-219
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 
-## What Matters (12)
+## What Matters (11)
 
-- **sleep-at-night** — Sleep At Night · 616 lines · engines: projection, tier0, foo, cashflow, swan · owns: oopMax, termLife, disabilityMonthly, umbrella, swanTarget · D-095, D-071, D-061
 - **fulfillment** — The Joy Curve · 378 lines · engines: projection, tier0, cashflow, fulfillment · D-164
 - **rerank** — The Rerank · 619 lines · engines: projection, tier0, cashflow, rerank · owns: rerankCut · D-089, D-085
 - **values** — What Matters · 429 lines · engines: projection, tier0, cashflow, values
@@ -109,8 +106,9 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 - **progress-card** — Progress Card (utility) · 140 lines · engines: projection, tier0, tax, debt · D-212
 
-## Files in rooms/ not in the registry (10)
+## Files in rooms/ not in the registry (13)
 
+- rooms/between-jobs.html
 - rooms/comeback.html
 - rooms/dashboard.html
 - rooms/doors.html
@@ -118,6 +116,8 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/first-round.html
 - rooms/net-worth.html
 - rooms/next-hundred.html
+- rooms/quit-fund.html
 - rooms/refresh.html
+- rooms/sleep-at-night.html
 - rooms/walk.html
 - rooms/windfall.html

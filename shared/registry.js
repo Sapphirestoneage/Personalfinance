@@ -340,28 +340,6 @@
       ]
     },
     {
-      id: 'sleep-at-night',
-      group: 'matters', aliases: ['sleep', 'risk', 'coverage checkup', 'worry'],
-      kind: 'about-you',
-      needs: ['monthlyExpenses', 'cashSavings'],
-      order: 7,
-      title: 'Sleep At Night',
-      blurb: 'The amount of cash that stops the 3am arithmetic \u2014 your number, beside the one the maths produces.',
-      href: 'rooms/sleep-at-night.html',
-      tier: 1,
-      tags: ['cashflow'],
-      daite: { reads: ['assets.cashCents', 'expenses'], writes: ['plans.swan', 'you.cover'] },
-      subsections: [
-        { id: 'number',        label: 'Your number' },
-        { id: 'deductible',    label: 'Your highest deductible' },
-        { id: 'coverage',      label: 'Coverage checkup' },
-        { id: 'out-compare',   label: 'Yours vs. the maths' },
-        { id: 'out-gap',       label: 'Getting there' },
-        { id: 'milestones',    label: 'The usual milestones' },
-        { id: 'reading',       label: 'Reading from elsewhere' }
-      ]
-    },
-    {
       id: 'fire-lab',
       features: ['showNominal', 'sequenceRisk'],
       group: 'scorecard', aliases: ['lab', 'variants', 'lean', 'fat', 'coast', 'barista'],
@@ -807,26 +785,46 @@
         { id: 'reading',     label: 'Reading from elsewhere' }
       ]
     },
+    /* The Cushion (D-230): four readings of one number. The Runway, Between
+       Jobs, The Quit Fund and Sleep At Night each answered how long you
+       could stop earning; the aliases carry all four so a search for any of
+       them lands, and the seven fields the last two owned are owned here. */
     {
       id: 'runway',
-      features: ['jobLossCushions'],
-      group: 'decisions', subgroup: 'moves', aliases: ['runway', 'months of cash', 'how long'],
-      kind: 'explore',
+      features: ['jobLossCushions', 'preMedicare', 'agingParents'],
+      group: 'decisions', subgroup: 'moves',
+      aliases: ['runway', 'months of cash', 'how long', 'cushion', 'emergency fund',
+                'unemployed', 'laid off', 'job loss', 'cobra', 'between jobs',
+                'quit fund', 'walk away', 'freedom fund',
+                'sleep at night', 'swan', 'coverage', '3am'],
+      kind: 'about-you',
       needs: ['cashSavings', 'monthlyExpenses'],
       order: 26,
-      title: 'The Runway',
-      blurb: 'The income stops and the bills don\u2019t \u2014 quitting, laid off, or starting something. How many months that is, and what would buy you more of them.',
+      title: 'The Cushion',
+      blurb: 'How long could you not earn? One number, four readings: plainly, while job hunting, by choice, and the amount that stops the 3am arithmetic.',
       href: 'rooms/runway.html',
       tier: 2,
       tags: ['income', 'cashflow'],
-      daite: { reads: ['assets.cashCents', 'expenses'], writes: [] },
+      daite: { reads: ['assets.cashCents', 'expenses', 'income.sources[].benefit', 'you.cover', 'you.dependents'],
+               writes: ['expenses.floor', 'plans.betweenJobs', 'plans.swan', 'you.cover'] },
       subsections: [
+        { id: 'view-how-long',    label: 'How long' },
+        { id: 'view-job-hunting', label: 'While job hunting' },
+        { id: 'view-by-choice',   label: 'By choice' },
+        { id: 'view-at-3am',      label: 'At 3am' },
         { id: 'the-plan',    label: 'The situation' },
         { id: 'out-runway',  label: 'How long the money lasts' },
         { id: 'out-path',    label: 'The drawdown' },
         { id: 'out-fix',     label: 'What would buy you more' },
         { id: 'out-compare', label: 'The same money, three exits' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
+        { id: 'bj-number',   label: 'The day the cash runs out' },
+        { id: 'inputs',      label: 'The search and the floor' },
+        { id: 'months',      label: 'Months of freedom' },
+        { id: 'dates',       label: 'When you would have' },
+        { id: 'am-number',   label: 'Your number' },
+        { id: 'coverage',    label: 'Coverage checkup' },
+        { id: 'out-gap',     label: 'Getting there' },
+        { id: 'hl-reading',  label: 'Reading from elsewhere' }
       ]
     },
     {
@@ -1035,30 +1033,6 @@
     ]
   });
 
-  /* Between Jobs — the tranche rooms on the template (D-098). */
-  ROOMS.push({
-    id: 'between-jobs',
-    features: ['preMedicare', 'jobLossCushions'],
-    group: 'decisions', subgroup: 'work', aliases: ['unemployed', 'laid off', 'job loss', 'runway', 'cobra'], appliesWhen: 'situation != retired',
-    kind: 'about-you',
-    needs: ['unemployment', 'monthlyExpenses', 'cashSavings'],
-    order: 31,
-    title: 'Between Jobs',
-    blurb: 'The runway against the search: the day the cash runs out, with the benefit and severance counted, and the floor you could drop to.',
-    href: 'rooms/between-jobs.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses', 'income.sources[].benefit'], writes: ['expenses.floor', 'plans.betweenJobs'] },
-      subsections: [
-        { id: 'number',      label: 'The day the cash runs out' },
-        { id: 'chart',       label: 'Cash, month by month' },
-        { id: 'inputs',      label: 'The search and the floor' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
   /* Protection — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'protection',
@@ -1131,24 +1105,6 @@
       { id: 'years',       label: 'Year by year' },
       { id: 'assumptions', label: 'Assumptions' }
     ]
-  });
-
-  /* The Quit Fund (K7, D-217): months of freedom on money that costs
-     nothing to reach, with cover counted, and the dates to 3, 6 and 12. */
-  ROOMS.push({
-    id: 'quit-fund',
-    group: 'decisions', subgroup: 'work', aliases: ['quit', 'quit fund', 'freedom fund', 'f-you money', 'walk away', 'laid off'],
-    appliesWhen: 'situation != retired',
-    kind: 'read',
-    needs: ['cashSavings', 'monthlyExpenses'],
-    order: 31.5,
-    title: 'The Quit Fund',
-    blurb: 'How many months you could walk away for, on money that costs nothing to reach, with the floor month and health cover counted; when you would have three, six and twelve; and what changes if you are laid off instead.',
-    href: 'rooms/quit-fund.html',
-    tier: 2,
-    tags: ['cashflow', 'income'],
-    daite: { reads: ['assets.cashCents', 'assets', 'expenses', 'expenses.floor', 'income.grossAnnualCents', 'taxes.state', 'you.dob'], writes: [] },
-    subsections: [{ id: 'months', label: 'Months of freedom' }, { id: 'dates', label: 'When you would have' }, { id: 'parts', label: 'What it is made of' }]
   });
 
   /* Micro-Retirement Planner (K5, D-219): a planned break of 1 to 12 months,
@@ -1925,8 +1881,8 @@
     home: ['dashboard', 'planner', 'start'],
     numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
     scorecard: ['financial-snapshot', 'savings-rate', 'ratios', 'health', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
-    decisions: ['career-move', 'self-employed', 'side-hustle', 'between-jobs', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'runway', 'decumulation', 'quick-math', 'adventure', 'what-if-life', 'timeline'],
-    matters: ['sleep-at-night', 'values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
+    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'runway', 'decumulation', 'quick-math', 'adventure', 'what-if-life', 'timeline'],
+    matters: ['values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
     levelup: ['skill-tree', 'stacker', 'exercises'],
     upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
   };
@@ -1984,7 +1940,9 @@
     hassle: ['hours'],
     'savings-rate': ['savingsRate'],
     fire: ['savingsRate'],
-    'between-jobs': ['unemployment'],
+    /* Between Jobs became the Cushion's while-job-hunting reading (D-230),
+       which anyone may open: it reads as if the pay stopped today and says
+       so. The Cushion itself requires nothing. */
     protection: ['protection'],
     decumulation: ['decumulation'],
     tax: ['income'],

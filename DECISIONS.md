@@ -13809,6 +13809,42 @@ checks; the ladder's build-once inputs and the lump-sum boxes both hold
 their text). All three readings and both redirects loaded at 390px with a
 clean console, each showing the same step number as the ladder itself.
 
+## D-230 — The Cushion: four readings of one number
+
+**Why.** The Runway, Between Jobs, The Quit Fund and Sleep At Night all
+answered "how long could you not earn" and each drew its own conclusion from
+it, in its own room, with its own copy of the framing. Four rooms hid the
+one thing worth seeing: that the answer changes with WHY the earning
+stopped, and that the four answers are the same arithmetic.
+
+**Decision.** `rooms/runway.html` becomes **The Cushion**, four readings on
+the hats strip, the plainest first: `#how-long` (cash against the month, and
+what would buy more of it), `#job-hunting` (`engines/betweenjobs.js`),
+`#by-choice` (`engines/quitfund.js`), `#at-3am` (`engines/swan.js`). Seven
+fields move their owner to `runway` with the boxes that ask them: the two
+unemployment figures and the five from Sleep At Night. The how-long reading
+still writes nothing and says so between markers the tests read. The
+job-hunting reading no longer refuses anyone: not being between jobs makes
+it run as if the pay stopped today, said in a line above the number.
+`shared/room.js` gains `part: true` — a reading inside a merged room leaves
+registration, the sidebar and the hash to the room it sits in.
+
+**Replaces or removes.** Three registry rooms (84 → 81), each a redirect
+carrying its deep links. `REQUIRES['between-jobs']`, because a reading of a
+room everyone can open cannot require a situation. The walk's two separate
+steps become one.
+
+**Stored shape.** No change to `slaf.household.v2`. Two `applies` guards are
+gone from `expectedSearchMonths` and `floorMonthly`: both were "only while
+between jobs", and both are now askable in advance, which is when they are
+easiest to answer honestly.
+
+**Verified.** `node test/run.js` (30,907 checks), `node test/forms.js` (604
+checks: the coverage boxes and the two owned inputs all still hold their
+text and land on the household). All four readings, the three redirects and
+the ownership deep links `#coverage`, `#inputs` and `#am-number` loaded at
+390px with a clean console.
+
 ---
 
 # The Dungeons & Dividends entries

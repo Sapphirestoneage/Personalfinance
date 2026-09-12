@@ -29,6 +29,12 @@
        scope: string           the out-of-scope line (→ Get Help)
        guessAs: 'retired'      (optional) the situation to guess on an empty
                                spine, for a room that exists for one
+       part: true              (optional) this is ONE READING inside a room
+                               that registers itself, not the room. Added by
+                               the 93-to-30 merge (D-227): a merged room owns
+                               the registration, the sidebar and the hash,
+                               and a reading that claimed any of them would
+                               claim them twice. Everything else is the same.
      })
 
    LIVE-FORM: built once. Inputs are built from the spec on mount and only
@@ -341,17 +347,22 @@
       var d = t.closest('details'); if (d) d.open = true;
       t.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    window.addEventListener('hashchange', jumpToHash);
+    if (!spec.part) window.addEventListener('hashchange', jumpToHash);
 
-    Spine.registerRoom(ROOM_ID);
-    if (S.Progress) S.Progress.mount(ROOM_ID);
+    /* A reading inside a merged room leaves registration, the sidebar and
+       the hash to the room it sits in (D-230). Two registerRoom calls on one
+       page mark the same room visited twice and mount a second sidebar. */
+    if (!spec.part) {
+      Spine.registerRoom(ROOM_ID);
+      if (S.Progress) S.Progress.mount(ROOM_ID);
+    }
     Spine.onChange(render);
 
     Reference.load(spec.tables || undefined).then(function (t) {
       TABLES = t;
       if (typeof spec.ready === 'function') spec.ready(t);
       paint();
-      jumpToHash();
+      if (!spec.part) jumpToHash();
     }).catch(function (err) {
       var notice = el('load-notice');
       if (!notice) return;

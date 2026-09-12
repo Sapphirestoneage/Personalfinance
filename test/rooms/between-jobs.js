@@ -203,18 +203,28 @@ module.exports = function (t) {
     check('proposing a floor with no spending gives nothing', BetweenJobs.proposeFloorCents(noSpend), null);
   }
 
-  /* -- The six-situation rule: nothing for anyone not between jobs ---------- */
+  /* -- The engine still refuses; the READING asks it a hypothetical --------
+     Between Jobs became the Cushion's while-job-hunting reading (D-230). The
+     engine is unchanged: handed an employed household with no vouching, it
+     refuses, and that is still the rule about not inventing a situation.
+     What changed is that the reading vouches — asBetweenJobs — and says in a
+     line above the number that it is reading as if the pay stopped today.
+     Refusing an employed person the question "how long while job hunting"
+     only made sense while answering it cost a whole room. */
   {
     const employed = t.Demo.build();
     const p = BetweenJobs.plan(employed, TABLES, { now: NOW });
-    check('the demo (employed) is refused', p.status, 'incomplete');
+    check('the demo (employed) is refused by the engine', p.status, 'incomplete');
     checkTrue('and told which answer Start Here holds', /employed/.test(p.reason));
-    checkTrue('the room is not in the employed map', !Registry.forHousehold(employed).some(r => r.id === 'between-jobs'));
-    checkTrue('and is in the between-jobs map', Registry.forHousehold(household()).some(r => r.id === 'between-jobs'));
-    checkTrue('the gate agrees', Gate.exists(household(), 'unemployment') && !Gate.exists(employed, 'unemployment'));
-    const html = fs.readFileSync(path.join(ROOT, 'rooms/between-jobs.html'), 'utf8');
-    const why = /why: function \(h, T, situation\) \{[\s\S]*?\}\[situation\] \|\| ''/.exec(html);
-    checkTrue('the why paragraph exists only for betweenJobs and is empty otherwise', !!why && /betweenJobs:/.test(why[0]) && !/employed:|retired:|student:|selfEmployed:|mixed:/.test(why[0]));
+    const vouched = BetweenJobs.plan(employed, TABLES, { now: NOW, asBetweenJobs: true });
+    checkTrue('vouched for, the same household gets an answer', Money.isOk(vouched), vouched.reason);
+    checkTrue('the gate still knows who is actually between jobs', Gate.exists(household(), 'unemployment') && !Gate.exists(employed, 'unemployment'));
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
+    checkTrue('the reading vouches for anyone not between jobs', /var guessedPerson = !Schema\.isUnemployed\(h\);/.test(html));
+    checkTrue('and says so above the number, rather than presenting it as a fact',
+      /You are not between jobs, so this reads as if the pay stopped today\./.test(html));
+    const why = /why: function \(h, T, situation\) \{[\s\S]*?\}\[situation\] \|\|/.exec(html);
+    checkTrue('the why paragraph names only betweenJobs, with a general fallback', !!why && /betweenJobs:/.test(why[0]) && !/employed:|retired:|student:|selfEmployed:|mixed:/.test(why[0]));
   }
 
   /* -- The stand-alone render: a guessed person is treated as between jobs -- */
@@ -259,23 +269,30 @@ module.exports = function (t) {
 
   /* -- The page, the registry and the ownership rows ------------------------ */
   {
-    const html = fs.readFileSync(path.join(ROOT, 'rooms/between-jobs.html'), 'utf8');
-    ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue('the page has the deep link #' + id, new RegExp('id="' + id + '"').test(html)));
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
+    ['bj-number', 'chart', 'inputs', 'amounts', 'assumptions', 'bj-reading'].forEach(id => checkTrue('the page has the deep link #' + id, new RegExp('id="' + id + '"').test(html)));
     t.Room.IDS.concat(['room-standalone', 'load-notice']).forEach(id => checkTrue('the page has the host ' + id, html.indexOf('id="' + id + '"') >= 0));
-    checkTrue('the page mounts the template', /Room\.mount\(\{/.test(html));
-    checkTrue('with the room id', /id: 'between-jobs'/.test(html));
+    checkTrue('the reading mounts the template', /Room\.mount\(\{/.test(html));
+    checkTrue('with the room id it now lives in, as a part', /id: 'runway',\s*\n\s*part: true,/.test(html));
+    checkTrue('so the template leaves registration and the hash to the room', /if \(!spec\.part\) \{[\s\S]{0,120}registerRoom/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
+    checkTrue('and the old page redirects to it, hash and all', /url=runway\.html#job-hunting/.test(fs.readFileSync(path.join(ROOT, 'rooms/between-jobs.html'), 'utf8')));
     const tag = f => html.indexOf('<script src="../' + f + '"></script>');
     checkTrue('loads the runway engine before its own', tag('engines/runway.js') > 0 && tag('engines/runway.js') < tag('engines/betweenjobs.js'));
     checkTrue('and its own before the lens', tag('engines/betweenjobs.js') < tag('shared/lens.js'));
     checkTrue('is built once', html.indexOf('LIVE-FORM: built once') >= 0);
     checkTrue('never writes health', !/insurance\.health\s*=|upsertInsurance|health\.monthlyCents\s*=/.test(html));
-    checkTrue('writes only person.unemployment', /unemployment: Object\.assign\(\{\}, current, patch\)/.test(html) && !/upsertAsset|upsertIncomeSource|updateProfile\(/.test(html));
-    checkTrue('the scope line is the one', html.indexOf('This room does not file for benefits, price COBRA against the marketplace, or plan the search itself.') >= 0);
-    const room = Registry.byId('between-jobs');
-    check('the registry needs the between-jobs facts, spending and cash', room.needs.join(','), 'unemployment,monthlyExpenses,cashSavings');
-    check('the room requires the unemployment branch', Registry.requires('between-jobs').join(','), 'unemployment');
-    check('expectedSearchMonths is owned here', Ownership.field('expectedSearchMonths').owner, 'between-jobs');
-    check('floorMonthly is owned here', Ownership.field('floorMonthly').owner, 'between-jobs');
+    /* Scoped to this reading's own script: the room next door writes the
+       cover facts and the sleep-at-night number, each through its owner. */
+    const mine = html.slice(html.indexOf("id: 'runway',\n    part: true,") - 4000, html.indexOf('This reading does not file for benefits'));
+    checkTrue('writes only person.unemployment', /unemployment: Object\.assign\(\{\}, current, patch\)/.test(mine) && !/upsertAsset|upsertIncomeSource|updateProfile\(/.test(mine));
+    checkTrue('the scope line is the one', html.indexOf('This reading does not file for benefits, price COBRA against the marketplace, or plan the search itself.') >= 0);
+    const room = Registry.byId('runway');
+    checkTrue('Between Jobs is no longer a room', !Registry.byId('between-jobs'));
+    check('the Cushion needs spending and cash', room.needs.join(','), 'cashSavings,monthlyExpenses');
+    check('expectedSearchMonths is owned by the room the reading sits in', Ownership.field('expectedSearchMonths').owner, 'runway');
+    check('floorMonthly too', Ownership.field('floorMonthly').owner, 'runway');
+    checkTrue('and neither stops applying when you are employed, because the reading does not',
+      !Ownership.field('expectedSearchMonths').applies && !Ownership.field('floorMonthly').applies);
     check('health cover is not', Ownership.field('healthCover').owner, 'protection');
     const h = household({ unemployment: { expectedSearchMonths: 4, floorMonthlyCents: 220000 } });
     check('the ownership row reads the months back', Ownership.field('expectedSearchMonths').read(h).value, 4);

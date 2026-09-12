@@ -7,133 +7,33 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>The Quit Fund · SPARKS</title>
-<meta name="description" content="Months of freedom: the money you could reach at no cost divided by the floor month with health cover added, the dates to three, six and twelve months at your pace, and the difference between quitting and being laid off."/>
+<meta name="description" content="The Quit Fund is the by-choice reading of The Cushion now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. K7 (D-217).
-
-  1. READS   The free tiers of the reachable-money waterfall (cash, Roth
-             contributions), the floor month (Cash Flow's fixed lines, else
-             the household month), the state (for the benefit), what is
-             saved a month, whether there are others in the household (for
-             the cover figure).
-  2. WRITES  Nothing. The quit / laid-off switch is this page's state.
-  3. CALLS   engines/quitfund.js, which dates the targets through
-             engines/countdown.js goalCountdown(), the one countdown.
-  4. EMPTY   No cash or no spending: it says which.
-  5. CONFIG  data/cobra_aca_2024.json (cover), data/ui_benefits.json (the
-             benefit), data/access_rules.json (what is free).
-
-  LIVE-FORM: built once. Buttons only, no input.
+  REDIRECT — The Quit Fund is the by-choice reading of The Cushion (rooms/runway.html#by-choice, DECISIONS.md D-230).
+  Four rooms asked how long you could stop earning and each drew its own
+  conclusion; they are four readings of one number now, on one strip. The
+  file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
-  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
-  ul.plain { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
-  ul.plain li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
-  ul.plain li:first-child { border-top: none; }
-  ul.plain .amt { font-variant-numeric: tabular-nums; }
-  ul.plain small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
-</style>
+<meta http-equiv="refresh" content="0; url=runway.html#by-choice"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>The Quit Fund</h1>
-  <p class="room-lede">How many months you could walk away for, on money that costs nothing to reach, with the floor month and health cover counted. And when you would have three, six and twelve.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <section class="slaf-card" id="months">
-    <span class="slaf-eyebrow">Months of freedom</span>
-    <p class="head-num" id="q-num"></p>
-    <p class="head-sub" id="q-sub"></p>
-    <div class="choices" id="mode-choices" style="margin-top:var(--space-3)">
-      <button type="button" class="choice" data-mode="quit" aria-pressed="true">If I quit</button>
-      <button type="button" class="choice" data-mode="laidOff" aria-pressed="false">If I am laid off</button>
-    </div>
-    <p class="slaf-hint" id="q-benefit" style="margin:var(--space-2) 0 0"></p>
-  </section>
-  <section class="slaf-card" id="dates" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">When you would have</span>
-    <ul class="plain" id="q-dates"></ul>
-  </section>
-  <section class="slaf-card" id="parts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">What it is made of</span>
-    <ul class="plain" id="q-parts"></ul>
-  </section>
-  <p class="disclaimer">
-    Educational tool, not financial advice. The benefit is the state maximum at a half replacement rate, an estimate; the cover figure is a national average. Everything stays in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">The Quit Fund is the by-choice reading of The Cushion now.
+    <a href="runway.html#by-choice" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../engines/selfemployed.js"></script>
-<script src="../engines/tax.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/debt.js"></script>
-<script src="../engines/cashflow.js"></script>
-<script src="../engines/reachable.js"></script>
-<script src="../engines/countdown.js"></script>
-<script src="../engines/quitfund.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, QuitFund = SLAF.QuitFund;
-  var ROOM_ID = 'quit-fund';
-  var TABLES = null, MODE = 'quit';
-  function el(id) { return document.getElementById(id); }
-  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
-  function render() {
-    if (!TABLES) return;
-    Array.prototype.forEach.call(el('mode-choices').querySelectorAll('[data-mode]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === MODE ? 'true' : 'false'); });
-    var r = QuitFund.plan(Spine.getProfile(), TABLES, { mode: MODE });
-    if (!Money.isOk(r)) { el('q-num').textContent = 'Not yet.'; el('q-sub').textContent = r.reason; el('q-benefit').textContent = ''; el('q-dates').innerHTML = ''; el('q-parts').innerHTML = ''; return; }
-    el('q-num').textContent = r.value + ' month' + (r.value === 1 ? '' : 's') + '.';
-    el('q-num').setAttribute('data-months', String(r.value));
-    el('q-sub').textContent = Money.formatCents(r.freeCents) + ' you could reach at no cost' + (r.benefit.totalCents ? ' plus ' + Money.formatCents(r.benefit.totalCents) + ' of unemployment benefit' : '') + ', against a month of ' + Money.formatCents(r.monthCents) + ': the ' + (r.floorSource === 'floor' ? 'floor' : 'household') + ' month of ' + Money.formatCents(r.floorCents) + ' plus ' + Money.formatCents(r.coverCents) + ' of health cover at the COBRA price' + (r.marketplaceCents ? ' (a marketplace plan can be nearer ' + Money.formatCents(r.marketplaceCents) + ')' : '') + '.';
-    el('q-benefit').textContent = MODE === 'laidOff'
-      ? (r.benefit.totalCents ? 'Laid off: about ' + Money.formatCents(r.benefit.weeklyCents) + ' a week for ' + r.benefit.weeks + ' weeks in ' + r.benefit.state + ', at half your pay up to the state cap. An estimate from the state maximum, not a promise.' : 'Laid off: ' + (r.benefit.reason || 'no benefit counted.'))
-      : 'Quitting usually disqualifies an unemployment claim, so none is counted. Nothing else changes between the two.';
-    el('q-dates').innerHTML = r.targets.map(function (t) {
-      var when = t.reachedNow ? 'now' : t.neverAtThisPace ? 'not at this pace: ' + Money.formatCents(t.monthlyNeededCents) + ' a month would get there in five years' : monthWord(t.date);
-      return '<li><span>' + t.months + ' months<small>' + esc(Money.formatCents(t.targetCents)) + ' in the fund' + (r.savingsKnown ? ', at ' + esc(Money.formatCents(r.monthlyCents)) + ' a month' : ', with nothing known to be going in') + '</small></span><span class="amt">' + esc(when) + '</span></li>';
-    }).join('');
-    var parts = r.freeTiers.map(function (t) { return '<li><span>' + esc(t.label) + '<small>free to reach</small></span><span class="amt">' + esc(Money.formatCents(t.cents)) + '</span></li>'; });
-    if (!parts.length) parts.push('<li><span>Nothing free to reach yet<small>cash and Roth contributions count here</small></span><span class="amt"></span></li>');
-    parts.push('<li><span>The month<small>' + (r.floorSource === 'floor' ? 'the fixed lines from Cash Flow' : 'the household month; mark fixed lines in Cash Flow for a floor') + '</small></span><span class="amt">' + esc(Money.formatCents(r.floorCents)) + '</span></li>');
-    parts.push('<li><span>Health cover<small>COBRA, ' + esc(r.coverKind) + ', data/cobra_aca_2024.json</small></span><span class="amt">' + esc(Money.formatCents(r.coverCents)) + '</span></li>');
-    el('q-parts').innerHTML = parts.join('');
-  }
-  document.addEventListener('click', function (evt) {
-    var b = evt.target.closest('[data-mode]'); if (!b) return;
-    MODE = b.getAttribute('data-mode') === 'laidOff' ? 'laidOff' : 'quit'; render();
-  });
-  Spine.registerRoom(ROOM_ID);
-  SLAF.Progress.mount(ROOM_ID);
-  Spine.onChange(render);
-  Reference.load(['accessRules', 'federalBrackets', 'seTax', 'stateBrackets', 'aca', 'effectiveTaxRates', 'expenseCategories', 'debtRules', 'cobraAca', 'uiBenefits']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
-    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#months': '#months', '#dates': '#dates', '#parts': '#parts' };
+    var hash = location.hash || '';
+    var target = 'runway.html' + (map[hash] || '#by-choice');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

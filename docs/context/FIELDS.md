@@ -18,11 +18,6 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 - `allocationCash` — Target: cash · **no other room mentions it**
 - `rebalanceBand` — Rebalance band · **no other room mentions it**
 
-## between-jobs (2)
-
-- `expectedSearchMonths` — Expected search, months · **no other room mentions it**
-- `floorMonthly` — The floor, a month · **no other room mentions it**
-
 ## big-purchase (3)
 
 - `purchasePrice` — The purchase · **no other room mentions it**
@@ -87,7 +82,7 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by housing, debates, calendar
-- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, savings-rate, sleep-at-night, fire, fire-lab, real-hourly-wage, ratios, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, health, what-if-life, between-jobs, quit-fund, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, buckets, dreamline, reversibility, unlearning, debates, calendar, one-pager
+- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, savings-rate, fire, fire-lab, real-hourly-wage, ratios, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, health, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, buckets, dreamline, reversibility, unlearning, debates, calendar, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
@@ -137,8 +132,8 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 
 ## protection (2)
 
-- `healthCover` — Health cover · read by between-jobs
-- `healthMonthly` — Health cover, a month · read by between-jobs, offer-compare
+- `healthCover` — Health cover · read by runway
+- `healthMonthly` — Health cover, a month · read by runway, offer-compare
 
 ## rerank (1)
 
@@ -148,17 +143,19 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 
 - `reversibilityDecision` — The decision being weighed · **no other room mentions it**
 
-## skill-tree (1)
-
-- `skillsDone` — Skills done · **no other room mentions it**
-
-## sleep-at-night (5)
+## runway (7)
 
 - `oopMax` — Out-of-pocket maximum · read by statement, protection
 - `termLife` — Term life in force · read by protection
 - `disabilityMonthly` — Disability benefit · read by protection
 - `umbrella` — Umbrella policy · too generic to trace
+- `expectedSearchMonths` — Expected search, months · **no other room mentions it**
+- `floorMonthly` — The floor, a month · **no other room mentions it**
 - `swanTarget` — Your sleep-at-night number · read by financial-snapshot
+
+## skill-tree (1)
+
+- `skillsDone` — Skills done · **no other room mentions it**
 
 ## stacker (1)
 
@@ -171,17 +168,17 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
 - `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, savings-rate, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, wrapped, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, quit-fund, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, health, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
-- `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, sleep-at-night, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, between-jobs, quit-fund, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
+- `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
 - `investments` — Investments + retirement · too generic to trace
-- `employmentStatus` — Working situation · read by ledger, between-jobs, tax, offer-compare, unlearning, student-loans
+- `employmentStatus` — Working situation · read by ledger, runway, tax, offer-compare, unlearning, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, savings-rate, foo-ladder, offer-compare, unlearning
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, wrapped
 - `hasDebt` — Any debt · read by dashboard, unlearning, student-loans
 - `contributionPercent` — Workplace contribution · read by ledger, statements, accounts, what-if-life, tax
-- `highestDeductible` — Highest deductible · read by statement, sleep-at-night, protection
+- `highestDeductible` — Highest deductible · read by statement, runway, protection
 - `dependents` — Anyone depending on your income · too generic to trace
 
 ## statement (7)

@@ -38,7 +38,6 @@
             "statement",
             "reachable",
             "savings-rate",
-            "sleep-at-night",
             "fire",
             "coast-date",
             "fire-lab",
@@ -71,8 +70,6 @@
             "what-if-life",
             "adventure",
             "timeline",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "protection",
             "decumulation",
@@ -147,7 +144,6 @@
             "statements",
             "statement",
             "reachable",
-            "sleep-at-night",
             "fire-lab",
             "quick-math",
             "ratios",
@@ -202,8 +198,6 @@
             "credential",
             "degree",
             "accounts",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "decumulation",
             "roth-aca",
@@ -324,12 +318,9 @@
           "name": "Something’s gone wrong",
           "rooms": [
             "cant-pay",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "get-help",
-            "variable-income",
-            "sleep-at-night"
+            "variable-income"
           ],
           "note": "The rooms someone opens on their worst day. Worth being one tap from the front door."
         },
@@ -403,8 +394,6 @@
             "credential",
             "degree",
             "timeline",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement"
           ]
         },
@@ -437,7 +426,6 @@
         {
           "name": "Keep",
           "rooms": [
-            "sleep-at-night",
             "runway",
             "savings-rate",
             "accounts",
@@ -543,8 +531,6 @@
           "name": "Right now",
           "rooms": [
             "cant-pay",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "runway",
             "get-help",
@@ -573,7 +559,6 @@
         {
           "name": "This year",
           "rooms": [
-            "sleep-at-night",
             "savings-rate",
             "accounts",
             "tax",
@@ -693,7 +678,6 @@
         {
           "name": "1 · Deductibles covered",
           "rooms": [
-            "sleep-at-night",
             "protection"
           ]
         },
@@ -786,8 +770,6 @@
             "timeline",
             "what-if-life",
             "adventure",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "partner",
             "wedding",
@@ -887,8 +869,6 @@
             "self-employed",
             "side-hustle",
             "variable-income",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement"
           ],
           "note": "A third of the app behind one word — the price of a tidy tab bar.",
@@ -923,7 +903,6 @@
             "reversibility",
             "worth",
             "giving",
-            "sleep-at-night",
             "data",
             "one-pager",
             "progress-card",
@@ -961,8 +940,7 @@
           "rooms": [
             "cant-pay",
             "runway",
-            "debt-payoff",
-            "sleep-at-night"
+            "debt-payoff"
           ],
           "note": "Driven by the gate and the FOO rung — the app’s own opinion, three or four rooms. A surface, not a shelf: these also sit in the A–Z below.",
           "overlay": true
@@ -970,8 +948,6 @@
         {
           "name": "Everything, A–Z",
           "rooms": [
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "big-purchase",
             "budget",
@@ -1020,7 +996,6 @@
             "reversibility",
             "savings-rate",
             "side-hustle",
-            "sleep-at-night",
             "start",
             "ledger",
             "student-loans",
@@ -1101,13 +1076,10 @@
         {
           "name": "The bedroom",
           "rooms": [
-            "sleep-at-night",
             "runway",
             "protection",
             "cant-pay",
             "credit",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement"
           ],
           "note": "What you lie awake about."
@@ -1265,8 +1237,7 @@
             "runway",
             "credit",
             "ratios",
-            "health",
-            "sleep-at-night"
+            "health"
           ]
         },
         {
@@ -1308,8 +1279,6 @@
         {
           "name": "When something happens",
           "rooms": [
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "cant-pay",
             "career-move",
@@ -1462,10 +1431,7 @@
           "name": "Somewhere to stand when it’s bad",
           "rooms": [
             "cant-pay",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
-            "sleep-at-night",
             "get-help",
             "variable-income",
             "partner",
@@ -1515,10 +1481,7 @@
         {
           "name": "The income stopping",
           "rooms": [
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
-            "sleep-at-night",
             "variable-income",
             "self-employed",
             "side-hustle",
@@ -1676,8 +1639,6 @@
             "offer-compare",
             "credential",
             "degree",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "side-hustle",
             "self-employed",
@@ -1743,7 +1704,6 @@
             "rank-guess",
             "race",
             "statements",
-            "sleep-at-night",
             "settings",
             "data",
             "one-pager",
@@ -1814,7 +1774,6 @@
             "statement",
             "reachable",
             "savings-rate",
-            "sleep-at-night",
             "fire",
             "coast-date",
             "fire-lab",
@@ -1835,8 +1794,6 @@
             "what-if-life",
             "adventure",
             "timeline",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "protection",
             "decumulation",
@@ -1899,8 +1856,6 @@
           "name": "1 · “What’s happening?”",
           "rooms": [
             "cant-pay",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "runway",
             "get-help",
@@ -1956,7 +1911,6 @@
         {
           "name": "5 · “What are you afraid of?”",
           "rooms": [
-            "sleep-at-night",
             "protection",
             "estate",
             "partner",
@@ -2060,7 +2014,6 @@
             "car",
             "first-car",
             "reversibility",
-            "sleep-at-night",
             "cant-pay",
             "get-help",
             "rollover",
@@ -2090,8 +2043,6 @@
             "big-purchase",
             "housing",
             "down-payment",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement"
           ]
         },
@@ -2191,8 +2142,6 @@
             "first-car",
             "big-purchase",
             "kids",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "career-move",
             "offer-compare",
@@ -2227,7 +2176,6 @@
             "accounts",
             "health",
             "ratios",
-            "sleep-at-night",
             "timeline"
           ],
           "note": "Fine once, annoying if nobody ever defines it."
@@ -2291,8 +2239,6 @@
             "partner",
             "wedding",
             "kids",
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "variable-income",
             "self-employed",
@@ -2332,7 +2278,6 @@
             "accounts",
             "savings-rate",
             "runway",
-            "sleep-at-night",
             "rollover",
             "tax",
             "protection",
@@ -2485,7 +2430,6 @@
             "credential",
             "degree",
             "worth",
-            "sleep-at-night",
             "rerank"
           ],
           "note": "These lean on data/*.json. Only 4 of the 72 tables are marked sourced; 17 are marked unverified. The rooms here are exactly as good as those files.",
@@ -2515,8 +2459,6 @@
         {
           "name": "Nothing yet, and it says so",
           "rooms": [
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "variable-income",
             "self-employed",
@@ -2561,7 +2503,6 @@
           "rooms": [
             "cant-pay",
             "runway",
-            "sleep-at-night",
             "credit",
             "calendar"
           ]
@@ -2569,8 +2510,6 @@
         {
           "name": "Wrong right now › Work changed",
           "rooms": [
-            "between-jobs",
-            "quit-fund",
             "micro-retirement",
             "career-move",
             "offer-compare",

@@ -46,7 +46,7 @@
 
   /* Where an unknown side is fixed: the owning room and its anchor, the
      same ones the ownership map links to. */
-  var COVERAGE = { room: 'sleep-at-night', anchor: 'coverage' };
+  var COVERAGE = { room: 'runway', anchor: 'coverage' };   /* the Cushion's at-3am reading, D-230 */
   var START_CASH = { room: 'start', anchor: 'q-cash' };
   var START_INCOME = { room: 'start', anchor: 'q-income' };
   var START_EXPENSES = { room: 'start', anchor: 'q-expenses' };

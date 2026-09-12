@@ -305,10 +305,12 @@
       format: money
     },
 
-    /* The Coverage Checkup (D-071): four facts about your cover, asked in
-       Sleep At Night, read by the Statement's worst plausible year. */
+    /* The Coverage Checkup (D-071): four facts about your cover, asked on
+       the Cushion's at-3am reading since D-230, read by the Statement's
+       worst plausible year. Sleep At Night became that reading; the owner
+       moved with the boxes, which is the only way ownership ever moves. */
     oopMax: {
-      label: 'Out-of-pocket maximum', owner: 'sleep-at-night', anchor: 'coverage',
+      label: 'Out-of-pocket maximum', owner: 'runway', anchor: 'coverage',
       read: function (h) {
         var v = (h.insurance || {}).oopMaxCents;
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['oopMaxCents']);
@@ -316,7 +318,7 @@
       format: money
     },
     termLife: {
-      label: 'Term life in force', owner: 'sleep-at-night', anchor: 'coverage',
+      label: 'Term life in force', owner: 'runway', anchor: 'coverage',
       read: function (h) {
         var v = (h.insurance || {}).termLifeCents;
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['termLifeCents']);
@@ -337,7 +339,7 @@
       format: function (v) { return v === 0 ? 'No' : v + (v === 1 ? ' person' : ' people'); }
     },
     disabilityMonthly: {
-      label: 'Disability benefit', owner: 'sleep-at-night', anchor: 'coverage',
+      label: 'Disability benefit', owner: 'runway', anchor: 'coverage',
       read: function (h) {
         var v = (h.insurance || {}).disabilityMonthlyCents;
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['disabilityMonthlyCents']);
@@ -345,7 +347,7 @@
       format: function (v) { return money(v) + '/mo'; }
     },
     umbrella: {
-      label: 'Umbrella policy', owner: 'sleep-at-night', anchor: 'coverage',
+      label: 'Umbrella policy', owner: 'runway', anchor: 'coverage',
       read: function (h) {
         var v = (h.insurance || {}).umbrella;
         return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['umbrella']);
@@ -353,18 +355,21 @@
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
 
-    /* ---- The tranche rooms (D-098): each owns the facts it asks. ---- */
+    /* ---- The tranche rooms (D-098): each owns the facts it asks. ----
+       Between Jobs became the Cushion's while-job-hunting reading (D-230),
+       so these two moved with the two boxes that ask them. They no longer
+       stop applying when you are employed: the reading runs as if the pay
+       stopped today, and the two numbers it needs are much easier to think
+       about before the job ends than on the day it does. */
     expectedSearchMonths: {
-      label: 'Expected search, months', owner: 'between-jobs', anchor: 'inputs',
+      label: 'Expected search, months', owner: 'runway', anchor: 'inputs',
       read: function (h) { var v = Schema.unemploymentOf(h).expectedSearchMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['expectedSearchMonths']); },
-      format: function (v) { return v + ' mo'; },
-      applies: function (h) { return Schema.isUnemployed(h); }, notApplicableBecause: 'Not between jobs.'
+      format: function (v) { return v + ' mo'; }
     },
     floorMonthly: {
-      label: 'The floor, a month', owner: 'between-jobs', anchor: 'inputs',
+      label: 'The floor, a month', owner: 'runway', anchor: 'inputs',
       read: function (h) { var v = Schema.unemploymentOf(h).floorMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['floorMonthlyCents']); },
-      format: function (v) { return money(v) + '/mo'; },
-      applies: function (h) { return Schema.isUnemployed(h); }, notApplicableBecause: 'Not between jobs.'
+      format: function (v) { return money(v) + '/mo'; }
     },
     healthCover: {
       label: 'Health cover', owner: 'protection', anchor: 'inputs',
@@ -768,7 +773,7 @@
        Snapshot, which shows computed Emergency Fund Coverage beside it,
        links here rather than offering a second place to type it. */
     swanTarget: {
-      label: 'Your sleep-at-night number', owner: 'sleep-at-night', anchor: 'number',
+      label: 'Your sleep-at-night number', owner: 'runway', anchor: 'am-number',
       read: function (h) {
         var Swan = (typeof module === 'object' && module.exports)
           ? require('../engines/swan.js')

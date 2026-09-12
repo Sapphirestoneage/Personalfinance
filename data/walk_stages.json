@@ -18,7 +18,6 @@
         "cash-flow",
         "statement",
         "debt-payoff",
-        "between-jobs",
         "self-employed",
         "variable-income"
       ]
@@ -28,7 +27,7 @@
       "title": "Make it hard to go backwards",
       "goal": "The things that stop one bad month turning into a bad year. This comes before growing anything.",
       "rooms": [
-        "sleep-at-night",
+        "runway",
         "protection",
         "credit"
       ]

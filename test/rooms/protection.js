@@ -151,5 +151,5 @@ module.exports = function (t) {
   checkTrue('the registry row exists', !!room && room.href === 'rooms/protection.html');
   check('… appears for everyone but a student', Gate.SITUATIONS.filter(s => Registry.applies(room, household({ status: s.status }))).map(s => s.id).join(','), 'employed,selfEmployed,betweenJobs,retired,mixed');
   check('… the two writes are owned here', Ownership.field('healthCover').owner + '/' + Ownership.field('healthMonthly').owner, 'protection/protection');
-  check('… and the coverage facts by Sleep At Night', ['termLife', 'disabilityMonthly', 'oopMax', 'umbrella'].map(f => Ownership.field(f).owner).join(','), 'sleep-at-night,sleep-at-night,sleep-at-night,sleep-at-night');
+  check('… and the coverage facts by The Cushion, where Sleep At Night became a reading (D-230)', ['termLife', 'disabilityMonthly', 'oopMax', 'umbrella'].map(f => Ownership.field(f).owner).join(','), 'runway,runway,runway,runway');
 };

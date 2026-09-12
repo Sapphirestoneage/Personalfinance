@@ -529,7 +529,7 @@
   var OPENS = {
     netWorth: ['statement', 'portfolios'], savingsRate: ['savings-rate', 'rate'], emergencyFundMonths: ['runway', 'the-plan'],
     debtToIncome: ['debt-payoff', 'debts'], fiEtaYear: ['fire', 'targets'], fooStep: ['foo-ladder', null],
-    ownersPay: ['self-employed', 'quarterly'], runwayDays: ['between-jobs', 'number'], loanTrajectory: ['student-loans', 'number'], withdrawalRate: ['decumulation', 'number']
+    ownersPay: ['self-employed', 'quarterly'], runwayDays: ['runway', 'bj-number'], loanTrajectory: ['student-loans', 'number'], withdrawalRate: ['decumulation', 'number']
   };
   function opens(id) {
     var o = OPENS[id] || ['start', null];
@@ -797,7 +797,7 @@
         + (bareMonths !== null && bareMonths !== months ? ' (' + bareMonths + ' on cash alone)' : '') + '.';
     if (gap) say += ' A search typically runs <strong>' + gap.medianMonths + ' months</strong>, ' + gap.meanMonths + ' on average (' + gap.confidence + ').';
     if (!Money.isOk(ben)) say += ' ' + esc(ben.reason);
-    return { say: say, room: Registry.byId('between-jobs') ? 'between-jobs' : 'runway', anchor: Registry.byId('between-jobs') ? 'number' : 'the-plan', go: 'See the runway, month by month →',
+    return { say: say, room: 'runway', anchor: 'bj-number', go: 'See the runway, month by month →',
       critical: !sustainable && gap && months < gap.medianMonths };
   }
   /* Retired, the next thing is the draw against the convention. D-096. */
@@ -889,10 +889,10 @@
     var s = Gate.situationOf(h);
     if (s === 'betweenJobs') {
       var r = c.byId.runwayDays;
-      if (!r.ok) return { cap: 'The day the cash runs out', big: null, reason: r.result.reason, say: '', room: 'between-jobs', anchor: 'number', go: 'Open Between Jobs →' };
-      if (r.result.sustainable) return { cap: 'The day the cash runs out', big: 'Not soon', say: 'What comes in covers the month, so the cash is not being drawn down.', room: 'between-jobs', anchor: 'number', go: 'Open Between Jobs →' };
+      if (!r.ok) return { cap: 'The day the cash runs out', big: null, reason: r.result.reason, say: '', room: 'runway', anchor: 'bj-number', go: 'Open the Cushion →' };
+      if (r.result.sustainable) return { cap: 'The day the cash runs out', big: 'Not soon', say: 'What comes in covers the month, so the cash is not being drawn down.', room: 'runway', anchor: 'bj-number', go: 'Open the Cushion →' };
       var when = new Date(Date.now() + r.result.value * 86400000);
-      return { cap: 'The day the cash runs out', big: when.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), say: r.result.value.toLocaleString('en-US') + ' days at this spending, benefit and severance counted.', room: 'between-jobs', anchor: 'number', go: 'Open Between Jobs →' };
+      return { cap: 'The day the cash runs out', big: when.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), say: r.result.value.toLocaleString('en-US') + ' days at this spending, benefit and severance counted.', room: 'runway', anchor: 'bj-number', go: 'Open the Cushion →' };
     }
     if (s === 'retired') {
       var w = c.byId.withdrawalRate, inv = Schema.investmentsCents(h), age = Schema.primaryAge(h), a = Schema.resolveAssumptions(h);
