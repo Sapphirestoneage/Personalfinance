@@ -8811,6 +8811,32 @@ section('D-224: underwriting a rental honestly, and one set of ratios');
   checkTrue('no scenario is kinder than today', st.scenarios.every(s => s.swingCents === undefined || s.swingCents <= 0));
   checkTrue('and it says how many it stops paying under', /stops paying under 3 of 4/.test(st.say));
 
+  /* The house hack, at 5% down, letting one unit of a duplex. */
+  const hk = Own.houseHack({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069,
+    unitRentsCents: [150000], rentMonthlyCents: 160000, years: 5, annualReturn: 0.07, tables: T });
+  check('at 5% down the loan carries $152 a month of mortgage insurance', Own.cost({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069, tables: T }).pmiMonthlyCents, 15200);
+  check('owning it, with the reserves, is $3,091.20 a month', hk.fullMonthlyCents, 309120);
+  check('the let unit brings $1,380 after the empty stretch', hk.collectedMonthlyCents, 138000);
+  check('so living there costs $1,711.20', hk.youPayMonthlyCents, 171120);
+  check('against $1,600 to rent, that is $111.20 a month WORSE', hk.savingMonthlyCents, -11120);
+  check('and it refuses to call that a win', hk.beatsRenting, false);
+  checkTrue('… saying the case would have to rest on the loan or the value', hk.notes.some(n => /not on the monthly figure/.test(n)));
+  check('the tenants still pay down $18,147.64 over five years', hk.principalPaidCents, 1814764);
+  checkTrue('one let unit is called out as one tenant between you and the payment', hk.notes.some(n => /one tenant between you/.test(n)));
+  check('if that unit empties, the whole $3,091.20 is yours', hk.ifBiggestUnitEmpties.youPayMonthlyCents, 309120);
+
+  /* The same building with two units let is the move that works. */
+  const hk2 = Own.houseHack({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069,
+    unitRentsCents: [150000, 150000], rentMonthlyCents: 160000, years: 5, annualReturn: 0.07, tables: T });
+  check('two units let: you pay $441.60 to live there', hk2.youPayMonthlyCents, 44160);
+  check('… a saving of $1,158.40 a month against renting', hk2.savingMonthlyCents, 115840);
+  check('and it is called a win', hk2.beatsRenting, true);
+  checkTrue('… on the condition that the saving is actually invested', hk2.notes.some(n => /only a win if it is invested/.test(n)));
+  check('five years of that saving at 7% is $82,933.22', hk2.savingInvestedCents, 8293322);
+  const noReturn = Own.houseHack({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069, unitRentsCents: [150000, 150000], rentMonthlyCents: 160000, years: 5, tables: T });
+  check('with no return asserted the saving is only added up', noReturn.savingInvestedCents, 115840 * 60);
+  checkTrue('… and says it was not invested', noReturn.assumed.some(a => /not invested/.test(a)));
+
   /* One set of ratios, shared with the statement engine. */
   const m = Own.metrics({ noiAnnualCents: 2169600, debtServiceAnnualCents: 1800000, valueCents: 30000000, cashInvestedCents: 6000000, equityCents: 10000000 });
   check('the cap rate is operating income over value', Math.round(m.capRate * 10000) / 10000, 0.0723);

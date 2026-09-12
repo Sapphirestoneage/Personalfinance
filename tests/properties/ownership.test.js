@@ -119,6 +119,19 @@ const props = [
     }
     return st.survived <= st.total || 'more scenarios survived than were run';
   }),
+  prop('a house hack carries the building’s reserves too, and letting more units never makes you pay more', fc.record({ b: base, rents: fc.array(fc.integer({ min: 0, max: 800000 }), { minLength: 1, maxLength: 3 }), rent: fc.integer({ min: 0, max: 900000 }) }), (o) => {
+    const k = O.houseHack(optsOf(o.b, { unitRentsCents: o.rents, rentMonthlyCents: o.rent }));
+    if (!Money.isOk(k)) return true;
+    if (k.fullMonthlyCents !== k.ownershipMonthlyCents + k.capexMonthlyCents + k.managementMonthlyCents) return 'the reserves are not on top of the month';
+    if (k.youPayMonthlyCents !== k.fullMonthlyCents - k.collectedMonthlyCents) return 'what you pay is not the month less the rent collected';
+    if (k.savingMonthlyCents !== k.rentMonthlyCents - k.youPayMonthlyCents) return 'the saving is not renting less living there';
+    if (k.beatsRenting !== (k.savingMonthlyCents > 0)) return 'the verdict disagrees with the saving';
+    /* One more unit at the same rent can only help. */
+    const more = O.houseHack(optsOf(o.b, { unitRentsCents: o.rents.concat([o.rents[0]]), rentMonthlyCents: o.rent }));
+    if (Money.isOk(more) && more.youPayMonthlyCents > k.youPayMonthlyCents) return 'letting another unit made you pay more';
+    const frac = H.fractionalCents(k, 'houseHack', new Set(), 0);
+    return !frac.length || frac[0];
+  }),
   prop('a missing price, an impossible down payment or a negative rate is refused with a reason, never a number', fc.record({ b: base, which: fc.constantFrom('price', 'down', 'rate') }), (o) => {
     const bad = { price: { priceCents: null }, down: { downPct: 1.5 }, rate: { annualRate: -0.01 } }[o.which];
     const r = O.cost(optsOf(o.b, bad));

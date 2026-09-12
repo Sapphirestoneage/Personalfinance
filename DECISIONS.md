@@ -13642,6 +13642,42 @@ among them that counting the reserves can only ever make a deal look
 worse, and that cash-on-cash and return on equity are never the same
 number on different denominators.
 
+## D-225 — The house hack, priced against the rent it replaces
+
+**Why.** Living in one unit and letting the rest is the one move that
+cuts the largest line in most budgets, and the arithmetic for it was the
+plain one: the month less the rent collected. That reading flatters it
+twice. It leaves out the reserves, which the building needs whether or
+not you sleep in it, and it stops before the only question that matters,
+which is what this frees up against renting a place of your own.
+
+**Decision.** `Ownership.houseHack` carries the capital reserve and the
+management fee that `underwrite` does, then says what living there costs
+against what renting costs, and what the difference becomes if it is
+actually invested. Nothing is compounded without an asserted return; with
+none, the saving is added up and said to be uninvested. It names the
+weakness of a one-unit hack: one tenant between you and the whole
+payment, and it prices the month that unit is empty. When the monthly
+figure loses to renting it says so and refuses to call it a win, pointing
+instead at the loan being paid down as the case that would have to be
+made. `hack` stays as the plain reading.
+
+**Replaces or removes.** Nothing. `hack` and `houseHack` answer different
+questions and both are used; the plain one is what a first glance wants.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (30,550 checks), every figure derived by
+hand first: a $320,000 duplex at 5% down costs $3,091.20 a month with the
+reserves and $152 of mortgage insurance; letting one unit at $1,500
+leaves you paying $1,711.20, which is $111.20 a month WORSE than renting
+at $1,600, and the engine says so while still crediting the $18,147.64 of
+loan the tenants pay down over five years. Letting two turns it into a
+$1,158.40 a month saving, worth $82,933.22 after five years at 7%, a
+figure checked by the month-by-month loop and by the closed-form annuity
+independently. Twelve properties, including that letting one more unit
+can never make you pay more.
+
 ---
 
 # The Dungeons & Dividends entries

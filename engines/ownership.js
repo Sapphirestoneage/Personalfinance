@@ -503,6 +503,105 @@
     });
   }
 
+  /**
+   * houseHack(opts) — live in one unit, let the rest, priced honestly.
+   *
+   * hack() above is the plain reading: the month less the rent collected.
+   * This is the one that survives contact with a real building. It carries
+   * the same reserves underwrite() does, because a roof does not care that
+   * you live under it, and it answers the question the arithmetic is
+   * actually for: against renting a place of your own, what does this free
+   * up a month, and what does that become if you keep investing it.
+   *
+   *   everything cost() takes, plus unitRentsCents: [cents, …]
+   *   optional: rentMonthlyCents (what you would otherwise pay to rent),
+   *             years and annualReturn (to carry the saving forward),
+   *             vacancyRate, capexRate, managementRate
+   * value: youPayMonthlyCents — what living there costs you, after the
+   *   rent the other units bring. Negative means they cover it and more.
+   */
+  function houseHack(opts) {
+    var o = opts || {};
+    var base = cost(o);
+    if (!Money.isOk(base)) return base;
+    var rents = o.unitRentsCents;
+    if (!Array.isArray(rents) || !rents.length) return Money.incomplete('Enter the rent for each unit you would let.', ['unitRentsCents']);
+    for (var i = 0; i < rents.length; i++) {
+      if (!entered(rents[i])) return Money.incomplete('Unit ' + (i + 1) + ' has no rent yet.', ['unitRentsCents']);
+      if (rents[i] < 0) return Money.incomplete('Rent below zero is not a rent.', ['unitRentsCents']);
+    }
+    var c = conventions(o.tables);
+    var assumed = base.assumed.slice(), notes = [];
+
+    var vacRate = entered(o.vacancyRate) ? o.vacancyRate : c.vacancyRate;
+    var capexRate = entered(o.capexRate) ? o.capexRate : c.capexRate;
+    var mgmtRate = entered(o.managementRate) ? o.managementRate : c.managementRate;
+    if (!entered(o.vacancyRate)) assumed.push('each let unit empty ' + Math.round(vacRate * 100) + '% of the year');
+    if (!entered(o.capexRate)) assumed.push('a capital reserve of ' + (Math.round(capexRate * 10000) / 100) + '% of value a year');
+    if (!entered(o.managementRate)) assumed.push('management at ' + Math.round(mgmtRate * 100) + '% of the rent collected');
+
+    var grossCents = rents.reduce(function (s2, r) { return s2 + r; }, 0);
+    var vacancyCents = cents(grossCents * vacRate);
+    var collectedCents = grossCents - vacancyCents;
+    var capexCents = cents(base.priceCents * capexRate / 12);
+    var mgmtCents = cents(collectedCents * mgmtRate);
+
+    /* The reserves are the building's, not the tenants'. They are part of
+       what living here costs whether or not a unit is let. */
+    var fullMonthlyCents = base.totalMonthlyCents + capexCents + mgmtCents;
+    var youPayCents = fullMonthlyCents - collectedCents;
+
+    var out = {
+      unitsLet: rents.length, grossRentMonthlyCents: grossCents, vacancyCents: vacancyCents,
+      collectedMonthlyCents: collectedCents,
+      capexMonthlyCents: capexCents, managementMonthlyCents: mgmtCents,
+      ownershipMonthlyCents: base.totalMonthlyCents, fullMonthlyCents: fullMonthlyCents,
+      youPayMonthlyCents: youPayCents, theyPayYou: youPayCents < 0,
+      vacancyRate: vacRate, assumed: assumed, notes: notes
+    };
+
+    /* Against renting: the saving is the point of the whole exercise. */
+    if (entered(o.rentMonthlyCents)) {
+      var savingCents = o.rentMonthlyCents - youPayCents;
+      out.rentMonthlyCents = o.rentMonthlyCents;
+      out.savingMonthlyCents = savingCents;
+      out.savingAnnualCents = savingCents * 12;
+      out.beatsRenting = savingCents > 0;
+      if (savingCents > 0) notes.push('Living here costs ' + Math.round(youPayCents / 100) + ' dollars a month against ' + Math.round(o.rentMonthlyCents / 100) + ' to rent. The ' + Math.round(savingCents / 100) + ' a month is only a win if it is invested rather than absorbed.');
+      else notes.push('This costs more each month than renting does. It can still be the right move, but not on the monthly figure: the case would have to be the loan being paid down, or what the place is worth later.');
+
+      /* What the saving becomes, if it is actually put to work. Growth is
+         the caller's assertion; without a rate this is not guessed. */
+      if (entered(o.years) && o.years > 0) {
+        out.years = o.years;
+        var months = Math.round(o.years * 12);
+        if (entered(o.annualReturn)) {
+          var m2 = o.annualReturn / 12, pot = 0;
+          for (var k = 0; k < months; k++) pot = pot * (1 + m2) + savingCents;
+          out.savingInvestedCents = cents(pot);
+          out.annualReturn = o.annualReturn;
+        } else {
+          out.savingInvestedCents = savingCents * months;
+          assumed.push('the saving set aside and not invested: no return was asserted');
+        }
+        /* The loan the tenants pay down over the same years. */
+        var am = amortize(base.loanCents, o.annualRate, base.termMonths, base.paymentCents, months);
+        out.principalPaidCents = base.loanCents - am.balanceCents;
+        out.balanceCents = am.balanceCents;
+      }
+    } else {
+      assumed.push('no rent to compare against: what this frees up cannot be said');
+    }
+
+    /* The unit that empties. A hack with one let unit has no cushion. */
+    var worst = rents.slice().sort(function (a, b) { return b - a; })[0];
+    out.ifBiggestUnitEmpties = { rentLostCents: worst, youPayMonthlyCents: fullMonthlyCents - (collectedCents - cents(worst * (1 - vacRate))) };
+    if (rents.length === 1) notes.push('One let unit means one tenant between you and the whole payment. Two smaller ones usually beat one larger one for exactly that reason.');
+
+    return Money.ok(youPayCents, out);
+  }
+
   return { cost: cost, hold: hold, rental: rental, hack: hack, amortize: amortize,
-    metrics: metrics, underwrite: underwrite, totalReturn: totalReturn, stress: stress };
+    metrics: metrics, underwrite: underwrite, totalReturn: totalReturn, stress: stress,
+    houseHack: houseHack };
 });
