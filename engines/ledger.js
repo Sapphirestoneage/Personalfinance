@@ -93,19 +93,16 @@
   }
 
   /* ---- The household's rate ------------------------------------------------
-     The effective rate the year's pay lands in. The household's annual
-     gross first (Start Here's sources); failing that, the ledger's own
-     recurring entries annualised; failing that, this entry alone. */
+     The effective rate the year's pay lands in. Schema.grossAnnualIncomeCents
+     answers it: a typed source when there is one, the ledger's own recurring
+     entries annualised when there is not, and it says which (D-226). This
+     file used to run that second loop itself, which is why the one moved
+     down to Schema — every room needed it, not just this one. The last
+     fallback stays here because it is this engine's alone: with nothing else
+     to go on, the entry being priced is the only rate there is. */
   function householdAnnualGross(household, entry) {
     var g = Schema.grossAnnualIncomeCents(household);
-    if (Money.isOk(g) && g.value > 0) return { cents: g.value, basis: 'sources' };
-    var sum = 0, any = false;
-    activeEntries(household).forEach(function (e) {
-      if (e.frequency === 'once' || e.taxMethod === 'none') return;
-      var a = annualGrossCents(e);
-      if (Money.isEntered(a)) { sum += a; any = true; }
-    });
-    if (any) return { cents: sum, basis: 'ledger' };
+    if (Money.isOk(g) && g.value > 0) return { cents: g.value, basis: g.basis === 'logged' ? 'ledger' : 'sources' };
     var own = annualGrossCents(entry);
     return { cents: Money.isEntered(own) ? own : null, basis: 'entry' };
   }

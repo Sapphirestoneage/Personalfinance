@@ -54,10 +54,12 @@ render; engines never write. Undo snapshots sit under `slaf.snapshots.v1`.
 
 ## Known structural problems (confirmed in the code, 2026-09-11)
 
-1. Logged income does not reach the headline numbers. `ledger.income[]` is
-   read only by the ledger, budget, calendar and tax-room engines; savings
-   rate and the FI date (`engines/tier0.js`) read `grossAnnualIncome`, which
-   Start Here still owns. Logged pay never changes them.
+1. ~~Logged income does not reach the headline numbers.~~ FIXED (D-226).
+   `Schema.grossAnnualIncomeCents` is the one reader, and all 62 call sites
+   got it at once: a typed source wins, recurring logged pay carries it when
+   nothing is typed, and `basis`, `loggedAnnualCents` and `differs` come back
+   so a room can name a disagreement. Still open underneath it: the owner
+   decision in STATUS Next 1 about who owns income sources.
 2. Start Here owns 17 core fields (the most of any room) but is meant to
    retire into the Ledger; those owners must move first.
 3. Typical versus actual is spread over four rooms: Expenses (the typical

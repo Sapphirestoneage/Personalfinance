@@ -11962,6 +11962,71 @@ section('Backup: one file for every key (D-202)');
     done();
   }
 
+  /* ---- Logged income reaches the headline (D-226) ---------------------- */
+  {
+    const bare = () => { const x = Schema.createHousehold({ state: 'NC', filingStatus: 'single' }); x.people.push(Schema.createPerson({ label: 'You', role: 'adult' })); return x; };
+    /* Nothing at all: the wording every room prints is unchanged. */
+    const none = Schema.grossAnnualIncomeCents(bare());
+    check('no income of any kind still asks for one', none.status, 'incomplete');
+    check('… in the same words as before', none.reason, 'Add your income to see this.');
+
+    /* Logged but never typed: the headline stops saying "add your income". */
+    const logged = bare();
+    logged.ledger.income = [
+      Schema.createIncomeEntry({ id: 'pay', kind: 'w2', amountCents: 200000, frequency: 'fortnightly', receivedOn: '2026-01-09' }),
+      Schema.createIncomeEntry({ id: 'bonus', kind: 'bonus', amountCents: 500000, frequency: 'once', receivedOn: '2026-02-01' })
+    ];
+    const fromLog = Schema.grossAnnualIncomeCents(logged);
+    check('recurring logged pay carries the headline', fromLog.status, 'ok');
+    check('… at 26 fortnights, the same basis income.js uses', fromLog.value, 5200000);
+    check('… and says where it came from', fromLog.basis, 'logged');
+    checkTrue('… counting the recurring entry and not the one-off bonus', fromLog.loggedEntryCount === 1);
+
+    /* A potential entry is drawn, never counted (D-130), and an inactive
+       one is off: neither may move a headline. */
+    const soft = bare();
+    soft.ledger.income = [
+      Schema.createIncomeEntry({ id: 'maybe', kind: 'side', amountCents: 100000, frequency: 'monthly', receivedOn: '2026-03-01', dateKind: 'potential' }),
+      Object.assign(Schema.createIncomeEntry({ id: 'off', kind: 'w2', amountCents: 400000, frequency: 'monthly', receivedOn: '2026-03-01' }), { active: false })
+    ];
+    check('a potential or inactive entry is not a year\'s pay', Schema.grossAnnualIncomeCents(soft).status, 'incomplete');
+
+    /* Both: the typed figure wins, and the log is named rather than lost. */
+    const both = bare();
+    both.people[0].incomeSources = [Schema.createIncomeSource({ id: 'i1', personId: both.people[0].id, grossAnnualIncomeCents: 9000000 })];
+    both.ledger.income = logged.ledger.income.slice();
+    const r = Schema.grossAnnualIncomeCents(both);
+    check('with both, the typed figure is the one used', r.value, 9000000);
+    check('… and it says so', r.basis, 'sources');
+    check('… with the log beside it', r.loggedAnnualCents, 5200000);
+    check('… and the gap named', r.differsByCents, 5200000 - 9000000);
+    checkTrue('… as a disagreement, being more than a tenth apart', r.differs === true);
+    const close = bare();
+    close.people[0].incomeSources = [Schema.createIncomeSource({ id: 'i1', personId: close.people[0].id, grossAnnualIncomeCents: 5300000 })];
+    close.ledger.income = logged.ledger.income.slice();
+    checkTrue('a log within a tenth is the same story twice, not a disagreement',
+      Schema.grossAnnualIncomeCents(close).differs === false);
+
+    /* The table moved down so every room can do this, not just the 13 that
+       load engines/income.js. It is one table, not two. */
+    const IncomeEngine = require(path.join(ROOT, 'engines/income.js'));
+    checkTrue('engines/income.js re-exports the schema table, same array', IncomeEngine.BASES === Schema.PAY_BASES);
+    check('… and basisById is payBasis', IncomeEngine.basisById('fortnightly').periods, 26);
+    checkTrue('no second copy of the periods was left behind in income.js',
+      !/periods: 26/.test(fs.readFileSync(path.join(ROOT, 'engines/income.js'), 'utf8')));
+
+    /* The headline carries it through, so a room can name the disagreement. */
+    const T0 = require(path.join(ROOT, 'engines/tier0.js'));
+    const spend = (x) => { x.expenses.needs = { food: { monthlyCents: 40000 }, accommodation: { monthlyCents: 150000 }, transportation: { monthlyCents: 30000 } }; x.expenses.wants = { totalCents: 50000, therapy: null }; return x; };
+    const rate = T0.savingsRate(spend(both), TABLES).excludingMatch;
+    checkTrue('the savings rate carries the basis and the gap', Money.isOk(rate) && rate.incomeBasis === 'sources' && rate.incomeDiffers === true && rate.loggedAnnualCents === 5200000);
+    const rateLogged = T0.savingsRate(spend(logged), TABLES).excludingMatch;
+    checkTrue('and a household that only logged is no longer told to add an income',
+      Money.isOk(rateLogged) && rateLogged.incomeBasis === 'logged');
+    const room = fs.readFileSync(path.join(ROOT, 'rooms/savings-rate.html'), 'utf8');
+    checkTrue('the room says which income the rate was built on', /incomeNote\(r\)/.test(room) && /logged in Income/.test(room));
+  }
+
   /* ---- The close offers a copy (D-225) --------------------------------- */
   {
     const budget = fs.readFileSync(path.join(ROOT, 'rooms/budget.html'), 'utf8');

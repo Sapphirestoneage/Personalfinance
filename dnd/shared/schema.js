@@ -2412,14 +2412,107 @@
     return Money.ok(summed.total);
   }
 
+  /* ---- The ways people are actually paid (moved here at D-226) -----------
+   *
+   * This lived in engines/income.js, which 13 of 71 rooms load. Annualising
+   * a logged pay entry needs it, and grossAnnualIncomeCents below has to be
+   * able to do that on EVERY room, so the table lives in the one file they
+   * all load. engines/income.js re-exports it as BASES and basisById.
+   *
+   * `periods` is how many times that pay lands in a year, and every one of
+   * them is exact arithmetic rather than a convention — except `hourly`,
+   * which cannot be, and says so.
+   *
+   * fortnightly and semimonthly are BOTH here and are deliberately not the
+   * same row. Every two weeks is 26 pay packets; twice a month is 24. People
+   * conflate them constantly and it is an 8% error in the annual figure.
+   */
+  var PAY_BASES = [
+    { id: 'annual',      label: 'a year',      short: 'yr',  periods: 1 },
+    { id: 'monthly',     label: 'a month',     short: 'mo',  periods: 12 },
+    { id: 'semimonthly', label: 'twice a month', short: '½mo', periods: 24,
+      note: 'Twice a month — 24 payslips. Not the same as every two weeks.' },
+    { id: 'fortnightly', label: 'every 2 weeks', short: '2wk', periods: 26,
+      note: 'Every two weeks — 26 payslips, because a year is not 24 fortnights.' },
+    { id: 'weekly',      label: 'a week',      short: 'wk',  periods: 52 },
+    /* Variable income — freelance, tips, commission — given as a month on
+       average. The arithmetic is monthly; the label says it varies. D-094. */
+    { id: 'variable',    label: 'a month on average \u2014 it varies', short: 'avg', periods: 12,
+      note: 'An average month. The runway and the rates read it as steady, which is the one thing it is not.' },
+    { id: 'hourly',      label: 'an hour',     short: 'hr',  periods: null,
+      needsHours: true,
+      note: 'Needs your hours a week — there is no honest hourly-to-yearly number without them.' },
+    /* Not earning. This is a real answer and it is NOT the same as leaving
+       the question blank: blank means "I have not told you", this means
+       "the number is zero". Everything downstream depends on knowing which
+       — a savings rate cannot be computed from either, but only one of them
+       should be met with "add your income". DECISIONS.md D-048. */
+    { id: 'none',        label: 'not earning right now', short: '—', periods: 0,
+      noPay: true,
+      note: 'A deliberate zero. Different from skipping the question.' }
+  ];
+
+  function payBasis(id) {
+    for (var i = 0; i < PAY_BASES.length; i++) { if (PAY_BASES[i].id === id) return PAY_BASES[i]; }
+    return null;
+  }
+
+  /* ---- The year's income, however it was told (D-226) --------------------
+     Known problem 1 in docs/ARCHITECTURE.md: `ledger.income[]` was read by
+     the ledger, budget, calendar and tax rooms and by nothing that makes a
+     headline. Somebody who logged their pay every fortnight and never typed
+     a figure into Start Here was told "Add your income to see this" by the
+     savings rate, the debt ratio, the retirement benchmark and the FI date,
+     while the Income room showed the pay on the screen next door.
+
+     THE TYPED SOURCE WINS when both exist. It is the household's stated
+     typical year; a log is however much happens to have been entered so
+     far, and reading a part-year log as a year would understate every rate
+     in the app. But the logged figure comes back beside it as
+     `loggedAnnualCents`, with `differs` true when the two are more than a
+     tenth apart, so a room can say they disagree instead of quietly
+     picking one. That is the reconciling the architecture note asked for.
+
+     `basis` is 'sources' or 'logged'. With neither, the wording is what it
+     always was, so every room that prints the reason is unchanged.
+
+     What the log contributes: recurring entries only. A one-off is not a
+     year's pay, an entry dated `potential` is "drawn, never counted" by the
+     same rule the expense log uses (D-130), and an inactive one is off. */
+  function loggedAnnualIncomeCents(household) {
+    var list = ((household && household.ledger && household.ledger.income) || []);
+    var total = 0, counted = 0;
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      if (!e || e.active === false) continue;
+      if (e.frequency === 'once' || e.dateKind === 'potential') continue;
+      if (!Money.isEntered(e.amountCents)) continue;
+      var basis = payBasis(e.frequency);
+      if (!basis || !Money.isEntered(basis.periods)) continue;
+      total += Math.round(e.amountCents * basis.periods);
+      counted++;
+    }
+    return counted ? { cents: total, count: counted } : null;
+  }
+
   function grossAnnualIncomeCents(household) {
     var summed = Money.sumCents(allIncomeSources(household).map(function (s) {
       return s.grossAnnualIncomeCents;
     }));
+    var logged = loggedAnnualIncomeCents(household);
     if (summed.counted === 0) {
+      if (logged) {
+        return Money.ok(logged.cents, { basis: 'logged', loggedAnnualCents: logged.cents,
+          loggedEntryCount: logged.count, differsByCents: null, differs: false });
+      }
       return Money.incomplete('Add your income to see this.', ['grossAnnualIncome']);
     }
-    return Money.ok(summed.total);
+    var diff = logged ? logged.cents - summed.total : null;
+    return Money.ok(summed.total, { basis: 'sources',
+      loggedAnnualCents: logged ? logged.cents : null,
+      loggedEntryCount: logged ? logged.count : 0,
+      differsByCents: diff,
+      differs: diff !== null && summed.total > 0 && Math.abs(diff) / summed.total > 0.1 });
   }
 
   /**
@@ -3075,6 +3168,9 @@
     investmentsCents: investmentsCents,
     totalDebtCents: totalDebtCents,
     monthlyDebtPaymentsCents: monthlyDebtPaymentsCents,
+    PAY_BASES: PAY_BASES,
+    payBasis: payBasis,
+    loggedAnnualIncomeCents: loggedAnnualIncomeCents,
     grossAnnualIncomeCents: grossAnnualIncomeCents,
     estimatedAnnualTaxCents: estimatedAnnualTaxCents,
     takeHomeAnnualCents: takeHomeAnnualCents,

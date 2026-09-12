@@ -26,10 +26,9 @@ Updated: 2026-09-12
    32px. `test/settings.js` 1: the section order. Everything else is green.
 1. Decide who owns income sources once Start Here retires (Ledger or Income).
    OWNER DECISION NEEDED.
-2. Make logged income reconcile with typical income (known problem 1).
-3. First journey works end to end: about 8 questions in, a FOO step and an FI
+2. First journey works end to end: about 8 questions in, a FOO step and an FI
    date range out. Add a node test for it.
-4. Student loans: name the plans (RAP, IBR, PAYE, ICR) and ask when the loans
+3. Student loans: name the plans (RAP, IBR, PAYE, ICR) and ask when the loans
    were disbursed, or keep the room's stated scope of three shapes and no plan
    names? Naming them adds a question and a vocabulary. OWNER DECISION NEEDED.
 

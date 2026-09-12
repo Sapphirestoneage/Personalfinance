@@ -218,10 +218,24 @@
     }
   }
 
+  /* D-226: say which income this rate was built on when there is a choice.
+     With nothing typed the logged pay carries it, and with both the typed
+     figure wins but a log more than a tenth away is named rather than
+     silently ignored. Nothing else changes: one figure, said honestly. */
+  function incomeNote(r) {
+    if (r.incomeBasis === 'logged') return ' — from the pay logged in Income, annualised, because no figure is typed in Start Here';
+    if (r.incomeDiffers) {
+      return ' — your typed figure; the pay logged in Income annualises to '
+        + Money.formatCents(r.loggedAnnualCents) + ', which is '
+        + (r.incomeDiffersByCents > 0 ? 'more' : 'less');
+    }
+    return '';
+  }
+
   function renderRates(rates) {
     setRate('r-ex', 'r-ex-sub', rates.excludingMatch, function (r) {
       return Money.formatCents(r.annualSavingsCents) + ' a year, out of '
-        + Money.formatCents(r.grossAnnualIncomeCents) + ' gross';
+        + Money.formatCents(r.grossAnnualIncomeCents) + ' gross' + incomeNote(r);
     });
     setRate('r-in', 'r-in-sub', rates.includingMatch, function (r) {
       return Money.formatCents(r.annualSavingsCents) + ' a year, including '

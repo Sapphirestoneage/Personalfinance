@@ -13599,6 +13599,50 @@ the refactor.
 
 ---
 
+## D-226 — Logged pay reaches the headline
+
+**Why.** Known problem 1 in `docs/ARCHITECTURE.md`: `ledger.income[]` was read
+by the ledger, budget, calendar and tax rooms and by nothing that makes a
+headline. Somebody who logged their pay every fortnight and never typed a
+figure into Start Here was told "Add your income to see this" by the savings
+rate, the debt ratio, the retirement benchmark and the FI date, while the
+Income room showed the pay on the screen next door.
+
+**Decision.** `Schema.grossAnnualIncomeCents` is the one reader and answers it
+for all 62 call sites at once. A typed source wins when both exist — it is the
+stated TYPICAL year, and a log is however much happens to have been entered —
+but the annualised log comes back as `loggedAnnualCents` with `differs` true
+past a tenth, so a room can name the disagreement instead of quietly choosing.
+With nothing typed, recurring logged pay carries the figure and `basis` says
+`logged`. With neither, the reason is the sentence it always was.
+
+**The pay-frequency table moved down.** `BASES` lived in `engines/income.js`,
+which 13 of 71 rooms load, so that file could not answer this for the other
+58. It is `Schema.PAY_BASES` now, one array, re-exported as `BASES` and
+`basisById` so nothing downstream moved; `engines/ledger.js` drops its own
+copy of the annualising loop and defers to Schema. One formula, one function.
+
+**What a log does not contribute.** One-off entries (a bonus is not a year's
+pay), anything dated `potential` (drawn, never counted, D-130), anything
+inactive.
+
+**Replaces or removes.** One duplicated loop in `engines/ledger.js`. No room,
+field or question. `engines/tier0.js` carries `incomeBasis`, `loggedAnnualCents`
+and `incomeDiffers` on the savings rate; the Savings Rate room says the
+sentence. The owner decision about who OWNS income sources (STATUS Next 1) is
+untouched: this is all read-side.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` 29,640, including the fortnight at 26 and the
+one-off, potential and inactive entries excluded; `export`, `data`, `corpus`,
+`migration`, `glossary`, `qr`. Savings Rate driven on a Pixel 7 in all three
+states: "out of $52,000 gross — from the pay logged in Income", "out of
+$90,000 gross — your typed figure; the pay logged in Income annualises to
+$52,000, which is less", and nothing extra when the two agree.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

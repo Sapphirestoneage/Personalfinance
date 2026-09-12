@@ -51,46 +51,13 @@
 
   var MONTHS_PER_YEAR = 12;
 
-  /**
-   * The ways people are actually paid.
-   *
-   * `periods` is how many times that pay lands in a year, and every one of
-   * them is exact arithmetic rather than a convention — except `hourly`,
-   * which cannot be, and says so.
-   *
-   * fortnightly and semimonthly are BOTH here and are deliberately not the
-   * same row. Every two weeks is 26 pay packets; twice a month is 24. People
-   * conflate them constantly and it is an 8% error in the annual figure.
-   */
-  var BASES = [
-    { id: 'annual',      label: 'a year',      short: 'yr',  periods: 1 },
-    { id: 'monthly',     label: 'a month',     short: 'mo',  periods: 12 },
-    { id: 'semimonthly', label: 'twice a month', short: '½mo', periods: 24,
-      note: 'Twice a month — 24 payslips. Not the same as every two weeks.' },
-    { id: 'fortnightly', label: 'every 2 weeks', short: '2wk', periods: 26,
-      note: 'Every two weeks — 26 payslips, because a year is not 24 fortnights.' },
-    { id: 'weekly',      label: 'a week',      short: 'wk',  periods: 52 },
-    /* Variable income — freelance, tips, commission — given as a month on
-       average. The arithmetic is monthly; the label says it varies. D-094. */
-    { id: 'variable',    label: 'a month on average \u2014 it varies', short: 'avg', periods: 12,
-      note: 'An average month. The runway and the rates read it as steady, which is the one thing it is not.' },
-    { id: 'hourly',      label: 'an hour',     short: 'hr',  periods: null,
-      needsHours: true,
-      note: 'Needs your hours a week — there is no honest hourly-to-yearly number without them.' },
-    /* Not earning. This is a real answer and it is NOT the same as leaving
-       the question blank: blank means "I have not told you", this means
-       "the number is zero". Everything downstream depends on knowing which
-       — a savings rate cannot be computed from either, but only one of them
-       should be met with "add your income". DECISIONS.md D-048. */
-    { id: 'none',        label: 'not earning right now', short: '—', periods: 0,
-      noPay: true,
-      note: 'A deliberate zero. Different from skipping the question.' }
-  ];
-
-  function basisById(id) {
-    for (var i = 0; i < BASES.length; i++) { if (BASES[i].id === id) return BASES[i]; }
-    return null;
-  }
+  /* ---- The ways people are actually paid ---------------------------------
+     This table moved down to shared/schema.js at D-226, so the one layer
+     every room loads can annualise a logged pay entry without this file on
+     the page. Same array, same rows, re-exported here because BASES and
+     basisById are what rooms and engines were written against. */
+  var BASES = Schema.PAY_BASES;
+  function basisById(id) { return Schema.payBasis(id); }
 
   /**
    * annualise(source, work) — one pay rate, as a year.

@@ -120,6 +120,13 @@
 
     var shared = {
       grossAnnualIncomeCents: gross.value,
+      /* D-226: which figure this rate is built on, and what the log says if
+         it says something else. A room can name the disagreement instead of
+         showing one number as though there were only one. */
+      incomeBasis: gross.basis || 'sources',
+      loggedAnnualCents: gross.loggedAnnualCents === undefined ? null : gross.loggedAnnualCents,
+      incomeDiffers: gross.differs === true,
+      incomeDiffersByCents: gross.differsByCents === undefined ? null : gross.differsByCents,
       takeHomeAnnualCents: takeHome.value,
       annualExpensesCents: annualExpenses,
       estimatedTaxCents: takeHome.estimatedTaxCents,
