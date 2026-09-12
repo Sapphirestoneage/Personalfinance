@@ -211,7 +211,7 @@
       band.hidden = true;
       reason.innerHTML = esc(s.reason)
         + (s.missing.indexOf('dob') !== -1
-          ? ' <a href="' + Ownership.linkTo('start', 'q-dob') + '">Add your date of birth →</a>'
+          ? ' <a href="' + Ownership.linkTo('start', 'q-about') + '">Add your date of birth →</a>'
           : '');
       el('score-note').hidden = true;
       return;

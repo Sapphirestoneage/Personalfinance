@@ -928,7 +928,15 @@
     }).catch(function (e) { say.textContent = 'Couldn’t read that picture (' + e.message + '). Paste the text instead.'; });
     this.value = '';
   });
-  if (typeof window.TextDetector !== 'function') el('photo-label').title = 'Needs a browser that can read text in pictures; otherwise paste the text.';
+  /* No browser in general use ships TextDetector, so this button answered
+     every tap with "this browser cannot read text out of a picture" — a
+     control that only ever fails is worse than no control. Hide it unless
+     the browser can actually do it; the paste box above does the same job
+     everywhere. D-221. */
+  if (typeof window.TextDetector !== 'function') {
+    el('photo-label').hidden = true;
+    el('import-photo').disabled = true;
+  }
 
   /* "See my dashboard": every guess still standing goes in as one, and is
      flagged so every room shows it as a guess until it is replaced — one

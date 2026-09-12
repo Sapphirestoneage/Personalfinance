@@ -711,14 +711,21 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .slaf-owned--guess { border-left-style: dashed; border-left-color: var(--color-caution); }
 .slaf-owned--guess .slaf-owned-value { color: var(--color-caution); }
 
-/* ---- Undo / redo, top right on every page (shared/undo.js). D-094. ---- */
-.slaf-undo { position: fixed; top: 10px; right: 10px; z-index: 40; display: flex; gap: 6px; }
+/* ---- Undo / redo, bottom right on every page (shared/undo.js). D-094.
+
+   It used to sit top right on anything wider than a phone, which is the
+   room nav's corner: on the Ledger with a door open it landed on top of
+   "← Every door", and it shadowed the nav's right-hand link in every
+   other room. The phone already put the pair bottom right for exactly
+   that reason; every width now does, which retires the whole class of
+   collision rather than padding one room around it. D-221. ---- */
+.slaf-undo { position: fixed; bottom: 14px; right: 12px; z-index: 40; display: flex; gap: 6px; }
+html.has-undo body { padding-bottom: 72px; }
 .slaf-undo-btn { border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); color: var(--color-text); font-size: var(--text-sm); min-height: 34px; padding: 0 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(6px); }
 .slaf-undo-btn:disabled { opacity: .35; cursor: default; }
 .slaf-undo-btn span { font-size: var(--text-xs); }
-/* On a phone the top-right corner is the room nav's; the pair sits
-   bottom right, above the soft keyboard's usual reach, as a thumb reaches. */
-@media (max-width: 640px) { .slaf-undo { top: auto; bottom: 14px; right: 12px; } html.has-undo body { padding-bottom: 72px; } .slaf-undo-btn span { display: none; } .slaf-undo-btn { padding: 0 10px; min-height: 38px; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
+/* On a phone it is a thumb's target: no words, a little larger, lifted. */
+@media (max-width: 640px) { .slaf-undo-btn span { display: none; } .slaf-undo-btn { padding: 0 10px; min-height: 38px; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
 
 /* ---- The lens toggle (shared/lens.js). D-094. ---- */
 .slaf-lens { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }

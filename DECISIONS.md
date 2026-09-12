@@ -13463,6 +13463,38 @@ headless phone on all eight fixtures: every one reaches the panel, and the
 retiree now reads "You draw 3.9% of your investments a year — inside the
 4% convention" with "The age the money lasts to: outlasts you".
 
+## D-221 — The dead controls and the links to nowhere
+
+**Why.** The same audit tapped all 1,598 visible buttons and followed every
+link. One button threw, one could never succeed, several links pointed at
+anchors that do not exist, and the six tiles on the Ledger's home ran their
+words together at every width.
+
+**Decision.** `shared/roomexport.js` exports `download` (the One-Pager
+called `RoomExport.download`, which was not there, so "Save a private file"
+threw and saved nothing); `_download` stays as an alias. Four links now
+name anchors that exist: `rooms/expenses.html` to `fire.html#targets`,
+`rooms/health.html` to `start.html#q-about`, `rooms/roth-aca.html` to
+`settings.html#horizon`, `rooms/credential.html` to
+`real-hourly-wage.html#inputs`. `rooms/ledger.html`: a computed row's
+missing inputs link to the room that owns them, not to `#row-<id>` which
+is not an id anything carries; and a door is a flex column with a gutter
+for its ring. `rooms/start.html` hides "Read a screenshot" unless the
+browser has `TextDetector`. `shared/theme.css` puts undo and redo bottom
+right at every width, not only on a phone. `shared/progress.js` puts the
+Safari notice under the room's heading instead of above it, in one line.
+
+**Replaces or removes.** Removes a button that always failed, a link
+pattern that never resolved, and the undo pair's collision with the room
+nav. No room, screen or field is added.
+
+**Stored shape.** No change to `slaf.household.v2`.
+
+**Verified.** `node test/run.js` (30,182), `node test/forms.js` (604), and
+a headless phone over all 94 pages with a full and an empty household:
+zero dead in-page anchors and zero console errors in both. The One-Pager
+download was driven and saves a real file.
+
 ---
 
 # The Dungeons & Dividends entries

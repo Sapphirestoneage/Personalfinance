@@ -1123,9 +1123,16 @@
       var line = document.createElement('p');
       line.id = 'slaf-a2hs';
       line.className = 'slaf-a2hs';
-      line.innerHTML = 'On an iPhone, Safari clears a site\u2019s saved numbers after seven days away, unless the site is on your Home Screen. Tap Share, then <b>Add to Home Screen</b>, and it keeps them. '
+      line.innerHTML = 'Safari clears saved numbers after seven days away. Tap Share, then <b>Add to Home Screen</b>, to keep them. '
         + '<button type="button" class="slaf-btn slaf-btn--quiet" id="slaf-a2hs-ok">Got it</button>';
-      main.insertBefore(line, main.firstChild);
+      /* Under the room's own heading, not above it. Inserted at the top of
+         <main> it pushed the menu button and the page title off the first
+         screen of every room, so the first thing anyone saw was a warning
+         about Safari rather than the room they had opened. D-221. */
+      var head = main.querySelector('header, .slaf-room-head, .room-head');
+      if (head && head.parentNode === main && head.nextSibling) main.insertBefore(line, head.nextSibling);
+      else if (head && head.parentNode === main) main.appendChild(line);
+      else main.insertBefore(line, main.firstChild);
       line.querySelector('#slaf-a2hs-ok').addEventListener('click', function () { if (Prefs && Prefs.set) Prefs.set('a2hs.seen', true); line.remove(); });
     }
   }

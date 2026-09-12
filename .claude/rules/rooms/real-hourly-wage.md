@@ -9,6 +9,7 @@ Reference data: effective_tax_rates_2026.json
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:
+  - D-221 — The dead controls and the links to nowhere
   - D-054 — A back and a next in every room, at the top
   - D-021 — Real Hourly Wage, and where a work profile lives
   - D-001 — Repo state did not match the brief's Section 0 premise

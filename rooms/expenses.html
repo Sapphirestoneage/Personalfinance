@@ -562,7 +562,7 @@
     var lean = (typeof SLAF.Fire === 'object' && SLAF.Fire && typeof SLAF.Fire.calculateFIRE === 'function' && TABLES.fireVariants)
       ? SLAF.Fire.calculateFIRE(h, TABLES, { variantId: 'lean' }) : null;
     if (lean && Money.isOk(lean) && lean.expenseSource === 'fat') {
-      el('lean-fi').innerHTML = '<a href="fire.html#lean" style="color:inherit">' + Money.formatCents(lean.value) + '</a>';
+      el('lean-fi').innerHTML = '<a href="fire.html#targets" style="color:inherit">' + Money.formatCents(lean.value) + '</a>';
       el('lean-why').textContent = 'Lean FI is the essentials covered for good: ' + Money.formatCents(lean.annualExpensesCents) + ' a year at a ' + Money.formatRate(lean.swrRate, { decimals: 1 }) + ' draw. FIRE Number has the other flavours.';
     } else {
       el('lean-fi').innerHTML = waiting('after FAT');

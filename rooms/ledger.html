@@ -84,13 +84,21 @@
   .understand { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); }
   .understand b { color: var(--color-text); font-family: var(--font-display); font-weight: 500; }
   .doors { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
-  .door { display: block; text-decoration: none; color: inherit; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); min-height: 150px; position: relative; }
+  /* A column, and every part on its own line. These were inline spans in a
+     `display: block` box, so the six tiles on the app's home screen read
+     "DDebtwhat you owenone total owed" at every width, and the ring's
+     caption sat on top of the figure's label. The right padding is the gutter
+     the ring and its caption occupy. D-221. */
+  .door { display: flex; flex-direction: column; text-decoration: none; color: inherit; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); padding-right: calc(var(--space-3) + 48px); min-height: 150px; position: relative; }
+  .door > span { display: block; min-width: 0; overflow-wrap: anywhere; }
   .door:hover { border-color: var(--color-border-active); }
   .door.is-recommended { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent) inset; }
-  .door .letter { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-accent-hover); }
+  /* `.letter` is also the sphere-group heading further down this page, which
+     carries a margin-top; inside a door it must not. */
+  .door .letter { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-accent-hover); margin-top: 0; line-height: 1.1; }
   .door .label { font-family: var(--font-display); font-size: var(--text-md); margin-top: 2px; }
-  .door .say { font-size: var(--text-xs); color: var(--color-text-faint); }
-  .door .num { font-family: var(--font-display); font-size: var(--text-lg); margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
+  .door .say { font-size: var(--text-xs); color: var(--color-text-faint); line-height: 1.35; }
+  .door .num { font-family: var(--font-display); font-size: var(--text-lg); margin-top: auto; padding-top: var(--space-2); font-variant-numeric: tabular-nums; line-height: 1.15; }
   .door .num.is-blank { color: var(--color-text-faint); font-size: var(--text-sm); font-style: italic; }
   .door .numlab { font-size: var(--text-xs); color: var(--color-text-faint); }
   .door .ring { position: absolute; top: var(--space-3); right: var(--space-3); width: 36px; height: 36px; }
@@ -309,7 +317,16 @@
     if (st === 'computed') {
       var inputs = LedgerRows.inputsOf(row, Spine.getProfile(), TABLES);
       out += '<span class="small">' + esc(row.engine.split('.')[1] === 'netWorth' ? 'What you own less what you owe' : 'Worked out from ') + (row.engine.split('.')[1] === 'netWorth' ? ': ' : '')
-        + inputs.map(function (i) { return i.row ? (i.missing ? '<a href="#row-' + esc(i.id) + '">' + esc(i.row.label) + ' (missing)</a>' : esc(i.row.label)) : esc(i.id); }).join(', ') + '.</span>';
+        /* A missing input links to the room that OWNS it, not to
+           "#row-<id>" — rows carry data-row, never that id, so every one of
+           these was a link to nowhere. The owner's box is where the number
+           gets filled in anyway, which is what the reader wanted. D-221. */
+        + inputs.map(function (i) {
+            if (!i.row) return esc(i.id);
+            if (!i.missing) return esc(i.row.label);
+            var to = target(i.row);
+            return to ? '<a href="' + esc(to) + '">' + esc(i.row.label) + ' (missing)</a>' : esc(i.row.label) + ' (missing)';
+          }).join(', ') + '.</span>';
     } else if (!row.entered && row.kind === 'lookup' && row.where) {
       out += '<span class="where">' + esc(row.where) + '</span>';
     } else if (row.entered) {

@@ -10,6 +10,7 @@ Reference data: confidence_weights.json, expense_categories.json, fire_variants.
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:
+  - D-221 — The dead controls and the links to nowhere
   - D-143 — The panel audit: the crash, and the things it said that were not true
   - D-081 — Fourteen more ratios, in the one registry, most of them without a band
 Full context: node tools/context/pack.js health

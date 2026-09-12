@@ -8,19 +8,19 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 - **first-round** — The First Round (utility) · 321 lines · engines: tax · D-220, D-206
 - **express** — Express (utility) · 517 lines · engines: tax, projection, tier0, statement, debt, hourly · D-208
-- **start** — Start Here · 1001 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
+- **start** — Start Here · 1009 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-221, D-166, D-159
 - **dashboard** — The Dashboard · 1616 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
 
 - **debt-payoff** — Debt Payoff · 1778 lines · engines: projection, debt · owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-191, D-190, D-189
-- **expenses** — Expenses · 1189 lines · engines: projection, tier0, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-207, D-199, D-196
+- **expenses** — Expenses · 1189 lines · engines: projection, tier0, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-221, D-207, D-199
 - **cash-flow** — Cash Flow · 565 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget · D-192, D-181, D-163
 - **income** — Income · 787 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-207, D-198, D-195
 - **budget** — Budget · 484 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-130, D-129, D-128
 - **variance** — Estimated vs Actual · 233 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
 - **statement** — The Statement · 723 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
-- **real-hourly-wage** — Real Hourly Wage · 251 lines · engines: projection, tier0, hourly · D-054, D-021, D-001
+- **real-hourly-wage** — Real Hourly Wage · 251 lines · engines: projection, tier0, hourly · D-221, D-054, D-021
 - **accounts** — Where It Goes & how it’s split · 582 lines · engines: selfemployed, accounts, projection, tier0, hourly · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand · D-130, D-071, D-062
 - **credit** — Your Credit File · 476 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-147
 - **cant-pay** — When It Won’t All Get Paid · 530 lines · engines: projection, tier0, cashflow · D-148
@@ -35,7 +35,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **financial-snapshot** — Financial Snapshot · 863 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath · D-056, D-036, D-008
 - **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-156
 - **savings-rate** — Savings Rate · 490 lines · engines: projection, tier0, foo, hourly · D-130, D-091, D-054
-- **fire** — FIRE Number · 532 lines · engines: projection, tier0, fire, selfemployed, tax, hourly · owns: retireAge, coastAge · D-162, D-161, D-142
+- **fire** — FIRE Number · 532 lines · engines: projection, tier0, fire, selfemployed, tax, hourly · owns: retireAge, coastAge · D-221, D-162, D-161
 - **fire-lab** — FIRE Lab · 463 lines · engines: projection, tier0, cashflow, fire, hourly · D-138
 - **ratios** — Every Ratio · 410 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-143, D-139, D-136
 - **foo-ladder** — FOO Ladder · 77 lines · engines: projection, tier0 · D-058, D-054, D-007
@@ -43,7 +43,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **coast-date** — Your Coast Date · 123 lines · engines: projection, tier0, coast · D-213
 - **rank-guess** — Where Do You Think You Rank? · 115 lines · engines: projection, tier0, rankguess · D-213
 - **race** — The Race to $100K · 156 lines · engines: projection, tier0, countdown, race · D-217
-- **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-143, D-081
+- **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-221, D-143, D-081
 
 ## Decisions (33)
 
@@ -53,7 +53,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **reachable** — Reachable Money · 151 lines · engines: selfemployed, tax, reachable · D-212
 - **subscriptions** — Subscription Finder · 126 lines · engines: projection, tier0, selfemployed, tax, hourly, subscriptions · D-215
 - **side-hustle** — Side Hustle · 507 lines · engines: projection, tier0, selfemployed, hourly, sidehustle · D-062, D-033
-- **credential** — Worth Learning · 486 lines · engines: projection, tier0, hourly, credential · D-062
+- **credential** — Worth Learning · 486 lines · engines: projection, tier0, hourly, credential · D-221, D-062
 - **worth** — Worth It · 607 lines · engines: projection, tier0, hourly, worth
 - **windfall** — The Windfall · 479 lines · engines: windfall, projection, tier0, hourly · D-091, D-041
 - **runway** — The Runway · 729 lines · engines: projection, tier0, cashflow, tax, runway, swan · D-130, D-082, D-062
@@ -65,7 +65,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **micro-retirement** — Micro-Retirement Planner · 167 lines · engines: projection, tier0, hourly, countdown, microretirement · D-219
 - **protection** — Protection · 268 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-103, D-098, D-094
 - **decumulation** — Drawing It Down · 274 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-104, D-098, D-094
-- **roth-aca** — Roth Conversions Before 65 · 207 lines · engines: selfemployed, tax, rothaca · D-216
+- **roth-aca** — Roth Conversions Before 65 · 207 lines · engines: selfemployed, tax, rothaca · D-221, D-216
 - **middle-class-trap** — The Middle Class Trap Test · 202 lines · engines: selfemployed, tax, projection, tier0, trap · D-218
 - **estate** — Estate Basics · 218 lines · engines: projection, tier0, hourly, estate · owns: beneficiariesSet, willExists, poaExists · D-106, D-098, D-094
 - **giving** — Giving · 261 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget · D-107, D-098, D-094
@@ -110,9 +110,9 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **doors** — Front Doors (utility) · 410 lines · engines: layouts · D-153
 - **walk** — The Walk-Through (utility) · 280 lines · no engines · D-169, D-149
 - **data** — Your Data (utility) · 572 lines · engines: tax, bankcsv · D-125
-- **ledger** — The Ledger (utility) · 496 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing · D-207, D-186, D-185
+- **ledger** — The Ledger (utility) · 513 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing · D-221, D-207, D-186
 - **one-pager** — The One-Pager · 173 lines · engines: selfemployed, tax, projection, tier0, debt, cashflow, ratios, trap, onepager · D-219
-- **settings** — Settings (utility) · 181 lines · no engines · D-180
+- **settings** — Settings (utility) · 181 lines · no engines · D-221, D-180
 - **progress-card** — Progress Card (utility) · 140 lines · engines: projection, tier0, tax, debt · D-212
 - **comeback** — Welcome Back (utility) · 195 lines · engines: tax, projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, skills, sincelast · D-214
 - **refresh** — Refresh (utility) · 340 lines · engines: tax, projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, skills · D-209, D-181, D-081

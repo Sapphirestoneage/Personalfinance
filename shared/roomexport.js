@@ -212,5 +212,11 @@
     return !!(room && room.href && room.href.indexOf('rooms/') !== 0);
   }
 
-  return { rows: rows, csv: csv, json: json, mount: mount, provide: provide, _download: download };
+  /* `download` is part of the interface, not a private helper: the
+     One-Pager hands a whole household to a coach as a file and has no
+     other way to do it. It shipped calling `RoomExport.download`, which
+     did not exist, so the button threw and saved nothing. `_download`
+     stays as an alias for anything still reaching for the old name. */
+  return { rows: rows, csv: csv, json: json, mount: mount, provide: provide,
+           download: download, _download: download };
 });
