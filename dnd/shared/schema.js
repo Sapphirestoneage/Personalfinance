@@ -993,7 +993,22 @@
       opexMonthlyCents: f.opexMonthlyCents === undefined ? null : f.opexMonthlyCents,
       vacancyRate: f.vacancyRate === undefined ? null : f.vacancyRate,
       hassle: f.hassle === undefined ? null : f.hassle,
-      prospects: f.prospects === undefined ? null : f.prospects
+      prospects: f.prospects === undefined ? null : f.prospects,
+      /* The terms of the deal, for a place being weighed rather than one
+         already owned (D-227). A record written before this has them all
+         null and reads exactly as it did. */
+      label: typeof f.label === 'string' && f.label.trim() ? f.label.trim() : null,
+      priceCents: Money.isEntered(f.priceCents) ? f.priceCents : null,
+      downPct: Money.isEntered(f.downPct) ? f.downPct : null,
+      rate: Money.isEntered(f.rate) ? f.rate : null,
+      hoaMonthlyCents: Money.isEntered(f.hoaMonthlyCents) ? f.hoaMonthlyCents : null,
+      yourRentMonthlyCents: Money.isEntered(f.yourRentMonthlyCents) ? f.yourRentMonthlyCents : null,
+      unitRentsCents: Array.isArray(f.unitRentsCents)
+        ? f.unitRentsCents.filter(function (v) { return Money.isEntered(v); }).map(function (v) { return Math.round(v); })
+        : [],
+      yearsHeld: Money.isEntered(f.yearsHeld) ? f.yearsHeld : null,
+      marginalRate: Money.isEntered(f.marginalRate) ? f.marginalRate : null,
+      appreciationRate: Money.isEntered(f.appreciationRate) ? f.appreciationRate : null
     };
   }
 

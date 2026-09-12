@@ -45,7 +45,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **race** — The Race to $100K · 156 lines · engines: projection, tier0, countdown, race · D-217
 - **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-143, D-081
 
-## Decisions (33)
+## Decisions (34)
 
 - **hassle** — Worth the Hassle · 499 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
 - **quick-math** — Quick Math · 447 lines · engines: projection, quickmath, tier0, hourly · D-062, D-022
@@ -77,6 +77,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **kids** — Kids and Tuition · 245 lines · engines: projection, tier0, kids · owns: tuitionTarget, tuitionSaved, tuitionMonthly · D-110
 - **housing** — Housing Decision · 330 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing · owns: rentAlternative, homePrice, downPct, mortgageRate · D-130, D-111
 - **down-payment** — Down Payment Countdown · 155 lines · engines: projection, tier0, debt, cashflow, ratios, housing, countdown, downpayment · D-217
+- **property** — The Deal · 404 lines · engines: projection, ownership · D-226, D-066
 - **big-purchase** — Big Purchase · 264 lines · engines: projection, tier0, hourly, quickmath, purchase · owns: purchasePrice, purchaseMonths, purchaseRate · D-129, D-112
 - **first-car** — The First Car Check · 148 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-219
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167

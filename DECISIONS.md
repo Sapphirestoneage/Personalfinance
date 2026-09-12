@@ -13678,6 +13678,45 @@ figure checked by the month-by-month loop and by the closed-form annuity
 independently. Twelve properties, including that letting one more unit
 can never make you pay more.
 
+## D-227 — The Deal: a room that shows the figure and the figure beside it
+
+**Why.** D-224 and D-225 put honest underwriting in the engine, where
+nobody could see it. The thing worth showing is not a cap rate. It is two
+numbers next to each other: what a listing says a place clears, and what
+it actually does.
+
+**Decision.** `rooms/property.html`, "The Deal", in Decisions → Home,
+beside Housing Decision. Housing asks whether to buy where you live; this
+asks whether a building pays. Both sit on `engines/ownership.js` and the
+room holds no arithmetic of its own. Six readings: the month line by
+line, letting it out (the advertised figure and the real one side by
+side, with the gap itemised), the four ways it pays, what breaks it,
+living in one unit and letting the rest, and where every rate came from.
+Nothing appears until it can be computed, and the page names which of the
+price, the down payment or the rate is missing.
+
+Built once, per D-034: eleven boxes in the markup, only ever read and
+written, with the readings rendered around them.
+
+**Replaces or removes.** Nothing, and this is a new room under the
+freeze. It earns that by being the only place any of Tier 17 is visible;
+the engine was shipped in D-223 to D-225 with no way to reach it.
+
+**Stored shape.** `household.property[]` records gain the terms of a deal
+being weighed: `label`, `priceCents`, `downPct`, `rate`,
+`hoaMonthlyCents`, `yourRentMonthlyCents`, `unitRentsCents[]`,
+`yearsHeld`, `marginalRate`, `appreciationRate`. Every one is additive
+and null on a record written before this, which therefore reads exactly
+as it did; `engines/statement.js` is unchanged by it. The room writes
+through `Spine.upsertProperty` and owns no field another room owns.
+
+**Verified.** Unit suite 30,610; `test/render.js`, `sidebar`, `onefact`,
+`xss` and `alignment` all pass with the room in the registry and in all
+twenty arrangements. A phone walk types the deal and reads it back: the
+price, the share, the rate and the rent land as cents and decimals, the
+listing figure reads $714 and the real one a loss of $481, and both
+survive a reload. A new case in `test/forms.js` holds that.
+
 ---
 
 # The Dungeons & Dividends entries

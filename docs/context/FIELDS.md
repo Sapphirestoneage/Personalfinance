@@ -5,14 +5,14 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 112. Traced: 103. No other room mentions it: **52**.
+Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 
 ## accounts (7)
 
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by statement, side-hustle, credential, rollover, roth-aca, debates
+- `marginalRate` — Marginal tax rate · read by statement, side-hustle, credential, rollover, roth-aca, property, debates
 - `allocationStocks` — Target: stocks · **no other room mentions it**
 - `allocationBonds` — Target: bonds · **no other room mentions it**
 - `allocationCash` — Target: cash · **no other room mentions it**
@@ -86,7 +86,7 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 
 ## expenses (8)
 
-- `rentMonthly` — Rent or mortgage, a month · read by housing, debates, calendar
+- `rentMonthly` — Rent or mortgage, a month · read by housing, property, debates, calendar
 - `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, savings-rate, sleep-at-night, fire, fire-lab, real-hourly-wage, ratios, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, health, what-if-life, between-jobs, quit-fund, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, buckets, dreamline, reversibility, unlearning, debates, calendar, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
@@ -113,7 +113,7 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 
 - `rentAlternative` — A place you would rent instead, a month · **no other room mentions it**
 - `homePrice` — The place, its price · **no other room mentions it**
-- `downPct` — Down payment, share of price · **no other room mentions it**
+- `downPct` — Down payment, share of price · read by property
 - `mortgageRate` — Mortgage rate · read by unlearning
 
 ## income (3)

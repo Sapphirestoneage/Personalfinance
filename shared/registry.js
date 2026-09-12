@@ -1444,6 +1444,33 @@
       ]
   });
 
+  /* The Deal — Tier 17 (D-227). Housing Decision asks whether to buy where
+     you live; this asks whether a building pays, and what living in one
+     unit of it would cost. Both sit on engines/ownership.js. */
+  ROOMS.push({
+    id: 'property',
+    group: 'decisions', subgroup: 'home',
+    aliases: ['rental', 'landlord', 'house hack', 'investment property', 'deal', 'cap rate', 'real estate'],
+    kind: 'about-you',
+    needs: [],
+    order: 40.7,
+    title: 'The Deal',
+    blurb: 'A property priced the way it actually runs: the reserves a listing leaves out, the four ways it pays, what breaks it, and what living in one unit would cost against renting.',
+    href: 'rooms/property.html',
+    tier: 2,
+    tags: ['cashflow'],
+    daite: { reads: [], writes: ['assets.property'] },
+    subsections: [
+      { id: 'deal',        label: 'The deal' },
+      { id: 'month',       label: 'What it costs a month' },
+      { id: 'letting',     label: 'Let it out' },
+      { id: 'return',      label: 'The four ways it pays' },
+      { id: 'stress',      label: 'What breaks it' },
+      { id: 'hack',        label: 'Live in one, let the rest' },
+      { id: 'assumptions', label: 'Where the rates come from' }
+    ]
+  });
+
   /* Housing Decision — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'housing',

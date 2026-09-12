@@ -10429,7 +10429,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move, no Between Jobs', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move' || r.id === 'between-jobs'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 33);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 34);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
