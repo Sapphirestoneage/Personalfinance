@@ -54,7 +54,7 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 
 ## debt-payoff (5)
 
-- `totalDebt` — Total debt · read by start, financial-snapshot, statements, statement, ratios, dashboard, credit, what-if-life, student-loans, history
+- `totalDebt` — Total debt · read by express, start, financial-snapshot, statements, statement, ratios, dashboard, credit, what-if-life, student-loans, history
 - `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, financial-snapshot, statements, ratios, rerank, cant-pay, student-loans, calendar
 - `debtBalance` — Balance · read by express, start
 - `debtRate` — Interest rate · read by express, start, next-hundred, debates, ledger

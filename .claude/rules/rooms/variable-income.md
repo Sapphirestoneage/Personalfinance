@@ -4,7 +4,7 @@ paths:
   - "engines/variableincome.js"
 ---
 # Variable Income (`variable-income`)
-File: rooms/variable-income.html · 292 lines
+File: rooms/variable-income.html · 301 lines
 Engines: projection, tier0, selfemployed, income, ledger, variableincome
 Reference data: effective_tax_rates_2026.json, se_tax_2026.json, variable_income_conventions.json
 Owns: incomeLow, incomeHigh, bufferMonths, variableWindow

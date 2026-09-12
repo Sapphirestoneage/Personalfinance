@@ -4,7 +4,7 @@ paths:
   - "engines/offers.js"
 ---
 # Offer Compare (`offer-compare`)
-File: rooms/offer-compare.html · 189 lines
+File: rooms/offer-compare.html · 194 lines
 Engines: projection, tier0, offers
 Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json, state_brackets_2026.json
 Owns: nothing

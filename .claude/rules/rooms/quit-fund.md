@@ -4,7 +4,7 @@ paths:
   - "engines/quitfund.js"
 ---
 # The Quit Fund (`quit-fund`)
-File: rooms/quit-fund.html · 140 lines
+File: rooms/quit-fund.html · 142 lines
 Engines: selfemployed, tax, projection, tier0, debt, cashflow, reachable, countdown, quitfund
 Reference data: aca_2026.json, access_rules.json, cobra_aca_2024.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, +4 more
 Owns: nothing

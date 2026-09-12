@@ -4,7 +4,7 @@ paths:
   - "engines/next100.js"
 ---
 # Your Next $100 (`next-hundred`)
-File: rooms/next-hundred.html · 132 lines
+File: rooms/next-hundred.html · 134 lines
 Engines: projection, tier0, foo, next100
 Reference data: foo_rules.json, return_bands.json
 Owns: nothing

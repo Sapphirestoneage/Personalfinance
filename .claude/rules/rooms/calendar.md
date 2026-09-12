@@ -4,7 +4,7 @@ paths:
   - "engines/calendar.js"
 ---
 # Money Calendar & Pay-Later (`calendar`)
-File: rooms/calendar.html · 269 lines
+File: rooms/calendar.html · 265 lines
 Engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar
 Reference data: calendar_conventions.json, effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: payCadence, nextPayday, billsMonthly, payLaterDue

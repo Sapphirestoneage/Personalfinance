@@ -4,7 +4,7 @@ paths:
   - "engines/windfall.js"
 ---
 # The Windfall (`windfall`)
-File: rooms/windfall.html · 479 lines
+File: rooms/windfall.html · 477 lines
 Engines: windfall, projection, tier0, hourly
 Reference data: none
 Owns: nothing

@@ -4,7 +4,7 @@ paths:
   - "engines/ss.js"
 ---
 # What If, Life (`what-if-life`)
-File: rooms/what-if-life.html · 551 lines
+File: rooms/what-if-life.html · 553 lines
 Engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events
 Reference data: car_costs.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, se_tax_2026.json, +1 more
 Owns: nothing

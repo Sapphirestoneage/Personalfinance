@@ -61,6 +61,9 @@
   .pick[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent);
     color: var(--color-accent-contrast); font-weight: 600; }
   .pick .code { font-size: var(--text-xs); color: var(--color-text-subtle); margin-right: 4px; }
+  /* On the chosen arrangement the code sits on the accent, where the subtle
+     token cannot be read; accent-contrast is the one that can. D-222. */
+  .pick[aria-pressed="true"] .code { color: var(--color-accent-contrast); }
   .vol-h { flex-basis: 100%; font-size: var(--text-xs); text-transform: uppercase;
     letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); margin-top: var(--space-2); }
 

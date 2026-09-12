@@ -5,7 +5,7 @@ paths:
 # What A Car Costs (`car`)
 File: rooms/car.html · 656 lines
 Engines: projection, tier0, hourly, quickmath
-Reference data: car_costs.json, states.json
+Reference data: car_costs.json
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start)
 Latest decisions:
