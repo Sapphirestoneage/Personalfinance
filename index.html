@@ -815,6 +815,16 @@
     return new Date(+m[1], +m[2] - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
 
+  /* Retired, not working, or on disability: no pay is coming in and the
+     portfolio is what the month runs on, so the drawdown is the next thing
+     — not a ladder step that starts by asking for a salary. Between jobs
+     has its own branch above this one, and is deliberately not included:
+     there the runway against a search is the number. D-220. */
+  function livingOffAssets(h) {
+    var row = Schema.householdEmployment(h);
+    return !!(row && row.earning === false && !Schema.isUnemployed(h));
+  }
+
   function renderNextAction(h, c) {
     var box = el('next-action');
     var foo = c.byId.fooStep.result;
@@ -823,7 +833,7 @@
     if (Schema.isUnemployed(h)) {
       action = betweenJobs(h);
       box.className = 'next' + (action.critical ? ' is-critical' : '');
-    } else if (Gate.situationOf(h) === 'retired' && c.byId.withdrawalRate.ok) {
+    } else if (livingOffAssets(h) && c.byId.withdrawalRate.ok) {
       action = retiredDraw(c.byId.withdrawalRate);
       box.className = 'next' + (action.critical ? ' is-critical' : '');
     } else if (flag && ACTION[flag.key]) {
@@ -834,11 +844,32 @@
         room: 'foo-ladder', anchor: null, go: 'Walk the ladder month by month →' };
       box.className = 'next';
     } else {
-      var row = SLAF.Progress.forRoom('start', h);
+      /* What the PANEL is missing, not the first gap anywhere in Start
+         Here — which owns 17 fields, so it answered "the next thing money
+         should do" with an insurance deductible for a household holding
+         $440,000 and no debt. D-220. */
+      var row = SLAF.Progress.forRoom('dashboard', h);
       var first = row && row.missing[0];
+      /* Nothing missing here, but the ladder still cannot place you: say
+         which input IT is waiting on and link to whoever owns it, rather
+         than "not enough entered" pointing at a room with 17 fields. The
+         ladder names its own needs on the step it stopped at. D-220. */
+      var stopped = Foo.evaluate(h, TABLES).stoppedAt;
+      var owner = null;
+      ((stopped && stopped.missing) || []).forEach(function (id) {
+        if (owner) return;
+        var d = Ownership.describe(id, h, ROOM_ID);
+        /* Never chase a figure the app has just said is not a question for
+           this household — a retiree was being asked for a paycheque. */
+        if (d && d.href && d.applies) owner = d;
+      });
       action = first
         ? { say: 'The panel needs <strong>' + esc(first.label.toLowerCase()) + '</strong> before it can place you.', href: first.href, go: 'Answer it in ' + esc(first.ownerTitle) + ' →' }
-        : { say: esc(foo.reason || 'Not enough entered to place you yet.'), room: 'start', anchor: null, go: 'Start Here →' };
+        : owner
+          ? { say: 'The ladder is waiting on <strong>' + esc(owner.label.toLowerCase()) + '</strong>.', href: owner.href, go: 'Answer it in ' + esc(owner.ownerTitle) + ' →' }
+          : stopped && stopped.detail
+            ? { say: esc(stopped.detail), room: Registry.byId('accounts') ? 'accounts' : 'foo-ladder', anchor: null, go: 'Fill them in at Where It Goes →' }
+            : { say: esc(foo.reason || 'Not enough entered to place you yet.'), room: 'start', anchor: null, go: 'Start Here →' };
       box.className = 'next';
     }
     box.hidden = false;
@@ -894,7 +925,7 @@
       var when = new Date(Date.now() + r.result.value * 86400000);
       return { cap: 'The day the cash runs out', big: when.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), say: r.result.value.toLocaleString('en-US') + ' days at this spending, benefit and severance counted.', room: 'between-jobs', anchor: 'number', go: 'Open Between Jobs →' };
     }
-    if (s === 'retired') {
+    if (s === 'retired' || (s === null && livingOffAssets(h))) {
       var w = c.byId.withdrawalRate, inv = Schema.investmentsCents(h), age = Schema.primaryAge(h), a = Schema.resolveAssumptions(h);
       if (!w.ok || !Money.isOk(inv)) return { cap: 'The age the money lasts to', big: null, reason: w.ok ? inv.reason : w.result.reason, say: '', room: 'decumulation', anchor: 'number', go: 'Open Drawing It Down →' };
       var y = SLAF.Projection.yearsUntilEmptyCents({ startCents: inv.value, annualDrawCents: w.result.annualDrawCents, annualRate: a.returnReal });
@@ -1069,7 +1100,17 @@
   function panelReady(h) {
     var row = SLAF.Progress.forRoom('dashboard', h);
     if (!row) return false;
-    return row.missing.every(function (f) { return f.fieldId === 'totalDebt'; });
+    /* Ready means there is something true to say, not that every box is
+       full. Every block here already names what it is missing, so a thin
+       panel is more use than a landing page that refuses — and the old
+       rule (all five answered, debt excepted) refused everyone: the First
+       Round writes pay and cash, promises "one thing the numbers say", and
+       then the front door showed the same landing as before. It also shut
+       out a retiree entirely, so the retired branch of this page had never
+       been seen. A situation on file and one of the five answered. D-220. */
+    var p = Schema.primaryPerson(h);
+    if (!p || !p.employmentStatus) return row.missing.length === 0;
+    return row.filled.length > 0;
   }
 
   function route(h) {
@@ -1263,7 +1304,15 @@
       var r = t.read(h);
       var ok = Money.isOk(r);
       var word, cls;
+      /* A figure the situation has ruled out is not missing. Chasing a
+         retiree for a paycheque on the same screen that tells them the
+         drawdown is their number is the panel arguing with itself. The
+         taxes tile follows income: there is nothing to tax. D-220. */
+      var incomeApplies = Ownership.describe('grossAnnualIncome', h, ROOM_ID);
+      incomeApplies = !incomeApplies || incomeApplies.applies;
+      var ruledOut = (d && !d.applies) || ((t.id === 'income' || t.id === 'taxes') && !incomeApplies);
       if (t.id === 'debt' && ok && r.none) { word = 'none'; cls = 'is-entered'; }
+      else if (!ok && ruledOut) { word = 'not asked'; cls = ''; }
       else if (!ok) { word = 'missing'; cls = 'is-missing'; }
       else if (d && d.confidence === 'guess') { word = 'a guess'; cls = 'is-guess'; }
       else { word = 'entered'; cls = 'is-entered'; }
@@ -1273,7 +1322,7 @@
         + '<span class="cap">' + esc(fam.label) + '</span>'
         + '<span class="big' + (ok ? '' : ' is-incomplete') + '">' + esc(ok ? t.fmt(r.value) : Money.EM_DASH) + '</span>'
         + '<span class="status ' + cls + '">' + word + '</span>'
-        + '<span class="sub">' + esc(ok ? t.sub : (r.reason || '')) + '</span>'
+        + '<span class="sub">' + esc(ok ? t.sub : (ruledOut ? 'No pay coming in.' : (r.reason || ''))) + '</span>'
         + '</a></div>';
     }).join('');
   }

@@ -164,9 +164,22 @@
       /* Between jobs with nothing coming in, income is not a question the
          app should keep asking; the runway is the number now. Anything
          entered — a partner's pay, a benefit typed as income — still
-         counts, and then the row applies as before. D-092. */
-      applies: function (h) { return !(Schema.isUnemployed(h) && !Money.isOk(Schema.grossAnnualIncomeCents(h))); },
-      notApplicableBecause: 'Between jobs — the runway is the number that matters now.'
+         counts, and then the row applies as before. D-092.
+
+         Retirement is the same sentence with a different noun, and so are
+         "not working" and "on disability": the person has no paycheque
+         because of their situation, not because they skipped a box. So the
+         rule reads the situation's own `earning` flag rather than naming
+         statuses one at a time. Without it a retired household could never
+         reach the dashboard at all, and the panel's whole retired branch —
+         the age the money lasts to, the withdrawal rate — only ever drew
+         for households the front door refused. D-220. */
+      applies: function (h) {
+        var nothingComingIn = !Money.isOk(Schema.grossAnnualIncomeCents(h));
+        var row = Schema.householdEmployment(h);
+        return !(nothingComingIn && row && row.earning === false);
+      },
+      notApplicableBecause: 'No pay coming in — the runway, or the drawdown, is the number that matters now.'
     },
     unemployment: {
       label: 'Between jobs', owner: 'start', anchor: 'q-unemployed',

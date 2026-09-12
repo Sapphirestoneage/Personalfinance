@@ -13429,6 +13429,40 @@ cost and break-even with its range; the car's three parts and the price
 that fits), the render, features and forms gates on the five rooms, the
 phone walk.
 
+## D-220 — The front door stops refusing people
+
+**Why.** An audit drove `index.html` with all eight fixture households.
+Three never reached the dashboard, a retiree among them; and the First
+Round writes only pay and cash, so nobody who took it and returned home
+was let in either.
+
+**Decision.** `index.html` `panelReady`: with a situation on file, one of
+the panel's five numbers is enough — every block already names what it is
+missing. `shared/ownership.js` `grossAnnualIncome` does not apply when the
+situation earns nothing and nothing is entered (the `earning` flag in
+`shared/schema.js` EMPLOYMENT_STATUSES, not a list of statuses), so
+retired, not working and on disability join between jobs. The next action
+reads the dashboard's own missing list, never Start Here's seventeen;
+skips a field ruled out; and names the ladder's `stoppedAt.missing`.
+`livingOffAssets` sends every non-earner who is not job-hunting to the
+drawdown, so the retired branch renders at all. The DAITE income and taxes
+tiles read "not asked", not "missing". `rooms/first-round.html` offers all
+six `shared/gate.js` situations; Retired and Student were missing, with
+pay copy per situation.
+
+**Replaces or removes.** Removes the `totalDebt` special case in
+`panelReady` and the landing page for anyone part-way through. Removes the
+"answer everything before you may look" rule.
+
+**Stored shape.** No change to `slaf.household.v2`. `employmentStatus`
+gains no values; the First Round can now write `retired` and `student`,
+which `shared/gate.js` already handled.
+
+**Verified.** `node test/run.js` (30,147), `node test/forms.js`, and a
+headless phone on all eight fixtures: every one reaches the panel, and the
+retiree now reads "You draw 3.9% of your investments a year — inside the
+4% convention" with "The age the money lasts to: outlasts you".
+
 ---
 
 # The Dungeons & Dividends entries

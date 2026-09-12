@@ -176,7 +176,7 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 - `lastPay` — Your last pay, a year · read by first-round
 - `cashSavings` — Cash & savings · read by first-round, budget, financial-snapshot, statements, statement, sleep-at-night, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, between-jobs, quit-fund, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, ledger, one-pager, refresh
 - `investments` — Investments + retirement · too generic to trace
-- `employmentStatus` — Working situation · read by first-round, between-jobs, tax, offer-compare, unlearning, student-loans
+- `employmentStatus` — Working situation · read by first-round, dashboard, between-jobs, tax, offer-compare, unlearning, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, savings-rate, foo-ladder, next-hundred, offer-compare, unlearning
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, wrapped
 - `hasDebt` — Any debt · read by dashboard, unlearning, student-loans

@@ -108,6 +108,8 @@
       <button type="button" class="choice" data-situation="unemployed" aria-pressed="false">Between jobs<small>The runway is the number now</small></button>
       <button type="button" class="choice" data-situation="selfEmployed" aria-pressed="false">Self-employed<small>Your own work, no employer</small></button>
       <button type="button" class="choice" data-situation="both" aria-pressed="false">A mix<small>A job and your own work</small></button>
+      <button type="button" class="choice" data-situation="retired" aria-pressed="false">Retired<small>Money coming in from what you built</small></button>
+      <button type="button" class="choice" data-situation="student" aria-pressed="false">A student<small>Little coming in, maybe loans</small></button>
     </div>
     <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-zip">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-pay">Next →</button></div>
   </section>
@@ -190,11 +192,26 @@
     try { history.replaceState(null, '', '#' + id); } catch (e) { /* fine */ }
     window.scrollTo(0, 0);
   }
+  /* One question, six wordings. The situation decides which noun is
+     honest: a retiree has no "pay", a student may have none at all, and
+     someone between jobs is being asked about a job they have left. The
+     six match shared/gate.js SITUATIONS, so this room and Start Here ask
+     the same set. D-220. */
+  var PAY_COPY = {
+    unemployed: { heading: 'Your last pay, a year?', label: 'Your last pay, a year',
+      why: 'Before tax, from the last job. It sets the benefit estimate and the tax rate.' },
+    retired:    { heading: 'What comes in, a year?', label: 'Pension, Social Security and the rest',
+      why: 'Everything arriving that is not drawn from savings. Leave it blank if nothing does.' },
+    student:    { heading: 'Anything coming in?', label: 'Pay, a year',
+      why: 'A part-time job, a stipend, family help. Blank is a real answer here.' }
+  };
+  var PAY_DEFAULT = { heading: 'Pay, a year?', label: 'Gross pay, a year',
+    why: 'Before tax. A rough figure is fine; it can be sharpened later.' };
   function paintPayLabel() {
-    var between = situation() === 'unemployed';
-    el('pay-heading').textContent = between ? 'Your last pay, a year?' : 'Pay, a year?';
-    el('pay-label').textContent = between ? 'Your last pay, a year' : 'Gross pay, a year';
-    el('pay-why').textContent = between ? 'Before tax, from the last job. It sets the benefit estimate and the tax rate.' : 'Before tax. A rough figure is fine; it can be sharpened later.';
+    var c = PAY_COPY[situation()] || PAY_DEFAULT;
+    el('pay-heading').textContent = c.heading;
+    el('pay-label').textContent = c.label;
+    el('pay-why').textContent = c.why;
   }
 
   /* ---- Writes: each through its owner's path -------------------------------- */

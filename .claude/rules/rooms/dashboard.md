@@ -3,11 +3,11 @@ paths:
   - "index.html"
 ---
 # The Dashboard (`dashboard`)
-File: index.html · 1567 lines
+File: index.html · 1616 lines
 Engines: none
 Reference data: advice_translator.json, ratio_benchmarks.json
 Owns: nothing
-Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), capturingFullMatch (start), hasDebt (start), totalDebt (debt-payoff), netWorth (statement), retireAge (fire), +1 more
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), employmentStatus (start), capturingFullMatch (start), hasDebt (start), totalDebt (debt-payoff), netWorth (statement), +2 more
 Latest decisions:
   - DD-028 — Four ways in, because one front door was asking before it gave
   - DD-026 — The whole run through: five questions, a build, your six, and what to do about them
