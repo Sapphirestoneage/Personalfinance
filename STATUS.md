@@ -7,10 +7,10 @@ Updated: 2026-09-12
 - ~70 rooms live on GitHub Pages. Each room works on its own; the connections
   between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
 - Context system added. Sessions should no longer read the archives.
-- Clutter pass (D-209, D-210): nine dead root files gone; the glossary hover is
-  live on every room; one federal tax table (`data/tax_brackets.json`, sourced)
-  feeds every tax figure; every user switch starts on. Owner decided: dnd/
-  stays separate and unlinked; the roadmap tiers wait.
+- Clutter pass (D-209, D-210, D-219): nine dead root files gone; the glossary
+  hover is live on every room; one federal tax table and now one ACA table
+  (`data/tax_brackets.json`, `data/aca.json`, both sourced) feed every figure;
+  every user switch starts on. Owner decided: dnd/ stays separate; roadmap waits.
 
 ## Freeze
 - ON. No new rooms, frameworks, or vocabularies until the first journey

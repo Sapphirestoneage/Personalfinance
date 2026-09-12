@@ -5358,7 +5358,7 @@ section('The Statement: shape and tables');
   const rules = require(path.join(ROOT, 'data/access_rules.json'));
   const weights = require(path.join(ROOT, 'data/confidence_weights.json'));
   const ui = require(path.join(ROOT, 'data/ui_benefits.json'));
-  const aca = require(path.join(ROOT, 'data/aca_2026.json'));
+  const aca = require(path.join(ROOT, 'shared/reference.js')).readSync('aca', path.join(ROOT, 'data'));
   const st = require(path.join(ROOT, 'data/state_brackets_2026.json'));
   const states = require(path.join(ROOT, 'data/states.json'));
 
@@ -5443,9 +5443,15 @@ section('The Statement: shape and tables');
       if (row.type === 'flat') checkTrue(`${c} flat rate is a rate`, row.rate > 0 && row.rate < 0.15);
     });
     checkTrue('Texas has no income tax', st.states.TX.type === 'none');
-    checkTrue('the ACA table admits it is unverified', aca.confidence === 'unverified' && ui.confidence === 'unverified' && st.confidence === 'unverified');
-    checkTrue('ACA applicable percentages climb with income', aca.applicablePercentage.every((r, i) => i === 0 || r.percent >= aca.applicablePercentage[i - 1].percent));
-    check('and end at the cliff', aca.applicablePercentage[aca.applicablePercentage.length - 1].upToFplMultiple, aca.cliffMultiple);
+    /* D-219: the ACA table is sourced now (Rev. Proc. 2025-25), so it no
+       longer belongs with the two that still admit they are recalled. */
+    checkTrue('the ACA table is sourced and says which plan year', aca.confidence === 'sourced' && aca.planYear === 2026 && aca.guidelineYear === 2025);
+    checkTrue('the other two still admit they are unverified', ui.confidence === 'unverified' && st.confidence === 'unverified');
+    checkTrue('ACA applicable percentages climb with income', aca.applicablePercentage.every((r, i) => r.to >= r.from && (i === 0 || r.from >= aca.applicablePercentage[i - 1].to)));
+    checkTrue('the bands meet end to end, with no gap and no overlap', aca.applicablePercentage.every((r, i) => i === 0 ? r.fromFpl === 0 : r.fromFpl === aca.applicablePercentage[i - 1].toFpl));
+    check('and end at the cliff', aca.applicablePercentage[aca.applicablePercentage.length - 1].toFpl, aca.cliffMultiple);
+    checkTrue('every region carries a poverty guideline', ['contiguous', 'alaska', 'hawaii'].every((r) => aca.fplByRegion[r].base > 0 && aca.fplByRegion[r].perAdditionalPerson > 0));
+    checkTrue('and Alaska is the highest of the three', aca.fplByRegion.alaska.base > aca.fplByRegion.hawaii.base && aca.fplByRegion.hawaii.base > aca.fplByRegion.contiguous.base);
   }
 })();
 
@@ -5457,7 +5463,7 @@ section('The tax engine');
     federalBrackets: require(path.join(ROOT, 'shared/reference.js')).readSync('federalBrackets', path.join(ROOT, 'data')),
     seTax: require(path.join(ROOT, 'shared/reference.js')).readSync('seTax', path.join(ROOT, 'data')),
     stateBrackets: require(path.join(ROOT, 'data/state_brackets_2026.json')),
-    aca: require(path.join(ROOT, 'data/aca_2026.json'))
+    aca: require(path.join(ROOT, 'shared/reference.js')).readSync('aca', path.join(ROOT, 'data'))
   };
 
   /* -- Ordinary income, by hand ------------------------------------------- */
@@ -7196,6 +7202,18 @@ section('Life events: moving, on the demo');
   const tpl = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/move.json'), 'utf8'));
   const h = Demo.build();
   check('forty cities, and every one has a state', Object.keys(T.colIndex.cities).length === 40 && Object.values(T.colIndex.cities).every(c => /^[A-Z]{2}$/.test(c.state)), true);
+  /* The move template spells its own city menu, and the lines then
+     look each answer up in colIndex. A city added to the table and not to
+     the menu is unreachable; one in the menu and not the table reads as a
+     missing value. The two lists are the same list or the room is wrong. */
+  const cityIds = Object.keys(T.colIndex.cities);
+  const ask = {}; tpl.questions.forEach((q) => { ask[q.id] = q; });
+  check('the "where you would go" menu is exactly the table',
+    ask.toCity.choices.map(c => c.id).join(','), cityIds.join(','));
+  check('and "where you are" is the same list behind the national average',
+    ask.fromCity.choices.map(c => c.id).join(','), ['national'].concat(cityIds).join(','));
+  checkTrue('every label in the menu is the label in the table',
+    ask.toCity.choices.every(c => c.label === T.colIndex.cities[c.id].label));
   /* Raleigh to Austin: 103 → 110, NC's 4.25% flat tax to none. */
   const r = E.run(h, tpl, { startsOn: 0, fromCity: 'raleigh', toCity: 'austin', band: 'crossCountry' }, { tables: T, d: 'default' });
   const by = {}; r.lines.forEach(l => { by[l.id] = l; });
@@ -12544,7 +12562,7 @@ section('What a marketplace plan costs (D-217)');
 (function () {
   const P = require(path.join(ROOT, 'engines/protection.js'));
   const T = {
-    aca: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/aca_2026.json'), 'utf8')),
+    aca: require(path.join(ROOT, 'shared/reference.js')).readSync('aca', path.join(ROOT, 'data')),
     states: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/states.json'), 'utf8'))
   };
   function person(grossCents, state, dependents) {
@@ -12563,10 +12581,16 @@ section('What a marketplace plan costs (D-217)');
   const low = P.marketplace(person(3000000, 'NY'), T);
   checkTrue('it computes for a single adult', Money.isOk(low), low.reason);
   check('the poverty multiple is income over the poverty line', low.fplMultiple, 3000000 / 100 / fpl, 1e-9);
-  const band = T.aca.applicablePercentage.filter((b) => low.fplMultiple <= b.upToFplMultiple)[0];
-  check('the applicable percentage is the band it falls in', low.applicablePercentage, band.percent);
+  /* D-219: the band RAMPS. The percentage at this multiple is `from` plus
+     the share of the band already climbed, times the rise across it. */
+  const band = T.aca.applicablePercentage.filter((b) => low.fplMultiple <= b.toFpl)[0];
+  const within = (low.fplMultiple - band.fromFpl) / (band.toFpl - band.fromFpl);
+  const pct = band.from + (band.to - band.from) * within;
+  check('the applicable percentage is the point it reaches inside its band', low.applicablePercentage, pct, 1e-12);
+  checkTrue('...which is inside the band and not either edge of it',
+    low.applicablePercentage > band.from && low.applicablePercentage < band.to);
   check('what you are expected to pay is that share of income, a month',
-    low.expectedMonthlyCents, Math.round(3000000 * band.percent / 12));
+    low.expectedMonthlyCents, Math.round(3000000 * pct / 12));
   check('the benchmark is the state figure', low.benchmarkMonthlyCents, bench);
   check('the subsidy is the difference', low.subsidyMonthlyCents, bench - low.expectedMonthlyCents);
   check('...and a year of it is twelve times that', low.subsidyAnnualCents, low.subsidyMonthlyCents * 12);
@@ -12600,7 +12624,7 @@ section('What a marketplace plan costs (D-217)');
   /* It says what it does not model rather than implying a quote. */
   checkTrue('it lists what it leaves out', (low.notModelled || []).length >= 3);
   checkTrue('...including age rating', low.notModelled.join(' ').indexOf('age rating') > -1);
-  checkTrue('and it names its sources', (low.sources || []).indexOf('data/aca_2026.json') > -1);
+  checkTrue('and it names its sources', (low.sources || []).indexOf('data/aca.json') > -1);
 
   /* The engine is reached at call time, so a room that loads protection.js
      before tax.js still gets the reading rather than "not loaded". */

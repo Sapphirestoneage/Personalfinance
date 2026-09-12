@@ -5,7 +5,7 @@
   "source": "HHS poverty guidelines (2025 and 2026) and the ACA premium tax credit applicable percentage tables for 2025 (enhanced, ARPA/IRA) and 2026 (current law after the enhancement expired). Lane 2, section 3 (L-3).",
   "confidence": "sourced",
   "confidenceNote": "The 2026 guidelines and the 2026 applicable percentages were read from search results quoting HHS and Rev. Proc. 2025-25; the 2025 rows from memory of the same sources (verify: true). The legislative question, whether Congress restores the enhanced credits for 2026, is a fact that can change under this file: `currentLaw.changeDate` says what changed and when.",
-  "note": "The older data/aca_2026.json carries a single FPL row and the 2026 table for engines/tax.js; DECIDE: point the engine here and retire that file, or keep both in sync (tests/data.test.js asserts the 2025 base and the top percentage agree).",
+  "note": "The one ACA table (D-219): engines/tax.js `acaCliff` and engines/protection.js `marketplace` read it through the `aca` view in shared/reference.js, which picks the plan year and the poverty guidelines that govern it (the guidelines published in January of year N price coverage for year N+1). data/aca_2026.json is retired. Within an applicablePercentage band the percentage rises linearly from `from` at `fromFpl` to `to` at `toFpl`; above cliffMultiple there is no credit.",
   "refresh": {
     "month": "January (poverty guidelines) and August (applicable percentages, Rev. Proc. for the next plan year)",
     "against": "aspe.hhs.gov poverty guidelines; the IRS revenue procedure under IRC 36B(b)(3)(A)(ii); Congress.gov for any premium tax credit legislation."

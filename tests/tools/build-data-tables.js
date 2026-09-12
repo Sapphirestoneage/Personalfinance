@@ -46,7 +46,7 @@ function markHistorical(v) {
    data/*.json to be in Reference.TABLE_FILES, and that file is outside
    this lane. states.json is already registered and stays where it is. */
 const LANE2 = path.join(DATA, 'lane2');
-const IN_ROOT = { 'states.json': true, 'return_bands.json': true, 'bands.json': true, 'tax_brackets.json': true };
+const IN_ROOT = { 'states.json': true, 'return_bands.json': true, 'bands.json': true, 'tax_brackets.json': true, 'aca.json': true, 'milestones.json': true };
 function write(name, obj) {
   const dir = IN_ROOT[name] ? DATA : LANE2;
   fs.mkdirSync(dir, { recursive: true });
@@ -204,7 +204,7 @@ function buildMilestones() {
     source: 'The ages at which US retirement rules change, each with its rule text and primary source. Lane 2, section 3 (L-3).',
     confidence: 'sourced',
     confidenceNote: 'Statute and agency pages, not opinions. The one thing that moves is the Social Security full retirement age table by birth year and the RMD age by birth year, both transcribed here.',
-    note: 'Not the savings-multiple milestones (those are data/retirement_milestones.json). Read by nothing yet; section 15.9 of the master build (milestones on every timeline) is the intended reader. Ages are exact years unless `months` says otherwise; 59.5 is stored as years 59, months 6.',
+    note: 'Not the savings-multiple milestones (those are data/retirement_milestones.json). Read by Schema.milestones(person, table) and drawn on every timeline by Schema.milestoneMarks (15.9, D-181); the Drawing It Down engine uses them as phase boundaries. Ages are exact years unless `months` says otherwise; 59.5 is stored as years 59, months 6. Two rows depend on the birth year (full retirement age, RMD age); with no birth year the 1960-and-later row stands in and the result says so.',
     refresh: { month: 'January', against: 'SECURE 2.0 follow-on legislation (RMD age), the SSA full retirement age page, Medicare enrollment page; the catch-up amounts live in contribution_limits.json, not here.' },
     milestones: [
       { id: 'catchup50', age: { years: 50, months: 0 }, label: 'Catch-up contributions', rule: cell('From the year you turn 50 you may contribute the catch-up amount above the elective deferral limit (401(k), 403(b), most 457(b)) and above the IRA limit. The dollar amounts are in contribution_limits.json.', '2026-01-01', SRC.irc414v, 'sourced', { citation: 'IRC 414(v); IRC 219(b)(5)(B)' }) },
@@ -239,7 +239,7 @@ function buildAca() {
     source: 'HHS poverty guidelines (2025 and 2026) and the ACA premium tax credit applicable percentage tables for 2025 (enhanced, ARPA/IRA) and 2026 (current law after the enhancement expired). Lane 2, section 3 (L-3).',
     confidence: 'sourced',
     confidenceNote: 'The 2026 guidelines and the 2026 applicable percentages were read from search results quoting HHS and Rev. Proc. 2025-25; the 2025 rows from memory of the same sources (verify: true). The legislative question, whether Congress restores the enhanced credits for 2026, is a fact that can change under this file: `currentLaw.changeDate` says what changed and when.',
-    note: 'The older data/aca_2026.json carries a single FPL row and the 2026 table for engines/tax.js; DECIDE: point the engine here and retire that file, or keep both in sync (tests/data.test.js asserts the 2025 base and the top percentage agree).',
+    note: 'The one ACA table (D-219): engines/tax.js `acaCliff` and engines/protection.js `marketplace` read it through the `aca` view in shared/reference.js, which picks the plan year and the poverty guidelines that govern it (the guidelines published in January of year N price coverage for year N+1). data/aca_2026.json is retired. Within an applicablePercentage band the percentage rises linearly from `from` at `fromFpl` to `to` at `toFpl`; above cliffMultiple there is no credit.',
     refresh: { month: 'January (poverty guidelines) and August (applicable percentages, Rev. Proc. for the next plan year)', against: 'aspe.hhs.gov poverty guidelines; the IRS revenue procedure under IRC 36B(b)(3)(A)(ii); Congress.gov for any premium tax credit legislation.' },
     fpl: {
       2026: { contiguous: fpl(15960, 5680, '2026-01-15', SRC.hhsFpl2026, 'sourced'), alaska: fpl(19950, 7100, '2026-01-15', SRC.hhsFpl2026, 'sourced'), hawaii: fpl(18360, 6530, '2026-01-15', SRC.hhsFpl2026, 'sourced') },
@@ -376,7 +376,7 @@ function buildTaxBrackets() {
           medicareRate: cell(0.0145, '2026-01-01', SRC.ssaWageBase, 'sourced'),
           additionalMedicareRate: cell(0.009, '2026-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/questions-and-answers-for-the-additional-medicare-tax', 'sourced', { note: 'On wages and SE income above $200,000 (single), $250,000 (joint), $125,000 (separate); thresholds unindexed.' }),
           selfEmploymentRate: cell(0.153, '2026-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', 'sourced', { note: '12.4% Social Security to the wage base plus 2.9% Medicare, on 92.35% of net earnings; half is deductible.' }),
-          selfEmploymentNetEarningsFactor: cell(0.9235, '2026-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', 'sourced')
+          selfEmploymentNetEarningsFactor: cell(0.9235, '2026-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', 'sourced'),
           additionalMedicareThresholds: cell({ single: 200000, married_joint: 250000, married_separate: 125000, head_of_household: 200000 }, '2026-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/questions-and-answers-for-the-additional-medicare-tax', 'sourced', { note: 'Unindexed statute; combined wages and self-employment earnings.' }),
         }
       },
@@ -399,7 +399,7 @@ function buildTaxBrackets() {
           medicareRate: cell(0.0145, '2025-01-01', SRC.ssaWageBase, 'sourced'),
           additionalMedicareRate: cell(0.009, '2025-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/questions-and-answers-for-the-additional-medicare-tax', 'sourced'),
           selfEmploymentRate: cell(0.153, '2025-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', 'sourced'),
-          selfEmploymentNetEarningsFactor: cell(0.9235, '2025-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', 'sourced')
+          selfEmploymentNetEarningsFactor: cell(0.9235, '2025-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes', 'sourced'),
           additionalMedicareThresholds: cell({ single: 200000, married_joint: 250000, married_separate: 125000, head_of_household: 200000 }, '2025-01-01', 'https://www.irs.gov/businesses/small-businesses-self-employed/questions-and-answers-for-the-additional-medicare-tax', 'sourced')
         }
       }

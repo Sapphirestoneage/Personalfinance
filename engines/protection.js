@@ -206,10 +206,10 @@
      window closes without anything behind that.
 
      This closes it, from tables that are already here: the applicable
-     percentage in data/aca_2026.json turns income into what you are
-     EXPECTED to contribute, and data/states.json carries the benchmark
-     silver premium for your state. The subsidy is the difference. Nothing
-     is stored; a missing answer names itself.
+     percentage in data/aca.json turns income into what you are EXPECTED to
+     contribute, and data/states.json carries the benchmark silver premium
+     for your state. The subsidy is the difference. Nothing is stored; a
+     missing answer names itself.
 
      Not modelled, and said so on the way out: age rating (the benchmark is
      the 40-year-old figure), tobacco rating, the family glitch, and
@@ -218,6 +218,7 @@
      engines/protection.js before engines/tax.js, and capturing an
      undefined Tax then would make the marketplace reading permanently
      unavailable on that page with only "not loaded" to show for it. */
+  var REGION = { AK: 'alaska', HI: 'hawaii' };
   function taxModule() {
     if (Tax && typeof Tax.acaCliff === 'function') return Tax;
     if (typeof module === 'object' && module.exports) { try { return require('./tax.js'); } catch (e) { return null; } }
@@ -244,11 +245,13 @@
     if (magi === null) return Money.incomplete('Add what comes in a year and this works out what cover should cost.', ['grossAnnualIncome']);
 
     var size = Math.max(1, Schema.adults(h).length + ((h.dependents || []).length));
-    var cliff = T2.acaCliff(t.aca, magi, size);
+    /* The poverty guidelines are higher in Alaska and Hawaii, so the same
+       income is a smaller multiple there and buys a bigger credit (D-219). */
+    var state = h.state || null;
+    var cliff = T2.acaCliff(t.aca, magi, size, REGION[state] || 'contiguous');
     if (!Money.isOk(cliff)) return cliff;
 
     /* The benchmark plan for the state, from data/states.json. */
-    var state = h.state || null;
     var row = state && t.states && Array.isArray(t.states.states)
       ? t.states.states.filter(function (x) { return x.code === state; })[0] : null;
     var cell = row ? row.acaBenchmarkSilver40MonthlyCents : null;
@@ -270,12 +273,14 @@
       cliffCents: cliff.cliffCents,
       roomBeforeCliffCents: cliff.roomBeforeCliffCents,
       applicablePercentage: cliff.applicablePercentage,
+      region: cliff.region,
+      planYear: cliff.planYear,
       benchmarkMonthlyCents: benchmark,
       expectedMonthlyCents: expectedMonthly,
       subsidyMonthlyCents: subsidyMonthly,
       subsidyAnnualCents: subsidyMonthly === null ? null : subsidyMonthly * MONTHS,
       missingState: !state,
-      sources: ['data/aca_2026.json'].concat(benchmark === null ? [] : ['data/states.json']),
+      sources: ['data/aca.json'].concat(benchmark === null ? [] : ['data/states.json']),
       notModelled: ['age rating (the benchmark is the 40-year-old figure)', 'tobacco rating',
         'the family glitch', 'cost-sharing reductions below 250% of poverty'],
       confidence: cell && cell.confidence ? cell.confidence : 'unverified'

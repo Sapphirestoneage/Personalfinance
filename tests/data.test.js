@@ -40,7 +40,7 @@ function check(name, cond, detail) { if (cond) ok(); else failures.push(name + (
 function load(name) { return JSON.parse(fs.readFileSync(path.join(DATA, name), 'utf8')); }
 
 /* Four of the eight live under data/lane2/ until shared/reference.js registers them (docs/lane2-proposals.md P-5). */
-const FILES = ['states.json', 'milestones.json', 'lane2/aca.json', 'lane2/studentloans.json', 'lane2/contribution_limits.json', 'tax_brackets.json', 'return_bands.json', 'bands.json'];
+const FILES = ['states.json', 'milestones.json', 'aca.json', 'lane2/studentloans.json', 'lane2/contribution_limits.json', 'tax_brackets.json', 'return_bands.json', 'bands.json'];
 const isUrl = (s) => typeof s === 'string' && /^https?:\/\/\S+$/.test(s);
 const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s));
 
@@ -175,7 +175,7 @@ if (stale) notes.push(stale + ' cells are older than 18 months and say so (`stal
 
 /* ---- 4. FPL rises with household size; applicable percentages ordered ---------------- */
 (function () {
-  const t = tables['lane2/aca.json'];
+  const t = tables['aca.json'];
   if (!t) return;
   Object.keys(t.fpl).forEach((y) => Object.keys(t.fpl[y]).forEach((area) => {
     const r = t.fpl[y][area];
@@ -192,11 +192,13 @@ if (stale) notes.push(stale + ' cells are older than 18 months and say so (`stal
       if (i) { check(y + ' band ' + i + ' starts where the last ended', rows[i].fromFpl === rows[i - 1].toFpl); check(y + ' band ' + i + ' percentage does not fall across bands', rows[i].from >= rows[i - 1].to); }
     }
   });
-  const old = load('aca_2026.json');
-  check('2025 base agrees with aca_2026.json (which prices 2026 coverage)', old.fpl.base === t.fpl[2025].contiguous.base.value, old.fpl.base + ' vs ' + t.fpl[2025].contiguous.base.value);
-  const oldTop = old.applicablePercentage[old.applicablePercentage.length - 1].percent;
-  const newTop = t.applicablePercentage[2026].value[t.applicablePercentage[2026].value.length - 1].to;
-  if (oldTop !== newTop) notes.push('2026 top applicable percentage: aca.json says ' + newTop + ' (Rev. Proc. 2025-25), aca_2026.json says ' + oldTop + '. DECIDE: which the engine reads.'); else ok();
+  /* D-219: this IS the engine's table now — aca_2026.json is retired, so
+     there is no second copy to disagree with. What is left to check is that
+     the app reads the year whose guidelines actually price the plan year. */
+  const view = require(path.join(ROOT, 'shared/reference.js')).readSync('aca', path.join(ROOT, 'data'));
+  check('the view is the plan year the app is in', view.planYear === 2026);
+  check('and reads the guidelines published the January before it', view.guidelineYear === 2025 && view.fpl.base === t.fpl[2025].contiguous.base.value, view.fpl.base + ' vs ' + t.fpl[2025].contiguous.base.value);
+  check('the top applicable percentage is the one Rev. Proc. 2025-25 gives', view.applicablePercentage[view.applicablePercentage.length - 1].to === 0.0996);
 })();
 
 /* ---- 5. Contribution limits agree with the engine's table ------------------------------ */

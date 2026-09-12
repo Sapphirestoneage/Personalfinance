@@ -13376,6 +13376,40 @@ notice.
 
 ---
 
+## D-219 — One ACA table, and the percentage that ramps instead of stepping
+
+**Why.** Two files held the same subsidy mechanics. `data/aca_2026.json` was
+`unverified` and transcribed from memory; `data/lane2/aca.json` was written
+against Rev. Proc. 2025-25 and the HHS guidelines, cell by cell, and nothing
+read it. `tests/data.test.js` had been printing the disagreement for a month:
+the top applicable percentage is 9.96%, not 8.66%. D-217 priced a marketplace
+plan off the wrong one.
+
+**Decision.** `data/aca.json` is the one ACA table, both plan years, every
+cell sourced. `shared/reference.js` gains an `aca` VIEW beside the tax views
+(D-210): it picks `ACA_YEAR` and the poverty guidelines that price it, which
+are the ones published the January BEFORE the plan year. `engines/tax.js`
+`acaCliff` interpolates inside a band — the revenue procedure's table ramps
+from `from` at `fromFpl` to `to` at `toFpl`, and reading it as steps was
+wrong at every income but a band edge — and takes a region, so Alaska and
+Hawaii get their own poverty line. `engines/protection.js` passes it from the
+state. `data/aca_2026.json` is deleted.
+
+**Replaces or removes.** One data file, and the "DECIDE: which the engine
+reads" that `tests/data.test.js` printed on every run. No room, field or
+question changes.
+
+**Stored shape.** No change. Nothing about the marketplace is stored.
+
+**Verified.** `node test/run.js` 29,380; `export` 33; `data.test.js` 3,976
+with the ACA disagreement gone; `corpus`, `migration`, `glossary`, `qr`;
+`forms.js` 532. By hand at $26,000 single: 1.6613 × the poverty line lands
+32.3% into the 1.5–2.0 band, so 4.968%, so $107.63 a month expected against a
+$620 benchmark — a $512 subsidy, and the cliff $36,600 further up. Both sides
+of the cliff driven in Chromium with no console error.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

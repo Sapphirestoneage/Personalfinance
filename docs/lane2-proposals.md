@@ -52,7 +52,7 @@ Section 3 wrote eight sourced tables. Five of them overlap a table an engine alr
 |---|---|---|---|---|
 | `data/tax_brackets.json` | `data/tax_brackets.json`, `data/tax_brackets.json` | `engines/tax.js` (`tables.federalBrackets`, `tables.seTax`) | None on 2026 brackets or deductions after the head-of-household 32% top was corrected to $256,200 | Register `taxBrackets` in `Reference.TABLE_FILES`; in `engines/tax.js` read `tables.taxBrackets.years[year].brackets[fs].value` and `.standardDeduction[fs].value` with `year` from `opts.taxYear` (default 2026); retire the two old files once test/run.js is moved |
 | `data/lane2/contribution_limits.json` | `data/irs_limits_2026.json` | `engines/presets.js`, the FOO room | `annualAdditions`: 72,000 (Notice 2025-67) vs 70,000 (carried from the FOO room) | Register `contributionLimits`; read `years[2026].elective401k.value` and so on; fix `annualAdditions` to 72,000 in the old file meanwhile |
-| `data/lane2/aca.json` | `data/aca_2026.json` | `engines/tax.js` (`acaCliff`) | Top applicable percentage: 9.96% (Rev. Proc. 2025-25) vs 8.66% | Register `aca`; read `applicablePercentage[2026].value` (bands with from/to) and `fpl[2025].contiguous` for 2026 coverage; fix the old file's top band to 0.0996 meanwhile |
+| `data/aca.json` | ~~`data/aca_2026.json`~~ | `engines/tax.js` (`acaCliff`), `engines/protection.js` (`marketplace`) | Top applicable percentage was 8.66% against 9.96% (Rev. Proc. 2025-25) | **APPLIED (D-219).** The table moved to `data/aca.json`, `aca` is a VIEW in `shared/reference.js` that picks the plan year and the guidelines that price it, `acaCliff` interpolates inside a band and takes a region, and `aca_2026.json` is deleted. |
 | `data/states.json` (`uiWeeklyMaxCents`, `uiMaxWeeks`) | `data/ui_benefits.json` | `shared/gate.js`, `engines/statement.js` | 27 states differ (the old file is a 2025 recollection; the new cells carry the July 2025 DOL edition plus the October 2025 MA and NY increases) | Read `states[i].uiWeeklyMaxCents.value` from states.json; retire `ui_benefits.json` (keep its `replacementRate` convention in states.json `columns`) |
 | `data/states.json` (`childcareInfantCenterMonthlyCents`) | `data/childcare_by_state.json` | `engines/kids.js` | None (copied); both are the 2023 edition and stale | Refresh both from Child Care Aware "Price of Care 2024" in May; then read from states.json and retire the old file |
 | `data/states.json` (`incomeTax`) | `data/state_brackets_2026.json` | `engines/tax.js` (`stateTax`) | Ohio is flat in 2026; the engine table (2025 edition) still has brackets; eight states cut rates on 2026-01-01 (IN, KY, MS, MT, NE, NC, OH, OK) | Update `state_brackets_2026.json` from the Tax Foundation 2026 edition in February; states.json keeps only type and top rate so there is one schedule |
@@ -67,12 +67,12 @@ The lane asks for current and prior year in `contribution_limits.json` and `tax_
 
 ## P-5: move the five section 3 tables into `data/` and register them
 
-**Applied for `tax_brackets.json` (D-210).** The other four still live under `data/lane2/`.
+**Applied for `tax_brackets.json` (D-210) and `aca.json` (D-219).** The other three still live under `data/lane2/`.
 
 `test/run.js` requires every `data/*.json` to be registered in `Reference.TABLE_FILES`, and `shared/reference.js` is outside lane 2, so the five new tables are under `data/lane2/` for now. The change, once the master build wants them loadable by a room:
 
 ```
-git mv data/lane2/aca.json data/aca.json
+git mv data/lane2/aca.json data/aca.json          # done, D-219
 git mv data/lane2/contribution_limits.json data/contribution_limits.json
 git mv data/lane2/milestones.json data/milestones.json
 git mv data/lane2/studentloans.json data/studentloans.json
@@ -82,7 +82,7 @@ git mv data/tax_brackets.json data/tax_brackets.json
 and in `shared/reference.js` `TABLE_FILES`:
 
 ```js
-    aca: 'aca.json',
+    aca: 'aca.json',                     /* done, D-219 */
     contributionLimits: 'contribution_limits.json',
     milestones: 'milestones.json',
     studentLoans: 'studentloans.json',

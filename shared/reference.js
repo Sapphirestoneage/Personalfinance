@@ -117,7 +117,7 @@
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',
     zipPrefixes: 'zip_prefixes.json',
-    aca: 'aca_2026.json',
+    aca: 'aca.json',
     stateBrackets: 'state_brackets_2026.json'
   };
 
@@ -174,6 +174,41 @@
       v.precision = 'computed';
       return v;
     }
+  };
+
+  /* ---- The one ACA table (D-219) -----------------------------------------
+     data/aca.json carries both plan years, every cell sourced, and the
+     poverty guidelines for the contiguous states, Alaska and Hawaii. A
+     guideline published in January of year N prices coverage for year N+1,
+     so plan year ACA_YEAR reads the guidelines of ACA_YEAR - 1. The view
+     flattens the year the app is in down to the shape a caller wants:
+     one fpl pair a region, one cliff multiple, one band list. The bands
+     RAMP — `from` at `fromFpl` up to `to` at `toFpl` — because the
+     revenue procedure's table does; engines/tax.js interpolates. */
+  var ACA_YEAR = 2026;
+  VIEWS.aca = function (json) {
+    var ap = json.applicablePercentage[ACA_YEAR];
+    var guidelines = json.fpl[ACA_YEAR - 1];
+    var fpl = {};
+    Object.keys(guidelines).forEach(function (region) {
+      var g = guidelines[region];
+      if (!g || !g.base) return;
+      fpl[region] = { base: cellValue(g.base), perAdditionalPerson: cellValue(g.perAdditionalPerson), note: g.note };
+    });
+    var out = stamped(json, {
+      planYear: ACA_YEAR,
+      guidelineYear: ACA_YEAR - 1,
+      fplByRegion: fpl,
+      fpl: fpl.contiguous,
+      cliffMultiple: ap.cliffMultiple,
+      applicablePercentage: cellValue(ap),
+      percentageSource: ap.source,
+      percentageNote: ap.note,
+      currentLaw: json.currentLaw ? cellValue(json.currentLaw.changeDate) : null,
+      currentLawNote: json.currentLaw && json.currentLaw.changeDate ? json.currentLaw.changeDate.note : null
+    });
+    delete out.taxYear;
+    return out;
   };
   function view(name, json) { return VIEWS[name] ? VIEWS[name](json) : json; }
 

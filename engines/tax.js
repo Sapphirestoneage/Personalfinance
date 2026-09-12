@@ -153,25 +153,51 @@
   /* ---- 5. The ACA cliff ------------------------------------------------------ */
 
   /**
-   * acaCliff(table, magiCents, householdSize) — where MAGI sits against the
-   * subsidy ceiling. Flags and distance only; it never prices a plan.
+   * applicableFraction(bands, multiple) — the share of income the law expects
+   * you to put towards a benchmark plan at `multiple` times the poverty
+   * level. The revenue procedure's table RAMPS: inside a band the percentage
+   * rises in a straight line from `from` at `fromFpl` to `to` at `toFpl`
+   * (D-219). A step read of the same table overstates at the bottom of every
+   * band and understates at the top. Above the last band: null, no credit.
    */
-  function acaCliff(table, magiCents, householdSize) {
+  function applicableFraction(bands, multiple) {
+    if (!bands || !bands.length) return null;
+    for (var i = 0; i < bands.length; i++) {
+      var b = bands[i];
+      if (multiple > b.toFpl && b.toFpl !== null) continue;
+      if (b.to === b.from || b.toFpl === null || b.toFpl === b.fromFpl) return b.from;
+      var within = (multiple - b.fromFpl) / (b.toFpl - b.fromFpl);
+      if (within < 0) within = 0;
+      if (within > 1) within = 1;
+      return b.from + (b.to - b.from) * within;
+    }
+    return null;
+  }
+
+  /**
+   * acaCliff(table, magiCents, householdSize, region) — where MAGI sits
+   * against the subsidy ceiling, and the share of income the law expects.
+   * `region` is 'contiguous' (the default), 'alaska' or 'hawaii': the
+   * poverty guidelines differ there and so does everything read off them.
+   */
+  function acaCliff(table, magiCents, householdSize, region) {
     if (!table) return Money.incomplete('ACA table is not loaded.', ['aca']);
     if (!Money.isEntered(magiCents)) return Money.incomplete('Add your income to check the subsidy ceiling.', ['grossAnnualIncome']);
     var size = Math.max(1, householdSize || 1);
-    var fpl = table.fpl.base + table.fpl.perAdditionalPerson * (size - 1);
+    var byRegion = table.fplByRegion || {};
+    var name = region && byRegion[region] ? region : 'contiguous';
+    var row = byRegion[name] || table.fpl;
+    var fpl = row.base + row.perAdditionalPerson * (size - 1);
     var multiple = dollars(magiCents) / fpl;
     var cliffDollars = fpl * table.cliffMultiple;
-    var pct = null;
-    for (var i = 0; i < table.applicablePercentage.length; i++) {
-      if (multiple <= table.applicablePercentage[i].upToFplMultiple) { pct = table.applicablePercentage[i].percent; break; }
-    }
+    var over = multiple > table.cliffMultiple;
+    var pct = over ? null : applicableFraction(table.applicablePercentage, multiple);
     return Money.ok(multiple, {
-      fplDollars: fpl, householdSize: size,
+      fplDollars: fpl, householdSize: size, region: name,
+      planYear: table.planYear, guidelineYear: table.guidelineYear,
       cliffCents: cents(cliffDollars),
       roomBeforeCliffCents: cents(Math.max(0, cliffDollars - dollars(magiCents))),
-      overCliff: multiple > table.cliffMultiple,
+      overCliff: over,
       applicablePercentage: pct,
       expectedContributionCents: pct === null ? null : cents(dollars(magiCents) * pct),
       referenceVersion: table.version, confidence: table.confidence
@@ -423,6 +449,7 @@
     fica: fica,
     stateTax: stateTax,
     acaCliff: acaCliff,
+    applicableFraction: applicableFraction,
     estimate: estimate,
     _walk: walk
   };

@@ -590,7 +590,7 @@
     "safeHarbor": {
       "value": {
         "currentYearShare": 0.9,
-        "priorYearShare": 1.0,
+        "priorYearShare": 1,
         "priorYearShareHighIncome": 1.1,
         "highIncomeAgiThreshold": 150000,
         "highIncomeAgiThresholdMarriedSeparate": 75000
