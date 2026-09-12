@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="slaf-build" content="2026-09-12 07:54Z"/>
+<meta name="slaf-build" content="2026-09-12 08:55Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>The Long Way Round · SPARKS</title>
@@ -98,16 +98,16 @@
   <!-- Screen one, part one -->
   <section class="stage on" id="s-stand">
     <h2 class="slaf-eyebrow">Where you stand</h2>
-    <p class="slaf-note">Taken from the rooms that own these numbers. Nothing to type here.</p>
+    <p class="slaf-hint">Taken from the rooms that own these numbers. Nothing to type here.</p>
     <div class="baseline" id="baseline"></div>
     <p class="need" id="need"></p>
-    <p class="slaf-note gate" id="gate" hidden></p>
+    <p class="slaf-hint gate" id="gate" hidden></p>
   </section>
 
   <!-- Screen one, part two -->
   <section class="stage on" id="s-ways">
     <h2 class="slaf-eyebrow">The ways through</h2>
-    <p class="slaf-note">Drift first: nothing changes and the raises get spent. Every other card says how far it moves you from that. None is marked the winner; they cost different things.</p>
+    <p class="slaf-hint">Drift first: nothing changes and the raises get spent. Every other card says how far it moves you from that. None is marked the winner; they cost different things.</p>
     <div class="sortrow"><span>Sort by</span>
       <span class="slaf-lens" role="group" aria-label="Sort the ways">
         <button type="button" class="slaf-lens-btn" data-sort="fi">FI date</button>
@@ -135,9 +135,9 @@
         <button type="button" class="slaf-lens-btn" data-returns="likely">likely</button>
         <button type="button" class="slaf-lens-btn" data-returns="high">high</button>
       </span><span id="returns-note"></span></div>
-    <p class="slaf-note" id="rate-line"></p>
+    <p class="slaf-hint" id="rate-line"></p>
     <div class="steppers" id="steppers"></div>
-    <p class="slaf-note" id="way-assume"></p>
+    <p class="slaf-hint" id="way-assume"></p>
     <div id="cmp-bands"></div>
     <div id="cmp-lens"></div>
     <details class="drawer" id="walk">
@@ -148,7 +148,7 @@
       <button type="button" class="slaf-btn slaf-btn--primary" id="pin">Pin this way</button>
       <button type="button" class="slaf-btn" id="copylink">Copy link to this scenario</button>
     </div>
-    <p class="slaf-note" id="copied" hidden>Link copied.</p>
+    <p class="slaf-hint" id="copied" hidden>Link copied.</p>
     <ul class="pins" id="pins"></ul>
   </section>
 
@@ -557,9 +557,9 @@
     var lensIds = ['savingsrate', 'simplemath', 'househack'];
     var lensList = TABLES.lenses && TABLES.lenses.lenses ? TABLES.lenses.lenses.filter(function (l) { return lensIds.indexOf(l.id) > -1; }) : [];
     el('assumptions').innerHTML =
-      '<p class="slaf-note">' + esc(t.source) + '</p>'
-      + '<p class="slaf-note"><strong>Confidence: ' + esc(t.confidence) + '.</strong> ' + esc(t.confidenceNote) + '</p>'
-      + '<ul class="slaf-note">'
+      '<p class="slaf-hint">' + esc(t.source) + '</p>'
+      + '<p class="slaf-hint"><strong>Confidence: ' + esc(t.confidence) + '.</strong> ' + esc(t.confidenceNote) + '</p>'
+      + '<ul class="slaf-hint">'
       + '<li>Returns: ' + (r ? 'low ' + Money.formatRate(r.low, { decimals: 1 }) + ', likely ' + Money.formatRate(r.likely, { decimals: 1 }) + ', high ' + Money.formatRate(r.high, { decimals: 1 }) + ' a year after inflation, from data/return_bands.json v' + esc(r.version) + '. In play: <strong>' + esc(state.returns) + '</strong>.' : (t.returnRateReal * 100).toFixed(0) + '% a year after inflation.') + '</li>'
       + '<li>Saving is take-home minus spending, never gross. The target: a year of spending divided by ' + (t.withdrawalRate * 100).toFixed(0) + '%, the same arithmetic the FIRE room uses; a raise not kept is spent, which moves it.</li>'
       + '<li>Cash and investments are kept apart. A crash hits what is invested only. A lost job draws on cash first, month by month, then sells taxable investments (net of the gains tax when the rates are known), and only then borrows: the year says “borrowing from month N” and the pot is never quietly drawn below zero. Retirement money is never sold in these five years. Side income that survives a job loss keeps paying through it.</li>'
@@ -567,7 +567,7 @@
       + '<li>Below the FOO’s high-interest-debt step, side income pays that debt before it joins the pot.</li>'
       + '<li>Everything is in today’s money, so a dollar in year five means what it means now.</li></ul>'
       + paintLevers()
-      + (lensList.length ? '<p class="slaf-note"><strong>Lenses that read these numbers</strong> (on the Snapshot): ' + lensList.map(function (l) { return esc(l.name) + ' — ' + esc(l.source); }).join(' · ') + '.</p>' : '');
+      + (lensList.length ? '<p class="slaf-hint"><strong>Lenses that read these numbers</strong> (on the Snapshot): ' + lensList.map(function (l) { return esc(l.name) + ' — ' + esc(l.source); }).join(' · ') + '.</p>' : '');
   }
   /* The levers the ways pull, each with its figure (table or stepper), its
      hours and what that makes an hour worth for THIS household. D-174. */
@@ -588,8 +588,8 @@
         + worth + '. ' + (lv.survivesJobLoss ? 'Keeps paying if the job goes' : 'Stops with the job') + '; ' + esc(lv.flex) + '.'
         + (SLAF.Levers.applies(lv.id, h()) ? '' : ' <em>Not offered to you yet: ' + esc(lv.appliesWhen) + '.</em>') + '</li>';
     }).join('');
-    return '<p class="slaf-note"><strong>The levers.</strong> ' + esc(L.source) + ' data/levers.json v' + esc(L.version) + ' (' + esc(L.confidence) + ').</p>'
-      + '<ul class="slaf-note">' + rows + '</ul>';
+    return '<p class="slaf-hint"><strong>The levers.</strong> ' + esc(L.source) + ' data/levers.json v' + esc(L.version) + ' (' + esc(L.confidence) + ').</p>'
+      + '<ul class="slaf-hint">' + rows + '</ul>';
   }
 
   /* ---- Wiring ------------------------------------------------------------ */

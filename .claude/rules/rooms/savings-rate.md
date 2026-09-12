@@ -3,7 +3,7 @@ paths:
   - "rooms/savings-rate.html"
 ---
 # Savings Rate (`savings-rate`)
-File: rooms/savings-rate.html · 490 lines
+File: rooms/savings-rate.html · 489 lines
 Engines: projection, tier0, foo, hourly
 Reference data: effective_tax_rates_2026.json, foo_rules.json
 Owns: nothing

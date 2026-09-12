@@ -6,7 +6,7 @@ paths:
   - "engines/advicerules.js"
 ---
 # Unlearning (`unlearning`)
-File: rooms/unlearning.html · 380 lines
+File: rooms/unlearning.html · 379 lines
 Engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules
 Reference data: advice.json, advice_translator.json, confidence_weights.json, debt_rules.json, expense_categories.json, fire_variants.json, +4 more
 Owns: unlearningDropped

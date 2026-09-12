@@ -13973,6 +13973,58 @@ section('The CSV round trip made resilient (D-221)');
 })();
 
 /* ==========================================================================
+   Every class a page names has a rule somewhere (D-226)
+   ========================================================================== */
+section('Every class a page names has a rule somewhere (D-226)');
+(function () {
+  /* The Ledger, Express and First Round each named their page wrapper
+     .slaf-room and their header .slaf-room-head. Neither existed in any
+     stylesheet, so those three rooms ran edge to edge on a phone with no
+     measure and no gutter, and nobody noticed for months. A class in the
+     markup that nothing defines is either a layout that silently does not
+     happen or a name left behind; both are worth knowing about. */
+  const cssText = fs.readdirSync(path.join(ROOT, 'shared')).filter(f => /\.css$/.test(f))
+    .map(f => fs.readFileSync(path.join(ROOT, 'shared', f), 'utf8')).join('\n');
+  const classesIn = (text) => { const out = new Set(); const re = /\.(-?[_a-zA-Z][\w-]*)/g; let m; while ((m = re.exec(text))) out.add(m[1]); return out; };
+  const shared = classesIn(cssText);
+  /* Names kept on purpose: a hook a script looks for, or a box that carries
+     its own style inline. Each one is listed so the list can only get
+     shorter; a new name that nothing defines fails the build. */
+  const HOOKS = {
+    'index.html': ['dash'],
+    'rooms/data.html': ['form-grid', 'wide'],
+    'rooms/debt-payoff.html': ['grid-2'],
+    'rooms/express.html': ['xbody'],
+    'rooms/fire.html': ['why'],
+    'rooms/middle-class-trap.html': ['plain'],
+    'rooms/unlearning.html': ['acts']
+  };
+  const pages = ['index.html', 'map.html'].concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
+  const orphans = [];
+  pages.forEach(rel => {
+    const raw = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const known = new Set(shared);
+    (raw.match(/<style[\s\S]*?<\/style>/g) || []).forEach(b => classesIn(b).forEach(c => known.add(c)));
+    (HOOKS[rel] || []).forEach(c => known.add(c));
+    /* Static markup only: a class built inside a script is that script's business. */
+    const markup = raw.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, '');
+    const used = new Set();
+    const re = /\bclass="([^"{}]*)"/g;
+    let m;
+    while ((m = re.exec(markup))) m[1].split(/\s+/).forEach(c => { if (c) used.add(c); });
+    [...used].filter(c => !known.has(c)).forEach(c => orphans.push(rel + ' names .' + c));
+  });
+  check('no page names a class that no stylesheet defines', orphans.join('; '), '');
+  const listed = Object.keys(HOOKS).reduce((n, k) => n + HOOKS[k].length, 0);
+  checkTrue('the names kept on purpose are few, and each is a script hook or a box styled inline: ' + listed, listed <= 8);
+  /* The wrapper the three door rooms name, and the small print every room
+     shows, are defined once and shared. */
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the page body, its header and its lede have a rule under both names they are given', /\.slaf-room\s*\{/.test(theme) && /\.slaf-room-head\s*\{/.test(theme) && /\.slaf-lede/.test(theme));
+  checkTrue('the small print under a room is defined once, in the theme, not copied into every room', /^\.disclaimer \{/m.test(theme) && fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).every(f => !/^\s*\.disclaimer \{/m.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

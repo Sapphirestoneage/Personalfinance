@@ -4,7 +4,7 @@ paths:
   - "engines/rankguess.js"
 ---
 # Where Do You Think You Rank? (`rank-guess`)
-File: rooms/rank-guess.html · 115 lines
+File: rooms/rank-guess.html · 114 lines
 Engines: projection, tier0, rankguess
 Reference data: net_worth_percentiles_scf_2022.json
 Owns: nothing

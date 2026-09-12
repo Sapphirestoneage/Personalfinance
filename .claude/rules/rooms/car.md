@@ -3,7 +3,7 @@ paths:
   - "rooms/car.html"
 ---
 # What A Car Costs (`car`)
-File: rooms/car.html · 656 lines
+File: rooms/car.html · 655 lines
 Engines: projection, tier0, hourly, quickmath
 Reference data: car_costs.json, states.json
 Owns: nothing

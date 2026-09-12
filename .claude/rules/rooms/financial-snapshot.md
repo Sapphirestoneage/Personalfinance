@@ -4,7 +4,7 @@ paths:
   - "engines/draftt.js"
 ---
 # Financial Snapshot (`financial-snapshot`)
-File: rooms/financial-snapshot.html · 863 lines
+File: rooms/financial-snapshot.html · 862 lines
 Engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath
 Reference data: bands.json, car_costs.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, +6 more
 Owns: nothing

@@ -4,7 +4,7 @@ paths:
   - "engines/race.js"
 ---
 # The Race to $100K (`race`)
-File: rooms/race.html · 156 lines
+File: rooms/race.html · 155 lines
 Engines: projection, tier0, countdown, race
 Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json
 Owns: nothing
