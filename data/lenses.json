@@ -1,11 +1,11 @@
 {
   "id": "lenses",
-  "version": "1.0",
-  "asOf": "2026-09-09",
+  "version": "1.1",
+  "asOf": "2026-09-12",
   "source": "Thirty-three ways to read the same numbers, each a published rule of thumb or one of Eli's own, stated as a rule, a band and three sentences. 50/30/20 (Elizabeth Warren), the Money Guy Show's 25% and rate-by-age, Ramit Sethi's conscious spending, Your Money or Your Life (Robin and Dominguez), Die With Zero (Bill Perkins), the Bogleheads three-fund portfolio, the bucket strategy, the 20/3/8 car rule, Mr. Money Mustache's Shockingly Simple Math, the FOO (the Money Guy Show's Financial Order of Operations) and the DRAFTT letters. Each lens re-reads DAITE numbers already in the household; no lens adds a field.",
   "confidence": "convention",
   "confidenceNote": "Rules of thumb, not findings. A lens says what a well-known framework would say about your numbers, in one sentence, and then says who it is for and who it is not for. The second pair is the advice translator: a lens without it does not ship.",
-  "note": "Read by shared/lenses.js (SLAF.Lenses — the name Lens is the four-way $ / hours / bought / pushed toggle, D-094). Each domain shows its `default` lens; the rest render only behind the \"More ways to look at this\" toggle, off by default. `band` is on the measure's own basis (the `measure` note says which); null means the lens states a number and has one verdict sentence. `verdict` is [under, in, over] for a banded lens, [sentence] for the rest; {tokens} are filled by the library from the measure. `plain` is the header when the showFrameworkNames preference is off. D-175.",
+  "note": "Read by shared/lenses.js (SLAF.Lenses — the name Lens is the four-way $ / hours / bought / pushed toggle, D-094). Each domain shows its `default` lens; the rest render only behind the \"More ways to look at this\" toggle, off by default. `band` is on the measure's own basis (the `measure` note says which); null means the lens states a number and has one verdict sentence. `verdict` is [under, in, over] for a banded lens, [sentence] for the rest; {tokens} are filled by the library from the measure. `plain` is the header when the showFrameworkNames preference is off. D-175. D-222: the lane-2 copy file is folded in. `forWhom` and `notForWhom` are one sentence each with no hedging word (`hedgeWords` is the list) and no em dash; `sourceDetail` is the same source as `source`, structured, so a card can link it. tests/glossary.test.js enforces all of that against this file.",
   "domains": [
     {
       "id": "budgeting",
@@ -68,7 +68,13 @@
       ],
       "forWhom": "Anyone with take-home pay and the three needs lines filled in.",
       "notForWhom": "Between jobs, with no take-home to divide: read the runway instead.",
-      "source": "Eli's default (D-172)"
+      "source": "Eli's default (D-172)",
+      "sourceDetail": {
+        "kind": "app",
+        "title": "Eli's default",
+        "author": "Eli",
+        "url": "DECISIONS.md#D-172"
+      }
     },
     {
       "id": "fiftythirty",
@@ -91,8 +97,15 @@
         "{share} of take-home is left after spending, well past the 20."
       ],
       "forWhom": "Someone starting out who wants three numbers and no spreadsheet.",
-      "notForWhom": "High earners in expensive cities: the 50 for needs is often impossible on rent alone, and the 20 is too little.",
-      "source": "Elizabeth Warren, All Your Worth"
+      "notForWhom": "High earners in expensive cities: rent alone breaks the 50 for needs, and the 20 is too little.",
+      "source": "Elizabeth Warren, All Your Worth",
+      "sourceDetail": {
+        "kind": "book",
+        "title": "All Your Worth: The Ultimate Lifetime Money Plan",
+        "author": "Elizabeth Warren and Amelia Warren Tyagi",
+        "url": "https://www.simonandschuster.com/books/All-Your-Worth/Elizabeth-Warren/9780743269889",
+        "where": "Chapter 2, the balanced money formula"
+      }
     },
     {
       "id": "moneyguy25",
@@ -116,7 +129,14 @@
       ],
       "forWhom": "Anyone with a job and no high-interest debt.",
       "notForWhom": "Carrying credit card debt: clear it first, this comes later.",
-      "source": "The Money Guy Show"
+      "source": "The Money Guy Show",
+      "sourceDetail": {
+        "kind": "show",
+        "title": "The Money Guy Show",
+        "author": "Brian Preston and Bo Hanson",
+        "url": "https://moneyguy.com/financial-order-of-operations/",
+        "where": "The Financial Order of Operations; the 25% rule; the 20/3/8 car rule; the rate-by-age debt rule"
+      }
     },
     {
       "id": "conscious",
@@ -140,7 +160,14 @@
       ],
       "forWhom": "Someone who hates budgets and wants one line to protect.",
       "notForWhom": "A month that does not close: the ruthless part comes before the guilt-free part.",
-      "source": "Ramit Sethi, I Will Teach You to Be Rich"
+      "source": "Ramit Sethi, I Will Teach You to Be Rich",
+      "sourceDetail": {
+        "kind": "book",
+        "title": "I Will Teach You to Be Rich",
+        "author": "Ramit Sethi",
+        "url": "https://www.iwillteachyoutoberich.com/book/",
+        "where": "Chapter 4, the conscious spending plan"
+      }
     },
     {
       "id": "ymoyl",
@@ -159,7 +186,14 @@
       ],
       "forWhom": "Anyone who has filled in Real Hourly Wage and wonders whether a line is worth it.",
       "notForWhom": "Retired or between jobs: with no wage there are no hours to price in.",
-      "source": "Vicki Robin and Joe Dominguez"
+      "source": "Vicki Robin and Joe Dominguez",
+      "sourceDetail": {
+        "kind": "book",
+        "title": "Your Money or Your Life",
+        "author": "Vicki Robin and Joe Dominguez",
+        "url": "https://yourmoneyoryourlife.com/book-summary/",
+        "where": "Step 2, your real hourly wage; step 3, life energy per purchase"
+      }
     },
     {
       "id": "diewithzero",
@@ -182,7 +216,14 @@
       ],
       "forWhom": "Anyone with a date of birth entered and a fear of dying rich.",
       "notForWhom": "A household with no cushion yet: the book assumes the basics are covered before the spending curve starts.",
-      "source": "Bill Perkins, Die With Zero"
+      "source": "Bill Perkins, Die With Zero",
+      "sourceDetail": {
+        "kind": "book",
+        "title": "Die With Zero",
+        "author": "Bill Perkins",
+        "url": "https://www.diewithzerobook.com/",
+        "where": "Rule 8, the peak net worth date; rule 3, spend on experiences by age"
+      }
     },
     {
       "id": "sinkingfund",
@@ -198,9 +239,15 @@
       "verdict": [
         "Set aside {amount} a month so nothing surprises you: {count}, {total} a year."
       ],
-      "forWhom": "Anyone with a yearly bill that lands all at once.",
-      "notForWhom": "No yearly costs listed: there is nothing to set aside for.",
-      "source": "15.5 (D-181)"
+      "forWhom": "Anyone with a yearly bill that lands all at once: insurance, a gift season, a registration.",
+      "notForWhom": "No yearly costs listed on Cash Flow: there is nothing to set aside for yet.",
+      "source": "15.5 (D-181)",
+      "sourceDetail": {
+        "kind": "app",
+        "title": "The yearly fold",
+        "author": "Eli",
+        "url": "DECISIONS.md#D-181"
+      }
     },
     {
       "id": "avalanche",
@@ -224,7 +271,14 @@
       ],
       "forWhom": "Anyone who can keep paying a plan without seeing a balance disappear.",
       "notForWhom": "Someone who needs an early win to keep going: see the snowball.",
-      "source": "convention"
+      "source": "convention",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "Common practice with no single author",
+        "author": null,
+        "url": "https://www.bogleheads.org/wiki/Main_Page",
+        "where": "The Bogleheads wiki is the fullest write-up of the convention"
+      }
     },
     {
       "id": "snowball",
@@ -243,7 +297,14 @@
       ],
       "forWhom": "Someone with several debts who needs one gone to believe the rest can go.",
       "notForWhom": "One big debt at a high rate: there is nothing to snowball; see the avalanche.",
-      "source": "Dave Ramsey"
+      "source": "Dave Ramsey",
+      "sourceDetail": {
+        "kind": "show",
+        "title": "The Ramsey Show and The Total Money Makeover",
+        "author": "Dave Ramsey",
+        "url": "https://www.ramseysolutions.com/debt/how-the-debt-snowball-method-works",
+        "where": "Baby step 2, the debt snowball"
+      }
     },
     {
       "id": "moneyguyage",
@@ -274,6 +335,13 @@
         "40": 0.04,
         "50": 0.03,
         "60": 0.03
+      },
+      "sourceDetail": {
+        "kind": "show",
+        "title": "The Money Guy Show",
+        "author": "Brian Preston and Bo Hanson",
+        "url": "https://moneyguy.com/financial-order-of-operations/",
+        "where": "The Financial Order of Operations; the 25% rule; the 20/3/8 car rule; the rate-by-age debt rule"
       }
     },
     {
@@ -298,7 +366,14 @@
       ],
       "forWhom": "Anyone choosing between an extra payment and an extra contribution.",
       "notForWhom": "Someone without an emergency fund: neither wins until the cushion exists.",
-      "source": "convention"
+      "source": "convention",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "Common practice with no single author",
+        "author": null,
+        "url": "https://www.bogleheads.org/wiki/Main_Page",
+        "where": "The Bogleheads wiki is the fullest write-up of the convention"
+      }
     },
     {
       "id": "drafttD",
@@ -322,7 +397,13 @@
       ],
       "forWhom": "Anyone with debts entered and a take-home figure.",
       "notForWhom": "A mortgage only: it sits in A, not here.",
-      "source": "Eli's default (D-173)"
+      "source": "Eli's default (D-173)",
+      "sourceDetail": {
+        "kind": "app",
+        "title": "Eli's default",
+        "author": "Eli",
+        "url": "DECISIONS.md#D-173"
+      }
     },
     {
       "id": "foo",
@@ -343,7 +424,14 @@
       ],
       "forWhom": "Anyone unsure what the next dollar should do.",
       "notForWhom": "Retired: the ladder is for building, not drawing down.",
-      "source": "The Money Guy Show"
+      "source": "The Money Guy Show",
+      "sourceDetail": {
+        "kind": "show",
+        "title": "The Money Guy Show",
+        "author": "Brian Preston and Bo Hanson",
+        "url": "https://moneyguy.com/financial-order-of-operations/",
+        "where": "The Financial Order of Operations; the 25% rule; the 20/3/8 car rule; the rate-by-age debt rule"
+      }
     },
     {
       "id": "threefund",
@@ -367,7 +455,14 @@
       ],
       "forWhom": "Anyone with a target mix in Where It Goes.",
       "notForWhom": "Money you need in under five years: it is not in stocks or bonds at all.",
-      "source": "Bogleheads"
+      "source": "Bogleheads",
+      "sourceDetail": {
+        "kind": "community",
+        "title": "Bogleheads wiki, three-fund portfolio",
+        "author": "The Bogleheads",
+        "url": "https://www.bogleheads.org/wiki/Three-fund_portfolio",
+        "where": "The three-fund portfolio page"
+      }
     },
     {
       "id": "bucket",
@@ -391,7 +486,14 @@
       ],
       "forWhom": "Someone near or in retirement, or anyone who wants to know how long the cash lasts.",
       "notForWhom": "Someone still on the starter emergency fund: one bucket first.",
-      "source": "convention (Harold Evensky)"
+      "source": "convention (Harold Evensky)",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "The bucket strategy",
+        "author": "Harold Evensky",
+        "url": "https://www.bogleheads.org/wiki/Bucket_strategy",
+        "where": "Evensky and Katz, Retirement Income Redesigned"
+      }
     },
     {
       "id": "assetlocation",
@@ -415,7 +517,14 @@
       ],
       "forWhom": "Anyone whose accounts say how they are taxed, in the Statement.",
       "notForWhom": "An account entered as one total: say how it is taxed first.",
-      "source": "convention"
+      "source": "convention",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "Common practice with no single author",
+        "author": null,
+        "url": "https://www.bogleheads.org/wiki/Main_Page",
+        "where": "The Bogleheads wiki is the fullest write-up of the convention"
+      }
     },
     {
       "id": "glidepath",
@@ -439,7 +548,14 @@
       ],
       "forWhom": "Anyone with a FIRE number, an investment balance and a target mix.",
       "notForWhom": "Money with a date on it: a glide path is for the long pot only.",
-      "source": "convention"
+      "source": "convention",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "Common practice with no single author",
+        "author": null,
+        "url": "https://www.bogleheads.org/wiki/Main_Page",
+        "where": "The Bogleheads wiki is the fullest write-up of the convention"
+      }
     },
     {
       "id": "coastfi",
@@ -465,7 +581,14 @@
       ],
       "forWhom": "Anyone who wants to know when saving becomes optional.",
       "notForWhom": "Retired: coast is a milestone on the way, not a way to draw down.",
-      "source": "convention"
+      "source": "convention",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "Common practice with no single author",
+        "author": null,
+        "url": "https://www.bogleheads.org/wiki/Main_Page",
+        "where": "The Bogleheads wiki is the fullest write-up of the convention"
+      }
     },
     {
       "id": "tco",
@@ -489,7 +612,13 @@
       ],
       "forWhom": "Anyone with the transportation line filled in.",
       "notForWhom": "A household with no vehicle and no transit cost: the line is legitimately near zero.",
-      "source": "Eli's default (D-173)"
+      "source": "Eli's default (D-173)",
+      "sourceDetail": {
+        "kind": "app",
+        "title": "Eli's default",
+        "author": "Eli",
+        "url": "DECISIONS.md#D-173"
+      }
     },
     {
       "id": "twentythreeeight",
@@ -511,9 +640,16 @@
         "Getting around is {share} of gross, inside the 8: at your income the rule allows a car of about {maxPrice} on a three-year loan.",
         "Getting around is {share} of gross, over the 8 — and that is the whole line, not just a payment. The rule allows about {maxPrice} of car."
       ],
-      "forWhom": "Anyone about to finance a car.",
-      "notForWhom": "Someone paying cash for a car they will keep ten years: the rule is about loans.",
-      "source": "The Money Guy Show"
+      "forWhom": "Anyone financing a car this year.",
+      "notForWhom": "Someone paying cash for a car they will keep ten years: the rule is for loans.",
+      "source": "The Money Guy Show",
+      "sourceDetail": {
+        "kind": "show",
+        "title": "The Money Guy Show",
+        "author": "Brian Preston and Bo Hanson",
+        "url": "https://moneyguy.com/financial-order-of-operations/",
+        "where": "The Financial Order of Operations; the 25% rule; the 20/3/8 car rule; the rate-by-age debt rule"
+      }
     },
     {
       "id": "carnetworth",
@@ -537,7 +673,14 @@
       ],
       "forWhom": "Anyone who has entered a vehicle in the Statement.",
       "notForWhom": "A negative net worth: the share has no meaning; read the debt lenses first.",
-      "source": "convention"
+      "source": "convention",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "Common practice with no single author",
+        "author": null,
+        "url": "https://www.bogleheads.org/wiki/Main_Page",
+        "where": "The Bogleheads wiki is the fullest write-up of the convention"
+      }
     },
     {
       "id": "returnonhassle",
@@ -555,7 +698,13 @@
       ],
       "forWhom": "Anyone weighing the bus, a longer drive, a cheaper car or fixing it yourself.",
       "notForWhom": "No wage yet: the bar is not set until Real Hourly Wage is.",
-      "source": "Eli's framework (Return on Hassle)"
+      "source": "Eli's framework (Return on Hassle)",
+      "sourceDetail": {
+        "kind": "app",
+        "title": "Return on Hassle",
+        "author": "Eli",
+        "url": "DECISIONS.md#D-066"
+      }
     },
     {
       "id": "twentyfive",
@@ -579,7 +728,14 @@
       ],
       "forWhom": "Anyone with a rent or mortgage line.",
       "notForWhom": "A paid-off home: the line is tax and insurance only, and the quarter does not apply.",
-      "source": "The Money Guy Show"
+      "source": "The Money Guy Show",
+      "sourceDetail": {
+        "kind": "show",
+        "title": "The Money Guy Show",
+        "author": "Brian Preston and Bo Hanson",
+        "url": "https://moneyguy.com/financial-order-of-operations/",
+        "where": "The Financial Order of Operations; the 25% rule; the 20/3/8 car rule; the rate-by-age debt rule"
+      }
     },
     {
       "id": "rentbuy",
@@ -603,8 +759,15 @@
         "Breakeven is {years} away: renting wins unless you stay longer than that."
       ],
       "forWhom": "Anyone with a price and a rent typed into Housing Decision.",
-      "notForWhom": "Someone who may move in under five years: see the 5-year rule.",
-      "source": "convention"
+      "notForWhom": "Someone who will move in under five years: see the 5-year rule.",
+      "source": "convention",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "Common practice with no single author",
+        "author": null,
+        "url": "https://www.bogleheads.org/wiki/Main_Page",
+        "where": "The Bogleheads wiki is the fullest write-up of the convention"
+      }
     },
     {
       "id": "househack",
@@ -624,7 +787,13 @@
       ],
       "forWhom": "Anyone with a property, or a price typed in Housing Decision.",
       "notForWhom": "A lease with no room to share and no move in sight: the lever does not apply yet.",
-      "source": "data/levers.json (D-174)"
+      "source": "data/levers.json (D-174)",
+      "sourceDetail": {
+        "kind": "app",
+        "title": "The lever library",
+        "author": "Eli",
+        "url": "DECISIONS.md#D-174"
+      }
     },
     {
       "id": "fiveyear",
@@ -642,7 +811,14 @@
       ],
       "forWhom": "Anyone weighing a price in Housing Decision.",
       "notForWhom": "Someone who has already owned the place for years: the costs are sunk.",
-      "source": "convention"
+      "source": "convention",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "Common practice with no single author",
+        "author": null,
+        "url": "https://www.bogleheads.org/wiki/Main_Page",
+        "where": "The Bogleheads wiki is the fullest write-up of the convention"
+      }
     },
     {
       "id": "drafttA",
@@ -666,7 +842,13 @@
       ],
       "forWhom": "Anyone with a rent or mortgage line and take-home pay.",
       "notForWhom": "A paid-off home.",
-      "source": "Eli's default (D-173)"
+      "source": "Eli's default (D-173)",
+      "sourceDetail": {
+        "kind": "app",
+        "title": "Eli's default",
+        "author": "Eli",
+        "url": "DECISIONS.md#D-173"
+      }
     },
     {
       "id": "takehome",
@@ -685,8 +867,14 @@
         "You keep {share} of what you earn: {takeHome} a month from {gross}, after about {tax} a year of tax. Every share in this room is of the {takeHome}."
       ],
       "forWhom": "Everyone with an income and a filing status.",
-      "notForWhom": "Nobody — but self-employed take-home here is before quarterly estimates you set aside yourself.",
-      "source": "data/effective_tax_rates_2026.json"
+      "notForWhom": "Nobody: but self-employed take-home here is before quarterly estimates you set aside yourself.",
+      "source": "data/effective_tax_rates_2026.json",
+      "sourceDetail": {
+        "kind": "data",
+        "title": "Effective tax rate table",
+        "author": "This repo",
+        "url": "data/tax_brackets.json"
+      }
     },
     {
       "id": "rhw",
@@ -704,7 +892,14 @@
       ],
       "forWhom": "Anyone with a job and a commute.",
       "notForWhom": "Retired or between jobs: there is no wage to correct.",
-      "source": "Vicki Robin and Joe Dominguez"
+      "source": "Vicki Robin and Joe Dominguez",
+      "sourceDetail": {
+        "kind": "book",
+        "title": "Your Money or Your Life",
+        "author": "Vicki Robin and Joe Dominguez",
+        "url": "https://yourmoneyoryourlife.com/book-summary/",
+        "where": "Step 2, your real hourly wage; step 3, life energy per purchase"
+      }
     },
     {
       "id": "savingsrate",
@@ -729,7 +924,14 @@
       ],
       "forWhom": "Anyone with income, spending and a filing status entered.",
       "notForWhom": "Variable income: read the rolling average first, then this.",
-      "source": "convention"
+      "source": "convention",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "Common practice with no single author",
+        "author": null,
+        "url": "https://www.bogleheads.org/wiki/Main_Page",
+        "where": "The Bogleheads wiki is the fullest write-up of the convention"
+      }
     },
     {
       "id": "simplemath",
@@ -748,7 +950,14 @@
       ],
       "forWhom": "Anyone who wants the one lever that matters most.",
       "notForWhom": "Someone already holding a pot: the FIRE room counts what you have; this starts from nothing on purpose.",
-      "source": "Mr. Money Mustache"
+      "source": "Mr. Money Mustache",
+      "sourceDetail": {
+        "kind": "blog",
+        "title": "The Shockingly Simple Math Behind Early Retirement",
+        "author": "Mr. Money Mustache (Pete Adeney)",
+        "url": "https://www.mrmoneymustache.com/2012/01/13/the-shockingly-simple-math-behind-early-retirement/",
+        "where": "The 2012 post and its savings rate table"
+      }
     },
     {
       "id": "effmarg",
@@ -766,8 +975,14 @@
         "Your average rate is about {effective}; the next dollar is taxed at {marginal}. A raise is taxed at the second, your life at the first."
       ],
       "forWhom": "Everyone with an income and a filing status.",
-      "notForWhom": "Nobody — but a self-employed picture adds the self-employment tax the table already includes.",
-      "source": "data/federal_brackets_2026.json"
+      "notForWhom": "Nobody: but a self-employed picture adds the self-employment tax the table already includes.",
+      "source": "data/federal_brackets_2026.json",
+      "sourceDetail": {
+        "kind": "data",
+        "title": "Federal brackets 2026",
+        "author": "This repo",
+        "url": "data/tax_brackets.json"
+      }
     },
     {
       "id": "fourbuckets",
@@ -793,7 +1008,14 @@
       ],
       "forWhom": "Anyone whose accounts say how they are taxed.",
       "notForWhom": "No HSA eligibility: three buckets is the full set for you.",
-      "source": "convention"
+      "source": "convention",
+      "sourceDetail": {
+        "kind": "convention",
+        "title": "Common practice with no single author",
+        "author": null,
+        "url": "https://www.bogleheads.org/wiki/Main_Page",
+        "where": "The Bogleheads wiki is the fullest write-up of the convention"
+      }
     },
     {
       "id": "headroom",
@@ -812,7 +1034,14 @@
       ],
       "forWhom": "Anyone weighing a Roth conversion, a bonus or extra work this year.",
       "notForWhom": "The top bracket: there is no next one.",
-      "source": "data/federal_brackets_2026.json"
+      "source": "data/federal_brackets_2026.json",
+      "sourceDetail": {
+        "kind": "data",
+        "title": "Federal brackets 2026",
+        "author": "This repo",
+        "url": "data/tax_brackets.json"
+      }
     }
-  ]
+  ],
+  "hedgeWords": "\\b(maybe|might|could|roughly|probably|perhaps|may|usually|often|sometimes|about|around|likely|tend|tends|generally|mostly|somewhat|fairly|quite|seems?|arguably|typically)\\b"
 }

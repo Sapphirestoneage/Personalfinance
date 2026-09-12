@@ -13470,6 +13470,36 @@ cap is $72,000 now, not $70,000.
 
 ---
 
+## D-222 — The lens copy folded in, and the rule moved to where it bites
+
+**Why.** `data/lane2/lenses.copy.json` held a second copy of the "for / not
+for" sentences of all 34 lenses, rewritten without hedging words, with a
+structured source. Nothing read it: the rooms read `data/lenses.json`, which
+still said "may move in under five years" and "is often impossible". The test
+that enforced the copy rule enforced it only on the file nobody rendered.
+
+**Decision.** The eight rewritten sentences move into `data/lenses.json`, each
+lens gains a `sourceDetail` object (kind, title, author, url, where), and
+`hedgeWords` moves onto that file so the rule is data rather than a regex in a
+test. `tests/glossary.test.js` runs every rule — one sentence, no hedge word,
+no em dash, a structured source — against `data/lenses.json` itself.
+`data/lane2/lenses.copy.json` and `tests/tools/build-lenses-copy.js` are gone.
+
+**Not done, deliberately.** Nothing renders `sourceDetail` as a link. The app
+has no outbound link anywhere, which reads as a decision, not an omission, so
+adding one to every lens card is the owner's call.
+
+**Replaces or removes.** One data file and one generator. No room, field or
+question changes; four lens sentences read slightly differently.
+
+**Stored shape.** No change. Lens copy is reference data.
+
+**Verified.** `node test/run.js` 29,472; `glossary.test.js` 3,069 with the
+rules now on the live file; `export`, `data`, `corpus`, `migration`, `qr`;
+`render` 432; `forms` 532.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

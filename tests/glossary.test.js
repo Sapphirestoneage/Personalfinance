@@ -17,9 +17,9 @@
        a small fake DOM
      - data/lane2/ledger-rows.where.json covers every lookup row the lane
        lists, and every row has a where, an ifMissing and a roughly
-     - data/lane2/lenses.copy.json has a row for every lens in
-       data/lenses.json with both sentences, no hedging word, a source
-       with a URL, and no em dash anywhere in the copy
+     - every lens in data/lenses.json carries both sentences, one sentence
+       each, with no hedging word and no em dash, and a structured source
+       with a kind, a title and a URL
 
    Run:  node tests/glossary.test.js
    ========================================================================== */
@@ -139,23 +139,24 @@ MUST.forEach((m) => check('where row for "' + m + '"', labels.some((l) => l.inde
 });
 
 /* ---- 4. The lens copy --------------------------------------------------------------- */
+/* D-222: these rules used to be checked against data/lane2/lenses.copy.json,
+   a second file holding a rewrite of the same sentences. It is folded in, so
+   the rules now hold against the file the rooms actually read, and a lens
+   cannot be added with a hedging word by editing the master and forgetting
+   the copy. `hedgeWords` is the list, and it lives in the data. */
 const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'lenses.json'), 'utf8'));
-const C = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'lane2', 'lenses.copy.json'), 'utf8'));
-const HEDGE = new RegExp('\\b(' + C.hedgeWords.replace(/^\\b\(|\)\\b$/g, '').replace(/^\(|\)$/g, '') + ')\\b', 'i');
-const byId = {};
-(C.lenses || []).forEach((l) => { byId[l.id] = l; });
+check('the hedge word list is in the data, not in this test', typeof L.hedgeWords === 'string' && L.hedgeWords.length > 20);
+const HEDGE = new RegExp(L.hedgeWords, 'i');
 L.lenses.forEach((l) => {
-  const c = byId[l.id];
-  check('lens copy for ' + l.id, !!c);
-  if (!c) return;
   ['forWhom', 'notForWhom'].forEach((k) => {
-    check(l.id + ' ' + k + ' is one sentence', typeof c[k] === 'string' && c[k].length > 10 && c[k].split(/(?<=[.!?])\s+(?=[A-Z])/).length === 1, c[k]);
-    check(l.id + ' ' + k + ' has no hedging word', !HEDGE.test(c[k]), c[k]);
-    check(l.id + ' ' + k + ' has no em dash', c[k].indexOf('—') === -1);
+    check(l.id + ' ' + k + ' is one sentence', typeof l[k] === 'string' && l[k].length > 10 && l[k].split(/(?<=[.!?])\s+(?=[A-Z])/).length === 1, l[k]);
+    check(l.id + ' ' + k + ' has no hedging word', !HEDGE.test(l[k]), l[k]);
+    check(l.id + ' ' + k + ' has no em dash', l[k].indexOf('—') === -1);
   });
-  check(l.id + ' source has a kind, a title and a url', c.source && c.source.kind && c.source.title && typeof c.source.url === 'string');
+  const d = l.sourceDetail;
+  check(l.id + ' names its source in words', typeof l.source === 'string' && l.source.length > 3);
+  check(l.id + ' source detail has a kind, a title and a url', d && d.kind && d.title && typeof d.url === 'string' && d.url.length > 3);
 });
-check('no lens copy without a lens', (C.lenses || []).every((c) => L.lenses.some((l) => l.id === c.id)));
 
 /* ---- Report ------------------------------------------------------------------------- */
 const report = { entries: terms.length, passed, failures: failures.slice(), notes: notes.slice() };

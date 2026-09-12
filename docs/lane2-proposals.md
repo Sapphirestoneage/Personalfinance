@@ -116,14 +116,15 @@ then the same five path edits in `tests/tools/build-data-tables.js` (`IN_ROOT`),
 
 Dependencies: none. `shared/glossary.js` requires nothing and writes nothing. DECIDE: master build.
 
-## P-7: read the lens copy from `data/lane2/lenses.copy.json` (section 4, L-4)
+## P-7: fold the lens copy into `data/lenses.json` (section 4, L-4)
 
-`data/lenses.json` already carries `forWhom`, `notForWhom` and a one-line `source` per lens (D-175). Section 4 wrote `data/lane2/lenses.copy.json` with the same pair rewritten without hedging words and a structured source (kind, title, author, url, where). Either:
+**APPLIED, option (a) (D-222).** `data/lenses.json` carried `forWhom`, `notForWhom` and a one-line `source` per lens (D-175); section 4 wrote `data/lane2/lenses.copy.json` with the same pair rewritten without hedging words and a structured source (kind, title, author, url, where).
 
-- (a) copy the four rewritten sentences back into `data/lenses.json` (`fiftythirty.notForWhom`, `twentythreeeight.forWhom`, `twentythreeeight.notForWhom`, `rentbuy.notForWhom`) and add a `sourceDetail` object per lens from the copy file, then retire the copy file; or
-- (b) register `lensesCopy` in `TABLE_FILES` and have `shared/lenses.js` read `forWhom`, `notForWhom` and `source` from it when present.
+All eight rewritten sentences are folded into `data/lenses.json` (the four hedge-word rewrites the lane asked for, plus four where an em dash became a colon or the sentence gained a detail), each lens gains a `sourceDetail` object, and `hedgeWords` moves onto the file so the rule is data. `tests/glossary.test.js` now runs every rule against `data/lenses.json` itself, which is the point: a lens added with a hedging word fails whether or not anyone remembers a second file. `data/lane2/lenses.copy.json` and `tests/tools/build-lenses-copy.js` are deleted.
 
-(a) keeps one file and is the conservative choice. `tests/glossary.test.js` keeps the two files in step either way (every lens has a row, no hedge word, no em dash). DECIDE: master build.
+Option (b) — a second file the library reads at runtime — was not taken: it keeps two copies of the same sentences, which is what this removes.
+
+Not done, and deliberately: nothing renders `sourceDetail` as a link. The app has no outbound links anywhere, which reads as a decision rather than an omission, so putting one on every lens card is the owner's call, not a side effect of folding a file in.
 
 ## P-8: let Your Data import the pre-spine flat profile (section 5, L-5)
 
