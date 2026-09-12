@@ -12045,7 +12045,13 @@ section('Backup: one file for every key (D-202)');
       checkTrue(f + ' loads backup.js after the spine', html.indexOf('shared/backup.js') > html.indexOf('shared/spine-v2.js'));
       checkTrue(f + ' has a #backup host', /id="backup"/.test(html));
     });
-    checkTrue('the widget: two buttons, an undo that hides, a status line', /Save a copy/.test(src) && /Load a copy/.test(src) && /data-backup="undo" hidden/.test(src) && /role="status"/.test(src));
+    /* D-222: the two kinds of save are named for what they are for. The
+       readable ones come first; the restore file is the quiet one and says
+       in words that it is not meant to be read. */
+    checkTrue('the widget leads with a spreadsheet and a printable page', /Spreadsheet \(\.csv\)/.test(src) && /Printable page \(PDF\)/.test(src) && /one-pager\.html/.test(src));
+    checkTrue('the restore file is the quiet one, and says it is not readable', /Backup file \(\.json\)/.test(src) && /slaf-backup-acts--quiet/.test(src) && /not for a person/.test(src));
+    checkTrue('the widget: load, an undo that hides, a status line', /Load a backup file/.test(src) && /data-backup="undo" hidden/.test(src) && /role="status"/.test(src));
+    checkTrue('the sheet is the same CSV Your Data writes, so one reader takes it back', /CsvExport\.single\(/.test(src) && /CsvExport\.filename\(/.test(src));
     checkTrue('it asks before loading, with the counts', /countsSentence\(check\.counts\)/.test(src) && /confirm/.test(src));
     checkTrue('LIVE-FORM declared', /LIVE-FORM: built once/.test(src));
     checkTrue('no em dash on screen', !/—/.test(src.split('function mount(host')[1] || ''));
@@ -13574,7 +13580,13 @@ section('K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, 
   checkTrue('presets decide the sections and any can be switched off', OnePager.build(demo, T, { audience: 'partner' }).sectionsOn.join(',') === 'story,cashflow,debts,goals' && OnePager.build(demo, T, { audience: 'partner', sections: { debts: false, ratios: true } }).sectionsOn.join(',') === 'story,cashflow,goals,ratios');
   checkTrue('lender prep carries debt-to-income and credit notes', OnePager.build(demo, T, { audience: 'lender' }).sectionsOn.indexOf('credit') > -1 && rowOf(OnePager.build(demo, T, { audience: 'lender' }), 'debts', 'Debt-to-income').kind === 'rate');
   const opRoom = fs.readFileSync(path.join(ROOT, 'rooms/one-pager.html'), 'utf8');
-  checkTrue('the Private file is the shape Your Data imports, so a coach can open it as an intake', /Spine\.exportObject\(\)/.test(opRoom) && /onePager/.test(opRoom));
+  /* D-222: the save was a .json file, which opens as a wall of code on a
+     phone and which no spreadsheet will take. The page saves as a sheet
+     instead: a section column, a line, a value, and a blank left blank. */
+  checkTrue('the page saves as a spreadsheet, not as a file of code', /Save as a spreadsheet/.test(opRoom) && /\.csv'/.test(opRoom) && !/application\/json/.test(opRoom));
+  checkTrue('...with a section column and a blank left blank', /\['section', 'line', 'value', 'note'\]/.test(opRoom) && /x\.blank \? '' :/.test(opRoom));
+  checkTrue('...through the shared download, under its public name', /RoomExport\.download\(/.test(opRoom) && /download: download/.test(fs.readFileSync(path.join(ROOT, 'shared/roomexport.js'), 'utf8')));
+  checkTrue('and the print button says a PDF is what comes out', /Save as PDF, or print/.test(opRoom));
   checkTrue('the page has a print stylesheet and writes nothing', /@media print/.test(opRoom) && opRoom.indexOf('Spine.set(') === -1);
 
   /* -- K5: the break -------------------------------------------------------------------- */

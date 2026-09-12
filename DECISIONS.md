@@ -13515,6 +13515,55 @@ features, forms and XSS gates on Your Data, and a phone walk: download,
 re-save the file as another locale's Excel would, bring it back, apply,
 undo.
 
+## D-222 — The screens a person actually meets: what floats, what toggles, what a Save gives you, and an intake that asks one family at a time
+
+**Why.** The owner walked the app on a phone and sent ten screenshots. The
+math sheet was painted on a 10% tint with no backdrop, so the room behind it
+showed through and two screens of words sat on top of each other. Three
+rooms had no side gutter at all. A door card's every line was an inline
+span, so "DDebtwhat you owes$21,600total owed" was one run of collided text.
+A switch in Settings looked identical on and off. A Save handed over a file
+of JSON. And the DAITE intake asked every question at once, six accordions
+deep, rather than one family at a time and then sharpening.
+
+**Decision.**
+- `shared/theme.css`: `.slaf-math` takes `--color-panel` and a backdrop
+  (`shared/showmath.js` adds it, plus Escape and a focus return); the dead
+  inline `.slaf-math*` block that was fighting it is removed; `--color-warning`
+  is declared (it was used a dozen times and never defined); `.slaf-room` gets
+  the same gutter `.slaf-wrap` has; `.choice` styles itself rather than only
+  inside `.choices`; `.slaf-switch` is a track and a knob; `.slaf-btn--quiet`
+  gets an outline; the undo pair is a solid tray, not a blur.
+- `rooms/settings.html`: a switch row's state sentence leaves the control
+  column, which was crushing the label to one word a line.
+- `rooms/ledger.html`: each part of a door card is its own line; the count
+  sits beside the ring, not inside and under it.
+- A Save gives you something you can read: `shared/backup.js` leads with the
+  spreadsheet (the same `shared/csvexport.js` file Your Data writes and reads)
+  and a printable page, and names the JSON as the restore file; `rooms/
+  one-pager.html` saves a CSV instead of JSON; `shared/roomexport.js` names its
+  buttons for what they give you and exports `download`, which the One-Pager
+  called and which was never public, so that button threw.
+- `shared/progress.js`: the `#backup` section is exempt from the tail fold.
+- `rooms/express.html`: a guided walk. One family a screen at level 1, then a
+  sharpening pass at levels 2 to 4 over the families that got an answer.
+
+**Replaces or removes.** No new room and no new store: the walk is a second
+VIEW of the rows Express already holds, toggling `[hidden]` on the doors and
+levels built once at boot, so D-034 holds and a value typed in one mode is
+already in the other. It replaces the link out to the First Round as the way
+to be walked through Express. Removed: the dead `.slaf-math*` inline block,
+the One-Pager's JSON download, and the ring's inner number.
+
+**Stored shape.** No change to `slaf.household.v2`. Two per-person
+preferences are added (`express.mode`, `express.step`), which are Prefs, not
+household, and a missing one just means "walk if you have answered little".
+
+**Verified.** `node test/run.js` (30324 checks), `node test/forms.js`, and a
+phone walk at 390px through the Ledger, the First Round, Express in both
+modes, Settings and the One-Pager: no console error, no sideways scroll, the
+math sheet opaque over a dimmed page, the spreadsheet downloaded and opened.
+
 ---
 
 # The Dungeons & Dividends entries

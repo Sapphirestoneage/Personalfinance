@@ -185,9 +185,12 @@
     box.className = 'slaf-export';
     box.innerHTML = '<summary class="slaf-export-h">Save or print this room</summary>'
       + '<div class="slaf-export-acts">'
-      + '<button type="button" class="slaf-btn" data-x="csv">CSV</button>'
-      + '<button type="button" class="slaf-btn" data-x="json">JSON</button>'
-      + '<button type="button" class="slaf-btn" data-x="print">Print / PDF</button>'
+      /* Named for what you get, not for the file extension: "CSV" and "JSON"
+         told the person nothing, and the one that opens as a wall of code was
+         as prominent as the one that opens in a spreadsheet. D-222. */
+      + '<button type="button" class="slaf-btn slaf-btn--primary" data-x="csv">Spreadsheet (.csv)</button>'
+      + '<button type="button" class="slaf-btn" data-x="print">Save as PDF, or print</button>'
+      + '<button type="button" class="slaf-btn slaf-btn--quiet" data-x="json">Data file (.json)</button>'
       + '</div>'
       + '<p class="slaf-export-note">This room only; your whole household is in '
       + '<a href="' + (atRoot(roomId) ? '' : '') + 'data.html">Your Data</a>. Nothing is uploaded.</p>';
@@ -212,5 +215,9 @@
     return !!(room && room.href && room.href.indexOf('rooms/') !== 0);
   }
 
-  return { rows: rows, csv: csv, json: json, mount: mount, provide: provide, _download: download };
+  /* `download` was exported only as `_download`, and the One-Pager called it
+     by its plain name — so its save button threw a TypeError and handed the
+     person nothing at all. Exported under both names; the underscore stays
+     because other callers use it. D-222. */
+  return { rows: rows, csv: csv, json: json, mount: mount, provide: provide, download: download, _download: download };
 });

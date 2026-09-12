@@ -80,6 +80,11 @@
   --color-caution: #D8A63F;
   --color-critical: #E2565B;
   --color-neutral: var(--color-text-muted);
+  /* "Rough", "not sure yet", a figure leaning on a guess. It was written as
+     var(--color-warning, #d97706) in a dozen places and the token was never
+     declared, so every one of them fell back to a raw orange that is not in
+     this palette and misses AA on the ground. Declared here, once. D-222. */
+  --color-warning: var(--color-caution);
 
   /* ---- Typography ------------------------------------------------------
      One family, differentiated by weight and tracking rather than by a
@@ -169,6 +174,21 @@ body.slaf {
   max-width: var(--measure);
   margin: 0 auto;
   padding: 0 var(--space-4) var(--space-7);
+}
+
+/* THE GUTTER. `.slaf-room` is the wrapper the three rooms of the intake path
+   use (the Ledger, Express, the First Round) and it had no rule in this file
+   at all: no measure, and no side padding. On a phone that put every heading,
+   every sentence and every input hard against both edges of the glass, and it
+   is why "← Every door" sat half off the screen. Same gutter as .slaf-wrap,
+   plus the safe-area inset so a notched phone in landscape keeps it. A room
+   that wants a wider column says so as `main.slaf-room`. D-222. */
+.slaf-room {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
+  padding-bottom: var(--space-7);
 }
 
 h1, h2, h3, .slaf-display {
@@ -303,8 +323,29 @@ h3 { font-size: var(--text-md); }
 .slaf-seed { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); font-size: var(--text-sm); }
 .slaf-seed-label { color: var(--color-text-faint); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; }
 .slaf-seed-btn { font: inherit; font-size: var(--text-sm); color: var(--color-text-muted); background: var(--color-surface-raised); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); padding: 4px var(--space-3); cursor: pointer; }
-.slaf-seed-btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+.slaf-seed-btn[aria-pressed="true"], .slaf-seed-btn[aria-checked="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
 .slaf-seed-note { flex-basis: 100%; font-size: var(--text-xs); color: var(--color-text-faint); }
+
+/* ---- A switch that looks like a switch (D-222) ---------------------------
+   Settings drew every switch as a grey pill reading "On" or "Off" and styled
+   the on state off [aria-pressed], which a role="switch" never carries — so
+   an on switch and an off switch were the same grey pill and the only
+   difference was two letters. A person scanning the page could not tell what
+   was on. This is a track and a knob: position and colour say the state
+   before the word does, and the word stays for anyone who cannot see either.
+   44px tall because a finger is not a cursor (D-146). */
+.slaf-switch { display: inline-flex; align-items: center; gap: var(--space-2); font: inherit; font-size: var(--text-sm); color: var(--color-text-muted); background: none; border: 0; padding: 0; cursor: pointer; min-height: 44px; }
+.slaf-switch-track { position: relative; flex: 0 0 auto; width: 46px; height: 26px; border-radius: var(--radius-pill); background: var(--ink-700); border: 1px solid var(--color-border-strong); transition: background 150ms ease, border-color 150ms ease; }
+.slaf-switch-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--color-text-subtle); transition: transform 150ms ease, background 150ms ease; }
+.slaf-switch-text { min-width: 2.1em; text-align: left; }
+.slaf-switch[aria-checked="true"] .slaf-switch-track { background: var(--sapphire-600); border-color: var(--sapphire-600); }
+.slaf-switch[aria-checked="true"] .slaf-switch-knob { transform: translateX(20px); background: var(--color-accent-contrast); }
+.slaf-switch[aria-checked="true"] .slaf-switch-text { color: var(--color-text); font-weight: 600; }
+.slaf-switch:hover .slaf-switch-track { border-color: var(--color-border-active); }
+.slaf-switch:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 3px; border-radius: var(--radius-sm); }
+.slaf-switch[aria-disabled="true"] { cursor: default; }
+.slaf-switch[aria-disabled="true"] .slaf-switch-track { opacity: .6; }
+@media (prefers-reduced-motion: reduce) { .slaf-switch-knob, .slaf-switch-track { transition: none; } }
 
 /* Hide number spinners — they invite scroll-wheel edits on a money field. */
 .slaf-input-shell > input[type="number"]::-webkit-outer-spin-button,
@@ -390,13 +431,16 @@ h3 { font-size: var(--text-md); }
 .slaf-btn--primary:hover { background: var(--sapphire-500); border-color: var(--sapphire-500); }
 a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 
+/* The quiet variant had no border, no fill and no padding, so beside a real
+   button it read as a link dropped into the row. Quiet should mean "second",
+   not "not a button": a faint outline and its own padding, so the eye still
+   ranks it below the primary but the finger can see where to land. D-222. */
 .slaf-btn--quiet {
   background: transparent;
-  border-color: transparent;
+  border-color: var(--color-border);
   color: var(--color-accent-hover);
-  padding-left: 0;
-  padding-right: 0;
 }
+.slaf-btn--quiet:hover { border-color: var(--color-border-active); background: var(--color-surface); }
 
 :focus-visible {
   outline: 2px solid var(--color-focus-ring);
@@ -713,12 +757,28 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 
 /* ---- Undo / redo, top right on every page (shared/undo.js). D-094. ---- */
 .slaf-undo { position: fixed; top: 10px; right: 10px; z-index: 40; display: flex; gap: 6px; }
-.slaf-undo-btn { border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); color: var(--color-text); font-size: var(--text-sm); min-height: 34px; padding: 0 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(6px); }
+/* SOLID. It was a 10% tint with a blur behind it, which on a phone reads as
+   a smudge sitting on top of whatever it happens to be over — the one-pager's
+   Print button, in the report. A floating control is over the page, so it
+   takes the panel colour, the same rule the drawer and the math sheet follow
+   (D-157). D-222. */
+.slaf-undo-btn { border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-panel); color: var(--color-text); font-size: var(--text-sm); min-height: 34px; padding: 0 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 10px rgba(0,0,0,.35); }
 .slaf-undo-btn:disabled { opacity: .35; cursor: default; }
 .slaf-undo-btn span { font-size: var(--text-xs); }
 /* On a phone the top-right corner is the room nav's; the pair sits
    bottom right, above the soft keyboard's usual reach, as a thumb reaches. */
-@media (max-width: 640px) { .slaf-undo { top: auto; bottom: 14px; right: 12px; } html.has-undo body { padding-bottom: 72px; } .slaf-undo-btn span { display: none; } .slaf-undo-btn { padding: 0 10px; min-height: 38px; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
+/* On a phone the words are dropped and the glyph is all that is left, so the
+   glyph has to be big enough to read and the button solid enough to look like
+   a button rather than a smudge over whatever it is floating on. The pair
+   also sits in one tray with a border, so two circles do not read as two
+   unrelated blobs. D-222. */
+@media (max-width: 640px) {
+  .slaf-undo { top: auto; bottom: 14px; right: 12px; gap: 0; padding: 4px; background: var(--color-panel); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); box-shadow: 0 4px 16px rgba(0,0,0,.5); }
+  html.has-undo body { padding-bottom: 80px; }
+  .slaf-undo-btn span { display: none; }
+  .slaf-undo-btn { padding: 0; width: 44px; min-height: 44px; justify-content: center; font-size: var(--text-lg); border-color: transparent; background: transparent; box-shadow: none; }
+  .slaf-undo-btn:not(:disabled) { color: var(--color-text); }
+}
 
 /* ---- The lens toggle (shared/lens.js). D-094. ---- */
 .slaf-lens { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
@@ -782,9 +842,16 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
 .room-scope a { color: var(--color-accent-hover); }
 .room-standalone { font-size: var(--text-sm); border: 1px dashed var(--color-caution); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); color: var(--color-text-muted); }
 .room-standalone a { color: var(--color-accent-hover); }
+/* The look was tied to `.choices .choice`, so a `.choice` in any other
+   container (the One-Pager's section switches sit in `.row-controls`) fell
+   all the way back to the browser's default button: a grey slab with no on
+   state at all, which is most of what made that card look broken. The look
+   now belongs to the button; `.choices` is only the row that holds it. D-222. */
 .choices { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.choices .choice { flex: 1 1 auto; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); color: var(--color-text); padding: var(--space-2) var(--space-3); font-size: var(--text-sm); cursor: pointer; text-align: left; min-height: 40px; }
-.choices .choice[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+.choice { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); color: var(--color-text); padding: var(--space-2) var(--space-3); font: inherit; font-size: var(--text-sm); cursor: pointer; text-align: left; min-height: 44px; }
+.choices .choice { flex: 1 1 auto; }
+.choice:hover[aria-pressed="false"], .choice:hover:not([aria-pressed]) { border-color: var(--color-border-active); }
+.choice[aria-pressed="true"] { background: var(--sapphire-600); border-color: var(--sapphire-600); color: var(--color-accent-contrast); font-weight: 600; }
 
 /* One chart, animated when it changes: bars grow, areas and rings draw in. */
 @keyframes slaf-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
@@ -796,15 +863,11 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
 /* ---- The ⓘ on a ratio (shared/explain.js) --------------------------------- */
 .slaf-info { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); font: italic 700 12px/1 var(--font-display); cursor: pointer; margin-left: var(--space-2); vertical-align: middle; flex: 0 0 auto; padding: 0; }
 .slaf-info:hover, .slaf-info.is-open { border-color: var(--color-accent); color: var(--color-accent-hover); }
-.slaf-math { margin: var(--space-2) 0 0; padding: var(--space-3); border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: rgba(46,111,232,.06); font-size: var(--text-sm); color: var(--color-text); text-align: left; }
-.slaf-math-row { display: grid; grid-template-columns: 92px 1fr; gap: var(--space-2) var(--space-3); padding: var(--space-1) 0; align-items: baseline; }
-.slaf-math-k { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
-.slaf-math-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.slaf-math-chip { display: inline-block; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px var(--space-2); font-size: var(--text-xs); color: var(--color-text); text-decoration: none; }
-a.slaf-math-chip:hover { border-color: var(--color-accent); }
-.slaf-math-chip.is-empty { color: var(--color-text-faint); border-style: dashed; }
-.slaf-math-chip small { color: var(--color-accent-hover); }
-@media (max-width: 420px) { .slaf-math-row { grid-template-columns: 1fr; gap: 2px; } }
+/* The inline .slaf-math box and its .slaf-math-row/-k/-chip children lived
+   here from the ⓘ widget's first shape and nothing has emitted them since.
+   They were not merely dead: `.slaf-math` is now the name of the sheet at
+   the foot of this file, so this block was quietly adding a stray accent
+   border to it. Removed. D-222. */
 
 /* ---- Manage sources: hide, set aside, restore (shared/manage.js) ---------- */
 .slaf-manage-toggle { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; }
@@ -1188,8 +1251,17 @@ a:hover { color: var(--sapphire-100); }
    and it is the last thing on the page rather than a call to action. */
 .slaf-export { margin-top: var(--space-4); padding-top: var(--space-3);
   border-top: 1px solid var(--color-border); }
-.slaf-export-h { display: block; font-size: var(--text-xs); text-transform: uppercase;
-  letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+/* `display: block` on a <summary> throws away the disclosure triangle the
+   browser draws for `list-item`, so this fold rendered as a dead grey
+   heading with nothing to say it opened, and nobody opened it. A caret of
+   its own, a tap target, and a colour that says it is a control. D-222. */
+.slaf-export-h { display: flex; align-items: center; gap: var(--space-2); cursor: pointer;
+  min-height: 44px; font-size: var(--text-xs); text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow); color: var(--color-text-muted); }
+.slaf-export-h::-webkit-details-marker { display: none; }
+.slaf-export-h::before { content: '▸'; font-size: var(--text-sm); color: var(--color-accent-hover); transition: transform 150ms ease; }
+.slaf-export[open] > .slaf-export-h::before { transform: rotate(90deg); }
+.slaf-export-h:hover { color: var(--color-text); }
 .slaf-export-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
 .slaf-export-acts > * { min-width: 0; }
 .slaf-export-note { font-size: var(--text-xs); color: var(--color-text-faint);
@@ -1204,6 +1276,12 @@ a:hover { color: var(--sapphire-100); }
   margin: var(--space-1) 0 0; line-height: var(--leading-loose); }
 .slaf-backup-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); align-items: center; }
 .slaf-backup-acts > * { min-width: 0; }
+/* The restore file and the two readable saves are different kinds of thing,
+   so they sit apart with a rule between them rather than in one row of
+   identical buttons where the wrong one is the easiest to press. D-222. */
+.slaf-backup-acts--quiet { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+.slaf-backup-note { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); }
+a.slaf-btn[data-backup="pdf"] { display: inline-flex; align-items: center; }
 .slaf-backup-status { font-size: var(--text-xs); color: var(--color-text-faint);
   margin: var(--space-2) 0 0; line-height: var(--leading-loose); min-height: 1em; }
 .slaf-backup-status.is-good { color: var(--color-text-muted); }
@@ -1306,9 +1384,21 @@ a:hover { color: var(--sapphire-100); }
 .ex-btn { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted var(--color-text-faint); text-underline-offset: 3px; }
 .ex-btn:hover, .ex-btn:focus { text-decoration-color: var(--color-accent); }
 .ex-btn--big { font-family: inherit; font-size: inherit; }
-.slaf-math { position: fixed; left: 0; right: 0; bottom: 0; max-height: 80vh; overflow: auto; z-index: 60; padding: var(--space-4) max(var(--space-4), env(safe-area-inset-left)) max(var(--space-4), env(safe-area-inset-bottom)); background: var(--color-surface-raised); color: var(--color-text); border-top: 1px solid var(--color-border-strong); border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,.18); font-size: var(--text-sm); }
-.slaf-math .ex-close { float: right; }
-.slaf-math .ex-title { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-1) 0 var(--space-2); }
+/* OPAQUE, and over a backdrop. It used to paint on --color-surface-raised,
+   a 10% tint, with nothing behind it: the room's own text showed straight
+   through the sheet and you read two screens at once. That is the exact
+   thing D-157 forbids for anything that floats OVER the page. D-222. */
+.slaf-math-backdrop { position: fixed; inset: 0; background: rgba(2, 8, 23, .62); z-index: 59; }
+.slaf-math { position: fixed; left: 0; right: 0; bottom: 0; max-height: 80vh; overflow: auto; overscroll-behavior: contain; z-index: 60; padding: var(--space-3) max(var(--space-4), env(safe-area-inset-left)) max(var(--space-5), env(safe-area-inset-bottom)); background: var(--color-panel); color: var(--color-text); border-top: 1px solid var(--color-border-strong); border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,.45); font-size: var(--text-sm); }
+/* The close button was floated right, which let the title run under it and
+   took it out of the scroll. It is now a bar of its own, pinned to the top
+   of the sheet so it is reachable however far down you have scrolled. */
+.slaf-math .ex-close { position: sticky; top: 0; z-index: 1; float: none; display: block; margin-left: auto; }
+.slaf-math .ex-title { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-1) 0 var(--space-2); line-height: var(--leading-tight); overflow-wrap: anywhere; }
+/* While the sheet is open nothing else floats over the page: the undo pair
+   sat on top of the sheet's own words on a phone. */
+html.has-math .slaf-undo, html.has-math .slaf-hops-host { display: none; }
+html.has-math, html.has-math body { overflow: hidden; }
 .slaf-math h3 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); margin: var(--space-3) 0 var(--space-1); }
 .slaf-math .ex-words { color: var(--color-text-muted); margin: 0 0 var(--space-1); }
 .slaf-math .ex-plugged { font-variant-numeric: tabular-nums; margin: 0; }

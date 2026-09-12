@@ -26,34 +26,61 @@
   LIVE-FORM: built once — buttons only, no text input.
 -->
 <style>
+  /* The row used to be `minmax(0,1fr) auto`, and the control cell held a whole
+     sentence ("Set by your situation: a federal student loan exists."). `auto`
+     sizes to its content, so that sentence took the width and squeezed the
+     switch's own label down to one word a line. The sentence now sits with the
+     rest of the words, where it belongs, and the control column holds only the
+     control and one short word. D-222. */
   .sw { list-style: none; margin: 0; padding: 0; }
-  .sw li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: start; }
+  .sw li { display: grid; grid-template-columns: minmax(0, 1fr) max-content; gap: var(--space-2) var(--space-4); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: start; }
   .sw li:first-child { border-top: none; }
-  .sw b { display: block; font-size: var(--text-sm); }
-  .sw .gloss { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; line-height: 1.45; }
-  .sw .where { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+  .sw b { display: block; font-size: var(--text-md); font-family: var(--font-display); font-weight: 600; }
+  .sw .gloss { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-1); line-height: var(--leading-normal); }
+  .sw .where { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); line-height: var(--leading-normal); }
   .sw .where a { color: var(--color-accent-hover); text-decoration: none; }
-  .sw .state { font-size: var(--text-xs); color: var(--color-text-faint); text-align: right; margin-top: 4px; }
-  .paths { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-2); }
+  .sw .set-by { display: block; font-size: var(--text-xs); color: var(--color-caution); margin-top: var(--space-1); }
+  .sw .ctl { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
+  .sw .state { font-size: var(--text-xs); color: var(--color-text-faint); text-align: right; white-space: nowrap; }
+  /* The rate stepper: two round buttons and the figure between them, so the
+     thing you press looks pressable and the figure it changes sits in line. */
+  .sw .stepper { flex-direction: row; align-items: center; gap: var(--space-2); }
+  .sw .stepper output { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: center; }
+  .sw .step-btn { font: inherit; font-size: var(--text-lg); line-height: 1; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: var(--color-surface-raised); color: var(--color-text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+  .sw .step-btn:hover:not(:disabled) { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  .sw .step-btn:disabled { opacity: .35; cursor: default; }
+  .sw .stepper .state { flex-basis: 100%; text-align: right; }
+  /* On a phone the two columns become two rows: the words get the full width,
+     the control sits under them where a thumb reaches it. */
+  @media (max-width: 560px) {
+    .sw li { grid-template-columns: 1fr; gap: var(--space-1); }
+    .sw .ctl { flex-direction: row; align-items: center; justify-content: flex-start; gap: var(--space-3); flex-wrap: wrap; }
+    .sw .state, .sw .stepper .state { text-align: left; flex-basis: auto; }
+  }
+  .sw .src { margin-top: var(--space-1); font-size: var(--text-xs); color: var(--color-text-faint); }
+  .sw .src > summary { cursor: pointer; color: var(--color-accent-hover); min-height: 32px; display: flex; align-items: center; }
+  .sw .src p { margin: var(--space-1) 0 0; line-height: var(--leading-normal); }
+  .paths { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+  .paths .choice { flex: 0 1 auto; min-width: 8rem; text-align: center; }
 </style>
 </head>
 <body class="slaf">
 <header class="room-head">
   <a class="room-back" href="../index.html">← Home</a>
   <h1>Settings</h1>
-  <p class="room-lede">Every switch, on one screen. A switch changes what a room shows and what an engine applies. It never changes a number you entered.</p>
+  <p class="room-lede">Every switch, on one screen. A switch changes what a room shows. It never changes a number you entered.</p>
 </header>
 
 <main class="slaf-wrap">
   <section class="slaf-card" id="path">
     <span class="slaf-eyebrow">A starting set</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Two ways in. Beginner starts with only the switches that are on by default. FI starts with Accuracy and Horizon all on. Either way, every switch below is yours to change.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Beginner turns on only the defaults. FI turns on Accuracy and Horizon too. Either way, every switch below is yours to change.</p>
     <div class="paths" id="paths"></div>
   </section>
   <section class="slaf-card" id="accuracy" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Accuracy</span><p class="slaf-hint" id="accuracy-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="accuracy-list"></ul></section>
   <section class="slaf-card" id="household" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Household</span><p class="slaf-hint" id="household-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="household-list"></ul></section>
   <section class="slaf-card" id="horizon" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Horizon</span><p class="slaf-hint" id="horizon-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="horizon-list"></ul></section>
-  <section class="slaf-card" id="assumptions" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Assumptions</span><p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Declared once, here, and read by every projection. Every engine works in today’s money, so the return is real (over inflation) and comes from the return bands table; the two rates below are yours to step.</p><ul class="sw" id="assumptions-list"></ul></section>
+  <section class="slaf-card" id="assumptions" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Assumptions</span><p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Declared once, here, and read by every projection. Every engine works in today’s money, so the return is real, over inflation. The two rates below are yours to step.</p><ul class="sw" id="assumptions-list"></ul></section>
   <section class="slaf-card" id="advanced" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Advanced</span><p class="slaf-hint" id="advanced-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="advanced-list"></ul></section>
   <section class="slaf-card" id="backup" style="margin-top:var(--space-4)" aria-label="Backup"></section>
 </main>
@@ -72,6 +99,14 @@
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../shared/gate.js"></script>
+<!-- The spreadsheet save in the backup widget below. Five small files, and
+     the same shared/csvexport.js Your Data uses, so there is one CSV in the
+     app and one reader that takes it back. D-222. -->
+<script src="../shared/daite.js"></script>
+<script src="../shared/ledger-rows.js"></script>
+<script src="../shared/doors.js"></script>
+<script src="../shared/csv.js"></script>
+<script src="../shared/csvexport.js"></script>
 <script src="../shared/backup.js"></script>
 <script>
 (function () {
@@ -88,11 +123,18 @@
     var where = rooms.length
       ? 'Shows up in ' + rooms.map(function (r) { return '<a href="../' + esc(r.href) + '">' + esc(r.title) + '</a>'; }).join(', ') + '.'
       : 'Not shown anywhere yet.';
+    /* One shape for both: a track and a knob. A switch the situation set is
+       the same switch, not a different-looking chip — it just does not move,
+       and the words say what decided it. The sentence that says so lives with
+       the rest of the words, not in the control column, which is what used to
+       crush the label. D-222. */
+    var track = '<span class="slaf-switch-track"><span class="slaf-switch-knob"></span></span><span class="slaf-switch-text">' + (on ? 'On' : 'Off') + '</span>';
     var control = f.scope === 'situation'
-      ? '<span class="slaf-seed-btn" aria-disabled="true" data-feature="' + esc(f.id) + '" data-scope="situation">' + (on ? 'On' : 'Off') + '</span><span class="state">Set by your situation: ' + esc(f.situationWhen) + '.</span>'
-      : '<button type="button" class="slaf-seed-btn" role="switch" aria-checked="' + on + '" data-feature="' + esc(f.id) + '" aria-label="' + esc(f.label) + '">' + (on ? 'On' : 'Off') + '</button>'
+      ? '<span class="slaf-switch" role="switch" aria-checked="' + on + '" aria-disabled="true" data-feature="' + esc(f.id) + '" data-scope="situation" aria-label="' + esc(f.label) + '">' + track + '</span><span class="state">your situation</span>'
+      : '<button type="button" class="slaf-switch" role="switch" aria-checked="' + on + '" data-feature="' + esc(f.id) + '" aria-label="' + esc(f.label) + '">' + track + '</button>'
         + '<span class="state">' + (Features.isDefault(f.id) ? 'the default' : 'yours') + '</span>';
-    return '<li data-row="' + esc(f.id) + '"><div><b>' + esc(f.label) + '</b><span class="gloss">' + esc(f.gloss) + '</span><span class="where">' + where + '</span></div><div>' + control + '</div></li>';
+    var setBy = f.scope === 'situation' ? '<span class="set-by">Set by your situation: ' + esc(f.situationWhen) + '.</span>' : '';
+    return '<li data-row="' + esc(f.id) + '"><div><b>' + esc(f.label) + '</b><span class="gloss">' + esc(f.gloss) + '</span>' + setBy + '<span class="where">' + where + '</span></div><div class="ctl">' + control + '</div></li>';
   }
   /* 15.2: the three declared assumptions. Inflation and real wage growth
      are stepped with buttons (no typing) and written to household.assumptions
@@ -117,9 +159,9 @@
     var isDefault = !Money.isEntered(v) || v === SLAF.Schema.ASSUMPTION_DEFAULTS[r.path.split('.')[1]];
     var cur = Money.isEntered(v) ? v : SLAF.Schema.ASSUMPTION_DEFAULTS[r.path.split('.')[1]];
     return '<li data-row="' + esc(r.path) + '"><div><b>' + esc(r.label) + '</b><span class="gloss">' + esc(r.gloss) + '</span>' + whereRead() + '</div>'
-      + '<div class="stepper"><button type="button" class="slaf-seed-btn" data-step="' + esc(r.path) + '" data-dir="-1" aria-label="' + esc(r.label) + ' down"' + (cur - STEP < r.min - 1e-9 ? ' disabled' : '') + '>−</button>'
+      + '<div class="ctl stepper"><button type="button" class="step-btn" data-step="' + esc(r.path) + '" data-dir="-1" aria-label="' + esc(r.label) + ' down"' + (cur - STEP < r.min - 1e-9 ? ' disabled' : '') + '>−</button>'
       + '<output aria-live="polite">' + pctText(cur) + '</output>'
-      + '<button type="button" class="slaf-seed-btn" data-step="' + esc(r.path) + '" data-dir="1" aria-label="' + esc(r.label) + ' up"' + (cur + STEP > r.max + 1e-9 ? ' disabled' : '') + '>+</button>'
+      + '<button type="button" class="step-btn" data-step="' + esc(r.path) + '" data-dir="1" aria-label="' + esc(r.label) + ' up"' + (cur + STEP > r.max + 1e-9 ? ' disabled' : '') + '>+</button>'
       + '<span class="state">' + (isDefault ? 'the default' : 'yours') + '</span></div></li>';
   }
   function returnRow() {
@@ -127,8 +169,9 @@
     var bands = TABLES && TABLES.returnBands;
     var p = bands && bands.percentiles ? bands.percentiles : null;
     return '<li data-row="assumptions.returnReal"><div><b>Expected real return</b><span class="gloss">The median of the return bands table: the likely case, over inflation. The low and high bands say how wide “about” is.</span>'
-      + (p ? '<span class="where">Low ' + pctText(p.p25) + ' · likely ' + pctText(p.p50) + ' · high ' + pctText(p.p75) + ', as of ' + esc(bands.asOf) + '. A planning convention, not a forecast: ' + esc(bands.source) + '</span>' : '') + whereRead()
-      + '</div><div><output>' + pctText(a.returnReal) + '</output><span class="state">from the table</span></div></li>';
+      + (p ? '<span class="where">Low ' + pctText(p.p25) + ' · likely ' + pctText(p.p50) + ' · high ' + pctText(p.p75) + ', as of ' + esc(bands.asOf) + '. A planning convention, not a forecast.</span>'
+        + '<details class="src"><summary>Where the band comes from</summary><p>' + esc(bands.source) + '</p></details>' : '') + whereRead()
+      + '</div><div class="ctl stepper"><output>' + pctText(a.returnReal) + '</output><span class="state">from the table</span></div></li>';
   }
   var TABLES = null;
   function paintAssumptions() {
@@ -142,7 +185,7 @@
     });
     var door = Prefs.get('door', null);
     el('paths').innerHTML = ['beginner', 'fi'].map(function (p) {
-      return '<button type="button" class="slaf-seed-btn" data-path="' + p + '" aria-pressed="' + (door === p) + '">' + (p === 'fi' ? 'FI' : 'Beginner') + '</button>';
+      return '<button type="button" class="choice" data-path="' + p + '" aria-pressed="' + (door === p) + '">' + (p === 'fi' ? 'FI' : 'Beginner') + '</button>';
     }).join('');
   }
   document.querySelector('main').addEventListener('click', function (e) {

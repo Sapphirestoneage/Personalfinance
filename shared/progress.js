@@ -962,6 +962,12 @@
          nor writes itself to the URL. */
       return n.tagName === 'SECTION' && n.id && !n.hidden
         && n.id !== 'slaf-progress' && n.id !== 'slaf-notapply' && n.id !== 'slaf-ask' && n.id !== 'slaf-reopen'
+        /* Saving a copy is never "the rest". The backup card is the last
+           section on Settings and on the Ledger, so the fold swallowed it
+           and the one control a person goes looking for when they want
+           their numbers out was behind a button that did not name it.
+           Exempt, the way the progress and ask hosts are. D-222. */
+        && n.id !== 'backup'
         && (typeof getComputedStyle !== 'function' || getComputedStyle(n).display !== 'none');
     });
     if (lifted) host.classList.add('slaf-folded');

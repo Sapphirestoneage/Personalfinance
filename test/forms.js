@@ -1206,7 +1206,14 @@ const CASES = [
     room: '/rooms/express.html',
     container: '#xform',
     seed: 'empty',
-    prepare: async (page) => { await page.waitForSelector('[data-x-row="dob"]'); },
+    /* A person who has answered nothing now lands in the guided walk (D-222),
+       which shows one family at a time. This case is about the flat form, so
+       it asks for the flat form first. */
+    prepare: async (page) => {
+      await page.waitForSelector('[data-mode="all"]');
+      await page.tap('[data-mode="all"]');
+      await page.waitForSelector('[data-x-row="dob"]');
+    },
     fields: [
       { sel: '[data-x-row="zip"] [data-x-input]', type: '12203' },
       { sel: '[data-x-row="employmentStatus"] [data-x-val="unemployed"]', tap: true },
@@ -1229,6 +1236,58 @@ const CASES = [
         ['cash landed', s.cash, 300000],
         ['the card was added by name and its balance typed', s.debt, 'Amex 1003:320000'],
         ['the form is long', s.rows > 60, true]
+      ];
+    }
+  },
+  {
+    /* EXPRESS, THE GUIDED WALK (D-222): the same rows, one DAITE family a
+       screen, and it is what a person who has answered nothing meets first.
+       The walk only sets [hidden] on the doors and levels it is not asking
+       about, so nothing is rebuilt; this proves the keyboard survives inside
+       the walk and that a box keeps its value across a Next. */
+    room: '/rooms/express.html',
+    container: '#xform',
+    seed: 'empty',
+    prepare: async (page) => {
+      await page.waitForSelector('[data-mode="walk"]');
+      await page.tap('[data-mode="walk"]');
+      /* Debt is the first family, and with nothing entered its only control
+         is the yes/no; the total is computed from the cards. Answer it, then
+         move on to Assets, which is where the first typed box lives. */
+      await page.waitForSelector('[data-x-row="hasDebt"] [data-x-val="true"]');
+      await page.tap('[data-x-row="hasDebt"] [data-x-val="true"]');
+      await page.waitForTimeout(300);
+      await page.tap('[data-walk="next"]');
+      await page.waitForSelector('[data-x-row="cashSavings"] [data-x-input]');
+    },
+    fields: [
+      { sel: '[data-x-row="cashSavings"] [data-x-input]', type: '3000' }
+    ],
+    expect: async (page) => {
+      const before = await page.evaluate(() => document.querySelector('[data-x-row="cashSavings"] [data-x-input]').value);
+      const here = await page.evaluate(() => ({
+        step: document.getElementById('xwalk-step').textContent,
+        title: document.getElementById('xwalk-title').textContent,
+        showing: Array.prototype.filter.call(document.querySelectorAll('details.xdoor'), function (d) { return !d.hidden; }).map(function (d) { return d.id; }).join(','),
+        cash: SLAF.Schema.cashCents(SLAF.Spine.getProfile()).value,
+        debtAnswered: (SLAF.Spine.getProfile().meta || {}).hasDebt
+      }));
+      await page.tap('[data-walk="next"]');
+      await page.waitForTimeout(400);
+      const after = await page.evaluate(() => ({
+        title: document.getElementById('xwalk-title').textContent,
+        showing: Array.prototype.filter.call(document.querySelectorAll('details.xdoor'), function (d) { return !d.hidden; }).map(function (d) { return d.id; }).join(','),
+        stillThere: document.querySelector('[data-x-row="cashSavings"] [data-x-input]').value
+      }));
+      return [
+        ['one family shows at a time', here.showing, 'x-A'],
+        ['and the screen names it', here.title, 'Assets'],
+        ['and counts the families, not the rows', here.step, 'Step 2 of 6'],
+        ['the yes/no on the first screen landed', here.debtAnswered, true],
+        ['what was typed was written through its owner', here.cash, 300000],
+        ['Next moves on', after.title, 'Income'],
+        ['alone', after.showing, 'x-I'],
+        ['and the box behind it was never rebuilt', after.stillThere, before]
       ];
     }
   },

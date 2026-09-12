@@ -162,20 +162,46 @@
     sheet.id = 'slaf-math';
     sheet.className = 'slaf-math';
     sheet.setAttribute('role', 'dialog');
-    sheet.setAttribute('aria-modal', 'false');
+    sheet.setAttribute('aria-modal', 'true');
     sheet.hidden = true;
+    /* A backdrop, because the sheet floats over the room. Without one the
+       page behind stayed live, stayed lit, and on a phone the two sets of
+       words landed on top of each other. Tapping it closes, the way every
+       sheet on a phone does. D-222. */
+    var back = doc.createElement('div');
+    back.className = 'slaf-math-backdrop';
+    back.hidden = true;
+    doc.body.appendChild(back);
     doc.body.appendChild(sheet);
+    var opener = null;
+    function close() {
+      if (sheet.hidden) return;
+      sheet.hidden = true; back.hidden = true;
+      doc.documentElement.classList.remove('has-math');
+      if (opener && opener.focus) { try { opener.focus(); } catch (e) { /* gone from the page */ } }
+      opener = null;
+    }
+    function open(x, from) {
+      opener = from || null;
+      sheet.innerHTML = sheetHtml(x);
+      back.hidden = false;
+      sheet.hidden = false;
+      doc.documentElement.classList.add('has-math');
+      sheet.scrollTop = 0;
+      var c = sheet.querySelector('[data-math-close]');
+      if (c && c.focus) { try { c.focus(); } catch (e) { /* fine */ } }
+    }
+    back.addEventListener('click', close);
+    doc.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') close(); });
     doc.addEventListener('click', function (ev) {
       var t = ev.target && ev.target.closest ? ev.target.closest('[data-math],[data-math-close]') : null;
       if (!t) return;
-      if (t.hasAttribute('data-math-close')) { sheet.hidden = true; return; }
+      if (t.hasAttribute('data-math-close')) { close(); return; }
       var S = (typeof self !== 'undefined' ? self : root).SLAF;
       var x = of(t.getAttribute('data-math'), S.Spine.getProfile(), tables || (S.Reference && S.Reference._cache) || {});
       if (!x) return;
       ev.preventDefault();
-      sheet.innerHTML = sheetHtml(x);
-      sheet.hidden = false;
-      sheet.scrollTop = 0;
+      open(x, t);
     });
     return sheet;
   }

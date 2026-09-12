@@ -7,6 +7,20 @@ Updated: 2026-09-12
 - ~70 rooms live on GitHub Pages. Each room works on its own; the connections
   between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
 - Context system added. Sessions should no longer read the archives.
+- **This session (D-222): the screens as a person on a phone meets them.** The
+  owner walked the live app and sent ten screenshots. Fixed: the math sheet was
+  translucent with no backdrop, so the room behind it read through it (now
+  opaque, dims the page, closes on Escape or a tap outside, hides the undo pair
+  while open); the Ledger, Express and the First Round had no side gutter, so
+  every line sat against both edges of the glass; a door card's parts were
+  inline spans that collided into one run of text; a Settings switch looked the
+  same on and off, and a situation row's sentence squeezed its own label to one
+  word a line; `--color-warning` was used a dozen times and never declared.
+  Saving now gives you something you can read: a spreadsheet and a printable
+  page first, the JSON named as the restore file, the One-Pager saving a CSV
+  instead of a file of code, and the save card no longer folded away. Express
+  gained the guided DAITE walk: one family a screen, then a sharpening pass over
+  the families that got an answer. No new room, no new store, no new vocabulary.
 
 ## Freeze
 - ON. No new rooms, frameworks, or vocabularies until the first journey
@@ -15,10 +29,14 @@ Updated: 2026-09-12
 ## Next (top item first; one per session)
 1. Decide who owns income sources once Start Here retires (Ledger or Income).
    OWNER DECISION NEEDED.
-2. Make logged income reconcile with typical income (known problem 1).
-3. First journey works end to end: about 8 questions in, a FOO step and an FI
+2. Walk the other rooms at 390px the way D-222 walked six. Its four faults (a
+   floating panel that is not opaque, a wrapper with no gutter, a run of inline
+   spans where lines were meant, a control with no on state) are patterns, not
+   one-offs; a test that catches them beats a walk that finds them.
+3. Make logged income reconcile with typical income (known problem 1).
+4. First journey works end to end: about 8 questions in, a FOO step and an FI
    date range out. Add a node test for it.
-4. Monthly close prompts a backup export.
+5. Monthly close prompts a backup export, and offers the spreadsheet (D-222).
 
 ## Cut list (for /simplify, one per session, owner approves each)
 - Retire Start Here, Front Doors, Walk-Through into the Ledger (decided).

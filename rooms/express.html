@@ -40,7 +40,7 @@
   [hidden] toggled. Nothing is rebuilt while a finger is in a box.
 -->
 <style>
-  main { max-width: 720px; }
+  main.slaf-room { max-width: 720px; }
   .xbar { position: sticky; top: 0; z-index: 4; background: var(--color-bg); border-bottom: 1px solid var(--color-border); padding: var(--space-2) 0; display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
   .xbar .pct { font-size: var(--text-sm); color: var(--color-text-muted); }
   .xbar .pct b { color: var(--color-text); font-family: var(--font-display); font-weight: 500; }
@@ -87,6 +87,38 @@
   .switch { font-size: var(--text-sm); margin: var(--space-2) 0 0; }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
   @media (max-width: 480px) { .xrow { grid-template-columns: 1fr; } .xrow .sug, .xrow .saved { grid-column: 1; } }
+
+  /* ---- The guided walk (D-222) ------------------------------------------ */
+  .xmode { display: flex; gap: var(--space-2); margin: var(--space-3) 0 0; flex-wrap: wrap; }
+  .xmode-btn { font: inherit; font-size: var(--text-sm); min-height: 44px; padding: 0 var(--space-4); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); color: var(--color-text-muted); cursor: pointer; }
+  .xmode-btn[aria-pressed="true"] { background: var(--sapphire-600); border-color: var(--sapphire-600); color: var(--color-accent-contrast); font-weight: 600; }
+  .xmode-btn:hover[aria-pressed="false"] { border-color: var(--color-border-active); color: var(--color-text); }
+  .xwalk { margin-top: var(--space-4); padding-bottom: var(--space-2); border-bottom: 1px solid var(--color-border); }
+  .xwalk-dots { display: flex; gap: 6px; }
+  .xwalk-dots i { display: block; height: 4px; flex: 1 1 0; border-radius: 2px; background: var(--color-border); }
+  .xwalk-dots i.is-done { background: var(--color-accent); }
+  .xwalk-dots i.is-now { background: var(--sapphire-300); }
+  .xwalk-step { margin: var(--space-3) 0 0; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+  .xwalk-title { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-1) 0 0; }
+  .xwalk-say { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-normal); }
+  /* The walk's nav is the flow's primary control, so it stays on the glass
+     rather than being something to scroll for; and the floating undo pair,
+     which lives at bottom-left on a phone, is lifted clear of it so it stops
+     landing on top of Back. D-222. */
+  .xwalk-nav { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-5); padding: var(--space-3) 0 max(var(--space-3), env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border); background: var(--color-bg); }
+  body.is-walking .slaf-undo { bottom: 86px; }
+  .xwalk-nav .xwalk-left { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-faint); text-align: right; }
+  .xwalk-nav .slaf-btn { min-height: 52px; }
+  .xwalk-nav .slaf-btn--primary { min-width: 140px; }
+  /* In the walk a door is the screen, so its own summary would just repeat
+     the heading above it, and a level heading you cannot leave is furniture. */
+  body.is-walking details.xdoor { border: 0; background: none; padding: 0; margin-top: 0; }
+  body.is-walking details.xdoor > summary { display: none; }
+  body.is-walking details.xlvl { border-top: 0; padding-top: 0; }
+  body.is-walking details.xlvl > summary { margin-top: var(--space-3); }
+  body.is-walking .xbar .jump { display: none; }
+  body.is-walking-one details.xlvl > summary { display: none; }
+  body.is-walking-one details.xlvl { margin-top: 0; }
 </style>
 </head>
 <body class="slaf">
@@ -95,14 +127,31 @@
   <header class="slaf-room-head">
     <span class="slaf-eyebrow">Home</span>
     <h1>Express</h1>
-    <p class="slaf-lede">Every question on one page, grouped by door and level. Fill what you know, skip the rest; each box saves the moment you leave it.</p>
-    <p class="switch">Rather be walked through it? <a href="first-round.html">Five questions, one a screen.</a></p>
+    <p class="slaf-lede">The same questions, two ways. Walk one family at a time, or open the lot. Fill what you know, skip the rest; each box saves the moment you leave it.</p>
+    <p class="switch">Never done this before? <a href="first-round.html">Start with five questions, one a screen.</a></p>
   </header>
+
+  <div class="xmode" role="group" aria-label="How to fill this in">
+    <button type="button" class="xmode-btn" data-mode="walk" aria-pressed="false">One family at a time</button>
+    <button type="button" class="xmode-btn" data-mode="all" aria-pressed="false">Everything at once</button>
+  </div>
 
   <div class="xbar" id="xbar">
     <span class="pct" id="xpct">You understand <b>…</b> of your financial picture.</span>
     <nav class="jump" id="xjump" aria-label="Jump to a door"></nav>
   </div>
+
+  <!-- The guided walk. It builds nothing: the whole form below is in the
+       page already, and the walk only toggles [hidden] on the doors and the
+       levels it is not asking about. That keeps the D-034 rule intact - no
+       container of live inputs is ever rebuilt - and means a value typed in
+       one mode is already there in the other. D-222. -->
+  <section class="xwalk" id="xwalk" hidden>
+    <div class="xwalk-dots" id="xwalk-dots" aria-hidden="true"></div>
+    <p class="xwalk-step" id="xwalk-step"></p>
+    <h2 class="xwalk-title" id="xwalk-title"></h2>
+    <p class="xwalk-say" id="xwalk-say"></p>
+  </section>
 
   <div id="xform">
     <details class="xdoor" id="x-D" open><summary><span class="letter">D</span><span class="label">Debt</span><span class="say">what you owe</span><span class="count" data-x-count="D"></span></summary><div class="xbody"></div></details>
@@ -112,6 +161,12 @@
     <details class="xdoor" id="x-E" open><summary><span class="letter">E</span><span class="label">Expenses</span><span class="say">what goes out</span><span class="count" data-x-count="E"></span></summary><div class="xbody"></div></details>
     <details class="xdoor" id="x-you" open><summary><span class="letter">You</span><span class="label">You</span><span class="say">who this is for</span><span class="count" data-x-count="you"></span></summary><div class="xbody"></div></details>
   </div>
+
+  <nav class="xwalk-nav" id="xwalk-nav" hidden>
+    <button type="button" class="slaf-btn slaf-btn--quiet" data-walk="back">← Back</button>
+    <span class="xwalk-left" id="xwalk-left"></span>
+    <button type="button" class="slaf-btn slaf-btn--primary" data-walk="next">Next →</button>
+  </nav>
 
   <p class="disclaimer">Not financial advice. Nothing here is sent anywhere; every figure stays in this browser.</p>
 </main>
@@ -498,6 +553,152 @@
     });
   }
 
+  /* ==========================================================================
+     THE GUIDED WALK (D-222)
+     --------------------------------------------------------------------------
+     The brief asked for an intake that asks about each DAITE family in turn
+     and then sharpens. Express already held every one of those questions, but
+     it held them ALL AT ONCE, six accordions deep, which is a reference sheet,
+     not an intake. So this is the same rows in the same DOM, walked:
+
+       the first pass   one screen a family, level 1 only, the how-much
+                        questions a person can answer from memory
+       sharpening       the same six families again, levels 2 to 4, and only
+                        for a family whose first pass got an answer
+
+     It builds NOTHING. Every control is already in the page from build(), and
+     the walk only sets [hidden] on the doors and levels it is not asking
+     about, so no container of live inputs is ever rebuilt (D-034) and a value
+     typed in one mode is already there in the other.
+     ========================================================================== */
+  var MODE_PREF = 'express.mode';
+  var STEP_PREF = 'express.step';
+  var MODE = 'all';
+  var STAGES = [];
+  var STEP = 0;
+
+  function doorEl(id) { return el('x-' + id); }
+  function levelEls(doorId) {
+    var d = doorEl(doorId);
+    return d ? Array.prototype.slice.call(d.querySelectorAll('details.xlvl')) : [];
+  }
+  function levelNumber(node) { return Number((node.id || '').split('-').pop()) || 0; }
+  /* A level counts as present only if it still has a row showing: paintApplies
+     hides the rows a situation rules out, and a family whose every deeper row
+     is ruled out must not become an empty screen with a Next button. */
+  function levelHasRows(node) {
+    return Array.prototype.slice.call(node.querySelectorAll('[data-x-row]')).some(function (r) { return !r.hidden; })
+      || !!node.querySelector('[data-x-listhost]');
+  }
+  function answered(doorId) {
+    return Object.keys(NODES).some(function (k) {
+      var n = NODES[k];
+      return n.row && n.row.door === doorId && n.row.level === 1 && !n.el.hidden && current(n.row, itemOf(n)) !== null;
+    });
+  }
+  function buildStages() {
+    var out = [];
+    Doors.DOORS.forEach(function (d) {
+      if (levelEls(d.id).some(function (n) { return levelNumber(n) === 1 && levelHasRows(n); })) out.push({ door: d.id, phase: 'first' });
+    });
+    Doors.DOORS.forEach(function (d) {
+      if (!answered(d.id)) return;
+      if (levelEls(d.id).some(function (n) { return levelNumber(n) > 1 && levelHasRows(n); })) out.push({ door: d.id, phase: 'sharpen' });
+    });
+    return out;
+  }
+
+  var PHASE_SAY = {
+    first: 'The one number first. Answer from memory; a rough figure beats a blank, and you can sharpen it in a moment.',
+    sharpen: 'Now sharpen it: where it sits, what it is made of, what it costs. Skip anything you do not have to hand.'
+  };
+  function paintWalk() {
+    if (MODE !== 'walk') return;
+    if (STEP >= STAGES.length) STEP = Math.max(0, STAGES.length - 1);
+    var stage = STAGES[STEP];
+    if (!stage) return;
+    var door = Doors.DOORS.filter(function (d) { return d.id === stage.door; })[0];
+    Doors.DOORS.forEach(function (d) {
+      var node = doorEl(d.id);
+      if (!node) return;
+      var on = d.id === stage.door;
+      node.hidden = !on;
+      if (on) node.open = true;
+      levelEls(d.id).forEach(function (lv) {
+        var n = levelNumber(lv);
+        var show = on && (stage.phase === 'first' ? n === 1 : n > 1);
+        lv.hidden = !show;
+        if (show) lv.open = true;
+      });
+    });
+    var firsts = STAGES.filter(function (x) { return x.phase === 'first'; }).length;
+    el('xwalk-dots').innerHTML = STAGES.map(function (x, i) {
+      return '<i class="' + (i === STEP ? 'is-now' : i < STEP ? 'is-done' : '') + '"></i>';
+    }).join('');
+    el('xwalk-step').textContent = stage.phase === 'sharpen'
+      ? 'Sharpening · ' + (STEP - firsts + 1) + ' of ' + (STAGES.length - firsts)
+      : 'Step ' + (STEP + 1) + ' of ' + firsts;
+    el('xwalk-title').textContent = door.label + (stage.phase === 'sharpen' ? ', in detail' : '');
+    el('xwalk-say').textContent = door.say.charAt(0).toUpperCase() + door.say.slice(1) + '. ' + PHASE_SAY[stage.phase];
+    /* On the first pass exactly one level shows, so its heading would say
+       "Level 1 · How much" under a heading that already says the family.
+       Sharpening shows several, where the headings earn their place. */
+    document.body.classList.toggle('is-walking-one', stage.phase === 'first');
+    var last = STEP >= STAGES.length - 1;
+    var nextStage = STAGES[STEP + 1];
+    el('xwalk-nav').querySelector('[data-walk="back"]').disabled = STEP === 0;
+    var nextBtn = el('xwalk-nav').querySelector('[data-walk="next"]');
+    nextBtn.textContent = last ? 'Done →' : 'Next →';
+    el('xwalk-left').textContent = last ? 'That is every family.'
+      : nextStage.phase === 'sharpen' && stage.phase === 'first' ? 'Next: sharpening what you answered'
+      : 'Next: ' + (Doors.DOORS.filter(function (d) { return d.id === nextStage.door; })[0] || {}).label;
+  }
+  function setMode(mode, step) {
+    MODE = mode === 'walk' ? 'walk' : 'all';
+    SLAF.Prefs.set(MODE_PREF, MODE);
+    document.body.classList.toggle('is-walking', MODE === 'walk');
+    Array.prototype.forEach.call(document.querySelectorAll('.xmode-btn'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-mode') === MODE ? 'true' : 'false');
+    });
+    el('xwalk').hidden = MODE !== 'walk';
+    el('xwalk-nav').hidden = MODE !== 'walk';
+    if (MODE === 'walk') {
+      STAGES = buildStages();
+      STEP = Math.min(Math.max(0, typeof step === 'number' ? step : Number(SLAF.Prefs.get(STEP_PREF, 0)) || 0), Math.max(0, STAGES.length - 1));
+      paintWalk();
+    } else {
+      document.body.classList.remove('is-walking-one');
+      Doors.DOORS.forEach(function (d) {
+        var node = doorEl(d.id);
+        if (node) { node.hidden = false; }
+        levelEls(d.id).forEach(function (lv) { lv.hidden = false; });
+      });
+    }
+  }
+  function goTo(step) {
+    STEP = Math.min(Math.max(0, step), Math.max(0, STAGES.length - 1));
+    SLAF.Prefs.set(STEP_PREF, STEP);
+    paintWalk();
+    var top = el('xwalk');
+    if (top && top.scrollIntoView) top.scrollIntoView({ block: 'start' });
+  }
+  function wireWalk() {
+    Array.prototype.forEach.call(document.querySelectorAll('.xmode-btn'), function (b) {
+      b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); });
+    });
+    el('xwalk-nav').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-walk]');
+      if (!b) return;
+      if (b.getAttribute('data-walk') === 'back') { goTo(STEP - 1); return; }
+      /* Answering the first pass is what opens a family's sharpening stage,
+         so the list is rebuilt on every move rather than fixed at the start. */
+      var here = STAGES[STEP];
+      STAGES = buildStages();
+      var at = STAGES.findIndex(function (x) { return here && x.door === here.door && x.phase === here.phase; });
+      goTo((at > -1 ? at : STEP) + 1);
+    });
+  }
+
   Spine.registerRoom(ROOM_ID);
   Progress.mountHeader(ROOM_ID);
   Progress.mount(ROOM_ID);
@@ -506,9 +707,17 @@
     LedgerRows.use(t.ledgerRows);
     SLAF.ShowMath.mount(t);
     build();
+    wireWalk();
+    /* A person who has answered nothing is walked; a person who has been here
+       before gets back whichever mode they left in. */
+    var saved = SLAF.Prefs.get(MODE_PREF, null);
+    setMode(saved || (Doors.understanding(h(), TABLES, Suggest.suggestions(h(), TABLES), TABLES.confidenceWeights).percent < 25 ? 'walk' : 'all'));
     /* A change anywhere (another tab, undo, a chip) repaints values and
        what applies, never rebuilding a control, never under a finger. */
-    Spine.onChange(function () { paintValues(); paintApplies(); paintSuggestions(); paintBar(); });
+    Spine.onChange(function () {
+      paintValues(); paintApplies(); paintSuggestions(); paintBar();
+      if (MODE === 'walk') paintWalk();
+    });
   });
 })();
 </script>

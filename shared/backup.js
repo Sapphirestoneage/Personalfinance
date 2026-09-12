@@ -26,7 +26,8 @@
      undoAvailable()           { at, count } while a stash exists, else null
      drift()                   stored keys outside the prefixes (dev guard)
      driftGuard()              console.warn those, on a dev host only
-     mount(host)               the widget: two buttons and a status line
+     mount(host)               the widget: the spreadsheet and the printable
+                               page first, then the restore file and its load
 
    WHAT A FILE HOLDS. Each key's stored string, as JSON where it parses
    ({ json: … }) and as text where it does not ({ text: … }), so a file is
@@ -266,9 +267,9 @@
   }
 
   /* ---- The widget --------------------------------------------------------
-     Two buttons and a status line; Undo appears only while a stash exists.
-     Built once (LIVE-FORM: built once): no text input, and the status line
-     is the only thing repainted.                                            */
+     Two readable saves, then the restore file and its load; Undo appears
+     only while a stash exists. Built once (LIVE-FORM: built once): no text
+     input, and the status line is the only thing repainted.                 */
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function shortDate(iso) { var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
   function things(n) { return n + (n === 1 ? ' thing' : ' things'); }
@@ -314,18 +315,55 @@
     var el = typeof host === 'string' ? doc.querySelector(host) : host;
     if (!el) return null;
     var o = opts || {};
+    /* TWO KINDS OF SAVE, and they were not told apart (D-222).
+       "Save a copy" wrote the .json backup, which is the only file that can
+       restore a device, and which opens, when you tap it on a phone, as a
+       screenful of code. Somebody looking for their numbers found braces.
+       So the two are now named for what they are FOR: a spreadsheet you can
+       read and a page you can hand over come first, and the backup file is
+       the quiet one that says, in words, that it is not meant to be read. */
+    var sheetable = !!(slaf().CsvExport && slaf().Reference && slaf().LedgerRows);
     el.className = (el.className ? el.className + ' ' : '') + 'slaf-backup';
-    el.innerHTML = '<span class="slaf-eyebrow">Backup</span>'
-      + '<p class="slaf-backup-lede">Everything this browser holds, as one file. Save it here, load it on the other device. Whichever device you loaded last is the true copy.</p>'
+    el.innerHTML = '<span class="slaf-eyebrow">Save your numbers</span>'
+      + '<p class="slaf-backup-lede">A spreadsheet to read, a page to hand over, or a backup file to move this browser to another device.</p>'
       + '<div class="slaf-backup-acts">'
-      + '<button type="button" class="slaf-btn" data-backup="save">Save a copy</button>'
-      + '<button type="button" class="slaf-btn" data-backup="load">Load a copy</button>'
+      + (sheetable ? '<button type="button" class="slaf-btn slaf-btn--primary" data-backup="sheet">Spreadsheet (.csv)</button>' : '')
+      + '<a class="slaf-btn" data-backup="pdf" href="' + (o.roomsPath || '') + 'one-pager.html">Printable page (PDF)</a>'
+      + '</div>'
+      + (sheetable ? '<p class="slaf-backup-note">The spreadsheet opens in Google Sheets, Excel or Numbers. Every row the app holds, one to a line.</p>' : '')
+      + '<div class="slaf-backup-acts slaf-backup-acts--quiet">'
+      + '<button type="button" class="slaf-btn slaf-btn--quiet" data-backup="save">Backup file (.json)</button>'
+      + '<button type="button" class="slaf-btn slaf-btn--quiet" data-backup="load">Load a backup file</button>'
       + '<button type="button" class="slaf-btn slaf-btn--quiet" data-backup="undo" hidden>Undo last load</button>'
       + '<input type="file" data-backup="file" accept="application/json,.json" hidden aria-label="Choose a backup file"/>'
       + '</div>'
+      + '<p class="slaf-backup-note">The backup file is the only one that can restore a device. It is written for the app, not for a person, so it looks like code. That is fine.</p>'
       + '<p class="slaf-backup-status" data-backup="status" role="status" aria-live="polite"></p>';
     var q = function (name) { return el.querySelector('[data-backup="' + name + '"]'); };
     var status = q('status'), undoBtn = q('undo'), file = q('file');
+
+    /* The spreadsheet. Same text shared/csvexport.js writes for Your Data,
+       so one reader brings it back in (D-220, D-221) and the two saves can
+       never drift into two formats. */
+    var sheetBtn = q('sheet');
+    if (sheetBtn) sheetBtn.addEventListener('click', function () {
+      var S = slaf();
+      if (!keys().length) { say('Nothing to save yet: this browser holds no figures.', 'is-error'); return; }
+      say('Building the sheet…');
+      S.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights']).then(function (t) {
+        S.LedgerRows.use(t.ledgerRows);
+        var text = S.CsvExport.single(S.Spine.getProfile(), t);
+        var name = S.CsvExport.filename(S.Schema.localDay());
+        var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = doc.createElement('a');
+        a.href = url; a.download = name;
+        doc.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        noteExport();
+        say('Saved ' + name + '. Open it in Google Sheets, Excel or Numbers.', 'is-good');
+      }).catch(function (err) { say('Could not build the sheet: ' + (err && err.message ? err.message : err), 'is-error'); });
+    });
     function say(text, cls) { status.textContent = text || ''; status.className = 'slaf-backup-status' + (cls ? ' ' + cls : ''); }
     function reload() { if (o.reload === false) return; try { g().location.reload(); } catch (e) { /* fine */ } }
     function paintUndo() {
@@ -348,7 +386,7 @@
         doc.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
         noteExport();
-        say('Saved ' + name + ' (' + things(n) + '). Keep it where you keep a bank statement.', 'is-good');
+        say('Saved ' + name + ' (' + things(n) + '). It is the restore file, not a readable one. Keep it where you keep a bank statement.', 'is-good');
       } catch (e) { say('This browser would not hand over the file: ' + (e && e.message ? e.message : e), 'is-error'); }
     });
     q('load').addEventListener('click', function () { file.value = ''; file.click(); });

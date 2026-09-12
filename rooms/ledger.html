@@ -83,20 +83,30 @@
   .target-wrap { position: static; border-bottom: 0; }
   .understand { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); }
   .understand b { color: var(--color-text); font-family: var(--font-display); font-weight: 500; }
-  .doors { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
-  .door { display: block; text-decoration: none; color: inherit; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); min-height: 150px; position: relative; }
+  /* THE DOOR CARD (D-222). Every line in it was an inline <span> with no
+     display of its own, so the letter, the label, the "what you owe", the
+     figure and its caption ran together into one paragraph of collided text
+     ("DDebtwhat you owes$21,600total owed"), and the ring in the corner sat
+     on top of whatever reflowed under it. Each part is now its own line, the
+     ring has a column reserved for it rather than floating over the words,
+     and the card is a flex column so the figure sits at the bottom whatever
+     the label's length. */
+  .doors { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-3); }
+  .door { display: flex; flex-direction: column; text-decoration: none; color: inherit; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); min-height: 150px; }
   .door:hover { border-color: var(--color-border-active); }
   .door.is-recommended { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent) inset; }
-  .door .letter { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-accent-hover); }
-  .door .label { font-family: var(--font-display); font-size: var(--text-md); margin-top: 2px; }
-  .door .say { font-size: var(--text-xs); color: var(--color-text-faint); }
-  .door .num { font-family: var(--font-display); font-size: var(--text-lg); margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
+  /* The ring and its count are a row of their own at the top, beside the
+     letter, so nothing has to dodge an absolutely positioned circle. */
+  .door .doorcount { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); margin-bottom: var(--space-2); }
+  .door .ring { width: 32px; height: 32px; flex: 0 0 auto; }
+  .door .ringlab { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  .door .letter { display: block; font-family: var(--font-display); font-size: var(--text-xl); line-height: 1; color: var(--color-accent-hover); }
+  .door .label { display: block; font-family: var(--font-display); font-size: var(--text-md); line-height: var(--leading-tight); margin-top: var(--space-1); }
+  .door .say { display: block; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); margin-top: 2px; }
+  .door .num { display: block; font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--leading-tight); margin-top: auto; padding-top: var(--space-3); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .door .num.is-blank { color: var(--color-text-faint); font-size: var(--text-sm); font-style: italic; }
-  .door .numlab { font-size: var(--text-xs); color: var(--color-text-faint); }
-  .door .ring { position: absolute; top: var(--space-3); right: var(--space-3); width: 36px; height: 36px; }
-  .door .ring text { font-size: 9px; fill: var(--color-text-muted); font-family: var(--font-display); }
-  .door .ringlab { position: absolute; right: var(--space-3); top: 52px; font-size: 9px; color: var(--color-text-faint); text-align: center; width: 36px; }
-  .door .why { font-size: var(--text-xs); color: var(--color-accent-hover); margin-top: var(--space-2); line-height: 1.4; }
+  .door .numlab { display: block; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); }
+  .door .why { display: block; font-size: var(--text-xs); color: var(--color-accent-hover); margin-top: var(--space-2); line-height: var(--leading-normal); }
   .door-open { margin-top: var(--space-3); }
   .door-open .head { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
   .door-open .head h2 { font-family: var(--font-display); font-size: var(--text-xl); margin: 0; }
@@ -192,6 +202,10 @@
 <script src="../shared/ledger-rows.js"></script>
 <script src="../shared/spheres.js"></script>
 <script src="../shared/backup.js"></script>
+<!-- The spreadsheet save in the backup widget: the same CSV Your Data writes
+     and reads, so there is one format, not two. D-222. -->
+<script src="../shared/csv.js"></script>
+<script src="../shared/csvexport.js"></script>
 <script src="../engines/tax.js"></script>
 <script src="../shared/suggest.js"></script>
 <script src="../engines/statement.js"></script>
@@ -366,7 +380,8 @@
     var r = 15, c = 2 * Math.PI * r, share = total ? known / total : 0;
     return '<svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="' + r + '" fill="none" stroke="var(--color-border)" stroke-width="3"/>'
       + '<circle cx="18" cy="18" r="' + r + '" fill="none" stroke="var(--color-accent)" stroke-width="3" stroke-dasharray="' + (c * share).toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 18 18)"/>'
-      + '<text x="18" y="21" text-anchor="middle">' + known + '</text></svg>';
+      + '</svg>';   /* the count is written beside the ring, not inside it: at
+                         36px the two collided and neither could be read. D-222 */
   }
   function paintHome(h) {
     var rec = Doors.recommend(h, TABLES, SUGLIST);
@@ -375,8 +390,11 @@
       var hl = Doors.headline(h, TABLES, d.id);
       var isRec = rec.door === d.id;
       return '<a class="door' + (isRec ? ' is-recommended' : '') + '" href="#door-' + esc(d.id) + '" data-door="' + esc(d.id) + '">'
-        + ring(c.known, c.total) + '<span class="ringlab">' + c.known + ' of ' + c.total + '</span>'
-        + '<span class="letter">' + esc(d.letter) + '</span><span class="label">' + esc(d.label) + '</span><span class="say">' + esc(d.say) + '</span>'
+        + '<span class="doorcount">' + ring(c.known, c.total) + '<span class="ringlab">' + c.known + ' of ' + c.total + '</span></span>'
+        /* The You door's letter and label are both the word "You", so it read
+           as "YouYou". One of them is enough. D-222. */
+        + (d.letter === d.label ? '' : '<span class="letter">' + esc(d.letter) + '</span>')
+        + '<span class="label">' + esc(d.label) + '</span><span class="say">' + esc(d.say) + '</span>'
         + '<span class="num' + (hl.display === 'not entered yet' ? ' is-blank' : '') + '">' + esc(hl.display) + '</span><span class="numlab">' + esc(hl.label) + '</span>'
         + (isRec ? '<span class="why">' + esc(rec.reason) + '</span>' : '')
         + '</a>';

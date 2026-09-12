@@ -18,8 +18,8 @@
              (take-home, the ratios, the piles by tax type, the FI number).
   2. WRITES  Nothing. The audience, the version and the section switches
              are this page's state.
-  3. CALLS   engines/onepager.js. The Private file is the same shape Your
-             Data imports (a coach's intake); the Public text is checked
+  3. CALLS   engines/onepager.js. The page saves as a spreadsheet, Private or
+             Public, one row a line (D-222); the Public text is checked
              against the share-card leak rule.
   4. EMPTY   A figure nobody typed is a blank row, never $0.
   5. CONFIG  None beyond the tables the engines read.
@@ -54,7 +54,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>The One-Pager</h1>
-  <p class="room-lede">One page of your money for any conversation. Private carries the full numbers for someone you trust; Public carries ratios, percentages and time only, so nothing about the size of your life leaves the page.</p>
+  <p class="room-lede">One page of your money, for any conversation. Private carries the full numbers. Public carries ratios and time only, so the size of your life never leaves the page.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -70,8 +70,8 @@
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">Switch any section on or off:</p>
     <div class="row-controls" id="sec-choices"></div>
     <div class="row-controls" style="margin-top:var(--space-3)">
-      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-print">Print</button>
-      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-file">Download the Private file</button>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-print">Save as PDF, or print</button>
+      <button type="button" class="slaf-btn" id="btn-sheet">Save as a spreadsheet</button>
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-copy">Copy as text</button>
     </div>
     <p class="slaf-hint" id="file-note" style="margin:var(--space-2) 0 0"></p>
@@ -96,6 +96,7 @@
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
+<script src="../shared/csv.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/selfemployed.js"></script>
@@ -136,7 +137,6 @@
     }).join('') || '<p class="slaf-hint">Nothing to show for this audience yet.</p>';
     el('op-stamp').textContent = 'From SPARKS, ' + r.at + '. ' + (VER === 'public' ? 'Public version: ratios, percentages and time only; no dollar figure appears.' : 'Private version: full numbers, for someone you trust.');
     el('op-page').setAttribute('data-version', VER);
-    el('btn-file').hidden = VER !== 'private';
   }
   document.addEventListener('click', function (evt) {
     var a = evt.target.closest('[data-aud]'), v = evt.target.closest('[data-version]'), s = evt.target.closest('[data-sec]');
@@ -145,20 +145,46 @@
     if (s) { var id = s.getAttribute('data-sec'); SEC[id] = s.getAttribute('aria-pressed') !== 'true'; }
     if (a || v || s) render();
   });
-  el('btn-print').addEventListener('click', function () { window.print(); });
+  el('btn-print').addEventListener('click', function () {
+    /* No PDF library on a no-build static site, and none is needed: every
+       browser's print dialog has "Save as PDF" (on a phone it is the first
+       destination in the list). The print stylesheet already drops the nav,
+       the undo pair and these buttons, so what lands on the page is the
+       page. The hint says where to look, because "Print" alone is why
+       somebody looking for a PDF never pressed it. D-222. */
+    el('file-note').textContent = 'In the dialog, choose “Save as PDF” as the destination.';
+    window.print();
+  });
   el('btn-copy').addEventListener('click', function () {
     var r = OnePager.build(Spine.getProfile(), TABLES, { audience: AUD, version: VER, sections: SEC });
     var text = OnePager.text(r);
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { el('file-note').textContent = 'Copied as text.'; }, function () { el('file-note').textContent = 'Could not copy; select the page and copy it.'; });
     else el('file-note').textContent = 'Copy is not available here; select the page and copy it.';
   });
-  el('btn-file').addEventListener('click', function () {
-    /* The Private file is the same shape Your Data imports: a coach opens it as a client intake. */
-    var obj = Spine.exportObject();
-    var r = OnePager.build(Spine.getProfile(), TABLES, { audience: AUD, version: 'private', sections: SEC });
-    obj.onePager = { audience: AUD, at: r.at, sections: r.value.map(function (s) { return { id: s.id, title: s.title, rows: s.rows.map(function (x) { return { label: x.label, value: x.blank ? null : x.text, status: x.blank ? 'not entered' : 'entered' }; }) }; }) };
-    RoomExport.download('one-pager-private-' + r.at + '.json', JSON.stringify(obj, null, 2), 'application/json');
-    el('file-note').textContent = 'Downloaded. Whoever you hand it to can open it in Your Data as an intake; it holds your full numbers, so hand it only to someone you trust.';
+  /* This used to hand over a .json file, which opens as a wall of code in
+     whatever the phone picks to show it — nobody can read it and no
+     spreadsheet will take it. The same page, as a sheet: one row a line,
+     a section column so it still groups, and a blank left blank rather than
+     turned into a zero. Google Sheets, Excel and Numbers all open it by
+     double-clicking. D-222. */
+  function csvCell(v) {
+    var t = String(v === null || v === undefined ? '' : v);
+    return /[",\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+  }
+  el('btn-sheet').addEventListener('click', function () {
+    var r = OnePager.build(Spine.getProfile(), TABLES, { audience: AUD, version: VER, sections: SEC });
+    var lines = [['section', 'line', 'value', 'note'].join(',')];
+    r.value.forEach(function (sec) {
+      sec.rows.forEach(function (x) {
+        lines.push([sec.title, x.label, x.blank ? '' : x.text, x.blank ? 'not entered' : (x.note || '')].map(csvCell).join(','));
+      });
+    });
+    var name = 'one-pager-' + VER + '-' + r.at + '.csv';
+    /* The BOM is what makes Excel read the £ and the em dash as written. */
+    RoomExport.download(name, SLAF.Csv.BOM + lines.join('\r\n') + '\r\n', 'text/csv');
+    el('file-note').textContent = VER === 'private'
+      ? 'Saved ' + name + '. It opens in Google Sheets or Excel and holds your full numbers, so hand it only to someone you trust.'
+      : 'Saved ' + name + '. It opens in Google Sheets or Excel and carries ratios and time only, no dollar figure.';
   });
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
