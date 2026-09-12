@@ -14,11 +14,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Unit, D&D, export
+      - name: Unit, D&D, export, spreadsheet
         run: |
           node test/run.js
           node dnd/test/run.js
           node test/export.js
+          node test/xlsx.js
       - name: Lane 2 (corpus, properties, data, glossary, migration, QR)
         working-directory: tests
         run: |

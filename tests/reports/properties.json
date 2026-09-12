@@ -587,6 +587,18 @@
           "seed": 20260910
         },
         {
+          "name": "a workbook of any household opens as a zip, and its rows read back as the text the sheet shows",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a workbook read into rows plans exactly as the same rows in a CSV would",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
           "name": "the bank importer and the sheet importer read one file the same way, through the one reader",
           "ok": true,
           "numRuns": 100,
@@ -3080,6 +3092,6 @@
       ]
     }
   ],
-  "totalProperties": 390,
+  "totalProperties": 392,
   "failedProperties": 7
 }

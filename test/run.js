@@ -12824,7 +12824,7 @@ section('G3: hostile files, the policy, attribution, January 1, the error log, t
   check('seven entries in the central directory', zip[zip.length - 12] + zip[zip.length - 11] * 256, 7);
   check('CRC-32 of a known string', Csv.crc32(new TextEncoder().encode('123456789')).toString(16), 'cbf43926');
   const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
-  checkTrue('Your Data offers the spreadsheet zip and the whole app, with the honest note about a local server', /btn-sheet/.test(dataHtml) && /archive\/refs\/heads\/main\.zip/.test(dataHtml) && /python3 -m http\.server/.test(dataHtml) && /Your numbers are not in the zip/.test(dataHtml));
+  checkTrue('Your Data offers the spreadsheet and the whole app, with the honest note about a local server', /btn-xlsx/.test(dataHtml) && /archive\/refs\/heads\/main\.zip/.test(dataHtml) && /python3 -m http\.server/.test(dataHtml) && /Your numbers are not in the zip/.test(dataHtml));
 })();
 
 /* ==========================================================================

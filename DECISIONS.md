@@ -13515,6 +13515,50 @@ features, forms and XSS gates on Your Data, and a phone walk: download,
 re-save the file as another locale's Excel would, bring it back, apply,
 undo.
 
+## D-222 — The file that leaves is a spreadsheet, not code
+
+**Why.** The owner opened a download and saw code. Every way out of the app
+handed over a text file: the backup is JSON, the sheet was a CSV, and the
+"spreadsheet" was a zip of more CSVs. Tapped on a phone, or opened without
+Excel, all three are lines of text.
+
+**Decision.** Your Data now leads with **Download the spreadsheet**: a real
+`.xlsx` built by `shared/xlsx.js` from the same Ledger rows, with a tab a
+door (Debt, Assets, Income, Taxes, Expenses, You) and a page of notes, money
+in money cells, a percent in a percent cell, a date in a date cell, headings
+in words (What it is · Which one · Your number · In · How sure · Last checked
+· Came from), the heading row frozen and filterable, and the two ids the app
+needs to put a line back kept last, narrow and grey. The plain CSV stays as
+the second button for anyone who wants text. Bringing a file back takes
+either: `CsvExport.fromFile()` reads a workbook or a CSV and hands the same
+planner the same rows, and a cell's own number format settles what it means,
+so a percent cell comes back "24.99%" and a date cell "2026-06-03" with no
+guess. Each line is named by its tab and row. `shared/zipfile.js` is the one
+zip writer and reader (inflating through the browser's own
+DecompressionStream, or node's zlib), so the workbook and the CSV zip share
+it. Applying now checks its own work: a value the app did not keep is named
+back, and a total the accounts make is counted when the file disagrees with
+it.
+
+**Replaces or removes.** The zip of one CSV a door goes: the workbook has a
+tab a door and a notes page, which is the same thing in one file that opens.
+`shared/csvexport.js` loses its own zip writer to `shared/zipfile.js`. One
+button fewer in Your Data.
+
+**Stored shape.** No change to `slaf.household.v2`. The file on the way out
+is new; every older CSV still reads, and the workbook carries the same
+columns under friendlier names, mapped back on the way in.
+
+**Verified.** `node test/xlsx.js` (new: the workbook's parts, its formats,
+a frozen heading, the round trip with nothing changed, and the same file
+re-saved the way every other spreadsheet writes one — every part compressed,
+its strings shared, a debt typed at the bottom with no ids — read and
+applied, then taken back by one undo), `node test/run.js`, `node
+dnd/test/run.js`, `node test/export.js`, `node test/jan1.js`, `cd tests &&
+npm test` (two more properties), the render, features, forms and XSS gates,
+and a phone walk that downloads the file, opens it in a real spreadsheet
+program, edits three cells there, brings it back, applies and undoes.
+
 ---
 
 # The Dungeons & Dividends entries

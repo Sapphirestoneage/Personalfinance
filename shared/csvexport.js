@@ -36,15 +36,16 @@
   var deps;
   if (typeof module === 'object' && module.exports) {
     deps = { Money: require('./money.js'), Schema: require('./schema.js'), LedgerRows: require('./ledger-rows.js'), Doors: require('./doors.js'), Csv: require('./csv.js'),
+      Xlsx: require('./xlsx.js'), Zipfile: require('./zipfile.js'),
       Ownership: (function () { try { return require('./ownership.js'); } catch (e) { return null; } })() };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, LedgerRows: S.LedgerRows, Doors: S.Doors, Csv: S.Csv, Ownership: S.Ownership };
+    deps = { Money: S.Money, Schema: S.Schema, LedgerRows: S.LedgerRows, Doors: S.Doors, Csv: S.Csv, Xlsx: S.Xlsx, Zipfile: S.Zipfile, Ownership: S.Ownership };
   }
-  var api = factory(deps.Money, deps.Schema, deps.LedgerRows, deps.Doors, deps.Csv, deps.Ownership);
+  var api = factory(deps.Money, deps.Schema, deps.LedgerRows, deps.Doors, deps.Csv, deps.Xlsx, deps.Zipfile, deps.Ownership);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.CsvExport = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, LedgerRows, Doors, Csv, Ownership) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, LedgerRows, Doors, Csv, Xlsx, Zipfile, Ownership) {
   'use strict';
   var COLUMNS = ['door', 'level', 'row', 'label', 'item', 'value', 'unit', 'state', 'as_of', 'source', 'item_id'];
   var UNIT_WORDS = { cents: 'dollars, to the cent', rate: 'percent (24.99 means 24.99%)', percent: 'percent', months: 'months', years: 'years', count: 'a count', bool: 'yes or no', enum: 'one of the row’s choices', text: 'text', date: 'a date, YYYY-MM-DD', formula: 'match: percent of the first percent of pay' };
@@ -95,7 +96,7 @@
     return out;
   }
   function line(r, it, v, st, meta, h, ns) {
-    return { door: r.door, level: r.level, row: r.id, label: r.label, item: itemName(it), value: valueText(r, v), unit: r.unit, state: stateWord(st, ns),
+    return { raw: v === undefined ? null : v, kind: r.kind, door: r.door, level: r.level, row: r.id, label: r.label, item: itemName(it), value: valueText(r, v), unit: r.unit, state: stateWord(st, ns),
       as_of: st === 'missing' || st === 'notSure' ? '' : (meta.asOf ? String(meta.asOf).slice(0, 10) : ''), source: st === 'missing' || st === 'notSure' ? '' : (meta.source || ''), item_id: it ? (it.id || '') : '' };
   }
   /* The byte-order mark up front is what makes Excel read the file as UTF-8
@@ -109,9 +110,16 @@
     label: ['label', 'name', 'question', 'row_label', 'title', 'what'],
     item: ['item', 'account', 'debt', 'which', 'item_name', 'line', 'for'],
     value: ['value', 'amount', 'new', 'new_value', 'number', 'entered', 'answer'],
-    item_id: ['item_id', 'itemid', 'item_key']
+    item_id: ['item_id', 'itemid', 'item_key'],
+    /* the workbook's own headings (D-222) */
+    unit: ['unit', 'in'],
+    state: ['state', 'how_sure'],
+    as_of: ['as_of', 'last_checked'],
+    source: ['source', 'came_from']
   };
+  var FRIENDLY = { what_it_is: 'label', which_one: 'item', your_number: 'value', row_id: 'row', item_id: 'item_id' };
   function canonical(key) {
+    if (FRIENDLY[key]) return FRIENDLY[key];
     var ks = Object.keys(HEADER_ALIASES);
     for (var i = 0; i < ks.length; i++) if (HEADER_ALIASES[ks[i]].indexOf(key) > -1) return ks[i];
     return key;
@@ -158,33 +166,10 @@
     return out;
   }
 
-  /* ---- A store-only zip (no compression), enough for any spreadsheet ---- */
-  var CRC_TABLE = (function () { var t = [], c; for (var n = 0; n < 256; n++) { c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
-  function crc32(bytes) { var c = 0xFFFFFFFF; for (var i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
-  function utf8(s) {
-    if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(s);
-    return new Uint8Array(Buffer.from(s, 'utf8'));
-  }
-  function le16(v) { return [v & 0xFF, (v >>> 8) & 0xFF]; }
-  function le32(v) { return [v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF]; }
-  function dosTime(d) { return ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF; }
-  function dosDate(d) { return (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF; }
-  function zip(fileMap, now) {
-    var d = now || new Date();
-    var parts = [], central = [], offset = 0;
-    Object.keys(fileMap).forEach(function (name) {
-      var data = utf8(fileMap[name]), nm = utf8(name), crc = crc32(data);
-      var head = [].concat([0x50, 0x4B, 0x03, 0x04], le16(20), le16(0x0800), le16(0), le16(dosTime(d)), le16(dosDate(d)), le32(crc), le32(data.length), le32(data.length), le16(nm.length), le16(0));
-      parts.push(new Uint8Array(head), nm, data);
-      central.push(new Uint8Array([].concat([0x50, 0x4B, 0x01, 0x02], le16(20), le16(20), le16(0x0800), le16(0), le16(dosTime(d)), le16(dosDate(d)), le32(crc), le32(data.length), le32(data.length), le16(nm.length), le16(0), le16(0), le16(0), le16(0), le32(0), le32(offset))), nm);
-      offset += head.length + nm.length + data.length;
-    });
-    var cdSize = central.reduce(function (n, p) { return n + p.length; }, 0);
-    var end = new Uint8Array([].concat([0x50, 0x4B, 0x05, 0x06], le16(0), le16(0), le16(central.length / 2), le16(central.length / 2), le32(cdSize), le32(offset), le16(0)));
-    var total = offset + cdSize + end.length, out = new Uint8Array(total), pos = 0;
-    parts.concat(central, [end]).forEach(function (p) { out.set(p, pos); pos += p.length; });
-    return out;
-  }
+  /* One zip writer for the app (shared/zipfile.js): the doors zip and the
+     workbook are both zips, so there is one of them, not two. */
+  function zip(fileMap, now) { return Zipfile.write(fileMap, now); }
+  function crc32(bytes) { return Zipfile.crc32(bytes); }
 
   /* ---- One CSV out, and the same CSV back in (D-220, D-221) ----------------- */
   function single(household, tables) { return csv(rows(household, tables)); }
@@ -475,7 +460,7 @@
     var pre = lines.map(function (l, i) {
       var found = findRow(idx, l.row, l.label);
       var r = found.row;
-      var e = { n: i + 1, line: l._n, row: r ? r.id : null, label: r ? r.label : (l.label || l.row || ''), item: l.item || '', itemId: null, unit: r ? r.unit : null, text: l.value === undefined ? '' : l.value, value: null, before: '', after: '', status: 'unknown', why: null, warn: null, room: r && fieldOf(r.id) ? fieldOf(r.id).owner : null, create: null };
+      var e = { n: i + 1, line: l.sheet_row || l._n, row: r ? r.id : null, label: r ? r.label : (l.label || l.row || ''), item: l.item || '', itemId: null, unit: r ? r.unit : null, text: l.value === undefined ? '' : l.value, value: null, before: '', after: '', status: 'unknown', why: null, warn: null, room: r && fieldOf(r.id) ? fieldOf(r.id).owner : null, create: null };
       if (!r) { e.why = 'no row called that' + (found.near ? '; did you mean "' + found.near + '"?' : ''); return { e: e, r: null, l: l }; }
       if (found.how === 'near') e.warn = 'read as the row "' + r.label + '"';
       var want = norm(l.item), it = null, dup = false;
@@ -565,9 +550,13 @@
       }
       return e;
     });
-    var counts = {}, problems = 0;
-    entries.forEach(function (e) { counts[e.status] = (counts[e.status] || 0) + 1; if (PROBLEM[e.status]) problems++; });
-    out.entries = entries; out.counts = counts; out.problems = problems;
+    var counts = {}, problems = 0, conflicts = 0;
+    entries.forEach(function (e) {
+      counts[e.status] = (counts[e.status] || 0) + 1;
+      if (PROBLEM[e.status]) problems++;
+      if (e.status === 'covered' && /do not come to/.test(e.why || '')) conflicts++;
+    });
+    out.entries = entries; out.counts = counts; out.problems = problems; out.conflicts = conflicts; out.tables = tables;
     if (!entries.length) out.problem = 'empty';
     return out;
   }
@@ -586,9 +575,12 @@
     return null;
   }
   /**
-   * apply(plan, Spine) → { applied, added, failed: [{ n, line, label, item, why }], total }
+   * apply(plan, Spine) → { applied, added, failed, notKept, total }
    * Every 'change' and 'add' line, each through its owner, in one undo batch.
-   * A line whose owner refuses it is reported, and the rest still land.
+   * A line whose owner refuses it is reported, and the rest still land. So is
+   * a line the app did not keep: a row it does not ask as things stand (the
+   * employer match, once the sheet says you are self-employed) takes a value
+   * and drops it, and saying so beats showing it as a change for ever.
    */
   function apply(planned, Spine) {
     if (!Ownership || !Ownership.write) throw new Error('CsvExport.apply needs shared/ownership.js');
@@ -615,9 +607,100 @@
       });
     };
     if (Spine && typeof Spine.batch === 'function') Spine.batch('CSV import: ' + todo.length + ' line' + (todo.length === 1 ? '' : 's'), run); else run();
-    return { applied: applied, added: added, failed: failed, total: todo.length };
+    var notKept = [];
+    if (planned && planned.tables && Spine && typeof Spine.getProfile === 'function') {
+      var after = {};
+      rows(Spine.getProfile(), planned.tables).forEach(function (x) { after[x.row + '|' + norm(x.item)] = x.value; });
+      todo.forEach(function (e) {
+        if (failed.some(function (f) { return f.n === e.n; })) return;
+        var r = LedgerRows.byId(e.row);
+        if (!r) return;
+        var key = e.row + '|' + norm(e.item);
+        if (!(key in after) || after[key] !== valueText(r, e.value)) notKept.push({ n: e.n, line: e.line, label: e.label, item: e.item, why: key in after ? 'the app worked out a different number from the rest' : 'not a question for you as things stand' });
+      });
+    }
+    return { applied: applied, added: added, failed: failed, notKept: notKept, total: todo.length };
+  }
+
+  /* ---- A real spreadsheet, not a text file (D-222) --------------------------
+     One tab a door, money in money cells, a percent in a percent cell, a date
+     in a date cell, the headings in words, and the two ids the app needs to
+     put a line back where it came from kept at the end, narrow and grey. */
+  var SHEET_COLUMNS = [
+    { header: 'What it is', key: 'label', width: 42 },
+    { header: 'Which one', key: 'item', width: 22 },
+    { header: 'Your number', key: 'value', width: 16 },
+    { header: 'In', key: 'unit', width: 12 },
+    { header: 'How sure', key: 'state', width: 14 },
+    { header: 'Last checked', key: 'as_of', width: 13 },
+    { header: 'Came from', key: 'source', width: 12 },
+    { header: 'row id', key: 'row', width: 18 },
+    { header: 'item id', key: 'item_id', width: 14 }
+  ];
+  var UNIT_IN = { cents: 'dollars', rate: 'a percent', percent: 'a percent', months: 'months', years: 'years', count: 'a number', bool: 'yes or no', enum: 'a choice', text: 'text', date: 'a date', formula: 'words' };
+  /** The value cell for one line: a number where it is a number. */
+  function sheetCell(l, tables) {
+    var row = LedgerRows.byId(l.row) || { id: l.row, unit: l.unit };
+    if (l.raw === null || l.raw === undefined || l.value === '') return '';
+    if (l.unit === 'cents') return { v: Math.round(l.raw) / 100, kind: 'money' };
+    if (l.unit === 'rate' || l.unit === 'percent') return { v: wholePercent(row) ? l.raw / 100 : l.raw, kind: 'percent' };
+    if (l.unit === 'months' || l.unit === 'years' || l.unit === 'count') return { v: l.raw, kind: 'number' };
+    if (l.unit === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(String(l.raw))) return { v: l.raw, kind: 'date' };
+    return { v: shown(row, l.raw, tables) || l.value, kind: 'text' };
+  }
+  function sheetRow(l, tables) {
+    return SHEET_COLUMNS.map(function (c) {
+      if (c.key === 'value') return sheetCell(l, tables);
+      if (c.key === 'unit') return UNIT_IN[l.unit] || l.unit;
+      if (c.key === 'row' || c.key === 'item_id') return { v: l[c.key], kind: 'note' };
+      return l[c.key];
+    });
+  }
+  /** build(h, tables) → a workbook, one tab a door plus a page of notes. */
+  function workbook(household, tables, opts) {
+    if (!Xlsx) throw new Error('CsvExport.workbook needs shared/xlsx.js');
+    var all = rows(household, tables);
+    var sheets = Doors.DOORS.map(function (d) {
+      var mine = all.filter(function (l) { return l.door === d.id; });
+      return { name: d.label, columns: SHEET_COLUMNS, rows: mine.map(function (l) { return sheetRow(l, tables); }) };
+    }).filter(function (s) { return s.rows.length; });
+    sheets.push({
+      name: 'How to use this',
+      columns: [{ header: 'Money Rooms — your numbers, on one sheet a door', width: 110 }],
+      rows: readme(household, tables).split('\n').map(function (t) { return [t]; })
+    });
+    return Xlsx.build(sheets, { title: 'Money Rooms', day: Schema.localDay(), now: opts && opts.now });
+  }
+  function workbookName(day) { return 'money-rooms-' + day + '.xlsx'; }
+  /** The sheets a workbook was read into, as the one text the planner reads. */
+  function fromWorkbook(sheets) {
+    var head = ['row', 'label', 'item', 'value', 'item_id', 'sheet_row'];
+    var out = [head.join(',')];
+    (sheets || []).forEach(function (sheet) {
+      var body = (sheet.rows || []).slice();
+      var header = body.shift() || [];
+      var keys = header.map(function (k) { return canonical(Csv.headerKey(k)); });
+      if (keys.indexOf('value') < 0 || (keys.indexOf('row') < 0 && keys.indexOf('label') < 0)) return;
+      body.forEach(function (cells, i) {
+        if (!cells.some(function (c) { return String(c || '').trim() !== ''; })) return;
+        var rec = {};
+        keys.forEach(function (k, j) { if (k && !(k in rec)) rec[k] = cells[j] === undefined ? '' : cells[j]; });
+        rec.sheet_row = sheet.name + ', row ' + (i + 2);
+        out.push(head.map(function (k) { return Csv.cell(rec[k] === undefined ? '' : rec[k]); }).join(','));
+      });
+    });
+    return out.join('\r\n') + '\r\n';
+  }
+  /** A file chosen in Your Data, whatever it is → the text the planner reads. */
+  function fromFile(bytes) {
+    if (Zipfile && Zipfile.isZip(bytes)) {
+      if (!Xlsx) return Promise.reject(new Error('this build cannot read a workbook'));
+      return Xlsx.read(bytes).then(function (sheets) { return fromWorkbook(sheets); });
+    }
+    return Promise.resolve(Zipfile ? Zipfile.text(bytes) : String(bytes));
   }
 
   return { rows: rows, files: files, csv: csv, parse: parse, readme: readme, zip: zip, crc32: crc32, dollars: dollars, COLUMNS: COLUMNS, UNIT_WORDS: UNIT_WORDS,
+    workbook: workbook, workbookName: workbookName, fromWorkbook: fromWorkbook, fromFile: fromFile, SHEET_COLUMNS: SHEET_COLUMNS,
     single: single, filename: filename, read: read, fromText: fromText, shown: shown, plan: plan, apply: apply, signature: signature, valueText: valueText, norm: norm, findRow: findRow, rowIndex: rowIndex, enumChoices: enumChoices, CREATOR: CREATOR };
 });

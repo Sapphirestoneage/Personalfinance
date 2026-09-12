@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-12 03:55Z"/>
+<meta name="slaf-build" content="2026-09-12 07:54Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Your Data · SPARKS</title>
@@ -80,7 +80,7 @@
   <section class="slaf-card" id="out">
     <span class="slaf-eyebrow">Take it with you</span>
     <h2 style="margin:var(--space-2) 0 0">A file, or a link</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">There is no account and no server. On a phone, <strong>Send</strong> opens the share sheet with your numbers as a small file: mail it to yourself, message it, drop it in a drive, then load it on the other device. A share link works too, though it is long, and most chat apps cut it off.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">There is no account and no server. On a phone, <strong>Send</strong> opens the share sheet with your numbers as a small file: mail it to yourself, message it, drop it in a drive, then load it on the other device. A share link works too, though it is long, and most chat apps cut it off. This file is the whole backup, written for the app to read back, not for you: the one made to be read is the spreadsheet below.</p>
     <div class="data-actions">
       <button type="button" class="slaf-btn slaf-btn--primary" id="btn-send" hidden>Send to another device…</button>
       <button type="button" class="slaf-btn" id="btn-export">Download a file</button>
@@ -121,18 +121,18 @@
   <section class="slaf-card card-gap" id="sheet">
     <span class="slaf-eyebrow">Mint-proof</span>
     <h2 style="margin:var(--space-2) 0 0">A spreadsheet, and the app itself</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Nothing here can be taken away. Every row the Ledger holds as one CSV per door (D, A, I, T, E, you) with a readme naming every column and its unit, in one zip; a blank stays blank and "not sure yet" is words, never a zero. The code is public too: the whole app comes down as a folder.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Nothing here can be taken away. <strong>Download the spreadsheet</strong> gives an Excel file that opens as a sheet in Excel, Numbers or Google Sheets: a tab a door (Debt, Assets, Income, Taxes, Expenses, You), money in money cells, a percent as a percent, a date as a date, headings in words. A blank stays blank and "not sure yet" is words, never a zero. The code is public too: the whole app comes down as a folder.</p>
     <div class="data-actions">
-      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-csv">Download one CSV</button>
-      <button type="button" class="slaf-btn" id="btn-sheet">Download the spreadsheet zip</button>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-xlsx">Download the spreadsheet</button>
+      <button type="button" class="slaf-btn" id="btn-csv">Plain text instead (CSV)</button>
       <a class="slaf-btn" id="btn-app" href="https://github.com/sapphirestoneage/Personalfinance/archive/refs/heads/main.zip" download>Download the whole app</a>
     </div>
     <p class="data-note" id="sheet-note" hidden></p>
-    <h3 style="margin:var(--space-4) 0 0">Bring a CSV back in</h3>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The same CSV, edited in any spreadsheet, comes back here: each line goes to the row it names (by the row column, or by its label) and, for an account, a debt or a source of pay, to the item with that name. Sort it, add lines, write numbers any way you like ($1,234.56, 24.99%, 6/3/2026, yes): every line is shown, with what it would do, before anything saves. A blank cell leaves the row as it is; nothing becomes a zero. One undo takes the whole lot back.</p>
+    <h3 style="margin:var(--space-4) 0 0">Bring the sheet back in</h3>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The same file, edited anywhere, comes back here: an Excel file or a CSV, either way. Each line goes to the row it names and, for an account, a debt or a source of pay, to the one with that name. Sort it, add lines, write numbers any way you like ($1,234.56, 24.99%, 6/3/2026, yes): every line is shown, with what it would do, before anything saves. A blank cell leaves the row as it is; nothing becomes a zero. One undo takes the whole lot back.</p>
     <div class="data-actions">
-      <label class="slaf-btn" for="csv-file" style="cursor:pointer">Choose a CSV…</label>
-      <input type="file" id="csv-file" accept=".csv,text/csv" hidden/>
+      <label class="slaf-btn" for="csv-file" style="cursor:pointer">Choose a file…</label>
+      <input type="file" id="csv-file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden/>
     </div>
     <p class="tally" id="csv-tally" hidden></p>
     <div id="csv-preview" style="overflow-x:auto"></div>
@@ -222,6 +222,8 @@
 <script src="../shared/ledger-rows.js"></script>
 <script src="../shared/doors.js"></script>
 <script src="../shared/csv.js"></script>
+<script src="../shared/zipfile.js"></script>
+<script src="../shared/xlsx.js"></script>
 <script src="../shared/csvexport.js"></script>
 <script src="../engines/bankcsv.js"></script>
 <script>
@@ -331,18 +333,30 @@
   });
   el('btn-bank-cancel').addEventListener('click', function () { BANK = { parsed: null, map: null, lines: [] }; el('bank-map').hidden = true; el('bank-preview').innerHTML = ''; el('bank-tally').hidden = true; el('bank-actions').hidden = true; note('bank-note', ''); });
 
+  /* A real spreadsheet out, and one back in (D-222). */
+  function save(bytes, name, type) {
+    var blob = new Blob([bytes], { type: type });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  el('btn-xlsx').addEventListener('click', function () {
+    SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights']).then(function (t) {
+      SLAF.LedgerRows.use(t.ledgerRows);
+      var name = SLAF.CsvExport.workbookName(Schema.localDay());
+      save(SLAF.CsvExport.workbook(Spine.getProfile(), t), name, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      note('sheet-note', 'Downloaded ' + name + '. It opens as a spreadsheet: a tab a door, money in money cells. Edit the "Your number" column and bring it back below.', 'is-good');
+    }).catch(function (err) { note('sheet-note', 'Could not build the spreadsheet: ' + err.message, 'is-error'); });
+  });
   /* One CSV out and the same CSV back in (D-220), through shared/csvexport.js. */
   el('btn-csv').addEventListener('click', function () {
     SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights']).then(function (t) {
       SLAF.LedgerRows.use(t.ledgerRows);
-      var text = SLAF.CsvExport.single(Spine.getProfile(), t);
-      var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url; a.download = SLAF.CsvExport.filename(Schema.localDay());
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-      note('sheet-note', 'Downloaded ' + a.download + ': every row on one sheet. Edit the value column and bring it back below.', 'is-good');
+      var name = SLAF.CsvExport.filename(Schema.localDay());
+      save(SLAF.CsvExport.single(Spine.getProfile(), t), name, 'text/csv;charset=utf-8');
+      note('sheet-note', 'Downloaded ' + name + ': every row on one sheet, as plain text. It opens in a spreadsheet, and in anything else as lines of text.', 'is-good');
     }).catch(function (err) { note('sheet-note', 'Could not build the CSV: ' + err.message, 'is-error'); });
   });
   var CSV = { plan: null, text: '', busy: false, problemsOnly: false };
@@ -358,6 +372,7 @@
     if (c.add) parts.push(plural(c.add, 'new item line'));
     if (c.same) parts.push(c.same + ' already so');
     if (c.skip) parts.push(c.skip + ' blank');
+    if (CSV.plan.conflicts) parts.push(plural(CSV.plan.conflicts, 'total') + ' left to the account lines that make it');
     if (left) parts.push(left + ' cannot be read (shown below)');
     el('csv-tally').hidden = false;
     el('csv-tally').textContent = parts.join(', ') + '.' + (quiet && !left ? ' The rest is as it is.' : '');
@@ -390,21 +405,29 @@
   }
   el('csv-file').addEventListener('change', function () {
     var f = this.files && this.files[0]; this.value = ''; if (!f) return;
-    if (f.size > 8 * 1024 * 1024) { note('csv-note', 'That file is ' + Math.round(f.size / 1048576) + ' MB; a Money Rooms sheet is a few hundred lines. Is it the right file?', 'is-error'); return; }
+    if (f.size > 12 * 1024 * 1024) { note('csv-note', 'That file is ' + Math.round(f.size / 1048576) + ' MB; a Money Rooms sheet is a few hundred lines. Is it the right file?', 'is-error'); return; }
     var reader = new FileReader();
     reader.onerror = function () { note('csv-note', 'The file could not be read from disk. Try choosing it again.', 'is-error'); };
     reader.onload = function () {
-      var text = String(reader.result || '');
-      if (SLAF.Csv.looksBinary(text)) { note('csv-note', /^PK/.test(text) ? 'That is a zip or an Excel workbook, not a CSV. From the zip, unzip it and choose one of the .csv files; from Excel, use File, Save As, CSV UTF-8.' : 'That file is not text. Save it as CSV first.', 'is-error'); return; }
+      var bytes = new Uint8Array(reader.result || new ArrayBuffer(0));
+      /* A workbook is a zip; anything else is read as text. Some other zip,
+         or a PDF, is neither. */
+      if (SLAF.Zipfile.isZip(bytes) && !/\.xlsx?$/i.test(f.name)) { note('csv-note', 'That is a zip, not a spreadsheet. Unzip it and choose the .xlsx or .csv inside.', 'is-error'); return; }
+      if (!SLAF.Zipfile.isZip(bytes) && SLAF.Csv.looksBinary(SLAF.Zipfile.text(bytes.subarray(0, 4096)))) { note('csv-note', 'That file is not a spreadsheet. In Excel or Numbers, use File, Save As, and choose Excel (.xlsx) or CSV.', 'is-error'); return; }
       csvClear();
-      csvPlan(text).then(function (p) {
-        if (p.problem) { note('csv-note', csvProblemNote(p), 'is-error'); return; }
-        CSV.plan = p; CSV.text = text;
-        note('csv-note', p.problems ? plural(p.problems, 'line') + ' could not be placed; each says why. Everything else is ready.' : '');
-        csvPreview();
-      }).catch(function (err) { note('csv-note', 'Could not read the CSV: ' + err.message, 'is-error'); });
+      SLAF.CsvExport.fromFile(bytes).then(function (text) {
+        return csvPlan(text).then(function (p) {
+          if (p.problem) { note('csv-note', csvProblemNote(p), 'is-error'); return; }
+          CSV.plan = p; CSV.text = text;
+          var said = [];
+          if (p.problems) said.push(plural(p.problems, 'line') + ' could not be placed; each says why');
+          if (p.conflicts) said.push(plural(p.conflicts, 'total') + ' the app works out from the accounts below it: change the account line instead, and the total follows');
+          note('csv-note', said.length ? said.join('. ') + '. Everything else is ready.' : '', p.conflicts ? 'is-warn' : '');
+          csvPreview();
+        });
+      }).catch(function (err) { note('csv-note', 'Could not read that file: ' + err.message, 'is-error'); });
     };
-    reader.readAsText(f);
+    reader.readAsArrayBuffer(f);
   });
   el('btn-csv-apply').addEventListener('click', function () {
     if (!CSV.plan || CSV.busy) return;
@@ -421,34 +444,19 @@
       var r = SLAF.CsvExport.apply(fresh, Spine);
       return csvPlan(CSV.text).then(function (after) {
         CSV.plan = after; CSV.busy = false; CSV.problemsOnly = false; csvPreview();
+        var kept = r.applied - r.notKept.length;
+        var msg = 'Applied ' + plural(kept, 'line') + (r.added ? ', ' + plural(r.added, 'new item') : '') + ', each through the room that owns it. Undo takes them all back at once.';
+        if (r.failed.length) msg += ' ' + plural(r.failed.length, 'line') + ' could not be written: ' + r.failed.slice(0, 3).map(function (x) { return x.line + ' (' + x.label + (x.item ? ', ' + x.item : '') + '): ' + x.why; }).join('; ') + (r.failed.length > 3 ? '; ...' : '');
+        if (r.notKept.length) msg += ' ' + plural(r.notKept.length, 'line') + ' was not kept: ' + r.notKept.slice(0, 3).map(function (x) { return x.label + (x.item ? ' (' + x.item + ')' : '') + ', ' + x.why; }).join('; ') + (r.notKept.length > 3 ? '; ...' : '') + '.';
         var stray = after.entries.filter(function (e) { return e.status === 'change' || e.status === 'add'; }).length;
-        var msg = 'Applied ' + plural(r.applied, 'line') + (r.added ? ', ' + plural(r.added, 'new item') : '') + ', each through the room that owns it. Undo takes them all back at once.';
-        if (r.failed.length) msg += ' ' + plural(r.failed.length, 'line') + ' could not be written: ' + r.failed.slice(0, 3).map(function (x) { return 'line ' + x.line + ' (' + x.label + (x.item ? ', ' + x.item : '') + '): ' + x.why; }).join('; ') + (r.failed.length > 3 ? '; ...' : '');
-        else if (stray) msg += ' ' + plural(stray, 'line') + ' still reads as a change: look at the preview.';
-        else if (r.applied) msg += ' Read back: every line landed.';
-        note('csv-note', msg, r.failed.length || stray ? 'is-warn' : 'is-good');
+        if (stray) msg += (stray === 1 ? ' 1 line still reads' : ' ' + stray + ' lines still read') + ' as a change: the file may have changed something (your working situation, say) that makes those rows apply differently. The preview below is read against your numbers as they are now.';
+        if (!r.failed.length && !r.notKept.length && !stray && r.applied) msg += ' Read back: every line landed.';
+        note('csv-note', msg, r.failed.length || r.notKept.length || stray ? 'is-warn' : 'is-good');
       });
     }).catch(function (err) { CSV.busy = false; el('btn-csv-apply').disabled = false; note('csv-note', 'Could not apply: ' + err.message, 'is-error'); });
   });
   el('btn-csv-cancel').addEventListener('click', function () { csvClear(); note('csv-note', ''); });
 
-  /* The spreadsheet zip (J1, D-210): one CSV a door and a readme, from the
-     same rows the Ledger shows, through shared/csvexport.js. */
-  el('btn-sheet').addEventListener('click', function () {
-    SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights']).then(function (t) {
-      SLAF.LedgerRows.use(t.ledgerRows);
-      var files = SLAF.CsvExport.files(Spine.getProfile(), t);
-      var bytes = SLAF.CsvExport.zip(files);
-      var blob = new Blob([bytes], { type: 'application/zip' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url; a.download = 'money-rooms-sheets-' + Schema.localDay() + '.zip';
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-      var n = Object.keys(files).length - 1;
-      note('sheet-note', 'Downloaded ' + a.download + ': ' + n + ' CSV files and the readme. Open any of them in a spreadsheet.', 'is-good');
-    }).catch(function (err) { note('sheet-note', 'Could not build the spreadsheet: ' + err.message, 'is-error'); });
-  });
   el('btn-share').addEventListener('click', function () {
     Spine.shareFragment().then(function (frag) {
       var link = Spine.siteRoot() + frag;
