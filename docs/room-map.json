@@ -7,7 +7,8 @@
     "survivors": "One entry per surviving room. 'id' is its registry id and stays its id; 'title' is what it is called after the merge (the registry may still carry the old title until that merge ships).",
     "absorbs": "Registry ids that become a view, a toggle, a block type or a card inside the survivor. Every one of them ends as a redirect file, never a deleted file: the links are out in the world.",
     "done": "The subset of 'absorbs' that has already been retired. A room in 'done' must be a redirect and must be gone from the registry; a room in 'absorbs' but not 'done' must still be a live registry room. That pair is the drift alarm.",
-    "held": "Absorbed rooms that are deliberately NOT being retired yet, each with the reason. A held room stays live until the reason is cleared."
+    "held": "Absorbed rooms that are deliberately NOT being retired yet, each with the reason. A held room stays live until the reason is cleared.",
+    "order": "The six sessions the plan sequenced, not the whole job: they are the merges whose ORDER matters. Every other absorption in this file is independent of them and can be taken in any session, one at a time. Reading 'four of six shipped' as 'two sessions left' is the misreading this line exists to stop."
   },
   "rules": [
     "Same fields, different framing is one room with a toggle, not two rooms.",
