@@ -12535,6 +12535,102 @@ section('Express: a second view of the same rows (D-208)');
   checkTrue('Express is in every arrangement beside the First Round', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('express') >= 0)); })());
 })();
 
+section('What a marketplace plan costs (D-217)');
+
+/* The app could say where an income sits against the subsidy cliff since
+   D-067 and no room ever called it, so Protection asked you to type what
+   you pay and the first round named an enrolment deadline with nothing
+   behind it. Protection.marketplace closes that, from tables already here. */
+(function () {
+  const P = require(path.join(ROOT, 'engines/protection.js'));
+  const T = {
+    aca: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/aca_2026.json'), 'utf8')),
+    states: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/states.json'), 'utf8'))
+  };
+  function person(grossCents, state, dependents) {
+    const h = Schema.createHousehold(state ? { state: state } : {});
+    h.people.push(Schema.createPerson({ label: 'You', role: 'adult',
+      incomeSources: grossCents ? [Schema.createIncomeSource({ personId: 'p', grossAnnualIncomeCents: grossCents })] : [] }));
+    if (dependents) h.dependents = [{ age: 6 }];
+    return h;
+  }
+  const fpl = T.aca.fpl.base;
+  const bench = T.states.states.filter((x) => x.code === 'NY')[0].acaBenchmarkSilver40MonthlyCents.value;
+
+  /* A worked case by hand: $30,000 single. 30,000 / the poverty line is the
+     multiple; the applicable percentage for that band times income is what
+     you are expected to contribute; the benchmark less that is the subsidy. */
+  const low = P.marketplace(person(3000000, 'NY'), T);
+  checkTrue('it computes for a single adult', Money.isOk(low), low.reason);
+  check('the poverty multiple is income over the poverty line', low.fplMultiple, 3000000 / 100 / fpl, 1e-9);
+  const band = T.aca.applicablePercentage.filter((b) => low.fplMultiple <= b.upToFplMultiple)[0];
+  check('the applicable percentage is the band it falls in', low.applicablePercentage, band.percent);
+  check('what you are expected to pay is that share of income, a month',
+    low.expectedMonthlyCents, Math.round(3000000 * band.percent / 12));
+  check('the benchmark is the state figure', low.benchmarkMonthlyCents, bench);
+  check('the subsidy is the difference', low.subsidyMonthlyCents, bench - low.expectedMonthlyCents);
+  check('...and a year of it is twelve times that', low.subsidyAnnualCents, low.subsidyMonthlyCents * 12);
+  checkTrue('the subsidy is worth having at this income', low.subsidyMonthlyCents > 0);
+
+  /* Over the cliff there is no subsidy, and the sticker price is the price.
+     That step IS the cliff, so it must not be smoothed away. */
+  const high = P.marketplace(person(20000000, 'NY'), T);
+  check('a high income is over the cliff', high.overCliff, true);
+  check('...so there is no subsidy at all', high.subsidyMonthlyCents, 0);
+  check('...and the plan costs its full price', high.expectedMonthlyCents, bench);
+  checkTrue('the cliff is named as a figure, so it can be steered around',
+    Money.isEntered(high.cliffCents) && high.cliffCents > 0);
+  checkTrue('below the cliff it says how much room is left',
+    Money.isEntered(low.roomBeforeCliffCents) && low.roomBeforeCliffCents > 0);
+
+  /* A bigger household raises the poverty line, so the same income is
+     further from the cliff. */
+  const family = P.marketplace(person(3000000, 'NY', true), T);
+  checkTrue('a dependent raises the poverty line', family.fplDollars > low.fplDollars);
+  checkTrue('...so the same income sits lower against it', family.fplMultiple < low.fplMultiple);
+
+  /* Missing answers name themselves; nothing is guessed. */
+  const noState = P.marketplace(person(3000000, null), T);
+  check('without a state there is no benchmark', noState.benchmarkMonthlyCents, null);
+  check('...and it says the state is what is missing', noState.missingState, true);
+  check('without an income it asks for one',
+    P.marketplace(person(null, 'NY'), T).missing.join(','), 'grossAnnualIncome');
+  check('without the table it says so', P.marketplace(person(3000000, 'NY'), {}).status, 'incomplete');
+
+  /* It says what it does not model rather than implying a quote. */
+  checkTrue('it lists what it leaves out', (low.notModelled || []).length >= 3);
+  checkTrue('...including age rating', low.notModelled.join(' ').indexOf('age rating') > -1);
+  checkTrue('and it names its sources', (low.sources || []).indexOf('data/aca_2026.json') > -1);
+
+  /* The engine is reached at call time, so a room that loads protection.js
+     before tax.js still gets the reading rather than "not loaded". */
+  const src = fs.readFileSync(path.join(ROOT, 'engines/protection.js'), 'utf8');
+  checkTrue('the tax engine is resolved when called, not when loaded',
+    /function taxModule\(\)/.test(src) && /Tax && typeof Tax\.acaCliff === 'function'/.test(src));
+
+  /* The two rooms that now carry it. */
+  const prot = fs.readFileSync(path.join(ROOT, 'rooms/protection.html'), 'utf8');
+  checkTrue('Protection says what a plan would cost', /marketNote/.test(prot) && /benchmark silver plan/.test(prot));
+  checkTrue('...and loads the two tables it needs', /tables: \['aca', 'states'/.test(prot));
+  const fr = fs.readFileSync(path.join(ROOT, 'rooms/first-round.html'), 'utf8');
+  checkTrue('the first round’s marketplace deadline links to that room',
+    /'protection\.html'\]\)/.test(fr) && /r\[4\] \? '<a href="'/.test(fr));
+})();
+
+section('The phone walk types the way a phone does (D-217)');
+
+(function () {
+  const src = fs.readFileSync(path.join(ROOT, 'test/forms.js'), 'utf8');
+  checkTrue('text is committed the way a soft keyboard commits it',
+    /Input\.insertText/.test(src) && !/keyboard\.type\(f\.type/.test(src));
+  checkTrue('...with the measurement that justified it written down',
+    /tap with raw keys, 4/.test(src));
+  checkTrue('the tap and the live-form guard are untouched',
+    /await page\.tap\(f\.sel\)/.test(src) && /survives the tap \(same node keeps focus\)/.test(src));
+  checkTrue('a date control still goes through the picker path',
+    /if \(f\.fill\)/.test(src));
+})();
+
 section('The cut list, checked against the code (D-216)');
 
 /* Phase 5 of the brief lists eleven fields to delete. Checked one by one,

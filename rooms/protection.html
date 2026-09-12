@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-12 05:38Z"/>
+<meta name="slaf-build" content="2026-09-12 08:41Z"/>
 <title>Protection · SPARKS</title>
 <meta name="description" content="What a bad year would cost and what stands behind you: health, disability, life, the cushion — each need against what is held."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -152,10 +152,30 @@
     if (r.healthFlag === 'cobra') return 'COBRA keeps the old employer plan at its full price; between jobs a marketplace plan is usually the cheaper comparison';
     return '';
   }
+  /* What a marketplace plan would actually cost, in a sentence (D-217).
+     The room used to say a marketplace plan is "usually cheaper" and leave
+     it there; the subsidy has been computable since D-067 and nothing
+     called it. Every figure names where it came from, and anything missing
+     says which answer is missing rather than guessing it. */
+  function marketNote(h, T) {
+    if (!Protection.marketplace) return '';
+    var m = Protection.marketplace(h, T);
+    if (!Money.isOk(m)) return '';
+    if (m.missingState) return 'A marketplace plan is priced by state; add your ZIP in the first round and this says what one would cost you';
+    if (m.benchmarkMonthlyCents === null) return '';
+    if (m.overCliff) {
+      return 'At this income there is no subsidy: a benchmark silver plan is ' + Money.formatCents(m.benchmarkMonthlyCents)
+        + ' a month at full price. The subsidy returns below ' + Money.formatCents(m.cliffCents) + ' of income';
+    }
+    return 'A benchmark silver plan is ' + Money.formatCents(m.benchmarkMonthlyCents) + ' a month where you live, and at this income '
+      + 'you would be expected to pay ' + Money.formatCents(m.expectedMonthlyCents) + ' of it — a subsidy of '
+      + Money.formatCents(m.subsidyMonthlyCents) + ' a month. ' + Money.formatCents(m.roomBeforeCliffCents)
+      + ' more income a year and the subsidy stops altogether';
+  }
 
   Room.mount({
     id: 'protection',
-    tables: ['protectionConventions', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    tables: ['aca', 'states', 'protectionConventions', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
     reads: ['monthlyExpenses', 'cashSavings', 'grossAnnualIncome', 'highestDeductible', 'dependents', 'termLife', 'disabilityMonthly', 'oopMax', 'umbrella'],
 
     number: function (h, T) {
@@ -179,6 +199,7 @@
       if (r.unknown.length) sentences.push('Not entered yet: ' + r.unknown.map(function (l) { return l.label.toLowerCase() + ' — ' + l.reason + fixLink(l); }).join('; ') + '.');
       if (skipped.length) sentences.push('Not a line for you: ' + skipped.map(function (l) { return l.label.toLowerCase() + ' — ' + l.reason; }).join(' '));
       var hn = healthNote(r); if (hn) sentences.push(hn + '.');
+      var mn = marketNote(h, T); if (mn) sentences.push(mn + '.');
       return { label: 'Your biggest gap', value: value, sub: sentences.join(' '), zone: r.zone, result: r };
     },
 
@@ -209,7 +230,7 @@
         options: [['', 'Not answered']].concat(HEALTH_TYPES.map(function (v) { return [v, HEALTH_LABELS[v] || v]; })),
         read: function (h) { return health(h).type; },
         write: function (v) { Spine.set('insurance.health.type', v === null || v === '' ? null : v); } },
-      { ctl: 'healthMonthly', label: 'Health cover, a month', kind: 'money', placeholder: 'e.g. 350', hint: 'What you pay for the plan, not what it pays out. Leave it blank if the plan costs you nothing.',
+      { ctl: 'healthMonthly', label: 'Health cover, a month', kind: 'money', placeholder: 'e.g. 350', hint: 'What you pay for the plan, not what it pays out. The figure above is what a marketplace plan would cost you at this income. Leave it blank if the plan costs you nothing.',
         read: function (h) { return health(h).monthlyCents; },
         write: function (v) { Spine.set('insurance.health.monthlyCents', v); } }
     ],
@@ -219,6 +240,11 @@
       var rows = [];
       var hm = health(h).monthlyCents;
       if (Money.isEntered(hm)) rows.push({ label: 'A year of health cover', cents: hm * 12 });
+      var mk = Protection.marketplace ? Protection.marketplace(h, T) : null;
+      if (mk && Money.isOk(mk) && mk.benchmarkMonthlyCents !== null) {
+        rows.push({ label: 'A marketplace plan, a month, after the subsidy', cents: mk.expectedMonthlyCents });
+        if (mk.subsidyAnnualCents) rows.push({ label: 'The subsidy, a year', cents: mk.subsidyAnnualCents });
+      }
       var ins = h.insurance || {};
       if (Money.isEntered(ins.oopMaxCents)) rows.push({ label: 'The out-of-pocket maximum', cents: ins.oopMaxCents, href: coverLink() });
       else if (Money.isEntered(ins.highestDeductibleCents)) rows.push({ label: 'The highest deductible', cents: ins.highestDeductibleCents, href: startLink('q-deductible') });

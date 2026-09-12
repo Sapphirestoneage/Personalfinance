@@ -13311,6 +13311,42 @@ known and few.
 (532); the lane 2 suites; Express in Chromium with `futureIncome` rendering
 read-only and no console error.
 
+## D-217 — What a marketplace plan costs, and the keystrokes that were never lost
+
+**Why.** Two things I had recorded as open. The first round tells someone
+between jobs that their marketplace window closes on a date, and no room
+priced a plan: `Tax.acaCliff` has been written and tested since D-067 with
+no caller, so Protection asked you to type what you pay. Separately, STATUS
+called the phone walk's Express failure "a real data-loss path".
+
+**Decision.** `Protection.marketplace(household, tables)` turns income into
+the poverty multiple, the applicable percentage from `data/aca_2026.json`,
+and so what you are expected to contribute; `data/states.json` carries the
+benchmark silver premium; the difference is the subsidy. Over the cliff the
+subsidy is zero and the sticker price stands, because that step IS the
+cliff. The Protection room says it in a sentence and adds two rows to its
+amounts; the first round's marketplace deadline links there. The tax engine
+is resolved at call time, since a room may load `protection.js` first.
+
+**And the walk loses nothing.** Measured, eight runs each on one build:
+desktop click with real keys 0 lost, phone emulation with a click and real
+keys 0, phone emulation with a tap and soft-keyboard insertion 0, phone
+emulation with a tap and raw keys 4. Only the last pairing fails and no real
+device produces it: a soft keyboard commits text (CDP `Input.insertText`),
+it does not send raw keydowns. So the harness was losing the text, never the
+app, and no household ever lost a figure. `test/forms.js` now commits text
+the way a phone does; the tap and the live-form guard are untouched.
+
+**Replaces or removes.** No field, row or room. One "usually cheaper"
+sentence becomes a figure.
+
+**Stored shape.** No change. Nothing about the marketplace is stored.
+
+**Verified.** `node test/run.js` (29,300) including the subsidy re-derived
+from the tables by hand, both sides of the cliff, and a dependent moving the
+poverty line; `test/forms.js` three times, 532 each, where it used to fail
+about half the time; Protection driven in Chromium at two incomes.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -1476,6 +1476,7 @@ async function tagFields(page, container) {
     const ctx = await browser.newContext(devices['Pixel 7']);
     ctx.setDefaultTimeout(6000);
     const page = await ctx.newPage();
+    const cdp = await ctx.newCDPSession(page);
     const errs = [];
     page.on('pageerror', (e) => errs.push(e.message));
     try {
@@ -1534,7 +1535,20 @@ async function tagFields(page, container) {
           if (a && a.setSelectionRange) a.setSelectionRange(0, a.value.length);
         });
       }
-      await page.keyboard.type(f.type, { delay: 15 });
+      /* Type the way a phone does. A soft keyboard does not send raw key
+         events: Gboard and every other IME COMMITS text, which is CDP's
+         Input.insertText. Sending synthesized keydowns instead loses the
+         text outright about half the time here — keydown fires, the
+         `beforeinput` that inserts it never does, and the box stays empty —
+         but ONLY when a synthesized touch tap focused the box first.
+         Measured on one build, eight runs each: desktop click with real
+         keys, 0 lost; phone emulation, click with real keys, 0; phone
+         emulation, tap with soft-keyboard insertion, 0; phone emulation,
+         tap with raw keys, 4. No real device produces that last pairing,
+         so it was the harness losing the text and never the app (D-217).
+         The tap above and the live-form guard are untouched: they are what
+         this file exists to check. */
+      await cdp.send('Input.insertText', { text: f.type });
       await page.waitForTimeout(120);
     }
 
@@ -1569,6 +1583,7 @@ async function tagFields(page, container) {
     const ctx = await browser.newContext(devices['Pixel 7']);
     ctx.setDefaultTimeout(6000);
     const page = await ctx.newPage();
+    const cdp = await ctx.newCDPSession(page);
     const errs = [];
     page.on('pageerror', (e) => errs.push(e.message));
     try {

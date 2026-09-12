@@ -31,15 +31,15 @@
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Gate: require('../shared/gate.js'), Tier0: require('./tier0.js') };
+    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Gate: require('../shared/gate.js'), Tax: require('./tax.js'), Tier0: require('./tier0.js') };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, Gate: S.Gate, Tier0: S.Tier0 };
+    deps = { Money: S.Money, Schema: S.Schema, Gate: S.Gate, Tax: S.Tax, Tier0: S.Tier0 };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Gate, deps.Tier0);
+  var api = factory(deps.Money, deps.Schema, deps.Gate, deps.Tax, deps.Tier0);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Protection = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Gate, Tier0) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Gate, Tax, Tier0) {
   'use strict';
 
   var MONTHS = 12;
@@ -198,8 +198,93 @@
     });
   }
 
+  /* ---- What a marketplace plan actually costs (D-217) ---------------------
+     The app could already say where your income sits against the subsidy
+     cliff — `Tax.acaCliff` has been written and tested since D-067 — and no
+     room called it, so the Protection room asked you to type what you pay
+     and the first round told somebody between jobs that their enrolment
+     window closes without anything behind that.
+
+     This closes it, from tables that are already here: the applicable
+     percentage in data/aca_2026.json turns income into what you are
+     EXPECTED to contribute, and data/states.json carries the benchmark
+     silver premium for your state. The subsidy is the difference. Nothing
+     is stored; a missing answer names itself.
+
+     Not modelled, and said so on the way out: age rating (the benchmark is
+     the 40-year-old figure), tobacco rating, the family glitch, and
+     cost-sharing reductions below 250% of poverty. */
+  /* Resolved at CALL time, not when this file runs: a room may load
+     engines/protection.js before engines/tax.js, and capturing an
+     undefined Tax then would make the marketplace reading permanently
+     unavailable on that page with only "not loaded" to show for it. */
+  function taxModule() {
+    if (Tax && typeof Tax.acaCliff === 'function') return Tax;
+    if (typeof module === 'object' && module.exports) { try { return require('./tax.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Tax ? g.SLAF.Tax : null;
+  }
+  function marketplace(household, tables, opts) {
+    var o = opts || {};
+    var h = household || {};
+    var t = tables || {};
+    var T2 = taxModule();
+    if (!T2 || typeof T2.acaCliff !== 'function') return Money.incomplete('The tax engine is not loaded.', ['aca']);
+    if (!t.aca) return Money.incomplete('The marketplace table is not loaded.', ['aca']);
+
+    /* The income the subsidy is decided on is MAGI. Between jobs the
+       benefit counts and the last job's pay does not, so an explicit
+       figure always wins over the household's gross. */
+    var magi = Money.isEntered(o.magiCents) ? o.magiCents : null;
+    var basis = 'given';
+    if (magi === null) {
+      var gross = Schema.grossAnnualIncomeCents(h);
+      if (Money.isOk(gross)) { magi = gross.value; basis = 'gross'; }
+    }
+    if (magi === null) return Money.incomplete('Add what comes in a year and this works out what cover should cost.', ['grossAnnualIncome']);
+
+    var size = Math.max(1, Schema.adults(h).length + ((h.dependents || []).length));
+    var cliff = T2.acaCliff(t.aca, magi, size);
+    if (!Money.isOk(cliff)) return cliff;
+
+    /* The benchmark plan for the state, from data/states.json. */
+    var state = h.state || null;
+    var row = state && t.states && Array.isArray(t.states.states)
+      ? t.states.states.filter(function (x) { return x.code === state; })[0] : null;
+    var cell = row ? row.acaBenchmarkSilver40MonthlyCents : null;
+    var benchmark = cell && Money.isEntered(cell.value) ? cell.value : null;
+
+    var expectedMonthly = Money.isEntered(cliff.expectedContributionCents)
+      ? Math.round(cliff.expectedContributionCents / MONTHS) : null;
+    var subsidyMonthly = (benchmark === null || expectedMonthly === null) ? null
+      : Math.max(0, benchmark - expectedMonthly);
+    /* Over the cliff there is no subsidy at all, so the sticker price is
+       what it costs. That step is the whole reason the cliff matters. */
+    if (cliff.overCliff) { subsidyMonthly = benchmark === null ? null : 0; expectedMonthly = benchmark; }
+
+    return Money.ok(expectedMonthly === null ? (benchmark === null ? 0 : benchmark) : expectedMonthly, {
+      magiCents: magi, magiBasis: basis, householdSize: size,
+      fplMultiple: cliff.value,
+      fplDollars: cliff.fplDollars,
+      overCliff: cliff.overCliff,
+      cliffCents: cliff.cliffCents,
+      roomBeforeCliffCents: cliff.roomBeforeCliffCents,
+      applicablePercentage: cliff.applicablePercentage,
+      benchmarkMonthlyCents: benchmark,
+      expectedMonthlyCents: expectedMonthly,
+      subsidyMonthlyCents: subsidyMonthly,
+      subsidyAnnualCents: subsidyMonthly === null ? null : subsidyMonthly * MONTHS,
+      missingState: !state,
+      sources: ['data/aca_2026.json'].concat(benchmark === null ? [] : ['data/states.json']),
+      notModelled: ['age rating (the benchmark is the 40-year-old figure)', 'tobacco rating',
+        'the family glitch', 'cost-sharing reductions below 250% of poverty'],
+      confidence: cell && cell.confidence ? cell.confidence : 'unverified'
+    });
+  }
+
   return {
     checkup: checkup,
+    marketplace: marketplace,
     conventions: conventions
   };
 });

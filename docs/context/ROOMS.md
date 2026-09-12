@@ -6,7 +6,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Home (4)
 
-- **first-round** — The First Round (utility) · 647 lines · no engines · D-212, D-206
+- **first-round** — The First Round (utility) · 651 lines · no engines · D-212, D-206
 - **express** — Express (utility) · 458 lines · no engines · D-213, D-208
 - **start** — Start Here · 999 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1557 lines · no engines · DD-028, DD-026, DD-025
@@ -55,7 +55,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **what-if-life** — What If, Life · 549 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events · D-146, D-091, D-087
 - **timeline** — What Comes Next · 502 lines · engines: timeline · owns: futureIncome · D-152
 - **between-jobs** — Between Jobs · 297 lines · engines: projection, tier0, hourly, tax, runway, betweenjobs · owns: lastDayWorked, severanceCents, ptoPayoutCents, expectedSearchMonths, floorMonthly · D-213, D-102
-- **protection** — Protection · 266 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-215, D-103, D-098
+- **protection** — Protection · 292 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-217, D-215, D-103
 - **decumulation** — Drawing It Down · 272 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-104, D-098, D-094
 - **estate** — Estate Basics · 216 lines · engines: projection, tier0, hourly, estate · owns: beneficiariesSet, willExists, poaExists · D-213, D-106, D-098
 - **giving** — Giving · 259 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget · D-213, D-107, D-098

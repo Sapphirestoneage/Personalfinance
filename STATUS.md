@@ -22,10 +22,11 @@ Updated: 2026-09-12
    decides. Three phases turned out to be already true and are recorded as
    such rather than built twice: the path collisions, most of the derivation
    ledger, and seven of the eleven cuts.
-0c. Two failures older than this work (both at 2cb6f50): `test/alignment.js`, 4 in
-   financial-snapshot.html ("nothing rendered"); `test/forms.js`, the Express
-   walk's "the last pay landed" null in ~half of runs — the keystrokes never
-   reach the box the tap focused, so a typed value is LOST. Its own session.
+0c. `test/alignment.js`: 4 failures in financial-snapshot.html ("nothing
+   rendered"), present at 2cb6f50 and older than this work.
+   The Express walk flake is FIXED and was never the app (D-217): only a
+   synthesized tap plus synthetic raw keys loses text, which no real device
+   sends. The walk now commits text the way a soft keyboard does.
 1. Decide who owns income sources once Start Here retires (Ledger or Income).
    OWNER DECISION NEEDED.
 2. Make logged income reconcile with typical income (known problem 1).

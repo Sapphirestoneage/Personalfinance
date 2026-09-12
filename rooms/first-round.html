@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-12 05:38Z"/>
+<meta name="slaf-build" content="2026-09-12 08:41Z"/>
 <title>The First Round · SPARKS</title>
 <meta name="description" content="Eleven questions at most, fewer if they do not apply to you, one a screen. A real number after the fourth, and again after the eighth."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -494,12 +494,16 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       if (d.severanceThroughDate) lines.push('Severance and paid-out leave cover about ' + d.severanceWeeks + ' weeks of that, through ' + pretty(d.severanceThroughDate) + '.');
       var rows = [];
-      if (d.cobraElectionBy) rows.push(['COBRA election closes', d.cobraElectionBy, d.cobraDaysLeft, d.cobraClosed]);
-      if (d.marketplaceBy) rows.push(['Marketplace special enrolment closes', d.marketplaceBy, d.marketplaceDaysLeft, d.marketplaceClosed]);
+      if (d.cobraElectionBy) rows.push(['COBRA election closes', d.cobraElectionBy, d.cobraDaysLeft, d.cobraClosed, null]);
+      /* The marketplace row links to the room that now prices a plan and
+         works out the subsidy (D-217). Naming a deadline and leaving the
+         person with nowhere to act on it was the gap. */
+      if (d.marketplaceBy) rows.push(['Marketplace special enrolment closes', d.marketplaceBy, d.marketplaceDaysLeft, d.marketplaceClosed, 'protection.html']);
       if (rows.length) {
         list.innerHTML = rows.map(function (r) {
           var when = r[3] ? 'closed ' + Math.abs(r[2]) + ' days ago' : r[2] + (r[2] === 1 ? ' day left' : ' days left');
-          return '<li><span>' + esc(r[0]) + '</span><span class="when' + (r[3] ? ' closed' : '') + '">' + esc(pretty(r[1])) + ' · ' + esc(when) + '</span></li>';
+          var label = r[4] ? '<a href="' + esc(r[4]) + '">' + esc(r[0]) + '</a>' : esc(r[0]);
+          return '<li><span>' + label + '</span><span class="when' + (r[3] ? ' closed' : '') + '">' + esc(pretty(r[1])) + ' · ' + esc(when) + '</span></li>';
         }).join('');
         list.hidden = false;
       }
