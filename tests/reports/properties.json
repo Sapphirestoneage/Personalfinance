@@ -1,8 +1,8 @@
 {
   "seed": 20260910,
   "numRuns": 100,
-  "engines": 87,
-  "files": 90,
+  "engines": 88,
+  "files": 91,
   "missingFiles": [],
   "extraFiles": [
     "blocks",
@@ -1650,6 +1650,54 @@
       ]
     },
     {
+      "engine": "ownership",
+      "notes": [],
+      "properties": [
+        {
+          "name": "a month of owning is whole cents throughout, the same twice, and never NaN",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the parts add up: every line sums to the total, and the carry plus the equity is the same total",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "putting more down never makes the month cost more, and mortgage insurance only appears under the line",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "let out: the rent less the empty stretch, less the running costs, is the operating income, and the loan comes off after",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "holding it: the balance only falls, what you keep never exceeds what it is worth, and the sums reconcile",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a house hack: what you pay to live there is the month less the rent the other units bring",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a missing price, an impossible down payment or a negative rate is refused with a reason, never a number",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "partner",
       "notes": [],
       "properties": [
@@ -3092,6 +3140,6 @@
       ]
     }
   ],
-  "totalProperties": 392,
+  "totalProperties": 399,
   "failedProperties": 7
 }

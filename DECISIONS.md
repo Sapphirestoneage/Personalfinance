@@ -13559,6 +13559,42 @@ npm test` (two more properties), the render, features, forms and XSS gates,
 and a phone walk that downloads the file, opens it in a real spreadsheet
 program, edits three cells there, brings it back, applies and undoes.
 
+## D-223 — Tier 17: one arithmetic for owning a place, four ways to read it
+
+**Why.** Rent/Buy, a rental analysis and a house hack are the same figures
+asked three ways, and the repo had only the first, as its own arithmetic
+inside `engines/housing.js`. Anything about property beyond "should I buy
+where I live" had nowhere to stand. A handoff brief named this as the
+thing blocking real estate.
+
+**Decision.** `engines/ownership.js`, pure inputs and integer cents, no
+household: `cost` (a month of owning), `hold` (N years, against renting),
+`rental` (cash flow, cap rate, cash-on-cash, DSCR) and `hack` (live in
+one unit, let the rest). The mortgage is `Projection.levelPaymentCents`,
+never a second copy of the formula. Operating costs exclude the loan, the
+way net operating income is always defined, and the loan comes off after.
+Every rate is read from `data/housing_conventions.json`; every figure the
+caller did not supply is named in `assumed` rather than taken as zero, so
+"no HOA" and "no growth" are stated rather than implied.
+
+**Replaces or removes.** Nothing yet. `engines/housing.js` keeps its own
+arithmetic this commit; moving its `compare` onto `cost` and `hold` is the
+next step, and is what makes Rent/Buy the thin wrapper SPEC.md asked for.
+
+**Stored shape.** No change. The engine reads nothing from the household
+and writes nothing. `data/housing_conventions.json` goes to 1.1, adding
+`pmiRate` (0.6% of the loan a year) and `pmiEndsAtLoanToValue` (0.80);
+every key that was there is unchanged, so an existing reader sees what it
+saw before.
+
+**Verified.** `node test/run.js`, with the worked example derived by hand
+apart from the engine: $320,000 at a fifth down and 6.9% is $1,686.02 of
+payment and $2,379.35 all in; let at $2,400 it runs $171.35 a month short,
+a 5.68% cap rate, covering the loan 0.90 times against the 1.2 a lender
+wants, and it says so. Seven properties in
+`tests/properties/ownership.test.js`, including that the lines sum to the
+total and that the carry plus the equity is that same total.
+
 ---
 
 # The Dungeons & Dividends entries

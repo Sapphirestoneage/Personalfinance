@@ -8677,6 +8677,73 @@ section('D-194: an entry knows when it ends and what the stub took off');
   check('… and the tax is per landing times the landings', sep26.taxCents, oneLanding.taxCents * 4);
 })();
 
+section('Tier 17 (D-223): what a place actually costs to own');
+(function () {
+  const Own = require(path.join(ROOT, 'engines/ownership.js'));
+  const T = { housingConventions: require(path.join(ROOT, 'data/housing_conventions.json')) };
+  /* $320,000, a fifth down, 6.9% over thirty years. Every figure below was
+     worked out apart from the engine: the payment from the level-payment
+     formula, the rest straight off the conventions file. */
+  const o = { priceCents: 32000000, downPct: 0.20, annualRate: 0.069, tables: T };
+  const c = Own.cost(o);
+  checkTrue('the month prices', Money.isOk(c), c.reason);
+  check('a fifth down is $64,000, and the loan is the rest', c.downCents + '/' + c.loanCents, '6400000/25600000');
+  check('the payment is $1,686.02', c.paymentCents, 168602);
+  check('property tax a month, at 1.1% a year', c.propertyTaxMonthlyCents, 29333);
+  check('insurance a month, at 0.5%', c.insuranceMonthlyCents, 13333);
+  check('maintenance a month, at 1%', c.maintenanceMonthlyCents, 26667);
+  check('the month costs $2,379.35 all in', c.totalMonthlyCents, 237935);
+  check('… which is what the value is', c.value, 237935);
+  check('the carry and the equity are the whole of it', c.carryMonthlyCents + c.equityMonthlyCents, c.totalMonthlyCents);
+  check('nothing is assumed about an HOA without saying so', c.assumed.some(a => /HOA/.test(a)), true);
+  check('a fifth down carries no mortgage insurance', c.pmiMonthlyCents, 0);
+  /* Under the line it is charged: 5% down on the same place. */
+  const small = Own.cost(Object.assign({}, o, { downPct: 0.05 }));
+  check('5% down means a $304,000 loan', small.loanCents, 30400000);
+  check('… and $152 a month of mortgage insurance', small.pmiMonthlyCents, 15200);
+  checkTrue('… which makes the month dearer, not cheaper', small.totalMonthlyCents > c.totalMonthlyCents);
+
+  /* Let out at $2,400. The cover test is the one that fails here. */
+  const r = Own.rental(Object.assign({}, o, { grossRentMonthlyCents: 240000 }));
+  check('an 8% empty stretch takes $192 off the rent', r.vacancyCents, 19200);
+  check('operating costs exclude the mortgage', r.operatingMonthlyCents, 69333);
+  check('net operating income is $1,514.67 a month', r.noiMonthlyCents, 151467);
+  check('so it runs $171.35 a month short', r.cashFlowMonthlyCents, -17135);
+  check('the cap rate is 5.68%', Math.round(r.capRate * 10000) / 10000, 0.0568);
+  check('the loan is covered 0.90 times, under the 1.2 lenders want', Math.round(r.dscr * 10000) / 10000, 0.8984);
+  checkTrue('and it says so, twice: the cover test and the monthly shortfall', r.flags.length === 2);
+
+  /* A duplex you live in half of: the other unit lets for $1,500. */
+  const k = Own.hack(Object.assign({}, o, { unitRentsCents: [150000] }));
+  check('the other unit brings $1,380 after the empty stretch', k.collectedMonthlyCents, 138000);
+  check('so living there costs $999.35 a month', k.youPayMonthlyCents, 99935);
+  check('… and nobody is paying you yet', k.theyPayYou, false);
+  const two = Own.hack(Object.assign({}, o, { unitRentsCents: [150000, 150000] }));
+  checkTrue('two units let costs less than one', two.youPayMonthlyCents < k.youPayMonthlyCents);
+
+  /* Holding it. Nothing grows unless the caller says it does. */
+  const h = Own.hold(Object.assign({}, o, { years: 5, rentMonthlyCents: 220000 }));
+  check('five years is sixty months', h.monthsHeld, 60);
+  check('with no growth assumed, it sells for what it cost', h.valueAtSaleCents, 32000000);
+  checkTrue('… and says that is an assumption', h.assumed.some(a => /no growth/.test(a)));
+  check('what you paid is the cash to close plus the months', h.paidCents, h.cashToCloseCents + h.monthlyCents * 60);
+  check('the cost of owning is what you paid less what you keep', h.costOfOwningCents, h.paidCents - h.netProceedsCents);
+  check('equity is what it is worth less what is left on the loan', h.equityCents, h.valueAtSaleCents - h.balanceCents);
+  checkTrue('the loan is smaller after five years', h.balanceCents < 25600000);
+  checkTrue('renting at $2,200 is named the cheaper of the two', h.cheaper === 'renting' || h.cheaper === 'owning');
+  /* Growth is the caller's to assert, and it moves the answer. */
+  const grown = Own.hold(Object.assign({}, o, { years: 5, appreciationRate: 0.03 }));
+  checkTrue('3% a year leaves more at the sale', grown.netProceedsCents > h.netProceedsCents);
+
+  /* Refusals, never a number. */
+  checkTrue('no price, no answer', !Money.isOk(Own.cost({ downPct: 0.2, annualRate: 0.07, tables: T })));
+  checkTrue('a down payment over the price is refused', !Money.isOk(Own.cost(Object.assign({}, o, { downPct: 1.5 }))));
+  checkTrue('a negative rate is refused', !Money.isOk(Own.cost(Object.assign({}, o, { annualRate: -0.01 }))));
+  checkTrue('a rental with no rent is refused', !Money.isOk(Own.rental(o)));
+  checkTrue('a hack with no units is refused', !Money.isOk(Own.hack(o)));
+  checkTrue('without the conventions table it says which table', !Money.isOk(Own.cost({ priceCents: 1, downPct: 0, annualRate: 0 })));
+})();
+
 section('Two decision sequences that cannot collide');
 
 (function () {
