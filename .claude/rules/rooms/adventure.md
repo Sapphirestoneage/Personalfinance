@@ -10,6 +10,7 @@ Reference data: adventure_paths.json, contribution_limits.json, foo_rules.json, 
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:
+  - D-227 — The last three red suites, and two of them were the tests
   - D-176 — The Long Way Round v2: every way on a card, one chart, a link that keeps
   - D-167 — The Long Way Round, and what the spec asked for instead
 Full context: node tools/context/pack.js adventure

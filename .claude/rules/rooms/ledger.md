@@ -3,7 +3,7 @@ paths:
   - "rooms/ledger.html"
 ---
 # The Ledger (`ledger`)
-File: rooms/ledger.html · 486 lines · utility room
+File: rooms/ledger.html · 490 lines · utility room
 Engines: none
 Reference data: access_rules.json, confidence_weights.json, ledger-rows.json, spheres.json, staleness.json, tax_brackets.json
 Owns: nothing

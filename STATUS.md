@@ -21,9 +21,9 @@ Updated: 2026-09-12
 ## Next (top item first; one per session)
 0b. Gated-intake brief: six phases done (D-211 to D-216) plus the last two
    gate branches (D-218). The first round asks 9 to 10, never more than 12.
-0c. Pre-existing, older than this work, all in financial-snapshot.html:
-   `test/alignment.js` 4 failures, `test/responsive.js` 3 tap targets under
-   32px. `test/settings.js` 1: the section order. Everything else is green.
+0c. Every suite is green (D-227). Two of the three long-standing failures
+   were the tests: alignment never opened the fold, settings pinned six
+   sections when Backup made seven. The third was real, a 28px tap target.
 1. Decide who owns income sources once Start Here retires (Ledger or Income).
    OWNER DECISION NEEDED.
 2. First journey works end to end: about 8 questions in, a FOO step and an FI

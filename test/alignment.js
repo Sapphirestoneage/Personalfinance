@@ -108,9 +108,24 @@ const EQUAL_HEIGHT = [
       SLAF.Spine.updateProfile({ ratings: { joy: { housing: 6, groceries: 7,
         dining_out: 9, entertainment: 8, subscriptions: 3, transportation: 4 } } }); });
 
+    /* Every long room folds its tail away (D-170), and a grid inside the
+       fold measures zero and reads as "nothing rendered". A person opens the
+       fold; so does this, before measuring anything. */
+    async function openFolds() {
+      try {
+        const more = await p.$('#showrest');
+        if (more && !(await more.evaluate(n => n.hidden))) { await more.click(); await p.waitForTimeout(250); }
+      } catch (e) { /* no fold on this room */ }
+      try {
+        const anyway = await p.$('#slaf-showanyway');
+        if (anyway) { await anyway.click(); await p.waitForTimeout(250); }
+      } catch (e) { /* not folded away by the gate */ }
+    }
+
     for (const [page, sel] of TARGETS) {
       await p.goto(BASE + page, { waitUntil: 'networkidle' });
       await p.waitForTimeout(page === '/' ? 900 : 600);
+      await openFolds();
       const rows = await p.evaluate((sel) => {
         const out = [];
         document.querySelectorAll(sel).forEach(grid => {
@@ -149,6 +164,7 @@ const EQUAL_HEIGHT = [
     for (const [page, sel] of EQUAL_HEIGHT) {
       await p.goto(BASE + page, { waitUntil: 'networkidle' });
       await p.waitForTimeout(600);
+      await openFolds();
       const rows = await p.evaluate((sel) => {
         const out = [];
         document.querySelectorAll(sel).forEach(grid => {

@@ -9,6 +9,7 @@ Reference data: expense_categories.json, import_keywords.json
 Owns: nothing
 Reads from other owners: nothing traced
 Latest decisions:
+  - D-227 — The last three red suites, and two of them were the tests
   - D-226 — Logged pay reaches the headline
   - D-223 — What to do when the statement is not there
   - D-222 — The lens copy folded in, and the rule moved to where it bites

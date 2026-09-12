@@ -13643,6 +13643,44 @@ $52,000, which is less", and nothing extra when the two agree.
 
 ---
 
+## D-227 — The last three red suites, and two of them were the tests
+
+**Why.** `test/alignment.js` reported 4 failures, `test/responsive.js` 3 and
+`test/settings.js` 1, every run, recorded in STATUS as pre-existing. A suite
+that is red every run stops being read.
+
+**Decision, one at a time.**
+
+**Alignment: the test, not the room.** Its 4 failures were
+`financial-snapshot.html .three` "nothing rendered" at every width. The three
+cells render fine; they sit inside the progressive-disclosure fold (D-170), so
+they measure zero. A person opens the fold, so the test does too now — the same
+`#showrest` and `#slaf-showanyway` taps `test/forms.js` has. Green, and it now
+measures a grid it had never actually seen.
+
+**Responsive: the app.** The DRAFTT footer's band switch was 28px on
+`rooms/financial-snapshot.html` and the whole lens strip dropped to 30px under
+420px in `shared/theme.css` — both under the 32px floor D-136 set and D-146
+applied to controls rather than class by class. Both overrides are gone; only
+padding and type size narrow on a phone now. `test/run.js` asserts the base
+rule keeps its 32 and that no room opts out again.
+
+**Settings: the test.** It pinned six section ids in order; the Backup panel
+(D-202) made seven and was never added, so the line had failed since. It also
+passed its expected value into the `ok` argument, which would have made it pass
+on any string; fixed, and checked by making it fail on purpose first.
+
+**Replaces or removes.** Two CSS overrides. No room, field or question.
+
+**Stored shape.** No change.
+
+**Verified.** Every suite green together: `run` 29,687, `export` 33, `data`
+4,090, `corpus` 7,439, `migration` 905, `glossary` 3,003, `qr` 207, `render`
+432, `forms` 532, `lenses` 112, `adventure` 38, `aftertax` 25, `sidebar` 95,
+`settings` 15, `alignment`, `responsive` 370 room-widths clean.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

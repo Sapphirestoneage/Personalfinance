@@ -68,7 +68,10 @@
   .draftt .is-under .dr-verdict { color: var(--color-caution); }
   .draftt .dr-foot { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; font-size: var(--text-xs); color: var(--color-text-faint); }
   .draftt .dr-foot a { color: var(--color-accent-hover); text-decoration: none; }
-  .draftt .dr-foot .slaf-lens-btn { min-height: 28px; padding: 0 8px; }
+  /* The footer switch is small, but 32px is the floor a finger needs
+     (D-136, D-146) and this room had quietly opted out of it at 28. Only
+     the padding narrows now. */
+  .draftt .dr-foot .slaf-lens-btn { padding: 0 8px; }
   @media (max-width: 520px) {
     .draftt .dr { grid-template-columns: 2em minmax(0, 1fr) auto; }
     .draftt .dr-band, .draftt .dr-verdict { grid-column: 2 / -1; }

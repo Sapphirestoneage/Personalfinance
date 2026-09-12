@@ -9,5 +9,6 @@ Reference data: features.json, return_bands.json
 Owns: nothing
 Reads from other owners: nothing traced
 Latest decisions:
+  - D-227 — The last three red suites, and two of them were the tests
   - D-180 — Feature switches: rendering and engines, never stored facts
 Full context: node tools/context/pack.js settings

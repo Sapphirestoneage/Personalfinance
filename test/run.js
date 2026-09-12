@@ -8527,8 +8527,19 @@ section('LATER.md, built (D-100): the log across tabs, worded labels, the defaul
      is stored, not what this tab last saved. */
   checkTrue('the storage listener reloads rather than only dropping the cache', /cache = null; lastSaved = null; lastReadings = null;\s*load\(\);/.test(fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8')));
 
-  /* The lens fits a phone. */
-  checkTrue('the lens shrinks under 420px', /max-width: 420px\) \{\s*\.slaf-lens-btn \{ padding: 0 8px/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+  /* The lens fits a phone, and never by going under the tap floor: the
+     narrow rule used to set min-height 30px and financial-snapshot's own
+     footer rule 28px, both below the 32px D-136 chose. Neither sets one
+     now, so the base rule's 32 stands at every width. */
+  {
+    const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+    checkTrue('the lens shrinks under 420px', /max-width: 420px\)[\s\S]{0,400}?\.slaf-lens-btn \{ padding: 0 8px; font-size: 11px; \}/.test(theme));
+    checkTrue('...by padding and type size, never by dropping under the 32px floor',
+      /\.slaf-lens-btn \{ border: none;[^}]*min-height: 32px/.test(theme)
+      && !/\.slaf-lens-btn \{[^}]*min-height: (2[0-9]|3[01])px/.test(theme));
+    checkTrue('and no room quietly opts out of the floor for it',
+      !fs.readdirSync(path.join(ROOT, 'rooms')).some(f => /\.slaf-lens-btn \{[^}]*min-height: (2[0-9]|3[01])px/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+  }
 
   /* rooms.json is the registry, generated, and fresh. */
   const rooms = tool.build();

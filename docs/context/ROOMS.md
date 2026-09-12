@@ -32,7 +32,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Scorecard (8)
 
-- **financial-snapshot** — Financial Snapshot · 861 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath · D-212, D-056, D-036
+- **financial-snapshot** — Financial Snapshot · 864 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath · D-227, D-212, D-056
 - **statements** — Your Statements · 383 lines · engines: projection, tier0, cashflow, statements · D-156
 - **savings-rate** — Savings Rate · 503 lines · engines: projection, tier0, foo, hourly · D-226, D-130, D-091
 - **fire** — FIRE Number · 530 lines · engines: projection, tier0, fire, selfemployed, tax, hourly · owns: retireAge, coastAge · D-162, D-161, D-142
@@ -64,7 +64,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **kids** — Kids and Tuition · 243 lines · engines: projection, tier0, kids · owns: tuitionTarget, tuitionSaved, tuitionMonthly · D-110
 - **housing** — Housing Decision · 328 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing · owns: rentAlternative, homePrice, downPct, mortgageRate · D-130, D-111
 - **big-purchase** — Big Purchase · 262 lines · engines: projection, tier0, hourly, quickmath, purchase · owns: purchasePrice, purchaseMonths, purchaseRate · D-129, D-112
-- **adventure** — The Long Way Round · 640 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
+- **adventure** — The Long Way Round · 640 lines · engines: projection, tier0, foo, hourly, adventure · D-227, D-176, D-167
 
 ## What Matters (11)
 
@@ -92,9 +92,9 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **history** — History · 229 lines · engines: projection, tier0, hourly, foo, cashflow, fire, statement, benchmarks, ratios, events, skills, history · owns: historyCompareTo · D-122, D-101
 - **doors** — Front Doors (utility) · 408 lines · engines: layouts · D-153
 - **walk** — The Walk-Through (utility) · 278 lines · no engines · D-169, D-149
-- **data** — Your Data (utility) · 455 lines · no engines · D-226, D-223, D-222
-- **ledger** — The Ledger (utility) · 486 lines · no engines · D-223, D-207, D-186
-- **settings** — Settings (utility) · 179 lines · no engines · D-180
+- **data** — Your Data (utility) · 455 lines · no engines · D-227, D-226, D-223
+- **ledger** — The Ledger (utility) · 490 lines · no engines · D-223, D-207, D-186
+- **settings** — Settings (utility) · 179 lines · no engines · D-227, D-180
 - **refresh** — Refresh (utility) · 326 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, skills · D-181, D-081, D-080
 
 ## Files in rooms/ not in the registry (2)

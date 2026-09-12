@@ -43,7 +43,12 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('a situation-scope switch has no button, and says what sets it', rows.filter(r => r.id === 'equityComp')[0] && !rows.filter(r => r.id === 'equityComp')[0].toggle && /Set by your situation/.test(rows.filter(r => r.id === 'equityComp')[0].text));
   check('every row names where it shows up', rows.every(r => r.links >= 1), rows.filter(r => r.links < 1).map(r => r.id).join(','));
   check('every row carries its label and gloss', ids.every(id => { const r = rows.filter(x => x.id === id)[0]; return r && r.text.indexOf(table.features[id].label) > -1 && r.text.indexOf(table.features[id].gloss.slice(0, 20)) > -1; }));
-  check('grouped under the four headings', (await page.$$eval('main > section', ss => ss.map(s => s.id).filter(id => id && id.indexOf('slaf-') !== 0 && id !== 'showrest').join(','))) === 'path,accuracy,household,horizon,assumptions,advanced');   /* 15.2: the Assumptions card sits between Horizon and Advanced */
+  /* 15.2: the Assumptions card sits between Horizon and Advanced. The Backup
+     panel (D-202) is last and was never added to this list, which is why this
+     line failed on every run since; the order is what is being checked. */
+  const sectionIds = await page.$$eval('main > section', ss => ss.map(s => s.id).filter(id => id && id.indexOf('slaf-') !== 0 && id !== 'showrest').join(','));
+  check('grouped under the headings, in order',
+    sectionIds === 'path,accuracy,household,horizon,assumptions,advanced,backup', sectionIds);
 
   /* Flip everything on, then off: the household is byte-identical. */
   const hash = () => page.evaluate(() => JSON.stringify(SLAF.Spine.getProfile()));
