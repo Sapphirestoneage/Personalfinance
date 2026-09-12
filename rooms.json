@@ -744,7 +744,9 @@
         "willExists",
         "poaExists"
       ],
-      "requires": [],
+      "requires": [
+        "estate"
+      ],
       "dashboardNumber": null,
       "order": 35
     },
@@ -759,7 +761,9 @@
         "givingPct",
         "givingTarget"
       ],
-      "requires": [],
+      "requires": [
+        "giving"
+      ],
       "dashboardNumber": null,
       "order": 36
     },

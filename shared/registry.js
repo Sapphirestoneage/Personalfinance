@@ -1787,7 +1787,12 @@
     kids: ['dependents'],
     'variable-income': ['variableIncome'],
     dreamline: ['hours'],
-    'student-loans': ['debt']
+    'student-loans': ['debt'],
+    /* D-218: these fold for a household they cannot be about, with the
+       D-142 way in still one tap away. Their own fields stay ungated so
+       the room takes the first answer once it is opened (D-213). */
+    estate: ['estate'],
+    giving: ['giving']
   };
   function gate() {
     if (typeof module === 'object' && module.exports) return require('./gate.js');

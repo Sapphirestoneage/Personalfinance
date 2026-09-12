@@ -8068,19 +8068,19 @@ section('Core (D-094): the gate — exists() per situation');
   /* Rooms whose requires are absent are not in the map. */
   const all = Registry.all().length;
   function gone(h) { const ids = Registry.forHousehold(h).map(r => r.id); return Registry.all().map(r => r.id).filter(id => ids.indexOf(id) === -1).sort().join(','); }
-  check('unanswered: every room but the ones that need a fact (a status, a partner, a dependent)', gone(none), 'between-jobs,kids,partner');
+  check('unanswered: every room but the ones that need a fact (a status, a partner, a dependent)', gone(none), 'between-jobs,estate,giving,kids,partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  check('retired: the working rooms are gone, and Between Jobs', gone(hh('retired')), 'accounts,between-jobs,career-move,credential,dreamline,fire,hassle,kids,partner,real-hourly-wage,savings-rate,self-employed,side-hustle,variable-income');
+  check('retired: the working rooms are gone, and Between Jobs', gone(hh('retired')), 'accounts,between-jobs,career-move,credential,dreamline,estate,fire,giving,hassle,kids,partner,real-hourly-wage,savings-rate,self-employed,side-hustle,variable-income');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
-  check('employed, alone, no dependents: own work, between jobs, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'between-jobs,decumulation,kids,partner,self-employed,variable-income');
+  check('employed, alone, no dependents: own work, between jobs, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'between-jobs,decumulation,estate,giving,kids,partner,self-employed,variable-income');
   checkTrue('self-employed: the 401(k) room is gone', Registry.forHousehold(hh('selfEmployed')).map(r => r.id).indexOf('accounts') === -1);
   checkTrue('every requires key is a branch', Object.keys(Registry.REQUIRES).every(id => Registry.REQUIRES[id].every(k => Gate.BRANCHES.indexOf(k) !== -1)));
   checkTrue('every requires room is a room', Object.keys(Registry.REQUIRES).every(id => !!Registry.byId(id)));
   check('byTag with a household filters the same way', Registry.byTag('all', hh('retired')).length, retiredRooms.length);
   check('byTag without one is every room', Registry.byTag('all').length, all);
-  check('the demo is six rooms short — no own work, not between jobs, not drawing down, alone, nobody depending', gone(Demo.build()), 'between-jobs,decumulation,kids,partner,self-employed,variable-income');
+  check('the demo is six rooms short — no own work, not between jobs, not drawing down, alone, nobody depending', gone(Demo.build()), 'between-jobs,decumulation,estate,giving,kids,partner,self-employed,variable-income');
 
   /* Guesses: a default for every guessable control, from the tables. */
   const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
@@ -13099,9 +13099,18 @@ section('The last day worked, and what falls out of it (D-213)');
   checkTrue('the clause defers to gate.js instead of copying the rule',
     /gate\\\.\(\\\\w\+\)/.test(fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8'))
     || /\^gate\\./.test(fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8')));
-  checkTrue('and the two rooms are not folded away, so their own form still opens',
-    !require(path.join(ROOT, 'shared/registry.js')).REQUIRES.estate
-    && !require(path.join(ROOT, 'shared/registry.js')).REQUIRES.giving);
+  /* The rooms fold for a household they cannot be about (D-218) — but the
+     FIELDS stay ungated, so the form still takes the first answer once the
+     D-142 "Show it anyway" has opened it. Folding both would be the dead
+     end: no way ever to record a first will. */
+  const Reg = require(path.join(ROOT, 'shared/registry.js'));
+  check('the estate room folds on the estate branch', (Reg.REQUIRES.estate || []).join(','), 'estate');
+  check('the giving room folds on the giving branch', (Reg.REQUIRES.giving || []).join(','), 'giving');
+  ['willExists', 'poaExists', 'beneficiariesSet', 'givingPct', 'givingTarget'].forEach(function (id) {
+    check(id + ': the field is still not gated shut', typeof Own.FIELDS[id].applies, 'undefined');
+  });
+  checkTrue('and the folded room still offers a way in',
+    /id="slaf-showanyway"/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
 })();
 
 section('The gate is load-bearing in the Tier 0 rooms (D-212)');

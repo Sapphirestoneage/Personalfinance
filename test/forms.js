@@ -1415,6 +1415,14 @@ async function revealFolded(page) {
       await page.waitForTimeout(250);
     }
   } catch (e) { /* room has no fold: nothing to open */ }
+  /* A room the situation gate folds away offers "Show it anyway" (D-142),
+     and a person who navigated to it deliberately taps that. The harness
+     does the same, or it would test a page nobody reaches and report the
+     room's own controls as missing (D-218). */
+  try {
+    const anyway = await page.$('#slaf-showanyway');
+    if (anyway) { await anyway.tap(); await page.waitForTimeout(250); }
+  } catch (e) { /* not folded: nothing to open */ }
 }
 
 async function seed(page, kind) {

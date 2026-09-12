@@ -10,6 +10,7 @@ Reference data: confidence_weights.json, expense_categories.json, fire_variants.
 Owns: givingPct, givingTarget
 Reads from other owners: grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:
+  - D-218 — Two rooms that stop asking a household they cannot be about
   - D-213 — The last day worked, and two branches that stop the wrong questions
   - D-107 — Giving: a share of income, in dollars, months of FI and hours
   - D-098 — The first six tranche rooms: what each owns, before it is built

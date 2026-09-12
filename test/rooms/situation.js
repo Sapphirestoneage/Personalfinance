@@ -54,17 +54,18 @@ module.exports = function (t) {
   /* The six situations, and what each turns off. Written out rather than
      computed, so a change to the gate has to be agreed to here too. */
   var EXPECTED = {
-    employed:     ['self-employed', 'between-jobs', 'decumulation', 'partner', 'kids', 'variable-income'],
-    selfEmployed: ['accounts', 'between-jobs', 'decumulation', 'partner', 'kids'],
+    employed:     ['self-employed', 'between-jobs', 'decumulation', 'estate', 'giving', 'partner', 'kids',
+                 'variable-income'],
+    selfEmployed: ['accounts', 'between-jobs', 'decumulation', 'estate', 'giving', 'partner', 'kids'],
     unemployed:   ['savings-rate', 'fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner', 'kids',
-                   'variable-income', 'dreamline'],
-    student:      ['self-employed', 'accounts', 'between-jobs', 'protection', 'decumulation', 'partner',
-                   'kids', 'variable-income'],
+                   'credential', 'accounts', 'decumulation', 'tax', 'estate', 'giving', 'career-move', 'partner',
+                   'kids', 'variable-income', 'dreamline'],
+    student:      ['self-employed', 'accounts', 'between-jobs', 'protection', 'decumulation', 'estate', 'giving',
+                'partner', 'kids', 'variable-income'],
     retired:      ['savings-rate', 'fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'between-jobs', 'career-move', 'partner', 'kids',
-                   'variable-income', 'dreamline'],
-    both:         ['between-jobs', 'decumulation', 'partner', 'kids']
+                'credential', 'accounts', 'between-jobs', 'estate', 'giving', 'career-move', 'partner', 'kids',
+                'variable-income', 'dreamline'],
+    both:         ['between-jobs', 'decumulation', 'estate', 'giving', 'partner', 'kids']
   };
   Object.keys(EXPECTED).forEach(function (status) {
     var h = household(status);

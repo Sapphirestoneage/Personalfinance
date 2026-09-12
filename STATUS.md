@@ -17,11 +17,11 @@ Updated: 2026-09-12
   below works end to end.
 
 ## Next (top item first; one per session)
-0b. Gated-intake brief: all six phases done (D-211 to D-216). The first round
-   asks 9 (student) to 10 (between jobs), never more than 12, and the gate
-   decides. Three phases turned out to be already true and are recorded as
-   such rather than built twice: the path collisions, most of the derivation
-   ledger, and seven of the eleven cuts.
+0b. Gated-intake brief: all six phases done (D-211 to D-216), and the last two
+   unused gate branches are wired (D-218: Estate and Giving fold for a
+   household they cannot be about). The first round asks 9 (student) to 10
+   (between jobs), never more than 12. Three phases turned out already true
+   and are recorded as such: collisions, most of the ledger, 7 of 11 cuts.
 0c. `test/alignment.js`: 4 failures in financial-snapshot.html ("nothing
    rendered"), present at 2cb6f50 and older than this work.
    The Express walk flake is FIXED and was never the app (D-217): only a

@@ -13349,6 +13349,33 @@ about half the time; Protection driven in Chromium at two incomes.
 
 ---
 
+## D-218 — Two rooms that stop asking a household they cannot be about
+
+**Why.** `gate.js` has six situations, and the estate and giving branches
+were the two nothing used. So the Estate room asked about a will and the
+Giving room asked for a target the same way for every household, including
+one with no dependents, no partner and nothing to leave.
+
+**Decision.** `shared/registry.js` `REQUIRES` gains `estate: ['estate']` and
+`giving: ['giving']`, so both rooms fold under the D-142 notice with "Show
+it anyway" one tap away. The gating is on the rooms, never on the fields:
+`willExists`, `poaExists`, `beneficiariesSet`, `givingPct` and `givingTarget`
+stay ungated, because a field that gates shut cannot take the first answer
+that would open its own branch. `test/forms.js` `revealFolded()` now taps
+`#slaf-showanyway`, so the walk still types into a folded room.
+
+**Replaces or removes.** Two rooms leave the default walk for a household
+the branches say they are not about. Nothing is deleted; the freeze holds.
+
+**Stored shape.** No change. Folding is a render decision, read from the
+household each time.
+
+**Verified.** `node test/run.js` 29,344; `node test/export.js` 33;
+`node test/forms.js` 532, the walk still reaching both rooms through the
+notice.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

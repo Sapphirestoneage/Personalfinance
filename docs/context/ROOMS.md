@@ -58,7 +58,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **protection** — Protection · 292 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-217, D-215, D-103
 - **decumulation** — Drawing It Down · 272 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-104, D-098, D-094
 - **estate** — Estate Basics · 216 lines · engines: projection, tier0, hourly, estate · owns: beneficiariesSet, willExists, poaExists · D-213, D-106, D-098
-- **giving** — Giving · 259 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget · D-213, D-107, D-098
+- **giving** — Giving · 259 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget · D-218, D-213, D-107
 - **career-move** — Career Move · 290 lines · engines: projection, tier0, hourly, careermove · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-108
 - **partner** — Partner · 284 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner · owns: partnerName, partnerDob, splitMode, sharedMonthly · D-181, D-179, D-109
 - **kids** — Kids and Tuition · 243 lines · engines: projection, tier0, kids · owns: tuitionTarget, tuitionSaved, tuitionMonthly · D-110
