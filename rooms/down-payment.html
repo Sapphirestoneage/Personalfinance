@@ -132,9 +132,9 @@
         + '<small>' + esc(Money.formatCents(o.paymentCents)) + ' a month: ' + esc(Money.formatCents(o.principalInterestCents)) + ' principal and interest, ' + esc(Money.formatCents(o.taxCents)) + ' tax, ' + esc(Money.formatCents(o.insuranceCents)) + ' insurance' + (o.miCents ? ', ' + esc(Money.formatCents(o.miCents)) + ' mortgage insurance' : '') + '.</small></li>';
     }).join('');
   }
-  /* One repaint after the typing pauses instead of one per keystroke; change
-     and blur still repaint at once, so nothing is lost on leaving a field.
-     D-222. */
+  /* One repaint after the typing pauses instead of one per keystroke.
+     Leaving the field fires `change`, which repaints at once, so nothing
+     is lost on the way out. D-222. */
   var repaintTimer = null;
   function renderSoon() {
     if (repaintTimer) clearTimeout(repaintTimer);
@@ -147,7 +147,6 @@
   ['in-price', 'in-saved', 'in-monthly', 'in-family', 'in-rate'].forEach(function (id) {
     el(id).addEventListener('input', renderSoon);
     el(id).addEventListener('change', renderNow);
-    el(id).addEventListener('blur', renderNow);
   });
   el('add-block').addEventListener('click', function () {
     if (!LAST) return;

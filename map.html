@@ -59,7 +59,21 @@
     #room-list > .room { margin-bottom: 0; }
   }
   .room h2 { font-size: var(--text-lg); }
-  .room p { color: var(--color-text-muted); font-size: var(--text-sm); margin: var(--space-2) 0 var(--space-3); }
+  /* Ninety-two cards, each with a title, a status, a paragraph and a row of
+     topic chips, made this directory twenty phone screens long — and it is
+     linked from every room as "All rooms". The blurb earns its place (it is
+     how you choose a room) but not at full length: two lines is enough to
+     tell one room from another, and the whole card is a link to the room
+     itself. The chips went: the filter row at the top of this page already
+     offers every topic, so they were the same information twice, costing a
+     line on all ninety-two. D-222. */
+  .room p {
+    color: var(--color-text-muted); font-size: var(--text-sm);
+    margin: var(--space-2) 0 0;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    line-clamp: 2; overflow: hidden;
+  }
+  .room { padding-block: var(--space-3); }
   .room-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
   .tag {
     font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow);
@@ -219,10 +233,7 @@
         + (isNext ? '<span class="next-flag">next</span>'
                   : seen ? '<span class="visited">visited</span>' : '') + '</div>'
         + donePill(room.id)
-        + '<p>' + room.blurb + '</p>'
-        + '<div class="room-tags">'
-        + room.tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('')
-        + '</div>';
+        + '<p>' + room.blurb + '</p>';
       list.appendChild(a);
     }
   }
