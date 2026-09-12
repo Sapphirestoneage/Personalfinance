@@ -13084,6 +13084,33 @@ properties (7 pre-existing), data, migration, glossary, qr; `test/export.js`;
 landed" check is flaky in isolation on the previous commit too, see
 STATUS); twelve rooms opened in Chromium with no errors.
 
+## D-211 — The path collisions were not collisions; here is the guard anyway
+
+**Why.** The gated-intake brief opens with six "path collisions" said to be
+blocking: two named fields writing one scalar, last write winning. Probed
+field by field against a seeded household, none of the six is one. In every
+pair at most one member writes. `Daite.pathOf` returns the coarse FAMILY
+path, so a raw input and a derived rollup share one by design.
+
+**Decision.** Change no field. `age`, `monthlyDebtPayments`, `netWorth`,
+`confidenceWeightedNetWorth` and `capturingFullMatch` are already read-only
+derivations. `rentMonthly` is not a duplicate of `accommodationMonthly`: the
+bucket is the raw input, `rentMonthly` is what is actually paid, falling
+back to Cash Flow's lines and then to logged rent, reporting its source
+(D-130, D-172). Collapsing them would delete that fallback. `healthCover` /
+`highestDeductible` and `investments` / `tuitionSaved` write distinct
+leaves. Instead `test/run.js` gains the guard the brief wanted, in the form
+that measures the real thing: every writable field is written on one seeded
+household and the stored leaves it changed are recorded; two fields that
+change the same leaves fail the run.
+
+**Replaces or removes.** Nothing. The brief's Phase 0 deletions are not
+made: each would remove a reader's derivation or the only writer.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (28,700); `node test/export.js`.
+
 ---
 
 # The Dungeons & Dividends entries

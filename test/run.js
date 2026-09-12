@@ -12526,6 +12526,115 @@ section('Express: a second view of the same rows (D-208)');
   checkTrue('Express is in every arrangement beside the First Round', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('express') >= 0)); })());
 })();
 
+section('One writer per stored leaf (D-211)');
+
+/* The guard the gated-intake brief asked for. The brief's own table named
+   six "path collisions", and none of them was one: in every pair at most
+   one member writes, and `pathOf` in shared/daite.js returns the coarse
+   FAMILY path (`expenses.needs.accommodation`), not a scalar, so a raw
+   input and a derived rollup legitimately share it. What matters is what a
+   write actually lands on, so that is what this measures: every writable
+   field is written on an identical seeded household and the stored leaves
+   it changed are recorded. Two fields that change exactly the same leaves
+   are the real collision — the second write would silently win. */
+(function () {
+  const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+  const ownPath = path.join(ROOT, 'shared/ownership.js');
+  /* The seed already carries a partner, a debt and an asset: a field whose
+     write CREATES one of those would otherwise show the whole new row as
+     its own work and look like a collision with every other creator. */
+  const seedHousehold = Demo.build();
+  if (seedHousehold.people.length < 2) {
+    seedHousehold.people.push(Schema.createPerson({ label: 'Partner', role: 'adult', dob: '1990-01-01' }));
+  }
+  const seeded = JSON.stringify(seedHousehold);
+  const store = {};
+  global.localStorage = {
+    getItem: (k) => (k in store ? store[k] : null),
+    setItem: (k, v) => { store[k] = String(v); },
+    removeItem: (k) => { delete store[k]; }
+  };
+  delete require.cache[require.resolve(spinePath)];
+  delete require.cache[require.resolve(ownPath)];
+  const Spine = require(spinePath);
+  const Own = require(ownPath);
+
+  /* Every scalar leaf of the stored household, as path -> JSON. */
+  function leaves(node, prefix, out) {
+    out = out || {};
+    Object.keys(node || {}).forEach(function (k) {
+      const v = node[k], at = prefix ? prefix + '.' + k : k;
+      if (v && typeof v === 'object' && !Array.isArray(v)) leaves(v, at, out);
+      else if (Array.isArray(v)) v.forEach(function (x, i) {
+        if (x && typeof x === 'object') leaves(x, at + '[' + i + ']', out);
+        else out[at + '[' + i + ']'] = JSON.stringify(x);
+      });
+      else out[at] = JSON.stringify(v);
+    });
+    return out;
+  }
+  /* Bookkeeping the spine keeps on every write, not the field's own doing. */
+  const BOOKKEEPING = /^meta\.|^schemaVersion|updatedAt|createdAt|^snapshots|^commands|\.id$/;
+
+  /* A value each unit will accept, so the write is a real one. */
+  const TRIES = [123457, 0.1234, true, 'zzq', '1991-07-03', 3,
+    { matchPercent: 0.07, capPercent: 0.06 }, { stocks: 0.5, bonds: 0.3, cash: 0.2 }];
+
+  function wroteLeaves(id, ctx) {
+    store['slaf.household.v2'] = seeded;
+    Spine._reload();
+    const before = leaves(Spine.getProfile());
+    let wrote = false;
+    for (const v of TRIES) { try { Own.FIELDS[id].write(v, ctx || null); wrote = true; break; } catch (e) { /* wrong unit */ } }
+    if (!wrote) return null;
+    const after = leaves(Spine.getProfile());
+    return Object.keys(Object.assign({}, before, after))
+      .filter((k) => after[k] !== before[k])
+      .filter((k) => !BOOKKEEPING.test(k))
+      .sort();
+  }
+
+  const writable = Object.keys(Own.FIELDS).filter((id) => typeof Own.FIELDS[id].write === 'function');
+  checkTrue('there are writable fields to check', writable.length > 40, String(writable.length));
+
+  const byLeafSet = {};
+  let unreached = 0;
+  writable.forEach(function (id) {
+    /* An item field (a debt row, an asset row) needs an itemId; it writes
+       inside that row and cannot collide with a household scalar. */
+    const changed = wroteLeaves(id) || wroteLeaves(id, { itemId: 'probe' });
+    if (!changed || !changed.length) { unreached++; return; }
+    const key = changed.join('|');
+    (byLeafSet[key] = byLeafSet[key] || []).push(id);
+  });
+
+  const collisions = Object.keys(byLeafSet)
+    .filter((k) => byLeafSet[k].length > 1)
+    .map((k) => byLeafSet[k].join(' + ') + ' -> ' + k);
+  check('no two writable fields land on the same stored leaves', collisions.join('; '), '');
+
+  /* The probe is only meaningful while it reaches most writers. If a future
+     unit stops being accepted, this fails rather than passing vacuously. */
+  checkTrue('the probe reached all but a handful of writers', unreached <= 10,
+    unreached + ' writers could not be probed with any sample value');
+
+  /* And the pairs the brief called collisions: each is a raw input beside a
+     derived rollup, so exactly one of the two writes. */
+  [['rentMonthly', 'accommodationMonthly'],
+   ['age', 'dob'],
+   ['monthlyDebtPayments', 'debtMinPayment'],
+   ['netWorth', 'confidenceWeightedNetWorth'],
+   ['capturingFullMatch', 'employerMatch']].forEach(function (pair) {
+    const writers = pair.filter((id) => typeof Own.FIELDS[id].write === 'function');
+    checkTrue(pair.join(' / ') + ': at most one of the two writes',
+      writers.length <= 1, 'writers: ' + writers.join(','));
+  });
+
+  delete global.localStorage;
+  delete require.cache[require.resolve(spinePath)];
+  delete require.cache[require.resolve(ownPath)];
+})();
+
 /* ==========================================================================
    Report
    ========================================================================== */
