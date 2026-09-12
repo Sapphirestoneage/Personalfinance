@@ -21,7 +21,7 @@
     { "step": 1, "target": "ledger", "title": "The Ledger swallows navigation", "state": "shipped-in-part" },
     { "step": 2, "target": "runway", "title": "The Cushion, four readings of one number", "state": "todo" },
     { "step": 3, "target": "financial-snapshot", "title": "The Scorecard", "state": "todo" },
-    { "step": 4, "target": "foo-ladder", "title": "What The Next Dollar Does", "state": "todo" },
+    { "step": 4, "target": "foo-ladder", "title": "What The Next Dollar Does", "state": "shipped" },
     { "step": 5, "target": "goals", "title": "The Decision Room shell, then three easy block types", "state": "todo" },
     { "step": 6, "target": "decumulation", "title": "The Back Half, which then defines the target every other room reads", "state": "todo" }
   ],
@@ -73,7 +73,7 @@
       "absorbs": ["between-jobs", "quit-fund", "sleep-at-night"], "done": [],
       "note": "Four readings of one number: how long can you not earn. The toggle is the insight; four rooms hid it." },
     { "n": 16, "id": "foo-ladder", "title": "What The Next Dollar Does", "group": "back-half",
-      "absorbs": ["next-hundred", "windfall"], "done": [],
+      "absorbs": ["next-hundred", "windfall"], "done": ["next-hundred", "windfall"],
       "note": "One question at three amounts. The FOO step number stays visible everywhere." },
 
     { "n": 17, "id": "goals", "title": "The Decision Room", "group": "decisions",

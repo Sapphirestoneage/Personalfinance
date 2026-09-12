@@ -31,8 +31,13 @@ module.exports = function (t) {
   checkTrue('the exercise chips grow too', /@media \(pointer: coarse\) \{ \.pill \{ min-height: 32px;/.test(ex));
 
   /* An inline link inside a sentence is deliberately NOT padded out: doing
-     that tears paragraphs apart, and it is never the primary control. */
-  checkTrue('inline links in prose are left alone', !/\ba \{[^}]*min-height: 3[0-9]px/.test(css));
+     that tears paragraphs apart, and it is never the primary control. What
+     is forbidden is a BARE `a` rule; a link that is a control in its own
+     right (the hats strip, D-228) is named by its component and does get a
+     tap target, which is the opposite mistake. */
+  checkTrue('inline links in prose are left alone', !/(^|[};]|\*\/)\s*a \{[^}]*min-height: 3[0-9]px/m.test(css));
+  checkTrue('… but a link that IS a control gets a tap target',
+    /\.slaf-hats a \{[^}]*min-height: 32px/.test(css));
 
   /* ---- Desktop ---------------------------------------------------------- */
   checkTrue('the column grows with the screen, in steps', /--measure: 620px/.test(css)

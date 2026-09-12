@@ -9,10 +9,14 @@ Updated: 2026-09-12
   right to be a room, and the thirty that survive it, are D-227 and
   `docs/room-map.json`; `test/run.js` checks that map against the registry on
   every run, so it cannot drift.
-- **Step 1 of six is done (D-228).** The Ledger swallowed navigation: First
+- **Steps 1 and 4 are done.** D-228: the Ledger swallowed navigation — First
   Round, Express, Front Doors, the Walk-Through, Refresh and Welcome Back are
   six views of `rooms/ledger.html`, routed by hash, all writing through the
-  owners. 92 registry rooms → 86. Every old URL redirects, hash and all.
+  owners. D-229: Your Next $100, the FOO Ladder and The Windfall are one
+  question at three amounts in What The Next Dollar Does, with the FOO step
+  number standing above all three. 92 registry rooms → 84. Every old URL
+  redirects, hash and all; `.slaf-hats` in `shared/theme.css` is the one
+  reading strip every merged room wears.
 - The Ledger rework brief (owner, 2026-09-11) is built through Phase K. H6
   (1871-on returns) and I7 wait on sourced data, egress blocked; I6 and I8
   wait. Still waiting on the owner: the Pages switch, the domain (G1.1), a
@@ -29,8 +33,8 @@ Updated: 2026-09-12
 2. Step 2: The Cushion. `runway` absorbs `between-jobs`, `quit-fund`,
    `sleep-at-night` — four readings of one number, on a toggle that defaults
    to the simplest (Alexis's note).
-3. Step 3: The Scorecard (6 → 1). Step 4: What The Next Dollar Does (3 → 1),
-   FOO step number visible everywhere (Money Guy's note).
+3. Step 3: The Scorecard (6 → 1): `financial-snapshot` absorbs `health`,
+   `ratios`, `savings-rate`, `quick-math`, `rank-guess`.
 4. Step 5: the Decision Room shell, then goals, wedding, big purchase.
 5. Step 6: the Back Half. Not before the shell has stopped moving.
 6. Still open from before: logged income does not reach the headline numbers;

@@ -68,7 +68,7 @@ typing in it.
 
 ```
 index.html          The front door: the Dashboard once it has what it needs, the intake landing until then (D-058)
-foo-ladder.js       The FOO ladder's logic (shell at rooms/foo-ladder.html): build() once, paint() on every change
+foo-ladder.js       The FOO ladder's logic — one of the three readings inside rooms/foo-ladder.html, What The Next Dollar Does (D-229): build() once, paint() on every change
 map.html            Room directory: next-unfinished first, then the groups, tag filter
 MONEY-MAP.md        The discovery map that preceded the ledger build (D-128, revised in D-129); where it and the build spec differ, the decisions are what shipped
 DESIGN-AUDIT.md     The design-audit brief: everything the app is and does, for a reviewer who has never seen the repo
@@ -131,7 +131,7 @@ engines/            Shared calculation engines — one function per concept
   ratios.js           thirty ratios in one registry, plus the radar projection
   credential.js       one ROI engine for a career move and a single skill
   worth.js            predicted-before against rated-after, and the regret view
-  windfall.js         a lump sum all at once or spread — and when spreading wins
+  windfall.js         a lump sum all at once or spread — and when spreading wins (the lump-sum reading of What The Next Dollar Does)
   runway.js           how long the money lasts when the income stops
   health.js           the health score: ratios, weighted by age cohort
   income.js           hourly/weekly/monthly pay into a year, and jobs by month

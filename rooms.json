@@ -515,7 +515,7 @@
     },
     {
       "id": "foo-ladder",
-      "title": "FOO Ladder",
+      "title": "What The Next Dollar Does",
       "file": "rooms/foo-ladder.html",
       "reads": [
         "grossAnnualIncome",
@@ -535,18 +535,6 @@
       "order": 23
     },
     {
-      "id": "next-hundred",
-      "title": "Your Next $100",
-      "file": "rooms/next-hundred.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 23.5
-    },
-    {
       "id": "worth",
       "title": "Worth It",
       "file": "rooms/worth.html",
@@ -557,16 +545,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 24
-    },
-    {
-      "id": "windfall",
-      "title": "The Windfall",
-      "file": "rooms/windfall.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 25
     },
     {
       "id": "coast-date",

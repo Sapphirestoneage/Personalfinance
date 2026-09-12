@@ -57,7 +57,7 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 - `totalDebt` — Total debt · read by ledger, start, financial-snapshot, statements, statement, ratios, dashboard, credit, what-if-life, student-loans, history, wrapped
 - `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, financial-snapshot, statements, ratios, rerank, cant-pay, student-loans, calendar
 - `debtBalance` — Balance · read by ledger, start
-- `debtRate` — Interest rate · read by ledger, start, next-hundred, debates
+- `debtRate` — Interest rate · read by ledger, start, foo-ladder, debates
 - `debtMinPayment` — Minimum payment, a month · read by ledger
 
 ## decumulation (3)
@@ -171,13 +171,13 @@ Fields: 112. Traced: 103. No other room mentions it: **52**.
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
 - `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, savings-rate, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, wrapped, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, foo-ladder, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, quit-fund, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, quit-fund, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
 - `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, sleep-at-night, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, between-jobs, quit-fund, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, between-jobs, tax, offer-compare, unlearning, student-loans
-- `employerMatch` — Employer match · read by financial-snapshot, statements, savings-rate, foo-ladder, next-hundred, offer-compare, unlearning
+- `employerMatch` — Employer match · read by financial-snapshot, statements, savings-rate, foo-ladder, offer-compare, unlearning
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, wrapped
 - `hasDebt` — Any debt · read by dashboard, unlearning, student-loans
 - `contributionPercent` — Workplace contribution · read by ledger, statements, accounts, what-if-life, tax

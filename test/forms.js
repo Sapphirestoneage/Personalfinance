@@ -706,8 +706,8 @@ const CASES = [
     /* The front page. It is the most input-heavy page in the repo and it is
        hand-built vanilla — the exact place the keyboard bug would come back
        if the build-once rule slipped. */
-    room: '/rooms/foo-ladder.html',
-    container: '.wrap',
+    room: '/rooms/foo-ladder.html#every-month',
+    container: '#view-ladder .wrap',
     seed: 'demo',
     prepare: async (page) => {
       /* The deductible is a stored fact now, owned by Sleep At Night. Give
@@ -743,8 +743,11 @@ const CASES = [
       const step1 = await page.evaluate(() =>
         document.body.innerText.includes('in cash & savings covers your')
         || document.body.innerText.includes('in cash & savings.'));
+      /* Count inside the ladder reading only: the lump-sum reading next door
+         has its own "what the waiting cash earns" box, which is a different
+         question and not a second place to enter the balance (D-229). */
       const oneCashRow = await page.evaluate(() =>
-        Array.from(document.querySelectorAll('.slaf-label'))
+        Array.from(document.querySelectorAll('#view-ladder .slaf-label'))
           .filter(l => /cash/i.test(l.textContent)).length);
       return [
         ['the prepaid goal was kept', v.goal, '20000'],
@@ -816,7 +819,7 @@ const CASES = [
     /* The Windfall stores nothing — every input is page-local. So the check
        is that what you typed is still in the box after the page has
        recomputed around it, which is the failure the guard exists for. */
-    room: '/rooms/windfall.html',
+    room: '/rooms/foo-ladder.html#a-lump-sum',
     container: '#the-money',
     seed: 'demo',
     fields: [

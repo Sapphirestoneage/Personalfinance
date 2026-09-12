@@ -60,9 +60,7 @@
             "values",
             "goals",
             "foo-ladder",
-            "next-hundred",
             "worth",
-            "windfall",
             "runway",
             "car",
             "first-car",
@@ -162,9 +160,7 @@
             "values",
             "goals",
             "foo-ladder",
-            "next-hundred",
             "worth",
-            "windfall",
             "runway",
             "car",
             "first-car",
@@ -285,7 +281,6 @@
           "name": "What do I do next?",
           "rooms": [
             "foo-ladder",
-            "next-hundred",
             "goals",
             "debt-payoff",
             "settings",
@@ -322,8 +317,7 @@
             "credential",
             "degree",
             "dreamline",
-            "reversibility",
-            "windfall"
+            "reversibility"
           ]
         },
         {
@@ -448,8 +442,7 @@
             "savings-rate",
             "accounts",
             "statement",
-            "reachable",
-            "windfall"
+            "reachable"
           ]
         },
         {
@@ -459,7 +452,6 @@
             "coast-date",
             "fire-lab",
             "foo-ladder",
-            "next-hundred",
             "rollover",
             "what-if-life",
             "adventure",
@@ -617,8 +609,7 @@
             "what-if-life",
             "adventure",
             "self-employed",
-            "side-hustle",
-            "windfall"
+            "side-hustle"
           ]
         },
         {
@@ -660,8 +651,7 @@
             "exercises",
             "hassle",
             "real-hourly-wage",
-            "foo-ladder",
-            "next-hundred"
+            "foo-ladder"
           ],
           "note": "The bay that catches everything that is not time-bound — nearly a quarter of the app.",
           "warn": true
@@ -740,8 +730,7 @@
           "rooms": [
             "fire",
             "coast-date",
-            "foo-ladder",
-            "next-hundred"
+            "foo-ladder"
           ]
         },
         {
@@ -797,7 +786,6 @@
             "timeline",
             "what-if-life",
             "adventure",
-            "windfall",
             "between-jobs",
             "quit-fund",
             "micro-retirement",
@@ -881,7 +869,6 @@
             "what-if-life",
             "adventure",
             "foo-ladder",
-            "next-hundred",
             "big-purchase",
             "car",
             "first-car",
@@ -897,7 +884,6 @@
             "protection",
             "partner",
             "wedding",
-            "windfall",
             "self-employed",
             "side-hustle",
             "variable-income",
@@ -1014,7 +1000,6 @@
             "fire",
             "coast-date",
             "foo-ladder",
-            "next-hundred",
             "get-help",
             "giving",
             "goals",
@@ -1049,7 +1034,6 @@
             "skill-tree",
             "statement",
             "reachable",
-            "windfall",
             "buckets",
             "unlearning",
             "debates",
@@ -1141,8 +1125,7 @@
             "fire",
             "coast-date",
             "fire-lab",
-            "foo-ladder",
-            "next-hundred"
+            "foo-ladder"
           ]
         },
         {
@@ -1195,7 +1178,6 @@
             "timeline",
             "goals",
             "dreamline",
-            "windfall",
             "reversibility",
             "worth",
             "quick-math"
@@ -1298,7 +1280,6 @@
             "fire",
             "coast-date",
             "foo-ladder",
-            "next-hundred",
             "dashboard"
           ]
         },
@@ -1341,7 +1322,6 @@
             "kids",
             "student-loans",
             "rollover",
-            "windfall",
             "self-employed",
             "side-hustle",
             "variable-income",
@@ -1432,7 +1412,6 @@
           "name": "A plan you can follow",
           "rooms": [
             "foo-ladder",
-            "next-hundred",
             "goals",
             "debt-payoff",
             "timeline",
@@ -1476,8 +1455,7 @@
             "giving",
             "what-if-life",
             "adventure",
-            "fire-lab",
-            "windfall"
+            "fire-lab"
           ]
         },
         {
@@ -1603,7 +1581,6 @@
             "statement",
             "reachable",
             "foo-ladder",
-            "next-hundred",
             "goals",
             "what-if-life",
             "adventure",
@@ -1639,8 +1616,7 @@
             "degree",
             "stacker",
             "skill-tree",
-            "exercises",
-            "windfall"
+            "exercises"
           ],
           "note": "The risk of not measuring. Everything here exists so the other six bays are not a surprise."
         }
@@ -1745,10 +1721,8 @@
             "runway",
             "what-if-life",
             "adventure",
-            "windfall",
             "goals",
             "foo-ladder",
-            "next-hundred",
             "ratios",
             "health"
           ]
@@ -1806,7 +1780,6 @@
             "stacker",
             "skill-tree",
             "exercises",
-            "windfall",
             "cant-pay",
             "rollover",
             "estate"
@@ -1894,8 +1867,7 @@
         {
           "name": "Layer 3",
           "rooms": [
-            "foo-ladder",
-            "next-hundred"
+            "foo-ladder"
           ],
           "note": "The deepest room in the whole app is three hops from the door."
         },
@@ -2018,11 +1990,9 @@
             "coast-date",
             "fire-lab",
             "foo-ladder",
-            "next-hundred",
             "goals",
             "what-if-life",
             "adventure",
-            "windfall",
             "ratios",
             "health",
             "financial-snapshot",
@@ -2089,7 +2059,6 @@
             "worth",
             "car",
             "first-car",
-            "windfall",
             "reversibility",
             "sleep-at-night",
             "cant-pay",
@@ -2154,8 +2123,7 @@
             "roth-aca",
             "middle-class-trap",
             "giving",
-            "foo-ladder",
-            "next-hundred"
+            "foo-ladder"
           ],
           "note": "A third of the app asks for a real evening. Worth knowing before you open one on a Tuesday.",
           "warn": true
@@ -2258,7 +2226,6 @@
             "rollover",
             "accounts",
             "health",
-            "windfall",
             "ratios",
             "sleep-at-night",
             "timeline"
@@ -2289,7 +2256,6 @@
           "name": "Only this app says it like this",
           "rooms": [
             "foo-ladder",
-            "next-hundred",
             "rerank",
             "dreamline",
             "decumulation",
@@ -2373,8 +2339,7 @@
             "estate",
             "decumulation",
             "roth-aca",
-            "middle-class-trap",
-            "windfall"
+            "middle-class-trap"
           ],
           "note": "What you hold and what protects it. Ten spokes.",
           "hub": "statement"
@@ -2409,7 +2374,6 @@
             "coast-date",
             "fire-lab",
             "foo-ladder",
-            "next-hundred",
             "goals",
             "what-if-life",
             "adventure",
@@ -2489,7 +2453,6 @@
             "coast-date",
             "fire-lab",
             "foo-ladder",
-            "next-hundred",
             "goals",
             "timeline",
             "what-if-life",
@@ -2523,7 +2486,6 @@
             "degree",
             "worth",
             "sleep-at-night",
-            "windfall",
             "rerank"
           ],
           "note": "These lean on data/*.json. Only 4 of the 72 tables are marked sourced; 17 are marked unverified. The rooms here are exactly as good as those files.",
@@ -2655,8 +2617,7 @@
             "accounts",
             "savings-rate",
             "tax",
-            "protection",
-            "windfall"
+            "protection"
           ]
         },
         {
@@ -2678,7 +2639,6 @@
             "coast-date",
             "fire-lab",
             "foo-ladder",
-            "next-hundred",
             "goals",
             "what-if-life",
             "adventure",

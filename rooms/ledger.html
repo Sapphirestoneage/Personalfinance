@@ -134,14 +134,8 @@
   #spheres-fold { margin-top: var(--space-5); }
   #spheres-fold > summary { font-size: var(--text-sm); }
 
-  /* ---- The hats: which way in you are using (D-228) ---------------------- */
-  .hats { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-3) 0 var(--space-4); }
-  .hats a { font-family: var(--font-display); font-size: var(--text-sm); text-decoration: none;
-    border: 1px solid var(--color-border); border-radius: var(--radius-pill);
-    padding: 4px 12px; color: var(--color-text-muted); min-height: 32px; }
-  .hats a:hover { color: var(--color-text); border-color: var(--color-border-active); }
-  .hats a[aria-current="page"] { background: var(--color-accent); border-color: var(--color-accent);
-    color: var(--color-accent-contrast); }
+  /* The hats strip itself lives in shared/theme.css (.slaf-hats, D-228):
+     every merged room wears one, so there is one of it. */
   #view-express { max-width: 720px; }
   #view-round1 { max-width: 560px; }
   #view-round1 .switch, #view-express .switch { font-size: var(--text-sm); margin: var(--space-2) 0 0; }
@@ -544,7 +538,7 @@
     <p class="slaf-lede">Every number the app can hold. Six ways in; they all write the same rows.</p>
   </header>
 
-  <nav class="hats" id="hats" aria-label="Ways into the same rows">
+  <nav class="slaf-hats" id="hats" aria-label="Ways into the same rows">
     <a href="#doors-home"      data-view="view-doors">The doors</a>
     <a href="#round-1"         data-view="view-round1">Round 1</a>
     <a href="#all-at-once"     data-view="view-express">All at once</a>

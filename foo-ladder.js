@@ -557,13 +557,14 @@
     var root = document.getElementById('root');
     var wrap = h('div', { class: 'wrap' });
 
-    wrap.appendChild(h('a', { class: 'back', href: '../map.html', text: '← All rooms' }));
-
-    wrap.appendChild(h('header', { style: { paddingTop: '16px', paddingBottom: '20px', textAlign: 'center' } }, [
+    /* No back link and no <h1> here since D-229: the ladder is one of three
+       readings inside What The Next Dollar Does, and the page above it owns
+       the room head. The crown and the one-line subtitle stay — they are
+       this reading's own, not the room's. */
+    wrap.appendChild(h('header', { style: { paddingTop: '4px', paddingBottom: '20px', textAlign: 'center' } }, [
       h('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: '12px' } }, gemCrown()),
-      h('h1', { text: 'Financial Order of Operations' }),
       h('p', { style: { color: 'var(--color-text-subtle)', fontSize: 'var(--text-base)', marginTop: '4px' },
-        text: 'Nine steps, in the exact order you need.' })
+        text: 'Nine steps, in the exact order you need. Every month from here.' })
     ]));
 
     wrap.appendChild(h('div', { class: 'actions',
@@ -912,9 +913,8 @@
   build();
   paint();
 
-  Spine.registerRoom(ROOM_ID);
-
-  SLAF.Progress.mount(ROOM_ID);
+  /* The ROOM registers itself in rooms/foo-ladder.html since D-229; this
+     file is one of its three readings, not the room. */
   Spine.onChange(function (h0) { state.household = h0; paint(); });
 
   Reference.load(['irsLimits', 'effectiveTaxRates']).then(function (t) {

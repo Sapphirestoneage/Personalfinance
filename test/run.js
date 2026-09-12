@@ -6040,7 +6040,8 @@ section('Facts answered once');
     checkTrue('and loads the tax table it needs', foo.indexOf("'effectiveTaxRates'") !== -1);
     const idx = fs.readFileSync(path.join(ROOT, 'rooms/foo-ladder.html'), 'utf8');
     checkTrue('the ladder page loads tier0 before the ladder script',
-      idx.indexOf('engines/tier0.js') !== -1 && idx.indexOf('engines/tier0.js') < idx.indexOf('foo-ladder.js'));
+      idx.indexOf('engines/tier0.js') !== -1
+      && idx.indexOf('<script src="../engines/tier0.js">') < idx.indexOf('<script src="../foo-ladder.js">'));
   }
 
   /* -- The footer and the timeline read the same list ---------------------- */
@@ -10446,7 +10447,8 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
-  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements,next-hundred,coast-date,rank-guess,race');
+  /* Your Next $100 became a reading of What The Next Dollar Does (D-229). */
+  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,savings-rate,ratios,health,foo-ladder,fire,fire-lab,statements,coast-date,rank-guess,race');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
@@ -10460,7 +10462,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move, no Between Jobs', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move' || r.id === 'between-jobs'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 33);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 32);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13098,7 +13100,7 @@ section('H1, H3, H2: tap any number, your next $100 ranked, earned vs learned (D
   const rb = Next100.rank(h3b, T, {});
   checkTrue('a debt without a rate is named as missing, never ranked at an assumed rate', rb.rows.every(r => r.id !== 'debt:' + h3b.debts[0].id) && rb.missing.some(m => /No rate yet/.test(m)));
   check('with no framework names the notes are off', Next100.rank(h3, T, { frameworkNames: false }).rows.every(r => r.note === null), true);
-  checkTrue('the room is registered, reads only, and in rooms.json', (function () { const r = Registry.byId('next-hundred'); const rj = JSON.parse(fs.readFileSync(path.join(ROOT, 'rooms.json'), 'utf8')).rooms.some(x => x.id === 'next-hundred'); return r && r.kind === 'read' && r.daite.writes.length === 0 && rj; })());
+  checkTrue('the reading lives in What The Next Dollar Does, which reads only and is in rooms.json', (function () { const r = Registry.byId('foo-ladder'); const rj = JSON.parse(fs.readFileSync(path.join(ROOT, 'rooms.json'), 'utf8')).rooms.some(x => x.id === 'foo-ladder'); return !Registry.byId('next-hundred') && r && r.kind === 'read' && r.daite.writes.length === 0 && rj; })());
 
   /* -- H2: earned vs learned, never mixed without the split ------------------- */
   const store = {};

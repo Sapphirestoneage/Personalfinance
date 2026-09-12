@@ -13778,6 +13778,37 @@ checks in a real browser: Round 1, all at once, since last time and the
 arrangements search box each keep the keyboard open). Every view and all six
 redirects loaded at 390px with a clean console.
 
+## D-229 — What The Next Dollar Does: one question at three amounts
+
+**Why.** Your Next $100, the FOO Ladder and The Windfall asked one question
+— where does the next dollar go — at three sizes, in three rooms, off three
+engines. Three rooms can answer it three different ways, and the ladder
+already had a windfall box of its own, so they could and did disagree.
+
+**Decision.** `rooms/foo-ladder.html` becomes **What The Next Dollar Does**,
+with three readings on the hats strip and the simplest first: `#next-100`
+(the ranked scale, `engines/next100.js`), `#every-month` (the month-by-month
+waterfall, `foo-ladder.js`) and `#a-lump-sum` (all at once against spread
+out, `engines/windfall.js`). Above all three stands one line: the FOO step
+number, read from `Instruments.compute().byId.fooStep` — the SAME figure the
+dashboard prints, never a second reading of the ladder. People navigate by
+step, so the step is never behind a toggle. The room registers itself in the
+room file now; `foo-ladder.js` is a reading, not a room, and no longer calls
+`registerRoom`. The hats strip moves to `shared/theme.css` as `.slaf-hats`,
+one copy for every room the merge produces.
+
+**Replaces or removes.** Two registry rooms (86 → 84): `next-hundred` and
+`windfall`, both redirects carrying their deep links. The ladder's own back
+link and `<h1>`, which the room head now owns.
+
+**Stored shape.** No change. Neither room owned a field; every box on the
+lump-sum reading is page-local, as it always was.
+
+**Verified.** `node test/run.js` (30,926 checks), `node test/forms.js` (604
+checks; the ladder's build-once inputs and the lump-sum boxes both hold
+their text). All three readings and both redirects loaded at 390px with a
+clean console, each showing the same step number as the ladder itself.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -808,26 +808,6 @@
       ]
     },
     {
-      id: 'windfall',
-      group: 'decisions', subgroup: 'moves', aliases: ['windfall', 'bonus', 'inheritance', 'lump sum'],
-      kind: 'explore',
-      needs: [],
-      order: 25,
-      title: 'The Windfall',
-      blurb: 'A bonus, an inheritance, a sale \u2014 all at once or spread out, and the exact condition under which spreading it wins.',
-      href: 'rooms/windfall.html',
-      tier: 1,
-      tags: ['income'],
-      daite: { reads: [], writes: [] },
-      subsections: [
-        { id: 'the-money',      label: 'The decision' },
-        { id: 'out-when',       label: 'When spreading it wins' },
-        { id: 'out-cost',       label: 'What the caution costs' },
-        { id: 'out-scenarios',  label: 'Suppose it did this instead' },
-        { id: 'out-windows',    label: 'How long you take' }
-      ]
-    },
-    {
       id: 'runway',
       features: ['jobLossCushions'],
       group: 'decisions', subgroup: 'moves', aliases: ['runway', 'months of cash', 'how long'],
@@ -873,7 +853,12 @@
     {
       id: 'foo-ladder',
       features: ['matchVesting'],
-      group: 'scorecard', aliases: ['foo', 'order of operations', 'next dollar', 'ladder'],
+      /* One question at three amounts since D-229: the next $100, every
+         month from here, a lump sum. The aliases carry the two rooms that
+         became readings so a search for either still lands. */
+      group: 'scorecard', aliases: ['foo', 'order of operations', 'next dollar', 'ladder',
+                                    'next $100', 'next hundred', 'where does it go',
+                                    'windfall', 'bonus', 'inheritance', 'lump sum'],
       kind: 'read',
       /* Every shared figure the month-by-month timeline reads, so the
          footer and the timeline cannot disagree about what is missing.
@@ -882,17 +867,25 @@
       needs: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses', 'cashSavings', 'employerMatch', 'dob',
               'highestDeductible', 'contributionPercent', 'rothContributed', 'hsaContributed'],
       order: 23,
-      title: 'FOO Ladder',
-      blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
+      title: 'What The Next Dollar Does',
+      blurb: 'One question at three amounts: where the next $100 goes, what every month from here does as it walks the nine steps, and what to do with a lump sum all at once. The step number stands above all three.',
       href: 'rooms/foo-ladder.html',
       tier: 0,
       tags: ['cashflow', 'debt'],
       daite: { reads: ['assets.cashCents', 'assets.contributions.hsa', 'assets.contributions.pretax', 'assets.contributions.roth', 'expenses', 'income.grossAnnualCents', 'income.sources[].employerMatch', 'taxes.filingStatus', 'you.cover', 'you.dob'], writes: [] },
-      /* The FOO calculator sat at the repo root until D-058, so this href
-         is relative to map.html, which also lives at the root. A
-         single-view app with no stable section anchors yet; declaring none
-         is deliberate — see DECISIONS.md D-007. */
-      subsections: []
+      /* The ladder reading has no stable anchors of its own (D-007); the
+         other two readings do, and they are the old rooms' deep links. */
+      subsections: [
+        { id: 'view-next100',  label: 'The next $100' },
+        { id: 'view-ladder',   label: 'Every month from here' },
+        { id: 'view-windfall', label: 'A lump sum' },
+        { id: 'ranked',        label: 'What the numbers say' },
+        { id: 'the-money',     label: 'The lump-sum decision' },
+        { id: 'out-when',      label: 'When spreading it wins' },
+        { id: 'out-cost',      label: 'What the caution costs' },
+        { id: 'out-scenarios', label: 'Suppose it did this instead' },
+        { id: 'out-windows',   label: 'How long you take' }
+      ]
     },
     {
       id: 'what-if-life',
@@ -1775,27 +1768,6 @@
     ]
   });
 
-  /* Your Next $100 (H3, D-211): every place the next hundred could go on
-     one scale, the return it earns or saves; guaranteed and expected kept
-     apart; the order of operations a note on each line. Reads only. */
-  ROOMS.push({
-    id: 'next-hundred',
-    group: 'scorecard', aliases: ['next 100', 'next hundred', 'next dollar', 'where to put it', 'ranked'],
-    kind: 'read',
-    needs: ['grossAnnualIncome'],
-    order: 23.5,
-    title: 'Your Next $100',
-    blurb: 'Every place the next hundred dollars could go, ranked on one scale: the return it earns or saves. Guaranteed and expected, never blended.',
-    href: 'rooms/next-hundred.html',
-    tier: 0,
-    tags: ['debt', 'cashflow'],
-    daite: { reads: ['debt.items', 'income.grossAnnualCents', 'income.sources[].employerMatch', 'assets.contributions.pretax'], writes: [] },
-    subsections: [
-      { id: 'ranked', label: 'The list' },
-      { id: 'how',    label: 'How the scale works' }
-    ]
-  });
-
   /* Reachable Money (H4, D-212): an amount and a by-when; the order to pull
      it and what each dollar costs on the way out. Reads only. */
   ROOMS.push({
@@ -1953,7 +1925,7 @@
     home: ['dashboard', 'planner', 'start'],
     numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
     scorecard: ['financial-snapshot', 'savings-rate', 'ratios', 'health', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
-    decisions: ['career-move', 'self-employed', 'side-hustle', 'between-jobs', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'windfall', 'runway', 'decumulation', 'quick-math', 'adventure', 'what-if-life', 'timeline'],
+    decisions: ['career-move', 'self-employed', 'side-hustle', 'between-jobs', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'runway', 'decumulation', 'quick-math', 'adventure', 'what-if-life', 'timeline'],
     matters: ['sleep-at-night', 'values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
     levelup: ['skill-tree', 'stacker', 'exercises'],
     upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']

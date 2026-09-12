@@ -6,7 +6,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Home (3)
 
-- **ledger** — The Ledger (utility) · 2233 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-228, D-207, D-186
+- **ledger** — The Ledger (utility) · 2227 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-228, D-207, D-186
 - **start** — Start Here · 1001 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1567 lines · no engines · DD-028, DD-026, DD-025
 
@@ -29,7 +29,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **student-loans** — Student Loan Decision · 268 lines · engines: projection, tier0, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-120
 - **calendar** — Money Calendar & Pay-Later · 269 lines · engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-130, D-121
 
-## Scorecard (12)
+## Scorecard (11)
 
 - **financial-snapshot** — Financial Snapshot · 863 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath · D-056, D-036, D-008
 - **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-156
@@ -37,14 +37,13 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **fire** — FIRE Number · 532 lines · engines: projection, tier0, fire, selfemployed, tax, hourly · owns: retireAge, coastAge · D-226, D-162, D-161
 - **fire-lab** — FIRE Lab · 463 lines · engines: projection, tier0, cashflow, fire, hourly · D-226, D-138
 - **ratios** — Every Ratio · 410 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-143, D-139, D-136
-- **foo-ladder** — FOO Ladder · 77 lines · engines: projection, tier0 · D-058, D-054, D-007
-- **next-hundred** — Your Next $100 · 132 lines · engines: projection, tier0, foo, next100 · D-211
+- **foo-ladder** — What The Next Dollar Does · 700 lines · engines: projection, tier0, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-229, D-058, D-054
 - **coast-date** — Your Coast Date · 123 lines · engines: projection, tier0, coast · D-213
 - **rank-guess** — Where Do You Think You Rank? · 115 lines · engines: projection, tier0, rankguess · D-213
 - **race** — The Race to $100K · 156 lines · engines: projection, tier0, countdown, race · D-217
 - **health** — The Score · 375 lines · engines: projection, tier0, cashflow, foo, fire, statement, benchmarks, ratios, health · D-143, D-081
 
-## Decisions (33)
+## Decisions (32)
 
 - **hassle** — Worth the Hassle · 499 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
 - **quick-math** — Quick Math · 447 lines · engines: projection, quickmath, tier0, hourly · D-062, D-022
@@ -54,7 +53,6 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **side-hustle** — Side Hustle · 507 lines · engines: projection, tier0, selfemployed, hourly, sidehustle · D-062, D-033
 - **credential** — Worth Learning · 486 lines · engines: projection, tier0, hourly, credential · D-062
 - **worth** — Worth It · 607 lines · engines: projection, tier0, hourly, worth
-- **windfall** — The Windfall · 479 lines · engines: windfall, projection, tier0, hourly · D-091, D-041
 - **runway** — The Runway · 729 lines · engines: projection, tier0, cashflow, tax, runway, swan · D-130, D-082, D-062
 - **car** — What A Car Costs · 656 lines · engines: projection, tier0, hourly, quickmath · D-151
 - **what-if-life** — What If, Life · 551 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events · D-146, D-091, D-087
@@ -111,7 +109,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 - **progress-card** — Progress Card (utility) · 140 lines · engines: projection, tier0, tax, debt · D-212
 
-## Files in rooms/ not in the registry (8)
+## Files in rooms/ not in the registry (10)
 
 - rooms/comeback.html
 - rooms/dashboard.html
@@ -119,5 +117,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/express.html
 - rooms/first-round.html
 - rooms/net-worth.html
+- rooms/next-hundred.html
 - rooms/refresh.html
 - rooms/walk.html
+- rooms/windfall.html

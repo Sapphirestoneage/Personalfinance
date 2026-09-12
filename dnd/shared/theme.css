@@ -1317,3 +1317,17 @@ a:hover { color: var(--sapphire-100); }
 .slaf-math li { margin: 2px 0; }
 .slaf-math .ex-fn { margin-top: var(--space-3); }
 @media (min-width: 720px) { .slaf-math { left: auto; right: var(--space-4); bottom: var(--space-4); width: 30rem; border-radius: var(--radius-lg, 16px); border: 1px solid var(--color-border-strong); } }
+
+/* ---- The hats: one room, several readings of the same rows (D-228) --------
+   A merged room keeps every reading its old rooms held and puts them on one
+   strip, so the choice between them is visible instead of being a choice
+   between pages. One place, because the 93-to-30 merge (D-227) gives every
+   surviving room the same strip, and a second copy of it would drift.
+   The first hat is always the simplest reading, and it is the default. */
+.slaf-hats { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-3) 0 var(--space-4); }
+.slaf-hats a { font-family: var(--font-display); font-size: var(--text-sm); text-decoration: none;
+  border: 1px solid var(--color-border); border-radius: var(--radius-pill);
+  padding: 4px 12px; color: var(--color-text-muted); min-height: 32px; }
+.slaf-hats a:hover { color: var(--color-text); border-color: var(--color-border-active); }
+.slaf-hats a[aria-current="page"] { background: var(--color-accent); border-color: var(--color-accent);
+  color: var(--color-accent-contrast); }
