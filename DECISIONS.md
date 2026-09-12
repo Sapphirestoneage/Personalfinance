@@ -13495,6 +13495,33 @@ a headless phone over all 94 pages with a full and an empty household:
 zero dead in-page anchors and zero console errors in both. The One-Pager
 download was driven and saves a real file.
 
+## D-223 — A month that does not close outranks every optimisation
+
+**Why.** A persona audit drove the dashboard as a household spending $4,997
+a month more than it earned. It answered: "$4,500 of cash sits beyond a
+starter fund while $24,000 compounds above 7.5% — point the excess at the
+debt." That is advice to spend the only buffer keeping them afloat.
+
+**Decision.** `index.html`: `shortfall()` reads the ladder's own
+`cover_basics` step, and when it is unmet the next action is the gap —
+before every out-of-bounds flag, after the between-jobs and drawdown
+branches, which are situations where outgoings above income are the plan.
+The sentence names the gap, both sides of it, and what is absorbing it:
+savings, with how many months they last at this rate, or credit, with the
+balance growing while it is true. It links to The Rerank.
+
+**Replaces or removes.** Removes the case where a flag about allocating
+spare cash is shown to a household that has none spare. No new room, screen
+or field.
+
+**Stored shape.** No change to `slaf.household.v2`.
+
+**Verified.** `node test/run.js` (30,215). Driven on eight fixtures: the
+student (short $157, savings last 7 months) and negative-net-worth (short
+$415, 9 months) get the gap; solvent households keep their ladder step or
+flag unchanged; the retiree keeps the drawdown branch and the job-seeker
+the runway.
+
 ---
 
 # The Dungeons & Dividends entries

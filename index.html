@@ -828,10 +828,47 @@
     return !!(row && row.earning === false && !Schema.isUnemployed(h));
   }
 
+  /* Step 0 of the ladder is "does what comes in cover what goes out". When
+     it does not, that is the next thing money should do, and nothing else
+     comes close — yet every out-of-bounds flag used to outrank it, because
+     flags were checked before the placement. A household short $4,997 a
+     month was being told "$4,500 of cash sits beyond a starter fund while
+     $24,000 compounds above 7.5% — point the excess at the debt", which is
+     advice to spend the only buffer keeping them afloat. The flags are
+     optimisations and they assume a month that closes. D-223. */
+  function shortfall(h) {
+    var r = Foo.evaluate(h, TABLES);
+    var step = r.steps && r.steps.filter(function (s) { return s.key === 'cover_basics'; })[0];
+    if (!step || step.status !== 'unmet' || !step.detail) return null;
+    var inC = step.detail.netMonthlyIncomeCents, outC = step.detail.monthlyOutgoingsCents;
+    if (!Money.isEntered(inC) || !Money.isEntered(outC) || outC <= inC) return null;
+    return { gapCents: outC - inC, inCents: inC, outCents: outC };
+  }
+  function coverBasics(h, gap) {
+    var room = Registry.byId('rerank') ? 'rerank' : 'expenses';
+    /* Say what is actually absorbing the gap. With savings it is the
+       savings, and the point is that they are not spare; with none it is
+       credit, and the balance is growing while this is true. */
+    var cash = Schema.cashCents(h);
+    var months = Money.isOk(cash) && cash.value > 0 ? Math.floor(cash.value / gap.gapCents) : 0;
+    var covering = months > 0
+      ? 'Savings are covering the difference, which is what makes them not spare: at this rate they last <strong>'
+        + months + ' more month' + (months === 1 ? '' : 's') + '</strong>.'
+      : 'With no savings to draw on, the difference is going on credit, so the balance grows every month this is true.';
+    return {
+      say: '<strong>' + Money.formatCents(gap.gapCents) + ' more goes out than comes in</strong>, every month. '
+        + Money.formatCents(gap.inCents) + ' arrives, ' + Money.formatCents(gap.outCents) + ' leaves. ' + covering,
+      room: room, anchor: null,
+      go: room === 'rerank' ? 'See what to cut first →' : 'Find the gap in Expenses →',
+      critical: true
+    };
+  }
+
   function renderNextAction(h, c) {
     var box = el('next-action');
     var foo = c.byId.fooStep.result;
     var flag = Money.isOk(foo) && foo.flags && foo.flags.length ? foo.flags[0] : null;
+    var gap = shortfall(h);
     var action = null;
     if (Schema.isUnemployed(h)) {
       action = betweenJobs(h);
@@ -839,6 +876,9 @@
     } else if (livingOffAssets(h) && c.byId.withdrawalRate.ok) {
       action = retiredDraw(c.byId.withdrawalRate);
       box.className = 'next' + (action.critical ? ' is-critical' : '');
+    } else if (gap) {
+      action = coverBasics(h, gap);
+      box.className = 'next is-critical';
     } else if (flag && ACTION[flag.key]) {
       action = ACTION[flag.key](flag.detail || {});
       box.className = 'next' + (flag.severity === 'critical' ? ' is-critical' : '');
