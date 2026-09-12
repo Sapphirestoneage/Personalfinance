@@ -110,33 +110,36 @@
   <p class="disclaimer">Not financial advice. Nothing here is sent anywhere; every figure stays in this browser.</p>
 </main>
 
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/daite.js"></script>
-<script src="../shared/levers.js"></script>
-<script src="../shared/staleness.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../engines/tax.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/statement.js"></script>
-<script src="../engines/debt.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../shared/ledger-rows.js"></script>
-<script src="../shared/suggest.js"></script>
-<script src="../shared/ask.js"></script>
-<script src="../shared/doors.js"></script>
+<script defer src="../shared/money.js"></script>
+<script defer src="../shared/schema.js"></script>
+<script defer src="../shared/registry.js"></script>
+<script defer src="../shared/reference.js"></script>
+<script defer src="../shared/spine-v2.js"></script>
+<script defer src="../shared/ownership.js"></script>
+<script defer src="../shared/daite.js"></script>
+<script defer src="../shared/levers.js"></script>
+<script defer src="../shared/staleness.js"></script>
+<script defer src="../shared/gate.js"></script>
+<script defer src="../shared/guide.js"></script>
+<script defer src="../shared/prefs.js"></script>
+<script defer src="../shared/progress.js"></script>
+<script defer src="../shared/roomexport.js"></script>
+<script defer src="../shared/undo.js"></script>
+<script defer src="../engines/tax.js"></script>
+<script defer src="../engines/projection.js"></script>
+<script defer src="../engines/tier0.js"></script>
+<script defer src="../engines/statement.js"></script>
+<script defer src="../engines/debt.js"></script>
+<script defer src="../engines/hourly.js"></script>
+<script defer src="../shared/ledger-rows.js"></script>
+<script defer src="../shared/suggest.js"></script>
+<script defer src="../shared/ask.js"></script>
+<script defer src="../shared/doors.js"></script>
 <script>
-(function () {
+/* Deferred scripts (every src above) run in order AFTER parsing and BEFORE
+   DOMContentLoaded, so this listener is where SLAF.* is first guaranteed to
+   exist. Registered at parse time, it still runs after all of them. */
+document.addEventListener('DOMContentLoaded', function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Reference = SLAF.Reference,
       LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Ask = SLAF.Ask, Doors = SLAF.Doors, Progress = SLAF.Progress;
@@ -435,7 +438,7 @@
        what applies, never rebuilding a control, never under a finger. */
     Spine.onChange(function () { paintValues(); paintApplies(); paintSuggestions(); paintBar(); });
   });
-})();
+});
 </script>
 </body>
 </html>

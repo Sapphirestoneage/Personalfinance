@@ -1,12 +1,11 @@
 ---
 paths:
   - "rooms/ledger.html"
-  - "engines/variance.js"
 ---
 # The Ledger (`ledger`)
-File: rooms/ledger.html · 472 lines · utility room
-Engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly
-Reference data: access_rules.json, confidence_weights.json, debt_rules.json, ledger-rows.json, liquidity_benchmarks.json, spheres.json, +2 more
+File: rooms/ledger.html · 475 lines · utility room
+Engines: none
+Reference data: access_rules.json, confidence_weights.json, ledger-rows.json, spheres.json, staleness.json, tax_brackets.json
 Owns: nothing
 Reads from other owners: netWorth (statement)
 Latest decisions:

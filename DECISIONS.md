@@ -13111,6 +13111,37 @@ made: each would remove a reader's derivation or the only writer.
 
 **Verified.** `node test/run.js` (28,700); `node test/export.js`.
 
+## D-212 — The gate is load-bearing, and gate.js stays on every page
+
+**Why.** The brief: the Tier 0 rooms load `gate.js` and never call it, and 51
+rooms load 26 KB they do not use. Half right. Express and the Ledger already
+gate every row, on `LedgerRows.applies` and then the field's own `applies`;
+the Ledger reaches it through `LedgerRows.rows()`, which filters on the way
+out. `first-round.html` gates nothing, which is real.
+
+**Decision.** `gate.js` stays in all 72 rooms. `Progress.mountHeader` runs on
+every page (D-170) and its situation notice reads `Gate.situationOf`,
+`Gate.why` and `Gate.byId`; `lens.js`, `room.js`, `registry.js` and
+`instruments.js` read it too. The guard there is `if (!S.Gate) return null`,
+so removing the file would delete the D-142 notice from 51 rooms silently.
+`test/run.js` gains a behavioural gate test: each of the six situations must
+drop rows, a row scoped to one situation must be absent for every other, and
+between jobs must not be asked about an employer match while it IS asked for
+the last pay. Every `<script src>` in the three Tier 0 rooms is now
+`defer`red and their inline half waits for `DOMContentLoaded`, which is the
+first moment `SLAF.*` is guaranteed. first-round's own gating lands with its
+rewrite, not twice.
+
+**Replaces or removes.** 19, 25 and 29 render-blocking scripts become
+deferred. No field, screen or room removed.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (28,778); `test/export.js`; `test/forms.js`
+(529, typing survives); the three rooms booted in Chromium under defer with
+no console error and the header mounted. `test/alignment.js` has 4 failures
+in `financial-snapshot.html`, present at 2cb6f50 before any of this work.
+
 ---
 
 # The Dungeons & Dividends entries

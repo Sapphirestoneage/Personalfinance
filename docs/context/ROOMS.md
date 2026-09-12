@@ -6,8 +6,8 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Home (4)
 
-- **first-round** — The First Round (utility) · 302 lines · engines: tax · D-206
-- **express** — Express (utility) · 442 lines · engines: tax, projection, tier0, statement, debt, hourly · D-208
+- **first-round** — The First Round (utility) · 305 lines · no engines · D-212, D-206
+- **express** — Express (utility) · 445 lines · no engines · D-208
 - **start** — Start Here · 999 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1557 lines · no engines · DD-028, DD-026, DD-025
 
@@ -32,7 +32,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Scorecard (8)
 
-- **financial-snapshot** — Financial Snapshot · 861 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath · D-056, D-036, D-008
+- **financial-snapshot** — Financial Snapshot · 861 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath · D-212, D-056, D-036
 - **statements** — Your Statements · 383 lines · engines: projection, tier0, cashflow, statements · D-156
 - **savings-rate** — Savings Rate · 489 lines · engines: projection, tier0, foo, hourly · D-130, D-091, D-054
 - **fire** — FIRE Number · 530 lines · engines: projection, tier0, fire, selfemployed, tax, hourly · owns: retireAge, coastAge · D-162, D-161, D-142
@@ -93,7 +93,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **doors** — Front Doors (utility) · 408 lines · engines: layouts · D-153
 - **walk** — The Walk-Through (utility) · 278 lines · no engines · D-169, D-149
 - **data** — Your Data (utility) · 455 lines · no engines · D-125
-- **ledger** — The Ledger (utility) · 472 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly · D-207, D-186, D-185
+- **ledger** — The Ledger (utility) · 475 lines · no engines · D-207, D-186, D-185
 - **settings** — Settings (utility) · 179 lines · no engines · D-180
 - **refresh** — Refresh (utility) · 326 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, skills · D-181, D-081, D-080
 

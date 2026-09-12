@@ -17,9 +17,11 @@ Updated: 2026-09-11
   below works end to end.
 
 ## Next (top item first; one per session)
-0b. Gated-intake brief, phases 1-5: call the gate in the Tier 0 rooms, add the
-   unemployment fields and the estate/giving branches, extend the derivations,
-   rebuild first-round. Phase 0 needed no change (D-211).
+0b. Gated-intake brief: phases 0 (D-211) and 1 (D-212) done. Next: the
+   unemployment fields and the estate/giving branches, the derivations,
+   then rebuild first-round.
+0c. `node test/alignment.js`: 4 failures in financial-snapshot.html, "nothing
+   rendered" at every width. Present at 2cb6f50, so older than this work.
 0. `SLAF_ONLY=express node test/forms.js` fails about half its runs ("the last pay
    landed" comes back null); same on the commit before D-210. Find the race.
 1. Decide who owns income sources once Start Here retires (Ledger or Income).

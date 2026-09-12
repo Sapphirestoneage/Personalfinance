@@ -12526,6 +12526,121 @@ section('Express: a second view of the same rows (D-208)');
   checkTrue('Express is in every arrangement beside the First Round', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('express') >= 0)); })());
 })();
 
+section('The gate is load-bearing in the Tier 0 rooms (D-212)');
+
+/* The brief's point: "without this test the intake drifts back to asking
+   everyone everything." So this is behavioural, not a grep for the call.
+   Express and the Ledger render one control per row of data/ledger-rows.json
+   and gate each one on `LedgerRows.applies` (its appliesWhen) and then on the
+   field's own `applies`. Assert that gate actually removes questions, per
+   situation, and that a situation's own rows never leak to another. */
+(function () {
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  LR.use(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')));
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  const Gate = require(path.join(ROOT, 'shared/gate.js'));
+  const rows = LR.all();
+
+  /* The same two predicates, in the same order, that paintApplies() uses in
+     rooms/express.html and rooms/ledger.html. */
+  function renders(row, h) {
+    if (!LR.applies(row, h)) return false;
+    const f = Own.FIELDS[row.id];
+    if (f && typeof f.applies === 'function') return !!f.applies(h);
+    return true;
+  }
+  function forSituation(status) {
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({ label: 'You', role: 'adult', employmentStatus: status }));
+    return { h: h, ids: rows.filter((r) => renders(r, h)).map((r) => r.id) };
+  }
+
+  const SITS = Gate.SITUATIONS.map((s) => s.id);
+  check('six situations, as gate.js defines them', SITS.length, 6);
+
+  /* 1. Every situation drops questions. A situation that renders every row
+        means the gate stopped working for it. */
+  Gate.SITUATIONS.forEach(function (sit) {
+    const r = forSituation(sit.status);
+    checkTrue(sit.id + ': the gate removes rows', r.ids.length < rows.length,
+      r.ids.length + ' of ' + rows.length + ' rendered');
+  });
+
+  /* 2. A row scoped to one situation never renders for another. */
+  const scoped = rows.filter((r) => /^situation ==/.test(r.appliesWhen || ''));
+  checkTrue('some rows are scoped to a situation', scoped.length >= 6, String(scoped.length));
+  scoped.forEach(function (row) {
+    const allowed = (row.appliesWhen.match(/situation == (\w+)/g) || [])
+      .map((m) => m.replace('situation == ', ''));
+    Gate.SITUATIONS.forEach(function (sit) {
+      if (allowed.indexOf(sit.id) > -1) return;
+      const r = forSituation(sit.status);
+      checkTrue(row.id + ' is absent for ' + sit.id, r.ids.indexOf(row.id) === -1,
+        'it is scoped to ' + allowed.join('/'));
+    });
+  });
+
+  /* 3. The between-jobs case the brief names: no employer match, and the
+        last pay is asked instead of current pay. */
+  const bj = forSituation(Gate.byId('betweenJobs').status);
+  checkTrue('between jobs: the employer match is not asked', bj.ids.indexOf('employerMatch') === -1);
+  checkTrue('between jobs: the last pay IS asked', bj.ids.indexOf('lastPay') > -1);
+  const emp = forSituation(Gate.byId('employed').status);
+  checkTrue('employed: the last pay is not asked', emp.ids.indexOf('lastPay') === -1);
+
+  /* 4. And the rooms still reach the gate. A room that stopped gating would
+        pass every check above while rendering everything. There are two
+        legitimate routes: Express holds the predicates itself because it
+        builds its controls once and only toggles them (D-034); the Ledger
+        renders from LedgerRows.rows(), which gates on the way out. */
+  const lrSrc = fs.readFileSync(path.join(ROOT, 'shared/ledger-rows.js'), 'utf8');
+  checkTrue('LedgerRows.rows() gates on applies itself',
+    /function rows\([\s\S]{0,200}filter\(function \(r\) \{ return applies\(r, household\); \}\)/.test(lrSrc));
+  {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms/express.html'), 'utf8');
+    checkTrue('express gates each row on LedgerRows.applies', /LedgerRows\.applies\(/.test(src));
+    checkTrue('express then gates on the field’s own applies',
+      /typeof f\.applies === 'function'/.test(src));
+    checkTrue('express renders a row that does not apply as absent, not greyed',
+      /\.hidden = !applies/.test(src) && !/disabled = !applies/.test(src));
+  }
+  {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+    checkTrue('the ledger renders from the gated LedgerRows.rows()',
+      /LedgerRows\.rows\(/.test(src) && !/LedgerRows\.all\(\)/.test(src));
+  }
+
+  /* A row only the gate removes: prove removal is the gate's doing and not a
+     filter, by flipping the one fact its appliesWhen reads. */
+  {
+    const two = Schema.createHousehold({});
+    two.people.push(Schema.createPerson({ label: 'You', role: 'adult', employmentStatus: 'employed' }));
+    const solo = rows.filter((r) => renders(r, two)).map((r) => r.id);
+    two.people.push(Schema.createPerson({ label: 'Partner', role: 'adult', employmentStatus: 'employed' }));
+    const pair = rows.filter((r) => renders(r, two)).map((r) => r.id);
+    checkTrue('a second adult adds the household.two rows and nothing else goes',
+      pair.length > solo.length && solo.every((id) => pair.indexOf(id) > -1),
+      solo.length + ' -> ' + pair.length);
+  }
+
+  /* 5. Every branch gate.js offers has the sentence a room says when it does
+        not apply, or the room would fold with nothing to show. */
+  const missing = Gate.BRANCHES.filter((k) => !Gate.WHY[k]);
+  check('every branch has a WHY sentence', missing.join(','), '');
+  const orphan = Object.keys(Gate.WHY).filter((k) => Gate.BRANCHES.indexOf(k) === -1);
+  check('every WHY sentence has a branch', orphan.join(','), '');
+
+  /* 6. The Tier 0 rooms paint before their tables load: every src script is
+        deferred and the inline half waits for DOMContentLoaded (D-212). */
+  ['first-round', 'express', 'ledger'].forEach(function (room) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
+    const all = (src.match(/<script src=/g) || []).length;
+    check(room + ': no render-blocking script src', all, 0);
+    checkTrue(room + ': the inline half waits for DOMContentLoaded',
+      /addEventListener\('DOMContentLoaded'/.test(src));
+  });
+})();
+
 section('One writer per stored leaf (D-211)');
 
 /* The guard the gated-intake brief asked for. The brief's own table named
