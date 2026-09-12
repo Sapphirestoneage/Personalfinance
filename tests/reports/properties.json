@@ -1690,6 +1690,30 @@
           "seed": 20260910
         },
         {
+          "name": "underwriting: the reserves only ever make it worse, and the gap is exactly what the listing left out",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the ratios are their own definitions, and cash-on-cash divides by the cash put in, never by equity",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the total return is its four parts and nothing else, and the loan paid down plus what is left is the loan",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every stress is a worse day than today, never a better one",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
           "name": "a missing price, an impossible down payment or a negative rate is refused with a reason, never a number",
           "ok": true,
           "numRuns": 100,
@@ -3140,6 +3164,6 @@
       ]
     }
   ],
-  "totalProperties": 399,
+  "totalProperties": 403,
   "failedProperties": 7
 }

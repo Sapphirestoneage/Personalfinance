@@ -277,5 +277,232 @@
     return Money.ok(youPayCents, out);
   }
 
-  return { cost: cost, hold: hold, rental: rental, hack: hack, amortize: amortize };
+  /**
+   * metrics(o) — the four ratios, defined once so every room agrees.
+   *   noiAnnualCents, debtServiceAnnualCents, valueCents, cashInvestedCents,
+   *   equityCents (optional)
+   * Cash-on-cash is the cash flow over the cash you actually put in. It is
+   * NOT the return on today's equity: equity grows as the loan is paid and
+   * the place is revalued, and dividing by it answers a different question.
+   * Both are returned, named apart.
+   */
+  function metrics(o) {
+    var noi = o.noiAnnualCents, ds = o.debtServiceAnnualCents || 0;
+    var cashFlow = noi - ds;
+    return {
+      capRate: entered(o.valueCents) && o.valueCents > 0 ? noi / o.valueCents : null,
+      dscr: ds > 0 ? noi / ds : null,
+      cashOnCash: entered(o.cashInvestedCents) && o.cashInvestedCents > 0 ? cashFlow / o.cashInvestedCents : null,
+      returnOnEquity: entered(o.equityCents) && o.equityCents > 0 ? cashFlow / o.equityCents : null,
+      cashFlowAnnualCents: cashFlow
+    };
+  }
+
+  /**
+   * underwrite(opts) — the rental priced the way it actually runs, against
+   * the way it is usually advertised.
+   *
+   * A listing shows the rent less the mortgage and calls the difference
+   * cash flow. It is not. Three costs are missing from that number and all
+   * three are certain: the months it sits empty, the roof that goes once a
+   * decade, and the work of managing it. This returns both figures side by
+   * side, because the gap between them is the whole point.
+   *
+   *   everything cost() takes, plus grossRentMonthlyCents
+   *   optional: vacancyRate, capexRate, managementRate, selfManaged
+   * value: cashFlowMonthlyCents — after every reserve. Often negative.
+   */
+  function underwrite(opts) {
+    var o = opts || {};
+    var base = cost(o);
+    if (!Money.isOk(base)) return base;
+    if (!entered(o.grossRentMonthlyCents)) return Money.incomplete('Enter the rent it would bring to underwrite it.', ['grossRentMonthlyCents']);
+    if (o.grossRentMonthlyCents < 0) return Money.incomplete('Rent below zero is not a rent.', ['grossRentMonthlyCents']);
+    var c = conventions(o.tables);
+    var assumed = base.assumed.slice(), notes = [];
+
+    var vacRate = entered(o.vacancyRate) ? o.vacancyRate : c.vacancyRate;
+    var capexRate = entered(o.capexRate) ? o.capexRate : c.capexRate;
+    var mgmtRate = entered(o.managementRate) ? o.managementRate : c.managementRate;
+    if (!entered(o.vacancyRate)) assumed.push('empty ' + Math.round(vacRate * 100) + '% of the year');
+    if (!entered(o.capexRate)) assumed.push('a capital reserve of ' + (Math.round(capexRate * 10000) / 100) + '% of value a year');
+    if (!entered(o.managementRate)) assumed.push('management at ' + Math.round(mgmtRate * 100) + '% of the rent collected');
+
+    var rent = o.grossRentMonthlyCents;
+    var vacancyCents = cents(rent * vacRate);
+    var collectedCents = rent - vacancyCents;
+    var capexCents = cents(base.priceCents * capexRate / 12);
+    var mgmtCents = cents(collectedCents * mgmtRate);
+    if (o.selfManaged === true) notes.push('Managing it yourself does not make the ' + Math.round(mgmtRate * 100) + '% free. It moves it from your wallet to your evenings; the figure stays in so the deal is judged on the work it needs, not on who does it.');
+
+    var operatingCents = base.propertyTaxMonthlyCents + base.insuranceMonthlyCents
+      + base.maintenanceMonthlyCents + base.hoaMonthlyCents + capexCents + mgmtCents;
+    var noiMonthlyCents = collectedCents - operatingCents;
+    var debtServiceCents = base.paymentCents + base.pmiMonthlyCents;
+    var cashFlowCents = noiMonthlyCents - debtServiceCents;
+
+    /* The figure a listing quotes: rent in, mortgage out, nothing else. */
+    var advertisedCents = rent - debtServiceCents;
+    var missedCents = advertisedCents - cashFlowCents;
+
+    var m = metrics({ noiAnnualCents: noiMonthlyCents * 12, debtServiceAnnualCents: debtServiceCents * 12,
+      valueCents: base.priceCents, cashInvestedCents: base.cashToCloseCents });
+
+    /* The two screens investors run first. Neither decides anything. */
+    var onePercent = base.priceCents > 0 ? rent / base.priceCents : null;
+    var fiftyPercent = rent > 0 ? operatingCents / rent : null;
+    var screens = [
+      { id: 'onePercent', label: 'The 1% rule', value: onePercent, passes: onePercent !== null && onePercent >= c.onePercentRule,
+        say: onePercent === null ? '' : 'The rent is ' + (Math.round(onePercent * 10000) / 100) + '% of the price a month, against the 1% a screen looks for.',
+        caveat: 'A screen for which deals are worth an hour, not a test of whether this one works. Cheap places pass it and still lose money.' },
+      { id: 'fiftyPercent', label: 'The 50% rule', value: fiftyPercent, passes: fiftyPercent !== null && fiftyPercent <= c.fiftyPercentRule,
+        say: fiftyPercent === null ? '' : 'Running costs are ' + Math.round(fiftyPercent * 100) + '% of the rent, against the 50% the rule expects.',
+        caveat: 'The rule counts everything except the loan. Coming in under it usually means something has been left out.' }
+    ];
+
+    var flags = [];
+    if (m.dscr !== null && m.dscr < c.guardrails.dscr) flags.push('The rent covers the loan ' + (Math.round(m.dscr * 100) / 100) + ' times. A lender wants ' + c.guardrails.dscr + ', and so should you.');
+    if (cashFlowCents < 0 && advertisedCents >= 0) flags.push('This is the deal that looks like it cash flows and does not. On rent less the mortgage it clears ' + Math.round(advertisedCents / 100) + ' dollars a month; once the empty months, the capital reserve and the management are counted, it costs you ' + Math.round(Math.abs(cashFlowCents) / 100) + '.');
+    else if (cashFlowCents < 0) flags.push('It runs at a loss of ' + Math.round(Math.abs(cashFlowCents) / 100) + ' dollars a month before anything goes wrong.');
+
+    return Money.ok(cashFlowCents, {
+      grossRentMonthlyCents: rent, vacancyCents: vacancyCents, collectedMonthlyCents: collectedCents,
+      lines: [
+        { id: 'tax', label: 'Property tax', cents: base.propertyTaxMonthlyCents },
+        { id: 'insurance', label: 'Insurance', cents: base.insuranceMonthlyCents },
+        { id: 'maintenance', label: 'Repairs', cents: base.maintenanceMonthlyCents },
+        { id: 'capex', label: 'Capital reserve', cents: capexCents, note: 'The roof, the boiler, the windows. Not repairs: replacement.' },
+        { id: 'management', label: 'Management', cents: mgmtCents, note: 'Counted whether you pay it or do it.' },
+        { id: 'hoa', label: 'HOA or condo fee', cents: base.hoaMonthlyCents }
+      ].filter(function (l) { return l.cents > 0 || l.id === 'capex' || l.id === 'management'; }),
+      operatingMonthlyCents: operatingCents, capexMonthlyCents: capexCents, managementMonthlyCents: mgmtCents,
+      noiMonthlyCents: noiMonthlyCents, noiAnnualCents: noiMonthlyCents * 12,
+      debtServiceMonthlyCents: debtServiceCents,
+      cashFlowMonthlyCents: cashFlowCents, cashFlowAnnualCents: cashFlowCents * 12,
+      advertisedCashFlowMonthlyCents: advertisedCents, reservesMissedMonthlyCents: missedCents,
+      cashInvestedCents: base.cashToCloseCents, monthlyCostCents: base.totalMonthlyCents,
+      capRate: m.capRate, dscr: m.dscr, cashOnCash: m.cashOnCash,
+      screens: screens, flags: flags, notes: notes, assumed: assumed,
+      verdict: cashFlowCents > 0 ? 'clears' : (cashFlowCents === 0 ? 'breaks even' : 'costs you')
+    });
+  }
+
+  /**
+   * totalReturn(opts) — the four ways a rental pays, never blended into one
+   * number without the split.
+   *
+   *   1. cash flow            what lands, after every reserve
+   *   2. principal paydown    the tenant buying the place for you
+   *   3. appreciation         only if you assert a rate; never assumed
+   *   4. the depreciation shelter   tax deferred, not forgiven
+   *
+   * opts: everything underwrite() takes, plus years, and optionally
+   * appreciationRate and marginalRate (without a marginal rate the shelter
+   * is not counted, because its worth depends entirely on your bracket).
+   * value: totalCents — the four added up over the years held.
+   */
+  function totalReturn(opts) {
+    var o = opts || {};
+    var u = underwrite(o);
+    if (!Money.isOk(u)) return u;
+    if (!entered(o.years)) return Money.incomplete('Say how many years you would hold it.', ['years']);
+    if (o.years <= 0) return Money.incomplete('A holding period is at least a year.', ['years']);
+    var c = conventions(o.tables);
+    var base = cost(o);
+    var assumed = u.assumed.slice(), notes = u.notes.slice();
+
+    var months = Math.round(o.years * 12);
+    var am = amortize(base.loanCents, o.annualRate, base.termMonths, base.paymentCents, months);
+    var principalCents = base.loanCents - am.balanceCents;
+
+    var cashFlowCents = u.cashFlowMonthlyCents * months;
+
+    var appr = entered(o.appreciationRate) ? o.appreciationRate : 0;
+    if (!entered(o.appreciationRate)) assumed.push('no growth in what it is worth: the only return counted is the one the rent and the loan produce');
+    var valueCents = cents(base.priceCents * Math.pow(1 + appr, o.years));
+    var appreciationCents = valueCents - base.priceCents;
+
+    /* Depreciation shelters rental income at your marginal rate, on the
+       building only. It is deferred, not forgiven: it is recaptured when
+       you sell. Counted only when a bracket is supplied. */
+    var buildingCents = cents(base.priceCents * (1 - c.landShare));
+    var annualDepreciationCents = cents(buildingCents / c.depreciationYears);
+    var shelterCents = 0;
+    if (entered(o.marginalRate)) {
+      shelterCents = cents(annualDepreciationCents * o.marginalRate * o.years);
+      notes.push('The depreciation shelter is tax deferred, not tax free. Sell, and it is recaptured, at up to 25%. It is counted here because it is real money in the years you hold it, and named because it comes back.');
+    } else {
+      assumed.push('the depreciation shelter is not counted: its worth depends on your tax bracket, which was not given');
+    }
+
+    var totalCents = cashFlowCents + principalCents + appreciationCents + shelterCents;
+    var invested = base.cashToCloseCents;
+    var onCash = invested > 0 ? totalCents / invested : null;
+    var annualised = (onCash !== null && onCash > -1) ? Math.pow(1 + onCash, 1 / o.years) - 1 : null;
+
+    return Money.ok(totalCents, {
+      years: o.years, monthsHeld: months,
+      parts: [
+        { id: 'cashFlow', label: 'Cash flow', cents: cashFlowCents, say: 'What actually landed, after every reserve.' },
+        { id: 'principal', label: 'The loan paid down', cents: principalCents, say: 'Paid by the rent, not by you. You cannot spend it until you sell or borrow against it.' },
+        { id: 'appreciation', label: 'What it gained in value', cents: appreciationCents, say: appr === 0 ? 'Nothing assumed. Growth is a hope, not a plan.' : 'At ' + (Math.round(appr * 1000) / 10) + '% a year, which you asserted.' },
+        { id: 'shelter', label: 'The depreciation shelter', cents: shelterCents, say: shelterCents === 0 ? 'Not counted without a tax bracket.' : 'Deferred, and recaptured when you sell.' }
+      ],
+      cashFlowCents: cashFlowCents, principalPaidCents: principalCents,
+      appreciationCents: appreciationCents, shelterCents: shelterCents,
+      annualDepreciationCents: annualDepreciationCents, buildingCents: buildingCents,
+      valueAtEndCents: valueCents, balanceCents: am.balanceCents,
+      cashInvestedCents: invested, totalCents: totalCents,
+      returnOnCash: onCash, annualisedReturn: annualised,
+      spendableCents: cashFlowCents,
+      lockedCents: principalCents + appreciationCents,
+      assumed: assumed, notes: notes
+    });
+  }
+
+  /**
+   * stress(opts) — what breaks it. Every landlord meets at least one of
+   * these; the question is whether the deal survives it.
+   * value: the number of scenarios it survives.
+   */
+  function stress(opts) {
+    var o = opts || {};
+    var live = underwrite(o);
+    if (!Money.isOk(live)) return live;
+    var c = conventions(o.tables);
+    var rent = o.grossRentMonthlyCents;
+
+    function run(label, change, say) {
+      var r = underwrite(Object.assign({}, o, change));
+      if (!Money.isOk(r)) return null;
+      return { label: label, say: say, cashFlowMonthlyCents: r.cashFlowMonthlyCents,
+        dscr: r.dscr, survives: r.cashFlowMonthlyCents >= 0,
+        swingCents: r.cashFlowMonthlyCents - live.cashFlowMonthlyCents };
+    }
+    var rows = [
+      run('It sits empty twice as often', { vacancyRate: Math.min(1, (entered(o.vacancyRate) ? o.vacancyRate : c.vacancyRate) * 2) }, 'One bad tenant, one slow season.'),
+      run('The rent comes in 10% under', { grossRentMonthlyCents: cents(rent * 0.9) }, 'The market softens, or your figure was the top of the range.'),
+      run('Both at once', { vacancyRate: Math.min(1, (entered(o.vacancyRate) ? o.vacancyRate : c.vacancyRate) * 2), grossRentMonthlyCents: cents(rent * 0.9) }, 'These arrive together more often than apart.')
+    ].filter(Boolean);
+
+    /* A single big repair, priced against the reserve that was set aside. */
+    var repairCents = 800000;
+    var reserveAfterYear = live.capexMonthlyCents * 12;
+    rows.push({ label: 'The roof goes, at $8,000', say: 'A year of the capital reserve is ' + Math.round(reserveAfterYear / 100) + ' dollars, so this is ' + (Math.round(repairCents / Math.max(1, reserveAfterYear) * 10) / 10) + ' years of setting money aside.',
+      cashFlowMonthlyCents: live.cashFlowMonthlyCents, dscr: live.dscr,
+      survives: reserveAfterYear > 0, oneOffCents: repairCents, yearsOfReserve: repairCents / Math.max(1, reserveAfterYear) });
+
+    var survived = rows.filter(function (r) { return r.survives; }).length;
+    var monthsOfReserve = live.cashFlowMonthlyCents > 0 ? null : null;
+    return Money.ok(survived, {
+      scenarios: rows, survived: survived, total: rows.length,
+      baseCashFlowMonthlyCents: live.cashFlowMonthlyCents,
+      say: survived === rows.length ? 'It holds through every one of these.'
+        : 'It stops paying under ' + (rows.length - survived) + ' of ' + rows.length + ' of the things that reliably happen.',
+      monthsOfReserve: monthsOfReserve
+    });
+  }
+
+  return { cost: cost, hold: hold, rental: rental, hack: hack, amortize: amortize,
+    metrics: metrics, underwrite: underwrite, totalReturn: totalReturn, stress: stress };
 });

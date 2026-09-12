@@ -13595,6 +13595,53 @@ wants, and it says so. Seven properties in
 `tests/properties/ownership.test.js`, including that the lines sum to the
 total and that the carry plus the equity is that same total.
 
+## D-224 — A rental is underwritten honestly, or it is not underwritten
+
+**Why.** The figure every listing quotes is the rent less the mortgage,
+and it is not cash flow. Three costs are missing from it and all three
+are certain: the months it sits empty, the capital that replaces a roof,
+and the work of managing it. A tool that repeats the listing's number
+teaches the mistake that loses people money.
+
+**Decision.** `engines/ownership.js` gains four things.
+`underwrite` prices the deal the way it actually runs and reports the
+advertised figure beside it, with the gap named: on the worked example a
+place advertised at $713.98 a month costs $481.32, a difference of
+$1,195.30 the listing left out. Management is charged at 8% even when
+self-managed, and says why. `totalReturn` splits the four ways a rental
+pays and never blends them: cash flow, the loan the tenant pays down,
+growth (zero unless you assert a rate), and the depreciation shelter
+(counted only when a bracket is given, and named as deferred, not
+forgiven, because it is recaptured). `stress` runs the things that
+reliably happen. `metrics` holds the ratio definitions once.
+
+The 1% and 50% rules are reported with the caveat that a screen decides
+nothing; the example fails the first and passes the second, which is
+exactly why one is never a verdict.
+
+**Replaces or removes.** `engines/statement.js` stops computing cap rate,
+cover and return itself and calls `Ownership.metrics`, so a rental you own
+and a deal you are weighing are measured the same way. Its cash-on-cash
+was dividing by today's equity, which flatters a place that has risen; it
+now reports `returnOnEquity`, which is what that arithmetic is, and
+declines to claim a cash-on-cash it has no cash-invested figure for. The
+house-hack block in `data/blocks/` still carries its own copy; that is
+the next one to move.
+
+**Stored shape.** No change. `data/housing_conventions.json` goes to 1.2,
+adding the capital-reserve rate, the management rate, the two screens and
+the depreciation convention; every existing key is untouched.
+
+**Verified.** `node test/run.js` (30,485 checks), with every figure above
+derived by hand in a separate script before the engine was asked: the
+reserves, the operating total, both cash-flow figures and their gap, the
+five-year split including $15,282.67 of principal and $11,170.91 of
+shelter, and a five-year total that is still a loss of $2,425.62 on
+$73,600 in. Eleven properties in `tests/properties/ownership.test.js`,
+among them that counting the reserves can only ever make a deal look
+worse, and that cash-on-cash and return on equity are never the same
+number on different denominators.
+
 ---
 
 # The Dungeons & Dividends entries

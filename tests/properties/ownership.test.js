@@ -76,6 +76,49 @@ const props = [
     const frac = H.fractionalCents(k, 'hack', new Set(), 0);
     return !frac.length || frac[0];
   }),
+  prop('underwriting: the reserves only ever make it worse, and the gap is exactly what the listing left out', fc.record({ b: base, rent: fc.integer({ min: 0, max: 2000000 }) }), (o) => {
+    const u = O.underwrite(optsOf(o.b, { grossRentMonthlyCents: o.rent }));
+    if (!Money.isOk(u)) return true;
+    if (u.cashFlowMonthlyCents !== u.noiMonthlyCents - u.debtServiceMonthlyCents) return 'cash flow is not operating income less the loan';
+    if (u.advertisedCashFlowMonthlyCents !== u.grossRentMonthlyCents - u.debtServiceMonthlyCents) return 'the advertised figure is not rent less the loan';
+    if (u.reservesMissedMonthlyCents !== u.advertisedCashFlowMonthlyCents - u.cashFlowMonthlyCents) return 'the gap does not reconcile';
+    if (u.advertisedCashFlowMonthlyCents < u.cashFlowMonthlyCents) return 'counting the reserves made it look better';
+    if (u.operatingMonthlyCents < u.capexMonthlyCents + u.managementMonthlyCents) return 'the reserves are not inside the running costs';
+    const frac = H.fractionalCents(u, 'underwrite', new Set(), 0);
+    return !frac.length || frac[0];
+  }),
+  prop('the ratios are their own definitions, and cash-on-cash divides by the cash put in, never by equity', fc.record({ noi: fc.integer({ min: -500000, max: 5000000 }), ds: fc.integer({ min: 0, max: 5000000 }), value: fc.integer({ min: 1, max: 900000000 }), cash: fc.integer({ min: 1, max: 90000000 }), equity: fc.integer({ min: 1, max: 900000000 }) }), (o) => {
+    const m = O.metrics({ noiAnnualCents: o.noi, debtServiceAnnualCents: o.ds, valueCents: o.value, cashInvestedCents: o.cash, equityCents: o.equity });
+    if (Math.abs(m.capRate - o.noi / o.value) > 1e-12) return 'the cap rate is not operating income over value';
+    if (o.ds > 0 && Math.abs(m.dscr - o.noi / o.ds) > 1e-12) return 'the cover is not operating income over the loan';
+    if (Math.abs(m.cashOnCash - (o.noi - o.ds) / o.cash) > 1e-12) return 'cash-on-cash is not cash flow over the cash put in';
+    if (Math.abs(m.returnOnEquity - (o.noi - o.ds) / o.equity) > 1e-12) return 'the return on equity is not cash flow over equity';
+    return o.cash === o.equity || m.cashOnCash !== m.returnOnEquity || 'the two returns are the same number on different denominators';
+  }),
+  prop('the total return is its four parts and nothing else, and the loan paid down plus what is left is the loan', fc.record({ b: base, rent: fc.integer({ min: 0, max: 2000000 }), years: fc.integer({ min: 1, max: 30 }), marginal: fc.constantFrom(null, 0.12, 0.24, 0.32) }), (o) => {
+    const t = O.totalReturn(optsOf(o.b, { grossRentMonthlyCents: o.rent, years: o.years, marginalRate: o.marginal }));
+    if (!Money.isOk(t)) return true;
+    const sum = t.parts.reduce((s2, p2) => s2 + p2.cents, 0);
+    if (sum !== t.totalCents) return 'the parts sum to ' + sum + ', the total says ' + t.totalCents;
+    if (t.cashFlowCents + t.principalPaidCents + t.appreciationCents + t.shelterCents !== t.totalCents) return 'the four named figures do not reconcile';
+    /* The loan is the price less the ROUNDED down payment, which is not
+       always the same cent as rounding the price times the share. Ask the
+       engine what the loan was rather than deriving it a second way. */
+    const loan = O.cost(optsOf(o.b)).loanCents;
+    if (t.principalPaidCents + t.balanceCents !== loan) return 'paid down plus outstanding is not the loan';
+    if (o.marginal === null && t.shelterCents !== 0) return 'a shelter was counted with no tax bracket';
+    if (t.appreciationCents !== 0) return 'growth was assumed without being asserted';
+    return true;
+  }),
+  prop('every stress is a worse day than today, never a better one', fc.record({ b: base, rent: fc.integer({ min: 1, max: 2000000 }) }), (o) => {
+    const st = O.stress(optsOf(o.b, { grossRentMonthlyCents: o.rent }));
+    if (!Money.isOk(st)) return true;
+    for (const sc of st.scenarios) {
+      if (sc.swingCents === undefined) continue;
+      if (sc.swingCents > 0) return sc.label + ' made the deal better by ' + sc.swingCents;
+    }
+    return st.survived <= st.total || 'more scenarios survived than were run';
+  }),
   prop('a missing price, an impossible down payment or a negative rate is refused with a reason, never a number', fc.record({ b: base, which: fc.constantFrom('price', 'down', 'rate') }), (o) => {
     const bad = { price: { priceCents: null }, down: { downPct: 1.5 }, rate: { annualRate: -0.01 } }[o.which];
     const r = O.cost(optsOf(o.b, bad));

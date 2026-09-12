@@ -1,8 +1,8 @@
 {
   "id": "housing_conventions",
-  "version": "1.1",
+  "version": "1.2",
   "asOf": "2026-01-01",
-  "source": "Rules of thumb used in first-pass real-estate arithmetic: property tax around 1.1% of value a year (US average effective rate), homeowner's insurance around 0.5%, maintenance around 1% (the '1% rule'), closing costs around 3% of price to buy, selling costs around 8% (agent commissions plus closing) to sell, an 8% vacancy allowance on rent, and a 30-year fixed term, private mortgage insurance around 0.6% of the loan a year while the loan is above 80% of value.",
+  "source": "Rules of thumb used in first-pass real-estate arithmetic: property tax around 1.1% of value a year (US average effective rate), homeowner's insurance around 0.5%, maintenance around 1% (the '1% rule'), closing costs around 3% of price to buy, selling costs around 8% (agent commissions plus closing) to sell, an 8% vacancy allowance on rent, and a 30-year fixed term, private mortgage insurance around 0.6% of the loan a year while the loan is above 80% of value. Capital expenditure is held apart from maintenance at 0.5% of value a year, because a roof is not a repair; property management at 8% of the rent collected, counted even when you manage it yourself, because your time is not free; the 1% rule (monthly rent against price) and the 50% rule (operating costs against rent) as screens, never as verdicts; residential rental property depreciates straight-line over 27.5 years on the building only, with land taken at 20% of value.",
   "confidence": "convention",
   "confidenceNote": "Every figure is a national rule of thumb; property tax alone ranges from under 0.3% to over 2% by state. The template shows which it used; the room lets the price and rate be changed, and the rest can be edited here.",
   "note": "Rates are decimal fractions of price per year. Guardrails: PITI over 25% of gross monthly income reads amber; a DSCR under 1.2 reads amber; cash after closing under the emergency-fund floor reads red. D-088.",
@@ -14,6 +14,12 @@
   "vacancyRate": 0.08,
   "pmiRate": 0.006,
   "pmiEndsAtLoanToValue": 0.8,
+  "capexRate": 0.005,
+  "managementRate": 0.08,
+  "onePercentRule": 0.01,
+  "fiftyPercentRule": 0.5,
+  "landShare": 0.2,
+  "depreciationYears": 27.5,
   "termMonths": 360,
   "guardrails": {
     "pitiToGross": 0.25,
