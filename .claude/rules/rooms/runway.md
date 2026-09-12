@@ -4,7 +4,7 @@ paths:
   - "engines/runway.js"
 ---
 # The Runway (`runway`)
-File: rooms/runway.html · 729 lines
+File: rooms/runway.html · 728 lines
 Engines: projection, tier0, cashflow, tax, runway, swan
 Reference data: effective_tax_rates_2026.json, expense_categories.json, liquidity_benchmarks.json
 Owns: nothing

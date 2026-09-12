@@ -13559,6 +13559,39 @@ npm test` (two more properties), the render, features, forms and XSS gates,
 and a phone walk that downloads the file, opens it in a real spreadsheet
 program, edits three cells there, brings it back, applies and undoes.
 
+## D-223 — The Ledger's doors, and the gutter three rooms never had
+
+**Why.** The owner sent a photo of the Ledger on a phone. Every door read
+"DDebt … what you owe$41,940total owed6 of 10", the ring sat on top of the
+words, half of each tile was empty, and the whole page ran edge to edge with
+no margin. Two faults, both invisible to every test the app had.
+
+**Decision.** A door tile is a column now, not a run of inline spans: the
+letter and the name on one line with the ring in its own corner above its
+count, the say line under them, and the number anchored to the bottom so a
+row of tiles lines up (`rooms/ledger.html`). The You door writes its name
+once instead of twice. `.slaf-room`, `.slaf-room-head` and `.slaf-lede` —
+the names the Ledger, Express and First Round give their page body, header
+and lede — had no rule in any stylesheet, so those three rooms had no
+measure and no side padding; they are defined in `shared/theme.css` beside
+the `.slaf-wrap` they are the same thing as. `.disclaimer` is defined once
+there too, which eighty rooms carried their own identical copy of and seven
+carried none. The undo pair is one floating bar on its own surface rather
+than two translucent rings, and it appears with the first change instead of
+sitting empty on top of a figure.
+
+**Replaces or removes.** Eighty copies of the same small-print rule.
+`.slaf-note`, which nothing defined, gives way to `.slaf-hint`, which does.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (a new section: no page names a class that
+no stylesheet defines, with the eight script hooks and inline-styled boxes
+listed so the list can only shorten — the check that would have caught this
+the day it was written), the render, features and forms gates, and the
+Ledger, Express and First Round photographed at phone width before and
+after.
+
 ---
 
 # The Dungeons & Dividends entries
