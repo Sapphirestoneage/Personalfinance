@@ -3,34 +3,47 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 19:29Z"/>
+<meta name="slaf-build" content="2026-09-12 05:28Z"/>
 <title>The First Round · SPARKS</title>
-<meta name="description" content="Five questions, one a screen, under a minute. Then one thing the numbers say, and one door to open."/>
+<meta name="description" content="Eleven questions at most, fewer if they do not apply to you, one a screen. A real number after the fourth, and again after the eighth."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-206 (the Ledger rework, Phase B).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-206 (the first round), rebuilt by
+  D-215 (the gated intake).
 
-  1. READS   Nothing it does not also write. The insight reads cash and a
-             month's spending (suggested where not entered, shared/suggest.js)
-             through shared/doors.js.
-  2. WRITES  Five rows, each through its owner's write path (Ownership.write):
-             the birth date, ZIP, situation, pay a year (or the last pay,
-             between jobs), cash on hand. Start Here stays the owner.
-  3. CALLS   shared/doors.js firstInsight() and recommend(); no engine of
-             its own.
+  1. READS   Nothing it does not also write, plus the readings the two payoff
+             screens show: shared/doors.js firstInsight() for the runway and
+             the door, and engines/betweenjobs.js dates() for the benefit and
+             the two 60-day windows between jobs (D-213).
+  2. WRITES  Eleven rows, each through its owner's write path
+             (Ownership.write), never a second copy: the situation, the last
+             day worked, a month of spending, cash, ZIP, what comes in,
+             what is invested, the birth date, whether anything is owed, who
+             else is in the household, health cover. Start Here, Expenses,
+             Between Jobs and Protection stay the owners.
+  3. CALLS   shared/gate.js exists() for every screen, shared/doors.js,
+             engines/betweenjobs.js. No engine of its own.
   4. EMPTY   Every box starts empty with a format-only placeholder. Skipping
-             a screen is fine; a blank writes nothing. The insight needs cash
-             and some spending figure and says which it lacks.
-  5. CONFIG  The suggestion engine's tables (Suggest.TABLES).
+             a screen is fine and writes nothing. Typing something that is
+             not a number says so on the screen rather than failing quietly.
+             A payoff that cannot compute says which answer it is short of.
+  5. CONFIG  The suggestion engine's tables (Suggest.TABLES), plus
+             uiBenefits and protectionConventions for the between-jobs dates.
 
-  Five screens, one question each, big tap targets, no list of anything
-  missing anywhere. Then one card: about how many months of runway, rough
-  when it leans on a guess, and one sentence pointing at one door.
+  A SCREEN THAT DOES NOT APPLY IS NOT IN THE WALK. Gate.exists decides, so
+  the count is 9 for a student and 10 for someone between jobs, and nobody
+  is asked about an employer match or a power of attorney here at all.
 
-  LIVE-FORM: built once — the six screens and their controls are in the
-  markup; script only toggles [hidden] and writes .value at boot.
+  A month of spending is written to `wantsMonthly`, which IS the one unsplit
+  month while none of food, accommodation or transportation is typed (see
+  Schema.fat, D-172/D-197). Nothing is split across buckets, because a split
+  nobody typed would be a guess stored as a fact.
+
+  LIVE-FORM: built once — every screen and control is in the markup; the
+  script only toggles [hidden], writes .value at boot, and paints the two
+  payoffs. No input is ever created or destroyed after load.
 -->
 <style>
   main { max-width: 560px; }
@@ -39,16 +52,15 @@
   .screen .why { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0 0 var(--space-4); line-height: var(--leading-loose); }
   .big .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
   .big input { font-family: var(--font-display); font-size: var(--text-2xl); min-height: 64px; width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); color: var(--color-text); }
+  .big input[type="date"] { font-size: var(--text-xl); }
   .big .affix { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-text-faint); }
+  .err { color: var(--color-danger, #b4232a); font-size: var(--text-sm); margin: var(--space-2) 0 0; }
   .choices.tall .choice { flex: 1 1 100%; min-height: 60px; font-size: var(--text-md); padding: var(--space-3) var(--space-4); }
   .choices.tall .choice small { display: block; font-size: var(--text-xs); color: inherit; opacity: .8; font-weight: 400; margin-top: 2px; }
   .nav { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; margin-top: var(--space-5); }
   .nav .slaf-btn--primary { min-height: 56px; min-width: 160px; font-size: var(--text-md); }
   .steps { font-size: var(--text-xs); color: var(--color-text-faint); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
   .alt { margin-top: var(--space-3); font-size: var(--text-sm); }
-  .alt summary { cursor: pointer; color: var(--color-accent-hover); }
-  .alt .row { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
-  .alt select, .alt input { font-size: var(--text-md); min-height: 48px; padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
   .insight .slaf-figure { font-size: var(--text-3xl, 2.4rem); margin: var(--space-2) 0; }
   .insight .line { color: var(--color-text-muted); line-height: var(--leading-loose); }
   .insight .rough { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
@@ -56,6 +68,13 @@
   .insight .door p { margin: 0 0 var(--space-3); font-size: var(--text-md); }
   .insight .door .slaf-btn--primary { min-height: 56px; font-size: var(--text-md); }
   .insight .needs { color: var(--color-text-muted); }
+  .deadlines { margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+  /* The date must not be cut off on a narrow phone: the row wraps and the
+     date drops under its label rather than running off the edge. */
+  .deadlines li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .deadlines li > span:first-child { flex: 1 1 auto; min-width: 0; }
+  .deadlines .when { color: var(--color-text-muted); flex: 0 0 auto; }
+  .deadlines .closed { color: var(--color-danger, #b4232a); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
@@ -65,89 +84,179 @@
   <header class="slaf-room-head">
     <span class="slaf-eyebrow">Home</span>
     <h1>The First Round</h1>
-    <p class="slaf-lede">Five questions. Under a minute. Then one thing the numbers say.</p>
+    <p class="slaf-lede">One question a screen. Only the ones that apply to you. A real number after the fourth.</p>
   </header>
 
-  <section class="screen slaf-card" id="q-age">
-    <span class="steps">1 of 5</span>
-    <h2>How old are you?</h2>
-    <p class="why">Every age-based figure starts here: the buffer target, the milestones, the FI date.</p>
-    <div class="slaf-field big">
-      <label class="slaf-label" for="in-age">Age</label>
-      <span class="slaf-input-shell"><input id="in-age" type="text" inputmode="numeric" placeholder="e.g. 34" autocomplete="off"/></span>
-    </div>
-    <details class="alt" id="alt-dob">
-      <summary>Know the month and year? Use those instead.</summary>
-      <div class="row">
-        <select id="in-month" aria-label="Birth month"><option value="">Month</option><option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select>
-        <input id="in-year" type="text" inputmode="numeric" placeholder="Year, e.g. 1992" aria-label="Birth year"/>
-      </div>
-    </details>
-    <div class="nav"><span></span><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-zip">Next →</button></div>
-  </section>
-
-  <section class="screen slaf-card" id="q-zip" hidden>
-    <span class="steps">2 of 5</span>
-    <h2>Your ZIP code?</h2>
-    <p class="why">It suggests your state, which sets state tax and the unemployment cap. Nothing leaves this browser.</p>
-    <div class="slaf-field big">
-      <label class="slaf-label" for="in-zip">ZIP</label>
-      <span class="slaf-input-shell"><input id="in-zip" type="text" inputmode="numeric" placeholder="e.g. 12203" maxlength="5" autocomplete="postal-code"/></span>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-age">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-situation">Next →</button></div>
-  </section>
-
-  <section class="screen slaf-card" id="q-situation" hidden>
-    <span class="steps">3 of 5</span>
+  <!-- 1. The situation decides every screen after it, so it comes first and
+          advances on the tap: a Next button here would be a second tap for
+          an answer already given. -->
+  <section class="screen slaf-card" id="q-situation">
+    <span class="steps" data-step></span>
     <h2>Right now, you are…</h2>
-    <p class="why">This decides which rows apply to you at all. Nothing that does not apply is ever asked.</p>
-    <div class="choices tall" data-choices="situation" role="group" aria-label="Situation">
-      <button type="button" class="choice" data-situation="employed" aria-pressed="false">Working<small>A paycheque from an employer</small></button>
-      <button type="button" class="choice" data-situation="unemployed" aria-pressed="false">Between jobs<small>The runway is the number now</small></button>
-      <button type="button" class="choice" data-situation="selfEmployed" aria-pressed="false">Self-employed<small>Your own work, no employer</small></button>
-      <button type="button" class="choice" data-situation="both" aria-pressed="false">A mix<small>A job and your own work</small></button>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-zip">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-pay">Next →</button></div>
+    <p class="why">This decides which questions apply to you at all. Nothing that does not apply is asked.</p>
+    <div class="choices tall" data-choices="situation" role="group" aria-label="Situation"></div>
+    <div class="nav"><span></span><span></span></div>
   </section>
 
-  <section class="screen slaf-card" id="q-pay" hidden>
-    <span class="steps">4 of 5</span>
-    <h2 id="pay-heading">Pay, a year?</h2>
-    <p class="why" id="pay-why">Before tax. A rough figure is fine; it can be sharpened later.</p>
+  <!-- 2. Between jobs only. The one fact a 60-day deadline can be counted
+          from (D-213). -->
+  <section class="screen slaf-card" id="q-lastday" hidden data-gate="unemployment">
+    <span class="steps" data-step></span>
+    <h2>What was your last day worked?</h2>
+    <p class="why">Not the month — the day. The benefit clock, the COBRA window and the marketplace window are all counted from it.</p>
     <div class="slaf-field big">
-      <label class="slaf-label" for="in-pay" id="pay-label">Gross pay, a year</label>
-      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-pay" type="text" inputmode="decimal" placeholder="e.g. 62,000" autocomplete="off"/></span>
+      <label class="slaf-label" for="in-lastday">Last day on the payroll</label>
+      <span class="slaf-input-shell"><input id="in-lastday" type="date" autocomplete="off"/></span>
     </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-situation">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-cash">Next →</button></div>
+    <p class="err" id="err-lastday" hidden></p>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
   </section>
 
+  <!-- 3. Spending before income: it is the denominator of the first real
+          number, and people know it better than their gross pay. -->
+  <section class="screen slaf-card" id="q-spending" hidden>
+    <span class="steps" data-step></span>
+    <h2>What does a month cost you?</h2>
+    <p class="why">Everything, all in: rent, food, getting around, the rest. One number is fine — it can be split later.</p>
+    <div class="slaf-field big">
+      <label class="slaf-label" for="in-spending">A month, all in</label>
+      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-spending" type="text" inputmode="decimal" placeholder="e.g. 3,150" autocomplete="off"/></span>
+    </div>
+    <p class="err" id="err-spending" hidden></p>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
+  </section>
+
+  <!-- 4. The last answer the first payoff needs. -->
   <section class="screen slaf-card" id="q-cash" hidden>
-    <span class="steps">5 of 5</span>
-    <h2>Cash on hand?</h2>
+    <span class="steps" data-step></span>
+    <h2>How much cash can you reach?</h2>
     <p class="why">Checking, savings, anything you could spend this week. Not investments.</p>
     <div class="slaf-field big">
       <label class="slaf-label" for="in-cash">Cash and savings</label>
       <span class="slaf-input-shell"><span class="affix">$</span><input id="in-cash" type="text" inputmode="decimal" placeholder="e.g. 3,000" autocomplete="off"/></span>
     </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-pay">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="insight" id="btn-finish">See what the numbers say →</button></div>
+    <p class="err" id="err-cash" hidden></p>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>See what that already says →</button></div>
   </section>
 
-  <section class="screen slaf-card insight" id="insight" hidden aria-live="polite">
-    <span class="steps">The first thing the numbers say</span>
-    <p class="slaf-figure" id="ins-headline">…</p>
-    <p class="line" id="ins-line"></p>
-    <p class="rough" id="ins-rough" hidden></p>
-    <div class="door">
-      <p id="ins-door"></p>
-      <a class="slaf-btn slaf-btn--primary" id="ins-open" href="ledger.html">Open the door →</a>
-      <a class="slaf-btn slaf-btn--quiet" href="ledger.html">Or see every door</a>
+  <!-- PAYOFF 1 — four answers in. Between jobs this is weeks and dates,
+       because months are the wrong unit for a search and a deadline. -->
+  <section class="screen slaf-card insight" id="payoff-1" hidden aria-live="polite">
+    <span class="steps">What those four answers already say</span>
+    <p class="slaf-figure" id="p1-headline">…</p>
+    <p class="line" id="p1-line"></p>
+    <ul class="deadlines" id="p1-deadlines" hidden></ul>
+    <p class="rough" id="p1-rough" hidden></p>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Keep going →</button></div>
+  </section>
+
+  <!-- 5. ZIP earns its place here, after the first payoff: nothing reads it
+          directly, but it unlocks the state, the benefit cap and the cost
+          tables. -->
+  <section class="screen slaf-card" id="q-zip" hidden>
+    <span class="steps" data-step></span>
+    <h2>What is your ZIP code?</h2>
+    <p class="why">It suggests your state, which sets state tax and the unemployment cap. Nothing leaves this browser.</p>
+    <div class="slaf-field big">
+      <label class="slaf-label" for="in-zip">ZIP</label>
+      <span class="slaf-input-shell"><input id="in-zip" type="text" inputmode="numeric" placeholder="e.g. 12203" maxlength="5" autocomplete="postal-code"/></span>
     </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-cash">← Back</button><span></span></div>
+    <p class="err" id="err-zip" hidden></p>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
+  </section>
+
+  <!-- 6. Skipped entirely between jobs: the income branch is false there
+          until something comes in, so the screen is not in the walk. -->
+  <section class="screen slaf-card" id="q-income" hidden data-gate="income">
+    <span class="steps" data-step></span>
+    <h2>What comes in, a year?</h2>
+    <p class="why">Before tax. A rough figure is fine; it can be sharpened later.</p>
+    <div class="slaf-field big">
+      <label class="slaf-label" for="in-income">Gross pay, a year</label>
+      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-income" type="text" inputmode="decimal" placeholder="e.g. 62,000" autocomplete="off"/></span>
+    </div>
+    <p class="err" id="err-income" hidden></p>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
+  </section>
+
+  <!-- 7. -->
+  <section class="screen slaf-card" id="q-invested" hidden>
+    <span class="steps" data-step></span>
+    <h2>What is invested?</h2>
+    <p class="why">Retirement accounts and anything else invested. Not cash, not your home.</p>
+    <div class="slaf-field big">
+      <label class="slaf-label" for="in-invested">Investments and retirement</label>
+      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-invested" type="text" inputmode="decimal" placeholder="e.g. 48,000" autocomplete="off"/></span>
+    </div>
+    <p class="err" id="err-invested" hidden></p>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
+  </section>
+
+  <!-- 8. One date input. The month-and-year drawer is gone: a date control
+          is one tap on a phone and exact everywhere. -->
+  <section class="screen slaf-card" id="q-dob" hidden>
+    <span class="steps" data-step></span>
+    <h2>When were you born?</h2>
+    <p class="why">Every age-based figure starts here: the buffer target, the milestones, the FI date.</p>
+    <div class="slaf-field big">
+      <label class="slaf-label" for="in-dob">Date of birth</label>
+      <span class="slaf-input-shell"><input id="in-dob" type="date" autocomplete="bday"/></span>
+    </div>
+    <p class="err" id="err-dob" hidden></p>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>See where that puts you →</button></div>
+  </section>
+
+  <!-- PAYOFF 2 — the situation's own lead number, and the one door to open. -->
+  <section class="screen slaf-card insight" id="payoff-2" hidden aria-live="polite">
+    <span class="steps">Where that puts you</span>
+    <p class="slaf-figure" id="p2-headline">…</p>
+    <p class="line" id="p2-line"></p>
+    <p class="rough" id="p2-rough" hidden></p>
+    <div class="door">
+      <p id="p2-door"></p>
+      <a class="slaf-btn slaf-btn--primary" id="p2-open" href="ledger.html">Open the door →</a>
+    </div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Three quick ones →</button></div>
+  </section>
+
+  <!-- 9. -->
+  <section class="screen slaf-card" id="q-debt" hidden>
+    <span class="steps" data-step></span>
+    <h2>Is anything owed?</h2>
+    <p class="why">Cards, loans, a mortgage, money owed to a person. Saying no hides every debt question after this.</p>
+    <div class="choices tall" data-choices="debt" role="group" aria-label="Any debt">
+      <button type="button" class="choice" data-debt="yes" aria-pressed="false">Yes<small>The payoff order comes next</small></button>
+      <button type="button" class="choice" data-debt="no" aria-pressed="false">No<small>Nothing owed to anyone</small></button>
+    </div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
+  </section>
+
+  <!-- 10. Who else is in the household. "Kids" writes one dependent, the
+           fewest that can be true; the Kids room refines the count. -->
+  <section class="screen slaf-card" id="q-who" hidden>
+    <span class="steps" data-step></span>
+    <h2>Who else is in this?</h2>
+    <p class="why">It decides whether the money is split, and whether there is anyone to direct it to.</p>
+    <div class="choices tall" data-choices="who" role="group" aria-label="Who else is in the household">
+      <button type="button" class="choice" data-who="me" aria-pressed="false">Just me<small>One adult, nobody depending on you</small></button>
+      <button type="button" class="choice" data-who="partner" aria-pressed="false">A partner<small>Two adults</small></button>
+      <button type="button" class="choice" data-who="kids" aria-pressed="false">Kids<small>Someone depends on your income</small></button>
+      <button type="button" class="choice" data-who="both" aria-pressed="false">A partner and kids<small>Both</small></button>
+    </div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
+  </section>
+
+  <!-- 11. Not asked of a student: the protection branch is false there. -->
+  <section class="screen slaf-card" id="q-cover" hidden data-gate="protection">
+    <span class="steps" data-step></span>
+    <h2>How are you covered for health?</h2>
+    <p class="why">It sets what a month of cover costs, and between jobs it decides which window matters.</p>
+    <div class="choices tall" data-choices="cover" role="group" aria-label="Health cover"></div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><a class="slaf-btn slaf-btn--primary" id="cover-open" href="ledger.html">Open the door →</a></div>
   </section>
 
   <p class="disclaimer">Not financial advice. Nothing here is sent anywhere; every figure stays in this browser.</p>
 </main>
-
 <script defer src="../shared/money.js"></script>
 <script defer src="../shared/schema.js"></script>
 <script defer src="../shared/registry.js"></script>
@@ -163,9 +272,14 @@
 <script defer src="../shared/progress.js"></script>
 <script defer src="../shared/roomexport.js"></script>
 <script defer src="../shared/undo.js"></script>
+<script defer src="../engines/projection.js"></script>
 <script defer src="../engines/tax.js"></script>
+<script defer src="../engines/tier0.js"></script>
+<script defer src="../engines/runway.js"></script>
+<script defer src="../engines/betweenjobs.js"></script>
 <script defer src="../shared/ledger-rows.js"></script>
 <script defer src="../shared/suggest.js"></script>
+<script defer src="../shared/ask.js"></script>
 <script defer src="../shared/doors.js"></script>
 <script>
 /* Deferred scripts (every src above) run in order AFTER parsing and BEFORE
@@ -173,131 +287,359 @@
    exist. Registered at parse time, it still runs after all of them. */
 document.addEventListener('DOMContentLoaded', function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Reference = SLAF.Reference,
-      LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Doors = SLAF.Doors, Progress = SLAF.Progress;
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      Reference = SLAF.Reference, LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest,
+      Doors = SLAF.Doors, Progress = SLAF.Progress, Gate = SLAF.Gate, BetweenJobs = SLAF.BetweenJobs,
+      Ask = SLAF.Ask;
   var ROOM_ID = 'first-round';
   var TABLES = null;
-  var ORDER = ['q-age', 'q-zip', 'q-situation', 'q-pay', 'q-cash', 'insight'];
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function h() { return Spine.getProfile(); }
   function situation() { var p = Schema.primaryPerson(h()); return p ? p.employmentStatus : null; }
 
-  /* ---- Screens: one at a time, never rebuilt ------------------------------ */
-  function show(id) {
-    ORDER.forEach(function (s) { el(s).hidden = s !== id; });
-    if (id === 'insight') paintInsight();
-    if (id === 'q-pay') paintPayLabel();
-    try { history.replaceState(null, '', '#' + id); } catch (e) { /* fine */ }
+  /* ---- The walk: every screen in order, the ones that apply ---------------
+     A screen carries `data-gate="<branch>"` and is in the walk only while
+     Gate.exists says that branch applies. This is the whole of Phase 1's
+     point: the count is 9 for a student, 10 between jobs, because the
+     screens that do not apply are absent rather than skipped over. */
+  var ALL = ['q-situation', 'q-lastday', 'q-spending', 'q-cash', 'payoff-1',
+             'q-zip', 'q-income', 'q-invested', 'q-dob', 'payoff-2',
+             'q-debt', 'q-who', 'q-cover'];
+  function inWalk(id) {
+    var sec = el(id);
+    var key = sec.getAttribute('data-gate');
+    if (!key) return true;
+    return Gate.exists(h(), key);
+  }
+  function walk() { return ALL.filter(inWalk); }
+  function isQuestion(id) { return id.indexOf('q-') === 0; }
+
+  /* ---- Showing one, and the history behind it ------------------------------
+     pushState per screen with a popstate handler, so the phone's back swipe
+     steps back one question instead of leaving the room. replaceState is
+     used only for the first paint, which must not add an entry of its own. */
+  var current = null;
+  function paintSteps() {
+    var qs = walk().filter(isQuestion);
+    qs.forEach(function (id, i) {
+      var node = el(id).querySelector('[data-step]');
+      if (node) node.textContent = (i + 1) + ' of ' + qs.length;
+    });
+  }
+  function show(id, how) {
+    if (ALL.indexOf(id) === -1 || !inWalk(id)) id = walk()[0];
+    ALL.forEach(function (s) { el(s).hidden = s !== id; });
+    current = id;
+    paintSteps();
+    if (id === 'payoff-1') paintPayoff1();
+    if (id === 'payoff-2') paintPayoff2();
+    if (id === 'q-cover') paintCoverDoor();
+    try {
+      if (how === 'replace') history.replaceState({ screen: id }, '', '#' + id);
+      else history.pushState({ screen: id }, '', '#' + id);
+    } catch (e) { /* a file:// page has no history to write; the walk still works */ }
     window.scrollTo(0, 0);
   }
-  function paintPayLabel() {
-    var between = situation() === 'unemployed';
-    el('pay-heading').textContent = between ? 'Your last pay, a year?' : 'Pay, a year?';
-    el('pay-label').textContent = between ? 'Your last pay, a year' : 'Gross pay, a year';
-    el('pay-why').textContent = between ? 'Before tax, from the last job. It sets the benefit estimate and the tax rate.' : 'Before tax. A rough figure is fine; it can be sharpened later.';
+  function step(dir) {
+    var list = walk(), i = list.indexOf(current);
+    var next = list[i + dir];
+    if (next) show(next);
+  }
+  window.addEventListener('popstate', function (ev) {
+    var id = (ev.state && ev.state.screen) || (location.hash || '').replace('#', '');
+    /* Never push from inside a popstate: the browser has already moved. */
+    if (ALL.indexOf(id) === -1 || !inWalk(id)) id = walk()[0];
+    ALL.forEach(function (s) { el(s).hidden = s !== id; });
+    current = id;
+    paintSteps();
+    if (id === 'payoff-1') paintPayoff1();
+    if (id === 'payoff-2') paintPayoff2();
+    window.scrollTo(0, 0);
+  });
+
+  /* ---- The choices, built once from the one list that defines them --------- */
+  function buildChoices() {
+    el('q-situation').querySelector('[data-choices]').innerHTML = Gate.SITUATIONS.map(function (s) {
+      var label = String(s.label).split(/\s+[—-]\s+/);
+      return '<button type="button" class="choice" data-situation="' + esc(s.status) + '" aria-pressed="false">'
+        + esc(label[0]) + (label[1] ? '<small>' + esc(label[1]) + '</small>' : '') + '</button>';
+    }).join('');
+    var COVER = Ask && Ask.ENUM_LABELS && Ask.ENUM_LABELS.healthCover ? Ask.ENUM_LABELS.healthCover : null;
+    var order = ['employer', 'marketplace', 'cobra', 'medicaid', 'parent', 'none'];
+    el('q-cover').querySelector('[data-choices]').innerHTML = order.map(function (k) {
+      var label = COVER && COVER[k] ? COVER[k] : k;
+      return '<button type="button" class="choice" data-cover="' + esc(k) + '" aria-pressed="false">' + esc(label) + '</button>';
+    }).join('');
+  }
+  function press(sel, attr, value) {
+    Array.prototype.forEach.call(document.querySelectorAll('[' + attr + ']'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute(attr) === value ? 'true' : 'false');
+    });
   }
 
-  /* ---- Writes: each through its owner's path -------------------------------- */
-  function writeAge() {
-    var m = el('in-month').value, y = String(el('in-year').value || '').replace(/\D/g, '');
-    var dob = null;
-    if (m && y.length === 4) dob = y + '-' + m + '-01';
-    else {
-      var raw = String(el('in-age').value || '').replace(/\D/g, '');
-      if (raw !== '') {
-        var n = Number(raw);
-        if (n >= 1 && n <= 120) { var now = new Date(); dob = Schema.localDay(new Date(now.getFullYear() - n, now.getMonth(), 1)); }
-      }
+  /* ---- Writes: each through its owner, and a blank never erases -----------
+     An unparseable answer says so on the screen. It used to return in
+     silence, which looked exactly like a saved value. */
+  function fail(which, message) {
+    var node = el('err-' + which);
+    if (!node) return false;
+    node.textContent = message;
+    node.hidden = !message;
+    return !message;
+  }
+  function money(which, fieldId, currentCents) {
+    var raw = String(el('in-' + which).value || '').trim();
+    if (raw === '') return fail(which, '');                      /* skipping is fine */
+    var cents = Money.parseMoney(raw);
+    if (cents === null) return fail(which, 'That is not a number I can read. Digits, and a comma or a dot if you like.');
+    if (cents < 0) return fail(which, 'A figure below zero cannot be right here.');
+    fail(which, '');
+    if (cents !== currentCents) Ownership.write(fieldId, cents);
+    return true;
+  }
+  function readCents(result) { return result && Money.isOk(result) ? result.value : null; }
+
+  var SAVE = {
+    'q-lastday': function () {
+      var raw = String(el('in-lastday').value || '').trim();
+      if (raw === '') return fail('lastday', '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return fail('lastday', 'A date, as year-month-day.');
+      if (new Date(raw + 'T00:00:00').getTime() > Date.now()) return fail('lastday', 'That day has not happened yet.');
+      fail('lastday', '');
+      if (Schema.unemploymentOf(h()).lastDayWorked !== raw) Ownership.write('lastDayWorked', raw);
+      return true;
+    },
+    'q-spending': function () {
+      /* One unsplit month, which is what `wantsMonthly` holds while none of
+         food, accommodation or transportation is typed (Schema.fat). */
+      var f = Schema.fat(h());
+      return money('spending', 'wantsMonthly', Money.isOk(f.wants) ? f.wants.value : null);
+    },
+    'q-cash': function () { return money('cash', 'cashSavings', readCents(Schema.cashCents(h()))); },
+    'q-zip': function () {
+      var raw = String(el('in-zip').value || '').replace(/\D/g, '');
+      if (raw === '') return fail('zip', '');
+      if (raw.length !== 5) return fail('zip', 'A ZIP code is five digits.');
+      fail('zip', '');
+      if ((h().zip || null) !== raw) Ownership.write('zip', raw);
+      return true;
+    },
+    'q-income': function () {
+      var g = Schema.grossAnnualIncomeCents(h());
+      return money('income', 'grossAnnualIncome', Money.isOk(g) ? g.value : null);
+    },
+    'q-invested': function () { return money('invested', 'investments', readCents(Ownership.FIELDS.investments.read(h()))); },
+    'q-dob': function () {
+      var raw = String(el('in-dob').value || '').trim();
+      if (raw === '') return fail('dob', '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return fail('dob', 'A date, as year-month-day.');
+      var then = new Date(raw + 'T00:00:00').getTime();
+      if (isNaN(then) || then > Date.now()) return fail('dob', 'A birth date in the past, please.');
+      fail('dob', '');
+      var p = Schema.primaryPerson(h());
+      if ((p && p.dob) !== raw) Ownership.write('dob', raw);
+      return true;
     }
-    var p = Schema.primaryPerson(h());
-    if ((p && p.dob) !== dob && (dob || (p && p.dob))) Ownership.write('dob', dob);
-  }
-  function writeZip() {
-    var z = String(el('in-zip').value || '').replace(/\D/g, '').slice(0, 5);
-    if ((h().zip || null) !== (z.length === 5 ? z : null)) Ownership.write('zip', z);
-  }
-  function writeSituation(v) {
-    if (situation() !== v) Ownership.write('employmentStatus', v);
-    Array.prototype.forEach.call(document.querySelectorAll('[data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === v ? 'true' : 'false'); });
-    paintPayLabel();
-  }
-  function writePay() {
-    var cents = Money.parseMoney(el('in-pay').value);
-    var between = situation() === 'unemployed';
-    var current = between ? Schema.unemploymentOf(h()).lastGrossAnnualCents : (Money.isOk(Schema.grossAnnualIncomeCents(h())) ? Schema.grossAnnualIncomeCents(h()).value : null);
-    if (cents === current || (cents === null && current === null)) return;
-    if (cents === null && current !== null && String(el('in-pay').value).trim() === '') return;   /* a blank never erases */
-    if (cents === null) return;
-    Ownership.write(between ? 'lastPay' : 'grossAnnualIncome', cents);
-  }
-  function writeCash() {
-    var cents = Money.parseMoney(el('in-cash').value);
-    if (cents === null) return;
-    var cur = Schema.cashCents(h());
-    if (Money.isOk(cur) && cur.value === cents) return;
-    Ownership.write('cashSavings', cents);
-  }
-  var SAVE = { 'q-age': writeAge, 'q-zip': writeZip, 'q-pay': writePay, 'q-cash': writeCash };
+  };
+  function save(id) { return SAVE[id] ? SAVE[id]() : true; }
 
-  /* ---- The insight ---------------------------------------------------------- */
-  function paintInsight() {
-    if (!TABLES) { el('ins-headline').textContent = 'One moment…'; return; }
+  /* ---- Payoff 1: weeks and dates between jobs, months otherwise ----------- */
+  function weeksOfCash() {
+    var cash = Schema.cashCents(h()), spend = Schema.monthlyExpensesCents(h());
+    if (!Money.isOk(cash) || !Money.isOk(spend) || spend.value <= 0) return null;
+    return Math.floor(cash.value / (spend.value * 12 / 52));
+  }
+  function paintPayoff1() {
+    var between = Gate.exists(h(), 'unemployment');
+    var list = el('p1-deadlines');
+    list.hidden = true; list.innerHTML = '';
+    el('p1-rough').hidden = true;
+    if (!between) {
+      /* The same runway and door the dashboard leads with. */
+      if (!TABLES) { el('p1-headline').textContent = 'One moment…'; el('p1-line').textContent = ''; return; }
+      var ins = Doors.firstInsight(h(), TABLES);
+      if (!ins.ok) {
+        el('p1-headline').textContent = 'Nearly there';
+        el('p1-line').innerHTML = '<span class="needs">' + esc(ins.reason) + '</span>';
+        return;
+      }
+      el('p1-headline').textContent = ins.headline;
+      el('p1-line').textContent = ins.line;
+      el('p1-rough').hidden = !ins.rough;
+      if (ins.rough) el('p1-rough').textContent = 'Rough: it leans on ' + ins.usedSuggestions.length + (ins.usedSuggestions.length === 1 ? ' guess' : ' guesses') + ' you can confirm behind the doors.';
+      return;
+    }
+    /* Between jobs: weeks, not months, and the dates that close. */
+    var weeks = weeksOfCash();
+    if (weeks === null) {
+      el('p1-headline').textContent = 'Nearly there';
+      el('p1-line').innerHTML = '<span class="needs">Add a month of spending and the cash you can reach, and this becomes a number of weeks.</span>';
+      return;
+    }
+    el('p1-headline').textContent = 'About ' + weeks + (weeks === 1 ? ' week' : ' weeks') + ' of cash';
+    var lines = ['At what you spend now, the cash you can reach covers about ' + weeks + (weeks === 1 ? ' week' : ' weeks') + '.'];
+    /* The state is a SUGGESTION off the ZIP until it is confirmed, so the
+       benefit date is read against the same overlay the insight uses
+       (Suggest.overlay): a household with the suggestions laid on, nothing
+       stored. The rough line below says it leaned on them. */
+    var ov = Suggest.overlay ? Suggest.overlay(h(), TABLES) : { household: h(), used: [] };
+    var leaned = (ov.used || []).length;
+    var d = BetweenJobs && TABLES ? BetweenJobs.dates(ov.household, TABLES) : null;
+    if (d && Money.isOk(d)) {
+      if (d.benefitEndDate && Money.isEntered(d.benefitWeeks)) {
+        lines.push('Your state pays up to ' + d.benefitWeeks + ' weeks, which from your last day runs out around ' + pretty(d.benefitEndDate) + '.');
+      } else if (d.missingState) {
+        lines.push('Add your ZIP on the next screen and the benefit gets an end date too.');
+      }
+      if (d.severanceThroughDate) lines.push('Severance and paid-out leave cover about ' + d.severanceWeeks + ' weeks of that, through ' + pretty(d.severanceThroughDate) + '.');
+      var rows = [];
+      if (d.cobraElectionBy) rows.push(['COBRA election closes', d.cobraElectionBy, d.cobraDaysLeft, d.cobraClosed]);
+      if (d.marketplaceBy) rows.push(['Marketplace special enrolment closes', d.marketplaceBy, d.marketplaceDaysLeft, d.marketplaceClosed]);
+      if (rows.length) {
+        list.innerHTML = rows.map(function (r) {
+          var when = r[3] ? 'closed ' + Math.abs(r[2]) + ' days ago' : r[2] + (r[2] === 1 ? ' day left' : ' days left');
+          return '<li><span>' + esc(r[0]) + '</span><span class="when' + (r[3] ? ' closed' : '') + '">' + esc(pretty(r[1])) + ' · ' + esc(when) + '</span></li>';
+        }).join('');
+        list.hidden = false;
+      }
+      el('p1-rough').hidden = false;
+      el('p1-rough').textContent = 'The benefit figures are an estimate from an unverified table; your state agency has the real ones. The two windows are statute.'
+        + (leaned ? ' This leans on ' + leaned + (leaned === 1 ? ' suggestion' : ' suggestions') + ' you can confirm behind the doors.' : '');
+    } else {
+      lines.push('Add the day you last worked and this gains a benefit end date and two deadlines.');
+    }
+    var floor = floorWeeks();
+    if (floor !== null && floor > weeks) lines.push('Cutting to your floor takes it to about ' + floor + ' weeks.');
+    el('p1-line').textContent = lines.join(' ');
+  }
+  function floorWeeks() {
+    var cash = Schema.cashCents(h());
+    if (!Money.isOk(cash) || !BetweenJobs || !BetweenJobs.proposeFloorCents) return null;
+    var f = BetweenJobs.proposeFloorCents(h());
+    if (!f || !Money.isEntered(f.value) || f.value <= 0) return null;
+    return Math.floor(cash.value / (f.value * 12 / 52));
+  }
+  function pretty(iso) {
+    var d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  }
+
+  /* ---- Payoff 2: the situation's own lead, and one door ------------------- */
+  function paintPayoff2() {
+    if (!TABLES) { el('p2-headline').textContent = 'One moment…'; return; }
     var ins = Doors.firstInsight(h(), TABLES);
     var door = Doors.byId(ins.door.door);
     if (!ins.ok) {
-      el('ins-headline').textContent = 'Nearly there';
-      el('ins-line').innerHTML = '<span class="needs">' + esc(ins.reason) + '</span>';
-      el('ins-rough').hidden = true;
+      el('p2-headline').textContent = 'Nearly there';
+      el('p2-line').innerHTML = '<span class="needs">' + esc(ins.reason) + '</span>';
+      el('p2-rough').hidden = true;
     } else {
-      el('ins-headline').textContent = ins.headline;
-      el('ins-line').textContent = ins.line;
-      el('ins-rough').hidden = !ins.rough;
-      el('ins-rough').textContent = ins.rough ? 'Rough: it leans on ' + ins.usedSuggestions.length + (ins.usedSuggestions.length === 1 ? ' guess' : ' guesses') + ' you can confirm or change behind the doors.' : '';
+      el('p2-headline').textContent = ins.headline;
+      el('p2-line').textContent = ins.line;
+      el('p2-rough').hidden = !ins.rough;
+      if (ins.rough) el('p2-rough').textContent = 'Rough: it leans on ' + ins.usedSuggestions.length + (ins.usedSuggestions.length === 1 ? ' guess' : ' guesses') + ' you can confirm behind the doors.';
     }
-    el('ins-door').textContent = ins.door.reason;
-    el('ins-open').textContent = 'Open ' + (door ? door.label : 'the door') + ' →';
-    el('ins-open').href = 'ledger.html#door-' + ins.door.door;
+    el('p2-door').textContent = ins.door.reason;
+    el('p2-open').textContent = 'Open ' + (door ? door.label : 'the door') + ' →';
+    el('p2-open').href = 'ledger.html#door-' + ins.door.door;
+  }
+  function paintCoverDoor() {
+    if (!TABLES) return;
+    var ins = Doors.firstInsight(h(), TABLES);
+    el('cover-open').href = 'ledger.html#door-' + ins.door.door;
   }
 
-  /* ---- Boot: prefill once, wire once ------------------------------------------ */
+  /* ---- Prefill, once ------------------------------------------------------- */
   function prefill() {
     var hh = h(), p = Schema.primaryPerson(hh);
-    var age = Schema.primaryAge(hh);
-    if (Money.isEntered(age)) el('in-age').value = String(age);
-    if (p && p.dob && /^\d{4}-\d{2}/.test(p.dob)) { el('in-month').value = p.dob.slice(5, 7); el('in-year').value = p.dob.slice(0, 4); }
+    if (p && p.dob) el('in-dob').value = p.dob;
+    var last = Schema.unemploymentOf(hh).lastDayWorked;
+    if (last) el('in-lastday').value = last;
     if (hh.zip) el('in-zip').value = hh.zip;
-    var s = situation();
-    if (s) Array.prototype.forEach.call(document.querySelectorAll('[data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === s ? 'true' : 'false'); });
-    var pay = s === 'unemployed' ? Schema.unemploymentOf(hh).lastGrossAnnualCents : (Money.isOk(Schema.grossAnnualIncomeCents(hh)) ? Schema.grossAnnualIncomeCents(hh).value : null);
-    if (Money.isEntered(pay)) el('in-pay').value = Money.formatCents(pay).replace(/^\$/, '');
+    var f = Schema.fat(hh);
+    if (Money.isOk(f.wants)) el('in-spending').value = Money.formatCents(f.wants.value).replace(/^\$/, '');
     var cash = Schema.cashCents(hh);
     if (Money.isOk(cash)) el('in-cash').value = Money.formatCents(cash.value).replace(/^\$/, '');
-    paintPayLabel();
+    var g = Schema.grossAnnualIncomeCents(hh);
+    if (Money.isOk(g)) el('in-income').value = Money.formatCents(g.value).replace(/^\$/, '');
+    var inv = Ownership.FIELDS.investments.read(hh);
+    if (Money.isOk(inv)) el('in-invested').value = Money.formatCents(inv.value).replace(/^\$/, '');
+    var s = situation();
+    if (s) press('[data-situation]', 'data-situation', s);
+    var debt = hh.meta && hh.meta.hasDebt;
+    if (debt === true || debt === false) press('[data-debt]', 'data-debt', debt ? 'yes' : 'no');
+    var cover = Ownership.FIELDS.healthCover.read(hh);
+    if (Money.isOk(cover)) press('[data-cover]', 'data-cover', cover.value);
+    var two = Schema.householdOfTwo(hh);
+    var kids = Array.isArray(hh.dependents) && hh.dependents.length > 0;
+    if (two || kids) press('[data-who]', 'data-who', two && kids ? 'both' : two ? 'partner' : 'kids');
   }
+
+  /* ---- Taps --------------------------------------------------------------- */
   document.addEventListener('click', function (ev) {
-    var t = ev.target.closest ? ev.target.closest('[data-next],[data-back],[data-situation]') : null;
+    var t = ev.target.closest ? ev.target.closest('[data-next],[data-back],[data-situation],[data-debt],[data-who],[data-cover]') : null;
     if (!t) return;
-    if (t.hasAttribute('data-situation')) { writeSituation(t.getAttribute('data-situation')); return; }
-    var from = t.closest('.screen');
-    if (t.hasAttribute('data-next') && from && SAVE[from.id]) SAVE[from.id]();
-    show(t.getAttribute('data-next') || t.getAttribute('data-back'));
+    /* The situation advances on the tap: the answer is already given. */
+    if (t.hasAttribute('data-situation')) {
+      var v = t.getAttribute('data-situation');
+      if (situation() !== v) Ownership.write('employmentStatus', v);
+      press('[data-situation]', 'data-situation', v);
+      step(1);
+      return;
+    }
+    if (t.hasAttribute('data-debt')) {
+      var yes = t.getAttribute('data-debt') === 'yes';
+      Ownership.write('hasDebt', yes);
+      press('[data-debt]', 'data-debt', yes ? 'yes' : 'no');
+      return;
+    }
+    if (t.hasAttribute('data-cover')) {
+      var c = t.getAttribute('data-cover');
+      Ownership.write('healthCover', c);
+      press('[data-cover]', 'data-cover', c);
+      return;
+    }
+    if (t.hasAttribute('data-who')) {
+      var who = t.getAttribute('data-who');
+      /* "Kids" writes ONE dependent: the fewest that can be true. The Kids
+         room is where a real count and real ages go. */
+      Ownership.write('dependents', who === 'kids' || who === 'both' ? 1 : 0);
+      if ((who === 'partner' || who === 'both') && !Schema.householdOfTwo(h())) Ownership.write('partnerName', '');
+      press('[data-who]', 'data-who', who);
+      return;
+    }
+    if (t.hasAttribute('data-next')) { if (save(current) === false) return; step(1); return; }
+    if (t.hasAttribute('data-back')) { step(-1); }
   });
-  ['in-age', 'in-zip', 'in-pay', 'in-cash', 'in-year', 'in-month'].forEach(function (id) {
-    el(id).addEventListener('change', function () { var s = el(id).closest('.screen'); if (s && SAVE[s.id]) SAVE[s.id](); });
+  /* Leaving a box commits it, so a value is never lost by walking away. */
+  ['lastday', 'spending', 'cash', 'zip', 'income', 'invested', 'dob'].forEach(function (which) {
+    el('in-' + which).addEventListener('change', function () { save(current); });
   });
+
+  /* ---- Boot --------------------------------------------------------------- */
+  buildChoices();
   Spine.registerRoom(ROOM_ID);
   Progress.mountHeader(ROOM_ID);
   Progress.mount(ROOM_ID);
   prefill();
   var start = (location.hash || '').replace('#', '');
-  show(ORDER.indexOf(start) !== -1 ? start : 'q-age');
-  Reference.load(Suggest.TABLES.concat(['effectiveTaxRates', 'staleness'])).then(function (t) {
+  show(ALL.indexOf(start) !== -1 && inWalk(start) ? start : walk()[0], 'replace');
+  Reference.load(Suggest.TABLES.concat(['effectiveTaxRates', 'staleness', 'reentryGap'])).then(function (t) {
     TABLES = t;
     LedgerRows.use(t.ledgerRows);
-    if (!el('insight').hidden) paintInsight();
+    if (current === 'payoff-1') paintPayoff1();
+    if (current === 'payoff-2') paintPayoff2();
+    if (current === 'q-cover') paintCoverDoor();
   });
-  Spine.onChange(function () { if (!el('insight').hidden) paintInsight(); });
+  /* A write can change which screens apply (the situation, the partner), so
+     the step counts are repainted; the screen itself is never rebuilt. */
+  Spine.onChange(function () {
+    paintSteps();
+    if (current === 'payoff-1') paintPayoff1();
+    if (current === 'payoff-2') paintPayoff2();
+  });
 });
 </script>
 </body>

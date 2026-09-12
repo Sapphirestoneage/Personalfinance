@@ -162,7 +162,12 @@
     var net = spend.value - benefitMonthly;
     var months = net > 0 ? cash.value / net : null;
     var rough = ov.used.length > 0;
-    var headline = months === null ? 'The benefit covers the month' : (months >= 24 ? 'Two years or more of runway' : 'About ' + (Math.round(months * 10) / 10) + ' months of runway');
+    /* "About 1 months of runway" read as a bug to anyone who saw it, and the
+       first round now puts this line in front of everybody (D-215). */
+    var rounded = Math.round(months * 10) / 10;
+    var headline = months === null ? 'The benefit covers the month'
+      : (months >= 24 ? 'Two years or more of runway'
+        : 'About ' + rounded + (rounded === 1 ? ' month' : ' months') + ' of runway');
     var line = Money.formatCents(cash.value) + ' in cash against ' + Money.formatCents(spend.value) + ' a month' + (benefitNote ? ', with ' + benefitNote + ' coming in' : '') + '.';
     return { ok: true, headline: headline, months: months === null ? null : Math.round(months * 10) / 10, rough: rough, line: line,
       usedSuggestions: ov.used, door: recommend(h, tables, sug), cashCents: cash.value, spendCents: spend.value, benefitMonthlyCents: benefitMonthly };

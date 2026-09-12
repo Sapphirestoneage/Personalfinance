@@ -13232,6 +13232,51 @@ and an assertion that the four excluded rows still carry no rule.
 "Suggested $1,750 a month · use it", and tapping one stored 52000 tagged
 suggested/roughly.
 
+## D-215 — The first round, rebuilt: the gate decides who is asked what
+
+**Why.** The old room asked everyone the same five questions in a fixed
+order, gated nothing, asked the age before anything that pays off, never
+asked what a month costs (so the runway headline leaned on a guess), and
+swallowed an unreadable answer in silence.
+
+**Decision.** Thirteen screens in the markup, eleven of them questions, and
+`Gate.exists` decides which are in the walk: the last day worked only
+between jobs (`unemployment`), what comes in only when something does
+(`income`), health cover for everyone but a student (`protection`). A
+student answers 9, someone between jobs 10, nobody more than 12. The order
+is the brief's: the situation first and it advances on the tap; spending and
+cash before the first payoff; then ZIP, income, invested, the birth date and
+the second payoff; then three taps. A month of spending is written to
+`wantsMonthly`, which IS the one unsplit month while none of the three needs
+buckets is typed (`Schema.fat`, D-172/D-197) — nothing is split across
+buckets, because a split nobody typed would be a guess stored as a fact.
+
+Between jobs the first payoff is weeks and dates, not months: weeks of cash,
+the state's benefit weeks and the day they run out, the floor variant, and
+both 60-day windows with the days left, from `BetweenJobs.dates` (D-213)
+read against `Suggest.overlay` so the ZIP unlocks the state without storing
+it. Everywhere else it stays the runway and one door. `history.pushState`
+per screen with a `popstate` handler, so a phone's back swipe steps back one
+question instead of leaving. An unparseable answer names itself on the
+screen. "Or see every door" is gone: one button.
+
+**Replaces or removes.** The age screen's month-and-year drawer (one date
+control now), the second button on the insight, and the fixed five-question
+order. `shared/doors.js` no longer says "1 months of runway".
+
+**Stored shape.** No change. Eleven answers, every one through its owner's
+write path; the room owns nothing and never touches the spine directly.
+
+**Verified.** `node test/run.js` (29,162) including the counts per situation
+and that each conditional screen names a branch `gate.js` defines;
+`test/export.js`; `test/forms.js` (532) whose first-round walk now drives the
+rebuilt screens and gained a `fill` mode, because keystrokes into a native
+date control land segment by segment and never make a valid date;
+`test/alignment.js` and `test/responsive.js` byte-identical to before. Driven
+in Chromium at 320–414px: all six situations, no sideways scroll, and the
+between-jobs payoff reading "About 4 weeks of cash … your state pays up to
+26 weeks … COBRA election closes October 11 · 29 days left".
+
 ---
 
 # The Dungeons & Dividends entries

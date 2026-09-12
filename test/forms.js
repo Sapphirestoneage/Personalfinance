@@ -1160,41 +1160,56 @@ const CASES = [
     }
   },
   {
-    /* THE FIRST ROUND (D-206): five screens, one box each, all in the markup
-       from boot; script only toggles [hidden]. Typing on each screen has to
-       survive the Next tap that reveals the next one. */
+    /* THE FIRST ROUND, rebuilt (D-215): the situation first and it advances on
+       the tap; then the screens the gate leaves in the walk. Between jobs
+       that is the last day worked, and what comes in is absent. Typing on
+       each screen has to survive the tap that reveals the next one, and the
+       whole walk is in the markup from boot. */
     room: '/rooms/first-round.html',
     container: 'main',
     seed: 'empty',
+    prepare: async (page) => {
+      await page.waitForSelector('[data-situation="unemployed"]');
+      /* The situation writes and advances in one tap, so it is done here
+         rather than as a field: the screens after it depend on it. */
+      await page.tap('[data-situation="unemployed"]');
+      await page.waitForTimeout(350);
+    },
     fields: [
-      { sel: '#in-age', type: '27' },
-      { sel: '[data-next="q-zip"]', tap: true },
+      { sel: '#in-lastday', fill: '2026-08-12' },
+      { sel: '#q-lastday [data-next]', tap: true },
+      { sel: '#in-spending', type: '3150' },
+      { sel: '#q-spending [data-next]', tap: true },
+      { sel: '#in-cash', type: '3000' },
+      { sel: '#q-cash [data-next]', tap: true },
+      { sel: '#payoff-1 [data-next]', tap: true },
       { sel: '#in-zip', type: '12203' },
-      { sel: '[data-next="q-situation"]', tap: true },
-      { sel: '[data-situation="unemployed"]', tap: true },
-      { sel: '[data-next="q-pay"]', tap: true },
-      { sel: '#in-pay', type: '95000' },
-      { sel: '[data-next="q-cash"]', tap: true },
-      { sel: '#in-cash', type: '3000' }
+      { sel: '#q-zip [data-next]', tap: true },
+      { sel: '#in-invested', type: '48000' }
     ],
     expect: async (page) => {
-      await page.tap('#btn-finish');
-      await page.waitForFunction(() => /runway|Nearly there/.test(document.getElementById('ins-headline').textContent), null, { timeout: 5000 });
+      await page.tap('#q-invested [data-next]');
+      await page.waitForTimeout(300);
       const s = await page.evaluate(() => {
         const h = SLAF.Spine.getProfile();
-        return { age: SLAF.Schema.primaryAge(h), zip: h.zip, status: h.people[0].employmentStatus,
-          lastPay: SLAF.Schema.unemploymentOf(h).lastGrossAnnualCents, cash: SLAF.Schema.cashCents(h).value,
-          headline: document.getElementById('ins-headline').textContent,
-          visible: [...document.querySelectorAll('.screen')].filter(e => !e.hidden).map(e => e.id).join(',') };
+        const u = SLAF.Schema.unemploymentOf(h);
+        return { status: h.people[0].employmentStatus, lastDay: u.lastDayWorked, zip: h.zip,
+          month: SLAF.Schema.monthlyExpensesCents(h).value, cash: SLAF.Schema.cashCents(h).value,
+          invested: SLAF.Ownership.FIELDS.investments.read(h).value,
+          visible: [...document.querySelectorAll('.screen')].filter(e => !e.hidden).map(e => e.id).join(','),
+          incomeInWalk: !SLAF.Gate.exists(h, 'income'),
+          p1: document.getElementById('p1-headline').textContent };
       });
       return [
-        ['the age landed as a birth date', s.age, 27],
-        ['the ZIP landed', s.zip, '12203'],
-        ['the situation landed', s.status, 'unemployed'],
-        ['the last pay landed on the person', s.lastPay, 9500000],
+        ['the situation landed from the one tap', s.status, 'unemployed'],
+        ['the last day worked landed as a date', s.lastDay, '2026-08-12'],
+        ['a month of spending landed', s.month, 315000],
         ['cash landed', s.cash, 300000],
-        ['one screen showing at the end: the insight', s.visible, 'insight'],
-        ['and it says something', /runway/.test(s.headline), true]
+        ['the ZIP landed', s.zip, '12203'],
+        ['what is invested landed', s.invested, 4800000],
+        ['what comes in is absent from the walk between jobs', s.incomeInWalk, true],
+        ['one screen showing: the birth date comes next', s.visible, 'q-dob'],
+        ['the first payoff counted weeks, not months', /week/.test(s.p1), true]
       ];
     }
   },
@@ -1483,6 +1498,19 @@ async function tagFields(page, container) {
     for (const f of c.fields) {
       /* A tap-only step (a Next button, a choice): tap and move on. */
       if (f.tap) { await page.tap(f.sel); await page.waitForTimeout(300); continue; }
+      /* A native date control is a picker, not a keyboard: a person spins
+         the wheel and the browser hands back YYYY-MM-DD. Keystrokes into
+         one land segment by segment in the locale's own order and never
+         make a valid date, so the realistic interaction is a fill. The
+         live-form guard does not apply: there is no soft keyboard to lose. */
+      if (f.fill) {
+        await page.fill(f.sel, f.fill);
+        await page.dispatchEvent(f.sel, 'change');
+        await page.waitForTimeout(250);
+        const got = await page.inputValue(f.sel);
+        check(`${f.sel.split(' ').pop()} took the date`, got, f.fill);
+        continue;
+      }
       /* A box that a tap just created (a new list block) is tagged now; the
          guard then holds for the typing that follows, which is the point. */
       if (f.fresh) await tagFields(page, c.container);

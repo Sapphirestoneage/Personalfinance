@@ -1638,19 +1638,28 @@
     needs: [],
     order: 0.5,
     title: 'The First Round',
-    blurb: 'Five questions, under a minute, then one thing the numbers say and one door to open. Everything else fills in as you go.',
+    blurb: 'Eleven questions at most, fewer when they do not apply to you, one a screen. A real number after the fourth and again after the eighth, then one door to open.',
     href: 'rooms/first-round.html',
     tier: 0,
     tags: ['income', 'cashflow'],
-    daite: { reads: ['you.dob', 'taxes.zip', 'you.situation', 'income.grossAnnualCents', 'income.sources[].lastPay', 'assets.cashCents'],
-             writes: ['you.dob', 'taxes.zip', 'you.situation', 'income.grossAnnualCents', 'income.sources[].lastPay', 'assets.cashCents'] },
+    daite: { reads: ['you.dob', 'taxes.zip', 'you.situation', 'income.grossAnnualCents', 'income.sources[].lastPay', 'assets.cashCents', 'expenses', 'assets.invested', 'debt.items', 'you.cover'],
+             writes: ['you.dob', 'taxes.zip', 'you.situation', 'income.grossAnnualCents', 'income.sources[].lastPay', 'income.sources[].lastDayWorked', 'assets.cashCents', 'expenses', 'assets.invested', 'debt.items', 'you.cover'] },
+    /* The walk, in order (D-215). A screen whose gate is closed is absent
+       from it, so the count is 9 for a student and 10 between jobs. */
     subsections: [
-      { id: 'q-age',       label: 'Your age' },
-      { id: 'q-zip',       label: 'ZIP' },
       { id: 'q-situation', label: 'Situation' },
-      { id: 'q-pay',       label: 'Pay' },
-      { id: 'q-cash',      label: 'Cash on hand' },
-      { id: 'insight',     label: 'The first thing the numbers say' }
+      { id: 'q-lastday',   label: 'Your last day worked' },
+      { id: 'q-spending',  label: 'What a month costs' },
+      { id: 'q-cash',      label: 'Cash you can reach' },
+      { id: 'payoff-1',    label: 'What those four answers say' },
+      { id: 'q-zip',       label: 'ZIP' },
+      { id: 'q-income',    label: 'What comes in' },
+      { id: 'q-invested',  label: 'What is invested' },
+      { id: 'q-dob',       label: 'When you were born' },
+      { id: 'payoff-2',    label: 'Where that puts you' },
+      { id: 'q-debt',      label: 'Anything owed' },
+      { id: 'q-who',       label: 'Who else is in this' },
+      { id: 'q-cover',     label: 'Health cover' }
     ]
   });
 

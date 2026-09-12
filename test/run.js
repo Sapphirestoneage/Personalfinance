@@ -12535,6 +12535,140 @@ section('Express: a second view of the same rows (D-208)');
   checkTrue('Express is in every arrangement beside the First Round', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('express') >= 0)); })());
 })();
 
+section('The first round, rebuilt (D-215)');
+
+/* The brief's acceptance: a student answers 9, nobody answers more than 12,
+   and a screen that does not apply is ABSENT from the walk rather than
+   skipped past. The walk is markup plus one gate per screen, so it can be
+   read straight out of the file. */
+(function () {
+  const src = fs.readFileSync(path.join(ROOT, 'rooms/first-round.html'), 'utf8');
+  const Gate = require(path.join(ROOT, 'shared/gate.js'));
+
+  /* The order the room walks, and the gate on each screen. */
+  const ALL = (src.match(/var ALL = \[([\s\S]*?)\];/) || [])[1];
+  checkTrue('the walk is declared in one list', !!ALL);
+  const order = (ALL || '').match(/'[^']+'/g).map((x) => x.replace(/'/g, ''));
+  check('thirteen screens: eleven questions and two payoffs',
+    order.filter((id) => /^q-/.test(id)).length + '/' + order.filter((id) => /^payoff-/.test(id)).length, '11/2');
+  check('the situation comes first', order[0], 'q-situation');
+  check('the first payoff lands after the fourth question', order.indexOf('payoff-1'), 4);
+  check('the second lands after the eighth', order.indexOf('payoff-2'), 9);
+  check('spending is asked before what comes in',
+    order.indexOf('q-spending') < order.indexOf('q-income'), true);
+  check('the ZIP comes after the first payoff, not before it',
+    order.indexOf('q-zip') > order.indexOf('payoff-1'), true);
+
+  /* Each conditional screen names an existing branch, so there is one
+     definition of when it applies. */
+  const gates = {};
+  (src.match(/id="(q-[a-z]+)"[^>]*data-gate="(\w+)"/g) || []).forEach(function (m) {
+    const p = /id="(q-[a-z]+)"[^>]*data-gate="(\w+)"/.exec(m);
+    gates[p[1]] = p[2];
+  });
+  check('three screens are conditional', Object.keys(gates).sort().join(','), 'q-cover,q-income,q-lastday');
+  check('the last day worked is gated on the unemployment branch', gates['q-lastday'], 'unemployment');
+  check('what comes in is gated on the income branch', gates['q-income'], 'income');
+  check('health cover is gated on the protection branch', gates['q-cover'], 'protection');
+  Object.keys(gates).forEach(function (id) {
+    checkTrue(gates[id] + ' is a branch gate.js defines', Gate.BRANCHES.indexOf(gates[id]) > -1);
+  });
+
+  /* The counts, computed the way the room computes them. */
+  function countFor(status) {
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({ label: 'You', role: 'adult', employmentStatus: status }));
+    return order.filter((id) => /^q-/.test(id)).filter((id) => !gates[id] || Gate.exists(h, gates[id])).length;
+  }
+  check('a student answers 9', countFor('student'), 9);
+  check('between jobs answers 10: the last day is added, what comes in is dropped', countFor('unemployed'), 10);
+  check('employed answers 10', countFor('employed'), 10);
+  Gate.SITUATIONS.forEach(function (sit) {
+    checkTrue(sit.id + ' is never asked more than 12', countFor(sit.status) <= 12, String(countFor(sit.status)));
+  });
+
+  /* The six situations come from gate.js, not a second list in the markup. */
+  checkTrue('the situation buttons are built from Gate.SITUATIONS',
+    /Gate\.SITUATIONS\.map/.test(src));
+  check('no situation is hard-coded in the markup',
+    (src.match(/data-situation="\w+"/g) || []).filter((m) => !/data-situation="' \+/.test(m)).length, 0);
+  /* And health cover reads the app's own vocabulary rather than a new one. */
+  checkTrue('the cover options come from Ask.ENUM_LABELS', /ENUM_LABELS\.healthCover/.test(src));
+
+  /* The brief's four fixes to the old room. */
+  check('the month-and-year drawer is gone: one date input', (src.match(/id="in-dob"/g) || []).length, 1);
+  checkTrue('...and it is a real date control', /id="in-dob" type="date"/.test(src));
+  checkTrue('the situation advances on the tap, with no Next of its own',
+    /hasAttribute\('data-situation'\)\) \{[\s\S]{0,400}step\(1\);/.test(src)
+    && !/id="q-situation"[\s\S]{0,900}data-next/.test(src));
+  checkTrue('history is pushed per screen, with a popstate handler',
+    /history\.pushState/.test(src) && /addEventListener\('popstate'/.test(src));
+  checkTrue('...and the first paint replaces rather than pushes',
+    /show\([\s\S]{0,120}'replace'\)/.test(src) && /how === 'replace'[\s\S]{0,80}replaceState/.test(src));
+  check('"Or see every door" is gone: one button in the door block',
+    /Or see every door/.test(src), false);
+
+  /* Unparseable input says so on the screen. The old room returned in
+     silence, which looked exactly like a saved value. */
+  checkTrue('every typed screen has somewhere to put an error',
+    ['lastday', 'spending', 'cash', 'zip', 'income', 'invested', 'dob']
+      .every((w) => src.indexOf('id="err-' + w + '"') > -1));
+  checkTrue('an unreadable number is named as such', /not a number I can read/.test(src));
+  checkTrue('a five-digit ZIP is enforced', /five digits/.test(src));
+  checkTrue('a future birth date is refused', /birth date in the past/.test(src));
+  checkTrue('a blank still writes nothing', /skipping is fine/.test(src));
+
+  /* A month of spending goes to the one unsplit month, never a split. */
+  checkTrue('spending writes wantsMonthly, which IS the unsplit month',
+    /'q-spending'[\s\S]{0,400}'wantsMonthly'/.test(src));
+  checkTrue('...and says why, in the room spec and at the write', (src.match(/unsplit\s+month/g) || []).length >= 2);
+
+  /* Every write goes through an owner, and the room owns nothing. */
+  /* Written two ways: the enum and date screens name the field at the call,
+     the money screens hand it to one helper. Both are owner writes. */
+  const writes = (src.match(/Ownership\.write\('(\w+)'/g) || []).map((m) => /'(\w+)'/.exec(m)[1])
+    .concat((src.match(/money\('\w+', '(\w+)'/g) || []).map((m) => /money\('\w+', '(\w+)'/.exec(m)[1]));
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  checkTrue('every field it writes exists with a write path',
+    writes.every((id) => Own.FIELDS[id] && typeof Own.FIELDS[id].write === 'function'), writes.join(','));
+  check('it writes nothing through the spine directly', /Spine\.set\(/.test(src), false);
+  checkTrue('the eleven answers cover the brief’s list',
+    ['employmentStatus', 'lastDayWorked', 'wantsMonthly', 'cashSavings', 'zip',
+     'grossAnnualIncome', 'investments', 'dob', 'hasDebt', 'dependents', 'healthCover']
+      .every((id) => writes.indexOf(id) > -1));
+
+  /* The payoff between jobs is weeks and dates, not months. */
+  checkTrue('the between-jobs payoff counts weeks', /weeksOfCash/.test(src));
+  checkTrue('...and reads the dates from the one engine that derives them',
+    /BetweenJobs\.dates\(/.test(src));
+  checkTrue('...and shows both 60-day windows', /cobraElectionBy/.test(src) && /marketplaceBy/.test(src));
+  checkTrue('...and says the benefit figure is an estimate', /estimate from an unverified table/.test(src));
+  checkTrue('a closed window says closed rather than counting down past zero',
+    /cobraClosed/.test(src) && /closed '/.test(src));
+
+  /* Every script is deferred and the inline half waits, as D-212 requires. */
+  check('no render-blocking script', (src.match(/<script src=/g) || []).length, 0);
+  checkTrue('the inline half waits for DOMContentLoaded', /addEventListener\('DOMContentLoaded'/.test(src));
+  checkTrue('it is still built once, never rebuilt under a finger',
+    /LIVE-FORM: built once/.test(src));
+
+  /* The registry's walk matches the room's. */
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const room = Registry.byId('first-round');
+  check('the registry lists the same screens in the same order',
+    room.subsections.map((x) => x.id).join(','), order.join(','));
+
+  /* The runway line reads as English at one month. */
+  const Doors = require(path.join(ROOT, 'shared/doors.js'));
+  const one = Schema.createHousehold({});
+  one.people.push(Schema.createPerson({ label: 'You', role: 'adult', employmentStatus: 'employed' }));
+  one.assets.push(Schema.createAsset({ category: 'cash', valueCents: 315000, liquid: true }));
+  one.expenses.wants.totalCents = 315000;
+  const ins = Doors.firstInsight(one, TABLES);
+  check('one month of runway is "1 month", not "1 months"',
+    /\b1 months\b/.test(ins.headline || ''), false);
+})();
+
 section('The derivation ledger (D-214)');
 
 /* The brief: a row the intake renders blank when a table in data/ already

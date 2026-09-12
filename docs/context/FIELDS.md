@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 115. Traced: 106. No other room mentions it: **60**.
+Fields: 115. Traced: 106. No other room mentions it: **57**.
 
 
 ## accounts (7)
@@ -20,7 +20,7 @@ Fields: 115. Traced: 106. No other room mentions it: **60**.
 
 ## between-jobs (5)
 
-- `lastDayWorked` — Your last day worked · **no other room mentions it**
+- `lastDayWorked` — Your last day worked · read by first-round
 - `severanceCents` — Severance, in total · read by start, dashboard, runway
 - `ptoPayoutCents` — Unused leave paid out · **no other room mentions it**
 - `expectedSearchMonths` — Expected search, months · **no other room mentions it**
@@ -90,11 +90,11 @@ Fields: 115. Traced: 106. No other room mentions it: **60**.
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by financial-snapshot, housing, calendar
-- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, savings-rate, sleep-at-night, fire, fire-lab, real-hourly-wage, ratios, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, health, what-if-life, between-jobs, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, buckets, dreamline, reversibility, unlearning, calendar
+- `monthlyExpenses` — Monthly expenses · read by first-round, start, budget, financial-snapshot, statements, statement, savings-rate, sleep-at-night, fire, fire-lab, real-hourly-wage, ratios, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, health, what-if-life, between-jobs, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, buckets, dreamline, reversibility, unlearning, calendar
 - `foodMonthly` — Food, a month · **no other room mentions it**
 - `accommodationMonthly` — Rent or mortgage, a month · **no other room mentions it**
 - `transportationMonthly` — Getting around, a month · **no other room mentions it**
-- `wantsMonthly` — Everything else, a month · **no other room mentions it**
+- `wantsMonthly` — Everything else, a month · read by first-round
 - `therapyMonthly` — Therapy, a month · **no other room mentions it**
 - `annualLine` — Once-a-year costs · read by express
 
@@ -133,14 +133,14 @@ Fields: 115. Traced: 106. No other room mentions it: **60**.
 
 ## partner (4)
 
-- `partnerName` — The other of you · **no other room mentions it**
+- `partnerName` — The other of you · read by first-round
 - `partnerDob` — Their birth year · read by express
 - `splitMode` — How shared costs are split · **no other room mentions it**
 - `sharedMonthly` — Shared costs, a month · **no other room mentions it**
 
 ## protection (2)
 
-- `healthCover` — Health cover · read by between-jobs
+- `healthCover` — Health cover · read by first-round, between-jobs
 - `healthMonthly` — Health cover, a month · read by between-jobs
 
 ## rerank (1)
@@ -176,13 +176,13 @@ Fields: 115. Traced: 106. No other room mentions it: **60**.
 - `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, savings-rate, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, tax, career-move, partner
 - `grossAnnualIncome` — Gross annual income · read by first-round, express, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, savings-rate, real-hourly-wage, hassle, quick-math, self-employed, side-hustle, ratios, dashboard, credential, accounts, stacker, skill-tree, exercises, foo-ladder, worth, car, cant-pay, rollover, health, what-if-life, between-jobs, protection, decumulation, tax, giving, career-move, partner, housing, big-purchase, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar
 - `unemployment` — Between jobs · too generic to trace
-- `lastPay` — Your last pay, a year · read by first-round, express
+- `lastPay` — Your last pay, a year · read by express
 - `cashSavings` — Cash & savings · read by first-round, budget, financial-snapshot, statements, statement, sleep-at-night, quick-math, ratios, dashboard, exercises, runway, cant-pay, what-if-life, between-jobs, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, refresh
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by first-round, between-jobs, tax, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, savings-rate, foo-ladder, unlearning
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker
-- `hasDebt` — Any debt · read by dashboard, unlearning, student-loans
+- `hasDebt` — Any debt · read by first-round, dashboard, unlearning, student-loans
 - `contributionPercent` — Workplace contribution · read by express, statements, accounts, what-if-life, tax
 - `highestDeductible` — Highest deductible · read by statement, sleep-at-night, protection
 - `dependents` — Anyone depending on your income · too generic to trace

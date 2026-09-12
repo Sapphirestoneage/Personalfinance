@@ -17,10 +17,10 @@ Updated: 2026-09-12
   below works end to end.
 
 ## Next (top item first; one per session)
-0b. Gated-intake brief: phases 0-3 done (D-211 to D-214). Next: phase 4
-   (rebuild first-round to 11 gated screens with the between-jobs payoff) and
-   phase 5 (the cuts). Phase 3 left 4 rows asked on purpose: a contribution
-   cap is not a contribution, and no table knows whose paperwork is signed.
+0b. Gated-intake brief: phases 0-4 done (D-211 to D-215). The first round now
+   asks 9 (student) to 10 (between jobs), never more than 12, and the gate
+   decides. Left: phase 5, the cuts. Phase 3 left 4 rows asked on purpose: a
+   contribution cap is not a contribution, and no table knows your paperwork.
 0c. Two failures older than this work (both at 2cb6f50): `test/alignment.js`, 4 in
    financial-snapshot.html ("nothing rendered"); `test/forms.js`, the Express
    walk's "the last pay landed" null in ~half of runs — the keystrokes never
