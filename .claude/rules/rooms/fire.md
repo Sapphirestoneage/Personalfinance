@@ -3,7 +3,7 @@ paths:
   - "rooms/fire.html"
 ---
 # FIRE Number (`fire`)
-File: rooms/fire.html · 532 lines
+File: rooms/fire.html · 533 lines
 Engines: projection, tier0, fire, selfemployed, tax, hourly
 Reference data: effective_tax_rates_2026.json, fire_variants.json, se_tax_2026.json
 Owns: retireAge, coastAge

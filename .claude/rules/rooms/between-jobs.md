@@ -5,7 +5,7 @@ paths:
   - "engines/betweenjobs.js"
 ---
 # Between Jobs (`between-jobs`)
-File: rooms/between-jobs.html · 299 lines
+File: rooms/between-jobs.html · 300 lines
 Engines: projection, tier0, hourly, tax, runway, betweenjobs
 Reference data: effective_tax_rates_2026.json, reentry_gap.json
 Owns: expectedSearchMonths, floorMonthly

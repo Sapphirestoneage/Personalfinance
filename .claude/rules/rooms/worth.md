@@ -4,7 +4,7 @@ paths:
   - "engines/worth.js"
 ---
 # Worth It (`worth`)
-File: rooms/worth.html · 607 lines
+File: rooms/worth.html · 608 lines
 Engines: projection, tier0, hourly, worth
 Reference data: none
 Owns: nothing

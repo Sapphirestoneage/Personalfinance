@@ -344,6 +344,7 @@
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
+<script src="../shared/staleness.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
@@ -1705,6 +1706,7 @@
     if ((h.debts || []).length
         && !window.confirm('This replaces the debts you’ve entered with the example. Continue?')) return;
     var demo = Demo.build();
+    Spine.markDemo(true);                    /* D-226 */
     Spine.updateProfile({ debts: demo.debts });
     if (!Schema.primaryPerson(Spine.getProfile())) Spine.updateProfile({ people: demo.people });
     extraCents = 20000;

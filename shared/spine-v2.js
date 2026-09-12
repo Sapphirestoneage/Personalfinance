@@ -5,8 +5,10 @@
        getProfile()            -> the household object
        updateProfile(patch)    -> merge a partial household, notify listeners
        onChange(fn)            -> subscribe; returns an unsubscribe function
-       registerRoom(id)        -> mark a room visited
+       registerRoom(id)        -> mark a room visited; notes the day (D-226)
        getVisitedRooms()       -> array of room ids
+       noteVisit()             -> record today as a day this was opened
+       visitStats()            -> { days, first, last, lastDays, streak }
 
    WHAT CHANGED, AND WHAT A NEW ROOM MUST KNOW
    -------------------------------------------
@@ -479,7 +481,7 @@
      entry for a batch). Undo applies the befores, redo the afters. The
      stacks live in meta so they survive a reload and go with a reset. */
   var HISTORY_CAP = 100;
-  var HISTORY_SKIP = { 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.source': true, 'meta.fields': true, 'meta.fieldsMigratedAt': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.createdAt': true };
+  var HISTORY_SKIP = { 'meta.isDemo': true, 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.source': true, 'meta.fields': true, 'meta.fieldsMigratedAt': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.visits': true, 'meta.createdAt': true };
   var lastSaved = null;
   var applyingHistory = false;
   var batchDepth = 0, batchChanges = null, batchLabel = null;
@@ -1426,6 +1428,7 @@
   function registerRoom(roomId) {
     if (!roomId) return getVisitedRooms();
     currentRoom = roomId;
+    noteVisit();
     var h = load();
     h.meta.visitedRooms = h.meta.visitedRooms || [];
     if (h.meta.visitedRooms.indexOf(roomId) === -1) {
@@ -1436,9 +1439,101 @@
     return getVisitedRooms();
   }
 
+  /* ---- Example numbers, and saying so (D-226) ----------------------------
+     "See it with example numbers" writes Robin Sparks's whole household
+     into the spine. shared/demo-persona.js has always set meta.isDemo on
+     the object it builds, but every caller copied the parts it wanted and
+     left the meta behind, and nothing read the flag in any case — so the
+     example household was, from the second screen onward, indistinguishable
+     from the person's own. On an app whose first rule is that it never
+     holds real financial data, the demo is the path most people take, and
+     it has to keep saying what it is.
+
+     Set when the demo is written, cleared only by a deliberate act (the
+     person taking the example off, or a reset). It is NOT cleared by typing
+     over one figure: one real number in Robin's household still leaves the
+     rest Robin's, and quietly dropping the mark there would be the app
+     lying about whose numbers are on screen. */
+  function markDemo(on) {
+    var h = load();
+    if (on) h.meta.isDemo = true; else delete h.meta.isDemo;
+    save();
+    notify();
+    return !!h.meta.isDemo;
+  }
+  function isDemo() { var h = load(); return h.meta && h.meta.isDemo === true; }
+
   function getVisitedRooms() {
     var h = load();
     return (h.meta.visitedRooms || []).slice();
+  }
+
+  /* ---- Deliberate use (D-226) -------------------------------------------
+     One calendar day per entry, not one per page view: the question a
+     person actually has is "have I kept this up?", and ten rooms opened in
+     one sitting is one sitting. The day is the LOCAL day, because that is
+     the day the person was living in.
+
+     `count` is the true total of days, kept separately, so trimming the
+     list past the cap never makes a long-running household look newer than
+     it is. The write is skipped by the command log (HISTORY_SKIP), so
+     opening a screen never lands on the undo stack, and it only saves on a
+     day not already recorded: a reload is not a visit.                  */
+  var VISIT_DAYS_CAP = 400;
+
+  function localDay(d) {
+    var t = d || new Date();
+    return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+  }
+
+  function noteVisit(now) {
+    var h = load();
+    var v = h.meta.visits || (h.meta.visits = { firstAt: null, lastAt: null, days: [], count: 0 });
+    var today = localDay(now instanceof Date ? now : (now ? new Date(now) : null));
+    var nowIso = (now instanceof Date ? now : (now ? new Date(now) : new Date())).toISOString();
+    v.lastAt = nowIso;
+    if (!v.firstAt) v.firstAt = nowIso;
+    if (v.days.indexOf(today) !== -1) return visitStats();
+    v.days.push(today);
+    v.count = (typeof v.count === 'number' ? v.count : 0) + 1;
+    if (v.days.length > VISIT_DAYS_CAP) v.days = v.days.slice(v.days.length - VISIT_DAYS_CAP);
+    /* Saved, deliberately NOT notified: looking at a screen changed no
+       number, and a repaint of every subscriber on page load would be a
+       cost paid for nothing. */
+    save();
+    return visitStats();
+  }
+
+  /**
+   * visitStats(now?) -> { days, first, last, lastDays, streak, today }
+   *   days      calendar days this was opened, ever (never trimmed away)
+   *   lastDays  whole days since the previous visit, null on the first
+   *   streak    consecutive days ending today, 1 on a single day
+   * Null-ish rather than zero when there is no record: a household saved
+   * before D-226 has an unknown history, not an empty one.
+   */
+  function visitStats(now) {
+    var h = load();
+    var v = h.meta.visits || {};
+    var days = Array.isArray(v.days) ? v.days : [];
+    if (!days.length) return { days: 0, first: v.firstAt || null, last: v.lastAt || null, lastDays: null, streak: 0, today: false };
+    var today = localDay(now instanceof Date ? now : (now ? new Date(now) : null));
+    var idx = days.indexOf(today);
+    var prev = idx === -1 ? days[days.length - 1] : (idx > 0 ? days[idx - 1] : null);
+    var lastDays = prev ? Math.round((Date.parse(today) - Date.parse(prev)) / 86400000) : null;
+    var streak = 0;
+    if (idx !== -1) {
+      streak = 1;
+      for (var i = days.length - 1; i > 0; i--) {
+        if (Math.round((Date.parse(days[i]) - Date.parse(days[i - 1])) / 86400000) === 1) streak++;
+        else break;
+      }
+    }
+    return {
+      days: typeof v.count === 'number' && v.count >= days.length ? v.count : days.length,
+      first: v.firstAt || days[0], last: v.lastAt || days[days.length - 1],
+      lastDays: lastDays, streak: streak, today: idx !== -1
+    };
   }
 
   /* ---- Snapshots --------------------------------------------------------
@@ -1831,6 +1926,10 @@
     onChange: onChange,
     registerRoom: registerRoom,
     getVisitedRooms: getVisitedRooms,
+    noteVisit: noteVisit,
+    visitStats: visitStats,
+    markDemo: markDemo,
+    isDemo: isDemo,
     ensurePrimaryPerson: ensurePrimaryPerson,
     upsertPerson: upsertPerson,
     upsertIncomeSource: upsertIncomeSource,

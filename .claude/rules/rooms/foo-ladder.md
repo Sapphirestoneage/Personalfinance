@@ -3,7 +3,7 @@ paths:
   - "rooms/foo-ladder.html"
 ---
 # FOO Ladder (`foo-ladder`)
-File: rooms/foo-ladder.html · 77 lines
+File: rooms/foo-ladder.html · 78 lines
 Engines: projection, tier0
 Reference data: effective_tax_rates_2026.json, irs_limits_2026.json
 Owns: nothing

@@ -4,7 +4,7 @@ paths:
   - "engines/accounts.js"
 ---
 # Where It Goes & how it’s split (`accounts`)
-File: rooms/accounts.html · 582 lines
+File: rooms/accounts.html · 583 lines
 Engines: selfemployed, accounts, projection, tier0, hourly
 Reference data: irs_limits_2026.json, se_tax_2026.json
 Owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand

@@ -4,7 +4,7 @@ paths:
   - "engines/skilltree.js"
 ---
 # The Skill Tree (`skill-tree`)
-File: rooms/skill-tree.html · 610 lines
+File: rooms/skill-tree.html · 611 lines
 Engines: projection, tier0, foo, skilltree
 Reference data: exercises.json, foo_rules.json, skill_links.json, skill_tree.json
 Owns: skillsDone

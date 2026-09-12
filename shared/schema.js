@@ -132,6 +132,7 @@
     'household.history.compareTo':               { class: 'raw',        unit: 'id',      note: 'the snapshot History compares today against. Owned by History. D-101' },
     'meta.fields':                               { class: 'raw',        unit: 'map',     note: '{ fieldId: { asOf, source, confidence, room } }: when a number was last set or confirmed, how it arrived (typed, pasted, imported, screenshot, migrated, block-default, quote) and how sure the person is (sure, roughly, unsure, unknown). Schema.meta reads it; the spine writes it. D-181' },
     'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
+    'meta.visits':                               { class: 'raw',        unit: 'map',     note: '{ firstAt, lastAt, days: [YYYY-MM-DD], count }: the calendar days this app was opened. Spine.noteVisit writes it on every room open; no formula reads it and no engine sees it. Absent on anything saved before D-226, which reads back as no days recorded. D-226' },
     'household.expenses.needs.food.monthlyCents':          { class: 'raw', unit: 'cents', note: 'FAT: food a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
     'household.expenses.needs.accommodation.monthlyCents': { class: 'raw', unit: 'cents', note: 'FAT: rent, or mortgage plus tax plus insurance, one number a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
     'household.expenses.needs.transportation.monthlyCents':{ class: 'raw', unit: 'cents', note: 'FAT: getting around, a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
@@ -2152,6 +2153,19 @@
       assumptionOverrides: f.assumptionOverrides || {},
       meta: Object.assign({
         visitedRooms: [],
+        /* The days this app was deliberately opened: { firstAt, lastAt,
+           days: ['YYYY-MM-DD', …], count }. `days` is a set of calendar
+           days, newest last, capped by the spine; `count` is the length it
+           would have had without the cap, so a long-running household still
+           reads back a true total. Written by Spine.noteVisit on every room
+           open, never by a formula, and skipped by the command log so
+           looking at a screen is not an undoable change. D-226.
+
+           COMPATIBILITY: absent on everything saved before D-226, which
+           reads back as { count: 0, days: [] } — "no days recorded yet",
+           never "never used". visitedRooms (the undated id list) is left
+           exactly as it was. */
+        visits: createVisits(f.meta && f.meta.visits),
         createdAt: null,
         updatedAt: null,
         /* { fieldId: ISO } — when each owned field was last set or
@@ -2890,6 +2904,22 @@
     var v = m[key];
     return v && typeof v === 'object' ? { at: v.at || null, expectedBy: v.expectedBy || null } : null;
   }
+  /** The visit record (D-226). Absent, malformed or legacy -> empty, never
+      invented: a household with no record has not been shown to be unused. */
+  function createVisits(v) {
+    var o = v && typeof v === 'object' ? v : {};
+    var days = Array.isArray(o.days) ? o.days.filter(function (d) { return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d); }) : [];
+    var seen = {}, uniq = [];
+    days.forEach(function (d) { if (!seen[d]) { seen[d] = true; uniq.push(d); } });
+    uniq.sort();
+    return {
+      firstAt: typeof o.firstAt === 'string' ? o.firstAt : (uniq.length ? uniq[0] : null),
+      lastAt: typeof o.lastAt === 'string' ? o.lastAt : (uniq.length ? uniq[uniq.length - 1] : null),
+      days: uniq,
+      count: typeof o.count === 'number' && o.count >= uniq.length ? o.count : uniq.length
+    };
+  }
+
   function meta(household, pathOrId) {
     var ids = fieldIdsFor(pathOrId);
     var fieldId = ids.length ? ids[0] : (typeof pathOrId === 'string' ? pathOrId : null);

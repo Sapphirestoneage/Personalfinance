@@ -25,11 +25,18 @@
    ========================================================================== */
 'use strict';
 
+/* Playwright may be installed here or globally (the dev container puts it in
+   /opt/node22/lib/node_modules). Look in both rather than printing SKIPPED
+   next to a browser that is sitting right there — a check that passes by not
+   running is not a check. D-226. */
 let chromium = null, devices = null;
-try {
-  const pw = require('playwright');
-  chromium = pw.chromium; devices = pw.devices;
-} catch (e) { /* handled below */ }
+for (const where of ['playwright', '/opt/node22/lib/node_modules/playwright']) {
+  try {
+    const pw = require(where);
+    chromium = pw.chromium; devices = pw.devices;
+    break;
+  } catch (e) { /* try the next one; handled below if none work */ }
+}
 
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -57,7 +64,22 @@ const DND_CHARACTER = (() => {
 })();
 
 const BASE = process.env.SLAF_BASE || 'http://127.0.0.1:8765';
-const EXECUTABLE = process.env.SLAF_CHROMIUM || '/opt/pw-browsers/chromium';
+/* The browser moves with playwright's build number, so name the candidates
+   rather than one path that silently stops existing. Empty means "let
+   playwright find its own", which is right anywhere but this container. */
+const EXECUTABLE = (function () {
+  if (process.env.SLAF_CHROMIUM) return process.env.SLAF_CHROMIUM;
+  const fs = require('fs');
+  const fixed = ['/opt/pw-browsers/chromium/chrome-linux/chrome', '/opt/pw-browsers/chromium'];
+  for (const c of fixed) { if (fs.existsSync(c)) return c; }
+  let dirs = [];
+  try { dirs = fs.readdirSync('/opt/pw-browsers').filter(d => /^chromium-\d+$/.test(d)).sort().reverse(); } catch (e) { /* no such dir */ }
+  for (const d of dirs) {
+    const c = '/opt/pw-browsers/' + d + '/chrome-linux/chrome';
+    if (fs.existsSync(c)) return c;
+  }
+  return '';
+})();
 
 /* Each case: open the room, make sure the form has at least one row, then
    walk the fields in order, tapping each one and typing into it. */
@@ -1586,8 +1608,8 @@ async function tagFields(page, container) {
   }
   let browser;
   try {
-    browser = await chromium.launch(require('fs').existsSync(EXECUTABLE)
-      ? { executablePath: EXECUTABLE } : {});
+    browser = await chromium.launch(EXECUTABLE && require('fs').existsSync(EXECUTABLE)
+      ? { executablePath: EXECUTABLE, args: ['--no-sandbox'] } : {});
   } catch (e) {
     console.log('SKIPPED — could not launch Chromium: ' + e.message);
     process.exit(0);

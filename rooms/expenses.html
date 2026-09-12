@@ -356,6 +356,7 @@
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
 <script src="../shared/features.js"></script>
+<script src="../shared/staleness.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
@@ -1116,6 +1117,7 @@
         capturingFullMatch: demo.capturingFullMatch
       });
     }
+    Spine.markDemo(true);                    /* the log below is Robin's month. D-226 */
     Spine.updateProfile({ expenses: { entries: Demo.buildSpending() } });
     render();
     el('out-summary').scrollIntoView({ behavior: 'smooth', block: 'start' });

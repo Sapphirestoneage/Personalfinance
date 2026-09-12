@@ -4,7 +4,7 @@ paths:
   - "engines/giving.js"
 ---
 # Giving (`giving`)
-File: rooms/giving.html · 261 lines
+File: rooms/giving.html · 262 lines
 Engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, giving
 Reference data: confidence_weights.json, expense_categories.json, fire_variants.json, foo_rules.json, giving_conventions.json, ratio_benchmarks.json, +1 more
 Owns: givingPct, givingTarget

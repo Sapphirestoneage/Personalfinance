@@ -4,7 +4,7 @@ paths:
   - "engines/degree.js"
 ---
 # The Degree Decision (`degree`)
-File: rooms/degree.html · 154 lines
+File: rooms/degree.html · 155 lines
 Engines: projection, tier0, degree
 Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json
 Owns: nothing

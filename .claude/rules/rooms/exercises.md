@@ -6,7 +6,7 @@ paths:
   - "engines/exercises.js"
 ---
 # Exercises (`exercises`)
-File: rooms/exercises.html · 211 lines
+File: rooms/exercises.html · 212 lines
 Engines: projection, tier0, foo, skilltree, income, selfemployed, tax, fire, statement, vpw, decumulation, cashflow, events, exercises
 Reference data: effective_tax_rates_2026.json, exercises.json, expense_categories.json, fire_variants.json, foo_rules.json, ratio_benchmarks.json, +5 more
 Owns: exercisesDone

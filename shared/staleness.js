@@ -110,6 +110,68 @@
     return perField ? 'updated ' + when : 'last saved ' + when + ' (this figure not dated)';
   }
 
+
+  /**
+   * forFields(household, fieldIds, now?) — the age of one ROOM's numbers.
+   *
+   * A room declares what it reads (`needs` in shared/registry.js). This
+   * folds those fields into the four counts a header line needs, so no room
+   * has to compute its own:
+   *
+   *   entered   how many of them the household actually holds
+   *   dated     how many of those carry a per-field stamp (D-181)
+   *   stale     how many dated ones are past their review interval
+   *   oldest    the describe() row with the largest `days`, or null
+   *
+   * Fields with no value are skipped entirely: nothing that was never
+   * entered can be old, and counting blanks as stale would turn an empty
+   * room amber. D-057 still holds — this counts, it never discounts.
+   */
+  function forFields(household, fieldIds, now) {
+    var rows = (fieldIds || []).map(function (id) { return describe(household, id, now); });
+    var entered = rows.filter(function (r) { return r.days !== null || r.perField; });
+    var dated = entered.filter(function (r) { return r.perField && r.days !== null; });
+    var sorted = dated.slice().sort(function (a, b) { return b.days - a.days; });
+    return {
+      rows: rows,
+      entered: entered.length,
+      dated: dated.length,
+      undated: entered.length - dated.length,
+      stale: dated.filter(function (r) { return r.stale === true; }),
+      anyStale: dated.some(function (r) { return r.stale === true; }),
+      oldest: sorted[0] || null,
+      newest: sorted.length ? sorted[sorted.length - 1] : null
+    };
+  }
+
+  /**
+   * line(household, fieldIds, now?) — one sentence saying how old the
+   * numbers on this screen are, or null when there is nothing to date.
+   *
+   *   { text, stale, oldestDays }
+   *
+   * Never a verdict and never a scolding: the worst it says is that a
+   * figure is past the interval data/staleness.json sets for it, which is
+   * a prompt to look, not a reason to distrust the number (D-057).
+   */
+  function line(household, fieldIds, now) {
+    var s = forFields(household, fieldIds, now);
+    if (!s.entered) return null;
+    if (!s.dated) return { text: 'These numbers are not dated — they were saved before this app kept dates.', stale: false, oldestDays: null };
+    var when = s.oldest.days === 0 ? 'today'
+      : s.oldest.days === 1 ? 'yesterday'
+      : s.oldest.days < 31 ? s.oldest.days + ' days ago'
+      : s.oldest.days < 61 ? 'about a month ago'
+      : s.oldest.days < 365 ? Math.round(s.oldest.days / 30) + ' months ago'
+      : s.oldest.days < 730 ? 'over a year ago'
+      : Math.floor(s.oldest.days / 365) + ' years ago';
+    var text = s.dated === 1 ? 'This number was last touched ' + when + '.'
+      : 'Oldest number on this screen: last touched ' + when + '.';
+    if (s.stale.length) text += ' ' + (s.stale.length === 1 ? 'One is' : s.stale.length + ' are') + ' past the date it is worth a look.';
+    if (s.undated) text += ' ' + s.undated + ' not dated.';
+    return { text: text, stale: s.stale.length > 0, oldestDays: s.oldest.days };
+  }
+
   /** The short list the Refresh page walks, from the table; [] until use(). */
   function volatileFields() {
     return (table && table.volatile) ? table.volatile.slice() : [];
@@ -136,6 +198,8 @@
     tableInUse: tableInUse,
     ageDays: ageDays,
     describe: describe,
+    forFields: forFields,
+    line: line,
     label: label,
     volatileFields: volatileFields,
     summary: summary

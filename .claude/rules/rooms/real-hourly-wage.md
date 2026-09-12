@@ -3,7 +3,7 @@ paths:
   - "rooms/real-hourly-wage.html"
 ---
 # Real Hourly Wage (`real-hourly-wage`)
-File: rooms/real-hourly-wage.html · 251 lines
+File: rooms/real-hourly-wage.html · 252 lines
 Engines: projection, tier0, hourly
 Reference data: effective_tax_rates_2026.json
 Owns: nothing

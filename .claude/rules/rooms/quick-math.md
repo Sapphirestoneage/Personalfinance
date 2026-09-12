@@ -3,7 +3,7 @@ paths:
   - "rooms/quick-math.html"
 ---
 # Quick Math (`quick-math`)
-File: rooms/quick-math.html · 447 lines
+File: rooms/quick-math.html · 448 lines
 Engines: projection, quickmath, tier0, hourly
 Reference data: car_costs.json, return_bands.json
 Owns: nothing

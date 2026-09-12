@@ -1317,3 +1317,37 @@ a:hover { color: var(--sapphire-100); }
 .slaf-math li { margin: 2px 0; }
 .slaf-math .ex-fn { margin-top: var(--space-3); }
 @media (min-width: 720px) { .slaf-math { left: auto; right: var(--space-4); bottom: var(--space-4); width: 30rem; border-radius: var(--radius-lg, 16px); border: 1px solid var(--color-border-strong); } }
+
+/* ---- How old the numbers on this screen are (D-226) -----------------------
+   One quiet line under the room header, on every room. Deliberately NOT a
+   card and NOT amber-on-amber: an old figure is still the figure, and the
+   line is a prompt to look, not a warning that something is wrong (D-057).
+   Stale gets the caution colour on the dot alone, so a screen with one
+   old number does not read as a screen in trouble. */
+.slaf-age-host { max-width: var(--measure); margin: 0 auto; width: 100%; }
+.slaf-age {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  margin: 0 0 var(--space-3); padding: 0 var(--space-4);
+  font-size: var(--text-xs); line-height: var(--leading-loose);
+  color: var(--color-text-faint);
+}
+.slaf-age-dot {
+  flex: none; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--color-border-active); transform: translateY(-1px);
+}
+.slaf-age.is-stale .slaf-age-dot { background: var(--color-caution); }
+.slaf-age a { color: var(--color-accent-hover); text-decoration: none; }
+.slaf-age a:hover { text-decoration: underline; }
+
+/* ---- The example household says so, on every room (D-226) ----------------
+   Not an error and not a warning: a statement of fact about whose numbers
+   are on screen, in the accent the app uses for "this is the app talking". */
+.slaf-demo {
+  max-width: var(--measure); margin: 0 auto var(--space-2); padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs); line-height: var(--leading-loose); color: var(--color-text-muted);
+}
+.slaf-demo b { color: var(--color-text); }
+.slaf-linkbtn {
+  background: none; border: 0; padding: 0; font: inherit;
+  color: var(--color-accent-hover); text-decoration: underline; cursor: pointer;
+}

@@ -7,6 +7,10 @@ Updated: 2026-09-12
 - ~70 rooms live on GitHub Pages. Each room works on its own; the connections
   between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
 - Context system added. Sessions should no longer read the archives.
+- End-to-end audit, walked in a browser as beginner and expert
+  (`docs/END-TO-END-AUDIT.md`, D-226). Four seams fixed: every room says how
+  old its numbers are; the example household says it is the example; home
+  opens on what you earned, not the pitch; one progress meter, not two.
 
 ## Freeze
 - ON. No new rooms, frameworks, or vocabularies until the first journey
@@ -14,11 +18,13 @@ Updated: 2026-09-12
 
 ## Next (top item first; one per session)
 1. Decide who owns income sources once Start Here retires (Ledger or Income).
-   OWNER DECISION NEEDED.
+   OWNER DECISION NEEDED. Now the top cost to a beginner: four ways in are
+   live on the landing and none can close until this is decided (D-226 F6).
 2. Make logged income reconcile with typical income (known problem 1).
 3. First journey works end to end: about 8 questions in, a FOO step and an FI
    date range out. Add a node test for it.
 4. Monthly close prompts a backup export.
+5. Express opens at level 1 only (94 boxes on one page today). D-226 F7.
 
 ## Cut list (for /simplify, one per session, owner approves each)
 - Retire Start Here, Front Doors, Walk-Through into the Ledger (decided).

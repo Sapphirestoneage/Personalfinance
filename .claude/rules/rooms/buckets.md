@@ -4,7 +4,7 @@ paths:
   - "engines/buckets.js"
 ---
 # Time Buckets (`buckets`)
-File: rooms/buckets.html · 264 lines
+File: rooms/buckets.html · 265 lines
 Engines: projection, tier0, cashflow, ratios, hourly, buckets
 Reference data: bucket_ideas.json, confidence_weights.json, expense_categories.json, ratio_benchmarks.json, ratio_explainers.json
 Owns: bucketsPlanned

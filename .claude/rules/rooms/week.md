@@ -4,7 +4,7 @@ paths:
   - "engines/week.js"
 ---
 # Designed Week (`week`)
-File: rooms/week.html · 278 lines
+File: rooms/week.html · 279 lines
 Engines: projection, tier0, hourly, cashflow, week
 Reference data: expense_categories.json, week_blocks.json
 Owns: designedHours

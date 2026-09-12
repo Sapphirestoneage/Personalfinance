@@ -3,7 +3,7 @@ paths:
   - "rooms/walk.html"
 ---
 # The Walk-Through (`walk`)
-File: rooms/walk.html · 280 lines · utility room
+File: rooms/walk.html · 281 lines · utility room
 Engines: none
 Reference data: walk_stages.json
 Owns: nothing

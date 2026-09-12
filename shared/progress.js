@@ -866,6 +866,100 @@
       + '\u21A9 Back to ' + escapeHtml(room.title) + '</a>';
   }
 
+  /* ---- How old is what I am looking at? (D-226) ---------------------------
+     Every owned number has carried its own as-of date since D-056/D-181 and
+     the spine stamps one on every write. Until now that date reached exactly
+     two screens: the dashboard's "Last confirmed" line, folded inside "The
+     full panel", and the Refresh room. Ninety rooms showed figures with no
+     hint of whether they were typed this morning or eighteen months ago —
+     and eighteen-month-old spending is a different number, read the same way.
+
+     So the room header carries one quiet line: the oldest figure this room
+     reads, when it was last touched, and how many are past the review
+     interval data/staleness.json sets for them. It is a prompt, never a
+     verdict: nothing here discounts, hides or re-colours the number itself
+     (D-057), and a room whose figures are all fresh says so in four words.
+
+     Mounted by mountHeader, so no room is wired by hand. It is one line of
+     text with no controls in it, so rebuilding it when the household changes
+     cannot disturb a live input (D-034).                                   */
+  function ageLineHtml(roomId, household) {
+    var g = globals();
+    var Staleness = g && g.SLAF && g.SLAF.Staleness;
+    var room = Registry.byId(roomId);
+    if (!Staleness || !Staleness.line || !room) return '';
+    /* Not the dashboard: it is not a room that reads a fixed set of fields,
+       it reads all of them, and it already prints its own "Last confirmed"
+       line over the figures that actually move (shared/staleness.js
+       summary). Two age lines on one screen is one too many. */
+    if (roomId === 'dashboard') return '';
+    if (!(room.needs || []).length) return '';
+    /* Only the fields this room actually HOLDS a value for. Staleness
+       describes a field id without seeing whether it has a value, and its
+       fallback to the household's last save would otherwise date a blank —
+       reporting an empty room's missing numbers as "not dated". forRoom
+       already separates filled from missing, so use its answer. */
+    var row = forRoom(roomId, household);
+    var filled = row ? row.filled.map(function (f) { return f.fieldId; }) : [];
+    if (!filled.length) return '';           /* nothing entered: nothing to date */
+    var l = Staleness.line(household, filled);
+    if (!l) return '';
+    var refresh = Registry.byId('refresh');
+    var link = l.stale && refresh ? ' <a href="' + escapeHtml(href(refresh.href, roomId)) + '">Look at them \u2192</a>' : '';
+    return '<p class="slaf-age' + (l.stale ? ' is-stale' : '') + '" id="slaf-age">'
+      + '<span class="slaf-age-dot" aria-hidden="true"></span>'
+      + escapeHtml(l.text) + link + '</p>';
+  }
+
+  /* ---- "These are not your numbers" (D-226) -------------------------------
+     The example household is the path most people take first, and until now
+     it left no mark: two screens in, Robin Sparks's runway read exactly like
+     your own, and a week later there was nothing on any screen to say whose
+     money it was. One line, on every room, until the person clears it. */
+  function demoLineHtml(roomId) {
+    var g = globals();
+    var Spine = g && g.SLAF && g.SLAF.Spine;
+    if (!Spine || !Spine.isDemo || !Spine.isDemo()) return '';
+    return '<p class="slaf-demo" id="slaf-demo" role="status">'
+      + '<b>Example numbers.</b> These are Robin Sparks\u2019s figures, not yours. '
+      + '<button type="button" class="slaf-linkbtn" id="slaf-demo-clear">Clear them and start with mine</button></p>';
+  }
+
+  /** The age line, mounted once and repainted (text only) as figures change. */
+  function mountAge(roomId, nav) {
+    var g = globals();
+    var Spine = g && g.SLAF && g.SLAF.Spine;
+    if (!Spine || !nav || document.getElementById('slaf-age-host')) return null;
+    var host = document.createElement('div');
+    host.id = 'slaf-age-host';
+    host.className = 'slaf-age-host';
+    function paint() {
+      host.innerHTML = demoLineHtml(roomId) + ageLineHtml(roomId, Spine.getProfile());
+      var clear = document.getElementById('slaf-demo-clear');
+      if (clear) clear.addEventListener('click', function () {
+        if (!g.confirm('Clear the example numbers and start from empty? Anything you typed over them goes too.')) return;
+        try { Spine.markDemo(false); } catch (e) { /* fine */ }
+        if (Spine.reset) Spine.reset();
+        g.location.reload();
+      });
+    }
+    paint();
+    if (Spine.onChange) Spine.onChange(paint);
+    /* data/staleness.json arrives after the first paint in most rooms; the
+       ages are right without it, the "past its review date" clause is not,
+       so repaint once when the table lands. */
+    var R = g.SLAF && g.SLAF.Reference;
+    if (R && R.load && g.SLAF.Staleness && !g.SLAF.Staleness.tableInUse()) {
+      try {
+        R.load(['staleness']).then(function (t) {
+          if (t && t.staleness) { g.SLAF.Staleness.use(t.staleness); paint(); }
+        })['catch'](function () { /* no table: ages still show, verdicts do not */ });
+      } catch (e) { /* same */ }
+    }
+    nav.parentNode.insertBefore(host, nav.nextSibling);
+    return host;
+  }
+
   /* ---- The dead spot is the door (D-163) ----------------------------------
      Thirty-four places in the app print "Add your debts to see this" exactly
      where a number should be. The sentence names what is missing and the app
@@ -927,6 +1021,7 @@
     if (have) return have;
     var back = document.querySelector('.room-back, .back');
     if (!back) return null;
+    noteVisit(globals(), roomId);
     var nav = document.createElement('div');
     nav.className = 'slaf-hops-host';
     nav.innerHTML = returnHtml(roomId) + headerNavHtml(roomId);
@@ -934,6 +1029,7 @@
     mountMenu(roomId, nav);
     mountSituation(roomId);
     mountWalk(roomId, nav);
+    mountAge(roomId, nav);
     mountDoors(roomId);
     mountFold(roomId);
     mountSectionSync(roomId);
@@ -1087,6 +1183,10 @@
      due mark is cleared by the Comeback's Done, or by a visit to it. */
   var COMEBACK_DAYS = 21;
   function noteVisit(g, roomId) {
+    /* Two records, two jobs. The household's own visit log (D-226) is the
+       person's history and travels with an export; the Prefs stamp below is
+       one number the Comeback reads and nothing else. */
+    try { if (g.SLAF && g.SLAF.Spine && g.SLAF.Spine.noteVisit) g.SLAF.Spine.noteVisit(); } catch (e) { /* storage refused */ }
     var Prefs = g.SLAF && g.SLAF.Prefs;
     if (!Prefs || !Prefs.get) return;
     try {
@@ -1255,7 +1355,7 @@
 
   return {
     mount: mount,
-    mountHeader: mountHeader, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
+    mountHeader: mountHeader, ageLineHtml: ageLineHtml, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
     mountFold: mountFold,
     mountSectionSync: mountSectionSync,
     roomIdFromLocation: roomIdFromLocation,

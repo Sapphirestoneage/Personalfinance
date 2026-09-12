@@ -4,7 +4,7 @@ paths:
   - "engines/presets.js"
 ---
 # Budget (`budget`)
-File: rooms/budget.html · 484 lines
+File: rooms/budget.html · 485 lines
 Engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget
 Reference data: budget_templates.json, car_costs.json, effective_tax_rates_2026.json, expense_categories.json, irs_limits_2026.json, savings_presets.json, +1 more
 Owns: monthsClosed

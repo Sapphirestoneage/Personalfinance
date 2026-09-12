@@ -13678,6 +13678,52 @@ figure checked by the month-by-month loop and by the closed-form annuity
 independently. Twelve properties, including that letting one more unit
 can never make you pay more.
 
+## D-226 — A number that does not say how old it is, or whose it is, is half a number
+
+**Why.** An end-to-end walk of the live app as a beginner and as an expert
+(docs/END-TO-END-AUDIT.md, 2026-09-12): the age of a figure reached 2 of 92
+rooms; the example household left no mark on any screen; home greeted someone
+who had just finished the First Round with the pitch it shows a stranger; and
+the progress meter said "4 of 16" on home and "31%" in the Ledger at the same
+moment, for the same household.
+
+**Decision.** Four things the app already had the data for, now shown.
+`shared/staleness.js` gains `forFields` and `line` (pure); `shared/progress.js`
+`mountHeader` puts one age line under every room's header, from the room's
+declared `needs` filtered to what is actually entered, plus one line naming
+the example household when `meta.isDemo` is set. `Spine.markDemo`/`isDemo`,
+stamped at the three sites that write the demo (index.html,
+`rooms/debt-payoff.html`, `rooms/expenses.html`). `Spine.noteVisit`/
+`visitStats` record the calendar days the app was opened. index.html's landing
+becomes the lodge: `Doors.firstInsight` and `Doors.understanding` read, never
+re-derived, so home and the Ledger print the one meter. The dashboard now
+calls `LedgerRows.use()`, without which its meter was 0% over an empty list.
+Stale is still a prompt to look, never a discount (D-057).
+
+**Replaces or removes.** The dashboard's "N of M answers in" as the headline
+measure of progress — one meter now, `Doors.understanding`, everywhere.
+`meta.visitedRooms` stops being the only visit record (it is untouched, and
+still read by nothing; `meta.visits` is what a reader should use). No new
+room, lens, vocabulary or framework: every word on screen comes from a
+function that already existed.
+
+**Stored shape.** `slaf.household.v2` gains `meta.visits
+{ firstAt, lastAt, days: ['YYYY-MM-DD'], count }` and uses `meta.isDemo`,
+which `shared/demo-persona.js` already declared and nothing set. Both are
+ABSENT on anything saved earlier and read back as "no days recorded" and "not
+the demo" — never as "never used" or "definitely yours". `Schema.createVisits`
+normalises anything malformed to empty. Both are in the command log's
+HISTORY_SKIP: opening a screen is not an undoable change. `meta.visitedRooms`
+is unchanged, so every existing reader still works.
+
+**Verified.** `node test/run.js` (30,587 checks), `node test/forms.js`
+(604 checks, typing survives in every room — the new header lines add no
+control and rebuild no container, so D-034 holds), `node tools/context/build.js
+--check`, and the two-persona browser walk re-run against the fixes. `test/forms.js`
+itself was skipping silently in this container — it looked for Chromium at a
+path that had moved and for playwright only in the local tree — and now finds
+both, because a check that passes by not running is not a check.
+
 ---
 
 # The Dungeons & Dividends entries
