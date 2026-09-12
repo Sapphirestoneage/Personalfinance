@@ -5679,12 +5679,16 @@ section('The Statement engine');
     const prop = Schema.createProperty({ assetId: 'house', mortgageId: 'mtg', rentMonthlyCents: 240000, pitiMonthlyCents: 150000, opexMonthlyCents: 40000 });
     /* NOI = (2,400 × .92 − 400) × 12 = (2,208 − 400) × 12 = 21,696.
        Cap = 21,696 / 300,000 = 7.23%. Debt service 18,000. DSCR 1.205.
-       Cash-on-cash = 3,696 / 100,000 equity = 3.7%. */
+       Return on equity = 3,696 / 100,000 equity = 3.7%. Not cash-on-cash:
+       that would divide by the cash actually put in, which this record
+       does not hold, so it is reported as null with the reason (D-224). */
     const m = St.propertyMetrics(h, prop);
     check('NOI by hand', m.noiCents, 2169600);
     check('cap rate', Math.round(m.capRate * 10000) / 10000, 0.0723);
     check('DSCR', Math.round(m.dscr * 1000) / 1000, 1.205);
-    check('cash-on-cash on 100,000 of equity', Math.round(m.cashOnCash * 1000) / 1000, 0.037);
+    check('return on equity, on 100,000 of equity', Math.round(m.returnOnEquity * 1000) / 1000, 0.037);
+    check('and cash-on-cash is not claimed from equity', m.cashOnCash, null);
+    checkTrue('… it says why instead', /cash you actually put in/.test(m.cashOnCashReason));
     checkTrue('the vacancy was assumed and says so', m.vacancyAssumed && m.vacancyRate === 0.08);
     check('monthly cash flow', m.cashFlowMonthlyCents, 30800);
     check('a rental with no asset link is incomplete', St.propertyMetrics(h, Schema.createProperty({})).status, 'incomplete');
@@ -8675,6 +8679,171 @@ section('D-194: an entry knows when it ends and what the stub took off');
   check('dated weekly from a Friday: four landings in September 2026', sep26.grossCents, 4 * 86900);
   check('… five in May', may26.grossCents, 5 * 86900);
   check('… and the tax is per landing times the landings', sep26.taxCents, oneLanding.taxCents * 4);
+})();
+
+section('Tier 17 (D-223): what a place actually costs to own');
+(function () {
+  const Own = require(path.join(ROOT, 'engines/ownership.js'));
+  const T = { housingConventions: require(path.join(ROOT, 'data/housing_conventions.json')) };
+  /* $320,000, a fifth down, 6.9% over thirty years. Every figure below was
+     worked out apart from the engine: the payment from the level-payment
+     formula, the rest straight off the conventions file. */
+  const o = { priceCents: 32000000, downPct: 0.20, annualRate: 0.069, tables: T };
+  const c = Own.cost(o);
+  checkTrue('the month prices', Money.isOk(c), c.reason);
+  check('a fifth down is $64,000, and the loan is the rest', c.downCents + '/' + c.loanCents, '6400000/25600000');
+  check('the payment is $1,686.02', c.paymentCents, 168602);
+  check('property tax a month, at 1.1% a year', c.propertyTaxMonthlyCents, 29333);
+  check('insurance a month, at 0.5%', c.insuranceMonthlyCents, 13333);
+  check('maintenance a month, at 1%', c.maintenanceMonthlyCents, 26667);
+  check('the month costs $2,379.35 all in', c.totalMonthlyCents, 237935);
+  check('… which is what the value is', c.value, 237935);
+  check('the carry and the equity are the whole of it', c.carryMonthlyCents + c.equityMonthlyCents, c.totalMonthlyCents);
+  check('nothing is assumed about an HOA without saying so', c.assumed.some(a => /HOA/.test(a)), true);
+  check('a fifth down carries no mortgage insurance', c.pmiMonthlyCents, 0);
+  /* Under the line it is charged: 5% down on the same place. */
+  const small = Own.cost(Object.assign({}, o, { downPct: 0.05 }));
+  check('5% down means a $304,000 loan', small.loanCents, 30400000);
+  check('… and $152 a month of mortgage insurance', small.pmiMonthlyCents, 15200);
+  checkTrue('… which makes the month dearer, not cheaper', small.totalMonthlyCents > c.totalMonthlyCents);
+
+  /* Let out at $2,400. The cover test is the one that fails here. */
+  const r = Own.rental(Object.assign({}, o, { grossRentMonthlyCents: 240000 }));
+  check('an 8% empty stretch takes $192 off the rent', r.vacancyCents, 19200);
+  check('operating costs exclude the mortgage', r.operatingMonthlyCents, 69333);
+  check('net operating income is $1,514.67 a month', r.noiMonthlyCents, 151467);
+  check('so it runs $171.35 a month short', r.cashFlowMonthlyCents, -17135);
+  check('the cap rate is 5.68%', Math.round(r.capRate * 10000) / 10000, 0.0568);
+  check('the loan is covered 0.90 times, under the 1.2 lenders want', Math.round(r.dscr * 10000) / 10000, 0.8984);
+  checkTrue('and it says so, twice: the cover test and the monthly shortfall', r.flags.length === 2);
+
+  /* A duplex you live in half of: the other unit lets for $1,500. */
+  const k = Own.hack(Object.assign({}, o, { unitRentsCents: [150000] }));
+  check('the other unit brings $1,380 after the empty stretch', k.collectedMonthlyCents, 138000);
+  check('so living there costs $999.35 a month', k.youPayMonthlyCents, 99935);
+  check('… and nobody is paying you yet', k.theyPayYou, false);
+  const two = Own.hack(Object.assign({}, o, { unitRentsCents: [150000, 150000] }));
+  checkTrue('two units let costs less than one', two.youPayMonthlyCents < k.youPayMonthlyCents);
+
+  /* Holding it. Nothing grows unless the caller says it does. */
+  const h = Own.hold(Object.assign({}, o, { years: 5, rentMonthlyCents: 220000 }));
+  check('five years is sixty months', h.monthsHeld, 60);
+  check('with no growth assumed, it sells for what it cost', h.valueAtSaleCents, 32000000);
+  checkTrue('… and says that is an assumption', h.assumed.some(a => /no growth/.test(a)));
+  check('what you paid is the cash to close plus the months', h.paidCents, h.cashToCloseCents + h.monthlyCents * 60);
+  check('the cost of owning is what you paid less what you keep', h.costOfOwningCents, h.paidCents - h.netProceedsCents);
+  check('equity is what it is worth less what is left on the loan', h.equityCents, h.valueAtSaleCents - h.balanceCents);
+  checkTrue('the loan is smaller after five years', h.balanceCents < 25600000);
+  checkTrue('renting at $2,200 is named the cheaper of the two', h.cheaper === 'renting' || h.cheaper === 'owning');
+  /* Growth is the caller's to assert, and it moves the answer. */
+  const grown = Own.hold(Object.assign({}, o, { years: 5, appreciationRate: 0.03 }));
+  checkTrue('3% a year leaves more at the sale', grown.netProceedsCents > h.netProceedsCents);
+
+  /* Refusals, never a number. */
+  checkTrue('no price, no answer', !Money.isOk(Own.cost({ downPct: 0.2, annualRate: 0.07, tables: T })));
+  checkTrue('a down payment over the price is refused', !Money.isOk(Own.cost(Object.assign({}, o, { downPct: 1.5 }))));
+  checkTrue('a negative rate is refused', !Money.isOk(Own.cost(Object.assign({}, o, { annualRate: -0.01 }))));
+  checkTrue('a rental with no rent is refused', !Money.isOk(Own.rental(o)));
+  checkTrue('a hack with no units is refused', !Money.isOk(Own.hack(o)));
+  checkTrue('without the conventions table it says which table', !Money.isOk(Own.cost({ priceCents: 1, downPct: 0, annualRate: 0 })));
+})();
+
+section('D-224: underwriting a rental honestly, and one set of ratios');
+(function () {
+  const Own = require(path.join(ROOT, 'engines/ownership.js'));
+  const T = { housingConventions: require(path.join(ROOT, 'data/housing_conventions.json')) };
+  const deal = { priceCents: 32000000, downPct: 0.20, annualRate: 0.069, grossRentMonthlyCents: 240000, tables: T };
+  const u = Own.underwrite(deal);
+  checkTrue('the deal underwrites', Money.isOk(u), u.reason);
+
+  /* The two reserves a listing leaves out, both worked out by hand: a
+     capital reserve of 0.5% of value a year, and management at 8% of what
+     is actually collected, not of the asking rent. */
+  check('the capital reserve is $133.33 a month', u.capexMonthlyCents, 13333);
+  check('management is 8% of the rent collected, not of the rent asked', u.managementMonthlyCents, 17664);
+  check('running costs come to $1,003.30', u.operatingMonthlyCents, 100330);
+  check('net operating income is $1,204.70', u.noiMonthlyCents, 120470);
+
+  /* The whole point: the same deal, two figures. */
+  check('rent less the mortgage reads $713.98 a month', u.advertisedCashFlowMonthlyCents, 71398);
+  check('once the reserves are counted it LOSES $481.32 a month', u.cashFlowMonthlyCents, -48132);
+  check('the gap is $1,195.30, and it reconciles exactly', u.reservesMissedMonthlyCents, 119530);
+  check('the gap is the advertised figure less the real one', u.reservesMissedMonthlyCents, u.advertisedCashFlowMonthlyCents - u.cashFlowMonthlyCents);
+  check('so the verdict is that it costs you', u.verdict, 'costs you');
+  checkTrue('and it says so in words, naming both figures',
+    u.flags.some(f => /looks like it cash flows and does not/.test(f) && /714/.test(f) && /481/.test(f)));
+
+  /* The screens, reported and caveated, never used as a verdict. */
+  const scr = {}; u.screens.forEach(x => { scr[x.id] = x; });
+  check('the 1% rule: the rent is 0.75% of the price', Math.round(scr.onePercent.value * 10000) / 10000, 0.0075);
+  check('… so it fails that screen', scr.onePercent.passes, false);
+  check('the 50% rule: costs are 41.8% of rent', Math.round(scr.fiftyPercent.value * 100000) / 100000, 0.41804);
+  check('… so it passes that one, which is why one screen is never a verdict', scr.fiftyPercent.passes, true);
+  checkTrue('both screens carry the caveat that they decide nothing',
+    u.screens.every(x => typeof x.caveat === 'string' && x.caveat.length > 30));
+  check('the loan is covered 0.71 times', Math.round(u.dscr * 100000) / 100000, 0.71452);
+
+  /* Managing it yourself does not make the fee vanish. */
+  const self = Own.underwrite(Object.assign({}, deal, { selfManaged: true }));
+  check('self-managing charges the same 8%', self.managementMonthlyCents, u.managementMonthlyCents);
+  checkTrue('… and says why it is still counted', self.notes.some(n => /your evenings/.test(n)));
+
+  /* The four ways it pays, over five years, in the 24% bracket. */
+  const t = Own.totalReturn(Object.assign({}, deal, { years: 5, marginalRate: 0.24 }));
+  check('five years of cash flow is a loss of $28,879.20', t.cashFlowCents, -2887920);
+  check('the tenant pays down $15,282.67 of the loan', t.principalPaidCents, 1528267);
+  check('nothing is counted for growth, because none was asserted', t.appreciationCents, 0);
+  check('the building depreciates over 27.5 years, land excluded', t.annualDepreciationCents, 930909);
+  check('… sheltering $11,170.91 across five years at 24%', t.shelterCents, 1117091);
+  check('so the whole five years comes to a LOSS of $2,425.62', t.totalCents, -242562);
+  check('the four parts sum to exactly that', t.parts.reduce((a, p) => a + p.cents, 0), -242562);
+  check('on $73,600 of cash in, that is -3.3%', Math.round(t.returnOnCash * 10000) / 10000, -0.033);
+  checkTrue('the shelter is named as deferred, not forgiven', t.notes.some(n => /recaptured/.test(n)));
+  checkTrue('what is spendable is held apart from what is locked up', t.spendableCents === t.cashFlowCents && t.lockedCents === t.principalPaidCents + t.appreciationCents);
+  const noBracket = Own.totalReturn(Object.assign({}, deal, { years: 5 }));
+  check('with no bracket given, no shelter is claimed', noBracket.shelterCents, 0);
+  checkTrue('… and it says that is why', noBracket.assumed.some(a => /tax bracket/.test(a)));
+
+  /* What breaks it. */
+  const st = Own.stress(deal);
+  check('four things that reliably happen are tried', st.total, 4);
+  checkTrue('it fails three of them', st.survived === 1);
+  checkTrue('no scenario is kinder than today', st.scenarios.every(s => s.swingCents === undefined || s.swingCents <= 0));
+  checkTrue('and it says how many it stops paying under', /stops paying under 3 of 4/.test(st.say));
+
+  /* The house hack, at 5% down, letting one unit of a duplex. */
+  const hk = Own.houseHack({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069,
+    unitRentsCents: [150000], rentMonthlyCents: 160000, years: 5, annualReturn: 0.07, tables: T });
+  check('at 5% down the loan carries $152 a month of mortgage insurance', Own.cost({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069, tables: T }).pmiMonthlyCents, 15200);
+  check('owning it, with the reserves, is $3,091.20 a month', hk.fullMonthlyCents, 309120);
+  check('the let unit brings $1,380 after the empty stretch', hk.collectedMonthlyCents, 138000);
+  check('so living there costs $1,711.20', hk.youPayMonthlyCents, 171120);
+  check('against $1,600 to rent, that is $111.20 a month WORSE', hk.savingMonthlyCents, -11120);
+  check('and it refuses to call that a win', hk.beatsRenting, false);
+  checkTrue('… saying the case would have to rest on the loan or the value', hk.notes.some(n => /not on the monthly figure/.test(n)));
+  check('the tenants still pay down $18,147.64 over five years', hk.principalPaidCents, 1814764);
+  checkTrue('one let unit is called out as one tenant between you and the payment', hk.notes.some(n => /one tenant between you/.test(n)));
+  check('if that unit empties, the whole $3,091.20 is yours', hk.ifBiggestUnitEmpties.youPayMonthlyCents, 309120);
+
+  /* The same building with two units let is the move that works. */
+  const hk2 = Own.houseHack({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069,
+    unitRentsCents: [150000, 150000], rentMonthlyCents: 160000, years: 5, annualReturn: 0.07, tables: T });
+  check('two units let: you pay $441.60 to live there', hk2.youPayMonthlyCents, 44160);
+  check('… a saving of $1,158.40 a month against renting', hk2.savingMonthlyCents, 115840);
+  check('and it is called a win', hk2.beatsRenting, true);
+  checkTrue('… on the condition that the saving is actually invested', hk2.notes.some(n => /only a win if it is invested/.test(n)));
+  check('five years of that saving at 7% is $82,933.22', hk2.savingInvestedCents, 8293322);
+  const noReturn = Own.houseHack({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069, unitRentsCents: [150000, 150000], rentMonthlyCents: 160000, years: 5, tables: T });
+  check('with no return asserted the saving is only added up', noReturn.savingInvestedCents, 115840 * 60);
+  checkTrue('… and says it was not invested', noReturn.assumed.some(a => /not invested/.test(a)));
+
+  /* One set of ratios, shared with the statement engine. */
+  const m = Own.metrics({ noiAnnualCents: 2169600, debtServiceAnnualCents: 1800000, valueCents: 30000000, cashInvestedCents: 6000000, equityCents: 10000000 });
+  check('the cap rate is operating income over value', Math.round(m.capRate * 10000) / 10000, 0.0723);
+  check('the cover is operating income over the loan', Math.round(m.dscr * 1000) / 1000, 1.205);
+  check('cash-on-cash divides by the cash put in: 3,696 of 60,000', Math.round(m.cashOnCash * 10000) / 10000, 0.0616);
+  check('the return on equity divides by equity: 3,696 of 100,000', Math.round(m.returnOnEquity * 1000) / 1000, 0.037);
+  checkTrue('which are different numbers, and that is the point', m.cashOnCash !== m.returnOnEquity);
 })();
 
 section('Two decision sequences that cannot collide');
@@ -13804,9 +13973,9 @@ section('The CSV round trip made resilient (D-221)');
 })();
 
 /* ==========================================================================
-   Every class a page names has a rule somewhere (D-223)
+   Every class a page names has a rule somewhere (D-226)
    ========================================================================== */
-section('Every class a page names has a rule somewhere (D-223)');
+section('Every class a page names has a rule somewhere (D-226)');
 (function () {
   /* The Ledger, Express and First Round each named their page wrapper
      .slaf-room and their header .slaf-room-head. Neither existed in any

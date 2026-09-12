@@ -12,7 +12,7 @@ Reference data: access_rules.json, confidence_weights.json, debt_rules.json, eff
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), netWorth (statement), foodMonthly (expenses), accommodationMonthly (expenses), transportationMonthly (expenses), wantsMonthly (expenses), therapyMonthly (expenses), +2 more
 Latest decisions:
-  - D-223 — The Ledger's doors, and the gutter three rooms never had
+  - D-226 — The Ledger's doors, and the gutter three rooms never had
   - D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line
   - D-186 — The simplification pass, first cut: fewer doors, one next, quieter rooms
   - D-185 — The Ledger room, 18.4 and 18.5: the target, and one line per row

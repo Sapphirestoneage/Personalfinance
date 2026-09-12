@@ -13559,7 +13559,126 @@ npm test` (two more properties), the render, features, forms and XSS gates,
 and a phone walk that downloads the file, opens it in a real spreadsheet
 program, edits three cells there, brings it back, applies and undoes.
 
-## D-223 — The Ledger's doors, and the gutter three rooms never had
+## D-223 — Tier 17: one arithmetic for owning a place, four ways to read it
+
+**Why.** Rent/Buy, a rental analysis and a house hack are the same figures
+asked three ways, and the repo had only the first, as its own arithmetic
+inside `engines/housing.js`. Anything about property beyond "should I buy
+where I live" had nowhere to stand. A handoff brief named this as the
+thing blocking real estate.
+
+**Decision.** `engines/ownership.js`, pure inputs and integer cents, no
+household: `cost` (a month of owning), `hold` (N years, against renting),
+`rental` (cash flow, cap rate, cash-on-cash, DSCR) and `hack` (live in
+one unit, let the rest). The mortgage is `Projection.levelPaymentCents`,
+never a second copy of the formula. Operating costs exclude the loan, the
+way net operating income is always defined, and the loan comes off after.
+Every rate is read from `data/housing_conventions.json`; every figure the
+caller did not supply is named in `assumed` rather than taken as zero, so
+"no HOA" and "no growth" are stated rather than implied.
+
+**Replaces or removes.** Nothing yet. `engines/housing.js` keeps its own
+arithmetic this commit; moving its `compare` onto `cost` and `hold` is the
+next step, and is what makes Rent/Buy the thin wrapper SPEC.md asked for.
+
+**Stored shape.** No change. The engine reads nothing from the household
+and writes nothing. `data/housing_conventions.json` goes to 1.1, adding
+`pmiRate` (0.6% of the loan a year) and `pmiEndsAtLoanToValue` (0.80);
+every key that was there is unchanged, so an existing reader sees what it
+saw before.
+
+**Verified.** `node test/run.js`, with the worked example derived by hand
+apart from the engine: $320,000 at a fifth down and 6.9% is $1,686.02 of
+payment and $2,379.35 all in; let at $2,400 it runs $171.35 a month short,
+a 5.68% cap rate, covering the loan 0.90 times against the 1.2 a lender
+wants, and it says so. Seven properties in
+`tests/properties/ownership.test.js`, including that the lines sum to the
+total and that the carry plus the equity is that same total.
+
+## D-224 — A rental is underwritten honestly, or it is not underwritten
+
+**Why.** The figure every listing quotes is the rent less the mortgage,
+and it is not cash flow. Three costs are missing from it and all three
+are certain: the months it sits empty, the capital that replaces a roof,
+and the work of managing it. A tool that repeats the listing's number
+teaches the mistake that loses people money.
+
+**Decision.** `engines/ownership.js` gains four things.
+`underwrite` prices the deal the way it actually runs and reports the
+advertised figure beside it, with the gap named: on the worked example a
+place advertised at $713.98 a month costs $481.32, a difference of
+$1,195.30 the listing left out. Management is charged at 8% even when
+self-managed, and says why. `totalReturn` splits the four ways a rental
+pays and never blends them: cash flow, the loan the tenant pays down,
+growth (zero unless you assert a rate), and the depreciation shelter
+(counted only when a bracket is given, and named as deferred, not
+forgiven, because it is recaptured). `stress` runs the things that
+reliably happen. `metrics` holds the ratio definitions once.
+
+The 1% and 50% rules are reported with the caveat that a screen decides
+nothing; the example fails the first and passes the second, which is
+exactly why one is never a verdict.
+
+**Replaces or removes.** `engines/statement.js` stops computing cap rate,
+cover and return itself and calls `Ownership.metrics`, so a rental you own
+and a deal you are weighing are measured the same way. Its cash-on-cash
+was dividing by today's equity, which flatters a place that has risen; it
+now reports `returnOnEquity`, which is what that arithmetic is, and
+declines to claim a cash-on-cash it has no cash-invested figure for. The
+house-hack block in `data/blocks/` still carries its own copy; that is
+the next one to move.
+
+**Stored shape.** No change. `data/housing_conventions.json` goes to 1.2,
+adding the capital-reserve rate, the management rate, the two screens and
+the depreciation convention; every existing key is untouched.
+
+**Verified.** `node test/run.js` (30,485 checks), with every figure above
+derived by hand in a separate script before the engine was asked: the
+reserves, the operating total, both cash-flow figures and their gap, the
+five-year split including $15,282.67 of principal and $11,170.91 of
+shelter, and a five-year total that is still a loss of $2,425.62 on
+$73,600 in. Eleven properties in `tests/properties/ownership.test.js`,
+among them that counting the reserves can only ever make a deal look
+worse, and that cash-on-cash and return on equity are never the same
+number on different denominators.
+
+## D-225 — The house hack, priced against the rent it replaces
+
+**Why.** Living in one unit and letting the rest is the one move that
+cuts the largest line in most budgets, and the arithmetic for it was the
+plain one: the month less the rent collected. That reading flatters it
+twice. It leaves out the reserves, which the building needs whether or
+not you sleep in it, and it stops before the only question that matters,
+which is what this frees up against renting a place of your own.
+
+**Decision.** `Ownership.houseHack` carries the capital reserve and the
+management fee that `underwrite` does, then says what living there costs
+against what renting costs, and what the difference becomes if it is
+actually invested. Nothing is compounded without an asserted return; with
+none, the saving is added up and said to be uninvested. It names the
+weakness of a one-unit hack: one tenant between you and the whole
+payment, and it prices the month that unit is empty. When the monthly
+figure loses to renting it says so and refuses to call it a win, pointing
+instead at the loan being paid down as the case that would have to be
+made. `hack` stays as the plain reading.
+
+**Replaces or removes.** Nothing. `hack` and `houseHack` answer different
+questions and both are used; the plain one is what a first glance wants.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (30,550 checks), every figure derived by
+hand first: a $320,000 duplex at 5% down costs $3,091.20 a month with the
+reserves and $152 of mortgage insurance; letting one unit at $1,500
+leaves you paying $1,711.20, which is $111.20 a month WORSE than renting
+at $1,600, and the engine says so while still crediting the $18,147.64 of
+loan the tenants pay down over five years. Letting two turns it into a
+$1,158.40 a month saving, worth $82,933.22 after five years at 7%, a
+figure checked by the month-by-month loop and by the closed-form annuity
+independently. Twelve properties, including that letting one more unit
+can never make you pay more.
+
+## D-226 — The Ledger's doors, and the gutter three rooms never had
 
 **Why.** The owner sent a photo of the Ledger on a phone. Every door read
 "DDebt … what you owe$41,940total owed6 of 10", the ring sat on top of the

@@ -110,7 +110,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **doors** — Front Doors (utility) · 410 lines · engines: layouts · D-153
 - **walk** — The Walk-Through (utility) · 280 lines · no engines · D-169, D-149
 - **data** — Your Data (utility) · 702 lines · engines: tax, bankcsv · D-221, D-220, D-125
-- **ledger** — The Ledger (utility) · 505 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing · D-223, D-207, D-186
+- **ledger** — The Ledger (utility) · 505 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing · D-226, D-207, D-186
 - **one-pager** — The One-Pager · 172 lines · engines: selfemployed, tax, projection, tier0, debt, cashflow, ratios, trap, onepager · D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 - **progress-card** — Progress Card (utility) · 139 lines · engines: projection, tier0, tax, debt · D-212
