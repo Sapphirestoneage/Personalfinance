@@ -22,6 +22,7 @@
           "state",
           "grossAnnualIncome",
           "lastPay",
+          "lastDayWorked",
           "cashSavings",
           "hasDebt",
           "accommodationMonthly",
@@ -187,6 +188,8 @@
         "rows": [
           "floorMonthly",
           "unemployment",
+          "severanceCents",
+          "ptoPayoutCents",
           "paySurvives",
           "healthCover",
           "healthMonthly",
@@ -196,7 +199,7 @@
           "billsMonthly",
           "payLaterDue"
         ],
-        "minutes": 9.5
+        "minutes": 10.0
       },
       "unlocks": [
         "sleep-at-night",

@@ -8,7 +8,7 @@ File: rooms/runway.html · 727 lines
 Engines: projection, tier0, cashflow, tax, runway, swan
 Reference data: expense_categories.json, liquidity_benchmarks.json, tax_brackets.json
 Owns: nothing
-Reads from other owners: cashSavings (start), monthlyExpenses (expenses)
+Reads from other owners: severanceCents (between-jobs), cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:
   - D-130 — What was pushed off, built: dates that are only estimated or potential, the calendar from the ledger, one month of spending, one rent, what the log moved, N/A in its owner room, an emergency-fund preset
   - D-082 — Which lines could not be cut: the floor, and how much of a month is cuttable

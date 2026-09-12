@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 112. Traced: 103. No other room mentions it: **58**.
+Fields: 115. Traced: 106. No other room mentions it: **60**.
 
 
 ## accounts (7)
@@ -18,8 +18,11 @@ Fields: 112. Traced: 103. No other room mentions it: **58**.
 - `allocationCash` — Target: cash · **no other room mentions it**
 - `rebalanceBand` — Rebalance band · **no other room mentions it**
 
-## between-jobs (2)
+## between-jobs (5)
 
+- `lastDayWorked` — Your last day worked · **no other room mentions it**
+- `severanceCents` — Severance, in total · read by start, dashboard, runway
+- `ptoPayoutCents` — Unused leave paid out · **no other room mentions it**
 - `expectedSearchMonths` — Expected search, months · **no other room mentions it**
 - `floorMonthly` — The floor, a month · **no other room mentions it**
 

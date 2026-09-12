@@ -1,6 +1,6 @@
 # STATUS (keep under 40 lines; /wrap rewrites it)
 
-Updated: 2026-09-11
+Updated: 2026-09-12
 
 ## Where it stands
 - The Ledger rework brief (owner, 2026-09-11) is being built in order: G1, A, B, C/C2, D, E, F shipped (D-204 to D-208); G2/G3, H to K next. The owner's brief overrides the freeze for those phases; each adds a VIEW of existing rows (First Round, doors, Express), no second store.
@@ -17,13 +17,13 @@ Updated: 2026-09-11
   below works end to end.
 
 ## Next (top item first; one per session)
-0b. Gated-intake brief: phases 0 (D-211) and 1 (D-212) done. Next: the
-   unemployment fields and the estate/giving branches, the derivations,
-   then rebuild first-round.
-0c. `node test/alignment.js`: 4 failures in financial-snapshot.html, "nothing
-   rendered" at every width. Present at 2cb6f50, so older than this work.
-0. `SLAF_ONLY=express node test/forms.js` fails about half its runs ("the last pay
-   landed" comes back null); same on the commit before D-210. Find the race.
+0b. Gated-intake brief: phases 0 (D-211), 1 (D-212) and 2 (D-213) done. Next:
+   phase 3 (the derivation ledger: 21 fields still asked that a table could
+   answer), then phase 4 (rebuild first-round) and phase 5 (the cuts).
+0c. Two failures older than this work (both at 2cb6f50): `test/alignment.js`, 4 in
+   financial-snapshot.html ("nothing rendered"); `test/forms.js`, the Express
+   walk's "the last pay landed" null in ~half of runs — the keystrokes never
+   reach the box the tap focused, so a typed value is LOST. Its own session.
 1. Decide who owns income sources once Start Here retires (Ledger or Income).
    OWNER DECISION NEEDED.
 2. Make logged income reconcile with typical income (known problem 1).

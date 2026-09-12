@@ -72,6 +72,95 @@
   }
   function addDays(nowMs, days) { return iso(new Date(nowMs + days * MS_PER_DAY)); }
 
+  /* ---- The dates the last day worked fixes (D-213) ------------------------
+     One typed date answers four questions nothing else in the app can
+     answer: when the benefit runs out, when the two 60-day windows close,
+     and how long the search has already run. Every one of them is counted
+     from `people[].unemployment.lastDayWorked`; without it this is
+     incomplete and names the field, because a deadline guessed from a
+     month is a deadline shown on the wrong day.
+
+     Nothing here is a fact about the household and nothing is stored. The
+     benefit duration and the waiting week come from data/ui_benefits.json,
+     which says of itself that it is unverified, so `estimated` is true on
+     the way out and the room prints the state agency link beside it. */
+  /* Whole days, local midnight to local midnight. Counting from a
+     timestamp instead put every deadline half a day out and so one day
+     wrong for half of each day, which on a 60-day window is the
+     difference between "closes tomorrow" and "closed" (D-204, D-213). */
+  function dayDiff(fromIso, toIso) {
+    var a = new Date(fromIso + 'T00:00:00'), b = new Date(toIso + 'T00:00:00');
+    if (isNaN(a.getTime()) || isNaN(b.getTime())) return null;
+    return Math.round((b.getTime() - a.getTime()) / MS_PER_DAY);
+  }
+  function dates(household, tables, opts) {
+    var o = opts || {};
+    var h = household || {};
+    var t = tables || {};
+    var nowMs = Money.isEntered(o.now) ? o.now : Date.now();
+    var u = Schema.unemploymentOf(h);
+    var last = u.lastDayWorked;
+    if (!last || isNaN(new Date(last + 'T00:00:00').getTime())) {
+      return Money.incomplete('Add the last day you worked and the dates fall out of it.', ['lastDayWorked']);
+    }
+    var lastMs = new Date(last + 'T00:00:00').getTime();
+    var today = Schema.localDay ? Schema.localDay(new Date(nowMs)) : iso(new Date(nowMs));
+    var elapsedDays = dayDiff(last, today);
+
+    /* The benefit: a waiting week, then the state's weeks. */
+    var ui = t.uiBenefits || null;
+    var row = ui && ui.states ? ui.states[h.state] : null;
+    var waitWeeks = ui && Money.isEntered(ui.waitingWeeks) ? ui.waitingWeeks : null;
+    var weeks = row && Money.isEntered(row.weeks) ? row.weeks : null;
+    var claimStart = waitWeeks === null ? null : addDays(lastMs, waitWeeks * 7);
+    var benefitEnd = (weeks === null || waitWeeks === null) ? null : addDays(lastMs, (waitWeeks + weeks) * 7);
+
+    /* The two windows, each its own statutory count of days from the last
+       day worked (data/protection_conventions.json). */
+    var pc = t.protectionConventions || {};
+    function cell(v) { return v && typeof v === 'object' && Money.isEntered(v.value) ? v.value : (Money.isEntered(v) ? v : null); }
+    var cobraDays = cell(pc.cobraElectionDays);
+    var acaDays = cell(pc.marketplaceSpecialEnrolmentDays);
+    var cobraBy = cobraDays === null ? null : addDays(lastMs, cobraDays);
+    var acaBy = acaDays === null ? null : addDays(lastMs, acaDays);
+
+    /* Severance runs out on a date too, once there is a pay rate to divide
+       it by: the last pay a year over 52. PTO paid out lands the same way. */
+    var weekly = Money.isEntered(u.lastGrossAnnualCents) && u.lastGrossAnnualCents > 0
+      ? u.lastGrossAnnualCents / 52 : null;
+    var lump = (Money.isEntered(u.severanceCents) ? u.severanceCents : 0)
+      + (Money.isEntered(u.ptoPayoutCents) ? u.ptoPayoutCents : 0);
+    var severanceWeeks = weekly && lump > 0 ? lump / weekly : null;
+    var severanceThrough = severanceWeeks === null ? null : addDays(lastMs, severanceWeeks * 7);
+
+    return Money.ok(Math.max(0, Math.round((elapsedDays / 7) * 10) / 10), {
+      lastDayWorked: last,
+      today: today,
+      daysElapsed: elapsedDays,
+      weeksElapsed: Math.max(0, Math.round((elapsedDays / 7) * 10) / 10),
+      claimStart: claimStart,
+      benefitWeeks: weeks,
+      waitingWeeks: waitWeeks,
+      benefitEndDate: benefitEnd,
+      benefitWeeksLeft: benefitEnd === null ? null : Math.max(0, Math.round(dayDiff(today, benefitEnd) / 7 * 10) / 10),
+      cobraElectionBy: cobraBy,
+      cobraDaysLeft: cobraBy === null ? null : dayDiff(today, cobraBy),
+      cobraClosed: cobraBy === null ? null : dayDiff(today, cobraBy) < 0,
+      marketplaceBy: acaBy,
+      marketplaceDaysLeft: acaBy === null ? null : dayDiff(today, acaBy),
+      marketplaceClosed: acaBy === null ? null : dayDiff(today, acaBy) < 0,
+      severanceWeeks: severanceWeeks === null ? null : Math.round(severanceWeeks * 10) / 10,
+      severanceThroughDate: severanceThrough,
+      /* Already in the store as a status, so it is read, never asked twice. */
+      claimFiled: u.benefitStatus === null ? null : (u.benefitStatus === 'receiving' || u.benefitStatus === 'applied'),
+      /* The benefit figures lean on an unverified table, so say so. */
+      estimated: true,
+      benefitSource: ui ? 'data/ui_benefits.json v' + (ui.version || '?') + ' (' + (ui.confidence || 'unverified') + ')' : null,
+      missingState: !h.state,
+      windowSource: 'data/protection_conventions.json'
+    });
+  }
+
   /* ---- The stand-ins, named so the room proposes exactly what the engine uses -- */
 
   /** The typical search, from the reentry gap table: { value, source } or null. */
@@ -240,6 +329,7 @@
     FLOOR_SHARE: FLOOR_SHARE,
     addMonths: addMonths,
     addDays: addDays,
+    dates: dates,
     proposeSearchMonths: proposeSearchMonths,
     proposeFloorCents: proposeFloorCents,
     otherIncome: otherIncome,

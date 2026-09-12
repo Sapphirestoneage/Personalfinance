@@ -76,7 +76,17 @@
     childcare:     function (h) { return Array.isArray(h.dependents) && h.dependents.some(function (d) { return Money.isEntered(d.age) && d.age < 5; }); },
     daySchool:     function (h) { return !!(h.community && h.community.daySchool === true) && BRANCHES.dependents(h); },
     debt:          function (h) { return !(h.meta && h.meta.hasDebt === false); },
-    studentLoans:  function (h, s) { return (s === null || s === 'student') && BRANCHES.debt(h); }
+    studentLoans:  function (h, s) { return (s === null || s === 'student') && BRANCHES.debt(h); },
+    /* What happens to the money after you: only once there is somebody it
+       would pass to. Without this a 22-year-old with no assets is asked
+       whether they hold a power of attorney (D-213). */
+    estate:        function (h) { return hasPartner(h) || BRANCHES.dependents(h); },
+    /* Planned giving is opt-in: the questions appear once a share or a
+       yearly figure has been set, never before. */
+    giving:        function (h) {
+      var g = h.giving || {};
+      return Money.isEntered(g.pctOfIncome) || Money.isEntered(g.annualTargetCents);
+    }
   };
   /* ---- why(h, key): the sentence a room says when it does not apply -------
      `exists` decides; this says it out loud. The two live together on
@@ -106,6 +116,8 @@
     childcare:      'This one is about childcare for a child under five.',
     daySchool:      'This one is about day-school fees.',
     debt:           'You said there is nothing owed.',
+    estate:         'This one is about who your money goes to. There is nobody else in this household yet, so there is nothing to direct.',
+    giving:         'This one is about planned giving. Nothing has been set aside for it yet.',
     studentLoans:   'This one is about student loans.'
   };
   /** The first reason this room does not apply, or null if it does. */

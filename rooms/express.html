@@ -213,6 +213,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (u === 'date' && (row.id === 'dob' || row.id === 'partnerDob')) {
       return '<span class="slaf-input-shell"><select data-x-month aria-label="Month"><option value="">Month</option>' + ['01','02','03','04','05','06','07','08','09','10','11','12'].map(function (m, i) { return '<option value="' + m + '">' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][i] + '</option>'; }).join('') + '</select><input type="text" inputmode="numeric" placeholder="Year, e.g. 1992" data-x-year aria-label="Year"/></span>';
     }
+    /* A full calendar date (D-213): the native control, so a phone gets a
+       date wheel and the value is already YYYY-MM-DD. */
+    if (u === 'isoDate') {
+      return '<span class="slaf-input-shell"><input type="date" data-x-input aria-label="' + esc(row.label) + '"/></span>';
+    }
     if (u === 'formula') return '<span class="slaf-input-shell"><input type="text" inputmode="decimal" placeholder="e.g. 50" data-x-match aria-label="Match, cents on the dollar"/><span class="affix">% of the first</span><input type="text" inputmode="decimal" placeholder="e.g. 6" data-x-cap aria-label="Cap, share of pay"/><span class="affix">% of pay</span></span>';
     var affix = u === 'cents' ? '$' : (u === 'percent' || u === 'rate') ? '' : '';
     var suffix = (u === 'percent' || u === 'rate') ? '%' : u === 'months' ? 'mo' : u === 'years' ? 'yr' : '';
@@ -369,6 +374,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (String(raw).trim() === '') { if (before !== null && before !== undefined) write(n, null, 'typed'); return; }
       var v;
       if (row.unit === 'enum' || row.unit === 'text') v = raw.trim();
+      else if (row.unit === 'isoDate') v = Ask.parse(row, raw);
       else if (row.unit === 'date') v = Number(String(raw).replace(/\D/g, '')) || null;
       else v = Ask.parse(row, raw);
       if (v === null) { said(n, 'A number, please.'); return; }

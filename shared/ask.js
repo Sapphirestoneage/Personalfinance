@@ -108,6 +108,9 @@
     var u = row.unit, s = String(raw === null || raw === undefined ? '' : raw).trim();
     if (s === '') return null;
     if (u === 'cents') return D.Money.parseMoney(s);
+    /* A full calendar date is the one unit that is not a number: a deadline
+       is counted from it, so it stays YYYY-MM-DD or it is not an answer. */
+    if (u === 'isoDate') return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
     var n = Number(s.replace(/[^0-9.\-]/g, ''));
     if (isNaN(n)) return null;
     if (u === 'rate') return n > 1 ? Math.round(n * 100) / 10000 : n;           /* 24.99 → 0.2499; 0.25 stays */

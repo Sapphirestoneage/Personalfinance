@@ -1,11 +1,11 @@
 {
   "id": "ui_benefits",
-  "version": "2025.0",
+  "version": "2025.1",
   "asOf": "2025-07-01",
   "source": "State unemployment insurance: the maximum weekly benefit and the standard maximum duration in weeks, by state, as published by each state agency and compiled by the U.S. Department of Labor's Significant Provisions of State UI Laws. Transcribed from memory of the 2025 compilation.",
   "confidence": "unverified",
   "confidenceNote": "NOT checked against the DOL compilation line by line. Every room that shows an expected benefit labels it an estimate and links to the state agency. Actual benefits depend on base-period wages; the maximum is a ceiling, not a promise.",
-  "note": "expected weekly benefit \u2248 min(maxWeeklyDollars, replacementRate \u00d7 prior weekly wage). Used by the worst-plausible-year figure (D-066) and the Runway room. States without a dependent allowance are shown without one.",
+  "note": "expected weekly benefit ≈ min(maxWeeklyDollars, replacementRate × prior weekly wage). Used by the worst-plausible-year figure (D-066) and the Runway room. States without a dependent allowance are shown without one.",
   "replacementRate": 0.5,
   "replacementRateNote": "Most states replace roughly half of the base-period weekly wage up to the cap; a convention here, not a per-state table.",
   "states": {
@@ -218,7 +218,9 @@
   },
   "estimate": {
     "method": "high_quarter_over_26",
-    "note": "The weekly benefit most states pay is the highest-earning calendar quarter of the base period divided by 26 (New York's formula for a high quarter above $3,575), capped at the state maximum. With only an annual pay figure, the high quarter is taken as pay \u00f7 4. Read by shared/suggest.js (rule unemploymentWeekly). D-205.",
+    "note": "The weekly benefit most states pay is the highest-earning calendar quarter of the base period divided by 26 (New York's formula for a high quarter above $3,575), capped at the state maximum. With only an annual pay figure, the high quarter is taken as pay ÷ 4. Read by shared/suggest.js (rule unemploymentWeekly). D-205.",
     "highQuarterDivisor": 26
-  }
+  },
+  "waitingWeeks": 1,
+  "waitingWeeksNote": "Most states hold back one unpaid week at the start of a claim; several have none, and a few suspended theirs. A convention here, not a per-state table, so a benefit end date built on it is an estimate and every room that shows one says so."
 }

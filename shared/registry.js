@@ -1077,7 +1077,7 @@
     href: 'rooms/between-jobs.html',
     tier: 2,
     tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses', 'income.sources[].benefit'], writes: ['expenses.floor', 'plans.betweenJobs'] },
+    daite: { reads: ['assets.cashCents', 'expenses', 'income.sources[].benefit'], writes: ['expenses.floor', 'plans.betweenJobs', 'income.sources[].lastDayWorked', 'income.sources[].severance', 'income.sources[].ptoPayout'] },
       subsections: [
         { id: 'number',      label: 'The day the cash runs out' },
         { id: 'chart',       label: 'Cash, month by month' },

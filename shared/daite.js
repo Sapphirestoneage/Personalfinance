@@ -91,6 +91,7 @@
     assetValue: 'assets.items[].valueCents', assetCharacter: 'assets.items[].taxCharacter', assetTier: 'assets.items[].tier', assetCostBasis: 'assets.items[].costBasisCents',
     incomeType: 'income.sources[].type', paySurvives: 'income.sources[].survivesJobLoss', annualLine: 'expenses.annual[]',
     lastPay: 'income.sources[].lastPay',
+    lastDayWorked: 'income.sources[].lastDayWorked', severanceCents: 'income.sources[].severance', ptoPayoutCents: 'income.sources[].ptoPayout',
     offerGross: 'plans.careerMove', offerHours: 'plans.careerMove', offerCommute: 'plans.careerMove', offerCosts: 'plans.careerMove', offerSignOn: 'plans.careerMove',
     tuitionTarget: 'plans.kids', tuitionMonthly: 'plans.kids',
     rentAlternative: 'plans.housing', homePrice: 'plans.housing', downPct: 'plans.housing', mortgageRate: 'plans.housing',

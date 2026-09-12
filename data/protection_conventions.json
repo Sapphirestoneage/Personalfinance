@@ -1,7 +1,7 @@
 {
   "id": "protection_conventions",
-  "version": "1.0",
-  "asOf": "2026-09-01",
+  "version": "1.1",
+  "asOf": "2026-09-12",
   "source": "Rules of thumb used in first-pass protection arithmetic: long-term disability cover is sold to replace about 60% of gross pay; term life is sized at about ten times gross income when someone lives on it; a cash cushion of three months of spending is the floor and six months is the full cushion. None is a regulation or a quote.",
   "confidence": "convention",
   "confidenceNote": "Every figure is a rule of thumb, and each has a range in practice: disability policies replace 50-70% of pay, life-cover multiples run from 7x to 15x depending on age and debts, and the cushion advice runs from three to twelve months. The room shows which it used; a real policy or a planner's number replaces it.",
@@ -17,5 +17,19 @@
   "dependentCoverageToAge": {
     "value": 26,
     "note": "The Affordable Care Act lets a child stay on a parent's health plan until age 26 (42 U.S.C. 300gg-14). Read by shared/suggest.js (rule healthCoverUnder26) to offer 'On a parent's plan?' as one tap; never stored until confirmed. D-205."
+  },
+  "cobraElectionDays": {
+    "value": 60,
+    "asOf": "2026-01-01",
+    "source": "https://www.dol.gov/general/topic/health-plans/cobra",
+    "confidence": "sourced",
+    "note": "ERISA 605(a): at least 60 days to elect COBRA, counted from the later of the qualifying event and the date the election notice is given. 60 days from the last day worked is the earliest that window can close, so it is the honest one to show."
+  },
+  "marketplaceSpecialEnrolmentDays": {
+    "value": 60,
+    "asOf": "2026-01-01",
+    "source": "https://www.healthcare.gov/coverage-outside-open-enrollment/special-enrollment-period/",
+    "confidence": "sourced",
+    "note": "45 CFR 155.420(d)(1): losing job-based coverage opens a 60-day special enrolment period. A plan can also be chosen up to 60 days BEFORE the loss."
   }
 }

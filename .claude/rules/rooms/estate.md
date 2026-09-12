@@ -10,6 +10,7 @@ Reference data: estate_basics.json
 Owns: beneficiariesSet, willExists, poaExists
 Reads from other owners: cashSavings (start), otherAssets (statement)
 Latest decisions:
+  - D-213 — The last day worked, and two branches that stop the wrong questions
   - D-106 — Estate Basics: three facts, and what would pass by the state's rules
   - D-098 — The first six tranche rooms: what each owns, before it is built
   - D-094 — One pager in, one pager out: the core

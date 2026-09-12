@@ -194,6 +194,34 @@
       applies: function (h) { return Schema.isUnemployed(h); },
       notApplicableBecause: 'You are working.'
     },
+    /* The exact last day on payroll (D-213): the one fact a 60-day COBRA
+       or marketplace deadline can be counted from, and the start of the
+       benefit clock. Between Jobs owns it, as it owns the search and the
+       floor; Start Here's month-precision `since` is left alone. */
+    lastDayWorked: {
+      label: 'Your last day worked', owner: 'between-jobs', anchor: 'inputs',
+      read: function (h) { var v = Schema.unemploymentOf(h).lastDayWorked; return v ? Money.ok(v) : Money.incomplete('Not entered yet.', ['lastDayWorked']); },
+      format: function (v) { return String(v); },
+      write: function (v) { return unemploymentPatch({ lastDayWorked: typeof v === 'string' && v ? v : null }); },
+      applies: function (h) { return Schema.isUnemployed(h); },
+      notApplicableBecause: 'You are working.'
+    },
+    severanceCents: {
+      label: 'Severance, in total', owner: 'between-jobs', anchor: 'inputs',
+      read: function (h) { var v = Schema.unemploymentOf(h).severanceCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['severanceCents']); },
+      format: money,
+      write: function (v) { return unemploymentPatch({ severanceCents: Money.isEntered(v) ? Math.round(v) : null }); },
+      applies: function (h) { return Schema.isUnemployed(h); },
+      notApplicableBecause: 'You are working.'
+    },
+    ptoPayoutCents: {
+      label: 'Unused leave paid out', owner: 'between-jobs', anchor: 'inputs',
+      read: function (h) { var v = Schema.unemploymentOf(h).ptoPayoutCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['ptoPayoutCents']); },
+      format: money,
+      write: function (v) { return unemploymentPatch({ ptoPayoutCents: Money.isEntered(v) ? Math.round(v) : null }); },
+      applies: function (h) { return Schema.isUnemployed(h); },
+      notApplicableBecause: 'You are working.'
+    },
     cashSavings: {
       label: 'Cash & savings', owner: 'start', anchor: 'q-cash',
       read: function (h) { return Schema.cashCents(h); },
@@ -404,28 +432,23 @@
     beneficiariesSet: {
       label: 'Beneficiaries named', owner: 'estate', anchor: 'inputs',
       read: function (h) { var v = (h.estate || {}).beneficiariesSet; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['beneficiariesSet']); },
-      format: function (v) { return v ? 'Yes' : 'No'; }
-    },
+      format: function (v) { return v ? 'Yes' : 'No'; },    },
     willExists: {
       label: 'A will', owner: 'estate', anchor: 'inputs',
       read: function (h) { var v = (h.estate || {}).willExists; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['willExists']); },
-      format: function (v) { return v ? 'Yes' : 'No'; }
-    },
+      format: function (v) { return v ? 'Yes' : 'No'; },    },
     poaExists: {
       label: 'A power of attorney', owner: 'estate', anchor: 'inputs',
       read: function (h) { var v = (h.estate || {}).poaExists; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['poaExists']); },
-      format: function (v) { return v ? 'Yes' : 'No'; }
-    },
+      format: function (v) { return v ? 'Yes' : 'No'; },    },
     givingPct: {
       label: 'Giving, share of income', owner: 'giving', anchor: 'inputs',
       read: function (h) { var v = (h.giving || {}).pctOfIncome; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['pctOfIncome']); },
-      format: function (v) { return Money.formatRate(v, { decimals: 1 }); }
-    },
+      format: function (v) { return Money.formatRate(v, { decimals: 1 }); },    },
     givingTarget: {
       label: 'Giving, a year', owner: 'giving', anchor: 'inputs',
       read: function (h) { var v = (h.giving || {}).annualTargetCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['annualTargetCents']); },
-      format: function (v) { return money(v) + '/yr'; }
-    },
+      format: function (v) { return money(v) + '/yr'; },    },
 
     /* ---- The second wave of tranche rooms (D-099). ---- */
     offerGross: {
@@ -871,6 +894,18 @@
   function centsAt(path, label) { return function (v) { return Spine.set(path, Money.isEntered(v) ? Math.round(v) : null, label); }; }
   function boolAt(path, label) { return function (v) { return Spine.set(path, v === null || v === undefined ? null : !!v, label); }; }
   function personPatch(patch) { var p = primary(); return Spine.upsertPerson(Object.assign({ id: p.id }, patch)); }
+  /* The branch predicates live in shared/gate.js and are read from here so
+     a field's `applies` is never a second copy of the same rule (D-213).
+     gate.js requires only money.js and schema.js, so this cannot cycle. */
+  function gate() {
+    if (typeof module === 'object' && module.exports) { try { return require('./gate.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Gate ? g.SLAF.Gate : null;
+  }
+  function branchApplies(key) {
+    return function (h) { var G = gate(); return G ? G.exists(h, key) : true; };
+  }
+
   function unemploymentPatch(patch) {
     var u = Schema.unemploymentOf(Spine.getProfile());
     return personPatch({ unemployment: Object.assign({}, u, patch) });

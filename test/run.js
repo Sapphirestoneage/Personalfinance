@@ -8022,7 +8022,7 @@ section('Core (D-094): the gate — exists() per situation');
      the intake shows every room. */
   const none = Schema.createHousehold({});
   const absentWhenUnanswered = Gate.BRANCHES.filter(k => !Gate.exists(none, k));
-  check('unanswered: only the branches that need a fact are absent', absentWhenUnanswered.sort().join(','), 'childcare,daySchool,dependents,partner,unemployment');
+  check('unanswered: only the branches that need a fact are absent', absentWhenUnanswered.sort().join(','), 'childcare,daySchool,dependents,estate,giving,partner,unemployment');
 
   /* The household branches. */
   check('no partner: the partner branch is absent', Gate.exists(hh('employed'), 'partner'), false);
@@ -12261,7 +12261,7 @@ section('Phase A: suggestions, derived and never stored (D-205)');
   /* ---- The registry rows carry the new fields ------------------------- */
   const rows = table.rows;
   const SugSrc = require(sugPath);
-  check('the five first-round rows, with the last pay as the pay question between jobs', rows.filter(r => r.round === 1).map(r => r.id).sort().join(','), 'cashSavings,dob,employmentStatus,grossAnnualIncome,lastPay,zip');
+  check('the first-round rows, with the last pay and the last day worked between jobs', rows.filter(r => r.round === 1).map(r => r.id).sort().join(','), 'cashSavings,dob,employmentStatus,grossAnnualIncome,lastDayWorked,lastPay,zip');
   checkTrue('every row has a door in D A I T E you', rows.every(r => ['D', 'A', 'I', 'T', 'E', 'you'].indexOf(r.door) !== -1));
   checkTrue('every row has a level 1 to 4', rows.every(r => [1, 2, 3, 4].indexOf(r.level) !== -1));
   checkTrue('every row says whether it moves', rows.every(r => typeof r.moves === 'boolean'));
@@ -12477,7 +12477,16 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
     const p = Ask.pick(h, 'debt-payoff', T, sug);
     checkTrue('Debt Payoff asks the card’s real minimum, and only that card', p && p.row.id === 'debtMinPayment' && p.item.id === 'visa', p && p.row.id + ':' + (p.item && p.item.id));
     checkTrue('with the suggestion beside it', p.suggestion && p.suggestion.value === 6400);
-    checkTrue('the estate room asks a will, POA or beneficiaries', ['willExists', 'poaExists', 'beneficiariesSet'].indexOf(Ask.pick(h, 'estate', T, sug).row.id) !== -1);
+    /* The inline ask is a nudge, and the estate rows are gated to a household
+       that has somebody to pass money to (D-213), so for one adult alone it
+       correctly has nothing to say. The room's own controls are built from
+       its spec and still take the answer. */
+    check('one adult alone: the estate nudge stays quiet', Ask.pick(h, 'estate', T, sug), null);
+    const withHeir = Spine.getProfile(); withHeir.dependents = [{ age: 6 }];
+    const heirPick = Ask.pick(withHeir, 'estate', T, sug);
+    checkTrue('with somebody depending on you it asks a will, POA or beneficiaries',
+      heirPick && ['willExists', 'poaExists', 'beneficiariesSet'].indexOf(heirPick.row.id) !== -1,
+      heirPick && heirPick.row.id);
     checkTrue('the FI room asks allocation', /^allocation/.test(Ask.pick(h, 'fire', T, sug).row.id));
     check('parses money', Ask.parse({ unit: 'cents' }, '1,200'), 120000);
     check('parses a rate typed as a percent', Ask.parse({ unit: 'rate' }, '24.99'), 0.2499);
@@ -12524,6 +12533,145 @@ section('Express: a second view of the same rows (D-208)');
   checkTrue('the front door offers both: walk me through it, give me the whole form; fi defaults to Express', (function () { const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'); return /Walk me through it/.test(idx) && /Give me the whole form/.test(idx) && /Prefs\.get\('door', null\) === 'fi'/.test(idx); })());
   checkTrue('addItem goes through the list owner and the registry agrees', ['debt', 'asset', 'incomeSource', 'annualLine'].every(k => Own.LISTS[k] && Registry.writersOf(Own.LISTS[k].path).indexOf(Own.LISTS[k].owner) !== -1));
   checkTrue('Express is in every arrangement beside the First Round', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('express') >= 0)); })());
+})();
+
+section('The last day worked, and what falls out of it (D-213)');
+
+(function () {
+  const BJ = require(path.join(ROOT, 'engines/betweenjobs.js'));
+  const T = {
+    uiBenefits: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ui_benefits.json'), 'utf8')),
+    protectionConventions: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/protection_conventions.json'), 'utf8'))
+  };
+  /* Both windows are statute, so they live in data/ with their citation and
+     are never inlined in an engine. */
+  check('the COBRA election window is 60 days, sourced', T.protectionConventions.cobraElectionDays.value, 60);
+  check('the marketplace window is 60 days, sourced', T.protectionConventions.marketplaceSpecialEnrolmentDays.value, 60);
+  checkTrue('each names where it comes from',
+    /dol\.gov/.test(T.protectionConventions.cobraElectionDays.source)
+    && /healthcare\.gov/.test(T.protectionConventions.marketplaceSpecialEnrolmentDays.source));
+  checkTrue('the waiting week is a stated convention, not a per-state fact',
+    T.uiBenefits.waitingWeeks === 1 && /convention/.test(T.uiBenefits.waitingWeeksNote));
+  const engineSrc = fs.readFileSync(path.join(ROOT, 'engines/betweenjobs.js'), 'utf8');
+  checkTrue('no day count is inlined in the engine', !/\b60\b/.test(engineSrc.split('function dates(')[1].split('function proposeSearchMonths')[0]));
+
+  function person(u, state) {
+    const h = Schema.createHousehold(state ? { state: state } : {});
+    h.people.push(Schema.createPerson({ label: 'You', role: 'adult', employmentStatus: 'unemployed', unemployment: u }));
+    return h;
+  }
+  const NOW = new Date('2026-09-12T12:00:00').getTime();
+
+  /* Without the date, nothing is guessed and the field is named. */
+  const bare = BJ.dates(person({}), T, { now: NOW });
+  check('without the last day worked it is incomplete', bare.status, 'incomplete');
+  check('...and it names the field', (bare.missing || []).join(','), 'lastDayWorked');
+
+  /* The worked case, by hand: last day 12 Aug 2026, NC, $95,000, today 12 Sep.
+       elapsed      12 Aug -> 12 Sep = 31 days = 4.4 weeks
+       claim start  + 1 waiting week           = 19 Aug
+       benefit ends + (1 + 12) x 7 = 91 days   = 11 Nov, 60 days off = 8.6 weeks
+       COBRA by     + 60 days                  = 11 Oct, 29 days left
+       severance    ($4,000 + $1,200) / ($95,000 / 52) = 2.8 weeks -> 31 Aug */
+  const r = BJ.dates(person({
+    lastDayWorked: '2026-08-12', lastGrossAnnualCents: 9500000,
+    severanceCents: 400000, ptoPayoutCents: 120000, benefitStatus: 'applied'
+  }, 'NC'), T, { now: NOW });
+  checkTrue('the worked case computes', Money.isOk(r), r.reason);
+  check('31 days elapsed', r.daysElapsed, 31);
+  check('...which is 4.4 weeks of search', r.weeksElapsed, 4.4);
+  check('the claim starts after the waiting week', r.claimStart, '2026-08-19');
+  check('NC pays 12 weeks', r.benefitWeeks, 12);
+  check('so the benefit ends 11 Nov', r.benefitEndDate, '2026-11-11');
+  check('...8.6 weeks from today', r.benefitWeeksLeft, 8.6);
+  check('COBRA must be elected by 11 Oct', r.cobraElectionBy, '2026-10-11');
+  check('...29 days left', r.cobraDaysLeft, 29);
+  check('and it is not closed', r.cobraClosed, false);
+  check('the marketplace window closes the same day', r.marketplaceBy, '2026-10-11');
+  check('severance and leave are 2.8 weeks together', r.severanceWeeks, 2.8);
+  check('...running through 31 Aug', r.severanceThroughDate, '2026-08-31');
+  check('a filed claim is read from the status, never asked twice', r.claimFiled, true);
+  checkTrue('the benefit figures say they are estimates and name the table',
+    r.estimated === true && /ui_benefits\.json/.test(r.benefitSource));
+
+  /* Past both windows, the answer is that they closed — not a negative count
+     dressed up as time remaining. */
+  const late = BJ.dates(person({ lastDayWorked: '2026-08-12' }), T, { now: new Date('2026-11-01T09:00:00').getTime() });
+  check('past the window it says closed', late.cobraClosed, true);
+  checkTrue('...and the days left run negative rather than clamping', late.cobraDaysLeft < 0);
+
+  /* No state: the benefit cannot be dated, the statutory windows still can. */
+  const noState = BJ.dates(person({ lastDayWorked: '2026-08-12' }), T, { now: NOW });
+  check('without a state there is no benefit end date', noState.benefitEndDate, null);
+  check('...and it says the state is what is missing', noState.missingState, true);
+  checkTrue('...while both 60-day windows still land', !!noState.cobraElectionBy && !!noState.marketplaceBy);
+
+  /* A claim not filed is false; never answered stays null, not false. */
+  check('no benefit status: the claim question is unanswered, not no',
+    BJ.dates(person({ lastDayWorked: '2026-08-12' }), T, { now: NOW }).claimFiled, null);
+  check('"not applied" is a filed claim of no',
+    BJ.dates(person({ lastDayWorked: '2026-08-12', benefitStatus: 'notApplied' }), T, { now: NOW }).claimFiled, false);
+
+  /* The three fields: stored, owned by one room, gated to the situation. */
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  ['lastDayWorked', 'severanceCents', 'ptoPayoutCents'].forEach(function (id) {
+    const f = Own.FIELDS[id];
+    checkTrue(id + ' exists with one owner and a write', !!f && f.owner === 'between-jobs' && typeof f.write === 'function');
+    check(id + ' applies only between jobs', f.applies(person({ lastDayWorked: '2026-08-12' })) + '/' + f.applies(Demo.build()), 'true/false');
+    const row = require(path.join(ROOT, 'shared/ledger-rows.js'));
+    checkTrue(id + ' is a ledger row scoped to between jobs',
+      JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')).rows
+        .some((r) => r.id === id && r.appliesWhen === 'situation == betweenJobs'));
+  });
+  /* Start Here's coarse `since` is untouched: two fields, two leaves. */
+  checkTrue('the exact day is stored beside the month, not over it',
+    /lastDayWorked: typeof f\.lastDayWorked/.test(fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8'))
+    && /since: typeof f\.since/.test(fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8')));
+
+  /* The estate and giving branches: the brief's 22-year-old. */
+  const Gate = require(path.join(ROOT, 'shared/gate.js'));
+  const student = Schema.createHousehold({});
+  student.people.push(Schema.createPerson({ label: 'You', role: 'adult', employmentStatus: 'student' }));
+  check('a student alone is not asked about an estate', Gate.exists(student, 'estate'), false);
+  check('...nor about giving', Gate.exists(student, 'giving'), false);
+  const withKid = Schema.createHousehold({}); withKid.people.push(Schema.createPerson({ label: 'You', role: 'adult' }));
+  withKid.dependents = [{ age: 4 }];
+  check('somebody depending on you turns the estate on', Gate.exists(withKid, 'estate'), true);
+  const pair = Schema.createHousehold({});
+  pair.people.push(Schema.createPerson({ label: 'You', role: 'adult' }));
+  pair.people.push(Schema.createPerson({ label: 'Sam', role: 'adult' }));
+  check('so does a second adult', Gate.exists(pair, 'estate'), true);
+  const giver = Schema.createHousehold({}); giver.people.push(Schema.createPerson({ label: 'You', role: 'adult' }));
+  giver.giving = { pctOfIncome: 0.05, annualTargetCents: null };
+  check('giving is opt-in: a share entered turns it on', Gate.exists(giver, 'giving'), true);
+  /* Where the gating goes, and where it must NOT go. The intake asks these
+     of everybody today, which is the brief's complaint; the room that OWNS
+     them has to keep taking the answer, or a solo person could never record
+     a will at all. So the ROW is gated and the FIELD is not. */
+  const rowsJson = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')).rows;
+  const rowBy = {}; rowsJson.forEach((r) => { rowBy[r.id] = r; });
+  ['willExists', 'poaExists', 'beneficiariesSet'].forEach(function (id) {
+    check(id + ': the intake row defers to the gate', rowBy[id].appliesWhen, 'gate.estate');
+    check(id + ': the field itself is never gated shut', typeof Own.FIELDS[id].applies, 'undefined');
+  });
+  ['givingPct', 'givingTarget'].forEach(function (id) {
+    check(id + ': the intake row defers to the gate', rowBy[id].appliesWhen, 'gate.giving');
+    check(id + ': the field itself is never gated shut', typeof Own.FIELDS[id].applies, 'undefined');
+  });
+  /* One rule, one place: `gate.<branch>` reads shared/gate.js rather than
+     restating the branch in the row vocabulary. */
+  const LRx = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  LRx.use(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')));
+  check('a gate.* row is absent for one adult alone', LRx.applies(rowBy.willExists, student), false);
+  check('...and present once somebody depends on you', LRx.applies(rowBy.willExists, withKid), true);
+  check('a giving row is absent until giving is set up', LRx.applies(rowBy.givingPct, student), false);
+  check('...and present once a share is entered', LRx.applies(rowBy.givingPct, giver), true);
+  checkTrue('the clause defers to gate.js instead of copying the rule',
+    /gate\\\.\(\\\\w\+\)/.test(fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8'))
+    || /\^gate\\./.test(fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8')));
+  checkTrue('and the two rooms are not folded away, so their own form still opens',
+    !require(path.join(ROOT, 'shared/registry.js')).REQUIRES.estate
+    && !require(path.join(ROOT, 'shared/registry.js')).REQUIRES.giving);
 })();
 
 section('The gate is load-bearing in the Tier 0 rooms (D-212)');

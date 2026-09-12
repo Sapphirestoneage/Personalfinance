@@ -664,6 +664,9 @@
         "cashSavings"
       ],
       "writes": [
+        "lastDayWorked",
+        "severanceCents",
+        "ptoPayoutCents",
         "expectedSearchMonths",
         "floorMonthly"
       ],

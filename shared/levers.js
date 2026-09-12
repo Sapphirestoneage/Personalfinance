@@ -61,6 +61,11 @@
     return s === 'retired' ? 'retired' : s === 'unemployed' ? 'betweenJobs' : s === 'student' ? 'student'
       : s === 'selfEmployed' ? 'selfEmployed' : s === 'both' ? 'mixed' : s ? 'employed' : null;
   }
+  function gateModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('./gate.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Gate ? g.SLAF.Gate : null;
+  }
   function clause(text, h) {
     var c = String(text).trim();
     if (c === 'always') return true;
@@ -68,6 +73,12 @@
     /* 18.2 (D-183): the Ledger rows use the same reader, a few more phrases. */
     var m = /^situation (==|!=) (\w+)$/.exec(c);
     if (m) return (situationOf(h) === m[2]) === (m[1] === '==');
+    /* `gate.<branch>` defers to shared/gate.js, so a row's appliesWhen and
+       a room's requires read ONE definition of the branch instead of two
+       copies that can drift (D-213). gate.js requires only money.js and
+       schema.js, so reading it from here cannot cycle. */
+    var gm = /^gate\.(\w+)$/.exec(c);
+    if (gm) { var G = gateModule(); return G ? G.exists(h, gm[1]) : true; }
     if (c === 'household.two') return !!(Schema.householdOfTwo && Schema.householdOfTwo(h));
     if (c === 'dependents.any') return !!(h && Array.isArray(h.dependents) && h.dependents.length);
     if (c === 'debt.any') return !!(h && (h.debts || []).length);

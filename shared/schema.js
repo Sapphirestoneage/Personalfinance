@@ -591,10 +591,16 @@
     var f = fields || {};
     return {
       since: typeof f.since === 'string' && f.since ? f.since : null,
+      /* The exact last day on payroll (D-213). `since` is the month Start
+         Here asks for and stays what it was; this is the finer fact, and
+         the only one a 60-day deadline can be counted from. */
+      lastDayWorked: typeof f.lastDayWorked === 'string' && f.lastDayWorked ? f.lastDayWorked : null,
       benefitStatus: BENEFIT_STATUSES.indexOf(f.benefitStatus) >= 0 ? f.benefitStatus : null,
       benefitWeeklyCents: Money.isEntered(f.benefitWeeklyCents) ? f.benefitWeeklyCents : null,
       benefitWeeksLeft: Money.isEntered(f.benefitWeeksLeft) ? f.benefitWeeksLeft : null,
       severanceCents: Money.isEntered(f.severanceCents) ? f.severanceCents : null,
+      /* Paid-out leave, which lands like severance but is not severance. */
+      ptoPayoutCents: Money.isEntered(f.ptoPayoutCents) ? f.ptoPayoutCents : null,
       lastGrossAnnualCents: Money.isEntered(f.lastGrossAnnualCents) ? f.lastGrossAnnualCents : null,
       /* The Between Jobs room's two (D-098): how long you expect the
          search to take, and the bare-minimum month you could drop to. */

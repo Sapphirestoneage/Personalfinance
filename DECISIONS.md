@@ -13142,6 +13142,54 @@ deferred. No field, screen or room removed.
 no console error and the header mounted. `test/alignment.js` has 4 failures
 in `financial-snapshot.html`, present at 2cb6f50 before any of this work.
 
+## D-213 — The last day worked, and two branches that stop the wrong questions
+
+**Why.** Between jobs, one date answers what nothing else can: when the
+benefit runs out, when the two 60-day windows close, how long the search has
+run. The app stored only `unemployment.since`, a month. Separately, a
+22-year-old alone was asked in the intake whether they hold a power of
+attorney, because the estate rows said `appliesWhen: always`.
+
+**Decision.** Three stored fields, owned by Between Jobs:
+`unemployment.lastDayWorked` (an exact day, beside the coarse `since`, which
+is untouched — Start Here keeps writing it), `ptoPayoutCents`, and
+`severanceCents` which the schema already held with nothing to write it.
+`engines/betweenjobs.js` gains `dates()`: the claim start, the benefit end,
+both 60-day deadlines with days left, the weeks elapsed, and the date
+severance runs through. Nothing is stored and nothing is guessed; without the
+date it is incomplete and names the field. `benefitClaimFiled` is NOT a new
+field — `benefitStatus` already answers it, so it is read. The two statutory
+windows go in `data/protection_conventions.json` with their citations and the
+waiting week in `ui_benefits.json` as a stated convention. `gate.js` gains
+the `estate` and `giving` branches with their WHY sentences, and
+`shared/levers.js` gains a `gate.<branch>` clause so a Ledger row defers to
+gate.js instead of restating the rule. The five estate and giving ROWS use
+it; their FIELDS are deliberately left ungated, because the room that owns a
+field must always take the first answer — gating both would mean a solo
+person could never record a will, and the Giving room could never be opened.
+
+**Replaces or removes.** Three questions the intake asked everybody
+(`willExists`, `poaExists`, `beneficiariesSet`) and two more (`givingPct`,
+`givingTarget`) are now absent unless they apply. Net: the intake asks fewer.
+
+**Stored shape.** `people[].unemployment` gains `lastDayWorked` (ISO date
+string or null) and `ptoPayoutCents` (integer cents or null). Both default to
+null, so an older household reads identically and an export made before this
+imports unchanged. `since` is unchanged and still written by Start Here.
+Rooms updated: `rooms/express.html` (a native date control for the new
+`isoDate` unit), `shared/ask.js`, `shared/ownership.js`, `shared/schema.js`
+(and its vendored copy), `shared/levers.js`, `shared/gate.js`,
+`shared/daite.js`, `shared/registry.js`, `data/ledger-rows.json`,
+`data/spheres.json`, `data/protection_conventions.json`,
+`data/ui_benefits.json`.
+
+**Verified.** `node test/run.js` (28,910) including the worked case by hand:
+last day 12 Aug 2026 in NC gives a claim start of 19 Aug, a benefit end of 11
+Nov, both windows closing 11 Oct with 29 days left, and severance through 31
+Aug. `test/export.js`; the lane 2 suites; Express driven in Chromium — the
+rows absent for a fresh household, present after tapping "between jobs", the
+date stored as `2026-08-12`.
+
 ---
 
 # The Dungeons & Dividends entries
