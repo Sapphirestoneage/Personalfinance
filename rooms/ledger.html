@@ -71,7 +71,11 @@
   .row .where, .row .small { grid-column: 2 / span 2; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-loose); }
   .row .where { color: var(--color-text-muted); }
   .row .where details { display: inline; }
-  .row .where summary { display: inline; cursor: pointer; color: var(--color-text-faint); }
+  /* At the end of the where sentence, but a finger still has to hit it, so
+     it is an inline-block at the 32px floor rather than a bare inline word
+     (D-223, the floor from D-136). */
+  .row .where summary { display: inline-block; cursor: pointer; color: var(--color-text-faint);
+    min-height: 32px; padding-block: 7px; vertical-align: middle; }
   .row .where details > span { margin-left: 0.35em; }
   .row .reads a { margin-right: var(--space-2); }
   details.fold > summary { cursor: pointer; font-family: var(--font-display); font-size: var(--text-md); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
