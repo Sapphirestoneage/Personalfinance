@@ -70,6 +70,9 @@
   .row .val a { text-decoration: none; }
   .row .where, .row .small { grid-column: 2 / span 2; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-loose); }
   .row .where { color: var(--color-text-muted); }
+  .row .where details { display: inline; }
+  .row .where summary { display: inline; cursor: pointer; color: var(--color-text-faint); }
+  .row .where details > span { margin-left: 0.35em; }
   .row .reads a { margin-right: var(--space-2); }
   details.fold > summary { cursor: pointer; font-family: var(--font-display); font-size: var(--text-md); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
   .empyrean { margin-top: var(--space-4); color: var(--color-text-muted); font-size: var(--text-sm); }
@@ -263,6 +266,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!f) return null;
     return Ownership.linkTo(f.owner, f.anchor, 'ledger');
   }
+  /* D-223: the second sentence of a lookup row, folded away. "Where to look"
+     answers it most of the time; "what to do when the statement is not
+     there" is what stops the row cold, and it only helps the person it
+     happens to, so it costs a tap and no line until then. */
+  function ifMissing(row) {
+    if (!row.ifMissing) return '';
+    return ' <details><summary>Cannot find it?</summary><span>' + esc(row.ifMissing) + '</span></details>';
+  }
   function sourceLine(row) {
     if (!row.entered || !row.meta) return '';
     var bits = [];
@@ -302,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
       out += '<span class="small">' + esc(row.engine.split('.')[1] === 'netWorth' ? 'What you own less what you owe' : 'Worked out from ') + (row.engine.split('.')[1] === 'netWorth' ? ': ' : '')
         + inputs.map(function (i) { return i.row ? (i.missing ? '<a href="#row-' + esc(i.id) + '">' + esc(i.row.label) + ' (missing)</a>' : esc(i.row.label)) : esc(i.id); }).join(', ') + '.</span>';
     } else if (!row.entered && row.kind === 'lookup' && row.where) {
-      out += '<span class="where">' + esc(row.where) + '</span>';
+      out += '<span class="where">' + esc(row.where) + ifMissing(row) + '</span>';
     } else if (row.entered) {
       var src = sourceLine(row);
       if (src) out += '<span class="small">' + esc(src) + '</span>';
@@ -400,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var href = target(r);
         return '<li class="row is-missing" data-row="' + esc(r.id) + '" data-status="missing"><span class="g" title="not entered">' + GLYPH.missing + '</span><span class="lab">' + esc(r.label) + '</span>'
           + '<span class="val">' + (href ? '<a href="' + esc(href) + '">' + (r.kind === 'lookup' ? 'Look it up' : 'Enter it') + '</a>' : '') + '</span>'
-          + (r.kind === 'lookup' && r.where ? '<span class="where">' + esc(r.where) + '</span>' : '')
+          + (r.kind === 'lookup' && r.where ? '<span class="where">' + esc(r.where) + ifMissing(r) + '</span>' : '')
           + '<span class="small">Unlocks ' + esc(r.unlocks) + '.</span></li>';
       }).join('') + '</ul></div>';
     }

@@ -1,6 +1,6 @@
 {
   "entries": 258,
-  "passed": 3069,
+  "passed": 3003,
   "failures": [],
   "notes": [
     "\"cliff\" is listed under both \"cliff vesting\" and \"subsidy cliff\"; get() returns the first",

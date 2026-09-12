@@ -13500,6 +13500,37 @@ rules now on the live file; `export`, `data`, `corpus`, `migration`, `qr`;
 
 ---
 
+## D-223 — What to do when the statement is not there
+
+**Why.** `data/lane2/ledger-rows.where.json` gave 41 lookup rows three
+sentences each: where to find the number, what to do when the document is not
+there, and what to type meanwhile. Nothing read it — the rooms read
+`data/ledger-rows.json`, whose 23 lookup rows already carried `where` and
+`roughly` and had never had `ifMissing`. So the app said where to look, and
+said nothing to the person who looked and could not find it.
+
+**Decision.** `ifMissing` is a field on all 23 lookup rows of
+`data/ledger-rows.json`, one or two sentences, in the same voice as the other
+two. The Ledger room renders it folded, as "Cannot find it?" beside the
+`where` sentence, on rows not yet entered: the first sentence answers it most
+of the time and the second only helps the person it happens to, so it costs a
+tap and no line until then. `tests/glossary.test.js` runs all four copy rules
+against `data/ledger-rows.json`. The lane-2 file is deleted; its own path
+spellings were a section-18.2 proposal, and every concept in it is a live row
+under the real path.
+
+**Replaces or removes.** One data file. No new field a person types, no new
+screen; one folded sentence on rows that already carried two.
+
+**Stored shape.** No change. Lookup copy is reference data.
+
+**Verified.** `node test/run.js` 29,503; `glossary.test.js` 3,003 with the
+rules on the live rows; `export`, `data`, `corpus`, `migration`, `qr`; the
+Ledger driven on a Pixel 7, 14 folds on the page, no console error and no
+sideways scroll.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

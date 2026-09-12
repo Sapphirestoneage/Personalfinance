@@ -187,7 +187,7 @@ None.
 
 ## Section 4: the gloss dictionary and the lookup sentences
 
-258 glossary entries, 3069 checks. Source: `tests/glossary.test.js`.
+258 glossary entries, 3003 checks. Source: `tests/glossary.test.js`.
 
 ### Failures
 

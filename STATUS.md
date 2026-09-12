@@ -4,9 +4,11 @@ Updated: 2026-09-12
 
 ## Where it stands
 - The Ledger rework brief (owner, 2026-09-11) is being built in order: G1, A, B, C/C2, D, E, F shipped (D-204 to D-208); G2/G3, H to K next. The owner's brief overrides the freeze for those phases; each adds a VIEW of existing rows (First Round, doors, Express), no second store.
-- ~70 rooms live on GitHub Pages. Each room works on its own; the connections
-  between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
-- Context system added. Sessions should no longer read the archives.
+- ~70 rooms live on GitHub Pages. Each works on its own; the connections
+  between them are the weak spot (docs/ARCHITECTURE.md "Known problems").
+- Lane 2 is nearly landed: only `data/lane2/studentloans.json` is still parked
+  (P-3's last row). The lens copy and the lookup sentences are folded into the
+  files the rooms read (D-222, D-223).
 - Clutter pass (D-209/210, D-219/220/221): nine dead root files gone; the
   glossary hover is live everywhere; one sourced table now feeds each of tax,
   ACA, unemployment and contribution limits, and all four duplicates are
@@ -17,16 +19,11 @@ Updated: 2026-09-12
   below works end to end.
 
 ## Next (top item first; one per session)
-0b. Gated-intake brief: all six phases done (D-211 to D-216), and the last two
-   unused gate branches are wired (D-218: Estate and Giving fold for a
-   household they cannot be about). The first round asks 9 (student) to 10
-   (between jobs), never more than 12. Three phases turned out already true
-   and are recorded as such: collisions, most of the ledger, 7 of 11 cuts.
-0c. `test/alignment.js`: 4 failures in financial-snapshot.html ("nothing
-   rendered"), present at 2cb6f50 and older than this work.
-   The Express walk flake is FIXED and was never the app (D-217): only a
-   synthesized tap plus synthetic raw keys loses text, which no real device
-   sends. The walk now commits text the way a soft keyboard does.
+0b. Gated-intake brief: six phases done (D-211 to D-216) plus the last two
+   gate branches (D-218). The first round asks 9 to 10, never more than 12.
+0c. Pre-existing, older than this work, all in financial-snapshot.html:
+   `test/alignment.js` 4 failures, `test/responsive.js` 3 tap targets under
+   32px. `test/settings.js` 1: the section order. Everything else is green.
 1. Decide who owns income sources once Start Here retires (Ledger or Income).
    OWNER DECISION NEEDED.
 2. Make logged income reconcile with typical income (known problem 1).
@@ -44,4 +41,4 @@ Updated: 2026-09-12
 
 ## Proposed in chat, not decided
 - Four layers: Ledger (facts), Log (actuals, one + button), Blocks, Readings.
-- Round 1 uses only answer-from-your-head rows; lookups move to round 2.
+- Round 1 uses answer-from-your-head rows only; lookups move to round 2.

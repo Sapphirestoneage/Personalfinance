@@ -15,8 +15,8 @@
      - shared/glossary.js resolves every term and alias through get(),
        find() sees terms in text, and mark() wraps the first occurrence in
        a small fake DOM
-     - data/lane2/ledger-rows.where.json covers every lookup row the lane
-       lists, and every row has a where, an ifMissing and a roughly
+     - every lookup row in data/ledger-rows.json has a where, an ifMissing
+       and a roughly, each one or two sentences and none an em dash
      - every lens in data/lenses.json carries both sentences, one sentence
        each, with no hedging word and no em dash, and a structured source
        with a kind, a title and a URL
@@ -126,15 +126,24 @@ check('find() does not match inside a longer word', !Glossary.find('The capping 
 })();
 
 /* ---- 3. The lookup sentences ------------------------------------------------------- */
-const W = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'lane2', 'ledger-rows.where.json'), 'utf8'));
-const MUST = ['checking balance', 'savings balance', 'brokerage balance', '401(k) balance', 'traditional ira balance', 'roth ira balance', 'hsa balance', '529 balance', 'pension', 'home value', 'car value', 'credit card apr', 'student loan interest rate', 'car loan apr', 'mortgage rate', 'personal loan apr', 'take-home from a pay stub', 'employer match formula', 'vesting schedule', 'social security estimate', 'pension statement', 'property tax bill', 'health insurance premium', 'auto insurance premium', 'home or renters insurance premium', 'student loan servicer and plan', 'rsu grant document', 'credit report'];
-const labels = (W.rows || []).map((r) => r.label.toLowerCase());
-MUST.forEach((m) => check('where row for "' + m + '"', labels.some((l) => l.indexOf(m) !== -1)));
-(W.rows || []).forEach((r) => {
-  const label = 'where "' + r.label + '"';
-  check(label + ' is a lookup row with a path and a letter', r.kind === 'lookup' && typeof r.path === 'string' && /^[DAITE]$/.test(r.letter));
+/* D-223: these rules used to hold against data/lane2/ledger-rows.where.json,
+   a proposal file with its own path spellings that no room read. Every
+   concept in it is a row in data/ledger-rows.json under the real path, so
+   the rules hold there now and `ifMissing` is a field on the live row. */
+const W = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'ledger-rows.json'), 'utf8'));
+const LOOKUPS = (W.rows || []).filter((r) => r.kind === 'lookup');
+check('every kind of thing a person must go and find is a lookup row', LOOKUPS.length >= 23, String(LOOKUPS.length));
+const MUST = ['employerMatch', 'unemployment', 'cashSavings', 'investments', 'assetValue', 'assetCostBasis', 'contributionPercent', 'rothContributed', 'hsaContributed', 'tuitionSaved', 'debtBalance', 'debtRate', 'debtMinPayment', 'loanPlan', 'marginalRate', 'otherPreTax', 'withheld', 'healthMonthly', 'highestDeductible', 'oopMax', 'termLife', 'disabilityMonthly', 'umbrella'];
+MUST.forEach((id) => check('a lookup row for ' + id, LOOKUPS.some((r) => r.id === id)));
+LOOKUPS.forEach((r) => {
+  const label = 'lookup "' + r.label + '"';
+  /* The five cover rows sit under the `you` door rather than a DAITE letter,
+     so null is allowed; a letter that is neither is not. */
+  check(label + ' has a path, and a DAITE letter or none', typeof r.path === 'string' && (r.letter === null || /^[DAITE]$/.test(r.letter)));
   ['where', 'ifMissing', 'roughly'].forEach((k) => check(label + ' has ' + k, typeof r[k] === 'string' && r[k].length > 10));
   check(label + ' where is one or two sentences', r.where.split(/(?<=[.!?])\s+(?=[A-Z])/).length <= 2, r.where);
+  check(label + ' ifMissing is one or two sentences', r.ifMissing.split(/(?<=[.!?])\s+(?=[A-Z])/).length <= 2, r.ifMissing);
+  check(label + ' ifMissing says something else than where', r.ifMissing !== r.where);
   check(label + ' has no em dash', JSON.stringify(r).indexOf('—') === -1);
 });
 
