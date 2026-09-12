@@ -9,5 +9,6 @@ Reference data: aca_2026.json, access_rules.json, effective_tax_rates_2026.json,
 Owns: nothing
 Reads from other owners: nothing traced
 Latest decisions:
+  - D-226 — You cannot size the mountain until you know how you come down it
   - D-212 — H4, H5, H7, H8: reachable money, the popular rules, privacy proved, share the shape
 Full context: node tools/context/pack.js reachable

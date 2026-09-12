@@ -22,8 +22,6 @@
         {
           "name": "The numbered path",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "debt-payoff",
@@ -112,14 +110,10 @@
           "name": "Off the path",
           "rooms": [
             "get-help",
-            "walk",
             "data",
             "one-pager",
             "progress-card",
-            "refresh",
-            "comeback",
-            "settings",
-            "doors"
+            "settings"
           ],
           "note": "Utilities at orders 29 and 97–99 — reachable any time, never a step."
         }
@@ -140,8 +134,6 @@
         {
           "name": "Applies to everyone",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "debt-payoff",
@@ -236,14 +228,10 @@
           "name": "Always available",
           "rooms": [
             "get-help",
-            "walk",
             "data",
             "one-pager",
             "progress-card",
-            "refresh",
-            "comeback",
-            "settings",
-            "doors"
+            "settings"
           ],
           "note": "Utilities the gate never touches."
         }
@@ -298,17 +286,11 @@
           "rooms": [
             "foo-ladder",
             "next-hundred",
-            "walk",
             "goals",
             "debt-payoff",
-            "refresh",
-            "comeback",
             "settings",
-            "first-round",
-            "express",
             "start",
-            "ledger",
-            "doors"
+            "ledger"
           ]
         },
         {
@@ -533,14 +515,9 @@
         {
           "name": "None of the above",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "dashboard",
-            "walk",
-            "refresh",
-            "comeback",
             "settings",
             "data",
             "one-pager",
@@ -551,8 +528,7 @@
             "financial-snapshot",
             "rank-guess",
             "race",
-            "statements",
-            "doors"
+            "statements"
           ],
           "note": "The verbs have no home for the rooms that are about the app rather than about money.",
           "warn": true
@@ -595,8 +571,6 @@
             "variance",
             "income",
             "debt-payoff",
-            "refresh",
-            "comeback",
             "settings",
             "financial-snapshot",
             "rank-guess",
@@ -671,9 +645,6 @@
           "name": "Any time",
           "rooms": [
             "dashboard",
-            "walk",
-            "first-round",
-            "express",
             "start",
             "ledger",
             "ratios",
@@ -690,8 +661,7 @@
             "hassle",
             "real-hourly-wage",
             "foo-ladder",
-            "next-hundred",
-            "doors"
+            "next-hundred"
           ],
           "note": "The bay that catches everything that is not time-bound — nearly a quarter of the app.",
           "warn": true
@@ -713,8 +683,6 @@
         {
           "name": "Before the ladder",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "expenses",
@@ -841,16 +809,12 @@
             "roth-aca",
             "middle-class-trap",
             "get-help",
-            "walk",
             "data",
             "one-pager",
             "progress-card",
             "history",
             "wrapped",
-            "refresh",
-            "comeback",
-            "settings",
-            "doors"
+            "settings"
           ],
           "note": "Everything about time, meaning, skill, work and the end of life. The FOO has nothing to say about any of it.",
           "warn": true
@@ -877,16 +841,10 @@
             "rank-guess",
             "race",
             "statements",
-            "walk",
-            "refresh",
-            "comeback",
             "settings",
-            "first-round",
-            "express",
             "start",
             "ledger",
-            "health",
-            "doors"
+            "health"
           ]
         },
         {
@@ -1073,15 +1031,11 @@
             "protection",
             "quick-math",
             "real-hourly-wage",
-            "refresh",
-            "comeback",
             "settings",
             "reversibility",
             "savings-rate",
             "side-hustle",
             "sleep-at-night",
-            "first-round",
-            "express",
             "start",
             "ledger",
             "student-loans",
@@ -1095,7 +1049,6 @@
             "skill-tree",
             "statement",
             "reachable",
-            "walk",
             "windfall",
             "buckets",
             "unlearning",
@@ -1116,8 +1069,7 @@
             "credit",
             "data",
             "one-pager",
-            "progress-card",
-            "doors"
+            "progress-card"
           ],
           "note": "One flat alphabetical list. No hierarchy to learn and none to get wrong."
         }
@@ -1138,17 +1090,13 @@
         {
           "name": "The hall",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "dashboard",
-            "walk",
             "financial-snapshot",
             "rank-guess",
             "race",
-            "statements",
-            "doors"
+            "statements"
           ],
           "note": "Where you come in and hang your coat."
         },
@@ -1162,8 +1110,6 @@
             "income",
             "variance",
             "calendar",
-            "refresh",
-            "comeback",
             "settings"
           ],
           "note": "Where the daily work happens and the mess accumulates."
@@ -1320,8 +1266,6 @@
           "rooms": [
             "variance",
             "income",
-            "refresh",
-            "comeback",
             "settings",
             "debt-payoff",
             "financial-snapshot",
@@ -1355,9 +1299,7 @@
             "coast-date",
             "foo-ladder",
             "next-hundred",
-            "dashboard",
-            "walk",
-            "doors"
+            "dashboard"
           ]
         },
         {
@@ -1420,8 +1362,6 @@
         {
           "name": "Set up once",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "skill-tree",
@@ -1495,7 +1435,6 @@
             "next-hundred",
             "goals",
             "debt-payoff",
-            "walk",
             "timeline",
             "accounts",
             "tax",
@@ -1503,8 +1442,7 @@
             "estate",
             "decumulation",
             "roth-aca",
-            "middle-class-trap",
-            "doors"
+            "middle-class-trap"
           ]
         },
         {
@@ -1516,8 +1454,6 @@
             "budget",
             "calendar",
             "income",
-            "refresh",
-            "comeback",
             "settings",
             "stacker",
             "skill-tree",
@@ -1562,8 +1498,6 @@
         {
           "name": "The app itself",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "data",
@@ -1686,14 +1620,9 @@
         {
           "name": "Never finding out",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "dashboard",
-            "walk",
-            "refresh",
-            "comeback",
             "settings",
             "variance",
             "income",
@@ -1711,8 +1640,7 @@
             "stacker",
             "skill-tree",
             "exercises",
-            "windfall",
-            "doors"
+            "windfall"
           ],
           "note": "The risk of not measuring. Everything here exists so the other six bays are not a surprise."
         }
@@ -1828,8 +1756,6 @@
         {
           "name": "Nobody — just the numbers",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "dashboard",
@@ -1844,17 +1770,13 @@
             "race",
             "statements",
             "sleep-at-night",
-            "refresh",
-            "comeback",
             "settings",
-            "walk",
             "data",
             "one-pager",
             "progress-card",
             "history",
             "wrapped",
-            "get-help",
-            "doors"
+            "get-help"
           ]
         }
       ]
@@ -1894,8 +1816,6 @@
         {
           "name": "Layer 1",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "variance",
@@ -1983,14 +1903,10 @@
           "name": "Outside the graph",
           "rooms": [
             "get-help",
-            "walk",
             "data",
             "one-pager",
             "progress-card",
-            "refresh",
-            "comeback",
-            "settings",
-            "doors"
+            "settings"
           ]
         }
       ]
@@ -2119,13 +2035,8 @@
         {
           "name": "Never asked about, always reachable",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
-            "walk",
-            "refresh",
-            "comeback",
             "settings",
             "data",
             "one-pager",
@@ -2135,8 +2046,7 @@
             "quick-math",
             "stacker",
             "skill-tree",
-            "exercises",
-            "doors"
+            "exercises"
           ]
         }
       ]
@@ -2157,8 +2067,6 @@
           "name": "Under a minute",
           "rooms": [
             "quick-math",
-            "refresh",
-            "comeback",
             "settings",
             "financial-snapshot",
             "rank-guess",
@@ -2193,8 +2101,6 @@
         {
           "name": "One sitting",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "expenses",
@@ -2249,9 +2155,7 @@
             "middle-class-trap",
             "giving",
             "foo-ladder",
-            "next-hundred",
-            "walk",
-            "doors"
+            "next-hundred"
           ],
           "note": "A third of the app asks for a real evening. Worth knowing before you open one on a Tuesday.",
           "warn": true
@@ -2290,8 +2194,6 @@
         {
           "name": "Needs nothing explained",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "income",
@@ -2310,8 +2212,6 @@
             "history",
             "wrapped",
             "exercises",
-            "refresh",
-            "comeback",
             "settings",
             "data",
             "one-pager",
@@ -2343,10 +2243,8 @@
             "variance",
             "quick-math",
             "cant-pay",
-            "walk",
             "dashboard",
-            "estate",
-            "doors"
+            "estate"
           ],
           "note": "The title is the thing. A stranger reads it and knows."
         },
@@ -2421,8 +2319,6 @@
         {
           "name": "Hub · Start Here",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
             "timeline",
@@ -2454,8 +2350,6 @@
             "variance",
             "calendar",
             "rerank",
-            "refresh",
-            "comeback",
             "settings",
             "real-hourly-wage",
             "hassle",
@@ -2519,14 +2413,12 @@
             "goals",
             "what-if-life",
             "adventure",
-            "walk",
             "history",
             "wrapped",
             "data",
             "one-pager",
             "progress-card",
-            "get-help",
-            "doors"
+            "get-help"
           ],
           "note": "How it is going and where it lands. Twelve spokes.",
           "hub": "dashboard"
@@ -2675,13 +2567,8 @@
         {
           "name": "About the app, not about your money",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
-            "walk",
-            "refresh",
-            "comeback",
             "settings",
             "data",
             "one-pager",
@@ -2690,8 +2577,7 @@
             "wrapped",
             "stacker",
             "skill-tree",
-            "exercises",
-            "doors"
+            "exercises"
           ]
         }
       ]
@@ -2753,8 +2639,6 @@
             "income",
             "budget",
             "variance",
-            "refresh",
-            "comeback",
             "settings",
             "dashboard",
             "financial-snapshot",
@@ -2837,17 +2721,13 @@
         {
           "name": "Always there, never in the way",
           "rooms": [
-            "first-round",
-            "express",
             "start",
             "ledger",
-            "walk",
             "data",
             "one-pager",
             "progress-card",
             "history",
-            "wrapped",
-            "doors"
+            "wrapped"
           ],
           "note": "Reachable from every screen without being one of the three."
         }

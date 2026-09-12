@@ -245,7 +245,7 @@ const CASES = [
     /* The Refresh page: every box opens holding the current figure, and
        typing over it must replace it, not append to it — a phone selects
        nothing on tap, so the case types with clearFirst. */
-    room: '/rooms/refresh.html',
+    room: '/rooms/ledger.html#since-last-time',
     container: '#fields',
     seed: 'demo',
     fields: [
@@ -619,10 +619,11 @@ const CASES = [
        place a careless rebuild would close the keyboard mid-word. The results
        under it are rewritten on every keystroke, so if the box itself were
        ever regenerated this case would catch it. D-034, D-153. */
-    room: '/rooms/doors.html',
+    room: '/rooms/ledger.html#arrangements',
     container: '#search-host',
     seed: 'demo',
     prepare: async (page) => {
+      await page.waitForSelector('[data-layout="search"]');
       await page.tap('[data-layout="search"]');
       await page.waitForTimeout(250);
       /* Stamp the node. If any keystroke rebuilt the box, the stamp goes with
@@ -630,16 +631,16 @@ const CASES = [
          D-034 property here — focus cannot be asserted after the fact,
          because the harness deliberately blurs before expect() runs so that
          every other room's focusout commit fires (see the blur below). */
-      await page.evaluate(() => { document.getElementById('q').__stamp = 'before-typing'; });
+      await page.evaluate(() => { document.getElementById('lay-q').__stamp = 'before-typing'; });
     },
     fields: [
-      { sel: '#q', type: 'rent' }
+      { sel: '#lay-q', type: 'rent' }
     ],
     expect: async (page) => {
       const r = await page.evaluate(() => ({
-        value: document.getElementById('q').value,
-        stamp: document.getElementById('q').__stamp || '(node was replaced)',
-        hits: document.querySelectorAll('.door').length,
+        value: document.getElementById('lay-q').value,
+        stamp: document.getElementById('lay-q').__stamp || '(node was replaced)',
+        hits: document.querySelectorAll('#lay-body .door').length,
         all: document.querySelectorAll('#search-host input').length,
         wrote: (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).meta.frontDoor
       }));
@@ -1163,8 +1164,8 @@ const CASES = [
     /* THE FIRST ROUND (D-206): five screens, one box each, all in the markup
        from boot; script only toggles [hidden]. Typing on each screen has to
        survive the Next tap that reveals the next one. */
-    room: '/rooms/first-round.html',
-    container: 'main',
+    room: '/rooms/ledger.html#round-1',
+    container: '#view-round1',
     seed: 'empty',
     fields: [
       { sel: '#in-age', type: '27' },
@@ -1203,7 +1204,7 @@ const CASES = [
        boxes across doors, a situation tap that hides and shows rows around
        them, and adding a card block: the keyboard must stay open through
        all of it. */
-    room: '/rooms/express.html',
+    room: '/rooms/ledger.html#all-at-once',
     container: '#xform',
     seed: 'empty',
     prepare: async (page) => { await page.waitForSelector('[data-x-row="dob"]'); },

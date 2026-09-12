@@ -363,7 +363,7 @@
 
   /* Upkeep, kept as a named list for the pages that ask for it directly
      (the map, the tests): the rooms a person reaches for from anywhere. */
-  var UPKEEP = ['data', 'refresh', 'history', 'start', 'get-help'];
+  var UPKEEP = ['data', 'ledger', 'history', 'start', 'get-help'];
 
   function globals() { return (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null; }
   function prefs() { var g = globals(); return g && g.SLAF && g.SLAF.Prefs ? g.SLAF.Prefs : null; }
@@ -761,7 +761,7 @@
     if (!at) return null;
 
     var p = Guide.progress(h, tables);
-    var hub = (atRoot(roomId) ? 'rooms/' : '') + 'walk.html';
+    var hub = (atRoot(roomId) ? 'rooms/' : '') + 'ledger.html#route';
     var dealt = at.state !== 'open';
     var out = [];
 
@@ -1092,7 +1092,7 @@
     try {
       var now = Date.now();
       var last = Prefs.get('visit.last', null);
-      if (typeof last === 'number' && now - last >= COMEBACK_DAYS * 86400000 && roomId !== 'comeback') Prefs.set('comeback.due', last);
+      if (typeof last === 'number' && now - last >= COMEBACK_DAYS * 86400000 && roomId !== 'ledger') Prefs.set('comeback.due', last);
       Prefs.set('visit.last', now);
     } catch (e) { /* storage refused: no comeback, no harm */ }
   }
@@ -1204,7 +1204,7 @@
        page opened, before the room's own question. Not on the First Round or
        Express, which show every row live already. */
     var pendingChange = Spine && Spine.reopenPending ? Spine.reopenPending() : null;
-    if (pendingChange && !pendingChange.dismissed && ['first-round', 'express'].indexOf(roomId) === -1 && !document.getElementById('slaf-reopen')) {
+    if (pendingChange && !pendingChange.dismissed && roomId !== 'ledger' && !document.getElementById('slaf-reopen')) {
       withAsk(function () {
         if (g.SLAF.Reopen) { g.SLAF.Reopen.mountLater(host); return; }
         var sc = document.createElement('script');
@@ -1213,7 +1213,7 @@
         document.head.appendChild(sc);
       });
     }
-    if (['ledger', 'first-round', 'start', 'express'].indexOf(roomId) === -1 && !document.getElementById('slaf-ask')) {
+    if (['ledger', 'start'].indexOf(roomId) === -1 && !document.getElementById('slaf-ask')) {
       withAsk(function () { if (g.SLAF.Ask) g.SLAF.Ask.mount(roomId, host); });
     }
 

@@ -11,14 +11,14 @@ Use invented numbers only. The repo is public and so is the Pages site.
 
 ## The four walks
 
-1. **The First Round** (`rooms/first-round.html`). Five screens, one
+1. **Round 1** (`rooms/ledger.html#round-1`). Five screens, one
    answer each. The keyboard opens on every box on the first tap, stays
    open between boxes, and the insight card shows without a list of
    missing fields.
 2. **One door** (`rooms/ledger.html`, then any door). Open a level, tap a
    suggestion chip, type over a value, mark one row "Not sure yet". The
    understanding line moves; nothing typed disappears.
-3. **Express** (`rooms/express.html`). Type into three boxes in a row,
+3. **All at once** (`rooms/ledger.html#all-at-once`). Type into three boxes in a row,
    add a debt with a name and last four, change the situation. Rows hide
    and show without clearing anything; the keyboard never closes on its own.
 4. **An import** (`rooms/data.html`). Load a backup file made on the other

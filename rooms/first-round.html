@@ -7,297 +7,33 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>The First Round · SPARKS</title>
-<meta name="description" content="Five questions, one a screen, under a minute. Then one thing the numbers say, and one door to open."/>
+<meta name="description" content="The First Round is Round 1 of The Ledger now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-206 (the Ledger rework, Phase B).
-
-  1. READS   Nothing it does not also write. The insight reads cash and a
-             month's spending (suggested where not entered, shared/suggest.js)
-             through shared/doors.js.
-  2. WRITES  Five rows, each through its owner's write path (Ownership.write):
-             the birth date, ZIP, situation, pay a year (or the last pay,
-             between jobs), cash on hand. Start Here stays the owner.
-  3. CALLS   shared/doors.js firstInsight() and recommend(); no engine of
-             its own.
-  4. EMPTY   Every box starts empty with a format-only placeholder. Skipping
-             a screen is fine; a blank writes nothing. The insight needs cash
-             and some spending figure and says which it lacks.
-  5. CONFIG  The suggestion engine's tables (Suggest.TABLES).
-
-  Five screens, one question each, big tap targets, no list of anything
-  missing anywhere. Then one card: about how many months of runway, rough
-  when it leans on a guess, and one sentence pointing at one door.
-
-  LIVE-FORM: built once — the six screens and their controls are in the
-  markup; script only toggles [hidden] and writes .value at boot.
+  REDIRECT — The First Round is Round 1 inside The Ledger (rooms/ledger.html#round-1, DECISIONS.md D-228).
+  Navigation is not a room: this page was a way IN, never a number, so it
+  became a view of the page that holds every number. The file stays so that
+  every link already out in the world keeps landing, hash included.
+  LIVE-FORM: built once. No inputs.
 -->
-<style>
-  main { max-width: 560px; }
-  .screen { padding: var(--space-4) 0 var(--space-6); }
-  .screen h2 { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.15; margin: var(--space-2) 0 var(--space-3); }
-  .screen .why { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0 0 var(--space-4); line-height: var(--leading-loose); }
-  .big .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
-  .big input { font-family: var(--font-display); font-size: var(--text-2xl); min-height: 64px; width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); color: var(--color-text); }
-  .big .affix { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-text-faint); }
-  .choices.tall .choice { flex: 1 1 100%; min-height: 60px; font-size: var(--text-md); padding: var(--space-3) var(--space-4); }
-  .choices.tall .choice small { display: block; font-size: var(--text-xs); color: inherit; opacity: .8; font-weight: 400; margin-top: 2px; }
-  .nav { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; margin-top: var(--space-5); }
-  .nav .slaf-btn--primary { min-height: 56px; min-width: 160px; font-size: var(--text-md); }
-  .steps { font-size: var(--text-xs); color: var(--color-text-faint); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
-  .alt { margin-top: var(--space-3); font-size: var(--text-sm); }
-  .alt summary { cursor: pointer; color: var(--color-accent-hover); }
-  .alt .row { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
-  .alt select, .alt input { font-size: var(--text-md); min-height: 48px; padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
-  .insight .slaf-figure { font-size: var(--text-3xl, 2.4rem); margin: var(--space-2) 0; }
-  .insight .line { color: var(--color-text-muted); line-height: var(--leading-loose); }
-  .insight .rough { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
-  .insight .door { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
-  .insight .door p { margin: 0 0 var(--space-3); font-size: var(--text-md); }
-  .insight .door .slaf-btn--primary { min-height: 56px; font-size: var(--text-md); }
-  .insight .needs { color: var(--color-text-muted); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
-</style>
+<meta http-equiv="refresh" content="0; url=ledger.html#round-1"/>
 </head>
 <body class="slaf">
-<main class="slaf-room" data-fold="own">
-  <a class="room-back" href="../index.html">← Home</a>
-  <header class="slaf-room-head">
-    <span class="slaf-eyebrow">Home</span>
-    <h1>The First Round</h1>
-    <p class="slaf-lede">Five questions. Under a minute. Then one thing the numbers say.</p>
-  </header>
-
-  <section class="screen slaf-card" id="q-age">
-    <span class="steps">1 of 5</span>
-    <h2>How old are you?</h2>
-    <p class="why">Every age-based figure starts here: the buffer target, the milestones, the FI date.</p>
-    <div class="slaf-field big">
-      <label class="slaf-label" for="in-age">Age</label>
-      <span class="slaf-input-shell"><input id="in-age" type="text" inputmode="numeric" placeholder="e.g. 34" autocomplete="off"/></span>
-    </div>
-    <details class="alt" id="alt-dob">
-      <summary>Know the month and year? Use those instead.</summary>
-      <div class="row">
-        <select id="in-month" aria-label="Birth month"><option value="">Month</option><option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select>
-        <input id="in-year" type="text" inputmode="numeric" placeholder="Year, e.g. 1992" aria-label="Birth year"/>
-      </div>
-    </details>
-    <div class="nav"><span></span><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-zip">Next →</button></div>
-  </section>
-
-  <section class="screen slaf-card" id="q-zip" hidden>
-    <span class="steps">2 of 5</span>
-    <h2>Your ZIP code?</h2>
-    <p class="why">It suggests your state, which sets state tax and the unemployment cap. Nothing leaves this browser.</p>
-    <div class="slaf-field big">
-      <label class="slaf-label" for="in-zip">ZIP</label>
-      <span class="slaf-input-shell"><input id="in-zip" type="text" inputmode="numeric" placeholder="e.g. 12203" maxlength="5" autocomplete="postal-code"/></span>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-age">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-situation">Next →</button></div>
-  </section>
-
-  <section class="screen slaf-card" id="q-situation" hidden>
-    <span class="steps">3 of 5</span>
-    <h2>Right now, you are…</h2>
-    <p class="why">This decides which rows apply to you at all. Nothing that does not apply is ever asked.</p>
-    <div class="choices tall" data-choices="situation" role="group" aria-label="Situation">
-      <button type="button" class="choice" data-situation="employed" aria-pressed="false">Working<small>A paycheque from an employer</small></button>
-      <button type="button" class="choice" data-situation="unemployed" aria-pressed="false">Between jobs<small>The runway is the number now</small></button>
-      <button type="button" class="choice" data-situation="selfEmployed" aria-pressed="false">Self-employed<small>Your own work, no employer</small></button>
-      <button type="button" class="choice" data-situation="both" aria-pressed="false">A mix<small>A job and your own work</small></button>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-zip">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-pay">Next →</button></div>
-  </section>
-
-  <section class="screen slaf-card" id="q-pay" hidden>
-    <span class="steps">4 of 5</span>
-    <h2 id="pay-heading">Pay, a year?</h2>
-    <p class="why" id="pay-why">Before tax. A rough figure is fine; it can be sharpened later.</p>
-    <div class="slaf-field big">
-      <label class="slaf-label" for="in-pay" id="pay-label">Gross pay, a year</label>
-      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-pay" type="text" inputmode="decimal" placeholder="e.g. 62,000" autocomplete="off"/></span>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-situation">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-cash">Next →</button></div>
-  </section>
-
-  <section class="screen slaf-card" id="q-cash" hidden>
-    <span class="steps">5 of 5</span>
-    <h2>Cash on hand?</h2>
-    <p class="why">Checking, savings, anything you could spend this week. Not investments.</p>
-    <div class="slaf-field big">
-      <label class="slaf-label" for="in-cash">Cash and savings</label>
-      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-cash" type="text" inputmode="decimal" placeholder="e.g. 3,000" autocomplete="off"/></span>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-pay">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="insight" id="btn-finish">See what the numbers say →</button></div>
-  </section>
-
-  <section class="screen slaf-card insight" id="insight" hidden aria-live="polite">
-    <span class="steps">The first thing the numbers say</span>
-    <p class="slaf-figure" id="ins-headline">…</p>
-    <p class="line" id="ins-line"></p>
-    <p class="rough" id="ins-rough" hidden></p>
-    <div class="door">
-      <p id="ins-door"></p>
-      <a class="slaf-btn slaf-btn--primary" id="ins-open" href="ledger.html">Open the door →</a>
-      <a class="slaf-btn slaf-btn--quiet" href="ledger.html">Or see every door</a>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-cash">← Back</button><span></span></div>
-  </section>
-
-  <p class="disclaimer">Not financial advice. Nothing here is sent anywhere; every figure stays in this browser.</p>
+<main class="slaf-wrap">
+  <p style="color:var(--color-text-muted)">The First Round is Round 1 of The Ledger now.
+    <a href="ledger.html#round-1" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/daite.js"></script>
-<script src="../shared/levers.js"></script>
-<script src="../shared/staleness.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../engines/tax.js"></script>
-<script src="../shared/ledger-rows.js"></script>
-<script src="../shared/suggest.js"></script>
-<script src="../shared/doors.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Reference = SLAF.Reference,
-      LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Doors = SLAF.Doors, Progress = SLAF.Progress;
-  var ROOM_ID = 'first-round';
-  var TABLES = null;
-  var ORDER = ['q-age', 'q-zip', 'q-situation', 'q-pay', 'q-cash', 'insight'];
-  function el(id) { return document.getElementById(id); }
-  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function h() { return Spine.getProfile(); }
-  function situation() { var p = Schema.primaryPerson(h()); return p ? p.employmentStatus : null; }
-
-  /* ---- Screens: one at a time, never rebuilt ------------------------------ */
-  function show(id) {
-    ORDER.forEach(function (s) { el(s).hidden = s !== id; });
-    if (id === 'insight') paintInsight();
-    if (id === 'q-pay') paintPayLabel();
-    try { history.replaceState(null, '', '#' + id); } catch (e) { /* fine */ }
-    window.scrollTo(0, 0);
-  }
-  function paintPayLabel() {
-    var between = situation() === 'unemployed';
-    el('pay-heading').textContent = between ? 'Your last pay, a year?' : 'Pay, a year?';
-    el('pay-label').textContent = between ? 'Your last pay, a year' : 'Gross pay, a year';
-    el('pay-why').textContent = between ? 'Before tax, from the last job. It sets the benefit estimate and the tax rate.' : 'Before tax. A rough figure is fine; it can be sharpened later.';
-  }
-
-  /* ---- Writes: each through its owner's path -------------------------------- */
-  function writeAge() {
-    var m = el('in-month').value, y = String(el('in-year').value || '').replace(/\D/g, '');
-    var dob = null;
-    if (m && y.length === 4) dob = y + '-' + m + '-01';
-    else {
-      var raw = String(el('in-age').value || '').replace(/\D/g, '');
-      if (raw !== '') {
-        var n = Number(raw);
-        if (n >= 1 && n <= 120) { var now = new Date(); dob = Schema.localDay(new Date(now.getFullYear() - n, now.getMonth(), 1)); }
-      }
-    }
-    var p = Schema.primaryPerson(h());
-    if ((p && p.dob) !== dob && (dob || (p && p.dob))) Ownership.write('dob', dob);
-  }
-  function writeZip() {
-    var z = String(el('in-zip').value || '').replace(/\D/g, '').slice(0, 5);
-    if ((h().zip || null) !== (z.length === 5 ? z : null)) Ownership.write('zip', z);
-  }
-  function writeSituation(v) {
-    if (situation() !== v) Ownership.write('employmentStatus', v);
-    Array.prototype.forEach.call(document.querySelectorAll('[data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === v ? 'true' : 'false'); });
-    paintPayLabel();
-  }
-  function writePay() {
-    var cents = Money.parseMoney(el('in-pay').value);
-    var between = situation() === 'unemployed';
-    var current = between ? Schema.unemploymentOf(h()).lastGrossAnnualCents : (Money.isOk(Schema.grossAnnualIncomeCents(h())) ? Schema.grossAnnualIncomeCents(h()).value : null);
-    if (cents === current || (cents === null && current === null)) return;
-    if (cents === null && current !== null && String(el('in-pay').value).trim() === '') return;   /* a blank never erases */
-    if (cents === null) return;
-    Ownership.write(between ? 'lastPay' : 'grossAnnualIncome', cents);
-  }
-  function writeCash() {
-    var cents = Money.parseMoney(el('in-cash').value);
-    if (cents === null) return;
-    var cur = Schema.cashCents(h());
-    if (Money.isOk(cur) && cur.value === cents) return;
-    Ownership.write('cashSavings', cents);
-  }
-  var SAVE = { 'q-age': writeAge, 'q-zip': writeZip, 'q-pay': writePay, 'q-cash': writeCash };
-
-  /* ---- The insight ---------------------------------------------------------- */
-  function paintInsight() {
-    if (!TABLES) { el('ins-headline').textContent = 'One moment…'; return; }
-    var ins = Doors.firstInsight(h(), TABLES);
-    var door = Doors.byId(ins.door.door);
-    if (!ins.ok) {
-      el('ins-headline').textContent = 'Nearly there';
-      el('ins-line').innerHTML = '<span class="needs">' + esc(ins.reason) + '</span>';
-      el('ins-rough').hidden = true;
-    } else {
-      el('ins-headline').textContent = ins.headline;
-      el('ins-line').textContent = ins.line;
-      el('ins-rough').hidden = !ins.rough;
-      el('ins-rough').textContent = ins.rough ? 'Rough: it leans on ' + ins.usedSuggestions.length + (ins.usedSuggestions.length === 1 ? ' guess' : ' guesses') + ' you can confirm or change behind the doors.' : '';
-    }
-    el('ins-door').textContent = ins.door.reason;
-    el('ins-open').textContent = 'Open ' + (door ? door.label : 'the door') + ' →';
-    el('ins-open').href = 'ledger.html#door-' + ins.door.door;
-  }
-
-  /* ---- Boot: prefill once, wire once ------------------------------------------ */
-  function prefill() {
-    var hh = h(), p = Schema.primaryPerson(hh);
-    var age = Schema.primaryAge(hh);
-    if (Money.isEntered(age)) el('in-age').value = String(age);
-    if (p && p.dob && /^\d{4}-\d{2}/.test(p.dob)) { el('in-month').value = p.dob.slice(5, 7); el('in-year').value = p.dob.slice(0, 4); }
-    if (hh.zip) el('in-zip').value = hh.zip;
-    var s = situation();
-    if (s) Array.prototype.forEach.call(document.querySelectorAll('[data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === s ? 'true' : 'false'); });
-    var pay = s === 'unemployed' ? Schema.unemploymentOf(hh).lastGrossAnnualCents : (Money.isOk(Schema.grossAnnualIncomeCents(hh)) ? Schema.grossAnnualIncomeCents(hh).value : null);
-    if (Money.isEntered(pay)) el('in-pay').value = Money.formatCents(pay).replace(/^\$/, '');
-    var cash = Schema.cashCents(hh);
-    if (Money.isOk(cash)) el('in-cash').value = Money.formatCents(cash.value).replace(/^\$/, '');
-    paintPayLabel();
-  }
-  document.addEventListener('click', function (ev) {
-    var t = ev.target.closest ? ev.target.closest('[data-next],[data-back],[data-situation]') : null;
-    if (!t) return;
-    if (t.hasAttribute('data-situation')) { writeSituation(t.getAttribute('data-situation')); return; }
-    var from = t.closest('.screen');
-    if (t.hasAttribute('data-next') && from && SAVE[from.id]) SAVE[from.id]();
-    show(t.getAttribute('data-next') || t.getAttribute('data-back'));
-  });
-  ['in-age', 'in-zip', 'in-pay', 'in-cash', 'in-year', 'in-month'].forEach(function (id) {
-    el(id).addEventListener('change', function () { var s = el(id).closest('.screen'); if (s && SAVE[s.id]) SAVE[s.id](); });
-  });
-  Spine.registerRoom(ROOM_ID);
-  Progress.mountHeader(ROOM_ID);
-  Progress.mount(ROOM_ID);
-  prefill();
-  var start = (location.hash || '').replace('#', '');
-  show(ORDER.indexOf(start) !== -1 ? start : 'q-age');
-  Reference.load(Suggest.TABLES.concat(['effectiveTaxRates', 'staleness'])).then(function (t) {
-    TABLES = t;
-    LedgerRows.use(t.ledgerRows);
-    if (!el('insight').hidden) paintInsight();
-  });
-  Spine.onChange(function () { if (!el('insight').hidden) paintInsight(); });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#q-age': '#round-1', '#q-zip': '#round-1-q-zip', '#q-situation': '#round-1-q-situation', '#q-pay': '#round-1-q-pay', '#q-cash': '#round-1-q-cash', '#insight': '#round-1-insight' };
+    var hash = location.hash || '';
+    var target = 'ledger.html' + (map[hash] || '#round-1');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

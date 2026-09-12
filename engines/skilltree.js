@@ -132,7 +132,7 @@
   var THRESHOLD_WORDS = {
     monthsClosed: { one: 'closed month in the ledger', many: 'closed months in the ledger', href: 'budget.html#close' },
     logCount: { one: 'dated expense in the log', many: 'dated expenses in the log', href: 'cash-flow.html#log' },
-    snapshots: { one: 'snapshot frozen', many: 'snapshots frozen', href: 'refresh.html#snapshot' },
+    snapshots: { one: 'snapshot frozen', many: 'snapshots frozen', href: 'ledger.html#since-last-time' },
     exercisesDone: { one: 'exercise completed', many: 'exercises completed', href: 'exercises.html' },
     debtsPaid: { one: 'debt paid off', many: 'debts paid off', href: 'debt-payoff.html#debts' }
   };

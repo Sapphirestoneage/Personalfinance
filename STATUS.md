@@ -3,31 +3,45 @@
 Updated: 2026-09-12
 
 ## Where it stands
-- The Ledger rework brief (owner, 2026-09-11) is being built in order: G1, A, B, C/C2, D, E, F, G2, G3 with J1, H1 to H5, H7, H8 shipped (D-204 to D-212); H6 waits on sourced 1871-on returns data (egress blocked); I1 to I5 shipped (D-213, D-214); J2 to J8 shipped (D-214 to D-216; J7 without gift privacy, which waits on the owner); K4, K6, K7, K11 shipped on the one countdown (D-217); K1 and K3 shipped (D-218); K2, K5, K8, K9, K10 shipped (D-219): Phase K is built; one CSV out and back in (D-220), made to survive a real spreadsheet (D-221: one reader for every CSV, any way a number, date, yes or choice is written, a preview naming what each line would do, one undo for the lot) and then made a spreadsheet (D-222: the download is a real .xlsx with a tab a door, money in money cells, headings in words; a workbook or a CSV comes back); I6 (Eli's taxonomy), I7 (needs H6), I8 (needs the §11 tree) wait. Still waiting on the owner: the Pages switch, the domain (G1.1), a LICENSE (G3.14). The owner's brief overrides the freeze for those phases; each adds a VIEW of existing rows (First Round, doors, Express), no second store.
-- ~70 rooms live on GitHub Pages. Each room works on its own; the connections
-  between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
-- Context system added. Sessions should no longer read the archives.
+- **93 → 30 is the programme now.** The reframe (D-226): you cannot size the
+  mountain until you know how you come down it, so the Back Half defines the
+  target and The Number becomes a read-out of it. The test for what earns the
+  right to be a room, and the thirty that survive it, are D-227 and
+  `docs/room-map.json`; `test/run.js` checks that map against the registry on
+  every run, so it cannot drift.
+- **Step 1 of six is done (D-228).** The Ledger swallowed navigation: First
+  Round, Express, Front Doors, the Walk-Through, Refresh and Welcome Back are
+  six views of `rooms/ledger.html`, routed by hash, all writing through the
+  owners. 92 registry rooms → 86. Every old URL redirects, hash and all.
+- The Ledger rework brief (owner, 2026-09-11) is built through Phase K. H6
+  (1871-on returns) and I7 wait on sourced data, egress blocked; I6 and I8
+  wait. Still waiting on the owner: the Pages switch, the domain (G1.1), a
+  LICENSE (G3.14).
 
 ## Freeze
-- ON. No new rooms, frameworks, or vocabularies until the first journey
-  below works end to end.
+- ON, and the merge is how it gets honoured: every session leaves the app with
+  fewer screens. No new rooms, frameworks or vocabularies.
 
 ## Next (top item first; one per session)
-1. Decide who owns income sources once Start Here retires (Ledger or Income).
-   OWNER DECISION NEEDED.
-2. Make logged income reconcile with typical income (known problem 1).
-3. First journey works end to end: about 8 questions in, a FOO step and an FI
-   date range out. Add a node test for it.
-4. Monthly close prompts a backup export.
+1. **Who owns Start Here's 17 fields once it retires into the Ledger?**
+   OWNER DECISION NEEDED. It is the only thing blocking the last room in
+   step 1, and the map holds it back with that reason written down.
+2. Step 2: The Cushion. `runway` absorbs `between-jobs`, `quit-fund`,
+   `sleep-at-night` — four readings of one number, on a toggle that defaults
+   to the simplest (Alexis's note).
+3. Step 3: The Scorecard (6 → 1). Step 4: What The Next Dollar Does (3 → 1),
+   FOO step number visible everywhere (Money Guy's note).
+4. Step 5: the Decision Room shell, then goals, wedding, big purchase.
+5. Step 6: the Back Half. Not before the shell has stopped moving.
+6. Still open from before: logged income does not reach the headline numbers;
+   the first journey end to end; a monthly close that prompts a backup.
 
-## Cut list (for /simplify, one per session, owner approves each)
-- Retire Start Here, Front Doors, Walk-Through into the Ledger (decided).
-- Merge candidates, not yet decided: Financial Snapshot / Savings Rate /
-  Every Ratio / The Score into the DRAFTT scorecard; FIRE Number + FIRE Lab;
-  Worth It / Worth the Hassle / Price the Dream; Designed Week + Time Buckets;
-  Budget + Estimated vs Actual into a monthly close.
-- rooms/net-worth.html is a redirect to statement.html, not in the registry.
+## Cut list
+- `docs/room-map.json` IS the cut list now. `absorbs` minus `done` is what is
+  left; `held` says what is deliberately not moving yet, and why.
 
-## Proposed in chat, not decided
-- Four layers: Ledger (facts), Log (actuals, one + button), Blocks, Readings.
-- Round 1 uses only answer-from-your-head rows; lookups move to round 2.
+## Panel notes not yet answered
+- Galloway: model the means-tested floor, or the Back Half sells comfort.
+- Donegan: the merged Work room holds eight rooms about having a job and none
+  about building something that pays you.
+- Hormozi: thirty is still a library. One screen in front of it.

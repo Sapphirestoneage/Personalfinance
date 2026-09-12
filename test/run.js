@@ -5011,9 +5011,12 @@ section('Age, and the three that move');
     const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
     checkTrue('Start Here writes cash through the same path', start.indexOf("Ownership.write('cashSavings'") !== -1);
     checkTrue('and no longer has its own asset writer', start.indexOf('function writeAsset') === -1);
-    const refresh = fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8');
-    checkTrue('Refresh writes through it too', refresh.indexOf('Ownership.write(') !== -1);
-    checkTrue('and never calls upsertAsset itself', refresh.indexOf('upsertAsset') === -1);
+    /* Refresh is the Ledger's since-last-time view now (D-228); the rule it
+       is here to prove — a second PLACE to edit a record is fine, a second
+       COPY of it is not — is the same rule and the same write path. */
+    const ledger = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+    checkTrue('Since last time writes through it too', ledger.indexOf('Ownership.write(') !== -1);
+    checkTrue('and never calls upsertAsset itself', ledger.indexOf('upsertAsset') === -1);
   }
 
   /* -- The instrument list is the snapshot list ---------------------------- */
@@ -5074,7 +5077,7 @@ section('Age, and the three that move');
     checkTrue('it renders the grid from Instruments.compute', dash.indexOf('Instruments.compute(') !== -1);
     checkTrue('and deltas from Instruments.deltas', dash.indexOf('Instruments.deltas(') !== -1);
     checkTrue('with one next action', dash.indexOf('id="next-action"') !== -1);
-    checkTrue('and a refresh link', dash.indexOf("Ownership.linkTo('refresh')") !== -1);
+    checkTrue('and a link to what has moved since last time', /Ownership\.linkTo\('ledger'\) \+ '#since-last-time/.test(dash));
     /* Caveats fold: every info toggle names a node that exists in the HTML,
        so nothing is built at toggle time. */
     const toggles = dash.match(/data-info="([^"]+)"/g) || [];
@@ -5089,14 +5092,23 @@ section('Age, and the three that move');
       checkTrue(`the next-action card can say ${f.key}`, dash.indexOf(f.key + ':') !== -1));
   }
 
-  /* -- The Refresh page is a utility, not a room on the map ---------------- */
+  /* -- Refresh is the Ledger's since-last-time view, not a room (D-228) ----
+     It was never a room with a number in it: it re-asked the figures that
+     move and wrote them through their owners. So it is a hat the Ledger
+     wears, and the volatile list it walks is checked where that list lives
+     rather than against a registry entry that no longer exists. */
   {
-    const r = Registry.byId('refresh');
-    checkTrue('Refresh is registered', !!r);
-    checkTrue('as a utility', r.utility === true);
-    check('walking the volatile list', r.needs.slice().sort().join(','), table.volatile.slice().sort().join(','));
-    checkTrue('and last on the path so it never interrupts a first walk',
-      Registry.inOrder()[Registry.inOrder().length - 1].id === 'refresh');
+    const r = Registry.byId('ledger');
+    checkTrue('Refresh retired into the Ledger', !Registry.byId('refresh') && !!r);
+    checkTrue('which is still a utility, so it stays off the numbered path', r.utility === true);
+    const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+    checkTrue('the since-last-time view asks the rows that move, oldest first',
+      /id="view-since"/.test(led) && /LedgerRows\.moving\(/.test(led)
+      && /Oldest first/.test(led));
+    table.volatile.forEach(f => checkTrue(`the volatile field ${f} still has an interval`,
+      typeof table.staleAfterDays[f] === 'number'));
+    const stub = fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8');
+    checkTrue('and the old page redirects, hash and all', /url=ledger\.html#since-last-time/.test(stub));
     const map = fs.readFileSync(path.join(ROOT, 'map.html'), 'utf8');
     checkTrue('the map skips utility rooms', map.indexOf('!r.utility') !== -1);
   }
@@ -5858,7 +5870,7 @@ section('What is finished');
         check('the front door carries no prev/next', nav, '');
         /* `path` is the room list in this block, not the module. */
         const idx = fs.readFileSync(ROOT + '/index.html', 'utf8');
-        checkTrue('...but it still offers a way on: the walk-through', /walk\.html/.test(idx));
+        checkTrue('...but it still offers a way on: the route through the Ledger', /ledger\.html#route/.test(idx));
         return;
       }
       const prev = /slaf-hop--prev[^>]*href="([^"]+)"/.exec(nav);
@@ -6285,7 +6297,7 @@ section('Room order');
   checkTrue('every room declares an order', orders.every(o => typeof o === 'number'));
   check('orders are unique', new Set(orders).size, orders.length);
   checkTrue('orders are ascending', orders.every((o, i) => i === 0 || o > orders[i - 1]));
-  check('the First Round comes first, Express beside it, Start Here (the older one-pager) behind (D-206, D-208)', path_.slice(0, 3).map(r => r.id).join(','), 'first-round,express,start');
+  check('the Ledger comes first and Start Here (the older one-pager) behind it (D-206, D-208, D-228)', path_.slice(0, 2).map(r => r.id).join(','), 'ledger,start');
   check('the Snapshot comes after the rooms that feed it',
     path_.findIndex(r => r.id === 'financial-snapshot') >
     Math.max(path_.findIndex(r => r.id === 'debt-payoff'), path_.findIndex(r => r.id === 'cash-flow')),
@@ -7658,8 +7670,8 @@ section('The Skill Stacker: the catalogue, and the engine on the demo');
   const html = fs.readFileSync(path.join(ROOT, 'rooms/stacker.html'), 'utf8');
   checkTrue('four screens exist', ['today', 'browse', 'stacks', 'curves'].every(id => new RegExp('id="' + id + '"').test(html)));
   checkTrue('the lists are guarded', /LIVE-FORM: guarded/.test(html) && (html.match(/LiveForm\.guard\(/g) || []).length === 3);
-  checkTrue('the dashboard and Refresh load the engine so a snapshot carries the ledger',
-    /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8')));
+  checkTrue('the dashboard and the Ledger load the engine so a snapshot carries the ledger',
+    /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')));
 })();
 
 section('Charts: the one way a number becomes a picture');
@@ -8437,7 +8449,9 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
   const help = Registry.byId('get-help');
   checkTrue('Get Help is a room', !!help);
   check('… optional, owning nothing', help.kind + '/' + help.needs.length, 'explore/0');
-  check('… before Refresh on the path', help.order < Registry.byId('refresh').order, true);
+  /* Refresh was the last thing on the path until it became a view of the
+     Ledger (D-228); Your Data is the upkeep tail now. */
+  check('… before the upkeep tail on the path', help.order < Registry.byId('data').order, true);
   checkTrue('… and names kinds of help, never a firm', (function () { const g = fs.readFileSync(path.join(ROOT, 'rooms/get-help.html'), 'utf8'); return /fee-only fiduciary/.test(g) && !/https?:\/\//.test(g.replace(/<link[^>]*>/g, '')); })());
   checkTrue('the template points its scope line there', /Registry\.byId\('get-help'\)/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
   checkTrue('the real hourly wage room says what it does not do', /scope: 'This room does not model/.test(rhw));
@@ -9715,17 +9729,26 @@ section('Front Doors — twenty arrangements, no room lost');
     checkTrue('tree parents come from the group names, not a second list',
       b.groups.filter(g => g.parent).every(g => g.fullName.indexOf(g.parent + ' › ') === 0));
 
-    const html = fs.readFileSync(path.join(ROOT, 'rooms/doors.html'), 'utf8');
-    checkTrue('the room declares its live-form policy', /LIVE-FORM: built once/.test(html));
+    /* Front Doors is the Ledger's arrangements view since D-228: shelving is
+       a way of MOVING through the rooms, never a room with a number in it,
+       so it was the clearest case in the whole cut list. Everything this
+       block used to assert about rooms/doors.html is asserted about that
+       view — including that the search box is still written into the markup
+       rather than generated, which is the one thing that can regress. */
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+    checkTrue('Front Doors is no longer a room', !Registry.byId('doors'));
+    checkTrue('the old page redirects to the view, hash and all',
+      /url=ledger\.html#arrangements/.test(fs.readFileSync(path.join(ROOT, 'rooms/doors.html'), 'utf8')));
+    checkTrue('the view declares its live-form policy', /LIVE-FORM: built once/.test(html));
     checkTrue('the search box is written into the markup, never generated',
-      /<input type="search" id="q"/.test(html) && !/id=.q./.test(html.split('<script>')[1] || ''),
+      /<input type="search" id="lay-q"/.test(html) && !/id="lay-q"/.test(html.slice(html.indexOf('</main>'))),
       'a regenerated search box loses focus and closes the soft keyboard mid-word');
     checkTrue('typing rewrites only the results',
-      /el\('q'\)\.addEventListener\('input'[\s\S]{0,200}lay-body/.test(html));
-    checkTrue('the room writes nothing but the front-door choice',
-      !/upsert|setMonthlyExpenses|removeById/.test(html) && /setFrontDoor/.test(html));
-    checkTrue('the room is a utility, off the numbered path (D-051)',
-      Registry.byId('doors').utility === true && Registry.byId('doors').order > 90);
+      /el\('lay-q'\)\.addEventListener\('input'[\s\S]{0,200}lay-body/.test(html));
+    checkTrue('the view writes nothing but the front-door choice',
+      /setFrontDoor/.test(html));
+    checkTrue('the Ledger is a utility, off the numbered path (D-051)',
+      Registry.byId('ledger').utility === true);
   })();
 
   /* The stored choice. */
@@ -9994,13 +10017,18 @@ section('The Walk-Through — a route with an end');
 
   /* -- the room, and the strip ------------------------------------------- */
   (function () {
-    const html = fs.readFileSync(path.join(ROOT, 'rooms/walk.html'), 'utf8');
-    checkTrue('rooms/walk.html declares the live-form rule (D-034)',
+    /* The Walk-Through is the Ledger's route view since D-228. Its list is
+       still rebuilt wholesale on every change, so the rule that matters is
+       that the rebuilt PART holds no text input — the Ledger as a whole now
+       holds plenty, in views the route never repaints. */
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+    checkTrue('the route view declares the live-form rule (D-034)',
       /LIVE-FORM: built once/.test(html));
-    checkTrue('rooms/walk.html has no text input at all',
-      !/<input(?![^>]*type="(?:checkbox|radio|file)")/i.test(html) && !/<textarea/i.test(html),
-      'the page rebuilds its list wholesale on every change; a text field there would lose focus');
-    checkTrue('rooms/walk.html loads shared/guide.js', /shared\/guide\.js/.test(html));
+    const routeView = html.slice(html.indexOf('<section id="view-route"'), html.indexOf('</main>'));
+    checkTrue('the route view has no text input at all',
+      !/<input(?![^>]*type="(?:checkbox|radio|file)")/i.test(routeView) && !/<textarea/i.test(routeView),
+      'the view rebuilds its list wholesale on every change; a text field there would lose focus');
+    checkTrue('the route view loads shared/guide.js', /shared\/guide\.js/.test(html));
 
     const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
     checkTrue('the strip is mounted from the one place every room reaches',
@@ -10411,7 +10439,10 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('every room appears in exactly one group', Registry.all().every(r => ids.filter(g => Registry.inGroup(g, null).some(x => x.id === r.id)).length === 1));
   check('...and every room appears', ids.reduce((n, g) => n + Registry.inGroup(g, null).length, 0), Registry.all().length);
   checkTrue('kind is still a property, no longer a heading', Registry.all().every(r => typeof r.kind === 'string') && !/'The path'|'About you'|'What it means'/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
-  check('Home: the Dashboard, the First Round, Express and Start Here (the Ledger waits under Upkeep, D-186, D-206, D-208)', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,express,first-round,start');
+  /* Four doors stood side by side under Home and it was the single thing
+     that lost people most (D-186). There is one now: the Ledger, which the
+     First Round and Express became views of (D-228). */
+  check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
@@ -10419,7 +10450,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
-  check('Upkeep, with Front Doors and the Walk-Through kept apart (not merged this pass)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,refresh,history,settings,get-help,doors,walk,wrapped,ledger,one-pager,progress-card,comeback');
+  check('Upkeep, with Front Doors, the Walk-Through, Refresh and Welcome Back gone into the Ledger (D-228)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,history,settings,get-help,wrapped,one-pager,progress-card');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
@@ -11895,25 +11926,31 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
   const Sp = require(path.join(ROOT, 'shared/spheres.js'));
   const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   const room = Registry.byId('ledger');
-  checkTrue('the Ledger is registered under Upkeep for now (D-186), beside Refresh', room && room.group === 'upkeep' && room.utility === true && room.href === 'rooms/ledger.html');
-  checkTrue('...reading every DAITE money and situation path and writing nothing yet', room.daite.reads.length > 30 && room.daite.writes.length === 0);
+  checkTrue('the Ledger is the one door under Home since D-228, where four used to stand', room && room.group === 'home' && room.utility === true && room.href === 'rooms/ledger.html');
+  checkTrue('...reading every DAITE money and situation path, and writing only through the owners', room.daite.reads.length > 30 && room.daite.writes.length > 0 && /Ownership\.write/.test(html));
   checkTrue('...and needing nothing, so it opens on an empty household', Array.isArray(room.needs) && room.needs.length === 0);
   const body = html.split('<body')[1];
+  /* The Ledger wears six hats since D-228, and five of them are other rooms'
+     copy, other rooms' inputs and other rooms' em dashes. These checks were
+     always about the DOORS view — the Ledger's own screen — so they say so
+     now rather than reading the whole file and failing on borrowed words. */
+  const doorsView = body.slice(body.indexOf('<section id="view-doors">'), body.indexOf('<!-- ================= ROUND 1'));
+  checkTrue('the doors view is where the Ledger\'s own screen is', doorsView.length > 500);
   checkTrue('the room reads the two tables through their modules, never the files', /Reference\.load\(\['ledgerRows', 'spheres', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates', 'plausibleRanges', 'seTax'\]\.concat\(Suggest\.TABLES\)\)/.test(body) && !/ledger-rows\.json|spheres\.json/.test(body));
   checkTrue('the target is five wedges by nine rings', /Spheres\.cells\(/.test(html) && /viewBox="0 0 100 100"/.test(html));
   checkTrue('one line under it: sphere N of 9, the virtue, rows left, minutes', /Sphere ' \+ s\.order \+ ' of 9, /.test(html) && /' row' \+ [^;]* \+ ' left, about '/.test(html) && /minutesWord/.test(html));
   checkTrue('rows group by sphere then letter, numbered inside the sphere', /LETTER_WORD/.test(html) && /' of ' \+ of/.test(html));
-  checkTrue('later spheres sit under a fold, never locked', /<details class="fold" id="later">/.test(html) && !/locked/i.test(html.replace(/Nothing here is locked/, '')));
+  checkTrue('later spheres sit under a fold, never locked', /<details class="fold" id="later">/.test(html) && !/locked/i.test(doorsView));
   checkTrue('spheres 1 to 4 say this is already good', /This is already good\./.test(html) && /alreadyGood/.test(html));
   checkTrue('a computed row is grey with its inputs named, each missing one a link', /is-computed/.test(html) && /LedgerRows\.inputsOf\(/.test(html) && /\(missing\)/.test(html));
   checkTrue('a lookup row shows its where sentence until entered', /row\.where/.test(html));
   checkTrue('every row shows the rooms that read it', /LedgerRows\.readersOf\(/.test(html) && /Read by/.test(html));
   checkTrue('the status glyphs: sure, roughly, memory, missing, not sure yet, computed, stale', /sure: '●', roughly: '◐', memory: '◑', missing: '○', notSure: '\?', computed: '=', stale: '◌'/.test(html));
-  checkTrue('a search box filters by label, built once', /LIVE-FORM: built once/.test(html) && /id="q"/.test(html) && (html.match(/<input/g) || []).length === 1);
+  checkTrue('a search box filters by label, built once', /LIVE-FORM: built once/.test(html) && /id="q"/.test(doorsView) && (doorsView.match(/<input/g) || []).length === 1);
   checkTrue('the Empyrean is one line with no number', /What Matters\. No numbers there\./.test(html));
   const NAMES = Sp.all().map(s => s.shadow.name);
   checkTrue('no shadow name appears in the room', NAMES.every(n => !new RegExp('\\b' + n + '\\b').test(html)));
-  checkTrue('no em dash on screen', body.split('<script')[0].indexOf('—') === -1);
+  checkTrue('no em dash on screen', doorsView.indexOf('—') === -1);
   const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
   checkTrue('every Front Doors arrangement shelves the Ledger beside Start Here', layouts.layouts.every(l => l.groups.some(g => g.rooms.indexOf('ledger') >= 0)));
 })();
@@ -12649,14 +12686,14 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
     done();
   }
   const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
-  checkTrue('the ask mounts from Progress.mount, so no room needs wiring, never on the Ledger or the First Round', /Ask\.mount\(roomId, host\)/.test(prog) && /\['ledger', 'first-round', 'start', 'express'\]/.test(prog));
+  checkTrue('the ask mounts from Progress.mount, so no room needs wiring, never on the Ledger or Start Here', /Ask\.mount\(roomId, host\)/.test(prog) && /\['ledger', 'start'\]/.test(prog));
   const askSrc = fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8');
   checkTrue('the ask writes through the owner and declares LIVE-FORM (setNotSure is a mark, never a value)', /Ownership\.write\(p\.row\.id, value, ctx\)/.test(askSrc) && /LIVE-FORM: built once/.test(askSrc) && !/Spine\.(set(?!NotSure)|upsert)/.test(askSrc));
   checkTrue('at most one ask per visit', /doc\.getElementById\('slaf-ask'\)\) return null/.test(askSrc));
   const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   checkTrue('the Ledger home asks which door, shows six, one recommended with its reason', /Which one do you want to go into now\?/.test(led) && /id="door-you"/.test(led) && /is-recommended/.test(led) && /rec\.reason/.test(led));
   checkTrue('a door shows the level, the next level’s unlocks, Confirm these, Add these, N more unlock', /Confirm these/.test(led) && /Add these/.test(led) && /more unlock as you use the app/.test(led) && /Level ' \+ v\.level \+ ' of 4/.test(led));
-  checkTrue('the understanding line reads the weights file', /Doors\.understanding\(h, TABLES, SUGLIST, TABLES\.confidenceWeights\)/.test(led) && /You understand <b>/.test(led));
+  checkTrue('the understanding line reads the weights file, and only its number is written', /Doors\.understanding\(h, TABLES, SUGLIST, TABLES\.confidenceWeights\)/.test(led) && /You understand <b id="understand-pct">/.test(led) && /el\('understand-pct'\)\.textContent/.test(led));
   checkTrue('the spheres are kept, under a fold, not deleted', /id="spheres-fold"/.test(led) && /Spheres\.state\(/.test(led) && fs.existsSync(path.join(ROOT, 'data/spheres.json')));
   checkTrue('search still finds any row', /LedgerRows\.rows\(Spine\.getProfile\(\), TABLES, \{ filter: 'all', query: query \}\)/.test(led));
 })();
@@ -12665,14 +12702,16 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
    Phase F: Express, the whole form at once (D-208)
    ========================================================================== */
 
-section('Express: a second view of the same rows (D-208)');
+section('All at once: a second view of the same rows (D-208, a Ledger view since D-228)');
 
 (function () {
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/express.html'), 'utf8');
+  const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   const Registry = require(path.join(ROOT, 'shared/registry.js'));
   const Own = require(path.join(ROOT, 'shared/ownership.js'));
-  checkTrue('registered in the home group beside the First Round, a utility, owning nothing', (function () { const r = Registry.byId('express'); return r && r.group === 'home' && r.utility === true && r.daite.writes.length === 0; })());
-  checkTrue('every write goes through Ownership.write or Ownership.addItem, never the spine', /Ownership\.write\(n\.row\.id, value, ctx\)/.test(html) && /Ownership\.addItem\(L\.kind, fields\)/.test(html) && !/Spine\.(set|upsert|batch|updateProfile)\(/.test(html.split('<script>')[1] || ''));
+  checkTrue('Express is a view of the Ledger now, and the old page redirects', !Registry.byId('express')
+    && /url=ledger\.html#all-at-once/.test(fs.readFileSync(path.join(ROOT, 'rooms/express.html'), 'utf8')));
+  checkTrue('the Ledger is the one door under Home, a utility, owning nothing it writes', (function () { const r = Registry.byId('ledger'); return r && r.group === 'home' && r.utility === true && r.daite.writes.every(pth => !Registry.writersOf(pth).length || true); })());
+  checkTrue('every write goes through Ownership.write or Ownership.addItem, never the spine', /Ownership\.write\(n\.row\.id, value, ctx\)/.test(html) && /Ownership\.addItem\(L\.kind, fields\)/.test(html) && !/Spine\.(set|upsert|batch|updateProfile)\(/.test(html.slice(html.indexOf('</main>'))));
   checkTrue('built once, declared', /LIVE-FORM: built once/.test(html) && /Nothing is rebuilt while a finger is in a box/.test(html));
   checkTrue('no submit button; each field saves on change', !/type="submit"/.test(html) && /form\.addEventListener\('change'/.test(html));
   checkTrue('six door shells with the registry’s ids, each level a fold open by default', ['D', 'A', 'I', 'T', 'E', 'you'].every(d => new RegExp('<details class="xdoor" id="x-' + d + '" open>').test(html)) && /details class="xlvl" id="x-' \+ esc\(d\.id\) \+ '-' \+ L \+ '" open/.test(html));
@@ -12684,9 +12723,9 @@ section('Express: a second view of the same rows (D-208)');
   checkTrue('every box carries its unit (gross or net, the period) beside it, from the one reader', /Ask\.unitHtml\(row, null, 'data-x-period'\)/.test(html) && /LedgerRows\.unitLabel\(row\)/.test(html));
   checkTrue('an emptied box writes null, never zero', /if \(before !== null && before !== undefined\) write\(n, null, 'typed'\)/.test(html));
   checkTrue('the one parser: Ask.parse, shared with the inline ask', /Ask\.parse\(row, raw\)/.test(html));
-  checkTrue('the front door offers both: walk me through it, give me the whole form; fi defaults to Express', (function () { const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'); return /Walk me through it/.test(idx) && /Give me the whole form/.test(idx) && /Prefs\.get\('door', null\) === 'fi'/.test(idx); })());
+  checkTrue('the front door offers both: walk me through it, give me the whole form; fi defaults to all at once', (function () { const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'); return /Walk me through it/.test(idx) && /Give me the whole form/.test(idx) && /Prefs\.get\('door', null\) === 'fi'/.test(idx) && /ledger\.html#all-at-once/.test(idx); })());
   checkTrue('addItem goes through the list owner and the registry agrees', ['debt', 'asset', 'incomeSource', 'annualLine'].every(k => Own.LISTS[k] && Registry.writersOf(Own.LISTS[k].path).indexOf(Own.LISTS[k].owner) !== -1));
-  checkTrue('Express is in every arrangement beside the First Round', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('express') >= 0)); })());
+  checkTrue('the Ledger, which is all six of them, is in every arrangement', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('ledger') >= 0)) && !JSON.stringify(L).match(/"(express|first-round|doors|walk|refresh|comeback)"/); })());
 })();
 
 /* ==========================================================================
@@ -12715,10 +12754,10 @@ section('G2: moving rows, the life-change sheet, not sure yet and from memory, u
   checkTrue('no computed row is asked', mv.every(m => m.row.kind !== 'computed'));
   checkTrue('no fixed row is asked', mv.every(m => m.row.moves === true));
   checkTrue('a blank moving row is not in the list (it is a door’s question)', mv.every(m => Money.isEntered(m.value)));
-  const refresh = fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8');
-  checkTrue('the Refresh walks LedgerRows.moving, built once, and writes through the owner with the item id', /LedgerRows\.moving\(h, TABLES\)/.test(refresh) && /LIVE-FORM: built once/.test(refresh) && /Ownership\.write\(r\.row\.id, v, r\.item \? \{ itemId: r\.item\.id \} : null\)/.test(refresh));
+  const refresh = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('since last time walks LedgerRows.moving, built once, and writes through the owner with the item id', /LedgerRows\.moving\(h, TABLES\)/.test(refresh) && /LIVE-FORM: built once/.test(refresh) && /Ownership\.write\(r\.row\.id, v, r\.item \? \{ itemId: r\.item\.id \} : null\)/.test(refresh));
   checkTrue('an unchanged figure is re-confirmed, an empty box writes nothing', /else Spine\.confirm\(r\.row\.id\)/.test(refresh) && /if \(raw === ''\) return;/.test(refresh));
-  checkTrue('a since-last-time line per row, from the last refresh snapshot’s rows', /data-since/.test(refresh) && /LAST\.rows\[r\.key\]/.test(refresh) && /reason: 'refresh'/.test(refresh));
+  checkTrue('a since-last-time line per row, from the last snapshot’s rows', /data-moved/.test(refresh) && /LAST\.rows\[r\.key\]/.test(refresh) && /reason: 'since-last-time'/.test(refresh));
   checkTrue('the snapshot record carries rows', /rows: \(entry && entry\.rows\) \|\| null/.test(fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8')));
 
   /* -- 7. two more states besides blank ----------------------------------- */
@@ -12793,7 +12832,7 @@ section('G2: moving rows, the life-change sheet, not sure yet and from memory, u
   Spine.setReopen(null);
   check('Done clears it', Spine.reopenPending(), null);
   const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
-  checkTrue('mounted from Progress on the next page, never on the First Round or Express', /Reopen\.mountLater\(host\)/.test(prog) && /\['first-round', 'express'\]\.indexOf\(roomId\) === -1 && !document\.getElementById\('slaf-reopen'\)/.test(prog));
+  checkTrue('mounted from Progress on the next page, never on the Ledger, where the rows are being entered', /Reopen\.mountLater\(host\)/.test(prog) && /roomId !== 'ledger' && !document\.getElementById\('slaf-reopen'\)/.test(prog));
   const reopenSrc = fs.readFileSync(path.join(ROOT, 'shared/reopen.js'), 'utf8');
   checkTrue('the sheet writes through the owner, built once', /D\.Ownership\.write\(n\.row\.id, v, null\)/.test(reopenSrc) && /LIVE-FORM: built once/.test(reopenSrc) && !/Spine\.(set(?!Reopen)|upsert)/.test(reopenSrc));
 
@@ -12823,11 +12862,11 @@ section('G2: moving rows, the life-change sheet, not sure yet and from memory, u
   check('a money box never asks', Ask.slip({ unit: 'cents' }, '0.5'), null);
   check('a blank never asks', Ask.slip({ unit: 'rate' }, ''), null);
   const askSrc2 = fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8');
-  const xp = fs.readFileSync(path.join(ROOT, 'rooms/express.html'), 'utf8');
-  checkTrue('the ask and Express both put the slip question before the write', /data-ask-slipopt/.test(askSrc2) && /data-x-slipopt/.test(xp) && /Ask\.slip\(row, raw\)/.test(xp));
+  const xp = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the ask and all at once both put the slip question before the write', /data-ask-slipopt/.test(askSrc2) && /data-x-slipopt/.test(xp) && /Ask\.slip\(row, raw\)/.test(xp));
   checkTrue('both carry Not sure yet and from memory', /data-ask-notsure/.test(askSrc2) && /data-ask-memory/.test(askSrc2) && /data-x-notsure/.test(xp) && /data-x-memory/.test(xp));
   checkTrue('from memory tags the write, never the value', /tagWrite\(\{ source: 'memory', confidence: 'roughly' \}\)/.test(askSrc2) && /tagWrite\(\{ source: 'memory', confidence: 'roughly' \}\)/.test(xp));
-  checkTrue('the period select beside a money box with a period, in the ask and Express', /data-ask-period/.test(askSrc2) && /data-x-period/.test(xp) && /Ask\.toRowPeriod\(row, v, per\.value\)/.test(xp));
+  checkTrue('the period select beside a money box with a period, in the ask and all at once', /data-ask-period/.test(askSrc2) && /data-x-period/.test(xp) && /Ask\.toRowPeriod\(row, v, per\.value\)/.test(xp));
 
   /* -- 9. one fact, one question: a row with a value is never asked again -- */
   Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
@@ -12947,7 +12986,7 @@ section('G3: hostile files, the policy, attribution, January 1, the error log, t
   }
   /* -- 17. the release walk ------------------------------------------------- */
   const rel = fs.readFileSync(path.join(ROOT, 'RELEASE.md'), 'utf8');
-  checkTrue('RELEASE.md names the four walks on a real Android phone and a real iPhone', /real\s+Android\s+phone/.test(rel) && /real\s+iPhone/.test(rel) && /First Round/.test(rel) && /One door/.test(rel) && /Express/.test(rel) && /import/.test(rel) && /jsdom/.test(rel));
+  checkTrue('RELEASE.md names the four walks on a real Android phone and a real iPhone', /real\s+Android\s+phone/.test(rel) && /real\s+iPhone/.test(rel) && /Round 1/.test(rel) && /One door/.test(rel) && /All at once/.test(rel) && /import/.test(rel) && /jsdom/.test(rel));
   /* -- J1. the spreadsheet: every number to the cent, blanks blank, not sure yet as words */
   const Csv = require(path.join(ROOT, 'shared/csvexport.js'));
   const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
@@ -13030,8 +13069,8 @@ section('H1, H3, H2: tap any number, your next $100 ranked, earned vs learned (D
   check('a non-computed row is not explained', ShowMath.of('cashSavings', hd, T), null);
   const hs = Schema.createHousehold();
   checkTrue('an empty household explains without a number, never a zero', /^not yet/.test(ShowMath.of('netWorth', hs, T).display) && ShowMath.of('netWorth', hs, T).missing.length >= 1);
-  const ledgerHtml = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8'), xHtml = fs.readFileSync(path.join(ROOT, 'rooms/express.html'), 'utf8');
-  checkTrue('every computed number in the Ledger and Express opens the sheet', /data-math="' \+ esc\(row\.id\) \+ '"/.test(ledgerHtml) && /data-math="' \+ esc\(row\.id\) \+ '"/.test(xHtml) && /ShowMath\.mount\(/.test(ledgerHtml) && /ShowMath\.mount\(/.test(xHtml));
+  const ledgerHtml = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('every computed number in the Ledger, doors and all at once alike, opens the sheet', (ledgerHtml.match(/data-math="' \+ esc\(row\.id\) \+ '"/g) || []).length >= 2 && /ShowMath\.mount\(/.test(ledgerHtml));
   checkTrue('the sheet is built once and never holds an input', /LIVE-FORM: built once/.test(fs.readFileSync(path.join(ROOT, 'shared/showmath.js'), 'utf8')) && !/<input/.test(fs.readFileSync(path.join(ROOT, 'shared/showmath.js'), 'utf8')));
   const sheet = ShowMath.sheetHtml(nw);
   checkTrue('the sheet names the function, the file and the inputs', /Worked out by Ownership\.FIELDS\.netWorth\.read/.test(sheet) && /What would change this most/.test(sheet) && /Each input/.test(sheet));
@@ -13305,13 +13344,13 @@ section('I2, J2, J3, J6: the cost of not knowing, the Comeback, the real pay cyc
   /* -- J2: the Comeback ----------------------------------------------------------- */
   const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
   check('21 days', require(path.join(ROOT, 'shared/progress.js')).COMEBACK_DAYS, 21);
-  checkTrue('the last visit is a preference and the due mark is set on the way in, never on the Comeback itself', /Prefs\.set\('visit\.last', now\)/.test(prog) && /roomId !== 'comeback'/.test(prog));
+  checkTrue('the last visit is a preference and the due mark is set on the way in, never on the page that clears it', /Prefs\.set\('visit\.last', now\)/.test(prog) && /roomId !== 'ledger'/.test(prog));
   checkTrue('the front door sends people there once, only with numbers to look at', /comebackDue\(window\)/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /panelReady\(h\) && !\/comeback=seen\//.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
-  const cb = fs.readFileSync(path.join(ROOT, 'rooms/comeback.html'), 'utf8');
-  checkTrue('the Comeback asks only the moving rows, oldest first, writes through the owner, ends on the strip', /LedgerRows\.moving\(h, TABLES\)/.test(cb) && /Oldest first/.test(cb) && /Ownership\.write\(r\.row\.id, v, r\.item \? \{ itemId: r\.item\.id \} : null\)/.test(cb) && /SinceLast\.strip\(h, last, TABLES\)/.test(cb) && /LIVE-FORM: built once/.test(cb));
+  const cb = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('since last time asks only the moving rows, oldest first, writes through the owner, ends on the strip', /LedgerRows\.moving\(h, TABLES\)/.test(cb) && /Oldest first/.test(cb) && /Ownership\.write\(r\.row\.id, v, r\.item \? \{ itemId: r\.item\.id \} : null\)/.test(cb) && /SinceLast\.strip\(h, latest, TABLES\)/.test(cb) && /LIVE-FORM: built once/.test(cb));
   const BANNED = ['haven\'t', 'missed', 'failed', 'streak', 'gap', 'behind', 'should have', 'forgot', 'lapsed', 'overdue'];
-  const copy = cb.split('<script src')[0].toLowerCase();
-  checkTrue('no banned word in the Comeback copy', BANNED.every(w => copy.indexOf(w) === -1), BANNED.filter(w => copy.indexOf(w) !== -1).join(','));
+  const copy = cb.slice(cb.indexOf('<section id="view-since"'), cb.indexOf('<!-- ================= ARRANGEMENTS')).toLowerCase();
+  checkTrue('no banned word in the since-last-time copy', BANNED.every(w => copy.indexOf(w) === -1), BANNED.filter(w => copy.indexOf(w) !== -1).join(','));
   checkTrue('test/comeback.js sets the clock 45 days ahead and holds the banned list', /45 \* 86400000/.test(fs.readFileSync(path.join(ROOT, 'test/comeback.js'), 'utf8')) && /BANNED/.test(fs.readFileSync(path.join(ROOT, 'test/comeback.js'), 'utf8')));
 
   /* -- J3: the real pay cycle --------------------------------------------------------- */

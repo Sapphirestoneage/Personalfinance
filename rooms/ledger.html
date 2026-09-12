@@ -34,8 +34,22 @@
   three), and "N more unlock as you use the app". The nine spheres stay,
   under a fold, until their fate is decided (D-207 proposes it).
 
-  LIVE-FORM: built once. The search box is in the HTML and only its value
-  is read; every list below it holds no inputs and is rewritten freely.
+  THE HATS (D-228): navigation is not a room, so the six pages that were
+  only ways in are views of this one, switched by the hash and never
+  rebuilt: the doors (default), Round 1 (#round-1, was First Round), all at
+  once (#all-at-once, was Express), since last time (#since-last-time, was
+  Refresh and Welcome Back, which asked the same question twice),
+  arrangements (#arrangements, was Front Doors) and the route (#route, was
+  the Walk-Through). Every one of them writes through Ownership.write, the
+  same path the doors use. Not one of them is a second store.
+
+  LIVE-FORM: built once, and that is the whole reason the views are
+  [hidden] rather than rendered on demand. The search box, the five Round 1
+  boxes, every all-at-once control and every since-last-time row is built
+  one time at boot and only ever has its .value written or its [hidden]
+  toggled. Nothing is rebuilt while a finger is in a box: a view that
+  rebuilt its inputs when you switched to it would close the soft keyboard
+  under a finger, which is D-034.
 -->
 <style>
   .target-wrap { position: sticky; top: 0; z-index: 3; background: var(--color-bg); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
@@ -119,6 +133,406 @@
   .door-open .na { font-size: var(--text-xs); color: var(--color-text-faint); font-style: italic; }
   #spheres-fold { margin-top: var(--space-5); }
   #spheres-fold > summary { font-size: var(--text-sm); }
+
+  /* ---- The hats: which way in you are using (D-228) ---------------------- */
+  .hats { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-3) 0 var(--space-4); }
+  .hats a { font-family: var(--font-display); font-size: var(--text-sm); text-decoration: none;
+    border: 1px solid var(--color-border); border-radius: var(--radius-pill);
+    padding: 4px 12px; color: var(--color-text-muted); min-height: 32px; }
+  .hats a:hover { color: var(--color-text); border-color: var(--color-border-active); }
+  .hats a[aria-current="page"] { background: var(--color-accent); border-color: var(--color-accent);
+    color: var(--color-accent-contrast); }
+  #view-express { max-width: 720px; }
+  #view-round1 { max-width: 560px; }
+  #view-round1 .switch, #view-express .switch { font-size: var(--text-sm); margin: var(--space-2) 0 0; }
+  #view-since .strip { font-size: var(--text-md); margin: var(--space-2) 0 0; }
+  #view-since .moved { font-size: var(--text-xs); color: var(--color-text-muted); }
+  #view-since .moved.is-up { color: var(--color-positive); }
+  #view-since .moved.is-down { color: var(--color-caution); }
+  #view-shelves section[id] { scroll-margin-top: var(--space-4); }
+
+  /* ---- Round 1, from rooms/first-round.html (D-228) ---------------------- */
+  
+  #view-round1 main { max-width: 560px; }
+  
+  #view-round1 .screen { padding: var(--space-4) 0 var(--space-6); }
+  
+  #view-round1 .screen h2 { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.15; margin: var(--space-2) 0 var(--space-3); }
+  
+  #view-round1 .screen .why { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0 0 var(--space-4); line-height: var(--leading-loose); }
+  
+  #view-round1 .big .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
+  
+  #view-round1 .big input { font-family: var(--font-display); font-size: var(--text-2xl); min-height: 64px; width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); color: var(--color-text); }
+  
+  #view-round1 .big .affix { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-text-faint); }
+  
+  #view-round1 .choices.tall .choice { flex: 1 1 100%; min-height: 60px; font-size: var(--text-md); padding: var(--space-3) var(--space-4); }
+  
+  #view-round1 .choices.tall .choice small { display: block; font-size: var(--text-xs); color: inherit; opacity: .8; font-weight: 400; margin-top: 2px; }
+  
+  #view-round1 .nav { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; margin-top: var(--space-5); }
+  
+  #view-round1 .nav .slaf-btn--primary { min-height: 56px; min-width: 160px; font-size: var(--text-md); }
+  
+  #view-round1 .steps { font-size: var(--text-xs); color: var(--color-text-faint); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+  
+  #view-round1 .alt { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-round1 .alt summary { cursor: pointer; color: var(--color-accent-hover); }
+  
+  #view-round1 .alt .row { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+  
+  #view-round1 .alt select,
+  #view-round1 .alt input { font-size: var(--text-md); min-height: 48px; padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
+  
+  #view-round1 .insight .slaf-figure { font-size: var(--text-3xl, 2.4rem); margin: var(--space-2) 0; }
+  
+  #view-round1 .insight .line { color: var(--color-text-muted); line-height: var(--leading-loose); }
+  
+  #view-round1 .insight .rough { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
+  
+  #view-round1 .insight .door { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+  
+  #view-round1 .insight .door p { margin: 0 0 var(--space-3); font-size: var(--text-md); }
+  
+  #view-round1 .insight .door .slaf-btn--primary { min-height: 56px; font-size: var(--text-md); }
+  
+  #view-round1 .insight .needs { color: var(--color-text-muted); }
+  
+  #view-round1 .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* ---- All at once, from rooms/express.html (D-228) ---------------------- */
+  
+  #view-express main { max-width: 720px; }
+  
+  #view-express .xbar { position: sticky; top: 0; z-index: 4; background: var(--color-bg); border-bottom: 1px solid var(--color-border); padding: var(--space-2) 0; display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+  
+  #view-express .xbar .pct { font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-express .xbar .pct b { color: var(--color-text); font-family: var(--font-display); font-weight: 500; }
+  
+  #view-express .xbar .jump { display: flex; gap: var(--space-1); margin-left: auto; flex-wrap: wrap; }
+  
+  #view-express .xbar .jump a { font-family: var(--font-display); font-size: var(--text-sm); text-decoration: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px 10px; color: var(--color-text-muted); }
+  
+  #view-express .xbar .jump a:hover { color: var(--color-text); border-color: var(--color-border-active); }
+  
+  #view-express details.xdoor { margin-top: var(--space-4); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: 0 var(--space-3) var(--space-3); }
+  
+  #view-express details.xdoor > summary { cursor: pointer; list-style: none; padding: var(--space-3) 0; display: flex; gap: var(--space-2); align-items: baseline; }
+  
+  #view-express details.xdoor > summary::-webkit-details-marker { display: none; }
+  
+  #view-express details.xdoor > summary .letter { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-accent-hover); }
+  
+  #view-express details.xdoor > summary .label { font-family: var(--font-display); font-size: var(--text-lg); }
+  
+  #view-express details.xdoor > summary .say { font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-express details.xdoor > summary .count { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-express details.xlvl { margin-top: var(--space-2); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
+  
+  #view-express details.xlvl > summary { cursor: pointer; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: var(--space-1) 0; }
+  
+  #view-express .xrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-2) var(--space-3); align-items: start; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-express .xrow:first-of-type { border-top: 0; }
+  
+  #view-express .xrow .lab { font-size: var(--text-sm); padding-top: 8px; }
+  
+  #view-express .xrow .lab .unit { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-express .xrow .xstates { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-top: var(--space-1); min-height: 20px; }
+  
+  #view-express .xrow .xstates .slaf-btn--small { min-height: 32px; padding: 0 var(--space-2); font-size: var(--text-xs); }
+  
+  #view-express .xrow .slaf-unit { margin-left: 0; }
+  
+  #view-express .xadd [data-x-add-last4] { width: 6.5em; flex: 0 0 auto; }
+  
+  #view-express .xrow .lab .own { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-express .xrow .ctl .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
+  
+  #view-express .xrow .ctl input,
+  #view-express .xrow .ctl select { font-size: var(--text-md); min-height: 44px; width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
+  
+  #view-express .xrow .ctl .affix { color: var(--color-text-faint); font-size: var(--text-sm); white-space: nowrap; }
+  
+  #view-express .xrow .ctl .choices .choice { min-height: 40px; font-size: var(--text-xs); }
+  
+  #view-express .xrow .ctl .computed { font-family: var(--font-display); color: var(--color-text-muted); padding-top: 8px; }
+  
+  #view-express .xrow .ctl .computed.is-blank { color: var(--color-text-faint); font-style: italic; font-family: var(--font-body); font-size: var(--text-sm); }
+  
+  #view-express .xrow .sug { grid-column: 2; font-size: var(--text-xs); }
+  
+  #view-express .xrow .sug .slaf-use-this { font-size: var(--text-xs); }
+  
+  #view-express .xrow .sug .how { color: var(--color-text-faint); display: block; margin-top: 2px; }
+  
+  #view-express .xrow .saved { grid-column: 2; font-size: var(--text-xs); color: var(--color-positive); min-height: 1em; }
+  
+  #view-express .xitem { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-sm); }
+  
+  #view-express .xitem .xhead { display: flex; gap: var(--space-2); align-items: baseline; }
+  
+  #view-express .xitem .xhead b { font-family: var(--font-display); font-weight: 500; }
+  
+  #view-express .xitem .xhead .kind { font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-express .xitem .xhead .rm { margin-left: auto; font-size: var(--text-xs); }
+  
+  #view-express .xadd { margin-top: var(--space-2); display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+  
+  #view-express .xadd input,
+  #view-express .xadd select { font-size: var(--text-sm); min-height: 40px; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
+  
+  #view-express .xadd input { flex: 1 1 160px; }
+  
+  #view-express .xhint { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  
+  #view-express .switch { font-size: var(--text-sm); margin: var(--space-2) 0 0; }
+  
+  #view-express .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media (max-width: 480px) { 
+  #view-express .xrow { grid-template-columns: 1fr; } 
+  #view-express .xrow .sug,
+  #view-express .xrow .saved { grid-column: 1; } }
+
+  /* ---- Since last time, from rooms/refresh.html (D-228) ------------------ */
+  
+  #view-since .room-back:hover { text-decoration: underline; }
+  
+  #view-since .row { display: grid; grid-template-columns: 1fr; gap: var(--space-1); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-since .row:first-child { border-top: none; padding-top: 0; }
+  
+  #view-since .row .top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  
+  #view-since .row .nm { font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-since .row .age { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  
+  #view-since .row .age.is-stale { color: var(--color-caution); }
+  
+  #view-since .row .age.is-fresh { color: var(--color-positive); }
+  
+  #view-since .row .where { font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-since .row .where a { color: var(--color-accent-hover); }
+  
+  #view-since .row .ctl { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+  
+  #view-since .row .ctl .slaf-input-shell { flex: 1 1 12em; }
+  
+  #view-since .row .since { font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-since .row .since.is-up { color: var(--color-positive); }
+  
+  #view-since .row .since.is-down { color: var(--color-caution); }
+  
+  #view-since .row.is-confirmed .age { color: var(--color-positive); }
+  
+  #view-since .still { min-height: 44px; white-space: nowrap; }
+  
+  #view-since .summary { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); }
+  
+  #view-since .actions { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
+  
+  #view-since .empty { font-size: var(--text-sm); color: var(--color-text-faint); }
+  
+  #view-since .done-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  
+  #view-since .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-since .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* ---- Arrangements, from rooms/doors.html (D-228) ----------------------- */
+  
+  #view-shelves section[id] { scroll-margin-top: var(--space-4); }
+
+  /* ---- The picker ------------------------------------------------------- */
+  
+  #view-shelves .picker { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-shelves .pick {
+    font: inherit; font-size: var(--text-sm); color: var(--color-text);
+    background: var(--color-surface-raised); border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-pill); padding: var(--space-2) var(--space-3);
+    cursor: pointer; min-height: 32px; text-align: left;
+  }
+  
+  #view-shelves .pick:hover { border-color: var(--color-accent); }
+  
+  #view-shelves .pick[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent);
+    color: var(--color-accent-contrast); font-weight: 600; }
+  
+  #view-shelves .pick .code { font-size: var(--text-xs); opacity: .7; margin-right: 4px; }
+  
+  #view-shelves .vol-h { flex-basis: 100%; font-size: var(--text-xs); text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); margin-top: var(--space-2); }
+
+  /* ---- The arrangement -------------------------------------------------- */
+  
+  #view-shelves .lay-head h2 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0; }
+  
+  #view-shelves .lay-by { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow);
+    color: var(--color-accent-hover); margin: var(--space-1) 0 0; }
+  
+  #view-shelves .lay-premise { color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
+  
+  #view-shelves .lay-meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); margin-top: var(--space-3);
+    align-items: center; font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-shelves .lay-meta .ok { color: var(--color-positive); }
+  
+  #view-shelves .lay-meta .bad { color: var(--color-critical-text); }
+
+  
+  #view-shelves .bay { border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    margin-top: var(--space-3); overflow: hidden; }
+  
+  #view-shelves .bay.is-warn { border-color: var(--color-caution); }
+  
+  #view-shelves .bay-h { padding: var(--space-3); border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-raised); }
+  
+  #view-shelves .bay-h .nm { font-family: var(--font-display); font-weight: 600; font-size: var(--text-base); }
+  
+  #view-shelves .bay-h .ct { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: var(--space-2); }
+  
+  #view-shelves .bay-h .nt { display: block; font-size: var(--text-sm); color: var(--color-text-muted);
+    margin-top: var(--space-1); line-height: var(--leading-loose); }
+  
+  #view-shelves .bay-h .dropped { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+
+  
+  #view-shelves .doors { list-style: none; margin: 0; padding: 0; }
+  
+  #view-shelves .doors li { border-top: 1px solid var(--color-border); }
+  
+  #view-shelves .doors li:first-child { border-top: 0; }
+  
+  #view-shelves .door { display: block; padding: var(--space-3); text-decoration: none; color: var(--color-text); }
+  
+  #view-shelves .door:hover { background: var(--color-surface-raised); }
+  
+  #view-shelves .door .t { font-weight: 600; font-size: var(--text-sm); }
+  
+  #view-shelves .door .t .hub { font-size: var(--text-xs); font-weight: normal; color: var(--color-accent-hover);
+    border: 1px solid currentColor; border-radius: var(--radius-pill); padding: 0 5px; margin-left: var(--space-2); }
+  
+  #view-shelves .door .b { display: block; font-size: var(--text-xs); color: var(--color-text-muted);
+    margin-top: 2px; line-height: var(--leading-loose); }
+
+  /* ---- Tree mode -------------------------------------------------------- */
+  
+  #view-shelves .three { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-shelves .big-choice { font: inherit; text-align: left; cursor: pointer; color: var(--color-text);
+    background: var(--color-surface-raised); border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md); padding: var(--space-4); min-height: 64px; }
+  
+  #view-shelves .big-choice:hover { border-color: var(--color-accent); }
+  
+  #view-shelves .big-choice .t { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 600; }
+  
+  #view-shelves .big-choice .s { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-top: 2px; }
+  
+  #view-shelves .crumb { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center;
+    margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-shelves .crumb button { font: inherit; font-size: var(--text-sm); color: var(--color-accent-hover);
+    background: none; border: 0; cursor: pointer; padding: 0; min-height: 32px; text-decoration: underline; }
+
+  /* ---- Search mode ------------------------------------------------------ */
+  /* Written into the markup, hidden when unused — NEVER regenerated (D-034). */
+  
+  #view-shelves #search-host { margin-top: var(--space-3); }
+  
+  #view-shelves #search-host input { width: 100%; font: inherit; padding: var(--space-3);
+    background: var(--color-surface); color: var(--color-text);
+    border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); }
+  
+  #view-shelves .hits { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+
+  /* ---- Flow mode -------------------------------------------------------- */
+  
+  #view-shelves .flow-nav { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-shelves .flow-nav > * { min-width: 0; }
+
+  /* ---- The route, from rooms/walk.html (D-228) --------------------------- */
+  
+  #view-route .top { text-align: center; }
+  
+  #view-route .top .big { font-family: var(--font-display); font-size: var(--text-3xl); line-height: 1.1; }
+  
+  #view-route .top .sub { color: var(--color-text-muted); font-size: var(--text-sm); margin-top: var(--space-1); }
+  
+  #view-route .track { height: 10px; margin: var(--space-3) 0; border-radius: 999px; background: var(--color-border); overflow: hidden; }
+  
+  #view-route .track i { display: block; height: 100%; background: var(--color-accent); border-radius: 999px; transition: width .4s ease; }
+  
+  #view-route .track.is-done i { background: var(--color-positive); }
+  
+  #view-route .top-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: center; }
+  
+  #view-route .top-acts > * { min-width: 0; }
+
+  
+  #view-route .stage { margin-top: var(--space-4); }
+  
+  #view-route .stage-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+  
+  #view-route .stage-num { font-family: var(--font-display); font-size: var(--text-sm); color: var(--color-text-faint);
+    border: 1px solid var(--color-border); border-radius: 999px; min-width: 26px; text-align: center; padding: 1px 6px; }
+  
+  #view-route .stage-title { font-family: var(--font-display); font-size: var(--text-lg); margin: 0; }
+  
+  #view-route .stage-count { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  
+  #view-route .stage.is-complete .stage-count { color: var(--color-positive); }
+  
+  #view-route .stage-goal { color: var(--color-text-muted); font-size: var(--text-sm); margin: var(--space-2) 0 0;
+    line-height: var(--leading-loose); }
+
+  
+  #view-route .steps { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-route .steps li { border-top: 1px solid var(--color-border); padding: var(--space-3) 0; }
+  
+  #view-route .step-head { display: flex; align-items: baseline; gap: var(--space-2); }
+  /* The mark is a status, not a control: the buttons below it are the
+     control. Making it a button too would give the same action two places
+     to live and two states to keep in step. */
+  
+  #view-route .mark { flex: 0 0 auto; width: 1.6em; font-size: var(--text-sm); }
+  
+  #view-route .mark.is-done { color: var(--color-positive); }
+  
+  #view-route .mark.is-skipped { color: var(--color-text-faint); }
+  
+  #view-route .step-link { font-weight: 600; text-decoration: none; color: var(--color-text); }
+  
+  #view-route .step-link:hover { color: var(--color-accent-hover); }
+  
+  #view-route li.is-dealt .step-link { color: var(--color-text-muted); font-weight: normal; }
+  
+  #view-route .step-blurb { margin: var(--space-1) 0 0 1.6em; font-size: var(--text-sm);
+    color: var(--color-text-muted); line-height: var(--leading-loose); }
+  
+  #view-route .step-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-2) 0 0 1.6em; }
+  
+  #view-route .step-acts > * { min-width: 0; }
+  
+  #view-route .step-said { font-size: var(--text-xs); color: var(--color-text-faint); align-self: center; }
+
+  
+  #view-route .finished { border-color: var(--color-positive); }
 </style>
 </head>
 <body class="slaf">
@@ -127,10 +541,24 @@
   <header class="slaf-room-head">
     <span class="slaf-eyebrow">Home</span>
     <h1>The Ledger</h1>
-    <p class="slaf-lede" id="lede-home">Which one do you want to go into now?</p>
+    <p class="slaf-lede">Every number the app can hold. Six ways in; they all write the same rows.</p>
   </header>
 
-  <p class="understand" id="understand" aria-live="polite"></p>
+  <nav class="hats" id="hats" aria-label="Ways into the same rows">
+    <a href="#doors-home"      data-view="view-doors">The doors</a>
+    <a href="#round-1"         data-view="view-round1">Round 1</a>
+    <a href="#all-at-once"     data-view="view-express">All at once</a>
+    <a href="#since-last-time" data-view="view-since">Since last time</a>
+    <a href="#arrangements"    data-view="view-shelves">Arrangements</a>
+    <a href="#route"           data-view="view-route">The route</a>
+  </nav>
+
+  <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ================= THE DOORS (the default view) ==================== -->
+  <section id="view-doors">
+  <p class="slaf-lede" id="lede-home">Which one do you want to go into now?</p>
+  <p class="understand" id="understand" aria-live="polite">You understand <b id="understand-pct">…</b> of your financial picture.</p>
   <p class="since" id="since" hidden></p>
   <p class="since"><a href="progress-card.html">Share progress, not balances →</a></p>
 
@@ -165,6 +593,184 @@
   <p class="empyrean" id="empyrean">Beyond the nine: What Matters. No numbers there.</p>
 
   <section id="backup" aria-label="Backup"></section>
+  </section>
+
+  <!-- ================= ROUND 1 (was rooms/first-round.html) ============= -->
+  <section id="view-round1" hidden>
+  <p class="slaf-lede">Five questions. Under a minute. Then one thing the numbers say.</p>
+  <section class="screen slaf-card" id="q-age">
+    <span class="steps">1 of 5</span>
+    <h2>How old are you?</h2>
+    <p class="why">Every age-based figure starts here: the buffer target, the milestones, the FI date.</p>
+    <div class="slaf-field big">
+      <label class="slaf-label" for="in-age">Age</label>
+      <span class="slaf-input-shell"><input id="in-age" type="text" inputmode="numeric" placeholder="e.g. 34" autocomplete="off"/></span>
+    </div>
+    <details class="alt" id="alt-dob">
+      <summary>Know the month and year? Use those instead.</summary>
+      <div class="row">
+        <select id="in-month" aria-label="Birth month"><option value="">Month</option><option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select>
+        <input id="in-year" type="text" inputmode="numeric" placeholder="Year, e.g. 1992" aria-label="Birth year"/>
+      </div>
+    </details>
+    <div class="nav"><span></span><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-zip">Next →</button></div>
+  </section>
+
+  <section class="screen slaf-card" id="q-zip" hidden>
+    <span class="steps">2 of 5</span>
+    <h2>Your ZIP code?</h2>
+    <p class="why">It suggests your state, which sets state tax and the unemployment cap. Nothing leaves this browser.</p>
+    <div class="slaf-field big">
+      <label class="slaf-label" for="in-zip">ZIP</label>
+      <span class="slaf-input-shell"><input id="in-zip" type="text" inputmode="numeric" placeholder="e.g. 12203" maxlength="5" autocomplete="postal-code"/></span>
+    </div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-age">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-situation">Next →</button></div>
+  </section>
+
+  <section class="screen slaf-card" id="q-situation" hidden>
+    <span class="steps">3 of 5</span>
+    <h2>Right now, you are…</h2>
+    <p class="why">This decides which rows apply to you at all. Nothing that does not apply is ever asked.</p>
+    <div class="choices tall" data-choices="situation" role="group" aria-label="Situation">
+      <button type="button" class="choice" data-situation="employed" aria-pressed="false">Working<small>A paycheque from an employer</small></button>
+      <button type="button" class="choice" data-situation="unemployed" aria-pressed="false">Between jobs<small>The runway is the number now</small></button>
+      <button type="button" class="choice" data-situation="selfEmployed" aria-pressed="false">Self-employed<small>Your own work, no employer</small></button>
+      <button type="button" class="choice" data-situation="both" aria-pressed="false">A mix<small>A job and your own work</small></button>
+    </div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-zip">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-pay">Next →</button></div>
+  </section>
+
+  <section class="screen slaf-card" id="q-pay" hidden>
+    <span class="steps">4 of 5</span>
+    <h2 id="pay-heading">Pay, a year?</h2>
+    <p class="why" id="pay-why">Before tax. A rough figure is fine; it can be sharpened later.</p>
+    <div class="slaf-field big">
+      <label class="slaf-label" for="in-pay" id="pay-label">Gross pay, a year</label>
+      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-pay" type="text" inputmode="decimal" placeholder="e.g. 62,000" autocomplete="off"/></span>
+    </div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-situation">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-cash">Next →</button></div>
+  </section>
+
+  <section class="screen slaf-card" id="q-cash" hidden>
+    <span class="steps">5 of 5</span>
+    <h2>Cash on hand?</h2>
+    <p class="why">Checking, savings, anything you could spend this week. Not investments.</p>
+    <div class="slaf-field big">
+      <label class="slaf-label" for="in-cash">Cash and savings</label>
+      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-cash" type="text" inputmode="decimal" placeholder="e.g. 3,000" autocomplete="off"/></span>
+    </div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-pay">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="insight" id="btn-finish">See what the numbers say →</button></div>
+  </section>
+
+  <section class="screen slaf-card insight" id="insight" hidden aria-live="polite">
+    <span class="steps">The first thing the numbers say</span>
+    <p class="slaf-figure" id="ins-headline">…</p>
+    <p class="line" id="ins-line"></p>
+    <p class="rough" id="ins-rough" hidden></p>
+    <div class="door">
+      <p id="ins-door"></p>
+      <a class="slaf-btn slaf-btn--primary" id="ins-open" href="ledger.html">Open the door →</a>
+      <a class="slaf-btn slaf-btn--quiet" href="#doors-home">Or see every door</a>
+    </div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-cash">← Back</button><span></span></div>
+  </section>
+  </section>
+
+  <!-- ================= ALL AT ONCE (was rooms/express.html) ============= -->
+  <section id="view-express" hidden>
+  <p class="slaf-lede">Every question on one page, grouped by door and level. Fill what you know, skip the rest; each box saves the moment you leave it.</p>
+  <p class="switch">Rather be walked through it? <a href="#round-1">Five questions, one a screen.</a></p>
+  <div class="xbar" id="xbar">
+    <span class="pct">You understand <b id="xpct-pct">…</b> of your financial picture.</span>
+    <nav class="jump" id="xjump" aria-label="Jump to a door"></nav>
+  </div>
+
+  <div id="xform">
+    <details class="xdoor" id="x-D" open><summary><span class="letter">D</span><span class="label">Debt</span><span class="say">what you owe</span><span class="count" data-x-count="D"></span></summary><div class="xbody"></div></details>
+    <details class="xdoor" id="x-A" open><summary><span class="letter">A</span><span class="label">Assets</span><span class="say">what you own</span><span class="count" data-x-count="A"></span></summary><div class="xbody"></div></details>
+    <details class="xdoor" id="x-I" open><summary><span class="letter">I</span><span class="label">Income</span><span class="say">what comes in</span><span class="count" data-x-count="I"></span></summary><div class="xbody"></div></details>
+    <details class="xdoor" id="x-T" open><summary><span class="letter">T</span><span class="label">Taxes</span><span class="say">what the state takes</span><span class="count" data-x-count="T"></span></summary><div class="xbody"></div></details>
+    <details class="xdoor" id="x-E" open><summary><span class="letter">E</span><span class="label">Expenses</span><span class="say">what goes out</span><span class="count" data-x-count="E"></span></summary><div class="xbody"></div></details>
+    <details class="xdoor" id="x-you" open><summary><span class="letter">You</span><span class="label">You</span><span class="say">who this is for</span><span class="count" data-x-count="you"></span></summary><div class="xbody"></div></details>
+  </div>
+  </section>
+
+  <!-- ====== SINCE LAST TIME (was rooms/refresh.html + comeback.html) ==== -->
+  <section id="view-since" hidden>
+  <p class="slaf-lede">Only the numbers that move: balances, rates, spending, pay — oldest first. Each box holds the last number you gave. Tap Still true, or type the new one.</p>
+
+  <section class="slaf-card" id="fields">
+    <span class="slaf-eyebrow">The numbers that move</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-2)">Still true?</h2>
+    <p class="summary" id="since-line"></p>
+    <div id="rows-moving"></div>
+    <p class="empty" id="rows-empty" hidden>Nothing that moves has a value yet. <a href="#doors-home">The doors</a> hold the first questions.</p>
+    <p class="empty" id="blank-line" hidden></p>
+  </section>
+
+  <section class="slaf-card" id="done" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Snapshot</span>
+    <h2 style="margin:var(--space-2) 0 0">Then freeze today's numbers</h2>
+    <p class="strip" id="strip">Finish the rows and this line says what moved and what you learned.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      One snapshot carrying every dashboard instrument, so the next time you
+      open it the panel can say what moved since today — not just what it is.
+    </p>
+    <div class="actions">
+      <span class="done-note" id="done-note" style="margin:0"></span>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-done">Save &amp; snapshot →</button>
+    </div>
+  </section>
+  </section>
+
+  <!-- ================= ARRANGEMENTS (was rooms/doors.html) ============== -->
+  <section id="view-shelves" hidden>
+  <p class="slaf-lede">Twenty ways into the same rooms. The rooms never change — only the shelves. Pick whichever matches how you actually think about money; you can change it back any time.</p>
+  <section class="slaf-card" id="out-pick">
+    <span class="slaf-eyebrow">How would you like these arranged?</span>
+    <div class="picker" id="picker"></div>
+  </section>
+
+  <section class="slaf-card" id="out-door" style="margin-top:var(--space-4)">
+    <div class="lay-head" id="lay-head"></div>
+    <div id="search-host" hidden>
+      <input type="search" id="lay-q" autocomplete="off" placeholder="Type anything — rent, retire, car, behind on bills" aria-label="Search every room"/>
+      <p class="hits" id="hits"></p>
+    </div>
+    <div id="lay-body"></div>
+  </section>
+
+  <details class="drawer" id="out-why" style="margin-top:var(--space-4)">
+    <summary>Why this arrangement, and what it costs</summary>
+    <div id="why-body"></div>
+  </details>
+  </section>
+
+  <!-- ================= THE ROUTE (was rooms/walk.html) ================== -->
+  <section id="view-route" hidden>
+  <p class="slaf-lede">This app has a lot of rooms. This is the short route through the ones that matter for you — five sets, in order, with an end.</p>
+  <section class="slaf-card top" id="out-top"></section>
+  <div id="out-stages"></div>
+
+  <details class="drawer" style="margin-top:var(--space-4)">
+    <summary>What this checklist is, and is not</summary>
+    <div>
+      <p>Nothing in this app is locked behind this list. Every room is open
+      from the map at any time, in any order, whether you use this or not.
+      This is a suggested route with somewhere to tick things off.</p>
+      <p>A step is done when <em>you</em> say it is — not when the room has a
+      number in every box. Those are different things. A room can be full of
+      figures you do not trust yet, and a room can be finished the moment you
+      have decided it does not change anything.</p>
+      <p><strong>“Not for me” is a real answer.</strong> It counts as dealt
+      with, it moves the bar, and it is not held against you anywhere. You
+      can change your mind on any step later.</p>
+      <p>Clearing the list clears the ticks and nothing else. Every figure
+      you have entered stays exactly where it is.</p>
+      <p id="reset-line"></p>
+    </div>
+  </details>
+  </section>
 
   <p class="disclaimer">Not financial advice. Nothing here is sent anywhere; every figure stays in this browser.</p>
 </main>
@@ -190,6 +796,7 @@
 <script src="../engines/variance.js"></script>
 <script src="../engines/rerank.js"></script>
 <script src="../shared/ledger-rows.js"></script>
+<script src="../shared/ask.js"></script>
 <script src="../shared/spheres.js"></script>
 <script src="../shared/backup.js"></script>
 <script src="../engines/tax.js"></script>
@@ -204,6 +811,14 @@
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/reachable.js"></script>
 <script src="../engines/notknowing.js"></script>
+<script src="../engines/layouts.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../engines/skills.js"></script>
+<script src="../shared/instruments.js"></script>
 <script>
 (function () {
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry, Progress = SLAF.Progress,
@@ -266,7 +881,8 @@
     return Money.isOk(row.result) ? String(row.result.value) : '';
   }
   function target(row) {
-    if (/^prefs\./.test(row.path)) return Ownership.linkTo('doors', 'inputs', 'ledger');
+    /* Front Doors is the arrangements view of this page now (D-228). */
+    if (/^prefs\./.test(row.path)) return '#arrangements';
     var f = Ownership.FIELDS[row.id];
     if (!f) return null;
     return Ownership.linkTo(f.owner, f.anchor, 'ledger');
@@ -381,8 +997,11 @@
         + (isRec ? '<span class="why">' + esc(rec.reason) + '</span>' : '')
         + '</a>';
     }).join('');
+    /* The sentence is in the markup and only the number is written, as text
+       (D-228): one less innerHTML that concatenates, on a page that now
+       renders the same line twice. */
     var u = Doors.understanding(h, TABLES, SUGLIST, TABLES.confidenceWeights);
-    el('understand').innerHTML = 'You understand <b>' + u.percent + '%</b> of your financial picture.';
+    el('understand-pct').textContent = u.percent + '%';
     /* Since last time, split: money that moved, knowledge added (H2, D-211). */
     var last = Spine.latestSnapshot ? Spine.latestSnapshot() : null;
     var strip = last && SLAF.SinceLast ? SLAF.SinceLast.strip(h, last, TABLES) : null;
@@ -436,9 +1055,32 @@
     el('lede-home').textContent = id ? 'One door at a time. Confirm what is suggested, add the next three, and the rest unlocks as you go.' : 'Which one do you want to go into now?';
     if (id) paintDoor(Spine.getProfile(), id);
   }
+  /* ---- The hats: one page, six ways in (D-228) ---------------------------
+     Which view is on screen is read off the hash and nothing else, so every
+     old link keeps landing where it meant to. Switching hides and shows;
+     it never rebuilds, because four of the six hold live inputs. */
+  var VIEWS = [
+    { id: 'view-round1',  hash: '#round-1',          match: /^#round-1/ },
+    { id: 'view-express', hash: '#all-at-once',      match: /^#(all-at-once|x-)/ },
+    { id: 'view-since',   hash: '#since-last-time',  match: /^#since-last-time/ },
+    { id: 'view-shelves', hash: '#arrangements',     match: /^#arrangements/ },
+    { id: 'view-route',   hash: '#route',            match: /^#route/ },
+    { id: 'view-doors',   hash: '#doors-home',       match: /.*/ }
+  ];
+  function routeView() {
+    var h = location.hash || '';
+    var on = VIEWS.filter(function (v) { return v.match.test(h); })[0] || VIEWS[VIEWS.length - 1];
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var mine = a.getAttribute('data-view') === on.id;
+      a.setAttribute('aria-current', mine ? 'page' : 'false');
+    });
+    return on.id;
+  }
   function routeHash() {
+    var view = routeView();
     var m = /^#door-(D|A|I|T|E|you)$/.exec(location.hash || '');
-    showDoor(m ? m[1] : null);
+    showDoor(view === 'view-doors' && m ? m[1] : null);
     if (!m && location.hash === '#doors-home') { try { history.replaceState(null, '', location.pathname); } catch (e) { /* fine */ } }
   }
 
@@ -488,6 +1130,1101 @@
     render();
   }).catch(function (err) {
     el('target-line').textContent = 'The rows could not be loaded. (' + err + ')';
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Reference = SLAF.Reference,
+      LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Doors = SLAF.Doors;
+  var TABLES = null;
+  var ORDER = ['q-age', 'q-zip', 'q-situation', 'q-pay', 'q-cash', 'insight'];
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function h() { return Spine.getProfile(); }
+  function situation() { var p = Schema.primaryPerson(h()); return p ? p.employmentStatus : null; }
+
+  /* ---- Screens: one at a time, never rebuilt ------------------------------ */
+  function show(id) {
+    ORDER.forEach(function (s) { el(s).hidden = s !== id; });
+    if (id === 'insight') paintInsight();
+    if (id === 'q-pay') paintPayLabel();
+    /* The hash names the VIEW first and the screen second, because the
+       Ledger is one page now and the hash has to say which hat it is
+       wearing. Only write it while this view is the one on screen —
+       prefilling at boot must not drag a reader off the doors. */
+    if (!document.getElementById('view-round1').hidden) {
+      try { history.replaceState(null, '', '#round-1' + (id === 'q-age' ? '' : '-' + id)); } catch (e) { /* fine */ }
+      window.scrollTo(0, 0);
+    }
+  }
+  function paintPayLabel() {
+    var between = situation() === 'unemployed';
+    el('pay-heading').textContent = between ? 'Your last pay, a year?' : 'Pay, a year?';
+    el('pay-label').textContent = between ? 'Your last pay, a year' : 'Gross pay, a year';
+    el('pay-why').textContent = between ? 'Before tax, from the last job. It sets the benefit estimate and the tax rate.' : 'Before tax. A rough figure is fine; it can be sharpened later.';
+  }
+
+  /* ---- Writes: each through its owner's path -------------------------------- */
+  function writeAge() {
+    var m = el('in-month').value, y = String(el('in-year').value || '').replace(/\D/g, '');
+    var dob = null;
+    if (m && y.length === 4) dob = y + '-' + m + '-01';
+    else {
+      var raw = String(el('in-age').value || '').replace(/\D/g, '');
+      if (raw !== '') {
+        var n = Number(raw);
+        if (n >= 1 && n <= 120) { var now = new Date(); dob = Schema.localDay(new Date(now.getFullYear() - n, now.getMonth(), 1)); }
+      }
+    }
+    var p = Schema.primaryPerson(h());
+    if ((p && p.dob) !== dob && (dob || (p && p.dob))) Ownership.write('dob', dob);
+  }
+  function writeZip() {
+    var z = String(el('in-zip').value || '').replace(/\D/g, '').slice(0, 5);
+    if ((h().zip || null) !== (z.length === 5 ? z : null)) Ownership.write('zip', z);
+  }
+  function writeSituation(v) {
+    if (situation() !== v) Ownership.write('employmentStatus', v);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === v ? 'true' : 'false'); });
+    paintPayLabel();
+  }
+  function writePay() {
+    var cents = Money.parseMoney(el('in-pay').value);
+    var between = situation() === 'unemployed';
+    var current = between ? Schema.unemploymentOf(h()).lastGrossAnnualCents : (Money.isOk(Schema.grossAnnualIncomeCents(h())) ? Schema.grossAnnualIncomeCents(h()).value : null);
+    if (cents === current || (cents === null && current === null)) return;
+    if (cents === null && current !== null && String(el('in-pay').value).trim() === '') return;   /* a blank never erases */
+    if (cents === null) return;
+    Ownership.write(between ? 'lastPay' : 'grossAnnualIncome', cents);
+  }
+  function writeCash() {
+    var cents = Money.parseMoney(el('in-cash').value);
+    if (cents === null) return;
+    var cur = Schema.cashCents(h());
+    if (Money.isOk(cur) && cur.value === cents) return;
+    Ownership.write('cashSavings', cents);
+  }
+  var SAVE = { 'q-age': writeAge, 'q-zip': writeZip, 'q-pay': writePay, 'q-cash': writeCash };
+
+  /* ---- The insight ---------------------------------------------------------- */
+  function paintInsight() {
+    if (!TABLES) { el('ins-headline').textContent = 'One moment…'; return; }
+    var ins = Doors.firstInsight(h(), TABLES);
+    var door = Doors.byId(ins.door.door);
+    if (!ins.ok) {
+      el('ins-headline').textContent = 'Nearly there';
+      el('ins-line').innerHTML = '<span class="needs">' + esc(ins.reason) + '</span>';
+      el('ins-rough').hidden = true;
+    } else {
+      el('ins-headline').textContent = ins.headline;
+      el('ins-line').textContent = ins.line;
+      el('ins-rough').hidden = !ins.rough;
+      el('ins-rough').textContent = ins.rough ? 'Rough: it leans on ' + ins.usedSuggestions.length + (ins.usedSuggestions.length === 1 ? ' guess' : ' guesses') + ' you can confirm or change behind the doors.' : '';
+    }
+    el('ins-door').textContent = ins.door.reason;
+    el('ins-open').textContent = 'Open ' + (door ? door.label : 'the door') + ' →';
+    el('ins-open').href = '#door-' + ins.door.door;
+  }
+
+  /* ---- Boot: prefill once, wire once ------------------------------------------ */
+  function prefill() {
+    var hh = h(), p = Schema.primaryPerson(hh);
+    var age = Schema.primaryAge(hh);
+    if (Money.isEntered(age)) el('in-age').value = String(age);
+    if (p && p.dob && /^\d{4}-\d{2}/.test(p.dob)) { el('in-month').value = p.dob.slice(5, 7); el('in-year').value = p.dob.slice(0, 4); }
+    if (hh.zip) el('in-zip').value = hh.zip;
+    var s = situation();
+    if (s) Array.prototype.forEach.call(document.querySelectorAll('[data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === s ? 'true' : 'false'); });
+    var pay = s === 'unemployed' ? Schema.unemploymentOf(hh).lastGrossAnnualCents : (Money.isOk(Schema.grossAnnualIncomeCents(hh)) ? Schema.grossAnnualIncomeCents(hh).value : null);
+    if (Money.isEntered(pay)) el('in-pay').value = Money.formatCents(pay).replace(/^\$/, '');
+    var cash = Schema.cashCents(hh);
+    if (Money.isOk(cash)) el('in-cash').value = Money.formatCents(cash.value).replace(/^\$/, '');
+    paintPayLabel();
+  }
+  document.addEventListener('click', function (ev) {
+    var t = ev.target.closest ? ev.target.closest('[data-next],[data-back],[data-situation]') : null;
+    if (!t) return;
+    if (t.hasAttribute('data-situation')) { writeSituation(t.getAttribute('data-situation')); return; }
+    var from = t.closest('.screen');
+    if (t.hasAttribute('data-next') && from && SAVE[from.id]) SAVE[from.id]();
+    show(t.getAttribute('data-next') || t.getAttribute('data-back'));
+  });
+  ['in-age', 'in-zip', 'in-pay', 'in-cash', 'in-year', 'in-month'].forEach(function (id) {
+    el(id).addEventListener('change', function () { var s = el(id).closest('.screen'); if (s && SAVE[s.id]) SAVE[s.id](); });
+  });
+  prefill();
+  var start = (/^#round-1-(.+)$/.exec(location.hash || '') || [])[1] || 'q-age';
+  show(ORDER.indexOf(start) !== -1 ? start : 'q-age');
+  window.addEventListener('hashchange', function () {
+    var m = /^#round-1(?:-(.+))?$/.exec(location.hash || '');
+    if (!m) return;
+    var want = m[1] || 'q-age';
+    if (ORDER.indexOf(want) !== -1 && el(want).hidden) show(want);
+  });
+  Reference.load(Suggest.TABLES.concat(['effectiveTaxRates', 'staleness'])).then(function (t) {
+    TABLES = t;
+    LedgerRows.use(t.ledgerRows);
+    if (!el('insight').hidden) paintInsight();
+  });
+  Spine.onChange(function () { if (!el('insight').hidden) paintInsight(); });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Reference = SLAF.Reference,
+      LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Ask = SLAF.Ask, Doors = SLAF.Doors;
+  var TABLES = null;
+  var NODES = {};        /* rowId or rowId:itemId → { row, el, input, sug, saved } */
+  var LISTS = { debts: { kind: 'debt', rows: ['debtBalance', 'debtRate', 'debtMinPayment'], label: 'Debts', level: 2, door: 'D' },
+                assets: { kind: 'asset', rows: ['assetValue', 'assetCharacter', 'assetTier', 'assetCostBasis'], label: 'Accounts and things owned', level: 2, door: 'A' },
+                incomeSources: { kind: 'incomeSource', rows: ['grossAnnualIncome', 'incomeType', 'paySurvives'], label: 'Sources of pay', level: 1, door: 'I' },
+                annualLines: { kind: 'annualLine', rows: ['annualLine'], label: 'Once-a-year costs', level: 3, door: 'E' } };
+  var ITEM_ROWS = {};
+  Object.keys(LISTS).forEach(function (k) { LISTS[k].rows.forEach(function (r) { ITEM_ROWS[r] = k; }); });
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function h() { return Spine.getProfile(); }
+  function money(c) { return Money.formatCents(c, { exact: true }).replace(/^\$/, ''); }
+
+  /* ---- Reading a row's current value for the box ----------------------------- */
+  function itemValue(row, item) {
+    if (row.id === 'debtBalance') return item.balanceCents; if (row.id === 'debtRate') return item.rate; if (row.id === 'debtMinPayment') return item.minPaymentCents;
+    if (row.id === 'assetValue') return item.valueCents; if (row.id === 'assetCharacter') return item.taxCharacter; if (row.id === 'assetTier') return item.tier; if (row.id === 'assetCostBasis') return item.costBasisCents;
+    if (row.id === 'grossAnnualIncome') return item.grossAnnualIncomeCents; if (row.id === 'incomeType') return item.type; if (row.id === 'paySurvives') return item.survivesJobLoss;
+    if (row.id === 'annualLine') return item.amountCents;
+    return null;
+  }
+  function current(row, item) {
+    if (item) { var v = itemValue(row, item); return v === undefined ? null : v; }
+    var f = Ownership.FIELDS[row.id];
+    if (!f) return null;
+    var r = f.read(h());
+    return Money.isOk(r) ? r.value : null;
+  }
+  function display(row, v) {
+    if (v === null || v === undefined) return '';
+    if (row.unit === 'cents') return money(v);
+    if (row.unit === 'rate') return String(Math.round(v * 10000) / 100);
+    if (row.unit === 'percent') return row.id === 'contributionPercent' ? String(v) : String(Math.round(v * 10000) / 100);
+    if (row.unit === 'bool') return v ? 'true' : 'false';
+    return String(v);
+  }
+  /* The unit beside every box comes from the one reader in
+     shared/ledger-rows.js (G2.8, D-209), the same words the ask and the
+     Refresh use; a period select where the row has a period. */
+  function unitHtml(row) { return Ask.unitHtml(row, null, 'data-x-period'); }
+
+  /* ---- Building a control, once ----------------------------------------------- */
+  function enumValues(row) {
+    if (row.id === 'state') return (TABLES.states.states || []).map(function (s) { return { v: s.code, l: s.code + ' ' + s.name }; });
+    var labels = Ask.ENUM_LABELS[row.id] || {};
+    var vals = row.values || Object.keys(labels);
+    return vals.map(function (v) { return { v: v, l: labels[v] || v }; });
+  }
+  function control(row, key) {
+    var u = row.unit;
+    if (row.kind === 'computed') return '<button type="button" class="computed ex-btn" data-x-computed data-math="' + esc(row.id) + '" title="See the math"></button>';
+    if (u === 'bool') return '<div class="choices" data-x-choices><button type="button" class="choice" data-x-val="true" aria-pressed="false">Yes</button><button type="button" class="choice" data-x-val="false" aria-pressed="false">No</button></div>';
+    if (u === 'enum') {
+      var vals = enumValues(row);
+      if (vals.length > 8) return '<select data-x-input aria-label="' + esc(row.label) + '"><option value="">Choose…</option>' + vals.map(function (o) { return '<option value="' + esc(o.v) + '">' + esc(o.l) + '</option>'; }).join('') + '</select>';
+      return '<div class="choices" data-x-choices>' + vals.map(function (o) { return '<button type="button" class="choice" data-x-val="' + esc(o.v) + '" aria-pressed="false">' + esc(o.l) + '</button>'; }).join('') + '</div>';
+    }
+    if (u === 'date' && (row.id === 'dob' || row.id === 'partnerDob')) {
+      return '<span class="slaf-input-shell"><select data-x-month aria-label="Month"><option value="">Month</option>' + ['01','02','03','04','05','06','07','08','09','10','11','12'].map(function (m, i) { return '<option value="' + m + '">' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][i] + '</option>'; }).join('') + '</select><input type="text" inputmode="numeric" placeholder="Year, e.g. 1992" data-x-year aria-label="Year"/></span>';
+    }
+    if (u === 'formula') return '<span class="slaf-input-shell"><input type="text" inputmode="decimal" placeholder="e.g. 50" data-x-match aria-label="Match, cents on the dollar"/><span class="affix">% of the first</span><input type="text" inputmode="decimal" placeholder="e.g. 6" data-x-cap aria-label="Cap, share of pay"/><span class="affix">% of pay</span></span>';
+    var affix = u === 'cents' ? '$' : (u === 'percent' || u === 'rate') ? '' : '';
+    var suffix = (u === 'percent' || u === 'rate') ? '%' : u === 'months' ? 'mo' : u === 'years' ? 'yr' : '';
+    var ph = u === 'cents' ? 'e.g. 1,200' : u === 'percent' ? 'e.g. 6' : u === 'rate' ? 'e.g. 24.99' : u === 'months' ? 'e.g. 6' : u === 'years' ? 'e.g. 20' : u === 'count' ? 'e.g. 2' : u === 'date' ? 'e.g. 15' : row.id === 'zip' ? 'e.g. 12203' : '';
+    return '<span class="slaf-input-shell">' + (affix ? '<span class="affix">' + affix + '</span>' : '') + '<input type="text" inputmode="' + (u === 'text' ? 'text' : 'decimal') + '" placeholder="' + esc(ph) + '" data-x-input aria-label="' + esc(row.label) + '"/>' + (suffix ? '<span class="affix">' + suffix + '</span>' : '') + '</span>'
+      + (u === 'cents' ? unitHtml(row) : '');
+  }
+  /* The two states besides blank (G2.7): "Not sure yet", with the month they
+     expect to know by, and "from memory" on the next save. Only on rows a
+     person types, never on a computed one. */
+  function statesHtml(row) {
+    if (row.kind === 'computed') return '';
+    return '<div class="xstates"><span class="slaf-state" data-x-state></span>'
+      + '<button type="button" class="slaf-btn slaf-btn--quiet slaf-btn--small" data-x-notsure>Not sure yet</button>'
+      + '<label class="x-memory"><input type="checkbox" data-x-memory/> from memory</label></div>'
+      + '<div class="x-when" data-x-when hidden><label>Expect to know by <input type="month" data-x-expected aria-label="Expected month"/></label> <button type="button" class="slaf-btn slaf-btn--small" data-x-notsure-save>Mark it</button></div>'
+      + '<div class="x-slip" data-x-slip hidden></div>';
+  }
+  function rowHtml(row, key, item) {
+    var f = Ownership.FIELDS[row.id];
+    var owner = f ? SLAF.Registry.byId(f.owner) : null;
+    return '<div class="xrow" data-x-row="' + esc(row.id) + '" data-x-key="' + esc(key) + '"' + (item ? ' data-x-item="' + esc(item.id) + '"' : '') + '>'
+      + '<div class="lab">' + esc(row.label) + (row.unit !== 'cents' && LedgerRows.unitLabel(row) ? '<span class="unit">' + esc(LedgerRows.unitLabel(row)) + '</span>' : '') + (owner && row.kind !== 'computed' ? '<span class="own">owned by ' + esc(owner.title) + '</span>' : '') + '</div>'
+      + '<div class="ctl">' + control(row, key) + '</div>'
+      + statesHtml(row)
+      + '<div class="sug" data-x-sug hidden></div><div class="saved" data-x-saved></div></div>';
+  }
+  function itemLabel(kind, item) { return item.label || item.source || 'Unnamed'; }
+  function itemHtml(listKey, item, rows) {
+    var L = LISTS[listKey];
+    return '<div class="xitem" data-x-list="' + esc(listKey) + '" data-x-itemid="' + esc(item.id) + '"><div class="xhead"><b>' + esc(itemLabel(L.kind, item)) + '</b>' + (item.type ? '<span class="kind">' + esc((Ask.ENUM_LABELS.debtType || {})[item.type] || item.type) + '</span>' : '') + '<button type="button" class="slaf-btn slaf-btn--quiet rm" data-x-remove>Remove</button></div>'
+      + rows.map(function (r) { return rowHtml(r, r.id + ':' + item.id, item); }).join('') + '</div>';
+  }
+  function addHtml(listKey) {
+    var L = LISTS[listKey];
+    var type = L.kind === 'debt' ? '<select data-x-add-type aria-label="Kind of debt">' + Object.keys(Ask.ENUM_LABELS.debtType).map(function (k) { return '<option value="' + k + '">' + esc(Ask.ENUM_LABELS.debtType[k]) + '</option>'; }).join('') + '</select>'
+      : L.kind === 'asset' ? '<select data-x-add-type aria-label="Kind of account"><option value="cash">Cash account</option><option value="investment">Investment account</option><option value="retirement">Retirement account</option><option value="property">Property</option><option value="other">Other</option></select>' : '';
+    var last4 = (L.kind === 'debt' || L.kind === 'asset') ? '<input type="text" inputmode="numeric" maxlength="4" placeholder="last four" data-x-add-last4 aria-label="Last four digits"/>' : '';
+    return '<div class="xadd" data-x-add="' + esc(listKey) + '"><input type="text" placeholder="' + esc(L.kind === 'debt' ? 'Lender, e.g. Amex' : L.kind === 'asset' ? 'Where it is, e.g. Fidelity Roth' : L.kind === 'incomeSource' ? 'Name it: e.g. Day job' : 'Name it: e.g. Car insurance') + '" data-x-add-name aria-label="Name"/>' + last4 + type + '<button type="button" class="slaf-btn" data-x-add-btn>+ Add another</button></div>';
+  }
+
+  /* ---- The whole form, built once ---------------------------------------------- */
+  function build() {
+    var hh = h();
+    var all = LedgerRows.all().filter(function (r) { return !/^prefs\./.test(r.path); });
+    Doors.DOORS.forEach(function (d) {
+      var mine = all.filter(function (r) { return r.door === d.id; });
+      var out = '';
+      [1, 2, 3, 4].forEach(function (L) {
+        var rows = mine.filter(function (r) { return r.level === L; });
+        if (!rows.length) return;
+        out += '<details class="xlvl" id="x-' + esc(d.id) + '-' + L + '" open><summary>Level ' + L + ' · ' + esc(Doors.LEVELS[L - 1].label) + '</summary>';
+        var listsHere = {};
+        rows.forEach(function (r) {
+          if (ITEM_ROWS[r.id]) { listsHere[ITEM_ROWS[r.id]] = true; }
+          /* Gross pay is one line per source; with no source yet it is one
+             plain box, whose owner path creates the first source. */
+          if (ITEM_ROWS[r.id] && r.id !== 'grossAnnualIncome') return;
+          out += rowHtml(r, r.id, null);
+        });
+        Object.keys(listsHere).forEach(function (lk) {
+          var Lst = LISTS[lk];
+          var items = LedgerRows.items(hh, { repeat: lk }) || [];
+          var rowsOf = Lst.rows.map(function (id) { return LedgerRows.byId(id); }).filter(Boolean);
+          out += '<div class="xlist" data-x-listhost="' + esc(lk) + '"><p class="xhint">' + esc(Lst.label) + ': one block each, the fields together.</p>'
+            + items.map(function (it) { return itemHtml(lk, it, rowsOf); }).join('') + addHtml(lk) + '</div>';
+        });
+        out += '</details>';
+      });
+      document.querySelector('#x-' + d.id + ' .xbody').innerHTML = out;
+    });
+    el('xjump').innerHTML = Doors.DOORS.map(function (d) { return '<a href="#x-' + esc(d.id) + '">' + esc(d.letter) + '</a>'; }).join('');
+    index();
+    wire();
+    paintValues();
+    paintApplies();
+    paintSuggestions();
+    paintBar();
+  }
+  function index() {
+    NODES = {};
+    Array.prototype.forEach.call(document.querySelectorAll('[data-x-row]'), function (n) {
+      var row = LedgerRows.byId(n.getAttribute('data-x-row'));
+      NODES[n.getAttribute('data-x-key')] = { row: row, el: n, itemId: n.getAttribute('data-x-item') || null, sug: n.querySelector('[data-x-sug]'), saved: n.querySelector('[data-x-saved]') };
+    });
+  }
+  function itemOf(node) {
+    if (!node.itemId) return null;
+    var lk = ITEM_ROWS[node.row.id];
+    return (LedgerRows.items(h(), { repeat: lk }) || []).filter(function (it) { return it.id === node.itemId; })[0] || null;
+  }
+
+  /* ---- Values in, never under a finger ------------------------------------------ */
+  function paintValues() {
+    var hh = h();
+    Object.keys(NODES).forEach(function (key) {
+      var n = NODES[key], row = n.row, e = n.el;
+      var a = document.activeElement;
+      if (a && e.contains(a) && (a.tagName === 'INPUT' || a.tagName === 'SELECT')) return;
+      var item = itemOf(n);
+      if (n.itemId && !item) return;
+      var v = current(row, item);
+      if (row.kind === 'computed') { var c = e.querySelector('[data-x-computed]'); var f = Ownership.FIELDS[row.id]; var r = f ? f.read(hh) : null; c.textContent = r && Money.isOk(r) ? (f.format ? f.format(r.value) : String(r.value)) : 'needs its inputs'; c.classList.toggle('is-blank', !(r && Money.isOk(r))); return; }
+      var inp = e.querySelector('[data-x-input]');
+      if (inp) { var d = display(row, v); if (inp.value !== d) inp.value = d; }
+      paintState(n, v);
+      var ch = e.querySelector('[data-x-choices]');
+      if (ch) Array.prototype.forEach.call(ch.querySelectorAll('[data-x-val]'), function (b) { b.setAttribute('aria-pressed', v !== null && v !== undefined && String(v) === b.getAttribute('data-x-val') ? 'true' : 'false'); });
+      var mo = e.querySelector('[data-x-month]');
+      if (mo && typeof v === 'string' && /^\d{4}-\d{2}/.test(v)) { mo.value = v.slice(5, 7); e.querySelector('[data-x-year]').value = v.slice(0, 4); }
+      var mt = e.querySelector('[data-x-match]');
+      if (mt && v && typeof v === 'object') { mt.value = Money.isEntered(v.matchPercent) ? String(Math.round(v.matchPercent * 100)) : ''; e.querySelector('[data-x-cap]').value = Money.isEntered(v.matchCapPercentOfSalary) ? String(Math.round(v.matchCapPercentOfSalary * 100)) : ''; }
+    });
+  }
+  /* The state word beside a row (G2.7): not sure yet (by when), from memory,
+     suggested, or nothing; the "Not sure yet" button only while blank. */
+  function paintState(n, v) {
+    var st = n.el.querySelector('[data-x-state]'); if (!st) return;
+    var key = n.itemId ? n.row.id + ':' + n.itemId : n.row.id;
+    var blank = v === null || v === undefined || v === '';
+    var ns = Schema.notSure(h(), key);
+    var m = blank ? null : Schema.meta(h(), n.row.id);
+    var word = '', cls = '';
+    if (blank && ns) { word = 'Not sure yet' + (ns.expectedBy ? ', by ' + monthWord(ns.expectedBy) : ''); cls = 'is-notSure'; }
+    else if (!blank && !n.itemId && m && m.source === 'memory' && m.confidence !== 'sure') { word = 'From memory'; cls = 'is-memory'; }
+    else if (!blank && !n.itemId && m && m.source === 'suggested' && m.confidence !== 'sure') { word = 'Suggested, not yet confirmed'; cls = ''; }
+    st.textContent = word; st.className = 'slaf-state ' + cls;
+    var nb = n.el.querySelector('[data-x-notsure]'); if (nb) nb.hidden = !blank || !!ns;
+    var mem = n.el.querySelector('.x-memory'); if (mem) mem.hidden = !!(m && m.source === 'memory' && m.confidence !== 'sure');
+  }
+  function monthWord(ym) {
+    var m = Number(String(ym).slice(5, 7)), y = String(ym).slice(0, 4);
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1] + ' ' + y;
+  }
+  function paintApplies() {
+    var hh = h();
+    Object.keys(NODES).forEach(function (key) {
+      var n = NODES[key];
+      var applies = LedgerRows.applies(n.row, hh);
+      var f = Ownership.FIELDS[n.row.id];
+      if (applies && f && typeof f.applies === 'function') applies = f.applies(hh);
+      if (key === 'grossAnnualIncome' && (LedgerRows.items(hh, { repeat: 'incomeSources' }) || []).length) applies = false;
+      n.el.hidden = !applies;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('details.xlvl'), function (lv) {
+      var any = Array.prototype.some.call(lv.querySelectorAll('.xrow, .xadd'), function (r) { return !r.hidden; });
+      lv.hidden = !any;
+    });
+    Doors.DOORS.forEach(function (d) {
+      var c = Doors.counts(hh, TABLES, d.id, []);
+      var cnt = document.querySelector('[data-x-count="' + d.id + '"]');
+      if (cnt) cnt.textContent = c.known + ' of ' + c.total + ' known';
+    });
+  }
+  var SUG = {};
+  function paintSuggestions() {
+    var list = Suggest.suggestions(h(), TABLES);
+    SUG = {};
+    list.forEach(function (s) { SUG[s.key] = s; });
+    Object.keys(NODES).forEach(function (key) {
+      var n = NODES[key], s = SUG[key];
+      if (!n.sug) return;
+      if (s && !s.na) { n.sug.hidden = false; n.sug.innerHTML = '<button type="button" class="slaf-use-this" data-x-use="' + esc(key) + '">Suggested ' + esc(s.display) + ' · use it</button><span class="how">' + esc(s.how) + '</span>'; }
+      else if (s && s.na) { n.sug.hidden = false; n.sug.innerHTML = '<span class="how">' + esc(s.display) + ': ' + esc(s.how) + '</span>'; }
+      else { n.sug.hidden = true; n.sug.innerHTML = ''; }
+    });
+  }
+  function paintBar() {
+    var u = Doors.understanding(h(), TABLES, Suggest.suggestions(h(), TABLES), TABLES.confidenceWeights);
+    el('xpct-pct').textContent = u.percent + '%';
+  }
+
+  /* ---- Writes: each through the owner ---------------------------------------------- */
+  function said(n, text) { n.saved.textContent = text; setTimeout(function () { if (n.saved.textContent === text) n.saved.textContent = ''; }, 1600); }
+  function write(n, value, how, note) {
+    var ctx = n.itemId ? { itemId: n.itemId } : null;
+    var mem = n.el.querySelector('[data-x-memory]');
+    try {
+      if (how === 'suggested' && Spine.tagWrite) Spine.tagWrite({ source: 'suggested', confidence: 'roughly' });
+      else if (mem && mem.checked && value !== null && Spine.tagWrite) Spine.tagWrite({ source: 'memory', confidence: 'roughly' });
+      Ownership.write(n.row.id, value, ctx);
+      if (mem) mem.checked = false;
+      said(n, (note ? note + ' ' : '') + (value === null ? 'Cleared.' : 'Saved.'));
+    } catch (e) { said(n, 'Could not save: ' + e.message); }
+  }
+  function commitInput(n) {
+    var e = n.el, row = n.row;
+    var inp = e.querySelector('[data-x-input]');
+    if (inp) {
+      var raw = inp.value;
+      var before = current(row, itemOf(n));
+      if (String(raw).trim() === '') { if (before !== null && before !== undefined) write(n, null, 'typed'); return; }
+      var v;
+      /* An obvious percent slip is a plain question, not an error (G2.8). */
+      var sl = Ask.slip(row, raw), slipBox = e.querySelector('[data-x-slip]');
+      if (sl && slipBox) {
+        slipBox.hidden = false;
+        slipBox.innerHTML = '<p class="ask-q">' + esc(sl.question) + '</p><div class="choices">' + sl.options.map(function (o, i) { return '<button type="button" class="choice" data-x-slipopt="' + i + '">' + esc(o.label) + '</button>'; }).join('') + '</div>';
+        n.slip = sl;
+        return;
+      }
+      if (row.unit === 'enum' || row.unit === 'text') v = raw.trim();
+      else if (row.unit === 'date') v = Number(String(raw).replace(/\D/g, '')) || null;
+      else v = Ask.parse(row, raw);
+      if (v === null) { said(n, 'A number, please.'); return; }
+      /* Typed in another period: converted to the row's own before saving. */
+      var per = e.querySelector('[data-x-period]');
+      var conv = row.unit === 'cents' && per ? Ask.toRowPeriod(row, v, per.value) : { value: v, note: null };
+      if (conv.note) { per.value = LedgerRows.period(row); }
+      if (conv.value === before) return;
+      write(n, conv.value, 'typed', conv.note);
+      return;
+    }
+    var mo = e.querySelector('[data-x-month]');
+    if (mo) { var y = String(e.querySelector('[data-x-year]').value || '').replace(/\D/g, ''); if (mo.value && y.length === 4) { var dob = y + '-' + mo.value + '-01'; if (dob !== current(row, null)) write(n, dob, 'typed'); } return; }
+    var mt = e.querySelector('[data-x-match]');
+    if (mt) { var m = Number(mt.value), c = Number(e.querySelector('[data-x-cap]').value); if (mt.value !== '' && e.querySelector('[data-x-cap]').value !== '' && !isNaN(m) && !isNaN(c)) write(n, { matchPercent: m / 100, matchCapPercentOfSalary: c / 100 }, 'typed'); }
+  }
+  function wire() {
+    var form = el('xform');
+    form.addEventListener('change', function (ev) {
+      var r = ev.target.closest ? ev.target.closest('[data-x-key]') : null;
+      if (!r) return;
+      /* The period select, the memory tick and the expected month are not
+         the value: changing them saves nothing by themselves. */
+      if (ev.target.hasAttribute('data-x-period') || ev.target.hasAttribute('data-x-memory') || ev.target.hasAttribute('data-x-expected')) return;
+      var n = NODES[r.getAttribute('data-x-key')];
+      if (n) commitInput(n);
+    });
+    form.addEventListener('click', function (ev) {
+      var t = ev.target.closest ? ev.target.closest('[data-x-val],[data-x-use],[data-x-add-btn],[data-x-remove],[data-x-notsure],[data-x-notsure-save],[data-x-slipopt]') : null;
+      if (!t) return;
+      if (t.hasAttribute('data-x-notsure')) { t.closest('[data-x-key]').querySelector('[data-x-when]').hidden = false; return; }
+      if (t.hasAttribute('data-x-notsure-save')) {
+        var nn = NODES[t.closest('[data-x-key]').getAttribute('data-x-key')];
+        var when = nn.el.querySelector('[data-x-expected]').value || null;
+        Spine.setNotSure(nn.itemId ? nn.row.id + ':' + nn.itemId : nn.row.id, { expectedBy: when });
+        nn.el.querySelector('[data-x-when]').hidden = true;
+        said(nn, 'Marked not sure yet. It stays blank, never zero.');
+        return;
+      }
+      if (t.hasAttribute('data-x-slipopt')) {
+        var ns = NODES[t.closest('[data-x-key]').getAttribute('data-x-key')];
+        var o = ns.slip && ns.slip.options[Number(t.getAttribute('data-x-slipopt'))];
+        var sb = ns.el.querySelector('[data-x-slip]'); sb.hidden = true; sb.innerHTML = ''; ns.slip = null;
+        if (!o) return;
+        if (o.value === null) { var ip = ns.el.querySelector('[data-x-input]'); ip.value = ''; ip.focus(); return; }
+        write(ns, o.value, 'typed');
+        return;
+      }
+      if (t.hasAttribute('data-x-val')) {
+        var n = NODES[t.closest('[data-x-key]').getAttribute('data-x-key')];
+        var raw = t.getAttribute('data-x-val');
+        write(n, n.row.unit === 'bool' ? raw === 'true' : raw, 'typed');
+        return;
+      }
+      if (t.hasAttribute('data-x-use')) {
+        var key = t.getAttribute('data-x-use'), s = SUG[key], n2 = NODES[key];
+        if (s && n2) write(n2, s.value, 'suggested');
+        return;
+      }
+      if (t.hasAttribute('data-x-add-btn')) {
+        var box = t.closest('[data-x-add]'), lk = box.getAttribute('data-x-add'), L = LISTS[lk];
+        var name = String(box.querySelector('[data-x-add-name]').value || '').trim();
+        var l4 = box.querySelector('[data-x-add-last4]');
+        var last4 = l4 ? String(l4.value || '').replace(/\D/g, '').slice(-4) : '';
+        /* Named by lender and last four, "Amex ••1003", never a numbered card (G2.8). */
+        if (last4) name = (name || (L.kind === 'debt' ? 'Card' : 'Account')) + ' ••' + last4;
+        var typeSel = box.querySelector('[data-x-add-type]');
+        var fields = {};
+        if (L.kind === 'incomeSource') fields.source = name || 'A source'; else fields.label = name || undefined;
+        if (typeSel) { if (L.kind === 'debt') fields.type = typeSel.value; else fields.category = typeSel.value; }
+        var item = Ownership.addItem(L.kind, fields);
+        var rowsOf = L.rows.map(function (id) { return LedgerRows.byId(id); }).filter(Boolean);
+        box.insertAdjacentHTML('beforebegin', itemHtml(lk, item, rowsOf));
+        box.querySelector('[data-x-add-name]').value = '';
+        if (l4) l4.value = '';
+        index(); paintValues(); paintApplies(); paintSuggestions(); paintBar();
+        return;
+      }
+      if (t.hasAttribute('data-x-remove')) {
+        var it = t.closest('[data-x-itemid]'), lk2 = it.getAttribute('data-x-list');
+        if (!window.confirm('Remove ' + it.querySelector('.xhead b').textContent + '? Undo brings it back.')) return;
+        Ownership.removeItem(LISTS[lk2].kind, it.getAttribute('data-x-itemid'));
+        it.remove();
+        index(); paintApplies(); paintSuggestions(); paintBar();
+      }
+    });
+  }
+
+  Reference.load(Suggest.TABLES.concat(['states', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates'])).then(function (t) {
+    TABLES = t;
+    LedgerRows.use(t.ledgerRows);
+    build();
+    /* A change anywhere (another tab, undo, a chip) repaints values and
+       what applies, never rebuilding a control, never under a finger. */
+    Spine.onChange(function () { paintValues(); paintApplies(); paintSuggestions(); paintBar(); });
+  });
+})();
+</script>
+
+<script>
+/* ---- Since last time (D-228) -------------------------------------------
+   Welcome Back and Refresh asked the same question with the same boxes and
+   wrote through the same owners; the only difference was the order of the
+   rows and which of the two lines each drew. One view now: the moving rows,
+   oldest first, each carrying what it read last time, and one snapshot at
+   the end. No word here names a lapse — a month not visited is not a gap,
+   a failure or a broken streak (D-214). */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Staleness = SLAF.Staleness, Instruments = SLAF.Instruments,
+      LedgerRows = SLAF.LedgerRows, Ask = SLAF.Ask, SinceLast = SLAF.SinceLast, Prefs = SLAF.Prefs;
+
+  var TABLES = null;
+  var ROWS = [];          /* { key, row, item, el, input } built once */
+  var LAST = null;        /* the last snapshot that carried rows, or null */
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* ---- Which lines: the moving rows with a value, one per item ----------
+     Cash and investments are one figure each while the household holds one
+     account of that kind (the aggregate row is the account); with more, it
+     is one line per account and the aggregate is not asked twice. */
+  function lines(h) {
+    var all = LedgerRows.moving(h, TABLES);
+    var byCat = {};
+    (h.assets || []).forEach(function (a) { byCat[a.category] = (byCat[a.category] || 0) + 1; });
+    var manyCash = (byCat.cash || 0) > 1, manyInvest = ((byCat.investment || 0) + (byCat.retirement || 0)) > 1;
+    return all.filter(function (m) {
+      if (m.row.id === 'cashSavings') return !manyCash;
+      if (m.row.id === 'investments') return !manyInvest;
+      if (m.row.id === 'assetValue' && m.item) {
+        if (m.item.category === 'cash') return manyCash;
+        if (m.item.category === 'investment' || m.item.category === 'retirement') return manyInvest;
+      }
+      return true;
+    });
+  }
+  function lastWithRows() {
+    var all = Spine.listSnapshots();
+    for (var i = all.length - 1; i >= 0; i--) if (all[i].rows) return all[i];
+    return null;
+  }
+  function itemName(m) { return m.item ? (m.item.label || m.item.source || m.item.type || 'one line') : ''; }
+  function display(row, v) {
+    if (!Money.isEntered(v)) return '';
+    if (row.unit === 'cents') return Money.formatCents(v, { exact: true }).replace(/^\$/, '');
+    if (row.unit === 'rate' || (row.unit === 'percent' && row.id !== 'contributionPercent')) return String(Math.round(v * 10000) / 100);
+    return String(v);
+  }
+  function words(row, v) {
+    if (!Money.isEntered(v)) return 'blank';
+    if (row.unit === 'cents') return Money.formatCents(v);
+    if (row.unit === 'rate' || (row.unit === 'percent' && row.id !== 'contributionPercent')) return (Math.round(v * 10000) / 100) + '%';
+    return String(v);
+  }
+  function dayWord(iso) { return iso ? String(iso).slice(0, 10) : ''; }
+
+  /* ---- Build once ---------------------------------------------------------- */
+  function build() {
+    var h = Spine.getProfile();
+    LAST = lastWithRows();
+    /* Oldest first: the number looked at longest ago comes up first (D-214). */
+    var ms = lines(h).map(function (m) {
+      return Object.assign({}, m, { days: Staleness.describe(h, m.row.id).days });
+    }).sort(function (a, b) { return (b.days === null ? 1e9 : b.days) - (a.days === null ? 1e9 : a.days); });
+    var host = el('rows-moving');
+    el('rows-empty').hidden = ms.length > 0;
+    ROWS = ms.map(function (m, i) {
+      var row = document.createElement('div');
+      row.className = 'row';
+      row.id = 'moving-' + i;
+      var f = Ownership.FIELDS[m.row.id];
+      var owner = f ? SLAF.Registry.byId(f.owner) : null;
+      var affix = m.row.unit === 'cents' ? '$' : '';
+      var suffix = (m.row.unit === 'rate' || m.row.unit === 'percent') ? '%' : '';
+      row.innerHTML = '<div class="top"><span class="nm">' + esc(m.row.label) + (m.item ? ' · ' + esc(itemName(m)) : '') + '</span><span class="age" data-age></span></div>'
+        + '<div class="ctl"><span class="slaf-input-shell">' + (affix ? '<span class="slaf-affix">' + affix + '</span>' : '')
+        + '<input type="text" inputmode="decimal" data-field="' + esc(m.row.id) + '"' + (m.item ? ' data-item="' + esc(m.item.id) + '"' : '') + ' data-key="' + esc(m.key) + '" aria-label="' + esc(m.row.label + (m.item ? ' for ' + itemName(m) : '')) + '"/>'
+        + (suffix ? '<span class="slaf-affix">' + suffix + '</span>' : '') + '</span>'
+        + (LedgerRows.unitLabel(m.row) ? '<span class="slaf-unit">' + esc(LedgerRows.unitLabel(m.row)) + '</span>' : '')
+        + '<button type="button" class="slaf-btn slaf-btn--small still" data-still>Still true</button></div>'
+        + '<span class="moved" data-moved></span>'
+        + (owner ? '<span class="where">Owned by <a href="' + esc(owner.href.indexOf('rooms/') === 0 ? owner.href.slice(6) : '../' + owner.href) + '">' + esc(owner.title) + '</a>; this box writes the same record.</span>' : '');
+      host.appendChild(row);
+      return { key: m.key, row: m.row, item: m.item, el: row, input: row.querySelector('input') };
+    });
+    var blank = LedgerRows.rows(h, TABLES, { filter: 'all' }).filter(function (r) { return r.moves && r.kind !== 'computed' && (r.status === 'missing' || r.status === 'notSure'); });
+    el('blank-line').hidden = blank.length === 0;
+    el('blank-line').innerHTML = blank.length + ' moving row' + (blank.length === 1 ? '' : 's') + ' still blank; the <a href="#doors-home">doors</a> ask ' + (blank.length === 1 ? 'it' : 'them') + '.';
+    paint();
+  }
+
+  /* ---- Values in, never under a finger --------------------------------------- */
+  function currentOf(r) {
+    var h = Spine.getProfile();
+    if (r.item) {
+      var list = LedgerRows.items(h, r.row) || [];
+      var it = list.filter(function (x) { return x.id === r.item.id; })[0];
+      return it ? LedgerRows.itemValue(r.row, it) : null;
+    }
+    var f = Ownership.FIELDS[r.row.id];
+    var res = f ? f.read(h) : null;
+    return res && Money.isOk(res) ? res.value : null;
+  }
+  function paint() {
+    var h = Spine.getProfile();
+    var changed = 0, same = 0;
+    ROWS.forEach(function (r) {
+      var v = currentOf(r);
+      if (r.input !== document.activeElement) r.input.value = display(r.row, v);
+      var a = Staleness.describe(h, r.row.id);
+      var age = r.el.querySelector('[data-age]');
+      age.textContent = a.label;
+      age.className = 'age' + (a.stale === true ? ' is-stale' : a.days === 0 && a.perField ? ' is-fresh' : '');
+      var moved = r.el.querySelector('[data-moved]');
+      var before = LAST && LAST.rows && Object.prototype.hasOwnProperty.call(LAST.rows, r.key) ? LAST.rows[r.key] : undefined;
+      if (before === undefined) { moved.textContent = LAST ? 'New since last time.' : ''; moved.className = 'moved'; return; }
+      if (!Money.isEntered(v) || !Money.isEntered(before) || v === before) { moved.textContent = 'Same as last time (' + dayWord(LAST.timestamp) + ').'; moved.className = 'moved'; same++; return; }
+      var d = v - before;
+      var dw = r.row.unit === 'cents' ? Money.formatCents(Math.abs(d)) : words(r.row, Math.abs(d));
+      moved.textContent = 'Since last time (' + dayWord(LAST.timestamp) + '): ' + words(r.row, before) + ' → ' + words(r.row, v) + ', ' + (d > 0 ? 'up ' : 'down ') + dw + '.';
+      moved.className = 'moved ' + (d > 0 ? 'is-up' : 'is-down');
+      changed++;
+    });
+    var line = el('since-line');
+    if (!ROWS.length) line.textContent = '';
+    else if (!LAST) line.textContent = 'First time through: ' + ROWS.length + ' number' + (ROWS.length === 1 ? '' : 's') + ' to look at. Next time this line says what moved.';
+    else line.textContent = 'Since last time (' + dayWord(LAST.timestamp) + '): ' + changed + ' changed, ' + same + ' the same' + (ROWS.length - changed - same ? ', ' + (ROWS.length - changed - same) + ' new' : '') + '.';
+    /* The strip splits what the money did from what you learned (D-211). */
+    var latest = Spine.latestSnapshot ? Spine.latestSnapshot() : null;
+    var strip = latest && SinceLast ? SinceLast.strip(h, latest, TABLES) : null;
+    if (strip) el('strip').textContent = strip;
+  }
+
+  /* ---- Commit: changed → write through the owner; unchanged → confirm; empty → skip */
+  function commit(r) {
+    var raw = String(r.input.value || '').trim();
+    if (raw === '') return;                                   /* nothing said, nothing written */
+    var v = Ask.parse(r.row, raw);
+    if (v === null) return;
+    var before = currentOf(r);
+    if (v !== before) Ownership.write(r.row.id, v, r.item ? { itemId: r.item.id } : null);
+    else Spine.confirm(r.row.id);
+    r.el.classList.add('is-confirmed');
+    r.input.value = display(r.row, v);
+  }
+  function still(r) {
+    var v = currentOf(r);
+    if (!Money.isEntered(v)) return;
+    Spine.confirm(r.row.id);
+    r.input.value = display(r.row, v);
+    r.el.classList.add('is-confirmed');
+    paint();
+  }
+  function rowOf(node) {
+    var box = node && node.closest ? node.closest('#view-since .row') : null;
+    return box ? ROWS.filter(function (r) { return r.el === box; })[0] : null;
+  }
+
+  document.addEventListener('focusout', function (evt) {
+    var r = rowOf(evt.target);
+    if (r && evt.target === r.input) { commit(r); paint(); }
+  });
+  document.addEventListener('click', function (evt) {
+    var b = evt.target && evt.target.closest ? evt.target.closest('#view-since [data-still]') : null;
+    if (!b) return;
+    var r = rowOf(b);
+    if (r) still(r);
+  });
+  /* Enter commits and moves to the next box; on the last box it finishes. */
+  document.addEventListener('keydown', function (evt) {
+    if (evt.key !== 'Enter') return;
+    var r = rowOf(evt.target);
+    if (!r || evt.target !== r.input) return;
+    evt.preventDefault();
+    commit(r); paint();
+    var i = ROWS.indexOf(r);
+    if (i >= 0 && i < ROWS.length - 1) ROWS[i + 1].input.focus();
+    else el('btn-done').focus();
+  });
+
+  /* ---- Finish: snapshot with the rows as they stand, then home --------------- */
+  el('btn-done').addEventListener('click', function () {
+    ROWS.forEach(commit);
+    if (!TABLES) { el('done-note').textContent = 'Reference tables are still loading, one moment.'; return; }
+    var rows = {};
+    ROWS.forEach(function (r) { rows[r.key] = currentOf(r); });
+    Instruments.snapshot(Spine.getProfile(), TABLES, { rows: rows, reason: 'since-last-time' });
+    try { Prefs.set('comeback.due', null); } catch (e) { /* fine */ }
+    var n = Spine.listSnapshots().length;
+    el('done-note').textContent = 'Saved. Snapshot ' + n + ' taken.';
+    window.location.href = '../index.html';
+  });
+
+  Spine.onChange(function () { if (ROWS.length) paint(); });
+
+  Reference.load().then(function (t) {
+    TABLES = t;
+    Staleness.use(t.staleness);
+    LedgerRows.use(t.ledgerRows);
+    build();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Spine = SLAF.Spine, Reference = SLAF.Reference, Layouts = SLAF.Layouts;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function el(id) { return document.getElementById(id); }
+  /* Registry hrefs are written from the site root; this page lives in rooms/. */
+  function from(href) { return href.indexOf('rooms/') === 0 ? href.slice(6) : '../' + href; }
+
+  var TABLES = null;
+  var current = null;      /* the built layout */
+  var branch = null;       /* tree mode: which parent is open */
+  var turn = 0;            /* flow mode: which question we are on */
+
+  /* Which layout: the hash wins (a shared link), then the stored choice,
+     then the order the app ships. */
+  function wantedId() {
+    var m = /(?:^|[#&])l=([a-z0-9-]+)/.exec(location.hash || '');
+    if (m) return m[1];
+    var h = Spine.getProfile();
+    return (h.meta && h.meta.frontDoor) || Layouts.DEFAULT_ID;
+  }
+
+  function doorHtml(r) {
+    return '<li><a class="door" href="' + esc(from(r.href)) + '">'
+      + '<span class="t">' + esc(r.title)
+      + (r.isHub ? '<span class="hub">landmark</span>' : '') + '</span>'
+      + (r.blurb ? '<span class="b">' + esc(r.blurb) + '</span>' : '')
+      + '</a></li>';
+  }
+
+  function bayHtml(g) {
+    var out = ['<div class="bay' + (g.warn ? ' is-warn' : '') + '">'];
+    out.push('<div class="bay-h"><span class="nm">' + esc(g.name) + '</span>'
+      + '<span class="ct">' + g.rooms.length + '</span>');
+    if (g.note) out.push('<span class="nt">' + esc(g.note) + '</span>');
+    if (g.droppedCount) {
+      out.push('<span class="dropped">' + g.droppedCount
+        + (g.droppedCount === 1 ? ' room here is' : ' rooms here are')
+        + ' not for your situation, so ' + (g.droppedCount === 1 ? 'it is' : 'they are') + ' left out.</span>');
+    }
+    out.push('</div><ul class="doors">' + g.rooms.map(doorHtml).join('') + '</ul></div>');
+    return out.join('');
+  }
+
+  /* ---- Modes ---------------------------------------------------------------
+     Every mode renders the SAME built layout — they differ only in how much
+     of it is on screen at once. */
+
+  function renderBays() { return current.groups.map(bayHtml).join(''); }
+
+  function renderTree() {
+    var parents = Layouts.parents(current);
+    var loose = current.groups.filter(function (g) { return !g.parent; });
+    var out = [];
+    if (!branch) {
+      out.push('<div class="three">');
+      parents.forEach(function (p) {
+        var kids = current.groups.filter(function (g) { return g.parent === p; });
+        var n = kids.reduce(function (s, g) { return s + g.rooms.length; }, 0);
+        out.push('<button type="button" class="big-choice" data-branch="' + esc(p) + '">'
+          + '<span class="t">' + esc(p) + '</span>'
+          + '<span class="s">' + kids.length + ' choices · ' + n + ' rooms behind them</span></button>');
+      });
+      out.push('</div>');
+      loose.forEach(function (g) { out.push(bayHtml(g)); });
+      return out.join('');
+    }
+    out.push('<div class="crumb"><button type="button" data-branch="">← All three</button>'
+      + '<span>' + esc(branch) + '</span></div>');
+    current.groups.filter(function (g) { return g.parent === branch; })
+      .forEach(function (g) { out.push(bayHtml(g)); });
+    return out.join('');
+  }
+
+  function renderFlow() {
+    var qs = current.groups;
+    if (turn >= qs.length) turn = qs.length - 1;
+    if (turn < 0) turn = 0;
+    var g = qs[turn];
+    var out = ['<p class="slaf-hint" style="margin:var(--space-3) 0 0">Question ' + (turn + 1)
+      + ' of ' + qs.length + '. Nothing is hidden — you can walk the whole thing.</p>'];
+    out.push(bayHtml(g));
+    out.push('<div class="flow-nav">');
+    if (turn > 0) out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-turn="' + (turn - 1) + '">← Back</button>');
+    if (turn < qs.length - 1) out.push('<button type="button" class="slaf-btn slaf-btn--primary" data-turn="' + (turn + 1) + '">Next question →</button>');
+    else out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-turn="0">Start again</button>');
+    out.push('</div>');
+    return out.join('');
+  }
+
+  function renderSearch(q) {
+    var all = [];
+    current.groups.forEach(function (g) {
+      if (g.overlay) return;
+      g.rooms.forEach(function (r) { all.push(r); });
+    });
+    var seen = {}, uniq = [];
+    all.forEach(function (r) { if (!seen[r.id]) { seen[r.id] = true; uniq.push(r); } });
+    var term = String(q || '').trim().toLowerCase();
+    var hits = !term ? uniq : uniq.filter(function (r) {
+      return (r.title + ' ' + (r.blurb || '')).toLowerCase().indexOf(term) !== -1;
+    });
+    el('hits').textContent = term
+      ? hits.length + (hits.length === 1 ? ' room matches' : ' rooms match') + ' “' + term + '”'
+      : uniq.length + ' rooms. Type to narrow, or browse the surfaces below.';
+    if (term) {
+      if (!hits.length) {
+        return '<p class="slaf-reason" style="margin-top:var(--space-3)">Nothing matches that. '
+          + 'Try a plainer word — “rent”, “car”, “behind”, “retire” — or clear the box to see everything.</p>';
+      }
+      return '<div class="bay"><div class="bay-h"><span class="nm">Matches</span>'
+        + '<span class="ct">' + hits.length + '</span></div>'
+        + '<ul class="doors">' + hits.map(doorHtml).join('') + '</ul></div>';
+    }
+    return current.groups.map(bayHtml).join('');
+  }
+
+  /* ---- Paint ---------------------------------------------------------------
+     Head, body and drawer are containers of links and buttons — no inputs —
+     so they are rewritten freely. The search box is NOT in any of them. */
+
+  function paint() {
+    var h = Spine.getProfile();
+    var id = wantedId();
+    current = Layouts.build(h, TABLES, id);
+    if (!current) {
+      el('lay-body').innerHTML = '<p class="slaf-reason">That arrangement could not be loaded.</p>';
+      return;
+    }
+    if (current.id !== id) branch = null;      /* fell back — reset the drill */
+
+    Array.prototype.forEach.call(el('picker').querySelectorAll('[data-layout]'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-layout') === current.id ? 'true' : 'false');
+    });
+
+    var c = current.coverage;
+    var head = ['<h2>' + esc(current.name) + '</h2>'];
+    if (current.by) head.push('<p class="lay-by">Designed by ' + esc(current.by) + '</p>');
+    head.push('<p class="lay-premise">' + esc(current.premise) + '</p>');
+    head.push('<div class="lay-meta">');
+    head.push('<span>' + current.groups.length + (current.groups.length === 1 ? ' group' : ' groups') + '</span>');
+    head.push(c.missing.length
+      ? '<span class="bad">⚠ ' + c.missing.length + ' of your rooms are not on any shelf here</span>'
+      : '<span class="ok">✓ all ' + c.total + ' of your rooms are reachable</span>');
+    if (current.live) head.push('<span>· this is the order the app ships</span>');
+    head.push('</div>');
+    el('lay-head').innerHTML = head.join('');
+
+    var mode = current.mode;
+    el('search-host').hidden = mode !== 'search';
+    el('lay-body').innerHTML =
+        mode === 'tree'   ? renderTree()
+      : mode === 'flow'   ? renderFlow()
+      : mode === 'search' ? renderSearch(el('lay-q').value)
+      : renderBays();
+
+    el('why-body').innerHTML =
+      '<p><strong>Reads well.</strong> ' + esc(current.readsWell) + '</p>'
+      + '<p><strong>What it costs.</strong> ' + esc(current.costs) + '</p>'
+      + '<p class="slaf-hint">Sheet ' + esc(current.code) + ' of the drawing set. '
+      + 'Which shelf a room sits on is an opinion in <code>data/layouts.json</code> — '
+      + 'it changes nothing about what any room says or computes.</p>';
+  }
+
+  /* ---- Wiring -------------------------------------------------------------- */
+
+  el('picker').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-layout]');
+    if (!b) return;
+    branch = null; turn = 0;
+    var id = b.getAttribute('data-layout');
+    /* Clear the hash so the stored choice is what wins from here on. */
+    /* Drop the l= in the hash so the stored choice wins from here on, but
+       keep the view: this is one page wearing a hat, not a page of its own. */
+    history.replaceState(null, '', location.pathname + location.search + '#arrangements');
+    Spine.setFrontDoor(id === Layouts.DEFAULT_ID ? null : id);
+    paint();
+  });
+
+  el('lay-body').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-branch]');
+    if (b) { branch = b.getAttribute('data-branch') || null; paint(); return; }
+    var t = e.target.closest('[data-turn]');
+    if (t) { turn = Number(t.getAttribute('data-turn')) || 0; paint(); }
+  });
+
+  /* Only the RESULTS are rewritten as you type — the box itself is untouched,
+     so focus and the soft keyboard survive every keystroke (D-034). */
+  el('lay-q').addEventListener('input', function () {
+    if (current && current.mode === 'search') el('lay-body').innerHTML = renderSearch(el('lay-q').value);
+  });
+
+  window.addEventListener('hashchange', function () {
+    if (!TABLES || !/^#arrangements/.test(location.hash || '')) return;
+    branch = null; turn = 0; paint();
+  });
+
+  function buildPicker() {
+    var rows = Layouts.list(TABLES);
+    var out = [], vol = null;
+    var LABEL = { 1: 'The obvious eight', 2: 'The less obvious eight', 3: 'One from each reviewer' };
+    rows.forEach(function (l) {
+      if (l.volume !== vol) {
+        vol = l.volume;
+        out.push('<div class="vol-h">' + esc(LABEL[vol] || ('Volume ' + vol)) + '</div>');
+      }
+      out.push('<button type="button" class="pick" data-layout="' + esc(l.id) + '" aria-pressed="false">'
+        + '<span class="code">' + esc(l.code) + '</span>' + esc(l.name) + '</button>');
+    });
+    el('picker').innerHTML = out.join('');
+  }
+
+  Spine.onChange(function () { if (TABLES) paint(); });
+
+  Reference.load([Layouts.TABLE], '../data/').then(function (T) {
+    TABLES = T;
+    buildPicker();
+    paint();
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false;
+    n.className = 'notice is-error';
+    n.textContent = 'The arrangements could not be loaded (' + err.message + '). '
+      + 'Every room is still reachable from the map.';
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Spine = SLAF.Spine, Guide = SLAF.Guide, Reference = SLAF.Reference;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  /* Registry hrefs are written from the site root; this page lives in rooms/. */
+  function from(href) {
+    return href.indexOf('rooms/') === 0 ? href.slice('rooms/'.length) : '../' + href;
+  }
+
+  var TABLES = null;
+
+  function topHtml(h) {
+    var p = Guide.progress(h, TABLES);
+    var next = Guide.nextStep(h, TABLES);
+    var started = Guide.hasStarted(h);
+    var out = [];
+
+    if (!p.total) {
+      return '<p class="say">The walk could not be built — <code>data/walk_stages.json</code> '
+        + 'did not load. Every room is still reachable from the map.</p>';
+    }
+    if (!started) {
+      out.push('<div class="big">' + p.total + ' steps</div>');
+      out.push('<p class="sub">In five short sets. Most people do a set at a sitting, not all of it at once.</p>');
+      out.push('<div class="top-acts" style="margin-top:var(--space-3)">'
+        + '<a class="slaf-btn slaf-btn--primary" href="' + from(next.href) + '" id="btn-begin">Start with ' + esc(next.title) + ' →</a>'
+        + '</div>');
+      return out.join('');
+    }
+    if (p.open === 0) {
+      out.push('<div class="big">All ' + p.total + ' done</div>');
+      out.push('<p class="sub">' + p.done + ' finished'
+        + (p.skipped ? ', ' + p.skipped + ' set aside' : '')
+        + '. Nothing here is ever really finished — but this part is. Come back to <a href="#since-last-time">Since last time</a> when the numbers move.</p>');
+      out.push('<div class="track is-done"><i style="width:100%"></i></div>');
+      out.push('<div class="top-acts">'
+        + '<a class="slaf-btn slaf-btn--primary" href="../index.html">See the dashboard →</a></div>');
+      return out.join('');
+    }
+    out.push('<div class="big">' + (p.done + p.skipped) + ' of ' + p.total + '</div>');
+    out.push('<p class="sub">' + p.open + (p.open === 1 ? ' step left' : ' steps left')
+      + (p.skipped ? ' · ' + p.skipped + ' set aside' : '') + '</p>');
+    out.push('<div class="track"><i style="width:' + p.pct + '%"></i></div>');
+    out.push('<div class="top-acts">'
+      + '<a class="slaf-btn slaf-btn--primary" href="' + from(next.href) + '">Continue: ' + esc(next.title) + ' →</a>'
+      + '</div>');
+    return out.join('');
+  }
+
+  function stagesHtml(h) {
+    var list = Guide.stages(h, TABLES);
+    if (!list.length) return '';
+    var out = [];
+    list.forEach(function (s, i) {
+      var cls = 'slaf-card stage' + (s.complete ? ' is-complete' : '') + (s.complete && !s.allSkipped ? ' finished' : '');
+      out.push('<section class="' + cls + '" style="margin-top:var(--space-4)">');
+      out.push('<div class="stage-head">'
+        + '<span class="stage-num">' + (i + 1) + '</span>'
+        + '<h2 class="stage-title">' + esc(s.title) + '</h2>'
+        + '<span class="stage-count">' + (s.done + s.skipped) + ' / ' + s.total
+        + (s.complete ? ' ✓' : '') + '</span>'
+        + '</div>');
+      out.push('<p class="stage-goal">' + esc(s.goal) + '</p>');
+      out.push('<ul class="steps">');
+      s.steps.forEach(function (x) {
+        var dealt = x.state !== 'open';
+        out.push('<li class="' + (dealt ? 'is-dealt' : '') + '">');
+        out.push('<div class="step-head">'
+          + '<span class="mark ' + (x.state === 'done' ? 'is-done' : x.state === 'skipped' ? 'is-skipped' : '') + '" aria-hidden="true">'
+          + (x.state === 'done' ? '✓' : x.state === 'skipped' ? '–' : '')
+          + '</span>'
+          + '<a class="step-link" href="' + from(x.href) + '">' + x.n + '. ' + esc(x.title) + '</a>'
+          + '</div>');
+        if (!dealt) out.push('<p class="step-blurb">' + esc(x.blurb) + '</p>');
+        out.push('<div class="step-acts">');
+        if (dealt) {
+          out.push('<span class="step-said">'
+            + (x.state === 'done' ? 'Done.' : 'Not for you.') + '</span>');
+          out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-step="' + x.id + '" data-want="open">Undo</button>');
+        } else {
+          out.push('<a class="slaf-btn slaf-btn--primary" href="' + from(x.href) + '">Open →</a>');
+          out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-step="' + x.id + '" data-want="done">Done</button>');
+          out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-step="' + x.id + '" data-want="skipped">Not for me</button>');
+        }
+        out.push('</div></li>');
+      });
+      out.push('</ul></section>');
+    });
+    return out.join('');
+  }
+
+  /* One delegated listener on a container that is rebuilt whole. Rebuilding
+     is safe here in a way it would not be in a room with inputs: there is not
+     a single text field on this page, so nothing can lose focus and no soft
+     keyboard can close (D-034). */
+  function paint() {
+    var h = Spine.getProfile();
+    document.getElementById('out-top').innerHTML = topHtml(h);
+    document.getElementById('out-stages').innerHTML = stagesHtml(h);
+    var line = document.getElementById('reset-line');
+    if (line) {
+      line.innerHTML = Guide.hasStarted(h)
+        ? '<button type="button" class="slaf-btn slaf-btn--quiet" id="btn-reset">Clear the ticks and start the list again</button>'
+        : '<span class="slaf-hint">Nothing ticked yet, so there is nothing to clear.</span>';
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-step]') : null;
+    if (b) {
+      var want = b.getAttribute('data-want');
+      Spine.markWalkStep(b.getAttribute('data-step'), want === 'open' ? null : want);
+      return;
+    }
+    if (e.target.id === 'btn-reset') Spine.resetWalk();
+    /* Opening the first step IS starting the walk — that is what makes the
+       strip appear on the room you land on. */
+    if (e.target.id === 'btn-begin') Spine.startWalk();
+  });
+
+  Spine.onChange(function () { if (TABLES) paint(); });
+
+  Reference.load([Guide.TABLE], '../data/').then(function (T) {
+    TABLES = T;
+    paint();
+  }).catch(function (err) {
+    var n = document.getElementById('load-notice');
+    n.hidden = false;
+    n.textContent = 'The list of steps could not be loaded. Every room is still reachable from the map. (' + err + ')';
   });
 })();
 </script>

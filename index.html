@@ -271,8 +271,8 @@
     <h2>One set of numbers. Every tool reads it.</h2>
     <p>Answer a short set of questions once — what you earn, spend, hold and owe — and every room opens already filled in, from your runway to your FI year. Nothing leaves this browser.</p>
     <div class="cta">
-      <a class="slaf-btn slaf-btn--primary" id="btn-start" href="rooms/first-round.html">Walk me through it →</a>
-      <a class="slaf-btn" id="btn-express" href="rooms/express.html">Give me the whole form</a>
+      <a class="slaf-btn slaf-btn--primary" id="btn-start" href="rooms/ledger.html#round-1">Walk me through it →</a>
+      <a class="slaf-btn" id="btn-express" href="rooms/ledger.html#all-at-once">Give me the whole form</a>
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-example">See it with example numbers</button>
     </div>
     <p class="resume"><a href="rooms/start.html" id="btn-long-form">The older one-pager is still here.</a></p>
@@ -979,7 +979,7 @@
       : 'Not frozen yet. Freeze once and the panel can say what moved.';
     el('age-line').innerHTML = '<span>' + left + '</span>'
       + '<span class="' + (justFroze ? 'froze' : '') + '" id="freeze-say">' + frozen + '</span>'
-      + '<span><a href="' + Ownership.linkTo('refresh') + '">Refresh what moves →</a> '
+      + '<span><a href="' + Ownership.linkTo('ledger') + '#since-last-time">Refresh what moves →</a> '
       + '<button type="button" id="btn-freeze" title="Take a snapshot so the panel can say what changed">Freeze today\u2019s numbers</button></span>';
     el('btn-freeze').addEventListener('click', function () {
       Instruments.snapshot(Spine.getProfile(), TABLES);
@@ -1078,7 +1078,7 @@
     var due = SLAF.Progress.comebackDue ? SLAF.Progress.comebackDue(window) : null;
     if (due !== null && panelReady(h) && !/comeback=seen/.test(location.search)) {
       try { SLAF.Prefs.set('comeback.due', null); } catch (e) { /* fine */ }
-      window.location.replace('rooms/comeback.html');
+      window.location.replace('rooms/ledger.html#since-last-time');
       return false;
     }
     var ready = panelReady(h);
@@ -1240,7 +1240,7 @@
     card.innerHTML = '<p class="walk-say">Walk-through: <strong>' + (p.done + p.skipped) + ' of ' + p.total
       + '</strong> behind you. Next is ' + esc(next.title) + '.</p>'
       + '<a class="slaf-btn slaf-btn--primary" href="' + next.href + '">Continue →</a>'
-      + '<a class="slaf-btn" href="rooms/walk.html">All ' + p.total + '</a>';
+      + '<a class="slaf-btn" href="rooms/ledger.html#route">All ' + p.total + '</a>';
   }
 
   /* ---- The five tiles (D-171) ----------------------------------------------

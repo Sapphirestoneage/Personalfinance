@@ -537,24 +537,33 @@
       ]
     },
     /* The Ledger (18.4, 18.5; D-185): every number the app can hold, one
-       row each, in nine spheres. Reads everything, writes nothing until
-       18.1 moves entry here. */
+       row each, in nine spheres. Six ways in, one set of rows (D-228). */
     {
       id: 'ledger',
-      /* Under Upkeep beside Refresh until 18.1 makes it the place numbers
-         are entered (D-186): three doors side by side under Home was one of
-         the things that lost people. */
-      group: 'upkeep', aliases: ['ledger', 'the ledger', 'rows', 'spheres', 'progress'],
+      /* Home, not Upkeep, since D-228: three doors side by side under Home
+         was what lost people (D-186), and there is now one door. The First
+         Round, Express, Front Doors and the Walk-Through are its views. */
+      group: 'home', aliases: ['ledger', 'the ledger', 'rows', 'spheres', 'progress',
+                               'first round', 'five questions', 'quick start', 'begin',
+                               'express', 'whole form', 'all at once', 'everything',
+                               'front doors', 'arrangements', 'ways in',
+                               'walk-through', 'guided', 'tour',
+                               'refresh', 'stale', 'update numbers', 'confirm',
+                               'welcome back', 'been a while', 'comeback'],
       kind: 'about-you',
       utility: true,
       needs: [],
-      order: 98.2,
+      order: 0.5,
       title: 'The Ledger',
-      blurb: 'Every number the app can hold, one line each, in the order they matter: what is entered, what is rough, what is still to look up, and where each is read.',
+      blurb: 'Every number the app can hold, one line each. Six ways in and they all write the same rows: the six doors, five questions to start, the whole form at once, what has moved since last time, twenty arrangements, and the short route through.',
       href: 'rooms/ledger.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ["assets","assets.allocation","assets.cashCents","assets.contributions.hsa","assets.contributions.pretax","assets.contributions.roth","assets.invested","assets.property","debt.items","debt.items[].minimumCents","debt.items[].plan","debt.none","expenses","expenses.floor","expenses.giving","expenses.insurance","expenses.log","expenses.months","expenses.needs.accommodation","expenses.needs.food","expenses.needs.transportation","expenses.shared","expenses.wants","expenses.wants.therapy","income.cadence","income.future","income.grossAnnualCents","income.ledger","income.sources[].benefit","income.sources[].employerMatch","income.variable","taxes.filingStatus","taxes.marginalRate","taxes.otherPreTax","taxes.state","taxes.withheld","taxes.zip","you.cover","you.dependents","you.dob","you.estate","you.partner","you.situation"], writes: [] },
+      daite: { reads: ["assets","assets.allocation","assets.cashCents","assets.contributions.hsa","assets.contributions.pretax","assets.contributions.roth","assets.invested","assets.property","debt.items","debt.items[].minimumCents","debt.items[].plan","debt.none","expenses","expenses.floor","expenses.giving","expenses.insurance","expenses.log","expenses.months","expenses.needs.accommodation","expenses.needs.food","expenses.needs.transportation","expenses.shared","expenses.wants","expenses.wants.therapy","income.cadence","income.future","income.grossAnnualCents","income.ledger","income.sources[].benefit","income.sources[].employerMatch","income.variable","taxes.filingStatus","taxes.marginalRate","taxes.otherPreTax","taxes.state","taxes.withheld","taxes.zip","you.cover","you.dependents","you.dob","you.estate","you.partner","you.situation"],
+               /* It owns none of these. Round 1, all at once and since last
+                  time each write through Ownership.write, which is the owner's
+                  own path — one record, never a second copy (D-228). */
+               writes: ["assets.cashCents","assets.invested","debt.items","expenses","income.grossAnnualCents","income.sources[].lastPay","taxes.zip","you.dob","you.situation"] },
       subsections: [
         { id: 'doors-home',   label: 'The six doors' },
         { id: 'door-D',       label: 'Debt' },
@@ -563,6 +572,11 @@
         { id: 'door-T',       label: 'Taxes' },
         { id: 'door-E',       label: 'Expenses' },
         { id: 'door-you',     label: 'You' },
+        { id: 'view-round1',  label: 'Round 1' },
+        { id: 'view-express', label: 'All at once' },
+        { id: 'view-since',   label: 'Since last time' },
+        { id: 'view-shelves', label: 'Arrangements' },
+        { id: 'view-route',   label: 'The route' },
         { id: 'spheres-fold', label: 'The nine spheres' },
         { id: 'backup',       label: 'Backup' }
       ]
@@ -921,31 +935,6 @@
      what is required from what is optional, which is most of why a suite
      this size feels like homework. See DECISIONS.md D-051.
 
-  /* A utility page: reached from the dashboard's staleness line and from
-     the room-to-room nav, never listed on the map's groups — it asks for
-     nothing new, it re-asks the figures that move (moves: true in
-     data/ledger-rows.json, D-209). It writes those
-     through the owner's own write path (Ownership.write), so it is not a
-     second editor of a second copy. DECISIONS.md D-057. */
-  ROOMS.push({
-    id: 'refresh',
-    group: 'upkeep', aliases: ['refresh', 'stale', 'update numbers', 'confirm'],
-    kind: 'core',
-    utility: true,
-    needs: ['cashSavings', 'investments', 'totalDebt'],
-    order: 99,   /* always last on the path (D-057), whatever rooms are added */
-    title: 'Refresh',
-    blurb: 'Only the numbers that move: balances, rates, spending, pay. Each pre-filled with what you gave last time, one tap to confirm, a line saying what changed since, and a snapshot taken so the dashboard can say what moved.',
-    href: 'rooms/refresh.html',
-    tier: 0,
-    tags: ['cashflow', 'debt'],
-    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets.cashCents', 'assets.invested', 'debt.items'] },
-    subsections: [
-      { id: 'fields', label: 'The numbers that move' },
-      { id: 'done',   label: 'Snapshot' }
-    ]
-  });
-
   /* The First Car Check (K10, D-219): 20/3/8 as a lens, the price that fits,
      the gap in FI days, new against used at the same budget. */
   ROOMS.push({
@@ -1030,30 +1019,6 @@
     ]
   });
 
-  /* Front Doors — the same rooms, arranged twenty different ways (D-153).
-     A utility like Refresh and Your Data: it is a way of MOVING through the
-     rooms, not a room with a number in it, so it stays off the numbered path
-     and out of D-051's four-room core cap. */
-  ROOMS.push({
-    id: 'doors',
-    group: 'upkeep', aliases: ['front doors', 'arrangements', 'ways in'],
-    kind: 'core',
-    utility: true,
-    needs: [],
-    order: 96,
-    title: 'Front Doors',
-    blurb: 'Twenty ways into the same rooms — by the question you came with, by what could go wrong, by how long it takes, by how often you would open it. The rooms never change; only the shelves.',
-    href: 'rooms/doors.html',
-    tier: 0,
-    tags: ['income', 'cashflow', 'debt'],
-    daite: { reads: [], writes: ['prefs.door'] },
-    subsections: [
-      { id: 'out-pick', label: 'Choose an arrangement' },
-      { id: 'out-door', label: 'The rooms' },
-      { id: 'out-why',  label: 'Why this one' }
-    ]
-  });
-
   /* Settings — every user-scope feature switch on one screen (D-180). */
   ROOMS.push({
     id: 'settings',
@@ -1074,29 +1039,6 @@
       { id: 'horizon',   label: 'Horizon' },
       { id: 'advanced',  label: 'Advanced' },
       { id: 'backup',    label: 'Backup' }
-    ]
-  });
-
-  /* The Walk-Through — the short, finishable route through the suite
-     (D-149). `utility: true` for the same reason Refresh is: it is a way of
-     moving through the rooms, not a room with a number in it, so it stays
-     off the numbered path and out of the four-room core cap (D-051). */
-  ROOMS.push({
-    id: 'walk',
-    group: 'upkeep', aliases: ['walk-through', 'guided', 'tour'],
-    kind: 'core',
-    utility: true,
-    needs: [],
-    order: 97,   /* ahead of Your Data (98) and Refresh (99), both utilities */
-    title: 'The Walk-Through',
-    blurb: 'The short route through this app: five sets of steps, only the ones that are for you, with somewhere to say when each is done.',
-    href: 'rooms/walk.html',
-    tier: 0,
-    tags: ['income', 'cashflow', 'debt'],
-    daite: { reads: [], writes: ['progress.walk'] },
-    subsections: [
-      { id: 'out-top',    label: 'Where you are' },
-      { id: 'out-stages', label: 'The five sets' }
     ]
   });
 
@@ -1833,57 +1775,6 @@
     ]
   });
 
-  /* The First Round (D-206): five questions, one a screen, then one insight
-     and one door. Group home, ahead of Start Here, which stays the long form. */
-  ROOMS.push({
-    id: 'first-round',
-    group: 'home', aliases: ['first round', 'five questions', 'quick start', 'begin'],
-    kind: 'core',
-    utility: true,
-    needs: [],
-    order: 0.5,
-    title: 'The First Round',
-    blurb: 'Five questions, under a minute, then one thing the numbers say and one door to open. Everything else fills in as you go.',
-    href: 'rooms/first-round.html',
-    tier: 0,
-    tags: ['income', 'cashflow'],
-    daite: { reads: ['you.dob', 'taxes.zip', 'you.situation', 'income.grossAnnualCents', 'income.sources[].lastPay', 'assets.cashCents'],
-             writes: ['you.dob', 'taxes.zip', 'you.situation', 'income.grossAnnualCents', 'income.sources[].lastPay', 'assets.cashCents'] },
-    subsections: [
-      { id: 'q-age',       label: 'Your age' },
-      { id: 'q-zip',       label: 'ZIP' },
-      { id: 'q-situation', label: 'Situation' },
-      { id: 'q-pay',       label: 'Pay' },
-      { id: 'q-cash',      label: 'Cash on hand' },
-      { id: 'insight',     label: 'The first thing the numbers say' }
-    ]
-  });
-
-  /* Express (D-208): the whole form at once, a second VIEW of the same rows,
-     grouped by door and level, every field through its owner. */
-  ROOMS.push({
-    id: 'express',
-    group: 'home', aliases: ['express', 'whole form', 'all at once', 'the long form', 'everything'],
-    kind: 'core',
-    utility: true,
-    needs: [],
-    order: 0.6,
-    title: 'Express',
-    blurb: 'Every question on one page, grouped by door and level. For anyone who already knows their numbers. The same rows the doors hold, the same owners.',
-    href: 'rooms/express.html',
-    tier: 0,
-    tags: ['income', 'cashflow', 'debt'],
-    daite: { reads: [], writes: [] },
-    subsections: [
-      { id: 'x-D',   label: 'Debt' },
-      { id: 'x-A',   label: 'Assets' },
-      { id: 'x-I',   label: 'Income' },
-      { id: 'x-T',   label: 'Taxes' },
-      { id: 'x-E',   label: 'Expenses' },
-      { id: 'x-you', label: 'You' }
-    ]
-  });
-
   /* Your Next $100 (H3, D-211): every place the next hundred could go on
      one scale, the return it earns or saves; guaranteed and expected kept
      apart; the order of operations a note on each line. Reads only. */
@@ -2010,28 +1901,6 @@
     subsections: [{ id: 'guess', label: 'Your guess' }, { id: 'reveal', label: 'Guess beside survey' }]
   });
 
-  /* The Comeback (J2, D-214): the first screen after 21 days away. Only the
-     moving rows, oldest first, then the earned-vs-learned strip. Not on the
-     map's groups on its own account: the front door sends people here. */
-  ROOMS.push({
-    id: 'comeback',
-    group: 'upkeep', aliases: ['comeback', 'welcome back', 'been a while'],
-    kind: 'core',
-    utility: true,
-    needs: ['cashSavings', 'investments', 'totalDebt'],
-    order: 98.9,
-    title: 'Welcome Back',
-    blurb: 'Back after a while? Here is what changed. About 2 minutes: only the numbers that move, oldest first, then what moved and what you learned.',
-    href: 'rooms/comeback.html',
-    tier: 0,
-    tags: ['cashflow', 'debt'],
-    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses'], writes: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses'] },
-    subsections: [
-      { id: 'rows-card', label: 'The numbers that move' },
-      { id: 'since',     label: 'Since last time' }
-    ]
-  });
-
   /* The Subscription Finder (J5, D-215): repeating charges from the dated
      log, each priced a year and in hours; confirm, dismiss, or a reminder
      to cancel. Owns household.subscriptions. */
@@ -2087,7 +1956,7 @@
     decisions: ['career-move', 'self-employed', 'side-hustle', 'between-jobs', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'windfall', 'runway', 'decumulation', 'quick-math', 'adventure', 'what-if-life', 'timeline'],
     matters: ['sleep-at-night', 'values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
     levelup: ['skill-tree', 'stacker', 'exercises'],
-    upkeep: ['data', 'refresh', 'history', 'settings', 'get-help', 'doors', 'walk']
+    upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
   };
   function groups() { return GROUPS.slice(); }
   function groupById(id) { return GROUPS.filter(function (g) { return g.id === id; })[0] || null; }

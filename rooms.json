@@ -3,24 +3,14 @@
   "note": "Generated from shared/registry.js and shared/ownership.js; do not edit by hand.",
   "rooms": [
     {
-      "id": "first-round",
-      "title": "The First Round",
-      "file": "rooms/first-round.html",
+      "id": "ledger",
+      "title": "The Ledger",
+      "file": "rooms/ledger.html",
       "reads": [],
       "writes": [],
       "requires": [],
       "dashboardNumber": null,
       "order": 0.5
-    },
-    {
-      "id": "express",
-      "title": "Express",
-      "file": "rooms/express.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 0.6
     },
     {
       "id": "start",
@@ -1237,26 +1227,6 @@
       "order": 51.5
     },
     {
-      "id": "doors",
-      "title": "Front Doors",
-      "file": "rooms/doors.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 96
-    },
-    {
-      "id": "walk",
-      "title": "The Walk-Through",
-      "file": "rooms/walk.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 97
-    },
-    {
       "id": "data",
       "title": "Your Data",
       "file": "rooms/data.html",
@@ -1265,16 +1235,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 98
-    },
-    {
-      "id": "ledger",
-      "title": "The Ledger",
-      "file": "rooms/ledger.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 98.2
     },
     {
       "id": "one-pager",
@@ -1307,34 +1267,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 98.7
-    },
-    {
-      "id": "comeback",
-      "title": "Welcome Back",
-      "file": "rooms/comeback.html",
-      "reads": [
-        "cashSavings",
-        "investments",
-        "totalDebt"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 98.9
-    },
-    {
-      "id": "refresh",
-      "title": "Refresh",
-      "file": "rooms/refresh.html",
-      "reads": [
-        "cashSavings",
-        "investments",
-        "totalDebt"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 99
     }
   ]
 }
