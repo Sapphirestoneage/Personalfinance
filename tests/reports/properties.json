@@ -1,8 +1,8 @@
 {
   "seed": 20260910,
   "numRuns": 100,
-  "engines": 74,
-  "files": 76,
+  "engines": 87,
+  "files": 89,
   "missingFiles": [],
   "extraFiles": [
     "blocks",
@@ -498,11 +498,47 @@
       ]
     },
     {
+      "engine": "countdown",
+      "notes": [],
+      "properties": [
+        {
+          "name": "already there reads reached now; nothing in and nothing growing reads never; else whole months forward",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a bigger monthly contribution never lands later, and the bands order the range",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the honest monthly figure lands within the months it was asked for",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "credential",
       "notes": [],
       "properties": [
         {
           "name": "credentialROI on random inputs: no throw, no NaN, whole cents, the same answer twice",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "debates",
+      "notes": [],
+      "properties": [
+        {
+          "name": "every debate answers a, b or cantTell with a sentence and a flip point, or says what is missing; the household is untouched",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -595,6 +631,60 @@
         },
         {
           "name": "a draw path never ends higher with a lower return, and a bigger draw never ends higher",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "degree",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the cost adds up, ranges are ordered, no gain never breaks even, employer help never breaks even later",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "downpayment",
+      "notes": [],
+      "properties": [
+        {
+          "name": "more down: more cash needed, less borrowed, principal and interest lower, a date no earlier",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "family help never makes a date later, and a needed figure never goes below zero",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -847,6 +937,42 @@
         },
         {
           "name": "the FI date never moves earlier when spending rises or income falls",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "firstcar",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "three parts, inside or outside; the count is the parts inside; the gap is never negative; the curve never rises",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -1265,6 +1391,42 @@
       ]
     },
     {
+      "engine": "microretirement",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the fund is the break plus the cushion; a zero pay penalty changes nothing else",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "next100",
       "notes": [],
       "properties": [
@@ -1337,11 +1499,89 @@
       ]
     },
     {
-      "engine": "partner",
+      "engine": "offers",
       "notes": [],
       "properties": [
         {
           "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the match is salary × cap × rate on the offer household (one adult), and the household passed in is untouched",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "two priced offers: value low to high, whole cents, the best is the highest middle, one line decides",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "onepager",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the Public page never carries a dollar figure; blank rows are blank; sections come from the nine",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "partner",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -1542,6 +1782,78 @@
       ]
     },
     {
+      "engine": "quitfund",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "laid off reads no fewer months than quit, with the same free money, month and cover; targets are 3, 6 and 12",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "race",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every rung is $100K above the last, dated no earlier, and its saving plus growth is the climb",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "rankguess",
       "notes": [],
       "properties": [
@@ -1692,6 +2004,42 @@
       "engine": "reversibility",
       "notes": [],
       "properties": []
+    },
+    {
+      "engine": "rothaca",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "one row a year to 65, low to high in order, the tax the same under both rules, nothing converted from nothing",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
     },
     {
       "engine": "runway",
@@ -2357,6 +2705,42 @@
       ]
     },
     {
+      "engine": "trap",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every available path has a verdict from the three and a row a year; selling the home never reads worse",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "unlearning",
       "notes": [],
       "properties": [
@@ -2495,6 +2879,42 @@
       ]
     },
     {
+      "engine": "wedding",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "guests × per guest + fixed + ring is the total; a typed total wins; family help never lands later",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "week",
       "notes": [],
       "properties": [
@@ -2599,6 +3019,6 @@
       ]
     }
   ],
-  "totalProperties": 324,
+  "totalProperties": 381,
   "failedProperties": 7
 }

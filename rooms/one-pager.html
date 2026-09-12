@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 22:47Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>The One-Pager · SPARKS</title>
+<meta name="description" content="One page of your money for any conversation: a partner, a coach, a lender, a planner, a podcast. Private with full numbers, or Public with ratios, percentages and time only. Print it, or hand over the file."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. K2 (D-219).
+
+  1. READS   The whole household, through the engines that own each figure
+             (take-home, the ratios, the piles by tax type, the FI number).
+  2. WRITES  Nothing. The audience, the version and the section switches
+             are this page's state.
+  3. CALLS   engines/onepager.js. The Private file is the same shape Your
+             Data imports (a coach's intake); the Public text is checked
+             against the share-card leak rule.
+  4. EMPTY   A figure nobody typed is a blank row, never $0.
+  5. CONFIG  None beyond the tables the engines read.
+
+  LIVE-FORM: built once. Buttons only, no input.
+-->
+<style>
+  .row-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+  .page { margin-top: var(--space-3); }
+  .page h2 { font-size: var(--text-md); margin: var(--space-4) 0 var(--space-1); }
+  .page h2:first-child { margin-top: 0; }
+  .page table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+  .page td { padding: 2px 0; border-top: 1px solid var(--color-border); vertical-align: top; }
+  .page td.v { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .page td.v.is-blank { color: var(--color-text-faint); font-style: italic; }
+  .page small { color: var(--color-text-faint); }
+  .stamp { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-3); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media print {
+    body { background: #fff; color: #000; font-size: 10pt; }
+    .room-head, #audience, .slaf-progress-host, .slaf-hops, .disclaimer, .slaf-btn, .row-controls, #load-notice { display: none !important; }
+    .slaf-card { border: 0; box-shadow: none; padding: 0; }
+    .page h2 { margin: 8pt 0 2pt; font-size: 11pt; break-after: avoid; }
+    .page table { font-size: 9pt; }
+    .page td { padding: 1pt 0; }
+    @page { margin: 12mm; }
+  }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The One-Pager</h1>
+  <p class="room-lede">One page of your money for any conversation. Private carries the full numbers for someone you trust; Public carries ratios, percentages and time only, so nothing about the size of your life leaves the page.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <section class="slaf-card" id="audience">
+    <span class="slaf-eyebrow">Who is it for</span>
+    <div class="choices" id="aud-choices" style="margin-top:var(--space-2)"></div>
+    <p class="slaf-hint" id="aud-line" style="margin:var(--space-2) 0 0"></p>
+    <div class="choices" id="ver-choices" style="margin-top:var(--space-3)">
+      <button type="button" class="choice" data-version="private" aria-pressed="true">Private: full numbers</button>
+      <button type="button" class="choice" data-version="public" aria-pressed="false">Public: ratios and time only</button>
+    </div>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Switch any section on or off:</p>
+    <div class="row-controls" id="sec-choices"></div>
+    <div class="row-controls" style="margin-top:var(--space-3)">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-print">Print</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-file">Download the Private file</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-copy">Copy as text</button>
+    </div>
+    <p class="slaf-hint" id="file-note" style="margin:var(--space-2) 0 0"></p>
+  </section>
+  <section class="slaf-card" id="page">
+    <span class="slaf-eyebrow" id="page-title">The page</span>
+    <div class="page" id="op-page"></div>
+    <p class="stamp" id="op-stamp"></p>
+  </section>
+  <p class="disclaimer">
+    Educational tool, not financial advice. Every figure is the one its own room shows; blanks are blanks. Nothing is sent anywhere: printing and the file happen on this device.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../engines/trap.js"></script>
+<script src="../engines/onepager.js"></script>
+<script src="../shared/sharecard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, OnePager = SLAF.OnePager, ShareCard = SLAF.ShareCard, RoomExport = SLAF.RoomExport;
+  var ROOM_ID = 'one-pager';
+  var TABLES = null, AUD = 'coach', VER = 'private', SEC = {};
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var audHtml = '';
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var html = OnePager.AUDIENCES.map(function (a) { return '<button type="button" class="choice" data-aud="' + esc(a.id) + '" aria-pressed="' + (a.id === AUD ? 'true' : 'false') + '">' + esc(a.label) + '</button>'; }).join('');
+    if (html !== audHtml) { el('aud-choices').innerHTML = html; audHtml = html; }
+    else Array.prototype.forEach.call(el('aud-choices').querySelectorAll('[data-aud]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-aud') === AUD ? 'true' : 'false'); });
+    Array.prototype.forEach.call(el('ver-choices').querySelectorAll('[data-version]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-version') === VER ? 'true' : 'false'); });
+    var aud = OnePager.audienceById(AUD);
+    el('aud-line').textContent = aud.line;
+    var r = OnePager.build(h, TABLES, { audience: AUD, version: VER, sections: SEC });
+    el('sec-choices').innerHTML = OnePager.SECTIONS.map(function (s) { var on = r.sectionsOn.indexOf(s.id) > -1 || (typeof SEC[s.id] === 'boolean' ? SEC[s.id] : aud.sections.indexOf(s.id) > -1); return '<button type="button" class="choice" data-sec="' + esc(s.id) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(s.title) + '</button>'; }).join('');
+    el('page-title').textContent = (VER === 'private' ? 'Private' : 'Public') + ' one-pager for a ' + aud.label.toLowerCase();
+    el('op-page').innerHTML = r.value.map(function (s) {
+      return '<h2>' + esc(s.title) + '</h2><table>' + s.rows.map(function (x) {
+        return '<tr><td>' + esc(x.label) + (x.note ? ' <small>' + esc(x.note) + '</small>' : '') + '</td><td class="v' + (x.blank ? ' is-blank' : '') + '">' + esc(x.blank ? 'not entered' : x.text) + '</td></tr>';
+      }).join('') + '</table>';
+    }).join('') || '<p class="slaf-hint">Nothing to show for this audience yet.</p>';
+    el('op-stamp').textContent = 'From SPARKS, ' + r.at + '. ' + (VER === 'public' ? 'Public version: ratios, percentages and time only; no dollar figure appears.' : 'Private version: full numbers, for someone you trust.');
+    el('op-page').setAttribute('data-version', VER);
+    el('btn-file').hidden = VER !== 'private';
+  }
+  document.addEventListener('click', function (evt) {
+    var a = evt.target.closest('[data-aud]'), v = evt.target.closest('[data-version]'), s = evt.target.closest('[data-sec]');
+    if (a) { AUD = a.getAttribute('data-aud'); SEC = {}; }
+    if (v) VER = v.getAttribute('data-version');
+    if (s) { var id = s.getAttribute('data-sec'); SEC[id] = s.getAttribute('aria-pressed') !== 'true'; }
+    if (a || v || s) render();
+  });
+  el('btn-print').addEventListener('click', function () { window.print(); });
+  el('btn-copy').addEventListener('click', function () {
+    var r = OnePager.build(Spine.getProfile(), TABLES, { audience: AUD, version: VER, sections: SEC });
+    var text = OnePager.text(r);
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { el('file-note').textContent = 'Copied as text.'; }, function () { el('file-note').textContent = 'Could not copy; select the page and copy it.'; });
+    else el('file-note').textContent = 'Copy is not available here; select the page and copy it.';
+  });
+  el('btn-file').addEventListener('click', function () {
+    /* The Private file is the same shape Your Data imports: a coach opens it as a client intake. */
+    var obj = Spine.exportObject();
+    var r = OnePager.build(Spine.getProfile(), TABLES, { audience: AUD, version: 'private', sections: SEC });
+    obj.onePager = { audience: AUD, at: r.at, sections: r.value.map(function (s) { return { id: s.id, title: s.title, rows: s.rows.map(function (x) { return { label: x.label, value: x.blank ? null : x.text, status: x.blank ? 'not entered' : 'entered' }; }) }; }) };
+    RoomExport.download('one-pager-private-' + r.at + '.json', JSON.stringify(obj, null, 2), 'application/json');
+    el('file-note').textContent = 'Downloaded. Whoever you hand it to can open it in Your Data as an intake; it holds your full numbers, so hand it only to someone you trust.';
+  });
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['effectiveTaxRates', 'federalBrackets', 'seTax', 'stateBrackets', 'ratioBenchmarks', 'fireVariants', 'expenseCategories', 'debtRules', 'returnBands']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

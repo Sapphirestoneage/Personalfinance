@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 22:47Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Down Payment Countdown · SPARKS</title>
+<meta name="description" content="For a home price, the date you could buy at 3.5%, 5%, 10% and 20% down, each with closing costs and the lender's reserves counted, and the monthly payment at each with tax, insurance and mortgage insurance where it applies."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. K6 (D-217).
+
+  1. READS   The state (for the home block). Nothing else: the price,
+             what is set aside, the monthly saving and any family help are
+             typed here.
+  2. WRITES  Nothing to the household. "Add this as a block" saves a home
+             block in the scenarios store (shared/scenarios.js).
+  3. CALLS   engines/downpayment.js, which dates each option through
+             engines/countdown.js goalCountdown(), the one countdown, and
+             prices the payment through engines/housing.js.
+  4. EMPTY   No price: it asks for one. Out of reach at the current pace:
+             says so with the monthly saving that would reach it in five
+             years, never a far-off date.
+  5. CONFIG  data/down_payment.json, data/housing_conventions.json,
+             data/mortgage_rates.json.
+
+  LIVE-FORM: built once. Five boxes, in the HTML; only .value is set.
+-->
+<style>
+  .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
+  .ask > div:first-child { grid-column: 1 / -1; }
+  .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  ul.opts { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.opts li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  ul.opts li:first-child { border-top: none; }
+  ul.opts .lab { font-weight: 600; }
+  ul.opts .when { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-1) 0; }
+  ul.opts .when.is-never { font-size: var(--text-md); }
+  ul.opts small { display: block; color: var(--color-text-muted); font-size: var(--text-xs); line-height: var(--leading-loose); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media (max-width: 480px) { .ask { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Down Payment Countdown</h1>
+  <p class="room-lede">Four ways in, each with its date: what the lender needs in cash at 3.5%, 5%, 10% and 20% down, and what each costs a month once you are in.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <section class="slaf-card" id="inputs">
+    <span class="slaf-eyebrow">The home, and the fund</span>
+    <div class="ask">
+      <div><label for="in-price">Home price</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-price" placeholder="e.g. 400,000" aria-label="Home price"/></span>
+        <span class="slaf-hint">The app has no price table; type the price of the kind of place you mean.</span></div>
+      <div><label for="in-saved">Set aside for it</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-saved" placeholder="e.g. 20,000" aria-label="Set aside for it"/></span></div>
+      <div><label for="in-monthly">Saved toward it, a month</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-monthly" placeholder="e.g. 1,000" aria-label="Saved toward it a month"/></span></div>
+      <div><label for="in-family">Family help, if any</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-family" placeholder="only if promised" aria-label="Family help"/></span></div>
+      <div><label for="in-rate">Mortgage rate</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-rate" placeholder="e.g. 6.5" aria-label="Mortgage rate"/><span class="slaf-affix">%</span></span></div>
+    </div>
+  </section>
+  <section class="slaf-card" id="options" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Four ways in</span>
+    <p class="slaf-hint" id="d-sub" style="margin:var(--space-2) 0 0"></p>
+    <ul class="opts" id="d-opts"></ul>
+    <p style="margin:var(--space-3) 0 0"><button type="button" class="slaf-btn slaf-btn--quiet" id="add-block" hidden>Add this as a block</button> <span class="slaf-hint" id="block-note"></span></p>
+  </section>
+  <p class="disclaimer">
+    Educational tool, not financial advice. Closing costs, reserves and mortgage insurance are national rules of thumb marked by their confidence; a lender's terms decide. Everything stays in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../shared/expr.js"></script>
+<script src="../shared/scenarios.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../engines/housing.js"></script>
+<script src="../engines/countdown.js"></script>
+<script src="../engines/downpayment.js"></script>
+<script src="../shared/blocks.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, DownPayment = SLAF.DownPayment, Blocks = SLAF.Blocks, Scenarios = SLAF.Scenarios;
+  var ROOM_ID = 'down-payment';
+  var TABLES = null, LAST = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '"': '&quot;', '>': '&gt;' }[c]; }); }
+  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
+  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
+  function render() {
+    if (!TABLES) return;
+    var rateTyped = String(el('in-rate').value || '').trim();
+    var rate = rateTyped === '' ? null : Number(rateTyped.replace(/[^0-9.]/g, '')) / 100;
+    if (!el('in-rate').value && TABLES.mortgageRates) el('in-rate').placeholder = 'e.g. ' + (Math.round(TABLES.mortgageRates.thirtyYearFixed * 1000) / 10);
+    var r = DownPayment.plan(TABLES, { priceCents: typed('in-price'), savedCents: typed('in-saved'), monthlyCents: typed('in-monthly'), familyHelpCents: typed('in-family'), rate: Number.isFinite(rate) && rate > 0 ? rate : null });
+    LAST = Money.isOk(r) ? r : null;
+    el('add-block').hidden = !LAST;
+    if (!Money.isOk(r)) { el('d-sub').textContent = r.reason; el('d-opts').innerHTML = ''; return; }
+    el('d-sub').textContent = 'A ' + Money.formatCents(r.priceCents) + ' home at ' + Money.formatRate(r.rate, { decimals: 2 }) + ' over 30 years, with ' + Money.formatCents(r.savedCents) + ' set aside and ' + Money.formatCents(r.monthlyCents) + ' a month going in' + (r.familyHelpCents ? ', and ' + Money.formatCents(r.familyHelpCents) + ' of family help' : '') + '. Closing costs about ' + Money.formatCents(r.closingCents) + ' in every case.';
+    el('d-opts').innerHTML = r.options.map(function (o) {
+      var when = o.reachedNow ? 'You could buy now.' : o.neverAtThisPace ? 'Not at this pace: ' + Money.formatCents(o.monthlyNeededCents) + ' a month would get there in ' + r.honestYears + ' years.' : monthWord(o.date);
+      return '<li data-pct="' + o.pct + '"><span class="lab">' + esc(o.label) + '</span><div class="when' + (o.neverAtThisPace ? ' is-never' : '') + '">' + esc(when) + '</div>'
+        + '<small>Needs ' + esc(Money.formatCents(o.neededCents)) + ': ' + esc(Money.formatCents(o.downCents)) + ' down, ' + esc(Money.formatCents(o.closingCents)) + ' closing, ' + esc(Money.formatCents(o.reservesCents)) + ' in reserve' + (o.familyHelpCents ? ', less ' + esc(Money.formatCents(o.familyHelpCents)) + ' of help' : '') + '.</small>'
+        + '<small>' + esc(Money.formatCents(o.paymentCents)) + ' a month: ' + esc(Money.formatCents(o.principalInterestCents)) + ' principal and interest, ' + esc(Money.formatCents(o.taxCents)) + ' tax, ' + esc(Money.formatCents(o.insuranceCents)) + ' insurance' + (o.miCents ? ', ' + esc(Money.formatCents(o.miCents)) + ' mortgage insurance' : '') + '.</small></li>';
+    }).join('');
+  }
+  ['in-price', 'in-saved', 'in-monthly', 'in-family', 'in-rate'].forEach(function (id) { el(id).addEventListener('input', render); });
+  el('add-block').addEventListener('click', function () {
+    if (!LAST) return;
+    var twenty = LAST.options.filter(function (o) { return o.pct === 0.2; })[0] || LAST.options[LAST.options.length - 1];
+    var h = Spine.getProfile();
+    var built = Blocks.build('home', { price: LAST.priceCents, down: twenty.downCents, when: twenty.date || null, state: h.state || null }, h, { label: 'Home: ' + Money.formatCents(LAST.priceCents), start: twenty.date || null });
+    if (!Money.isOk(built)) { el('block-note').textContent = built.reason; return; }
+    var b = Scenarios.addBlock(built.value);
+    el('block-note').textContent = 'Saved as a block: ' + b.label + (b.dates[0] ? ', from ' + monthWord(b.dates[0].start) : '') + '. It lives beside your numbers, never in them.';
+  });
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['downPayment', 'housingConventions', 'mortgageRates', 'blockHome', 'states']).then(function (t) { TABLES = t; Blocks.use(t); render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

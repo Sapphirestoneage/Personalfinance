@@ -13270,6 +13270,201 @@ statement twice changes nothing; the finder names the two monthly charges
 and prices them), render and features gates on the two rooms, the phone
 walk with the fixture file.
 
+## D-216 — J7, J8: two views of Partner, Roth conversions before 65
+
+**Why.** A couple wants one sentence, not a room, most days; and the
+two of them want to know whose each account is without a second store.
+Between leaving work and Medicare, a Roth conversion is reported income
+and reported income sets the marketplace premium: nothing in the app
+priced the two together.
+
+**Decision.** `rooms/partner.html` gains two views of the same rows: the
+full room, and "Are we on track?", one sentence from
+`Partner.onTrack()` in `engines/partner.js`, read off `split()` (out of
+pocket is "no", a share past the watch line "close", both take-homes
+known "yes", else "can't tell"). Each adult keeps their own default view
+as a preference (`partner.view.<personId>`, `partner.viewer`), never on
+the household. `Partner.tags()` labels every account and debt mine /
+yours / ours / theirs from the viewer's side, read off `ownerIds` through
+`Schema.ownerOf`. Gift privacy is not built: it waits on the owner.
+`engines/rothaca.js` walks each year to 65: federal ordinary tax on
+other income plus the conversion (`Tax.ordinaryTax`), the premium after
+the credit (`Tax.acaCliff`, the benchmark typed by the person, never
+guessed), under two rules, the cliff in force and the no-cliff cap
+(`aca.ifNoCliff.capPercent`), shown as a range. `rooms/roth-aca.html`
+sits behind the `preMedicare` switch and writes nothing.
+
+**Replaces or removes.** Nothing: the brief adds views and one what-if
+room, and the freeze does not cover them.
+
+**Stored shape.** No change to `slaf.household.v2`. Prefs gain
+`partner.view.<personId>` and `partner.viewer`. `data/aca_2026.json`
+gains `ifNoCliff`.
+
+**Verified.** `node test/run.js` (the sentence for each state, the tags
+from either side, the household byte-identical after both; year one
+tax and premium by hand under and over the cliff, the range, the
+baseline, the capped conversion, every empty state), the render,
+features and forms gates on both rooms, the phone walk (both views,
+the viewer switch remembered across a reload, the switch off).
+
+## D-217 — K4, K6, K7, K11: one countdown, four skins
+
+**Why.** Every "when can I afford it" in the brief is the same sum with a
+different name, and a suite that lets each room walk its own months ends
+up with four answers to one question.
+
+**Decision.** `engines/countdown.js` holds the one `goalCountdown()`:
+target, set aside, a month's contribution, what it earns, the return
+bands for a range, and a `monthlyNeededCents()` for the honest
+alternative when a date is out of reach. Four skins on it, each a
+standalone room writing nothing to the household: `engines/race.js` and
+`rooms/race.html` (the next $100K rung and every rung to $1M, saving and
+growth split at each, shareable as dates only through a `race` card);
+`engines/downpayment.js` and `rooms/down-payment.html` (3.5% FHA, 5%, 10%
+and 20% down, each with closing costs, reserves and the payment from
+`engines/housing.js`; a home block on request); `engines/quitfund.js`
+and `rooms/quit-fund.html` (months of freedom on the free tiers of the
+reachable-money waterfall over the floor month plus COBRA cover; laid
+off counts the state benefit, quit counts none); `engines/wedding.js`
+and `rooms/wedding.html` (a total or a build-up from
+`data/wedding_defaults.json`, each extra table in dollars and FI days
+through the lens; a marriage block on request). Cash goals count at 0%,
+so their range collapses on purpose. `test/run.js` fails the build if a
+skin walks its own months.
+
+**Replaces or removes.** Nothing: four new rooms and one shared engine.
+
+**Stored shape.** No change to `slaf.household.v2`. New tables
+`data/down_payment.json` and `data/wedding_defaults.json`, both marked
+unverified. The scenarios store may gain a home or marriage block from
+the two rooms that offer one.
+
+**Verified.** `node test/run.js` (the countdown by hand, the demo's
+rungs shrinking with growth taking over, the 20%-down payment to the
+cent and its 78 months, family help moving every date, quit versus laid
+off changing only the benefit, the wedding build-up and its target
+month), the render, features and forms gates on the four rooms, the
+phone walk.
+
+## D-218 — K1, K3: the Middle Class Trap Test and the Referee
+
+**Why.** People already argue these debates on podcasts; the app can be
+the referee that runs both sides on the person's own numbers and never
+picks a side in general.
+
+**Decision.** `data/early_access_rules_2026.json` holds every rule for
+reaching retirement money early (the access age, the penalty, the
+seasoning years, the 72(t) method and rate ceiling, the Rule of 55 age,
+the single life expectancy table, the home-equity borrowing share), each
+with its statute or publication named and marked unverified.
+`engines/trap.js` runs four paths year by year from the retirement age to
+the access age: bridge accounts, the Roth conversion ladder, 72(t)
+payments and the Rule of 55, with lead-time savings landing in the bridge,
+federal tax from `engines/tax.js`, the 72(t) payment from
+`engines/projection.js`, verdicts Trapped / Tight / Free with the range
+across the three bands, and the earliest age not trapped per path.
+`rooms/middle-class-trap.html` names both sides with their sources and
+says what the numbers say. `data/debates.json` holds seven debates, each
+side's best case with its source, the fields read and the flip point;
+`engines/debates.js` runs each through the shared engines;
+`rooms/debates.html` shows both sides, the answer as a range, the flip
+point and the distance to it, shareable as the verdict only through a
+`debate` card.
+
+**Replaces or removes.** Nothing: two new rooms, two tables, two engines.
+
+**Stored shape.** No change to `slaf.household.v2`.
+
+**Verified.** `node test/run.js` (the brief's four households: trapped
+in two years under bridge alone, the ladder reaching Free with eight
+years of lead, the ladder unable to start with no bridge, Free under
+every path with a solid bridge; the 72(t) payment to the cent; each
+debate's answer flipping as the key input crosses its flip point), the
+render, features and forms gates on both rooms, the phone walk.
+
+## D-219 — K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, the car
+
+**Why.** The rest of Phase K: the "one pager out" half of the suite's core
+goal, and four decisions people bring to a friend who is good with money.
+
+**Decision.** `engines/onepager.js` and `rooms/one-pager.html`: one page
+of the household for an audience (partner, coach, lender prep, planner,
+podcast), Private with full numbers or Public with ratios, percentages
+and time only (checked against the share-card leak rule), any section
+switchable, a print stylesheet, and a Private file in the shape Your Data
+imports so a coach opens it as an intake. Every figure comes from the
+engine that owns it; blanks stay blank. `engines/microretirement.js` and
+`rooms/micro-retirement.html`: the fund for a 1 to 12 month break (the
+break, cover, less income, plus the re-entry cushion), the ready date
+through the one countdown, the FI move through the lens, the
+career-momentum cost as a range from `data/career_momentum.json`, and a
+sabbatical block on request. `engines/offers.js` and
+`rooms/offer-compare.html`: two to four offers priced on a copy of the
+household holding each pay (the one take-home figure, the true match
+salary × cap × rate, equity as a range, less premiums and the commute),
+per real hour with the commute in the hours, the FI date under each, the
+one line that decides it; accepting writes the pay and the state and
+records the life change for the reopen sheet. `engines/degree.js` and
+`rooms/degree.html`: a degree as a sum, break-even age and lifetime
+difference by 65 as ranges, the FI date with and without.
+`engines/firstcar.js` and `rooms/first-car.html`: 20/3/8 through the one
+rule call in `engines/quickmath.js`, each part inside or outside, the
+price that fits, the gap in FI days, new against used from the
+depreciation curve in `data/car_costs.json`.
+
+**Replaces or removes.** Nothing: five new rooms. The 20/3/8 figures sit
+both in `data/car_costs.json` and as the constant Quick Math has always
+carried; a later pass should make the engine read the table.
+
+**Stored shape.** No change to `slaf.household.v2`. Offer Compare writes
+existing fields only (the primary's first income source and the state)
+and `meta.reopen`. New table `data/career_momentum.json`, marked
+unverified.
+
+**Verified.** `node test/run.js` (the Public page with no cents, the
+Private page to the cent, blanks and "not sure yet"; the six-month fund
+and the zero-momentum case; the two match formulas by hand; the degree's
+cost and break-even with its range; the car's three parts and the price
+that fits), the render, features and forms gates on the five rooms, the
+phone walk.
+
+## D-220 — One CSV out, and the same CSV back in
+
+**Why.** The owner asked for a CSV export and a CSV import. The spreadsheet
+zip (D-210) already gave one CSV a door; nothing read a CSV back.
+
+**Decision.** `shared/csvexport.js` gains `single()` (every Ledger line as
+one CSV, the same columns as the zip), `fromText()` (the inverse of the
+export's value text, by the row's unit: dollars to the cent, a percent
+number to a rate, yes or no, a choice from the row's values, a date, a
+match from its words), `plan()` (each line matched to its row by id or
+by label and, for accounts, debts and pay, to its item by name; the value
+compared to what is held; one status a line: change, same, blank, worked
+out, no such row, no such item, enter it in its room, could not read),
+and `apply()` (every change through `Ownership.write`, in one undo
+batch). Your Data (`rooms/data.html`) gains "Download one CSV" and "Bring
+a CSV back in": choose a file, see every line and what it would do, then
+apply. A blank cell leaves the row as it is; nothing becomes a zero. An
+account, a debt or a source of pay the household does not hold yet is
+added from its amount line, named as the file names it and placed by
+the import keywords, and its other lines land on it; Start Here's totals
+are skipped when the file carries the account lines, so nothing doubles.
+The employer match now exports as its words, not the cents it earns.
+
+**Replaces or removes.** Nothing: the zip stays for anyone who wants one
+file a door.
+
+**Stored shape.** No change. Writes go through the owners' existing paths.
+
+**Verified.** `node test/run.js` (every exported value reads back to the
+same text; the demo's CSV into an empty household brings back its two
+accounts, two debts, pay, spending, filing status and date of birth to
+the cent; the same file again changes nothing and adds nothing twice; a
+two-column sheet by label; blank skipped, zero kept), the render,
+features and forms gates on Your Data, the phone walk (download, empty
+the household, bring the edited file back, one balance changed).
+
 ---
 
 # The Dungeons & Dividends entries

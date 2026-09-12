@@ -35,6 +35,7 @@
             "variance",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "statement",
             "reachable",
@@ -51,6 +52,7 @@
             "ratios",
             "dashboard",
             "credential",
+            "degree",
             "accounts",
             "fulfillment",
             "rerank",
@@ -65,6 +67,7 @@
             "windfall",
             "runway",
             "car",
+            "first-car",
             "credit",
             "cant-pay",
             "rollover",
@@ -73,15 +76,22 @@
             "adventure",
             "timeline",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "protection",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "tax",
             "estate",
             "giving",
             "career-move",
+            "offer-compare",
             "partner",
+            "wedding",
             "kids",
             "housing",
+            "down-payment",
             "big-purchase",
             "variable-income",
             "enough",
@@ -90,6 +100,7 @@
             "dreamline",
             "reversibility",
             "unlearning",
+            "debates",
             "student-loans",
             "calendar",
             "history",
@@ -103,6 +114,7 @@
             "get-help",
             "walk",
             "data",
+            "one-pager",
             "progress-card",
             "refresh",
             "comeback",
@@ -141,6 +153,7 @@
             "variance",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "statement",
             "reachable",
@@ -162,6 +175,7 @@
             "windfall",
             "runway",
             "car",
+            "first-car",
             "credit",
             "cant-pay",
             "rollover",
@@ -173,12 +187,14 @@
             "estate",
             "giving",
             "housing",
+            "down-payment",
             "big-purchase",
             "enough",
             "week",
             "buckets",
             "reversibility",
             "unlearning",
+            "debates",
             "calendar",
             "history",
             "wrapped"
@@ -196,12 +212,19 @@
             "self-employed",
             "side-hustle",
             "credential",
+            "degree",
             "accounts",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "tax",
             "career-move",
+            "offer-compare",
             "partner",
+            "wedding",
             "kids",
             "variable-income",
             "dreamline",
@@ -215,6 +238,7 @@
             "get-help",
             "walk",
             "data",
+            "one-pager",
             "progress-card",
             "refresh",
             "comeback",
@@ -243,6 +267,7 @@
             "dashboard",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "health",
             "ratios",
@@ -291,7 +316,9 @@
           "rooms": [
             "big-purchase",
             "car",
+            "first-car",
             "housing",
+            "down-payment",
             "kids",
             "quick-math",
             "hassle",
@@ -307,9 +334,11 @@
             "fire-lab",
             "timeline",
             "career-move",
+            "offer-compare",
             "self-employed",
             "side-hustle",
             "credential",
+            "degree",
             "dreamline",
             "reversibility",
             "windfall"
@@ -320,6 +349,8 @@
           "rooms": [
             "cant-pay",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "get-help",
             "variable-income",
             "sleep-at-night"
@@ -335,7 +366,8 @@
             "week",
             "buckets",
             "giving",
-            "unlearning"
+            "unlearning",
+            "debates"
           ]
         },
         {
@@ -344,17 +376,21 @@
             "fire",
             "coast-date",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "estate",
             "protection",
             "tax",
             "rollover",
-            "partner"
+            "partner",
+            "wedding"
           ]
         },
         {
           "name": "Keeping it going",
           "rooms": [
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped",
@@ -385,11 +421,15 @@
             "side-hustle",
             "self-employed",
             "career-move",
+            "offer-compare",
             "variable-income",
             "hassle",
             "credential",
+            "degree",
             "timeline",
-            "between-jobs"
+            "between-jobs",
+            "quit-fund",
+            "micro-retirement"
           ]
         },
         {
@@ -404,7 +444,9 @@
             "calendar",
             "big-purchase",
             "car",
-            "housing"
+            "first-car",
+            "housing",
+            "down-payment"
           ]
         },
         {
@@ -448,8 +490,11 @@
             "protection",
             "estate",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "tax",
             "partner",
+            "wedding",
             "kids"
           ]
         },
@@ -481,6 +526,7 @@
             "skill-tree",
             "exercises",
             "unlearning",
+            "debates",
             "health"
           ]
         },
@@ -497,12 +543,14 @@
             "comeback",
             "settings",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped",
             "get-help",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "doors"
           ],
@@ -528,6 +576,8 @@
           "rooms": [
             "cant-pay",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "runway",
             "get-help",
             "credit"
@@ -550,6 +600,7 @@
             "settings",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements"
           ]
         },
@@ -564,11 +615,14 @@
             "goals",
             "rerank",
             "car",
+            "first-car",
             "big-purchase",
             "student-loans",
             "rollover",
             "career-move",
+            "offer-compare",
             "credential",
+            "degree",
             "variable-income"
           ]
         },
@@ -581,8 +635,10 @@
             "statement",
             "reachable",
             "housing",
+            "down-payment",
             "kids",
             "partner",
+            "wedding",
             "timeline",
             "what-if-life",
             "adventure",
@@ -603,7 +659,10 @@
             "estate",
             "giving",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "unlearning",
+            "debates",
             "reversibility",
             "worth"
           ]
@@ -621,6 +680,7 @@
             "health",
             "quick-math",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped",
@@ -666,6 +726,7 @@
             "calendar",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "dashboard"
           ],
@@ -733,7 +794,9 @@
             "student-loans",
             "big-purchase",
             "car",
-            "housing"
+            "first-car",
+            "housing",
+            "down-payment"
           ]
         },
         {
@@ -746,6 +809,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "worth",
             "reversibility",
             "rerank",
@@ -756,7 +820,9 @@
             "skill-tree",
             "exercises",
             "credential",
+            "degree",
             "career-move",
+            "offer-compare",
             "side-hustle",
             "self-employed",
             "variable-income",
@@ -765,13 +831,19 @@
             "adventure",
             "windfall",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "partner",
+            "wedding",
             "estate",
             "giving",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "get-help",
             "walk",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped",
@@ -803,6 +875,7 @@
             "dashboard",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "walk",
             "refresh",
@@ -853,18 +926,26 @@
             "next-hundred",
             "big-purchase",
             "car",
+            "first-car",
             "housing",
+            "down-payment",
             "kids",
             "career-move",
+            "offer-compare",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "estate",
             "protection",
             "partner",
+            "wedding",
             "windfall",
             "self-employed",
             "side-hustle",
             "variable-income",
-            "between-jobs"
+            "between-jobs",
+            "quit-fund",
+            "micro-retirement"
           ],
           "note": "A third of the app behind one word — the price of a tidy tab bar.",
           "warn": true
@@ -877,8 +958,10 @@
             "exercises",
             "ratios",
             "unlearning",
+            "debates",
             "quick-math",
             "credential",
+            "degree",
             "hassle",
             "real-hourly-wage"
           ]
@@ -898,6 +981,7 @@
             "giving",
             "sleep-at-night",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped",
@@ -943,14 +1027,19 @@
           "name": "Everything, A–Z",
           "rooms": [
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "big-purchase",
             "budget",
             "career-move",
+            "offer-compare",
             "expenses",
             "cash-flow",
             "subscriptions",
             "debt-payoff",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "week",
             "dreamline",
             "enough",
@@ -961,6 +1050,7 @@
             "exercises",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "fire-lab",
             "fire",
@@ -974,10 +1064,12 @@
             "history",
             "wrapped",
             "housing",
+            "down-payment",
             "income",
             "kids",
             "calendar",
             "partner",
+            "wedding",
             "protection",
             "quick-math",
             "real-hourly-wage",
@@ -1007,8 +1099,10 @@
             "windfall",
             "buckets",
             "unlearning",
+            "debates",
             "variable-income",
             "car",
+            "first-car",
             "timeline",
             "what-if-life",
             "adventure",
@@ -1017,9 +1111,11 @@
             "accounts",
             "worth",
             "credential",
+            "degree",
             "hassle",
             "credit",
             "data",
+            "one-pager",
             "progress-card",
             "doors"
           ],
@@ -1050,6 +1146,7 @@
             "walk",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "doors"
           ],
@@ -1079,7 +1176,9 @@
             "protection",
             "cant-pay",
             "credit",
-            "between-jobs"
+            "between-jobs",
+            "quit-fund",
+            "micro-retirement"
           ],
           "note": "What you lie awake about."
         },
@@ -1104,8 +1203,10 @@
           "name": "The garage",
           "rooms": [
             "car",
+            "first-car",
             "big-purchase",
             "housing",
+            "down-payment",
             "rollover",
             "student-loans",
             "debt-payoff"
@@ -1119,7 +1220,9 @@
             "skill-tree",
             "exercises",
             "credential",
+            "degree",
             "career-move",
+            "offer-compare",
             "side-hustle",
             "self-employed",
             "variable-income",
@@ -1132,6 +1235,7 @@
           "name": "The living room",
           "rooms": [
             "partner",
+            "wedding",
             "kids",
             "giving",
             "values"
@@ -1157,6 +1261,8 @@
           "rooms": [
             "estate",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "history",
             "wrapped"
           ]
@@ -1169,7 +1275,8 @@
             "week",
             "buckets",
             "rerank",
-            "unlearning"
+            "unlearning",
+            "debates"
           ],
           "note": "The part that is not about money at all."
         },
@@ -1177,6 +1284,7 @@
           "name": "The cupboard under the stairs",
           "rooms": [
             "data",
+            "one-pager",
             "progress-card",
             "get-help"
           ]
@@ -1218,6 +1326,7 @@
             "debt-payoff",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements"
           ]
         },
@@ -1257,13 +1366,17 @@
             "values",
             "estate",
             "partner",
+            "wedding",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "enough",
             "fulfillment",
             "week",
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "reversibility",
             "worth",
             "giving"
@@ -1273,11 +1386,16 @@
           "name": "When something happens",
           "rooms": [
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "cant-pay",
             "career-move",
+            "offer-compare",
             "housing",
+            "down-payment",
             "big-purchase",
             "car",
+            "first-car",
             "kids",
             "student-loans",
             "rollover",
@@ -1290,6 +1408,7 @@
             "adventure",
             "fire-lab",
             "credential",
+            "degree",
             "hassle",
             "real-hourly-wage",
             "quick-math",
@@ -1307,6 +1426,7 @@
             "ledger",
             "skill-tree",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped"
@@ -1341,6 +1461,7 @@
             "reachable",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "variance",
             "quick-math"
@@ -1353,11 +1474,15 @@
             "hassle",
             "big-purchase",
             "housing",
+            "down-payment",
             "car",
+            "first-car",
             "student-loans",
             "rollover",
             "career-move",
+            "offer-compare",
             "credential",
+            "degree",
             "reversibility",
             "self-employed",
             "side-hustle"
@@ -1377,6 +1502,8 @@
             "protection",
             "estate",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "doors"
           ]
         },
@@ -1409,6 +1536,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "giving",
             "what-if-life",
             "adventure",
@@ -1421,10 +1549,13 @@
           "rooms": [
             "cant-pay",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "sleep-at-night",
             "get-help",
             "variable-income",
             "partner",
+            "wedding",
             "kids"
           ]
         },
@@ -1436,6 +1567,7 @@
             "start",
             "ledger",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped"
@@ -1472,11 +1604,14 @@
           "name": "The income stopping",
           "rooms": [
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "sleep-at-night",
             "variable-income",
             "self-employed",
             "side-hustle",
             "career-move",
+            "offer-compare",
             "timeline"
           ]
         },
@@ -1487,7 +1622,8 @@
             "student-loans",
             "rollover",
             "big-purchase",
-            "car"
+            "car",
+            "first-car"
           ]
         },
         {
@@ -1496,8 +1632,11 @@
             "protection",
             "estate",
             "partner",
+            "wedding",
             "kids",
-            "decumulation"
+            "decumulation",
+            "roth-aca",
+            "middle-class-trap"
           ]
         },
         {
@@ -1511,6 +1650,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "worth",
             "reversibility",
             "giving"
@@ -1534,8 +1674,10 @@
             "what-if-life",
             "adventure",
             "housing",
+            "down-payment",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "ratios",
             "health"
@@ -1556,6 +1698,7 @@
             "variance",
             "income",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped",
@@ -1564,6 +1707,7 @@
             "real-hourly-wage",
             "hassle",
             "credential",
+            "degree",
             "stacker",
             "skill-tree",
             "exercises",
@@ -1598,6 +1742,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "worth",
             "reversibility",
             "rerank",
@@ -1611,10 +1756,12 @@
           "name": "Someone you love",
           "rooms": [
             "partner",
+            "wedding",
             "kids",
             "giving",
             "estate",
-            "housing"
+            "housing",
+            "down-payment"
           ]
         },
         {
@@ -1622,8 +1769,12 @@
           "rooms": [
             "accounts",
             "career-move",
+            "offer-compare",
             "credential",
+            "degree",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "side-hustle",
             "self-employed",
             "variable-income",
@@ -1639,6 +1790,7 @@
             "credit",
             "student-loans",
             "car",
+            "first-car",
             "big-purchase",
             "cant-pay"
           ]
@@ -1649,6 +1801,8 @@
             "tax",
             "protection",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "fire",
             "coast-date"
           ]
@@ -1687,6 +1841,7 @@
             "calendar",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "sleep-at-night",
             "refresh",
@@ -1694,6 +1849,7 @@
             "settings",
             "walk",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped",
@@ -1750,7 +1906,8 @@
             "credit",
             "kids",
             "week",
-            "unlearning"
+            "unlearning",
+            "debates"
           ],
           "note": "Start Here is in this layer, not layer 0 — the front door has a prerequisite."
         },
@@ -1759,6 +1916,7 @@
           "rooms": [
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "statement",
             "reachable",
@@ -1774,22 +1932,31 @@
             "ratios",
             "dashboard",
             "credential",
+            "degree",
             "accounts",
             "worth",
             "runway",
             "car",
+            "first-car",
             "health",
             "what-if-life",
             "adventure",
             "timeline",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "protection",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "tax",
             "giving",
             "career-move",
+            "offer-compare",
             "partner",
+            "wedding",
             "housing",
+            "down-payment",
             "big-purchase",
             "variable-income",
             "enough",
@@ -1818,6 +1985,7 @@
             "get-help",
             "walk",
             "data",
+            "one-pager",
             "progress-card",
             "refresh",
             "comeback",
@@ -1844,6 +2012,8 @@
           "rooms": [
             "cant-pay",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "runway",
             "get-help",
             "expenses",
@@ -1861,7 +2031,9 @@
             "real-hourly-wage",
             "hassle",
             "career-move",
+            "offer-compare",
             "credential",
+            "degree",
             "timeline"
           ]
         },
@@ -1874,7 +2046,9 @@
             "rerank",
             "big-purchase",
             "car",
+            "first-car",
             "housing",
+            "down-payment",
             "student-loans"
           ]
         },
@@ -1898,8 +2072,11 @@
             "protection",
             "estate",
             "partner",
+            "wedding",
             "kids",
-            "decumulation"
+            "decumulation",
+            "roth-aca",
+            "middle-class-trap"
           ]
         },
         {
@@ -1913,6 +2090,7 @@
             "dreamline",
             "giving",
             "unlearning",
+            "debates",
             "worth",
             "reversibility"
           ]
@@ -1933,6 +2111,7 @@
             "health",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "dashboard"
           ]
@@ -1949,6 +2128,7 @@
             "comeback",
             "settings",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped",
@@ -1982,6 +2162,7 @@
             "settings",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "dashboard",
             "health",
@@ -1999,6 +2180,7 @@
             "hassle",
             "worth",
             "car",
+            "first-car",
             "windfall",
             "reversibility",
             "sleep-at-night",
@@ -2032,7 +2214,10 @@
             "timeline",
             "big-purchase",
             "housing",
-            "between-jobs"
+            "down-payment",
+            "between-jobs",
+            "quit-fund",
+            "micro-retirement"
           ]
         },
         {
@@ -2046,17 +2231,22 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "what-if-life",
             "adventure",
             "fire-lab",
             "estate",
             "partner",
+            "wedding",
             "kids",
             "career-move",
+            "offer-compare",
             "self-employed",
             "side-hustle",
             "variable-income",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "giving",
             "foo-ladder",
             "next-hundred",
@@ -2075,9 +2265,11 @@
             "skill-tree",
             "exercises",
             "credential",
+            "degree",
             "history",
             "wrapped",
             "data",
+            "one-pager",
             "progress-card"
           ]
         }
@@ -2112,6 +2304,7 @@
             "tax",
             "giving",
             "partner",
+            "wedding",
             "credit",
             "calendar",
             "history",
@@ -2121,14 +2314,20 @@
             "comeback",
             "settings",
             "data",
+            "one-pager",
             "progress-card",
             "get-help",
             "housing",
+            "down-payment",
             "car",
+            "first-car",
             "big-purchase",
             "kids",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "career-move",
+            "offer-compare",
             "side-hustle",
             "self-employed",
             "student-loans",
@@ -2138,6 +2337,7 @@
             "reachable",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "variable-income",
             "variance",
@@ -2174,6 +2374,7 @@
             "hassle",
             "worth",
             "credential",
+            "degree",
             "reversibility",
             "week",
             "values",
@@ -2194,8 +2395,11 @@
             "rerank",
             "dreamline",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "buckets",
-            "unlearning"
+            "unlearning",
+            "debates"
           ],
           "note": "Invented or borrowed vocabulary a stranger cannot decode from the words. Six rooms are effectively unnamed until you have been told what they are.",
           "warn": true
@@ -2223,13 +2427,18 @@
             "ledger",
             "timeline",
             "partner",
+            "wedding",
             "kids",
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "variable-income",
             "self-employed",
             "side-hustle",
             "career-move",
-            "credential"
+            "offer-compare",
+            "credential",
+            "degree"
           ],
           "note": "Who you are and what is changing. Nine spokes.",
           "hub": "start"
@@ -2269,6 +2478,8 @@
             "protection",
             "estate",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "windfall"
           ],
           "note": "What you hold and what protects it. Ten spokes.",
@@ -2282,8 +2493,10 @@
             "student-loans",
             "cant-pay",
             "car",
+            "first-car",
             "big-purchase",
-            "housing"
+            "housing",
+            "down-payment"
           ],
           "note": "What you owe and what you are about to owe. Six spokes.",
           "hub": "debt-payoff"
@@ -2294,6 +2507,7 @@
             "dashboard",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "ratios",
             "health",
@@ -2309,6 +2523,7 @@
             "history",
             "wrapped",
             "data",
+            "one-pager",
             "progress-card",
             "get-help",
             "doors"
@@ -2326,6 +2541,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "worth",
             "reversibility",
             "giving",
@@ -2366,6 +2582,7 @@
             "savings-rate",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements",
             "credit",
             "runway",
@@ -2386,9 +2603,13 @@
             "what-if-life",
             "adventure",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "big-purchase",
             "housing",
+            "down-payment",
             "car",
+            "first-car",
             "student-loans",
             "rollover",
             "kids"
@@ -2407,6 +2628,7 @@
             "hassle",
             "quick-math",
             "credential",
+            "degree",
             "worth",
             "sleep-at-night",
             "windfall",
@@ -2421,6 +2643,7 @@
             "cant-pay",
             "get-help",
             "unlearning",
+            "debates",
             "reversibility",
             "values",
             "week",
@@ -2430,7 +2653,8 @@
             "dreamline",
             "giving",
             "estate",
-            "partner"
+            "partner",
+            "wedding"
           ],
           "note": "Nothing to be wrong about arithmetically. Judge these as advice, not as sums."
         },
@@ -2438,10 +2662,13 @@
           "name": "Nothing yet, and it says so",
           "rooms": [
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "variable-income",
             "self-employed",
             "side-hustle",
-            "career-move"
+            "career-move",
+            "offer-compare"
           ],
           "note": "Rooms that refuse to compute until you enter something, rather than guessing. The behaviour this whole app is built around."
         },
@@ -2457,6 +2684,7 @@
             "comeback",
             "settings",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped",
@@ -2494,7 +2722,10 @@
           "name": "Wrong right now › Work changed",
           "rooms": [
             "between-jobs",
+            "quit-fund",
+            "micro-retirement",
             "career-move",
+            "offer-compare",
             "self-employed",
             "side-hustle",
             "variable-income",
@@ -2507,6 +2738,7 @@
           "rooms": [
             "get-help",
             "partner",
+            "wedding",
             "kids",
             "giving",
             "estate"
@@ -2527,6 +2759,7 @@
             "dashboard",
             "financial-snapshot",
             "rank-guess",
+            "race",
             "statements"
           ]
         },
@@ -2548,8 +2781,10 @@
             "debt-payoff",
             "student-loans",
             "car",
+            "first-car",
             "big-purchase",
-            "housing"
+            "housing",
+            "down-payment"
           ]
         },
         {
@@ -2564,6 +2799,8 @@
             "what-if-life",
             "adventure",
             "decumulation",
+            "roth-aca",
+            "middle-class-trap",
             "ratios",
             "health"
           ]
@@ -2578,6 +2815,7 @@
             "buckets",
             "dreamline",
             "unlearning",
+            "debates",
             "rerank",
             "worth",
             "reversibility"
@@ -2590,6 +2828,7 @@
             "skill-tree",
             "exercises",
             "credential",
+            "degree",
             "real-hourly-wage",
             "hassle",
             "quick-math"
@@ -2604,6 +2843,7 @@
             "ledger",
             "walk",
             "data",
+            "one-pager",
             "progress-card",
             "history",
             "wrapped",

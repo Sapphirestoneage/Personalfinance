@@ -1231,6 +1231,134 @@ const CASES = [
         ['the form is long', s.rows > 60, true]
       ];
     }
+  },
+  {
+    /* ROTH CONVERSIONS BEFORE 65 (J8, D-216): four what-if boxes in the
+       HTML, re-rendered on every keystroke into siblings, never rebuilt. */
+    room: '/rooms/roth-aca.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '#in-premium', type: '800' },
+      { sel: '#in-pretax', type: '500000' },
+      { sel: '#in-conv', type: '40000' }
+    ],
+    expect: async (page) => {
+      const num = await page.evaluate(() => document.getElementById('r-num').textContent);
+      const rows = await page.evaluate(() => document.querySelectorAll('#r-rows li').length);
+      return [
+        ['a lifetime figure is shown', /^\$[\d,]+/.test(num), true],
+        ['a row a year to 65', rows > 0, true]
+      ];
+    }
+  },
+  {
+    /* DOWN PAYMENT COUNTDOWN (K6, D-217): five boxes, re-rendered into a
+       sibling list on every keystroke. */
+    room: '/rooms/down-payment.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '#in-price', type: '400000' },
+      { sel: '#in-saved', type: '20000' },
+      { sel: '#in-monthly', type: '1000' }
+    ],
+    expect: async (page) => {
+      const n = await page.evaluate(() => document.querySelectorAll('#d-opts li').length);
+      const twenty = await page.evaluate(() => (document.querySelector('#d-opts li[data-pct="0.2"] .when') || {}).textContent || '');
+      return [
+        ['four ways in', n, 4],
+        ['the 20% date is a month and a year', /^[A-Z][a-z]+ \d{4}$/.test(twenty), true]
+      ];
+    }
+  },
+  {
+    /* WEDDING COUNTDOWN (K11, D-217): nine boxes and a slider. */
+    room: '/rooms/wedding.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '#in-guests', type: '80' },
+      { sel: '#in-saved', type: '5000' },
+      { sel: '#in-monthly', type: '800' }
+    ],
+    expect: async (page) => {
+      const num = await page.evaluate(() => document.getElementById('w-num').textContent);
+      const sub = await page.evaluate(() => document.getElementById('w-sub').textContent);
+      return [
+        ['a date is shown', /^[A-Z][a-z]+ \d{4}\.$/.test(num), true],
+        ['built from 80 guests', /80 guests/.test(sub), true]
+      ];
+    }
+  },
+  {
+    /* THE MIDDLE CLASS TRAP TEST (K1, D-218): one age box, four paths
+       re-rendered into siblings. */
+    room: '/rooms/middle-class-trap.html',
+    container: '#verdict',
+    seed: 'demo',
+    fields: [{ sel: '#in-age', type: '50' }],
+    expect: async (page) => {
+      const paths = await page.evaluate(() => document.querySelectorAll('#t-paths li').length);
+      const hint = await page.evaluate(() => document.getElementById('t-age-hint').textContent);
+      return [['four paths', paths, 4], ['the typed age is the one bridged', /from 50 to/.test(hint), true]];
+    }
+  },
+  {
+    /* THE REFEREE (K3, D-218): the price box on rent or buy. */
+    room: '/rooms/debates.html',
+    container: '#answer',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('[data-debate="rentVsBuy"]'); },
+    fields: [{ sel: '#in-price', type: '150000' }],
+    expect: async (page) => {
+      const a = await page.evaluate(() => document.getElementById('d-num').getAttribute('data-answer'));
+      return [['a cheap place favours buying', a, 'a']];
+    }
+  },
+  {
+    /* MICRO-RETIREMENT PLANNER (K5, D-219): six boxes. */
+    room: '/rooms/micro-retirement.html',
+    container: '#fund',
+    seed: 'demo',
+    fields: [{ sel: '#in-months', type: '6' }, { sel: '#in-income', type: '500' }],
+    expect: async (page) => {
+      const fund = await page.evaluate(() => Number(document.getElementById('m-sub').getAttribute('data-fund')));
+      return [['a fund is priced', fund > 0, true]];
+    }
+  },
+  {
+    /* OFFER COMPARE (K8, D-219): four columns built once, two shown. */
+    room: '/rooms/offer-compare.html',
+    container: '#offers',
+    seed: 'demo',
+    fields: [{ sel: '#o0-base', type: '95000' }, { sel: '#o1-base', type: '100000' }, { sel: '#o1-commute', type: '200' }],
+    expect: async (page) => {
+      const best = await page.evaluate(() => document.getElementById('o-num').getAttribute('data-best'));
+      return [['a best offer is named', best === '0' || best === '1', true]];
+    }
+  },
+  {
+    /* THE DEGREE DECISION (K9, D-219): ten boxes. */
+    room: '/rooms/degree.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [{ sel: '#in-tuition', type: '60000' }, { sel: '#in-years', type: '2' }, { sel: '#in-with-low', type: '95000' }],
+    expect: async (page) => {
+      const be = await page.evaluate(() => document.getElementById('g-num').getAttribute('data-breakeven'));
+      return [['a break-even age', /^\d+(\.\d)?$/.test(be), true]];
+    }
+  },
+  {
+    /* THE FIRST CAR CHECK (K10, D-219): seven boxes. */
+    room: '/rooms/first-car.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [{ sel: '#in-price', type: '30000' }, { sel: '#in-down', type: '6000' }, { sel: '#in-term', type: '36' }],
+    expect: async (page) => {
+      const n = await page.evaluate(() => document.querySelectorAll('#c-parts li').length);
+      return [['three parts', n, 3]];
+    }
   }
 ];
 

@@ -946,6 +946,41 @@
     ]
   });
 
+  /* The First Car Check (K10, D-219): 20/3/8 as a lens, the price that fits,
+     the gap in FI days, new against used at the same budget. */
+  ROOMS.push({
+    id: 'first-car',
+    group: 'decisions', subgroup: 'moves', aliases: ['first car', '20/3/8', 'car check', 'car loan', 'new or used'],
+    kind: 'explore',
+    needs: ['grossAnnualIncome'],
+    order: 41.5,
+    title: 'The First Car Check',
+    blurb: 'The 20/3/8 rule as a lens on the car you are weighing: each part inside or outside, the highest price that fits all three, what the gap costs in days of financial independence, and new against used at the same budget.',
+    href: 'rooms/first-car.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['income.grossAnnualCents', 'expenses', 'assets.invested', 'taxes.filingStatus'], writes: [] },
+    subsections: [{ id: 'check', label: '20 / 3 / 8' }, { id: 'inputs', label: 'The car' }, { id: 'newused', label: 'New against used' }]
+  });
+
+  /* The Degree Decision (K9, D-219): a degree as a sum, the break-even age
+     and the lifetime difference as ranges, the FI date with and without. */
+  ROOMS.push({
+    id: 'degree',
+    group: 'decisions', subgroup: 'work', aliases: ['degree', 'masters', 'mba', 'go back to school', 'tuition', 'break-even'],
+    appliesWhen: 'situation != retired',
+    kind: 'explore',
+    needs: ['dob'],
+    order: 37.7,
+    title: 'The Degree Decision',
+    blurb: 'A degree as a sum: tuition, the pay given up, the loan and employer help against the pay with it and without it, each a range. The break-even age, the lifetime difference by 65, and the FI date with and without.',
+    href: 'rooms/degree.html',
+    tier: 2,
+    tags: ['income'],
+    daite: { reads: ['income.grossAnnualCents', 'you.dob', 'expenses', 'taxes.filingStatus', 'assets.invested'], writes: [] },
+    subsections: [{ id: 'answer', label: 'Break-even' }, { id: 'inputs', label: 'The degree' }, { id: 'sum', label: 'The sum' }]
+  });
+
   /* The Timeline — jobs and benefits as dated periods that stack, and the
      months they add up to (D-152). It OWNS futureIncome[], which used to be
      edited on The Statement: a dated period belongs in the room that draws
@@ -1137,6 +1172,100 @@
       ]
   });
 
+  /* Roth Conversions Before 65 (J8, D-216): conversions are reported
+     income and reported income sets the marketplace premium; the two priced
+     together to Medicare, as a range across the cliff-on and cliff-off
+     rules. Behind the preMedicare switch. */
+  ROOMS.push({
+    id: 'roth-aca',
+    features: ['preMedicare'],
+    group: 'decisions', subgroup: 'moves', aliases: ['roth conversion', 'aca', 'marketplace', 'obamacare', 'subsidy cliff', 'premium tax credit', 'before 65'],
+    appliesWhen: 'situation != student',
+    kind: 'explore',
+    needs: ['dob', 'filingStatus'],
+    order: 33.5,
+    title: 'Roth Conversions Before 65',
+    blurb: 'Converting pre-tax money to Roth is reported income, and reported income sets what the marketplace charges for health cover until Medicare. Year by year to 65, tax and premiums together, as a range.',
+    href: 'rooms/roth-aca.html',
+    tier: 2,
+    tags: ['income'],
+    daite: { reads: ['assets.invested', 'taxes.filingStatus', 'you.dob'], writes: [] },
+    subsections: [
+      { id: 'number',      label: 'Tax and premiums, together, to 65' },
+      { id: 'inputs',      label: 'The what-if' },
+      { id: 'years',       label: 'Year by year' },
+      { id: 'assumptions', label: 'Assumptions' }
+    ]
+  });
+
+  /* The Quit Fund (K7, D-217): months of freedom on money that costs
+     nothing to reach, with cover counted, and the dates to 3, 6 and 12. */
+  ROOMS.push({
+    id: 'quit-fund',
+    group: 'decisions', subgroup: 'work', aliases: ['quit', 'quit fund', 'freedom fund', 'f-you money', 'walk away', 'laid off'],
+    appliesWhen: 'situation != retired',
+    kind: 'read',
+    needs: ['cashSavings', 'monthlyExpenses'],
+    order: 31.5,
+    title: 'The Quit Fund',
+    blurb: 'How many months you could walk away for, on money that costs nothing to reach, with the floor month and health cover counted; when you would have three, six and twelve; and what changes if you are laid off instead.',
+    href: 'rooms/quit-fund.html',
+    tier: 2,
+    tags: ['cashflow', 'income'],
+    daite: { reads: ['assets.cashCents', 'assets', 'expenses', 'expenses.floor', 'income.grossAnnualCents', 'taxes.state', 'you.dob'], writes: [] },
+    subsections: [{ id: 'months', label: 'Months of freedom' }, { id: 'dates', label: 'When you would have' }, { id: 'parts', label: 'What it is made of' }]
+  });
+
+  /* Micro-Retirement Planner (K5, D-219): a planned break of 1 to 12 months,
+     what it costs and what it buys on one screen. */
+  ROOMS.push({
+    id: 'micro-retirement',
+    group: 'decisions', subgroup: 'work', aliases: ['micro-retirement', 'mini retirement', 'sabbatical', 'break', 'gap year', 'time off'],
+    appliesWhen: 'situation != retired',
+    kind: 'explore',
+    needs: ['monthlyExpenses'],
+    order: 31.7,
+    title: 'Micro-Retirement Planner',
+    blurb: 'A planned break from work of one to twelve months: the fund it needs with health cover and a re-entry cushion, the date you would be ready, how far the FI date moves, the career-momentum cost as a range, and what the break buys in weeks.',
+    href: 'rooms/micro-retirement.html',
+    tier: 2,
+    tags: ['cashflow', 'income'],
+    daite: { reads: ['expenses', 'assets.cashCents', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob', 'assets.invested'], writes: [] },
+    subsections: [{ id: 'fund', label: 'The fund' }, { id: 'sides', label: 'Both sides' }]
+  });
+  /* The Middle Class Trap Test (K1, D-218): both sides of the debate on
+     the household's numbers, four paths to the pre-tax money, each with a
+     verdict and its range. */
+  ROOMS.push({
+    id: 'middle-class-trap',
+    group: 'decisions', subgroup: 'moves', aliases: ['middle class trap', 'trap', 'bridge', 'roth ladder', '72t', 'rule of 55', 'early retirement'],
+    appliesWhen: 'situation != student',
+    kind: 'explore',
+    needs: ['dob', 'monthlyExpenses'],
+    order: 33.7,
+    title: 'The Middle Class Trap Test',
+    blurb: 'Is a net worth that is mostly the house and the 401(k) a trap before 59 and a half, or a planning problem? Both sides on your numbers: bridge accounts, the Roth conversion ladder, 72(t) payments and the Rule of 55, year by year, each with a verdict and its range.',
+    href: 'rooms/middle-class-trap.html',
+    tier: 2,
+    tags: ['income'],
+    daite: { reads: ['assets', 'assets.invested', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob', 'plans.targets'], writes: [] },
+    subsections: [{ id: 'verdict', label: 'What the numbers say' }, { id: 'debate', label: 'The debate' }, { id: 'paths', label: 'Four paths' }, { id: 'years', label: 'Year by year' }, { id: 'assumptions', label: 'Assumptions' }]
+  });
+  /* The Referee (K3, D-218): debates as buttons, both sides on your numbers. */
+  ROOMS.push({
+    id: 'debates',
+    group: 'matters', aliases: ['referee', 'debate', 'debates', 'both sides', 'flip point', 'mortgage or invest', 'roth or traditional', 'rent or buy'],
+    kind: 'explore',
+    needs: [],
+    order: 48.5,
+    title: 'The Referee',
+    blurb: 'Money debates people already have, both sides stated fairly with their sources, run on your numbers: the answer as a range, the flip point where it changes, and how close you sit to it.',
+    href: 'rooms/debates.html',
+    tier: 2,
+    tags: ['income', 'debt'],
+    daite: { reads: ['assets.invested', 'debt.items', 'expenses', 'expenses.needs.accommodation', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
+    subsections: [{ id: 'pick', label: 'Pick a debate' }, { id: 'answer', label: 'The answer' }, { id: 'sides', label: 'Both sides' }]
+  });
   /* Tax — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'tax',
@@ -1232,6 +1361,24 @@
       ]
   });
 
+  /* Offer Compare (K8, D-219): two to four offers priced as what they are
+     worth in a year and per real hour, with the FI date under each. */
+  ROOMS.push({
+    id: 'offer-compare',
+    group: 'decisions', subgroup: 'work', aliases: ['offer', 'offers', 'job offer', 'compare offers', 'match', 'equity', 'negotiate'],
+    appliesWhen: 'situation != retired',
+    kind: 'explore',
+    needs: [],
+    order: 37.5,
+    title: 'Offer Compare',
+    blurb: 'Two to four job offers side by side: each one’s real yearly value after the match, health premiums and the commute, its value per real hour, the FI date under each, and the one line that decides it.',
+    href: 'rooms/offer-compare.html',
+    tier: 2,
+    tags: ['income'],
+    daite: { reads: ['expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state', 'assets.invested'], writes: ['income.grossAnnualCents', 'income.sources[].employerMatch', 'taxes.state'] },
+    subsections: [{ id: 'decider', label: 'What decides it' }, { id: 'offers', label: 'The offers' }, { id: 'results', label: 'Side by side' }]
+  });
+
   /* Partner — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'partner',
@@ -1246,15 +1393,34 @@
     tags: ['income', 'cashflow'],
     daite: { reads: ['expenses', 'income.grossAnnualCents', 'you.partner'], writes: ['expenses.shared', 'you.partner'] },
       subsections: [
+        { id: 'view',        label: 'Which view' },
+        { id: 'track',       label: 'Are we on track?' },
         { id: 'number',      label: 'Each share of the shared month' },
         { id: 'chart',       label: 'The shared month, split' },
         { id: 'inputs',      label: 'How you split' },
         { id: 'amounts',     label: 'Through the lens' },
+        { id: 'tags',        label: 'Yours, mine, ours' },
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
       ]
   });
 
+  /* Wedding Countdown (K11, D-217): a total or a build-up, dated through the
+     one countdown; each extra table in dollars and FI days. */
+  ROOMS.push({
+    id: 'wedding',
+    group: 'decisions', subgroup: 'family', aliases: ['wedding', 'engagement', 'ring', 'guests', 'marry'],
+    kind: 'explore',
+    needs: [],
+    order: 38.5,
+    title: 'Wedding Countdown',
+    blurb: 'The date the wedding is paid for with no debt, from a total or from guests, fixed costs and the ring, and what every extra table costs in dollars and in days of financial independence.',
+    href: 'rooms/wedding.html',
+    tier: 2,
+    tags: ['cashflow'],
+    daite: { reads: ['expenses', 'income.grossAnnualCents', 'assets.invested'], writes: [] },
+    subsections: [{ id: 'date', label: 'Affordable, with no debt' }, { id: 'inputs', label: 'The wedding, and the fund' }, { id: 'tables', label: 'Every extra table' }]
+  });
   /* Kids and Tuition — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'kids',
@@ -1300,6 +1466,23 @@
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
       ]
+  });
+
+  /* Down Payment Countdown (K6, D-217): what each way in needs in cash, the
+     date at the pace, and the payment at each. */
+  ROOMS.push({
+    id: 'down-payment',
+    group: 'decisions', subgroup: 'moves', aliases: ['down payment', 'save for a house', 'fha', 'pmi', 'closing costs', 'first home'],
+    kind: 'explore',
+    needs: [],
+    order: 40.5,
+    title: 'Down Payment Countdown',
+    blurb: 'For a home price, the date you could buy at 3.5%, 5%, 10% and 20% down, each with closing costs and the lender’s reserves counted, and the monthly payment at each with tax, insurance and mortgage insurance where it applies.',
+    href: 'rooms/down-payment.html',
+    tier: 2,
+    tags: ['cashflow'],
+    daite: { reads: ['taxes.state'], writes: [] },
+    subsections: [{ id: 'inputs', label: 'The home, and the fund' }, { id: 'options', label: 'Four ways in' }]
   });
 
   /* Big Purchase — the second wave of tranche rooms (D-099). */
@@ -1611,6 +1794,23 @@
     ]
   });
 
+  /* The One-Pager (K2, D-219): one page of the household for any
+     conversation; Private with full numbers, Public with ratios and time. */
+  ROOMS.push({
+    id: 'one-pager',
+    group: 'upkeep', aliases: ['one pager', 'one-pager', 'snapshot page', 'print', 'share with a coach', 'lender', 'planner'],
+    kind: 'read',
+    needs: ['grossAnnualIncome'],
+    order: 98.3,
+    title: 'The One-Pager',
+    blurb: 'One page of your money for any conversation: a partner, a coach, a lender, a planner, a podcast. Private with full numbers, or Public with ratios, percentages and time only. Print it, or hand over the file.',
+    href: 'rooms/one-pager.html',
+    tier: 1,
+    tags: ['income', 'cashflow', 'debt'],
+    daite: { reads: ['assets', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state', 'you.dob', 'you.situation', 'plans.targets'], writes: [] },
+    subsections: [{ id: 'audience', label: 'Who is it for' }, { id: 'page', label: 'The page' }]
+  });
+
   /* Where every room's out-of-scope line points (D-097). Reads the gate for
      a line per stage; owns nothing; optional by definition. */
   ROOMS.push({
@@ -1777,6 +1977,22 @@
     tags: ['cashflow'],
     daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
     subsections: [{ id: 'date', label: 'Coast date' }, { id: 'reverse', label: 'The reverse view' }]
+  });
+  /* The Race to $100K (K4, D-217): the next rung and every rung to $1M, dated
+     through the one countdown, with saving and growth split at each. */
+  ROOMS.push({
+    id: 'race',
+    group: 'scorecard', aliases: ['race', '100k', 'first 100k', 'rungs', 'million'],
+    kind: 'read',
+    needs: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'],
+    order: 25.9,
+    title: 'The Race to $100K',
+    blurb: 'The date your net worth reaches its next $100,000 rung, then every rung to $1 million, with what came from saving and what came from growth at each. The first $100K is the hardest; this shows why.',
+    href: 'rooms/race.html',
+    tier: 1,
+    tags: ['cashflow'],
+    daite: { reads: ['assets', 'assets.cashCents', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus'], writes: [] },
+    subsections: [{ id: 'next', label: 'The next rung' }, { id: 'rungs', label: 'Every rung to $1 million' }]
   });
   /* Where Do You Think You Rank? (I3, D-213): the guess before the survey. */
   ROOMS.push({

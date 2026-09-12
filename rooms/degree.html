@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 22:47Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>The Degree Decision · SPARKS</title>
+<meta name="description" content="A degree as a sum: tuition, the pay given up, the loan, and employer help, against the pay with it and without it as ranges. The break-even age, the difference in lifetime earnings by 65, and the FI date with and without."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. K9 (D-219).
+
+  1. READS   Date of birth, pay now (the default for "without"), the savings
+             basis for the FI dates.
+  2. WRITES  Nothing. Every box is this page's what-if.
+  3. CALLS   engines/degree.js, on engines/projection.js (the loan) and
+             engines/tier0.js (the FI dates).
+  4. EMPTY   No pay with the degree: it asks. Zero gain: "does not break
+             even", never a far-off age.
+  5. CONFIG  None.
+
+  LIVE-FORM: built once. Ten boxes, in the HTML; only .value is set.
+-->
+<style>
+  .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
+  .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  ul.plain { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  ul.plain li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  ul.plain li:first-child { border-top: none; }
+  ul.plain b { font-variant-numeric: tabular-nums; text-align: right; }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media (max-width: 480px) { .ask { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Degree Decision</h1>
+  <p class="room-lede">A degree as a sum. What it costs, what it pays back, the age the two cross, and what it does to the FI date.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <section class="slaf-card" id="answer">
+    <span class="slaf-eyebrow">Break-even</span>
+    <p class="head-num" id="g-num"></p>
+    <p class="head-sub" id="g-sub"></p>
+  </section>
+  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The degree</span>
+    <div class="ask">
+      <div><label for="in-tuition">Tuition and fees, in all</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-tuition" placeholder="e.g. 60,000" aria-label="Tuition and fees"/></span></div>
+      <div><label for="in-years">Years in school</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-years" placeholder="e.g. 2" aria-label="Years in school"/></span></div>
+      <div><label for="in-keep">Pay kept while studying</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-keep" placeholder="0 full time, 50 part time" aria-label="Pay kept while studying"/><span class="slaf-affix">%</span></span></div>
+      <div><label for="in-help">Employer tuition help</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-help" placeholder="if any" aria-label="Employer tuition help"/></span></div>
+      <div><label for="in-loan">Loan</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-loan" placeholder="if any" aria-label="Loan"/></span></div>
+      <div><label for="in-rate">Loan rate</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-rate" placeholder="e.g. 6" aria-label="Loan rate"/><span class="slaf-affix">%</span></span></div>
+      <div><label for="in-with-low">Pay with the degree, low</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-with-low" placeholder="a year" aria-label="Pay with the degree, low"/></span></div>
+      <div><label for="in-with-high">Pay with the degree, high</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-with-high" placeholder="blank if one figure" aria-label="Pay with the degree, high"/></span></div>
+      <div><label for="in-wo-low">Pay without it, low</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-wo-low" placeholder="your pay now" aria-label="Pay without it, low"/></span></div>
+      <div><label for="in-wo-high">Pay without it, high</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-wo-high" placeholder="blank if one figure" aria-label="Pay without it, high"/></span></div>
+    </div>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Not sure of a salary? Leave the high box blank for one figure, or type a wide range; the answer is a range either way.</p>
+  </section>
+  <section class="slaf-card" id="sum" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The sum</span>
+    <ul class="plain" id="g-sum"></ul>
+  </section>
+  <p class="disclaimer">
+    Educational tool, not financial advice. Pay in today's dollars, the loan over ten years, no tax on the difference. Everything stays in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/degree.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Degree = SLAF.Degree;
+  var ROOM_ID = 'degree';
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
+  function num(id) { var t = String(el(id).value || '').replace(/[^0-9.]/g, ''); return t === '' ? null : Number(t); }
+  function li(label, value) { return '<li><span>' + esc(label) + '</span><b>' + esc(value) + '</b></li>'; }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var g = Schema.grossAnnualIncomeCents(h);
+    if (Money.isOk(g) && !el('in-wo-low').value) el('in-wo-low').placeholder = 'your pay now, ' + Money.formatCents(g.value, { exact: true }).replace(/^\$/, '');
+    var keep = num('in-keep'), rate = num('in-rate');
+    var r = Degree.decide(h, TABLES, { tuitionCents: typed('in-tuition'), years: num('in-years'), partTimeShare: keep === null ? null : keep / 100, employerHelpCents: typed('in-help'), loanCents: typed('in-loan'), loanRate: rate === null ? null : rate / 100,
+      withLowCents: typed('in-with-low'), withHighCents: typed('in-with-high'), withoutLowCents: typed('in-wo-low'), withoutHighCents: typed('in-wo-high') });
+    if (!Money.isOk(r)) { el('g-num').textContent = 'Not yet.'; el('g-sub').textContent = r.reason; el('g-sum').innerHTML = ''; return; }
+    if (r.breakEvenAge === null) { el('g-num').textContent = 'Does not break even.'; el('g-sub').textContent = 'With no gain in pay (' + Money.formatCents(r.gainLowCents) + ' to ' + Money.formatCents(r.gainHighCents) + ' a year), ' + Money.formatCents(r.costCents) + ' never comes back.'; }
+    else {
+      el('g-num').textContent = 'Breaks even at ' + r.breakEvenAge + (r.breaksEven ? '.' : ', past 65.');
+      var range = r.breakEvenLowAge !== null && r.breakEvenHighAge !== null && r.breakEvenLowAge !== r.breakEvenHighAge ? ' Range: ' + r.breakEvenLowAge + ' on the high pay to ' + (r.breakEvenHighAge === null ? 'never' : r.breakEvenHighAge) + ' on the low.' : '';
+      el('g-sub').textContent = Money.formatCents(r.costCents) + ' in, ' + Money.formatCents(r.gainLowCents) + ' to ' + Money.formatCents(r.gainHighCents) + ' a year back from ' + r.doneAt + '.' + range + ' By 65 that is ' + Money.formatCents(r.lifetimeLowCents) + ' to ' + Money.formatCents(r.lifetimeHighCents) + ' more' + (r.lifetimeLowCents < 0 ? ' (or less)' : '') + ' in lifetime earnings.';
+    }
+    el('g-num').setAttribute('data-breakeven', r.breakEvenAge === null ? 'never' : String(r.breakEvenAge));
+    var rows = [li('Tuition and fees', Money.formatCents(r.tuitionCents))];
+    if (r.employerHelpCents) rows.push(li('Employer help', '- ' + Money.formatCents(r.employerHelpCents)));
+    rows.push(li('Pay given up over ' + r.years + ' year' + (r.years === 1 ? '' : 's') + (r.keepShare ? ', keeping ' + Math.round(r.keepShare * 100) + '%' : ''), Money.formatCents(r.forgoneCents)));
+    if (r.interestCents) rows.push(li('Interest on the loan over ' + Degree.LOAN_YEARS + ' years', Money.formatCents(r.interestCents)));
+    rows.push(li('The cost, in all', Money.formatCents(r.costCents)));
+    rows.push(li('Gain a year', Money.formatCents(r.gainLowCents) + ' to ' + Money.formatCents(r.gainHighCents)));
+    rows.push(li('FI without the degree', r.fiWithoutYears === null ? 'not known' : 'about ' + r.fiWithoutYears + ' years'));
+    rows.push(li('FI with it (study years counted)', r.fiWithYears === null ? (r.fiReason || 'not known') : 'about ' + r.fiWithYears + ' years'));
+    el('g-sum').innerHTML = rows.join('');
+  }
+  ['in-tuition', 'in-years', 'in-keep', 'in-help', 'in-loan', 'in-rate', 'in-with-low', 'in-with-high', 'in-wo-low', 'in-wo-high'].forEach(function (id) { el(id).addEventListener('input', render); });
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['effectiveTaxRates', 'federalBrackets', 'fireVariants', 'returnBands']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

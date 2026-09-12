@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 22:47Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Offer Compare · SPARKS</title>
+<meta name="description" content="Two to four job offers side by side: each one's real yearly value after the match, health premiums and the commute, its value per real hour with the commute counted, the FI date under each, and the one line that decides it."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. K8 (D-219).
+
+  1. READS   The household (spending, filing status, assets) so each offer
+             can be priced as the one take-home figure and the FI date on
+             a copy holding that pay.
+  2. WRITES  Only on "Accept this offer": the primary's pay and match, and
+             the state, through the spine, with the life change recorded
+             for the reopen sheet (G2.6). Nothing until then.
+  3. CALLS   engines/offers.js: the true match (salary × cap × rate), the
+             take-home at the offer's state, the FI years, the decider.
+  4. EMPTY   Fewer than two offers with base pay: it says so.
+  5. CONFIG  data/effective_tax_rates_2026.json, data/state_brackets_2026.json.
+
+  LIVE-FORM: built once. Four offer columns are in the HTML from the
+  start (two shown); a button reveals the third and fourth. Only .value
+  is ever set.
+-->
+<style>
+  .offers { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-top: var(--space-3); }
+  .offers.show-3 { grid-template-columns: repeat(3, 1fr); }
+  .offers.show-4 { grid-template-columns: repeat(4, 1fr); }
+  .offer { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  .offer label { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 2px; }
+  .offer input { width: 100%; }
+  .offer .slaf-input-shell { width: 100%; }
+  .results { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-top: var(--space-3); }
+  .results.show-3 { grid-template-columns: repeat(3, 1fr); }
+  .results.show-4 { grid-template-columns: repeat(4, 1fr); }
+  .result { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--text-sm); }
+  .result.is-best { border-color: var(--color-accent); }
+  .result h3 { margin: 0 0 var(--space-1); font-size: var(--text-md); }
+  .result .big { font-family: var(--font-display); font-size: var(--text-lg); }
+  .result ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  .result li { display: flex; justify-content: space-between; gap: var(--space-2); padding: 2px 0; border-top: 1px solid var(--color-border); }
+  .result b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .head-num { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-2) 0 0; }
+  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  @media (max-width: 640px) { .offers, .offers.show-3, .offers.show-4, .results, .results.show-3, .results.show-4 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Offer Compare</h1>
+  <p class="room-lede">Two to four offers side by side, each priced as what it is really worth in a year and per real hour, with the FI date under each and the one line that decides it.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <section class="slaf-card" id="decider">
+    <span class="slaf-eyebrow">What decides it</span>
+    <p class="head-num" id="o-num"></p>
+    <p class="head-sub" id="o-sub"></p>
+  </section>
+  <section class="slaf-card" id="offers">
+    <span class="slaf-eyebrow">The offers</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Rough is fine for the bonus and the equity; equity is always a range. Match: a 50%-up-to-6% plan is rate 50 and cap 6.</p>
+    <div class="offers" id="offer-grid"></div>
+    <p style="margin:var(--space-3) 0 0"><button type="button" class="slaf-btn slaf-btn--quiet" id="btn-more">Add a third offer</button></p>
+  </section>
+  <section class="slaf-card" id="results" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Side by side</span>
+    <div class="results" id="result-grid"></div>
+    <p class="slaf-hint" id="accept-note" style="margin:var(--space-3) 0 0"></p>
+  </section>
+  <p class="disclaimer">
+    Educational tool, not financial advice. Take-home is the effective-rate estimate; the deductible is shown, not charged. Everything stays in this browser until you accept an offer.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/offers.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Offers = SLAF.Offers;
+  var ROOM_ID = 'offer-compare';
+  var TABLES = null, SHOWN = 2, LAST = null;
+  var FIELDS = [
+    ['label', 'What to call it', 'text', 'e.g. Acme'], ['base', 'Base pay a year', 'money', 'e.g. 95,000'], ['bonus', 'Bonus, rough', 'money', 'a year'],
+    ['eqlow', 'Equity a year, low', 'money', 'rough'], ['eqhigh', 'Equity a year, high', 'money', 'rough'],
+    ['mrate', 'Match rate', 'pct', 'e.g. 50'], ['mcap', 'Match cap, % of pay', 'pct', 'e.g. 6'], ['vest', 'Vesting, years', 'num', 'e.g. 3'],
+    ['health', 'Health premium a month', 'money', 'your share'], ['deduct', 'Deductible', 'money', 'a year'],
+    ['commute', 'Commute cost a month', 'money', 'fuel, transit, parking'], ['cmin', 'Commute, minutes a day', 'num', 'both ways'],
+    ['pto', 'Days off a year', 'num', 'e.g. 15'], ['remote', 'Remote days a week', 'num', '0 to 5'], ['state', 'State', 'text', 'e.g. NC']
+  ];
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function box(i, f) {
+    var id = 'o' + i + '-' + f[0];
+    var pre = f[2] === 'money' ? '<span class="slaf-affix">$</span>' : '', post = f[2] === 'pct' ? '<span class="slaf-affix">%</span>' : '';
+    return '<label for="' + esc(id) + '">' + esc(f[1]) + '</label><span class="slaf-input-shell">' + pre + '<input type="text" ' + (f[2] === 'text' ? '' : 'inputmode="decimal" ') + 'id="' + esc(id) + '" data-offer="' + esc(i) + '" placeholder="' + esc(f[3]) + '" aria-label="Offer ' + esc(i + 1) + ': ' + esc(f[1]) + '"/>' + post + '</span>';
+  }
+  /* LIVE-FORM: built once, here, before anything renders. */
+  el('offer-grid').innerHTML = [0, 1, 2, 3].map(function (i) { return '<div class="offer" id="offer-' + esc(i) + '"' + (i >= 2 ? ' hidden' : '') + '><strong>Offer ' + esc(i + 1) + '</strong>' + FIELDS.map(function (f) { return box(i, f); }).join('') + '</div>'; }).join('');
+  function read(i) {
+    function v(k) { var t = String(el('o' + i + '-' + k).value || '').trim(); return t === '' ? null : t; }
+    function m(k) { var t = v(k); return t === null ? null : Money.parseMoney(t); }
+    function n(k) { var t = v(k); return t === null ? null : Number(t.replace(/[^0-9.]/g, '')); }
+    var mr = n('mrate'), mc = n('mcap');
+    return { label: v('label') || 'Offer ' + (i + 1), baseCents: m('base'), bonusCents: m('bonus'), equityLowCents: m('eqlow'), equityHighCents: m('eqhigh'),
+      matchRate: mr === null ? null : mr / 100, matchCapPct: mc === null ? null : mc / 100, vestingYears: n('vest'), healthMonthlyCents: m('health'), deductibleCents: m('deduct'),
+      commuteMonthlyCents: m('commute'), commuteMinutesPerDay: n('cmin'), ptoDays: n('pto'), remoteDays: n('remote'), state: (v('state') || '').toUpperCase().slice(0, 2) || null };
+  }
+  function render() {
+    if (!TABLES) return;
+    el('offer-grid').className = 'offers show-' + SHOWN; el('result-grid').className = 'results show-' + SHOWN;
+    [0, 1, 2, 3].forEach(function (i) { el('offer-' + i).hidden = i >= SHOWN; });
+    el('btn-more').hidden = SHOWN >= 4; el('btn-more').textContent = SHOWN === 2 ? 'Add a third offer' : 'Add a fourth offer';
+    var offers = []; for (var i = 0; i < SHOWN; i++) offers.push(read(i));
+    var r = Offers.compare(Spine.getProfile(), TABLES, { offers: offers });
+    LAST = Money.isOk(r) ? r : null;
+    if (!Money.isOk(r)) { el('o-num').textContent = 'Not yet.'; el('o-sub').textContent = r.reason; el('result-grid').innerHTML = ''; return; }
+    var best = r.offers[r.value], second = r.offers[r.order[1]];
+    el('o-num').textContent = best.label + ' by ' + Money.formatCents(r.gapCents) + ' a year' + (r.overlap ? ', though the equity ranges overlap' : '') + '.';
+    el('o-num').setAttribute('data-best', String(r.value));
+    el('o-sub').textContent = 'The one line that decides it: ' + r.decider.label + ', ' + Money.formatCents(r.decider.diffCents) + ' a year apart between ' + best.label + ' and ' + second.label + '. Move that line and the answer moves.';
+    el('result-grid').innerHTML = r.offers.map(function (o, i) {
+      if (!o.ok) return '<div class="result"><h3>' + esc(o.label) + '</h3><p class="slaf-hint">' + esc(o.reason) + '</p></div>';
+      var value = o.valueLowCents === o.valueHighCents ? Money.formatCents(o.valueMidCents) : Money.formatCents(o.valueLowCents) + ' to ' + Money.formatCents(o.valueHighCents);
+      var perHour = o.perHourLowCents === o.perHourHighCents ? Money.formatCents(o.perHourMidCents) : Money.formatCents(o.perHourLowCents) + ' to ' + Money.formatCents(o.perHourHighCents);
+      return '<div class="result' + (i === r.value ? ' is-best' : '') + '"><h3>' + esc(o.label) + (i === r.value ? ' · best by the middle' : '') + '</h3><div class="big">' + esc(value) + ' a year</div>'
+        + '<ul><li><span>Take-home on ' + esc(Money.formatCents(o.grossCents)) + (o.state ? ' in ' + esc(o.state) : '') + '</span><b>' + esc(Money.formatCents(o.takeHomeCents)) + '</b></li>'
+        + '<li><span>Match' + (o.matchKnown ? '' : ' (none typed)') + '</span><b>' + esc(Money.formatCents(o.matchCents)) + '</b></li>'
+        + '<li><span>Equity</span><b>' + esc(o.equityLowCents === o.equityHighCents ? Money.formatCents(o.equityLowCents) : Money.formatCents(o.equityLowCents) + ' to ' + Money.formatCents(o.equityHighCents)) + '</b></li>'
+        + '<li><span>Health premiums' + (o.deductibleCents !== null ? ' (deductible ' + esc(Money.formatCents(o.deductibleCents)) + ', not charged)' : '') + '</span><b>- ' + esc(Money.formatCents(o.healthCents)) + '</b></li>'
+        + '<li><span>Commute</span><b>- ' + esc(Money.formatCents(o.commuteCents)) + '</b></li>'
+        + '<li><span>Per real hour, ' + o.hoursAYear + ' hours' + (o.commuteHoursAYear ? ' (' + o.commuteHoursAYear + ' of them commuting)' : '') + '</span><b>' + esc(perHour) + '</b></li>'
+        + '<li><span>FI</span><b>' + (o.fiYears === null ? esc(o.fiReason || 'not known') : 'about ' + o.fiYears + ' years') + '</b></li></ul>'
+        + '<p style="margin:var(--space-2) 0 0"><button type="button" class="slaf-btn slaf-btn--quiet" data-accept="' + i + '">Accept this offer</button></p></div>';
+    }).join('');
+  }
+  el('offer-grid').addEventListener('input', render);
+  el('btn-more').addEventListener('click', function () { SHOWN = Math.min(4, SHOWN + 1); render(); });
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-accept]'); if (!b || !LAST) return;
+    var i = Number(b.getAttribute('data-accept')), o = read(i), p = LAST.offers[i];
+    if (!p.ok) return;
+    var h = Spine.getProfile(), person = Schema.adults(h)[0];
+    if (!person) { el('accept-note').textContent = 'Add yourself in Start Here first.'; return; }
+    Spine.batch('Accepted ' + o.label, function () {
+      var src = (person.incomeSources || [])[0] || Schema.createIncomeSource({ personId: person.id, source: o.label, type: 'w2' });
+      Spine.upsertIncomeSource(person.id, Object.assign({}, src, { source: o.label, grossAnnualIncomeCents: p.grossCents, type: 'w2',
+        employerMatch: Money.isEntered(o.matchRate) && Money.isEntered(o.matchCapPct) ? { matchPercent: o.matchRate, matchCapPercentOfSalary: o.matchCapPct } : (src.employerMatch || {}) }));
+      if (o.state) Spine.set('state', o.state);
+      Spine.setReopen({ field: 'grossAnnualIncome', from: 'offer-compare', label: 'Accepted ' + o.label, at: Date.now() });
+    });
+    el('accept-note').textContent = 'Accepted ' + o.label + ': your pay' + (o.state ? ' and state' : '') + ' now read from it, and the next page you open will ask what else the change touches.';
+  });
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['effectiveTaxRates', 'federalBrackets', 'stateBrackets', 'fireVariants', 'returnBands']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

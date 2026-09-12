@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-11 20:55Z"/>
+<meta name="slaf-build" content="2026-09-11 22:47Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Partner · SPARKS</title>
@@ -35,6 +35,14 @@
   5. CONFIG  data/partner_conventions.json (the three modes, convention),
              data/effective_tax_rates_2026.json (the tax estimate).
 
+  J7 (D-216): two views of the same rows. "The full room" is everything
+  below; "Are we on track?" is one sentence (Partner.onTrack, read off the
+  split, never a second calculation). Each adult keeps their own default
+  view in prefs (partner.view.<personId>), and "viewing as" flips the
+  yours / mine / ours tags on every account and debt (Partner.tags, read
+  off ownerIds through Schema.ownerOf, never stored). Gift privacy is not
+  built: it waits on the owner (stop-and-ask).
+
   THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, two
   inputs, the assumptions drawer with sources, why this matters at your
   stage, one out-of-scope line to Get Help. The ids below are the deep links.
@@ -48,6 +56,23 @@
   section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+  #track { display: none; }
+  body.view-track #track { display: block; }
+  body.view-track #number, body.view-track #chart, body.view-track #inputs, body.view-track #amounts, body.view-track #tags,
+  body.view-track #assumptions, body.view-track #room-why, body.view-track #room-scope, body.view-track #reading, body.view-track .slaf-showrest { display: none; }
+  .view-row { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+  .slaf-link { background: none; border: 0; padding: 0; color: var(--color-accent); text-decoration: underline; cursor: pointer; font: inherit; }
+  .track-line { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--leading-tight); margin: var(--space-2) 0 0; }
+  .track-line.is-yes { color: var(--color-positive, inherit); }
+  .track-line.is-no { color: var(--color-critical); }
+  ul.tag-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ul.tag-list li { display: grid; grid-template-columns: 1fr auto auto; gap: var(--space-2); align-items: baseline; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ul.tag-list li.is-head { border-top: none; font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .04em; padding-top: var(--space-3); }
+  ul.tag-list .amt { font-variant-numeric: tabular-nums; }
+  ul.tag-list .tag { font-size: var(--text-xs); padding: 0 var(--space-2); border-radius: 999px; border: 1px solid var(--color-border-active); }
+  ul.tag-list .tag.is-mine { background: rgba(44, 121, 214, .12); }
+  ul.tag-list .tag.is-yours { background: rgba(229, 72, 77, .10); }
+  ul.tag-list .tag.is-ours { background: rgba(48, 164, 108, .12); }
 </style>
 </head>
 <body class="slaf">
@@ -62,12 +87,29 @@
   <div class="notice" id="load-notice" hidden></div>
   <div class="room-standalone" id="room-standalone" hidden></div>
 
+  <section class="slaf-card" id="track" style="margin-bottom:var(--space-4)">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">Are we on track?</span>
+      <span class="slaf-hint" id="track-as"></span>
+    </div>
+    <p class="track-line" id="track-line"></p>
+    <p class="slaf-hint" id="track-hint" style="margin:var(--space-2) 0 0">One sentence, read off the same split as the full room. Nothing is calculated twice. <button type="button" class="slaf-link" data-view="full">Show the full room</button></p>
+  </section>
+
   <section class="slaf-card" id="number">
     <div class="room-head-row">
       <span class="slaf-eyebrow">Each share of the shared month</span>
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
+    <div id="view" class="view-row" hidden>
+      <div class="choices" id="view-choices">
+        <button type="button" class="choice" data-view="full">The full room</button>
+        <button type="button" class="choice" data-view="track">Are we on track?</button>
+      </div>
+      <div class="choices" id="viewer-choices" style="margin-top:var(--space-2)"></div>
+      <p class="slaf-hint" style="margin:var(--space-2) 0 0">Each of you can keep a different default: the view picked is remembered for whoever is viewing (<span id="view-as"></span>).</p>
+    </div>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
@@ -85,6 +127,12 @@
     <span class="slaf-eyebrow">Through the lens</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
     <ul class="room-amounts" id="room-amounts"></ul>
+  </section>
+
+  <section class="slaf-card" id="tags" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Yours, mine, ours</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Every account and debt, tagged from the side of whoever is viewing. Whose each one is lives on the Statement and in Debt Payoff, where it is owned.</p>
+    <ul class="tag-list" id="tag-list"></ul>
   </section>
 
   <details class="room-drawer" id="assumptions">
@@ -136,7 +184,52 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Partner = SLAF.Partner, Charts = SLAF.Charts, Room = SLAF.Room;
+      Partner = SLAF.Partner, Charts = SLAF.Charts, Room = SLAF.Room, Prefs = SLAF.Prefs;
+  function el(id) { return document.getElementById(id); }
+
+  /* ---- J7: two views, and whose each thing is (prefs, never the household) -- */
+  function viewerId(h) {
+    var a = Schema.adults(h);
+    var stored = Prefs.get('partner.viewer', null);
+    return a[1] && stored === a[1].id ? a[1].id : (a[0] ? a[0].id : null);
+  }
+  function viewOf(h) { var v = Prefs.get('partner.view.' + viewerId(h), 'full'); return v === 'track' ? 'track' : 'full'; }
+  var viewerHtml = '';
+  function paintViews(h, T) {
+    var adults = Schema.adults(h);
+    var two = adults.length >= 2;
+    el('view').hidden = !two;
+    document.body.classList.toggle('view-track', two && viewOf(h) === 'track');
+    if (!two) { el('tag-list').innerHTML = '<li><span class="slaf-hint">Just you so far: the tags arrive with the other of you.</span><span></span><span></span></li>'; return; }
+    var viewer = viewerId(h), view = viewOf(h);
+    Array.prototype.forEach.call(el('view-choices').querySelectorAll('[data-view]'), function (b) { b.classList.toggle('is-on', b.getAttribute('data-view') === view); b.setAttribute('aria-pressed', b.getAttribute('data-view') === view ? 'true' : 'false'); });
+    var html = adults.slice(0, 2).map(function (p, i) { return '<button type="button" class="choice' + (p.id === viewer ? ' is-on' : '') + '" data-viewer="' + esc(p.id) + '" aria-pressed="' + (p.id === viewer ? 'true' : 'false') + '">Viewing as ' + esc(Schema.personName(p, i === 0 ? 'You' : 'The other of you')) + '</button>'; }).join('');
+    if (html !== viewerHtml) { el('viewer-choices').innerHTML = html; viewerHtml = html; }
+    var who = adults[0].id === viewer ? 'you' : Schema.personName(adults[1], 'the other of you');
+    el('view-as').textContent = 'remembered for ' + who;
+    el('track-as').textContent = 'Viewing as ' + (adults[0].id === viewer ? 'you' : who);
+    var t = Partner.onTrack(h, T);
+    var line = el('track-line');
+    line.className = 'track-line' + (Money.isOk(t) ? ' is-' + t.value : '');
+    line.textContent = Money.isOk(t) ? t.sentence : 'Can’t tell yet: ' + t.reason;
+    var g = Partner.tags(h, viewer);
+    var rows = [];
+    function block(title, items, unit) {
+      if (!items.length) return;
+      rows.push('<li class="is-head"><span>' + esc(title) + '</span><span></span><span></span></li>');
+      items.forEach(function (it) { rows.push('<li><span>' + esc(it.label || unit) + '</span><span class="tag is-' + esc(it.tag) + '">' + esc(it.word) + '</span><span class="amt">' + (it.cents === null ? '' : esc(Money.formatCents(it.cents))) + '</span></li>'); });
+    }
+    block('Accounts', g.assets, 'An account'); block('Debts', g.debts, 'A debt');
+    el('tag-list').innerHTML = rows.length ? rows.join('') : '<li><span class="slaf-hint">Nothing on the Statement or in Debt Payoff yet.</span><span></span><span></span></li>';
+  }
+  document.addEventListener('click', function (evt) {
+    var v = evt.target.closest('[data-view]'), w = evt.target.closest('[data-viewer]');
+    if (!v && !w) return;
+    var h = Spine.getProfile();
+    if (w) Prefs.set('partner.viewer', w.getAttribute('data-viewer'));
+    if (v) Prefs.set('partner.view.' + viewerId(h), v.getAttribute('data-view') === 'track' ? 'track' : null);
+    paintViews(h, ROOM.tables() || {});
+  });
 
   /* ---- writes: this room owns household.partner ------------------------------ */
   function plan(h) { return Schema.createPartnerPlan((h || {}).partner); }
@@ -147,7 +240,7 @@
 
   var COLOUR = { share: Charts.COLORS.spend, keeps: Charts.COLORS.target, pool: Charts.COLORS.contributed };
 
-  Room.mount({
+  var ROOM = Room.mount({
     id: 'partner',
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'partnerConventions', 'ratioBenchmarks'],
     reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
@@ -277,7 +370,9 @@
       }[situation] || 'One household, two incomes: how the shared month is split decides what each of you keeps.';
     },
 
-    scope: 'This room does not decide what is fair, hold separate accounts, or know your legal arrangement.'
+    scope: 'This room does not decide what is fair, hold separate accounts, or know your legal arrangement.',
+
+    after: function (h, T) { paintViews(h, T); }
   });
 })();
 </script>

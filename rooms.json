@@ -605,6 +605,20 @@
       "order": 25.7
     },
     {
+      "id": "race",
+      "title": "The Race to $100K",
+      "file": "rooms/race.html",
+      "reads": [
+        "cashSavings",
+        "monthlyExpenses",
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 25.9
+    },
+    {
       "id": "runway",
       "title": "The Runway",
       "file": "rooms/runway.html",
@@ -736,6 +750,31 @@
       "order": 31
     },
     {
+      "id": "quit-fund",
+      "title": "The Quit Fund",
+      "file": "rooms/quit-fund.html",
+      "reads": [
+        "cashSavings",
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 31.5
+    },
+    {
+      "id": "micro-retirement",
+      "title": "Micro-Retirement Planner",
+      "file": "rooms/micro-retirement.html",
+      "reads": [
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 31.7
+    },
+    {
       "id": "protection",
       "title": "Protection",
       "file": "rooms/protection.html",
@@ -773,6 +812,32 @@
       ],
       "dashboardNumber": "withdrawalRate",
       "order": 33
+    },
+    {
+      "id": "roth-aca",
+      "title": "Roth Conversions Before 65",
+      "file": "rooms/roth-aca.html",
+      "reads": [
+        "dob",
+        "filingStatus"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 33.5
+    },
+    {
+      "id": "middle-class-trap",
+      "title": "The Middle Class Trap Test",
+      "file": "rooms/middle-class-trap.html",
+      "reads": [
+        "dob",
+        "monthlyExpenses"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 33.7
     },
     {
       "id": "tax",
@@ -843,6 +908,28 @@
       "order": 37
     },
     {
+      "id": "offer-compare",
+      "title": "Offer Compare",
+      "file": "rooms/offer-compare.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 37.5
+    },
+    {
+      "id": "degree",
+      "title": "The Degree Decision",
+      "file": "rooms/degree.html",
+      "reads": [
+        "dob"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 37.7
+    },
+    {
       "id": "partner",
       "title": "Partner",
       "file": "rooms/partner.html",
@@ -861,6 +948,16 @@
       ],
       "dashboardNumber": null,
       "order": 38
+    },
+    {
+      "id": "wedding",
+      "title": "Wedding Countdown",
+      "file": "rooms/wedding.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 38.5
     },
     {
       "id": "kids",
@@ -900,6 +997,16 @@
       "order": 40
     },
     {
+      "id": "down-payment",
+      "title": "Down Payment Countdown",
+      "file": "rooms/down-payment.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 40.5
+    },
+    {
       "id": "big-purchase",
       "title": "Big Purchase",
       "file": "rooms/big-purchase.html",
@@ -915,6 +1022,18 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 41
+    },
+    {
+      "id": "first-car",
+      "title": "The First Car Check",
+      "file": "rooms/first-car.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 41.5
     },
     {
       "id": "variable-income",
@@ -1041,6 +1160,16 @@
       "order": 48
     },
     {
+      "id": "debates",
+      "title": "The Referee",
+      "file": "rooms/debates.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 48.5
+    },
+    {
       "id": "student-loans",
       "title": "Student Loan Decision",
       "file": "rooms/student-loans.html",
@@ -1146,6 +1275,18 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 98.2
+    },
+    {
+      "id": "one-pager",
+      "title": "The One-Pager",
+      "file": "rooms/one-pager.html",
+      "reads": [
+        "grossAnnualIncome"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 98.3
     },
     {
       "id": "settings",

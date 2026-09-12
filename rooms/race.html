@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-11 22:47Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>The Race to $100K · SPARKS</title>
+<meta name="description" content="The date your net worth reaches its next $100,000 rung, then every rung to $1 million, with what came from saving and what came from growth at each. The first $100K is the hardest; this shows why."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. K4 (D-217).
+
+  1. READS   Net worth (or the invested money alone), what is saved a
+             month (the one savings-rate figure), the real return and its
+             bands.
+  2. WRITES  Nothing. The invested-only switch is this page's state.
+  3. CALLS   engines/race.js, which dates every rung through
+             engines/countdown.js goalCountdown(), the one countdown.
+  4. EMPTY   No net worth or no savings basis: it says which. Saving
+             nothing and not growing there: "not reachable at this pace"
+             with the monthly saving that would, never a far-off date.
+  5. CONFIG  data/return_bands.json (the range).
+
+  LIVE-FORM: built once. Buttons only, no input.
+-->
+<style>
+  .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  ol.rungs { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ol.rungs li { display: grid; grid-template-columns: 4.5rem 1fr; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: start; }
+  ol.rungs li:first-child { border-top: none; }
+  ol.rungs .rung { font-family: var(--font-display); font-size: var(--text-lg); }
+  ol.rungs .when { font-weight: 600; }
+  ol.rungs .gap { display: block; height: 6px; border-radius: 3px; background: var(--color-border); margin: var(--space-1) 0; position: relative; overflow: hidden; }
+  ol.rungs .gap i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--color-accent); }
+  ol.rungs .gap b { position: absolute; right: 0; top: 0; bottom: 0; background: var(--color-positive, #30a46c); }
+  ol.rungs small { color: var(--color-text-muted); }
+  ol.rungs li.is-lead .rung::after { content: ' ★'; color: var(--color-positive, #30a46c); }
+  .choices { margin-top: var(--space-3); }
+  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Race to $100K</h1>
+  <p class="room-lede">The first $100,000 is the hardest. The date you reach your next rung, then every rung to $1 million, and at each one how much was saved and how much just grew.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <section class="slaf-card" id="next">
+    <span class="slaf-eyebrow">The next rung</span>
+    <p class="head-num" id="r-num"></p>
+    <p class="head-sub" id="r-sub"></p>
+    <div class="choices" id="basis-choices">
+      <button type="button" class="choice" data-basis="netWorth" aria-pressed="true">Net worth</button>
+      <button type="button" class="choice" data-basis="invested" aria-pressed="false">Invested money only</button>
+    </div>
+    <p class="slaf-hint" id="r-share" style="margin:var(--space-3) 0 0"></p>
+  </section>
+  <section class="slaf-card" id="rungs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Every rung to $1 million</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Each bar is the wait for that rung. Blue is what you put in over the wait; green is what grew on its own. The star marks the first rung where growth did more of the work than you did.</p>
+    <ol class="rungs" id="r-rungs"></ol>
+  </section>
+  <p class="disclaimer">
+    Educational tool, not financial advice. Today's dollars, at the real return the app assumes, with the range from a poor decade to a good one. Everything stays in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/countdown.js"></script>
+<script src="../engines/race.js"></script>
+<script src="../shared/sharecard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Race = SLAF.Race, ShareCard = SLAF.ShareCard;
+  var ROOM_ID = 'race';
+  var TABLES = null, BASIS = 'netWorth';
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
+  function k(cents) { return '$' + Math.round(cents / 100000) + 'K'; }
+  function years(months) { return months < 12 ? months + ' month' + (months === 1 ? '' : 's') : (Math.round(months / 12 * 10) / 10) + ' years'; }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    Array.prototype.forEach.call(el('basis-choices').querySelectorAll('[data-basis]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-basis') === BASIS ? 'true' : 'false'); });
+    var r = Race.rungs(h, TABLES, { investedOnly: BASIS === 'invested' });
+    el('r-share').innerHTML = '';
+    if (!Money.isOk(r)) { el('r-num').textContent = 'Not yet.'; el('r-sub').textContent = r.reason; el('r-rungs').innerHTML = ''; return; }
+    var basisWord = BASIS === 'invested' ? 'invested money' : 'net worth';
+    if (r.pastTop) { el('r-num').textContent = 'Past the last rung.'; el('r-sub').textContent = 'Your ' + basisWord + ' is already past $1 million; the race here ends at that rung.'; el('r-rungs').innerHTML = ''; return; }
+    if (r.neverAtThisPace) {
+      el('r-num').textContent = 'Not reachable at this pace.';
+      el('r-sub').textContent = 'From ' + Money.formatCents(r.startCents) + ', saving ' + Money.formatCents(r.monthlyCents) + ' a month does not reach ' + k(r.nextRungCents) + ' in fifty years. Saving ' + Money.formatCents(r.monthlyNeededCents) + ' a month' + (r.neededShareOfTakeHome !== null ? ' (' + Money.formatRate(r.neededShareOfTakeHome, { decimals: 0 }) + ' of take-home)' : '') + ' would get there in ' + r.honestYears + ' years.';
+      el('r-rungs').innerHTML = ''; return;
+    }
+    var first = r.rows[0];
+    el('r-num').textContent = k(first.rungCents) + ' by ' + monthWord(first.date) + '.';
+    var sub = 'From ' + Money.formatCents(r.startCents) + ' of ' + basisWord + ', saving ' + Money.formatCents(r.monthlyCents) + ' a month at ' + Money.formatRate(r.rate, { decimals: 1 }) + ' real: ' + years(first.months) + ' away.';
+    if (first.range.fastDate && first.range.slowDate && first.range.fastDate !== first.range.slowDate) sub += ' Range: ' + monthWord(first.range.fastDate) + ' in a good decade to ' + monthWord(first.range.slowDate) + ' in a poor one.';
+    if (r.firstGrowthLeadsRungCents) sub += ' From the ' + k(r.firstGrowthLeadsRungCents) + ' rung, growth does more of the work than you do.';
+    else if (r.reachedAll) sub += ' All the way to $1 million, what you put in stays the bigger part.';
+    el('r-sub').textContent = sub;
+    el('r-sub').setAttribute('data-range', (first.range.fastDate || '') + '|' + (first.range.slowDate || ''));
+    var maxGap = Math.max.apply(null, r.rows.map(function (x) { return x.gapMonths; })) || 1;
+    el('r-rungs').innerHTML = r.rows.map(function (x) {
+      var w = Math.max(2, x.gapMonths / maxGap * 100);
+      var contribShare = x.contributedCents + Math.max(0, x.grownCents) > 0 ? x.contributedCents / (x.contributedCents + Math.max(0, x.grownCents)) : 1;
+      return '<li' + (x.rungCents === r.firstGrowthLeadsRungCents ? ' class="is-lead"' : '') + '><span class="rung">' + esc(k(x.rungCents)) + '</span><span><span class="when">' + esc(monthWord(x.date)) + '</span> <small>' + esc(years(x.gapMonths)) + ' after the rung before'
+        + (x.range.fastDate && x.range.slowDate && x.range.fastDate !== x.range.slowDate ? ' (' + esc(x.range.fastDate.slice(0, 4)) + ' to ' + esc(x.range.slowDate.slice(0, 4)) + ')' : '') + '</small>'
+        + '<span class="gap" style="width:' + w + '%"><i style="width:' + (contribShare * 100) + '%"></i><b style="width:' + ((1 - contribShare) * 100) + '%"></b></span>'
+        + '<small>' + esc(Money.formatCents(x.contributedCents)) + ' saved, ' + esc(Money.formatCents(Math.max(0, x.grownCents))) + ' grew</small></span></li>';
+    }).join('');
+    var card = ShareCard.make('race', h, TABLES, { investedOnly: BASIS === 'invested' });
+    if (card.ok) {
+      var href = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'progress-card.html#c=' + ShareCard.encode(card);
+      el('r-share').innerHTML = 'Share it as dates only: <a href="' + esc(href) + '" id="share-link">' + esc(card.title) + '</a>. No dollar figure leaves this page.';
+    }
+  }
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-basis]'); if (!b) return;
+    BASIS = b.getAttribute('data-basis') === 'invested' ? 'invested' : 'netWorth'; render();
+  });
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(render);
+  Reference.load(['fireVariants', 'returnBands', 'effectiveTaxRates', 'federalBrackets']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

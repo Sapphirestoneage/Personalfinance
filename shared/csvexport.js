@@ -13,6 +13,14 @@
      CsvExport.zip(files)            a Uint8Array: store-only zip, CRC-32
      CsvExport.csv(rows)             one CSV text from lines
      CsvExport.parse(text)           back to rows (for the tests)
+     CsvExport.single(h, tables)     every line as ONE CSV text (D-220)
+     CsvExport.plan(text, h, tables) what importing a CSV would change: one
+                                     entry a line, matched to its row by id or
+                                     label and its item by name, the value read
+                                     back by the row's unit, against what is held
+     CsvExport.apply(plan, Spine)    write the changes through their owners in
+                                     one undo batch. A blank cell on the way in
+                                     leaves the row as it is, never a zero.
 
    Money is written in dollars to the cent (1234.56) from integer cents,
    never through a float formula; rates as a percent number (24.99).
@@ -20,15 +28,16 @@
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('./money.js'), Schema: require('./schema.js'), LedgerRows: require('./ledger-rows.js'), Doors: require('./doors.js') };
+    deps = { Money: require('./money.js'), Schema: require('./schema.js'), LedgerRows: require('./ledger-rows.js'), Doors: require('./doors.js'),
+      Ownership: (function () { try { return require('./ownership.js'); } catch (e) { return null; } })() };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, LedgerRows: S.LedgerRows, Doors: S.Doors };
+    deps = { Money: S.Money, Schema: S.Schema, LedgerRows: S.LedgerRows, Doors: S.Doors, Ownership: S.Ownership };
   }
-  var api = factory(deps.Money, deps.Schema, deps.LedgerRows, deps.Doors);
+  var api = factory(deps.Money, deps.Schema, deps.LedgerRows, deps.Doors, deps.Ownership);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.CsvExport = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, LedgerRows, Doors) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, LedgerRows, Doors, Ownership) {
   'use strict';
   var COLUMNS = ['door', 'level', 'row', 'label', 'item', 'value', 'unit', 'state', 'as_of', 'source'];
   var UNIT_WORDS = { cents: 'dollars, to the cent', rate: 'percent (24.99 means 24.99%)', percent: 'percent', months: 'months', years: 'years', count: 'a count', bool: 'yes or no', enum: 'one of the row’s choices', text: 'text', date: 'a date, YYYY-MM-DD', formula: 'match: percent of the first percent of pay' };
@@ -72,6 +81,7 @@
         return;
       }
       var val = r.kind === 'computed' ? (Money.isOk(r.result) ? r.result.value : null) : (r.entered && Money.isOk(r.result) ? r.result.value : null);
+      if (r.unit === 'formula' && typeof val === 'number') { var pp = Schema.primaryPerson(h), src = pp && (pp.incomeSources || [])[0], em = src && src.employerMatch; val = em && Money.isEntered(em.matchPercent) ? em : null; }
       out.push(line(r, null, val, r.status, meta, h, r.notSure));
     });
     return out;
@@ -160,5 +170,130 @@
     parts.concat(central, [end]).forEach(function (p) { out.set(p, pos); pos += p.length; });
     return out;
   }
-  return { rows: rows, files: files, csv: csv, parse: parse, readme: readme, zip: zip, crc32: crc32, dollars: dollars, COLUMNS: COLUMNS, UNIT_WORDS: UNIT_WORDS };
+
+  /* ---- One CSV out, and the same CSV back in (D-220) ------------------------ */
+  function single(household, tables) { return csv(rows(household, tables)); }
+  function filename(day) { return 'money-rooms-' + day + '.csv'; }
+
+  /** The inverse of valueText: the cell as the row's own value, or
+      { bad: why } when it cannot be read. '' is null (leave it). */
+  function fromText(row, text) {
+    var s = String(text === null || text === undefined ? '' : text).trim().replace(/^'/, '');
+    if (s === '') return null;
+    var u = row.unit;
+    if (u === 'cents') { var m = Money.parseMoney(s); return Money.isEntered(m) ? m : { bad: 'an amount' }; }
+    if (u === 'bool') { if (/^(yes|true|y|1)$/i.test(s)) return true; if (/^(no|false|n|0)$/i.test(s)) return false; return { bad: 'yes or no' }; }
+    if (u === 'enum') { if (row.values && row.values.indexOf(s) < 0) return { bad: 'one of ' + row.values.join(', ') }; return s; }
+    if (u === 'date') { return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : { bad: 'a date, YYYY-MM-DD' }; }
+    if (u === 'text') return s;
+    if (u === 'formula') {
+      var f = /(\d+(?:\.\d+)?)\s*%\s*of the first\s*(\d+(?:\.\d+)?)\s*%/i.exec(s);
+      return f ? { matchPercent: Number(f[1]) / 100, matchCapPercentOfSalary: Number(f[2]) / 100 } : { bad: 'a match like 50% of the first 6%' };
+    }
+    var n = Number(s.replace(/[^0-9.\-]/g, ''));
+    if (isNaN(n)) return { bad: 'a number' };
+    if (u === 'rate' || (u === 'percent' && row.id !== 'contributionPercent')) return Math.round(n * 100) / 10000;   /* 24.99 → 0.2499 */
+    return n;
+  }
+  function norm(x) { return String(x === null || x === undefined ? '' : x).trim().toLowerCase(); }
+  function findRow(cellRow, cellLabel) {
+    if (cellRow) { var byId = LedgerRows.byId(String(cellRow).trim()); if (byId) return byId; }
+    var lab = norm(cellLabel || cellRow);
+    if (!lab) return null;
+    return LedgerRows.all().filter(function (r) { return norm(r.label) === lab; })[0] || null;
+  }
+  /**
+   * plan(text, household, tables) → { entries, counts }
+   *   entries[i]: { n, row, label, item, itemId, unit, text, value, before, status, why }
+   *   status: change | same | add (a new item) | covered (a total the item lines set) | skip (blank) | computed | unknown | noItem | noWrite | bad
+   */
+  /* The line that can bring a new item into being, per repeat kind: the one
+     that carries the item's own amount. Other lines for that item follow it. */
+  var CREATOR = { assets: 'assetValue', debts: 'debtBalance', incomeSources: 'grossAnnualIncome' };
+  /* Start Here's totals are read off the items; a file that carries the
+     items line by line covers them, and writing both would double up. */
+  var AGGREGATE_OF = { cashSavings: 'assets', investments: 'assets' };
+  function categoryFor(label, tables) {
+    var kw = tables && tables.importKeywords, lower = norm(label);
+    var groups = (kw && kw.asset) || [];
+    for (var i = 0; i < groups.length; i++) for (var j = 0; j < (groups[i].words || []).length; j++) if (lower.indexOf(String(groups[i].words[j]).toLowerCase()) > -1) return groups[i].category;
+    return 'other';
+  }
+  function plan(text, household, tables) {
+    var h = household || {};
+    var lines = parse(text);
+    var held = rows(h, tables);
+    var writable = Ownership && Ownership.writable ? Ownership.writable() : [];
+    var pending = {};   /* repeat kind → { name → true }: items this file will add */
+    var itemLines = {};
+    lines.forEach(function (l) { var r0 = findRow(l.row, l.label); if (r0 && r0.repeat && norm(l.item)) itemLines[r0.repeat] = true; });
+    var entries = lines.map(function (l, i) {
+      var out = { n: i + 1, row: null, label: l.label || l.row || '', item: l.item || '', itemId: null, unit: null, text: l.value === undefined ? '' : l.value, value: null, before: '', status: 'unknown', why: null };
+      var r = findRow(l.row, l.label);
+      if (!r) { out.why = 'no row called that'; return out; }
+      out.row = r.id; out.label = r.label; out.unit = r.unit;
+      if (r.kind === 'computed' || /^prefs\./.test(r.path)) { out.status = 'computed'; out.why = 'worked out by the app, not typed'; return out; }
+      if (writable.indexOf(r.id) < 0) { out.status = 'noWrite'; out.why = 'enter it in its own room'; return out; }
+      if (AGGREGATE_OF[r.id] && itemLines[AGGREGATE_OF[r.id]]) { out.status = 'covered'; out.why = 'a total: the file\'s own lines for each account set it'; return out; }
+      var it = null;
+      if (r.repeat) {
+        var items = LedgerRows.items(h, r) || [];
+        var want = norm(l.item);
+        it = want ? items.filter(function (x) { return norm(itemName(x)) === want; })[0] : (items.length === 1 ? items[0] : null);
+        if (!it) {
+          if (!want) { out.status = 'noItem'; out.why = 'which one? name the item'; return out; }
+          var creator = CREATOR[r.repeat];
+          var v0 = fromText(r, l.value);
+          if (v0 === null) { out.status = 'skip'; out.why = 'blank: left as it is'; return out; }
+          if (v0 && typeof v0 === 'object' && v0.bad) { out.status = 'bad'; out.why = 'expected ' + v0.bad; return out; }
+          if (r.id === creator) { pending[r.repeat] = pending[r.repeat] || {}; pending[r.repeat][want] = true; out.status = 'add'; out.why = 'new: will be added'; out.value = v0; out.item = String(l.item).trim(); out.create = { repeat: r.repeat, label: out.item, category: r.repeat === 'assets' ? categoryFor(out.item, tables) : null }; return out; }
+          if (pending[r.repeat] && pending[r.repeat][want]) { out.status = 'add'; out.why = 'on the new item above'; out.value = v0; out.item = String(l.item).trim(); out.create = { repeat: r.repeat, label: out.item }; return out; }
+          out.status = 'noItem'; out.why = creator ? 'nothing called ' + l.item + ' yet: its ' + (LedgerRows.byId(creator) || {}).label + ' line would add it' : 'nothing called ' + l.item + ' yet: add it in its room first'; return out;
+        }
+        out.itemId = it.id; out.item = itemName(it);
+      }
+      var v = fromText(r, l.value);
+      if (v === null) { out.status = 'skip'; out.why = 'blank: left as it is'; return out; }
+      if (v && typeof v === 'object' && v.bad) { out.status = 'bad'; out.why = 'expected ' + v.bad; return out; }
+      out.value = v;
+      var current = held.filter(function (x) { return x.row === r.id && (!r.repeat || norm(x.item) === norm(out.item)); })[0];
+      out.before = current ? current.value : '';
+      out.status = current && current.value === valueText(r, v) ? 'same' : 'change';
+      return out;
+    });
+    var counts = {};
+    entries.forEach(function (e) { counts[e.status] = (counts[e.status] || 0) + 1; });
+    return { entries: entries, counts: counts };
+  }
+  /* A new item, from its amount line: the plainest record its room would
+     make, named as the file names it. Its other lines write onto it next. */
+  function createItem(spec, value, Spine) {
+    if (spec.repeat === 'assets') return Spine.upsertAsset(Schema.createAsset({ label: spec.label, category: spec.category || 'other', valueCents: value, liquid: spec.category === 'cash' })).id;
+    if (spec.repeat === 'debts') return Spine.upsertDebt(Schema.createDebt({ label: spec.label, balanceCents: value })).id;
+    if (spec.repeat === 'incomeSources') { var p = Spine.ensurePrimaryPerson('You'); return Spine.upsertIncomeSource(p.id, Schema.createIncomeSource({ personId: p.id, source: spec.label, grossAnnualIncomeCents: value })).id; }
+    return null;
+  }
+  /** Writes every 'change' entry through its owner, adds every new item, in one undo batch. */
+  function apply(planned, Spine) {
+    if (!Ownership || !Ownership.write) throw new Error('CsvExport.apply needs shared/ownership.js');
+    var todo = (planned.entries || []).filter(function (e) { return e.status === 'change' || e.status === 'add'; });
+    var made = {};
+    var run = function () {
+      todo.forEach(function (e) {
+        var itemId = e.itemId;
+        if (e.status === 'add') {
+          var key = e.create.repeat + ':' + norm(e.create.label);
+          if (!made[key]) { made[key] = createItem(e.create, e.value, Spine); if (e.row === CREATOR[e.create.repeat]) return; }
+          itemId = made[key];
+          if (!itemId) return;
+        }
+        Ownership.write(e.row, e.value, itemId ? { itemId: itemId } : null);
+      });
+    };
+    if (Spine && typeof Spine.batch === 'function') Spine.batch('CSV import: ' + todo.length + ' line' + (todo.length === 1 ? '' : 's'), run); else run();
+    return todo.length;
+  }
+
+  return { rows: rows, files: files, csv: csv, parse: parse, readme: readme, zip: zip, crc32: crc32, dollars: dollars, COLUMNS: COLUMNS, UNIT_WORDS: UNIT_WORDS,
+    single: single, filename: filename, fromText: fromText, plan: plan, apply: apply, valueText: valueText };
 });
