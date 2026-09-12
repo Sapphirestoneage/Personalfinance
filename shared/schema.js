@@ -356,6 +356,10 @@
       id: f.id || newId('inc'),
       personId: f.personId || null,
       source: f.source || null,                    // free text, e.g. "Day job"
+      /* Who pays it: the employer, the platform, the tenant. Its own field
+         so pay can be grouped by payer the way accounts group by bank, and
+         so "Day job" and "Acme Inc" stop being one string. D-223. */
+      institution: f.institution || null,
       grossAnnualIncomeCents: f.grossAnnualIncomeCents === undefined ? null : f.grossAnnualIncomeCents,
       /* How this person is ACTUALLY paid. engines/income.js turns the pair
          of (frequency, rateCents) into the annual figure above — which
@@ -666,11 +670,30 @@
     };
   }
 
+  /* The last four of an account or card: digits only, exactly four, or null.
+     Anything else a person types (a whole card number, three digits, a word)
+     is not four digits and so is not a last four. D-223. */
+  function last4Of(v) {
+    if (v === null || v === undefined || v === '') return null;
+    var d = String(v).replace(/\D/g, '');
+    return d.length === 4 ? d : (d.length > 4 ? d.slice(-4) : null);
+  }
+
   function createAsset(fields) {
     var f = fields || {};
     return {
       id: f.id || newId('a'),
       label: f.label || null,
+      /* WHO HOLDS IT, and the last four (D-223). These used to be smuggled
+         into `label` as one string ("Amex ••1003"), which meant the app could
+         show the name but could never group by the institution, could never
+         correct one without retyping the other, and lost the four digits to
+         anyone reading the label as a name. Both are their own field now,
+         both nullable: null is "not said", never "none", and a household
+         saved before this simply has null in both and reads exactly as it
+         did. `last4` is stored as the digits only, no bullets. */
+      institution: f.institution || null,
+      last4: last4Of(f.last4),
       category: f.category || 'other',
       valueCents: f.valueCents === undefined ? null : f.valueCents,
       liquid: f.liquid === undefined ? false : f.liquid,
@@ -1308,6 +1331,9 @@
     return {
       id: f.id || newId('d'),
       label: f.label || null,
+      /* Who it is with, and the last four. See createAsset. D-223. */
+      institution: f.institution || null,
+      last4: last4Of(f.last4),
       balanceCents: f.balanceCents === undefined ? null : f.balanceCents,
       rate: f.rate === undefined ? null : f.rate,
       minPaymentCents: f.minPaymentCents === undefined ? null : f.minPaymentCents,
@@ -1431,6 +1457,8 @@
     return {
       id: f.id || newId('yr'),
       label: typeof f.label === 'string' && f.label ? f.label : null,
+      /* Who it is paid to: the insurer, the council, the club. D-223. */
+      institution: f.institution || null,
       bucket: ANNUAL_BUCKETS.indexOf(f.bucket) >= 0 ? f.bucket : 'wants',
       amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
       monthDue: month !== null && month >= 1 && month <= 12 ? month : null,
@@ -2926,6 +2954,7 @@
 
   return {
     SCHEMA_VERSION: SCHEMA_VERSION,
+    last4Of: last4Of,
     SOURCES: SOURCES, CONFIDENCES: CONFIDENCES, ROUNDING: ROUNDING, notSure: notSure,
     useFieldMap: useFieldMap, get: get, meta: meta, confidenceOf: confidenceOf, precisionOf: precisionOf, roundForConfidence: roundForConfidence,
     ASSUMPTION_DEFAULTS: ASSUMPTION_DEFAULTS,

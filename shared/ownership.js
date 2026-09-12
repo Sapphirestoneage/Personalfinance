@@ -1149,6 +1149,50 @@
     if (writers.length && writers.indexOf(L.owner) === -1) throw new Error('The registry does not list ' + L.owner + ' as a writer of ' + L.path);
     return L.add(fields);
   }
+  /* RENAMING A LINE, through its owner (D-223). Express could add a line and
+     delete a line but never correct one: a card typed as "Amex" with the
+     wrong last four had to be removed and retyped, losing its balance and
+     its rate with it. These are the line's IDENTITY fields only - what it is
+     called, who holds it, the last four, which pile it sits in - never a
+     figure, which still goes through write() and that field's owner. The
+     write goes through the same owner room the constructor does, so the
+     one-owner rule holds. */
+  var IDENTITY = {
+    debt: ['label', 'institution', 'last4', 'type'],
+    asset: ['label', 'institution', 'last4', 'category'],
+    incomeSource: ['source', 'institution', 'type'],
+    annualLine: ['label', 'institution', 'bucket']
+  };
+  function itemsOf(kind, h) {
+    if (kind === 'debt') return h.debts || [];
+    if (kind === 'asset') return h.assets || [];
+    if (kind === 'annualLine') return (h.expenses && h.expenses.annual) || [];
+    if (kind === 'incomeSource') { var p = primary(); return (p && p.incomeSources) || []; }
+    return [];
+  }
+  function setItemFields(kind, id, fields) {
+    var L = LISTS[kind];
+    if (!L) throw new Error('No such list: ' + kind);
+    var allowed = IDENTITY[kind] || [];
+    var patch = { id: id };
+    Object.keys(fields || {}).forEach(function (k) {
+      if (allowed.indexOf(k) === -1) throw new Error(k + ' is not an identity field of a ' + kind + ' - write it through its own owner');
+      patch[k] = fields[k] === '' ? null : fields[k];
+    });
+    if (Object.prototype.hasOwnProperty.call(patch, 'last4')) patch.last4 = Schema.last4Of(patch.last4);
+    var writers = Registry.writersOf ? Registry.writersOf(L.path) : [];
+    if (writers.length && writers.indexOf(L.owner) === -1) throw new Error('The registry does not list ' + L.owner + ' as a writer of ' + L.path);
+    var before = itemsOf(kind, Spine.getProfile()).filter(function (x) { return x.id === id; })[0];
+    if (!before) throw new Error('No ' + kind + ' with id ' + id);
+    if (kind === 'debt') return Spine.upsertDebt(patch);
+    if (kind === 'asset') return Spine.upsertAsset(patch);
+    if (kind === 'incomeSource') { var p = primary(); return Spine.upsertIncomeSource(p.id, patch); }
+    /* The yearly line is rebuilt by its constructor on every upsert, so the
+       patch has to carry the whole record or the amount and the month would
+       be nulled by a rename. */
+    return Spine.upsertAnnualLine(Object.assign({}, before, patch));
+  }
+
   function removeItem(kind, id) {
     if (!LISTS[kind]) throw new Error('No such list: ' + kind);
     if (kind === 'annualLine') return Spine.removeAnnualLine(id);
@@ -1285,6 +1329,8 @@
     readings: readings,
     write: write,
     addItem: addItem,
+    setItemFields: setItemFields,
+    ITEM_IDENTITY: IDENTITY,
     removeItem: removeItem,
     LISTS: LISTS,
     ownerOf: ownerOf,

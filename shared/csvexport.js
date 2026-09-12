@@ -46,7 +46,12 @@
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.CsvExport = api; }
 })(typeof self !== 'undefined' ? self : null, function (Money, Schema, LedgerRows, Doors, Csv, Ownership) {
   'use strict';
-  var COLUMNS = ['door', 'level', 'row', 'label', 'item', 'value', 'unit', 'state', 'as_of', 'source', 'item_id'];
+  /* `institution` joins the descriptive columns (D-223): who holds the
+     account, who the card is with, who pays the wage. It is written out so a
+     spreadsheet can group and subtotal by bank the way the app now does, and
+     like door, level, label, unit, state, as_of and source it is a column
+     the importer reads past - only row (or label), item and value come back. */
+  var COLUMNS = ['door', 'level', 'row', 'label', 'item', 'institution', 'value', 'unit', 'state', 'as_of', 'source', 'item_id'];
   var UNIT_WORDS = { cents: 'dollars, to the cent', rate: 'percent (24.99 means 24.99%)', percent: 'percent', months: 'months', years: 'years', count: 'a count', bool: 'yes or no', enum: 'one of the row’s choices', text: 'text', date: 'a date, YYYY-MM-DD', formula: 'match: percent of the first percent of pay' };
 
   function dollars(cents) {
@@ -95,7 +100,7 @@
     return out;
   }
   function line(r, it, v, st, meta, h, ns) {
-    return { door: r.door, level: r.level, row: r.id, label: r.label, item: itemName(it), value: valueText(r, v), unit: r.unit, state: stateWord(st, ns),
+    return { door: r.door, level: r.level, row: r.id, label: r.label, item: itemName(it), institution: (it && it.institution) || '', value: valueText(r, v), unit: r.unit, state: stateWord(st, ns),
       as_of: st === 'missing' || st === 'notSure' ? '' : (meta.asOf ? String(meta.asOf).slice(0, 10) : ''), source: st === 'missing' || st === 'notSure' ? '' : (meta.source || ''), item_id: it ? (it.id || '') : '' };
   }
   /* The byte-order mark up front is what makes Excel read the file as UTF-8
@@ -135,6 +140,7 @@
       '  row     the row id, the same id the app uses everywhere',
       '  label   the row in words',
       '  item    the debt, account, source or line this value belongs to; empty for a household-wide row',
+      '  institution  who holds it: the bank, the lender, the employer, the payee. Sort or pivot on this to see one bank at a time.',
       '  value   the number. Blank means not entered: never zero. Units are in the unit column.',
       '  unit    ' + Object.keys(UNIT_WORDS).map(function (k) { return k + ' = ' + UNIT_WORDS[k]; }).join('; '),
       '  state   confirmed, roughly, from memory, needs a look, not sure yet (with the month expected), blank, or worked out (a computed row)',

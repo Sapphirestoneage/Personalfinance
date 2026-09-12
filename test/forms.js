@@ -1212,29 +1212,50 @@ const CASES = [
     prepare: async (page) => {
       await page.waitForSelector('[data-mode="all"]');
       await page.tap('[data-mode="all"]');
+      /* D-223: every level is a fold now, and only the first unfinished one
+         in each family is open. Open them all, because this case is about
+         typing into boxes across the whole form. */
+      await page.waitForSelector('details.xlvl');
+      await page.$$eval('details.xlvl', ns => ns.forEach(n => { n.open = true; }));
+      /* The situation is six choices, which is a select now, not six buttons
+         (D-223): five choices as five buttons was two rows of chrome for one
+         answer. Set through the select, the way a person does. */
+      await page.waitForSelector('[data-x-row="employmentStatus"] select[data-x-input]');
+      await page.selectOption('[data-x-row="employmentStatus"] select[data-x-input]', 'unemployed');
+      await page.waitForTimeout(250);
       await page.waitForSelector('[data-x-row="dob"]');
     },
     fields: [
       { sel: '[data-x-row="zip"] [data-x-input]', type: '12203' },
-      { sel: '[data-x-row="employmentStatus"] [data-x-val="unemployed"]', tap: true },
       { sel: '[data-x-row="lastPay"] [data-x-input]', type: '95000' },
       { sel: '[data-x-row="cashSavings"] [data-x-input]', type: '3000' },
-      { sel: '[data-x-add="debts"] [data-x-add-name]', type: 'Amex 1003' },
+      /* D-223: a card is a name, a lender and a last four, three fields, so
+         the name stays a name instead of becoming "Amex ••1003". */
+      { sel: '[data-x-add="debts"] [data-x-add-name]', type: 'Everyday card' },
+      { sel: '[data-x-add="debts"] [data-x-add-inst]', type: 'Amex' },
+      { sel: '[data-x-add="debts"] [data-x-add-last4]', type: '1003' },
       { sel: '[data-x-add="debts"] [data-x-add-btn]', tap: true },
       { sel: '.xitem[data-x-list="debts"] [data-x-row="debtBalance"] [data-x-input]', type: '3200', fresh: true }
     ],
     expect: async (page) => {
       const s = await page.evaluate(() => {
         const h = SLAF.Spine.getProfile();
+        const d = h.debts[0] || {};
         return { zip: h.zip, status: h.people[0].employmentStatus, lastPay: SLAF.Schema.unemploymentOf(h).lastGrossAnnualCents, cash: SLAF.Schema.cashCents(h).value,
-          debt: (h.debts[0] || {}).label + ':' + (h.debts[0] || {}).balanceCents, rows: document.querySelectorAll('[data-x-row]').length };
+          label: d.label, institution: d.institution, last4: d.last4, balance: d.balanceCents,
+          head: (document.querySelector('.xitem[data-x-list="debts"] [data-x-itemmeta]') || {}).textContent,
+          rows: document.querySelectorAll('[data-x-row]').length };
       });
       return [
         ['the ZIP landed', s.zip, '12203'],
         ['the situation landed', s.status, 'unemployed'],
         ['the last pay landed', s.lastPay, 9500000],
         ['cash landed', s.cash, 300000],
-        ['the card was added by name and its balance typed', s.debt, 'Amex 1003:320000'],
+        ['the card kept its own name', s.label, 'Everyday card'],
+        ['...the lender is its own field', s.institution, 'Amex'],
+        ['...and so are the last four', s.last4, '1003'],
+        ['...and the balance typed on it landed', s.balance, 320000],
+        ['the line reads back as who holds it and the last four', s.head, 'Amex · ••1003 · Credit card'],
         ['the form is long', s.rows > 60, true]
       ];
     }

@@ -54,36 +54,115 @@
   details.xdoor > summary .label { font-family: var(--font-display); font-size: var(--text-lg); }
   details.xdoor > summary .say { font-size: var(--text-xs); color: var(--color-text-faint); }
   details.xdoor > summary .count { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-faint); }
-  details.xlvl { margin-top: var(--space-2); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
-  details.xlvl > summary { cursor: pointer; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: var(--space-1) 0; }
-  .xrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-2) var(--space-3); align-items: start; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  /* ---- A LEVEL IS THE SEPARATION (D-223) -------------------------------
+     Levels were already in the markup but drawn as a faint uppercase line
+     with everything under it open, which made one screen out of four and
+     Express one very long page. A level is now a card that names itself,
+     counts what is answered, says Done when it is, and stays shut until you
+     want it. */
+  details.xlvl { margin-top: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); }
+  details.xlvl > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3); min-height: 52px; }
+  details.xlvl > summary::-webkit-details-marker { display: none; }
+  details.xlvl > summary::before { content: '▸'; color: var(--color-accent-hover); font-size: var(--text-sm); flex: 0 0 auto; transition: transform 150ms ease; }
+  details.xlvl[open] > summary::before { transform: rotate(90deg); }
+  details.xlvl > summary:hover { background: var(--color-surface); }
+  .xlvl-n { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); flex: 0 0 auto; }
+  .xlvl-t { font-family: var(--font-display); font-size: var(--text-md); min-width: 0; }
+  /* The badge is the answer to "have I done this one": a tick and the word
+     when it is finished, a count while it is going, nothing coy either way. */
+  .xbadge { margin-left: auto; flex: 0 0 auto; font-size: var(--text-xs); font-variant-numeric: tabular-nums; border-radius: var(--radius-pill); padding: 3px var(--space-2); border: 1px solid var(--color-border); color: var(--color-text-muted); white-space: nowrap; }
+  .xbadge.is-done { color: var(--color-positive); border-color: var(--color-positive); }
+  .xbadge.is-part { color: var(--color-text); border-color: var(--color-border-strong); }
+  .xbadge.is-empty { color: var(--color-text-faint); border-style: dashed; }
+  .xlvl-body { padding: 0 var(--space-3) var(--space-3); }
+  .xlvl-say { font-size: var(--text-xs); color: var(--color-text-muted); margin: 0 0 var(--space-2); line-height: var(--leading-normal); }
+
+  /* ---- A ROW, with its furniture put away (D-223) ----------------------
+     Every row carried a "Not sure yet" button, a "from memory" tick and an
+     "owned by" line at rest. Five rows of that is a screen of chrome around
+     five boxes, and it is most of why this page would not end. They are all
+     still here and all still one tap away: they appear for the row you are
+     actually answering, and go back when you leave it. */
+  .xrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: var(--space-1) var(--space-3); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
   .xrow:first-of-type { border-top: 0; }
-  .xrow .lab { font-size: var(--text-sm); padding-top: 8px; }
+  .xrow .lab { font-size: var(--text-sm); min-width: 0; }
   .xrow .lab .unit { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
-  .xrow .xstates { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-top: var(--space-1); min-height: 20px; }
+  /* Under the control, and only while the row has the focus. Everything that
+     appears on focus sits BELOW what you are answering, so nothing you are
+     about to tap ever moves. */
+  .xrow .xwhy { display: none; grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); }
+  .xrow:focus-within .xwhy { display: block; }
+  .xrow .xwhy .why, .xrow .xwhy .own { display: block; }
+  .xrow .xstates { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+  .xrow .xstates:empty { display: none; }
+  /* Put away at rest, back the moment the row has the focus. paintState
+     still sets the `hidden` ATTRIBUTE on the ones that do not apply, and
+     theme.css makes that display:none !important, so a row that must not
+     offer "Not sure yet" does not start offering it here. */
+  .xrow .xstates > [data-x-notsure], .xrow .xstates > .x-memory { display: none; }
+  .xrow:focus-within .xstates > [data-x-notsure] { display: inline-flex; }
+  .xrow:focus-within .xstates > .x-memory { display: inline-flex; }
   .xrow .xstates .slaf-btn--small { min-height: 32px; padding: 0 var(--space-2); font-size: var(--text-xs); }
   .xrow .slaf-unit { margin-left: 0; }
-  .xadd [data-x-add-last4] { width: 6.5em; flex: 0 0 auto; }
-  .xrow .lab .own { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
   .xrow .ctl .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
   .xrow .ctl input, .xrow .ctl select { font-size: var(--text-md); min-height: 44px; width: 100%; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
   .xrow .ctl .affix { color: var(--color-text-faint); font-size: var(--text-sm); white-space: nowrap; }
-  .xrow .ctl .choices .choice { min-height: 40px; font-size: var(--text-xs); }
-  .xrow .ctl .computed { font-family: var(--font-display); color: var(--color-text-muted); padding-top: 8px; }
+  .xrow .ctl .choices .choice { min-height: 40px; font-size: var(--text-sm); text-align: center; }
+  .xrow .ctl .computed { font-family: var(--font-display); color: var(--color-text-muted); }
   .xrow .ctl .computed.is-blank { color: var(--color-text-faint); font-style: italic; font-family: var(--font-body); font-size: var(--text-sm); }
   .xrow .sug { grid-column: 2; font-size: var(--text-xs); }
   .xrow .sug .slaf-use-this { font-size: var(--text-xs); }
   .xrow .sug .how { color: var(--color-text-faint); display: block; margin-top: 2px; }
-  .xrow .saved { grid-column: 2; font-size: var(--text-xs); color: var(--color-positive); min-height: 1em; }
-  .xitem { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-sm); }
-  .xitem .xhead { display: flex; gap: var(--space-2); align-items: baseline; }
-  .xitem .xhead b { font-family: var(--font-display); font-weight: 500; }
-  .xitem .xhead .kind { font-size: var(--text-xs); color: var(--color-text-faint); }
-  .xitem .xhead .rm { margin-left: auto; font-size: var(--text-xs); }
-  .xadd { margin-top: var(--space-2); display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
-  .xadd input, .xadd select { font-size: var(--text-sm); min-height: 40px; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
-  .xadd input { flex: 1 1 160px; }
+  .xrow .saved { grid-column: 2; font-size: var(--text-xs); color: var(--color-positive); }
+  .xrow .saved:empty { display: none; }
+
+  /* ---- A LINE, WITH A NAME AND A PLACE (D-223) -------------------------
+     An account, a card, a source of pay, a yearly bill. At rest it is one
+     line you can read: what it is called, who holds it, the last four, what
+     kind. Rename opens the four boxes that set exactly those. */
+  .xlist { margin-top: var(--space-3); }
+  .xlist-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+  .xlist-t { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+  .xlist-n { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+  /* A group is one institution: everything you hold at that bank, together,
+     with its own subtotal. */
+  .xgroup { margin-top: var(--space-2); }
+  .xgroup-h { display: flex; align-items: baseline; gap: var(--space-2); padding: var(--space-1) 0; border-bottom: 1px solid var(--color-border-strong); }
+  .xgroup-h b { font-family: var(--font-display); font-size: var(--text-sm); }
+  .xgroup-h .n { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+  .xgroup.is-loose .xgroup-h b { color: var(--color-text-faint); font-style: italic; font-weight: 400; }
+  /* A line is a block with a rule down its side, not another box inside a
+     box inside a box: by the time you reach a balance you are already four
+     borders deep, and each one costs a margin. */
+  .xitem { margin-top: var(--space-3); padding-left: var(--space-3); border-left: 2px solid var(--color-border-strong); }
+  /* The name gets the line, the buttons sit beside it, and who holds it goes
+     underneath. Laid out as a flex row this collapsed the name to "Chec..."
+     on a phone, because a shrinkable text node loses to two fixed buttons. */
+  .xitem .xhead { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 var(--space-2); align-items: center; }
+  .xitem .xname { font-family: var(--font-display); font-size: var(--text-md); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .xitem .xmeta { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .xitem .xmeta:empty { display: none; }
+  /* Placed, not auto-flowed: the meta spans both columns, so without this
+     the buttons are pushed to a third row of their own. */
+  .xitem .xhead .xacts { grid-row: 1; grid-column: 2; display: flex; gap: var(--space-1); flex: 0 0 auto; }
+  .xedit { margin-top: var(--space-2); display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-2); }
+  .xedit label { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .xedit input, .xedit select { width: 100%; font-size: var(--text-md); min-height: 44px; margin-top: 2px; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
+  .xedit .xl4 input { font-variant-numeric: tabular-nums; }
+
+  /* ---- ADD, as one obvious control ------------------------------------- */
+  .xadd { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px dashed var(--color-border-strong); }
+  .xadd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-2); }
+  .xadd label { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .xadd input, .xadd select { width: 100%; font-size: var(--text-md); min-height: 44px; margin-top: 2px; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
+  .xadd .slaf-btn { margin-top: var(--space-2); width: 100%; min-height: 48px; }
   .xhint { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+
+  /* ---- The small controls, as controls ---------------------------------- */
+  .xmini { font: inherit; font-size: var(--text-xs); min-height: 32px; padding: 0 var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); color: var(--color-text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .xmini:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  .xmini[aria-expanded="true"] { background: var(--color-surface-active); border-color: var(--color-border-active); color: var(--color-text); }
+  .xmini--danger:hover { border-color: var(--color-critical); color: var(--color-critical-text); }
   .switch { font-size: var(--text-sm); margin: var(--space-2) 0 0; }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
   @media (max-width: 480px) { .xrow { grid-template-columns: 1fr; } .xrow .sug, .xrow .saved { grid-column: 1; } }
@@ -114,11 +193,12 @@
      the heading above it, and a level heading you cannot leave is furniture. */
   body.is-walking details.xdoor { border: 0; background: none; padding: 0; margin-top: 0; }
   body.is-walking details.xdoor > summary { display: none; }
-  body.is-walking details.xlvl { border-top: 0; padding-top: 0; }
-  body.is-walking details.xlvl > summary { margin-top: var(--space-3); }
+  /* D-222 hid the level's own summary inside the walk, because the walk was
+     showing one level and the heading above it already said the family. Now
+     that a level IS the screen, its summary is the thing that says which
+     level this is and whether it is done, so it stays. D-223. */
+  body.is-walking details.xlvl { margin-top: 0; }
   body.is-walking .xbar .jump { display: none; }
-  body.is-walking-one details.xlvl > summary { display: none; }
-  body.is-walking-one details.xlvl { margin-top: 0; }
 </style>
 </head>
 <body class="slaf">
@@ -257,7 +337,12 @@
     if (u === 'bool') return '<div class="choices" data-x-choices><button type="button" class="choice" data-x-val="true" aria-pressed="false">Yes</button><button type="button" class="choice" data-x-val="false" aria-pressed="false">No</button></div>';
     if (u === 'enum') {
       var vals = enumValues(row);
-      if (vals.length > 8) return '<select data-x-input aria-label="' + esc(row.label) + '"><option value="">Choose…</option>' + vals.map(function (o) { return '<option value="' + esc(o.v) + '">' + esc(o.l) + '</option>'; }).join('') + '</select>';
+      /* Buttons up to three choices, a select beyond. Five choices as five
+         buttons is two rows of chrome for one answer, and on a phone it was
+         the single biggest thing making this page long; a select says the
+         current answer in one line and opens the platform's own picker,
+         which is a bigger tap target than any of them. D-223. */
+      if (vals.length > 3) return '<select data-x-input aria-label="' + esc(row.label) + '"><option value="">Choose\u2026</option>' + vals.map(function (o) { return '<option value="' + esc(o.v) + '">' + esc(o.l) + '</option>'; }).join('') + '</select>';
       return '<div class="choices" data-x-choices>' + vals.map(function (o) { return '<button type="button" class="choice" data-x-val="' + esc(o.v) + '" aria-pressed="false">' + esc(o.l) + '</button>'; }).join('') + '</div>';
     }
     if (u === 'date' && (row.id === 'dob' || row.id === 'partnerDob')) {
@@ -284,24 +369,217 @@
   function rowHtml(row, key, item) {
     var f = Ownership.FIELDS[row.id];
     var owner = f ? SLAF.Registry.byId(f.owner) : null;
+    /* WHAT THIS ONE IS FOR. data/ledger-rows.json gives every row an
+       `unlocks` line saying what answering it makes possible, and Express
+       had never shown it: the label alone told you the name of a number, not
+       why it was being asked for. It appears with the row's other furniture
+       when you are on the row, so it teaches without taking a line of the
+       page at rest. D-223. */
+    /* BELOW the control, never above it. Revealed on focus from inside the
+       label, these two lines grew the row upward the instant a finger landed
+       on a choice button: the button moved out from under the touch between
+       touchend and click, the browser retargeted the click to the row, and
+       the answer was silently dropped. Anything that appears on focus now
+       appears under the thing being answered. D-223. */
+    var why = row.unlocks ? '<span class="why">Unlocks ' + esc(row.unlocks) + '</span>' : '';
+    var own = owner && row.kind !== 'computed' ? '<span class="own">Entered here and in ' + esc(owner.title) + '; one record, two doors.</span>' : '';
     return '<div class="xrow" data-x-row="' + esc(row.id) + '" data-x-key="' + esc(key) + '"' + (item ? ' data-x-item="' + esc(item.id) + '"' : '') + '>'
-      + '<div class="lab">' + esc(row.label) + (row.unit !== 'cents' && LedgerRows.unitLabel(row) ? '<span class="unit">' + esc(LedgerRows.unitLabel(row)) + '</span>' : '') + (owner && row.kind !== 'computed' ? '<span class="own">owned by ' + esc(owner.title) + '</span>' : '') + '</div>'
+      + '<div class="lab">' + esc(row.label) + (row.unit !== 'cents' && LedgerRows.unitLabel(row) ? '<span class="unit">' + esc(LedgerRows.unitLabel(row)) + '</span>' : '') + '</div>'
       + '<div class="ctl">' + control(row, key) + '</div>'
       + statesHtml(row)
+      + (why || own ? '<div class="xwhy">' + why + own + '</div>' : '')
       + '<div class="sug" data-x-sug hidden></div><div class="saved" data-x-saved></div></div>';
   }
-  function itemLabel(kind, item) { return item.label || item.source || 'Unnamed'; }
-  function itemHtml(listKey, item, rows) {
-    var L = LISTS[listKey];
-    return '<div class="xitem" data-x-list="' + esc(listKey) + '" data-x-itemid="' + esc(item.id) + '"><div class="xhead"><b>' + esc(itemLabel(L.kind, item)) + '</b>' + (item.type ? '<span class="kind">' + esc((Ask.ENUM_LABELS.debtType || {})[item.type] || item.type) + '</span>' : '') + '<button type="button" class="slaf-btn slaf-btn--quiet rm" data-x-remove>Remove</button></div>'
+  /* ==========================================================================
+     A LINE'S IDENTITY: what it is called, who holds it, the last four (D-223)
+     --------------------------------------------------------------------------
+     The institution used to be smuggled into the name as one string, so
+     "Amex" plus "1003" became the label "Amex \u2022\u20221003" and the app could
+     never group by the bank, never correct one half without retyping the
+     other, and never tell a name from a number. They are three fields now,
+     and Express can rename a line instead of making you delete and retype it
+     (which used to take the balance and the rate with it).
+     ========================================================================== */
+  var KIND_WORDS = {
+    debt: { name: 'What to call it', namePh: 'e.g. Everyday card', inst: 'Who it is with', instPh: 'e.g. Amex', type: 'Kind of debt', none: 'No lender named' },
+    asset: { name: 'What to call it', namePh: 'e.g. Roth IRA', inst: 'Where it is held', instPh: 'e.g. Fidelity', type: 'Kind of account', none: 'No institution named' },
+    incomeSource: { name: 'What to call it', namePh: 'e.g. Day job', inst: 'Who pays it', instPh: 'e.g. Acme Inc', type: 'How it is paid', none: 'No payer named' },
+    annualLine: { name: 'What to call it', namePh: 'e.g. Car insurance', inst: 'Who it is paid to', instPh: 'e.g. Geico', type: 'Which bucket', none: 'No payee named' }
+  };
+  /* The identity field each kind keeps its NAME in, and the one it keeps its
+     CATEGORY in. Ownership.ITEM_IDENTITY is the list that may be written. */
+  var NAME_FIELD = { debt: 'label', asset: 'label', incomeSource: 'source', annualLine: 'label' };
+  var TYPE_FIELD = { debt: 'type', asset: 'category', incomeSource: 'type', annualLine: 'bucket' };
+  var HAS_LAST4 = { debt: true, asset: true, incomeSource: false, annualLine: false };
+  function typeOptions(kind) {
+    if (kind === 'debt') return Object.keys(Ask.ENUM_LABELS.debtType || {}).map(function (k) { return { v: k, l: Ask.ENUM_LABELS.debtType[k] }; });
+    if (kind === 'asset') return [{ v: 'cash', l: 'Cash' }, { v: 'investment', l: 'Investments' }, { v: 'retirement', l: 'Retirement' }, { v: 'property', l: 'Property' }, { v: 'other', l: 'Other' }];
+    if (kind === 'incomeSource') return Object.keys(Ask.ENUM_LABELS.incomeType || { w2: 'Employed (W-2)', selfEmployed: 'Self-employed' }).map(function (k) { return { v: k, l: (Ask.ENUM_LABELS.incomeType || {})[k] || k }; });
+    /* The four buckets a yearly cost can sit in are the expense engine's own
+       (Schema.ANNUAL_BUCKETS), said in the words the Expenses room uses. */
+    var BUCKETS = { food: 'Food', accommodation: 'Rent or mortgage', transportation: 'Getting around', wants: 'Everything else' };
+    return (Schema.ANNUAL_BUCKETS || ['wants']).map(function (k) { return { v: k, l: BUCKETS[k] || k }; });
+  }
+  function typeWord(kind, v) {
+    var o = typeOptions(kind).filter(function (x) { return x.v === v; })[0];
+    return o ? o.l : (v || '');
+  }
+  function itemLabel(kind, item) { return item[NAME_FIELD[kind]] || 'Not named yet'; }
+  function institutionOf(item) { return (item && item.institution) || ''; }
+  /* The one line you read when you are not editing: name, who holds it, the
+     last four, what kind. Nothing that needs a tap to find out. */
+  function itemMeta(kind, item) {
+    var bits = [];
+    if (item.institution) bits.push(item.institution);
+    if (HAS_LAST4[kind] && item.last4) bits.push('\u2022\u2022' + item.last4);
+    var t = typeWord(kind, item[TYPE_FIELD[kind]]);
+    if (t) bits.push(t);
+    return bits.join(' \u00b7 ');
+  }
+  function instListId(listKey) { return 'x-inst-' + listKey; }
+  function editHtml(listKey, item) {
+    var kind = LISTS[listKey].kind, W = KIND_WORDS[kind];
+    var opts = typeOptions(kind), cur = item[TYPE_FIELD[kind]];
+    return '<div class="xedit" data-x-edit hidden>'
+      + '<label>' + esc(W.name) + '<input type="text" data-x-item-field="' + esc(NAME_FIELD[kind]) + '" placeholder="' + esc(W.namePh) + '" value="' + esc(item[NAME_FIELD[kind]] || '') + '"/></label>'
+      /* The datalist is every institution already named in this list, so the
+         second account at the same bank lands in the same group instead of
+         starting a new one on a typo. */
+      + '<label>' + esc(W.inst) + '<input type="text" data-x-item-field="institution" list="' + esc(instListId(listKey)) + '" placeholder="' + esc(W.instPh) + '" value="' + esc(item.institution || '') + '"/></label>'
+      + (HAS_LAST4[kind] ? '<label class="xl4">Last four<input type="text" inputmode="numeric" maxlength="4" data-x-item-field="last4" placeholder="0000" value="' + esc(item.last4 || '') + '"/></label>' : '')
+      + '<label>' + esc(W.type) + '<select data-x-item-field="' + esc(TYPE_FIELD[kind]) + '">' + opts.map(function (o) { return '<option value="' + esc(o.v) + '"' + (o.v === cur ? ' selected' : '') + '>' + esc(o.l) + '</option>'; }).join('') + '</select></label>'
+      + '</div>';
+  }
+  /* `home` is the level the list belongs to: the one place a line is named,
+     renamed and removed. A deeper level shows the same line as a heading so
+     you know which account you are filling in, and nothing else. */
+  function itemHtml(listKey, item, rows, home) {
+    var kind = LISTS[listKey].kind;
+    return '<div class="xitem" data-x-list="' + esc(listKey) + '" data-x-itemid="' + esc(item.id) + '">'
+      + '<div class="xhead"><span class="xname" data-x-itemname>' + esc(itemLabel(kind, item)) + '</span>'
+      + '<span class="xmeta" data-x-itemmeta>' + esc(itemMeta(kind, item)) + '</span>'
+      + (home ? '<span class="xacts"><button type="button" class="xmini" data-x-rename aria-expanded="false">Rename</button>'
+        + '<button type="button" class="xmini xmini--danger" data-x-remove>Remove</button></span>' : '')
+      + '</div>'
+      + (home ? editHtml(listKey, item) : '')
       + rows.map(function (r) { return rowHtml(r, r.id + ':' + item.id, item); }).join('') + '</div>';
   }
   function addHtml(listKey) {
-    var L = LISTS[listKey];
-    var type = L.kind === 'debt' ? '<select data-x-add-type aria-label="Kind of debt">' + Object.keys(Ask.ENUM_LABELS.debtType).map(function (k) { return '<option value="' + k + '">' + esc(Ask.ENUM_LABELS.debtType[k]) + '</option>'; }).join('') + '</select>'
-      : L.kind === 'asset' ? '<select data-x-add-type aria-label="Kind of account"><option value="cash">Cash account</option><option value="investment">Investment account</option><option value="retirement">Retirement account</option><option value="property">Property</option><option value="other">Other</option></select>' : '';
-    var last4 = (L.kind === 'debt' || L.kind === 'asset') ? '<input type="text" inputmode="numeric" maxlength="4" placeholder="last four" data-x-add-last4 aria-label="Last four digits"/>' : '';
-    return '<div class="xadd" data-x-add="' + esc(listKey) + '"><input type="text" placeholder="' + esc(L.kind === 'debt' ? 'Lender, e.g. Amex' : L.kind === 'asset' ? 'Where it is, e.g. Fidelity Roth' : L.kind === 'incomeSource' ? 'Name it: e.g. Day job' : 'Name it: e.g. Car insurance') + '" data-x-add-name aria-label="Name"/>' + last4 + type + '<button type="button" class="slaf-btn" data-x-add-btn>+ Add another</button></div>';
+    var kind = LISTS[listKey].kind, W = KIND_WORDS[kind];
+    var opts = typeOptions(kind);
+    return '<div class="xadd" data-x-add="' + esc(listKey) + '">'
+      + '<div class="xadd-grid">'
+      + '<label>' + esc(W.name) + '<input type="text" data-x-add-name placeholder="' + esc(W.namePh) + '"/></label>'
+      + '<label>' + esc(W.inst) + '<input type="text" data-x-add-inst list="' + esc(instListId(listKey)) + '" placeholder="' + esc(W.instPh) + '"/></label>'
+      + (HAS_LAST4[kind] ? '<label>Last four<input type="text" inputmode="numeric" maxlength="4" data-x-add-last4 placeholder="0000"/></label>' : '')
+      + '<label>' + esc(W.type) + '<select data-x-add-type>' + opts.map(function (o) { return '<option value="' + esc(o.v) + '">' + esc(o.l) + '</option>'; }).join('') + '</select></label>'
+      + '</div>'
+      + '<button type="button" class="slaf-btn slaf-btn--primary" data-x-add-btn>Add another</button>'
+      + '<datalist id="' + esc(instListId(listKey)) + '" data-x-instlist="' + esc(listKey) + '"></datalist>'
+      + '</div>';
+  }
+
+  /* ==========================================================================
+     GROUPING BY INSTITUTION (D-223)
+     --------------------------------------------------------------------------
+     Four accounts at one bank read as four accounts until you put them under
+     the bank's name; then they read as one relationship with a subtotal. The
+     groups are built by MOVING the item nodes, never by re-rendering them, so
+     a half-typed balance is never thrown away (D-034); and a node holding the
+     focus is left where it is until the next regroup, which is why the
+     institution box regroups on change rather than on every keystroke.
+     ========================================================================== */
+  function groupKey(item) { return institutionOf(item).trim(); }
+  function listTotalCents(listKey, items) {
+    var kind = LISTS[listKey].kind;
+    var field = kind === 'debt' ? 'balanceCents' : kind === 'asset' ? 'valueCents' : kind === 'incomeSource' ? 'grossAnnualIncomeCents' : 'amountCents';
+    var any = false, sum = 0;
+    items.forEach(function (it) { if (Money.isEntered(it[field])) { any = true; sum += it[field]; } });
+    return any ? sum : null;
+  }
+  /* The list appears once per level that has fields of its own, so every
+     one of those hosts is grouped, headed and counted. `groupsHost` is the
+     home one: the level a new line is added in. */
+  function allHosts(listKey) { return Array.prototype.slice.call(document.querySelectorAll('[data-x-listhost="' + listKey + '"]')); }
+  function groupsHost(listKey) {
+    var home = document.querySelector('[data-x-listhost="' + listKey + '"][data-x-listlevel="' + LISTS[listKey].level + '"] [data-x-groups]');
+    return home || document.querySelector('[data-x-listhost="' + listKey + '"] [data-x-groups]');
+  }
+  function regroup(listKey) {
+    allHosts(listKey).forEach(function (wrap) { regroupHost(listKey, wrap); });
+  }
+  function regroupHost(listKey, wrap) {
+    var host = wrap.querySelector('[data-x-groups]');
+    if (!host) return;
+    var items = LedgerRows.items(h(), { repeat: listKey }) || [];
+    var byId = {};
+    items.forEach(function (it) { byId[it.id] = it; });
+    var kind = LISTS[listKey].kind;
+    var active = document.activeElement;
+
+    /* Every institution named, in the order a person would look for them:
+       the named ones alphabetically, the unplaced ones last. */
+    var names = [];
+    items.forEach(function (it) { var g = groupKey(it); if (g && names.indexOf(g) === -1) names.push(g); });
+    names.sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
+    var order = names.concat(['']);
+
+    order.forEach(function (g) {
+      var sel = '[data-x-group="' + String(g).replace(/"/g, '\\"') + '"]';
+      var box = host.querySelector(sel);
+      var mine = items.filter(function (it) { return groupKey(it) === g; });
+      if (!mine.length) { if (box) box.remove(); return; }
+      if (!box) {
+        box = document.createElement('div');
+        box.className = 'xgroup' + (g ? '' : ' is-loose');
+        box.setAttribute('data-x-group', g);
+        box.innerHTML = '<div class="xgroup-h"><b data-x-groupname></b><span class="n" data-x-groupn></span></div>';
+        host.appendChild(box);
+      }
+      box.querySelector('[data-x-groupname]').textContent = g || KIND_WORDS[kind].none;
+      var cents = listTotalCents(listKey, mine);
+      box.querySelector('[data-x-groupn]').textContent = mine.length + (mine.length === 1 ? ' line' : ' lines')
+        + (cents === null ? '' : ' \u00b7 $' + money(cents));
+      mine.forEach(function (it) {
+        var node = host.querySelector('[data-x-itemid="' + it.id + '"]');
+        if (!node) return;
+        if (node.parentNode === box) return;
+        if (active && node.contains(active)) return;   /* leave a box being typed in */
+        box.appendChild(node);
+      });
+      host.appendChild(box);                            /* keep the declared order */
+    });
+    /* The bank you just moved the last account away from. It is not in the
+       order any more, so the loop above never reaches it to remove it, and
+       an empty group with a subtotal of nothing would sit there for good. */
+    Array.prototype.forEach.call(host.querySelectorAll('[data-x-group]'), function (box) {
+      if (order.indexOf(box.getAttribute('data-x-group')) === -1) box.remove();
+    });
+
+    /* The list's own header, and the datalist that makes the second account
+       at one bank autocomplete to the same spelling. */
+    var n = wrap.querySelector('[data-x-listn]');
+    if (n) {
+      var tot = listTotalCents(listKey, items);
+      n.textContent = items.length ? items.length + (items.length === 1 ? ' line' : ' lines')
+        + (names.length ? ' in ' + names.length + (names.length === 1 ? ' place' : ' places') : '')
+        + (tot === null ? '' : ' \u00b7 $' + money(tot)) : 'none yet';
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('[data-x-instlist="' + listKey + '"]'), function (dl) {
+      dl.innerHTML = names.map(function (g) { return '<option value="' + esc(g) + '"></option>'; }).join('');
+    });
+  }
+  /* The same line is headed in every level that shows it, so a rename in one
+     is a rename in all of them. */
+  function repaintItemHead(listKey, itemId) {
+    var kind = LISTS[listKey].kind;
+    var item = (LedgerRows.items(h(), { repeat: listKey }) || []).filter(function (x) { return x.id === itemId; })[0];
+    if (!item) return;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-x-listhost="' + listKey + '"] [data-x-itemid="' + itemId + '"]'), function (node) {
+      var nm = node.querySelector('[data-x-itemname]'), mt = node.querySelector('[data-x-itemmeta]');
+      if (nm) nm.textContent = itemLabel(kind, item);
+      if (mt) mt.textContent = itemMeta(kind, item);
+    });
   }
 
   /* ---- The whole form, built once ---------------------------------------------- */
@@ -314,7 +592,13 @@
       [1, 2, 3, 4].forEach(function (L) {
         var rows = mine.filter(function (r) { return r.level === L; });
         if (!rows.length) return;
-        out += '<details class="xlvl" id="x-' + esc(d.id) + '-' + L + '" open><summary>Level ' + L + ' · ' + esc(Doors.LEVELS[L - 1].label) + '</summary>';
+        var lvl = Doors.LEVELS[L - 1];
+        /* The summary is the whole point of a level: it names it, and the
+           badge says whether it is done. paintLevels fills the badge. */
+        out += '<details class="xlvl" id="x-' + esc(d.id) + '-' + L + '" data-x-door="' + esc(d.id) + '" data-x-level="' + L + '">'
+          + '<summary><span class="xlvl-n">Level ' + L + '</span><span class="xlvl-t">' + esc(lvl.label) + '</span>'
+          + '<span class="xbadge" data-x-badge>\u2014</span></summary>'
+          + '<div class="xlvl-body"><p class="xlvl-say">' + esc(lvl.gloss) + '</p>';
         var listsHere = {};
         rows.forEach(function (r) {
           if (ITEM_ROWS[r.id]) { listsHere[ITEM_ROWS[r.id]] = true; }
@@ -326,11 +610,27 @@
         Object.keys(listsHere).forEach(function (lk) {
           var Lst = LISTS[lk];
           var items = LedgerRows.items(hh, { repeat: lk }) || [];
-          var rowsOf = Lst.rows.map(function (id) { return LedgerRows.byId(id); }).filter(Boolean);
-          out += '<div class="xlist" data-x-listhost="' + esc(lk) + '"><p class="xhint">' + esc(Lst.label) + ': one block each, the fields together.</p>'
-            + items.map(function (it) { return itemHtml(lk, it, rowsOf); }).join('') + addHtml(lk) + '</div>';
+          /* ONLY THIS LEVEL'S FIELDS (D-223). A list's rows span levels: an
+             account's value and tax character are level 2, what it cost is
+             level 4. The old build put EVERY field of the list into EVERY
+             level that held any of them, so each account and each card was
+             drawn twice, with two copies of the same data-x-key - the second
+             won the index and the first became a block that never repainted
+             again. Each level now carries its own fields only, which removes
+             the duplicate and is what levels were for. */
+          var rowsOf = Lst.rows.map(function (id) { return LedgerRows.byId(id); })
+            .filter(function (r) { return r && r.level === L; });
+          if (!rowsOf.length) return;
+          /* You add a line in ONE place: the level the list belongs to. The
+             deeper levels show the lines you already have, to fill in. */
+          var home = Lst.level === L;
+          out += '<div class="xlist" data-x-listhost="' + esc(lk) + '" data-x-listlevel="' + L + '">'
+            + '<div class="xlist-head"><span class="xlist-t">' + esc(Lst.label) + '</span><span class="xlist-n" data-x-listn></span></div>'
+            + (home ? '' : '<p class="xhint">The lines you already added, for this level\u2019s fields. Add a new one under level ' + Lst.level + '.</p>')
+            + '<div data-x-groups>' + items.map(function (it) { return itemHtml(lk, it, rowsOf, home); }).join('') + '</div>'
+            + (home ? addHtml(lk) : '') + '</div>';
         });
-        out += '</details>';
+        out += '</div></details>';
       });
       document.querySelector('#x-' + d.id + ' .xbody').innerHTML = out;
     });
@@ -341,7 +641,59 @@
     paintApplies();
     paintSuggestions();
     paintBar();
+    Object.keys(LISTS).forEach(regroup);
+    paintLevels();
+    openFirstUnfinished();
   }
+
+  /* ==========================================================================
+     IS THIS LEVEL DONE? (D-223)
+     --------------------------------------------------------------------------
+     Doors.counts already works this out per level for the Ledger; Express
+     simply never asked. A level that is finished says so and stays shut, so
+     the page is as long as the work that is left rather than as long as the
+     whole model.
+     ========================================================================== */
+  var LEVEL_STATE = {};
+  function levelCount(doorId, level) {
+    var c = Doors.counts(h(), TABLES, doorId, []);
+    var b = (c.byLevel || {})[level];
+    return b ? { known: b.known, total: b.total } : { known: 0, total: 0 };
+  }
+  function paintLevels() {
+    LEVEL_STATE = {};
+    Array.prototype.forEach.call(document.querySelectorAll('details.xlvl'), function (lv) {
+      var doorId = lv.getAttribute('data-x-door'), level = Number(lv.getAttribute('data-x-level'));
+      var c = levelCount(doorId, level);
+      var badge = lv.querySelector('[data-x-badge]');
+      var done = c.total > 0 && c.known >= c.total;
+      LEVEL_STATE[doorId + ':' + level] = { known: c.known, total: c.total, done: done };
+      if (!badge) return;
+      badge.textContent = !c.total ? 'nothing here'
+        : done ? '\u2713 Done'
+        : c.known ? c.known + ' of ' + c.total
+        : 'Not started';
+      badge.className = 'xbadge ' + (done ? 'is-done' : c.known ? 'is-part' : 'is-empty');
+      badge.title = done ? 'Every question in this level has an answer.' : c.known + ' of ' + c.total + ' answered.';
+    });
+  }
+  /* On arrival, open the first level that still has work in it, per door, and
+     leave the finished ones shut. Nothing is forced afterwards: a level you
+     open by hand stays open. */
+  var OPENED_ONCE = false;
+  function openFirstUnfinished() {
+    if (OPENED_ONCE) return;
+    OPENED_ONCE = true;
+    Doors.DOORS.forEach(function (d) {
+      var levels = Array.prototype.slice.call(document.querySelectorAll('details.xlvl[data-x-door="' + d.id + '"]'));
+      var first = levels.filter(function (lv) {
+        var st = LEVEL_STATE[d.id + ':' + lv.getAttribute('data-x-level')];
+        return st && st.total && !st.done;
+      })[0];
+      levels.forEach(function (lv) { lv.open = lv === first; });
+    });
+  }
+
   function index() {
     NODES = {};
     Array.prototype.forEach.call(document.querySelectorAll('[data-x-row]'), function (n) {
@@ -483,7 +835,14 @@
   }
   function wire() {
     var form = el('xform');
+    /* An identity field (the name, the institution, the last four, the kind)
+       is not a figure: it writes through the list's owner, not through the
+       row's, and then the line re-reads its own head and the groups settle.
+       On 'change', so a half-typed bank name never starts a group of its
+       own and never moves a node while a finger is in it. D-223. */
     form.addEventListener('change', function (ev) {
+      var idf = ev.target.closest ? ev.target.closest('[data-x-item-field]') : null;
+      if (idf) { commitIdentity(idf); return; }
       var r = ev.target.closest ? ev.target.closest('[data-x-key]') : null;
       if (!r) return;
       /* The period select, the memory tick and the expected month are not
@@ -493,8 +852,17 @@
       if (n) commitInput(n);
     });
     form.addEventListener('click', function (ev) {
-      var t = ev.target.closest ? ev.target.closest('[data-x-val],[data-x-use],[data-x-add-btn],[data-x-remove],[data-x-notsure],[data-x-notsure-save],[data-x-slipopt]') : null;
+      var t = ev.target.closest ? ev.target.closest('[data-x-val],[data-x-use],[data-x-add-btn],[data-x-remove],[data-x-rename],[data-x-notsure],[data-x-notsure-save],[data-x-slipopt]') : null;
       if (!t) return;
+      if (t.hasAttribute('data-x-rename')) {
+        var item = t.closest('[data-x-itemid]'), ed = item.querySelector('[data-x-edit]');
+        var open = ed.hidden;
+        ed.hidden = !open;
+        t.setAttribute('aria-expanded', open ? 'true' : 'false');
+        t.textContent = open ? 'Done' : 'Rename';
+        if (open) { var first = ed.querySelector('input'); if (first && first.focus) first.focus(); }
+        return;
+      }
       if (t.hasAttribute('data-x-notsure')) { t.closest('[data-x-key]').querySelector('[data-x-when]').hidden = false; return; }
       if (t.hasAttribute('data-x-notsure-save')) {
         var nn = NODES[t.closest('[data-x-key]').getAttribute('data-x-key')];
@@ -526,31 +894,70 @@
       }
       if (t.hasAttribute('data-x-add-btn')) {
         var box = t.closest('[data-x-add]'), lk = box.getAttribute('data-x-add'), L = LISTS[lk];
-        var name = String(box.querySelector('[data-x-add-name]').value || '').trim();
-        var l4 = box.querySelector('[data-x-add-last4]');
-        var last4 = l4 ? String(l4.value || '').replace(/\D/g, '').slice(-4) : '';
-        /* Named by lender and last four, "Amex ••1003", never a numbered card (G2.8). */
-        if (last4) name = (name || (L.kind === 'debt' ? 'Card' : 'Account')) + ' ••' + last4;
-        var typeSel = box.querySelector('[data-x-add-type]');
+        var val = function (sel) { var e = box.querySelector(sel); return e ? String(e.value || '').trim() : ''; };
+        /* Name, institution and the last four are three fields now, so the
+           name stays a name: "Everyday card", at "Amex", ending 1003. The
+           label is no longer a sentence with a card number glued to it. D-223. */
         var fields = {};
-        if (L.kind === 'incomeSource') fields.source = name || 'A source'; else fields.label = name || undefined;
-        if (typeSel) { if (L.kind === 'debt') fields.type = typeSel.value; else fields.category = typeSel.value; }
+        fields[NAME_FIELD[L.kind]] = val('[data-x-add-name]') || undefined;
+        var inst = val('[data-x-add-inst]');
+        if (inst) fields.institution = inst;
+        var last4 = Schema.last4Of(val('[data-x-add-last4]'));
+        if (last4) fields.last4 = last4;
+        var typeSel = box.querySelector('[data-x-add-type]');
+        if (typeSel) fields[TYPE_FIELD[L.kind]] = typeSel.value;
         var item = Ownership.addItem(L.kind, fields);
-        var rowsOf = L.rows.map(function (id) { return LedgerRows.byId(id); }).filter(Boolean);
-        box.insertAdjacentHTML('beforebegin', itemHtml(lk, item, rowsOf));
-        box.querySelector('[data-x-add-name]').value = '';
-        if (l4) l4.value = '';
+        /* The new line is appended to every level that shows this list, each
+           with that level's own fields, and then the groups settle. Appended,
+           never re-rendered: no box already on the page is touched. */
+        allHosts(lk).forEach(function (wrap) {
+          var lvl = Number(wrap.getAttribute('data-x-listlevel'));
+          var rowsHere = L.rows.map(function (id) { return LedgerRows.byId(id); })
+            .filter(function (r) { return r && r.level === lvl; });
+          if (!rowsHere.length) return;
+          wrap.querySelector('[data-x-groups]').insertAdjacentHTML('beforeend', itemHtml(lk, item, rowsHere, lvl === L.level));
+        });
+        Array.prototype.forEach.call(box.querySelectorAll('input'), function (i) { i.value = ''; });
         index(); paintValues(); paintApplies(); paintSuggestions(); paintBar();
+        regroup(lk); paintLevels();
+        var added = groupsHost(lk).querySelector('[data-x-itemid="' + item.id + '"]');
+        if (added && added.scrollIntoView) added.scrollIntoView({ block: 'nearest' });
         return;
       }
       if (t.hasAttribute('data-x-remove')) {
         var it = t.closest('[data-x-itemid]'), lk2 = it.getAttribute('data-x-list');
-        if (!window.confirm('Remove ' + it.querySelector('.xhead b').textContent + '? Undo brings it back.')) return;
-        Ownership.removeItem(LISTS[lk2].kind, it.getAttribute('data-x-itemid'));
-        it.remove();
+        var what = it.querySelector('[data-x-itemname]').textContent;
+        var meta = it.querySelector('[data-x-itemmeta]').textContent;
+        if (!window.confirm('Remove ' + what + (meta ? ' (' + meta + ')' : '') + '? Undo brings it back.')) return;
+        var rmId = it.getAttribute('data-x-itemid');
+        Ownership.removeItem(LISTS[lk2].kind, rmId);
+        Array.prototype.forEach.call(document.querySelectorAll('[data-x-listhost="' + lk2 + '"] [data-x-itemid="' + rmId + '"]'), function (n3) { n3.remove(); });
         index(); paintApplies(); paintSuggestions(); paintBar();
+        regroup(lk2); paintLevels();
       }
     });
+  }
+
+  /* One identity field, written through the list's owner (D-223). */
+  function commitIdentity(input) {
+    var item = input.closest('[data-x-itemid]');
+    if (!item) return;
+    var listKey = item.getAttribute('data-x-list'), id = item.getAttribute('data-x-itemid');
+    var kind = LISTS[listKey].kind;
+    var field = input.getAttribute('data-x-item-field');
+    var patch = {};
+    patch[field] = String(input.value || '').trim();
+    try {
+      Ownership.setItemFields(kind, id, patch);
+      if (field === 'last4') input.value = Schema.last4Of(input.value) || '';
+      repaintItemHead(listKey, id);
+      regroup(listKey);
+    } catch (e) {
+      /* The one place a rename can fail is a line that has just been removed
+         in another tab; say so rather than leaving a box that looks saved. */
+      var say = item.querySelector('[data-x-itemmeta]');
+      if (say) say.textContent = 'Could not save that: ' + (e && e.message ? e.message : e);
+    }
   }
 
   /* ==========================================================================
@@ -597,20 +1004,32 @@
     });
   }
   function buildStages() {
+    /* ONE LEVEL IS ONE SCREEN (D-223). The walk used to show a family's
+       levels 2, 3 and 4 together, which put the whole model on one screen
+       and undid the separation levels are for. A stage is now a (family,
+       level) pair: the first pass is every family at level 1, then the
+       sharpening walks the deeper levels of the families that answered. A
+       level with nothing left in it is still a stage, but it arrives shut
+       and badged Done, so it costs a tap rather than a screen. */
     var out = [];
     Doors.DOORS.forEach(function (d) {
-      if (levelEls(d.id).some(function (n) { return levelNumber(n) === 1 && levelHasRows(n); })) out.push({ door: d.id, phase: 'first' });
+      if (levelEls(d.id).some(function (n) { return levelNumber(n) === 1 && levelHasRows(n); })) out.push({ door: d.id, level: 1 });
     });
     Doors.DOORS.forEach(function (d) {
       if (!answered(d.id)) return;
-      if (levelEls(d.id).some(function (n) { return levelNumber(n) > 1 && levelHasRows(n); })) out.push({ door: d.id, phase: 'sharpen' });
+      levelEls(d.id).forEach(function (n) {
+        var L = levelNumber(n);
+        if (L > 1 && levelHasRows(n)) out.push({ door: d.id, level: L });
+      });
     });
     return out;
   }
 
   var PHASE_SAY = {
-    first: 'The one number first. Answer from memory; a rough figure beats a blank, and you can sharpen it in a moment.',
-    sharpen: 'Now sharpen it: where it sits, what it is made of, what it costs. Skip anything you do not have to hand.'
+    1: 'The one number first. Answer from memory; a rough figure beats a blank, and you can sharpen it in a moment.',
+    2: 'Where it sits: which account, which lender, which source, and how it is taxed.',
+    3: 'What it is made of: the parts inside, the rates, the categories.',
+    4: 'What it costs and where it came from: fees, what you paid, what has grown.'
   };
   function paintWalk() {
     if (MODE !== 'walk') return;
@@ -625,33 +1044,39 @@
       node.hidden = !on;
       if (on) node.open = true;
       levelEls(d.id).forEach(function (lv) {
-        var n = levelNumber(lv);
-        var show = on && (stage.phase === 'first' ? n === 1 : n > 1);
+        var show = on && levelNumber(lv) === stage.level;
         lv.hidden = !show;
-        if (show) lv.open = true;
+        /* A level with work left opens itself; a finished one arrives shut
+           behind its own Done badge, so the screen is the badge and Next. */
+        if (show) {
+          var st = LEVEL_STATE[d.id + ':' + stage.level];
+          lv.open = !(st && st.done);
+        }
       });
     });
-    var firsts = STAGES.filter(function (x) { return x.phase === 'first'; }).length;
+    var firsts = STAGES.filter(function (x) { return x.level === 1; }).length;
     el('xwalk-dots').innerHTML = STAGES.map(function (x, i) {
       return '<i class="' + (i === STEP ? 'is-now' : i < STEP ? 'is-done' : '') + '"></i>';
     }).join('');
-    el('xwalk-step').textContent = stage.phase === 'sharpen'
-      ? 'Sharpening · ' + (STEP - firsts + 1) + ' of ' + (STAGES.length - firsts)
+    var st = LEVEL_STATE[stage.door + ':' + stage.level] || { known: 0, total: 0, done: false };
+    el('xwalk-step').textContent = stage.level > 1
+      ? 'Sharpening \u00b7 ' + (STEP - firsts + 1) + ' of ' + (STAGES.length - firsts)
       : 'Step ' + (STEP + 1) + ' of ' + firsts;
-    el('xwalk-title').textContent = door.label + (stage.phase === 'sharpen' ? ', in detail' : '');
-    el('xwalk-say').textContent = door.say.charAt(0).toUpperCase() + door.say.slice(1) + '. ' + PHASE_SAY[stage.phase];
-    /* On the first pass exactly one level shows, so its heading would say
-       "Level 1 · How much" under a heading that already says the family.
-       Sharpening shows several, where the headings earn their place. */
-    document.body.classList.toggle('is-walking-one', stage.phase === 'first');
+    el('xwalk-title').textContent = stage.level > 1
+      ? door.label + ' \u00b7 ' + Doors.LEVELS[stage.level - 1].label
+      : door.label;
+    el('xwalk-say').textContent = st.done
+      ? 'Every question here has an answer. Open it if you want to change one, or move on.'
+      : (stage.level === 1 ? door.say.charAt(0).toUpperCase() + door.say.slice(1) + '. ' : '') + (PHASE_SAY[stage.level] || '');
     var last = STEP >= STAGES.length - 1;
     var nextStage = STAGES[STEP + 1];
     el('xwalk-nav').querySelector('[data-walk="back"]').disabled = STEP === 0;
     var nextBtn = el('xwalk-nav').querySelector('[data-walk="next"]');
-    nextBtn.textContent = last ? 'Done →' : 'Next →';
+    nextBtn.textContent = last ? 'Done \u2192' : 'Next \u2192';
     el('xwalk-left').textContent = last ? 'That is every family.'
-      : nextStage.phase === 'sharpen' && stage.phase === 'first' ? 'Next: sharpening what you answered'
-      : 'Next: ' + (Doors.DOORS.filter(function (d) { return d.id === nextStage.door; })[0] || {}).label;
+      : nextStage.level > 1 && stage.level === 1 ? 'Next: sharpening what you answered'
+      : nextStage.door !== stage.door ? 'Next: ' + (Doors.DOORS.filter(function (d) { return d.id === nextStage.door; })[0] || {}).label
+      : 'Next: level ' + nextStage.level + ', ' + String(Doors.LEVELS[nextStage.level - 1].label).toLowerCase();
   }
   function setMode(mode, step) {
     MODE = mode === 'walk' ? 'walk' : 'all';
@@ -667,7 +1092,6 @@
       STEP = Math.min(Math.max(0, typeof step === 'number' ? step : Number(SLAF.Prefs.get(STEP_PREF, 0)) || 0), Math.max(0, STAGES.length - 1));
       paintWalk();
     } else {
-      document.body.classList.remove('is-walking-one');
       Doors.DOORS.forEach(function (d) {
         var node = doorEl(d.id);
         if (node) { node.hidden = false; }
@@ -694,7 +1118,7 @@
          so the list is rebuilt on every move rather than fixed at the start. */
       var here = STAGES[STEP];
       STAGES = buildStages();
-      var at = STAGES.findIndex(function (x) { return here && x.door === here.door && x.phase === here.phase; });
+      var at = STAGES.findIndex(function (x) { return here && x.door === here.door && x.level === here.level; });
       goTo((at > -1 ? at : STEP) + 1);
     });
   }
@@ -716,6 +1140,11 @@
        what applies, never rebuilding a control, never under a finger. */
     Spine.onChange(function () {
       paintValues(); paintApplies(); paintSuggestions(); paintBar();
+      /* A level's badge is the answer to "is this one done", so it has to
+         move the moment an answer lands, not at the next Next. Regrouping is
+         NOT done here: it moves nodes, and this fires while a box is being
+         left. D-223. */
+      paintLevels();
       if (MODE === 'walk') paintWalk();
     });
   });

@@ -7,6 +7,19 @@ Updated: 2026-09-12
 - ~70 rooms live on GitHub Pages. Each room works on its own; the connections
   between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
 - Context system added. Sessions should no longer read the archives.
+- **Also this session (D-223): Express, made short.** The owner: too long, too
+  much extra, levels were a good separation. It was also drawing every account
+  and card twice, because a list's rows span levels and the build put all of a
+  list's fields into every level holding any of them; the second copy won the
+  index and the first went dead. Each level now renders only its own fields, is
+  a named fold with a badge that reads Done or a count, and arrives shut unless
+  it still has work. The walk steps one family-and-level a screen. The per-row
+  furniture and the row's `unlocks` line appear only for the row being
+  answered; an enum of four or more is a select. A line (account, card, source,
+  yearly cost) now has a name, an institution and a last four as three fields
+  rather than one mangled string, can be renamed in place, and the lines group
+  under their institution with a subtotal. The spreadsheet carries the
+  institution column so it can pivot by bank.
 - **This session (D-222): the screens as a person on a phone meets them.** The
   owner walked the live app and sent ten screenshots. Fixed: the math sheet was
   translucent with no backdrop, so the room behind it read through it (now

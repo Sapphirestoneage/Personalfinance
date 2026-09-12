@@ -12512,12 +12512,29 @@ section('Express: a second view of the same rows (D-208)');
   checkTrue('every write goes through Ownership.write or Ownership.addItem, never the spine', /Ownership\.write\(n\.row\.id, value, ctx\)/.test(html) && /Ownership\.addItem\(L\.kind, fields\)/.test(html) && !/Spine\.(set|upsert|batch|updateProfile)\(/.test(html.split('<script>')[1] || ''));
   checkTrue('built once, declared', /LIVE-FORM: built once/.test(html) && /Nothing is rebuilt while a finger is in a box/.test(html));
   checkTrue('no submit button; each field saves on change', !/type="submit"/.test(html) && /form\.addEventListener\('change'/.test(html));
-  checkTrue('six door shells with the registry’s ids, each level a fold open by default', ['D', 'A', 'I', 'T', 'E', 'you'].every(d => new RegExp('<details class="xdoor" id="x-' + d + '" open>').test(html)) && /details class="xlvl" id="x-' \+ esc\(d\.id\) \+ '-' \+ L \+ '" open/.test(html));
+  /* D-223: a level is the separation, so it is a named fold that says
+     whether it is done and arrives shut unless it still has work in it. */
+  checkTrue('six door shells with the registry’s ids', ['D', 'A', 'I', 'T', 'E', 'you'].every(d => new RegExp('<details class="xdoor" id="x-' + d + '" open>').test(html)));
+  checkTrue('each level is a fold that names itself and carries a done badge', /details class="xlvl" id="x-' \+ esc\(d\.id\) \+ '-' \+ L \+ '"/.test(html) && /class="xlvl-t"/.test(html) && /data-x-badge/.test(html) && /'\\u2713 Done'/.test(html));
+  checkTrue('...counted from the same byLevel the Ledger uses, not a second tally', /Doors\.counts\(h\(\), TABLES, doorId, \[\]\)/.test(html) && /c\.byLevel \|\| \{\}/.test(html));
+  checkTrue('...and the first level with work left is the one that opens', /function openFirstUnfinished/.test(html) && /lv\.open = lv === first/.test(html));
+  checkTrue('the walk steps one level a screen, not a family of levels at once', /out\.push\(\{ door: d\.id, level: L \}\)/.test(html) && /levelNumber\(lv\) === stage\.level/.test(html));
+  /* D-223: anything that appears when a row takes the focus appears UNDER
+     the control. Revealed above it, the choice button moved out from under
+     the finger between touchend and click, the browser retargeted the click
+     to the row, and the answer was dropped without a word. */
+  checkTrue('what a row reveals on focus sits below what you are answering', /class="xwhy"/.test(html) && /\.xrow:focus-within \.xwhy \{ display: block; \}/.test(html) && !/:focus-within \.lab/.test(html));
   checkTrue('rows that stop applying are hidden, never rebuilt or cleared', /n\.el\.hidden = !applies/.test(html) && !/innerHTML = ''/.test(html.split('function paintApplies')[1].split('function paintSuggestions')[0]));
   checkTrue('a suggestion is a chip beside the box, never typed into it', /Suggested ' \+ esc\(s\.display\) \+ ' · use it/.test(html) && /data-x-use/.test(html));
   checkTrue('a sticky bar carries the understanding line and a jump menu', /class="xbar"/.test(html) && /position: sticky/.test(html) && /id="xjump"/.test(html) && /Doors\.understanding\(/.test(html));
-  checkTrue('lists are repeatable: debts, accounts, sources, yearly lines each get + Add another', /\+ Add another/.test(html) && /debts: \{ kind: 'debt'/.test(html) && /assets: \{ kind: 'asset'/.test(html) && /incomeSources: \{ kind: 'incomeSource'/.test(html) && /annualLines: \{ kind: 'annualLine'/.test(html));
-  checkTrue('a list item is named by lender and last four, never Card 1', /data-x-add-last4/.test(html) && /' ••' \+ last4/.test(html) && !/Card 1/.test(html));
+  checkTrue('lists are repeatable: debts, accounts, sources, yearly lines each get an add form', /data-x-add-btn>Add another/.test(html) && /debts: \{ kind: 'debt'/.test(html) && /assets: \{ kind: 'asset'/.test(html) && /incomeSources: \{ kind: 'incomeSource'/.test(html) && /annualLines: \{ kind: 'annualLine'/.test(html));
+  /* D-223: a line has a name, an institution and a last four as three
+     fields. They used to be one string ("Amex ••1003"), which is why the app
+     could never group by the bank or correct half of it. */
+  checkTrue('a line is named, placed and numbered in three fields, not one string', /data-x-add-name/.test(html) && /data-x-add-inst/.test(html) && /data-x-add-last4/.test(html) && /fields\.institution = inst/.test(html) && /fields\.last4 = last4/.test(html) && !/' ••' \+ last4/.test(html) && !/Card 1/.test(html));
+  checkTrue('...and can be renamed in place, through the list owner', /data-x-rename/.test(html) && /Ownership\.setItemFields\(kind, id, patch\)/.test(html));
+  checkTrue('...with the institutions already used offered back, so one bank is one group', /<datalist id="' \+ esc\(instListId\(listKey\)\)/.test(html) && /data-x-instlist/.test(html));
+  checkTrue('lines group under their institution, by moving nodes and never re-rendering them', /function regroup\(listKey\)/.test(html) && /box\.appendChild\(node\)/.test(html) && /if \(active && node\.contains\(active\)\) return;/.test(html));
   checkTrue('every box carries its unit (gross or net, the period) beside it, from the one reader', /Ask\.unitHtml\(row, null, 'data-x-period'\)/.test(html) && /LedgerRows\.unitLabel\(row\)/.test(html));
   checkTrue('an emptied box writes null, never zero', /if \(before !== null && before !== undefined\) write\(n, null, 'typed'\)/.test(html));
   checkTrue('the one parser: Ask.parse, shared with the inline ask', /Ask\.parse\(row, raw\)/.test(html));

@@ -13564,6 +13564,53 @@ phone walk at 390px through the Ledger, the First Round, Express in both
 modes, Settings and the One-Pager: no console error, no sideways scroll, the
 math sheet opaque over a dimmed page, the spreadsheet downloaded and opened.
 
+## D-223 — Express, made short: a level is the separation, and a line has a name and a place
+
+**Why.** The owner: "Express is way too long and has way too much extra in it.
+Levels were a good separation." It was also literally twice as long as it
+needed to be: a list's rows span levels, and `build()` put EVERY field of a
+list into EVERY level holding any of them, so each account and each card was
+drawn twice with two copies of the same `data-x-key`. The second won the
+index; the first became a block that never repainted again. On top of that
+every row carried a "Not sure yet" button, a "from memory" tick and an
+"owned by" line at rest, a five-choice enum was five buttons, and a line's
+institution was smuggled into its name as one string ("Amex ••1003"), so the
+app could never group by the bank or correct half of it.
+
+**Decision.**
+- `rooms/express.html`: each level renders only its own fields, which removes
+  the duplicate block; a level is a named fold with a badge from
+  `Doors.counts().byLevel` that reads "✓ Done", "4 of 6" or "Not started",
+  shut unless it still has work; the walk steps one (family, level) a screen
+  instead of levels 2 to 4 at once; the per-row furniture and the row's
+  `unlocks` line appear on `:focus-within`; an enum of four or more is a
+  select, not a row of buttons.
+- A line is named, placed and numbered in three fields, renameable in place
+  through `Ownership.setItemFields` (identity only, never a figure), and the
+  lines group under their institution with a count and a subtotal. Grouping
+  MOVES nodes and never re-renders them, and skips a node holding the focus.
+- `shared/schema.js`: `institution` on all four list kinds, `last4` on
+  accounts and cards, `Schema.last4Of`. `shared/csvexport.js`: an
+  `institution` column, so a spreadsheet can pivot by bank.
+
+**Replaces or removes.** Removes the duplicate list block, the mangled
+"name ••last four" label, `is-walking-one` (which hid the level heading the
+brief now asks for), and delete-and-retype as the only way to fix a name.
+No new room, no new vocabulary: still one view of the rows that exist.
+
+**Stored shape.** `slaf.household.v2` gains, all nullable: `institution` on a
+debt, an asset, an income source and a yearly line; `last4` on a debt and an
+asset. A household saved before this has neither key, reads as null, and
+renders exactly as it did; nothing migrates and nothing is rewritten on load.
+`last4` is digits only, never bullets. A file from this build loaded into an
+older one keeps the keys and ignores them.
+
+**Verified.** `node test/run.js`, `node test/forms.js` (the flat form, and a
+new case that adds a card as three fields and reads its head back), `node
+test/export.js`, `node dnd/test/run.js`, and a phone walk at 390px: levels
+badged and shut, three accounts added at two banks, an institution renamed
+and the line moving group, the emptied group going away.
+
 ---
 
 # The Dungeons & Dividends entries
