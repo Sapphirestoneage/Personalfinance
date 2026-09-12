@@ -496,7 +496,7 @@
     var html = '';
     r.bands.forEach(function (b) {
       var mine = list.filter(function (s) { return s.band === b.id; }).sort(function (a, c) { return a.tree.localeCompare(c.tree) || (a.name || '').localeCompare(c.name || ''); });
-      html += '<div class="s-band"><div class="s-band-head">' + (b.id === r.currentBand ? '<span class="here" aria-label="You are here"></span>' : '') + esc(b.label) + '<small>' + (b.visibility === 'fogged' ? b.count + ' skills not in view yet' : b.done + ' of ' + b.count + ' done') + '</small></div>';
+      html += '<div class="s-band"><div class="s-band-head">' + (b.id === r.currentBand ? '<span class="here" role="img" aria-label="You are here"></span>' : '') + esc(b.label) + '<small>' + (b.visibility === 'fogged' ? b.count + ' skills not in view yet' : b.done + ' of ' + b.count + ' done') + '</small></div>';
       if (b.visibility === 'fogged') html += '<div class="s-fog">' + b.count + ' skills come into view when you reach ' + esc(b.label) + '.</div>';
       else html += '<div class="s-grid">' + mine.map(function (s) { return nodeHtml(s); }).join('') + '</div>';
       html += '</div>';

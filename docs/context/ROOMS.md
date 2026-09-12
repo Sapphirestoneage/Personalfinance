@@ -9,7 +9,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **first-round** — The First Round (utility) · 321 lines · engines: tax · D-220, D-206
 - **express** — Express (utility) · 555 lines · engines: tax, projection, tier0, statement, debt, hourly · D-208
 - **start** — Start Here · 1023 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-221, D-166, D-159
-- **dashboard** — The Dashboard · 1659 lines · no engines · DD-028, DD-026, DD-025
+- **dashboard** — The Dashboard · 1664 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
 
@@ -36,7 +36,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-156
 - **savings-rate** — Savings Rate · 490 lines · engines: projection, tier0, foo, hourly · D-130, D-091, D-054
 - **fire** — FIRE Number · 532 lines · engines: projection, tier0, fire, selfemployed, tax, hourly · owns: retireAge, coastAge · D-221, D-162, D-161
-- **fire-lab** — FIRE Lab · 476 lines · engines: projection, tier0, cashflow, fire, hourly · D-138
+- **fire-lab** — FIRE Lab · 480 lines · engines: projection, tier0, cashflow, fire, hourly · D-227, D-138
 - **ratios** — Every Ratio · 410 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-143, D-139, D-136
 - **foo-ladder** — FOO Ladder · 77 lines · engines: projection, tier0 · D-058, D-054, D-007
 - **next-hundred** — Your Next $100 · 134 lines · engines: projection, tier0, foo, next100 · D-211
@@ -99,7 +99,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Level Up (3)
 
 - **stacker** — The Skill Stacker · 613 lines · engines: projection, tier0, foo, cashflow, statement, swan, benchmarks, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, skills · owns: practiceLedger · D-141, D-139, D-131
-- **skill-tree** — The Skill Tree · 625 lines · engines: projection, tier0, foo, skilltree · owns: skillsDone · D-141, D-140, D-139
+- **skill-tree** — The Skill Tree · 625 lines · engines: projection, tier0, foo, skilltree · owns: skillsDone · D-227, D-141, D-140
 - **exercises** — Exercises · 211 lines · engines: projection, tier0, foo, skilltree, income, selfemployed, tax, fire, statement, vpw, decumulation, cashflow, events, exercises · owns: exercisesDone · D-141, D-139, D-136
 
 ## Upkeep (12)

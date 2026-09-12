@@ -13608,6 +13608,33 @@ room, screen or field.
 and the salary it proposes moves from spending to the low month, which is
 the convention the room states.
 
+## D-227 — The last three serious accessibility failures
+
+**Why.** The accessibility suite reported one serious failure in each of
+three rooms, none of them contrast. They had been there throughout and were
+named but not fixed when the contrast pass landed.
+
+**Decision.** `index.html`: the "Your Data" link moves out of the Your data
+`<summary>` and into the panel it opens — a summary is itself a control, so
+a link inside it is one control nested in another, which a keyboard cannot
+reach predictably. `rooms/fire-lab.html`: each fact row's third cell becomes
+a second `<dd>` rather than a `<span>`, because a description list may hold
+only dt, dd, div, script and template, and a wrapping div would break the
+three-column grid; the `.why` rule regains the alignment and wrapping that
+`.facts dd` would otherwise impose. `rooms/skill-tree.html`: the "You are
+here" marker gains `role="img"`, since `aria-label` is prohibited on a bare
+`<span>` and was never reliably announced.
+
+**Replaces or removes.** Nothing: three defects removed, no screen or field
+added.
+
+**Stored shape.** No change to `slaf.household.v2`.
+
+**Verified.** axe-core over the three rooms plus three controls: zero
+serious or critical violations in each, where there had been one apiece.
+`node test/run.js` (30,335). The FIRE Lab grid checked in a browser at phone
+width — three cells a row, no sideways scroll.
+
 ---
 
 # The Dungeons & Dividends entries

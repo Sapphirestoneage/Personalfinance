@@ -10,6 +10,7 @@ Reference data: exercises.json, foo_rules.json, skill_links.json, skill_tree.jso
 Owns: skillsDone
 Reads from other owners: grossAnnualIncome (start), monthsClosed (budget), monthlyExpenses (expenses), exercisesDone (exercises), practiceLedger (stacker)
 Latest decisions:
+  - D-227 — The last three serious accessibility failures
   - D-141 — The card says what the curriculum says
   - D-140 — The board, redrawn as a tech tree
   - D-139 — The Skill Tree gets its real curriculum: 625 skills, 25 trees, 312 lanes
