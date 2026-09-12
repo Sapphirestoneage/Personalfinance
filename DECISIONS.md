@@ -13277,6 +13277,40 @@ in Chromium at 320–414px: all six situations, no sideways scroll, and the
 between-jobs payoff reading "About 4 weeks of cash … your state pays up to
 26 weeks … COBRA election closes October 11 · 29 days left".
 
+## D-216 — The cut list, checked: seven are already outputs, one row could not be answered
+
+**Why.** The brief's last phase lists eleven fields to delete as "an engine
+output, a duplicate, or depth that does not belong at intake".
+
+**Decision.** Delete none of them, and say why for each. Seven — `age`,
+`netWorth`, `confidenceWeightedNetWorth`, `totalDebt`,
+`monthlyDebtPayments`, `otherAssets`, `futureIncome` — already have no write
+path: they are exactly the engine outputs the brief wants them to be, and
+their entries are the read-only chips rooms display, not questions anybody
+is asked. Four are answerable on purpose: `accommodationMonthly` is the only
+writer of the accommodation bucket (deleting it leaves `rentMonthly` reading
+a figure nothing can write, D-211), `assetCharacter` is what the asset-pile
+derivation reads (D-214), and it, `assetCostBasis` and `rebalanceBand` are
+per-item depth inside the room that owns them, not intake questions — the
+first round asks none of the eleven.
+
+What the phase did turn up is a real defect: a Ledger row can be `kind:
+know` with no shared write path, and Express rendered it as a box that
+throws from `Ownership.write` when filled. `futureIncome` is one, written by
+the Timeline room's own code. Express now renders any row it cannot write
+read-only, the same as a computed row, so the label's link to the owner is
+the way in. `test/run.js` pins all of it: the seven stay outputs, the
+accommodation bucket keeps exactly one writer, and the unwritable rows stay
+known and few.
+
+**Replaces or removes.** No field. One box that could not be filled.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (29,235); `test/export.js`; `test/forms.js`
+(532); the lane 2 suites; Express in Chromium with `futureIncome` rendering
+read-only and no console error.
+
 ---
 
 # The Dungeons & Dividends entries

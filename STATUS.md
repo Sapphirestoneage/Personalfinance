@@ -17,10 +17,11 @@ Updated: 2026-09-12
   below works end to end.
 
 ## Next (top item first; one per session)
-0b. Gated-intake brief: phases 0-4 done (D-211 to D-215). The first round now
+0b. Gated-intake brief: all six phases done (D-211 to D-216). The first round
    asks 9 (student) to 10 (between jobs), never more than 12, and the gate
-   decides. Left: phase 5, the cuts. Phase 3 left 4 rows asked on purpose: a
-   contribution cap is not a contribution, and no table knows your paperwork.
+   decides. Three phases turned out to be already true and are recorded as
+   such rather than built twice: the path collisions, most of the derivation
+   ledger, and seven of the eleven cuts.
 0c. Two failures older than this work (both at 2cb6f50): `test/alignment.js`, 4 in
    financial-snapshot.html ("nothing rendered"); `test/forms.js`, the Express
    walk's "the last pay landed" null in ~half of runs — the keystrokes never

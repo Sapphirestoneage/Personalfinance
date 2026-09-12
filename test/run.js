@@ -12535,6 +12535,71 @@ section('Express: a second view of the same rows (D-208)');
   checkTrue('Express is in every arrangement beside the First Round', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('express') >= 0)); })());
 })();
 
+section('The cut list, checked against the code (D-216)');
+
+/* Phase 5 of the brief lists eleven fields to delete. Checked one by one,
+   seven of them are already engine outputs with no write path — which is
+   what the brief wanted them to become — and deleting the entries would
+   remove the read-only chips that rooms display, not a question anybody is
+   asked. The four that ARE asked are per-item depth inside their owning
+   room, and one of them is what a Phase 3 derivation reads. So nothing is
+   deleted; what lands instead is the guard that keeps them outputs. */
+(function () {
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  LR.use(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')));
+
+  /* Already outputs: no write path, so no room can ask them. If one ever
+     grows a writer, that is a new question and this fails. */
+  ['age', 'netWorth', 'confidenceWeightedNetWorth', 'totalDebt',
+   'monthlyDebtPayments', 'otherAssets', 'futureIncome'].forEach(function (id) {
+    check(id + ' is an output, never asked', typeof Own.FIELDS[id].write, 'undefined');
+  });
+  /* ...and the four the brief also lists really are asked, on purpose:
+     they are the depth inside the room that owns them. */
+  ['accommodationMonthly', 'assetCostBasis', 'assetCharacter', 'rebalanceBand'].forEach(function (id) {
+    check(id + ' is answerable in the room that owns it', typeof Own.FIELDS[id].write, 'function');
+  });
+  /* accommodationMonthly is the only writer of the accommodation bucket:
+     deleting it, as the brief asks, would leave rentMonthly reading a
+     figure nothing can write (D-211). */
+  check('the accommodation bucket has exactly one writer',
+    ['rentMonthly', 'accommodationMonthly'].filter((id) => typeof Own.FIELDS[id].write === 'function').join(','),
+    'accommodationMonthly');
+  /* And assetCharacter is what the asset-pile derivation reads (D-214). */
+  const Sug = require(path.join(ROOT, 'shared/suggest.js'));
+  checkTrue('assetCharacter is what the asset-pile rule reads',
+    /taxCharacter/.test(String(Sug.RULES.tierFromCharacter)));
+
+  /* The real defect Phase 5 turned up: a row can look answerable and have
+     no shared write path, in which case Ownership.write throws. Express
+     must render those read-only rather than a box that errors when filled. */
+  const unwritable = LR.all().filter((r) => r.kind !== 'computed'
+    && !(Own.FIELDS[r.id] && typeof Own.FIELDS[r.id].write === 'function'));
+  checkTrue('the rows with no write path are known and few', unwritable.length <= 2,
+    unwritable.map((r) => r.id).join(','));
+  const ex = fs.readFileSync(path.join(ROOT, 'rooms/express.html'), 'utf8');
+  checkTrue('Express renders a row it cannot write as read-only',
+    /typeof Ownership\.FIELDS\[row\.id\]\.write !== 'function'/.test(ex)
+    && /data-x-readonly/.test(ex));
+  checkTrue('...and paints it the same way it paints a computed row',
+    /row\.kind === 'computed' \|\| e\.querySelector\('\[data-x-readonly\]'\)/.test(ex));
+
+  /* Nothing in the intake asks any of the eleven: the first round's walk is
+     the eleven questions of D-215 and none of these is among them. */
+  const fr = fs.readFileSync(path.join(ROOT, 'rooms/first-round.html'), 'utf8');
+  ['age', 'netWorth', 'totalDebt', 'monthlyDebtPayments', 'assetCostBasis',
+   'assetCharacter', 'rebalanceBand', 'otherAssets', 'futureIncome',
+   'confidenceWeightedNetWorth'].forEach(function (id) {
+    check('the first round never asks ' + id, new RegExp("Ownership\\.write\\('" + id + "'").test(fr), false);
+  });
+
+  /* rooms.json is regenerated, as the phase asks. */
+  const rooms = JSON.parse(fs.readFileSync(path.join(ROOT, 'rooms.json'), 'utf8'));
+  const first = rooms.rooms.filter((r) => r.id === 'first-round')[0];
+  checkTrue('rooms.json carries the rebuilt first round', !!first && first.file === 'rooms/first-round.html');
+})();
+
 section('The first round, rebuilt (D-215)');
 
 /* The brief's acceptance: a student answers 9, nobody answers more than 12,

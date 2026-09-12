@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-12 05:28Z"/>
+<meta name="slaf-build" content="2026-09-12 05:38Z"/>
 <title>Express · SPARKS</title>
 <meta name="description" content="Every question on one page, grouped by door and level, for anyone who already knows their numbers. The same rows the doors hold, the same owners."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -204,6 +204,13 @@ document.addEventListener('DOMContentLoaded', function () {
   function control(row, key) {
     var u = row.unit;
     if (row.kind === 'computed') return '<span class="computed" data-x-computed></span>';
+    /* A row with no shared write path cannot be answered here: the field is
+       written by its owner room's own code and Ownership.write would throw
+       (D-216). Show what it reads and let the label's link do the rest, the
+       same as a computed row — never a box that errors when you fill it. */
+    if (!Ownership.FIELDS[row.id] || typeof Ownership.FIELDS[row.id].write !== 'function') {
+      return '<span class="computed" data-x-computed data-x-readonly></span>';
+    }
     if (u === 'bool') return '<div class="choices" data-x-choices><button type="button" class="choice" data-x-val="true" aria-pressed="false">Yes</button><button type="button" class="choice" data-x-val="false" aria-pressed="false">No</button></div>';
     if (u === 'enum') {
       var vals = enumValues(row);
@@ -306,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var item = itemOf(n);
       if (n.itemId && !item) return;
       var v = current(row, item);
-      if (row.kind === 'computed') { var c = e.querySelector('[data-x-computed]'); var f = Ownership.FIELDS[row.id]; var r = f ? f.read(hh) : null; c.textContent = r && Money.isOk(r) ? (f.format ? f.format(r.value) : String(r.value)) : 'needs its inputs'; c.classList.toggle('is-blank', !(r && Money.isOk(r))); return; }
+      if (row.kind === 'computed' || e.querySelector('[data-x-readonly]')) { var c = e.querySelector('[data-x-computed]'); var f = Ownership.FIELDS[row.id]; var r = f ? f.read(hh) : null; c.textContent = r && Money.isOk(r) ? (f.format ? f.format(r.value) : String(r.value)) : 'needs its inputs'; c.classList.toggle('is-blank', !(r && Money.isOk(r))); return; }
       var inp = e.querySelector('[data-x-input]');
       if (inp) { var d = display(row, v); if (inp.value !== d) inp.value = d; }
       var ch = e.querySelector('[data-x-choices]');
