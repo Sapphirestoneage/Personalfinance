@@ -14882,6 +14882,117 @@ reading A/B'd against the old room in a browser: all five panels
 character-for-character identical, console clean. The xss count moved with
 the reading (worth 2 → goals 3); the repo total is still 58.
 
+## D-263 — A block can be priced per unit, and then it can be asked what one more costs
+
+**Why.** The Wedding Countdown was held out of the merges for a reason that
+was right: it is not a goal template, it is a room built around one
+question — what does one more table cost? — and no block could answer it.
+
+**Decision.** A goal line item gains `perUnitCents`, `units`, `unitLabel`
+and `unitsPerGroup` (`shared/schema.js` and the vendored copy).
+`Goals.itemAmountCents` makes the line's figure from the two;
+`Goals.marginalOf` asks what one more group costs, in money and through
+the same `Lens` — never a second conversion. The Decision Room shows the
+product as a read-out, not a third box, and prints the marginal line under
+the five. A template line may be an object — `{ label, unitLabel,
+unitsPerGroup }` — which still carries no amount.
+
+**Replaces or removes.** `rooms/wedding.html` (redirects),
+`engines/wedding.js`, `data/wedding_defaults.json`, its property test, and
+its registry entry. A second way to date the same fund is the duplication
+the shell exists to stop: `monthsAtCurrentContribution` IS the countdown.
+The national per-guest average goes with it, on purpose — the person types
+what their caterer quoted, which is better than a recalled 2024 average.
+
+**Stored shape.** `household.goals[].lineItems[]` gains four fields, all
+defaulting to `null`. A line written before this reads exactly as it did:
+`amountCents` still wins, and a line with neither figure is still blank,
+never zero. Nothing rewrites an existing goal.
+
+**And a shell bug it found.** A block with a price but NO DATE was
+returning `Money.incomplete` and throwing away everything it knew, so a
+fully priced wedding read "No price on it yet" on every row. It carries
+its answers now: what it costs, what it costs you and what one more costs
+do not wait on a date. That is the same mistake D-253 fixed for the
+unpriced block, in the other direction.
+
+**Verified.** `node test/run.js` (31,570) — the shell's answers checked
+against the figures the retired engine gave, line for line — and
+`node test/forms.js`: the template started from a tap, 80 typed into the
+count and 150 into the price each, landing as a count and as cents, the
+line adding to $12,000 and the margin reading "One more table of 8 guests
+· $1,200 · 57 h of your life · FI 1 mo later".
+
+## D-264 — Income takes Worth the Hassle, and eight readings got their scrolling back
+
+**Why.** Worth the Hassle was held for the Decision Room and did not belong
+there: a chore that pays per hour is a rate, not a dated target made of
+line items, and four of the five questions would have read "not
+applicable". What it IS is the question the reading beside it answers —
+"is this worth more an hour than your time is?" — measured against the real
+hourly wage that Income's What it pays works out. They were two navigations
+apart and needed each other.
+
+**Decision.** `#worth-the-hassle`, Income's fourth reading, carrying the
+`hours` branch on the router exactly as What it pays does.
+`REQUIRES.hassle` goes; Income requires nothing. `rooms/hassle.html`
+redirects.
+
+**Replaces or removes.** The Worth the Hassle room and its entry, twenty
+references in `data/layouts.json`, and a test slice that ran from one
+reading to the page's small print and so read the next reading as part of
+it — that is why "its old sections are gone" started failing.
+
+**Stored shape.** No change. `household.ratings.hassle` keeps its shape and
+its writer (`Spine.setRating`).
+
+**And the check it forced, which found seven more.** The URL follows you
+(D-170): as a section reaches the top of the screen its id becomes the
+hash. On a merged page the ROUTER reads that hash back — so every section
+id inside a reading must be matched by that reading's own regex, or
+scrolling switches the reading out from under the person. Worth the hassle
+did exactly that: one scroll past `#presets` and the page jumped to What
+lands. The check that now says so found eight in total, on six pages:
+budget (`#buckets`, `#months` — where a bare `month` was prefix-matching
+`#months`), decumulation (`#years`), The Number (`#number`), the Decision
+Room (`#reading`), Income (`#presets`, `#reading`) and The Statement
+(`#no-write`). Every one of them predates this merge and none of them was
+visible in a diff.
+
+**Verified.** `node test/run.js` (31,614), `node test/forms.js`, and in a
+browser: the reading A/B'd panel by panel against the old room — all five
+identical — and the preset ratings picked one after another without the
+page changing under them, which is the bug the check is named for.
+
+## D-265 — What Comes Next is income with a start and an end on it
+
+**Why.** Held out of the Decision Room with the right reason: a period of
+future income is not a decision you are weighing, it is a fact about a
+calendar. The map named Income or The Month as its real home. It is Income:
+a dated period that pays you is the same subject as everything else coming
+in, one timescale out, and the two were two navigations apart.
+
+**Decision.** `#what-is-coming`, Income's fifth reading. `futureIncome`
+moves owner Timeline → Income in `shared/ownership.js`, and Income's
+`needs` gain `dob` — the reading turns "from age 67" into a month.
+`rooms/timeline.html` redirects. Your Numbers keeps its DAITE rule: the
+stale `you.periods` write went with the move, because the reading writes
+`futureIncome` and nothing else.
+
+**Replaces or removes.** The What Comes Next room and its entry, twenty
+references in `data/layouts.json`, and its slot in
+`data/walk_stages.json` — Income was already in the walk one stage
+earlier, so the stage lost a row rather than gaining a duplicate.
+
+**Stored shape.** No change. `household.futureIncome[]` keeps its shape and
+its writer (`Spine.upsertFutureIncome`). `data/ledger-rows.json` asks for
+it in `income` now rather than `timeline`.
+
+**Verified.** `node test/run.js` (31,641), `node test/forms.js` — 46 checks
+across all five readings, the period list's live-form guard holding — and
+A/B'd against the old room in a browser: the months ahead, the periods and
+the gaps all character-for-character identical, console clean.
+
 ---
 
 # The Dungeons & Dividends entries

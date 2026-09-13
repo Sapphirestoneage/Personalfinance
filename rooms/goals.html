@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11, §9 item 6, §13. DECISIONS.md D-253 (the shell),
-  D-262 (the second reading).
+  D-262 (the second reading), D-263 (a line priced per unit).
 
   TWO READINGS OF A DECISION.
 
@@ -46,6 +46,16 @@
   Two ways to start a block: a goal template (data/goal_templates.json), or
   a decision people weigh (data/reversibility.json), which arrives with the
   undo question already priced where there is an honest figure for it.
+
+  A LINE CAN BE PRICED PER UNIT (D-263): so many guests at so much each.
+  The two figures MAKE the line's amount, they do not sit beside it, and
+  the room shows the product as a read-out rather than a third box — two
+  ways to type one figure is how they come to disagree. What it buys is
+  the marginal line under the five: what ONE MORE costs, in money, in
+  hours and in FI days. That is not a sixth answer; it is the first two
+  asked of the smallest decision inside the block, which for a wedding is
+  the only question anybody actually argues about. The Wedding Countdown
+  was a room for exactly that question and is a template here now.
 
   1. READS   Cash Flow's net surplus, to say whether the required monthly
              figure actually fits.
@@ -197,6 +207,22 @@
   
   #view-behind-you .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
+
+  /* A line priced per unit: how many, times how much each, equals. D-263. */
+  .item--unit { display: grid; grid-template-columns: 1fr 4.5rem auto 6rem auto auto; align-items: center; gap: var(--space-2); }
+  .item--unit .unit-x { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .item--unit .unit-sum { font-variant-numeric: tabular-nums; text-align: right; color: var(--color-text-muted); font-size: var(--text-sm); }
+  @media (max-width: 480px) {
+    .item--unit { grid-template-columns: 1fr 1fr; }
+    .item--unit .lbl { grid-column: 1 / -1; }
+    .item--unit .unit-x { display: none; }
+    .item--unit .unit-sum { grid-column: 1 / -1; text-align: left; }
+  }
+  .margin-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2);
+    margin: var(--space-3) 0 0; padding-top: var(--space-3); border-top: 1px dashed var(--color-border); }
+  .margin-line .margin-q { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .margin-line .margin-a { font-variant-numeric: tabular-nums; }
+  .margin-line small { flex-basis: 100%; color: var(--color-text-muted); font-size: var(--text-sm); }
 </style>
 </head>
 <body class="slaf">
@@ -414,7 +440,13 @@
 
   function fiveOf(p) {
     var out = {};
-    var priced = Money.isOk(p);
+    /* Two different incompletes, and they must not read the same. A block
+       with no PRICE knows almost nothing; a block with a price and no DATE
+       knows what it costs and what it costs you, and waits on the date
+       only for the other two. `priced` is what the plan says, not whether
+       the whole result came back ok. D-263. */
+    var priced = p && p.priced === true;
+    var full = Money.isOk(p);
     out.costs = priced
       ? { said: Money.formatCents(p.totalCents) }
       : { missing: p.reason || 'No price on it yet.' };
@@ -440,7 +472,8 @@
     } else if (p.monthsUntil && Money.isOk(p.monthsUntil)) {
       out.when = { said: monthsLabel(p.monthsUntil.value) + ' to the date you named' };
     } else {
-      out.when = { missing: 'No date, and nothing going in a month.' };
+      out.when = { missing: (p.monthsUntil && p.monthsUntil.reason)
+        || 'No date, and nothing going in a month.' };
     }
 
     if (p.alreadyThere) {
@@ -449,6 +482,8 @@
       out.fits = p.affordability.fitsInSurplus
         ? { said: Money.formatRate(p.affordability.shareOfSurplus, { decimals: 0 }) + ' of what you have spare' }
         : { said: Money.formatCents(p.affordability.shortPerMonthCents) + ' a month more than you have spare', warn: true };
+    } else if (!full) {
+      out.fits = { missing: 'Needs the date first, to know what a month of it is.' };
     } else {
       out.fits = { missing: p.affordabilityReason || 'Needs a month of spending to compare against.' };
     }
@@ -478,6 +513,25 @@
     return { said: (u.costCents !== null ? Money.formatCents(u.costCents) + ' to undo' : 'No cost named')
         + (u.months !== null ? ' · ' + monthsLabel(u.months) : ''),
       missingWhy: 'A month of spending would turn that into a verdict.' };
+  }
+
+  /* One more of them. The same first two answers asked of the smallest
+     decision inside the block — one more guest, one more night — which for
+     a wedding is the only question anybody actually argues about. Not a
+     sixth row: it sits apart, under the five, and only where a line is
+     priced per unit. D-263. */
+  function marginHtml(p) {
+    var m = p && p.perUnit;
+    if (!m || !Money.isEntered(m.perUnitCents)) return '';
+    var what = m.groupOf > 1
+      ? 'One more ' + (m.label === 'guest' ? 'table' : 'group') + ' of ' + m.groupOf + ' ' + m.label + 's'
+      : 'One more ' + m.label;
+    var bits = [Money.formatCents(m.groupCents)];
+    if (m.hoursDisplay) bits.push(m.hoursDisplay + ' of your life');
+    if (m.fiPushedDisplay) bits.push(m.fiPushedDisplay);
+    return '<p class="margin-line"><span class="margin-q">' + esc(what) + '</span>'
+      + '<span class="margin-a">' + esc(bits.join(' \u00b7 ')) + '</span>'
+      + (m.reason && !m.hoursDisplay ? '<small>' + esc(m.reason) + '</small>' : '') + '</p>';
   }
 
   function fiveHtml(p) {
@@ -541,6 +595,7 @@
     /* The five, under whatever the headline said — including on a block
        with no price, which still has an answer to the fifth (D-253). */
     out.push(fiveHtml(p));
+    out.push(marginHtml(p));
 
     out.push('<button type="button" class="toggle" data-toggle="' + goal.id + '">'
       + (open ? 'Hide the detail' : 'Open it up') + '</button>');
@@ -553,17 +608,17 @@
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Already saved</span>'
         + '<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-goal="'
         + goal.id + '" data-field="savedCents" value="'
-        + (Money.isEntered(goal.savedCents) ? Money.formatCents(goal.savedCents) : '')
+        + (Money.isEntered(goal.savedCents) ? Money.forInput(goal.savedCents) : '')
         + '" placeholder="e.g. 5000" aria-label="Already saved"/></span></label>'
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Putting away a month</span>'
         + '<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-goal="'
         + goal.id + '" data-field="monthlyContributionCents" value="'
-        + (Money.isEntered(goal.monthlyContributionCents) ? Money.formatCents(goal.monthlyContributionCents) : '')
+        + (Money.isEntered(goal.monthlyContributionCents) ? Money.forInput(goal.monthlyContributionCents) : '')
         + '" placeholder="e.g. 400" aria-label="Monthly contribution"/></span></label>'
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Or one total</span>'
         + '<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-goal="'
         + goal.id + '" data-field="lumpTargetCents" value="'
-        + (Money.isEntered(goal.lumpTargetCents) ? Money.formatCents(goal.lumpTargetCents) : '')
+        + (Money.isEntered(goal.lumpTargetCents) ? Money.forInput(goal.lumpTargetCents) : '')
         + '" placeholder="if not itemised" aria-label="Lump target"/></span></label>'
         + '</div>');
 
@@ -574,7 +629,7 @@
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">What undoing it would cost</span>'
         + '<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-goal="'
         + goal.id + '" data-field="undoCostCents" value="'
-        + (Money.isEntered(goal.undoCostCents) ? Money.formatCents(goal.undoCostCents) : '')
+        + (Money.isEntered(goal.undoCostCents) ? Money.forInput(goal.undoCostCents) : '')
         + '" placeholder="e.g. 2,000" aria-label="Cost to undo"/></span></label>'
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">And how long, in months</span>'
         + '<span class="slaf-input-shell"><input type="text" inputmode="numeric" data-goal="'
@@ -586,13 +641,38 @@
       out.push('<div class="items">');
       out.push('<span class="slaf-label">What it\'s made of</span>');
       (goal.lineItems || []).forEach(function (li) {
+        /* A line priced PER UNIT asks for the two figures that make it and
+           shows what they come to, rather than one box (D-263). The total
+           is a read-out, never an input: two ways to type one figure is
+           how they come to disagree. */
+        if (li.unitLabel) {
+          var made = Goals.itemAmountCents(li);
+          out.push('<div class="item item--unit">'
+            + '<input class="lbl" data-goal="' + goal.id + '" data-item="' + li.id
+            + '" data-field="label" value="' + esc(li.label) + '" placeholder="Name it" aria-label="Item"/>'
+            + '<span class="slaf-input-shell"><input type="text" inputmode="numeric" data-goal="' + goal.id
+            + '" data-item="' + li.id + '" data-field="units" value="'
+            + (Money.isEntered(li.units) ? String(li.units) : '')
+            + '" placeholder="how many" aria-label="' + esc(li.unitLabel) + 's"/></span>'
+            + '<span class="unit-x">\u00d7</span>'
+            + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
+            + '<input type="text" inputmode="decimal" data-goal="' + goal.id + '" data-item="' + li.id
+            + '" data-field="perUnitCents" value="'
+            + (Money.isEntered(li.perUnitCents) ? Money.forInput(li.perUnitCents) : '')
+            + '" placeholder="each" aria-label="Per ' + esc(li.unitLabel) + '"/></span>'
+            + '<span class="unit-sum">' + (Money.isEntered(made) ? esc(Money.formatCents(made)) : '\u2014') + '</span>'
+            + '<button type="button" data-remove-item="' + li.id + '" data-goal="' + goal.id
+            + '" aria-label="Remove item">\u2715</button>'
+            + '</div>');
+          return;
+        }
         out.push('<div class="item">'
           + '<input class="lbl" data-goal="' + goal.id + '" data-item="' + li.id
           + '" data-field="label" value="' + esc(li.label) + '" placeholder="Name it" aria-label="Item"/>'
           + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
           + '<input type="text" inputmode="decimal" data-goal="' + goal.id + '" data-item="' + li.id
           + '" data-field="amountCents" value="'
-          + (Money.isEntered(li.amountCents) ? Money.formatCents(li.amountCents) : '')
+          + (Money.isEntered(li.amountCents) ? Money.forInput(li.amountCents) : '')
           + '" placeholder="—" aria-label="Amount"/></span>'
           + '<button type="button" data-remove-item="' + li.id + '" data-goal="' + goal.id
           + '" aria-label="Remove item">✕</button>'
@@ -724,6 +804,13 @@
       if (li.id !== itemId) return li;
       var copy = Object.assign({}, li);
       if (field === 'label') copy.label = raw === '' ? null : raw;
+      /* A count of guests, not money: parseMoney would read 115 as $115
+         and store 11500 — the same trap as undoMonths. Blank is null, not
+         asked, never zero. D-263. */
+      else if (field === 'units') {
+        var n = String(raw).replace(/[^0-9.]/g, '');
+        copy.units = n === '' ? null : Number(n);
+      } else if (field === 'perUnitCents') copy.perUnitCents = Money.parseMoney(raw);
       else copy.amountCents = Money.parseMoney(raw);
       return copy;
     });
@@ -867,7 +954,7 @@
   'use strict';
   function el(id) { return document.getElementById(id); }
   var VIEWS = [
-    { id: 'view-behind-you', match: /^#(behind-you|wo-|things|out-each|out-gap|out-regrets|thing-)/ },
+    { id: 'view-behind-you', match: /^#(behind-you|wo-|things|out-each|out-gap|out-regrets|thing-|reading)/ },
     { id: 'view-ahead-of-you', match: /.*/ }
   ];
   function open(v) {
@@ -967,7 +1054,7 @@
       + '<label class="slaf-field" style="margin:0"><span class="slaf-label">It cost</span>'
       + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
       + '<input type="text" inputmode="decimal" data-worth="' + esc(check.id) + '" data-field="costCents" value="'
-      + (Money.isEntered(check.costCents) ? Money.formatCents(check.costCents) : '')
+      + (Money.isEntered(check.costCents) ? Money.forInput(check.costCents) : '')
       + '" placeholder="e.g. 450" aria-label="What it cost"/></span></label>'
       + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Hours you got out of it</span>'
       + '<span class="slaf-input-shell">'

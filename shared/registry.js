@@ -92,17 +92,19 @@
     },
     {
       id: 'income',
-      features: ['equityComp', 'matchVesting'],
-      group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources', 'variable income', 'irregular', 'uneven', 'real hourly wage', 'what it pays', 'per hour'],
+      features: ['equityComp', 'matchVesting', 'showMilestones'],
+      group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources', 'variable income', 'irregular', 'uneven', 'real hourly wage', 'what it pays', 'per hour', 'hassle', 'diy', 'chores', 'cheaper option', 'timeline', 'what comes next', 'future income', 'periods', 'gaps'],
       kind: 'about-you',
-      needs: [],
+      /* dob arrived with What is coming (D-265), which turns "from age 67"
+         into a month. */
+      needs: ['dob'],
       order: 3.2,
       title: 'Income',
       blurb: 'Everything coming in, logged as it lands and netted the way it is taxed — the salary to pay yourself when it is irregular, and what the job actually pays once every hour and cost is counted.',
       href: 'rooms/income.html',
       tier: 1,
       tags: ['income'],
-      daite: { reads: ['you.hours'], writes: ['income.costs', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss', 'income.variable'] },
+      daite: { reads: ['you.hours', 'you.dob'], writes: ['income.costs', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss', 'income.variable', 'income.future'] },
       subsections: [
         { id: 'month', label: 'This month' },
         { id: 'log',   label: 'Every entry' },
@@ -111,7 +113,13 @@
         { id: 'vi-number', label: 'The salary to pay yourself' },
         { id: 'vi-inputs', label: 'A low month, a high month' },
         { id: 'rhw-number', label: 'What an hour really pays' },
-        { id: 'rhw-inputs', label: 'The hours and the costs' }
+        { id: 'rhw-inputs', label: 'The hours and the costs' },
+        { id: 'chore',     label: 'The chore' },
+        { id: 'out-rate',  label: 'What it pays an hour' },
+        { id: 'out-wage',  label: 'Against an hour of your life' },
+        { id: 'out-months',  label: 'The months ahead' },
+        { id: 'out-periods', label: 'What you have listed' },
+        { id: 'out-gaps',    label: 'The gaps and the overlaps' }
       ]
     },
     {
@@ -319,26 +327,6 @@
       ]
     },
     {
-      id: 'hassle',
-      group: 'decisions', subgroup: 'home', aliases: ['hassle', 'diy', 'chores', 'cheaper option'],
-      kind: 'about-you',
-      needs: ['grossAnnualIncome'],
-      order: 10,
-      title: 'Worth the Hassle',
-      blurb: 'What a money-saving chore actually pays per hour \u2014 against what an hour of your life already earns, and how much you hate doing it.',
-      href: 'rooms/hassle.html',
-      tier: 1,
-      tags: ['income', 'cashflow'],
-      daite: { reads: ['income.grossAnnualCents'], writes: [] },
-      subsections: [
-        { id: 'chore',     label: 'The chore' },
-        { id: 'out-rate',  label: 'What it pays an hour' },
-        { id: 'out-wage',  label: 'Against an hour of your life' },
-        { id: 'presets',   label: 'Common ones' },
-        { id: 'reading',   label: 'Reading from elsewhere' }
-      ]
-    },
-    {
       id: 'dashboard',
       features: ['afterTaxNetWorth'],
       group: 'home', aliases: ['home', 'overview', 'tiles'],
@@ -463,7 +451,7 @@
     },
     {
       id: 'goals',
-      group: 'matters', aliases: ['goals', 'targets', 'wedding', 'dream', 'decisions', 'undo', 'reversible', 'one-way door', 'can it be undone', 'weighing', 'worth it', 'purchase', 'joy per dollar', 'regret'],
+      group: 'matters', aliases: ['goals', 'targets', 'wedding', 'dream', 'decisions', 'undo', 'reversible', 'one-way door', 'can it be undone', 'weighing', 'worth it', 'purchase', 'joy per dollar', 'regret', 'wedding countdown', 'engagement', 'ring', 'guests', 'per guest', 'one more table'],
       kind: 'about-you',
       /* grossAnnualIncome arrived with Behind you (D-262), which prices what
          a thing turned out to be worth in hours of your life. */
@@ -604,33 +592,6 @@
      A person who does not know which kind they are looking at cannot tell
      what is required from what is optional, which is most of why a suite
      this size feels like homework. See DECISIONS.md D-051.
-
-  /* The Timeline — jobs and benefits as dated periods that stack, and the
-     months they add up to (D-152). It OWNS futureIncome[], which used to be
-     edited on The Statement: a dated period belongs in the room that draws
-     it on a grid. Placed after the numbered path because it is a planning
-     room, not a fact-gathering one — you need to know what today is before
-     laying out what comes after it. */
-  ROOMS.push({
-    id: 'timeline',
-    features: ['showMilestones'],
-    group: 'decisions', subgroup: 'years', aliases: ['timeline', 'jobs', 'what comes next', 'life'],
-    kind: 'about-you',
-    needs: ['dob'],
-    order: 28.5,
-    title: 'What Comes Next',
-    blurb: 'Jobs, benefits and anything else that pays, each as a period with a start and an end — laid end to end so you can see where they overlap, where the gaps are, and what any month between now and then actually adds up to.',
-    href: 'rooms/timeline.html',
-    tier: 0,
-    tags: ['income', 'cashflow'],
-    daite: { reads: ['you.dob'], writes: ['income.future', 'you.periods'] },
-    subsections: [
-      { id: 'out-months',  label: 'The months ahead' },
-      { id: 'out-periods', label: 'What you have listed' },
-      { id: 'out-gaps',    label: 'Gaps and overlaps' },
-      { id: 'reading',     label: 'Reading from elsewhere' }
-    ]
-  });
 
   /* Settings — every user-scope feature switch on one screen (D-180). */
   ROOMS.push({
@@ -812,22 +773,6 @@
       ]
   });
 
-  /* Wedding Countdown (K11, D-217): a total or a build-up, dated through the
-     one countdown; each extra table in dollars and FI days. */
-  ROOMS.push({
-    id: 'wedding',
-    group: 'decisions', subgroup: 'family', aliases: ['wedding', 'engagement', 'ring', 'guests', 'marry'],
-    kind: 'explore',
-    needs: [],
-    order: 38.5,
-    title: 'Wedding Countdown',
-    blurb: 'The date the wedding is paid for with no debt, from a total or from guests, fixed costs and the ring, and what every extra table costs in dollars and in days of financial independence.',
-    href: 'rooms/wedding.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents', 'assets.invested'], writes: [] },
-    subsections: [{ id: 'date', label: 'Affordable, with no debt' }, { id: 'inputs', label: 'The wedding, and the fund' }, { id: 'tables', label: 'Every extra table' }]
-  });
   /* Housing Decision — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'housing',
@@ -1100,7 +1045,9 @@
        The Statement requires nothing — what you own is a question for
        everybody — and that READING keeps the retirement branch, declared on
        the router, so its hat is absent when there is no employer plan. */
-    hassle: ['hours'],
+    /* Worth the hassle became Income's fourth reading (D-264) and kept the
+       hours branch on the router, the way What it pays does. Income itself
+       requires nothing: what comes in is a question for everybody. */
     fire: ['savingsRate'],
     /* Between Jobs became the Cushion's while-job-hunting reading (D-232),
        which anyone may open: it reads as if the pay stopped today and says

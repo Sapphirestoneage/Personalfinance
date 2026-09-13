@@ -431,7 +431,7 @@
       "level": 2,
       "round": null,
       "suggestFrom": null,
-      "askIn": "timeline",
+      "askIn": "income",
       "moves": true,
       "unlocks": "the timeline: what stacks and where the gaps are"
     },

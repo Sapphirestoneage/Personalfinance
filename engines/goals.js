@@ -36,6 +36,14 @@
 
    None of the five is a new formula. That is the point of the shell: a
    block type adds a way to FILL these, never a sixth answer.
+
+   A LINE CAN BE PRICED PER UNIT (D-263): so many guests at so much each,
+   so many nights at so much a night. `itemAmountCents` makes the line's
+   figure from the two, and `marginalOf` asks what ONE MORE costs — in
+   money, in hours, and in FI days, through the same Lens. That is not a
+   sixth answer. It is the first two asked of the smallest decision inside
+   the block, which for a wedding is the only question anybody actually
+   argues about.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -72,9 +80,20 @@
      Itemised wins when there are items with amounts; otherwise the lump
      figure. A goal with neither is incomplete, not zero.                  */
 
+  /* What ONE line is worth. A typed figure wins; otherwise a per-unit line
+     makes its own (D-263). One function, because the total, the marginal
+     cost and the room's own read-out must never disagree about it. */
+  function itemAmountCents(item) {
+    if (!item) return null;
+    if (Money.isEntered(item.amountCents)) return item.amountCents;
+    if (Money.isEntered(item.perUnitCents) && Money.isEntered(item.units)) {
+      return Math.round(item.perUnitCents * item.units);
+    }
+    return null;
+  }
   function goalTotalCents(goal) {
     var items = (goal && goal.lineItems) || [];
-    var summed = Money.sumCents(items.map(function (i) { return i.amountCents; }));
+    var summed = Money.sumCents(items.map(itemAmountCents));
     if (summed.counted > 0) {
       return Money.ok(summed.total, {
         basis: 'itemised', itemsCounted: summed.counted, itemsTotal: items.length,
@@ -152,6 +171,33 @@
     };
   }
 
+  /* One more of them. NOT a sixth answer: it is "what it costs" and "what
+     it costs you" asked of the smallest decision the block contains — one
+     more guest, one more night — through the same Lens, with no second
+     conversion. A block with no per-unit line has no margin and says null.
+     D-263. */
+  function marginalOf(goal, household, tables) {
+    var line = ((goal && goal.lineItems) || []).filter(function (i) {
+      return Money.isEntered(i.perUnitCents) && i.perUnitCents > 0;
+    })[0];
+    if (!line) return null;
+    var group = Money.isEntered(line.unitsPerGroup) && line.unitsPerGroup > 0
+      ? Math.round(line.unitsPerGroup) : 1;
+    var groupCents = Math.round(line.perUnitCents * group);
+    var hours = Lens ? Lens.apply(groupCents, 'hours', household, tables) : null;
+    var fi = Lens ? Lens.apply(groupCents, 'pushed', household, tables) : null;
+    return {
+      label: line.unitLabel || 'one more',
+      perUnitCents: line.perUnitCents,
+      units: Money.isEntered(line.units) ? line.units : null,
+      groupOf: group,
+      groupCents: groupCents,
+      hoursDisplay: hours && Money.isOk(hours) ? hours.display : null,
+      fiPushedDisplay: fi && Money.isOk(fi) ? fi.display : null,
+      reason: hours && !Money.isOk(hours) ? hours.reason : null
+    };
+  }
+
   function plan(household, goal, tables, opts) {
     var o = opts || {};
     var spendNow = Schema.monthlyExpensesCents(household);
@@ -199,11 +245,19 @@
       priced: true
     };
 
+    shared.perUnit = marginalOf(goal, household, tables);
+
     if (remaining === 0) {
       return Money.ok(0, Object.assign({ onTrack: true, fundedBy: 'already saved' }, shared));
     }
+    /* No date is not no answers. The block has a price, so what it costs,
+       what it costs you and what one more of them costs are all known —
+       only "when it lands" and "whether it fits" wait on a date. Throwing
+       the rest away made a fully priced wedding read "Add a price" on
+       every row, which is the same mistake D-253 fixed for the unpriced
+       block, in the other direction. D-263. */
     if (!Money.isOk(months)) {
-      return Money.incomplete(months.reason, months.missing);
+      return Object.assign(Money.incomplete(months.reason, months.missing), shared);
     }
 
     var required = Math.ceil(remaining / months.value);
@@ -291,21 +345,33 @@
   }
 
   /** Build a goal from a template — line-item labels, no amounts. */
+  /* A template's line is a LABEL, or an object when the line is priced per
+     unit: { label, unitLabel, unitsPerGroup }. Still no amounts — the
+     templates say what a thing is made of and never what it costs. D-263. */
   function fromTemplate(table, templateId, name) {
     var t = templateById(table, templateId);
     if (!t) return null;
     return Schema.createGoal({
       name: name || t.label,
       templateId: t.id,
-      lineItems: (t.lineItems || []).map(function (label) {
-        return Schema.createGoalLineItem({ label: label, amountCents: null });
+      lineItems: (t.lineItems || []).map(function (line) {
+        if (typeof line === 'string') {
+          return Schema.createGoalLineItem({ label: line, amountCents: null });
+        }
+        return Schema.createGoalLineItem({
+          label: line.label,
+          unitLabel: line.unitLabel || null,
+          unitsPerGroup: Money.isEntered(line.unitsPerGroup) ? line.unitsPerGroup : null
+        });
       })
     });
   }
 
   return {
     templateById: templateById,
+    itemAmountCents: itemAmountCents,
     goalTotalCents: goalTotalCents,
+    marginalOf: marginalOf,
     monthsUntil: monthsUntil,
     plan: plan,
     planAll: planAll,

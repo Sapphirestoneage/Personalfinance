@@ -430,7 +430,7 @@
   'use strict';
   function el(id) { return document.getElementById(id); }
   var VIEWS = [
-    { id: 'view-every-month', match: /^#(every-month|va-|single|per-bucket|trend|trend-|bucket-|picker|month|use-revised)/ },
+    { id: 'view-every-month', match: /^#(every-month|va-|single|per-bucket|trend|trend-|bucket-|buckets|picker|month(?![a-z])|use-revised)/ },
     { id: 'view-over-time', match: /^#(over-time|hi-)/ },
     { id: 'view-this-month', match: /.*/ }
   ];

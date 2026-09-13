@@ -760,7 +760,7 @@
        period is edited in the room that draws it on a grid, and nowhere
        else. One owner per shared number (D-017). */
     futureIncome: {
-      label: 'Money that is coming', owner: 'timeline', anchor: 'out-periods',
+      label: 'Money that is coming', owner: 'income', anchor: 'out-periods',
       read: function (h) {
         var rows = (h.futureIncome || []).filter(function (f) { return Money.isEntered(f.monthlyCents); });
         if (!rows.length) return Money.incomplete('Nothing listed.', ['futureIncome']);

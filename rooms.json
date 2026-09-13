@@ -118,13 +118,16 @@
       "id": "income",
       "title": "Income",
       "file": "rooms/income.html",
-      "reads": [],
+      "reads": [
+        "dob"
+      ],
       "writes": [
         "incomeLow",
         "incomeHigh",
         "bufferMonths",
         "variableWindow",
         "ledgerIncome",
+        "futureIncome",
         "incomeType",
         "paySurvives"
       ],
@@ -211,20 +214,6 @@
       ],
       "dashboardNumber": "fiEtaYear",
       "order": 8
-    },
-    {
-      "id": "hassle",
-      "title": "Worth the Hassle",
-      "file": "rooms/hassle.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [
-        "hours"
-      ],
-      "dashboardNumber": null,
-      "order": 10
     },
     {
       "id": "dashboard",
@@ -367,20 +356,6 @@
       "order": 28
     },
     {
-      "id": "timeline",
-      "title": "What Comes Next",
-      "file": "rooms/timeline.html",
-      "reads": [
-        "dob"
-      ],
-      "writes": [
-        "futureIncome"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 28.5
-    },
-    {
       "id": "get-help",
       "title": "Get Help",
       "file": "rooms/get-help.html",
@@ -492,16 +467,6 @@
       ],
       "dashboardNumber": null,
       "order": 38
-    },
-    {
-      "id": "wedding",
-      "title": "Wedding Countdown",
-      "file": "rooms/wedding.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 38.5
     },
     {
       "id": "housing",

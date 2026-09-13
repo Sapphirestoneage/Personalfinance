@@ -1797,12 +1797,32 @@ function weddingHousehold() {
     Goals.planAll(Schema.createHousehold(), TABLES, {}).status, 'incomplete');
 })();
 
-/* The template library carries labels and no amounts, on purpose. */
+/* The template library carries labels and no amounts, on purpose. A line
+   may be an object since D-263 — { label, unitLabel, unitsPerGroup } for a
+   line priced per unit — and that is still not an amount: it says a wedding
+   is catered per guest and that guests arrive a table at a time, never what
+   a guest costs. So the check tests the RULE, which is "no money in here",
+   rather than the shape, which was only ever a proxy for it. */
 (function () {
+  const MONEY_KEY = /cents|amount|price|cost/i;
   TABLES.goalTemplates.templates.forEach(function (t) {
     checkTrue(`template "${t.id}" carries only labels, never amounts`,
-      t.lineItems.every(li => typeof li === 'string'));
+      t.lineItems.every(li => typeof li === 'string' || (
+        li && typeof li === 'object' && !Array.isArray(li)
+        && typeof li.label === 'string'
+        && Object.keys(li).every(k => !MONEY_KEY.test(k))
+        && Object.keys(li).every(k => ['label', 'unitLabel', 'unitsPerGroup'].indexOf(k) !== -1)
+      )));
+    checkTrue(`template "${t.id}" builds a goal with no figure on any line`,
+      (Goals.fromTemplate(TABLES.goalTemplates, t.id).lineItems || [])
+        .every(li => li.amountCents === null && li.perUnitCents === null && li.units === null));
   });
+  /* And the one that carries a per-unit line builds it as one. */
+  checkTrue('the wedding is catered per guest, a table at a time', (function () {
+    const line = (Goals.fromTemplate(TABLES.goalTemplates, 'wedding').lineItems || [])
+      .filter(li => li.unitLabel)[0];
+    return !!line && line.unitLabel === 'guest' && line.unitsPerGroup === 8;
+  })());
   check('a wedding template exists', !!Goals.templateById(TABLES.goalTemplates, 'wedding'), true);
   check('an unknown template builds nothing',
     Goals.fromTemplate(TABLES.goalTemplates, 'nope'), null);
@@ -6596,7 +6616,9 @@ section('The Statement room');
      shows the roll-up — it is part of the picture — but a dated period is
      edited in the room that draws it on a grid, and in exactly one room
      (D-017). The Statement must therefore have no editor for it left. */
-  check('money that is coming moved to the Timeline', Ownership.field('futureIncome').owner, 'timeline');
+  /* Owner moved Statement → Timeline in D-152, and Timeline → Income in
+     D-265 when What Comes Next became a reading of it. */
+  check('money that is coming is Income\'s', Ownership.field('futureIncome').owner, 'income');
   checkTrue('...and The Statement no longer edits it',
     !/data-future="/.test(html) && !/upsertFutureIncome/.test(html),
     'two editors for one field is the thing D-017 exists to prevent');
@@ -8256,7 +8278,7 @@ section('Core (D-094): the gate — exists() per situation');
   check('unanswered: every room but the ones that need a fact (a partner, a dependent)', gone(none), 'partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  check('retired: the working rooms are gone', gone(hh('retired')), 'career-move,fire,hassle,partner');
+  check('retired: the working rooms are gone', gone(hh('retired')), 'career-move,fire,partner');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
   check('employed, alone, no dependents: own work, partner, kids and variable income are gone', gone(hh('employed')), 'partner');
@@ -8609,8 +8631,14 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
   check('the template names its hosts', Room.IDS.join(','), 'room-number,room-chart,room-inputs,room-lens,room-amounts,room-assumptions,room-why,room-scope,reading-list');
   /* The Real Hourly Wage proved the template (D-097) and is the what-it-pays
      reading of Income since D-247; its skeleton moved behind rhw-. */
+  /* Bounded by the NEXT reading, not by the page's small print: a reading
+     added after this one would otherwise be read as part of it, which is
+     how "its old sections are gone" started failing when Worth the hassle
+     arrived with an out-rate of its own (D-264). */
   const incomePage = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
-  const rhw = incomePage.slice(incomePage.indexOf('<section id="view-what-it-pays"'), incomePage.indexOf('<p class="disclaimer">', incomePage.indexOf('<section id="view-what-it-pays"')))
+  const rhwFrom = incomePage.indexOf('<section id="view-what-it-pays"');
+  const rhwTo = incomePage.indexOf('<!-- =====', rhwFrom + 10);
+  const rhw = incomePage.slice(rhwFrom, rhwTo === -1 ? incomePage.indexOf('<p class="disclaimer">', rhwFrom) : rhwTo)
     + incomePage.split('<script>').filter(x => x.indexOf('READING view-what-it-pays,') !== -1)[0];
   Room.IDS.forEach(id => checkTrue(`Real Hourly Wage has #rhw-${id}`, new RegExp('id="rhw-' + id + '"').test(rhw)));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue(`… and the deep link #rhw-${id}`, new RegExp('id="rhw-' + id + '"').test(rhw)));
@@ -10093,18 +10121,24 @@ section('The Timeline — periods that stack');
   check('the horizon floors at a year', Timeline.months(H, { now: NOW, years: 0 }).value.length, 13);
   check('...and caps at sixty', Timeline.months(H, { now: NOW, years: 999 }).value.length, 60 * 12 + 1);
 
-  /* The room. */
+  /* The reading. What Comes Next became Income's "what is coming" reading
+     in D-265: a dated period that pays you is income with a start and an
+     end on it, and it was two navigations from everything else coming in. */
   (function () {
-    const html = fs.readFileSync(path.join(ROOT, 'rooms/timeline.html'), 'utf8');
-    checkTrue('the room guards its live form (D-034)', /LIVE-FORM: guarded/.test(html));
+    const page = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
+    const from = page.indexOf('<section id="view-what-is-coming"');
+    const to = page.indexOf('<!-- =====', from + 10);
+    const html = page.slice(from, to === -1 ? page.indexOf('<p class="disclaimer">', from) : to)
+      + page.split('<script>').filter(x => x.indexOf('READING view-what-is-coming,') !== -1)[0];
+    checkTrue('the reading guards its live form (D-034)', /LIVE-FORM: guarded/.test(page));
     checkTrue('...and actually calls request()', /listForm\.request\(\)/.test(html));
-    checkTrue('the room does no arithmetic of its own',
+    checkTrue('the reading does no arithmetic of its own',
       !/\bmonthlyCents\s*[+*]/.test(html),
       'every figure comes from engines/timeline.js; the page formats');
-    checkTrue('the room owns the periods it edits',
-      /upsertFutureIncome/.test(html) && Ownership.field('futureIncome').owner === 'timeline');
+    checkTrue('the reading owns the periods it edits',
+      /upsertFutureIncome/.test(html) && Ownership.field('futureIncome').owner === 'income');
     const kinds = Schema.FUTURE_KINDS;
-    checkTrue('every kind has a label in the room',
+    checkTrue('every kind has a label in the reading',
       kinds.every(k => new RegExp(k + ':').test(html)));
     check('an unknown kind falls back to other', Schema.createFutureIncome({ kind: 'zzz' }).kind, 'other');
     check('a row written before D-152 keeps its meaning', Schema.createFutureIncome({}).kind, 'other');
@@ -11904,7 +11938,7 @@ section('15.9: the ages where a rule changes, dated per person and drawn on ever
   [['rooms/adventure.html', /milestoneMarks\(h\(\), TABLES\.milestones, \{ axis: 'years'/],
    ['rooms/decumulation.html', /milestoneMarks\(h, T\.milestones/],
    ['rooms/fire.html', /milestoneMarks\(h, TABLES\.milestones, \{ axis: 'age'/],
-   ['rooms/timeline.html', /milestoneMarks\(h, MILESTONES, \{ axis: 'months'/]].forEach(([f, re]) => {
+   ['rooms/income.html', /milestoneMarks\(h, MILESTONES, \{ axis: 'months'/]].forEach(([f, re]) => {
     checkTrue(f + ' draws the milestones', re.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
   });
   checkTrue('the Drawing It Down room says which phases the draw crosses', /p\.phases/.test(fs.readFileSync(path.join(ROOT, 'rooms/decumulation.html'), 'utf8')));
@@ -13842,7 +13876,6 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   const Race = require(path.join(ROOT, 'engines/race.js'));
   const DownPayment = require(path.join(ROOT, 'engines/downpayment.js'));
   const QuitFund = require(path.join(ROOT, 'engines/quitfund.js'));
-  const Wedding = require(path.join(ROOT, 'engines/wedding.js'));
   const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
   const Ref = require(path.join(ROOT, 'shared/reference.js'));
   const T = {};
@@ -13859,7 +13892,10 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   const banded = Countdown.goalCountdown({ targetCents: 10000000, savedCents: 4800000, monthlyContributionCents: 100000, annualRate: 0.05, bands: { p25: 0.02, p50: 0.05, p75: 0.08 }, from: '2026-09' });
   checkTrue('an invested goal carries its range: the good decade lands first, the poor one last', banded.range.fastMonths < banded.months && banded.months < banded.range.slowMonths);
   /* every skin is a skin: no countdown walks its own months */
-  ['race', 'downpayment', 'quitfund', 'wedding'].forEach(function (e) {
+  /* The wedding is not here since D-263: its skin was retired with its room
+     and the shell dates the block through monthsAtCurrentContribution, which
+     is the same one countdown by another name. */
+  ['race', 'downpayment', 'quitfund'].forEach(function (e) {
     const src = fs.readFileSync(path.join(ROOT, 'engines/' + e + '.js'), 'utf8');
     checkTrue(e + ' dates through goalCountdown and never walks months itself', /Countdown\.goalCountdown\(/.test(src) && !/Math\.pow\(/.test(src) && !/for \(var m = /.test(src));
   });
@@ -13867,7 +13903,7 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
      live in: the skin still computes no date of its own, but the page it
      shares may write and may be guarded, so those two clauses are the
      reading's, not the file's. */
-  [['race', 'rooms/fire.html', 'view-the-rungs'], ['wedding', 'rooms/wedding.html', null],
+  [['race', 'rooms/fire.html', 'view-the-rungs'],
    ['down-payment', 'rooms/housing.html', 'view-the-deposit'],
    ['quit-fund', 'rooms/runway.html', 'view-by-choice']].forEach(function (r) {
     const page = fs.readFileSync(path.join(ROOT, r[1]), 'utf8');
@@ -13927,34 +13963,69 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   check('three targets: 3, 6, 12 months', quit.targets.map(t => t.months).join(','), '3,6,12');
   checkTrue('each target is that many months less the benefit, dated through the countdown from the free money', laid.targets.every(t => t.targetCents === Math.max(0, t.months * laid.monthCents - laid.benefit.totalCents)) && quit.targets.every((t, i) => i === 0 || t.date >= quit.targets[i - 1].date));
 
-  /* -- K11: the wedding on the demo ---------------------------------------------------- */
-  const w = Wedding.plan(Demo.build(), T, { savedCents: 500000, monthlyCents: 80000, from: '2026-09', targetDate: '2028-06' });
-  check('the default build-up: 115 guests at $150, $15,000 fixed, a $5,200 ring', w.totalCents, 115 * 15000 + 1500000 + 520000);
-  check('$32,450 to go at $800 a month: 41 months', w.months, 41);
-  checkTrue('not in time for June 2028, and the monthly that would be: $32,450 over 21 months', w.onTime === false && w.monthlyForTargetCents === Math.ceil(3245000 / 21));
-  const wf = Wedding.plan(Demo.build(), T, { savedCents: 500000, monthlyCents: 80000, familyCents: 1000000, from: '2026-09', targetDate: '2028-06' });
-  checkTrue('family contributions, typed, move the date earlier', wf.months < w.months);
-  checkTrue('a table of eight costs eight guests, priced in FI days through the lens', w.perTableCents === 8 * 15000 && typeof w.perTableFiDays === 'number' && w.perTableFiDays > 0);
-  check('a typed total wins over the build-up', Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).source + ':' + Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).reachedNow, 'typed:true');
-  checkTrue('the defaults table is tagged, every figure editable from the page', T.weddingDefaults.confidence === 'unverified' && /in-perguest/.test(fs.readFileSync(path.join(ROOT, 'rooms/wedding.html'), 'utf8')));
-  /* registry and shelves */
-  checkTrue('the Wedding Countdown is still a room', !!Registry.byId('wedding'));
+  /* -- K11: the wedding, now a block with a per-unit line (D-263) ---------------------- */
+  /* engines/wedding.js is gone and so is the room. Everything it did the
+     shell does: goalTotalCents sums the lines, monthsAtCurrentContribution
+     IS the countdown, and marginalOf prices one more table through the same
+     Lens. What is checked here is that the shell gives the same answers the
+     engine gave, on the same figures. */
+  {
+    const wLine = Schema.createGoalLineItem({ label: 'Catering and drinks', unitLabel: 'guest',
+      unitsPerGroup: 8, perUnitCents: 15000, units: 115 });
+    const wGoal = Schema.createGoal({ name: 'Wedding', templateId: 'wedding',
+      lineItems: [wLine, Schema.createGoalLineItem({ label: 'Fixed', amountCents: 1500000 }),
+                  Schema.createGoalLineItem({ label: 'Rings', amountCents: 520000 })],
+      savedCents: 500000, monthlyContributionCents: 80000, targetDate: '2028-06-01' });
+    const wp = Goals.plan(Demo.build(), T, {}) && Goals.plan(Demo.build(), wGoal, T, { asOf: '2026-09-01' });
+    check('the same build-up: 115 guests at $150, $15,000 fixed, a $5,200 ring',
+      wp.totalCents, 115 * 15000 + 1500000 + 520000);
+    check('$32,450 to go at $800 a month: 41 months', wp.monthsAtCurrentContribution, 41);
+    checkTrue('not in time for June 2028, and the monthly that would be',
+      wp.arrivesLate === true && wp.requiredMonthlyCents === Math.ceil(3245000 / 21));
+    check('a table of eight costs eight guests', wp.perUnit.groupCents, 8 * 15000);
+    checkTrue('...priced in your life through the same lens, not a second one',
+      !!wp.perUnit.hoursDisplay && !!wp.perUnit.fiPushedDisplay);
+    checkTrue('a typed total wins over the build-up', (function () {
+      const lump = Schema.createGoal({ name: 'W', lumpTargetCents: 1000000, savedCents: 1000000 });
+      const p2 = Goals.plan(Demo.build(), lump, T, {});
+      return p2.basis === 'lump' && p2.alreadyThere === true;
+    })());
+    /* A priced block with no date still knows the first two answers. That
+       is the bug this merge found: it read "no price on it yet" on every
+       row of a fully priced wedding. */
+    const noDate = Goals.plan(Demo.build(), Schema.createGoal({ name: 'W', lineItems: [wLine] }), T, {});
+    checkTrue('no date is not no answers: the price and the margin survive',
+      noDate.priced === true && noDate.totalCents === 115 * 15000 && !!noDate.perUnit);
+    checkTrue('the Wedding Countdown is a wedding block now', !Registry.byId('wedding')
+      && /url=goals\.html/.test(fs.readFileSync(path.join(ROOT, 'rooms/wedding.html'), 'utf8')));
+    checkTrue('...and its engine and its defaults table went with it',
+      !fs.existsSync(path.join(ROOT, 'engines/wedding.js'))
+      && !fs.existsSync(path.join(ROOT, 'data/wedding_defaults.json')));
+  }
   checkTrue('the Race is a reading of The Number', !Registry.byId('race')
     && /url=fire\.html#the-rungs/.test(fs.readFileSync(path.join(ROOT, 'rooms/race.html'), 'utf8')));
   checkTrue('the Down Payment Countdown is Housing\'s deposit reading now (D-250)',
     !Registry.byId('down-payment') && Registry.byId('housing').subsections.some(x => x.id === 'dp-inputs'));
   checkTrue('the Quit Fund is the Cushion\'s by-choice reading now (D-232)', !Registry.byId('quit-fund') && Registry.byId('runway').subsections.some(x => x.id === 'view-by-choice'));
-  const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
-  /* Three of the four pairs have become one room each: Between Jobs beside
-     The Quit Fund is The Cushion (D-232), Where Do You Think You Rank
-     beside The Race is a Scorecard reading beside a room (D-233), and
-     Housing beside the Down Payment Countdown is one room with two hats
-     (D-250) — shelving a room beside itself is not a thing. What is left
-     to check is that the one real pair is still shelved together. */
-  const pairs = { partner: 'wedding' };
-  let shelved = 0;
-  (function walk(x) { if (Array.isArray(x) && x.every(i => typeof i === 'string')) { Object.keys(pairs).forEach(k => { if (x.indexOf(k) > -1 && x[x.indexOf(k) + 1] === pairs[k]) shelved++; }); } if (Array.isArray(x)) x.forEach(walk); else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
-  check('it is shelved beside its neighbour in all twenty arrangements', shelved, 20);
+  /* All four pairs SPEC.md asked to be shelved together have become one
+     room each: Between Jobs beside The Quit Fund is The Cushion (D-232),
+     Where Do You Think You Rank beside The Race is a Scorecard reading
+     (D-233), Housing beside the Down Payment Countdown is one room with
+     two hats (D-250), and Family beside the Wedding Countdown is a room
+     beside a block type (D-263). Shelving a room beside itself is not a
+     thing, so there is no pair left to check — which is the point of the
+     programme, not a gap in it. What replaces it is the rule underneath:
+     a shelf never names a room that is no longer there. */
+  checkTrue('no retired room is still named in a layout', (function () {
+    const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
+    const live = new Set(Registry.all().map(r => r.id));
+    const bad = [];
+    (function walk(x) {
+      if (Array.isArray(x)) x.forEach(i2 => { if (typeof i2 === 'string') { if (!live.has(i2)) bad.push(i2); } else walk(i2); });
+      else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k]));
+    })(layouts);
+    return bad.length === 0 || bad.join(',');
+  })());
 })();
 
 /* ==========================================================================
@@ -14455,6 +14526,39 @@ section('The thirty (docs/room-map.json)');
     check('rooms/' + f + ' gives every element its own id', [...new Set(dup)].join(', '), '');
   });
 
+  /* The URL follows you (D-170): as a section reaches the top of the screen
+     its id becomes the hash. On a MERGED page the router then reads that
+     hash back and picks a reading from it — so every section id inside a
+     reading MUST be matched by that reading's own regex, or scrolling
+     switches the reading out from under the person. Worth the hassle did
+     exactly that: one scroll past #presets and the page jumped to What
+     lands. D-264. */
+  fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+    const rows = [...src.matchAll(/\{ id: '(view-[a-z0-9-]+)', match: (\/[^\n]*?\/)(?:,|\s*\})/g)];
+    if (rows.length < 2) return;
+    const views = rows.map(m => ({ id: m[1], re: m[2] }));
+    const strays = [];
+    views.forEach(function (v) {
+      const a = src.indexOf('<section id="' + v.id + '"');
+      if (a === -1) return;
+      let b = src.indexOf('<!-- =====', a + 10);
+      if (b === -1) b = src.indexOf('<p class="disclaimer">', a);
+      const body = src.slice(a, b === -1 ? undefined : b).replace(/<script[\s\S]*?<\/script>/g, '');
+      /* eslint-disable-next-line no-eval */
+      const re = eval(v.re);
+      [...body.matchAll(/<section[^>]*\bid="([a-z][a-z0-9-]*)"/g)].map(m => m[1])
+        .filter(id => id !== v.id)
+        .forEach(function (id) {
+          /* Whichever view claims '#id' first must be this one. */
+          const claimed = views.filter(x => x.re && eval(x.re).test('#' + id))[0];
+          if (!re.test('#' + id) || !claimed || claimed.id !== v.id) strays.push(v.id + ' loses #' + id);
+        });
+    });
+    check('rooms/' + f + ': every section a reading holds routes back to it',
+      [...new Set(strays)].join(', '), '');
+  });
+
   /* D-181 rounds every figure a room SHOWS to the precision its inputs
      justify. An input is not a figure a room shows: it is the person's own
      number, and a room that fills the box with a rounded one and parses it
@@ -14466,7 +14570,13 @@ section('The thirty (docs/room-map.json)');
      nothing may put a display-formatted figure into a .value. D-257. */
   fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(function (f) {
     const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
-    const bad = [...src.matchAll(/\.value\s*=(?!=)\s*[^;\n]*Money\.formatCents\(/g)].map(m => m[0].trim());
+    /* Two ways a figure reaches a box: an assignment, and an input built
+       as a string with value="..." in it. The second is the one D-263
+       found, six of them in one room, and it is the same bug — a repaint
+       would put the rounded figure back and the next blur would store it. */
+    const bad = [...src.matchAll(/\.value\s*=(?!=)\s*[^;\n]*Money\.formatCents\(/g)].map(m => m[0].trim())
+      .concat([...src.matchAll(/value="'(?:(?!'")[\s\S]){0,200}?Money\.formatCents\(/g)]
+        .map(m => m[0].replace(/\s+/g, ' ').slice(0, 70)));
     check('rooms/' + f + ' fills its boxes with Money.forInput, never a rounded figure',
       [...new Set(bad)].join(' | '), '');
   });

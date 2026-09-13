@@ -659,7 +659,7 @@ const CASES = [
        and every write changes the data the list is drawn from — so if the
        LiveForm guard were not doing its job the keyboard would close between
        every field. D-034, D-152. */
-    room: '/rooms/timeline.html',
+    room: '/rooms/income.html#what-is-coming',
     container: '#period-list',
     seed: 'demo',
     prepare: async (page) => { await page.tap('#btn-add'); await page.waitForTimeout(200); },
@@ -1277,21 +1277,33 @@ const CASES = [
     }
   },
   {
-    /* WEDDING COUNTDOWN (K11, D-217): nine boxes and a slider. */
-    room: '/rooms/wedding.html',
-    container: '#inputs',
+    /* THE WEDDING, as a block with a per-unit line (D-263). The room is
+       gone; what it did is a property of any block now, so the walk starts
+       one from the template and types into the two boxes that make the
+       per-guest line — the count and the price each, which must survive a
+       tap and land as a count and as cents, not both as money. */
+    room: '/rooms/goals.html',
+    container: '#goal-list',
     seed: 'demo',
+    prepare: async (page) => { await page.tap('[data-template="wedding"]'); },
     fields: [
-      { sel: '#in-guests', type: '80' },
-      { sel: '#in-saved', type: '5000' },
-      { sel: '#in-monthly', type: '800' }
+      { sel: '[data-field="units"]', type: '80' },
+      { sel: '[data-field="perUnitCents"]', type: '150' }
     ],
     expect: async (page) => {
-      const num = await page.evaluate(() => document.getElementById('w-num').textContent);
-      const sub = await page.evaluate(() => document.getElementById('w-sub').textContent);
+      const r = await page.evaluate(() => {
+        const g = (SLAF.Spine.getProfile().goals || [])[0] || {};
+        const line = (g.lineItems || []).filter(l => l.unitLabel)[0] || {};
+        return { units: line.units, per: line.perUnitCents,
+          sum: (document.querySelector('.unit-sum') || {}).textContent || '',
+          margin: (document.querySelector('.margin-line') || {}).innerText || '' };
+      });
       return [
-        ['a date is shown', /^[A-Z][a-z]+ \d{4}\.$/.test(num), true],
-        ['built from 80 guests', /80 guests/.test(sub), true]
+        ['the guest count landed as a count, not as money', r.units, 80],
+        ['the price each landed as cents', r.per, 15000],
+        ['and the line adds up', r.sum, '$12,000'],
+        ['one more table is priced', /One more table of 8 guests/.test(r.margin), true],
+        ['...in dollars and in a life', /\$1,200/.test(r.margin) && /of your life/.test(r.margin), true]
       ];
     }
   },
@@ -1542,7 +1554,7 @@ const SELECT_CASES = [
       stored.verdict.indexOf('Pick how long') === -1, true]]
   },
   {
-    room: '/rooms/hassle.html',
+    room: '/rooms/income.html#worth-the-hassle',
     container: '#preset-list',
     seed: 'demo',
     picks: [

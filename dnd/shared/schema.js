@@ -1900,7 +1900,18 @@
     return {
       id: f.id || newId('gli'),
       label: f.label === undefined ? null : f.label,
-      amountCents: f.amountCents === undefined ? null : f.amountCents
+      amountCents: f.amountCents === undefined ? null : f.amountCents,
+      /* A line that is priced PER UNIT rather than as one figure: so many
+         guests at so much each, so many nights at so much a night. The
+         amount is still the only thing that is summed — the two fields
+         below MAKE it (engines/goals.js itemAmountCents), they do not sit
+         beside it. `unitLabel` is what one of them is called, and
+         `unitsPerGroup` how many come at a time, because nobody invites
+         one more guest: they add a table. D-263. */
+      perUnitCents: f.perUnitCents === undefined ? null : f.perUnitCents,
+      units: f.units === undefined ? null : f.units,
+      unitLabel: f.unitLabel === undefined ? null : f.unitLabel,
+      unitsPerGroup: f.unitsPerGroup === undefined ? null : f.unitsPerGroup
     };
   }
 

@@ -7,170 +7,32 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Wedding Countdown · SPARKS</title>
-<meta name="description" content="The date a wedding is affordable with no debt, from a total or a build-up of guests, fixed costs and the ring, and what each extra table costs in dollars and in days of financial independence."/>
+<meta name="description" content="It is a block in The Decision Room now, started from the <strong>Wedding</strong> template."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. K11 (D-217).
-
-  1. READS   The savings basis for the FI-days lens (income, spending,
-             investments). Nothing else: the wedding is typed here.
-  2. WRITES  Nothing to the household. "Add this as a block" saves a
-             marriage block in the scenarios store with the wedding as a
-             one-off line.
-  3. CALLS   engines/wedding.js, which dates the fund through
-             engines/countdown.js goalCountdown(), the one countdown, and
-             prices a table in FI days through shared/lens.js.
-  4. EMPTY   Nothing typed: the national defaults, tagged, until they are
-             replaced. Out of reach at the pace: says so with the monthly
-             saving that would reach it, never a far-off date.
-  5. CONFIG  data/wedding_defaults.json.
-
-  LIVE-FORM: built once. Nine boxes and one slider, in the HTML; only
-  .value is set.
+  REDIRECT — Wedding Countdown (rooms/goals.htmlahead-of-you, DECISIONS.md D-263).
+  A wedding is a dated target made of line items, which is what every block here is. The one thing it needed that no other block had is a line priced PER GUEST, so the room could say what one more table costs — and that is a property of any block now, in dollars, in hours of your life and in FI days. engines/wedding.js went with the room: a second way to date the same fund is the duplication the shell exists to stop.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
-  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
-  .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
-  .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
-  .ask .wide { grid-column: 1 / -1; }
-  .slider { margin-top: var(--space-3); }
-  .slider input[type=range] { width: 100%; }
-  @media (max-width: 480px) { .ask { grid-template-columns: 1fr; } }
-</style>
+<meta http-equiv="refresh" content="0; url=goals.htmlahead-of-you"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>Wedding Countdown</h1>
-  <p class="room-lede">The date the wedding is paid for with no debt, and what every extra table costs, in dollars and in days of financial independence.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <section class="slaf-card" id="date">
-    <span class="slaf-eyebrow">Affordable, with no debt</span>
-    <p class="head-num" id="w-num"></p>
-    <p class="head-sub" id="w-sub"></p>
-    <p style="margin:var(--space-3) 0 0"><button type="button" class="slaf-btn slaf-btn--quiet" id="add-block" hidden>Add this as a block</button> <span class="slaf-hint" id="block-note"></span></p>
-  </section>
-  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The wedding, and the fund</span>
-    <p class="slaf-hint" id="w-defaults" style="margin:var(--space-2) 0 0"></p>
-    <div class="ask">
-      <div class="wide"><label for="in-total">One total, if you have one</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-total" placeholder="leave blank to build it up" aria-label="One total"/></span></div>
-      <div><label for="in-guests">Guests</label>
-        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-guests" placeholder="e.g. 115" aria-label="Guests"/></span></div>
-      <div><label for="in-perguest">Per guest</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-perguest" placeholder="e.g. 150" aria-label="Per guest"/></span></div>
-      <div><label for="in-fixed">Fixed costs</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-fixed" placeholder="e.g. 15,000" aria-label="Fixed costs"/></span></div>
-      <div><label for="in-ring">The ring</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-ring" placeholder="e.g. 5,200" aria-label="The ring"/></span></div>
-      <div><label for="in-when">The day you want</label>
-        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-when" placeholder="YYYY-MM" aria-label="The day you want"/></span></div>
-      <div><label for="in-saved">Set aside for it</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-saved" placeholder="e.g. 5,000" aria-label="Set aside for it"/></span></div>
-      <div><label for="in-monthly">Saved toward it, a month</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-monthly" placeholder="e.g. 800" aria-label="Saved toward it a month"/></span></div>
-      <div><label for="in-family">Family contributions, if promised</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-family" placeholder="only if promised" aria-label="Family contributions"/></span></div>
-    </div>
-  </section>
-  <section class="slaf-card" id="tables" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Every extra table</span>
-    <p class="head-sub" id="w-table"></p>
-    <div class="slider"><label for="in-slider" class="slaf-hint">Guests: <strong id="w-slider-n"></strong></label>
-      <input type="range" id="in-slider" min="0" max="300" step="1" aria-label="Guests"/></div>
-    <p class="slaf-hint" id="w-slider-line" style="margin:var(--space-2) 0 0"></p>
-  </section>
-  <p class="disclaimer">
-    Educational tool, not financial advice. The defaults are recalled national averages, tagged by their confidence and yours to replace. Everything stays in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">It is a block in The Decision Room now, started from the <strong>Wedding</strong> template.
+    <a href="goals.htmlahead-of-you" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../shared/expr.js"></script>
-<script src="../shared/scenarios.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../engines/countdown.js"></script>
-<script src="../engines/wedding.js"></script>
-<script src="../shared/blocks.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Wedding = SLAF.Wedding, Blocks = SLAF.Blocks, Scenarios = SLAF.Scenarios;
-  var ROOM_ID = 'wedding';
-  var TABLES = null, LAST = null, SLIDER_TOUCHED = false;
-  function el(id) { return document.getElementById(id); }
-  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
-  function num(id) { var t = String(el(id).value || '').replace(/[^0-9]/g, ''); return t === '' ? null : Number(t); }
-  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
-  function render() {
-    if (!TABLES) return;
-    var h = Spine.getProfile();
-    var when = String(el('in-when').value || '').trim();
-    var r = Wedding.plan(h, TABLES, { totalCents: typed('in-total'), guests: num('in-guests'), perGuestCents: typed('in-perguest'), fixedCents: typed('in-fixed'), ringCents: typed('in-ring'),
-      savedCents: typed('in-saved'), monthlyCents: typed('in-monthly'), familyCents: typed('in-family'), targetDate: /^\d{4}-\d{2}$/.test(when) ? when : null });
-    LAST = Money.isOk(r) ? r : null;
-    el('add-block').hidden = !LAST;
-    if (!Money.isOk(r)) { el('w-num').textContent = 'Not yet.'; el('w-sub').textContent = r.reason; return; }
-    var W = TABLES.weddingDefaults;
-    el('w-defaults').textContent = 'Blank boxes use the national defaults (' + W.confidence + ', ' + W.asOf.slice(0, 4) + '): ' + W.guests + ' guests at ' + Money.formatCents(W.perGuestCents) + ' each, ' + Money.formatCents(W.fixedCents) + ' fixed, a ' + Money.formatCents(W.ringCents) + ' ring. Type over any of them.';
-    var totalLine = Money.formatCents(r.totalCents) + (r.source === 'built' ? ' (' + r.guests + ' guests at ' + Money.formatCents(r.perGuestCents) + ', ' + Money.formatCents(r.fixedCents) + ' fixed, ' + Money.formatCents(r.ringCents) + ' ring)' : '') + (r.familyCents ? ', less ' + Money.formatCents(r.familyCents) + ' promised by family' : '');
-    if (r.reachedNow) { el('w-num').textContent = 'Paid for now.'; el('w-sub').textContent = 'What is set aside covers ' + totalLine + '.'; }
-    else if (r.neverAtThisPace) { el('w-num').textContent = 'Not at this pace.'; el('w-sub').textContent = totalLine + ' needs ' + Money.formatCents(r.neededCents) + '. With ' + Money.formatCents(r.savedCents) + ' set aside and ' + Money.formatCents(r.monthlyCents) + ' a month it does not get there; ' + Money.formatCents(r.monthlyNeededCents) + ' a month would in five years.'; }
-    else {
-      el('w-num').textContent = monthWord(r.date) + '.';
-      var sub = totalLine + ': ' + r.months + ' month' + (r.months === 1 ? '' : 's') + ' at ' + Money.formatCents(r.monthlyCents) + ' a month on top of ' + Money.formatCents(r.savedCents) + ' set aside.';
-      if (r.targetDate) sub += r.onTime ? ' That is in time for ' + monthWord(r.targetDate) + '.' : ' For ' + monthWord(r.targetDate) + ' it would take ' + (r.monthlyForTargetCents === null ? 'more than the months allow' : Money.formatCents(r.monthlyForTargetCents) + ' a month') + '.';
-      el('w-sub').textContent = sub;
-    }
-    el('w-table').textContent = 'A table of ' + r.tableSize + ' costs ' + Money.formatCents(r.perTableCents) + (r.perTableFiDays !== null ? ', about ' + r.perTableFiDays + ' day' + (r.perTableFiDays === 1 ? '' : 's') + ' of financial independence' : '') + '.';
-    if (!SLIDER_TOUCHED) el('in-slider').value = String(r.guests);
-    var n = Number(el('in-slider').value);
-    el('w-slider-n').textContent = String(n);
-    var at = r.totalAt(n), diff = at - r.totalAt(r.guests);
-    el('w-slider-line').textContent = n + ' guests: ' + Money.formatCents(at) + ' in all' + (diff ? ', ' + Money.formatCents(Math.abs(diff)) + (diff > 0 ? ' more' : ' less') + ' than the ' + r.guests + ' in the plan' + (r.perTableFiDays !== null ? ' (' + Math.round(Math.abs(diff) / r.perTableCents * r.perTableFiDays) + ' FI days)' : '') : '') + '.';
-  }
-  ['in-total', 'in-guests', 'in-perguest', 'in-fixed', 'in-ring', 'in-when', 'in-saved', 'in-monthly', 'in-family'].forEach(function (id) { el(id).addEventListener('input', render); });
-  el('in-slider').addEventListener('input', function () { SLIDER_TOUCHED = true; render(); });
-  el('add-block').addEventListener('click', function () {
-    if (!LAST) return;
-    var h = Spine.getProfile();
-    var start = LAST.targetDate || LAST.date || null;
-    var built = Blocks.build('marriage', { gross: null, debt: null, when: start, combine: false }, h, { label: 'Wedding: ' + Money.formatCents(LAST.totalCents), start: start });
-    if (!Money.isOk(built)) { el('block-note').textContent = built.reason; return; }
-    var block = built.value;
-    block.lines = (block.lines || []).concat([{ id: 'wedding', label: 'The wedding', path: 'assets.cashCents', kind: 'oneoff', delta: -LAST.totalCents, source: 'yours', confidence: 'entered', note: 'K11: the wedding as a one-off from cash.' }]);
-    var b = Scenarios.addBlock(block);
-    el('block-note').textContent = 'Saved as a block: ' + b.label + (b.dates[0] ? ', ' + monthWord(b.dates[0].start) : '') + '. It lives beside your numbers, never in them.';
-  });
-  Spine.registerRoom(ROOM_ID);
-  SLAF.Progress.mount(ROOM_ID);
-  Spine.onChange(render);
-  Reference.load(['weddingDefaults', 'blockMarriage', 'effectiveTaxRates', 'federalBrackets', 'fireVariants', 'returnBands', 'states']).then(function (t) { TABLES = t; Blocks.use(t); render(); }).catch(function (err) {
-    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = {};
+    var hash = location.hash || '';
+    var target = 'goals.html' + (map[hash] || 'ahead-of-you');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

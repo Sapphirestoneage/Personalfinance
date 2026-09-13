@@ -32,7 +32,6 @@
             "financial-snapshot",
             "statement",
             "fire",
-            "hassle",
             "dashboard",
             "skill-tree",
             "values",
@@ -43,13 +42,11 @@
             "cant-pay",
             "what-if-life",
             "adventure",
-            "timeline",
             "protection",
             "decumulation",
             "tax",
             "career-move",
             "partner",
-            "wedding",
             "housing",
             "big-purchase",
             "week",
@@ -103,7 +100,6 @@
             "cant-pay",
             "what-if-life",
             "adventure",
-            "timeline",
             "protection",
             "housing",
             "big-purchase",
@@ -116,12 +112,10 @@
           "name": "Appears for some situations only",
           "rooms": [
             "fire",
-            "hassle",
             "decumulation",
             "tax",
             "career-move",
-            "partner",
-            "wedding"
+            "partner"
           ],
           "note": "What the gate actually moves — between 8 and 19 rooms."
         },
@@ -183,8 +177,7 @@
           "rooms": [
             "big-purchase",
             "car",
-            "housing",
-            "hassle"
+            "housing"
           ]
         },
         {
@@ -192,7 +185,6 @@
           "rooms": [
             "what-if-life",
             "adventure",
-            "timeline",
             "career-move"
           ]
         },
@@ -219,8 +211,7 @@
             "decumulation",
             "protection",
             "tax",
-            "partner",
-            "wedding"
+            "partner"
           ]
         },
         {
@@ -249,9 +240,7 @@
           "name": "Earn",
           "rooms": [
             "income",
-            "career-move",
-            "hassle",
-            "timeline"
+            "career-move"
           ]
         },
         {
@@ -294,8 +283,7 @@
             "protection",
             "decumulation",
             "tax",
-            "partner",
-            "wedding"
+            "partner"
           ]
         },
         {
@@ -386,8 +374,6 @@
             "statement",
             "housing",
             "partner",
-            "wedding",
-            "timeline",
             "what-if-life",
             "adventure"
           ]
@@ -410,7 +396,6 @@
             "data",
             "one-pager",
             "skill-tree",
-            "hassle",
             "foo-ladder"
           ],
           "note": "The bay that catches everything that is not time-bound — nearly a quarter of the app.",
@@ -501,14 +486,11 @@
             "values",
             "week",
             "debates",
-            "hassle",
             "skill-tree",
             "career-move",
-            "timeline",
             "what-if-life",
             "adventure",
             "partner",
-            "wedding",
             "decumulation",
             "get-help",
             "data",
@@ -560,7 +542,6 @@
           "name": "Plan",
           "rooms": [
             "fire",
-            "timeline",
             "goals",
             "what-if-life",
             "adventure",
@@ -571,8 +552,7 @@
             "career-move",
             "decumulation",
             "protection",
-            "partner",
-            "wedding"
+            "partner"
           ],
           "note": "A third of the app behind one word — the price of a tidy tab bar.",
           "warn": true
@@ -581,8 +561,7 @@
           "name": "Learn",
           "rooms": [
             "skill-tree",
-            "debates",
-            "hassle"
+            "debates"
           ]
         },
         {
@@ -648,7 +627,6 @@
             "housing",
             "income",
             "partner",
-            "wedding",
             "protection",
             "settings",
             "start",
@@ -660,12 +638,10 @@
             "statement",
             "debates",
             "car",
-            "timeline",
             "what-if-life",
             "adventure",
             "values",
             "cant-pay",
-            "hassle",
             "data",
             "one-pager"
           ],
@@ -738,8 +714,7 @@
           "name": "The workshop",
           "rooms": [
             "skill-tree",
-            "career-move",
-            "hassle"
+            "career-move"
           ],
           "note": "What you can do, and what it is worth."
         },
@@ -747,7 +722,6 @@
           "name": "The living room",
           "rooms": [
             "partner",
-            "wedding",
             "values"
           ]
         },
@@ -756,7 +730,6 @@
           "rooms": [
             "what-if-life",
             "adventure",
-            "timeline",
             "goals"
           ],
           "note": "Looking out at what has not happened yet."
@@ -837,7 +810,6 @@
           "rooms": [
             "values",
             "partner",
-            "wedding",
             "decumulation",
             "week",
             "debates"
@@ -851,10 +823,8 @@
             "housing",
             "big-purchase",
             "car",
-            "timeline",
             "what-if-life",
             "adventure",
-            "hassle",
             "get-help"
           ],
           "note": "A third of the app, and none of it can be put in a diary. This is the bay that argues for S-3 or S-5 instead.",
@@ -896,7 +866,6 @@
         {
           "name": "A decision, made",
           "rooms": [
-            "hassle",
             "big-purchase",
             "housing",
             "car",
@@ -909,7 +878,6 @@
             "foo-ladder",
             "goals",
             "debt-payoff",
-            "timeline",
             "tax",
             "protection",
             "decumulation"
@@ -942,8 +910,7 @@
           "rooms": [
             "cant-pay",
             "get-help",
-            "partner",
-            "wedding"
+            "partner"
           ]
         },
         {
@@ -982,8 +949,7 @@
         {
           "name": "The income stopping",
           "rooms": [
-            "career-move",
-            "timeline"
+            "career-move"
           ]
         },
         {
@@ -999,7 +965,6 @@
           "rooms": [
             "protection",
             "partner",
-            "wedding",
             "decumulation"
           ]
         },
@@ -1037,7 +1002,6 @@
             "data",
             "one-pager",
             "get-help",
-            "hassle",
             "skill-tree"
           ],
           "note": "The risk of not measuring. Everything here exists so the other six bays are not a surprise."
@@ -1059,7 +1023,6 @@
         {
           "name": "Just you",
           "rooms": [
-            "hassle",
             "values",
             "week",
             "debates",
@@ -1070,7 +1033,6 @@
           "name": "Someone you love",
           "rooms": [
             "partner",
-            "wedding",
             "housing"
           ]
         },
@@ -1078,8 +1040,7 @@
           "name": "An employer",
           "rooms": [
             "career-move",
-            "income",
-            "timeline"
+            "income"
           ]
         },
         {
@@ -1172,19 +1133,16 @@
             "financial-snapshot",
             "statement",
             "fire",
-            "hassle",
             "dashboard",
             "runway",
             "car",
             "what-if-life",
             "adventure",
-            "timeline",
             "protection",
             "decumulation",
             "tax",
             "career-move",
             "partner",
-            "wedding",
             "housing",
             "big-purchase"
           ],
@@ -1235,9 +1193,7 @@
           "name": "2 · “What comes in?”",
           "rooms": [
             "income",
-            "hassle",
-            "career-move",
-            "timeline"
+            "career-move"
           ]
         },
         {
@@ -1262,7 +1218,6 @@
           "rooms": [
             "protection",
             "partner",
-            "wedding",
             "decumulation"
           ]
         },
@@ -1324,7 +1279,6 @@
         {
           "name": "Five minutes",
           "rooms": [
-            "hassle",
             "car",
             "cant-pay",
             "get-help"
@@ -1345,7 +1299,6 @@
             "tax",
             "protection",
             "fire",
-            "timeline",
             "big-purchase",
             "housing"
           ]
@@ -1359,7 +1312,6 @@
             "what-if-life",
             "adventure",
             "partner",
-            "wedding",
             "career-move",
             "decumulation",
             "foo-ladder"
@@ -1402,7 +1354,6 @@
             "protection",
             "tax",
             "partner",
-            "wedding",
             "settings",
             "data",
             "one-pager",
@@ -1423,15 +1374,13 @@
           "name": "One word to learn",
           "rooms": [
             "fire",
-            "runway",
-            "timeline"
+            "runway"
           ],
           "note": "Fine once, annoying if nobody ever defines it."
         },
         {
           "name": "A whole idea to hold",
           "rooms": [
-            "hassle",
             "week",
             "values",
             "skill-tree",
@@ -1469,9 +1418,7 @@
           "rooms": [
             "start",
             "ledger",
-            "timeline",
             "partner",
-            "wedding",
             "career-move"
           ],
           "note": "Who you are and what is changing. Nine spokes.",
@@ -1484,8 +1431,7 @@
             "cash-flow",
             "income",
             "budget",
-            "settings",
-            "hassle"
+            "settings"
           ],
           "note": "The month as it actually happens. Nine spokes.",
           "hub": "cash-flow"
@@ -1576,7 +1522,6 @@
             "fire",
             "foo-ladder",
             "goals",
-            "timeline",
             "what-if-life",
             "adventure",
             "decumulation",
@@ -1591,8 +1536,7 @@
           "rooms": [
             "tax",
             "protection",
-            "dashboard",
-            "hassle"
+            "dashboard"
           ],
           "note": "These lean on data/*.json. Only 4 of the 72 tables are marked sourced; 17 are marked unverified. The rooms here are exactly as good as those files.",
           "warn": true
@@ -1605,8 +1549,7 @@
             "debates",
             "values",
             "week",
-            "partner",
-            "wedding"
+            "partner"
           ],
           "note": "Nothing to be wrong about arithmetically. Judge these as advice, not as sums."
         },
@@ -1652,16 +1595,14 @@
         {
           "name": "Wrong right now › Work changed",
           "rooms": [
-            "career-move",
-            "timeline"
+            "career-move"
           ]
         },
         {
           "name": "Wrong right now › I need a person",
           "rooms": [
             "get-help",
-            "partner",
-            "wedding"
+            "partner"
           ]
         },
         {
@@ -1715,8 +1656,7 @@
         {
           "name": "Bigger picture › What I can do",
           "rooms": [
-            "skill-tree",
-            "hassle"
+            "skill-tree"
           ]
         },
         {

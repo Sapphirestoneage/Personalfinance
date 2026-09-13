@@ -5,7 +5,7 @@
   "source": "Checklists of what a goal is actually made of.",
   "confidence": "convention",
   "confidenceNote": "Line-item presets are starting points chosen for plausibility, not cost surveys.",
-  "note": "SPEC.md Section 13 asks the Dream Calculator to become the shared Goal Costing Engine 'with a template library', and makes the Wedding calc structurally identical to it. These templates carry LINE-ITEM LABELS ONLY and no amounts. Costs are wildly regional and inventing them would put a fake number in front of someone planning a real thing; the value here is the reminder that the marriage licence, the survey fee and the travel insurance exist at all.",
+  "note": "SPEC.md Section 13 asks the Dream Calculator to become the shared Goal Costing Engine 'with a template library', and makes the Wedding calc structurally identical to it. These templates carry LINE-ITEM LABELS ONLY and no amounts. Costs are wildly regional and inventing them would put a fake number in front of someone planning a real thing; the value here is the reminder that the marriage licence, the survey fee and the travel insurance exist at all. A line may be an object instead of a label when it is priced PER UNIT — { label, unitLabel, unitsPerGroup } — which still carries no amount: it says a wedding is catered per guest and that guests arrive a table at a time, not what a guest costs (D-263).",
   "templates": [
     {
       "id": "wedding",
@@ -13,7 +13,11 @@
       "blurb": "The costs that turn up whether you planned for them or not.",
       "lineItems": [
         "Venue",
-        "Catering and drinks",
+        {
+          "label": "Catering and drinks",
+          "unitLabel": "guest",
+          "unitsPerGroup": 8
+        },
         "Photography",
         "Attire",
         "Rings",

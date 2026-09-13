@@ -87,9 +87,9 @@ module.exports = function (t) {
   var EXPECTED = {
     employed:     ['partner'],
     selfEmployed: ['partner'],
-    unemployed:   ['fire', 'hassle', 'tax', 'partner'],
+    unemployed:   ['fire', 'tax', 'partner'],
     student:      ['protection', 'decumulation', 'partner'],
-    retired:      ['fire', 'hassle', 'career-move', 'partner'],
+    retired:      ['fire', 'career-move', 'partner'],
     both:         ['partner']
   };
   Object.keys(EXPECTED).forEach(function (status) {
