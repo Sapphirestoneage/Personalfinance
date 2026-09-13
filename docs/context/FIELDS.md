@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 112. Traced: 103. No other room mentions it: **51**.
+Fields: 112. Traced: 103. No other room mentions it: **53**.
 
 
 ## accounts (7)
@@ -27,7 +27,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 ## budget (1)
 
-- `monthsClosed` — Months closed · read by skill-tree, exercises
+- `monthsClosed` — Months closed · read by skill-tree
 
 ## calendar (4)
 
@@ -58,22 +58,18 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 ## decumulation (3)
 
-- `stockShare` — Share in stocks · read by exercises
-- `plannedAnnualDraw` — Planned draw, a year · read by exercises
-- `socialSecurityAt` — Social Security from · read by exercises
+- `stockShare` — Share in stocks · read by skill-tree
+- `plannedAnnualDraw` — Planned draw, a year · read by skill-tree
+- `socialSecurityAt` — Social Security from · read by skill-tree
 
 ## enough (1)
 
 - `enoughMonthly` — Enough, a month · **no other room mentions it**
 
-## exercises (1)
-
-- `exercisesDone` — Exercises done · read by skill-tree
-
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by housing, property, debates, calendar
-- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, fire, fire-lab, real-hourly-wage, dashboard, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, career-move, partner, housing, big-purchase, variable-income, enough, adventure, week, reversibility, debates, calendar, one-pager
+- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, fire, fire-lab, real-hourly-wage, dashboard, skill-tree, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, career-move, partner, housing, big-purchase, variable-income, enough, adventure, week, reversibility, debates, calendar, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
@@ -83,7 +79,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 ## fire (2)
 
-- `retireAge` — Stop working at · read by dashboard, stacker, exercises, coast-date, rollover, what-if-life, micro-retirement, decumulation, middle-class-trap, week, one-pager
+- `retireAge` — Stop working at · read by dashboard, skill-tree, coast-date, rollover, what-if-life, micro-retirement, decumulation, middle-class-trap, week, one-pager
 - `coastAge` — Coast: arrive by · read by coast-date
 
 ## history (1)
@@ -135,13 +131,11 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `floorMonthly` — The floor, a month · **no other room mentions it**
 - `swanTarget` — Your sleep-at-night number · read by financial-snapshot
 
-## skill-tree (1)
+## skill-tree (3)
 
 - `skillsDone` — Skills done · **no other room mentions it**
-
-## stacker (1)
-
-- `practiceLedger` — Practice ledger · read by skill-tree
+- `exercisesDone` — Exercises done · **no other room mentions it**
+- `practiceLedger` — Practice ledger · **no other room mentions it**
 
 ## start (17)
 
@@ -150,14 +144,14 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
 - `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, values, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, career-move, offer-compare, degree, partner, housing, big-purchase, variable-income, adventure, week, reversibility, debates, student-loans, calendar, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, skill-tree, values, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, career-move, offer-compare, degree, partner, housing, big-purchase, variable-income, adventure, week, reversibility, debates, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
-- `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, housing, big-purchase, variable-income, reversibility, debates, calendar, history, one-pager
+- `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, skill-tree, runway, cant-pay, what-if-life, protection, housing, big-purchase, variable-income, reversibility, debates, calendar, history, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, runway, tax, offer-compare, debates, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, debates
-- `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, one-pager
+- `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, skill-tree, one-pager
 - `hasDebt` — Any debt · read by dashboard, debates, student-loans
 - `contributionPercent` — Workplace contribution · read by ledger, statements, accounts, what-if-life, tax
 - `highestDeductible` — Highest deductible · read by statement, runway, protection
@@ -193,7 +187,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `givingPct` — Giving, share of income · **no other room mentions it**
 - `givingTarget` — Giving, a year · **no other room mentions it**
-- `rerankCut` — What The Rerank would cut · read by stacker
+- `rerankCut` — What The Rerank would cut · read by skill-tree
 
 ## variable-income (4)
 

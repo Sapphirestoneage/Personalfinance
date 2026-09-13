@@ -142,16 +142,35 @@ module.exports = function (t) {
   /* ---- Acceptance checks (the spec's §11), the ones a static read can hold ---- */
   section('The Skill Tree rooms, the wiring and the version (D-131)');
   const page = fs.readFileSync(path.join(ROOT, 'rooms/skill-tree.html'), 'utf8');
-  checkTrue('the board declares its live-form policy', /LIVE-FORM: built once/.test(page));
+  /* The page now serves three readings with different disciplines, so it
+     declares the strictest of them: guarded (D-244). The board itself
+     still builds once — nothing on it is rebuilt under a finger. */
+  checkTrue('the page declares its live-form policy', /LIVE-FORM: guarded/.test(page));
   checkTrue('every node carries its reason in its title, and a fogged node renders no name', /title="' \+ esc\(title\)/.test(page) && /s\.state === 'fogged' \? '' : '<span class="n-name">/.test(page));
   checkTrue('the fortress line renders above the board', page.indexOf('id="ladder"') < page.indexOf('id="board"') && /id="rungs"/.test(page));
   checkTrue('the card is the only way to mark done, through the spine', (page.match(/Spine\.setSkillDone\(/g) || []).length === 2 && !/skillTree\.state\[[^\]]*\] *=/.test(page));
   checkTrue('a bypassed branch stays reopenable: the card offers mark done for it', /s\.state === 'done' \? '<button[^']*data-reopen/.test(page));
   checkTrue('the phone gets the serpentine, one tree at a time', /class="serp"/.test(page) && /window\.innerWidth <= 700/.test(page));
   checkTrue('no band beyond the next one prints a name: the engine blanks it and the room draws a silhouette', /s\.name = null|name: fog && !o\.reveal \? null/.test(fs.readFileSync(path.join(ROOT, 'engines/skilltree.js'), 'utf8')));
-  const exPage = fs.readFileSync(path.join(ROOT, 'rooms/exercises.html'), 'utf8');
+  /* A visible change the merge made, chosen rather than inherited (D-244).
+     reconcile() is the three-at-a-time reading's boot step: it writes, by
+     proof, every once-off skill the household already demonstrates, and
+     reverts one whose fact has gone. It used to run only when someone
+     opened the Stacker, so the tree could sit at "0 done" for a household
+     that had plainly done four of them. Every reading on a merged page
+     boots, so it runs whenever the room is opened, and the tree agrees with
+     the facts from the first look. It writes nothing for a household that
+     proves nothing. */
+  checkTrue('the room reconciles proof on open, in the reading that owns it',
+    /function reconcile\(\)/.test(page) && /Skills\.verifyOnce\(hh, TABLES, today\(\)\)/.test(page)
+    && /if \(v\.verified\.length \|\| v\.reverted\.length \|\| d\.changes\.length\) Spine\.updateProfile/.test(page));
+  check('… and an empty household proves nothing, so nothing is written',
+    require(path.join(ROOT, 'engines/skills.js')).verifyOnce(Schema.createHousehold({}), TABLES, '2026-09-13').verified.length, 0);
+
+  /* The Stacker and Exercises are readings of this page since D-244. */
+  const exPage = page;
   checkTrue('the exercises room completes and runs through the spine, nothing else', (exPage.match(/Spine\.markExercise\(/g) || []).length === 3 && /Exercises\.compute\(/.test(exPage));
-  const stacker = fs.readFileSync(path.join(ROOT, 'rooms/stacker.html'), 'utf8');
+  const stacker = page;
   const skillsEngine = fs.readFileSync(path.join(ROOT, 'engines/skills.js'), 'utf8');
   checkTrue('the Stacker reads done from the tree and writes it there, no second copy', /treeDone\(household, skill\.id\)/.test(skillsEngine) && /skillTree: treePatch\(/.test(skillsEngine) && /skillTree: v\.skillTree/.test(stacker));
   const dash = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');

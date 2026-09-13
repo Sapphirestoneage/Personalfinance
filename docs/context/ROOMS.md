@@ -76,11 +76,9 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **reversibility** — Can It Be Undone · 328 lines · engines: projection, tier0, cashflow, hourly, events, reversibility · owns: reversibilityDecision · D-101
 - **debates** — The Referee · 568 lines · engines: selfemployed, tax, projection, tier0, trap, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-237, D-218
 
-## Level Up (3)
+## Level Up (1)
 
-- **stacker** — The Skill Stacker · 604 lines · engines: projection, tier0, foo, cashflow, statement, swan, benchmarks, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, skills · owns: practiceLedger · D-141, D-139, D-131
-- **skill-tree** — The Skill Tree · 609 lines · engines: projection, tier0, foo, skilltree · owns: skillsDone · D-141, D-140, D-139
-- **exercises** — Exercises · 210 lines · engines: projection, tier0, foo, skilltree, income, selfemployed, tax, fire, statement, vpw, decumulation, cashflow, events, exercises · owns: exercisesDone · D-141, D-139, D-136
+- **skill-tree** — The Skill Tree · 1522 lines · engines: projection, tier0, foo, skilltree, cashflow, statement, swan, benchmarks, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, skills, income, fire, decumulation, exercises · owns: skillsDone, exercisesDone, practiceLedger · D-237, D-141, D-140
 
 ## Upkeep (5)
 
@@ -90,7 +88,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (30)
+## Files in rooms/ not in the registry (32)
 
 - rooms/between-jobs.html
 - rooms/buckets.html
@@ -99,6 +97,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/doors.html
 - rooms/dreamline.html
 - rooms/estate.html
+- rooms/exercises.html
 - rooms/express.html
 - rooms/first-car.html
 - rooms/first-round.html
@@ -117,6 +116,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/rerank.html
 - rooms/savings-rate.html
 - rooms/sleep-at-night.html
+- rooms/stacker.html
 - rooms/subscriptions.html
 - rooms/unlearning.html
 - rooms/walk.html

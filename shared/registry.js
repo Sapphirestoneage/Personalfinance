@@ -601,31 +601,11 @@
         { id: 'reading',     label: 'Reading from elsewhere' }
       ]
     },
-        {
-      id: 'stacker',
-      group: 'levelup', aliases: ['skills', 'stack', 'earn more'],
-      kind: 'about-you',
-      needs: [],
-      order: 20,
-      title: 'The Skill Stacker',
-      blurb: 'Three money skills at a time: did it or didn\u2019t, what today was worth, and what the ledger becomes by 65.',
-      href: 'rooms/stacker.html',
-      tier: 2,
-      tags: ['cashflow'],
-      daite: { reads: [], writes: ['progress.learning'] },
-      subsections: [
-        { id: 'today',   label: 'Today' },
-        { id: 'browse',  label: 'Every skill' },
-        { id: 'stacks',  label: 'The stacks' },
-        { id: 'curves',  label: 'Three curves' },
-        { id: 'reading', label: 'Reading from elsewhere' }
-      ]
-    },
-    /* The Skill Tree and the Exercise Library (D-131): what the next hour
+        /* The Skill Tree and the Exercise Library (D-131): what the next hour
        does, beside the ladder's what the next dollar does. */
     {
       id: 'skill-tree',
-      group: 'levelup', aliases: ['skill tree', 'tech tree', 'curriculum'],
+      group: 'levelup', aliases: ['skill tree', 'tech tree', 'curriculum', 'stacker', 'skill stacker', 'practice', 'exercises', 'drills', 'fifteen minutes'],
       kind: 'about-you',
       needs: [],
       order: 20.2,
@@ -640,25 +620,11 @@
         { id: 'ladder',  label: 'The fortress line' },
         { id: 'board',   label: 'The board' },
         { id: 'warps',   label: 'Warps' },
-        { id: 'reading', label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'exercises',
-      group: 'levelup', aliases: ['exercises', 'practice', 'drills'],
-      kind: 'about-you',
-      needs: [],
-      order: 20.4,
-      title: 'Exercises',
-      blurb: 'Every doable thing in one place, fifteen minutes or less by default: the first fifteen minutes of a skill, a named exercise from the canon credited to its author, or a calculation run on your own numbers. Completing one opens the skill it belongs to.',
-      href: 'rooms/exercises.html',
-      tier: 2,
-      tags: ['cashflow'],
-      daite: { reads: [], writes: ['progress.learning'] },
-      subsections: [
-        { id: 'list',    label: 'What applies to you' },
-        { id: 'runs',    label: 'What the runs found' },
-        { id: 'reading', label: 'Reading from elsewhere' }
+        { id: 'reading', label: 'Reading from elsewhere' },
+        { id: 'today', label: 'What today was worth' },
+        { id: 'stacks', label: 'Three at a time' },
+        { id: 'list', label: 'Every exercise' },
+        { id: 'pick-time', label: 'How long you have' }
       ]
     },
     {
@@ -828,7 +794,7 @@
     needs: ['dob'],
     order: 37.7,
     title: 'What Matters',
-    blurb: 'The five things you say matter most against where the money actually went, what each thing is worth to you, your costs reordered by what they give you, and what you give away.',
+    blurb: 'Every money skill in five bands, three of them to practise at a time, and every doable exercise in one place — what the next hour does.',
     href: 'rooms/degree.html',
     tier: 2,
     tags: ['income'],
@@ -1597,7 +1563,7 @@
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
     decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'enough', 'week', 'reversibility'],
-    levelup: ['skill-tree', 'stacker', 'exercises'],
+    levelup: ['skill-tree'],
     upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
   };
   function groups() { return GROUPS.slice(); }

@@ -6,7 +6,9 @@ module.exports = function (t) {
 
   const css = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
   const map = fs.readFileSync(path.join(ROOT, 'map.html'), 'utf8');
-  const ex  = fs.readFileSync(path.join(ROOT, 'rooms/exercises.html'), 'utf8');
+  /* Exercises is The Skill Tree's doing reading since D-244; the rule
+     came with it, scoped to that reading. */
+  const ex  = fs.readFileSync(path.join(ROOT, 'rooms/skill-tree.html'), 'utf8');
 
   /* ---- The overflow ----------------------------------------------------- */
   /* A bar row's third cell holds a figure and never wraps. When the row has
@@ -28,7 +30,7 @@ module.exports = function (t) {
     /label input\[type="checkbox"\], label input\[type="radio"\]/.test(css));
   checkTrue('the ⓘ grows on a phone, since the room tells you to tap it 45 times',
     /\.slaf-info \{ width: 30px; height: 30px;/.test(css));
-  checkTrue('the exercise chips grow too', /@media \(pointer: coarse\) \{ \.pill \{ min-height: 32px;/.test(ex));
+  checkTrue('the exercise chips grow too', /@media \(pointer: coarse\) \{\s*#view-the-doing \.pill \{ min-height: 32px;/.test(ex));
 
   /* An inline link inside a sentence is deliberately NOT padded out: doing
      that tears paragraphs apart, and it is never the primary control. What

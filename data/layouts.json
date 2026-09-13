@@ -46,9 +46,7 @@
             "credential",
             "degree",
             "accounts",
-            "stacker",
             "skill-tree",
-            "exercises",
             "values",
             "goals",
             "foo-ladder",
@@ -128,9 +126,7 @@
             "reachable",
             "fire-lab",
             "dashboard",
-            "stacker",
             "skill-tree",
-            "exercises",
             "values",
             "goals",
             "foo-ladder",
@@ -313,9 +309,7 @@
             "data",
             "one-pager",
             "history",
-            "stacker",
-            "skill-tree",
-            "exercises"
+            "skill-tree"
           ]
         }
       ]
@@ -425,9 +419,7 @@
         {
           "name": "Learn",
           "rooms": [
-            "stacker",
             "skill-tree",
-            "exercises",
             "debates"
           ]
         },
@@ -551,9 +543,7 @@
             "data",
             "one-pager",
             "history",
-            "stacker",
             "skill-tree",
-            "exercises",
             "hassle",
             "real-hourly-wage",
             "foo-ladder"
@@ -665,9 +655,7 @@
             "reversibility",
             "hassle",
             "real-hourly-wage",
-            "stacker",
             "skill-tree",
-            "exercises",
             "credential",
             "degree",
             "career-move",
@@ -775,9 +763,7 @@
         {
           "name": "Learn",
           "rooms": [
-            "stacker",
             "skill-tree",
-            "exercises",
             "debates",
             "credential",
             "degree",
@@ -850,7 +836,6 @@
             "week",
             "enough",
             "variance",
-            "exercises",
             "financial-snapshot",
             "race",
             "statements",
@@ -881,7 +866,6 @@
             "rollover",
             "dashboard",
             "runway",
-            "stacker",
             "skill-tree",
             "statement",
             "reachable",
@@ -984,9 +968,7 @@
         {
           "name": "The workshop",
           "rooms": [
-            "stacker",
             "skill-tree",
-            "exercises",
             "credential",
             "degree",
             "career-move",
@@ -1065,9 +1047,7 @@
             "expenses",
             "cash-flow",
             "calendar",
-            "budget",
-            "stacker",
-            "exercises"
+            "budget"
           ]
         },
         {
@@ -1236,9 +1216,7 @@
             "calendar",
             "income",
             "settings",
-            "stacker",
             "skill-tree",
-            "exercises",
             "dashboard"
           ]
         },
@@ -1385,9 +1363,7 @@
             "hassle",
             "credential",
             "degree",
-            "stacker",
-            "skill-tree",
-            "exercises"
+            "skill-tree"
           ],
           "note": "The risk of not measuring. Everything here exists so the other six bays are not a surprise."
         }
@@ -1416,9 +1392,7 @@
             "debates",
             "worth",
             "reversibility",
-            "stacker",
-            "skill-tree",
-            "exercises"
+            "skill-tree"
           ]
         },
         {
@@ -1527,9 +1501,7 @@
             "cash-flow",
             "income",
             "budget",
-            "stacker",
             "skill-tree",
-            "exercises",
             "cant-pay",
             "rollover"
           ],
@@ -1728,9 +1700,7 @@
             "data",
             "one-pager",
             "history",
-            "stacker",
-            "skill-tree",
-            "exercises"
+            "skill-tree"
           ]
         }
       ]
@@ -1830,9 +1800,7 @@
           "rooms": [
             "calendar",
             "variance",
-            "stacker",
             "skill-tree",
-            "exercises",
             "credential",
             "degree",
             "history",
@@ -1871,7 +1839,6 @@
             "credit",
             "calendar",
             "history",
-            "exercises",
             "settings",
             "data",
             "one-pager",
@@ -1925,7 +1892,6 @@
             "week",
             "values",
             "enough",
-            "stacker",
             "skill-tree",
             "what-if-life",
             "adventure"
@@ -2058,9 +2024,7 @@
             "debates",
             "worth",
             "reversibility",
-            "stacker",
-            "skill-tree",
-            "exercises"
+            "skill-tree"
           ],
           "note": "What any of it is for. Twelve spokes.",
           "hub": "values"
@@ -2175,9 +2139,7 @@
             "data",
             "one-pager",
             "history",
-            "stacker",
-            "skill-tree",
-            "exercises"
+            "skill-tree"
           ]
         }
       ]
@@ -2290,9 +2252,7 @@
         {
           "name": "Bigger picture \u203a What I can do",
           "rooms": [
-            "stacker",
             "skill-tree",
-            "exercises",
             "credential",
             "degree",
             "real-hourly-wage",

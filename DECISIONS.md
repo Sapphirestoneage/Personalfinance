@@ -14260,6 +14260,36 @@ same line.
 `monthlyExpenses`, because that is what the reading it opens on wants. The
 giving reading still reads income and says so when there is none.
 
+### D-244 — The Skill Tree takes the Stacker and the Exercises
+
+**Decision.** The Skill Stacker and Exercises become readings of The Skill
+Tree. Three hats: `#the-tree` (the default), `#the-three`, `#the-doing`.
+Both old pages redirect, hash and all.
+
+**Why.** One set of skills read three ways: as a map, as a shortlist of three
+to practise, and as a to-do you can start in fifteen minutes. Rules 1 and 3
+of D-229. The tree is first because it is the frame the other two cut from.
+
+**Ownership.** `practiceLedger` → `skill-tree`, anchor `today`;
+`exercisesDone` → `skill-tree`, anchor `list`. Neither id collided, so
+neither moved.
+
+**The behaviour that changed, and why it stays.** `reconcile()` is the
+Stacker reading's boot step: it marks, by proof, every once-off skill the
+household already demonstrates, and reverts one whose fact has gone. It used
+to run only when someone opened the Stacker, so the tree could sit at
+"0 done" for a household that had plainly done four of them. Every reading
+on a merged page boots, so it now runs whenever the room is opened, and the
+tree agrees with the facts from the first look. It writes nothing for a
+household that proves nothing, and both halves are now asserted.
+
+**The ratchet.** `test/xss-baseline.json` records the move: the Stacker's one
+spot is now The Skill Tree's. The repo total is unchanged at 58, and the
+retired pages are set to 0 so no file can spend a budget it did not earn.
+
+**LIVE-FORM.** The page declares `guarded`, the strictest of the three
+readings' disciplines. The board still builds once.
+
 ---
 
 # The Dungeons & Dividends entries

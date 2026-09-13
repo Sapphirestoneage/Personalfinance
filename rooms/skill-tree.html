@@ -7,36 +7,44 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>The Skill Tree · SPARKS</title>
-<meta name="description" content="What the next hour does: every money skill in five bands, open, locked with the reason, done, or skipped because you are already past it. The FOO ladder runs above it and the two unlock each other."/>
+<meta name="description" content="Every money skill in five bands, three of them to practise at a time, and every doable exercise in one place — what the next hour does."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-131 (the Skill Tree).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-244 (the merge).
+  Registry: skill-tree.
 
-  1. READS   The whole household through engines/skilltree.js: the FOO
-             placement, closed months, the log, debts paid, snapshots,
-             exercises done, the facts the ownership map holds; and the
-             three tables data/skill_tree.json, data/skill_links.json,
-             data/exercises.json.
-  2. WRITES  It OWNS household.skillTree.state — a skill marked done, with
-             the day and how, and nothing else: open, locked, bypassed,
-             fogged and not-yours are derived every time and never stored.
-  3. CALLS   engines/skilltree.js (every state and reason), engines/foo.js
-             (the ladder step, through the engine).
-  4. EMPTY   With nothing entered the tree still draws: Foundation in full
-             with what is open from the start, every lock saying which
-             condition is unmet and where to meet it, the rest fogged.
-  5. CONFIG  data/skill_tree.json, data/skill_links.json, data/exercises.json.
+  THREE READINGS OF THE SAME SKILLS.
 
-  LIVE-FORM: built once. The one control is the tree picker, a select
-  built once at load; everything else is buttons and links. The board is
-  repainted whole on every change and holds no input.
-  THEMING: the Civ VI grammar in the house tokens — bands as era columns
-  with a dashed rule, orthogonal connectors, an unlock row under every
-  node, a boost bar along its bottom edge; the Mario serpentine on a phone.
+    #the-tree     every money skill in five bands: open, locked with the
+                  reason, done, or skipped because you are already past it
+    #the-three    three at a time, did it or didn't, what today was worth,
+                  and what the ledger becomes by 65
+    #the-doing    every doable thing in one place, fifteen minutes or less
+                  by default, filtered by kind and by time
+
+  One set of skills, read as a map, as a shortlist, and as a to-do. Rules 1
+  and 3 of D-229: the same fields at three framings, and a filter is a
+  toggle rather than a room. The tree is first because it is the frame the
+  other two are cut from.
+
+  1. READS   the skills done, the practice ledger, and the exercises done.
+  2. WRITES  skillsDone as before, and practiceLedger and exercisesDone,
+             whose owners moved here with their boxes (D-244).
+  3. CALLS   the engines each reading already called; no arithmetic moved.
+  4. EMPTY   a tree with nothing done is the whole tree, not an error.
+  5. CONFIG  the tables each engine names.
+
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css.
+
+  LIVE-FORM: guarded. Every reading keeps the discipline it had; switching
+  readings hides and shows and rebuilds nothing (D-034).
 -->
 <style>
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- The tree, from rooms/skill-tree.html (D-244) ---- */
   /* This room is a board, not prose. The tech tree is thousands of pixels
      wide, and a 620px measure shows the rail and two rungs of it. So the
      page takes the whole window here, and every section that IS prose keeps
@@ -44,158 +52,458 @@
      only, so the shared measure stays what it is everywhere else (the same
      move as D-134 in Debt Payoff, for the same reason). D-140. */
   @media (min-width: 900px) {
-    .slaf-wrap { max-width: 1800px; }
-    .room-head, .slaf-wrap > section:not(#board) { max-width: var(--measure); margin-left: 0; margin-right: 0; }
+    
+  #view-the-tree .slaf-wrap { max-width: 1800px; }
+    
+  #view-the-tree .room-head,
+  #view-the-tree .slaf-wrap > section:not(#board) { max-width: var(--measure); margin-left: 0; margin-right: 0; }
   }
-  section[id] { scroll-margin-top: var(--space-4); }
-  .card-gap { margin-top: var(--space-4); }
-  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
-  .say { font-size: var(--text-sm); margin: var(--space-3) 0 0; color: var(--color-text-muted); }
-  .say.is-good { color: var(--color-positive); }
-  .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; text-decoration: none; }
+  
+  #view-the-tree section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-tree .card-gap { margin-top: var(--space-4); }
+  
+  #view-the-tree .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  
+  #view-the-tree .say { font-size: var(--text-sm); margin: var(--space-3) 0 0; color: var(--color-text-muted); }
+  
+  #view-the-tree .say.is-good { color: var(--color-positive); }
+  
+  #view-the-tree .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; text-decoration: none; }
   /* "Do it →" is an <a>, so the shared coarse-pointer floor for buttons and
      .pill elements never reached it: at 320px it measured 20px tall against
      a 32px minimum, on the one control that leaves this room for the thing
      you are meant to go and do. D-146. */
   @media (pointer: coarse) {
-    a.pill { display: inline-flex; align-items: center; min-height: 32px; }
+    
+  #view-the-tree a.pill { display: inline-flex; align-items: center; min-height: 32px; }
   }
-  .pill:hover { border-color: var(--color-accent); }
-  .pill.is-quiet { color: var(--color-text-faint); }
-  .counts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
-  .counts b { color: var(--color-text); font-weight: 600; }
+  
+  #view-the-tree .pill:hover { border-color: var(--color-accent); }
+  
+  #view-the-tree .pill.is-quiet { color: var(--color-text-faint); }
+  
+  #view-the-tree .counts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
+  
+  #view-the-tree .counts b { color: var(--color-text); font-weight: 600; }
 
   /* ---- What opens next: the strip most people will only ever use ---- */
-  .next { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
-  .next-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; padding: var(--space-2) var(--space-3); border: 1.5px solid var(--color-border-active); border-radius: var(--radius-sm); }
-  .next-row .n-name { font-weight: 600; }
-  .next-row .n-sub { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-the-tree .next { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-the-tree .next-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; padding: var(--space-2) var(--space-3); border: 1.5px solid var(--color-border-active); border-radius: var(--radius-sm); }
+  
+  #view-the-tree .next-row .n-name { font-weight: 600; }
+  
+  #view-the-tree .next-row .n-sub { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
 
   /* ---- The fortress line: the ladder across the top ---- */
-  .ladder { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: var(--space-3); }
-  .rung { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 5px; text-align: center; font-size: 10px; line-height: 1.25; color: var(--color-text-faint); position: relative; min-height: 54px; overflow-wrap: break-word; hyphens: auto; }
-  .rung b { display: block; font-family: var(--font-display); font-size: var(--text-md); color: var(--color-text-muted); }
-  .rung.is-met { border-color: var(--color-positive); color: var(--color-text); }
-  .rung.is-met b { color: var(--color-positive); }
-  .rung.is-here { border-color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); color: var(--color-text); }
-  .rung.is-here b { color: var(--color-accent-hover); }
-  .rung small { display: block; font-size: 9px; color: var(--color-caution); line-height: 1.2; margin-top: 2px; }
-  @media (max-width: 700px) { .ladder { grid-template-columns: repeat(5, 1fr); } }
+  
+  #view-the-tree .ladder { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: var(--space-3); }
+  
+  #view-the-tree .rung { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 5px; text-align: center; font-size: 10px; line-height: 1.25; color: var(--color-text-faint); position: relative; min-height: 54px; overflow-wrap: break-word; hyphens: auto; }
+  
+  #view-the-tree .rung b { display: block; font-family: var(--font-display); font-size: var(--text-md); color: var(--color-text-muted); }
+  
+  #view-the-tree .rung.is-met { border-color: var(--color-positive); color: var(--color-text); }
+  
+  #view-the-tree .rung.is-met b { color: var(--color-positive); }
+  
+  #view-the-tree .rung.is-here { border-color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); color: var(--color-text); }
+  
+  #view-the-tree .rung.is-here b { color: var(--color-accent-hover); }
+  
+  #view-the-tree .rung small { display: block; font-size: 9px; color: var(--color-caution); line-height: 1.2; margin-top: 2px; }
+  @media (max-width: 700px) { 
+  #view-the-tree .ladder { grid-template-columns: repeat(5, 1fr); } }
 
   /* ---- The board ---- */
-  .board-tools { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
-  .board-tools label { font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); }
-  .board-tools select { font: inherit; font-size: var(--text-sm); background: var(--color-surface-raised); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 4px var(--space-2); }
+  
+  #view-the-tree .board-tools { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
+  
+  #view-the-tree .board-tools label { font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); }
+  
+  #view-the-tree .board-tools select { font: inherit; font-size: var(--text-sm); background: var(--color-surface-raised); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 4px var(--space-2); }
   /* The board is a tech tree: one row per tree, one column per rung, the
      five bands as column groups across the top. It is far wider than any
      screen, so the tree names sit in a rail that does NOT scroll and the
      columns scroll under the band headers beside it. */
-  .board-wrap { position: relative; display: flex; align-items: flex-start; margin-top: var(--space-3); padding-bottom: var(--space-3); }
-  .board-rail { flex: 0 0 156px; position: relative; }
-  .board-rail .r-tree { position: absolute; left: 0; width: 148px; height: 72px; box-sizing: border-box; padding: 5px 8px 5px 9px; border-left: 3px solid var(--color-border); font-size: 10px; line-height: 1.2; color: var(--color-text-faint); overflow: hidden; }
-  .board-rail .r-tree b { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-family: var(--font-display); font-size: 11px; font-weight: 600; line-height: 1.25; color: var(--color-text-muted); overflow-wrap: anywhere; margin-bottom: 2px; }
-  .board-rail .r-tree.is-here { border-left-color: var(--color-accent); }
-  .board-rail .r-tree.is-here b { color: var(--color-text); }
-  .board-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; position: relative; }
-  .board { position: relative; }
-  .board svg.wires { position: absolute; left: 0; top: 0; pointer-events: none; }
-  .band-head { position: absolute; top: 0; height: 28px; font-size: 11px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); white-space: nowrap; }
-  .band-head small { color: var(--color-text-faint); text-transform: none; letter-spacing: 0; margin-left: 6px; }
-  .band-rule { position: absolute; top: 0; bottom: 0; width: 0; border-right: 1px dashed var(--color-border); }
-  .row-rule { position: absolute; left: 0; height: 0; border-top: 1px solid var(--color-border); opacity: .5; }
-  .fog { position: absolute; top: 0; bottom: 0; width: 80px; background: linear-gradient(90deg, transparent, var(--color-bg)); pointer-events: none; }
+  
+  #view-the-tree .board-wrap { position: relative; display: flex; align-items: flex-start; margin-top: var(--space-3); padding-bottom: var(--space-3); }
+  
+  #view-the-tree .board-rail { flex: 0 0 156px; position: relative; }
+  
+  #view-the-tree .board-rail .r-tree { position: absolute; left: 0; width: 148px; height: 72px; box-sizing: border-box; padding: 5px 8px 5px 9px; border-left: 3px solid var(--color-border); font-size: 10px; line-height: 1.2; color: var(--color-text-faint); overflow: hidden; }
+  
+  #view-the-tree .board-rail .r-tree b { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-family: var(--font-display); font-size: 11px; font-weight: 600; line-height: 1.25; color: var(--color-text-muted); overflow-wrap: anywhere; margin-bottom: 2px; }
+  
+  #view-the-tree .board-rail .r-tree.is-here { border-left-color: var(--color-accent); }
+  
+  #view-the-tree .board-rail .r-tree.is-here b { color: var(--color-text); }
+  
+  #view-the-tree .board-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; position: relative; }
+  
+  #view-the-tree .board { position: relative; }
+  
+  #view-the-tree .board svg.wires { position: absolute; left: 0; top: 0; pointer-events: none; }
+  
+  #view-the-tree .band-head { position: absolute; top: 0; height: 28px; font-size: 11px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); white-space: nowrap; }
+  
+  #view-the-tree .band-head small { color: var(--color-text-faint); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+  
+  #view-the-tree .band-rule { position: absolute; top: 0; bottom: 0; width: 0; border-right: 1px dashed var(--color-border); }
+  
+  #view-the-tree .row-rule { position: absolute; left: 0; height: 0; border-top: 1px solid var(--color-border); opacity: .5; }
+  
+  #view-the-tree .fog { position: absolute; top: 0; bottom: 0; width: 80px; background: linear-gradient(90deg, transparent, var(--color-bg)); pointer-events: none; }
   /* The box is sized for the longest name in data/skill_tree.json (49
      characters) at three lines, so a name is never cut off and never leaves
      its box. The name owns the top of the card; the chips own the bottom
      left and the state badge the bottom right, so nothing overlaps the
      words. If the reference data ever grows longer names, widen COL_W and
      the clamp together — test/alignment.js measures it. */
-  .node { position: absolute; width: 184px; height: 72px; border-radius: 10px; box-sizing: border-box; padding: 7px 9px 22px 42px; font-family: var(--font-body); font-size: 12px; font-weight: 500; line-height: 1.25; color: var(--color-text); cursor: pointer; text-align: left; border: 1.5px solid; overflow: hidden; }
-  .node .n-icon { position: absolute; left: 11px; top: 8px; width: 24px; height: 24px; border-radius: 6px; background: var(--color-surface-active); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--color-accent-hover); }
-  .node .n-name { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; hyphens: auto; }
-  .node .n-chips { position: absolute; left: 42px; bottom: 4px; display: flex; gap: 5px; }
-  .node .n-chips i { width: 15px; height: 15px; border-radius: 4px; background: var(--color-surface-active); font-style: normal; font-size: 9px; line-height: 15px; text-align: center; color: var(--color-text-subtle); }
-  .node .n-chips i.more { background: none; color: var(--color-text-faint); }
-  .node .n-boost { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--color-accent); }
-  .node .n-lock { position: absolute; right: 8px; bottom: 4px; font-size: 11px; line-height: 15px; color: var(--color-text-faint); }
-  .node .n-date { position: absolute; right: 8px; bottom: 4px; font-size: 10px; line-height: 15px; color: var(--color-text-subtle); font-weight: 400; }
-  .node .n-tag { position: absolute; right: 8px; bottom: 4px; font-size: 10px; line-height: 15px; color: var(--color-text-subtle); font-weight: 400; }
-  .node.is-done { background: var(--color-surface-active); border-color: var(--color-accent-hover); }
-  .node.is-open { background: none; border-color: var(--color-text-subtle); }
-  .node.is-open .n-name { color: var(--color-text); }
-  .node.is-locked { background: var(--color-surface); border-color: var(--color-border); border-width: 1px; }
-  .node.is-locked .n-name { color: var(--color-text-faint); }
-  .node.is-bypassed { background: var(--color-surface); border-style: dashed; border-color: var(--color-accent); opacity: .85; }
-  .node.is-bypassed .n-name { color: var(--color-text-subtle); }
-  .node.is-fogged { background: var(--color-surface); border: none; cursor: default; }
-  .node.is-fogged .n-icon { background: none; color: var(--color-text-faint); opacity: .4; font-size: 16px; }
-  .node.is-dim { opacity: .6; }
-  .node.is-picked { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-  .node:focus-visible { outline: 2px solid var(--color-focus-ring); }
+  
+  #view-the-tree .node { position: absolute; width: 184px; height: 72px; border-radius: 10px; box-sizing: border-box; padding: 7px 9px 22px 42px; font-family: var(--font-body); font-size: 12px; font-weight: 500; line-height: 1.25; color: var(--color-text); cursor: pointer; text-align: left; border: 1.5px solid; overflow: hidden; }
+  
+  #view-the-tree .node .n-icon { position: absolute; left: 11px; top: 8px; width: 24px; height: 24px; border-radius: 6px; background: var(--color-surface-active); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--color-accent-hover); }
+  
+  #view-the-tree .node .n-name { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; hyphens: auto; }
+  
+  #view-the-tree .node .n-chips { position: absolute; left: 42px; bottom: 4px; display: flex; gap: 5px; }
+  
+  #view-the-tree .node .n-chips i { width: 15px; height: 15px; border-radius: 4px; background: var(--color-surface-active); font-style: normal; font-size: 9px; line-height: 15px; text-align: center; color: var(--color-text-subtle); }
+  
+  #view-the-tree .node .n-chips i.more { background: none; color: var(--color-text-faint); }
+  
+  #view-the-tree .node .n-boost { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--color-accent); }
+  
+  #view-the-tree .node .n-lock { position: absolute; right: 8px; bottom: 4px; font-size: 11px; line-height: 15px; color: var(--color-text-faint); }
+  
+  #view-the-tree .node .n-date { position: absolute; right: 8px; bottom: 4px; font-size: 10px; line-height: 15px; color: var(--color-text-subtle); font-weight: 400; }
+  
+  #view-the-tree .node .n-tag { position: absolute; right: 8px; bottom: 4px; font-size: 10px; line-height: 15px; color: var(--color-text-subtle); font-weight: 400; }
+  
+  #view-the-tree .node.is-done { background: var(--color-surface-active); border-color: var(--color-accent-hover); }
+  
+  #view-the-tree .node.is-open { background: none; border-color: var(--color-text-subtle); }
+  
+  #view-the-tree .node.is-open .n-name { color: var(--color-text); }
+  
+  #view-the-tree .node.is-locked { background: var(--color-surface); border-color: var(--color-border); border-width: 1px; }
+  
+  #view-the-tree .node.is-locked .n-name { color: var(--color-text-faint); }
+  
+  #view-the-tree .node.is-bypassed { background: var(--color-surface); border-style: dashed; border-color: var(--color-accent); opacity: .85; }
+  
+  #view-the-tree .node.is-bypassed .n-name { color: var(--color-text-subtle); }
+  
+  #view-the-tree .node.is-fogged { background: var(--color-surface); border: none; cursor: default; }
+  
+  #view-the-tree .node.is-fogged .n-icon { background: none; color: var(--color-text-faint); opacity: .4; font-size: 16px; }
+  
+  #view-the-tree .node.is-dim { opacity: .6; }
+  
+  #view-the-tree .node.is-picked { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  
+  #view-the-tree .node:focus-visible { outline: 2px solid var(--color-focus-ring); }
 
   /* ---- The card ---- */
-  .tcard { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-3); }
-  .tcard h3 { margin: 0; font-size: var(--text-lg); }
-  .tcard .t-state { display: inline-block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding: 2px var(--space-2); border-radius: var(--radius-pill); border: 1px solid var(--color-border); color: var(--color-text-muted); margin-bottom: var(--space-2); }
-  .tcard .t-state.is-done { color: var(--color-positive); border-color: var(--color-positive); }
-  .tcard .t-state.is-open { color: var(--color-accent-hover); border-color: var(--color-accent); }
-  .tcard .t-state.is-bypassed { color: var(--color-caution); border-color: var(--color-caution); border-style: dashed; }
-  .tcard ul { margin: var(--space-2) 0 0; padding-left: 18px; font-size: var(--text-sm); }
-  .tcard .t-reason a { color: var(--color-accent-hover); }
-  .tcard .t-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
-  .tcard .t-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
-  .tcard .t-line { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
-  .tcard .t-line strong { color: var(--color-text); font-weight: 600; }
-  .tcard .t-tier { display: inline-block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding: 2px var(--space-2); border-radius: var(--radius-pill); border: 1px solid var(--color-border); color: var(--color-text-faint); margin: 0 0 var(--space-2) var(--space-2); }
-  .tcard .t-proof { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
-  .tcard .t-boost { height: 6px; border-radius: 3px; background: var(--color-surface); margin-top: var(--space-2); overflow: hidden; }
-  .tcard .t-boost i { display: block; height: 100%; background: var(--color-accent); }
+  
+  #view-the-tree .tcard { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-the-tree .tcard h3 { margin: 0; font-size: var(--text-lg); }
+  
+  #view-the-tree .tcard .t-state { display: inline-block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding: 2px var(--space-2); border-radius: var(--radius-pill); border: 1px solid var(--color-border); color: var(--color-text-muted); margin-bottom: var(--space-2); }
+  
+  #view-the-tree .tcard .t-state.is-done { color: var(--color-positive); border-color: var(--color-positive); }
+  
+  #view-the-tree .tcard .t-state.is-open { color: var(--color-accent-hover); border-color: var(--color-accent); }
+  
+  #view-the-tree .tcard .t-state.is-bypassed { color: var(--color-caution); border-color: var(--color-caution); border-style: dashed; }
+  
+  #view-the-tree .tcard ul { margin: var(--space-2) 0 0; padding-left: 18px; font-size: var(--text-sm); }
+  
+  #view-the-tree .tcard .t-reason a { color: var(--color-accent-hover); }
+  
+  #view-the-tree .tcard .t-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+  
+  #view-the-tree .tcard .t-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-the-tree .tcard .t-line { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  
+  #view-the-tree .tcard .t-line strong { color: var(--color-text); font-weight: 600; }
+  
+  #view-the-tree .tcard .t-tier { display: inline-block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding: 2px var(--space-2); border-radius: var(--radius-pill); border: 1px solid var(--color-border); color: var(--color-text-faint); margin: 0 0 var(--space-2) var(--space-2); }
+  
+  #view-the-tree .tcard .t-proof { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  
+  #view-the-tree .tcard .t-boost { height: 6px; border-radius: 3px; background: var(--color-surface); margin-top: var(--space-2); overflow: hidden; }
+  
+  #view-the-tree .tcard .t-boost i { display: block; height: 100%; background: var(--color-accent); }
 
   /* ---- Warps ---- */
-  ul.warps { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  ul.warps li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
-  ul.warps li:first-child { border-top: none; }
-  ul.warps small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
-  ul.warps .w-on { color: var(--color-caution); }
-  ul.warps .w-off { color: var(--color-text-faint); }
+  
+  #view-the-tree ul.warps { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-tree ul.warps li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  
+  #view-the-tree ul.warps li:first-child { border-top: none; }
+  
+  #view-the-tree ul.warps small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  
+  #view-the-tree ul.warps .w-on { color: var(--color-caution); }
+  
+  #view-the-tree ul.warps .w-off { color: var(--color-text-faint); }
 
   /* ---- The band cutscene, once ---- */
-  .reveal { border: 1.5px dashed var(--color-accent); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-3); background: var(--color-surface-active); }
-  .reveal strong { display: block; font-family: var(--font-display); font-size: var(--text-lg); }
+  
+  #view-the-tree .reveal { border: 1.5px dashed var(--color-accent); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-3); background: var(--color-surface-active); }
+  
+  #view-the-tree .reveal strong { display: block; font-family: var(--font-display); font-size: var(--text-lg); }
 
   /* ---- The phone: Mario's map, not Civ's board ---- */
-  .serp { display: none; }
+  
+  #view-the-tree .serp { display: none; }
   @media (max-width: 700px) {
-    .board-wrap { display: none; }
-    .serp { display: block; margin-top: var(--space-3); }
-    .serp .s-band { margin-top: var(--space-4); }
-    .serp .s-band-head { font-size: 11px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); position: sticky; top: 0; background: var(--color-bg); padding: 6px 0; z-index: 2; }
-    .serp .s-band-head small { color: var(--color-text-faint); text-transform: none; letter-spacing: 0; margin-left: 6px; }
-    .serp .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 24px; position: relative; padding: 6px 0; }
-    .serp .s-grid .node { position: relative; width: auto; height: 68px; padding-left: 36px; }
-    .serp .s-grid .node .n-icon { width: 20px; height: 20px; left: 10px; top: 8px; font-size: 11px; }
-    .serp .s-grid .node .n-chips { left: 36px; }
-    .serp .s-grid .node .n-chips i:nth-child(n+3):not(.more) { display: none; }
-    .serp .s-grid > .node:nth-child(4n+3) { grid-column: 2; }
-    .serp .s-grid > .node:nth-child(4n+4) { grid-column: 1; }
-    .serp .here { width: 12px; height: 12px; border-radius: 50%; background: var(--color-accent); display: inline-block; margin-right: 6px; box-shadow: 0 0 0 4px var(--color-surface-active); }
-    @media (prefers-reduced-motion: no-preference) { .serp .here { animation: pulse 2s infinite; } }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 2px var(--color-surface-active); } 50% { box-shadow: 0 0 0 6px var(--color-surface-active); } 100% { box-shadow: 0 0 0 2px var(--color-surface-active); } }
-    .serp .s-fog { border: 1px dashed var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); color: var(--color-text-faint); font-size: var(--text-sm); text-align: center; }
+    
+  #view-the-tree .board-wrap { display: none; }
+    
+  #view-the-tree .serp { display: block; margin-top: var(--space-3); }
+    
+  #view-the-tree .serp .s-band { margin-top: var(--space-4); }
+    
+  #view-the-tree .serp .s-band-head { font-size: 11px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); position: sticky; top: 0; background: var(--color-bg); padding: 6px 0; z-index: 2; }
+    
+  #view-the-tree .serp .s-band-head small { color: var(--color-text-faint); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+    
+  #view-the-tree .serp .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 24px; position: relative; padding: 6px 0; }
+    
+  #view-the-tree .serp .s-grid .node { position: relative; width: auto; height: 68px; padding-left: 36px; }
+    
+  #view-the-tree .serp .s-grid .node .n-icon { width: 20px; height: 20px; left: 10px; top: 8px; font-size: 11px; }
+    
+  #view-the-tree .serp .s-grid .node .n-chips { left: 36px; }
+    
+  #view-the-tree .serp .s-grid .node .n-chips i:nth-child(n+3):not(.more) { display: none; }
+    
+  #view-the-tree .serp .s-grid > .node:nth-child(4n+3) { grid-column: 2; }
+    
+  #view-the-tree .serp .s-grid > .node:nth-child(4n+4) { grid-column: 1; }
+    
+  #view-the-tree .serp .here { width: 12px; height: 12px; border-radius: 50%; background: var(--color-accent); display: inline-block; margin-right: 6px; box-shadow: 0 0 0 4px var(--color-surface-active); }
+    @media (prefers-reduced-motion: no-preference) { 
+  #view-the-tree .serp .here { animation: pulse 2s infinite; } }
+    @keyframes pulse { 
+  #view-the-tree 0% { box-shadow: 0 0 0 2px var(--color-surface-active); } 
+  #view-the-tree 50% { box-shadow: 0 0 0 6px var(--color-surface-active); } 
+  #view-the-tree 100% { box-shadow: 0 0 0 2px var(--color-surface-active); } }
+    
+  #view-the-tree .serp .s-fog { border: 1px dashed var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); color: var(--color-text-faint); font-size: var(--text-sm); text-align: center; }
   }
+
+  /* ---- The three, from rooms/stacker.html (D-244) ---- */
+  
+  #view-the-three .room-back:hover { text-decoration: underline; }
+  
+  #view-the-three section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-the-three .stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); margin: 0 0 var(--space-4); }
+  
+  #view-the-three .stages a { display: block; text-align: center; font-size: var(--text-xs); text-decoration: none; color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-1); }
+  
+  #view-the-three .stages a b { display: block; font-family: var(--font-display); font-size: var(--text-lg); color: var(--color-text); }
+
+  
+  #view-the-three .line { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-three .line:first-child { border-top: none; }
+  
+  #view-the-three .line .nm { font-size: var(--text-sm); min-width: 0; }
+  
+  #view-the-three .line .nm small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  
+  #view-the-three .line .nm .st { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 1px 6px; border-radius: var(--radius-sm); border: 1px solid var(--color-border-strong); color: var(--color-text-muted); margin-left: var(--space-1); vertical-align: middle; }
+  
+  #view-the-three .line .nm .st.is-habit { background: var(--color-accent); color: var(--color-accent-contrast); border-color: transparent; }
+  
+  #view-the-three .line .nm .st.is-done { background: var(--color-positive); color: #04120a; border-color: transparent; }
+  
+  #view-the-three .line .nm .st.is-locked { color: var(--color-text-faint); }
+  
+  #view-the-three .line .acts { display: inline-flex; gap: var(--space-1); flex-wrap: wrap; justify-content: flex-end; }
+  
+  #view-the-three .line .acts button { min-height: 36px; }
+  
+  #view-the-three .line .acts .on { border-color: var(--color-accent); background: var(--color-surface-active); }
+  
+  #view-the-three .line .meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-the-three .line .meta b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  
+  #view-the-three .line .meta .auto { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+  
+  #view-the-three .line .meta .auto.is-on { color: var(--color-text); }
+  
+  #view-the-three .line .meta .auto:before { content: ''; width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--color-border-strong); display: inline-block; }
+  
+  #view-the-three .line .meta .auto.is-on:before { background: var(--color-accent); border-color: var(--color-accent); }
+
+  
+  #view-the-three .figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-4); }
+  @media (max-width: 420px) { 
+  #view-the-three .figures { grid-template-columns: 1fr 1fr; } }
+  
+  #view-the-three .figure-cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; min-height: 96px; }
+  
+  #view-the-three .figure-cell .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  
+  #view-the-three .figure-cell .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  
+  #view-the-three .figure-cell .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text-faint); }
+  
+  #view-the-three .figure-cell .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+
+  
+  #view-the-three .next { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-4); display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; }
+  
+  #view-the-three .next .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  
+  #view-the-three .next h3 { margin: var(--space-1) 0 0; font-size: var(--text-md); }
+  
+  #view-the-three .next p { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+
+  
+  #view-the-three .levers { display: flex; gap: var(--space-1); flex-wrap: wrap; margin: 0 0 var(--space-3); }
+  
+  #view-the-three .levers button { font-size: var(--text-xs); min-height: 32px; padding: 0 var(--space-3); }
+  
+  #view-the-three .levers button.is-on { border-color: var(--color-accent); background: var(--color-surface-active); }
+
+  
+  #view-the-three .stack { border-top: 1px solid var(--color-border); padding: var(--space-3) 0; }
+  
+  #view-the-three .stack:first-child { border-top: none; }
+  
+  #view-the-three .stack h3 { margin: 0; font-size: var(--text-md); display: flex; justify-content: space-between; gap: var(--space-2); }
+  
+  #view-the-three .stack h3 .val { font-family: var(--font-display); font-variant-numeric: tabular-nums; }
+  
+  #view-the-three .stack .why { font-size: var(--text-xs); color: var(--color-text-faint); margin: 2px 0 var(--space-2); }
+  
+  #view-the-three .wf { display: grid; grid-template-columns: 1fr auto auto; gap: 2px var(--space-2); font-size: var(--text-sm); align-items: center; }
+  
+  #view-the-three .wf .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--color-surface-raised); overflow: hidden; margin-bottom: var(--space-1); }
+  
+  #view-the-three .wf .bar i { display: block; height: 100%; background: var(--color-accent); }
+  
+  #view-the-three .wf .off { color: var(--color-text-faint); }
+  
+  #view-the-three .wf .mult { font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-the-three .wf .amt { font-variant-numeric: tabular-nums; text-align: right; }
+  
+  #view-the-three .wf .cap { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); border-top: 1px dashed var(--color-border); padding-top: var(--space-1); margin-top: var(--space-1); }
+
+  
+  #view-the-three .three { display: grid; grid-template-columns: 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (min-width: 720px) { 
+  #view-the-three .three { grid-template-columns: repeat(3, 1fr); } }
+  
+  #view-the-three .curve { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
+  
+  #view-the-three .curve .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  
+  #view-the-three .curve .slaf-chart { margin-top: var(--space-2); }
+  
+  #view-the-three .curve p { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  
+  #view-the-three .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  
+  #view-the-three .refused { font-size: var(--text-sm); color: var(--color-caution); margin: var(--space-2) 0 0; min-height: 1.2em; }
+  
+  #view-the-three .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+  
+  #view-the-three .notice { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); font-size: var(--text-sm); }
+  
+  #view-the-three .notice.is-error { border-color: #b5544d; }
+
+  /* ---- The doing, from rooms/exercises.html (D-244) ---- */
+  
+  #view-the-doing section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-doing .card-gap { margin-top: var(--space-4); }
+  
+  #view-the-doing .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  
+  #view-the-doing .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-accent-hover); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; }
+  /* 88 of these on a phone at 23px tall was a row of targets a finger
+     could not hit. A mouse keeps the compact chip. D-136. */
+  @media (pointer: coarse) { 
+  #view-the-doing .pill { min-height: 32px; padding: 4px var(--space-3); } }
+  
+  #view-the-doing .pill:hover { border-color: var(--color-accent); }
+  
+  #view-the-doing .pill.is-quiet { color: var(--color-text-faint); }
+  
+  #view-the-doing .tools { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; margin-top: var(--space-3); }
+  
+  #view-the-doing .tools label { font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); }
+  
+  #view-the-doing .tools select { font: inherit; font-size: var(--text-sm); background: var(--color-surface-raised); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 4px var(--space-2); }
+  
+  #view-the-doing .counts { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
+  
+  #view-the-doing ul.ex { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-doing ul.ex li { display: grid; grid-template-columns: 28px 1fr auto; gap: var(--space-2) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: start; }
+  
+  #view-the-doing ul.ex li:first-child { border-top: none; }
+  
+  #view-the-doing ul.ex .k { width: 28px; height: 28px; border-radius: 6px; background: var(--color-surface-active); display: flex; align-items: center; justify-content: center; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-subtle); }
+  
+  #view-the-doing ul.ex .k.is-run { color: var(--color-accent-hover); }
+  
+  #view-the-doing ul.ex .k.is-canon { color: var(--color-caution); }
+  
+  #view-the-doing ul.ex .t { font-weight: 600; color: var(--color-text); }
+  
+  #view-the-doing ul.ex .m { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 2px; }
+  
+  #view-the-doing ul.ex .m a { color: var(--color-accent-hover); }
+  
+  #view-the-doing ul.ex li.is-done .t { color: var(--color-text-muted); }
+  
+  #view-the-doing ul.ex li.is-done .k { color: var(--color-positive); }
+  
+  #view-the-doing ul.ex li.is-locked .t { color: var(--color-text-faint); }
+  
+  #view-the-doing ul.ex .r { display: block; margin-top: 4px; color: var(--color-text-muted); }
+  
+  #view-the-doing ul.ex .acts { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
+  <a class="room-back" href="../map.html">← All rooms</a>
   <h1>The Skill Tree</h1>
-  <p class="room-lede">What the next hour does. Every money skill in five bands: open, locked with the reason, done, or skipped because you are already past it. The ladder above it says what the next dollar does, and the two unlock each other.</p>
+  <p class="room-lede">What the next hour does. The whole tree, three skills to work on, and the exercises themselves.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Three readings of the same skills">
+    <a href="#the-tree" data-view="view-the-tree">The tree</a>
+    <a href="#the-three" data-view="view-the-three">The three</a>
+    <a href="#the-doing" data-view="view-the-doing">The doing</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
 
+  <!-- ===== THE TREE (was rooms/skill-tree.html) ===== -->
+  <section id="view-the-tree">
+  <p class="slaf-lede">Every money skill in five bands: open, locked with the reason, done, or skipped because you are already past it.</p>
   <section class="slaf-card" id="next">
     <span class="slaf-eyebrow">What opens next</span>
     <h2 style="margin:var(--space-2) 0 0">Three you could start today</h2>
@@ -239,10 +547,116 @@
     <span class="slaf-eyebrow">Reading from elsewhere</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
   </section>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. A skill marked done is your word; the app awards nothing for using it. Your numbers stay in this browser.
-  </p>
+  <!-- ===== THE THREE (was rooms/stacker.html) ===== -->
+  <section id="view-the-three" hidden>
+  <p class="slaf-lede">Three money skills at a time. Did it or didn’t, what today was worth, and what the ledger becomes by 65.</p>
+  <nav class="stages" aria-label="The four screens">
+    <a href="#today"><b>1</b>Today</a>
+    <a href="#browse"><b>2</b>Every skill</a>
+    <a href="#stacks"><b>3</b>The stacks</a>
+    <a href="#curves"><b>4</b>Three curves</a>
+  </nav>
+
+  <section class="slaf-card" id="today">
+    <span class="slaf-eyebrow">Today</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)" id="today-title">What is on</h2>
+    <p class="slaf-hint" id="today-hint" style="margin:0 0 var(--space-3)"></p>
+    <div id="today-list"></div>
+    <p class="refused" id="today-note" aria-live="polite"></p>
+    <div class="figures">
+      <div class="figure-cell"><span class="cap">Today was worth</span><span class="big" id="fig-today">—</span><span class="sub" id="fig-today-sub"></span></div>
+      <div class="figure-cell"><span class="cap">The ledger</span><span class="big" id="fig-ledger">—</span><span class="sub" id="fig-ledger-sub"></span></div>
+      <div class="figure-cell"><span class="cap">At 65</span><span class="big" id="fig-end">—</span><span class="sub" id="fig-end-sub"></span></div>
+    </div>
+    <div id="ledger-ring"></div>
+    <div class="next" id="next-card" hidden>
+      <div><span class="cap">Next</span><h3 id="next-name"></h3><p id="next-why"></p></div>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-next">Take it on</button>
+    </div>
+    <p class="why" id="today-why"></p>
+  </section>
+
+  <section class="slaf-card" id="browse" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Every skill</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">By lever</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Each skill trains one of the seven levers. A once-skill the household
+      already proves is marked done here without asking; a habit is logged a
+      day at a time; a periodic one comes due again. Best return on effort
+      first, within a lever.
+    </p>
+    <div class="levers" id="levers" role="group" aria-label="Filter by lever"></div>
+    <div id="browse-list"></div>
+    <p class="refused" id="browse-note" aria-live="polite"></p>
+    <h3 style="margin:var(--space-5) 0 var(--space-2);font-size:var(--text-md)">Thirty of the hundred ways</h3>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)" id="ways-hint"></p>
+    <div id="ways-list"></div>
+  </section>
+
+  <section class="slaf-card" id="stacks" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The stacks</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Skills that compound on each other</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      A stack is worth its skills' values, times the synergy between the ones
+      you are actually doing, up to a cap — The Kitchen can never claim more
+      than the food you buy.
+    </p>
+    <div id="stack-bars"></div>
+    <div id="stack-list" style="margin-top:var(--space-4)"></div>
+  </section>
+
+  <section class="slaf-card" id="curves" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Three curves</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">The poster, the practice, the ledger</h2>
+    <div class="three">
+      <div class="curve"><span class="cap">The poster: 1% a day</span><div id="curve-poster"></div><p id="curve-poster-p"></p></div>
+      <div class="curve"><span class="cap">Capability</span><div id="curve-cap"></div><p id="curve-cap-p"></p></div>
+      <div class="curve"><span class="cap">The ledger, to 65</span><div id="curve-ledger"></div><p id="curve-ledger-p"></p></div>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="st-reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="st-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ===== THE DOING (was rooms/exercises.html) ===== -->
+  <section id="view-the-doing" hidden>
+  <p class="slaf-lede">Every doable thing in one place, fifteen minutes or less by default — the first fifteen minutes of a skill, or a named exercise from the books.</p>
+  <section class="slaf-card" id="list">
+    <span class="slaf-eyebrow">What applies to you</span>
+    <h2 style="margin:var(--space-2) 0 0">Sorted from the band you are in</h2>
+    <div class="tools">
+      <label for="pick-kind">Kind</label>
+      <select id="pick-kind" aria-label="Which kind of exercise">
+        <option value="">All kinds</option><option value="micro">First fifteen minutes</option><option value="canon">From the canon</option><option value="run">A calculation on your numbers</option><option value="dare">Dares</option><option value="quest">Quests</option>
+      </select>
+      <label for="pick-time">Time</label>
+      <select id="pick-time" aria-label="How long">
+        <option value="15">15 minutes or less</option><option value="60">An hour or less</option><option value="">Any length</option>
+      </select>
+    </div>
+    <div class="counts" id="ex-counts"></div>
+    <ul class="ex" id="rows"></ul>
+    <p class="why">A run stays locked until the number it needs is entered, and says which. A canon exercise is described here in our own words and credits the book; nothing from the book is reproduced.</p>
+  </section>
+
+  <section class="slaf-card card-gap" id="runs">
+    <span class="slaf-eyebrow">What the runs found</span>
+    <h2 style="margin:var(--space-2) 0 0">Results kept, to compare later</h2>
+    <ul class="ex" id="results"></ul>
+  </section>
+
+  <section class="slaf-card card-gap" id="ex-reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="ex-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. Practising a skill is not the same as having money; nothing here is sent anywhere.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -261,11 +675,93 @@
 <script src="../engines/tier0.js"></script>
 <script src="../engines/foo.js"></script>
 <script src="../engines/skilltree.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/rating.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/swan.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/rerank.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script src="../engines/vpw.js"></script>
+<script src="../engines/ss.js"></script>
+<script src="../shared/expr.js"></script>
+<script src="../engines/events.js"></script>
+<script src="../engines/skills.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/decumulation.js"></script>
+<script src="../engines/exercises.js"></script>
 <script>
+/* ---- the tree, the three, and the doing (D-244) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   The hash still reaches it — an old link must land somewhere honest — and
+   the reading says for whom it is, which is what Gate.why is for. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-the-three', match: /^#(the-three|st-|today|stacks|stack-|curves|curve-|levers|next-card|browse|fig-|ledger-ring|ways-)/ },
+    { id: 'view-the-doing', match: /^#(the-doing|ex-|list|pick-kind|pick-time|results|rows|runs)/ },
+    { id: 'view-the-tree', match: /.*/ }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. If it is gated away, fall to the first one that is not. */
+    var on = open(asked) ? asked : VIEWS.filter(open)[0] || asked;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('skill-tree');
+  if (SLAF.Progress) SLAF.Progress.mount('skill-tree');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-the-tree, from rooms/skill-tree.html (D-244) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Registry = SLAF.Registry, Ownership = SLAF.Ownership, SkillTree = SLAF.SkillTree;
-  var ROOM_ID = 'skill-tree';
+  var ROOM_ID = 'skill-tree';   /* the room this reading lives in */
   var TABLES = null;
   var picked = null;          /* the node whose card is open */
   var treeFilter = 'all';
@@ -566,18 +1062,6 @@
       render();
     }
   });
-
-  function jumpToHash() {
-    if (!location.hash) return;
-    var id = location.hash.slice(1);
-    if (id.indexOf('skill-') === 0) { picked = id.slice(6); render(); }
-    var t = document.getElementById(id);
-    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-  window.addEventListener('hashchange', jumpToHash);
-
-  Spine.registerRoom(ROOM_ID);
-  SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
   Reference.load().then(function (tables) {
     TABLES = tables;
@@ -597,8 +1081,437 @@
     }
     render();
     if (treeFilter !== 'all') el('pick-tree').value = treeFilter;
-    jumpToHash();
   }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-three, from rooms/stacker.html (D-244) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Skills = SLAF.Skills, Benchmarks = SLAF.Benchmarks;
+
+  var ROOM_ID = 'skill-tree';   /* the room this reading lives in */
+  var TABLES = null;
+  var lever = 'all';
+  var LEVERS = [['all', 'All'], ['earner', 'Earner'], ['keeper', 'Keeper'], ['builder', 'Builder'], ['compounder', 'Compounder'],
+                ['landholder', 'Landholder'], ['anchor', 'Anchor'], ['speculator', 'Speculator']];
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function fmt(c) { return Money.formatCents(c); }
+  function fmtSmall(c) { return Money.formatCents(c, { decimals: 2 }); }
+  function today() { return Skills.dayISO(); }
+  function h() { return Spine.getProfile(); }
+
+  /* Every move the engine makes comes back as a patch or a refusal; the
+     patch is written, the refusal is shown where the tap happened. */
+  function apply(result, noteId) {
+    var note = el(noteId);
+    if (Money.isOk(result)) { note.textContent = ''; Spine.updateProfile(result.value); return true; }
+    note.textContent = result.reason;
+    return false;
+  }
+
+  function stateLabel(st, skill, stored) {
+    if (st === 'done' && skill.kind === 'periodic' && stored && stored.dueOn) return 'done · due ' + stored.dueOn;
+    return st;
+  }
+  function stateChip(st, skill, stored) {
+    return '<span class="st is-' + st + '">' + esc(stateLabel(st, skill, stored)) + '</span>';
+  }
+  function valueLine(skill, v) {
+    if (!Money.isOk(v)) return esc(v.reason);
+    if (v.risk) return 'worth $0 a year and something in a bad one';
+    return 'about <b>' + fmt(v.value) + '</b> a year';
+  }
+
+  /* ---- Today ------------------------------------------------------------------ */
+
+  function renderToday() {
+    var t = Skills.today(h(), TABLES, { today: today() });
+    var list = el('today-list');
+    el('today-title').textContent = t.lines.length ? 'What is on' : 'Nothing on yet';
+    el('today-hint').textContent = t.equippedCount + ' of ' + t.maxEquipped + ' on. '
+      + (t.lines.length ? 'Tap did or didn’t for each habit; mark a once-skill or a periodic one done when it is.' : 'Take one on from the list below, or the suggestion.');
+    list.innerHTML = t.lines.map(function (line) {
+      var s = line.skill, stored = h().skills[s.id] || {};
+      var acts = '';
+      if (s.kind === 'habit') {
+        acts = '<button type="button" class="slaf-btn' + (line.loggedToday === true ? ' on' : '') + '" data-log="did" data-skill="' + esc(s.id) + '">Did</button>'
+          + '<button type="button" class="slaf-btn' + (line.loggedToday === false ? ' on' : '') + '" data-log="didnt" data-skill="' + esc(s.id) + '">Didn’t</button>';
+      } else if (s.kind === 'once') {
+        acts = '<button type="button" class="slaf-btn" data-done="' + esc(s.id) + '">Done</button>';
+      } else {
+        acts = '<button type="button" class="slaf-btn' + (line.due ? ' slaf-btn--primary' : '') + '" data-done="' + esc(s.id) + '">' + (line.due ? 'Due — done' : 'Done today') + '</button>';
+      }
+      acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-drop="' + esc(s.id) + '" aria-label="Put ' + esc(s.name) + ' down">Drop</button>';
+      var meta = [];
+      if (s.kind === 'habit') meta.push('<span><b>' + line.last30 + '</b> of the last 30 days</span>');
+      if (s.kind === 'habit' && line.secondMisses) meta.push('<span><b>' + line.secondMisses + '</b> second miss' + (line.secondMisses === 1 ? '' : 'es') + '</span>');
+      meta.push('<span>' + (Money.isEntered(line.perDayCents) ? '<b>' + fmtSmall(line.perDayCents) + '</b> a day' : (line.risk ? 'worth $0 a day, by design' : 'not priced yet')) + '</span>');
+      if (Money.isEntered(line.valueCents) && line.valueCents > 0) {
+        meta.push('<span class="auto' + (line.automated ? ' is-on' : '') + '" data-auto="' + esc(s.id) + '" role="button" tabindex="0">' + (line.automated ? 'runs by itself' : 'runs by itself?') + '</span>');
+      }
+      return '<div class="line" data-skill-line="' + esc(s.id) + '"><span class="nm">' + esc(s.name) + stateChip(line.state, s, stored)
+        + '<small>' + esc(s.kind === 'habit' ? 'habit · ' + s.lever : s.kind === 'once' ? 'once · ' + s.lever : 'every ' + s.everyDays + ' days · ' + s.lever) + '</small></span>'
+        + '<span class="acts">' + acts + '</span><span class="meta">' + meta.join('') + '</span></div>';
+    }).join('');
+
+    setFigure('fig-today', Money.ok(t.todayCents), fmtSmall, t.todayCents ? 'the rows logged today, at each skill’s value ÷ 365' : 'nothing logged today');
+    setFigure('fig-ledger', Money.ok(t.ledgerCents), fmt, ledgerSub(t));
+    setFigure('fig-end', t.atEnd, fmt, Money.isOk(t.atEnd)
+      ? 'the ledger × ' + (Math.round(t.atEnd.multiplier * 10) / 10) + ', a dollar at ' + t.atEnd.age + ' by ' + t.atEnd.endAge + ' on the wealth multiplier'
+      : '');
+
+    var card = el('next-card');
+    if (Money.isOk(t.next) && t.equippedCount < t.maxEquipped) {
+      card.hidden = false;
+      el('next-name').textContent = t.next.value.name;
+      el('next-why').textContent = t.next.why + (t.next.fooStep !== null ? ' · you are at FOO step ' + t.next.fooStep : '');
+      el('btn-next').setAttribute('data-skill', t.next.value.id);
+    } else {
+      card.hidden = true;
+    }
+    el('today-why').textContent = 'A habit counts while it is logged: seven of thirty days makes it practicing, twenty-one a habit; fourteen unlogged days and it slips back, forty-five and it is off. The ledger keeps every row either way.';
+  }
+  function ledgerSub(t) {
+    var rows = (h().practiceLedger || []).length;
+    var d = Spine.snapshotDelta('practiceLedgerCents', Money.ok(t.ledgerCents));
+    var since = d && Money.isEntered(d.delta) && d.delta !== 0 ? ' · ' + (d.delta > 0 ? '+' : '−') + fmt(Math.abs(d.delta)) + ' since your last snapshot' : '';
+    return rows + ' row' + (rows === 1 ? '' : 's') + since;
+  }
+  function setFigure(id, result, format, sub) {
+    var node = el(id);
+    if (Money.isOk(result)) { node.textContent = format(result.value); node.className = 'big'; }
+    else { node.textContent = result.reason; node.className = 'big is-incomplete'; }
+    el(id + '-sub').textContent = sub;
+  }
+
+  var todayForm = SLAF.LiveForm.guard(el('today-list'), renderToday);
+
+  /* Every control in these lists is a button. A tap leaves focus on the
+     button it landed on, which the guard would read as "someone is in
+     here" and hold the rebuild — so after a tap has been acted on, the
+     lists are rebuilt at once. There is no typed input to protect. */
+
+  el('today-list').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-log]');
+    if (b) { apply(Skills.logDay(h(), b.getAttribute('data-skill'), b.getAttribute('data-log') === 'did', TABLES, today()), 'today-note'); rebuilt(); return; }
+    b = evt.target.closest('[data-done]');
+    if (b) { apply(Skills.markDone(h(), b.getAttribute('data-done'), TABLES, today()), 'today-note'); rebuilt(); return; }
+    b = evt.target.closest('[data-drop]');
+    if (b) { apply(Skills.drop(h(), b.getAttribute('data-drop')), 'today-note'); rebuilt(); return; }
+    b = evt.target.closest('[data-auto]');
+    if (b) { var id = b.getAttribute('data-auto'); apply(Skills.setAutomated(h(), id, !(h().skills[id] || {}).automated), 'today-note'); rebuilt(); }
+  });
+  el('today-list').addEventListener('keydown', function (evt) {
+    if (evt.key !== 'Enter' && evt.key !== ' ') return;
+    var b = evt.target.closest('[data-auto]');
+    if (b) { evt.preventDefault(); b.click(); }
+  });
+  el('btn-next').addEventListener('click', function () {
+    apply(Skills.equip(h(), el('btn-next').getAttribute('data-skill'), TABLES, today()), 'today-note'); rebuilt();
+  });
+
+  /* ---- Browse ------------------------------------------------------------------ */
+
+  function skillRow(s, noteId) {
+    var hh = h();
+    var st = Skills.state(hh, s);
+    var stored = hh.skills[s.id] || null;
+    var v = Skills.valuePerYear(hh, s, TABLES);
+    var hours = Skills.effortHours(s, TABLES);
+    var acts = '';
+    if (st === 'available') acts += '<button type="button" class="slaf-btn" data-equip="' + esc(s.id) + '">Take on</button>';
+    if (st === 'available' && s.kind !== 'habit') acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-done="' + esc(s.id) + '">Already done</button>';
+    if (st === 'trial' || st === 'practicing' || st === 'habit') acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-drop="' + esc(s.id) + '">Drop</button>';
+    if (st === 'done' && s.kind === 'periodic' && Skills.due(hh, s, today())) acts += '<button type="button" class="slaf-btn" data-done="' + esc(s.id) + '">Due — done</button>';
+    if (st === 'done' && stored && stored.verifiedBy === 'self') acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-drop="' + esc(s.id) + '">Not done</button>';
+    var need = st === 'locked' ? Skills.unmetPrereqs(hh, s).map(function (id) { var p = Skills.byId(TABLES, id); return p ? p.name : id; }) : [];
+    var meta = ['<span>' + valueLine(s, v) + '</span>',
+      '<span>' + (Math.round(hours * 10) / 10) + ' h a year</span>'];
+    if (st === 'done' && stored && stored.verifiedBy === 'household') meta.push('<span>proven by your own numbers</span>');
+    if (need.length) meta.push('<span>first: ' + esc(need.join(', ')) + '</span>');
+    if (s.synergy && s.synergy.length) meta.push('<span>×' + s.synergy[0].multiplier + ' with ' + esc((Skills.byId(TABLES, s.synergy[0].with) || {}).name || s.synergy[0].with) + '</span>');
+    return '<div class="line" data-skill-row="' + esc(s.id) + '"><span class="nm">' + esc(s.name) + stateChip(st, s, stored)
+      + '<small>' + esc(s.kind + ' · ' + s.lever + (s.fooStep ? ' · FOO step ' + s.fooStep : '') + ' · ' + s.source) + '</small></span>'
+      + '<span class="acts">' + acts + '</span><span class="meta">' + meta.join('') + '</span></div>';
+  }
+
+  function renderLevers() {
+    el('levers').innerHTML = LEVERS.map(function (l) {
+      return '<button type="button" class="slaf-btn' + (lever === l[0] ? ' is-on' : '') + '" data-lever="' + l[0] + '">' + l[1] + '</button>';
+    }).join('');
+  }
+  el('levers').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-lever]');
+    if (!b) return;
+    lever = b.getAttribute('data-lever');
+    renderLevers(); browseForm.force(); waysForm.force();
+  });
+
+  function ordered(list) {
+    var hh = h();
+    var rank = { trial: 0, practicing: 0, habit: 1, available: 2, locked: 3, done: 4 };
+    return list.map(function (s) { return { s: s, st: Skills.state(hh, s), roe: Skills.returnOnEffort(hh, s, TABLES).value }; })
+      .sort(function (a, b) { return rank[a.st] - rank[b.st] || b.roe - a.roe || a.s.level - b.s.level; })
+      .map(function (r) { return r.s; });
+  }
+  function renderBrowse() {
+    var cat = Skills.catalogue(TABLES).filter(function (s) { return !s.trial && (lever === 'all' || s.lever === lever); });
+    el('browse-list').innerHTML = ordered(cat).map(function (s) { return skillRow(s, 'browse-note'); }).join('')
+      || '<p class="slaf-reason">No skill trains that lever yet.</p>';
+  }
+  function renderWays() {
+    var hw = TABLES.hundredWays;
+    el('ways-hint').textContent = hw.confidenceNote + ' Each is a trial: take one on and its figure counts only while it is logged.';
+    var ways = Skills.catalogue(TABLES).filter(function (s) { return s.trial && (lever === 'all' || s.lever === lever); });
+    el('ways-list').innerHTML = ordered(ways).map(function (s) { return skillRow(s, 'browse-note'); }).join('')
+      || '<p class="slaf-reason">Every one of the thirty is a keeper.</p>';
+  }
+  var browseForm = SLAF.LiveForm.guard(el('browse-list'), renderBrowse);
+  var waysForm = SLAF.LiveForm.guard(el('ways-list'), renderWays);
+  function rebuilt() { todayForm.force(); browseForm.force(); waysForm.force(); render(); }
+
+  function browseClick(evt) {
+    var b = evt.target.closest('[data-equip]');
+    if (b) { apply(Skills.equip(h(), b.getAttribute('data-equip'), TABLES, today()), 'browse-note'); rebuilt(); return; }
+    b = evt.target.closest('[data-done]');
+    if (b) { apply(Skills.markDone(h(), b.getAttribute('data-done'), TABLES, today()), 'browse-note'); rebuilt(); return; }
+    b = evt.target.closest('[data-drop]');
+    if (b) { apply(Skills.drop(h(), b.getAttribute('data-drop')), 'browse-note'); rebuilt(); }
+  }
+  el('browse-list').addEventListener('click', browseClick);
+  el('ways-list').addEventListener('click', browseClick);
+
+  /* ---- Stacks -------------------------------------------------------------------- */
+
+  function renderStacks() {
+    var hh = h();
+    var values = Skills.stackValues(hh, TABLES);
+    renderStackBars(values);
+    el('stack-list').innerHTML = values.map(function (r) {
+      var st = r.stack;
+      var maxRow = Math.max(1, r.capCents, r.rawCents);
+      var rows = r.rows.map(function (row) {
+        return '<span class="' + (row.active ? '' : 'off') + '">' + esc(row.name) + (row.active ? '' : ' · ' + esc(row.state)) + '</span>'
+          + '<span class="mult">' + (row.multiplier !== 1 ? '×' + row.multiplier : '') + '</span>'
+          + '<span class="amt' + (row.active ? '' : ' off') + '">' + (row.active ? (row.valued ? fmt(row.valueCents) : 'not priced') : '—') + '</span>'
+          + '<span class="bar"><i style="width:' + Math.round(100 * row.valueCents / maxRow) + '%"></i></span>';
+      }).join('');
+      var capLine = r.capCents === 0
+        ? 'Capped at $0 on purpose: ' + esc(st.why)
+        : (r.capped ? 'Capped at ' + fmt(r.capCents) : 'Cap ' + fmt(r.capCents)) + (r.capFrom !== 'stack' ? ', twelve months of the line it acts on' : '') + '. ' + esc(st.why);
+      return '<div class="stack" data-stack="' + esc(st.id) + '"><h3><span>' + esc(st.name) + ' <small style="color:var(--color-text-faint);font-weight:normal">' + r.activeCount + ' of ' + r.total + '</small></span><span class="val">' + fmt(r.value) + '<small style="font-family:var(--font-body);color:var(--color-text-faint)"> /yr</small></span></h3>'
+        + '<div class="wf">' + rows + '<span class="cap">' + capLine + '</span></div></div>';
+    }).join('');
+  }
+
+  /* ---- Curves: three pictures through the one chart module -------------------- */
+
+  function renderCurves() {
+    var Charts = SLAF.Charts;
+    var c = TABLES.curves;
+    var hh = h();
+    /* 1. The poster, drawn as the fiction it is: clipped at the cap. */
+    var pts = [], honest = [], clipAt = null;
+    for (var d = 0; d <= c.poster.days; d += 5) {
+      pts.push([d, Skills.posterValue(TABLES, d)]);
+      if (Math.pow(c.poster.base, d) <= c.poster.cap * 1.5) honest.push([d, Math.pow(c.poster.base, d)]);
+      if (clipAt === null && Math.pow(c.poster.base, d) >= c.poster.cap) clipAt = d;
+    }
+    el('curve-poster').innerHTML = Charts.area({
+      title: 'The poster: 1.01 to the power of days, clipped',
+      series: [{ label: 'Clipped at ×' + c.poster.cap, color: Charts.COLORS.spend, fill: true, points: pts },
+               { label: 'What it claims', color: Charts.COLORS.debt, fill: false, dash: true, points: honest }],
+      vLines: clipAt !== null ? [{ x: clipAt, label: 'day ' + clipAt }] : [],
+      x: { label: 'days', format: function (v) { return String(Math.round(v)); } },
+      y: { min: 0, max: c.poster.cap * 1.5, format: function (v) { return '×' + (Math.round(v * 10) / 10); } }
+    });
+    el('curve-poster-p').textContent = c.poster.base + ' a day is ×' + (Math.round(Math.pow(c.poster.base, c.poster.days) * 10) / 10) + ' in ' + c.poster.days + ' days. Nothing compounds like that, so the line is clipped at ×' + c.poster.cap + (clipAt !== null ? ' on day ' + clipAt : '') + '.';
+    /* 2. Capability: logistic on practice days, with your best habit marked. */
+    var cp = [];
+    for (var dd = 0; dd <= 120; dd += 4) cp.push([dd, Skills.capability(TABLES, dd)]);
+    var best = 0;
+    Object.keys(hh.skills || {}).forEach(function (id) { var st = hh.skills[id]; if (st.kind === 'habit') best = Math.max(best, st.log.length); });
+    el('curve-cap').innerHTML = Charts.area({
+      title: 'Capability against practice days',
+      series: [{ label: 'Capability', color: Charts.COLORS.contributed, fill: true, points: cp }],
+      dots: best ? [{ x: Math.min(120, best), y: Skills.capability(TABLES, best), color: Charts.COLORS.target }] : [],
+      vLines: [{ x: c.logistic.midpointDays, label: 'day ' + c.logistic.midpointDays }],
+      x: { label: 'practice days', format: function (v) { return String(Math.round(v)); } },
+      y: { min: 0, max: 1, format: function (v) { return Math.round(v * 100) + '%'; } }
+    });
+    el('curve-cap-p').textContent = 'A logistic: slow at first, fastest around day ' + c.logistic.midpointDays + ', then levelling. ' + (best ? 'Your longest-logged habit is at ' + best + ' day' + (best === 1 ? '' : 's') + ', ' + Math.round(100 * Skills.capability(TABLES, best)) + '% of the way.' : 'No habit logged yet.');
+    /* 3. The ledger, grown to 65 along the wealth multiplier. */
+    var total = Skills.ledgerTotalCents(hh);
+    var fv = Skills.ledgerFutureValue(hh, TABLES);
+    if (Money.isOk(fv) && total > 0) {
+      var curve = Benchmarks.curve(TABLES.wealthMultiplier, fv.age);
+      var lp = [[fv.age, total]], acc = total;
+      for (var m = 0; m < curve.factors.length; m++) { acc *= curve.factors[m]; if ((m + 1) % curve.perYear === 0) lp.push([fv.age + (m + 1) / curve.perYear, Math.round(acc)]); }
+      el('curve-ledger').innerHTML = Charts.area({
+        title: 'The ledger grown to 65',
+        series: [{ label: 'The ledger, grown', color: Charts.COLORS.growth, fill: true, points: lp }],
+        hLines: [{ y: total, label: 'logged ' + Charts.shortMoney(total), color: Charts.COLORS.contributed }],
+        x: { label: 'age', format: function (v) { return String(Math.round(v)); } }
+      });
+      el('curve-ledger-p').textContent = fmt(total) + ' logged so far becomes ' + fmt(fv.value) + ' at ' + fv.endAge + ' — the wealth multiplier at ' + fv.age + ', a convention, not a forecast.';
+    } else {
+      el('curve-ledger').innerHTML = Charts.area({ series: [], empty: total > 0 ? fv.reason : 'Nothing in the ledger yet. Log a day and this draws itself.' });
+      el('curve-ledger-p').textContent = '';
+    }
+  }
+
+  /* ---- The ledger by skill, and the stacks side by side ----------------------- */
+
+  function renderLedgerRing() {
+    var Charts = SLAF.Charts;
+    var hh = h();
+    var by = {}, order = [];
+    (hh.practiceLedger || []).forEach(function (e) {
+      if (!by[e.skill]) { by[e.skill] = 0; order.push(e.skill); }
+      by[e.skill] += e.cents;
+    });
+    el('ledger-ring').innerHTML = order.length ? Charts.donut({
+      title: 'The ledger by skill',
+      slices: order.map(function (id) { var s = Skills.byId(TABLES, id); return { label: s ? s.name : id, value: by[id] }; }),
+      center: { big: Charts.shortMoney(Skills.ledgerTotalCents(hh)), small: 'logged' }
+    }) : '';
+  }
+
+  function renderStackBars(values) {
+    var Charts = SLAF.Charts;
+    el('stack-bars').innerHTML = Charts.bars({
+      title: 'The five stacks a year',
+      rows: values.map(function (r) {
+        return { label: r.stack.name, value: r.value, note: r.activeCount + ' of ' + r.total + ' on' + (r.capped ? ' · capped' : ''),
+                 color: r.value > 0 ? Charts.COLORS.target : Charts.COLORS.muted, marker: r.capCents > 0 ? { at: r.capCents, label: 'cap ' + fmt(r.capCents) } : null };
+      }),
+      max: Math.max.apply(null, values.map(function (r) { return Math.max(r.capCents, r.value); }).concat([1]))
+    });
+  }
+
+  /* ---- Facts first: what the household already proves, and what time undid ---- */
+
+  function reconcile() {
+    var hh = h();
+    var v = Skills.verifyOnce(hh, TABLES, today());
+    var d = Skills.decay(Object.assign({}, hh, { skills: v.skills }), TABLES, today());
+    /* Done lives in the tree (D-131): a fact that proves a skill writes it there, by proof. */
+    if (v.verified.length || v.reverted.length || d.changes.length) Spine.updateProfile({ skills: d.skills, skillTree: v.skillTree });
+  }
+
+  /* ---- Render -------------------------------------------------------------------- */
+
+  function renderNow() {
+    if (!TABLES) return;
+    todayForm.request(); browseForm.request(); waysForm.request();
+    renderLedgerRing();
+    renderStacks();
+    renderCurves();
+    el('st-reading-list').innerHTML = ['grossAnnualIncome', 'monthlyExpenses', 'capturingFullMatch', 'rerankCut', 'practiceLedger']
+      .map(function (f) { return Ownership.chip(f, h(), ROOM_ID); }).join('');
+  }
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    SLAF.Staleness.use(tables.staleness);
+    renderLevers();
+    reconcile();
+    renderNow();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-doing, from rooms/exercises.html (D-244) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Registry = SLAF.Registry, Ownership = SLAF.Ownership, Exercises = SLAF.Exercises;
+  var ROOM_ID = 'skill-tree';   /* the room this reading lives in */
+  var TABLES = null;
+  var kind = '', maxMinutes = 15, built = false;
+  var KIND_WORDS = { micro: '15m', canon: 'book', run: 'run', dare: 'dare', quest: 'quest' };
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function roomTitle(id) { var r = Registry.byId(id); return r ? r.title : id; }
+  function opts() { return { kind: kind || null, maxMinutes: maxMinutes, snapshots: Spine.listSnapshots().length }; }
+
+  function build() {
+    if (built) return;
+    built = true;
+    el('pick-kind').addEventListener('change', function () { kind = el('pick-kind').value; render(); });
+    el('pick-time').addEventListener('change', function () { var v = el('pick-time').value; maxMinutes = v === '' ? null : Number(v); render(); });
+  }
+
+  function rowHtml(r) {
+    var meta = [];
+    if (r.kind === 'canon' && r.origin) meta.push('after <em>' + esc(r.origin.work) + '</em>, ' + esc(r.origin.author));
+    meta.push(r.minutes + ' min');
+    if (r.skill) meta.push('opens <a href="skill-tree.html#skill-' + esc(r.skill.id) + '">' + esc(r.skill.name) + '</a> (' + esc(r.skill.state) + ')');
+    var reasons = r.locked ? '<span class="r">' + r.reasons.map(function (x) { return esc(x.text) + ' <a href="' + esc(x.href) + '">Add it →</a>'; }).join(' ') + '</span>' : '';
+    var result = r.done && r.result && r.result.summary ? '<span class="r">' + esc(r.result.summary) + '</span>' : '';
+    var acts = r.done
+      ? '<span class="slaf-hint">done ' + esc(r.done) + '</span><button type="button" class="pill is-quiet" data-undo="' + esc(r.id) + '">Undo</button>'
+      : r.locked ? '<span class="slaf-hint">locked</span>'
+      : (r.kind === 'run' ? '<button type="button" class="pill" data-run="' + esc(r.id) + '">Run it on my numbers</button>' : '<button type="button" class="pill" data-complete="' + esc(r.id) + '">Did it</button>')
+        + '<a class="pill is-quiet" href="' + esc(r.room) + '">Open the room →</a>';
+    return '<li class="' + (r.done ? 'is-done' : r.locked ? 'is-locked' : '') + '"><span class="k is-' + esc(r.kind) + '">' + esc(KIND_WORDS[r.kind] || r.kind) + '</span>'
+      + '<span><span class="t">' + esc(r.title) + '</span><span class="m">' + meta.join(' · ') + '</span>' + reasons + result + '</span>'
+      + '<span class="acts">' + acts + '</span></li>';
+  }
+
+  function render() {
+    if (!TABLES) return;
+    build();
+    var h = Spine.getProfile();
+    var l = Exercises.list(h, TABLES, opts());
+    el('ex-counts').textContent = l.counts.all + ' apply to you' + (l.currentBand ? ', from ' + l.currentBand + ' first' : '') + ' · ' + l.counts.done + ' done · ' + l.counts.locked + ' locked' + (l.counts.run ? ' · ' + l.counts.run + ' runs' : '') + (l.counts.canon ? ' · ' + l.counts.canon + ' from the canon' : '');
+    el('rows').innerHTML = l.rows.map(rowHtml).join('') || '<li><span class="slaf-hint" style="grid-column:1/-1">Nothing of that kind applies at that length.</span></li>';
+    var done = Exercises.list(h, TABLES, { kind: 'run', maxMinutes: null, snapshots: opts().snapshots }).rows.filter(function (r) { return r.done && r.result; });
+    el('results').innerHTML = done.length ? done.map(function (r) { return '<li class="is-done"><span class="k is-run">run</span><span><span class="t">' + esc(r.title) + '</span><span class="m">' + esc(r.done) + '</span><span class="r">' + esc(r.result.summary || '') + '</span></span><span class="acts"><button type="button" class="pill" data-run="' + esc(r.id) + '">Run again</button></span></li>'; }).join('')
+      : '<li><span class="slaf-hint" style="grid-column:1/-1">No run kept yet. Run one above and its result stays here to compare against next time.</span></li>';
+    el('ex-reading-list').innerHTML = ['monthlyExpenses', 'grossAnnualIncome', 'investments', 'cashSavings'].map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  document.addEventListener('click', function (evt) {
+    var c = evt.target.closest('[data-complete]');
+    if (c) { Spine.markExercise(c.getAttribute('data-complete')); return; }
+    var u = evt.target.closest('[data-undo]');
+    if (u) { Spine.markExercise(u.getAttribute('data-undo'), false); return; }
+    var r = evt.target.closest('[data-run]');
+    if (r) {
+      var id = r.getAttribute('data-run');
+      var res = Exercises.compute(Spine.getProfile(), TABLES, id);
+      if (!Money.isOk(res)) { r.textContent = res.reason; return; }
+      Spine.markExercise(id, undefined, { summary: res.summary, figures: res.figures, value: res.value, on: Schema.localDay() }, 'Ran: ' + id);
+    }
+  });
+  Spine.onChange(render);
+  Reference.load().then(function (tables) { TABLES = tables; render(); }).catch(function (err) {
     var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
     n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
   });

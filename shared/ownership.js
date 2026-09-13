@@ -844,7 +844,7 @@
       format: function (v) { return v + (v === 1 ? ' skill' : ' skills'); }
     },
     exercisesDone: {
-      label: 'Exercises done', owner: 'exercises', anchor: 'list',
+      label: 'Exercises done', owner: 'skill-tree', anchor: 'list',
       read: function (h) {
         var n = Object.keys((h.exercises && h.exercises.done) || {}).length;
         return n ? Money.ok(n) : Money.incomplete('No exercise completed yet.', ['exercises']);
@@ -854,7 +854,7 @@
     /* The practice ledger: every logged day's worth, summed. Written one
        row at a time by the Skill Stacker and by nothing else. D-090. */
     practiceLedger: {
-      label: 'Practice ledger', owner: 'stacker', anchor: 'today',
+      label: 'Practice ledger', owner: 'skill-tree', anchor: 'today',
       read: function (h) {
         var rows = h.practiceLedger || [];
         if (!rows.length) return Money.incomplete('No days logged yet.', ['practiceLedger']);

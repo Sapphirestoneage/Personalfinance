@@ -7690,7 +7690,7 @@ section('The Skill Stacker: the catalogue, and the engine on the demo');
   checkTrue('… and no longer lists it as unavailable', !ratioRow.unavailable);
   check('the instruments carry the ledger total for the Annual Review', InstrumentsMain.outputs(h, T).practiceLedgerCents.value, 2048);
   const own = Ownership.field('practiceLedger');
-  check('the ledger is owned by the Stacker', own.owner, 'stacker');
+  check('the ledger is owned by the room the Stacker became a reading of', own.owner, 'skill-tree');
   check('… and reads the total', own.read(h).value, 2048);
   check('… incomplete with no rows, not zero', own.read(Schema.createHousehold({})).status, 'incomplete');
 
@@ -7707,12 +7707,17 @@ section('The Skill Stacker: the catalogue, and the engine on the demo');
   check('… and the ledger', Schema.createHousehold(JSON.parse(JSON.stringify(h))).practiceLedger.length, 8);
   check('an unknown state is read as available', Schema.createSkillState({ state: 'weird' }).state, 'available');
 
-  const room = Registry.byId('stacker');
-  check('the room is an about-you room', room.kind, 'about-you');
-  check('… at order 20', room.order, 20);
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/stacker.html'), 'utf8');
+  /* The Skill Stacker is the three-at-a-time reading of The Skill Tree
+     since D-244. */
+  const room = Registry.byId('skill-tree');
+  check('the room it lives in is an about-you room', room.kind, 'about-you');
+  checkTrue('… and the Stacker is no longer a room of its own', !Registry.byId('stacker')
+    && /url=skill-tree\.html#the-three/.test(fs.readFileSync(path.join(ROOT, 'rooms/stacker.html'), 'utf8')));
+  const treePage = fs.readFileSync(path.join(ROOT, 'rooms/skill-tree.html'), 'utf8');
+  const html = treePage.slice(treePage.indexOf('<section id="view-the-three"'), treePage.indexOf('<!-- =====', treePage.indexOf('<section id="view-the-three"')))
+    + treePage.split('<script>').filter(x => x.indexOf('READING view-the-three,') !== -1)[0];
   checkTrue('four screens exist', ['today', 'browse', 'stacks', 'curves'].every(id => new RegExp('id="' + id + '"').test(html)));
-  checkTrue('the lists are guarded', /LIVE-FORM: guarded/.test(html) && (html.match(/LiveForm\.guard\(/g) || []).length === 3);
+  checkTrue('the lists are guarded', /LIVE-FORM: guarded/.test(treePage) && (html.match(/LiveForm\.guard\(/g) || []).length === 3);
   checkTrue('the dashboard and the Ledger load the engine so a snapshot carries the ledger',
     /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')));
 })();
@@ -7796,7 +7801,7 @@ section('Charts: the one way a number becomes a picture');
     check('… and eight days is practicing', h.skills['cook-dinner'].state, 'practicing');
   })();
 
-  ['index.html', 'rooms/fire.html', 'rooms/stacker.html'].forEach(f => {
+  ['index.html', 'rooms/fire.html', 'rooms/skill-tree.html'].forEach(f => {
     checkTrue(`${f} loads the chart module`, /shared\/charts\.js/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
   });
   checkTrue('the dashboard draws the ring, not the old stack', !/nw-stack/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
@@ -10516,7 +10521,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,foo-ladder,fire,fire-lab,statements,coast-date,race');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
-  check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
+  check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree');
   check('Upkeep, after the Ledger took navigation (D-230) and The Card took the three things you hand over (D-234)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,history,settings,get-help,one-pager');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));

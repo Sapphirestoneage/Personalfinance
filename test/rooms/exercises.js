@@ -2,7 +2,7 @@
    on the household through the owning engine and stays locked, naming the field, until
    it can; completing one boosts its skill to Open, never to Done. D-131. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Demo, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Demo, TABLES } = t;
   const E = require(path.join(ROOT, 'engines/exercises.js'));
   const ST = require(path.join(ROOT, 'engines/skilltree.js'));
   section('The exercise library (D-131): five kinds, the runs computed, never a silent number');
