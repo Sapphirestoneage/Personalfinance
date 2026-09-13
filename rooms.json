@@ -764,7 +764,7 @@
     },
     {
       "id": "partner",
-      "title": "Partner",
+      "title": "Family",
       "file": "rooms/partner.html",
       "reads": [
         "grossAnnualIncome",
@@ -774,10 +774,16 @@
         "partnerName",
         "partnerDob",
         "splitMode",
-        "sharedMonthly"
+        "sharedMonthly",
+        "tuitionTarget",
+        "tuitionSaved",
+        "tuitionMonthly"
       ],
       "requires": [
-        "partner"
+        [
+          "partner",
+          "dependents"
+        ]
       ],
       "dashboardNumber": null,
       "order": 38
@@ -791,24 +797,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 38.5
-    },
-    {
-      "id": "kids",
-      "title": "Kids and Tuition",
-      "file": "rooms/kids.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [
-        "tuitionTarget",
-        "tuitionSaved",
-        "tuitionMonthly"
-      ],
-      "requires": [
-        "dependents"
-      ],
-      "dashboardNumber": null,
-      "order": 39
     },
     {
       "id": "housing",

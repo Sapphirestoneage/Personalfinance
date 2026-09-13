@@ -96,7 +96,8 @@
     { "n": 21, "id": "debt-payoff", "title": "Debt", "group": "decisions", "absorbs": ["student-loans", "credit"], "done": [] },
     { "n": 22, "id": "big-purchase", "title": "Big Purchase", "group": "decisions", "absorbs": ["dreamline"], "done": ["dreamline"],
       "note": "Pricing the thing you want is the same form." },
-    { "n": 23, "id": "partner", "title": "Family", "group": "decisions", "absorbs": ["kids"], "done": [] },
+    { "n": 23, "id": "partner", "title": "Family", "group": "decisions", "absorbs": ["kids"], "note": "Each reading keeps the gate branch its room had: the hat is absent when the branch is not there, so a merge does not widen who sees what.",
+      "done": ["kids"] },
 
     { "n": 24, "id": "values", "title": "What Matters", "group": "meaning", "absorbs": ["fulfillment", "rerank", "giving"], "done": [] },
     { "n": 25, "id": "week", "title": "The Life", "group": "meaning", "absorbs": ["buckets"], "done": ["buckets"],

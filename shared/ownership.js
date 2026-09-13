@@ -485,17 +485,17 @@
       format: function (v) { return money(v) + '/mo'; }
     },
     tuitionTarget: {
-      label: 'Tuition target, per child', owner: 'kids', anchor: 'inputs',
+      label: 'Tuition target, per child', owner: 'partner', anchor: 'kid-inputs',
       read: function (h) { var v = (h.kids || {}).tuitionTargetCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionTargetCents']); },
       format: money
     },
     tuitionSaved: {
-      label: 'Saved for tuition so far', owner: 'kids', anchor: 'inputs',
+      label: 'Saved for tuition so far', owner: 'partner', anchor: 'kid-inputs',
       read: function (h) { var v = (h.kids || {}).tuitionSavedCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionSavedCents']); },
       format: money
     },
     tuitionMonthly: {
-      label: 'Going to tuition, a month', owner: 'kids', anchor: 'inputs',
+      label: 'Going to tuition, a month', owner: 'partner', anchor: 'kid-inputs',
       read: function (h) { var v = (h.kids || {}).tuitionMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionMonthlyCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },

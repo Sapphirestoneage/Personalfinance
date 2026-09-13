@@ -6,84 +6,125 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Partner · SPARKS</title>
-<meta name="description" content="Two incomes, one household: how the shared month is split, what each of you keeps, and how much rides on one paycheque."/>
+<title>Family · SPARKS</title>
+<meta name="description" content="The other people in your household and what the arrangement costs: two incomes and how the shared month is split, and what each child costs a year with the tuition they will need."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-099. Built on the frozen template
-  (shared/room.js, D-097).
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097), twice, which is
+  why the children reading carries a prefix and a root (D-235). DECISIONS.md
+  D-216, D-241 (the merge). Registry: partner.
 
-  1. READS   Both adults' income (owned by Start Here — the partner's pay is
-             the second adult's intake_partner_income source), the filing
-             status for the per-person tax estimate, the household month
-             for the shared-month guess, and the incomeConcentration ratio
-             from engines/ratios.js.
-  2. WRITES  It OWNS household.partner — splitMode (equal | proportional |
-             pooled) and sharedMonthlyCents. Nothing else edits those. It
-             does not touch anyone's income.
-  3. CALLS   engines/partner.js. Take-home per person comes from
-             engines/tier0.js run on a household holding only that person
-             (an approximation, said as one in the drawer); the share of
-             income that is one paycheque is the ratio engine's
-             incomeConcentration, never a second calculation.
-  4. EMPTY   The registry removes the room for one adult. Opened by deep
-             link with an empty spine it renders "Just you" with the
-             intake's guesses and says so (Gate.fillGuesses). No split
-             chosen reads as equal halves, and says it is the default.
-  5. CONFIG  data/partner_conventions.json (the three modes, convention),
-             data/effective_tax_rates_2026.json (the tax estimate).
+  ONE HOUSEHOLD, THE PEOPLE IN IT.
 
-  J7 (D-216): two views of the same rows. "The full room" is everything
-  below; "Are we on track?" is one sentence (Partner.onTrack, read off the
-  split, never a second calculation). Each adult keeps their own default
-  view in prefs (partner.view.<personId>), and "viewing as" flips the
-  yours / mine / ours tags on every account and debt (Partner.tags, read
-  off ownerIds through Schema.ownerOf, never stored). Gift privacy is not
+    #two-of-you   two incomes, one month: how the shared month is split,
+                  what each of you keeps, how much rides on one paycheque
+    #the-children what each child costs a year at their age, childcare
+                  while they are small, and what tuition needs a month
+
+  EACH READING IS GATED, AS ITS ROOM WAS. Partner required the partner
+  branch; Kids required dependents. A merge must not widen who sees what, so
+  each reading keeps its own branch and its hat is ABSENT when the branch is
+  not there. The room itself requires nothing, because a household with
+  children and no partner is a household, and so is the reverse.
+
+  1. READS   what you earn, the month you spend, and the people listed.
+  2. WRITES  the four partner fields as before, and the three tuition
+             fields, whose owner moved here with their boxes (D-241).
+  3. CALLS   the engines each reading already called; no arithmetic moved.
+  4. EMPTY   neither reading invents a person or a cost.
+  5. CONFIG  the tables each engine names.
+
+  J7 (D-216) is unchanged inside the two-of-you reading: "The full room" and
+  "Are we on track?" are its own two views, each adult keeps their own
+  default in prefs (partner.view.<personId>), and "viewing as" flips the
+  yours / mine / ours tags on every account and debt (Partner.tags, read off
+  ownerIds through Schema.ownerOf, never stored). Gift privacy is not
   built: it waits on the owner (stop-and-ask).
 
-  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, two
-  inputs, the assumptions drawer with sources, why this matters at your
-  stage, one out-of-scope line to Get Help. The ids below are the deep links.
+  LIVE-FORM: built once, twice over. shared/room.js builds each reading's
+  controls from its own spec and only ever sets .value; switching readings
+  hides and shows and rebuilds nothing (D-034).
 
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
   THEMING: none this pass. A theme is a class on <body> and a palette in
   shared/theme.css.
 -->
 <style>
-  section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  #track { display: none; }
-  body.view-track #track { display: block; }
-  body.view-track #number, body.view-track #chart, body.view-track #inputs, body.view-track #amounts, body.view-track #tags,
-  body.view-track #assumptions, body.view-track #room-why, body.view-track #room-scope, body.view-track #reading, body.view-track .slaf-showrest { display: none; }
-  .view-row { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
-  .slaf-link { background: none; border: 0; padding: 0; color: var(--color-accent); text-decoration: underline; cursor: pointer; font: inherit; }
-  .track-line { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--leading-tight); margin: var(--space-2) 0 0; }
-  .track-line.is-yes { color: var(--color-positive, inherit); }
-  .track-line.is-no { color: var(--color-critical); }
-  ul.tag-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  ul.tag-list li { display: grid; grid-template-columns: 1fr auto auto; gap: var(--space-2); align-items: baseline; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
-  ul.tag-list li.is-head { border-top: none; font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .04em; padding-top: var(--space-3); }
-  ul.tag-list .amt { font-variant-numeric: tabular-nums; }
-  ul.tag-list .tag { font-size: var(--text-xs); padding: 0 var(--space-2); border-radius: 999px; border: 1px solid var(--color-border-active); }
-  ul.tag-list .tag.is-mine { background: rgba(44, 121, 214, .12); }
-  ul.tag-list .tag.is-yours { background: rgba(229, 72, 77, .10); }
-  ul.tag-list .tag.is-ours { background: rgba(48, 164, 108, .12); }
+  /* ---- The two of you, from rooms/partner.html (D-241) ---- */
+  
+  #view-two-of-you section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-two-of-you .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-two-of-you #track { display: none; }
+  
+  #view-two-of-you body.view-track #track { display: block; }
+  
+  #view-two-of-you body.view-track #number,
+  #view-two-of-you body.view-track #chart,
+  #view-two-of-you body.view-track #inputs,
+  #view-two-of-you body.view-track #amounts,
+  #view-two-of-you body.view-track #tags,
+  #view-two-of-you body.view-track #assumptions,
+  #view-two-of-you body.view-track #room-why,
+  #view-two-of-you body.view-track #room-scope,
+  #view-two-of-you body.view-track #reading,
+  #view-two-of-you body.view-track .slaf-showrest { display: none; }
+  
+  #view-two-of-you .view-row { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+  
+  #view-two-of-you .slaf-link { background: none; border: 0; padding: 0; color: var(--color-accent); text-decoration: underline; cursor: pointer; font: inherit; }
+  
+  #view-two-of-you .track-line { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--leading-tight); margin: var(--space-2) 0 0; }
+  
+  #view-two-of-you .track-line.is-yes { color: var(--color-positive, inherit); }
+  
+  #view-two-of-you .track-line.is-no { color: var(--color-critical); }
+  
+  #view-two-of-you ul.tag-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-two-of-you ul.tag-list li { display: grid; grid-template-columns: 1fr auto auto; gap: var(--space-2); align-items: baseline; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  
+  #view-two-of-you ul.tag-list li.is-head { border-top: none; font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .04em; padding-top: var(--space-3); }
+  
+  #view-two-of-you ul.tag-list .amt { font-variant-numeric: tabular-nums; }
+  
+  #view-two-of-you ul.tag-list .tag { font-size: var(--text-xs); padding: 0 var(--space-2); border-radius: 999px; border: 1px solid var(--color-border-active); }
+  
+  #view-two-of-you ul.tag-list .tag.is-mine { background: rgba(44, 121, 214, .12); }
+  
+  #view-two-of-you ul.tag-list .tag.is-yours { background: rgba(229, 72, 77, .10); }
+  
+  #view-two-of-you ul.tag-list .tag.is-ours { background: rgba(48, 164, 108, .12); }
+
+  /* ---- The children, from rooms/kids.html (D-241) ---- */
+  
+  #view-the-children section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-children .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Partner</h1>
-  <p class="room-lede">Two incomes, one household: how the shared month is split, what each of you keeps, and how much rides on one paycheque.</p>
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Family</h1>
+  <p class="room-lede">The other people in your household, and what the arrangement costs.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="The people in the household">
+    <a href="#two-of-you" data-view="view-two-of-you">The two of you</a>
+    <a href="#the-children" data-view="view-the-children">The children</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ===== THE TWO OF YOU (was rooms/partner.html) ===== -->
+  <section id="view-two-of-you">
+  <p class="slaf-lede">Two incomes, one household: how the shared month is split, what each of you keeps, and how much rides on one paycheque.</p>
   <div class="room-standalone" id="room-standalone" hidden></div>
 
   <section class="slaf-card" id="track" style="margin-bottom:var(--space-4)">
@@ -146,12 +187,53 @@
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
   </section>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, one person at a time, not a return. Your numbers
-    stay in this browser.
-  </p>
+  <!-- ===== THE CHILDREN (was rooms/kids.html) ===== -->
+  <section id="view-the-children" hidden>
+  <p class="slaf-lede">What each child costs a year at their age, childcare while they are small, and what tuition needs a month to land on time.</p>
+  <div class="room-standalone" id="kid-room-standalone" hidden></div>
+
+  <section class="slaf-card" id="kid-number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">What the kids cost a year</span>
+      <div id="kid-room-lens"></div>
+    </div>
+    <div class="room-number" id="kid-room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="kid-chart" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">By child, a month</span>
+    <div id="kid-room-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="kid-inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Tuition</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">One target for each child, one pot saved so far, one figure going in a month. Leave the target blank if tuition is not a plan yet — blank is not a $0 target.</p>
+    <div id="kid-room-inputs"></div>
+  </section>
+
+  <section class="slaf-card" id="kid-amounts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Through the lens</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
+    <ul class="room-amounts" id="kid-room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="kid-assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="kid-room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="kid-room-why" hidden></p>
+  <p class="room-scope" id="kid-room-scope"></p>
+
+  <section class="slaf-card" id="kid-reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="kid-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. Nothing about the people here is sent anywhere.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -178,8 +260,67 @@
 <script src="../engines/partner.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../engines/kids.js"></script>
 <script src="../shared/room.js"></script>
 <script>
+/* ---- the two of you, and the children (D-241) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   The hash still reaches it — an old link must land somewhere honest — and
+   the reading says for whom it is, which is what Gate.why is for. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-the-children', match: /^#(the-children|kid-)/, branch: 'dependents' },
+    { id: 'view-two-of-you', match: /.*/, branch: 'partner' }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. If it is gated away, fall to the first one that is not. */
+    var on = open(asked) ? asked : VIEWS.filter(open)[0] || asked;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('partner');
+  if (SLAF.Progress) SLAF.Progress.mount('partner');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-two-of-you, from rooms/partner.html (D-241) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -241,6 +382,7 @@
 
   var ROOM = Room.mount({
     id: 'partner',
+    part: true,
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'partnerConventions', 'ratioBenchmarks'],
     reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
 
@@ -372,6 +514,134 @@
     scope: 'This room does not decide what is fair, hold separate accounts, or know your legal arrangement.',
 
     after: function (h, T) { paintViews(h, T); }
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-children, from rooms/kids.html (D-241) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      Kids = SLAF.Kids, Charts = SLAF.Charts, Room = SLAF.Room;
+
+  /* ---- writes: this room owns household.kids ---------------------------------- */
+  function readKids(h) { return Schema.createKidsPlan(h.kids); }
+  function money(c) { return Money.formatCents(c); }
+  function perMonth(c) { return money(c) + ' a month'; }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+  /* The tuition line in words, shared by the number's sub and the chart. */
+  function tuitionWords(p) {
+    var t = p.tuition;
+    if (!t) return null;
+    if (t.allFunded) return 'tuition is <strong>funded</strong> for ' + plural(p.count, 'child', 'children') + ' at ' + money(t.targetCents) + ' each';
+    var s = '';
+    if (t.dueNowCount) s += plural(t.dueNowCount, 'tuition bill is', 'tuition bills are') + ' <strong>due now</strong>' + (t.neededMonthlyCents > 0 ? '; the rest needs ' : '');
+    if (t.neededMonthlyCents > 0) s += (t.dueNowCount ? '' : 'tuition needs ') + '<strong>' + perMonth(t.neededMonthlyCents) + '</strong> to land by 18';
+    if (t.monthlyCents !== null) s += ', ' + money(t.monthlyCents) + ' going in' + (t.onTime === false ? ' — <strong>' + money(t.shortMonthlyCents) + ' a month short</strong>' : t.onTime ? ' — on time' : '');
+    else s += ', nothing entered as going in';
+    return s;
+  }
+
+  Room.mount({
+    id: 'partner',
+    part: true,
+    prefix: 'kid-',
+    root: 'view-the-children',
+    tables: ['childCost', 'childcareByState', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['dependents', 'state', 'monthlyExpenses'],
+
+    number: function (h, T) {
+      var p = Kids.plan(h, T);
+      if (!Money.isOk(p)) return { label: 'A year of the kids', value: null, reason: p.reason };
+      var bits = [plural(p.count, 'child', 'children')];
+      if (p.underFive) bits.push('childcare ' + (p.childcareUnknown ? 'not priced for ' + plural(p.childcareUnknown, 'child', 'children') : '<strong>' + perMonth(p.childcareMonthlyCents) + '</strong>') + ' while under five');
+      if (p.daySchool && p.daySchoolMonthlyCents > 0) bits.push('day school ' + perMonth(p.daySchoolMonthlyCents));
+      var tw = tuitionWords(p);
+      bits.push(tw || (p.tuitionReason === 'No tuition target entered.' ? 'no tuition target yet' : 'no tuition line'));
+      var sub = bits.join(' · ') + '.';
+      if (p.children.some(function (c) { return !c.ageKnown; })) sub += ' An age is missing: that child is costed as an infant until it is entered.';
+      return { label: 'A year of the kids, at their ages now', value: money(p.annualCents), sub: sub, zone: p.zone, result: p };
+    },
+
+    chart: function (h, T) {
+      var p = Kids.plan(h, T);
+      if (!Money.isOk(p)) return Charts.bars({ rows: [], empty: p.reason });
+      var rows = p.children.map(function (c, i) {
+        var note = c.past18 ? 'past 18' : !c.ageKnown ? 'costed as an infant' : money(c.costCents) + (c.childcareApplies ? (Money.isEntered(c.childcareCents) ? ' + ' + money(c.childcareCents) + ' childcare' : ' + childcare not priced') : '') + (c.daySchoolCents ? ' + ' + money(c.daySchoolCents) + ' day school' : '');
+        return { label: c.label, value: c.monthlyCents, note: note, color: Charts.COLORS.series[i % Charts.COLORS.series.length] };
+      });
+      var t = p.tuition;
+      rows.push({
+        label: 'Tuition, a month needed',
+        value: t ? t.neededMonthlyCents : null,
+        note: t ? (t.allFunded ? 'funded' : t.dueNowCount ? plural(t.dueNowCount, 'bill', 'bills') + ' due now' : t.monthlyCents !== null ? money(t.monthlyCents) + ' going in' : 'to land by 18') : 'add a target below',
+        empty: 'no target',
+        color: t && t.onTime === false ? Charts.COLORS.spend : Charts.COLORS.target,
+        marker: t && t.monthlyCents !== null ? { at: t.monthlyCents, label: money(t.monthlyCents) + ' going in' } : null
+      });
+      return Charts.bars({ rows: rows, format: function (v) { return money(v) + '/mo'; } });
+    },
+
+    inputs: [
+      { ctl: 'tuitionTargetCents', label: 'Tuition target, per child', kind: 'money', placeholder: 'e.g. 50,000',
+        hint: 'What you want to have for each child when they turn 18. The child-cost table’s convention is $250 a month from birth for half an in-state degree; it gives no lump sum, so nothing is proposed here.',
+        read: function (h) { return readKids(h).tuitionTargetCents; }, write: function (v) { Spine.set('kids.tuitionTargetCents', v); } },
+      { ctl: 'tuitionSavedCents', label: 'Saved for tuition so far', kind: 'money', placeholder: 'e.g. 5,000',
+        hint: 'One pot for the household. It goes to the oldest child’s bill first.',
+        read: function (h) { return readKids(h).tuitionSavedCents; }, write: function (v) { Spine.set('kids.tuitionSavedCents', v); } },
+      { ctl: 'tuitionMonthlyCents', label: 'Going to tuition, a month', kind: 'money', placeholder: 'e.g. 200',
+        hint: 'Across all the children. Measured against what is needed to land every target by 18.',
+        read: function (h) { return readKids(h).tuitionMonthlyCents; }, write: function (v) { Spine.set('kids.tuitionMonthlyCents', v); } }
+    ],
+
+    amounts: function (h, T) {
+      var p = Kids.plan(h, T);
+      var rows = [];
+      if (!Money.isOk(p)) return rows;
+      rows.push({ label: 'A year of the kids’ costs', cents: p.annualCents });
+      if (p.underFive && p.childcareMonthlyCents > 0) rows.push({ label: 'Childcare, a month', cents: p.childcareMonthlyCents, href: Ownership.linkTo('start', 'q-about') });
+      if (p.tuition) rows.push({ label: 'The tuition gap today', cents: p.tuition.gapCents, href: Ownership.linkTo('kids', 'inputs') });
+      var spend = Schema.monthlyExpensesCents(h);
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var cost = T.childCost, care = T.childcareByState;
+      var p = Kids.plan(h, T);
+      var bands = cost && cost.bands ? cost.bands.slice().sort(function (a, b) { return a.fromMonths - b.fromMonths; }) : [];
+      var bandWords = bands.length ? money(bands[0].monthlyCents) + ' a month at 0 to 2, rising to ' + money(bands[bands.length - 1].monthlyCents) + ' at ' + bands[bands.length - 1].label : 'not loaded';
+      var careWords = 'not loaded';
+      if (care) {
+        var cc = Kids.childcareFor(care, h.state, T.states);
+        careWords = Money.isEntered(cc.cents) ? perMonth(cc.cents) + (cc.source === 'state' ? ' in ' + h.state : ', the national figure' + (h.state ? '' : ' (no state entered)')) : (cc.reason || 'not priced');
+      }
+      var rows = [
+        { label: 'What a child costs', value: bandWords, source: cost ? 'data/child_cost.json v' + cost.version + ', as of ' + cost.asOf + ' — ' + cost.source + ' (' + cost.confidence + ': ' + cost.confidenceNote + ')' : 'data/child_cost.json' },
+        { label: 'Childcare while under five', value: careWords, source: care ? 'data/childcare_by_state.json v' + care.version + ', as of ' + care.asOf + ' — ' + care.source + ' (' + care.confidence + ')' : 'data/childcare_by_state.json' },
+        { label: 'Real return on tuition saving', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094) — a real rate, so the target is in today’s dollars' },
+        { label: 'Saving stops at 18', value: 'each child’s target is due on their 18th birthday', source: 'a convention; the cost bands end there too' },
+        { label: 'The target is per child', value: 'one pot saved, to the oldest first', source: 'one saved figure for the household lands on the first bill first (convention)' },
+        { label: 'College saving convention', value: cost && cost.college && cost.college.half ? money(cost.college.half.monthlyCents) + ' a month from birth for ' + cost.college.half.label.toLowerCase() : 'not loaded', source: 'data/child_cost.json — a planning convention, not a cost; it gives no lump sum, so no target is proposed' }
+      ];
+      if (Money.isOk(p) && p.daySchool) rows.push({ label: 'Day school', value: Money.isEntered(cost.privateSchoolMonthlyCents) ? perMonth(cost.privateSchoolMonthlyCents) + ' per child from 5 to 17' : 'in the picture, not priced', source: 'data/child_cost.json privateSchoolMonthlyCents — an average private-school tuition, not a school’s price' });
+      return rows;
+    },
+
+    why: function (h, T, situation) {
+      return {
+        employed: 'Employed, the kids are a line that grows with them: each band costs more than the last, childcare falls away at five, and tuition is the one bill you can see coming eighteen years out. What goes in a month now is the whole difference.',
+        selfEmployed: 'Self-employed, the kids’ costs are the fixed line under a variable income. Knowing the month’s figure — and what tuition needs on top — is what sets the floor the lean months have to clear.',
+        mixed: 'With a job and your own work, the kids cost the same either way; what changes is which income the childcare and the tuition saving come out of. This is the figure both have to cover between them.',
+        student: 'Studying with children, their cost sits beside your own tuition. Childcare while they are under five is usually the line that decides whether the hours add up; the tuition target can wait until the income does.',
+        retired: 'Retired, anyone entered here is depending on your income — grandchildren are not dependents unless you have said so in Start Here. If they are, their cost comes out of the draw, and a tuition target is a gift with a date on it.',
+        betweenJobs: 'Between jobs, childcare is the line that moves first — it is the cost of looking for work, and the cost of taking it. The tuition saving can pause; the runway cannot.'
+      }[situation] || 'Each child costs more as they grow, and tuition is the one bill with a date on it. This room prices both at their ages now.';
+    },
+
+    scope: 'This room does not know a school’s actual price, financial aid, or 529 rules.'
   });
 })();
 </script>

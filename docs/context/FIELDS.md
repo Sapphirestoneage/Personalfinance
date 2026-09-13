@@ -69,7 +69,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by housing, property, debates, calendar
-- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, fire, fire-lab, real-hourly-wage, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, reversibility, unlearning, debates, calendar, one-pager
+- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, fire, fire-lab, real-hourly-wage, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, housing, big-purchase, variable-income, enough, adventure, week, reversibility, unlearning, debates, calendar, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
@@ -104,18 +104,15 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `incomeType` — What kind of pay · read by ledger
 - `paySurvives` — Keeps paying if the job goes · read by ledger, start
 
-## kids (3)
-
-- `tuitionTarget` — Tuition target, per child · **no other room mentions it**
-- `tuitionSaved` — Saved for tuition so far · **no other room mentions it**
-- `tuitionMonthly` — Going to tuition, a month · **no other room mentions it**
-
-## partner (4)
+## partner (7)
 
 - `partnerName` — The other of you · **no other room mentions it**
 - `partnerDob` — Their birth year · read by ledger
 - `splitMode` — How shared costs are split · **no other room mentions it**
 - `sharedMonthly` — Shared costs, a month · **no other room mentions it**
+- `tuitionTarget` — Tuition target, per child · **no other room mentions it**
+- `tuitionSaved` — Saved for tuition so far · **no other room mentions it**
+- `tuitionMonthly` — Going to tuition, a month · **no other room mentions it**
 
 ## protection (5)
 

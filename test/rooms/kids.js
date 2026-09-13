@@ -1,7 +1,7 @@
 /* test/rooms/kids.js — the Kids and Tuition room (D-099).
    Hand-derived numbers as literals; nothing copied from engine output. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Registry, Ownership, Gate, Projection, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Registry, Ownership, Gate, Projection, TABLES } = t;
   const Kids = require(path.join(ROOT, 'engines/kids.js'));
   const T = { childCost: TABLES.childCost, childcareByState: TABLES.childcareByState };
 
@@ -160,7 +160,12 @@ module.exports = function (t) {
   /* No dependents: incomplete, and the registry hides the room. */
   const nobody = Kids.plan(household({ dependents: [] }), T);
   checkTrue('an empty list → incomplete, says nobody depends', nobody.status === 'incomplete' && /[Nn]obody/.test(nobody.reason));
-  checkTrue('… and the registry hides the room', Gate.exists(household({ dependents: [] }), 'dependents') === false && Registry.requires('kids').indexOf('dependents') !== -1);
+  /* No dependents: the READING is hidden, not the room. Family (D-241)
+     exists when there is a partner OR a dependent, and each reading keeps
+     the branch its room had — the router hides the hat. */
+  checkTrue('… and the reading is gated on dependents', Gate.exists(household({ dependents: [] }), 'dependents') === false
+    && /\{ id: 'view-the-children', match: [^}]*branch: 'dependents' \}/.test(fs.readFileSync(path.join(ROOT, 'rooms/partner.html'), 'utf8')));
+  checkTrue('… and the room it is in wants a partner or a dependent', JSON.stringify(Registry.requires('partner')) === JSON.stringify([['partner', 'dependents']]));
   checkTrue('… but shows it with a child', Gate.exists(base, 'dependents') === true);
   const unasked = Kids.plan(household({}), T);
   checkTrue('not asked → incomplete, points to Start Here', unasked.status === 'incomplete' && /Start Here/.test(unasked.reason) && unasked.missing.indexOf('dependents') !== -1);
@@ -189,14 +194,18 @@ module.exports = function (t) {
 
   section('Kids and Tuition — the room on the template');
 
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/kids.html'), 'utf8');
-  checkTrue('rooms/kids.html mounts on the template', /Room\.mount\(\{/.test(html) && /id: 'kids'/.test(html));
+  /* kids is a reading of partner since D-241, so this file reads its slice of
+     that page: its own markup and its own script. `slice.page` is the
+     whole file, for the few facts that really are page-wide. */
+  const slice = reading('rooms/partner.html', 'view-the-children', "READING view-the-children,");
+  const html = slice.html;
+  checkTrue('rooms/kids.html mounts on the template', /Room\.mount\(\{/.test(html) && /id: 'partner',\n\s*part: true,\n\s*prefix: 'kid-',\n\s*root: 'view-the-children',/.test(html));
   ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list', 'room-standalone', 'load-notice']
-    .forEach(id => checkTrue('… host #' + id, html.indexOf('id="' + id + '"') !== -1));
-  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue('… section #' + id, html.indexOf('id="' + id + '"') !== -1));
-  checkTrue('… the assumptions drawer is a details', /<details class="room-drawer" id="assumptions">/.test(html));
-  const src = f => html.indexOf('src="../' + f + '"');
-  checkTrue('… loads the engine after projection and tier0 and before the lens', src('engines/projection.js') < src('engines/kids.js') && src('engines/tier0.js') < src('engines/kids.js') && src('engines/kids.js') < src('shared/lens.js'));
+    .forEach(id => checkTrue('… host #' + id, (id === 'load-notice' ? slice.page : html).indexOf('id="' + (id === 'load-notice' ? '' : 'kid-') + id + '"') !== -1));
+  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue('… section #' + id, (id === 'load-notice' ? slice.page : html).indexOf('id="' + (id === 'load-notice' ? '' : 'kid-') + id + '"') !== -1));
+  checkTrue('… the assumptions drawer is a details', /<details class="room-drawer" id="kid-assumptions">/.test(html));
+  const src = f => slice.page.indexOf('src="../' + f + '"');
+  checkTrue('… loads the engine after projection and tier0 and before the lens', src('engines/projection.js') < src('engines/kids.js') && src('engines/tier0.js') < src('engines/kids.js') && src('engines/kids.js') < src('shared/room.js'));
   checkTrue('… is not the stub', html.indexOf('STUB') === -1 && html.indexOf('Hourly.realHourlyWage') === -1);
   checkTrue('… writes the three tuition fields through Spine.set', ['kids.tuitionTargetCents', 'kids.tuitionSavedCents', 'kids.tuitionMonthlyCents'].every(p => html.indexOf("Spine.set('" + p + "'") !== -1));
   checkTrue('… and nothing else', (html.match(/Spine\.set\(/g) || []).length === 3 && !/upsertPerson|upsertAsset|updateProfile|Spine\.set\('dependents/.test(html));
@@ -210,12 +219,12 @@ module.exports = function (t) {
   checkTrue('… the retired why says grandchildren are not dependents unless entered', /grandchildren are not dependents/.test(html));
   checkTrue('… and the scope line says what it does not do', /scope: 'This room does not know a school’s actual price, financial aid, or 529 rules\.'/.test(html));
 
-  const room = Registry.byId('kids');
-  checkTrue('the registry row exists', !!room && room.href === 'rooms/kids.html');
+  const room = Registry.byId('partner');
+  checkTrue('the registry row exists', !!room && room.href === 'rooms/partner.html');
   ['tuitionTarget', 'tuitionSaved', 'tuitionMonthly'].forEach(f => {
     const d = Ownership.field(f);
-    checkTrue('ownership: ' + f + ' is owned by kids at #inputs', !!d && d.owner === 'kids' && d.anchor === 'inputs');
+    checkTrue('ownership: ' + f + ' is owned by Family at #kid-inputs', !!d && d.owner === 'partner' && d.anchor === 'kid-inputs');
   });
-  const owned = Ownership.describe('tuitionTarget', base, 'kids');
+  const owned = Ownership.describe('tuitionTarget', base, 'partner');
   checkTrue('… the target reads back $50,000', owned && owned.isSet && owned.result.value === 5000000);
 };

@@ -1,7 +1,7 @@
 /* test/rooms/partner.js — the Partner room (D-099).
    Hand-derived numbers as literals; nothing copied from engine output. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Registry, Ownership, Gate, Ratios, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Registry, Ownership, Gate, Ratios, TABLES } = t;
   const Partner = require(path.join(ROOT, 'engines/partner.js'));
   const T = { effectiveTaxRates: TABLES.effectiveTaxRates, partnerConventions: TABLES.partnerConventions };
 
@@ -159,20 +159,26 @@ module.exports = function (t) {
 
   section('Partner — the room on the template');
 
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/partner.html'), 'utf8');
+  /* This room carries a second reading since D-241, so these assertions
+     read its own slice; `page` is the whole file, for the facts that
+     really are page-wide. */
+  const slice = reading('rooms/partner.html', 'view-two-of-you', "READING view-two-of-you,");
+  const html = slice.html, page = slice.page;
   checkTrue('rooms/partner.html mounts on the template', /Room\.mount\(\{/.test(html) && /id: 'partner'/.test(html));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue(`… has the section #${id}`, new RegExp('id="' + id + '"').test(html)));
-  ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list', 'room-standalone', 'load-notice'].forEach(id => checkTrue(`… has the host #${id}`, new RegExp('id="' + id + '"').test(html)));
-  checkTrue('… the registry’s subsections are all present', Registry.byId('partner').subsections.every(s => new RegExp('id="' + s.id + '"').test(html)));
+  ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list', 'room-standalone', 'load-notice'].forEach(id => checkTrue(`… has the host #${id}`, new RegExp('id="' + id + '"').test(id === 'load-notice' ? page : html)));
+  /* The room's subsections now span both readings, so this one is about
+     the page: every deep link the registry advertises has to land. */
+  checkTrue('… the registry’s subsections are all present', Registry.byId('partner').subsections.every(s => new RegExp('id="' + s.id + '"').test(page)));
   checkTrue('… no stub marker remains', !/STUB/.test(html) && !/Hourly\.realHourlyWage/.test(html));
   checkTrue('… it loads the partner engine after ratios and before the template', (function () {
-    const at = f => html.indexOf('src="../' + f + '"');
+    const at = f => page.indexOf('src="../' + f + '"');
     return at('engines/ratios.js') > -1 && at('engines/ratios.js') < at('engines/partner.js') && at('engines/partner.js') < at('shared/room.js');
   })());
   checkTrue('… writes the plan through its two owned paths, and the second adult through upsertPerson only (15.7)', (html.match(/Spine\.set\('partner\./g) || []).length === 2 && !/upsertIncomeSource/.test(html) && (html.match(/Spine\.upsertPerson\(\{ id: p\.id/g) || []).length === 2);
   checkTrue('… one Charts.stacked, no other chart', (html.match(/Charts\.stacked\(/g) || []).length === 2 && !/Charts\.(area|donut|bars)\(/.test(html));
   checkTrue('… says what it does not do', /scope: 'This room does not decide what is fair/.test(html));
-  checkTrue('… declares its live-form policy', /LIVE-FORM: built once/.test(html));
+  checkTrue('… declares its live-form policy', /LIVE-FORM: built once/.test(page));
   checkTrue('… says the tax split is an approximation', /approximation/.test(html));
   check('the ownership rows belong to this room', Ownership.field('splitMode').owner + '/' + Ownership.field('sharedMonthly').owner, 'partner/partner');
   check('… on the inputs anchor', Ownership.field('splitMode').anchor + '/' + Ownership.field('sharedMonthly').anchor, 'inputs/inputs');

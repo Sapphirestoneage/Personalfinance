@@ -14165,6 +14165,41 @@ its own fields: four `purchase.*` on one side, `dreams` on the other.
 a string that reading happens to contain. Merged pages carry the THEMING note
 the template rooms carry.
 
+### D-241 — Family, and a gate that survives a merge
+
+**Decision.** Kids and Tuition becomes the children reading of Partner, and
+the room is called Family. Two hats: `#two-of-you` (the default) and
+`#the-children`. `rooms/kids.html` becomes a redirect, hash and all.
+
+**The problem this one had to solve.** Both rooms were gated, on different
+branches: Partner on `partner`, Kids on `dependents`. Merging them naively
+would have widened who sees what — either the children reading would appear
+for someone with no children, or a parent with no partner would lose it.
+
+**A reading may name a gate branch.** The router now takes `branch` per view.
+A reading whose branch is absent has its hat ABSENT, not greyed, exactly as
+its room was. The hash still reaches it — an old link must land somewhere —
+and the reading says for whom it is.
+
+**A room may require any-of.** `Registry.REQUIRES` entries may now hold a
+nested array meaning "any one of these": `partner: [['partner',
+'dependents']]`. A merged room exists when any of its readings does, and the
+readings gate themselves inside it. `Gate.why` reads the same shape.
+
+**What changed for people, exactly.** A household with children and no
+partner used to have Kids and not Partner; it now has Family with only the
+children's hat. A household with a partner and no children has Family with
+only the two-of-you hat. A household with neither has no Family at all, as
+it had neither room before. Nobody gained a screen they had not earned.
+
+**Ownership.** The three tuition fields move to owner `partner`, anchor
+`kid-inputs`; `data/ledger-rows.json` follows, since `askIn` names the room
+that asks.
+
+**Compatibility.** No stored shape changes. J7's two views and the viewer
+switch are untouched inside the two-of-you reading, and so is the note that
+gift privacy waits on the owner.
+
 ---
 
 # The Dungeons & Dividends entries

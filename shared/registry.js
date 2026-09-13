@@ -1174,16 +1174,16 @@
   /* Partner — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'partner',
-    group: 'decisions', subgroup: 'family', aliases: ['partner', 'marriage', 'combine', 'spouse'],
+    group: 'decisions', subgroup: 'family', aliases: ['partner', 'marriage', 'combine', 'spouse', 'kids', 'children', 'childcare', 'tuition', '529', 'family'],
     kind: 'about-you',
     needs: ['grossAnnualIncome', 'monthlyExpenses'],
     order: 38,
-    title: 'Partner',
-    blurb: 'Two incomes, one household: how the shared month is split, what each of you keeps, and how much rides on one paycheque.',
+    title: 'Family',
+    blurb: 'Two incomes and how the shared month is split, and what each child costs a year with the tuition they will need — the other people in your household, and what the arrangement costs.',
     href: 'rooms/partner.html',
     tier: 2,
     tags: ['income', 'cashflow'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents', 'you.partner'], writes: ['expenses.shared', 'you.partner'] },
+    daite: { reads: ['expenses', 'income.grossAnnualCents', 'you.partner', 'you.dependents'], writes: ['expenses.shared', 'you.partner', 'plans.kids', 'assets.invested'] },
       subsections: [
         { id: 'view',        label: 'Which view' },
         { id: 'track',       label: 'Are we on track?' },
@@ -1193,7 +1193,10 @@
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'tags',        label: 'Yours, mine, ours' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'kid-number', label: 'What the kids cost a year' },
+        { id: 'kid-chart', label: 'By child, a month' },
+        { id: 'kid-inputs', label: 'Tuition' }
       ]
   });
 
@@ -1213,29 +1216,6 @@
     daite: { reads: ['expenses', 'income.grossAnnualCents', 'assets.invested'], writes: [] },
     subsections: [{ id: 'date', label: 'Affordable, with no debt' }, { id: 'inputs', label: 'The wedding, and the fund' }, { id: 'tables', label: 'Every extra table' }]
   });
-  /* Kids and Tuition — the second wave of tranche rooms (D-099). */
-  ROOMS.push({
-    id: 'kids',
-    group: 'decisions', subgroup: 'family', aliases: ['kids', 'children', 'childcare', 'tuition', '529'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses'],
-    order: 39,
-    title: 'Kids and Tuition',
-    blurb: 'What each child costs a year at their age, childcare while they are small, and what tuition needs a month to land on time.',
-    href: 'rooms/kids.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['expenses'], writes: ['assets.invested', 'plans.kids'] },
-      subsections: [
-        { id: 'number',      label: 'What the kids cost a year' },
-        { id: 'chart',       label: 'By child, a month' },
-        { id: 'inputs',      label: 'Tuition' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
   /* The Deal — Tier 17 (D-227). Housing Decision asks whether to buy where
      you live; this asks whether a building pays, and what living in one
      unit of it would cost. Both sit on engines/ownership.js. */
@@ -1705,7 +1685,7 @@
     home: ['dashboard', 'planner', 'start'],
     numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
-    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'giving', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
+    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'giving', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'enough', 'fulfillment', 'rerank', 'week', 'reversibility', 'unlearning'],
     levelup: ['skill-tree', 'stacker', 'exercises'],
     upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
@@ -1770,8 +1750,13 @@
     decumulation: ['decumulation'],
     tax: ['income'],
     'career-move': ['career'],
-    partner: ['partner'],
-    kids: ['dependents'],
+    /* Family holds both readings (D-241), so it exists when EITHER does: a
+       household with children and no partner is a household, and so is the
+       reverse. The nested array is the gate's any-of form. Each READING
+       keeps the branch its room had, declared on the router, so its hat is
+       absent when its own branch is not there — the merge does not widen
+       who sees what. */
+    partner: [['partner', 'dependents']],
     'variable-income': ['variableIncome'],
     /* Price the Dream became Big Purchase's whole-list reading (D-240). The
        hours branch was its requirement, not the room's: the one-thing
@@ -1799,7 +1784,11 @@
   function applies(room, household) {
     var G = gate();
     if (!G || !household) return true;
-    return requires(room.id).every(function (k) { return G.exists(household, k); });
+    /* A requirement is a branch key, or an array of keys meaning any one
+       will do — a merged room exists when any of its readings does (D-241). */
+    return requires(room.id).every(function (k) {
+      return Array.isArray(k) ? k.some(function (x) { return G.exists(household, x); }) : G.exists(household, k);
+    });
   }
   /** The rooms that exist for this household, in path order. */
   function forHousehold(household) {

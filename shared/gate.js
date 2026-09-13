@@ -109,10 +109,21 @@
     studentLoans:   'This one is about student loans.'
   };
   /** The first reason this room does not apply, or null if it does. */
+  /* A requirement is a branch key, or an ARRAY of keys meaning any one of
+     them will do. The any-of form arrived with the merges (D-241): a room
+     that holds several readings exists when any of them does, and the
+     readings gate themselves inside it. */
+  function anyOf(household, k) {
+    return Array.isArray(k) ? k.some(function (x) { return exists(household, x); }) : exists(household, k);
+  }
   function why(household, keys) {
     var list = [].concat(keys || []);
     for (var i = 0; i < list.length; i++) {
-      if (!exists(household, list[i])) return WHY[list[i]] || 'This one does not apply to your situation.';
+      if (anyOf(household, list[i])) continue;
+      if (!Array.isArray(list[i])) return WHY[list[i]] || 'This one does not apply to your situation.';
+      /* Any-of: say why the first one is missing. They are readings of the
+         same room, so the first is the plainest thing to name. */
+      return WHY[list[i][0]] || 'This one does not apply to your situation.';
     }
     return null;
   }

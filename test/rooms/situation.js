@@ -40,7 +40,7 @@ module.exports = function (t) {
      fold, silently. */
   var known = {}; Gate.BRANCHES.forEach(function (k) { known[k] = true; });
   checkTrue('every branch a room requires is a branch the gate has',
-    Registry.all().every(function (r) { return Registry.requires(r.id).every(function (k) { return known[k]; }); }));
+    Registry.all().every(function (r) { return [].concat.apply([], Registry.requires(r.id)).every(function (k) { return known[k]; }); }));
 
   /* Before the intake, a room is absent only when it needs a FACT nobody
      has given yet — a partner, a dependent, a status. The exact list is
@@ -59,19 +59,24 @@ module.exports = function (t) {
      Price the Dream left it in D-240 for the same reason: it is a reading
      of Big Purchase, and what one thing costs is a question anyone may ask.
      The dream reading still needs a wage to price the list in hours, and
-     says so rather than disappearing. */
+     says so rather than disappearing.
+     Kids and Tuition left it in D-241 by merging INTO a room that is still
+     gated: Family requires a partner OR a dependent, and each reading keeps
+     the branch its room had, so the hat is absent when the branch is. What
+     changed is that one entry covers both — a household with children and
+     no partner now has the room, and only the children's hat in it. */
   var EXPECTED = {
-    employed:     ['self-employed', 'decumulation', 'partner', 'kids', 'variable-income'],
-    selfEmployed: ['accounts', 'decumulation', 'partner', 'kids'],
+    employed:     ['self-employed', 'decumulation', 'partner', 'variable-income'],
+    selfEmployed: ['accounts', 'decumulation', 'partner'],
     unemployed:   ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner', 'kids',
+                   'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner',
                    'variable-income'],
     student:      ['self-employed', 'accounts', 'protection', 'decumulation', 'partner',
-                   'kids', 'variable-income'],
-    retired:      ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'career-move', 'partner', 'kids',
                    'variable-income'],
-    both:         ['decumulation', 'partner', 'kids']
+    retired:      ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
+                   'credential', 'accounts', 'career-move', 'partner',
+                   'variable-income'],
+    both:         ['decumulation', 'partner']
   };
   Object.keys(EXPECTED).forEach(function (status) {
     var h = household(status);
