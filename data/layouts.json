@@ -46,8 +46,6 @@
             "credential",
             "degree",
             "accounts",
-            "fulfillment",
-            "rerank",
             "stacker",
             "skill-tree",
             "exercises",
@@ -69,7 +67,6 @@
             "roth-aca",
             "middle-class-trap",
             "tax",
-            "giving",
             "career-move",
             "offer-compare",
             "partner",
@@ -131,8 +128,6 @@
             "reachable",
             "fire-lab",
             "dashboard",
-            "fulfillment",
-            "rerank",
             "stacker",
             "skill-tree",
             "exercises",
@@ -149,7 +144,6 @@
             "adventure",
             "timeline",
             "protection",
-            "giving",
             "housing",
             "down-payment",
             "property",
@@ -236,7 +230,6 @@
             "variance",
             "accounts",
             "calendar",
-            "rerank",
             "real-hourly-wage"
           ]
         },
@@ -294,10 +287,8 @@
           "name": "What\u2019s it all for?",
           "rooms": [
             "values",
-            "fulfillment",
             "enough",
             "week",
-            "giving",
             "debates"
           ]
         },
@@ -365,7 +356,6 @@
             "cash-flow",
             "budget",
             "variance",
-            "rerank",
             "calendar",
             "big-purchase",
             "car",
@@ -419,9 +409,7 @@
         {
           "name": "Give",
           "rooms": [
-            "giving",
             "values",
-            "fulfillment",
             "enough"
           ]
         },
@@ -509,7 +497,6 @@
             "tax",
             "protection",
             "goals",
-            "rerank",
             "car",
             "big-purchase",
             "student-loans",
@@ -545,10 +532,8 @@
           "name": "This life",
           "rooms": [
             "values",
-            "fulfillment",
             "enough",
             "week",
-            "giving",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
@@ -673,13 +658,11 @@
           "name": "Beside the ladder \u2014 no rung fits",
           "rooms": [
             "values",
-            "fulfillment",
             "enough",
             "week",
             "debates",
             "worth",
             "reversibility",
-            "rerank",
             "hassle",
             "real-hourly-wage",
             "stacker",
@@ -698,7 +681,6 @@
             "micro-retirement",
             "partner",
             "wedding",
-            "giving",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
@@ -807,13 +789,10 @@
           "name": "You",
           "rooms": [
             "values",
-            "fulfillment",
             "enough",
-            "rerank",
             "week",
             "reversibility",
             "worth",
-            "giving",
             "data",
             "one-pager",
             "history",
@@ -870,7 +849,6 @@
             "middle-class-trap",
             "week",
             "enough",
-            "fulfillment",
             "variance",
             "exercises",
             "financial-snapshot",
@@ -881,7 +859,6 @@
             "coast-date",
             "foo-ladder",
             "get-help",
-            "giving",
             "goals",
             "self-employed",
             "history",
@@ -903,7 +880,6 @@
             "tax",
             "rollover",
             "dashboard",
-            "rerank",
             "runway",
             "stacker",
             "skill-tree",
@@ -1028,7 +1004,6 @@
           "rooms": [
             "partner",
             "wedding",
-            "giving",
             "values"
           ]
         },
@@ -1056,10 +1031,8 @@
         {
           "name": "The garden",
           "rooms": [
-            "fulfillment",
             "enough",
             "week",
-            "rerank",
             "debates"
           ],
           "note": "The part that is not about money at all."
@@ -1125,7 +1098,6 @@
             "accounts",
             "protection",
             "goals",
-            "rerank",
             "fire",
             "coast-date",
             "foo-ladder",
@@ -1142,12 +1114,10 @@
             "roth-aca",
             "middle-class-trap",
             "enough",
-            "fulfillment",
             "week",
             "debates",
             "reversibility",
-            "worth",
-            "giving"
+            "worth"
           ]
         },
         {
@@ -1276,12 +1246,9 @@
           "name": "A different way of seeing it",
           "rooms": [
             "values",
-            "fulfillment",
             "enough",
-            "rerank",
             "week",
             "debates",
-            "giving",
             "what-if-life",
             "adventure",
             "fire-lab"
@@ -1371,14 +1338,11 @@
           "name": "Thirty years on the wrong thing",
           "rooms": [
             "values",
-            "fulfillment",
             "enough",
-            "rerank",
             "week",
             "debates",
             "worth",
-            "reversibility",
-            "giving"
+            "reversibility"
           ],
           "note": "The failure nobody insures against, and the one this app is unusually good at."
         },
@@ -1447,13 +1411,11 @@
             "real-hourly-wage",
             "hassle",
             "values",
-            "fulfillment",
             "enough",
             "week",
             "debates",
             "worth",
             "reversibility",
-            "rerank",
             "stacker",
             "skill-tree",
             "exercises"
@@ -1464,7 +1426,6 @@
           "rooms": [
             "partner",
             "wedding",
-            "giving",
             "housing",
             "down-payment",
             "property"
@@ -1580,8 +1541,6 @@
             "start",
             "ledger",
             "variance",
-            "fulfillment",
-            "rerank",
             "values",
             "goals",
             "credit",
@@ -1621,7 +1580,6 @@
             "roth-aca",
             "middle-class-trap",
             "tax",
-            "giving",
             "career-move",
             "offer-compare",
             "partner",
@@ -1703,7 +1661,6 @@
             "budget",
             "variance",
             "calendar",
-            "rerank",
             "big-purchase",
             "car",
             "housing",
@@ -1739,10 +1696,8 @@
           "name": "6 \u00b7 \u201cWhat\u2019s it for?\u201d",
           "rooms": [
             "values",
-            "fulfillment",
             "enough",
             "week",
-            "giving",
             "debates",
             "worth",
             "reversibility"
@@ -1848,9 +1803,7 @@
         {
           "name": "An evening, and worth it",
           "rooms": [
-            "rerank",
             "values",
-            "fulfillment",
             "enough",
             "week",
             "debates",
@@ -1867,7 +1820,6 @@
             "decumulation",
             "roth-aca",
             "middle-class-trap",
-            "giving",
             "foo-ladder"
           ],
           "note": "A third of the app asks for a real evening. Worth knowing before you open one on a Tuesday.",
@@ -1914,7 +1866,6 @@
             "goals",
             "protection",
             "tax",
-            "giving",
             "partner",
             "wedding",
             "credit",
@@ -1974,7 +1925,6 @@
             "week",
             "values",
             "enough",
-            "fulfillment",
             "stacker",
             "skill-tree",
             "what-if-life",
@@ -1986,7 +1936,6 @@
           "name": "Only this app says it like this",
           "rooms": [
             "foo-ladder",
-            "rerank",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
@@ -2038,7 +1987,6 @@
             "budget",
             "variance",
             "calendar",
-            "rerank",
             "settings",
             "real-hourly-wage",
             "hassle"
@@ -2105,13 +2053,11 @@
           "name": "Hub \u00b7 What Matters",
           "rooms": [
             "values",
-            "fulfillment",
             "enough",
             "week",
             "debates",
             "worth",
             "reversibility",
-            "giving",
             "stacker",
             "skill-tree",
             "exercises"
@@ -2188,8 +2134,7 @@
             "hassle",
             "credential",
             "degree",
-            "worth",
-            "rerank"
+            "worth"
           ],
           "note": "These lean on data/*.json. Only 4 of the 72 tables are marked sourced; 17 are marked unverified. The rooms here are exactly as good as those files.",
           "warn": true
@@ -2204,8 +2149,6 @@
             "values",
             "week",
             "enough",
-            "fulfillment",
-            "giving",
             "partner",
             "wedding"
           ],
@@ -2278,8 +2221,7 @@
           "rooms": [
             "get-help",
             "partner",
-            "wedding",
-            "giving"
+            "wedding"
           ]
         },
         {
@@ -2338,11 +2280,9 @@
           "name": "Bigger picture \u203a What it\u2019s for",
           "rooms": [
             "values",
-            "fulfillment",
             "enough",
             "week",
             "debates",
-            "rerank",
             "worth",
             "reversibility"
           ]

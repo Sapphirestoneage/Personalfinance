@@ -1683,7 +1683,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "giving",
+      "askIn": "values",
       "moves": false,
       "unlocks": "the giving rate beside the savings rate"
     },
@@ -1702,7 +1702,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "giving",
+      "askIn": "values",
       "moves": true,
       "unlocks": "the giving line a year"
     },

@@ -15,7 +15,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **debt-payoff** — Debt Payoff · 1777 lines · engines: projection, debt · owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-191, D-190, D-189
 - **expenses** — Expenses · 1402 lines · engines: projection, tier0, cashflow, fire, income, selfemployed, tax, hourly, subscriptions · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-237, D-207, D-199
 - **cash-flow** — Cash Flow · 564 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget · D-192, D-181, D-163
-- **income** — Income · 786 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-207, D-198, D-195
+- **income** — Income · 786 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-237, D-207, D-198
 - **budget** — Budget · 483 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-130, D-129, D-128
 - **variance** — Estimated vs Actual · 232 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
 - **statement** — The Statement · 722 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
@@ -39,7 +39,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **coast-date** — Your Coast Date · 122 lines · engines: projection, tier0, coast · D-213
 - **race** — The Race to $100K · 155 lines · engines: projection, tier0, countdown, race · D-217
 
-## Decisions (26)
+## Decisions (25)
 
 - **hassle** — Worth the Hassle · 498 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
 - **self-employed** — Going Self-Employed · 380 lines · engines: selfemployed · D-062
@@ -56,10 +56,9 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **decumulation** — Drawing It Down · 273 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-228, D-104, D-098
 - **roth-aca** — Roth Conversions Before 65 · 206 lines · engines: selfemployed, tax, rothaca · D-228, D-216
 - **middle-class-trap** — The Middle Class Trap Test · 201 lines · engines: selfemployed, tax, projection, tier0, trap · D-228, D-218
-- **giving** — Giving · 260 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget · D-107, D-098, D-094
 - **career-move** — Career Move · 291 lines · engines: projection, tier0, hourly, careermove · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-108
 - **offer-compare** — Offer Compare · 188 lines · engines: projection, tier0, offers · D-219
-- **degree** — The Degree Decision · 153 lines · engines: projection, tier0, degree · D-219
+- **degree** — What Matters · 153 lines · engines: projection, tier0, degree · D-219
 - **partner** — Family · 650 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner, kids · owns: partnerName, partnerDob, splitMode, sharedMonthly, tuitionTarget, tuitionSaved, tuitionMonthly · D-237, D-216, D-109
 - **wedding** — Wedding Countdown · 177 lines · engines: projection, tier0, hourly, countdown, wedding · D-217
 - **housing** — Housing Decision · 329 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing · owns: rentAlternative, homePrice, downPct, mortgageRate · D-130, D-111
@@ -68,11 +67,9 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **big-purchase** — Big Purchase · 490 lines · engines: projection, tier0, hourly, quickmath, purchase, dreamline · owns: purchasePrice, purchaseMonths, purchaseRate, dreamsMonthly · D-237, D-129, D-112
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 
-## What Matters (8)
+## What Matters (6)
 
-- **fulfillment** — The Joy Curve · 377 lines · engines: projection, tier0, cashflow, fulfillment · D-164
-- **rerank** — The Rerank · 619 lines · engines: projection, tier0, cashflow, rerank · owns: rerankCut · D-089, D-085
-- **values** — What Matters · 428 lines · engines: projection, tier0, cashflow, values
+- **values** — What Matters · 1669 lines · engines: projection, tier0, cashflow, values, fulfillment, rerank, foo, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget, rerankCut · D-237
 - **goals** — Goals · 493 lines · engines: projection, tier0, cashflow, goals · D-091, D-090, D-029
 - **enough** — Enough · 276 lines · engines: projection, tier0, cashflow, fulfillment, hourly, enough · owns: enoughMonthly · D-164, D-114, D-079
 - **week** — The Life · 518 lines · engines: projection, tier0, hourly, cashflow, week, ratios, buckets · owns: designedHours, bucketsPlanned · D-237
@@ -93,7 +90,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (27)
+## Files in rooms/ not in the registry (30)
 
 - rooms/between-jobs.html
 - rooms/buckets.html
@@ -105,6 +102,8 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/express.html
 - rooms/first-car.html
 - rooms/first-round.html
+- rooms/fulfillment.html
+- rooms/giving.html
 - rooms/health.html
 - rooms/kids.html
 - rooms/net-worth.html
@@ -115,6 +114,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/rank-guess.html
 - rooms/ratios.html
 - rooms/refresh.html
+- rooms/rerank.html
 - rooms/savings-rate.html
 - rooms/sleep-at-night.html
 - rooms/subscriptions.html

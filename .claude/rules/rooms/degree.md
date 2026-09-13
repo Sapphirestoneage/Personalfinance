@@ -3,7 +3,7 @@ paths:
   - "rooms/degree.html"
   - "engines/degree.js"
 ---
-# The Degree Decision (`degree`)
+# What Matters (`degree`)
 File: rooms/degree.html · 153 lines
 Engines: projection, tier0, degree
 Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json

@@ -14228,6 +14228,38 @@ nothing, and the test for that reads the debate reading's slice rather than
 the page, because the page is no longer read-only. The page-local select
 note and the `.acts` class hook moved with their markup.
 
+### D-243 — What Matters, four readings of one expense log
+
+**Decision.** The Joy Curve, The Rerank and Giving become readings of What
+Matters. Four hats: `#said-and-spent` (the default), `#the-joy-curve`,
+`#the-rerank`, `#what-you-give`. All three old pages redirect, hash and all.
+
+**Why.** Every one of them reads the same expense log and asks the same
+question of it: is the money going where you say it should. Rules 1 and 3 of
+D-229. Said against spent is first because it is the plainest and needs no
+rating typed first.
+
+**Ids.** Three hand-built pages and one template page on one page. Only the
+ids that actually collide are renamed: `jc-` for the Joy Curve's two,
+`rr-` for the Rerank's five. Giving is a template reading, so its whole
+skeleton moves behind `gv-` whether it collided or not — the mount looks for
+`gv-room-number`, not `room-number`, and half a prefix would be worse than
+none.
+
+**Ownership.** `rerankCut` → `values`, anchor `gap` (the id it kept).
+`givingPct` and `givingTarget` → `values`, anchor `gv-inputs`.
+`data/ledger-rows.json` follows, since `askIn` names the room that asks.
+
+**Compatibility.** No stored shape changes, and no arithmetic moved. Checked
+in a browser against the pre-merge pages rather than by eye: said-and-spent,
+the joy curve and the rerank render the same element counts as before, and
+typing 5% into Giving writes the same `{ pctOfIncome: 0.05 }` and prints the
+same line.
+
+**`needs` is the room's, not a reading's.** What Matters advertises
+`monthlyExpenses`, because that is what the reading it opens on wants. The
+giving reading still reads income and says so when there is none.
+
 ---
 
 # The Dungeons & Dividends entries

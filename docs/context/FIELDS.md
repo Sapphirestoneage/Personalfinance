@@ -51,7 +51,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 ## debt-payoff (5)
 
 - `totalDebt` — Total debt · read by ledger, start, financial-snapshot, statements, statement, dashboard, credit, what-if-life, student-loans, history, one-pager
-- `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, financial-snapshot, statements, rerank, cant-pay, student-loans, calendar
+- `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, financial-snapshot, statements, values, cant-pay, student-loans, calendar
 - `debtBalance` — Balance · read by ledger, start
 - `debtRate` — Interest rate · read by ledger, start, foo-ladder, debates
 - `debtMinPayment` — Minimum payment, a month · read by ledger
@@ -73,7 +73,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by housing, property, debates, calendar
-- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, fire, fire-lab, real-hourly-wage, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, housing, big-purchase, variable-income, enough, adventure, week, reversibility, debates, calendar, one-pager
+- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, fire, fire-lab, real-hourly-wage, dashboard, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, career-move, partner, housing, big-purchase, variable-income, enough, adventure, week, reversibility, debates, calendar, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
@@ -85,11 +85,6 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `retireAge` — Stop working at · read by dashboard, stacker, exercises, coast-date, rollover, what-if-life, micro-retirement, decumulation, middle-class-trap, week, one-pager
 - `coastAge` — Coast: arrive by · read by coast-date
-
-## giving (2)
-
-- `givingPct` — Giving, share of income · **no other room mentions it**
-- `givingTarget` — Giving, a year · **no other room mentions it**
 
 ## history (1)
 
@@ -126,10 +121,6 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `willExists` — A will · **no other room mentions it**
 - `poaExists` — A power of attorney · **no other room mentions it**
 
-## rerank (1)
-
-- `rerankCut` — What The Rerank would cut · read by stacker
-
 ## reversibility (1)
 
 - `reversibilityDecision` — The decision being weighed · **no other room mentions it**
@@ -159,7 +150,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
 - `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, variable-income, adventure, week, reversibility, debates, student-loans, calendar, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, values, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, career-move, offer-compare, degree, partner, housing, big-purchase, variable-income, adventure, week, reversibility, debates, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
 - `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, housing, big-purchase, variable-income, reversibility, debates, calendar, history, one-pager
@@ -197,6 +188,12 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 ## timeline (1)
 
 - `futureIncome` — Money that is coming · read by statement
+
+## values (3)
+
+- `givingPct` — Giving, share of income · **no other room mentions it**
+- `givingTarget` — Giving, a year · **no other room mentions it**
+- `rerankCut` — What The Rerank would cut · read by stacker
 
 ## variable-income (4)
 

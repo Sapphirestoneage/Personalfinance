@@ -559,7 +559,7 @@
     },
     {
       id: 'values',
-      group: 'matters', aliases: ['values', 'what matters', 'priorities'],
+      group: 'matters', aliases: ['values', 'what matters', 'priorities', 'joy curve', 'fulfillment', 'worth it', 'rerank', 'reorder', 'giving', 'charity', 'tithe', 'donate'],
       kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 21,
@@ -568,13 +568,17 @@
       href: 'rooms/values.html',
       tier: 2,
       tags: ['cashflow'],
-      daite: { reads: ['expenses'], writes: ['plans.values'] },
+      daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['plans.values', 'plans.rerank', 'plans.giving', 'expenses.giving'] },
       subsections: [
         { id: 'stated',      label: 'What matters to you' },
         { id: 'spending',    label: 'What the money serves' },
         { id: 'out-compare', label: 'The two lists' },
         { id: 'out-unclaimed', label: 'Serving nothing you named' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
+        { id: 'reading',     label: 'Reading from elsewhere' },
+        { id: 'out-curve', label: 'The joy curve' },
+        { id: 'gap', label: 'Where the orders disagree' },
+        { id: 'gv-number', label: 'A share given' },
+        { id: 'gv-inputs', label: 'What you give' }
       ]
     },
     {
@@ -598,51 +602,6 @@
       ]
     },
         {
-      id: 'fulfillment',
-      group: 'matters', aliases: ['joy', 'fulfillment curve', 'satisfaction'],
-      kind: 'about-you',
-      needs: ['monthlyExpenses'],
-      order: 18,
-      /* Was also called "Enough", which the room at order 43 is actually about
-         — the monthly figure you would live on by choice. Two rooms under one
-         name in the menu, the map and all twenty Front Doors layouts is a
-         coin toss every time. "The Joy Curve" is not invented here: it is what
-         the Enough room's own copy already calls this one's output. D-164. */
-      title: 'The Joy Curve',
-      blurb: 'What each thing costs a month, against what it is actually worth to you \u2014 and the four places that lands.',
-      href: 'rooms/fulfillment.html',
-      tier: 1,
-      tags: ['cashflow'],
-      daite: { reads: ['expenses'], writes: ['plans.ratings'] },
-      subsections: [
-        { id: 'rate',        label: 'Rate what you spend on' },
-        { id: 'out-curve',   label: 'Where it all falls' },
-        { id: 'out-quadrants', label: 'The four corners' },
-        { id: 'out-ranked',  label: 'Joy per dollar' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'rerank',
-      group: 'matters', aliases: ['rerank', 'cut', 'keep', 'value rank'],
-      kind: 'about-you',
-      needs: ['monthlyExpenses'],
-      order: 19,
-      title: 'The Rerank',
-      blurb: 'Your costs in order of size, then in order of what they give you \u2014 and the lines where the two orders disagree.',
-      href: 'rooms/rerank.html',
-      tier: 1,
-      tags: ['cashflow'],
-      daite: { reads: ['expenses'], writes: ['expenses.log', 'plans.rerank'] },
-      subsections: [
-        { id: 'costs',   label: '1 \u00b7 What it costs' },
-        { id: 'rate',    label: '2 \u00b7 What it gives you' },
-        { id: 'rerank',  label: '3 \u00b7 Put them in your order' },
-        { id: 'gap',     label: '4 \u00b7 The gap' },
-        { id: 'reading', label: 'Reading from elsewhere' }
-      ]
-    },
-    {
       id: 'stacker',
       group: 'levelup', aliases: ['skills', 'stack', 'earn more'],
       kind: 'about-you',
@@ -868,8 +827,8 @@
     kind: 'explore',
     needs: ['dob'],
     order: 37.7,
-    title: 'The Degree Decision',
-    blurb: 'A degree as a sum: tuition, the pay given up, the loan and employer help against the pay with it and without it, each a range. The break-even age, the lifetime difference by 65, and the FI date with and without.',
+    title: 'What Matters',
+    blurb: 'The five things you say matter most against where the money actually went, what each thing is worth to you, your costs reordered by what they give you, and what you give away.',
     href: 'rooms/degree.html',
     tier: 2,
     tags: ['income'],
@@ -1099,30 +1058,6 @@
         { id: 'number',      label: 'Your effective rate' },
         { id: 'chart',       label: 'Where a dollar of pay goes' },
         { id: 'inputs',      label: 'Pre-tax and withheld' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Giving — the tranche rooms on the template (D-098). */
-  ROOMS.push({
-    id: 'giving',
-    features: ['givingVehicles'],
-    group: 'decisions', subgroup: 'family', aliases: ['giving', 'charity', 'donate', 'tithe', 'daf'],
-    kind: 'about-you',
-    needs: ['grossAnnualIncome'],
-    order: 36,
-    title: 'Giving',
-    blurb: 'A share of income given, what it is in dollars and in months of FI, and where it sits against the conventions.',
-    href: 'rooms/giving.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['income.grossAnnualCents'], writes: ['expenses.giving'] },
-      subsections: [
-        { id: 'number',      label: 'Given, a year' },
-        { id: 'chart',       label: 'Three shares of income' },
-        { id: 'inputs',      label: 'How much' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }
@@ -1660,8 +1595,8 @@
     home: ['dashboard', 'planner', 'start'],
     numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
-    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'giving', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
-    matters: ['values', 'goals', 'enough', 'fulfillment', 'rerank', 'week', 'reversibility'],
+    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
+    matters: ['values', 'goals', 'enough', 'week', 'reversibility'],
     levelup: ['skill-tree', 'stacker', 'exercises'],
     upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
   };

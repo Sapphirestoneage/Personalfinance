@@ -99,7 +99,8 @@
     { "n": 23, "id": "partner", "title": "Family", "group": "decisions", "absorbs": ["kids"], "note": "Each reading keeps the gate branch its room had: the hat is absent when the branch is not there, so a merge does not widen who sees what.",
       "done": ["kids"] },
 
-    { "n": 24, "id": "values", "title": "What Matters", "group": "meaning", "absorbs": ["fulfillment", "rerank", "giving"], "done": [] },
+    { "n": 24, "id": "values", "title": "What Matters", "group": "meaning", "absorbs": ["fulfillment", "rerank", "giving"], "note": "Four readings of one expense log, all asking whether the money goes where you say it should.",
+      "done": ["fulfillment", "rerank", "giving"] },
     { "n": 25, "id": "week", "title": "The Life", "group": "meaning", "absorbs": ["buckets"], "done": ["buckets"],
       "note": "One question at two scales: is the life you want the one you are paying for. The week is the default because it is the scale you can act on tomorrow." },
 

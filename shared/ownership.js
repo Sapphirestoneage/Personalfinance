@@ -422,12 +422,12 @@
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
     givingPct: {
-      label: 'Giving, share of income', owner: 'giving', anchor: 'inputs',
+      label: 'Giving, share of income', owner: 'values', anchor: 'gv-inputs',
       read: function (h) { var v = (h.giving || {}).pctOfIncome; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['pctOfIncome']); },
       format: function (v) { return Money.formatRate(v, { decimals: 1 }); }
     },
     givingTarget: {
-      label: 'Giving, a year', owner: 'giving', anchor: 'inputs',
+      label: 'Giving, a year', owner: 'values', anchor: 'gv-inputs',
       read: function (h) { var v = (h.giving || {}).annualTargetCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['annualTargetCents']); },
       format: function (v) { return money(v) + '/yr'; }
     },
@@ -665,7 +665,7 @@
     /* What The Rerank would cut (D-085): the flagged lines, a year's worth.
        Derived, owned by the room that asks the questions. */
     rerankCut: {
-      label: 'What The Rerank would cut', owner: 'rerank', anchor: 'gap',
+      label: 'What The Rerank would cut', owner: 'values', anchor: 'gap',
       read: function (h) {
         var R = (typeof module === 'object' && module.exports)
           ? require('../engines/rerank.js')

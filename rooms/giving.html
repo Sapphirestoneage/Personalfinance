@@ -7,253 +7,33 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Giving · SPARKS</title>
-<meta name="description" content="A share of income given, what it is in dollars and in months of FI, and where it sits against the conventions."/>
+<meta name="description" content="Giving is a reading of What Matters now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-098.
-
-  1. READS   Gross annual income and a month's spending (owned by Start
-             Here), and — when Cash Flow has a categorised month — the
-             gifts line, through the ratios engine's giving rate.
-  2. WRITES  It OWNS household.giving: pctOfIncome (a share of gross) and
-             annualTargetCents (a year's target, which wins when typed).
-             Nothing else edits those. It does not touch income.
-  3. CALLS   engines/giving.js. The FI cost and the hours are the lens's
-             (shared/lens.js), never a second calculation; last month's
-             gifts are engines/ratios.js's givingRate read back.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses); the share box
-             proposes the average share until one is typed. Between jobs
-             there is no income to invent, so a typed target is the plan.
-  5. CONFIG  data/giving_conventions.json — the four shares and the
-             deduction note. Conventions, not benchmarks.
-
-  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens,
-  two inputs, the assumptions drawer with sources, why this matters at
-  your stage, one out-of-scope line to Get Help. The ids below are the
-  deep links.
-
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
-  THEMING: none this pass. A theme is a class on <body> and a palette in
-  shared/theme.css.
+  REDIRECT — Giving is a reading of What Matters (rooms/values.html#what-you-give, DECISIONS.md D-243).
+  All four readings ask one question of the same spending: is the money
+  going where you say it should. Rules 1 and 3 of D-229.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  section[id] { scroll-margin-top: var(--space-4); }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-</style>
+<meta http-equiv="refresh" content="0; url=values.html#what-you-give"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Giving</h1>
-  <p class="room-lede">A share of income given, what it is in dollars and in months of FI, and where it sits against the conventions.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <div class="room-standalone" id="room-standalone" hidden></div>
-
-  <section class="slaf-card" id="number">
-    <div class="room-head-row">
-      <span class="slaf-eyebrow">Given, a year</span>
-      <div id="room-lens"></div>
-    </div>
-    <div class="room-number" id="room-number"></div>
-  </section>
-
-  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Three shares of income</span>
-    <div id="room-chart"></div>
-  </section>
-
-  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">How much</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">A share of gross income, or a year's figure in dollars. When both are in, the dollars win and the share is worked back from them.</p>
-    <div id="room-inputs"></div>
-  </section>
-
-  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Priced in life</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
-    <ul class="room-amounts" id="room-amounts"></ul>
-  </section>
-
-  <details class="room-drawer" id="assumptions">
-    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
-    <div class="room-assumptions-body" id="room-assumptions"></div>
-  </details>
-
-  <p class="room-why" id="room-why" hidden></p>
-  <p class="room-scope" id="room-scope"></p>
-
-  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">What this is reading</span>
-    <div id="reading-list" style="margin-top:var(--space-3)"></div>
-  </section>
-
-  <p class="disclaimer">
-    Educational tool, not financial advice. The shares are conventions
-    people name, not targets; the tax deduction is not modelled. Your
-    numbers stay in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">Giving is a reading of What Matters now.
+    <a href="values.html#what-you-give" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/suggest.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/foo.js"></script>
-<script src="../engines/cashflow.js"></script>
-<script src="../engines/fire.js"></script>
-<script src="../engines/statement.js"></script>
-<script src="../engines/benchmarks.js"></script>
-<script src="../engines/ratios.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../engines/giving.js"></script>
-<script src="../shared/charts.js"></script>
-<script src="../shared/room.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Giving = SLAF.Giving, Charts = SLAF.Charts, Room = SLAF.Room;
-
-  /* ---- writes: this room owns household.giving ------------------------------- */
-  function readGiving(h) { return (h && h.giving) || {}; }
-  function writeGiving(key, value) { Spine.set('giving.' + key, value); }
-
-  function pct(rate) { return Money.formatRate(rate, { decimals: 1 }); }
-
-  /* The lens's own words for the FI cost, or its reason. */
-  function fiPhrase(pushed) {
-    if (!Money.isOk(pushed)) return pushed.reason || '';
-    if (pushed.value === 0) return 'FI unmoved';
-    return 'FI ' + Money.formatMonths(pushed.value) + ' later';
-  }
-  function hoursPhrase(hours) {
-    if (!Money.isOk(hours)) return '';
-    var n = Math.round(hours.value);
-    return n.toLocaleString('en-US') + (n === 1 ? ' hour' : ' hours') + ' of your life';
-  }
-  function lastMonthPhrase(h, T) {
-    var m = Giving.lastMonth(h, T);
-    if (!Money.isOk(m)) return '';
-    return 'last month you actually gave ' + Money.formatCents(m.giftsMonthlyCents) + ' (' + pct(m.rate) + ' of take-home)';
-  }
-
-  Room.mount({
-    id: 'giving',
-    reads: ['grossAnnualIncome', 'monthlyExpenses'],
-
-    number: function (h, T) {
-      var p = Giving.plan(h, T);
-      if (!Money.isOk(p)) return { label: 'Given, a year', value: null, reason: p.reason, result: p };
-      var parts = [];
-      if (p.nothing) parts.push('nothing given');
-      else if (p.share !== null && p.grossCents !== null) parts.push('<strong>' + pct(p.share) + '</strong> of ' + Money.formatCents(p.grossCents) + (p.shareDerived ? ', from your target' : ''));
-      else if (p.mode === 'target') parts.push('a year’s target, no income to read it against');
-      if (!p.nothing) parts.push(Money.formatCents(p.monthlyCents) + ' a month');
-      parts.push(fiPhrase(p.pushed));
-      if (!p.nothing) parts.push(hoursPhrase(p.hours));
-      parts.push(lastMonthPhrase(h, T));
-      return { label: 'Given, a year', value: Money.formatCents(p.annualCents), sub: parts.filter(Boolean).join(' · '), zone: null, result: p };
-    },
-
-    chart: function (h, T) {
-      var p = Giving.plan(h, T);
-      var gross = Schema.grossAnnualIncomeCents(h);
-      var conv = Giving.conventions(Money.isOk(gross) ? gross.value : null, T);
-      if (!Money.isOk(conv)) return Charts.bars({ rows: [], empty: conv.reason });
-      var rows = conv.rows.map(function (c, i) {
-        return { label: c.label + ' of income', note: c.note, value: c.cents, color: Charts.COLORS.series[i % Charts.COLORS.series.length], empty: 'needs your income' };
-      });
-      var yours = Money.isOk(p) ? p.annualCents : null;
-      rows.push({ label: 'Yours', note: Money.isOk(p) ? (p.share !== null ? pct(p.share) + (p.shareDerived ? ', from your target' : '') : 'a year’s target') : 'type a share or a target', value: yours, color: Charts.COLORS.target, empty: 'not entered yet' });
-      var max = Math.max.apply(null, rows.map(function (r) { return Money.isEntered(r.value) ? r.value : 0; }));
-      if (!Money.isOk(gross) && yours === null) return Charts.bars({ rows: [], empty: 'Add your income, or a year’s target, to see the shares in dollars.' });
-      return Charts.bars({ title: 'A year of giving, at each share of this income', rows: rows, max: max || undefined });
-    },
-
-    inputs: [
-      { ctl: 'pctOfIncome', label: 'Share of income given', kind: 'pct', placeholder: 'e.g. 2', hint: 'Of gross income, before tax.',
-        read: function (h) { return readGiving(h).pctOfIncome; },
-        write: function (v) { writeGiving('pctOfIncome', v === null ? null : (v < 0 ? 0 : v)); },
-        propose: function (h, T) {
-          var g = readGiving(h);
-          if (Money.isEntered(g.annualTargetCents)) {
-            var p = Giving.plan(h, T);
-            return Money.isOk(p) && p.share !== null ? { value: Math.round(p.share * 1000) / 1000, source: 'worked back from your target' } : null;
-          }
-          var s = Giving.proposedShare(T);
-          return s ? { value: s.value, source: s.note.replace(/ \(rounded\)$/, '') + ' (convention)' } : null;
-        } },
-      { ctl: 'annualTargetCents', label: 'A year’s target', kind: 'money', placeholder: 'e.g. 1,200', hint: 'Dollars a year. When typed, this wins over the share.',
-        read: function (h) { return readGiving(h).annualTargetCents; },
-        write: function (v) { writeGiving('annualTargetCents', v === null ? null : (v < 0 ? 0 : v)); },
-        propose: function (h, T) {
-          var g = readGiving(h);
-          if (!Money.isEntered(g.pctOfIncome)) return null;
-          var p = Giving.plan(h, T);
-          return Money.isOk(p) ? { value: p.annualCents, source: pct(p.share) + ' of your income' } : null;
-        } }
-    ],
-
-    amounts: function (h, T) {
-      var p = Giving.plan(h, T);
-      var gross = Schema.grossAnnualIncomeCents(h);
-      var rows = [];
-      if (Money.isOk(p)) {
-        rows.push({ label: 'A year given', cents: p.annualCents, href: '#inputs' });
-        rows.push({ label: 'A month given', cents: p.monthlyCents, href: '#inputs' });
-      }
-      var tithe = Giving.convention(T, 'tithe');
-      if (tithe && Money.isOk(gross)) rows.push({ label: 'The tithe, a year — ' + tithe.label + ' of ' + Money.formatCents(gross.value), cents: Math.round(gross.value * tithe.pct), href: Ownership.linkTo('start', 'q-income') });
-      return rows;
-    },
-
-    assumptions: function (h, T) {
-      var t = T.givingConventions || {};
-      var conv = Giving.conventions(null, T);
-      var shares = Money.isOk(conv) ? conv.rows.map(function (c) { return c.label; }).join(', ') : '—';
-      var source = 'data/giving_conventions.json v' + t.version + ' — ' + (t.confidence || 'unverified');
-      return [
-        { label: 'The conventions', value: shares + ' of gross', source: source + '. ' + (t.confidenceNote || '') },
-        { label: 'Out of', value: 'gross income, not take-home', source: 'This room reads a share of gross; Expenses’ giving rate reads gifts over take-home, so the two shares differ (convention)' },
-        { label: 'Real return, for the FI cost', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal, through the lens (D-094)' },
-        { label: 'The tax deduction', value: 'not modelled', source: (t.deduction && t.deduction.note) || 'Deductible only when itemising.' }
-      ];
-    },
-
-    why: function (h, T, situation) {
-      return {
-        employed: 'Employed, giving is easiest to set as a share of a steady paycheque and then forget. This room prices that share in the two currencies a job hides: months of FI and hours of your life. Neither says stop — they say what it costs, so the number is chosen rather than drifted into.',
-        selfEmployed: 'Self-employed, the months are irregular, so a share of income is a better promise than a fixed sum: a thin month gives less, a fat one more, and the year lands where the share says. Set the share here; the dollar figure is the year’s expectation, not a monthly bill.',
-        mixed: 'With a job and your own work, the share applies to both incomes together. The job’s part is predictable; the own-work part rises and falls. A year’s target typed over the share turns it into one fixed promise if that is easier to keep.',
-        student: 'At a student’s stage, time may be the gift — hours given are not on this page, and a small share of a small income is still a share. The habit matters more than the dollars; the conventions here are for later.',
-        retired: 'Retired, giving comes out of income — the draw, the pension, Social Security — not out of the portfolio. A share of that income keeps it in step with what the money actually produces; the FI cost here reads as months of runway rather than months to a target.',
-        betweenJobs: 'Between jobs, a pause is not a failure. With no income there is no share to apply, so this room takes a year’s figure in dollars if you want to keep giving through it, and nothing if you do not. The habit picks back up with the paycheque.'
-      }[situation] || 'A share of income given, priced in dollars, months of FI and hours of your life, against the shares people name.';
-    },
-
-    scope: 'This room does not track individual gifts, model the tax deduction, or judge what counts.'
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#reading': '#gv-reading', '#reading-list': '#gv-reading-list', '#number': '#gv-number', '#chart': '#gv-chart', '#inputs': '#gv-inputs', '#amounts': '#gv-amounts', '#assumptions': '#gv-assumptions' };
+    var hash = location.hash || '';
+    var target = 'values.html' + (map[hash] || '#what-you-give');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

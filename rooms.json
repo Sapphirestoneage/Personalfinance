@@ -356,32 +356,6 @@
       "order": 17
     },
     {
-      "id": "fulfillment",
-      "title": "The Joy Curve",
-      "file": "rooms/fulfillment.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 18
-    },
-    {
-      "id": "rerank",
-      "title": "The Rerank",
-      "file": "rooms/rerank.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [
-        "rerankCut"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 19
-    },
-    {
       "id": "stacker",
       "title": "The Skill Stacker",
       "file": "rooms/stacker.html",
@@ -424,7 +398,11 @@
       "reads": [
         "monthlyExpenses"
       ],
-      "writes": [],
+      "writes": [
+        "givingPct",
+        "givingTarget",
+        "rerankCut"
+      ],
       "requires": [],
       "dashboardNumber": null,
       "order": 21
@@ -706,21 +684,6 @@
       "order": 34
     },
     {
-      "id": "giving",
-      "title": "Giving",
-      "file": "rooms/giving.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [
-        "givingPct",
-        "givingTarget"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 36
-    },
-    {
       "id": "career-move",
       "title": "Career Move",
       "file": "rooms/career-move.html",
@@ -752,7 +715,7 @@
     },
     {
       "id": "degree",
-      "title": "The Degree Decision",
+      "title": "What Matters",
       "file": "rooms/degree.html",
       "reads": [
         "dob"

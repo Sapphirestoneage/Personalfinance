@@ -4,7 +4,7 @@
 'use strict';
 
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Demo, Registry, Ownership, Gate, Lens, Room, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Demo, Registry, Ownership, Gate, Lens, Room, TABLES } = t;
   const Giving = require(path.join(ROOT, 'engines/giving.js'));
   const T = TABLES;
 
@@ -114,29 +114,39 @@ module.exports = function (t) {
   check('… the ratios engine’s own figure', lm.rate, t.Ratios.all(tracked, T).rows.find(r => r.id === 'givingRate').value, 1e-12);
 
   /* ---- Ownership and the spine ----------------------------------------------- */
-  check('the share is owned by Giving', Ownership.field('givingPct').owner, 'giving');
-  check('the target is owned by Giving', Ownership.field('givingTarget').owner, 'giving');
-  check('… both anchored at the inputs', Ownership.field('givingPct').anchor + '/' + Ownership.field('givingTarget').anchor, 'inputs/inputs');
-  check('the registry row needs income', Registry.byId('giving').needs.join(','), 'grossAnnualIncome');
+  check('the share is owned by Giving', Ownership.field('givingPct').owner, 'values');
+  check('the target is owned by Giving', Ownership.field('givingTarget').owner, 'values');
+  check('… both anchored at the giving reading’s inputs', Ownership.field('givingPct').anchor + '/' + Ownership.field('givingTarget').anchor, 'gv-inputs/gv-inputs');
+  /* `needs` is what the ROOM advertises — What Matters opens on said
+     against spent, which wants the month. This reading reads income and
+     says so if it has none (D-243). */
+  check('the room it lives in needs the month', Registry.byId('values').needs.join(','), 'monthlyExpenses');
+  checkTrue('… and this reading still reads income', /reads: \[[^\]]*'grossAnnualIncome'/.test(reading('rooms/values.html', 'view-what-you-give', 'READING view-what-you-give,').html));
   check('giving starts unanswered', JSON.stringify(Schema.createHousehold({}).giving), JSON.stringify({ pctOfIncome: null, annualTargetCents: null }));
 
   /* ---- The page ---------------------------------------------------------------- */
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/giving.html'), 'utf8');
-  Room.IDS.forEach(id => checkTrue(`Giving has #${id}`, new RegExp('id="' + id + '"').test(html)));
-  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-standalone', 'load-notice'].forEach(id => checkTrue(`… and #${id}`, new RegExp('id="' + id + '"').test(html)));
-  checkTrue('it mounts the template as giving', /Room\.mount\(\{\s*id: 'giving'/.test(html));
+  /* giving is a reading of values since D-243, so this file reads its slice of
+     that page: its own markup and its own script. `slice.page` is the
+     whole file, for the few facts that really are page-wide. */
+  const slice = reading('rooms/values.html', 'view-what-you-give', "READING view-what-you-give,");
+  const html = slice.html;
+  Room.IDS.forEach(id => checkTrue(`Giving has #${id}`, new RegExp('id="' + (id === 'load-notice' ? '' : 'gv-') + id + '"').test(id === 'load-notice' ? slice.page : html)));
+  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-standalone', 'load-notice'].forEach(id => checkTrue(`… and #${id}`, new RegExp('id="' + (id === 'load-notice' ? '' : 'gv-') + id + '"').test(id === 'load-notice' ? slice.page : html)));
+  checkTrue('it mounts the template as giving', /id: 'values',\n\s*part: true,\n\s*prefix: 'gv-',/.test(html));
   checkTrue('no stub marker remains', html.indexOf('STUB') === -1 && html.indexOf('Hourly.realHourlyWage') === -1);
   checkTrue('two inputs: the share and the target', /ctl: 'pctOfIncome'/.test(html) && /ctl: 'annualTargetCents'/.test(html));
   checkTrue('it writes only through Spine.set on giving.*', /Spine\.set\('giving\.' \+ key, value\)/.test(html) && !/upsertPerson|updateProfile/.test(html));
   checkTrue('one chart, bars', (html.match(/Charts\.bars\(/g) || []).length >= 1 && !/Charts\.(area|donut|stacked)\(/.test(html));
   checkTrue('the FI cost comes from the lens, not a literal', /Lens\.apply\(annual, 'pushed'/.test(fs.readFileSync(path.join(ROOT, 'engines/giving.js'), 'utf8')));
   checkTrue('the conventions are read from the table in the engine', /tables\.givingConventions/.test(fs.readFileSync(path.join(ROOT, 'engines/giving.js'), 'utf8')) && !/0\.01|0\.05|0\.10/.test(fs.readFileSync(path.join(ROOT, 'engines/giving.js'), 'utf8')));
-  checkTrue('it declares its live-form discipline and a place for a theme', /LIVE-FORM: built once/.test(html) && /THEMING:/.test(html));
+  /* The page holds four readings with different disciplines, so it declares
+     the guarded one; this reading's own controls are still built once. */
+  checkTrue('the page declares its live-form discipline and a place for a theme', /LIVE-FORM: guarded/.test(slice.page) && /THEMING:/.test(slice.page));
   checkTrue('the scope line says what it does not do', /scope: 'This room does not track individual gifts, model the tax deduction, or judge what counts\.'/.test(html));
   checkTrue('why is written for all six situations', ['employed', 'selfEmployed', 'mixed', 'student', 'retired', 'betweenJobs'].every(s => new RegExp(s + ": '").test(html)));
   checkTrue('the scripts it needs, in order', (function () {
     const order = ['shared/gate.js', 'engines/projection.js', 'engines/tier0.js', 'engines/cashflow.js', 'engines/ratios.js', 'engines/hourly.js', 'shared/lens.js', 'engines/giving.js', 'shared/charts.js', 'shared/room.js'];
-    const idx = order.map(s => html.indexOf('<script src="../' + s + '"'));
+    const idx = order.map(s => slice.page.indexOf('<script src="../' + s + '"'));
     return idx.every((v, i) => v !== -1 && (i === 0 || v > idx[i - 1]));
   })());
 };

@@ -6941,15 +6941,22 @@ section('The Rerank');
   check('a rerank row defaults to not asked', JSON.stringify(Schema.createRerankRow({ id: 'x' })), '{"id":"x","miss":null,"who":null,"valueRank":null}');
   check('the household carries rerank rows', JSON.stringify(Schema.createHousehold({}).rerank), '{"rows":[]}');
   checkTrue('source may be rerank', Schema.FIELDS['expenses.entries[].source'].values.indexOf('rerank') !== -1);
-  const room = Registry.byId('rerank');
-  checkTrue('The Rerank is registered, about you, after Enough', room && room.kind === 'about-you' && room.order === Registry.byId('fulfillment').order + 1);
-  check('what it would cut is owned by the room', Ownership.field('rerankCut').owner, 'rerank');
+  /* The Rerank is a reading of What Matters since D-243, along with the
+     Joy Curve it used to sit beside. */
+  const room = Registry.byId('values');
+  checkTrue('The Rerank is a reading of What Matters', room && room.kind === 'about-you'
+    && !Registry.byId('rerank') && !Registry.byId('fulfillment')
+    && /url=values\.html#the-rerank/.test(fs.readFileSync(path.join(ROOT, 'rooms/rerank.html'), 'utf8')));
+  check('what it would cut is owned by the room it is in', Ownership.field('rerankCut').owner, 'values');
+  check('… anchored at the gap it names', Ownership.field('rerankCut').anchor, 'gap');
   const cutRead = Ownership.field('rerankCut').read(Object.assign(Demo.build(), { expenses: Object.assign({}, Demo.build().expenses, { entries: Demo.buildSpending() }) }));
   check('and reads the flagged year', cutRead.value, 180500 * 12);
   check('formatted per year', Ownership.field('rerankCut').format(2166000), '$21,660/yr');
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/rerank.html'), 'utf8');
-  checkTrue('four stages exist', ['costs', 'rate', 'rerank', 'gap'].every(id => new RegExp('id="' + id + '"').test(html)));
-  checkTrue('the lists are guarded', /LIVE-FORM: guarded/.test(html) && (html.match(/LiveForm\.guard\(/g) || []).length === 3);
+  const valuesPage = fs.readFileSync(path.join(ROOT, 'rooms/values.html'), 'utf8');
+  const html = valuesPage.slice(valuesPage.indexOf('<section id="view-the-rerank"'), valuesPage.indexOf('<!-- =====', valuesPage.indexOf('<section id="view-the-rerank"')))
+    + valuesPage.split('<script>').filter(x => x.indexOf('READING view-the-rerank,') !== -1)[0];
+  checkTrue('four stages exist', ['costs', 'rr-rate', 'rerank', 'gap'].every(id => new RegExp('id="' + id + '"').test(html)));
+  checkTrue('the lists are guarded', /LIVE-FORM: guarded/.test(valuesPage) && (html.match(/LiveForm\.guard\(/g) || []).length === 3);
   checkTrue('the rating control is the shared one, in its own scope', /Rating\.controlHtml\(\{ scope: Rerank\.SCOPE/.test(html) && Rating.ANCHORS.rerank);
 })();
 
@@ -10520,7 +10527,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 26);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 25);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
