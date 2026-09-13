@@ -1208,7 +1208,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "student-loans",
+      "askIn": "debt-payoff",
       "moves": false,
       "unlocks": "the student loan trajectory under the plan chosen"
     },
@@ -1227,7 +1227,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "student-loans",
+      "askIn": "debt-payoff",
       "moves": true,
       "unlocks": "how much sooner the loans end"
     },
@@ -1246,7 +1246,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "student-loans",
+      "askIn": "debt-payoff",
       "moves": false,
       "unlocks": "the income-driven payment"
     },
@@ -1265,7 +1265,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "student-loans",
+      "askIn": "debt-payoff",
       "moves": false,
       "unlocks": "the forgiveness horizon on the student loan path"
     },

@@ -57,13 +57,17 @@
     },
     {
       "id": "debt-payoff",
-      "title": "Debt Payoff",
+      "title": "Debt",
       "file": "rooms/debt-payoff.html",
       "reads": [
         "totalDebt",
         "monthlyDebtPayments"
       ],
       "writes": [
+        "loanPlan",
+        "loanExtra",
+        "idrShare",
+        "forgivenessYears",
         "totalDebt",
         "monthlyDebtPayments",
         "debtBalance",
@@ -444,18 +448,6 @@
       "order": 26.2
     },
     {
-      "id": "credit",
-      "title": "Your Credit File",
-      "file": "rooms/credit.html",
-      "reads": [
-        "totalDebt"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 26.4
-    },
-    {
       "id": "cant-pay",
       "title": "When It Won’t All Get Paid",
       "file": "rooms/cant-pay.html",
@@ -818,26 +810,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 48.5
-    },
-    {
-      "id": "student-loans",
-      "title": "Student Loan Decision",
-      "file": "rooms/student-loans.html",
-      "reads": [
-        "totalDebt",
-        "grossAnnualIncome"
-      ],
-      "writes": [
-        "loanPlan",
-        "loanExtra",
-        "idrShare",
-        "forgivenessYears"
-      ],
-      "requires": [
-        "debt"
-      ],
-      "dashboardNumber": "loanTrajectory",
-      "order": 49
     },
     {
       "id": "data",

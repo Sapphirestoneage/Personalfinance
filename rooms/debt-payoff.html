@@ -6,249 +6,505 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Debt Payoff · SPARKS</title>
-<meta name="description" content="Every debt, in the order you'll clear them — and what a different order would cost or save."/>
+<title>Debt · SPARKS</title>
+<meta name="description" content="Every debt in the order you will clear them and what a different order costs — the three student-loan plans side by side, and what a credit file is actually made of."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11.
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-061, D-101, D-249 (the merge).
+  Registry: debt-payoff.
 
-  1. READS   household.debts[] (balance, rate, minPayment, type,
-             emotionalTag, ownerIds; interestFree, archived, borrowedOn,
-             dueOn — D-124).
-  2. WRITES  household.debts[] — raw inputs only, itemised, one line each
-             with everything past the four facts behind one caret (D-187). This is the room
-             that turns the Financial Snapshot's single lump-sum debt record
-             into real per-debt entries, which is what the Debt Calculator
-             needs (SPEC.md §9 item 2).
-  3. CALLS   engines/debt.js for every figure — simulate(),
-             compareStrategies(), minimumPaymentCents(). No amortisation is
-             written in this file.
-  4. EMPTY   No debts: the plan says so. A debt missing a rate or a minimum
-             names itself rather than being silently dropped or zeroed.
-  5. CONFIG  data/debt_rules.json — strategies, minimum-payment conventions,
-             the emotional-priority ranking, the month ceiling.
+  THREE READINGS OF WHAT YOU OWE.
+
+    #the-order      every debt in the order you will clear them, and what
+                    a different order would cost or save
+    #the-loans      standard, income-driven or aggressive: what each pays
+                    a month, when each clears, what each costs in interest
+    #the-file       what a credit score is made of, which parts of it this
+                    app can actually see, and the one that moves fastest
+
+  One pile of debt, read as an order, as a plan for the part of it that has
+  plans, and as the record it leaves. Rules 1 and 4 of D-229. The order is
+  first because it is the one that applies to every debt.
+
+  EACH READING KEEPS THE GATE ITS ROOM HAD: the loans reading on the debt
+  branch, which is what the Student Loan Decision required. The room itself
+  requires nothing, and has not since D-061: someone who answered "no debt"
+  is skipped past it rather than shut out of it.
+
+  1. READS   the debts listed here, what comes in, and the month.
+  2. WRITES  the five debt fields as before, and the four loan-plan fields,
+             whose owner moved here with their boxes (D-249). The credit
+             reading writes nothing: it holds no score and never asks for
+             one.
+  3. CALLS   the engines each reading already called; no arithmetic moved.
+  4. EMPTY   no debt listed is no debt listed, never a zero.
+  5. CONFIG  the tables each engine names.
+
+  THE TWO LATER READINGS are built from shared/room.js as parts of this
+  room (D-235), each with a prefix and a root of its own.
+
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css.
+
+  LIVE-FORM: guarded. The debt list is the room's own and is guarded as it
+  always was; each template reading's controls are built once. Switching
+  readings hides and shows and rebuilds nothing (D-034).
 -->
 <style>
-  .room-back:hover { text-decoration: underline; }
-  section[id] { scroll-margin-top: var(--space-4); }
-  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- The order, from rooms/debt-payoff.html (D-249) ---- */
+  
+  #view-the-order .room-back:hover { text-decoration: underline; }
+  
+  #view-the-order section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-order .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 
-  .scope { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
-  .scope button { font-family: var(--font-body); font-size: var(--text-xs); border: none; background: transparent; color: var(--color-text-muted); padding: var(--space-1) var(--space-3); cursor: pointer; white-space: nowrap; }
-  .scope button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+  
+  #view-the-order .scope { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
+  
+  #view-the-order .scope button { font-family: var(--font-body); font-size: var(--text-xs); border: none; background: transparent; color: var(--color-text-muted); padding: var(--space-1) var(--space-3); cursor: pointer; white-space: nowrap; }
+  
+  #view-the-order .scope button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
 
-  .rewards { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-top: var(--space-3); font-size: var(--text-sm); }
-  .rewards.is-bad { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-the-order .rewards { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-the-order .rewards.is-bad { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
   /* One line per debt (D-187): name, owed, rate, minimum, and a caret for
      the rest. Ten debts are ten lines on a wide screen and twenty on a
      phone, where the name takes a line of its own. */
-  .debt { border-top: 1px solid var(--color-border); padding: var(--space-1) 0 0; }
-  .debt:first-child { border-top: none; }
-  .debt-cols { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 0.8fr 1fr 1.6em; gap: var(--space-2); font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: 0 0 var(--space-1); }
-  .debt-line { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 0.8fr 1fr 1.6em; gap: var(--space-2); align-items: center; }
-  .debt-line > * { min-width: 0; }
-  .debt-line .slaf-input-shell { min-height: 32px; }
-  .debt-line input { font-size: var(--text-sm); width: 100%; min-width: 0; }
-  .debt-line .slaf-affix { font-size: var(--text-xs); }
-  .debt-name { min-width: 0; width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-sm); padding: 3px 0; }
-  .debt-name:focus { border-bottom-color: var(--color-border-active); }
-  .debt-more { background: none; border: none; color: var(--color-text-faint); cursor: pointer; font-size: 12px; padding: 0; text-align: center; }
-  .debt-more[aria-expanded="true"] { color: var(--color-accent); }
-  .debt-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
-  .debt-acts { display: flex; gap: var(--space-3); align-items: center; margin-top: var(--space-3); }
-  .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: end; }
-  .debt-grid--2 { grid-template-columns: 1fr 1fr; }
-  .debt-grid--3 { display: contents; }
+  
+  #view-the-order .debt { border-top: 1px solid var(--color-border); padding: var(--space-1) 0 0; }
+  
+  #view-the-order .debt:first-child { border-top: none; }
+  
+  #view-the-order .debt-cols { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 0.8fr 1fr 1.6em; gap: var(--space-2); font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: 0 0 var(--space-1); }
+  
+  #view-the-order .debt-line { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 0.8fr 1fr 1.6em; gap: var(--space-2); align-items: center; }
+  
+  #view-the-order .debt-line > * { min-width: 0; }
+  
+  #view-the-order .debt-line .slaf-input-shell { min-height: 32px; }
+  
+  #view-the-order .debt-line input { font-size: var(--text-sm); width: 100%; min-width: 0; }
+  
+  #view-the-order .debt-line .slaf-affix { font-size: var(--text-xs); }
+  
+  #view-the-order .debt-name { min-width: 0; width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-sm); padding: 3px 0; }
+  
+  #view-the-order .debt-name:focus { border-bottom-color: var(--color-border-active); }
+  
+  #view-the-order .debt-more { background: none; border: none; color: var(--color-text-faint); cursor: pointer; font-size: 12px; padding: 0; text-align: center; }
+  
+  #view-the-order .debt-more[aria-expanded="true"] { color: var(--color-accent); }
+  
+  #view-the-order .debt-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
+  
+  #view-the-order .debt-acts { display: flex; gap: var(--space-3); align-items: center; margin-top: var(--space-3); }
+  
+  #view-the-order .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: end; }
+  
+  #view-the-order .debt-grid--2 { grid-template-columns: 1fr 1fr; }
+  
+  #view-the-order .debt-grid--3 { display: contents; }
   @media (max-width: 560px) {
-    .debt-cols { display: none; }
-    .debt-line { grid-template-columns: 1fr 0.8fr 1fr; }
-    .debt-line .debt-name-cell { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-2); }
-    .debt-line .debt-more { margin-left: auto; }
-    .debt-line .slaf-input-shell::before { content: attr(data-col); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); position: absolute; top: -12px; left: 0; }
-    .debt-line .slaf-input-shell { position: relative; margin-top: 11px; }
+    
+  #view-the-order .debt-cols { display: none; }
+    
+  #view-the-order .debt-line { grid-template-columns: 1fr 0.8fr 1fr; }
+    
+  #view-the-order .debt-line .debt-name-cell { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-2); }
+    
+  #view-the-order .debt-line .debt-more { margin-left: auto; }
+    
+  #view-the-order .debt-line .slaf-input-shell::before { content: attr(data-col); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); position: absolute; top: -12px; left: 0; }
+    
+  #view-the-order .debt-line .slaf-input-shell { position: relative; margin-top: 11px; }
   }
-  @media (min-width: 561px) { .debt-line .debt-more { grid-column: 5; } }
-  .plan-charts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
-  @media (max-width: 640px) { .plan-charts { grid-template-columns: 1fr; } }
-  .extra-field { margin-top: var(--space-4); }
+  @media (min-width: 561px) { 
+  #view-the-order .debt-line .debt-more { grid-column: 5; } }
+  
+  #view-the-order .plan-charts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+  @media (max-width: 640px) { 
+  #view-the-order .plan-charts { grid-template-columns: 1fr; } }
+  
+  #view-the-order .extra-field { margin-top: var(--space-4); }
   /* The sums (D-191): what is owed and the minimums, under the list; the
      minimums plus the extra, under the box, as the one figure that
      leaves the account for debt each month. */
-  .debt-total { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
-  .debt-total b { font-family: var(--font-display); font-weight: 500; color: var(--color-text); font-variant-numeric: tabular-nums; }
-  .extra-total { display: block; margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border-strong); font-size: var(--text-sm); }
-  .extra-total b { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; font-size: var(--text-lg); }
-  .extra-total .sum-how { display: block; color: var(--color-text-muted); font-size: var(--text-xs); }
-  .stop-field { margin-top: var(--space-3); max-width: 30em; }
-  .stop-field .slaf-input-shell { width: 100%; }
+  
+  #view-the-order .debt-total { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-order .debt-total b { font-family: var(--font-display); font-weight: 500; color: var(--color-text); font-variant-numeric: tabular-nums; }
+  
+  #view-the-order .extra-total { display: block; margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border-strong); font-size: var(--text-sm); }
+  
+  #view-the-order .extra-total b { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; font-size: var(--text-lg); }
+  
+  #view-the-order .extra-total .sum-how { display: block; color: var(--color-text-muted); font-size: var(--text-xs); }
+  
+  #view-the-order .stop-field { margin-top: var(--space-3); max-width: 30em; }
+  
+  #view-the-order .stop-field .slaf-input-shell { width: 100%; }
   /* The two figures the blank box falls back to (D-190): an estimate from
      what Start Here holds, and the realized one from closed months. The
      one in use is marked; the other says what it is waiting on. */
-  .extra-basis { display: grid; gap: 2px; margin-top: var(--space-2); font-size: var(--text-sm); }
-  .extra-basis .basis { display: grid; grid-template-columns: auto auto 1fr; gap: 0 var(--space-2); align-items: baseline; padding: 4px 0; border-top: 1px solid var(--color-border); }
-  .extra-basis .basis:first-child { border-top: none; }
-  .extra-basis .basis-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); min-width: 5.5em; }
-  .extra-basis b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .extra-basis .basis-tag { font-size: var(--text-xs); color: var(--color-positive); white-space: nowrap; }
-  .extra-basis .basis-note { grid-column: 1 / -1; color: var(--color-text-muted); font-size: var(--text-xs); }
-  .extra-basis .basis.is-used .basis-name { color: var(--color-text); font-weight: 600; }
-  .extra-basis .basis.is-waiting b { color: var(--color-text-faint); font-weight: normal; }
-  .fold-card > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
-  .fold-card > summary::-webkit-details-marker { display: none; }
-  .fold-card > summary::after { content: '▸'; color: var(--color-text-faint); font-size: 12px; transition: transform .12s ease; }
-  .fold-card[open] > summary::after { transform: rotate(90deg); }
-  .fold-card-sum { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: auto; margin-right: var(--space-2); }
+  
+  #view-the-order .extra-basis { display: grid; gap: 2px; margin-top: var(--space-2); font-size: var(--text-sm); }
+  
+  #view-the-order .extra-basis .basis { display: grid; grid-template-columns: auto auto 1fr; gap: 0 var(--space-2); align-items: baseline; padding: 4px 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-order .extra-basis .basis:first-child { border-top: none; }
+  
+  #view-the-order .extra-basis .basis-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); min-width: 5.5em; }
+  
+  #view-the-order .extra-basis b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-order .extra-basis .basis-tag { font-size: var(--text-xs); color: var(--color-positive); white-space: nowrap; }
+  
+  #view-the-order .extra-basis .basis-note { grid-column: 1 / -1; color: var(--color-text-muted); font-size: var(--text-xs); }
+  
+  #view-the-order .extra-basis .basis.is-used .basis-name { color: var(--color-text); font-weight: 600; }
+  
+  #view-the-order .extra-basis .basis.is-waiting b { color: var(--color-text-faint); font-weight: normal; }
+  
+  #view-the-order .fold-card > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  
+  #view-the-order .fold-card > summary::-webkit-details-marker { display: none; }
+  
+  #view-the-order .fold-card > summary::after { content: '▸'; color: var(--color-text-faint); font-size: 12px; transition: transform .12s ease; }
+  
+  #view-the-order .fold-card[open] > summary::after { transform: rotate(90deg); }
+  
+  #view-the-order .fold-card-sum { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: auto; margin-right: var(--space-2); }
   /* This room is an editor, not prose: one debt is a row of facts, and at
      480px they stack into a column a screen tall. Wider here only, so the
      shared measure stays what it is for every reading room. D-134. */
   @media (min-width: 760px) {
-    .slaf-wrap, .room-head { max-width: 720px; }
+    
+  #view-the-order .slaf-wrap,
+  #view-the-order .room-head { max-width: 720px; }
   }
   @media (min-width: 1040px) {
-    .slaf-wrap, .room-head { max-width: 980px; }
+    
+  #view-the-order .slaf-wrap,
+  #view-the-order .room-head { max-width: 980px; }
   }
 
   /* The folded parts of a row. */
-  .fold { border-top: 1px solid var(--color-border); margin-top: var(--space-2); }
-  .fold.is-more { border-top: none; margin-top: 0; }
-  .fold.is-more > summary { padding: 2px 0 var(--space-1); }
-  .fold.is-more > .fold-body { padding: var(--space-2) var(--space-3) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin: var(--space-2) 0 var(--space-2); }
-  .fold > summary { display: flex; align-items: baseline; gap: var(--space-2); cursor: pointer; list-style: none; padding: var(--space-2) 0; font-size: var(--text-sm); color: var(--color-text-muted); }
-  .fold > summary::-webkit-details-marker { display: none; }
-  .fold > summary::before { content: '▸'; color: var(--color-text-faint); font-size: 11px; line-height: 1.4; transition: transform .12s ease; }
-  .fold[open] > summary::before { transform: rotate(90deg); }
-  .fold > summary:hover { color: var(--color-text); }
-  .fold-title { font-weight: 600; }
-  .fold-sum { color: var(--color-text-faint); font-size: var(--text-xs); margin-left: auto; text-align: right; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .fold-body { padding-bottom: var(--space-2); }
+  
+  #view-the-order .fold { border-top: 1px solid var(--color-border); margin-top: var(--space-2); }
+  
+  #view-the-order .fold.is-more { border-top: none; margin-top: 0; }
+  
+  #view-the-order .fold.is-more > summary { padding: 2px 0 var(--space-1); }
+  
+  #view-the-order .fold.is-more > .fold-body { padding: var(--space-2) var(--space-3) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin: var(--space-2) 0 var(--space-2); }
+  
+  #view-the-order .fold > summary { display: flex; align-items: baseline; gap: var(--space-2); cursor: pointer; list-style: none; padding: var(--space-2) 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-order .fold > summary::-webkit-details-marker { display: none; }
+  
+  #view-the-order .fold > summary::before { content: '▸'; color: var(--color-text-faint); font-size: 11px; line-height: 1.4; transition: transform .12s ease; }
+  
+  #view-the-order .fold[open] > summary::before { transform: rotate(90deg); }
+  
+  #view-the-order .fold > summary:hover { color: var(--color-text); }
+  
+  #view-the-order .fold-title { font-weight: 600; }
+  
+  #view-the-order .fold-sum { color: var(--color-text-faint); font-size: var(--text-xs); margin-left: auto; text-align: right; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  
+  #view-the-order .fold-body { padding-bottom: var(--space-2); }
 
-  .debt-grid > * { min-width: 0; }
-  .debt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; margin-top: var(--space-2); }
-  .debt-warn { font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
-  .debt-limit { margin-top: var(--space-2); }
-  .debt-hint { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
-  .debt-promo { font-size: var(--text-xs); margin: var(--space-2) 0 0; }
-  .debt-promo.is-warn { color: var(--color-caution); }
-  .debt-promo.is-good { color: var(--color-positive); }
-  .debt-flags { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-2); }
-  .debt-flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
-  .debt-flag input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
-  .debt-dates { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-2); }
-  .debt-archive { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
-  .debt-archive:hover { border-color: var(--color-border-active); color: var(--color-text); }
-  details.archived { margin-top: var(--space-3); border: 1px dashed var(--color-border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
-  details.archived summary { cursor: pointer; font-size: var(--text-sm); color: var(--color-text-muted); }
-  details.archived summary small { color: var(--color-text-faint); }
-  .arch-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
-  .arch-row:first-child { border-top: none; }
-  .arch-row .arch-meta { color: var(--color-text-faint); font-size: var(--text-xs); display: block; }
+  
+  #view-the-order .debt-grid > * { min-width: 0; }
+  
+  #view-the-order .debt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; margin-top: var(--space-2); }
+  
+  #view-the-order .debt-warn { font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
+  
+  #view-the-order .debt-limit { margin-top: var(--space-2); }
+  
+  #view-the-order .debt-hint { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  
+  #view-the-order .debt-promo { font-size: var(--text-xs); margin: var(--space-2) 0 0; }
+  
+  #view-the-order .debt-promo.is-warn { color: var(--color-caution); }
+  
+  #view-the-order .debt-promo.is-good { color: var(--color-positive); }
+  
+  #view-the-order .debt-flags { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-2); }
+  
+  #view-the-order .debt-flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+  
+  #view-the-order .debt-flag input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
+  
+  #view-the-order .debt-dates { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-2); }
+  
+  #view-the-order .debt-archive { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
+  
+  #view-the-order .debt-archive:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  
+  #view-the-order details.archived { margin-top: var(--space-3); border: 1px dashed var(--color-border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
+  
+  #view-the-order details.archived summary { cursor: pointer; font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-order details.archived summary small { color: var(--color-text-faint); }
+  
+  #view-the-order .arch-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  
+  #view-the-order .arch-row:first-child { border-top: none; }
+  
+  #view-the-order .arch-row .arch-meta { color: var(--color-text-faint); font-size: var(--text-xs); display: block; }
 
-  .strategies { display: grid; gap: var(--space-2); }
-  .strategy { text-align: left; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; font-family: var(--font-body); color: var(--color-text); }
-  .strategy[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  
+  #view-the-order .strategies { display: grid; gap: var(--space-2); }
+  
+  #view-the-order .strategy { text-align: left; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; font-family: var(--font-body); color: var(--color-text); }
+  
+  #view-the-order .strategy[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
   /* Name, interest, time to clear — three columns on fixed rails, so the
      four orderings read down as a table and not as four ragged cards. */
-  .strategy-head { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); align-items: baseline; }
-  .strategy-name { font-weight: 600; min-width: 0; }
-  .strategy-figure, .strategy-when { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
-  .strategy-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; min-width: 0; }
-  .strategy-cols { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); padding: 0 var(--space-3) 2px; font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); white-space: nowrap; }
-  .strategy-cols span + span { text-align: right; }
-  .strategy-first { color: var(--color-text-faint); }
+  
+  #view-the-order .strategy-head { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); align-items: baseline; }
+  
+  #view-the-order .strategy-name { font-weight: 600; min-width: 0; }
+  
+  #view-the-order .strategy-figure,
+  #view-the-order .strategy-when { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+  
+  #view-the-order .strategy-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; min-width: 0; }
+  
+  #view-the-order .strategy-cols { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); padding: 0 var(--space-3) 2px; font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); white-space: nowrap; }
+  
+  #view-the-order .strategy-cols span + span { text-align: right; }
+  
+  #view-the-order .strategy-first { color: var(--color-text-faint); }
   @media (max-width: 420px) {
-    .strategy-head, .strategy-cols { grid-template-columns: minmax(0, 1fr) 7.5ch 7ch; gap: var(--space-2); }
-    .strategy-cols { padding: 0 var(--space-3); }
-    .strategy-blurb { font-size: var(--text-xs); }
+    
+  #view-the-order .strategy-head,
+  #view-the-order .strategy-cols { grid-template-columns: minmax(0, 1fr) 7.5ch 7ch; gap: var(--space-2); }
+    
+  #view-the-order .strategy-cols { padding: 0 var(--space-3); }
+    
+  #view-the-order .strategy-blurb { font-size: var(--text-xs); }
   }
   /* Reasons to keep it (D-132): the rational axis, beside "Feels like".
      A chip is on, off, or suggested — suggested is dashed and says so,
      and nothing is stored until it is confirmed. */
-  .keep { margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border); }
-  .keep-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); display: block; margin-bottom: 6px; }
-  .keep-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .keep-chip.is-none { margin-left: auto; }
-  .keep-chip { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; white-space: nowrap; }
-  .keep-chip[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-text); background: var(--color-surface-active); }
-  .keep-chip.is-suggested { border-style: dashed; border-color: var(--color-caution); color: var(--color-caution); }
-  .keep-chip.is-none[aria-pressed="true"] { border-color: var(--color-text-subtle); color: var(--color-text-subtle); background: none; }
-  .keep-suggest { font-size: var(--text-xs); color: var(--color-caution); margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
-  .keep-suggest button { background: none; border: 1px solid var(--color-caution); border-radius: var(--radius-pill); color: var(--color-caution); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; }
-  .keep-hint { font-size: var(--text-xs); color: var(--color-text-faint); margin: 6px 0 0; }
+  
+  #view-the-order .keep { margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border); }
+  
+  #view-the-order .keep-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); display: block; margin-bottom: 6px; }
+  
+  #view-the-order .keep-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  
+  #view-the-order .keep-chip.is-none { margin-left: auto; }
+  
+  #view-the-order .keep-chip { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; white-space: nowrap; }
+  
+  #view-the-order .keep-chip[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-text); background: var(--color-surface-active); }
+  
+  #view-the-order .keep-chip.is-suggested { border-style: dashed; border-color: var(--color-caution); color: var(--color-caution); }
+  
+  #view-the-order .keep-chip.is-none[aria-pressed="true"] { border-color: var(--color-text-subtle); color: var(--color-text-subtle); background: none; }
+  
+  #view-the-order .keep-suggest { font-size: var(--text-xs); color: var(--color-caution); margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  
+  #view-the-order .keep-suggest button { background: none; border: 1px solid var(--color-caution); border-radius: var(--radius-pill); color: var(--color-caution); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; }
+  
+  #view-the-order .keep-hint { font-size: var(--text-xs); color: var(--color-text-faint); margin: 6px 0 0; }
   /* The tags, wherever the payoff order is shown. */
-  .tagline { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; vertical-align: middle; }
-  .tagline i { font-style: normal; font-size: 10px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 0 6px; color: var(--color-text-subtle); white-space: nowrap; }
-  .tagline i.is-held { border-color: var(--color-caution); color: var(--color-caution); }
-  .badge { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-positive); border: 1px solid var(--color-positive); border-radius: var(--radius-pill); padding: 1px var(--space-2); margin-left: var(--space-2); }
+  
+  #view-the-order .tagline { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; vertical-align: middle; }
+  
+  #view-the-order .tagline i { font-style: normal; font-size: 10px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 0 6px; color: var(--color-text-subtle); white-space: nowrap; }
+  
+  #view-the-order .tagline i.is-held { border-color: var(--color-caution); color: var(--color-caution); }
+  
+  #view-the-order .badge { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-positive); border: 1px solid var(--color-positive); border-radius: var(--radius-pill); padding: 1px var(--space-2); margin-left: var(--space-2); }
 
-  ol.timeline { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  ol.timeline li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); flex-wrap: wrap; }
-  ol.timeline li > span:first-child { flex: 1 1 140px; min-width: 0; }
-  ol.timeline li > .tl-when { flex: 0 1 auto; margin-left: auto; }
-  ol.timeline li:first-child { border-top: none; }
-  .tl-when { color: var(--color-text-subtle); font-variant-numeric: tabular-nums; text-align: right; }
+  
+  #view-the-order ol.timeline { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-order ol.timeline li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); flex-wrap: wrap; }
+  
+  #view-the-order ol.timeline li > span:first-child { flex: 1 1 140px; min-width: 0; }
+  
+  #view-the-order ol.timeline li > .tl-when { flex: 0 1 auto; margin-left: auto; }
+  
+  #view-the-order ol.timeline li:first-child { border-top: none; }
+  
+  #view-the-order .tl-when { color: var(--color-text-subtle); font-variant-numeric: tabular-nums; text-align: right; }
 
   /* Every figure on one rail, with what it means beside it. The value
      column is fixed so the digits line up down the card however long the
      label is; the meaning sits in its own column and never pushes them. */
-  ol.finish { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  ol.finish li { display: flex; justify-content: space-between; gap: var(--space-3); padding: 4px 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
-  ol.finish li:first-child { border-top: none; }
-  ol.finish li:last-child { font-weight: 600; }
-  ol.finish b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  ol.finish .fin-none { color: var(--color-text-faint); font-weight: normal; }
-  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
-  .out-detail dl { display: grid; grid-template-columns: minmax(0, auto) 9.5ch 1fr; gap: 0; margin: 0; align-items: baseline; }
-  .out-detail dt { color: var(--color-text-muted); padding: var(--space-2) var(--space-3) var(--space-2) 0; border-top: 1px solid var(--color-border); grid-column: 1; white-space: nowrap; }
-  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-display); color: var(--color-text); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); grid-column: 2; white-space: nowrap; }
-  .out-detail .dl-why { color: var(--color-text-faint); font-size: var(--text-xs); padding: var(--space-2) 0 var(--space-2) var(--space-3); border-top: 1px solid var(--color-border); grid-column: 3; line-height: var(--leading-snug, 1.35); }
-  .out-detail dl > :nth-child(-n+3) { border-top: none; }
+  
+  #view-the-order ol.finish { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-order ol.finish li { display: flex; justify-content: space-between; gap: var(--space-3); padding: 4px 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  
+  #view-the-order ol.finish li:first-child { border-top: none; }
+  
+  #view-the-order ol.finish li:last-child { font-weight: 600; }
+  
+  #view-the-order ol.finish b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-order ol.finish .fin-none { color: var(--color-text-faint); font-weight: normal; }
+  
+  #view-the-order .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-the-order .out-detail dl { display: grid; grid-template-columns: minmax(0, auto) 9.5ch 1fr; gap: 0; margin: 0; align-items: baseline; }
+  
+  #view-the-order .out-detail dt { color: var(--color-text-muted); padding: var(--space-2) var(--space-3) var(--space-2) 0; border-top: 1px solid var(--color-border); grid-column: 1; white-space: nowrap; }
+  
+  #view-the-order .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-display); color: var(--color-text); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); grid-column: 2; white-space: nowrap; }
+  
+  #view-the-order .out-detail .dl-why { color: var(--color-text-faint); font-size: var(--text-xs); padding: var(--space-2) 0 var(--space-2) var(--space-3); border-top: 1px solid var(--color-border); grid-column: 3; line-height: var(--leading-snug, 1.35); }
+  
+  #view-the-order .out-detail dl > :nth-child(-n+3) { border-top: none; }
   @media (max-width: 460px) {
-    .out-detail dl { grid-template-columns: minmax(0, 1fr) auto; }
-    .out-detail dt { grid-column: 1; padding-bottom: 0; }
-    .out-detail dd { grid-column: 2; padding-bottom: 0; }
-    .out-detail .dl-why { grid-column: 1 / -1; border-top: none; padding: 2px 0 var(--space-2); }
-    .out-detail dl > :nth-child(-n+3) { border-top: none; }
-    .out-detail dl > :nth-child(3n+1):not(:nth-child(-n+3)), .out-detail dl > :nth-child(3n+2):not(:nth-child(-n+3)) { border-top: 1px solid var(--color-border); }
+    
+  #view-the-order .out-detail dl { grid-template-columns: minmax(0, 1fr) auto; }
+    
+  #view-the-order .out-detail dt { grid-column: 1; padding-bottom: 0; }
+    
+  #view-the-order .out-detail dd { grid-column: 2; padding-bottom: 0; }
+    
+  #view-the-order .out-detail .dl-why { grid-column: 1 / -1; border-top: none; padding: 2px 0 var(--space-2); }
+    
+  #view-the-order .out-detail dl > :nth-child(-n+3) { border-top: none; }
+    
+  #view-the-order .out-detail dl > :nth-child(3n+1):not(:nth-child(-n+3)),
+  #view-the-order .out-detail dl > :nth-child(3n+2):not(:nth-child(-n+3)) { border-top: 1px solid var(--color-border); }
   }
 
   /* How interest works: one question, three answers, and only the fields
      that answer owns. Replaces a Rate box, a "no interest" tick and a
      promo pair that sat in three different places (D-133). */
-  .interest { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3) var(--space-3); margin: var(--space-3) 0 0; min-width: 0; }
+  
+  #view-the-order .interest { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3) var(--space-3); margin: var(--space-3) 0 0; min-width: 0; }
   /* Only some debt types have one, so it takes no space when absent. */
-  .kind-note { border: 1px dashed var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); }
-  .kind-note > summary { font-size: var(--text-sm); color: var(--color-accent-hover); cursor: pointer; }
-  .kind-note ul { margin: var(--space-2) 0 0; padding-left: 18px; font-size: var(--text-sm); color: var(--color-text-muted); }
-  .kind-note li { margin-top: var(--space-1); }
-  .kind-note .kind-dont { font-size: var(--text-sm); color: var(--color-caution); margin: var(--space-2) 0 0; }
-  .interest-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: 0 var(--space-2); margin-left: calc(var(--space-2) * -1); }
-  .imodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: var(--space-3); }
-  .imode { font-family: var(--font-body); font-size: var(--text-xs); line-height: 1.25; border: none; border-left: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); padding: var(--space-2) var(--space-1); cursor: pointer; text-align: center; min-width: 0; display: flex; align-items: center; justify-content: center; text-wrap: balance; }
-  .imode:first-child { border-left: none; }
-  .imode:hover { color: var(--color-text); background: var(--color-surface-raised); }
-  .imode[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
-  .igrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: end; }
-  .igrid.is-promo { grid-template-columns: 1fr 1.2fr 1fr; }
-  .igrid .ifield { min-width: 0; display: block; }
-  .interest-say { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-snug, 1.35); }
-  @media (max-width: 420px) { .igrid.is-promo { grid-template-columns: 1fr 1fr; } .igrid.is-promo .ifield[data-ipart="rate"] { grid-column: 1 / -1; } }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-the-order .kind-note { border: 1px dashed var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); }
+  
+  #view-the-order .kind-note > summary { font-size: var(--text-sm); color: var(--color-accent-hover); cursor: pointer; }
+  
+  #view-the-order .kind-note ul { margin: var(--space-2) 0 0; padding-left: 18px; font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-order .kind-note li { margin-top: var(--space-1); }
+  
+  #view-the-order .kind-note .kind-dont { font-size: var(--text-sm); color: var(--color-caution); margin: var(--space-2) 0 0; }
+  
+  #view-the-order .interest-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: 0 var(--space-2); margin-left: calc(var(--space-2) * -1); }
+  
+  #view-the-order .imodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: var(--space-3); }
+  
+  #view-the-order .imode { font-family: var(--font-body); font-size: var(--text-xs); line-height: 1.25; border: none; border-left: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); padding: var(--space-2) var(--space-1); cursor: pointer; text-align: center; min-width: 0; display: flex; align-items: center; justify-content: center; text-wrap: balance; }
+  
+  #view-the-order .imode:first-child { border-left: none; }
+  
+  #view-the-order .imode:hover { color: var(--color-text); background: var(--color-surface-raised); }
+  
+  #view-the-order .imode[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+  
+  #view-the-order .igrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: end; }
+  
+  #view-the-order .igrid.is-promo { grid-template-columns: 1fr 1.2fr 1fr; }
+  
+  #view-the-order .igrid .ifield { min-width: 0; display: block; }
+  
+  #view-the-order .interest-say { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-snug, 1.35); }
+  @media (max-width: 420px) { 
+  #view-the-order .igrid.is-promo { grid-template-columns: 1fr 1fr; } 
+  #view-the-order .igrid.is-promo .ifield[data-ipart="rate"] { grid-column: 1 / -1; } }
+  
+  #view-the-order .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- Student loans, from rooms/student-loans.html (D-249) ---- */
+  
+  #view-the-loans section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-loans .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- Your credit file, from rooms/credit.html (D-249) ---- */
+  
+  #view-the-file section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-file .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* The standing statement that this page holds no score. Not a toggle and
+     not a footnote: it is the first thing on the page, because it is the
+     first thing a reader will be looking for. */
+  
+  #view-the-file .no-score { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  
+  #view-the-file .no-score strong { color: var(--color-text); }
+
+  /* One row per thing: a name, a figure or a plain "not here", and the
+     sentence underneath that says what it means. Shared by the factor
+     notes, what this app can see, how long things stay, and your rights. */
+  
+  #view-the-file ul.rows { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-file ul.rows > li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-file ul.rows > li:first-child { border-top: none; }
+  
+  #view-the-file .r-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  
+  #view-the-file .r-name { font-family: var(--font-display); font-size: var(--text-md); }
+  
+  #view-the-file .r-val { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text); }
+  
+  #view-the-file .r-val.is-good { color: var(--color-positive); }
+  
+  #view-the-file .r-val.is-watch { color: var(--color-caution); }
+  
+  #view-the-file .r-val.is-out { color: var(--color-critical-text); }
+  
+  #view-the-file .r-val.is-blank { color: var(--color-text-faint); }
+  
+  #view-the-file .r-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-the-file .r-note { font-size: var(--text-sm); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  
+  #view-the-file .r-note a { color: var(--color-accent-hover); }
+  
+  #view-the-file .r-where { font-size: var(--text-sm); color: var(--color-text-subtle); margin: var(--space-1) 0 0; word-break: break-word; }
+
+  
+  #view-the-file .lever-say { font-size: var(--text-md); line-height: var(--leading-loose); margin: var(--space-2) 0 0; }
+  
+  #view-the-file .lever-why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>Debt Payoff</h1>
-  <p class="room-lede">Every debt, in the order you'll clear them — and what a different order would cost or save.</p>
+  <h1>Debt</h1>
+  <p class="room-lede">Every debt, in the order you will clear them.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Three readings of what you owe">
+    <a href="#the-order" data-view="view-the-order">The order</a>
+    <a href="#the-loans" data-view="view-the-loans">Student loans</a>
+    <a href="#the-file" data-view="view-the-file">Your credit file</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
 
+  <!-- ===== THE ORDER (was rooms/debt-payoff.html) ===== -->
+  <section id="view-the-order">
+  <p class="slaf-lede">Every debt, in the order you will clear them — and what a different order would cost or save.</p>
   <section class="slaf-card" id="out-plan">
     <span class="slaf-eyebrow">Debt-free in</span>
     <div class="slaf-figure" data-figure>—</div>
@@ -326,12 +582,148 @@
     </div>
     <div id="rewards-body"></div>
   </details>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. Interest accrues monthly at the
-    rate you enter; a real statement may compound daily and add fees. Your
-    numbers stay in this browser.
-  </p>
+  <!-- ===== STUDENT LOANS (was rooms/student-loans.html) ===== -->
+  <section id="view-the-loans" hidden>
+  <p class="slaf-lede">Standard, income-driven, or aggressive: what each pays a month, when each clears, and what each costs in interest — for the loans you listed.</p>
+  <div class="room-standalone" id="sl-room-standalone" hidden></div>
+
+  <section class="slaf-card" id="sl-number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">The plan that clears them</span>
+      <div id="sl-room-lens"></div>
+    </div>
+    <div class="room-number" id="sl-room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="sl-chart" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Three plans, side by side</span>
+    <div id="sl-room-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="sl-inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The plan</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Pick the plan you are on or weighing. The extra only matters to the aggressive plan; the share and the horizon only to the income-driven one, and the usual figures are proposed until you type your own.</p>
+    <div id="sl-room-inputs"></div>
+  </section>
+
+  <section class="slaf-card" id="sl-amounts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Through the lens</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
+    <ul class="room-amounts" id="sl-room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="sl-assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="sl-room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="sl-room-why" hidden></p>
+  <p class="room-scope" id="sl-room-scope"></p>
+
+  <section class="slaf-card" id="sl-reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="sl-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ===== YOUR CREDIT FILE (was rooms/credit.html) ===== -->
+  <section id="view-the-file" hidden>
+  <p class="slaf-lede">What a credit score is made of, which parts of it this app can actually see, and the one that moves fastest.</p>
+  <div class="room-standalone" id="cr-room-standalone" hidden></div>
+
+  <section class="slaf-card" id="no-score">
+    <span class="slaf-eyebrow">Before anything else</span>
+    <p class="no-score">
+      <strong>There is no score on this page, and there cannot be.</strong>
+      A credit score is worked out by a credit bureau — a company that keeps a
+      file on you — from records this app has never seen: every account in your
+      name, every payment, every time someone checked you out. Nothing here adds
+      up to a number out of 850, and any page that offered you one from what you
+      have typed into it would be making it up. What this room does instead is
+      show what goes into a score, say which two parts of it your own figures
+      already answer, and be plain about the three they do not.
+    </p>
+  </section>
+
+  <section class="slaf-card" id="cr-number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">The part that moves fastest</span>
+      <div id="cr-room-lens"></div>
+    </div>
+    <div class="room-number" id="cr-room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="lever">
+    <span class="slaf-eyebrow">What to actually do</span>
+    <p class="lever-say" id="lever-say"></p>
+    <p class="lever-why" id="lever-why"></p>
+  </section>
+
+  <section class="slaf-card" id="out-what">
+    <span class="slaf-eyebrow">What a score is made of</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      The five things the scoring models weigh, and roughly how much each one
+      counts. Blue is a part your own figures say something about; grey is a
+      part only your report knows.
+    </p>
+    <div id="cr-room-chart"></div>
+    <ul class="rows" id="factor-notes"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-yours">
+    <span class="slaf-eyebrow">What this app can actually see</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Two of the five, from the debts you have listed. A figure left blank
+      below is missing, not zero — it says what it needs.
+    </p>
+    <ul class="rows" id="seen-list"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-stays">
+    <span class="slaf-eyebrow">How long things stay</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Nothing stays for ever. These are the reporting periods set by the law
+      that governs credit files, not a guess about your own.
+    </p>
+    <ul class="rows" id="stays-list"></ul>
+  </section>
+
+  <section class="slaf-card" id="out-rights">
+    <span class="slaf-eyebrow">What you are entitled to, free</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
+      Named, not linked. This app sends you nowhere and is paid by nobody —
+      type the address in yourself, and check it is the one written here.
+    </p>
+    <ul class="rows" id="rights-list"></ul>
+  </section>
+
+  <section class="slaf-card" id="cr-amounts">
+    <span class="slaf-eyebrow">Priced in life</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      What is actually owed, behind the percentage above. The toggle up top
+      reads it as dollars, hours of your life, or months of FI bought or
+      pushed.
+    </p>
+    <ul class="room-amounts" id="cr-room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="cr-assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="cr-room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="cr-room-why" hidden></p>
+  <p class="room-scope" id="cr-room-scope"></p>
+
+  <section class="slaf-card" id="cr-reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="cr-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. Nothing here is sent anywhere.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -351,13 +743,90 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/debt.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/studentloans.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/benchmarks.js"></script>
+<script src="../engines/ratios.js"></script>
+<script src="../shared/room.js"></script>
 <script>
+/* ---- the order, the loans, the file (D-249) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   The hash still reaches it — an old link must land somewhere honest — and
+   the reading says for whom it is, which is what Gate.why is for. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-the-loans', match: /^#(the-loans|sl-)/, branch: 'debt' },
+    { id: 'view-the-file', match: /^#(the-file|cr-|lever|out-rights|out-stays|out-what|out-yours|no-score|seen-list|stays-list|rights-list|factor-notes)/ },
+    { id: 'view-the-order', match: /.*/ }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. When the hash asks for a reading the gate has taken
+       away, fall back to the DEFAULT — the room's plainest reading, and the
+       one the person would have got with no hash at all — not to whichever
+       gated reading happens to sit first in this list. */
+    var fallback = VIEWS[VIEWS.length - 1];
+    var on = open(asked) ? asked
+           : open(fallback) ? fallback
+           : VIEWS.filter(open)[0] || fallback;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('debt-payoff');
+  if (SLAF.Progress) SLAF.Progress.mount('debt-payoff');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-the-order, from rooms/debt-payoff.html (D-249) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Demo = SLAF.DemoPersona, Debt = SLAF.Debt, Charts = SLAF.Charts;
 
-  var ROOM_ID = 'debt-payoff';
+  var ROOM_ID = 'debt-payoff';   /* the room this reading lives in */
   var RULES = null;
   var FOO = null;   /* data/foo_rules.json, for the high-interest line (D-188) */
   var TABLES = null;
@@ -1735,20 +2204,7 @@
     setTimeout(function () { renderQueued = false; renderNow(); }, 0);
   }
 
-  function jumpToHash() {
-    if (!location.hash) return;
-    var target = document.getElementById(location.hash.slice(1));
-    if (target && target.tagName === 'DETAILS') target.open = true;
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  window.addEventListener('hashchange', jumpToHash);
-
   /* ---------- boot ------------------------------------------------------- */
-
-  Spine.registerRoom(ROOM_ID);
-
-  SLAF.Progress.mount(ROOM_ID);
-
   Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults']).then(function (tables) {
     TABLES = tables;
     RULES = tables.debtRules;
@@ -1769,6 +2225,417 @@
     notice.className = 'notice is-error';
     notice.textContent = 'Couldn’t load data/debt_rules.json (' + err.message
       + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-loans, from rooms/student-loans.html (D-249) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      StudentLoans = SLAF.StudentLoans, Charts = SLAF.Charts, Room = SLAF.Room;
+
+  /* ---- writes: this room owns household.studentLoans ------------------------- */
+  function readPlan(h) { return (h && h.studentLoans) || {}; }
+  function write(key, value) { Spine.set('studentLoans.' + key, value); }
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function money(c) { return Money.formatCents(c); }
+  function years(n) { return n + (n === 1 ? ' year' : ' years'); }
+  function conv(T) { return T.studentLoanConventions; }
+
+  /* One plan in a few words: what it pays, when it ends, what it costs. */
+  function phrase(p, opts) {
+    var o = opts || {};
+    if (!p.ok) return p.label.toLowerCase() + ': ' + p.reason;
+    var s = p.label.toLowerCase() + ' ' + money(p.monthlyPaymentCents) + ' a month';
+    if (p.clears) s += ', clears ' + p.clearYear + ' for ' + money(p.totalPaidCents);
+    else s += ', ' + money(p.forgivenCents) + ' forgiven after ' + years(p.forgivenAtYears) + (o.total ? ' (' + money(p.totalPaidCents) + ' paid)' : '');
+    return s;
+  }
+  function debtLink() { return Ownership.linkTo('debt-payoff', 'debts'); }
+  var PLAN_COLOURS = { standard: Charts.COLORS.contributed, income_driven: Charts.COLORS.spend, aggressive: Charts.COLORS.target };
+
+  Room.mount({
+    id: 'debt-payoff',
+    part: true,
+    prefix: 'sl-',
+    root: 'view-the-loans',
+    guessAs: 'student',
+    tables: ['studentLoanConventions', 'debtRules', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['totalDebt', 'monthlyDebtPayments', 'grossAnnualIncome'],
+
+    number: function (h, T) {
+      var r = StudentLoans.compare(h, T, {});
+      var label = 'The plan that clears them';
+      if (!Money.isOk(r)) {
+        var sub = r.missing.indexOf('debts') !== -1
+          ? 'List a loan as a student loan in <a href="' + esc(debtLink()) + '">Debt Payoff</a> and the three plans appear here.'
+          : '';
+        return { label: label, value: null, reason: r.reason, sub: sub };
+      }
+      var rec = r.recommended;
+      if (!rec) {
+        return { label: label, value: null, reason: 'None of the three clears the loans.', sub: r.order.map(function (id) { return esc(phrase(r.plans[id], { total: true })); }).join(' · ') };
+      }
+      var parts = ['<strong>' + money(rec.monthlyPaymentCents) + '</strong> a month · ' + money(rec.totalPaidCents) + ' total, ' + money(rec.totalInterestCents) + ' interest'];
+      r.order.forEach(function (id) { if (id !== rec.id) parts.push(esc(phrase(r.plans[id], { total: true }))); });
+      var sub = parts.join(' · ');
+      var idr = r.plans.income_driven;
+      if (idr.negativeAmortisation) sub += '. <strong>The income-driven payment is below the interest</strong> — the balance grows until it is forgiven, and what is forgiven can be more than you borrowed';
+      if (idr.ok && idr.forgivenCents > 0) sub += '. A forgiven balance may be taxed as income that year; that tax is not in these figures';
+      if (r.chosen && !r.chosenIsRecommended && r.chosen.ok) sub += '. You picked ' + r.chosen.label.toLowerCase() + ': ' + (r.chosen.clears ? money(r.chosen.totalPaidCents - rec.totalPaidCents) + ' more than the cheapest plan that clears' : 'less paid, but the loans are forgiven rather than cleared');
+      if (r.chosen && r.chosenIsRecommended) sub += '. That is the one you picked';
+      if (r.lump) sub += '. Reading the one debt from Start Here as the loans, since you are a student — type them out in <a href="' + esc(debtLink()) + '">Debt Payoff</a> to be exact';
+      if (r.derivedMinimumIds.length) sub += '. A loan with no minimum listed is paid level over ' + years(conv(T).standardTermYears);
+      var zone = r.chosen ? (r.chosenIsRecommended ? 'good' : (r.chosen.ok ? 'watch' : null)) : null;
+      return { label: label, value: rec.label + ': clear in ' + rec.clearYear, sub: sub, zone: zone, result: r };
+    },
+
+    chart: function (h, T) {
+      var r = StudentLoans.compare(h, T, {});
+      if (!Money.isOk(r)) return Charts.bars({ rows: [], empty: r.reason });
+      return Charts.bars({
+        rows: r.order.map(function (id) {
+          var p = r.plans[id];
+          if (!p.ok) return { label: p.label, value: null, note: money(p.monthlyPaymentCents) === Money.EM_DASH ? 'not yet' : money(p.monthlyPaymentCents) + ' a month', empty: p.incomeMissing ? 'add income' : 'never clears', color: PLAN_COLOURS[id] };
+          return { label: p.label, value: p.totalPaidCents, color: PLAN_COLOURS[id],
+            note: money(p.monthlyPaymentCents) + ' a month · ' + (p.clears ? 'clears ' + p.clearYear : money(p.forgivenCents) + ' forgiven after ' + years(p.forgivenAtYears)) };
+        }),
+        format: function (v) { return money(v) + ' paid'; }
+      });
+    },
+
+    inputs: [
+      { ctl: 'plan', label: 'The plan', kind: 'select',
+        options: [['', 'Not chosen yet'], ['standard', 'Standard — the minimums, level over the term'], ['income_driven', 'Income-driven — a share of what you earn, the rest forgiven'], ['aggressive', 'Aggressive — standard plus an extra a month']],
+        read: function (h) { return readPlan(h).plan; }, write: function (v) { write('plan', v); } },
+      { ctl: 'extraMonthlyCents', label: 'Extra a month', kind: 'money', placeholder: 'e.g. 200', hint: 'On top of the standard payments — the aggressive plan. Blank or zero is the standard plan again.',
+        read: function (h) { return readPlan(h).extraMonthlyCents; }, write: function (v) { write('extraMonthlyCents', v === null ? null : Math.max(0, v)); } },
+      { ctl: 'idrShare', label: 'Income-driven share', kind: 'pct', placeholder: 'e.g. 10', hint: 'Of discretionary income — what you earn above 1.5× a poverty line.',
+        read: function (h) { return readPlan(h).idrShare; }, write: function (v) { write('idrShare', v === null ? null : Math.max(0, Math.min(1, v))); },
+        propose: function (h, T) { return { value: conv(T).idrShareOfDiscretionary, source: 'the usual share (convention)' }; } },
+      { ctl: 'forgivenessYears', label: 'Forgiveness after', kind: 'number', affix: 'years', placeholder: 'e.g. 20', hint: 'When an income-driven balance is written off. Zero means never.',
+        read: function (h) { return readPlan(h).forgivenessYears; }, write: function (v) { write('forgivenessYears', v === null ? null : Math.max(0, v)); },
+        propose: function (h, T) { return { value: conv(T).forgivenessYears, source: 'the usual horizon; ' + conv(T).forgivenessYearsGraduate + ' for graduate loans (convention)' }; } }
+    ],
+
+    amounts: function (h, T) {
+      var r = StudentLoans.compare(h, T, {});
+      if (!Money.isOk(r)) return [];
+      var p = (r.chosen && r.chosen.ok) ? r.chosen : r.recommended;
+      var rows = [{ label: 'The loans today', cents: r.startingBalanceCents, href: debtLink() }];
+      if (!p) return rows;
+      var who = (r.chosen && r.chosen.ok ? 'your ' : 'the ') + p.label.toLowerCase() + ' plan';
+      rows.push({ label: 'A month of ' + who, cents: p.monthlyPaymentCents });
+      rows.push({ label: 'All the interest, ' + who, cents: p.totalInterestCents });
+      if (p.forgivenCents > 0) rows.push({ label: 'Forgiven after ' + years(p.forgivenAtYears), cents: p.forgivenCents });
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var c = conv(T), rules = T.debtRules;
+      var r = StudentLoans.compare(h, T, {});
+      var ok = Money.isOk(r);
+      var src = 'data/student_loan_conventions.json v' + c.version + ' (' + c.confidence + ')';
+      var rows = [
+        { label: 'The standard term', value: years(c.standardTermYears), source: 'the level-payment shape of a federal standard plan — ' + src },
+        { label: 'Income-driven share', value: Money.formatRate(ok ? r.share : c.idrShareOfDiscretionary, { decimals: 0 }) + ' of discretionary income', source: ok && r.shareSource === 'yours' ? 'yours' : 'the common figure — ' + src },
+        { label: 'Discretionary income', value: 'earnings above ' + Money.formatRate(c.discretionaryPovertyMultiple, { decimals: 0 }) + ' of a ' + Money.formatCents(Math.round(c.povertyLineDollars * 100)) + ' poverty line', source: 'a round poverty line for one person, the shape of the rule and not any year\'s table — ' + src },
+        { label: 'Forgiveness after', value: ok && r.forgivenessNone ? 'never' : years(ok ? r.forgivenessYears : c.forgivenessYears), source: ok && r.forgivenessSource === 'yours' ? 'yours' : 'the usual horizon; ' + c.forgivenessYearsGraduate + ' for graduate loans — ' + src },
+        { label: 'Extra a month', value: ok ? Money.formatCents(r.extraMonthlyCents) : Money.EM_DASH, source: ok && r.extraEntered ? 'yours' : 'nothing until you type one; the aggressive plan equals the standard one' },
+        { label: 'The payoff arithmetic', value: 'month by month, interest at rate ÷ 12', source: 'engines/debt.js, data/debt_rules.json v' + rules.version + ' (' + rules.confidence + '); the same run Debt Payoff shows' },
+        { label: 'Income', value: ok && r.incomeKnown ? Money.formatCents(r.grossAnnualCents) + ' a year, held flat' : 'not entered', source: ok && r.incomeKnown ? 'Start Here; the income-driven payment does not rise with a raise here (convention)' : 'add it in Start Here for the income-driven line' },
+        { label: 'Tax on a forgiven balance', value: 'not modelled', source: 'a written-off balance may count as income that year; named, not priced' }
+      ];
+      if (ok) rows.push({ label: 'The loans read', value: r.loans.length + (r.loans.length === 1 ? ' loan, ' : ' loans, ') + Money.formatCents(r.startingBalanceCents), source: r.lump ? 'the one debt from Start Here, read as the loans because you are a student' : 'the debts typed student loan in Debt Payoff' });
+      return rows;
+    },
+
+    why: function (h, T, situation) {
+      return {
+        student: 'At a student\'s stage the loans are the number: the balance is set, the rate is set, and the only thing still open is the shape of paying it back. The three shapes here are the ones you will be offered, and the difference between them is measured in years and thousands.',
+        employed: 'The first years of pay decide the plan. A standard payment that fits the salary clears the loans on schedule; an extra on top clears them years early; an income-driven payment buys room now at the cost of interest later — or of a forgiven balance that may be taxed.',
+        selfEmployed: 'With uneven income, the income-driven shape is the one that bends with a thin year, and the aggressive one is what a fat year can do. Run both against a normal year here and remember the payment follows the income you report.',
+        mixed: 'A job plus your own work means the pay that sets an income-driven payment is the sum of both. Standard and aggressive do not care where the money comes from; income-driven does.',
+        retired: 'Loans carried into retirement are paid from a fixed draw, and the standard plan is the one that ends.',
+        betweenJobs: 'Between jobs, the income-driven payment falls with the income — that is what the shape is for — and the standard one does not.'
+      }[situation] || 'Three shapes of repayment for the same loans, priced in months and interest.';
+    },
+
+    scope: 'This room does not know your servicer\'s rules, the current income-driven plan names, or whether you qualify for forgiveness programs; it compares three shapes of repayment.'
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-file, from rooms/credit.html (D-249) ---- */
+(function () {
+  'use strict';
+  /* No SLAF.Spine here on purpose: this room reads the household through the
+     template and writes nothing at all, so it never needs the handle. */
+  var Money = SLAF.Money, Schema = SLAF.Schema, Ownership = SLAF.Ownership,
+      Ratios = SLAF.Ratios, Charts = SLAF.Charts, Room = SLAF.Room;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function el(id) { return document.getElementById(id); }
+  function debtLink(text) {
+    return '<a href="' + Ownership.linkTo('debt-payoff', 'debts') + '">' + esc(text) + ' →</a>';
+  }
+
+  /* ---- The table -------------------------------------------------------- */
+  function table(T) { return (T && T.creditFactors) || null; }
+  function factors(T) { var t = table(T); return t ? t.factors : []; }
+  function factorById(T, id) {
+    var f = factors(T).filter(function (x) { return x.id === id; });
+    return f[0] || null;
+  }
+
+  /* ---- The ratios ---------------------------------------------------------
+     One Ratios.all() per paint, not one per callback: the template hands the
+     same household object to every callback in a paint, so that is the key.
+     Utilisation here is the same figure the dashboard and the Ratio Glossary
+     show, because it is the same call. */
+  var memo = { h: null, rows: null };
+  function ratioRows(h, T) {
+    if (memo.h === h && memo.rows) return memo.rows;
+    var a = Ratios.all(h, T, {});
+    memo = { h: h, rows: (a && a.rows) || [] };
+    return memo.rows;
+  }
+  function ratio(h, T, id) {
+    var r = ratioRows(h, T).filter(function (x) { return x.id === id; });
+    return r[0] || null;
+  }
+  function rate(row) { return row && row.ok ? Money.formatRate(row.value, { decimals: 1 }) : Money.EM_DASH; }
+  function zoneOf(row) {
+    if (!row || !row.ok) return 'blank';
+    var z = row.verdict && row.verdict.zone;
+    return z && z !== 'none' ? z : '';
+  }
+
+  /* The band, said in the unit of the figure above it — the wording the
+     Ratio Glossary uses, so the same band reads the same in both rooms. */
+  function bandText(row) {
+    var b = row && row.verdict && row.verdict.band;
+    if (!b) return '';
+    if (b.good === null || b.warn === null) return b.note || '';
+    var aim = b.direction === 'lower'
+      ? 'Comfortable at or below ' + Money.formatRate(b.good, { decimals: 0 })
+      : 'Comfortable at or above ' + Money.formatRate(b.good, { decimals: 0 });
+    return aim + '. ' + (b.note || '');
+  }
+
+  /* ---- Why the other three are not here ----------------------------------
+     Page copy, not reference data: data/credit_factors.json says WHETHER
+     this app can see a factor (`youCanSee`), and this says what would be
+     needed to. Saying nothing would leave three gaps that look like bugs. */
+  var CANNOT_SEE = {
+    paymentHistory: 'Nothing typed into this app records whether a bill was paid on time, or late. Your report is the only place that is written down.',
+    ageOfAccounts: 'This app holds what an account is worth or what it owes, never the date it was opened — so it cannot know how old anything is.',
+    newCredit: 'Applying for credit leaves a mark on your report. It leaves nothing anywhere in here.'
+  };
+  /* And, for the two it can: how close the figure this app holds really is
+     to the thing the models weigh. Utilisation is the same measurement;
+     the credit-mix one is only the nearest shape of it, and says so. */
+  var HOW_CLOSE = {
+    utilisation: 'This is the same measurement the models make: what your cards owe against what they let you borrow. It counts only the cards you have given a limit for, on both sides of the division.',
+    mix: 'Not quite the same thing. The models look at whether you hold both kinds of credit at all; this is how much of what you owe sits on cards rather than in loans. It is the shape of the factor, not the factor.'
+  };
+
+  Room.mount({
+    id: 'debt-payoff',
+    part: true,
+    prefix: 'cr-',
+    root: 'view-the-file',
+    /* All of them: engines/ratios.js reads across the reference set to build
+       one context, and the two figures here come out of that same context. */
+    tables: null,
+    reads: ['totalDebt'],
+    /* No guesses, ever. Every other room may fill an empty spine with the
+       intake's estimates and say so; a guessed credit utilisation is exactly
+       the invented number this room exists not to print. */
+    standalone: false,
+
+    number: function (h, T) {
+      var label = 'How much of your card limits you are using';
+      var u = ratio(h, T, 'creditUtilization');
+      if (!u) return { label: label, value: null, reason: 'The ratio engine did not load.' };
+      if (!u.ok) {
+        return {
+          label: label,
+          value: null,
+          reason: u.result.reason,
+          sub: 'Blank is not zero. Nothing here says you are using none of your limit — it says no limit has been '
+            + 'entered to measure against. ' + debtLink('Put a card’s limit in Debt Payoff')
+        };
+      }
+      var e = u.result;
+      var cards = e.cardsCounted === 1 ? '1 card' : e.cardsCounted + ' cards';
+      var sub = '<strong>' + esc(Money.formatCents(e.balanceCents)) + '</strong> owed on ' + esc(cards)
+        + ' against <strong>' + esc(Money.formatCents(e.limitCents)) + '</strong> of limit';
+      if (e.cardsWithoutLimit) {
+        sub += ' · ' + esc(e.cardsWithoutLimit + (e.cardsWithoutLimit === 1 ? ' card is' : ' cards are'))
+          + ' left out of both sides, having no limit entered';
+      }
+      var band = bandText(u);
+      if (band) sub += ' · ' + esc(band);
+      return { label: label, value: rate(u), sub: sub, zone: zoneOf(u) || null, result: u };
+    },
+
+    /* The five factors and their published weights. Colour says whether this
+       app holds anything bearing on the part — blue it can, grey it cannot —
+       so the picture itself carries the honesty rather than a footnote. */
+    chart: function (h, T) {
+      var list = factors(T);
+      if (!list.length) return Charts.bars({ rows: [], empty: 'The credit factors table did not load.' });
+      return Charts.bars({
+        title: 'What a score is made of, by published weight',
+        rows: list.map(function (f) {
+          var seen = f.youCanSee === true;
+          var row = seen && f.ratio ? ratio(h, T, f.ratio) : null;
+          return {
+            label: f.label,
+            value: f.share,
+            color: seen ? Charts.COLORS.contributed : Charts.COLORS.muted,
+            note: !seen ? 'only your report knows this'
+              : row && row.ok ? 'yours: ' + rate(row)
+              : 'this app can see this one — nothing entered yet'
+          };
+        }),
+        max: 1,
+        format: function (v) { return Charts.percent(v); }
+      });
+    },
+
+    /* Only real money goes through the lens. The card balance and the total
+       owed are amounts someone actually owes, so pricing them in hours of
+       life or months of FI says something true. A credit LIMIT is neither
+       owed nor held — reading it as "four months of FI" would be nonsense,
+       so it stays a plain figure in the line under the percentage. */
+    amounts: function (h, T) {
+      var rows = [];
+      var u = ratio(h, T, 'creditUtilization');
+      if (u && u.ok) rows.push({ label: 'On your cards', cents: u.result.balanceCents, href: Ownership.linkTo('debt-payoff', 'debts') });
+      var debt = Schema.totalDebtCents(h);
+      if (Money.isOk(debt)) rows.push({ label: 'Everything you owe', cents: debt.value, href: Ownership.linkTo('debt-payoff', 'debts') });
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var t = table(T), bands = T.ratioBenchmarks;
+      var list = factors(T);
+      var seen = list.filter(function (f) { return f.youCanSee === true; });
+      var seenWeight = seen.reduce(function (s, f) { return s + f.share; }, 0);
+      return [
+        { label: 'The five weights',
+          value: list.map(function (f) { return Money.formatRate(f.share, { decimals: 0 }); }).join(' / '),
+          source: 'data/credit_factors.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + ')' },
+        { label: 'Why there is no score',
+          value: 'none is computed',
+          source: t.confidenceNote },
+        { label: 'How much of it is visible here',
+          value: Money.formatRate(seenWeight, { decimals: 0 }) + ' of the weight, ' + seen.length + ' of ' + list.length + ' factors',
+          source: 'The factors marked youCanSee in data/credit_factors.json. The other ' + (list.length - seen.length)
+            + ' are named and left blank rather than estimated.' },
+        { label: 'The two figures',
+          value: 'engines/ratios.js',
+          source: 'The same call the dashboard and the Ratio Glossary make, so one number is calculated in one place. Utilisation counts only the cards with a limit entered, on both sides (D-045).' },
+        { label: 'The bands on them',
+          value: 'comfortable at or below ' + Money.formatRate(bands.bands.creditUtilization.good, { decimals: 0 }),
+          source: 'data/ratio_benchmarks.json v' + bands.version + ' (' + bands.confidence + ') — ' + bands.bands.creditUtilization.note },
+        { label: 'How long things stay',
+          value: t.howLongThingsStay.length + ' reporting periods',
+          source: 'Set by the Fair Credit Reporting Act, not by a scoring model — the periods in data/credit_factors.json v' + t.version + ' (' + t.confidence + ').' }
+      ];
+    },
+
+    why: function (h, T, situation) {
+      return {
+        employed: 'Employed, a credit file mostly matters on the day you borrow — a mortgage, a car, a card. The cheapest time to fix it is the year before that day, not the week of it.',
+        selfEmployed: 'Self-employed, your file often does more work than your income does: a lender who cannot read two years of lumpy earnings will read your payment record instead. The business card counts here too if it reports to your personal file.',
+        mixed: 'With a job and your own work, the file is one file — there is no separate score for each. Every card in your own name, whatever you use it for, is on the same page of it.',
+        student: 'At a student’s stage the file is short, and a short file is a thin one. Nothing here can shortcut that; time is the only thing that lengthens it, so the useful move is to start something small and never miss it.',
+        betweenJobs: 'Between jobs a score does not know you are between jobs — it never sees income at all. What it sees is whether the minimums kept being paid, which is why the minimum is the bill to protect first when a month is short.',
+        retired: 'Retired, the file matters less often and matters a lot when it does — a move, a refinance, a new insurer in some states. A card kept open and lightly used keeps it alive at no cost.'
+      }[situation] || 'A credit file is a record somebody else keeps about how you have borrowed. This room says what is in it and which parts of it your own numbers already answer.';
+    },
+
+    scope: 'This room cannot read your report, cannot see or estimate your score, and cannot dispute anything on your behalf. Errors, collections, and debt that has stopped being a spreadsheet problem need a person —',
+
+    /* Everything that is content rather than calculation. Built on every
+       paint from the table and the two ratios; there is nothing focusable on
+       this page, so redrawing it cannot interrupt anyone. */
+    after: function (h, T) {
+      var t = table(T);
+      if (!t) return;
+
+      /* -- The fastest lever, in the data's own words ---------------------- */
+      var u = factorById(T, 'utilisation');
+      if (u) {
+        el('lever-say').textContent = u.lever;
+        el('lever-why').textContent = u.moves + ' It is ' + Math.round(u.share * 100)
+          + '% of what a score is made of, it is reported again every month, and it carries no memory: '
+          + 'last month’s figure is not held against this month’s. That combination is what makes it the '
+          + 'fastest thing on the list to change.';
+      }
+
+      /* -- What each factor is, and what moves it -------------------------- */
+      el('factor-notes').innerHTML = factors(T).map(function (f) {
+        return '<li><div class="r-head"><span class="r-name">' + esc(f.label) + '</span>'
+          + '<span class="r-val">' + esc(Money.formatRate(f.share, { decimals: 0 })) + '</span></div>'
+          + '<p class="r-say">' + esc(f.what) + '</p>'
+          + '<p class="r-note">' + esc(f.moves) + '</p></li>';
+      }).join('');
+
+      /* -- The two it can see, and the three it cannot --------------------- */
+      el('seen-list').innerHTML = factors(T).map(function (f) {
+        var seen = f.youCanSee === true;
+        if (!seen) {
+          return '<li><div class="r-head"><span class="r-name">' + esc(f.label) + '</span>'
+            + '<span class="r-val is-blank">not here</span></div>'
+            + '<p class="r-say">' + esc(CANNOT_SEE[f.id] || 'This app holds nothing bearing on this part.') + '</p>'
+            + '<p class="r-note">Worth ' + esc(Money.formatRate(f.share, { decimals: 0 }))
+            + ' of a score. Your own report shows it — see what you are entitled to, below.</p></li>';
+        }
+        var row = f.ratio ? ratio(h, T, f.ratio) : null;
+        var band = row && row.ok ? bandText(row) : '';
+        return '<li><div class="r-head"><span class="r-name">' + esc(f.label) + '</span>'
+          + '<span class="r-val is-' + esc(zoneOf(row) || 'none') + '">' + esc(rate(row)) + '</span></div>'
+          + '<p class="r-say">' + esc(HOW_CLOSE[f.id] || f.what) + '</p>'
+          + (row && row.ok
+              ? (band ? '<p class="r-note">' + esc(band) + '</p>' : '')
+              : '<p class="r-note">' + esc(row ? row.result.reason : 'Not worked out.') + ' '
+                + debtLink('Debt Payoff') + '</p>')
+          + '</li>';
+      }).join('');
+
+      /* -- How long things stay -------------------------------------------- */
+      el('stays-list').innerHTML = t.howLongThingsStay.map(function (r) {
+        var years = r.years === 0 ? 'gone once paid'
+          : r.years === 1 ? '1 year' : r.years + ' years';
+        return '<li><div class="r-head"><span class="r-name">' + esc(r.label) + '</span>'
+          + '<span class="r-val">' + esc(years) + '</span></div>'
+          + '<p class="r-say">' + esc(r.note) + '</p></li>';
+      }).join('');
+
+      /* -- What you are entitled to. Named as text, never linked: this app
+            sends you to no site and is paid by nobody (the Get Help
+            precedent — kinds of help, never a referral). -------------------- */
+      el('rights-list').innerHTML = t.yourRights.map(function (r) {
+        return '<li><div class="r-head"><span class="r-name">' + esc(r.what) + '</span></div>'
+          + '<p class="r-where">' + esc(r.where) + '</p></li>';
+      }).join('');
+    }
   });
 })();
 </script>

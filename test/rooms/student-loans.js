@@ -1,6 +1,6 @@
 /* test/rooms/student-loans.js — Student Loan Decision: three shapes of repayment. D-120. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Registry, Ownership, Debt, Projection, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Registry, Ownership, Debt, Projection, TABLES } = t;
   const SL = require(path.join(ROOT, 'engines/studentloans.js'));
   section('Student Loan Decision (D-120): standard, income-driven, aggressive');
 
@@ -71,11 +71,19 @@ module.exports = function (t) {
   check('a ten-year term', conv.standardTermYears, 10);
   check('ten per cent of discretionary income', conv.idrShareOfDiscretionary, 0.1);
   check('a convention, not a regulation', conv.confidence, 'convention');
-  const page = fs.readFileSync(path.join(ROOT, 'rooms/student-loans.html'), 'utf8');
-  checkTrue('the page mounts the template as student-loans, guessing a student', /id: 'student-loans'/.test(page) && /guessAs: 'student'/.test(page));
-  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + id + '"').test(page)));
+  /* student-loans is a reading of debt-payoff since D-249, so this file reads its slice of
+     that page: its own markup and its own script. `slice.page` is the
+     whole file, for the few facts that really are page-wide. */
+  const slice = reading('rooms/debt-payoff.html', 'view-the-loans', "READING view-the-loans,");
+  const page = slice.html;
+  checkTrue('the reading mounts the template as a part of Debt, guessing a student', /id: 'debt-payoff',\n\s*part: true,\n\s*prefix: 'sl-',\n\s*root: 'view-the-loans',/.test(page) && /guessAs: 'student'/.test(page));
+  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + (id === 'load-notice' ? '' : 'sl-') + id + '"').test(page)));
   checkTrue('… four inputs, the room’s own', ['plan', 'extraMonthlyCents', 'idrShare', 'forgivenessYears'].every(c => new RegExp("ctl: '" + c + "'").test(page)));
   checkTrue('… writes only studentLoans.*', (page.match(/Spine\.set\('([a-zA-Z.]+)'/g) || []).every(m => /studentLoans\./.test(m)));
-  check('the plan is owned here', Ownership.field('loanPlan').owner, 'student-loans');
-  check('the room needs the debt branch', Registry.requires('student-loans').join(','), 'debt');
+  check('the plan is owned here', Ownership.field('loanPlan').owner, 'debt-payoff');
+  /* The branch moved from the room to the reading (D-249): Debt requires
+     nothing and has not since D-061, and the loans reading carries it. */
+  check('the room it lives in requires no branch', Registry.requires('debt-payoff').join(','), '');
+  checkTrue('… and the loans reading declares the debt branch',
+    /\{ id: 'view-the-loans', match: [^}]*branch: 'debt' \}/.test(slice.page));
 };

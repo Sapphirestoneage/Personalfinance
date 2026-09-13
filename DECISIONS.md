@@ -14422,6 +14422,32 @@ one" while a reading inside it satisfied neither.
 **Compatibility.** No stored shape changes. Checked against the pre-merge
 pages: all three readings render identical element counts and text.
 
+### D-249 — Debt: the order, the loans, the file
+
+**Decision.** The Student Loan Decision and Your Credit File become readings
+of Debt Payoff, and the room is called Debt. Three hats: `#the-order` (the
+default), `#the-loans`, `#the-file`. Both old pages redirect, hash and all.
+
+**Why.** One pile of debt, read as an order, as a plan for the part of it
+that has plans, and as the record it leaves. Rules 1 and 4 of D-229. The
+order is first because it is the only reading that applies to every debt.
+
+**Gating.** Debt requires nothing and has not since D-061 — someone who
+answers "no debt" is skipped past it rather than shut out of it — and the
+loans reading keeps the `debt` branch the Student Loan Decision had.
+
+**Ownership.** The four loan-plan fields → `debt-payoff`, anchor
+`sl-inputs`. The credit reading owns nothing and still does: it holds no
+score and never asks for one.
+
+**The progress dot.** Debt's dot read "filled" on the demo when the room
+owned only the five debt fields. It owns the four loan-plan fields now and
+the demo has entered none of them, so it reads "partly". The dot moved with
+the fields.
+
+**Compatibility.** No stored shape changes. Checked against the pre-merge
+pages: all three readings render identically.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -594,22 +594,22 @@
       format: function (v) { return v === 0 ? 'none yet' : v + (v === 1 ? ' rule' : ' rules'); }
     },
     loanPlan: {
-      label: 'Student loan plan', owner: 'student-loans', anchor: 'inputs',
+      label: 'Student loan plan', owner: 'debt-payoff', anchor: 'sl-inputs',
       read: function (h) { var v = (h.studentLoans || {}).plan; return v ? Money.ok(v) : Money.incomplete('Not chosen yet.', ['plan']); },
       format: function (v) { return { standard: 'Standard', income_driven: 'Income-driven', aggressive: 'Aggressive' }[v] || v; }
     },
     loanExtra: {
-      label: 'Extra to the loans, a month', owner: 'student-loans', anchor: 'inputs',
+      label: 'Extra to the loans, a month', owner: 'debt-payoff', anchor: 'sl-inputs',
       read: function (h) { var v = (h.studentLoans || {}).extraMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['extraMonthlyCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
     idrShare: {
-      label: 'Income-driven share', owner: 'student-loans', anchor: 'inputs',
+      label: 'Income-driven share', owner: 'debt-payoff', anchor: 'sl-inputs',
       read: function (h) { var v = (h.studentLoans || {}).idrShare; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['idrShare']); },
       format: function (v) { return Math.round(v * 100) + '% of discretionary income'; }
     },
     forgivenessYears: {
-      label: 'Forgiveness after', owner: 'student-loans', anchor: 'inputs',
+      label: 'Forgiveness after', owner: 'debt-payoff', anchor: 'sl-inputs',
       read: function (h) { var v = (h.studentLoans || {}).forgivenessYears; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['forgivenessYears']); },
       format: function (v) { return v + ' years'; }
     },

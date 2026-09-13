@@ -10,19 +10,17 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **start** — Start Here · 1000 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1570 lines · no engines · DD-028, DD-026, DD-025
 
-## Your Numbers (11)
+## Your Numbers (9)
 
-- **debt-payoff** — Debt Payoff · 1777 lines · engines: projection, debt · owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-191, D-190, D-189
+- **debt-payoff** — Debt · 2644 lines · engines: projection, debt, tier0, studentloans, hourly, foo, cashflow, fire, statement, benchmarks, ratios · owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-237, D-207, D-191
 - **expenses** — Expenses · 1402 lines · engines: projection, tier0, cashflow, fire, income, selfemployed, tax, hourly, subscriptions · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-237, D-207, D-199
 - **cash-flow** — The Month · 896 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-237, D-192, D-163
 - **income** — Income · 1345 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget, variableincome, hourly · owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, incomeType, paySurvives · D-237, D-207, D-198
 - **budget** — The Close · 977 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history · owns: monthsClosed, historyCompareTo · D-237, D-130, D-129
 - **statement** — The Statement · 1732 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, statements · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-237, D-157, D-152
-- **credit** — Your Credit File · 475 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-147
 - **cant-pay** — When It Won’t All Get Paid · 529 lines · engines: projection, tier0, cashflow · D-148
 - **rollover** — The Account You Left Behind · 756 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom · D-150
 - **tax** — Tax · 258 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly · owns: otherPreTax, withheld · D-150, D-142, D-129
-- **student-loans** — Student Loan Decision · 267 lines · engines: projection, tier0, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-120
 
 ## Scorecard (6)
 
@@ -81,13 +79,14 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (39)
+## Files in rooms/ not in the registry (41)
 
 - rooms/accounts.html
 - rooms/between-jobs.html
 - rooms/buckets.html
 - rooms/calendar.html
 - rooms/comeback.html
+- rooms/credit.html
 - rooms/dashboard.html
 - rooms/doors.html
 - rooms/dreamline.html
@@ -115,6 +114,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/sleep-at-night.html
 - rooms/stacker.html
 - rooms/statements.html
+- rooms/student-loans.html
 - rooms/subscriptions.html
 - rooms/unlearning.html
 - rooms/variable-income.html

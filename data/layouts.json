@@ -49,7 +49,6 @@
             "worth",
             "runway",
             "car",
-            "credit",
             "cant-pay",
             "rollover",
             "what-if-life",
@@ -72,8 +71,7 @@
             "enough",
             "week",
             "reversibility",
-            "debates",
-            "student-loans"
+            "debates"
           ],
           "note": "Registry order 1\u201351 \u2014 the sequence a person is meant to walk."
         },
@@ -124,7 +122,6 @@
             "worth",
             "runway",
             "car",
-            "credit",
             "cant-pay",
             "rollover",
             "what-if-life",
@@ -160,8 +157,7 @@
             "career-move",
             "offer-compare",
             "partner",
-            "wedding",
-            "student-loans"
+            "wedding"
           ],
           "note": "What the gate actually moves \u2014 between 8 and 19 rooms."
         },
@@ -197,8 +193,7 @@
             "race",
             "runway",
             "statement",
-            "reachable",
-            "credit"
+            "reachable"
           ]
         },
         {
@@ -230,8 +225,7 @@
             "down-payment",
             "property",
             "hassle",
-            "worth",
-            "student-loans"
+            "worth"
           ]
         },
         {
@@ -337,8 +331,6 @@
           "name": "Owe",
           "rooms": [
             "debt-payoff",
-            "student-loans",
-            "credit",
             "cant-pay"
           ]
         },
@@ -433,8 +425,7 @@
             "cant-pay",
             "micro-retirement",
             "runway",
-            "get-help",
-            "credit"
+            "get-help"
           ],
           "note": "The floor is moving. Five rooms, one tap from the front door."
         },
@@ -459,7 +450,6 @@
             "goals",
             "car",
             "big-purchase",
-            "student-loans",
             "rollover",
             "career-move",
             "offer-compare",
@@ -560,7 +550,6 @@
           "name": "3 \u00b7 High-interest debt",
           "rooms": [
             "debt-payoff",
-            "credit",
             "cant-pay"
           ]
         },
@@ -597,7 +586,6 @@
           "name": "8 \u00b7 Prepaid future expenses",
           "rooms": [
             "goals",
-            "student-loans",
             "big-purchase",
             "car",
             "housing",
@@ -674,10 +662,8 @@
             "debt-payoff",
             "statement",
             "reachable",
-            "credit",
             "runway",
             "cant-pay",
-            "student-loans",
             "rollover",
             "tax"
           ]
@@ -807,7 +793,6 @@
             "side-hustle",
             "start",
             "ledger",
-            "student-loans",
             "tax",
             "rollover",
             "dashboard",
@@ -826,7 +811,6 @@
             "credential",
             "degree",
             "hassle",
-            "credit",
             "data",
             "one-pager"
           ],
@@ -874,7 +858,6 @@
             "runway",
             "protection",
             "cant-pay",
-            "credit",
             "micro-retirement"
           ],
           "note": "What you lie awake about."
@@ -900,7 +883,6 @@
             "down-payment",
             "property",
             "rollover",
-            "student-loans",
             "debt-payoff"
           ],
           "note": "Big, expensive, wheeled or mortgaged."
@@ -1001,8 +983,7 @@
           "rooms": [
             "statement",
             "reachable",
-            "runway",
-            "credit"
+            "runway"
           ]
         },
         {
@@ -1045,7 +1026,6 @@
             "property",
             "big-purchase",
             "car",
-            "student-loans",
             "rollover",
             "self-employed",
             "side-hustle",
@@ -1091,7 +1071,6 @@
             "fire",
             "coast-date",
             "runway",
-            "credit",
             "statement",
             "reachable",
             "financial-snapshot",
@@ -1108,7 +1087,6 @@
             "down-payment",
             "property",
             "car",
-            "student-loans",
             "rollover",
             "career-move",
             "offer-compare",
@@ -1197,8 +1175,7 @@
             "expenses",
             "cash-flow",
             "budget",
-            "runway",
-            "credit"
+            "runway"
           ]
         },
         {
@@ -1216,7 +1193,6 @@
           "name": "The debt outrunning you",
           "rooms": [
             "debt-payoff",
-            "student-loans",
             "rollover",
             "big-purchase",
             "car"
@@ -1339,8 +1315,6 @@
           "name": "A lender",
           "rooms": [
             "debt-payoff",
-            "credit",
-            "student-loans",
             "car",
             "big-purchase",
             "cant-pay"
@@ -1423,7 +1397,6 @@
             "ledger",
             "values",
             "goals",
-            "credit",
             "week",
             "debates"
           ],
@@ -1466,8 +1439,7 @@
             "property",
             "big-purchase",
             "enough",
-            "reversibility",
-            "student-loans"
+            "reversibility"
           ],
           "note": "37 rooms sit at exactly the same depth. There is no sequence among them \u2014 the numbered path invents one.",
           "warn": true
@@ -1535,8 +1507,7 @@
             "car",
             "housing",
             "down-payment",
-            "property",
-            "student-loans"
+            "property"
           ]
         },
         {
@@ -1544,7 +1515,6 @@
           "rooms": [
             "statement",
             "reachable",
-            "credit",
             "debt-payoff",
             "rollover",
             "tax"
@@ -1619,7 +1589,6 @@
             "financial-snapshot",
             "race",
             "dashboard",
-            "credit",
             "runway"
           ],
           "note": "Everything already computed. You are reading, not typing."
@@ -1633,8 +1602,7 @@
             "reversibility",
             "cant-pay",
             "get-help",
-            "rollover",
-            "student-loans"
+            "rollover"
           ]
         },
         {
@@ -1724,7 +1692,6 @@
             "tax",
             "partner",
             "wedding",
-            "credit",
             "settings",
             "data",
             "one-pager",
@@ -1739,7 +1706,6 @@
             "offer-compare",
             "side-hustle",
             "self-employed",
-            "student-loans",
             "debt-payoff",
             "statement",
             "reachable",
@@ -1857,8 +1823,6 @@
           "name": "Hub \u00b7 Debt Payoff",
           "rooms": [
             "debt-payoff",
-            "credit",
-            "student-loans",
             "cant-pay",
             "car",
             "big-purchase",
@@ -1929,7 +1893,6 @@
             "debt-payoff",
             "financial-snapshot",
             "race",
-            "credit",
             "runway"
           ],
           "note": "Arithmetic on what you typed. If it is wrong, you typed it wrong."
@@ -1953,7 +1916,6 @@
             "down-payment",
             "property",
             "car",
-            "student-loans",
             "rollover"
           ],
           "note": "A return rate, an inflation figure, a withdrawal rate. The assumption is named in the drawer and can be changed."
@@ -2027,8 +1989,7 @@
           "name": "Wrong right now \u203a Money is short",
           "rooms": [
             "cant-pay",
-            "runway",
-            "credit"
+            "runway"
           ]
         },
         {
@@ -2077,7 +2038,6 @@
           "name": "Regular \u203a What I owe",
           "rooms": [
             "debt-payoff",
-            "student-loans",
             "car",
             "big-purchase",
             "housing",

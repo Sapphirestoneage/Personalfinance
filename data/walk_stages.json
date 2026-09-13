@@ -27,8 +27,7 @@
       "goal": "The things that stop one bad month turning into a bad year. This comes before growing anything.",
       "rooms": [
         "runway",
-        "protection",
-        "credit"
+        "protection"
       ]
     },
     {
@@ -37,8 +36,7 @@
       "goal": "What leaves, where it lands, and what is taken on the way. This is the machine that moves money while you are not watching.",
       "rooms": [
         "financial-snapshot",
-        "tax",
-        "student-loans"
+        "tax"
       ]
     },
     {

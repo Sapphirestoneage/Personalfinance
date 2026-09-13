@@ -39,10 +39,14 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 
 - `unlearningDropped` — Rules let go of · **no other room mentions it**
 
-## debt-payoff (5)
+## debt-payoff (9)
 
-- `totalDebt` — Total debt · read by ledger, start, budget, financial-snapshot, statement, dashboard, credit, what-if-life, student-loans, one-pager
-- `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, financial-snapshot, statement, values, cant-pay, student-loans
+- `loanPlan` — Student loan plan · **no other room mentions it**
+- `loanExtra` — Extra to the loans, a month · **no other room mentions it**
+- `idrShare` — Income-driven share · **no other room mentions it**
+- `forgivenessYears` — Forgiveness after · **no other room mentions it**
+- `totalDebt` — Total debt · read by ledger, start, budget, financial-snapshot, statement, dashboard, what-if-life, one-pager
+- `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, financial-snapshot, statement, values, cant-pay
 - `debtBalance` — Balance · read by ledger, start
 - `debtRate` — Interest rate · read by ledger, start, foo-ladder, debates
 - `debtMinPayment` — Minimum payment, a month · read by ledger
@@ -135,15 +139,15 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
 - `filingStatus` — Filing status · read by expenses, income, financial-snapshot, statement, fire, fire-lab, self-employed, side-hustle, dashboard, credential, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, income, financial-snapshot, statement, hassle, self-employed, side-hustle, dashboard, credential, skill-tree, values, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, career-move, offer-compare, degree, partner, housing, big-purchase, adventure, week, reversibility, debates, student-loans, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, income, financial-snapshot, statement, hassle, self-employed, side-hustle, dashboard, credential, skill-tree, values, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, career-move, offer-compare, degree, partner, housing, big-purchase, adventure, week, reversibility, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
 - `cashSavings` — Cash & savings · read by ledger, cash-flow, income, budget, financial-snapshot, statement, dashboard, skill-tree, runway, cant-pay, what-if-life, protection, housing, big-purchase, reversibility, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
-- `employmentStatus` — Working situation · read by ledger, runway, tax, offer-compare, debates, student-loans
+- `employmentStatus` — Working situation · read by ledger, debt-payoff, runway, tax, offer-compare, debates
 - `employerMatch` — Employer match · read by financial-snapshot, statement, foo-ladder, offer-compare, debates
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, skill-tree, one-pager
-- `hasDebt` — Any debt · read by dashboard, debates, student-loans
+- `hasDebt` — Any debt · read by debt-payoff, dashboard, debates
 - `contributionPercent` — Workplace contribution · read by ledger, statement, what-if-life, tax
 - `highestDeductible` — Highest deductible · read by statement, runway, protection
 - `dependents` — Anyone depending on your income · too generic to trace
@@ -164,13 +168,6 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 - `assetCharacter` — How it is taxed on the way out · read by ledger
 - `assetTier` — Which pile it sits in · read by ledger
 - `assetCostBasis` — Cost basis · read by ledger
-
-## student-loans (4)
-
-- `loanPlan` — Student loan plan · **no other room mentions it**
-- `loanExtra` — Extra to the loans, a month · **no other room mentions it**
-- `idrShare` — Income-driven share · **no other room mentions it**
-- `forgivenessYears` — Forgiveness after · **no other room mentions it**
 
 ## tax (2)
 

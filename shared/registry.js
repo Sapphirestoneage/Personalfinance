@@ -186,32 +186,6 @@
       ]
     },
     {
-      /* The most-asked consumer money question, and the app had no room for
-         it (D-147). It computes NO score — it cannot see the file — so it
-         shows what it can see, says what moves one, and stops. */
-      id: 'credit',
-      group: 'numbers', subgroup: 'debt', aliases: ['credit score', 'report', 'file'],
-      kind: 'read',
-      /* It reads the itemised debts, which is where a card's balance and its
-         limit live — the two figures the utilisation and credit-mix rows are
-         made of. It writes nothing and owns nothing. */
-      needs: ['totalDebt'],
-      order: 26.4,
-      title: 'Your Credit File',
-      blurb: 'What a score is made of, which parts this app can actually see, and the one that moves fastest. No score here \u2014 that comes from a file only the bureaus hold.',
-      href: 'rooms/credit.html',
-      tier: 1,
-      tags: ['debt'],
-      daite: { reads: ['debt.items'], writes: [] },
-      subsections: [
-        { id: 'out-what',     label: 'What it is made of' },
-        { id: 'out-yours',    label: 'What this app can see' },
-        { id: 'out-stays',    label: 'How long things stay' },
-        { id: 'out-rights',   label: 'What you are entitled to' },
-        { id: 'reading',      label: 'Reading from elsewhere' }
-      ]
-    },
-    {
       /* The highest-stress money moment there is, and Between Jobs was the
          nearest thing — which assumes job loss specifically (D-148). */
       id: 'cant-pay',
@@ -285,23 +259,27 @@
     {
       id: 'debt-payoff',
       features: ['studentLoanPaths'],
-      group: 'numbers', subgroup: 'debt', aliases: ['loans', 'credit card', 'avalanche', 'snowball', 'minimums'],
+      group: 'numbers', subgroup: 'debt', aliases: ['loans', 'credit card', 'avalanche', 'snowball', 'minimums', 'student loans', 'college', 'loan forgiveness', 'idr', 'credit', 'credit score', 'credit file'],
       kind: 'core',
       needs: ['totalDebt', 'monthlyDebtPayments'],
       order: 2,
-      title: 'Debt Payoff',
-      blurb: 'Every debt, in the order you\u2019ll clear them — and what avalanche, snowball, or just getting the worst one gone would each cost.',
+      title: 'Debt',
+      blurb: 'Every debt in the order you will clear them and what a different order costs — the three student-loan plans side by side, and what a credit file is actually made of.',
       href: 'rooms/debt-payoff.html',
       tier: 1,
       tags: ['debt'],
-      daite: { reads: ['debt.items', 'debt.items[].minimumCents'], writes: ['debt.items', 'debt.items[].minimumCents', 'debt.items[].balanceCents', 'debt.items[].rate'] },
+      daite: { reads: ['debt.items', 'debt.items[].minimumCents', 'income.grossAnnualCents'], writes: ['debt.items', 'debt.items[].minimumCents', 'debt.items[].balanceCents', 'debt.items[].rate', 'debt.items[].plan'] },
       subsections: [
         { id: 'debts',           label: 'What you owe' },
         { id: 'extra',           label: 'Beyond the minimums' },
         { id: 'out-plan',        label: 'Debt-free in' },
         { id: 'out-strategies',  label: 'Which order' },
         { id: 'out-rewards',     label: 'Rewards vs. carrying' },
-        { id: 'out-timeline',    label: 'The order they fall' }
+        { id: 'out-timeline',    label: 'The order they fall' },
+        { id: 'sl-number', label: 'The plan that clears them' },
+        { id: 'sl-inputs', label: 'The plan' },
+        { id: 'cr-number', label: 'What a score is made of' },
+        { id: 'lever', label: 'The one that moves fastest' }
       ]
     },
     {
@@ -1238,30 +1216,6 @@
       ]
   });
 
-  /* Student Loan Decision — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'student-loans',
-    features: ['studentLoanPaths'],
-    group: 'numbers', subgroup: 'debt', aliases: ['college', 'loan forgiveness', 'idr'],
-    kind: 'about-you',
-    needs: ['totalDebt', 'grossAnnualIncome'],
-    order: 49,
-    title: 'Student Loan Decision',
-    blurb: 'Standard, income-driven, or aggressive: what each pays a month, when each clears, and what each costs in interest — for the loans you listed.',
-    href: 'rooms/student-loans.html',
-    tier: 2,
-    tags: ['debt'],
-    daite: { reads: ['debt.items', 'income.grossAnnualCents'], writes: ['debt.items[].plan'] },
-      subsections: [
-        { id: 'number',      label: 'The plan that clears them' },
-        { id: 'chart',       label: 'Three plans, side by side' },
-        { id: 'inputs',      label: 'The plan' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
   /* Your Data: every way numbers get in or out of this browser — a file, a
      share link, a pasted statement sorted into the right lists — in one
      place. Writes through the same spine helpers the owner rooms use; owns
@@ -1422,7 +1376,7 @@
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
-    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'rollover', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
+    numbers: ['debt-payoff', 'cant-pay', 'statement', 'rollover', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
     decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'enough', 'week', 'reversibility'],
@@ -1506,7 +1460,10 @@
        hours branch was its requirement, not the room's: the one-thing
        reading applies to anyone, and the dream reading says it has no wage
        rather than vanishing. Same call as Between Jobs above. */
-    'student-loans': ['debt']
+    /* The Student Loan Decision became Debt's loans reading (D-249). Debt
+       requires nothing and has not since D-061 — someone who answered "no
+       debt" is skipped past it, not shut out of it — and the READING keeps
+       the debt branch on the router. */
   };
   function gate() {
     if (typeof module === 'object' && module.exports) return require('./gate.js');

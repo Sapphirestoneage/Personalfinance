@@ -7,260 +7,33 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Student Loan Decision · SPARKS</title>
-<meta name="description" content="Standard, income-driven, or aggressive: what each pays a month, when each clears, and what each costs in interest — for the loans you listed."/>
+<meta name="description" content="The Student Loan Decision is a reading of Debt now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-101.
-
-  1. READS   The debts typed student_loan (Debt Payoff owns the list; Start
-             Here files a student's lump as one), the household's gross
-             income (Start Here) for the income-driven payment, and the
-             debt totals as chips.
-  2. WRITES  It OWNS household.studentLoans — plan, extraMonthlyCents,
-             idrShare, forgivenessYears. Nothing else edits those. It does
-             not touch the loans or the income.
-  3. CALLS   engines/studentloans.js. The standard and aggressive plans are
-             engines/debt.js's simulate() on a copy holding only the loans;
-             the income-driven plan is the one loop debt.js does not have.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses for a student (guessAs) and says so; with no
-             loan listed the number says so and points at Debt Payoff.
-  5. CONFIG  data/student_loan_conventions.json (the term, the share, the
-             poverty line and its multiple, the horizon) and
-             data/debt_rules.json (the simulation's limits).
-
-  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, four
-  inputs, the assumptions drawer with sources, why this matters at your
-  stage, one out-of-scope line to Get Help. The ids below are the deep links.
-
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
-  THEMING: none this pass. A theme is a class on <body> and a palette in
-  shared/theme.css.
+  REDIRECT — the Student Loan Decision is a reading of Debt (rooms/debt-payoff.html#the-loans, DECISIONS.md D-249).
+  One pile of debt: read as an order, as a plan for the part of it that
+  has plans, and as the record it leaves. Rules 1 and 4 of D-229.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  section[id] { scroll-margin-top: var(--space-4); }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-</style>
+<meta http-equiv="refresh" content="0; url=debt-payoff.html#the-loans"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Student Loan Decision</h1>
-  <p class="room-lede">Standard, income-driven, or aggressive: what each pays a month, when each clears, and what each costs in interest — for the loans you listed.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <div class="room-standalone" id="room-standalone" hidden></div>
-
-  <section class="slaf-card" id="number">
-    <div class="room-head-row">
-      <span class="slaf-eyebrow">The plan that clears them</span>
-      <div id="room-lens"></div>
-    </div>
-    <div class="room-number" id="room-number"></div>
-  </section>
-
-  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Three plans, side by side</span>
-    <div id="room-chart"></div>
-  </section>
-
-  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The plan</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Pick the plan you are on or weighing. The extra only matters to the aggressive plan; the share and the horizon only to the income-driven one, and the usual figures are proposed until you type your own.</p>
-    <div id="room-inputs"></div>
-  </section>
-
-  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Through the lens</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
-    <ul class="room-amounts" id="room-amounts"></ul>
-  </section>
-
-  <details class="room-drawer" id="assumptions">
-    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
-    <div class="room-assumptions-body" id="room-assumptions"></div>
-  </details>
-
-  <p class="room-why" id="room-why" hidden></p>
-  <p class="room-scope" id="room-scope"></p>
-
-  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">What this is reading</span>
-    <div id="reading-list" style="margin-top:var(--space-3)"></div>
-  </section>
-
-  <p class="disclaimer">
-    Educational tool, not financial advice. The three plans are shapes, not
-    your servicer's rules; a forgiven balance may be taxed. Your numbers stay
-    in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">The Student Loan Decision is a reading of Debt now.
+    <a href="debt-payoff.html#the-loans" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/suggest.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/debt.js"></script>
-<script src="../engines/studentloans.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../shared/charts.js"></script>
-<script src="../shared/room.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      StudentLoans = SLAF.StudentLoans, Charts = SLAF.Charts, Room = SLAF.Room;
-
-  /* ---- writes: this room owns household.studentLoans ------------------------- */
-  function readPlan(h) { return (h && h.studentLoans) || {}; }
-  function write(key, value) { Spine.set('studentLoans.' + key, value); }
-
-  function esc(s) {
-    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
-  function money(c) { return Money.formatCents(c); }
-  function years(n) { return n + (n === 1 ? ' year' : ' years'); }
-  function conv(T) { return T.studentLoanConventions; }
-
-  /* One plan in a few words: what it pays, when it ends, what it costs. */
-  function phrase(p, opts) {
-    var o = opts || {};
-    if (!p.ok) return p.label.toLowerCase() + ': ' + p.reason;
-    var s = p.label.toLowerCase() + ' ' + money(p.monthlyPaymentCents) + ' a month';
-    if (p.clears) s += ', clears ' + p.clearYear + ' for ' + money(p.totalPaidCents);
-    else s += ', ' + money(p.forgivenCents) + ' forgiven after ' + years(p.forgivenAtYears) + (o.total ? ' (' + money(p.totalPaidCents) + ' paid)' : '');
-    return s;
-  }
-  function debtLink() { return Ownership.linkTo('debt-payoff', 'debts'); }
-  var PLAN_COLOURS = { standard: Charts.COLORS.contributed, income_driven: Charts.COLORS.spend, aggressive: Charts.COLORS.target };
-
-  Room.mount({
-    id: 'student-loans',
-    guessAs: 'student',
-    tables: ['studentLoanConventions', 'debtRules', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['totalDebt', 'monthlyDebtPayments', 'grossAnnualIncome'],
-
-    number: function (h, T) {
-      var r = StudentLoans.compare(h, T, {});
-      var label = 'The plan that clears them';
-      if (!Money.isOk(r)) {
-        var sub = r.missing.indexOf('debts') !== -1
-          ? 'List a loan as a student loan in <a href="' + esc(debtLink()) + '">Debt Payoff</a> and the three plans appear here.'
-          : '';
-        return { label: label, value: null, reason: r.reason, sub: sub };
-      }
-      var rec = r.recommended;
-      if (!rec) {
-        return { label: label, value: null, reason: 'None of the three clears the loans.', sub: r.order.map(function (id) { return esc(phrase(r.plans[id], { total: true })); }).join(' · ') };
-      }
-      var parts = ['<strong>' + money(rec.monthlyPaymentCents) + '</strong> a month · ' + money(rec.totalPaidCents) + ' total, ' + money(rec.totalInterestCents) + ' interest'];
-      r.order.forEach(function (id) { if (id !== rec.id) parts.push(esc(phrase(r.plans[id], { total: true }))); });
-      var sub = parts.join(' · ');
-      var idr = r.plans.income_driven;
-      if (idr.negativeAmortisation) sub += '. <strong>The income-driven payment is below the interest</strong> — the balance grows until it is forgiven, and what is forgiven can be more than you borrowed';
-      if (idr.ok && idr.forgivenCents > 0) sub += '. A forgiven balance may be taxed as income that year; that tax is not in these figures';
-      if (r.chosen && !r.chosenIsRecommended && r.chosen.ok) sub += '. You picked ' + r.chosen.label.toLowerCase() + ': ' + (r.chosen.clears ? money(r.chosen.totalPaidCents - rec.totalPaidCents) + ' more than the cheapest plan that clears' : 'less paid, but the loans are forgiven rather than cleared');
-      if (r.chosen && r.chosenIsRecommended) sub += '. That is the one you picked';
-      if (r.lump) sub += '. Reading the one debt from Start Here as the loans, since you are a student — type them out in <a href="' + esc(debtLink()) + '">Debt Payoff</a> to be exact';
-      if (r.derivedMinimumIds.length) sub += '. A loan with no minimum listed is paid level over ' + years(conv(T).standardTermYears);
-      var zone = r.chosen ? (r.chosenIsRecommended ? 'good' : (r.chosen.ok ? 'watch' : null)) : null;
-      return { label: label, value: rec.label + ': clear in ' + rec.clearYear, sub: sub, zone: zone, result: r };
-    },
-
-    chart: function (h, T) {
-      var r = StudentLoans.compare(h, T, {});
-      if (!Money.isOk(r)) return Charts.bars({ rows: [], empty: r.reason });
-      return Charts.bars({
-        rows: r.order.map(function (id) {
-          var p = r.plans[id];
-          if (!p.ok) return { label: p.label, value: null, note: money(p.monthlyPaymentCents) === Money.EM_DASH ? 'not yet' : money(p.monthlyPaymentCents) + ' a month', empty: p.incomeMissing ? 'add income' : 'never clears', color: PLAN_COLOURS[id] };
-          return { label: p.label, value: p.totalPaidCents, color: PLAN_COLOURS[id],
-            note: money(p.monthlyPaymentCents) + ' a month · ' + (p.clears ? 'clears ' + p.clearYear : money(p.forgivenCents) + ' forgiven after ' + years(p.forgivenAtYears)) };
-        }),
-        format: function (v) { return money(v) + ' paid'; }
-      });
-    },
-
-    inputs: [
-      { ctl: 'plan', label: 'The plan', kind: 'select',
-        options: [['', 'Not chosen yet'], ['standard', 'Standard — the minimums, level over the term'], ['income_driven', 'Income-driven — a share of what you earn, the rest forgiven'], ['aggressive', 'Aggressive — standard plus an extra a month']],
-        read: function (h) { return readPlan(h).plan; }, write: function (v) { write('plan', v); } },
-      { ctl: 'extraMonthlyCents', label: 'Extra a month', kind: 'money', placeholder: 'e.g. 200', hint: 'On top of the standard payments — the aggressive plan. Blank or zero is the standard plan again.',
-        read: function (h) { return readPlan(h).extraMonthlyCents; }, write: function (v) { write('extraMonthlyCents', v === null ? null : Math.max(0, v)); } },
-      { ctl: 'idrShare', label: 'Income-driven share', kind: 'pct', placeholder: 'e.g. 10', hint: 'Of discretionary income — what you earn above 1.5× a poverty line.',
-        read: function (h) { return readPlan(h).idrShare; }, write: function (v) { write('idrShare', v === null ? null : Math.max(0, Math.min(1, v))); },
-        propose: function (h, T) { return { value: conv(T).idrShareOfDiscretionary, source: 'the usual share (convention)' }; } },
-      { ctl: 'forgivenessYears', label: 'Forgiveness after', kind: 'number', affix: 'years', placeholder: 'e.g. 20', hint: 'When an income-driven balance is written off. Zero means never.',
-        read: function (h) { return readPlan(h).forgivenessYears; }, write: function (v) { write('forgivenessYears', v === null ? null : Math.max(0, v)); },
-        propose: function (h, T) { return { value: conv(T).forgivenessYears, source: 'the usual horizon; ' + conv(T).forgivenessYearsGraduate + ' for graduate loans (convention)' }; } }
-    ],
-
-    amounts: function (h, T) {
-      var r = StudentLoans.compare(h, T, {});
-      if (!Money.isOk(r)) return [];
-      var p = (r.chosen && r.chosen.ok) ? r.chosen : r.recommended;
-      var rows = [{ label: 'The loans today', cents: r.startingBalanceCents, href: debtLink() }];
-      if (!p) return rows;
-      var who = (r.chosen && r.chosen.ok ? 'your ' : 'the ') + p.label.toLowerCase() + ' plan';
-      rows.push({ label: 'A month of ' + who, cents: p.monthlyPaymentCents });
-      rows.push({ label: 'All the interest, ' + who, cents: p.totalInterestCents });
-      if (p.forgivenCents > 0) rows.push({ label: 'Forgiven after ' + years(p.forgivenAtYears), cents: p.forgivenCents });
-      return rows;
-    },
-
-    assumptions: function (h, T) {
-      var c = conv(T), rules = T.debtRules;
-      var r = StudentLoans.compare(h, T, {});
-      var ok = Money.isOk(r);
-      var src = 'data/student_loan_conventions.json v' + c.version + ' (' + c.confidence + ')';
-      var rows = [
-        { label: 'The standard term', value: years(c.standardTermYears), source: 'the level-payment shape of a federal standard plan — ' + src },
-        { label: 'Income-driven share', value: Money.formatRate(ok ? r.share : c.idrShareOfDiscretionary, { decimals: 0 }) + ' of discretionary income', source: ok && r.shareSource === 'yours' ? 'yours' : 'the common figure — ' + src },
-        { label: 'Discretionary income', value: 'earnings above ' + Money.formatRate(c.discretionaryPovertyMultiple, { decimals: 0 }) + ' of a ' + Money.formatCents(Math.round(c.povertyLineDollars * 100)) + ' poverty line', source: 'a round poverty line for one person, the shape of the rule and not any year\'s table — ' + src },
-        { label: 'Forgiveness after', value: ok && r.forgivenessNone ? 'never' : years(ok ? r.forgivenessYears : c.forgivenessYears), source: ok && r.forgivenessSource === 'yours' ? 'yours' : 'the usual horizon; ' + c.forgivenessYearsGraduate + ' for graduate loans — ' + src },
-        { label: 'Extra a month', value: ok ? Money.formatCents(r.extraMonthlyCents) : Money.EM_DASH, source: ok && r.extraEntered ? 'yours' : 'nothing until you type one; the aggressive plan equals the standard one' },
-        { label: 'The payoff arithmetic', value: 'month by month, interest at rate ÷ 12', source: 'engines/debt.js, data/debt_rules.json v' + rules.version + ' (' + rules.confidence + '); the same run Debt Payoff shows' },
-        { label: 'Income', value: ok && r.incomeKnown ? Money.formatCents(r.grossAnnualCents) + ' a year, held flat' : 'not entered', source: ok && r.incomeKnown ? 'Start Here; the income-driven payment does not rise with a raise here (convention)' : 'add it in Start Here for the income-driven line' },
-        { label: 'Tax on a forgiven balance', value: 'not modelled', source: 'a written-off balance may count as income that year; named, not priced' }
-      ];
-      if (ok) rows.push({ label: 'The loans read', value: r.loans.length + (r.loans.length === 1 ? ' loan, ' : ' loans, ') + Money.formatCents(r.startingBalanceCents), source: r.lump ? 'the one debt from Start Here, read as the loans because you are a student' : 'the debts typed student loan in Debt Payoff' });
-      return rows;
-    },
-
-    why: function (h, T, situation) {
-      return {
-        student: 'At a student\'s stage the loans are the number: the balance is set, the rate is set, and the only thing still open is the shape of paying it back. The three shapes here are the ones you will be offered, and the difference between them is measured in years and thousands.',
-        employed: 'The first years of pay decide the plan. A standard payment that fits the salary clears the loans on schedule; an extra on top clears them years early; an income-driven payment buys room now at the cost of interest later — or of a forgiven balance that may be taxed.',
-        selfEmployed: 'With uneven income, the income-driven shape is the one that bends with a thin year, and the aggressive one is what a fat year can do. Run both against a normal year here and remember the payment follows the income you report.',
-        mixed: 'A job plus your own work means the pay that sets an income-driven payment is the sum of both. Standard and aggressive do not care where the money comes from; income-driven does.',
-        retired: 'Loans carried into retirement are paid from a fixed draw, and the standard plan is the one that ends.',
-        betweenJobs: 'Between jobs, the income-driven payment falls with the income — that is what the shape is for — and the standard one does not.'
-      }[situation] || 'Three shapes of repayment for the same loans, priced in months and interest.';
-    },
-
-    scope: 'This room does not know your servicer\'s rules, the current income-driven plan names, or whether you qualify for forgiveness programs; it compares three shapes of repayment.'
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#number': '#sl-number', '#chart': '#sl-chart', '#inputs': '#sl-inputs', '#amounts': '#sl-amounts', '#assumptions': '#sl-assumptions', '#reading': '#sl-reading', '#reading-list': '#sl-reading-list' };
+    var hash = location.hash || '';
+    var target = 'debt-payoff.html' + (map[hash] || '#the-loans');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

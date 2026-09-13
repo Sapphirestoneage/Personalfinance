@@ -10565,7 +10565,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
      First Round and Express became views of (D-230). */
   check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
-  check('...eleven of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 11);
+  check('...nine of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 9);
   /* The rule is about HOUSEHOLD data: a Your Numbers room writes a DAITE
      family, not a context. `prefs.*` is not a context — it is a
      preference, per person and per browser, and D-246 brought one into
@@ -10604,7 +10604,11 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('prefs.js loads on every page that has the sidebar', fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /shared\/progress\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))).every(f => /shared\/prefs\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
   const demo = Demo.build();
   const readings = Ownership.readings(demo);
-  check('a status dot: Debt Payoff filled on the demo', Progress.roomStatus('debt-payoff', readings), 'filled');
+  /* Debt's dot was filled when the room owned only the five debt fields.
+     It owns the four loan-plan fields too since D-249, and the demo has
+     entered none of them, so the room reads partly — the dot moved with
+     the fields (D-249). */
+  check('a status dot: Debt partly on the demo, since it now holds the loan plan too', Progress.roomStatus('debt-payoff', readings), 'partly');
   check('...Expenses partly (therapy untracked)', Progress.roomStatus('expenses', readings), 'partly');
   /* Cash Flow owned no field since D-192 and had no dot. It is The Month
      now and holds the Calendar's four, so it has the Calendar's dot: empty
