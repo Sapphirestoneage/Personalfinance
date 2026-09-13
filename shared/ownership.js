@@ -589,7 +589,7 @@
       format: function (v) { return String(v).replace(/[-_]/g, ' '); }
     },
     unlearningDropped: {
-      label: 'Rules let go of', owner: 'unlearning', anchor: 'inputs',
+      label: 'Rules let go of', owner: 'debates', anchor: 'inputs',
       read: function (h) { var d = ((h.unlearning || {}).dropped || []); return d.length ? Money.ok(d.length, { ids: d }) : Money.incomplete('None let go of yet.', ['unlearning']); },
       format: function (v) { return v === 0 ? 'none yet' : v + (v === 1 ? ' rule' : ' rules'); }
     },

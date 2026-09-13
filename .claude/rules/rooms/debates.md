@@ -2,13 +2,17 @@
 paths:
   - "rooms/debates.html"
   - "engines/debates.js"
+  - "engines/advice.js"
+  - "engines/unlearning.js"
+  - "engines/advicerules.js"
 ---
 # The Referee (`debates`)
-File: rooms/debates.html · 151 lines
-Engines: selfemployed, tax, projection, tier0, trap, debates
-Reference data: aca_2026.json, debates.json, early_access_rules_2026.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, +4 more
-Owns: nothing
-Reads from other owners: marginalRate (accounts), rentMonthly (expenses), monthlyExpenses (expenses), debtRate (debt-payoff)
+File: rooms/debates.html · 568 lines
+Engines: selfemployed, tax, projection, tier0, trap, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules
+Reference data: aca_2026.json, advice.json, advice_translator.json, confidence_weights.json, debates.json, debt_rules.json, +13 more
+Owns: unlearningDropped
+Reads from other owners: grossAnnualIncome (start), cashSavings (start), employmentStatus (start), employerMatch (start), hasDebt (start), marginalRate (accounts), rentMonthly (expenses), mortgageRate (housing), +2 more
 Latest decisions:
+  - D-237 — Expenses: the month, and what repeats in it
   - D-218 — K1, K3: the Middle Class Trap Test and the Referee
 Full context: node tools/context/pack.js debates

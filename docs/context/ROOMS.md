@@ -68,7 +68,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **big-purchase** — Big Purchase · 490 lines · engines: projection, tier0, hourly, quickmath, purchase, dreamline · owns: purchasePrice, purchaseMonths, purchaseRate, dreamsMonthly · D-237, D-129, D-112
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 
-## What Matters (9)
+## What Matters (8)
 
 - **fulfillment** — The Joy Curve · 377 lines · engines: projection, tier0, cashflow, fulfillment · D-164
 - **rerank** — The Rerank · 619 lines · engines: projection, tier0, cashflow, rerank · owns: rerankCut · D-089, D-085
@@ -77,8 +77,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **enough** — Enough · 276 lines · engines: projection, tier0, cashflow, fulfillment, hourly, enough · owns: enoughMonthly · D-164, D-114, D-079
 - **week** — The Life · 518 lines · engines: projection, tier0, hourly, cashflow, week, ratios, buckets · owns: designedHours, bucketsPlanned · D-237
 - **reversibility** — Can It Be Undone · 328 lines · engines: projection, tier0, cashflow, hourly, events, reversibility · owns: reversibilityDecision · D-101
-- **unlearning** — Unlearning · 379 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-213, D-212, D-119
-- **debates** — The Referee · 151 lines · engines: selfemployed, tax, projection, tier0, trap, debates · D-218
+- **debates** — The Referee · 568 lines · engines: selfemployed, tax, projection, tier0, trap, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-237, D-218
 
 ## Level Up (3)
 
@@ -94,7 +93,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (26)
+## Files in rooms/ not in the registry (27)
 
 - rooms/between-jobs.html
 - rooms/buckets.html
@@ -119,6 +118,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/savings-rate.html
 - rooms/sleep-at-night.html
 - rooms/subscriptions.html
+- rooms/unlearning.html
 - rooms/walk.html
 - rooms/windfall.html
 - rooms/wrapped.html

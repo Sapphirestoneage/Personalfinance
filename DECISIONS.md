@@ -14200,6 +14200,34 @@ that asks.
 switch are untouched inside the two-of-you reading, and so is the note that
 gift privacy waits on the owner.
 
+### D-242 — The Referee takes Unlearning
+
+**Decision.** Unlearning becomes the still-applies reading of The Referee.
+Two hats: `#which-side` (the default) and `#still-applies`.
+`rooms/unlearning.html` becomes a redirect, hash and all.
+
+**Why.** "Does this still apply to me" and "which side am I on" are the same
+question asked of the same advice. Rule 1 of D-229. Which side is first
+because it answers something; the other reading asks.
+
+**Ownership.** `unlearningDropped` moves to owner `debates`, anchor `inputs`
+— no prefix was needed: the two readings share no id but `load-notice`. The
+reading still carries `root: 'view-still-applies'`, which is not decoration:
+without it the template's document-level listeners would answer the debate
+reading's inputs too.
+
+**The rule that had to be stated properly.** D-051 says an optional room
+cannot own a field others wait on. Both places that checked it checked
+`owns nothing`, which is stricter than the rule and is now wrong: this merge
+puts a reading that writes inside a room that explores. Both now check the
+rule as written — no field an explore room owns may appear in another room's
+`needs` — and `unlearningDropped` is in nobody's.
+
+**Compatibility.** No stored shape changes. The debate reading still writes
+nothing, and the test for that reads the debate reading's slice rather than
+the page, because the page is no longer read-only. The page-local select
+note and the `.acts` class hook moved with their markup.
+
 ---
 
 # The Dungeons & Dividends entries

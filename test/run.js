@@ -5765,12 +5765,17 @@ section('What is finished');
         (r.needs || []).length > 0);
     });
     /* An "explore" room must never be a gate: it is optional by definition,
-       so it cannot be the thing standing between you and a reading. */
+       so it cannot be the thing standing between you and a reading.
+       Owning a field is not itself the problem — the merges put a reading
+       that writes inside a room that explores (D-242) — being the only way
+       to a field ANOTHER room waits on is. So: no field an explore room
+       owns may appear in another room's `needs`. */
+    const waitedOn = new Set();
+    Registry.ROOMS.forEach(r => (r.needs || []).forEach(f => waitedOn.add(r.id + '\u0000' + f)));
     Registry.ROOMS.filter(r => r.kind === 'explore').forEach(function (r) {
+      const mine = Object.keys(Ownership.FIELDS).filter(f => Ownership.FIELDS[f].owner === r.id);
       checkTrue(`${r.id} is optional, so it owns no field others wait on`,
-        Object.keys(Ownership.FIELDS).every(function (f) {
-          return Ownership.FIELDS[f].owner !== r.id;
-        }));
+        mine.every(f => Registry.ROOMS.every(o => o.id === r.id || (o.needs || []).indexOf(f) === -1)));
     });
   }
 
@@ -6098,9 +6103,15 @@ section('Facts answered once');
       accounts.kind, 'about-you');
     /* The rule from D-051, re-checked here because this change is exactly
        the kind that breaks it: an optional room cannot own a field others
-       wait on. */
+       wait on. Stated as it is meant, not as "owns nothing" — the merges
+       put a reading that writes inside a room that explores (D-242), and
+       what would actually hurt is a field reachable ONLY through a room
+       people are told they may skip. */
     Registry.ROOMS.filter(r => r.kind === 'explore').forEach(function (r) {
-      check(`${r.id} owns nothing`, Ownership.ownedBy(r.id).length, 0);
+      Ownership.ownedBy(r.id).forEach(function (f) {
+        checkTrue(`${r.id} owns ${f}, and no room waits on it`,
+          Registry.ROOMS.every(o => o.id === r.id || (o.needs || []).indexOf(f) === -1));
+      });
     });
   }
 })();
@@ -13251,7 +13262,7 @@ section('H4, H5, H7, H8: the waterfall, does the rule apply, the receipt, share 
   checkTrue('with the rows blank most rules say can’t tell yet and name the number that would decide it', ct.length >= 6 && ct.every(r => /Can’t tell yet: it needs /.test(r.why) && r.decidedBy));
   const uh = Schema.createHousehold(); uh.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'unemployed' })];
   check('between jobs: never touch the emergency fund is outgrown, because this is the emergency', AdviceRules.list(uh, T).filter(r => r.id === 'never_touch_ef')[0].status, 'outgrown');
-  checkTrue('the Unlearning room shows the section', /id="rulelist"/.test(fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8')) && /AdviceRules\.list\(h, TABLES\)/.test(fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8')));
+  checkTrue('the Unlearning reading shows the section', /id="rulelist"/.test(fs.readFileSync(path.join(ROOT, 'rooms/debates.html'), 'utf8')) && /AdviceRules\.list\(h, TABLES\)/.test(fs.readFileSync(path.join(ROOT, 'rooms/debates.html'), 'utf8')));
 
   /* -- H7: privacy you can prove ------------------------------------------------ */
   const r0 = Progress.privacyReceipt([{ name: 'https://x.test/shared/money.js', transferSize: 1200 }, { name: 'https://x.test/data/a.json', transferSize: 300 }], 'https://x.test');
@@ -13348,7 +13359,8 @@ section('I1, I3, I4, I5: Money Wrapped, where do you think you rank, your coast 
   checkTrue('the guess is a preference, never a household field', (function () { const sc = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8'); return /Prefs\.set\('rank\.guess'/.test(sc) && !/Ownership\.write|Spine\.(set|upsert)/.test(sc); })());
 
   /* -- I5: the quiz ------------------------------------------------------------------ */
-  const uh = fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8');
+  /* Unlearning is the still-applies reading of The Referee (D-242). */
+  const uh = fs.readFileSync(path.join(ROOT, 'rooms/debates.html'), 'utf8');
   checkTrue('five questions, each skipped when the Ledger has the answer', (uh.match(/\{ id: '[a-zA-Z]+', ask: /g) || []).length === 5 && /R\[q\.id\] === null \|\| R\[q\.id\] === undefined/.test(uh));
   checkTrue('answers stay on the page: no write', /Answers stay on this page/.test(uh) && !/Spine\.set\('quiz|Ownership\.write\(/.test(uh.split('function runQuiz')[1].split('function paintRules')[0]));
   const uc = ShareCard.make('unlearn', hd, T, { unlearn: ['save_ten_percent', 'hundred_minus_age', 'six_months'] });
@@ -13807,7 +13819,12 @@ section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
   /* shareable under the H8 rules */
   const card = ShareCard.make('debate', Demo.build(), T, { debate: 'rothVsTraditional', result: roth });
   checkTrue('a debate shares as its verdict only: no cents, renders from the fields alone', card.ok && ShareCard.leaks(ShareCard.link(card), Demo.build()).length === 0 && /Roth or traditional: traditional/.test(ShareCard.render(ShareCard.decode(ShareCard.encode(card))).title));
-  const debRoom = fs.readFileSync(path.join(ROOT, 'rooms/debates.html'), 'utf8');
+  /* The debate reading only. The page also holds Unlearning since D-242,
+     which does write — the rule being protected is that a DEBATE states
+     both sides and writes nothing, not that the page is read-only. */
+  const debPage = fs.readFileSync(path.join(ROOT, 'rooms/debates.html'), 'utf8');
+  const debRoom = debPage.slice(debPage.indexOf('<section id="view-which-side"'), debPage.indexOf('<!-- =====', debPage.indexOf('<section id="view-which-side"')))
+    + debPage.split('<script>').filter(x => x.indexOf('READING view-which-side,') !== -1)[0];
   checkTrue('the Referee never says "you should"', !/you should/i.test(debRoom.replace(/Never "you should"/, '')) && debRoom.indexOf('Spine.set(') === -1);
   ['middle-class-trap', 'debates'].forEach(id => checkTrue(id + ' is registered', !!Registry.byId(id)));
 })();
@@ -14219,7 +14236,7 @@ section('Every class a page names has a rule somewhere (D-226)');
     'rooms/ledger.html': ['xbody'],   /* Express is a Ledger view now (D-230); the hook moved with its markup */
     'rooms/fire.html': ['why'],
     'rooms/middle-class-trap.html': ['plain'],
-    'rooms/unlearning.html': ['acts']
+    'rooms/debates.html': ['acts']    /* Unlearning is a Referee reading now (D-242); the hook moved with its markup */
   };
   const pages = ['index.html', 'map.html'].concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
   const orphans = [];

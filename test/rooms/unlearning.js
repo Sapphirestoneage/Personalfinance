@@ -2,7 +2,7 @@
    The demo's sort is derived by hand below, rule by rule, as literals;
    nothing is copied from engine output. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Demo, Registry, Ownership, Foo, Ratios, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Demo, Registry, Ownership, Foo, Ratios, TABLES } = t;
   const Unlearning = require(path.join(ROOT, 'engines/unlearning.js'));
   const T = TABLES;
 
@@ -180,22 +180,31 @@ module.exports = function (t) {
   section('Unlearning — the household, the ownership, the page');
 
   check('the schema creates the branch', JSON.stringify(Schema.createHousehold({}).unlearning), '{"dropped":[]}');
-  check('the ownership row is owned by this room', Ownership.field('unlearningDropped').owner, 'unlearning');
+  check('the ownership row is owned by this room', Ownership.field('unlearningDropped').owner, 'debates');
   check('… anchored at the inputs', Ownership.field('unlearningDropped').anchor, 'inputs');
-  check('the registry needs a month of spending', Registry.byId('unlearning').needs.join(','), 'monthlyExpenses');
-  checkTrue('the room appears for everyone', Registry.applies ? Registry.applies(Registry.byId('unlearning'), demo) : true);
+  /* The merged room asks for nothing up front: the debate reading it opens
+     on needs no figure, and this reading names what it lacks rather than
+     being held back. `needs` is what the room advertises, not what a
+     reading inside it reads (D-242). */
+  check('the merged room advertises no prerequisite', Registry.byId('debates').needs.join(','), '');
+  checkTrue('… and this reading still reads the month', /reads: \['monthlyExpenses'/.test(reading('rooms/debates.html', 'view-still-applies', 'READING view-still-applies,').html));
+  checkTrue('the room appears for everyone', Registry.applies ? Registry.applies(Registry.byId('debates'), demo) : true);
 
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8');
+  /* unlearning is a reading of debates since D-242, so this file reads its slice of
+     that page: its own markup and its own script. `slice.page` is the
+     whole file, for the few facts that really are page-wide. */
+  const slice = reading('rooms/debates.html', 'view-still-applies', "READING view-still-applies,");
+  const html = slice.html;
   ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list', 'room-standalone', 'load-notice'].forEach(id =>
-    checkTrue('the page has #' + id, new RegExp('id="' + id + '"').test(html)));
+    checkTrue('the page has #' + id, new RegExp('id="' + (id === 'load-notice' ? '' : '') + id + '"').test(id === 'load-notice' ? slice.page : html)));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id =>
-    checkTrue('the page has the section #' + id, new RegExp('id="' + id + '"').test(html)));
+    checkTrue('the page has the section #' + id, new RegExp('id="' + (id === 'load-notice' ? '' : '') + id + '"').test(id === 'load-notice' ? slice.page : html)));
   checkTrue('the page mounts the template', /Room\.mount\(\{/.test(html));
-  checkTrue('… as the unlearning room', /id: 'unlearning'/.test(html));
-  checkTrue('… declares its live-form discipline', /LIVE-FORM: built once/.test(html));
-  checkTrue('… loads its engine and the two it reads', /engines\/unlearning\.js/.test(html) && /engines\/foo\.js/.test(html) && /engines\/ratios\.js/.test(html));
+  checkTrue('… as a part of The Referee', /id: 'debates',\n\s*part: true,\n\s*root: 'view-still-applies',/.test(html));
+  checkTrue('… declares its live-form discipline', /LIVE-FORM: built once/.test(slice.page));
+  checkTrue('… loads its engine and the two it reads', /engines\/unlearning\.js/.test(slice.page) && /engines\/foo\.js/.test(slice.page) && /engines\/ratios\.js/.test(slice.page));
   checkTrue('… writes only unlearning.dropped', (html.match(/Spine\.set\(/g) || []).length >= 1 && (html.match(/Spine\.set\('unlearning\.dropped'/g) || []).length === (html.match(/Spine\.set\(/g) || []).length);
-  checkTrue('… says the select is page-local', /PAGE-LOCAL/.test(html));
+  checkTrue('… says the select is page-local', /PAGE-LOCAL/.test(slice.page));
   checkTrue('… reads the three chips', /reads: \['monthlyExpenses', 'cashSavings', 'grossAnnualIncome'\]/.test(html));
   checkTrue('… names the dashboard block and D-096 in the drawer', /advice_translator\.json/.test(html) && /D-096/.test(html));
   checkTrue('… says what it does not do', /scope: 'This room does not tell you what to believe/.test(html));

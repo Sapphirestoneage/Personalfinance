@@ -935,25 +935,13 @@
       "order": 47
     },
     {
-      "id": "unlearning",
-      "title": "Unlearning",
-      "file": "rooms/unlearning.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [
-        "unlearningDropped"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 48
-    },
-    {
       "id": "debates",
       "title": "The Referee",
       "file": "rooms/debates.html",
       "reads": [],
-      "writes": [],
+      "writes": [
+        "unlearningDropped"
+      ],
       "requires": [],
       "dashboardNumber": null,
       "order": 48.5

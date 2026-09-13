@@ -104,7 +104,7 @@
       "note": "One question at two scales: is the life you want the one you are paying for. The week is the default because it is the scale you can act on tomorrow." },
 
     { "n": 26, "id": "skill-tree", "title": "The Skill Tree", "group": "levelup", "absorbs": ["stacker", "exercises"], "done": [] },
-    { "n": 27, "id": "debates", "title": "The Referee", "group": "levelup", "absorbs": ["unlearning"], "done": [],
+    { "n": 27, "id": "debates", "title": "The Referee", "group": "levelup", "absorbs": ["unlearning"], "done": ["unlearning"],
       "note": "Does this advice still apply to you is the same question as which side are you on." },
 
     { "n": 28, "id": "protection", "title": "Protection", "group": "alone",

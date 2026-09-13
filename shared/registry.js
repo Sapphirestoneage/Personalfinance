@@ -1069,17 +1069,17 @@
   /* The Referee (K3, D-218): debates as buttons, both sides on your numbers. */
   ROOMS.push({
     id: 'debates',
-    group: 'matters', aliases: ['referee', 'debate', 'debates', 'both sides', 'flip point', 'mortgage or invest', 'roth or traditional', 'rent or buy'],
+    group: 'matters', aliases: ['referee', 'debate', 'debates', 'both sides', 'flip point', 'mortgage or invest', 'roth or traditional', 'rent or buy', 'unlearn', 'myths', 'advice'],
     kind: 'explore',
     needs: [],
     order: 48.5,
     title: 'The Referee',
-    blurb: 'Money debates people already have, both sides stated fairly with their sources, run on your numbers: the answer as a range, the flip point where it changes, and how close you sit to it.',
+    blurb: 'Money debates people already have, both sides stated fairly with their sources and run on your numbers — and the advice everyone hears, sorted by whether it still applies to you.',
     href: 'rooms/debates.html',
     tier: 2,
     tags: ['income', 'debt'],
-    daite: { reads: ['assets.invested', 'debt.items', 'expenses', 'expenses.needs.accommodation', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
-    subsections: [{ id: 'pick', label: 'Pick a debate' }, { id: 'answer', label: 'The answer' }, { id: 'sides', label: 'Both sides' }]
+    daite: { reads: ['assets.invested', 'debt.items', 'expenses', 'expenses.needs.accommodation', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: ['plans.unlearning'] },
+    subsections: [{ id: 'pick', label: 'Pick a debate' }, { id: 'answer', label: 'The answer' }, { id: 'sides', label: 'Both sides' }, { id: 'number', label: 'Rules that no longer apply' }, { id: 'rules', label: 'Does it apply to you now?' }, { id: 'quiz', label: 'The Unlearning Quiz' }, { id: 'inputs', label: 'Let go' }]
   });
   /* Tax — the tranche rooms on the template (D-098). */
   ROOMS.push({
@@ -1430,31 +1430,6 @@
       ]
   });
 
-  /* Unlearning — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'unlearning',
-    group: 'matters', aliases: ['unlearn', 'myths', 'advice'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses'],
-    order: 48,
-    title: 'Unlearning',
-    blurb: 'The advice everyone hears, sorted by whether it still applies to you — and the rules you have let go of.',
-    href: 'rooms/unlearning.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['expenses'], writes: ['plans.unlearning'] },
-      subsections: [
-        { id: 'number',      label: 'Rules that no longer apply' },
-        { id: 'chart',       label: 'Applies, past it, not yet' },
-        { id: 'inputs',      label: 'Let go' },
-        { id: 'rules',       label: 'Does it apply to you now?' },
-        { id: 'quiz',        label: 'The Unlearning Quiz' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
   /* Student Loan Decision — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'student-loans',
@@ -1686,7 +1661,7 @@
     numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
     decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'giving', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
-    matters: ['values', 'goals', 'enough', 'fulfillment', 'rerank', 'week', 'reversibility', 'unlearning'],
+    matters: ['values', 'goals', 'enough', 'fulfillment', 'rerank', 'week', 'reversibility'],
     levelup: ['skill-tree', 'stacker', 'exercises'],
     upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
   };
