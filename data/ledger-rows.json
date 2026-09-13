@@ -450,7 +450,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "calendar",
+      "askIn": "cash-flow",
       "moves": false,
       "unlocks": "the calendar on your real pay rhythm, two- and three-paycheck months labelled"
     },
@@ -469,7 +469,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "calendar",
+      "askIn": "cash-flow",
       "moves": false,
       "unlocks": "the days until money arrives, on the calendar"
     },

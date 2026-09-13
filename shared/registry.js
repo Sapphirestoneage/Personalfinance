@@ -271,7 +271,7 @@
          Expenses and never types it. */
       id: 'cash-flow',
       features: [],
-      group: 'numbers', subgroup: 'expenses', aliases: ['log', 'receipts', 'this month', 'flow', 'sankey', 'what is left'],
+      group: 'numbers', subgroup: 'expenses', aliases: ['log', 'receipts', 'this month', 'flow', 'sankey', 'what is left', 'calendar', 'bills', 'due', 'pay later', 'dates'],
       kind: 'about-you',
       needs: [],
       order: 3.1,
@@ -280,12 +280,15 @@
       href: 'rooms/cash-flow.html',
       tier: 1,
       tags: ['cashflow', 'income'],
-      daite: { reads: ['expenses', 'income'], writes: ['expenses.log'] },
+      daite: { reads: ['expenses', 'income', 'assets.cashCents'], writes: ['expenses.log', 'income.cadence'] },
       subsections: [
         { id: 'glance',          label: 'At a glance' },
         { id: 'log',             label: 'The expense log' },
         { id: 'flow',            label: 'Where it flows' },
-        { id: 'out-net-flow',    label: 'What’s left' }
+        { id: 'out-net-flow',    label: 'What’s left' },
+        { id: 'cal-number', label: 'The low point this month' },
+        { id: 'cal-chart', label: 'Cash across the month' },
+        { id: 'cal-inputs', label: 'Paydays, bills, pay-later' }
       ]
     },
     {
@@ -793,8 +796,8 @@
     kind: 'explore',
     needs: ['dob'],
     order: 37.7,
-    title: 'What Matters',
-    blurb: 'Every money skill in five bands, three of them to practise at a time, and every doable exercise in one place — what the next hour does.',
+    title: 'The Month',
+    blurb: 'When the money moves: this month at a glance, every receipt on its date, where it all flows — and paydays against bills across the month, with the low point and the day it lands.',
     href: 'rooms/degree.html',
     tier: 2,
     tags: ['income'],
@@ -1355,30 +1358,6 @@
       ]
   });
 
-  /* Money Calendar & Pay-Later — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'calendar',
-    features: ['annualLines'],
-    group: 'numbers', subgroup: 'expenses', aliases: ['calendar', 'bills', 'due', 'pay later', 'dates'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses', 'cashSavings'],
-    order: 50,
-    title: 'Money Calendar & Pay-Later',
-    blurb: 'Paydays and bills across a month, pay-later instalments counted: the low point, and the day it lands.',
-    href: 'rooms/calendar.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses'], writes: ['expenses.log', 'income.cadence'] },
-      subsections: [
-        { id: 'number',      label: 'The low point this month' },
-        { id: 'chart',       label: 'Cash across the month' },
-        { id: 'inputs',      label: 'Paydays, bills, pay-later' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
   /* History — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'history',
@@ -1559,7 +1538,7 @@
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
-    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
+    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
     decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'enough', 'week', 'reversibility'],

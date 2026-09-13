@@ -1,6 +1,6 @@
 /* test/rooms/calendar.js — Money Calendar & Pay-Later: one month, a day at a time. D-121. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Registry, Ownership, Tier0, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Registry, Ownership, Tier0, TABLES } = t;
   const Cal = require(path.join(ROOT, 'engines/calendar.js'));
   section('Money Calendar & Pay-Later (D-121): the low point');
 
@@ -96,14 +96,17 @@ module.exports = function (t) {
   const conv = T.calendarConventions;
   check('four cadences', Object.keys(conv.cadences).length, 4);
   check('fortnightly is 26 ÷ 12 paydays a month', Math.round(conv.cadences.fortnightly.paydaysPerMonth * 1000) / 1000, Math.round(26 / 12 * 1000) / 1000);
-  const page = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
+  /* The Money Calendar is the dates reading of The Month since D-245, so
+     this file reads its slice of that page. */
+  const slice = reading('rooms/cash-flow.html', 'view-the-dates', 'READING view-the-dates,');
+  const page = slice.html;
   checkTrue('the page draws the grid under the line', /cal-grid/.test(page) && /Cal\.weeks\(/.test(page));
-  checkTrue('the page mounts the template as calendar', /Room\.mount\(\{/.test(page) && /id: 'calendar'/.test(page));
-  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + id + '"').test(page)));
+  checkTrue('the page mounts the template as a part of The Month', /Room\.mount\(\{/.test(page) && /id: 'cash-flow',\n\s*part: true,\n\s*prefix: 'cal-',\n\s*root: 'view-the-dates',/.test(page));
+  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + (id === 'load-notice' ? '' : 'cal-') + id + '"').test(page)));
   check('… two inputs, the cadence and the next payday; bills and pay-later are the log’s now (D-130)', (page.match(/ctl: '/g) || []).length, 2);
   checkTrue('… writes only calendar.*', (page.match(/Spine\.set\('([a-zA-Z.]+)'/g) || []).every(m => /calendar\./.test(m)));
-  check('the cadence is owned here', Ownership.field('payCadence').owner, 'calendar');
-  checkTrue('the room is for everyone', Registry.requires('calendar').length === 0);
+  check('the cadence is owned here', Ownership.field('payCadence').owner, 'cash-flow');
+  checkTrue('the room is for everyone', Registry.requires('cash-flow').length === 0);
 
   /* The ledger and the log draw the month (D-130, Q5). */
   section('Money Calendar from the ledger and the log (D-130)');
@@ -152,6 +155,6 @@ module.exports = function (t) {
   SpineC.reset();
   const startPage = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
   checkTrue('Start Here writes the one-off as an entry and reads it back through the helper', /Schema\.ONE_OFF_IN/.test(startPage) && /Schema\.ONE_OFF_OUT/.test(startPage) && /Schema\.oneOffEntry\(x\)/.test(startPage) && !/Spine\.set\('oneOffs', \[Schema\.createOneOff/.test(startPage));
-  const calPage = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
+  const calPage = slice.html;
   checkTrue('the calendar room no longer types bills; it points at the log', !/ctl: 'rentDay'/.test(calPage) && !/ctl: 'plCents'/.test(calPage) && /cash-flow\.html#log/.test(calPage) && /engines\/ledger\.js/.test(calPage));
 };

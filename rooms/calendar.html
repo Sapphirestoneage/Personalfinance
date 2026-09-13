@@ -7,261 +7,33 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Money Calendar & Pay-Later · SPARKS</title>
-<meta name="description" content="Paydays and bills across a month, pay-later instalments counted: the low point, and the day it lands."/>
+<meta name="description" content="The Money Calendar is the dates reading of The Month now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-121.
-
-  1. READS   Cash & savings, a month of spending and the household's income
-             (Start Here) — take-home a month through engines/tier0.js —
-             the ledger's income entries and the expense log (D-130: when
-             Income has entries landing this month they are the paydays;
-             every dated log entry is drawn on its day), and the rent
-             through Schema.rentMonthlyCents.
-  2. WRITES  It OWNS household.calendar: how often you are paid and the
-             next payday's day, used when the ledger has nothing landing.
-             Bills and pay-later instalments are the log's now — added in
-             Cash Flow — and the ones saved here before are still drawn.
-  3. CALLS   engines/calendar.js — one month drawn a day at a time; the
-             take-home is Tier0's, never a second lookup.
-  4. EMPTY   Opened with an empty spine it renders with the intake's guesses
-             for cash, spending and income and says so; with no cadence the
-             number asks how often you are paid.
-  5. CONFIG  data/calendar_conventions.json — paydays a month by cadence,
-             the bill-timing rules, the 31-day window, the week of spending
-             that reads as tight.
-
-  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, five
-  inputs and two folded, the assumptions drawer with sources, why this
-  matters at your stage, one out-of-scope line to Get Help.
-
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
-  THEMING: none this pass. A theme is a class on <body> and a palette in
-  shared/theme.css.
+  REDIRECT — the Money Calendar is a reading of The Month (rooms/cash-flow.html#the-dates, DECISIONS.md D-245).
+  What happened in the month and what is still to land in it are one
+  month. Rule 2 of D-229.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  section[id] { scroll-margin-top: var(--space-4); }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* The month as a grid, under the line. A cell a day; what lands on it, and the cash at its end. */
-  .cal-grid { margin-top: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
-  .cal-head, .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
-  .cal-head span { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); text-align: center; padding: var(--space-1) 0; border-bottom: 1px solid var(--color-border); }
-  .cal-cell { min-height: 58px; padding: 4px 3px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); font-size: 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-  .cal-cell:last-child { border-right: none; }
-  .cal-row:last-child .cal-cell { border-bottom: none; }
-  .cal-cell.is-blank { background: transparent; }
-  .cal-cell b { font-weight: 600; color: var(--color-text-muted); font-size: 11px; white-space: nowrap; }
-  .cal-cell.is-today b { color: var(--color-accent-hover); }
-  .cal-cell small { margin-top: auto; font-variant-numeric: tabular-nums; color: var(--color-text); }
-  .cal-cell.is-tight { background: rgba(232,184,75,.08); }
-  .cal-cell.is-under { background: rgba(229,72,77,.12); }
-  .cal-cell.is-under small { color: var(--color-critical); }
-  .cal-cell.is-low { outline: 2px solid var(--color-accent); outline-offset: -2px; }
-  .cal-in, .cal-out { font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 3px; padding: 0 2px; }
-  .cal-in { color: var(--color-positive); background: rgba(48,164,108,.14); }
-  .cal-out { color: var(--color-critical); background: rgba(229,72,77,.12); }
-  .cal-out.is-pl { color: var(--color-caution); background: rgba(232,184,75,.14); }
-  .cal-out.is-annual { color: var(--color-caution); background: rgba(232,184,75,.14); font-weight: 600; }
-  /* How sure the date is (D-130): estimated dashed, potential faded and
-     dotted — drawn, never counted. */
-  .cal-in.is-estimated, .cal-out.is-estimated { outline: 1px dashed currentColor; outline-offset: -1px; }
-  .cal-in.is-potential, .cal-out.is-potential { opacity: .5; text-decoration: underline dotted; }
-  .cal-key { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
-  .cal-key .k-low { outline: 2px solid var(--color-accent); outline-offset: 1px; border-radius: 2px; padding: 0 3px; }
-  .cal-key .k-under { background: rgba(229,72,77,.12); color: var(--color-critical); border-radius: 2px; padding: 0 3px; }
-</style>
+<meta http-equiv="refresh" content="0; url=cash-flow.html#the-dates"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Money Calendar & Pay-Later</h1>
-  <p class="room-lede">Paydays and bills across a month, pay-later instalments counted: the low point, and the day it lands.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <div class="room-standalone" id="room-standalone" hidden></div>
-
-  <section class="slaf-card" id="number">
-    <div class="room-head-row">
-      <span class="slaf-eyebrow">The low point this month</span>
-      <div id="room-lens"></div>
-    </div>
-    <div class="room-number" id="room-number"></div>
-  </section>
-
-  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Cash across the month, and the month as a calendar</span>
-    <div id="room-chart"></div>
-  </section>
-
-  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Paydays, bills, pay-later</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Paydays come from your <a href="income.html">Income</a> entries when any land this month; otherwise from the cadence below. Bills and pay-later instalments are the expense log’s: <a href="cash-flow.html#log">log them in Cash Flow</a>, recurring on their day, and they land here. The rest of your spending is spread across the days.</p>
-    <div id="room-inputs"></div>
-  </section>
-
-  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Through the lens</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
-    <ul class="room-amounts" id="room-amounts"></ul>
-  </section>
-
-  <details class="room-drawer" id="assumptions">
-    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
-    <div class="room-assumptions-body" id="room-assumptions"></div>
-  </details>
-
-  <p class="room-why" id="room-why" hidden></p>
-  <p class="room-scope" id="room-scope"></p>
-
-  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">What this is reading</span>
-    <div id="reading-list" style="margin-top:var(--space-3)"></div>
-  </section>
-
-  <p class="disclaimer">
-    Educational tool, not financial advice. Your numbers stay in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">The Money Calendar is the dates reading of The Month now.
+    <a href="cash-flow.html#the-dates" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/suggest.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../engines/income.js"></script>
-<script src="../engines/selfemployed.js"></script>
-<script src="../engines/ledger.js"></script>
-<script src="../engines/cashflow.js"></script>
-<script src="../engines/calendar.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../shared/charts.js"></script>
-<script src="../shared/room.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Charts = SLAF.Charts, Room = SLAF.Room, Cal = SLAF.Calendar, Gate = SLAF.Gate;
-
-  function cal(h) { return Schema.createCalendar((h || {}).calendar); }
-  function day(v) { return v === null || v === undefined ? null : Math.max(1, Math.min(31, Math.round(v))); }
-  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function ordinal(n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
-  function m(h, T) { return Cal.month(h, T, {}); }
-
-  Room.mount({
-    id: 'calendar',
-    reads: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome', 'monthlyDebtPayments'],
-
-    number: function (h, T) {
-      var r = m(h, T);
-      if (!Money.isOk(r)) return { label: 'The low point this month', value: null, reason: r.reason };
-      var counted = (r.incomeHits || []).filter(function (x) { return !x.potential; });
-      var logged = (r.logHits || []).filter(function (x) { return !x.potential; });
-      var sub = (r.paydaySource === 'ledger'
-          ? counted.length + (counted.length === 1 ? ' landing' : ' landings') + ' from Income, ' + Money.formatCents(counted.reduce(function (t, x) { return t + x.cents; }, 0)) + ' in all'
-          : 'Paid ' + r.cadenceLabel.toLowerCase() + ', ' + Money.formatCents(r.perPaydayCents) + ' a payday' + (r.paydays.length ? ' on the ' + r.paydays.map(function (p) { return ordinal(p.dom); }).join(' and the ') : '') + (r.paycheckMonth ? '. This is ' + r.paycheckMonth.label : ''))
-        + (logged.length ? ' · ' + logged.length + ' logged ' + (logged.length === 1 ? 'bill' : 'bills') + ' from Cash Flow, ' + Money.formatCents(logged.reduce(function (t, x) { return t + x.cents; }, 0)) : '')
-        + r.bills.map(function (b) { return ' · ' + b.label + ' ' + Money.formatCents(b.cents) + ' on the ' + ordinal(b.day); }).join('')
-        + ((r.annualHits || []).length ? ' · ' + r.annualHits.length + (r.annualHits.length === 1 ? ' yearly cost lands' : ' yearly costs land') + ' in this window, drawn on the 1st of their month, not spread' : '')
-        + r.payLater.map(function (b) { return ' · pay-later ' + Money.formatCents(b.cents) + ' on the ' + ordinal(b.day); }).join('')
-        + (r.potentialInCents || r.potentialOutCents ? ' · potential, drawn but not counted: ' + (r.potentialInCents ? Money.formatCents(r.potentialInCents) + ' in' : '') + (r.potentialInCents && r.potentialOutCents ? ', ' : '') + (r.potentialOutCents ? Money.formatCents(r.potentialOutCents) + ' out' : '') : '')
-        + (r.belowZero ? ' · <strong>below zero from the ' + ordinal(r.firstBelowDom) + '</strong>' : r.tight ? ' · the tightest stretch is the ' + ordinal(r.tight.fromDom) + '–' + ordinal(r.tight.toDom) : ' · never under a week of spending')
-        + (r.billsExceedSpending ? ' · the bills listed exceed the month’s spending, so nothing else is spread' : '');
-      return { label: 'The low point this month', value: Money.formatCents(r.lowCents) + ' on the ' + ordinal(r.lowDom), sub: sub, zone: r.zone, result: r };
-    },
-
-    /* One picture in two parts: the balance line, and beneath it the same
-       31 days as a calendar — a cell a day, paydays and bills on the day
-       they land, the balance underneath, the low point and any day under
-       zero marked. Both are drawn from the one month the engine runs. */
-    chart: function (h, T) {
-      var r = m(h, T);
-      if (!Money.isOk(r)) return Charts.area({ series: [], empty: r.reason });
-      var line = Charts.area({
-        title: 'Cash, day by day, for 31 days',
-        series: [{ label: 'Cash', color: Charts.COLORS.growth, fill: true, points: Cal.balancePoints(r) }],
-        hLines: [{ y: 0, label: 'zero', color: Charts.COLORS.debt }, { y: r.weekCents, label: 'a week of spending', color: Charts.COLORS.target }],
-        dots: r.paydays.map(function (p) { return { x: p.index, y: p.balanceCents }; }),
-        x: { label: 'day', format: function (v) { return 'd' + Math.round(v + 1); } }
-      });
-      var short = function (c) { var k = Math.abs(c) >= 100000; return (c < 0 ? '−' : '') + '$' + (k ? (Math.round(Math.abs(c) / 10000) / 10) + 'k' : Math.round(Math.abs(c) / 100)); };
-      var grid = '<div class="cal-grid" role="table" aria-label="The next 31 days as a calendar">'
-        + '<div class="cal-head">' + Cal.WEEKDAYS.map(function (w) { return '<span>' + w + '</span>'; }).join('') + '</div>'
-        + Cal.weeks(r).map(function (row) {
-          return '<div class="cal-row">' + row.map(function (d) {
-            if (!d) return '<span class="cal-cell is-blank"></span>';
-            var cls = 'cal-cell' + (d.today ? ' is-today' : '') + (d.isLow ? ' is-low' : '') + (d.belowZero ? ' is-under' : '') + (d.tight ? ' is-tight' : '');
-            var marks = '';
-            (d.ins || []).forEach(function (x) { marks += '<i class="cal-in' + (x.potential ? ' is-potential' : x.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(x.label) + (x.potential ? ' (potential, not counted)' : x.dateKind === 'estimated' ? ' (date estimated)' : '') + '">+' + short(x.cents) + '</i>'; });
-            d.bills.forEach(function (b) { marks += '<i class="cal-out' + (b.kind === 'payLater' ? ' is-pl' : b.kind === 'annual' ? ' is-annual' : '') + (b.potential ? ' is-potential' : b.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(b.label) + (b.potential ? ' (potential, not counted)' : b.dateKind === 'estimated' ? ' (date estimated)' : '') + '">−' + short(b.cents) + '</i>'; });
-            return '<span class="' + cls + '"><b>' + (d.firstOfMonth || d.today ? d.month + ' ' : '') + d.dom + '</b>' + marks + '<small>' + short(d.balanceCents) + '</small></span>';
-          }).join('') + '</div>';
-        }).join('')
-        + '</div><p class="cal-key"><i class="cal-in">+$</i> money in · <i class="cal-out">−$</i> a bill or a logged expense · <i class="cal-out is-pl">−$</i> pay-later · <i class="cal-out is-estimated">−$</i> date estimated · <i class="cal-out is-potential">−$</i> potential, not counted · the figure is the cash at the end of the day · <span class="k-low">the low point</span> · <span class="k-under">under zero</span></p>';
-      return line + grid;
-    },
-
-    inputs: [
-      { ctl: 'cadence', label: 'Paid', kind: 'select', options: [['', 'How often?'], ['weekly', 'Every week'], ['fortnightly', 'Every two weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Monthly']],
-        read: function (h) { return cal(h).cadence; }, write: function (v) { Spine.set('calendar.cadence', v || null); } },
-      { ctl: 'nextPaydayDay', label: 'Next payday, day of the month', kind: 'number', placeholder: 'e.g. 5', hint: 'Both are used only while Income has no entry landing this month; once it does, those landings are the paydays.',
-        read: function (h) { return cal(h).nextPaydayDay; }, write: function (v) { Spine.set('calendar.nextPaydayDay', day(v)); } }
-    ],
-
-    amounts: function (h, T) {
-      var r = m(h, T);
-      if (!Money.isOk(r)) return [];
-      var rows = [{ label: 'A payday’s take-home', cents: r.perPaydayCents }];
-      if (r.biggestBill) rows.push({ label: 'The biggest bill: ' + r.biggestBill.label, cents: r.biggestBill.cents });
-      if (r.payLaterCents > 0) rows.push({ label: 'Pay-later due this month', cents: r.payLaterCents });
-      rows.push({ label: 'A week of spending', cents: r.weekCents });
-      return rows;
-    },
-
-    assumptions: function (h, T) {
-      var c = T.calendarConventions || {};
-      var r = m(h, T);
-      return [
-        { label: 'Paydays', value: Money.isOk(r) ? (r.paydaySource === 'ledger' ? 'the Income entries’ landings' : String(Math.round(r.paydaysPerMonth * 100) / 100) + ' a month') : '—', source: Money.isOk(r) && r.paydaySource === 'ledger' ? 'each entry on its day, for the cash it brings net of what is withheld (engines/ledger.js)' : 'data/calendar_conventions.json v' + (c.version || '?') + ': 52 ÷ 12, 26 ÷ 12, 2 or 1 by cadence (' + (c.confidence || '') + ')' },
-        { label: 'Take-home', value: Money.isOk(r) && Money.isEntered(r.takeHomeCents) ? Money.formatCents(r.takeHomeCents) + ' a month' : '—', source: 'gross less the effective-rate table’s estimate (engines/tier0.js)' },
-        { label: 'Bills', value: 'drawn on their day', source: 'every dated entry in the expense log on its day, a recurring one each month; a date that is only potential is drawn, never counted' },
-        { label: 'The rest of spending', value: 'spread evenly', source: 'a month’s spending less the bills listed, a share on every day' },
-        { label: 'The window', value: (Money.isOk(r) ? r.horizonDays : 31) + ' days', source: 'today included; today’s cash is the starting balance' },
-        { label: 'Tight', value: 'under a week of spending', source: (c.tightWeekDays || 7) + ' days of the month’s spending (convention)' }
-      ];
-    },
-
-    why: function (h, T, situation) {
-      return {
-        employed: 'Employed, the month has a rhythm: paydays land, bills land, and the gap between them is where an overdraft or a pay-later charge lives. This draws the rhythm so the low point is a date, not a surprise.',
-        selfEmployed: 'Self-employed, a pay cadence is a fiction — the month is drawn as if you paid yourself on a schedule, which is the point of Variable Income’s salary. Set the cadence to how you pay yourself.',
-        mixed: 'With a job and your own work, the job’s paydays are the rhythm and the own-work income arrives around them. This draws the job’s.',
-        student: 'A student’s money arrives in lumps — a term’s aid, a part-time paycheque — and rent lands on the first. The low point is usually the day before the lump.',
-        retired: 'Retired, the pension or Social Security day is the payday. Set the cadence to monthly and its day; the month is the same shape as anyone’s.',
-        betweenJobs: 'Between jobs, the benefit’s day is the payday and the cadence is usually weekly or fortnightly; the low point is the day the runway feels shortest.'
-      }[situation] || 'A month is not a number; it is a shape. This draws it a day at a time from what you tell it.';
-    },
-
-    scope: 'This room does not connect to a bank; it draws one month from what Income and the expense log hold, and from what you tell it here.'
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#number': '#cal-number', '#chart': '#cal-chart', '#inputs': '#cal-inputs', '#amounts': '#cal-amounts', '#assumptions': '#cal-assumptions', '#reading': '#cal-reading', '#reading-list': '#cal-reading-list' };
+    var hash = location.hash || '';
+    var target = 'cash-flow.html' + (map[hash] || '#the-dates');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

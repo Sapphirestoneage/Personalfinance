@@ -14290,6 +14290,31 @@ retired pages are set to 0 so no file can spend a budget it did not earn.
 **LIVE-FORM.** The page declares `guarded`, the strictest of the three
 readings' disciplines. The board still builds once.
 
+### D-245 — The Month: what moved, and the dates
+
+**Decision.** The Money Calendar becomes the dates reading of Cash Flow, and
+the room is called The Month. Two hats: `#what-moved` (the default) and
+`#the-dates`. `rooms/calendar.html` becomes a redirect, hash and all.
+
+**Why.** What happened in the month and what is still to land in it are one
+month. Rule 2 of D-229 — before and after of one thing is one room with a
+time axis. What moved is first because it is the record; the dates are the
+forecast off it.
+
+**Ownership.** The four calendar fields — `payCadence`, `nextPayday`,
+`billsMonthly`, `payLaterDue` — move to owner `cash-flow`, anchor
+`cal-inputs`, with `data/ledger-rows.json`.
+
+**The progress dot.** Cash Flow owned no field since D-192 and therefore had
+no dot. It owns four now, so it has the Calendar's dot — empty until they
+are entered. That is the dot moving with its fields, not a new nag.
+
+**Compatibility.** No stored shape changes. Checked against the pre-merge
+pages: the glance, the flow and the log render identically, and so do the
+dates reading's number and chart. The calendar reading's link to
+`cash-flow.html#log` now lands on the other hat of its own page, which the
+router handles.
+
 ---
 
 # The Dungeons & Dividends entries

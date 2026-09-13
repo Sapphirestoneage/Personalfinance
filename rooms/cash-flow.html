@@ -6,91 +6,209 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Cash Flow · SPARKS</title>
-<meta name="description" content="When the money moves: this month at a glance, every receipt on its date, and where it flows."/>
+<title>The Month · SPARKS</title>
+<meta name="description" content="When the money moves: this month at a glance, every receipt on its date, where it all flows — and paydays against bills across the month, with the low point and the day it lands."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. Since D-192 this room is WHEN the money moves;
-  WHAT a month costs lives in Expenses (rooms/expenses.html).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-245 (the merge).
+  Registry: cash-flow.
 
-  1. READS   the four numbers and the typical-month lines (Expenses),
-             expenses.entries[] with source 'log', the income ledger,
-             people[].incomeSources[].grossAnnualIncomeCents, filingStatus.
-  2. WRITES  The expense LOG (D-128) only: dated occurrences with source
-             'log', a link to the income entry they produced, a deduction
-             the data layer allows only when linked, the reimbursable path
-             (D-129), and hide / set aside on a logged line. Nothing else:
-             the four numbers, the yearly lines and the split are typed in
-             Expenses, their one owner.
-  3. CALLS   engines/cashflow.js, engines/ledger.js and engines/budget.js
-             for every figure. Take-home pay comes from engines/tier0.js's
-             effective-tax lookup, not a second tax calculation.
-  4. EMPTY   Nothing logged: the month at a glance still reads the typical
-             month from Expenses and says so; the flow draws the typical
-             month until something real is logged; the log says it is
-             empty. A blank is never a zero.
-             THE SHAPE (D-126, D-192): the month at a glance first, then the
-             log, then where it flows, then what is left.
-  5. CONFIG  data/expense_categories.json (categories, groups, buckets),
-             data/effective_tax_rates_2026.json (take-home).
+  ONE MONTH, TWO READINGS.
+
+    #what-moved   this month at a glance, every receipt on its date, and
+                  where it all flows
+    #the-dates    paydays and bills across the month, pay-later
+                  instalments counted: the low point, and the day it lands
+
+  What happened in the month and what is still to land in it are one month.
+  Rule 2 of D-229 — before and after of one thing is one room with a time
+  axis. What moved is first because it is the record; the dates are the
+  forecast off it.
+
+  1. READS   the expense log this room already shows, and what comes in.
+  2. WRITES  the log, as before, and the four calendar fields — pay cadence,
+             next payday, bills a month, pay-later due — whose owner moved
+             here with their boxes (D-245).
+  3. CALLS   the engines each reading already called; no arithmetic moved.
+  4. EMPTY   the dates reading names the figure it lacks rather than drawing
+             a flat line. A month with nothing logged is a month with
+             nothing logged, not a zero month.
+  5. CONFIG  the tables each engine names.
+
+  LIVE-FORM: guarded. The log form is the room's own and is guarded as it
+  always was; the dates reading's controls are built once from the template
+  spec. Switching readings hides and shows and rebuilds nothing (D-034).
+
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css.
 -->
 <style>
-  .room-back:hover { text-decoration: underline; }
-  section[id] { scroll-margin-top: var(--space-4); }
-  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
-
-  .glance { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-3); }
-  .tile { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-2); background: var(--color-surface-raised); min-width: 0; }
-  .tile .t-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
-  .tile .t-big { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tile .t-big.is-incomplete { color: var(--color-text-faint); font-size: var(--text-base); white-space: normal; }
-  .tile .t-big.is-negative { color: var(--color-critical); }
-  .tile .t-big.is-good { color: var(--color-positive); }
-  .tile .t-sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
-  .glance-why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
-  @media (max-width: 420px) { .glance { grid-template-columns: 1fr 1fr; } .glance .tile:first-child { grid-column: 1 / -1; } }
-
-  .return-chip { display: inline-block; font-size: var(--text-sm); color: var(--color-accent-hover); border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 4px var(--space-3); text-decoration: none; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
-  .form-grid .wide { grid-column: 1 / -1; }
-  .flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--color-text-muted); cursor: pointer; }
-  .flag input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
-  .flag.is-off { color: var(--color-text-faint); }
-  ul.logged { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
-  ul.logged li { display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: center; }
-  ul.logged li:first-child { border-top: none; }
-  ul.logged .lg-date { color: var(--color-text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  ul.logged .lg-what small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
-  ul.logged .lg-amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
-  ul.logged .lg-cost { color: var(--color-caution); }
-  ul.logged .lg-credit { color: var(--color-positive); }
-  ul.logged .lg-date small { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-caution); }
-  ul.logged li.is-potential { opacity: .6; }
-  ul.logged li.is-potential .lg-amt { text-decoration: underline dotted; }
-  ul.logged li.is-credit .lg-what { color: var(--color-text-muted); }
-  ul.logged .lg-x { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 1px var(--space-2); cursor: pointer; }
-  .log-total { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
-
-  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
-  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
-  .out-detail dt { color: var(--color-text-faint); }
-  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- What moved, from rooms/cash-flow.html (D-245) ---- */
+  
+  #view-what-moved .room-back:hover { text-decoration: underline; }
+  
+  #view-what-moved section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-what-moved .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+  
+  #view-what-moved .glance { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-what-moved .tile { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-2); background: var(--color-surface-raised); min-width: 0; }
+  
+  #view-what-moved .tile .t-cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+  
+  #view-what-moved .tile .t-big { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  
+  #view-what-moved .tile .t-big.is-incomplete { color: var(--color-text-faint); font-size: var(--text-base); white-space: normal; }
+  
+  #view-what-moved .tile .t-big.is-negative { color: var(--color-critical); }
+  
+  #view-what-moved .tile .t-big.is-good { color: var(--color-positive); }
+  
+  #view-what-moved .tile .t-sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+  
+  #view-what-moved .glance-why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  @media (max-width: 420px) { 
+  #view-what-moved .glance { grid-template-columns: 1fr 1fr; } 
+  #view-what-moved .glance .tile:first-child { grid-column: 1 / -1; } }
+
+  
+  #view-what-moved .return-chip { display: inline-block; font-size: var(--text-sm); color: var(--color-accent-hover); border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 4px var(--space-3); text-decoration: none; }
+  
+  #view-what-moved .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+  
+  #view-what-moved .form-grid .wide { grid-column: 1 / -1; }
+  
+  #view-what-moved .flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--color-text-muted); cursor: pointer; }
+  
+  #view-what-moved .flag input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
+  
+  #view-what-moved .flag.is-off { color: var(--color-text-faint); }
+  
+  #view-what-moved ul.logged { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  
+  #view-what-moved ul.logged li { display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: center; }
+  
+  #view-what-moved ul.logged li:first-child { border-top: none; }
+  
+  #view-what-moved ul.logged .lg-date { color: var(--color-text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-what-moved ul.logged .lg-what small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  
+  #view-what-moved ul.logged .lg-amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-what-moved ul.logged .lg-cost { color: var(--color-caution); }
+  
+  #view-what-moved ul.logged .lg-credit { color: var(--color-positive); }
+  
+  #view-what-moved ul.logged .lg-date small { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-caution); }
+  
+  #view-what-moved ul.logged li.is-potential { opacity: .6; }
+  
+  #view-what-moved ul.logged li.is-potential .lg-amt { text-decoration: underline dotted; }
+  
+  #view-what-moved ul.logged li.is-credit .lg-what { color: var(--color-text-muted); }
+  
+  #view-what-moved ul.logged .lg-x { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 1px var(--space-2); cursor: pointer; }
+  
+  #view-what-moved .log-total { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2); }
+
+  
+  #view-what-moved .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-what-moved .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-what-moved .out-detail dt { color: var(--color-text-faint); }
+  
+  #view-what-moved .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  
+  #view-what-moved .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- The dates, from rooms/calendar.html (D-245) ---- */
+  
+  #view-the-dates section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-dates .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* The month as a grid, under the line. A cell a day; what lands on it, and the cash at its end. */
+  
+  #view-the-dates .cal-grid { margin-top: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+  
+  #view-the-dates .cal-head,
+  #view-the-dates .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
+  
+  #view-the-dates .cal-head span { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); text-align: center; padding: var(--space-1) 0; border-bottom: 1px solid var(--color-border); }
+  
+  #view-the-dates .cal-cell { min-height: 58px; padding: 4px 3px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); font-size: 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  
+  #view-the-dates .cal-cell:last-child { border-right: none; }
+  
+  #view-the-dates .cal-row:last-child .cal-cell { border-bottom: none; }
+  
+  #view-the-dates .cal-cell.is-blank { background: transparent; }
+  
+  #view-the-dates .cal-cell b { font-weight: 600; color: var(--color-text-muted); font-size: 11px; white-space: nowrap; }
+  
+  #view-the-dates .cal-cell.is-today b { color: var(--color-accent-hover); }
+  
+  #view-the-dates .cal-cell small { margin-top: auto; font-variant-numeric: tabular-nums; color: var(--color-text); }
+  
+  #view-the-dates .cal-cell.is-tight { background: rgba(232,184,75,.08); }
+  
+  #view-the-dates .cal-cell.is-under { background: rgba(229,72,77,.12); }
+  
+  #view-the-dates .cal-cell.is-under small { color: var(--color-critical); }
+  
+  #view-the-dates .cal-cell.is-low { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+  
+  #view-the-dates .cal-in,
+  #view-the-dates .cal-out { font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 3px; padding: 0 2px; }
+  
+  #view-the-dates .cal-in { color: var(--color-positive); background: rgba(48,164,108,.14); }
+  
+  #view-the-dates .cal-out { color: var(--color-critical); background: rgba(229,72,77,.12); }
+  
+  #view-the-dates .cal-out.is-pl { color: var(--color-caution); background: rgba(232,184,75,.14); }
+  
+  #view-the-dates .cal-out.is-annual { color: var(--color-caution); background: rgba(232,184,75,.14); font-weight: 600; }
+  /* How sure the date is (D-130): estimated dashed, potential faded and
+     dotted — drawn, never counted. */
+  
+  #view-the-dates .cal-in.is-estimated,
+  #view-the-dates .cal-out.is-estimated { outline: 1px dashed currentColor; outline-offset: -1px; }
+  
+  #view-the-dates .cal-in.is-potential,
+  #view-the-dates .cal-out.is-potential { opacity: .5; text-decoration: underline dotted; }
+  
+  #view-the-dates .cal-key { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+  
+  #view-the-dates .cal-key .k-low { outline: 2px solid var(--color-accent); outline-offset: 1px; border-radius: 2px; padding: 0 3px; }
+  
+  #view-the-dates .cal-key .k-under { background: rgba(229,72,77,.12); color: var(--color-critical); border-radius: 2px; padding: 0 3px; }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>Cash Flow</h1>
-  <p class="room-lede">When the money moves. This month at a glance, every receipt on its date, and where it all flows. What a typical month costs is typed once, in <a href="expenses.html#spending">Expenses</a>.</p>
+  <h1>The Month</h1>
+  <p class="room-lede">When the money moves, and the day it gets tight.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Two readings of one month">
+    <a href="#what-moved" data-view="view-what-moved">What moved</a>
+    <a href="#the-dates" data-view="view-the-dates">The dates</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
 
+  <!-- ===== WHAT MOVED (was rooms/cash-flow.html) ===== -->
+  <section id="view-what-moved">
+  <p class="slaf-lede">This month at a glance, every receipt on its date, and where it all flows.</p>
   <section class="slaf-card" id="glance">
     <span class="slaf-eyebrow">This month at a glance</span>
     <div class="glance" id="glance-tiles"></div>
@@ -159,10 +277,53 @@
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
   </section>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. Your numbers stay in this browser.
-  </p>
+  <!-- ===== THE DATES (was rooms/calendar.html) ===== -->
+  <section id="view-the-dates" hidden>
+  <p class="slaf-lede">Paydays and bills across a month, pay-later instalments counted: the low point, and the day it lands.</p>
+  <div class="room-standalone" id="cal-room-standalone" hidden></div>
+
+  <section class="slaf-card" id="cal-number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">The low point this month</span>
+      <div id="cal-room-lens"></div>
+    </div>
+    <div class="room-number" id="cal-room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="cal-chart" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Cash across the month, and the month as a calendar</span>
+    <div id="cal-room-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="cal-inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Paydays, bills, pay-later</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Paydays come from your <a href="income.html">Income</a> entries when any land this month; otherwise from the cadence below. Bills and pay-later instalments are the expense log’s: <a href="cash-flow.html#log">log them in Cash Flow</a>, recurring on their day, and they land here. The rest of your spending is spread across the days.</p>
+    <div id="cal-room-inputs"></div>
+  </section>
+
+  <section class="slaf-card" id="cal-amounts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Through the lens</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
+    <ul class="room-amounts" id="cal-room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="cal-assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="cal-room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="cal-room-why" hidden></p>
+  <p class="room-scope" id="cal-room-scope"></p>
+
+  <section class="slaf-card" id="cal-reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="cal-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. What a typical month costs is typed once, in Expenses; this room reads it. Everything stays in this browser.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -189,14 +350,76 @@
 <script src="../engines/budget.js"></script>
 <script src="../shared/manage.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/calendar.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/room.js"></script>
 <script>
+/* ---- what moved, and the dates (D-245) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   The hash still reaches it — an old link must land somewhere honest — and
+   the reading says for whom it is, which is what Gate.why is for. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-the-dates', match: /^#(the-dates|cal-)/ },
+    { id: 'view-what-moved', match: /.*/ }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. If it is gated away, fall to the first one that is not. */
+    var on = open(asked) ? asked : VIEWS.filter(open)[0] || asked;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('cash-flow');
+  if (SLAF.Progress) SLAF.Progress.mount('cash-flow');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-what-moved, from rooms/cash-flow.html (D-245) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Demo = SLAF.DemoPersona, CashFlow = SLAF.CashFlow,
       Charts = SLAF.Charts, Tier0 = SLAF.Tier0;
 
-  var ROOM_ID = 'cash-flow';
+  var ROOM_ID = 'cash-flow';   /* the room this reading lives in */
   var TABLES = null;
 
   function el(id) { return document.getElementById(id); }
@@ -530,18 +753,7 @@
     if (cat) window.__logCategory = cat[1];
   })();
 
-  function jumpToHash() {
-    if (!location.hash) return;
-    var target = document.getElementById(location.hash.slice(1));
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  window.addEventListener('hashchange', jumpToHash);
-
   /* ---------- boot ------------------------------------------------------ */
-
-  Spine.registerRoom(ROOM_ID);
-
-  SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
 
   Reference.load().then(function (tables) {
@@ -549,13 +761,127 @@
     buildLogForm();
     if (window.__logCategory && CashFlow.categoryById(tables.expenseCategories, window.__logCategory)) el('l-category').value = window.__logCategory;
     render();
-    jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');
     notice.hidden = false;
     notice.className = 'notice is-error';
     notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
       + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-dates, from rooms/calendar.html (D-245) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      Charts = SLAF.Charts, Room = SLAF.Room, Cal = SLAF.Calendar, Gate = SLAF.Gate;
+
+  function cal(h) { return Schema.createCalendar((h || {}).calendar); }
+  function day(v) { return v === null || v === undefined ? null : Math.max(1, Math.min(31, Math.round(v))); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function ordinal(n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+  function m(h, T) { return Cal.month(h, T, {}); }
+
+  Room.mount({
+    id: 'cash-flow',
+    part: true,
+    prefix: 'cal-',
+    root: 'view-the-dates',
+    reads: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome', 'monthlyDebtPayments'],
+
+    number: function (h, T) {
+      var r = m(h, T);
+      if (!Money.isOk(r)) return { label: 'The low point this month', value: null, reason: r.reason };
+      var counted = (r.incomeHits || []).filter(function (x) { return !x.potential; });
+      var logged = (r.logHits || []).filter(function (x) { return !x.potential; });
+      var sub = (r.paydaySource === 'ledger'
+          ? counted.length + (counted.length === 1 ? ' landing' : ' landings') + ' from Income, ' + Money.formatCents(counted.reduce(function (t, x) { return t + x.cents; }, 0)) + ' in all'
+          : 'Paid ' + r.cadenceLabel.toLowerCase() + ', ' + Money.formatCents(r.perPaydayCents) + ' a payday' + (r.paydays.length ? ' on the ' + r.paydays.map(function (p) { return ordinal(p.dom); }).join(' and the ') : '') + (r.paycheckMonth ? '. This is ' + r.paycheckMonth.label : ''))
+        + (logged.length ? ' · ' + logged.length + ' logged ' + (logged.length === 1 ? 'bill' : 'bills') + ' from Cash Flow, ' + Money.formatCents(logged.reduce(function (t, x) { return t + x.cents; }, 0)) : '')
+        + r.bills.map(function (b) { return ' · ' + b.label + ' ' + Money.formatCents(b.cents) + ' on the ' + ordinal(b.day); }).join('')
+        + ((r.annualHits || []).length ? ' · ' + r.annualHits.length + (r.annualHits.length === 1 ? ' yearly cost lands' : ' yearly costs land') + ' in this window, drawn on the 1st of their month, not spread' : '')
+        + r.payLater.map(function (b) { return ' · pay-later ' + Money.formatCents(b.cents) + ' on the ' + ordinal(b.day); }).join('')
+        + (r.potentialInCents || r.potentialOutCents ? ' · potential, drawn but not counted: ' + (r.potentialInCents ? Money.formatCents(r.potentialInCents) + ' in' : '') + (r.potentialInCents && r.potentialOutCents ? ', ' : '') + (r.potentialOutCents ? Money.formatCents(r.potentialOutCents) + ' out' : '') : '')
+        + (r.belowZero ? ' · <strong>below zero from the ' + ordinal(r.firstBelowDom) + '</strong>' : r.tight ? ' · the tightest stretch is the ' + ordinal(r.tight.fromDom) + '–' + ordinal(r.tight.toDom) : ' · never under a week of spending')
+        + (r.billsExceedSpending ? ' · the bills listed exceed the month’s spending, so nothing else is spread' : '');
+      return { label: 'The low point this month', value: Money.formatCents(r.lowCents) + ' on the ' + ordinal(r.lowDom), sub: sub, zone: r.zone, result: r };
+    },
+
+    /* One picture in two parts: the balance line, and beneath it the same
+       31 days as a calendar — a cell a day, paydays and bills on the day
+       they land, the balance underneath, the low point and any day under
+       zero marked. Both are drawn from the one month the engine runs. */
+    chart: function (h, T) {
+      var r = m(h, T);
+      if (!Money.isOk(r)) return Charts.area({ series: [], empty: r.reason });
+      var line = Charts.area({
+        title: 'Cash, day by day, for 31 days',
+        series: [{ label: 'Cash', color: Charts.COLORS.growth, fill: true, points: Cal.balancePoints(r) }],
+        hLines: [{ y: 0, label: 'zero', color: Charts.COLORS.debt }, { y: r.weekCents, label: 'a week of spending', color: Charts.COLORS.target }],
+        dots: r.paydays.map(function (p) { return { x: p.index, y: p.balanceCents }; }),
+        x: { label: 'day', format: function (v) { return 'd' + Math.round(v + 1); } }
+      });
+      var short = function (c) { var k = Math.abs(c) >= 100000; return (c < 0 ? '−' : '') + '$' + (k ? (Math.round(Math.abs(c) / 10000) / 10) + 'k' : Math.round(Math.abs(c) / 100)); };
+      var grid = '<div class="cal-grid" role="table" aria-label="The next 31 days as a calendar">'
+        + '<div class="cal-head">' + Cal.WEEKDAYS.map(function (w) { return '<span>' + w + '</span>'; }).join('') + '</div>'
+        + Cal.weeks(r).map(function (row) {
+          return '<div class="cal-row">' + row.map(function (d) {
+            if (!d) return '<span class="cal-cell is-blank"></span>';
+            var cls = 'cal-cell' + (d.today ? ' is-today' : '') + (d.isLow ? ' is-low' : '') + (d.belowZero ? ' is-under' : '') + (d.tight ? ' is-tight' : '');
+            var marks = '';
+            (d.ins || []).forEach(function (x) { marks += '<i class="cal-in' + (x.potential ? ' is-potential' : x.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(x.label) + (x.potential ? ' (potential, not counted)' : x.dateKind === 'estimated' ? ' (date estimated)' : '') + '">+' + short(x.cents) + '</i>'; });
+            d.bills.forEach(function (b) { marks += '<i class="cal-out' + (b.kind === 'payLater' ? ' is-pl' : b.kind === 'annual' ? ' is-annual' : '') + (b.potential ? ' is-potential' : b.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(b.label) + (b.potential ? ' (potential, not counted)' : b.dateKind === 'estimated' ? ' (date estimated)' : '') + '">−' + short(b.cents) + '</i>'; });
+            return '<span class="' + cls + '"><b>' + (d.firstOfMonth || d.today ? d.month + ' ' : '') + d.dom + '</b>' + marks + '<small>' + short(d.balanceCents) + '</small></span>';
+          }).join('') + '</div>';
+        }).join('')
+        + '</div><p class="cal-key"><i class="cal-in">+$</i> money in · <i class="cal-out">−$</i> a bill or a logged expense · <i class="cal-out is-pl">−$</i> pay-later · <i class="cal-out is-estimated">−$</i> date estimated · <i class="cal-out is-potential">−$</i> potential, not counted · the figure is the cash at the end of the day · <span class="k-low">the low point</span> · <span class="k-under">under zero</span></p>';
+      return line + grid;
+    },
+
+    inputs: [
+      { ctl: 'cadence', label: 'Paid', kind: 'select', options: [['', 'How often?'], ['weekly', 'Every week'], ['fortnightly', 'Every two weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Monthly']],
+        read: function (h) { return cal(h).cadence; }, write: function (v) { Spine.set('calendar.cadence', v || null); } },
+      { ctl: 'nextPaydayDay', label: 'Next payday, day of the month', kind: 'number', placeholder: 'e.g. 5', hint: 'Both are used only while Income has no entry landing this month; once it does, those landings are the paydays.',
+        read: function (h) { return cal(h).nextPaydayDay; }, write: function (v) { Spine.set('calendar.nextPaydayDay', day(v)); } }
+    ],
+
+    amounts: function (h, T) {
+      var r = m(h, T);
+      if (!Money.isOk(r)) return [];
+      var rows = [{ label: 'A payday’s take-home', cents: r.perPaydayCents }];
+      if (r.biggestBill) rows.push({ label: 'The biggest bill: ' + r.biggestBill.label, cents: r.biggestBill.cents });
+      if (r.payLaterCents > 0) rows.push({ label: 'Pay-later due this month', cents: r.payLaterCents });
+      rows.push({ label: 'A week of spending', cents: r.weekCents });
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var c = T.calendarConventions || {};
+      var r = m(h, T);
+      return [
+        { label: 'Paydays', value: Money.isOk(r) ? (r.paydaySource === 'ledger' ? 'the Income entries’ landings' : String(Math.round(r.paydaysPerMonth * 100) / 100) + ' a month') : '—', source: Money.isOk(r) && r.paydaySource === 'ledger' ? 'each entry on its day, for the cash it brings net of what is withheld (engines/ledger.js)' : 'data/calendar_conventions.json v' + (c.version || '?') + ': 52 ÷ 12, 26 ÷ 12, 2 or 1 by cadence (' + (c.confidence || '') + ')' },
+        { label: 'Take-home', value: Money.isOk(r) && Money.isEntered(r.takeHomeCents) ? Money.formatCents(r.takeHomeCents) + ' a month' : '—', source: 'gross less the effective-rate table’s estimate (engines/tier0.js)' },
+        { label: 'Bills', value: 'drawn on their day', source: 'every dated entry in the expense log on its day, a recurring one each month; a date that is only potential is drawn, never counted' },
+        { label: 'The rest of spending', value: 'spread evenly', source: 'a month’s spending less the bills listed, a share on every day' },
+        { label: 'The window', value: (Money.isOk(r) ? r.horizonDays : 31) + ' days', source: 'today included; today’s cash is the starting balance' },
+        { label: 'Tight', value: 'under a week of spending', source: (c.tightWeekDays || 7) + ' days of the month’s spending (convention)' }
+      ];
+    },
+
+    why: function (h, T, situation) {
+      return {
+        employed: 'Employed, the month has a rhythm: paydays land, bills land, and the gap between them is where an overdraft or a pay-later charge lives. This draws the rhythm so the low point is a date, not a surprise.',
+        selfEmployed: 'Self-employed, a pay cadence is a fiction — the month is drawn as if you paid yourself on a schedule, which is the point of Variable Income’s salary. Set the cadence to how you pay yourself.',
+        mixed: 'With a job and your own work, the job’s paydays are the rhythm and the own-work income arrives around them. This draws the job’s.',
+        student: 'A student’s money arrives in lumps — a term’s aid, a part-time paycheque — and rent lands on the first. The low point is usually the day before the lump.',
+        retired: 'Retired, the pension or Social Security day is the payday. Set the cadence to monthly and its day; the month is the same shape as anyone’s.',
+        betweenJobs: 'Between jobs, the benefit’s day is the payday and the cadence is usually weekly or fortnightly; the low point is the day the runway feels shortest.'
+      }[situation] || 'A month is not a number; it is a shape. This draws it a day at a time from what you tell it.';
+    },
+
+    scope: 'This room does not connect to a bank; it draws one month from what Income and the expense log hold, and from what you tell it here.'
   });
 })();
 </script>

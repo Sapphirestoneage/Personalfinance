@@ -79,7 +79,6 @@
             "reversibility",
             "debates",
             "student-loans",
-            "calendar",
             "history"
           ],
           "note": "Registry order 1\u201351 \u2014 the sequence a person is meant to walk."
@@ -148,7 +147,6 @@
             "week",
             "reversibility",
             "debates",
-            "calendar",
             "history"
           ],
           "note": "The same 43 rooms show up whichever answer you give."
@@ -225,7 +223,6 @@
             "income",
             "variance",
             "accounts",
-            "calendar",
             "real-hourly-wage"
           ]
         },
@@ -350,7 +347,6 @@
             "cash-flow",
             "budget",
             "variance",
-            "calendar",
             "big-purchase",
             "car",
             "housing",
@@ -472,7 +468,6 @@
             "expenses",
             "cash-flow",
             "budget",
-            "calendar",
             "variance",
             "income",
             "debt-payoff",
@@ -575,7 +570,6 @@
             "income",
             "budget",
             "variance",
-            "calendar",
             "financial-snapshot",
             "race",
             "statements",
@@ -715,7 +709,6 @@
             "income",
             "budget",
             "variance",
-            "calendar",
             "debt-payoff",
             "statement",
             "reachable",
@@ -851,7 +844,6 @@
             "down-payment",
             "property",
             "income",
-            "calendar",
             "partner",
             "wedding",
             "protection",
@@ -922,7 +914,6 @@
             "budget",
             "income",
             "variance",
-            "calendar",
             "settings"
           ],
           "note": "Where the daily work happens and the mess accumulates."
@@ -1046,7 +1037,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "calendar",
             "budget"
           ]
         },
@@ -1213,7 +1203,6 @@
             "expenses",
             "cash-flow",
             "budget",
-            "calendar",
             "income",
             "settings",
             "skill-tree",
@@ -1273,7 +1262,6 @@
             "cant-pay",
             "expenses",
             "cash-flow",
-            "calendar",
             "budget",
             "runway",
             "credit"
@@ -1468,7 +1456,6 @@
             "cash-flow",
             "budget",
             "variance",
-            "calendar",
             "financial-snapshot",
             "race",
             "statements",
@@ -1564,7 +1551,6 @@
             "enough",
             "reversibility",
             "student-loans",
-            "calendar",
             "history"
           ],
           "note": "37 rooms sit at exactly the same depth. There is no sequence among them \u2014 the numbered path invents one.",
@@ -1632,7 +1618,6 @@
           "rooms": [
             "budget",
             "variance",
-            "calendar",
             "big-purchase",
             "car",
             "housing",
@@ -1798,7 +1783,6 @@
         {
           "name": "Ongoing, never done",
           "rooms": [
-            "calendar",
             "variance",
             "skill-tree",
             "credential",
@@ -1837,7 +1821,6 @@
             "partner",
             "wedding",
             "credit",
-            "calendar",
             "history",
             "settings",
             "data",
@@ -1952,7 +1935,6 @@
             "income",
             "budget",
             "variance",
-            "calendar",
             "settings",
             "real-hourly-wage",
             "hassle"
@@ -2054,7 +2036,6 @@
             "statement",
             "reachable",
             "debt-payoff",
-            "calendar",
             "financial-snapshot",
             "race",
             "statements",
@@ -2161,8 +2142,7 @@
           "rooms": [
             "cant-pay",
             "runway",
-            "credit",
-            "calendar"
+            "credit"
           ]
         },
         {

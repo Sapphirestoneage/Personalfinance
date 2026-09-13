@@ -614,22 +614,22 @@
       format: function (v) { return v + ' years'; }
     },
     payCadence: {
-      label: 'Paid', owner: 'calendar', anchor: 'inputs',
+      label: 'Paid', owner: 'cash-flow', anchor: 'cal-inputs',
       read: function (h) { var v = (h.calendar || {}).cadence; return v ? Money.ok(v) : Money.incomplete('Not entered yet.', ['cadence']); },
       format: function (v) { return { weekly: 'every week', fortnightly: 'every two weeks', semimonthly: 'twice a month', monthly: 'monthly' }[v] || v; }
     },
     nextPayday: {
-      label: 'Next payday, day of month', owner: 'calendar', anchor: 'inputs',
+      label: 'Next payday, day of month', owner: 'cash-flow', anchor: 'cal-inputs',
       read: function (h) { var v = (h.calendar || {}).nextPaydayDay; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['nextPaydayDay']); },
       format: function (v) { return 'the ' + v + (v === 1 || v === 21 || v === 31 ? 'st' : v === 2 || v === 22 ? 'nd' : v === 3 || v === 23 ? 'rd' : 'th'); }
     },
     billsMonthly: {
-      label: 'Bills on a date, a month', owner: 'calendar', anchor: 'inputs',
+      label: 'Bills on a date, a month', owner: 'cash-flow', anchor: 'cal-inputs',
       read: function (h) { var bs = ((h.calendar || {}).bills || []).filter(function (b) { return Money.isEntered(b.cents); }); return bs.length ? Money.ok(bs.reduce(function (t, b) { return t + b.cents; }, 0), { count: bs.length }) : Money.incomplete('No bills listed yet.', ['bills']); },
       format: function (v) { return money(v) + '/mo'; }
     },
     payLaterDue: {
-      label: 'Pay-later due this month', owner: 'calendar', anchor: 'inputs',
+      label: 'Pay-later due this month', owner: 'cash-flow', anchor: 'cal-inputs',
       read: function (h) { var ps = ((h.calendar || {}).payLater || []).filter(function (b) { return Money.isEntered(b.cents); }); return ps.length ? Money.ok(ps.reduce(function (t, b) { return t + b.cents; }, 0), { count: ps.length }) : Money.incomplete('None listed.', ['payLater']); },
       format: money
     },

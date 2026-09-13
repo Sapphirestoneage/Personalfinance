@@ -10515,7 +10515,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
      First Round and Express became views of (D-230). */
   check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
-  check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
+  check('...fifteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 15);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
   /* Your Next $100 became a reading of What The Next Dollar Does (D-231). */
   check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,foo-ladder,fire,fire-lab,statements,coast-date,race');
@@ -10549,9 +10549,12 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   const demo = Demo.build();
   const readings = Ownership.readings(demo);
   check('a status dot: Debt Payoff filled on the demo', Progress.roomStatus('debt-payoff', readings), 'filled');
-  check('...the Calendar empty', Progress.roomStatus('calendar', readings), 'empty');
   check('...Expenses partly (therapy untracked)', Progress.roomStatus('expenses', readings), 'partly');
-  check('...Cash Flow, which owns no field since D-192, has no dot', Progress.roomStatus('cash-flow', readings), null);
+  /* Cash Flow owned no field since D-192 and had no dot. It is The Month
+     now and holds the Calendar's four, so it has the Calendar's dot: empty
+     on a demo that has entered none of them (D-245). */
+  check('...The Month, which took the Calendar\'s four fields, is empty', Progress.roomStatus('cash-flow', readings), 'empty');
+  checkTrue('...and the Calendar is not a room to have a dot', !Registry.byId('calendar'));
   check('...a room that owns nothing has no dot', Progress.roomStatus('ratios', readings), null);
 })();
 
@@ -11375,7 +11378,7 @@ section('15.5: cadence on every line, the yearly lines, the calendar and the sin
   checkTrue('Expenses has the fold, built once, with bucket chips', cf.indexOf('id="annual-fold"') > -1 && cf.indexOf('data-choices="y-bucket"') > -1 && /LIVE-FORM: built once\. -->\n    <details class="drawer" id="annual-fold"/.test(cf));
   checkTrue('...writing through the spine', cf.indexOf('Spine.upsertAnnualLine(') > -1 && cf.indexOf('Spine.removeAnnualLine(') > -1);
   checkTrue('...and hides behind the switch', cf.indexOf('Schema.annualLinesOn(h)') > -1);
-  const cal = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
+  const cal = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
   checkTrue('the calendar draws yearly marks', cal.indexOf('is-annual') > -1);
   checkTrue('the spine exports the two writers', typeof Spine.upsertAnnualLine === 'function' && typeof Spine.removeAnnualLine === 'function');
   Prefs.reset();
@@ -13444,7 +13447,7 @@ section('I2, J2, J3, J6: the cost of not knowing, the Comeback, the real pay cyc
   check('a three-paycheck month is named, not averaged away', Calendar.paycheckMonthLabel('fortnightly', 3).label, 'a three-paycheck month: one more payday than most months');
   check('five paydays on weekly pay', Calendar.paycheckMonthLabel('weekly', 5).label, 'a five-paycheck month: one more payday than most months');
   check('monthly pay has no such month', Calendar.paycheckMonthLabel('monthly', 1), null);
-  checkTrue('the calendar room says it', /r\.paycheckMonth\.label/.test(fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8')));
+  checkTrue('the calendar reading says it', /r\.paycheckMonth\.label/.test(fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8')));
 
   /* -- J6: no projected date without its range ------------------------------------------ */
   const fi = ShareCard.make('fiDate', Demo.build(), T, {});

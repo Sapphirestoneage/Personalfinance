@@ -100,7 +100,12 @@
       "title": "Cash Flow",
       "file": "rooms/cash-flow.html",
       "reads": [],
-      "writes": [],
+      "writes": [
+        "payCadence",
+        "nextPayday",
+        "billsMonthly",
+        "payLaterDue"
+      ],
       "requires": [],
       "dashboardNumber": null,
       "order": 3.1
@@ -693,7 +698,7 @@
     },
     {
       "id": "degree",
-      "title": "What Matters",
+      "title": "The Month",
       "file": "rooms/degree.html",
       "reads": [
         "dob"
@@ -906,24 +911,6 @@
       ],
       "dashboardNumber": "loanTrajectory",
       "order": 49
-    },
-    {
-      "id": "calendar",
-      "title": "Money Calendar & Pay-Later",
-      "file": "rooms/calendar.html",
-      "reads": [
-        "monthlyExpenses",
-        "cashSavings"
-      ],
-      "writes": [
-        "payCadence",
-        "nextPayday",
-        "billsMonthly",
-        "payLaterDue"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 50
     },
     {
       "id": "history",
