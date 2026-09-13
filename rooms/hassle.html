@@ -294,7 +294,7 @@
 
     var saving = el('in-saving');
     if (document.activeElement !== saving) {
-      saving.value = Money.isEntered(chore.savingCents) ? Money.formatCents(chore.savingCents) : '';
+      saving.value = Money.isEntered(chore.savingCents) ? Money.forInput(chore.savingCents) : '';
     }
     var hours = el('in-hours');
     if (document.activeElement !== hours) {

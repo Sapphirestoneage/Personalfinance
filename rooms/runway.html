@@ -1454,7 +1454,7 @@
       if (document.activeElement === node) return;
       var v = ins[spec[1]];
       node.setAttribute('data-raw', Money.isEntered(v) ? String(v) : '');
-      node.value = Money.isEntered(v) ? Money.formatCents(v) : '';
+      node.value = Money.isEntered(v) ? Money.forInput(v) : '';
     });
     var sel = el('c-umbrella');
     if (document.activeElement !== sel) sel.value = ins.umbrella === true ? 'yes' : ins.umbrella === false ? 'no' : '';
@@ -1514,7 +1514,7 @@
     var amount = el('in-amount');
     if (document.activeElement !== amount) {
       amount.setAttribute('data-raw', Money.isEntered(s.targetCents) ? String(s.targetCents) : '');
-      amount.value = Money.isEntered(s.targetCents) ? Money.formatCents(s.targetCents) : '';
+      amount.value = Money.isEntered(s.targetCents) ? Money.forInput(s.targetCents) : '';
     }
     var months = el('in-months');
     if (document.activeElement !== months) {

@@ -13,6 +13,6 @@ Reference data: aca_2026.json, advice.json, advice_translator.json, confidence_w
 Owns: unlearningDropped
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), employmentStatus (start), employerMatch (start), hasDebt (start), marginalRate (statement), rentMonthly (expenses), mortgageRate (housing), +2 more
 Latest decisions:
-  - D-237 — Expenses: the month, and what repeats in it
+  - D-242 — The Referee takes Unlearning
   - D-218 — K1, K3: the Middle Class Trap Test and the Referee
 Full context: node tools/context/pack.js debates

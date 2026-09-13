@@ -882,7 +882,7 @@ const RULES = TABLES.debtRules;
   checkTrue('...every simulation the room runs shares the options, bar the minimums-only baseline', /function simOpts\(extra\)/.test(page) && (page.match(/Debt\.simulate\([^)]*\{ strategyId: strategyId/g) || []).length === 1 && /extraMonthlyCents: 0 \}\);/.test(page) && /compareStrategies\(scoped\(h\), RULES, simOpts\(/.test(page));
   checkTrue('...and with a stop the room never prints a negative "sooner by"', /plan\.stopMonth === null\) \{\s*rows\.push\(\['Saved vs\. minimums only'/.test(page) && /Against minimums only/.test(page));
   checkTrue('...the extra is said to sit on top of the minimums, and the per-month figure says what it is built from', /Extra each month, on top of the minimums/.test(page) && /function perMonthNote\(plan, h\)/.test(page) && /the minimums as typed on each line/.test(page));
-  checkTrue('...a typed extra shows digits only, the shell carries the dollar sign', /formatCents\(extraCents\)\.replace\(\/\^\\\$\/, ''\)/.test(page));
+  checkTrue('...a typed extra shows digits only, the shell carries the dollar sign', /forInput\(extraCents\)\.replace\(\/\^\\\$\/, ''\)/.test(page));
   checkTrue('the list adds up what is owed and the minimums, counting blanks as missing, not zero', /function paintDebtTotal\(debts\)/.test(page) && /Money\.sumCents\(debts\.map\(function \(d\) \{ return d\.minPaymentCents; \}\)\)/.test(page) && /without a minimum/.test(page));
   checkTrue('...and under the box the minimums plus the extra read as one figure going to debt', /id="extra-total"/.test(page) && /Going to debt each month: <b>' \+ Money\.formatCents\(mins\.value \+ c\.cents\)/.test(page) && /the minimums alone, nothing on top/.test(page));
 })();
@@ -8259,7 +8259,7 @@ section('Core (D-094): the gate — exists() per situation');
   check('retired: the working rooms are gone', gone(hh('retired')), 'career-move,fire,hassle,partner');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
-  check('employed, alone, no dependents: own work, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'decumulation,partner');
+  check('employed, alone, no dependents: own work, partner, kids and variable income are gone', gone(hh('employed')), 'partner');
   checkTrue('self-employed: the 401(k) room is gone', Registry.forHousehold(hh('selfEmployed')).map(r => r.id).indexOf('accounts') === -1);
   /* A requirement may be a key or an array of keys meaning any-of (D-241);
      flatten before checking that each one names a real branch. */
@@ -8267,7 +8267,10 @@ section('Core (D-094): the gate — exists() per situation');
   checkTrue('every requires room is a room', Object.keys(Registry.REQUIRES).every(id => !!Registry.byId(id)));
   check('byTag with a household filters the same way', Registry.byTag('all', hh('retired')).length, retiredRooms.length);
   check('byTag without one is every room', Registry.byTag('all').length, all);
-  check('the demo is five rooms short — no own work, not drawing down, alone, nobody depending', gone(Demo.build()), 'decumulation,partner');
+  /* The Back Half is NOT among them since D-256: three of its four
+     readings are what-ifs for people still working, and only the draw
+     carries the branch. */
+  check('the demo is four rooms short — no own work, alone, nobody depending', gone(Demo.build()), 'partner');
 
   /* Guesses: a default for every guessable control, from the tables. */
   const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
@@ -9093,6 +9096,20 @@ section('Two decision sequences that cannot collide');
 
   checkTrue('there are SPARKS entries', sparks.length > 20);
   checkTrue('there are D&D entries', dnd.length > 10);
+
+  /* An entry heading is LEVEL 2. The check above only rejected a malformed
+     "## D..." line, so a "### D-238" slipped past it — and the index
+     builder, which matches "## " exactly, put twenty-one entries inside
+     D-237's line range. A whole programme of decisions was invisible to
+     `pack.js` and to DECISIONS-INDEX.md, which is the only way CLAUDE.md
+     tells a session to read this file. D-258. */
+  check('every entry heading is level 2, not deeper',
+    lines.map((l, i) => /^#{3,} DD?-\d{3}\s*[—–-]/.test(l) ? `line ${i + 1}: ${l.slice(0, 50)}` : null)
+      .filter(Boolean).join(' | '), '');
+  check('every entry in the file is in the index',
+    (text.match(/^## DD?-\d{3} — /gm) || []).length,
+    (fs.readFileSync(path.join(__dirname, '..', 'docs/context/DECISIONS-INDEX.md'), 'utf8')
+      .match(/^- ~?DD?-\d{3} — /gm) || []).length);
 
   sparks.forEach(e => {
     check(`line ${e.line}: an entry above the divider uses D-`, e.prefix, 'D');
@@ -14429,6 +14446,28 @@ section('The thirty (docs/room-map.json)');
     const dup = ids.filter((x, i) => ids.indexOf(x) !== i);
     check('rooms/' + f + ' gives every element its own id', [...new Set(dup)].join(', '), '');
   });
+
+  /* D-181 rounds every figure a room SHOWS to the precision its inputs
+     justify. An input is not a figure a room shows: it is the person's own
+     number, and a room that fills the box with a rounded one and parses it
+     back on the next blur quietly replaces what was typed. The Deal wrote
+     rent to the nearest thousand that way — $2,400 stored as $2,000 — the
+     moment it merged into Housing, because Housing needs three fields the
+     empty household has not got and the page rounds to thousands. It was
+     lossless as its own room only because that room needed nothing. So:
+     nothing may put a display-formatted figure into a .value. D-257. */
+  fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+    const bad = [...src.matchAll(/\.value\s*=(?!=)\s*[^;\n]*Money\.formatCents\(/g)].map(m => m[0].trim());
+    check('rooms/' + f + ' fills its boxes with Money.forInput, never a rounded figure',
+      [...new Set(bad)].join(' | '), '');
+  });
+  checkTrue('Money.forInput never display-rounds', (function () {
+    Money.setDisplayRounding(100000);
+    const out = Money.forInput(240000);
+    Money.setDisplayRounding(1);
+    return out === '$2,400';
+  })());
 
   /* Ownership.linkTo returns '#' for a room that is not in the registry, so
      a link to a room that has become a reading is a dead link with nothing

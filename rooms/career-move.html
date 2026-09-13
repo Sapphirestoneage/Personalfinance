@@ -1398,7 +1398,7 @@
     });
     node.addEventListener('blur', function () {
       v[id] = node.value.trim() === '' ? null : Money.parseMoney(node.value);
-      node.value = Money.isEntered(v[id]) ? Money.formatCents(v[id]) : '';
+      node.value = Money.isEntered(v[id]) ? Money.forInput(v[id]) : '';
       render();
     });
     node.addEventListener('keydown', function (evt) {
@@ -1566,7 +1566,7 @@
       return [{ node: el('w-salary'),
         value: Money.isOk(gross) ? gross.value : null, display: Money.isOk(gross) ? Money.formatCents(gross.value) : '',
         source: 'your gross income, from Start Here',
-        apply: function (c) { v['w-salary'] = c; el('w-salary').value = Money.formatCents(c); render(); } }];
+        apply: function (c) { v['w-salary'] = c; el('w-salary').value = Money.forInput(c); render(); } }];
     }
   });
   Spine.onChange(function () { seed.refresh(); render(); });

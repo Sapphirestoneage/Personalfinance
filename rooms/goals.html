@@ -645,7 +645,7 @@
        until focus leaves the form — see shared/liveform.js. */
     if (/Cents$/.test(field)) {
       var cents = Money.parseMoney(node.value);
-      node.value = Money.isEntered(cents) ? Money.formatCents(cents) : '';
+      node.value = Money.isEntered(cents) ? Money.forInput(cents) : '';
     }
   });
 

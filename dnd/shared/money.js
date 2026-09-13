@@ -213,6 +213,20 @@
     return (Math.round(x * 10) / 10) + 'x';
   }
 
+  /** The value that goes back INTO a box a person types in. Never
+   *  display-rounded: D-181's rounding is for figures a room SHOWS, and a
+   *  text input is not a display — it is the person's own number, waiting
+   *  to be read back. A room that fills an input with a rounded figure and
+   *  then parses it on the next blur silently replaces what was typed.
+   *  That is how a rent of $2,400 became $2,000 (D-257). The "$" is left
+   *  on; the caller strips it if its box has an affix. */
+  function forInput(cents, opts) {
+    var o = {};
+    for (var k in (opts || {})) if (Object.prototype.hasOwnProperty.call(opts, k)) o[k] = opts[k];
+    o.exact = true;
+    return formatCents(cents, o);
+  }
+
   /** Render any Result for display: its value, or the em dash. The caller
    *  shows `result.reason` alongside when the status is incomplete. */
   function display(result, formatter) {
@@ -222,6 +236,7 @@
 
   return {
     setDisplayRounding: setDisplayRounding, displayRounding: displayRounding,
+    forInput: forInput,
     EM_DASH: EM_DASH,
     isEntered: isEntered,
     ok: ok,

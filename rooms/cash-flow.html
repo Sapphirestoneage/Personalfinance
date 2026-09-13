@@ -567,9 +567,9 @@
   el('l-linked').addEventListener('change', paintDeductible);
   el('l-category').addEventListener('change', paintDeductible);
   el('l-amount').addEventListener('focus', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? String(c / 100) : ''; el('l-amount').select(); });
-  el('l-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }).replace(/^\$/, '') : ''; });
+  el('l-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('l-amount').value); el('l-amount').value = Money.isEntered(c) ? Money.forInput(c, { decimals: c % 100 ? 2 : 0 }).replace(/^\$/, '') : ''; });
   el('l-expected').addEventListener('focus', function () { var c = Money.parseMoney(el('l-expected').value); el('l-expected').value = Money.isEntered(c) ? String(c / 100) : ''; el('l-expected').select(); });
-  el('l-expected').addEventListener('blur', function () { var c = Money.parseMoney(el('l-expected').value); el('l-expected').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }).replace(/^\$/, '') : ''; });
+  el('l-expected').addEventListener('blur', function () { var c = Money.parseMoney(el('l-expected').value); el('l-expected').value = Money.isEntered(c) ? Money.forInput(c, { decimals: c % 100 ? 2 : 0 }).replace(/^\$/, '') : ''; });
   el('log-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-log').click(); } });
   el('btn-log').addEventListener('click', function () {
     var cents = Money.parseMoney(el('l-amount').value);

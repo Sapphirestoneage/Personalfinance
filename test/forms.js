@@ -1239,8 +1239,8 @@ const CASES = [
   {
     /* ROTH CONVERSIONS BEFORE 65 (J8, D-216): four what-if boxes in the
        HTML, re-rendered on every keystroke into siblings, never rebuilt. */
-    room: '/rooms/decumulation.html',
-    container: '#inputs',
+    room: '/rooms/decumulation.html#the-price-of-cover',
+    container: '#ra-inputs',
     seed: 'demo',
     fields: [
       { sel: '#in-premium', type: '800' },
@@ -1298,7 +1298,7 @@ const CASES = [
   {
     /* THE MIDDLE CLASS TRAP TEST (K1, D-218): one age box, four paths
        re-rendered into siblings. */
-    room: '/rooms/decumulation.html',
+    room: '/rooms/decumulation.html#before-59',
     container: '#verdict',
     seed: 'demo',
     fields: [{ sel: '#in-age', type: '50' }],

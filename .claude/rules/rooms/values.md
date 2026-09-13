@@ -12,5 +12,5 @@ Reference data: common_costs.json, confidence_weights.json, expense_categories.j
 Owns: givingPct, givingTarget, rerankCut
 Reads from other owners: grossAnnualIncome (start), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
 Latest decisions:
-  - D-237 — Expenses: the month, and what repeats in it
+  - D-243 — What Matters, four readings of one expense log
 Full context: node tools/context/pack.js values

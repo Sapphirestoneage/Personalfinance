@@ -13,7 +13,7 @@ Reference data: car_costs.json, debt_rules.json, effective_tax_rates_2026.json, 
 Owns: skillsDone, exercisesDone, practiceLedger
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), capturingFullMatch (start), stockShare (decumulation), plannedAnnualDraw (decumulation), socialSecurityAt (decumulation), monthsClosed (budget), rerankCut (values), +2 more
 Latest decisions:
-  - D-237 — Expenses: the month, and what repeats in it
+  - D-244 — The Skill Tree takes the Stacker and the Exercises
   - D-141 — The card says what the curriculum says
   - D-140 — The board, redrawn as a tech tree
   - D-139 — The Skill Tree gets its real curriculum: 625 skills, 25 trees, 312 lanes

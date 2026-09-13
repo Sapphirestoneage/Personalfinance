@@ -1392,7 +1392,7 @@
       }
       if (node.type === 'checkbox') { node.checked = v === true; return; }
       if (SETUP_MONEY.indexOf(key) !== -1) {
-        node.value = Money.isEntered(v) ? Money.formatCents(v) : '';
+        node.value = Money.isEntered(v) ? Money.forInput(v) : '';
       } else if (key === 'marginalRate') {
         node.value = Money.isEntered(v) ? String(Math.round(v * 1000) / 10) : '';
       } else {

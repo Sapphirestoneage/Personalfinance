@@ -447,9 +447,7 @@
         "plannedAnnualDraw",
         "socialSecurityAt"
       ],
-      "requires": [
-        "decumulation"
-      ],
+      "requires": [],
       "dashboardNumber": "withdrawalRate",
       "order": 33
     },

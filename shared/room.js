@@ -301,6 +301,14 @@
       if (!TABLES) return;
       var real = Spine.getProfile();
       var h = household();
+      /* Display rounding (D-181) is a page-global, and since the merges a
+         page holds several readings. A PART mount rounds its own figures
+         and then puts the unit back, so the reading beside it — which
+         computes from its own typed boxes, all of them sure — is not
+         rounded to a precision that belongs to someone else's fields. The
+         Deal showed a $714 cash flow as $1,000 and a $481 monthly loss as
+         $0 that way, the moment it became a reading of Housing. D-258. */
+      var outer = spec.part ? Money.displayRounding() : null;
       paintInputs(h);
       paintHorizon();
       paintApproximate(h);
@@ -313,6 +321,7 @@
       paintReads(h, real);
       paintStandalone(h);
       if (typeof spec.after === 'function') spec.after(h, TABLES);
+      if (outer !== null) Money.setDisplayRounding(outer);
     }
     function render() { if (queued) return; queued = true; setTimeout(function () { queued = false; paint(); }, 0); }
 

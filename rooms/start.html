@@ -544,7 +544,7 @@
   /* ---- Paint: values only, never under a finger ------------------------------ */
 
   function setSelect(name, v) { var n = ctl(name); if (settable(n)) n.value = v === null || v === undefined ? '' : String(v); }
-  function setMoney(name, cents) { var n = ctl(name); if (settable(n)) { Suggest.clear(n); n.value = Money.isEntered(cents) ? Money.formatCents(cents) : ''; } }
+  function setMoney(name, cents) { var n = ctl(name); if (settable(n)) { Suggest.clear(n); n.value = Money.isEntered(cents) ? Money.forInput(cents) : ''; } }
   function setText(name, v) { var n = ctl(name); if (settable(n)) n.value = v === null || v === undefined ? '' : String(v); }
   function press(name, value, guess) {
     var box = document.querySelector('[data-choices="' + name + '"]');

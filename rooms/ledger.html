@@ -1238,9 +1238,9 @@
     var s = situation();
     if (s) Array.prototype.forEach.call(document.querySelectorAll('[data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === s ? 'true' : 'false'); });
     var pay = s === 'unemployed' ? Schema.unemploymentOf(hh).lastGrossAnnualCents : (Money.isOk(Schema.grossAnnualIncomeCents(hh)) ? Schema.grossAnnualIncomeCents(hh).value : null);
-    if (Money.isEntered(pay)) el('in-pay').value = Money.formatCents(pay).replace(/^\$/, '');
+    if (Money.isEntered(pay)) el('in-pay').value = Money.forInput(pay).replace(/^\$/, '');
     var cash = Schema.cashCents(hh);
-    if (Money.isOk(cash)) el('in-cash').value = Money.formatCents(cash.value).replace(/^\$/, '');
+    if (Money.isOk(cash)) el('in-cash').value = Money.forInput(cash.value).replace(/^\$/, '');
     paintPayLabel();
   }
   document.addEventListener('click', function (ev) {

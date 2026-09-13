@@ -12,7 +12,7 @@ Reference data: car_costs.json, confidence_weights.json, effective_tax_rates_202
 Owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), employerMatch (start), contributionPercent (start), highestDeductible (start), oopMax (runway), totalDebt (debt-payoff), +3 more
 Latest decisions:
-  - D-237 — Expenses: the month, and what repeats in it
+  - D-248 — The Statement: what you own, where it lands, the documents
   - D-157 — The menu you could read the page through
   - D-152 — What Comes Next: a life as periods, and the months they add up to
   - D-130 — What was pushed off, built: dates that are only estimated or potential, the calendar from the ledger, one month of spending, one rent, what the log moved, N/A in its owner room, an emergency-fund preset

@@ -10,6 +10,6 @@ Reference data: car_costs.json, effective_tax_rates_2026.json, federal_brackets_
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start)
 Latest decisions:
-  - D-237 — Expenses: the month, and what repeats in it
+  - D-238 — Wheels: does it fit, then what it costs
   - D-151 — What A Car Costs: the payment is the least informative number
 Full context: node tools/context/pack.js car

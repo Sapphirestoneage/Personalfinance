@@ -11,5 +11,5 @@ Reference data: bucket_ideas.json, confidence_weights.json, expense_categories.j
 Owns: designedHours, bucketsPlanned
 Reads from other owners: grossAnnualIncome (start), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:
-  - D-237 — Expenses: the month, and what repeats in it
+  - D-239 — The Life: the week, and the decades
 Full context: node tools/context/pack.js week

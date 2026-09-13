@@ -10,7 +10,7 @@ Reference data: confidence_weights.json, credit_factors.json, debt_rules.json, e
 Owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment
 Reads from other owners: grossAnnualIncome (start), employmentStatus (start), hasDebt (start)
 Latest decisions:
-  - D-237 — Expenses: the month, and what repeats in it
+  - D-249 — Debt: the order, the loans, the file
   - D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line
   - D-191 — Debt Payoff: a stop line, and the payment says what it is built from
   - D-190 — Debt Payoff: the extra is always a number, estimated then realized

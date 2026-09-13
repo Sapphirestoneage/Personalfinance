@@ -13,7 +13,7 @@ Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_
 Owns: enoughMonthly, retireAge, coastAge
 Reads from other owners: netWorth (statement), monthlyExpenses (expenses)
 Latest decisions:
-  - D-237 — Expenses: the month, and what repeats in it
+  - D-255 — The Number, five readings of one multiplication
   - D-228 — You cannot size the mountain until you know how you come down it
   - D-161 — The way back
   - D-142 — A room does not ask a question your situation has no answer to

@@ -2376,7 +2376,7 @@
       return [{ node: el('h-balance'),
         value: Money.isOk(cash) ? cash.value : null, display: Money.isOk(cash) ? Money.formatCents(cash.value) : '',
         source: 'your cash & savings, from Start Here',
-        apply: function (c) { v['h-balance'] = c; el('h-balance').value = Money.formatCents(c); render(); } }];
+        apply: function (c) { v['h-balance'] = c; el('h-balance').value = Money.forInput(c); render(); } }];
     }
   });
   Spine.onChange(function () { seed.refresh(); });

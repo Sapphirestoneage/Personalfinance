@@ -1138,7 +1138,17 @@
        which anyone may open: it reads as if the pay stopped today and says
        so. The Cushion itself requires nothing. */
     protection: ['protection'],
-    decumulation: ['decumulation'],
+    /* The Back Half holds four readings (D-254), and only ONE of them is
+       about money already being drawn. What you can reach, Through the wall
+       and The price of cover are questions a person asks while still
+       working — the trap test is only interesting to someone employed with
+       the money behind the wall. They required nothing as rooms and they
+       require nothing now, so the ROOM requires nothing; the draw carries
+       the decumulation branch on the router, and its hat is absent until
+       the work stops. D-256.
+
+       This is what D-254 got wrong: it left the room's gate where it was
+       and hid three pre-retirement readings from everybody pre-retirement. */
     tax: ['income'],
     /* Work holds seven readings (D-251). The room keeps the situation rule
        every one of them had — appliesWhen "situation != retired" — but not

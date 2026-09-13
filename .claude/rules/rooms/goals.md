@@ -11,6 +11,6 @@ Reference data: expense_categories.json, goal_templates.json, reversibility.json
 Owns: reversibilityDecision
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:
-  - D-237 — Expenses: the month, and what repeats in it
+  - D-253 — The Decision Room: one shell, five outputs on every block
   - D-090 — The Skill Stacker: three at a time, did or didn't, and a ledger of what each day was worth
 Full context: node tools/context/pack.js goals

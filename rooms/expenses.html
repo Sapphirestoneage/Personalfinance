@@ -742,7 +742,7 @@
       if (input === document.activeElement) return;
       var r = f[input.getAttribute('data-fat')];
       /* Digits only: the shell's affix carries the dollar sign (D-192). */
-      input.value = r && Money.isOk(r) ? Money.formatCents(r.value).replace(/^\$/, '') : '';
+      input.value = r && Money.isOk(r) ? Money.forInput(r.value).replace(/^\$/, '') : '';
     });
     el('fat-therapy-on').checked = f.therapyTracked;
     el('fat-therapy-row').hidden = !f.therapyTracked;
@@ -1019,7 +1019,7 @@
       var entry = entryFor(h, input.getAttribute('data-cat'));
       if (entry && Money.isEntered(entry.amountCents)) {
         SLAF.Suggest.clear(input);
-        input.value = Money.formatCents(entry.amountCents).replace(/^\$/, '');
+        input.value = Money.forInput(entry.amountCents).replace(/^\$/, '');
       } else if (!SLAF.Suggest.isSuggested(input)) {
         input.value = '';
       }

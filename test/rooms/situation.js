@@ -75,14 +75,22 @@ module.exports = function (t) {
      appliesWhen every one of them carried. The Account You Left Behind is
      NOT among them: it never had that rule, and folding it in would have
      taken it from exactly the people it is for. It is held, with the
-     reason, in docs/room-map.json. */
+     reason, in docs/room-map.json.
+     The Back Half left it in D-256. D-254 merged three what-ifs into it —
+     what you can reach, through the 59½ wall, the price of cover — and
+     left the room's decumulation branch where it was, which hid all three
+     from everybody still working. They are FOR people still working: the
+     trap test only means anything to someone employed with the money
+     behind the wall. So the room requires nothing and the DRAW carries the
+     branch on its own hat. The student rule is a different mechanism and
+     stays: appliesWhen keeps the whole room away, hats and all. */
   var EXPECTED = {
-    employed:     ['decumulation', 'partner'],
-    selfEmployed: ['decumulation', 'partner'],
-    unemployed:   ['fire', 'hassle', 'decumulation', 'tax', 'partner'],
+    employed:     ['partner'],
+    selfEmployed: ['partner'],
+    unemployed:   ['fire', 'hassle', 'tax', 'partner'],
     student:      ['protection', 'decumulation', 'partner'],
     retired:      ['fire', 'hassle', 'career-move', 'partner'],
-    both:         ['decumulation', 'partner']
+    both:         ['partner']
   };
   Object.keys(EXPECTED).forEach(function (status) {
     var h = household(status);

@@ -11,7 +11,7 @@ Reference data: child_cost.json, childcare_by_state.json, confidence_weights.jso
 Owns: partnerName, partnerDob, splitMode, sharedMonthly, tuitionTarget, tuitionSaved, tuitionMonthly
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:
-  - D-237 — Expenses: the month, and what repeats in it
+  - D-241 — Family, and a gate that survives a merge
   - D-216 — J7, J8: two views of Partner, Roth conversions before 65
   - D-109 — Partner: the shared month split three ways
   - D-099 — The second six: Career Move, Partner, Kids and Tuition, Housing Decision, Big Purchase, Variable Income

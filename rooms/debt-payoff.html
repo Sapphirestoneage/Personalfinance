@@ -1595,7 +1595,7 @@
   el('f-extra').addEventListener('blur', function () {
     extraCents = Money.parseMoney(el('f-extra').value);
     /* Digits only: the shell's affix already carries the dollar sign. */
-    el('f-extra').value = Money.isEntered(extraCents) ? Money.formatCents(extraCents).replace(/^\$/, '') : '';
+    el('f-extra').value = Money.isEntered(extraCents) ? Money.forInput(extraCents).replace(/^\$/, '') : '';
     render();
   });
   el('f-extra').addEventListener('keydown', function (evt) {
@@ -2176,7 +2176,7 @@
     Spine.updateProfile({ debts: demo.debts });
     if (!Schema.primaryPerson(Spine.getProfile())) Spine.updateProfile({ people: demo.people });
     extraCents = 20000;
-    el('f-extra').value = Money.formatCents(extraCents);
+    el('f-extra').value = Money.forInput(extraCents);
     debtForm.force();
     render();
     el('out-plan').scrollIntoView({ behavior: 'smooth', block: 'start' });

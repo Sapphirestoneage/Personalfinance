@@ -336,7 +336,7 @@
        the whole form — see shared/liveform.js. */
     if (field === 'costCents') {
       var cents = Money.parseMoney(node.value);
-      node.value = Money.isEntered(cents) ? Money.formatCents(cents) : '';
+      node.value = Money.isEntered(cents) ? Money.forInput(cents) : '';
     }
   });
 

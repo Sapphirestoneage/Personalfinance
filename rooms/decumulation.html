@@ -405,7 +405,7 @@
     { id: 'view-what-you-can-reach', match: /^#(what-you-can-reach|rc-|headline|home|pull|pulls|reach|reach-sub|rough|tiers|in-amount|in-when)/ },
     { id: 'view-before-59', match: /^#(before-59|tr-|debate|paths|verdict|equity-choices|path-choices|rule55-choices|t-)/ },
     { id: 'view-the-price-of-cover', match: /^#(the-price-of-cover|ra-|in-conv|in-other|in-premium|in-pretax|use-conv|use-other|use-pretax|r-|switch-notice)/ },
-    { id: 'view-the-draw', match: /.*/ }
+    { id: 'view-the-draw', match: /.*/, branch: 'decumulation' }
   ];
   function open(v) {
     if (!v.branch) return true;
@@ -779,7 +779,7 @@
   ['in-premium', 'in-conv', 'in-other', 'in-pretax'].forEach(function (id) { el(id).addEventListener('input', render); });
   document.addEventListener('click', function (evt) {
     var b = evt.target.closest('[data-use]'); if (!b) return;
-    el(b.getAttribute('data-use')).value = Money.formatCents(Number(b.getAttribute('data-cents')), { exact: true }).replace(/^\$/, '');
+    el(b.getAttribute('data-use')).value = Money.forInput(Number(b.getAttribute('data-cents'))).replace(/^\$/, '');
     render();
   });
   Spine.onChange(render);

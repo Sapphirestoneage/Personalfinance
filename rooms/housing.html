@@ -708,7 +708,7 @@
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function m(cents) { return Money.formatCents(cents); }
   /* The boxes carry their own $ affix, so the value inside must not. */
-  function plain(cents) { return Money.isEntered(cents) ? Money.formatCents(cents, { decimals: 0 }).replace(/[$]/g, '') : ''; }
+  function plain(cents) { return Money.isEntered(cents) ? Money.forInput(cents, { decimals: 0 }).replace(/[$]/g, '') : ''; }
   function signed(cents) { return (cents < 0 ? '−' : '') + Money.formatCents(Math.abs(cents)); }
 
   /* ---- The record: one deal, in household.property[] -------------------- */

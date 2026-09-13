@@ -640,7 +640,7 @@
     editingId = e ? e.id : null;
     el('f-kind').value = e ? e.kind : 'w2';
     el('f-label').value = e && e.label ? e.label : '';
-    el('f-amount').value = e && Money.isEntered(e.amountCents) ? Money.formatCents(e.amountCents) : '';
+    el('f-amount').value = e && Money.isEntered(e.amountCents) ? Money.forInput(e.amountCents) : '';
     el('f-frequency').value = e ? e.frequency : 'once';
     el('f-date').value = e && e.receivedOn ? e.receivedOn : '';
     el('f-datekind').value = e && e.dateKind ? e.dateKind : 'exact';
@@ -650,7 +650,7 @@
     var firstAdult = Schema.adults(h0)[0];
     el('f-person').value = e && e.personId ? e.personId : (firstAdult ? firstAdult.id : '');
     el('f-ends').value = e && e.endsOn ? e.endsOn : '';
-    el('f-withheld').value = e && Money.isEntered(e.withheldCents) ? Money.formatCents(e.withheldCents, { decimals: e.withheldCents % 100 ? 2 : 0 }) : '';
+    el('f-withheld').value = e && Money.isEntered(e.withheldCents) ? Money.forInput(e.withheldCents, { decimals: e.withheldCents % 100 ? 2 : 0 }) : '';
     showForKind(el('f-kind').value);
     el('form-cap').textContent = e ? 'Editing ' + (e.label || KINDS[e.kind].label) : 'Add an entry';
     el('btn-save').textContent = e ? 'Save changes' : 'Save';
@@ -677,7 +677,7 @@
   });
   el('f-amount').addEventListener('blur', function () {
     var c = Money.parseMoney(el('f-amount').value);
-    el('f-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : '';
+    el('f-amount').value = Money.isEntered(c) ? Money.forInput(c, { decimals: c % 100 ? 2 : 0 }) : '';
   });
   el('f-withheld').addEventListener('focus', function () {
     var c = Money.parseMoney(el('f-withheld').value);
@@ -686,7 +686,7 @@
   });
   el('f-withheld').addEventListener('blur', function () {
     var c = Money.parseMoney(el('f-withheld').value);
-    el('f-withheld').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : '';
+    el('f-withheld').value = Money.isEntered(c) ? Money.forInput(c, { decimals: c % 100 ? 2 : 0 }) : '';
   });
   el('add-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-save').click(); } });
 
@@ -973,7 +973,7 @@
     }).join('') || '<li><span class="slaf-hint">Nothing logged against it yet.</span></li>';
   }
   el('c-amount').addEventListener('focus', function () { var c = Money.parseMoney(el('c-amount').value); el('c-amount').value = Money.isEntered(c) ? String(c / 100) : ''; el('c-amount').select(); });
-  el('c-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('c-amount').value); el('c-amount').value = Money.isEntered(c) ? Money.formatCents(c, { decimals: c % 100 ? 2 : 0 }) : ''; });
+  el('c-amount').addEventListener('blur', function () { var c = Money.parseMoney(el('c-amount').value); el('c-amount').value = Money.isEntered(c) ? Money.forInput(c, { decimals: c % 100 ? 2 : 0 }) : ''; });
   el('cost-form').addEventListener('keydown', function (evt) { if (evt.key === 'Enter' && evt.target.tagName === 'INPUT') { evt.preventDefault(); el('btn-cost').click(); } });
   el('btn-cost').addEventListener('click', function () {
     if (!detailId) return;
