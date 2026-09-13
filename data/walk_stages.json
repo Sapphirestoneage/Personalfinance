@@ -36,7 +36,6 @@
       "title": "Where the money goes",
       "goal": "What leaves, where it lands, and what is taken on the way. This is the machine that moves money while you are not watching.",
       "rooms": [
-        "accounts",
         "financial-snapshot",
         "tax",
         "student-loans"

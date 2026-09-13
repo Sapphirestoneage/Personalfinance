@@ -348,7 +348,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": "matchNotApplicable",
-      "askIn": "accounts",
+      "askIn": "statement",
       "moves": false,
       "unlocks": "the free money on the table and the first rung of the order of operations"
     },
@@ -783,7 +783,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": "contributionNotApplicable",
-      "askIn": "accounts",
+      "askIn": "statement",
       "moves": false,
       "unlocks": "the savings rate as contributed, and whether the match is captured"
     },
@@ -804,7 +804,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": null,
-      "askIn": "accounts",
+      "askIn": "statement",
       "moves": true,
       "unlocks": "room left this year under the Roth limit"
     },
@@ -825,7 +825,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": null,
-      "askIn": "accounts",
+      "askIn": "statement",
       "moves": true,
       "unlocks": "room left this year under the HSA limit"
     },
@@ -1286,7 +1286,7 @@
       "level": 1,
       "round": null,
       "suggestFrom": "marginalRateFromBrackets",
-      "askIn": "accounts",
+      "askIn": "statement",
       "moves": false,
       "unlocks": "the value of every pre-tax dollar: the Roth versus traditional answer"
     },

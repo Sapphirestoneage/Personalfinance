@@ -2639,8 +2639,38 @@ section('Live forms');
             which it declares with the marker below so the choice is a
             decision rather than an accident.
        Anything else destroys live inputs under the user's finger. */
-    const guarded = html.includes('liveform.js') && /LiveForm\.guard\(/.test(html);
-    const builtOnce = html.includes('LIVE-FORM: built once');
+    const loadsGuard = html.includes('liveform.js');
+    const claims = (text) => ({
+      guarded: loadsGuard && /LiveForm\.guard\(/.test(text),
+      builtOnce: text.includes('LIVE-FORM: built once')
+    });
+
+    /* A merged room is several readings on one page (D-229), and they may
+       legitimately use different patterns: one reading guards a list it
+       rebuilds, another builds four boxes once. So the rule applies PER
+       READING there, which is stricter than the page-level version it
+       replaces — a page could satisfy "exactly one" while a reading inside
+       it satisfied neither. Readings are labelled by the merge tool. */
+    const readings = html.split('/* ---- READING ').slice(1);
+    if (readings.length) {
+      readings.forEach(function (block) {
+        const name = block.slice(0, block.indexOf(','));
+        const builds = /innerHTML[\s\S]{0,4000}?(<input|<select|controlHtml)/.test(block)
+          || /(<input|<select)[^>]*'\s*\+/.test(block) || /controlHtml\(/.test(block);
+        if (!builds) return;
+        const c = claims(block);
+        checkTrue(`${file} ${name} builds form controls safely (guarded, or built once)`,
+          c.guarded || c.builtOnce,
+          'guard the container with SLAF.LiveForm.guard(), or build the controls once '
+            + 'and mark the reading "LIVE-FORM: built once" — see shared/liveform.js');
+        checkTrue(`${file} ${name} does not claim both patterns at once`,
+          !(c.guarded && c.builtOnce),
+          'pick one; claiming both means nobody knows which invariant holds');
+      });
+      return;
+    }
+
+    const { guarded, builtOnce } = claims(html);
     checkTrue(`${file} builds form controls safely (guarded, or built once)`,
       guarded || builtOnce,
       'guard the container with SLAF.LiveForm.guard(), or build the controls once '
@@ -5209,9 +5239,9 @@ section('Eleven cards');
     check('Sleep At Night reads the deductible as a chip',
       fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
     check('Where It Goes reads the contribution as a chip',
-      fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8').indexOf("Ownership.chip('contributionPercent'") !== -1, true);
+      fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8').indexOf("Ownership.chip('contributionPercent'") !== -1, true);
     checkTrue('and has no box for it',
-      fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8').indexOf('data-setup="contributionPercent"') === -1);
+      fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8').indexOf('data-setup="contributionPercent"') === -1);
   }
 
   /* -- The two tables -------------------------------------------------- */
@@ -5310,13 +5340,14 @@ section('Proposed, not taken');
     });
     const se = fs.readFileSync(path.join(ROOT, 'rooms/self-employed.html'), 'utf8');
     checkTrue('W2 vs 1099 no longer writes the salary straight into the box', !/v\['w-salary'\] = gross\.value/.test(se));
-    ['side-hustle', 'credential', 'accounts'].forEach(function (room) {
+    /* Where It Goes is The Statement's where-it-lands reading (D-248). */
+    ['side-hustle', 'credential', 'statement'].forEach(function (room) {
       const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
       checkTrue(`${room} proposes the federal bracket`, html.indexOf('Reference.marginalBracket(') !== -1);
       checkTrue(`${room} labels it federal only and unverified`, /federal only, an estimate/.test(html));
       checkTrue(`${room} reads the box through Suggest.entered`, html.indexOf('Suggest.entered(node)') !== -1);
     });
-    const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
+    const acc = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
     checkTrue('Where It Goes has one box for the marginal rate, not two', acc.indexOf('id="a-now"') === -1 && acc.indexOf('data-setup="marginalRate"') !== -1);
     checkTrue('and the comparison reads the shared rate', /currentTaxRate: assumptions\.marginalRate/.test(acc));
   }
@@ -5986,8 +6017,10 @@ section('Facts answered once');
   /* -- Every new fact is owned by exactly one room ----------------------- */
   {
     const OWNED = {
-      contributionPercent: 'start', rothContributed: 'accounts',
-      hsaContributed: 'accounts', marginalRate: 'accounts',
+      /* The three account facts moved with their boxes when Where It Goes
+         became The Statement's where-it-lands reading (D-248). */
+      contributionPercent: 'start', rothContributed: 'statement',
+      hsaContributed: 'statement', marginalRate: 'statement',
       highestDeductible: 'start'
     };
     const h = Schema.createHousehold({});
@@ -6098,9 +6131,14 @@ section('Facts answered once');
 
   /* -- Rooms that hold facts are not "explore" rooms --------------------- */
   {
-    const accounts = Registry.byId('accounts');
-    check('Where It Goes holds facts, so it is not a what-if room',
-      accounts.kind, 'about-you');
+    /* Where It Goes is The Statement's where-it-lands reading since D-248 —
+       where the next dollar lands moves the target (D-228), so it belongs
+       to the statement rather than beside it. The rule it stood for still
+       holds: the room that holds those facts is not a what-if room. */
+    const accounts = Registry.byId('statement');
+    checkTrue('what holds the account facts is not a what-if room', accounts.kind !== 'explore');
+    checkTrue('… and Where It Goes is no longer a room of its own', !Registry.byId('accounts')
+      && /url=statement\.html#where-it-lands/.test(fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8')));
     /* The rule from D-051, re-checked here because this change is exactly
        the kind that breaks it: an optional room cannot own a field others
        wait on. Stated as it is meant, not as "owns nothing" — the merges
@@ -6550,20 +6588,23 @@ section('The Coverage Checkup, and how it is split');
     check(`${f} links to the coverage card`, Ownership.field(f).anchor, 'coverage');
   });
   ['allocationStocks', 'allocationBonds', 'allocationCash', 'rebalanceBand'].forEach(function (f) {
-    check(`${f} is owned by Where It Goes`, Ownership.field(f).owner, 'accounts');
+    check(`${f} is owned by The Statement`, Ownership.field(f).owner, 'statement');
     check(`${f} links to the allocation card`, Ownership.field(f).anchor, 'allocation');
   });
   const san = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
-  const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
+  const acc = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
   checkTrue('the coverage card exists', /id="coverage"/.test(san));
   checkTrue('the allocation card exists', /id="allocation"/.test(acc));
   checkTrue('the deductible is still asked in Start Here, not here', !/data-field="highestDeductible"|id="c-deductible"/.test(san)
     && Ownership.field('highestDeductible').owner === 'start');
   checkTrue('Sleep At Night redirects to the reading it became',
     /url=runway\.html#at-3am/.test(fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8')));
-  checkTrue('Where It Goes says so in its title', /how it.s split/.test(Registry.byId('accounts').title));
+  /* The title said "& how it's split"; the reading's hat says "Where it
+     lands" and its lede says the same thing in full (D-248). */
+  checkTrue('the where-it-lands reading says so in its lede',
+    /how the next dollar is split/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')));
   checkTrue('The Cushion lists the checkup', Registry.byId('runway').subsections.some(s => s.id === 'coverage'));
-  checkTrue('Where It Goes lists the split', Registry.byId('accounts').subsections.some(s => s.id === 'allocation'));
+  checkTrue('The Statement lists the split', Registry.byId('statement').subsections.some(s => s.id === 'allocation'));
 
   const h = Demo.build();
   check('nothing entered: not priced, not zero', Ownership.field('oopMax').read(h).status, 'incomplete');
@@ -8132,7 +8173,7 @@ section('Core (D-094): the gate — exists() per situation');
   check('unanswered: every room but the ones that need a fact (a partner, a dependent)', gone(none), 'partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  check('retired: the working rooms are gone', gone(hh('retired')), 'accounts,career-move,credential,fire,hassle,partner,self-employed,side-hustle');
+  check('retired: the working rooms are gone', gone(hh('retired')), 'career-move,credential,fire,hassle,partner,self-employed,side-hustle');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
   check('employed, alone, no dependents: own work, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'decumulation,partner,self-employed');
@@ -8602,7 +8643,12 @@ section('LATER.md, built (D-100): the log across tabs, worded labels, the defaul
   check('every room is in rooms.json', rooms.length, Registry.all().length);
   checkTrue('each row has the brief\'s fields', rooms.every(r => ['id', 'title', 'file', 'reads', 'writes', 'requires', 'dashboardNumber', 'order'].every(k => k in r)));
   check('Start Here writes what ownership says', rooms.filter(r => r.id === 'start')[0].writes.join(','), Ownership.ownedBy('start').join(','));
-  check('Accounts requires the retirement branch', rooms.filter(r => r.id === 'accounts')[0].requires.join(','), 'retirement');
+  /* Where It Goes is The Statement's where-it-lands reading since D-248:
+     the branch moved from the room to the reading, so rooms.json — which
+     lists rooms — carries no requirement for it, and the router does. */
+  check('The Statement requires no branch', rooms.filter(r => r.id === 'statement')[0].requires.join(','), '');
+  checkTrue('… and the where-it-lands reading declares the retirement branch',
+    /\{ id: 'view-where-it-lands', match: [^}]*branch: 'retirement' \}/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')));
   check('FIRE is where the FI year opens', rooms.filter(r => r.id === 'fire')[0].dashboardNumber, 'fiEtaYear');
   check('the committed rooms.json is what the tool writes now (run node tools/rooms-json.js)', fs.readFileSync(path.join(ROOT, 'rooms.json'), 'utf8'), tool.render());
   checkTrue('and the dashboard opens the same rooms the tool says', (function () {
@@ -10519,7 +10565,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
      First Round and Express became views of (D-230). */
   check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
-  check('...twelve of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 12);
+  check('...eleven of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 11);
   /* The rule is about HOUSEHOLD data: a Your Numbers room writes a DAITE
      family, not a context. `prefs.*` is not a context — it is a
      preference, per person and per browser, and D-246 brought one into
@@ -10528,7 +10574,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses|prefs)\b/.test(w))));
   check('…and the only prefs writer among them is The Close', Registry.inGroup('numbers', null).filter(r => (Registry.daite(r.id).writes || []).some(w => /^prefs\b/.test(w))).map(r => r.id).join(','), 'budget');
   /* Your Next $100 became a reading of What The Next Dollar Does (D-231). */
-  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,foo-ladder,fire,fire-lab,statements,coast-date,race');
+  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,foo-ladder,fire,fire-lab,coast-date,race');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree');

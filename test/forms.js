@@ -287,7 +287,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/accounts.html',
+    room: '/rooms/statement.html',
     container: '#allocation',
     seed: 'demo',
     fields: [

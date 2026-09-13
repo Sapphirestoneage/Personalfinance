@@ -31,7 +31,6 @@
             "budget",
             "financial-snapshot",
             "race",
-            "statements",
             "statement",
             "reachable",
             "fire",
@@ -43,7 +42,6 @@
             "dashboard",
             "credential",
             "degree",
-            "accounts",
             "skill-tree",
             "values",
             "goals",
@@ -115,7 +113,6 @@
             "budget",
             "financial-snapshot",
             "race",
-            "statements",
             "statement",
             "reachable",
             "fire-lab",
@@ -155,7 +152,6 @@
             "side-hustle",
             "credential",
             "degree",
-            "accounts",
             "micro-retirement",
             "decumulation",
             "roth-aca",
@@ -199,7 +195,6 @@
             "dashboard",
             "financial-snapshot",
             "race",
-            "statements",
             "runway",
             "statement",
             "reachable",
@@ -212,8 +207,7 @@
             "expenses",
             "cash-flow",
             "budget",
-            "income",
-            "accounts"
+            "income"
           ]
         },
         {
@@ -352,7 +346,6 @@
           "name": "Keep",
           "rooms": [
             "runway",
-            "accounts",
             "statement",
             "reachable"
           ]
@@ -415,8 +408,7 @@
             "one-pager",
             "get-help",
             "financial-snapshot",
-            "race",
-            "statements"
+            "race"
           ],
           "note": "The verbs have no home for the rooms that are about the app rather than about money.",
           "warn": true
@@ -456,14 +448,12 @@
             "debt-payoff",
             "settings",
             "financial-snapshot",
-            "race",
-            "statements"
+            "race"
           ]
         },
         {
           "name": "This year",
           "rooms": [
-            "accounts",
             "tax",
             "protection",
             "goals",
@@ -551,7 +541,6 @@
             "budget",
             "financial-snapshot",
             "race",
-            "statements",
             "dashboard"
           ],
           "note": "You cannot start until these are entered."
@@ -565,7 +554,6 @@
         {
           "name": "2 \u00b7 Employer match",
           "rooms": [
-            "accounts"
           ]
         },
         {
@@ -671,7 +659,6 @@
             "dashboard",
             "financial-snapshot",
             "race",
-            "statements",
             "settings",
             "start",
             "ledger"
@@ -687,7 +674,6 @@
             "debt-payoff",
             "statement",
             "reachable",
-            "accounts",
             "credit",
             "runway",
             "cant-pay",
@@ -802,7 +788,6 @@
             "enough",
             "financial-snapshot",
             "race",
-            "statements",
             "fire-lab",
             "fire",
             "coast-date",
@@ -837,7 +822,6 @@
             "adventure",
             "values",
             "cant-pay",
-            "accounts",
             "worth",
             "credential",
             "degree",
@@ -869,8 +853,7 @@
             "ledger",
             "dashboard",
             "financial-snapshot",
-            "race",
-            "statements"
+            "race"
           ],
           "note": "Where you come in and hang your coat."
         },
@@ -901,7 +884,6 @@
           "rooms": [
             "statement",
             "reachable",
-            "accounts",
             "tax",
             "fire",
             "coast-date",
@@ -1011,8 +993,7 @@
             "settings",
             "debt-payoff",
             "financial-snapshot",
-            "race",
-            "statements"
+            "race"
           ]
         },
         {
@@ -1028,7 +1009,6 @@
           "name": "Once a year",
           "rooms": [
             "tax",
-            "accounts",
             "protection",
             "goals",
             "fire",
@@ -1115,8 +1095,7 @@
             "statement",
             "reachable",
             "financial-snapshot",
-            "race",
-            "statements"
+            "race"
           ]
         },
         {
@@ -1147,7 +1126,6 @@
             "goals",
             "debt-payoff",
             "timeline",
-            "accounts",
             "tax",
             "protection",
             "decumulation",
@@ -1273,7 +1251,6 @@
             "fire",
             "coast-date",
             "fire-lab",
-            "accounts",
             "tax",
             "statement",
             "reachable",
@@ -1285,8 +1262,7 @@
             "down-payment",
             "property",
             "financial-snapshot",
-            "race",
-            "statements"
+            "race"
           ]
         },
         {
@@ -1347,7 +1323,6 @@
         {
           "name": "An employer",
           "rooms": [
-            "accounts",
             "career-move",
             "offer-compare",
             "credential",
@@ -1407,7 +1382,6 @@
             "budget",
             "financial-snapshot",
             "race",
-            "statements",
             "settings",
             "data",
             "one-pager",
@@ -1460,7 +1434,6 @@
           "rooms": [
             "financial-snapshot",
             "race",
-            "statements",
             "statement",
             "reachable",
             "fire",
@@ -1472,7 +1445,6 @@
             "dashboard",
             "credential",
             "degree",
-            "accounts",
             "worth",
             "runway",
             "car",
@@ -1572,7 +1544,6 @@
           "rooms": [
             "statement",
             "reachable",
-            "accounts",
             "credit",
             "debt-payoff",
             "rollover",
@@ -1613,7 +1584,6 @@
             "adventure",
             "financial-snapshot",
             "race",
-            "statements",
             "dashboard"
           ]
         },
@@ -1648,7 +1618,6 @@
             "settings",
             "financial-snapshot",
             "race",
-            "statements",
             "dashboard",
             "credit",
             "runway"
@@ -1680,7 +1649,6 @@
             "statement",
             "reachable",
             "debt-payoff",
-            "accounts",
             "goals",
             "tax",
             "protection",
@@ -1777,7 +1745,6 @@
             "reachable",
             "financial-snapshot",
             "race",
-            "statements",
             "cant-pay",
             "dashboard"
           ],
@@ -1791,7 +1758,6 @@
             "fire-lab",
             "runway",
             "rollover",
-            "accounts",
             "timeline"
           ],
           "note": "Fine once, annoying if nobody ever defines it."
@@ -1876,7 +1842,6 @@
           "rooms": [
             "statement",
             "reachable",
-            "accounts",
             "runway",
             "rollover",
             "tax",
@@ -1910,7 +1875,6 @@
             "dashboard",
             "financial-snapshot",
             "race",
-            "statements",
             "fire",
             "coast-date",
             "fire-lab",
@@ -1965,10 +1929,8 @@
             "debt-payoff",
             "financial-snapshot",
             "race",
-            "statements",
             "credit",
-            "runway",
-            "accounts"
+            "runway"
           ],
           "note": "Arithmetic on what you typed. If it is wrong, you typed it wrong."
         },
@@ -2099,8 +2061,7 @@
             "settings",
             "dashboard",
             "financial-snapshot",
-            "race",
-            "statements"
+            "race"
           ]
         },
         {
@@ -2108,7 +2069,6 @@
           "rooms": [
             "statement",
             "reachable",
-            "accounts",
             "tax",
             "protection"
           ]

@@ -7,112 +7,345 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>The Statement · SPARKS</title>
-<meta name="description" content="Everything you own in three portfolios, how sure you are of each, how fast you could reach it, and the one number underneath — plus the bridge to 59½, your bracket, and a bad year priced."/>
+<meta name="description" content="Everything you own in three portfolios with the one number underneath — where the next dollar should land and how it is split — and the same period written out as the three documents a company produces."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. BRIEF §3.3 "The 10x Statement". DECISIONS.md D-069.
-  Replaces rooms/net-worth.html, which now redirects here.
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-228, D-248 (the merge).
+  Registry: statement.
 
-  1. READS   every asset and debt, cash and investments (Start Here), the
-             monthly spend, the deductible and out-of-pocket max (Sleep At
-             Night), income, date of birth, state and filing status.
-  2. WRITES  It OWNS the itemised assets (property, vehicle, other) — name,
-             value, type — exactly as Net Worth did; and for EVERY asset the
-             Statement's own facts: pile (15.8), confidence, cost basis,
-             hassle, monthly cash flow, an access-age override. Cash and
-             investment VALUES stay Start Here's and render as chips. It
-             also owns futureIncome[]. It writes no debt: Debt Payoff owns
-             those and every balance here links there.
-  3. CALLS   engines/statement.js for every derived figure, engines/tax.js
-             and Reference.marginalBracket for the bracket ladder. Nothing
-             is re-implemented here.
-  4. EMPTY   Each screen says what it is missing. An unrated asset is
-             excluded from the weighted total and the screen says how many.
-             No date of birth means the ladder cannot apply the age gate
-             and says so. Nothing is assumed silently.
-  5. CONFIG  data/access_rules.json, confidence_weights.json,
-             ui_benefits.json (unverified), federal_brackets_2026.json
-             (unverified), state_brackets_2026.json (unverified). Every
-             figure from an unverified table says so beside the number.
+  THREE READINGS OF WHAT YOU HOLD.
 
-  LIVE-FORM: guarded. #asset-list and #future-list are variable-length and
-  rebuilt through SLAF.LiveForm.guard(); every other control is written in
-  the HTML once and only has its .value set.
+    #what-you-own    everything in three portfolios, how sure you are of
+                     each, how fast you could reach it, and the one number
+                     underneath
+    #where-it-lands  Roth, Traditional or taxable, the allocation and the
+                     rebalance band, and what a Solo 401k actually allows
+    #the-documents   the three documents a company produces every quarter,
+                     for a household, and the same period in sentences
+
+  Accounts merges upward because WHERE the next dollar lands moves the
+  target the Back Half computes (D-228) — it is not a decision beside the
+  statement, it is part of it. The documents reading is the same period in
+  another language. Rules 1 and 4 of D-229.
+
+  EACH READING KEEPS THE GATE ITS ROOM HAD: where-it-lands on the
+  retirement branch, which is what Accounts required. The room itself
+  requires nothing: what you own is a question for everybody.
+
+  1. READS   the assets, the debts and the household's rates.
+  2. WRITES  the seven statement fields as before, and the seven account
+             fields — contributions, the marginal rate, the allocation and
+             the band — whose owner moved here with their boxes (D-248). The
+             documents reading writes nothing; nothing is typed in it.
+  3. CALLS   the engines each reading already called; no arithmetic moved.
+  4. EMPTY   nothing owned is nothing owned. No reading invents a holding.
+  5. CONFIG  the tables each engine names.
+
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css.
+
+  LIVE-FORM: guarded. Every reading keeps the discipline it had; switching
+  readings hides and shows and rebuilds nothing (D-034).
 -->
 <style>
-  .room-back:hover { text-decoration: underline; }
-  section[id] { scroll-margin-top: var(--space-4); }
-
-  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
-  @media (max-width: 420px) { .pair { grid-template-columns: 1fr; } }
-  .figure-cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
-  .figure-cell .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
-  .figure-cell .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
-  .figure-cell .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text-faint); }
-  .figure-cell .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
-
-  .portfolio { border-top: 1px solid var(--color-border); padding: var(--space-3) 0; }
-  .portfolio:first-of-type { border-top: none; }
-  .portfolio .head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
-  .portfolio .head h3 { margin: 0; font-size: var(--text-base); }
-  .portfolio .head .tot { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .portfolio .blurb { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
-  .portfolio ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-sm); }
-  .portfolio li { display: flex; justify-content: space-between; gap: var(--space-3); padding: 2px 0; color: var(--color-text-muted); }
-  .portfolio li .amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
-
-  .asset { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-2); }
-  .asset-top { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
-  .asset-name { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-base); padding: 2px 0; outline: none; }
-  .asset-name:focus { border-bottom-color: var(--color-border-active); }
-  .asset-name[readonly] { border-bottom-style: dotted; color: var(--color-text-muted); }
-  .asset-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
-  .asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; }
-  .asset-grid .slaf-label { display: block; margin-bottom: var(--space-1); }
-  .asset-more { margin-top: var(--space-2); }
-  .asset-sub { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; min-height: 1.3em; }
-
-  .ladder { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  .ladder li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: baseline; }
-  .ladder li:first-child { border-top: none; }
-  .ladder .amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .ladder .bar { grid-column: 1 / -1; height: 8px; border-radius: var(--radius-pill); background: rgba(0,0,0,.22); box-shadow: inset 0 0 0 1px var(--color-border); overflow: hidden; }
-  .ladder .bar > i { display: block; height: 100%; background: var(--color-accent); }
-  .ladder li.never .bar > i { background: var(--ink-700); }
-
-  .brackets { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
-  .brackets th, .brackets td { text-align: right; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
-  .brackets th:first-child, .brackets td:first-child { text-align: left; }
-  .brackets tr.here td { color: var(--color-text); font-weight: 600; }
-  .brackets tr.above td { color: var(--color-text-faint); }
-
-  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
-  .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
-  .flag.is-warn { border-left-color: var(--color-caution); background: rgba(232,160,46,.08); }
-  .caveat { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
-  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- What you own, from rooms/statement.html (D-248) ---- */
+  
+  #view-what-you-own .room-back:hover { text-decoration: underline; }
+  
+  #view-what-you-own section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-what-you-own .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 420px) { 
+  #view-what-you-own .pair { grid-template-columns: 1fr; } }
+  
+  #view-what-you-own .figure-cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; }
+  
+  #view-what-you-own .figure-cell .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  
+  #view-what-you-own .figure-cell .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  
+  #view-what-you-own .figure-cell .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text-faint); }
+  
+  #view-what-you-own .figure-cell .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+
+  
+  #view-what-you-own .portfolio { border-top: 1px solid var(--color-border); padding: var(--space-3) 0; }
+  
+  #view-what-you-own .portfolio:first-of-type { border-top: none; }
+  
+  #view-what-you-own .portfolio .head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  
+  #view-what-you-own .portfolio .head h3 { margin: 0; font-size: var(--text-base); }
+  
+  #view-what-you-own .portfolio .head .tot { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-what-you-own .portfolio .blurb { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  
+  #view-what-you-own .portfolio ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-what-you-own .portfolio li { display: flex; justify-content: space-between; gap: var(--space-3); padding: 2px 0; color: var(--color-text-muted); }
+  
+  #view-what-you-own .portfolio li .amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  
+  #view-what-you-own .asset { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-2); }
+  
+  #view-what-you-own .asset-top { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+  
+  #view-what-you-own .asset-name { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-base); padding: 2px 0; outline: none; }
+  
+  #view-what-you-own .asset-name:focus { border-bottom-color: var(--color-border-active); }
+  
+  #view-what-you-own .asset-name[readonly] { border-bottom-style: dotted; color: var(--color-text-muted); }
+  
+  #view-what-you-own .asset-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
+  
+  #view-what-you-own .asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; }
+  
+  #view-what-you-own .asset-grid .slaf-label { display: block; margin-bottom: var(--space-1); }
+  
+  #view-what-you-own .asset-more { margin-top: var(--space-2); }
+  
+  #view-what-you-own .asset-sub { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; min-height: 1.3em; }
+
+  
+  #view-what-you-own .ladder { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-what-you-own .ladder li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: baseline; }
+  
+  #view-what-you-own .ladder li:first-child { border-top: none; }
+  
+  #view-what-you-own .ladder .amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-what-you-own .ladder .bar { grid-column: 1 / -1; height: 8px; border-radius: var(--radius-pill); background: rgba(0,0,0,.22); box-shadow: inset 0 0 0 1px var(--color-border); overflow: hidden; }
+  
+  #view-what-you-own .ladder .bar > i { display: block; height: 100%; background: var(--color-accent); }
+  
+  #view-what-you-own .ladder li.never .bar > i { background: var(--ink-700); }
+
+  
+  #view-what-you-own .brackets { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-what-you-own .brackets th,
+  #view-what-you-own .brackets td { text-align: right; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
+  
+  #view-what-you-own .brackets th:first-child,
+  #view-what-you-own .brackets td:first-child { text-align: left; }
+  
+  #view-what-you-own .brackets tr.here td { color: var(--color-text); font-weight: 600; }
+  
+  #view-what-you-own .brackets tr.above td { color: var(--color-text-faint); }
+
+  
+  #view-what-you-own .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  
+  #view-what-you-own .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-what-you-own .flag.is-warn { border-left-color: var(--color-caution); background: rgba(232,160,46,.08); }
+  
+  #view-what-you-own .caveat { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+  
+  #view-what-you-own .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-what-you-own .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
   /* The printed statement: three portfolios, the figures, the date. No
      controls, no nav, no chips. */
-  .print-only { display: none; }
+  
+  #view-what-you-own .print-only { display: none; }
   @media print {
-    body { background: #fff; color: #000; }
-    .room-head .room-back, .slaf-hops, .slaf-progress-host, .actions, #assets, #future, #reading, .disclaimer, .caveat, .flag, .slaf-btn { display: none !important; }
-    .print-only { display: block; }
-    .slaf-card { border: 1px solid #999; box-shadow: none; break-inside: avoid; }
-    a { color: inherit; text-decoration: none; }
+    
+  #view-what-you-own body { background: #fff; color: #000; }
+    
+  #view-what-you-own .room-head .room-back,
+  #view-what-you-own .slaf-hops,
+  #view-what-you-own .slaf-progress-host,
+  #view-what-you-own .actions,
+  #view-what-you-own #assets,
+  #view-what-you-own #future,
+  #view-what-you-own #reading,
+  #view-what-you-own .disclaimer,
+  #view-what-you-own .caveat,
+  #view-what-you-own .flag,
+  #view-what-you-own .slaf-btn { display: none !important; }
+    
+  #view-what-you-own .print-only { display: block; }
+    
+  #view-what-you-own .slaf-card { border: 1px solid #999; box-shadow: none; break-inside: avoid; }
+    
+  #view-what-you-own a { color: inherit; text-decoration: none; }
   }
   /* The read-only future list (D-152). Edited in What Comes Next; shown
      here because it is part of the picture. */
-  .future-read { list-style: none; margin: 0; padding: 0; }
-  .future-read li { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline;
+  
+  #view-what-you-own .future-read { list-style: none; margin: 0; padding: 0; }
+  
+  #view-what-you-own .future-read li { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline;
     padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
-  .future-read .fr-name { font-weight: 600; min-width: 0; }
-  .future-read .fr-when { color: var(--color-text-muted); min-width: 0; }
-  .future-read .fr-amt { margin-left: auto; white-space: nowrap; }
+  
+  #view-what-you-own .future-read .fr-name { font-weight: 600; min-width: 0; }
+  
+  #view-what-you-own .future-read .fr-when { color: var(--color-text-muted); min-width: 0; }
+  
+  #view-what-you-own .future-read .fr-amt { margin-left: auto; white-space: nowrap; }
+
+  /* ---- Where it lands, from rooms/accounts.html (D-248) ---- */
+  
+  #view-where-it-lands .room-back:hover { text-decoration: underline; }
+  
+  #view-where-it-lands section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-where-it-lands .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { 
+  #view-where-it-lands .grid-2 { grid-template-columns: 1fr; } }
+
+  
+  #view-where-it-lands .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
+  
+  #view-where-it-lands .verdict.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  
+  #view-where-it-lands .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  
+  #view-where-it-lands ol.ranked { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-where-it-lands ol.ranked li { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-2); }
+  
+  #view-where-it-lands ol.ranked li.best { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  
+  #view-where-it-lands ol.ranked .head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  
+  #view-where-it-lands ol.ranked .nm { font-weight: 600; }
+  
+  #view-where-it-lands ol.ranked .amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-where-it-lands ol.ranked .flow { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+
+  
+  #view-where-it-lands .bars { margin-top: var(--space-3); }
+  
+  #view-where-it-lands .bar-row { display: grid; grid-template-columns: 88px 1fr; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); font-size: var(--text-xs); }
+  
+  #view-where-it-lands .bar-track { height: 10px; border-radius: var(--radius-pill); background: rgba(30,58,138,.4); overflow: hidden; }
+  
+  #view-where-it-lands .bar-fill { height: 100%; background: var(--color-accent); }
+
+  
+  #view-where-it-lands .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-where-it-lands .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-where-it-lands .out-detail dt { color: var(--color-text-faint); }
+  
+  #view-where-it-lands .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  
+  #view-where-it-lands .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-where-it-lands .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  @media (max-width: 460px) { 
+  #view-where-it-lands .setup-grid { grid-template-columns: 1fr; } }
+  
+  #view-where-it-lands .setup-toggles { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-where-it-lands .setup-toggle { display: flex; align-items: flex-start; gap: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-where-it-lands .setup-toggle input { margin-top: 3px; }
+  
+  #view-where-it-lands .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- The documents, from rooms/statements.html (D-248) ---- */
+  
+  #view-the-documents section[id] { scroll-margin-top: var(--space-4); }
+
+  /* The basis notice. Same weight as a heading on purpose. */
+  
+  #view-the-documents .basis { border: 1px solid var(--color-border-strong); border-left-width: 3px;
+    border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-the-documents .basis.is-estimate { border-left-color: var(--color-caution); }
+  
+  #view-the-documents .basis.is-record { border-left-color: var(--color-positive); }
+  
+  #view-the-documents .basis .k { font-size: var(--text-xs); text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+  
+  #view-the-documents .basis .v { font-weight: 600; margin-top: 2px; }
+  
+  #view-the-documents .basis p { margin: var(--space-2) 0 0; font-size: var(--text-sm);
+    color: var(--color-text-muted); line-height: var(--leading-loose); }
+
+  
+  #view-the-documents .tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-the-documents .tab { font: inherit; font-size: var(--text-sm); color: var(--color-text);
+    background: var(--color-surface-raised); border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3);
+    cursor: pointer; min-height: 32px; }
+  
+  #view-the-documents .tab[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent);
+    color: var(--color-accent-contrast); font-weight: 600; }
+
+  /* ---- The document ----------------------------------------------------- */
+  
+  #view-the-documents .doc-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2);
+    padding-bottom: var(--space-2); border-bottom: 2px solid var(--color-border-strong); }
+  
+  #view-the-documents .doc-h h2 { font-size: var(--text-lg); }
+  
+  #view-the-documents .doc-h .per { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-faint); }
+
+  
+  #view-the-documents table.ledger { width: 100%; border-collapse: collapse; margin-top: var(--space-2); }
+  
+  #view-the-documents table.ledger th { text-align: left; font-size: var(--text-xs); text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); font-weight: 500;
+    padding: var(--space-3) 0 var(--space-1); }
+  
+  #view-the-documents table.ledger td { padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border);
+    font-size: var(--text-sm); vertical-align: baseline; }
+  
+  #view-the-documents table.ledger td.amt { text-align: right; white-space: nowrap;
+    font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; padding-left: var(--space-3); }
+  
+  #view-the-documents table.ledger tr.is-indent td.lbl { padding-left: var(--space-4); color: var(--color-text-muted); }
+  
+  #view-the-documents table.ledger tr.is-total td { border-top: 1px solid var(--color-border-strong); border-bottom: 0;
+    font-weight: 650; padding-top: var(--space-3); }
+  
+  #view-the-documents table.ledger tr.is-grand td { border-top: 2px solid var(--color-border-strong);
+    border-bottom: 2px solid var(--color-border-strong); font-weight: 650; font-size: var(--text-md); }
+  
+  #view-the-documents table.ledger td .n { display: block; font-size: var(--text-xs); color: var(--color-text-faint);
+    margin-top: 2px; line-height: var(--leading-loose); }
+  
+  #view-the-documents .amt.is-out { color: var(--color-text-muted); }
+  
+  #view-the-documents .amt.is-blank { color: var(--color-text-faint); }
+  
+  #view-the-documents .waiting-on { font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
+
+  /* ---- The review ------------------------------------------------------- */
+  
+  #view-the-documents .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--space-3);
+    margin-top: var(--space-3); }
+  
+  #view-the-documents .rcard { border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    padding: var(--space-4); }
+  
+  #view-the-documents .rcard .k { font-size: var(--text-xs); text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+  
+  #view-the-documents .rcard .f { font-size: var(--text-2xl); font-weight: 620; letter-spacing: var(--tracking-figure);
+    font-variant-numeric: tabular-nums; margin-top: var(--space-2); line-height: 1.05; }
+  
+  #view-the-documents .rcard .s { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-2);
+    line-height: var(--leading-loose); }
 </style>
 </head>
 <body class="slaf">
@@ -120,13 +353,21 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>The Statement</h1>
-  <p class="room-lede">Everything you own in three portfolios, how sure you are of each, how fast you could reach it — and the one number underneath.</p>
-  <p class="print-only" id="print-date"></p>
+  <p class="room-lede">What you own, where the next dollar lands, and the same period written out.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Three readings of what you hold">
+    <a href="#what-you-own" data-view="view-what-you-own">What you own</a>
+    <a href="#where-it-lands" data-view="view-where-it-lands">Where it lands</a>
+    <a href="#the-documents" data-view="view-the-documents">The documents</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
 
+  <!-- ===== WHAT YOU OWN (was rooms/statement.html) ===== -->
+  <section id="view-what-you-own">
+  <p class="slaf-lede">Everything you own in three portfolios, how sure you are of each, how fast you could reach it — and the one number underneath.</p>
   <section class="slaf-card" id="portfolios">
     <span class="slaf-eyebrow">Three portfolios</span>
     <div class="pair" style="margin-top:var(--space-3)">
@@ -216,13 +457,142 @@
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
     <div class="actions"><button type="button" class="slaf-btn slaf-btn--quiet" id="btn-print">Print this statement</button></div>
   </section>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. Weights, access ages and the
-    liquidity scale are conventions from <code>data/</code>; the bracket,
-    state and unemployment tables are unverified and say so. Your numbers
-    stay in this browser.
-  </p>
+  <!-- ===== WHERE IT LANDS (was rooms/accounts.html) ===== -->
+  <section id="view-where-it-lands" hidden>
+  <p class="slaf-lede">Roth, Traditional or taxable — how the next dollar is split, and how much a Solo 401k actually lets you put away.</p>
+  
+  <section class="slaf-card" id="setup">
+    <span class="slaf-eyebrow">Your retirement setup</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Answered once, read everywhere</h2>
+    <p class="slaf-hint" style="margin:0">
+      The FOO ladder used to ask you for all of this separately and keep none
+      of it. Now it lives here, and every room that needs it reads this.
+    </p>
+    <div class="setup-grid">
+      <div class="slaf-field" style="margin:0" id="contribution-chip"></div>
+      <p class="slaf-hint" style="margin:var(--space-1) 0 0" id="plan-na"></p>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Your marginal tax rate</span>
+        <span class="slaf-input-shell">
+        <input type="text" inputmode="decimal" data-setup="marginalRate" placeholder="e.g. 22" aria-label="Marginal tax rate"/>
+        <span class="slaf-affix">%</span></span>
+        <span class="slaf-hint">The rate on your next dollar. An effective rate is a different number; a federal bracket may be proposed below.</span>
+      </label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Roth so far this year</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" data-setup="rothContributedCents" placeholder="e.g. 3000" aria-label="Roth contributed so far"/></span>
+      </label>
+      <label class="slaf-field" style="margin:0" id="hsa-field"><span class="slaf-label">HSA so far this year</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" data-setup="hsaContributedCents" placeholder="e.g. 0" aria-label="HSA contributed so far"/></span>
+      </label>
+    </div>
+    <p class="slaf-hint" data-suggest-note style="margin:var(--space-2) 0 0"></p>
+    <div class="setup-toggles">
+      <label class="setup-toggle"><input type="checkbox" data-setup="onHdhp" aria-label="On a high-deductible health plan"/>
+        <span>I'm on a high-deductible health plan (so an HSA is open to me)</span></label>
+      <label class="setup-toggle"><input type="checkbox" data-setup="hsaFamilyPlan" aria-label="Family HSA coverage"/>
+        <span>Family HSA coverage rather than self-only</span></label>
+    </div>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0" id="hsa-na-row">No HSA for you at all, whatever the plan? <span id="hsa-na"></span></p>
+  </section>
+<section class="slaf-card" id="compare">
+    <span class="slaf-eyebrow">Roth vs. Traditional vs. taxable</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Which account wins?</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Compared on the same <em>pre-tax</em> cost, which is the only fair way —
+      $7,000 into a Roth costs you more take-home than $7,000 into a
+      Traditional, so comparing equal deposits compares two different
+      decisions.
+    </p>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Pre-tax amount</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="a-amount" placeholder="e.g. 7000" aria-label="Pre-tax amount"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Years until you use it</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-years" placeholder="e.g. 30" aria-label="Years"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Your tax rate now</span>
+        <a class="slaf-owned slaf-owned--field" id="a-now-read" href="#setup"><span class="slaf-owned-value">—</span><span class="slaf-owned-from">the setup above →</span></a></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Rate in retirement</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-later" placeholder="e.g. 22" aria-label="Future tax rate"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Expected return</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-return" placeholder="7" aria-label="Expected return"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Capital gains rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="a-cg" placeholder="15" aria-label="Capital gains rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <div class="verdict" id="a-verdict">—</div>
+    <p class="why" id="a-why"></p>
+    <div id="a-bands"></div>
+    <div id="a-lens"></div>
+    <ol class="ranked" id="a-ranked"></ol>
+  </section>
+
+  <section class="slaf-card" id="solo">
+    <span class="slaf-eyebrow">Solo 401(k)</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">How much can you actually put away?</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      Self-employed, you're both the employee and the employer, so you get to
+      contribute twice.
+    </p>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Self-employment profit</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="s-profit" placeholder="e.g. 100000" aria-label="Net profit"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Deferring, as employee</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="s-employee" placeholder="the max" aria-label="Planned employee deferral"/></span></label>
+    </div>
+    <div class="verdict" id="s-verdict">—</div>
+    <div class="bars" id="s-bars"></div>
+    <div class="out-detail" id="s-detail"></div>
+    <div class="flag" id="s-note" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="allocation">
+    <span class="slaf-eyebrow">How it’s split</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">The mix you are aiming for</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      A target, not a reading of your accounts: stocks, bonds and cash
+      should add to 100. The band is how far a slice may drift before you
+      rebalance it back.
+    </p>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Stocks</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-alloc="stocks" placeholder="e.g. 70" aria-label="Target share in stocks"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Bonds</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-alloc="bonds" placeholder="e.g. 20" aria-label="Target share in bonds"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Cash</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" data-alloc="cash" placeholder="e.g. 10" aria-label="Target share in cash"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Rebalance band</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">±</span><input type="text" inputmode="decimal" data-alloc="rebalanceBand" placeholder="e.g. 5" aria-label="Rebalance band"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <p class="why" id="alloc-read"></p>
+  </section>
+
+  <section class="slaf-card" id="ac-reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="ac-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ===== THE DOCUMENTS (was rooms/statements.html) ===== -->
+  <section id="view-the-documents" hidden>
+  <p class="slaf-lede">The three documents a company produces every quarter, for a household — and the same period written out in sentences. Nothing here is typed in.</p>
+  <section class="slaf-card" id="out-basis">
+    <span class="slaf-eyebrow">What these are built from</span>
+    <div id="basis-body"></div>
+    <div class="tabs" id="tabs" role="group" aria-label="Which statement"></div>
+  </section>
+
+  <section class="slaf-card" id="out-doc" style="margin-top:var(--space-4)">
+    <div id="doc-body"></div>
+  </section>
+
+  <details class="drawer" id="out-how" style="margin-top:var(--space-4)">
+    <summary>How each line is worked out</summary>
+    <div id="how-body"></div>
+  </details>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. Nothing here is a recommendation to buy or sell anything. Everything stays in this browser.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -254,13 +624,84 @@
 <script src="../engines/presets.js"></script>
 <script src="../engines/budget.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../engines/accounts.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
+<script src="../engines/statements.js"></script>
 <script>
+/* ---- what you own, where it lands, and the documents (D-248) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   The hash still reaches it — an old link must land somewhere honest — and
+   the reading says for whom it is, which is what Gate.why is for. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-where-it-lands', match: /^#(where-it-lands|ac-|setup|allocation|solo|compare|alloc-|a-|s-|hsa-|plan-na|provenance|contribution-chip)/, branch: 'retirement' },
+    { id: 'view-the-documents', match: /^#(the-documents|sm-|tabs|out-doc|out-basis|out-how|doc-body|basis-body|how-body)/ },
+    { id: 'view-what-you-own', match: /.*/ }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. When the hash asks for a reading the gate has taken
+       away, fall back to the DEFAULT — the room's plainest reading, and the
+       one the person would have got with no hash at all — not to whichever
+       gated reading happens to sit first in this list. */
+    var fallback = VIEWS[VIEWS.length - 1];
+    var on = open(asked) ? asked
+           : open(fallback) ? fallback
+           : VIEWS.filter(open)[0] || fallback;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('statement');
+  if (SLAF.Progress) SLAF.Progress.mount('statement');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-what-you-own, from rooms/statement.html (D-248) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
       Ownership = SLAF.Ownership, Statement = SLAF.Statement, Tax = SLAF.Tax, Charts = SLAF.Charts;
 
-  var ROOM_ID = 'statement';
+  var ROOM_ID = 'statement';   /* the room this reading lives in */
   var TABLES = null;
   var OWNED = Schema.ITEMISED_ASSET_CATEGORIES;
   var CATEGORIES = [['real_estate', 'Property'], ['vehicle', 'Vehicle'], ['other', 'Something else']];
@@ -691,16 +1132,6 @@
   }
 
   el('btn-print').addEventListener('click', function () { window.print(); });
-
-  function jumpToHash() {
-    if (!location.hash) return;
-    var t = document.getElementById(location.hash.slice(1));
-    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  window.addEventListener('hashchange', jumpToHash);
-
-  Spine.registerRoom(ROOM_ID);
-  SLAF.Progress.mount(ROOM_ID);
   SLAF.AfterTax.mount(el('nw-basis'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.3 (D-181) */
   Spine.onChange(render);
 
@@ -708,12 +1139,591 @@
     TABLES = tables;
     SLAF.Staleness.use(tables.staleness);
     renderNow();
-    jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');
     notice.hidden = false;
     notice.className = 'notice is-error';
     notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-where-it-lands, from rooms/accounts.html (D-248) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership, Accounts = SLAF.Accounts;
+
+  var ROOM_ID = 'statement';   /* the room this reading lives in */
+  var TABLES = null;
+  var v = {};
+
+  function el(id) { return document.getElementById(id); }
+
+  function bind(id, kind) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      var raw = v[id];
+      node.value = !Money.isEntered(raw) ? ''
+        : kind === 'money' ? String(raw / 100)
+        : kind === 'rate' ? String(Math.round(raw * 10000) / 100)
+        : String(raw);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      v[id] = raw === '' ? null
+        : kind === 'money' ? Money.parseMoney(raw)
+        : kind === 'rate' ? Money.parseRatePercent(raw)
+        : (Number.isFinite(Number(raw)) ? Number(raw) : null);
+      node.value = !Money.isEntered(v[id]) ? ''
+        : kind === 'money' ? Money.formatCents(v[id])
+        : kind === 'rate' ? Money.formatRate(v[id], { decimals: 2 }).replace(/\.?0+%$/, '%')
+        : String(v[id]);
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  }
+  /* "Your tax rate now" is the marginal rate in the setup above — one
+     fact, asked once (D-052). It used to be a second box here. D-062. */
+  [['a-amount', 'money'], ['a-years', 'number'], ['a-later', 'rate'],
+   ['a-return', 'rate'], ['a-cg', 'rate'],
+   ['s-profit', 'money'], ['s-employee', 'money']].forEach(function (x) { bind(x[0], x[1]); });
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+
+  function renderCompare(h) {
+    var assumptions = Schema.resolveAssumptions(h);
+    /* Field-sized, so it sits in the row of inputs at the same height —
+       the full chip is taller than a box and broke the row. */
+    var nowRead = el('a-now-read');
+    if (nowRead) {
+      var d = Ownership.describe('marginalRate', h, ROOM_ID);
+      nowRead.className = 'slaf-owned slaf-owned--field' + (d.isSet ? '' : ' slaf-owned--empty');
+      nowRead.querySelector('.slaf-owned-value').textContent = d.display;
+      nowRead.querySelector('.slaf-owned-from').textContent = d.isSet ? 'the setup above →' : 'add it in the setup above →';
+    }
+    var r = Accounts.compareAccounts({
+      pretaxCents: v['a-amount'],
+      currentTaxRate: assumptions.marginalRate,
+      futureTaxRate: v['a-later'],
+      annualReturn: Money.isEntered(v['a-return']) ? v['a-return'] : assumptions.expectedReturnRate,
+      years: v['a-years'],
+      capitalGainsRate: v['a-cg']
+    });
+    var verdict = el('a-verdict');
+    if (!Money.isOk(r)) {
+      verdict.textContent = r.reason || Money.EM_DASH;
+      verdict.className = 'verdict is-incomplete';
+      el('a-why').textContent = '';
+      el('a-ranked').innerHTML = '';
+      el('a-bands').innerHTML = '';
+      return;
+    }
+    verdict.className = 'verdict';
+    var best = r.byKey[r.bestKey];
+    /* The winner's after-tax pot three ways - low, likely, high real return -
+       so the comparison carries its own width. D-170. */
+    el('a-bands').innerHTML = SLAF.Bands.lineHtml(TABLES, function (rate) {
+      var x = Accounts.compareAccounts({ pretaxCents: v['a-amount'], currentTaxRate: assumptions.marginalRate, futureTaxRate: v['a-later'],
+        annualReturn: rate, years: v['a-years'], capitalGainsRate: v['a-cg'] });
+      return Money.isOk(x) ? Money.ok(x.byKey[x.bestKey].afterTaxCents) : x;
+    }, Money.formatCents, { lead: best.label + ' after tax, three ways' });
+    verdict.textContent = r.ratesEqual
+      ? 'Roth and Traditional tie'
+      : best.label + ' wins by ' + Money.formatCents(r.marginOverNextCents);
+
+    el('a-why').textContent = r.ratesEqual
+      ? 'When your rate today and your rate in retirement are the same, the two are mathematically identical — the tax comes out of the same money either way. Pick on flexibility, not arithmetic.'
+      : r.futureRateLower
+        ? 'Your rate in retirement is lower than today, so deferring the tax wins. That is the whole of it.'
+        : 'Your rate in retirement is higher than today, so paying the tax now wins. That is the whole of it.';
+
+    el('a-ranked').innerHTML = r.options.map(function (o, i) {
+      return '<li class="' + (i === 0 && !r.ratesEqual ? 'best' : '') + '">'
+        + '<span class="head"><span class="nm">' + o.label + '</span>'
+        + '<span class="amt">' + Money.formatCents(o.afterTaxCents) + '</span></span>'
+        + '<span class="flow">' + Money.formatCents(o.goesInCents) + ' goes in'
+        + (o.taxedNowCents > 0 ? ' · ' + Money.formatCents(o.taxedNowCents) + ' taxed now' : '')
+        + (o.taxedLaterCents > 0 ? ' · ' + Money.formatCents(o.taxedLaterCents) + ' taxed later' : '')
+        + (o.taxedNowCents === 0 && o.taxedLaterCents === 0 ? ' · never taxed again' : '')
+        + '</span></li>';
+    }).join('');
+  }
+
+  function renderSolo(h) {
+    var age = Schema.primaryAge(h);
+    var r = Accounts.solo401k({
+      netProfitCents: v['s-profit'],
+      plannedEmployeeCents: v['s-employee'],
+      age: age,
+      filingStatus: h.filingStatus,
+      limits: TABLES.irsLimits,
+      seTaxTable: TABLES.seTax
+    });
+    var verdict = el('s-verdict');
+    if (!Money.isOk(r)) {
+      verdict.textContent = r.reason || Money.EM_DASH;
+      verdict.className = 'verdict is-incomplete';
+      el('s-bars').innerHTML = ''; el('s-detail').innerHTML = '';
+      el('s-note').hidden = true;
+      return;
+    }
+    verdict.className = 'verdict';
+    verdict.textContent = Money.formatCents(r.totalCents) + ' a year';
+
+    var max = Math.max(r.employeeCents, r.employerCents, 1);
+    el('s-bars').innerHTML = [
+      ['As employee', r.employeeCents], ['As employer', r.employerCents]
+    ].map(function (row) {
+      return '<div class="bar-row"><span>' + row[0] + '</span>'
+        + '<span class="bar-track"><span class="bar-fill" style="width:'
+        + (row[1] / max * 100) + '%"></span></span></div>'
+        + '<div class="bar-row"><span></span><span style="color:var(--color-text-muted)">'
+        + Money.formatCents(row[1]) + '</span></div>';
+    }).join('');
+
+    el('s-detail').innerHTML = dl([
+      ['Self-employment tax', Money.formatCents(r.seTaxCents)],
+      ['Half of it, deducted', '−' + Money.formatCents(r.seDeductibleHalfCents)],
+      ['Employer contributes ' + Money.formatRate(r.employerShare, { decimals: 0 }) + ' of',
+        Money.formatCents(r.employerBaseCents)],
+      ['Share of your profit', Money.formatRate(r.shareOfProfit, { decimals: 1 })]
+    ]);
+
+    el('s-note').hidden = false;
+    el('s-note').innerHTML = r.hitCap
+      ? '<strong>You’ve hit the overall cap.</strong> Employee and employer together are limited to '
+        + Money.formatCents(r.annualAdditionsCapCents)
+        + (r.catchUpCents ? ' plus the ' + Money.formatCents(r.catchUpCents) + ' catch-up' : '') + '.'
+      : '<strong>The employer half is 20% of profit after half your self-employment tax</strong> — '
+        + 'not 25% of profit. That is the single most common way this gets over-stated.'
+        + (r.overFifty ? ' Your catch-up contribution is included.' : '');
+  }
+
+  /* Say where the numbers came from and how much they are worth, from the
+     tables themselves rather than a hand-written sentence that goes stale
+     the moment a table is refreshed. See shared/reference.js. */
+  function renderProvenance() {
+    el('provenance').innerHTML = Reference.provenance(TABLES, ['irsLimits', 'seTax'])
+      .map(function (p) {
+        return '<strong>' + p.id + '</strong> v' + p.version + ' (' + p.asOf + ') — '
+          + p.label + '. ' + p.note;
+      }).join('<br/>');
+  }
+
+  function render() {
+    paintSetup();
+    if (!TABLES) return;
+    renderProvenance();
+    var h = Spine.getProfile();
+    el('ac-reading-list').innerHTML = ['filingStatus', 'age']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+    renderCompare(h);
+    renderSolo(h);
+  }
+
+  /* ---- Your retirement setup ---------------------------------------------
+     Facts, not a what-if, so these WRITE to the household. Everything else
+     in this room previews locally; these five are the exception, and the
+     reason this room stopped being an "explore" room. D-052.
+     LIVE-FORM: these controls are in the HTML above and only ever have
+     their .value set — never rebuilt. */
+
+  var SETUP_MONEY = ['rothContributedCents', 'hsaContributedCents'];
+
+  function readSetup(key) {
+    var h = Spine.getProfile();
+    if (key === 'marginalRate') return Schema.resolveAssumptions(h).marginalRate;
+    return (h.retirement || {})[key];
+  }
+
+  /* With no stored marginal rate, the federal bracket is PROPOSED in its
+     box — gross minus the standard deduction, walked up the 2026 ladder.
+     Federal only, an estimate, unverified: the source line says so. Tapping
+     it writes the shared rate exactly as typing it would. D-062. */
+  function suggestBracket(node) {
+    if (!node || !TABLES || !TABLES.federalBrackets) return;
+    var h = Spine.getProfile();
+    var gross = Schema.grossAnnualIncomeCents(h);
+    if (!Money.isOk(gross)) return;
+    var b = Reference.marginalBracket(TABLES.federalBrackets, gross.value / 100, h.filingStatus);
+    if (!Money.isOk(b)) return;
+    SLAF.Suggest.show(node, {
+      value: b.value,
+      display: String(Math.round(b.value * 1000) / 10),
+      source: 'the ' + TABLES.federalBrackets.taxYear + ' federal bracket for '
+        + Money.formatCents(gross.value) + ' gross, ' + (Ownership.FILING_LABELS[h.filingStatus] || h.filingStatus).toLowerCase()
+        + ' \u2014 federal only, an estimate (' + TABLES.federalBrackets.confidence + ')',
+      onUse: function (rate) { Spine.setAssumptionOverride('marginalRate', rate); }
+    });
+  }
+
+  function paintSetup() {
+    /* What you contribute is asked in Start Here now (D-061); this room
+       reads it as a chip that links back to the question. */
+    var chip = el('contribution-chip');
+    if (chip) chip.innerHTML = Ownership.chip('contributionPercent', Spine.getProfile(), ROOM_ID);
+    /* Structural options the household can mark Not applicable (D-130):
+       no workplace plan, no HSA. Out of every live figure until lifted. */
+    var hh = Spine.getProfile();
+    var na = hh.notApplicable || {};
+    if (el('plan-na')) el('plan-na').innerHTML = 'No workplace plan at all? ' + Ownership.naButton('contributionPercent', hh, { off: 'No plan — N/A', on: 'No plan ✓' });
+    if (el('hsa-na')) el('hsa-na').innerHTML = Ownership.naButton('hsaContributed', hh, { off: 'N/A', on: 'N/A ✓' });
+    if (el('hsa-field')) el('hsa-field').classList.toggle('slaf-na-off', na.hsaContributed === true);
+    document.querySelectorAll('[data-setup]').forEach(function (node) {
+      if (node === document.activeElement) return;
+      var key = node.getAttribute('data-setup');
+      var v = readSetup(key);
+      if (key === 'marginalRate') {
+        if (Money.isEntered(v)) SLAF.Suggest.clear(node);
+        else { node.value = ''; suggestBracket(node); return; }
+      }
+      if (node.type === 'checkbox') { node.checked = v === true; return; }
+      if (SETUP_MONEY.indexOf(key) !== -1) {
+        node.value = Money.isEntered(v) ? Money.formatCents(v) : '';
+      } else if (key === 'marginalRate') {
+        node.value = Money.isEntered(v) ? String(Math.round(v * 1000) / 10) : '';
+      } else {
+        node.value = Money.isEntered(v) ? String(v) : '';
+      }
+    });
+  }
+
+  function writeSetup(key, node) {
+    if (key === 'marginalRate') {
+      Spine.setAssumptionOverride('marginalRate', Money.parseRatePercent(SLAF.Suggest.entered(node)));
+      return;
+    }
+    var h = Spine.getProfile();
+    var next = Object.assign({}, h.retirement || {});
+    if (node.type === 'checkbox') next[key] = node.checked;
+    else if (SETUP_MONEY.indexOf(key) !== -1) next[key] = Money.parseMoney(node.value);
+    else {
+      var raw = String(node.value).trim();
+      var n = raw === '' ? null : Number(raw);
+      next[key] = (n === null || isNaN(n) || n < 0) ? null : n;
+    }
+    Spine.updateProfile({ retirement: next });
+  }
+
+  /* ---- How it's split (D-071) --------------------------------------------
+     A stated target mix, stored in household.allocation and owned here.
+     LIVE-FORM: built once — four boxes in the HTML above, .value only. */
+
+  function paintAllocation() {
+    var h = Spine.getProfile();
+    var a = h.allocation || {};
+    document.querySelectorAll('[data-alloc]').forEach(function (node) {
+      if (node === document.activeElement) return;
+      var v = a[node.getAttribute('data-alloc')];
+      node.value = Money.isEntered(v) ? String(Math.round(v * 1000) / 10) : '';
+    });
+    var st = Schema.allocationStatus(h);
+    var read = el('alloc-read');
+    if (!Money.isOk(st)) { read.textContent = ''; return; }
+    var pct = function (r) { return Money.formatRate(r, { decimals: 0 }); };
+    var text;
+    if (!st.complete) {
+      text = pct(st.value) + ' placed; ' + st.missing.join(', ') + ' still to enter.';
+    } else if (!st.balanced) {
+      text = 'Adds to ' + pct(st.value) + ', not 100% \u2014 ' + (st.value > 1 ? pct(st.value - 1) + ' too much.' : pct(1 - st.value) + ' unplaced.');
+    } else {
+      text = pct(a.stocks) + ' stocks \u00b7 ' + pct(a.bonds) + ' bonds \u00b7 ' + pct(a.cash) + ' cash.';
+      if (Money.isEntered(a.rebalanceBand) && Money.isEntered(a.stocks)) {
+        text += ' With a \u00b1' + pct(a.rebalanceBand) + ' band, stocks are rebalanced outside '
+          + pct(Math.max(0, a.stocks - a.rebalanceBand)) + '\u2013' + pct(Math.min(1, a.stocks + a.rebalanceBand)) + '.';
+      }
+    }
+    read.textContent = text;
+  }
+
+  document.querySelectorAll('[data-alloc]').forEach(function (node) {
+    var key = node.getAttribute('data-alloc');
+    node.addEventListener('blur', function () {
+      var rate = Money.parseRatePercent(node.value);
+      var current = (Spine.getProfile().allocation || {})[key];
+      if ((current === undefined ? null : current) !== rate) {
+        var patch = {}; patch[key] = (Money.isEntered(rate) && rate >= 0 && rate <= 1) ? rate : null;
+        Spine.updateProfile({ allocation: patch });
+      }
+      paintAllocation();
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  });
+  Spine.onChange(paintAllocation);
+  paintAllocation();
+
+  document.querySelectorAll('[data-setup]').forEach(function (node) {
+    var key = node.getAttribute('data-setup');
+    var evt = node.type === 'checkbox' ? 'change' : 'blur';
+    node.addEventListener(evt, function () { writeSetup(key, node); paintSetup(); });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  });
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-na-field]');
+    if (!b) return;
+    var id = b.getAttribute('data-na-field');
+    Spine.setNotApplicable(id, b.getAttribute('aria-pressed') !== 'true');
+    paintSetup();
+  });
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    SLAF.Lens.mountStrip('a-lens', function (h) {
+      var a = Schema.resolveAssumptions(h);
+      var r = Accounts.compareAccounts({ pretaxCents: v['a-amount'], currentTaxRate: a.marginalRate, futureTaxRate: v['a-later'],
+        annualReturn: Money.isEntered(v['a-return']) ? v['a-return'] : a.expectedReturnRate, years: v['a-years'], capitalGainsRate: v['a-cg'] });
+      var rows = [];
+      if (Money.isEntered(v['a-amount'])) rows.push({ label: 'Put in, pre-tax', cents: v['a-amount'] });
+      if (Money.isOk(r)) rows.push({ label: r.byKey[r.bestKey].label + ' after tax', cents: r.byKey[r.bestKey].afterTaxCents });
+      return rows;
+    }, function () { return TABLES; });
+    paintSetup();
+    render();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-documents, from rooms/statements.html (D-248) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Progress = SLAF.Progress,
+      Reference = SLAF.Reference, St = SLAF.Statements, RoomExport = SLAF.RoomExport;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function el(id) { return document.getElementById(id); }
+  function money(c) { return Money.formatCents(c); }
+  var DASH = Money.EM_DASH || '—';
+
+  var TABLES = null;
+  var DOCS = [
+    { id: 'income',  label: 'Income statement' },
+    { id: 'cash',    label: 'Cash flow' },
+    { id: 'balance', label: 'Balance sheet' },
+    { id: 'review',  label: 'The period in words' }
+  ];
+  var which = 'income';
+
+  /* A row renders its own missing-ness. This is the whole discipline of the
+     page in four lines: entered figures print, blanks print a dash, and
+     nothing in between silently becomes a zero. */
+  function row(l, opts) {
+    var o = opts || {};
+    var cls = (l.indent ? ' is-indent' : '') + (o.cls ? ' ' + o.cls : '');
+    var amt = l.entered
+      ? (l.kind === 'out' ? '(' + money(l.cents) + ')' : money(l.cents))
+      : DASH;
+    return '<tr class="' + cls.trim() + '"><td class="lbl">' + esc(l.label)
+      + (l.note ? '<span class="n">' + esc(l.note) + '</span>' : '')
+      + '</td><td class="amt' + (l.entered ? (l.kind === 'out' ? ' is-out' : '') : ' is-blank') + '">'
+      + esc(amt) + '</td></tr>';
+  }
+
+  function totalRow(label, t, cls) {
+    var amt = t.complete ? money(t.cents) : DASH;
+    return '<tr class="' + (cls || 'is-total') + '"><td class="lbl">' + esc(label)
+      + (t.complete ? '' : '<span class="n">Waiting on: ' + esc(t.missing.join(', ')) + '</span>')
+      + '</td><td class="amt' + (t.complete ? '' : ' is-blank') + '">' + esc(amt) + '</td></tr>';
+  }
+
+  function docHead(title, p) {
+    return '<div class="doc-h"><h2>' + esc(title) + '</h2>'
+      + '<span class="per">' + esc(p.basis === 'recorded' ? 'For ' + p.label : 'For ' + p.label) + '</span></div>';
+  }
+
+  function incomeDoc(h) {
+    var r = St.incomeStatement(h, TABLES);
+    if (!Money.isOk(r)) return '<p class="slaf-reason">' + esc(r.reason) + '</p>';
+    var s = r.value;
+    var out = [docHead('Income statement', s.period), '<table class="ledger">'];
+    out.push('<tr><th>What came in</th><th class="amt"></th></tr>');
+    s.revenue.forEach(function (l) { out.push(row(l)); });
+    out.push(totalRow('Total in', s.revenueTotal));
+    out.push('<tr><th>What went out</th><th class="amt"></th></tr>');
+    s.costs.forEach(function (l) { out.push(row(l)); });
+    out.push(totalRow('Total out', { cents: -s.costsTotal.cents, complete: s.costsTotal.complete, missing: s.costsTotal.missing }));
+    out.push('<tr class="is-grand"><td class="lbl">What was left</td><td class="amt">'
+      + esc(s.leftOverComplete ? money(s.leftOver) : DASH) + '</td></tr>');
+    out.push('</table>');
+    if (s.marginRate !== null) {
+      out.push('<p class="slaf-hint" style="margin-top:var(--space-3)">Of every dollar that came in, <strong>'
+        + esc(Money.formatRate(s.marginRate, { decimals: 1 })) + '</strong> was still there at the end. '
+        + 'A company would call that its margin.</p>');
+    }
+    return out.join('');
+  }
+
+  function cashDoc(h) {
+    var r = St.cashFlowStatement(h, TABLES);
+    if (!Money.isOk(r)) return '<p class="slaf-reason">' + esc(r.reason) + '</p>';
+    var s = r.value;
+    var out = [docHead('Cash flow statement', s.period), '<table class="ledger">'];
+    out.push('<tr><th>Operating — living</th><th class="amt"></th></tr>');
+    s.operating.forEach(function (l) { out.push(row(l)); });
+    out.push(totalRow('Cash from living', s.operatingTotal));
+    out.push('<tr><th>Investing — what you put away</th><th class="amt"></th></tr>');
+    s.investing.forEach(function (l) { out.push(row(l)); });
+    out.push('<tr><th>Financing — debt</th><th class="amt"></th></tr>');
+    s.financing.forEach(function (l) { out.push(row(l)); });
+    out.push('<tr class="is-grand"><td class="lbl">Change in cash'
+      + '<span class="n">Debt payments are inside living costs already, so they are shown above but not '
+      + 'subtracted twice — double-counting them is the classic error in this document.</span></td>'
+      + '<td class="amt">' + esc(s.netChangeComplete ? money(s.netChange) : DASH) + '</td></tr>');
+    out.push('</table>');
+    return out.join('');
+  }
+
+  function balanceDoc(h) {
+    var r = St.balanceSheet(h, TABLES);
+    if (!Money.isOk(r)) return '<p class="slaf-reason">' + esc(r.reason) + '</p>';
+    var s = r.value;
+    var out = ['<div class="doc-h"><h2>Balance sheet</h2><span class="per">As at today</span></div>',
+               '<table class="ledger">'];
+    out.push('<tr><th>What you own</th><th class="amt"></th></tr>');
+    s.current.concat(s.nonCurrent).forEach(function (l) { out.push(row(l)); });
+    out.push(totalRow('Total owned', s.assetsTotal));
+    out.push('<tr><th>What you owe</th><th class="amt"></th></tr>');
+    s.liabilities.forEach(function (l) { out.push(row(l)); });
+    out.push('<tr class="is-grand"><td class="lbl">Net worth</td><td class="amt">'
+      + esc(s.netWorthComplete ? money(s.netWorth) : DASH) + '</td></tr>');
+    out.push('</table>');
+    if (s.equityRate !== null) {
+      out.push('<p class="slaf-hint" style="margin-top:var(--space-3)"><strong>'
+        + esc(Money.formatRate(s.equityRate, { decimals: 1 })) + '</strong> of what you own is actually yours. '
+        + 'The rest is borrowed against.</p>');
+    }
+    return out.join('');
+  }
+
+  function reviewDoc(h) {
+    var r = St.review(h, TABLES, { snapshots: Spine.listSnapshots ? Spine.listSnapshots() : [] });
+    if (!Money.isOk(r)) return '<p class="slaf-reason">' + esc(r.reason) + '</p>';
+    var s = r.value;
+    if (!s.cards.length) {
+      return '<p class="slaf-reason">Not enough is entered to say anything about the period yet.</p>';
+    }
+    var out = ['<div class="doc-h"><h2>The period in words</h2><span class="per">'
+      + esc(s.period.label) + '</span></div>', '<div class="cards">'];
+    s.cards.forEach(function (c) {
+      out.push('<div class="rcard"><div class="k">' + esc(c.eyebrow) + '</div>'
+        + '<div class="f">' + esc(c.format === 'money' ? money(c.figure)
+            : Money.formatRate(c.figure, { decimals: 1 })) + '</div>'
+        + '<div class="s">' + esc(c.say) + '</div></div>');
+    });
+    out.push('</div>');
+    return out.join('');
+  }
+
+  function paint() {
+    var h = Spine.getProfile();
+    var p = St.period(h);
+
+    el('basis-body').innerHTML = '<div class="basis ' + (p.basis === 'recorded' ? 'is-record' : 'is-estimate') + '">'
+      + '<div class="k">' + (p.basis === 'recorded' ? 'A record' : 'An estimate, not a record') + '</div>'
+      + '<div class="v">' + esc(p.basis === 'recorded'
+          ? 'Built from ' + p.label + '.'
+          : 'Built from ' + p.label + '.') + '</div>'
+      + '<p>' + (p.basis === 'recorded'
+          ? 'These months actually happened and were closed in Budget, so this is a statement of what did.'
+          : 'Nothing has been closed in Budget yet, so this is what a year looks like at the figures you keep '
+            + 'current — not a record of one that happened. <a href="budget.html">Close a month</a> and these '
+            + 'become real statements.') + '</p></div>';
+
+    Array.prototype.forEach.call(el('tabs').children, function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-doc') === which ? 'true' : 'false');
+    });
+    el('doc-body').innerHTML =
+        which === 'cash' ? cashDoc(h)
+      : which === 'balance' ? balanceDoc(h)
+      : which === 'review' ? reviewDoc(h)
+      : incomeDoc(h);
+
+    el('how-body').innerHTML =
+      '<p><strong>Nothing here is calculated twice.</strong> What you earn comes from Income, what living '
+      + 'costs from Expenses, what you own and owe from The Statement and Debt Payoff, and the contribution '
+      + 'from the same line Savings Rate uses. This page arranges those figures; it does not recompute them, '
+      + 'so a number here can never disagree with the room it came from.</p>'
+      + '<p><strong>A dash is not a zero.</strong> Any figure that is not entered prints as ' + DASH + ', and '
+      + 'every subtotal waiting on one says which line it is waiting for rather than summing around it.</p>'
+      + '<p><strong>Debt appears twice in the cash flow, on purpose.</strong> A payment is both a cost of the '
+      + 'month and a transfer that reduces what you owe. It is shown in both sections and subtracted once.</p>';
+  }
+
+  DOCS.forEach(function (d) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'tab'; b.setAttribute('data-doc', d.id);
+    b.setAttribute('aria-pressed', 'false');
+    b.textContent = d.label;
+    b.addEventListener('click', function () { which = d.id; paint(); });
+    el('tabs').appendChild(b);
+  });
+
+  /* The export carries the statement lines themselves, not just the fields
+     this room reads — a balance sheet as a CSV is the point of exporting a
+     balance sheet. */
+  if (RoomExport) {
+    RoomExport.provide('statements', function (h) {
+      var rows = [];
+      var inc = St.incomeStatement(h, TABLES);
+      if (Money.isOk(inc)) {
+        inc.value.revenue.concat(inc.value.costs).forEach(function (l) {
+          rows.push({ section: 'Income statement', label: l.label, value: l.entered ? money(l.cents) : '',
+            cents: l.entered ? l.cents : null, status: l.entered ? 'entered' : 'not entered' });
+        });
+        rows.push({ section: 'Income statement', label: 'What was left',
+          value: inc.value.leftOverComplete ? money(inc.value.leftOver) : '',
+          cents: inc.value.leftOverComplete ? inc.value.leftOver : null,
+          status: inc.value.leftOverComplete ? 'entered' : 'not entered' });
+      }
+      var bal = St.balanceSheet(h, TABLES);
+      if (Money.isOk(bal)) {
+        bal.value.current.concat(bal.value.nonCurrent, bal.value.liabilities).forEach(function (l) {
+          rows.push({ section: 'Balance sheet', label: l.label, value: l.entered ? money(l.cents) : '',
+            cents: l.entered ? l.cents : null, status: l.entered ? 'entered' : 'not entered' });
+        });
+        rows.push({ section: 'Balance sheet', label: 'Net worth',
+          value: bal.value.netWorthComplete ? money(bal.value.netWorth) : '',
+          cents: bal.value.netWorthComplete ? bal.value.netWorth : null,
+          status: bal.value.netWorthComplete ? 'entered' : 'not entered' });
+      }
+      rows.push({ section: 'Basis', label: 'These figures are',
+        value: St.period(h).basis === 'recorded' ? 'a record of closed months'
+          : 'an estimate of a typical year, not a record', status: 'entered' });
+      return rows;
+    });
+  }
+  Spine.onChange(function () { if (TABLES) paint(); });
+  Reference.load().then(function (T) {
+    TABLES = T;
+    paint();
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'The reference tables did not load (' + err.message + '). '
+      + 'Serve this over HTTP rather than opening the file directly.';
   });
 })();
 </script>

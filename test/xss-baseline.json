@@ -9,7 +9,7 @@
     "dnd/types.html": 1,
     "index.html": 3,
     "map.html": 4,
-    "rooms/accounts.html": 2,
+    "rooms/accounts.html": 0,
     "rooms/budget.html": 2,
     "rooms/data.html": 1,
     "rooms/debt-payoff.html": 4,
@@ -29,6 +29,7 @@
     "rooms/start.html": 1,
     "rooms/worth.html": 2,
     "shared/lenses.js": 1,
-    "shared/progress.js": 1
+    "shared/progress.js": 1,
+    "rooms/statement.html": 2
   }
 }

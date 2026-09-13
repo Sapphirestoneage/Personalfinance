@@ -14391,6 +14391,37 @@ matched as a line, and `title`/`blurb` take the indent they find. Budget's
 room's registry title equals its title in `docs/room-map.json`, so the map
 and the app cannot disagree silently again.
 
+### D-248 — The Statement: what you own, where it lands, the documents
+
+**Decision.** Where It Goes and Your Statements become readings of The
+Statement. Three hats: `#what-you-own` (the default), `#where-it-lands`,
+`#the-documents`. Both old pages redirect, hash and all.
+
+**Why.** D-228 said it: Accounts merges upward because WHERE the next dollar
+lands moves the target the Back Half computes. It is not a decision beside
+the statement, it is part of it. The documents reading is the same period in
+another language — rule 4 of D-229.
+
+**Gating.** The Statement requires nothing; the where-it-lands reading keeps
+the `retirement` branch Accounts had, so its hat is absent for a household
+with no employer plan, exactly as the room was.
+
+**Ownership.** Seven fields move to `statement`: the three contributions and
+the marginal rate at `setup`, the three allocation targets and the band at
+`allocation`. Three of those come from the `allocationRow` factory, so the
+owner moved in one line rather than three.
+
+**The LIVE-FORM rule now applies per reading.** It was "a page claims exactly
+one pattern — guarded, or built once". On a merged page that is wrong: one
+reading guards a list it rebuilds and another builds four boxes once, both
+correctly. The check now splits a merged page on its reading markers and
+applies the pattern test to each reading that builds a control. That is
+stricter than what it replaces, not looser: a page could satisfy "exactly
+one" while a reading inside it satisfied neither.
+
+**Compatibility.** No stored shape changes. Checked against the pre-merge
+pages: all three readings render identical element counts and text.
+
 ---
 
 # The Dungeons & Dividends entries

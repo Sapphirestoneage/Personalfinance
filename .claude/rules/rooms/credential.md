@@ -8,7 +8,7 @@ File: rooms/credential.html · 485 lines
 Engines: projection, tier0, hourly, credential
 Reference data: federal_brackets_2026.json
 Owns: nothing
-Reads from other owners: filingStatus (start), grossAnnualIncome (start), marginalRate (accounts)
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), marginalRate (statement)
 Latest decisions:
   - D-062 — Explore rooms open with your numbers proposed, and the federal bracket is one of them
 Full context: node tools/context/pack.js credential

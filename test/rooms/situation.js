@@ -68,15 +68,17 @@ module.exports = function (t) {
      Variable Income and the Real Hourly Wage left it in D-247, readings of
      Income, which requires nothing: what comes in is a question for
      everybody, and each of those two readings keeps its own branch, so its
-     hat is absent exactly where its room used to be. */
+     hat is absent exactly where its room used to be. Where It Goes left it
+     in D-248 the same way — a reading of The Statement, which everybody
+     has, keeping the retirement branch on its own hat. */
   var EXPECTED = {
     employed:     ['self-employed', 'decumulation', 'partner'],
-    selfEmployed: ['accounts', 'decumulation', 'partner'],
+    selfEmployed: ['decumulation', 'partner'],
     unemployed:   ['fire', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner'],
-    student:      ['self-employed', 'accounts', 'protection', 'decumulation', 'partner'],
+                   'credential', 'decumulation', 'tax', 'career-move', 'partner'],
+    student:      ['self-employed', 'protection', 'decumulation', 'partner'],
     retired:      ['fire', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'career-move', 'partner'],
+                   'credential', 'career-move', 'partner'],
     both:         ['decumulation', 'partner']
   };
   Object.keys(EXPECTED).forEach(function (status) {

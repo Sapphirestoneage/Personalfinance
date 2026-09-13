@@ -59,7 +59,7 @@
       "done": ["calendar"] },
     { "n": 8, "id": "budget", "title": "The Close", "group": "facts", "absorbs": ["variance", "history"], "note": "One record at three lengths: the month you can still act on, the months you closed, and the line they make.",
       "done": ["variance", "history"] },
-    { "n": 9, "id": "statement", "title": "The Statement", "group": "facts", "absorbs": ["accounts", "statements"], "done": [],
+    { "n": 9, "id": "statement", "title": "The Statement", "group": "facts", "absorbs": ["accounts", "statements"], "done": ["accounts", "statements"],
       "note": "rooms/net-worth.html is already a redirect here and is not in the registry. Accounts merges upward because where the next dollar lands moves the target (D-228)." },
     { "n": 10, "id": "tax", "title": "Tax", "group": "facts", "absorbs": [], "done": [] },
 

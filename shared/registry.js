@@ -307,16 +307,16 @@
     {
       id: 'statement',
       features: ['afterTaxNetWorth', 'incomeFloor', 'equityComp', 'homeDetail'],
-      group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'accounts', 'property', 'what you own'],
+      group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'accounts', 'property', 'what you own', 'where it goes', 'roth', 'traditional', 'allocation', 'rebalance', 'solo 401k', 'statements', 'documents', 'quarterly'],
       kind: 'core',
       needs: ['cashSavings', 'investments', 'totalDebt'],
       order: 5,
       title: 'The Statement',
-      blurb: 'Everything you own in three portfolios, how sure you are of each, how fast you could reach it — and the one number underneath. The place to add a house or a car.',
+      blurb: 'Everything you own in three portfolios with the one number underneath — where the next dollar should land and how it is split — and the same period written out as the three documents a company produces.',
       href: 'rooms/statement.html',
       tier: 1,
       tags: ['debt'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets', 'assets.property', 'assets.items[].valueCents', 'assets.items[].taxCharacter', 'assets.items[].tier', 'assets.items[].costBasisCents'] },
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets', 'assets.property', 'assets.items[].valueCents', 'assets.items[].taxCharacter', 'assets.items[].tier', 'assets.items[].costBasisCents', 'assets.contributions.roth', 'assets.contributions.hsa', 'taxes.marginalRate', 'assets.allocation', 'assets.rebalanceBand'] },
       /* Replaces Net Worth (D-069); rooms/net-worth.html redirects here. */
       subsections: [
         { id: 'portfolios', label: 'Three portfolios' },
@@ -326,7 +326,11 @@
         { id: 'brackets',   label: 'Your bracket' },
         { id: 'worst-year', label: 'The worst plausible year' },
         { id: 'future',     label: 'Money that is coming' },
-        { id: 'reading',    label: 'Reading from elsewhere' }
+        { id: 'reading',    label: 'Reading from elsewhere' },
+        { id: 'setup', label: 'Where the next dollar lands' },
+        { id: 'allocation', label: 'How it is split' },
+        { id: 'solo', label: 'A Solo 401k' },
+        { id: 'tabs', label: 'The three documents' }
       ]
     },
     {
@@ -503,29 +507,6 @@
         { id: 'view-route',   label: 'The route' },
         { id: 'spheres-fold', label: 'The nine spheres' },
         { id: 'backup',       label: 'Backup' }
-      ]
-    },
-    {
-      id: 'accounts',
-      group: 'numbers', subgroup: 'assets', aliases: ['401k', 'ira', 'roth', 'hsa', 'allocation', 'contributions', 'match'],
-      /* Not a what-if: it holds facts about your retirement setup that other
-         rooms read. An explore room owns nothing anybody waits on, and this
-         one owns four things. DECISIONS.md D-052. */
-      kind: 'about-you',
-      needs: ['grossAnnualIncome', 'filingStatus'],
-      order: 17,
-      title: 'Where It Goes & how it\u2019s split',
-      blurb: 'Roth, Traditional or taxable, how much a Solo 401(k) actually lets you put away \u2014 and the mix you are aiming for.',
-      href: 'rooms/accounts.html',
-      tier: 2,
-      tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus'], writes: ['assets.allocation', 'assets.contributions.hsa', 'assets.contributions.roth', 'taxes.marginalRate'] },
-      subsections: [
-        { id: 'setup',   label: 'Your retirement setup' },
-        { id: 'compare', label: 'Roth vs. Traditional vs. taxable' },
-        { id: 'solo',       label: 'Solo 401(k)' },
-        { id: 'allocation', label: 'How it\u2019s split' },
-        { id: 'reading',    label: 'Reading from elsewhere' }
       ]
     },
     {
@@ -797,28 +778,6 @@
       { id: 'out-periods', label: 'What you have listed' },
       { id: 'out-gaps',    label: 'Gaps and overlaps' },
       { id: 'reading',     label: 'Reading from elsewhere' }
-    ]
-  });
-
-  /* Your Statements — the three documents a company files, for a household,
-     plus the period in words (D-156). A `read` room: it owns nothing, writes
-     nothing, and every figure on it belongs to another room. */
-  ROOMS.push({
-    id: 'statements',
-    group: 'scorecard', aliases: ['statements', 'history of net worth', 'monthly statement'],
-    kind: 'read',
-    needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
-    order: 4.5,
-    title: 'Your Statements',
-    blurb: 'An income statement, a cash flow statement and a balance sheet — the three documents a company produces every quarter, for a household. Plus the same period written out in sentences.',
-    href: 'rooms/statements.html',
-    tier: 0,
-    tags: ['income', 'cashflow', 'debt'],
-    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents'], writes: [] },
-    subsections: [
-      { id: 'out-basis', label: 'What these are built from' },
-      { id: 'out-doc',   label: 'The statements' },
-      { id: 'out-how',   label: 'How each line is worked out' }
     ]
   });
 
@@ -1463,7 +1422,7 @@
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
-    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
+    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'rollover', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
     decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'enough', 'week', 'reversibility'],
@@ -1516,7 +1475,10 @@
      (D-094). Rooms with none are for everyone. The check is Gate.exists,
      reached lazily because the gate loads after the registry. */
   var REQUIRES = {
-    accounts: ['retirement'],
+    /* Where It Goes became The Statement's where-it-lands reading (D-248).
+       The Statement requires nothing — what you own is a question for
+       everybody — and that READING keeps the retirement branch, declared on
+       the router, so its hat is absent when there is no employer plan. */
     credential: ['career'],
     'self-employed': ['ownWork'],
     'side-hustle': ['career'],

@@ -110,7 +110,7 @@
 
   function allocationRow(slice, label) {
     return {
-      label: label, owner: 'accounts', anchor: 'allocation',
+      label: label, owner: 'statement', anchor: 'allocation',
       read: function (h) {
         var v = (h.allocation || {})[slice];
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not set.', ['allocation.' + slice]);
@@ -262,7 +262,7 @@
       notApplicableBecause: 'You said there is no employer.'
     },
     rothContributed: {
-      label: 'Roth so far this year', owner: 'accounts', anchor: 'setup',
+      label: 'Roth so far this year', owner: 'statement', anchor: 'setup',
       read: function (h) {
         var v = (h.retirement || {}).rothContributedCents;
         return Money.isEntered(v) ? Money.ok(v)
@@ -271,7 +271,7 @@
       format: money
     },
     hsaContributed: {
-      label: 'HSA so far this year', owner: 'accounts', anchor: 'setup',
+      label: 'HSA so far this year', owner: 'statement', anchor: 'setup',
       read: function (h) {
         var v = (h.retirement || {}).hsaContributedCents;
         return Money.isEntered(v) ? Money.ok(v)
@@ -284,7 +284,7 @@
       notApplicableBecause: 'No HSA without a high-deductible plan.'
     },
     marginalRate: {
-      label: 'Marginal tax rate', owner: 'accounts', anchor: 'setup',
+      label: 'Marginal tax rate', owner: 'statement', anchor: 'setup',
       read: function (h) {
         var a = Schema.resolveAssumptions(h);
         return Money.isEntered(a.marginalRate) ? Money.ok(a.marginalRate)
@@ -689,7 +689,7 @@
     allocationBonds: allocationRow('bonds', 'Target: bonds'),
     allocationCash: allocationRow('cash', 'Target: cash'),
     rebalanceBand: {
-      label: 'Rebalance band', owner: 'accounts', anchor: 'allocation',
+      label: 'Rebalance band', owner: 'statement', anchor: 'allocation',
       read: function (h) {
         var v = (h.allocation || {}).rebalanceBand;
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not set.', ['rebalanceBand']);
