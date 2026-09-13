@@ -109,31 +109,43 @@ module.exports = function (t) {
     return Estate.review(x, T).atRiskCents === CASH + INV;
   })());
 
-  /* -- Ownership: the three facts are this room's ---------------------------- */
+  /* -- Ownership: the three facts moved with the boxes that ask them -------
+     Estate Basics is Protection's where-it-goes reading since D-236. */
   ['beneficiariesSet', 'willExists', 'poaExists'].forEach(function (f) {
     var d = t.Ownership.field(f);
-    check('ownership: ' + f + ' is owned by estate at #inputs', d && (d.owner + '/' + d.anchor), 'estate/inputs');
+    check('ownership: ' + f + ' is owned by protection at #es-inputs', d && (d.owner + '/' + d.anchor), 'protection/es-inputs');
   });
   checkTrue('the schema starts the three as null, never false', (function () { var e = Schema.createHousehold({}).estate; return e.beneficiariesSet === null && e.willExists === null && e.poaExists === null; })());
 
-  /* -- The page ----------------------------------------------------------- */
-  var html = t.fs.readFileSync(t.path.join(t.ROOT, 'rooms/estate.html'), 'utf8');
-  checkTrue('the page mounts the template', /Room\.mount\(\{/.test(html) && /id: 'estate'/.test(html));
-  t.Room.IDS.concat(['room-standalone', 'load-notice', 'number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading']).forEach(function (id) {
-    checkTrue('the page has #' + id, new RegExp('id="' + id + '"').test(html));
+  /* -- The reading --------------------------------------------------------
+     Both readings on this page are built from shared/room.js, so the estate
+     one carries a prefix and a root of its own (D-235); its skeleton ids are
+     the same names behind that prefix. */
+  var html = t.fs.readFileSync(t.path.join(t.ROOT, 'rooms/protection.html'), 'utf8');
+  checkTrue('Estate Basics is no longer a room', !t.Registry.byId('estate'));
+  checkTrue('and the old page redirects to the reading', /url=protection\.html#where-it-goes/.test(t.fs.readFileSync(t.path.join(t.ROOT, 'rooms/estate.html'), 'utf8')));
+  checkTrue('the reading mounts the template as a part of Protection', /Room\.mount\(\{/.test(html) && /id: 'protection',\n\s*part: true,\n\s*prefix: 'es-',\n\s*root: 'view-where-it-goes',/.test(html));
+  t.Room.IDS.concat(['room-standalone', 'number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading']).forEach(function (id) {
+    checkTrue('the reading has #es-' + id, new RegExp('id="es-' + id + '"').test(html));
   });
+  checkTrue('and the page has one load notice, the room\'s', (html.match(/id="load-notice"/g) || []).length === 1);
   checkTrue('the page is marked built once', /LIVE-FORM: built once/.test(html));
   var tags = (html.match(/<script src="[^"]+"><\/script>/g) || []).map(function (s) { return s.replace(/<script src="\.\.\//, '').replace(/"><\/script>/, ''); });
-  checkTrue('it loads its engine after tier0 and before the lens and the template', tags.indexOf('engines/estate.js') > tags.indexOf('engines/tier0.js') && tags.indexOf('engines/estate.js') < tags.indexOf('shared/lens.js') && tags.indexOf('shared/lens.js') < tags.indexOf('shared/room.js'));
-  checkTrue('it writes only estate.* through Spine.set', (html.match(/Spine\.set\('([^']+)'/g) || []).every(function (m) { return /Spine\.set\('estate\./.test(m); }) && /Spine\.set\('estate\./.test(html));
+  checkTrue('it loads its engine after tier0 and before the lens and the template', tags.indexOf('engines/estate.js') > tags.indexOf('engines/tier0.js') && tags.indexOf('engines/estate.js') < tags.indexOf('shared/room.js') && tags.indexOf('shared/lens.js') < tags.indexOf('shared/room.js'));
+  /* The page holds two readings; between them they may write estate.* and
+     the two health-cover fields Protection already owned, and nothing else. */
+  checkTrue('the page writes only estate.* and the cover it already owned', (function () {
+    var sets = html.match(/Spine\.set\('([^']+)'/g) || [];
+    return sets.length > 0 && sets.every(function (m) { return /Spine\.set\('(estate\.|insurance\.health\.)/.test(m); }) && /Spine\.set\('estate\./.test(html);
+  })());
   checkTrue('it never touches another owner\'s field', !/upsertAsset|upsertPerson|upsertDebt/.test(html));
   checkTrue('three choice inputs, yes / not yet', (html.match(/factInput\('/g) || []).length === 3 && /\[\['yes', 'Yes'\], \['no', 'Not yet'\]\]/.test(html));
-  checkTrue('one donut', (html.match(/Charts\.donut\(/g) || []).length === 2 && !/Charts\.(area|bars|stacked)\(/.test(html));
+  checkTrue('one donut in this reading', (html.match(/Charts\.donut\(/g) || []).length === 2);
   checkTrue('it says what it does not do', /scope: 'This room does not write a will/.test(html));
   checkTrue('it asks for its table', /tables: \['estateBasics'/.test(html));
   var Gate = t.Gate;
   checkTrue('why: a paragraph for each situation', Gate.SITUATIONS.every(function (s) { return new RegExp('\\n\\s+' + s.id + ": '").test(html); }));
-  var reg = t.Registry.byId('estate');
-  check('the registry row appears for everyone', reg && reg.needs.length, 0);
-  check('… at rooms/estate.html', reg && reg.href, 'rooms/estate.html');
+  var reg = t.Registry.byId('protection');
+  check('the room it lives in is at rooms/protection.html', reg && reg.href, 'rooms/protection.html');
+  checkTrue('… and lists the reading as a deep link', reg.subsections.some(function (x) { return x.id === 'view-where-it-goes'; }));
 };

@@ -966,22 +966,30 @@
   ROOMS.push({
     id: 'protection',
     features: ['agingParents'],
-    group: 'decisions', subgroup: 'family', aliases: ['insurance', 'life insurance', 'disability', 'coverage'],
+    /* Two readings since D-236: what stands behind you if a year goes
+       wrong, and where it all goes if the worst does. */
+    group: 'decisions', subgroup: 'family',
+    aliases: ['insurance', 'life insurance', 'disability', 'coverage',
+              'estate', 'will', 'beneficiary', 'power of attorney', 'what happens if'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'cashSavings', 'grossAnnualIncome'],
     order: 32,
     title: 'Protection',
-    blurb: 'What a bad year would cost and what stands behind you: health, disability, life, the cushion — each need against what is held.',
+    blurb: 'What a bad year would cost and what stands behind you — health, disability, life, the cushion — and the three estate facts that decide where it all goes if the worst happens.',
     href: 'rooms/protection.html',
     tier: 2,
     tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses', 'income.grossAnnualCents'], writes: ['expenses.insurance', 'you.cover'] },
+    daite: { reads: ['assets.cashCents', 'assets', 'expenses', 'income.grossAnnualCents', 'you.dependents'], writes: ['expenses.insurance', 'you.cover', 'you.estate'] },
       subsections: [
+        { id: 'view-cover',         label: 'Cover' },
+        { id: 'view-where-it-goes', label: 'Where it goes' },
         { id: 'number',      label: 'The biggest gap' },
         { id: 'chart',       label: 'Need against held' },
         { id: 'inputs',      label: 'Health cover' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
+        { id: 'es-number',   label: 'What would pass without them' },
+        { id: 'es-inputs',   label: 'The three facts' },
         { id: 'reading',     label: 'What this reads' }
       ]
   });
@@ -1104,29 +1112,6 @@
         { id: 'number',      label: 'Your effective rate' },
         { id: 'chart',       label: 'Where a dollar of pay goes' },
         { id: 'inputs',      label: 'Pre-tax and withheld' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Estate Basics — the tranche rooms on the template (D-098). */
-  ROOMS.push({
-    id: 'estate',
-    group: 'decisions', subgroup: 'family', aliases: ['will', 'estate', 'beneficiary', 'power of attorney'],
-    kind: 'about-you',
-    needs: [],
-    order: 35,
-    title: 'Estate Basics',
-    blurb: 'Three facts — beneficiaries named, a will, a power of attorney — and what would pass without them.',
-    href: 'rooms/estate.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: [], writes: ['you.estate'] },
-      subsections: [
-        { id: 'number',      label: 'In place' },
-        { id: 'chart',       label: 'What passes how' },
-        { id: 'inputs',      label: 'The three facts' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
         { id: 'reading',     label: 'What this reads' }

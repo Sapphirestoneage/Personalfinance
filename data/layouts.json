@@ -71,7 +71,6 @@
             "roth-aca",
             "middle-class-trap",
             "tax",
-            "estate",
             "giving",
             "career-move",
             "offer-compare",
@@ -158,7 +157,6 @@
             "adventure",
             "timeline",
             "protection",
-            "estate",
             "giving",
             "housing",
             "down-payment",
@@ -329,7 +327,6 @@
             "decumulation",
             "roth-aca",
             "middle-class-trap",
-            "estate",
             "protection",
             "tax",
             "rollover",
@@ -431,7 +428,6 @@
           "name": "Protect",
           "rooms": [
             "protection",
-            "estate",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
@@ -581,7 +577,6 @@
             "dreamline",
             "week",
             "buckets",
-            "estate",
             "giving",
             "decumulation",
             "roth-aca",
@@ -739,7 +734,6 @@
             "micro-retirement",
             "partner",
             "wedding",
-            "estate",
             "giving",
             "decumulation",
             "roth-aca",
@@ -824,7 +818,6 @@
             "decumulation",
             "roth-aca",
             "middle-class-trap",
-            "estate",
             "protection",
             "partner",
             "wedding",
@@ -922,7 +915,6 @@
             "dreamline",
             "enough",
             "fulfillment",
-            "estate",
             "variance",
             "exercises",
             "financial-snapshot",
@@ -1107,7 +1099,6 @@
         {
           "name": "The attic",
           "rooms": [
-            "estate",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
@@ -1200,7 +1191,6 @@
           "name": "Once, then rarely",
           "rooms": [
             "values",
-            "estate",
             "partner",
             "wedding",
             "decumulation",
@@ -1323,7 +1313,6 @@
             "accounts",
             "tax",
             "protection",
-            "estate",
             "decumulation",
             "roth-aca",
             "middle-class-trap"
@@ -1439,7 +1428,6 @@
           "name": "Something happening to you",
           "rooms": [
             "protection",
-            "estate",
             "partner",
             "wedding",
             "kids",
@@ -1553,7 +1541,6 @@
             "wedding",
             "kids",
             "giving",
-            "estate",
             "housing",
             "down-payment",
             "property"
@@ -1662,8 +1649,7 @@
             "skill-tree",
             "exercises",
             "cant-pay",
-            "rollover",
-            "estate"
+            "rollover"
           ],
           "note": "You could open any of these first, today, cold."
         },
@@ -1828,7 +1814,6 @@
           "name": "5 \u00b7 \u201cWhat are you afraid of?\u201d",
           "rooms": [
             "protection",
-            "estate",
             "partner",
             "wedding",
             "kids",
@@ -1967,7 +1952,6 @@
             "what-if-life",
             "adventure",
             "fire-lab",
-            "estate",
             "partner",
             "wedding",
             "kids",
@@ -2060,8 +2044,7 @@
             "variable-income",
             "variance",
             "cant-pay",
-            "dashboard",
-            "estate"
+            "dashboard"
           ],
           "note": "The title is the thing. A stranger reads it and knows."
         },
@@ -2177,7 +2160,6 @@
             "rollover",
             "tax",
             "protection",
-            "estate",
             "decumulation",
             "roth-aca",
             "middle-class-trap"
@@ -2338,7 +2320,6 @@
             "fulfillment",
             "dreamline",
             "giving",
-            "estate",
             "partner",
             "wedding"
           ],
@@ -2413,8 +2394,7 @@
             "partner",
             "wedding",
             "kids",
-            "giving",
-            "estate"
+            "giving"
           ]
         },
         {

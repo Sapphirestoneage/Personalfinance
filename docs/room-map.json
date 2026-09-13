@@ -103,7 +103,9 @@
     { "n": 27, "id": "debates", "title": "The Referee", "group": "levelup", "absorbs": ["unlearning"], "done": [],
       "note": "Does this advice still apply to you is the same question as which side are you on." },
 
-    { "n": 28, "id": "protection", "title": "Protection", "group": "alone", "absorbs": ["estate"], "done": [] },
+    { "n": 28, "id": "protection", "title": "Protection", "group": "alone",
+      "absorbs": ["estate"], "done": ["estate"],
+      "note": "Estate Basics was one fact three times (rule 4): what stands behind you if a year goes wrong, and where it goes if the worst does, are one page." },
     { "n": 29, "id": "cant-pay", "title": "When It Won't All Get Paid", "group": "alone", "absorbs": [], "done": [],
       "note": "The anti-rule. Different register, different failure cost. Never behind a toggle." },
     { "n": 30, "id": "get-help", "title": "Get Help", "group": "alone", "absorbs": [], "done": [],

@@ -2,14 +2,16 @@
 paths:
   - "rooms/protection.html"
   - "engines/protection.js"
+  - "engines/estate.js"
 ---
 # Protection (`protection`)
-File: rooms/protection.html · 267 lines
-Engines: projection, tier0, protection
-Reference data: protection_conventions.json
-Owns: healthCover, healthMonthly
-Reads from other owners: grossAnnualIncome (start), cashSavings (start), highestDeductible (start), oopMax (runway), termLife (runway), disabilityMonthly (runway), monthlyExpenses (expenses)
+File: rooms/protection.html · 462 lines
+Engines: projection, tier0, protection, hourly, estate
+Reference data: estate_basics.json, protection_conventions.json
+Owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists
+Reads from other owners: grossAnnualIncome (start), cashSavings (start), highestDeductible (start), oopMax (runway), termLife (runway), disabilityMonthly (runway), otherAssets (statement), monthlyExpenses (expenses)
 Latest decisions:
+  - D-236 — Protection: cover, and where it goes
   - D-103 — Protection: each need against what is held
   - D-098 — The first six tranche rooms: what each owns, before it is built
   - D-094 — One pager in, one pager out: the core

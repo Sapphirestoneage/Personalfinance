@@ -641,7 +641,10 @@
       ],
       "writes": [
         "healthCover",
-        "healthMonthly"
+        "healthMonthly",
+        "beneficiariesSet",
+        "willExists",
+        "poaExists"
       ],
       "requires": [
         "protection"
@@ -713,20 +716,6 @@
       ],
       "dashboardNumber": null,
       "order": 34
-    },
-    {
-      "id": "estate",
-      "title": "Estate Basics",
-      "file": "rooms/estate.html",
-      "reads": [],
-      "writes": [
-        "beneficiariesSet",
-        "willExists",
-        "poaExists"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 35
     },
     {
       "id": "giving",

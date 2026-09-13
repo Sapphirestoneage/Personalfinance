@@ -69,12 +69,6 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `enoughMonthly` — Enough, a month · **no other room mentions it**
 
-## estate (3)
-
-- `beneficiariesSet` — Beneficiaries named · **no other room mentions it**
-- `willExists` — A will · **no other room mentions it**
-- `poaExists` — A power of attorney · **no other room mentions it**
-
 ## exercises (1)
 
 - `exercisesDone` — Exercises done · read by skill-tree
@@ -130,10 +124,13 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `splitMode` — How shared costs are split · **no other room mentions it**
 - `sharedMonthly` — Shared costs, a month · **no other room mentions it**
 
-## protection (2)
+## protection (5)
 
 - `healthCover` — Health cover · read by runway
 - `healthMonthly` — Health cover, a month · read by runway, offer-compare
+- `beneficiariesSet` — Beneficiaries named · **no other room mentions it**
+- `willExists` — A will · **no other room mentions it**
+- `poaExists` — A power of attorney · **no other room mentions it**
 
 ## rerank (1)
 
@@ -171,7 +168,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
-- `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, one-pager
+- `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, runway, tax, offer-compare, unlearning, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, unlearning
@@ -183,7 +180,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 ## statement (7)
 
-- `otherAssets` — Property & other assets · read by ledger, statements, estate, one-pager
+- `otherAssets` — Property & other assets · read by ledger, statements, protection, one-pager
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
 - `netWorth` — Net worth · read by ledger, financial-snapshot, statements, dashboard, race, what-if-life, history, one-pager
 - `assetValue` — What each account or thing is worth · read by ledger

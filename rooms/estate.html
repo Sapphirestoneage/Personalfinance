@@ -7,210 +7,33 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Estate Basics · SPARKS</title>
-<meta name="description" content="Three facts — beneficiaries named, a will, a power of attorney — and what would pass by the state's rules without them."/>
+<meta name="description" content="Estate Basics is the where-it-goes reading of Protection now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (shared/room.js, D-097).
-  DECISIONS.md D-098.
-
-  1. READS   Cash & savings and investments (owned by Start Here), the
-             itemised assets by category (Net Worth), and whether anyone
-             depends on you (Start Here) — for the guardian line.
-  2. WRITES  It OWNS household.estate — beneficiariesSet, willExists,
-             poaExists. Three booleans, null until answered. Nothing else
-             edits them; this room edits nothing else.
-  3. CALLS   engines/estate.js. The asset sums are Schema.aggregatableAssets;
-             which route each category takes is data/estate_basics.json.
-  4. EMPTY   It appears for everyone (no needs), so it never shows guesses:
-             an empty spine renders "0 of 3 in place" with every fact "not
-             answered" and no dollars until something is owned.
-  5. CONFIG  data/estate_basics.json — category → route, the three
-             one-liners, the guardian line. Convention, not legal advice.
-
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value / aria-pressed, never under focus.
-  THEMING: none this pass. A theme is a class on <body> and a palette in
-  shared/theme.css.
+  REDIRECT — Estate Basics is a reading of Protection (rooms/protection.html#where-it-goes, DECISIONS.md D-236).
+  Estate Basics was one fact three times, and the decision it changes is
+  what stands behind you. Rule 4 of D-229.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  section[id] { scroll-margin-top: var(--space-4); }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-</style>
+<meta http-equiv="refresh" content="0; url=protection.html#where-it-goes"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Estate Basics</h1>
-  <p class="room-lede">Three facts — beneficiaries named, a will, a power of attorney — and what would pass without them.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <div class="room-standalone" id="room-standalone" hidden></div>
-
-  <section class="slaf-card" id="number">
-    <div class="room-head-row">
-      <span class="slaf-eyebrow">In place</span>
-      <div id="room-lens"></div>
-    </div>
-    <div class="room-number" id="room-number"></div>
-  </section>
-
-  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">What passes how</span>
-    <div id="room-chart"></div>
-  </section>
-
-  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The three facts</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Yes means signed and on file — a beneficiary form on each account, a will you could put your hands on, a power of attorney someone else knows about. Leave one unanswered rather than guessing.</p>
-    <div id="room-inputs"></div>
-  </section>
-
-  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Through the lens</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
-    <ul class="room-amounts" id="room-amounts"></ul>
-  </section>
-
-  <details class="room-drawer" id="assumptions">
-    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
-    <div class="room-assumptions-body" id="room-assumptions"></div>
-  </details>
-
-  <p class="room-why" id="room-why" hidden></p>
-  <p class="room-scope" id="room-scope"></p>
-
-  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">What this is reading</span>
-    <div id="reading-list" style="margin-top:var(--space-3)"></div>
-  </section>
-
-  <p class="disclaimer">
-    Educational tool, not legal or financial advice. How property passes at
-    death is general US convention here; your state's rules and each
-    account's paperwork decide. Your numbers stay in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">Estate Basics is the where-it-goes reading of Protection now.
+    <a href="protection.html#where-it-goes" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/suggest.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../engines/estate.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../shared/charts.js"></script>
-<script src="../shared/room.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Estate = SLAF.Estate, Charts = SLAF.Charts, Room = SLAF.Room;
-
-  /* ---- writes: this room owns household.estate ------------------------------- */
-  var YES_NO = [['yes', 'Yes'], ['no', 'Not yet']];
-  function readFact(id) {
-    return function (h) { var v = (h.estate || {})[id]; return v === true ? 'yes' : v === false ? 'no' : null; };
-  }
-  function writeFact(id) {
-    return function (raw) { Spine.set('estate.' + id, raw === 'yes' ? true : raw === 'no' ? false : null); };
-  }
-  function factInput(id, label, hint) {
-    return { ctl: id, label: label, kind: 'choice', options: YES_NO, hint: hint, read: readFact(id), write: writeFact(id) };
-  }
-  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-
-  var ROUTE_COLOURS = { beneficiary: Charts.COLORS.series[1], title: Charts.COLORS.series[0], will: Charts.COLORS.series[4], state: Charts.COLORS.debt };
-  var ROUTE_LABELS = { beneficiary: 'By beneficiary', title: 'By title', will: 'By will', state: 'By the state’s rules' };
-
-  Room.mount({
-    id: 'estate',
-    tables: ['estateBasics', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['cashSavings', 'investments', 'otherAssets', 'dependents'],
-
-    number: function (h, T) {
-      var r = Estate.review(h, T);
-      if (!Money.isOk(r)) return { label: 'Of the three', value: null, reason: r.reason };
-      var sub;
-      if (!Money.isOk(r.assets)) sub = esc(r.assets.reason);
-      else if (r.atRiskCents > 0) sub = '<strong>' + Money.formatCents(r.atRiskCents) + '</strong> would pass by the state’s rules, not your choice';
-      else sub = 'Everything you own passes the way you chose';
-      var notYet = r.facts.filter(function (f) { return f.value !== true; });
-      if (notYet.length) sub += ' · ' + notYet.map(function (f) { return esc(f.label.toLowerCase()) + ': ' + f.said; }).join(', ');
-      if (r.guardianLine) sub += '. ' + esc(r.guardianLine);
-      return { label: 'Of the three', value: r.inPlace + ' of ' + r.total + ' in place', sub: sub, zone: r.zone, result: r };
-    },
-
-    chart: function (h, T) {
-      var r = Estate.review(h, T);
-      if (!Money.isOk(r) || !Money.isOk(r.assets)) return Charts.donut({ slices: [], empty: 'Add what you own in Start Here to see how it would pass.' });
-      var slices = Estate.ROUTES.filter(function (k) { return r.routes[k] > 0; }).map(function (k) {
-        return { label: ROUTE_LABELS[k], value: r.routes[k], color: ROUTE_COLOURS[k], note: k === 'state' ? 'not your choice' : '' };
-      });
-      return Charts.donut({ title: 'What you own, by how it would pass', slices: slices, center: { big: Money.formatCents(r.atRiskCents), small: 'by the state' } });
-    },
-
-    inputs: [
-      factInput('beneficiariesSet', 'Beneficiaries named', 'On every retirement account, life-insurance policy and payable-on-death bank account.'),
-      factInput('willExists', 'A will', 'Signed, witnessed, and somewhere a person you trust can find it.'),
-      factInput('poaExists', 'A power of attorney', 'Someone named to act for you while you are alive but cannot.')
-    ],
-
-    amounts: function (h, T) {
-      var r = Estate.review(h, T);
-      if (!Money.isOk(r) || !Money.isOk(r.assets)) return [];
-      return [
-        { label: 'Would pass by the state’s rules', cents: r.atRiskCents },
-        { label: 'Everything you own', cents: r.assets.value, href: Ownership.linkTo('start', 'q-investments') }
-      ];
-    },
-
-    assumptions: function (h, T) {
-      var t = T.estateBasics;
-      var src = 'data/estate_basics.json v' + t.version + ' — ' + t.confidence + '; ' + t.source;
-      var rows = (t.categories || []).map(function (c) {
-        var route = (t.routes || []).filter(function (x) { return x.id === c.passesBy; })[0];
-        return { label: c.label, value: route ? route.label.toLowerCase() : c.passesBy, source: c.note + ' (' + t.confidence + ')' };
-      });
-      rows.unshift({ label: 'How property passes', value: 'general US pattern', source: src });
-      rows.push({ label: 'Jointly held property', value: 'not modelled', source: 'Assets carry no title flag, so nothing here is counted as passing by title to a co-owner; anything held jointly with right of survivorship would, whatever the will says (convention).' });
-      rows.push({ label: 'Life insurance', value: 'not counted', source: t.lifeInsurance + ' (' + t.confidence + ')' });
-      rows.push({ label: 'A guardian for children', value: 'named in a will', source: t.guardian + ' (' + t.confidence + ')' });
-      rows.push({ label: 'A will', value: 'one line', source: t.documents.will });
-      rows.push({ label: 'Beneficiaries', value: 'one line', source: t.documents.beneficiaries });
-      rows.push({ label: 'A power of attorney', value: 'one line', source: t.documents.poa });
-      return rows;
-    },
-
-    why: function (h, T, situation) {
-      return {
-        retired: 'Retired, the documents matter most now: what you built is mostly decided by beneficiary forms and a will, and a power of attorney is what lets someone act if you cannot.',
-        employed: 'Employed, the workplace plan’s beneficiary form overrides the will — the 401(k) goes to whoever is on that form, even a name from years ago. Check it before you check anything else.',
-        selfEmployed: 'Self-employed, there is no plan administrator holding a form for you: every retirement account and every bank account carries its own beneficiary line, and the business itself passes by will unless you have said otherwise.',
-        student: 'At a student’s stage a power of attorney matters more than a will — there is little to pass, but someone may need to act for you. A beneficiary on any account you do have takes a minute.',
-        betweenJobs: 'Between jobs, the old employer’s plan still has a beneficiary form on file. If it is moving to an IRA, the new account starts with none until you name one.',
-        mixed: 'With a job and your own work, there are two sets of accounts and two sets of forms; the workplace plan’s overrides the will, and your own accounts each carry their own.'
-      }[situation] || 'Three documents decide where what you own goes and who can act for you. Without them, the state decides.';
-    },
-
-    scope: 'This room does not write a will, name a beneficiary, or know your state’s rules. An estate lawyer does.'
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#number': '#es-number', '#inputs': '#es-inputs', '#chart': '#es-chart', '#amounts': '#es-amounts', '#assumptions': '#es-assumptions', '#reading': '#es-reading' };
+    var hash = location.hash || '';
+    var target = 'protection.html' + (map[hash] || '#where-it-goes');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

@@ -1847,7 +1847,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": null,
-      "askIn": "estate",
+      "askIn": "protection",
       "moves": false,
       "unlocks": "the estate checklist: who gets the accounts"
     },
@@ -1866,7 +1866,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": null,
-      "askIn": "estate",
+      "askIn": "protection",
       "moves": false,
       "unlocks": "the estate checklist: whether there is a will"
     },
@@ -1885,7 +1885,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": null,
-      "askIn": "estate",
+      "askIn": "protection",
       "moves": false,
       "unlocks": "the estate checklist: who acts if you cannot"
     }

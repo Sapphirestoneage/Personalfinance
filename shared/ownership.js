@@ -407,17 +407,17 @@
       format: money
     },
     beneficiariesSet: {
-      label: 'Beneficiaries named', owner: 'estate', anchor: 'inputs',
+      label: 'Beneficiaries named', owner: 'protection', anchor: 'es-inputs',
       read: function (h) { var v = (h.estate || {}).beneficiariesSet; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['beneficiariesSet']); },
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
     willExists: {
-      label: 'A will', owner: 'estate', anchor: 'inputs',
+      label: 'A will', owner: 'protection', anchor: 'es-inputs',
       read: function (h) { var v = (h.estate || {}).willExists; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['willExists']); },
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
     poaExists: {
-      label: 'A power of attorney', owner: 'estate', anchor: 'inputs',
+      label: 'A power of attorney', owner: 'protection', anchor: 'es-inputs',
       read: function (h) { var v = (h.estate || {}).poaExists; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['poaExists']); },
       format: function (v) { return v ? 'Yes' : 'No'; }
     },

@@ -10486,7 +10486,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 30);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 29);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -12703,7 +12703,9 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
     const p = Ask.pick(h, 'debt-payoff', T, sug);
     checkTrue('Debt Payoff asks the card’s real minimum, and only that card', p && p.row.id === 'debtMinPayment' && p.item.id === 'visa', p && p.row.id + ':' + (p.item && p.item.id));
     checkTrue('with the suggestion beside it', p.suggestion && p.suggestion.value === 6400);
-    checkTrue('the estate room asks a will, POA or beneficiaries', ['willExists', 'poaExists', 'beneficiariesSet'].indexOf(Ask.pick(h, 'estate', T, sug).row.id) !== -1);
+    /* Estate Basics is Protection's where-it-goes reading since D-236, so the
+       inline ask is put to the room that holds it. */
+    checkTrue('Protection asks a will, POA or beneficiaries', ['willExists', 'poaExists', 'beneficiariesSet', 'healthCover', 'healthMonthly'].indexOf(Ask.pick(h, 'protection', T, sug).row.id) !== -1);
     checkTrue('the FI room asks allocation', /^allocation/.test(Ask.pick(h, 'fire', T, sug).row.id));
     check('parses money', Ask.parse({ unit: 'cents' }, '1,200'), 120000);
     check('parses a rate typed as a percent', Ask.parse({ unit: 'rate' }, '24.99'), 0.2499);

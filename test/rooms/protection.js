@@ -141,9 +141,12 @@ module.exports = function (t) {
   checkTrue('… loads the engine after tier0 and before the lens', tag('engines/tier0.js') !== -1 && tag('engines/tier0.js') < tag('engines/protection.js') && tag('engines/protection.js') < tag('shared/lens.js'));
   checkTrue('… is not the stub', html.indexOf('STUB') === -1 && html.indexOf('Hourly.realHourlyWage') === -1);
   checkTrue('… writes health cover through Spine.set on the two paths it owns', /Spine\.set\('insurance\.health\.type'/.test(html) && /Spine\.set\('insurance\.health\.monthlyCents'/.test(html));
-  checkTrue('… and nothing else', (html.match(/Spine\.set\(/g) || []).length === 2 && !/upsertPerson|upsertAsset|updateProfile/.test(html));
+  /* The page holds a second reading since D-236 (where it goes), which
+     writes estate.* through its own owner. Between them, those are the only
+     paths either may set. */
+  checkTrue('… and nothing else', (html.match(/Spine\.set\('([^']+)'/g) || []).every(m => /Spine\.set\('(insurance\.health\.|estate\.)/.test(m)) && !/upsertPerson|upsertAsset|updateProfile/.test(html));
   checkTrue('… the coverage facts are read, not edited', /reads: \[/.test(html) && ['termLife', 'disabilityMonthly', 'oopMax', 'umbrella', 'highestDeductible', 'dependents', 'monthlyExpenses', 'cashSavings', 'grossAnnualIncome'].every(f => html.indexOf("'" + f + "'") !== -1));
-  checkTrue('… one bars chart', /Charts\.bars\(/.test(html) && !/Charts\.(area|donut|stacked)\(/.test(html));
+  checkTrue('… one bars chart in the cover reading, and the donut belongs to the other', /Charts\.bars\(/.test(html) && !/Charts\.(area|stacked)\(/.test(html));
   checkTrue('… the select offers every health type', Schema.HEALTH_TYPES.every(v => html.indexOf("'" + v + "'") !== -1));
   checkTrue('… and the scope line says what it does not do', /scope: 'This room does not quote a policy/.test(html));
 

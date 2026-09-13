@@ -13997,6 +13997,60 @@ that once before the guard existed, which is why the guard exists.
 redirects and the deep links `#audience` and `#w-lines` loaded at 390px with
 a gutter, no horizontal scroll and a clean console.
 
+## D-235 — Two readings from one template on one page: a prefix and a root
+
+**Why.** `shared/room.js` builds a room from a spec into fixed skeleton ids —
+`room-number`, `room-chart`, `room-inputs` and the rest. That was right while
+a template room was a whole page. The 93-to-30 merge (D-229) puts several
+template rooms into one room as readings, and a second copy on the same page
+writes into the first one's nodes and answers the first one's controls.
+
+**Decision.** `mount()` takes two optional fields, and they are passed
+together or not at all: `prefix`, which puts every skeleton id behind a name
+of that reading's own (`es-room-number`), and `root`, the id of the section
+the reading lives in. The prefix also reaches `control()`, so two readings
+may use the same `ctl` name without colliding, and it keeps ids unique for
+deep links. The `root` scopes the template's four document listeners: a
+reading ignores a control that is not inside it. With neither set, every
+lookup and every listener is exactly what it was.
+
+**Replaces or removes.** Nothing. It is additive, and the frozen shape
+(D-097) is unchanged: one number, one chart, the lens, the inputs, the
+drawer, the why, the scope line.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` and `node test/forms.js` (619 checks) with
+no template room passing either field — the existing rooms are untouched.
+Then on the first page to use it (Protection, D-236): tapping a control in
+the second reading wrote that reading's own field and left the first
+reading's cover fields alone, with a clean console.
+
+## D-236 — Protection: cover, and where it goes
+
+**Why.** Estate Basics was one fact asked three times — beneficiaries, a
+will, a power of attorney. Rule 4 of D-229: a single fact is a card in the
+room where it changes a decision, and the decision it changes is what stands
+behind you.
+
+**Decision.** `rooms/protection.html` gains a second reading:
+`#cover` (what a bad year costs against what is held) and `#where-it-goes`
+(the three facts, and what would pass without them). The three estate fields
+move their owner to `protection` at `#es-inputs`, with the boxes that ask
+them. Both readings are built from `shared/room.js`, so the second carries
+the prefix and root of D-235.
+
+**Replaces or removes.** One registry room (75 → 74), a redirect carrying its
+deep links. `askIn` for the three facts now names Protection.
+
+**Stored shape.** No change. `household.estate` is written by the same
+`Spine.set('estate.…')` calls, from the same controls, in a new place.
+
+**Verified.** `node test/run.js` (30,994 checks). Both readings, the redirect
+and the deep links `#es-inputs` and `#inputs` at 390px with a clean console,
+and a write from the estate reading landing on `estate.beneficiariesSet`
+while the cover fields stayed null.
+
 ---
 
 # The Dungeons & Dividends entries
