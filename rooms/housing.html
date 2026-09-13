@@ -6,59 +6,189 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Housing Decision · SPARKS</title>
-<meta name="description" content="Rent against buying, this place, this rate: the monthly cost of each, the price-to-rent ratio, and the years to a down payment."/>
+<title>Housing · SPARKS</title>
+<meta name="description" content="Rent against buying at this price and this rate, the four ways into a deposit with the date on each, and a property priced the way it actually runs."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-099.
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md
+  D-101, D-225, D-227, D-250 (the merge). Registry: housing.
 
-  1. READS   A month's spending, gross income and cash (owned by Start
-             Here), the state, and Start Here's "no rent" answer
-             (meta.noRent).
-  2. WRITES  It OWNS household.housing — the rent a month, the place's
-             price, the down payment share and the mortgage rate. Nothing
-             else edits those; it touches nothing else.
-  3. CALLS   engines/housing.js. The mortgage payment is
-             engines/projection.js's levelPaymentCents (the one amortisation
-             in the repo); the housing-ratio band is read through
-             engines/ratios.js's verdict; a year of savings comes from
-             engines/tier0.js's savingsRate, the lens's basis.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses for income, spending and cash, proposes a
-             rent (30% of gross), a price (18× a year of rent), 20% down
-             and the dated rate through Suggest, and says what it needs
-             until the price is entered. Empty is not zero: no price, no
-             comparison.
-  5. CONFIG  data/housing_conventions.json, data/price_to_rent.json,
-             data/mortgage_rates.json, data/ratio_benchmarks.json.
+  THREE READINGS OF THE SAME PLACE.
 
-  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens,
-  four inputs, the assumptions drawer with sources, why this matters at
-  your stage, one out-of-scope line to Get Help. The ids below are the
-  deep links.
+    #rent-or-buy   this place, this rate: the monthly cost of each, the
+                   price-to-rent ratio, and the years to a deposit
+    #the-deposit   four ways in, each with its date — 3.5%, 5%, 10% and
+                   20% down — and what each costs a month once you are in
+    #the-deal      a property priced the way it actually runs: the
+                   reserves a listing leaves out, the four ways it pays,
+                   and the things that break it
 
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
+  All three are the same building at the same price and rate, asked
+  differently: should I buy it, can I get in, and does it pay. Rule 1 of
+  D-229 — and the map named The Deal here the day it arrived on main, which
+  is what the map is for. The house hack (D-225) already ships inside this
+  room and never became a room of its own.
+
+  1. READS   what you earn, what you have in cash, and the month.
+  2. WRITES  the four housing fields as before. NEITHER of the other two
+             readings writes anything: a place you are weighing is a
+             what-if, not a fact about you (D-052), and both say so.
+  3. CALLS   the engines each reading already called; no arithmetic moved.
+  4. EMPTY   no price typed is no price typed. Each reading names the
+             figure it needs rather than inventing one.
+  5. CONFIG  the tables each engine names.
+
   THEMING: none this pass. A theme is a class on <body> and a palette in
   shared/theme.css.
+
+  LIVE-FORM: guarded. Each reading keeps the discipline it had; switching
+  readings hides and shows and rebuilds nothing (D-034).
 -->
 <style>
-  section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- Rent or buy, from rooms/housing.html (D-250) ---- */
+  
+  #view-rent-or-buy section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-rent-or-buy .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- The deposit, from rooms/down-payment.html (D-250) ---- */
+  
+  #view-the-deposit .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
+  
+  #view-the-deposit .ask > div:first-child { grid-column: 1 / -1; }
+  
+  #view-the-deposit .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  
+  #view-the-deposit ul.opts { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-deposit ul.opts li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-deposit ul.opts li:first-child { border-top: none; }
+  
+  #view-the-deposit ul.opts .lab { font-weight: 600; }
+  
+  #view-the-deposit ul.opts .when { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-1) 0; }
+  
+  #view-the-deposit ul.opts .when.is-never { font-size: var(--text-md); }
+  
+  #view-the-deposit ul.opts small { display: block; color: var(--color-text-muted); font-size: var(--text-xs); line-height: var(--leading-loose); }
+  @media (max-width: 480px) { 
+  #view-the-deposit .ask { grid-template-columns: 1fr; } }
+
+  /* ---- The deal, from rooms/property.html (D-250) ---- */
+  
+  #view-the-deal .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); }
+  @media (max-width: 420px) { 
+  #view-the-deal .grid2 { grid-template-columns: 1fr; } }
+  
+  #view-the-deal .wide { grid-column: 1 / -1; }
+  
+  #view-the-deal .verdict { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  @media (max-width: 460px) { 
+  #view-the-deal .verdict { grid-template-columns: 1fr; } }
+  
+  #view-the-deal .verdict .side { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  
+  #view-the-deal .verdict .side.is-real { border-color: var(--color-accent); }
+  
+  #view-the-deal .verdict .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .07em; color: var(--color-text-faint); }
+  
+  #view-the-deal .verdict .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: 4px; }
+  
+  #view-the-deal .verdict .big.is-bad { color: var(--color-critical); }
+  
+  #view-the-deal .verdict .big.is-good { color: var(--color-positive); }
+  
+  #view-the-deal .verdict .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 4px; line-height: var(--leading-loose); }
+  
+  #view-the-deal .gap { margin-top: var(--space-3); border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.08); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: var(--space-2) var(--space-3); font-size: var(--text-sm); }
+  
+  #view-the-deal .gap b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  
+  #view-the-deal ul.stack { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-the-deal ul.stack li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-deal ul.stack li:first-child { border-top: none; }
+  
+  #view-the-deal ul.stack li.is-total { border-top: 2px solid var(--color-border-strong); font-weight: 600; }
+  
+  #view-the-deal ul.stack .amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-deal ul.stack small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  
+  #view-the-deal ul.parts { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-deal ul.parts li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: baseline; }
+  
+  #view-the-deal ul.parts li:first-child { border-top: none; }
+  
+  #view-the-deal ul.parts .lab { font-weight: 600; }
+  
+  #view-the-deal ul.parts .amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-deal ul.parts .say { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); line-height: var(--leading-loose); }
+  
+  #view-the-deal .screens { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-the-deal .screen { border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); font-size: var(--text-sm); }
+  
+  #view-the-deal .screen .tag { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; }
+  
+  #view-the-deal .screen .tag.is-pass { color: var(--color-positive); }
+  
+  #view-the-deal .screen .tag.is-fail { color: var(--color-caution); }
+  
+  #view-the-deal .screen .caveat { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; }
+  
+  #view-the-deal ul.scen { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-the-deal ul.scen li { display: grid; grid-template-columns: auto 1fr auto; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); align-items: baseline; }
+  
+  #view-the-deal ul.scen li:first-child { border-top: none; }
+  
+  #view-the-deal ul.scen .mark { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .05em; }
+  
+  #view-the-deal ul.scen .mark.is-holds { color: var(--color-positive); }
+  
+  #view-the-deal ul.scen .mark.is-fails { color: var(--color-critical); }
+  
+  #view-the-deal ul.scen .amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-deal ul.scen small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  
+  #view-the-deal .flag { font-size: var(--text-sm); border-left: 3px solid var(--color-critical); background: rgba(229,72,77,.08); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: var(--space-2) var(--space-3); margin-top: var(--space-2); line-height: var(--leading-loose); }
+  
+  #view-the-deal .assumed { font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-loose); margin: var(--space-2) 0 0; }
+  
+  #view-the-deal .need { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  
+  #view-the-deal .card-gap { margin-top: var(--space-4); }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Housing Decision</h1>
-  <p class="room-lede">Rent against buying, this place, this rate: the monthly cost of each, the price-to-rent ratio, and the years to a down payment.</p>
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Housing</h1>
+  <p class="room-lede">Rent or buy, what the deposit takes, and whether the building pays.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Three readings of the same place">
+    <a href="#rent-or-buy" data-view="view-rent-or-buy">Rent or buy</a>
+    <a href="#the-deposit" data-view="view-the-deposit">The deposit</a>
+    <a href="#the-deal" data-view="view-the-deal">The deal</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ===== RENT OR BUY (was rooms/housing.html) ===== -->
+  <section id="view-rent-or-buy">
+  <p class="slaf-lede">Rent against buying, this place, this rate: the monthly cost of each, the price-to-rent ratio, and the years to a down payment.</p>
   <div class="room-standalone" id="room-standalone" hidden></div>
 
   <section class="slaf-card" id="number">
@@ -98,12 +228,132 @@
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
   </section>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. The rate is a dated average,
-    not a quote; the carrying costs are national rules of thumb. Your
-    numbers stay in this browser.
-  </p>
+  <!-- ===== THE DEPOSIT (was rooms/down-payment.html) ===== -->
+  <section id="view-the-deposit" hidden>
+  <p class="slaf-lede">Four ways in, each with its date: what the lender needs in cash at 3.5%, 5%, 10% and 20% down, and what each costs a month once you are in.</p>
+  <section class="slaf-card" id="dp-inputs">
+    <span class="slaf-eyebrow">The home, and the fund</span>
+    <div class="ask">
+      <div><label for="in-price">Home price</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-price" placeholder="e.g. 400,000" aria-label="Home price"/></span>
+        <span class="slaf-hint">The app has no price table; type the price of the kind of place you mean.</span></div>
+      <div><label for="in-saved">Set aside for it</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-saved" placeholder="e.g. 20,000" aria-label="Set aside for it"/></span></div>
+      <div><label for="in-monthly">Saved toward it, a month</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-monthly" placeholder="e.g. 1,000" aria-label="Saved toward it a month"/></span></div>
+      <div><label for="in-family">Family help, if any</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-family" placeholder="only if promised" aria-label="Family help"/></span></div>
+      <div><label for="in-rate">Mortgage rate</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-rate" placeholder="e.g. 6.5" aria-label="Mortgage rate"/><span class="slaf-affix">%</span></span></div>
+    </div>
+  </section>
+  <section class="slaf-card" id="options" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Four ways in</span>
+    <p class="slaf-hint" id="d-sub" style="margin:var(--space-2) 0 0"></p>
+    <ul class="opts" id="d-opts"></ul>
+    <p style="margin:var(--space-3) 0 0"><button type="button" class="slaf-btn slaf-btn--quiet" id="add-block" hidden>Add this as a block</button> <span class="slaf-hint" id="block-note"></span></p>
+  </section>
+  </section>
+
+  <!-- ===== THE DEAL (was rooms/property.html) ===== -->
+  <section id="view-the-deal" hidden>
+  <p class="slaf-lede">A property priced the way it actually runs, not the way it is advertised. The reserves a listing leaves out, the four ways it pays, and the things that break it.</p>
+  <section class="slaf-card" id="deal">
+    <span class="slaf-eyebrow">The deal</span>
+    <div class="grid2" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Price</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="pr-in-price" placeholder="e.g. 320,000" aria-label="Price"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Down payment</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-down" placeholder="e.g. 20" aria-label="Down payment percent"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Mortgage rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="pr-in-rate" placeholder="e.g. 6.9" aria-label="Mortgage rate"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">HOA or condo fee, a month</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-hoa" placeholder="none" aria-label="HOA fee"/></span></label>
+    </div>
+    <p class="need" id="need" hidden></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="month" hidden>
+    <span class="slaf-eyebrow">What it costs a month</span>
+    <ul class="stack" id="stack"></ul>
+    <p class="assumed" id="cost-assumed"></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="letting">
+    <span class="slaf-eyebrow">Let it out</span>
+    <label class="slaf-field" style="margin-top:var(--space-3);max-width:320px"><span class="slaf-label">The rent it would bring, a month</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-rent" placeholder="e.g. 2,400" aria-label="Monthly rent"/></span></label>
+    <div id="let-out" hidden>
+      <div class="verdict">
+        <div class="side">
+          <span class="cap">What a listing would say</span>
+          <div class="big" id="adv"></div>
+          <p class="sub">The rent, less the mortgage. Nothing else.</p>
+        </div>
+        <div class="side is-real">
+          <span class="cap">What it actually does</span>
+          <div class="big" id="real"></div>
+          <p class="sub">After the months it sits empty, the capital that replaces a roof, and the work of managing it.</p>
+        </div>
+      </div>
+      <p class="gap" id="gap"></p>
+      <ul class="stack" id="let-stack"></ul>
+      <div id="let-flags"></div>
+      <div class="screens" id="screens"></div>
+      <p class="assumed" id="let-assumed"></p>
+    </div>
+  </section>
+
+  <section class="slaf-card card-gap" id="return" hidden>
+    <span class="slaf-eyebrow">The four ways it pays</span>
+    <div class="grid2" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Years you would hold it</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-years" placeholder="e.g. 5" aria-label="Years held"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Your tax bracket</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-marginal" placeholder="leave blank to skip" aria-label="Marginal tax rate"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">Growth a year, if you want to assert one</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-appreciation" placeholder="blank means none assumed" aria-label="Appreciation rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <ul class="parts" id="parts"></ul>
+    <p class="slaf-hint" id="return-say" style="margin:var(--space-3) 0 0"></p>
+    <p class="assumed" id="return-assumed"></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="stress" hidden>
+    <span class="slaf-eyebrow">What breaks it</span>
+    <p class="slaf-hint" id="stress-say" style="margin:var(--space-2) 0 0"></p>
+    <ul class="scen" id="scenarios"></ul>
+  </section>
+
+  <section class="slaf-card card-gap" id="hack">
+    <span class="slaf-eyebrow">Live in one, let the rest</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">The rent of each unit you would let, and what you would otherwise pay to rent a place of your own.</p>
+    <div class="grid2">
+      <label class="slaf-field"><span class="slaf-label">Unit one, a month</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-unit1" placeholder="e.g. 1,500" aria-label="First unit rent"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Unit two</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-unit2" placeholder="if there is one" aria-label="Second unit rent"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Unit three</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-unit3" placeholder="if there is one" aria-label="Third unit rent"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">What renting would cost you</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-yourrent" placeholder="e.g. 1,600" aria-label="Your rent otherwise"/></span></label>
+    </div>
+    <div id="hack-out" hidden>
+      <ul class="stack" id="hack-stack"></ul>
+      <div id="hack-notes"></div>
+      <p class="assumed" id="hack-assumed"></p>
+    </div>
+  </section>
+
+  <section class="slaf-card card-gap" id="pr-assumptions">
+    <span class="slaf-eyebrow">Where the rates come from</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Every rate on this page is a national rule of thumb from <code>data/housing_conventions.json</code>, not a quote for this building. Property tax alone runs from under 0.3% to over 2% by state. Get the real figures before you sign anything: the tax bill, an insurance quote, and the actual rents on the street.</p>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. A price you are weighing is a what-if, not a fact about you. Everything stays in this browser.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -131,8 +381,80 @@
 <script src="../engines/housing.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/expr.js"></script>
+<script src="../shared/scenarios.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../engines/countdown.js"></script>
+<script src="../engines/downpayment.js"></script>
+<script src="../shared/blocks.js"></script>
+<script src="../engines/ownership.js"></script>
 <script src="../shared/room.js"></script>
 <script>
+/* ---- rent or buy, the deposit, the deal (D-250) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   The hash still reaches it — an old link must land somewhere honest — and
+   the reading says for whom it is, which is what Gate.why is for. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-the-deposit', match: /^#(the-deposit|dp-|options|d-opts|d-sub|add-block|block-note)/ },
+    { id: 'view-the-deal', match: /^#(the-deal|pr-|deal|hack|hack-|letting|let-|stress|stress-|return|return-|scenarios|screens|stack|parts|month|need|gap|adv|real|cost-assumed)/ },
+    { id: 'view-rent-or-buy', match: /.*/ }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. When the hash asks for a reading the gate has taken
+       away, fall back to the DEFAULT — the room's plainest reading, and the
+       one the person would have got with no hash at all — not to whichever
+       gated reading happens to sit first in this list. */
+    var fallback = VIEWS[VIEWS.length - 1];
+    var on = open(asked) ? asked
+           : open(fallback) ? fallback
+           : VIEWS.filter(open)[0] || fallback;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('housing');
+  if (SLAF.Progress) SLAF.Progress.mount('housing');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-rent-or-buy, from rooms/housing.html (D-250) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -190,6 +512,7 @@
 
   Room.mount({
     id: 'housing',
+    part: true,
     tables: ['housingConventions', 'priceToRent', 'mortgageRates', 'ratioBenchmarks', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'levers'],
     reads: ['rentMonthly', 'monthlyExpenses', 'grossAnnualIncome', 'cashSavings', 'state'],
 
@@ -321,6 +644,248 @@
     },
 
     scope: 'This room does not know your market, your credit, closing details, or whether prices or rents will rise.'
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-deposit, from rooms/down-payment.html (D-250) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, DownPayment = SLAF.DownPayment, Blocks = SLAF.Blocks, Scenarios = SLAF.Scenarios;
+  var ROOM_ID = 'housing';   /* the room this reading lives in */
+  var TABLES = null, LAST = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '"': '&quot;', '>': '&gt;' }[c]; }); }
+  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
+  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
+  function render() {
+    if (!TABLES) return;
+    var rateTyped = String(el('in-rate').value || '').trim();
+    var rate = rateTyped === '' ? null : Number(rateTyped.replace(/[^0-9.]/g, '')) / 100;
+    if (!el('in-rate').value && TABLES.mortgageRates) el('in-rate').placeholder = 'e.g. ' + (Math.round(TABLES.mortgageRates.thirtyYearFixed * 1000) / 10);
+    var r = DownPayment.plan(TABLES, { priceCents: typed('in-price'), savedCents: typed('in-saved'), monthlyCents: typed('in-monthly'), familyHelpCents: typed('in-family'), rate: Number.isFinite(rate) && rate > 0 ? rate : null });
+    LAST = Money.isOk(r) ? r : null;
+    el('add-block').hidden = !LAST;
+    if (!Money.isOk(r)) { el('d-sub').textContent = r.reason; el('d-opts').innerHTML = ''; return; }
+    el('d-sub').textContent = 'A ' + Money.formatCents(r.priceCents) + ' home at ' + Money.formatRate(r.rate, { decimals: 2 }) + ' over 30 years, with ' + Money.formatCents(r.savedCents) + ' set aside and ' + Money.formatCents(r.monthlyCents) + ' a month going in' + (r.familyHelpCents ? ', and ' + Money.formatCents(r.familyHelpCents) + ' of family help' : '') + '. Closing costs about ' + Money.formatCents(r.closingCents) + ' in every case.';
+    el('d-opts').innerHTML = r.options.map(function (o) {
+      var when = o.reachedNow ? 'You could buy now.' : o.neverAtThisPace ? 'Not at this pace: ' + Money.formatCents(o.monthlyNeededCents) + ' a month would get there in ' + r.honestYears + ' years.' : monthWord(o.date);
+      return '<li data-pct="' + o.pct + '"><span class="lab">' + esc(o.label) + '</span><div class="when' + (o.neverAtThisPace ? ' is-never' : '') + '">' + esc(when) + '</div>'
+        + '<small>Needs ' + esc(Money.formatCents(o.neededCents)) + ': ' + esc(Money.formatCents(o.downCents)) + ' down, ' + esc(Money.formatCents(o.closingCents)) + ' closing, ' + esc(Money.formatCents(o.reservesCents)) + ' in reserve' + (o.familyHelpCents ? ', less ' + esc(Money.formatCents(o.familyHelpCents)) + ' of help' : '') + '.</small>'
+        + '<small>' + esc(Money.formatCents(o.paymentCents)) + ' a month: ' + esc(Money.formatCents(o.principalInterestCents)) + ' principal and interest, ' + esc(Money.formatCents(o.taxCents)) + ' tax, ' + esc(Money.formatCents(o.insuranceCents)) + ' insurance' + (o.miCents ? ', ' + esc(Money.formatCents(o.miCents)) + ' mortgage insurance' : '') + '.</small></li>';
+    }).join('');
+  }
+  ['in-price', 'in-saved', 'in-monthly', 'in-family', 'in-rate'].forEach(function (id) { el(id).addEventListener('input', render); });
+  el('add-block').addEventListener('click', function () {
+    if (!LAST) return;
+    var twenty = LAST.options.filter(function (o) { return o.pct === 0.2; })[0] || LAST.options[LAST.options.length - 1];
+    var h = Spine.getProfile();
+    var built = Blocks.build('home', { price: LAST.priceCents, down: twenty.downCents, when: twenty.date || null, state: h.state || null }, h, { label: 'Home: ' + Money.formatCents(LAST.priceCents), start: twenty.date || null });
+    if (!Money.isOk(built)) { el('block-note').textContent = built.reason; return; }
+    var b = Scenarios.addBlock(built.value);
+    el('block-note').textContent = 'Saved as a block: ' + b.label + (b.dates[0] ? ', from ' + monthWord(b.dates[0].start) : '') + '. It lives beside your numbers, never in them.';
+  });
+  Spine.onChange(render);
+  Reference.load(['downPayment', 'housingConventions', 'mortgageRates', 'blockHome', 'states']).then(function (t) { TABLES = t; Blocks.use(t); render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-deal, from rooms/property.html (D-250) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Own = SLAF.Owning;
+  var ROOM_ID = 'housing';   /* the room this reading lives in */
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function m(cents) { return Money.formatCents(cents); }
+  /* The boxes carry their own $ affix, so the value inside must not. */
+  function plain(cents) { return Money.isEntered(cents) ? Money.formatCents(cents, { decimals: 0 }).replace(/[$]/g, '') : ''; }
+  function signed(cents) { return (cents < 0 ? '−' : '') + Money.formatCents(Math.abs(cents)); }
+
+  /* ---- The record: one deal, in household.property[] -------------------- */
+  function record() {
+    var list = (Spine.getProfile().property || []);
+    return list.filter(function (p) { return p.priceCents !== undefined; })[0] || list[0] || null;
+  }
+  function put(patch) {
+    var r = record();
+    Spine.upsertProperty(Schema.createProperty(Object.assign({}, r || {}, patch)));
+  }
+  function pctOf(raw) {
+    var n = Money.parseMoney(raw);
+    return Money.isEntered(n) ? n / 10000 : null;   /* "6.9" → 0.069 */
+  }
+  function pctText(rate) { return Money.isEntered(rate) ? String(Math.round(rate * 10000) / 100) : ''; }
+
+  /* ---- Inputs: built once in the markup, only ever read and set --------- */
+  var MONEY_IN = { 'pr-in-price': 'priceCents', 'in-hoa': 'hoaMonthlyCents', 'in-rent': 'rentMonthlyCents', 'in-yourrent': 'yourRentMonthlyCents' };
+  var RATE_IN = { 'in-down': 'downPct', 'pr-in-rate': 'rate', 'in-marginal': 'marginalRate', 'in-appreciation': 'appreciationRate' };
+  var UNIT_IN = ['in-unit1', 'in-unit2', 'in-unit3'];
+
+  function commit() {
+    var patch = {};
+    Object.keys(MONEY_IN).forEach(function (id) {
+      var v = Money.parseMoney(el(id).value);
+      patch[MONEY_IN[id]] = Money.isEntered(v) ? v : null;
+    });
+    Object.keys(RATE_IN).forEach(function (id) { patch[RATE_IN[id]] = pctOf(el(id).value); });
+    var years = Money.parseMoney(el('in-years').value);
+    patch.yearsHeld = Money.isEntered(years) ? Math.round(years / 100) : null;
+    patch.unitRentsCents = UNIT_IN.map(function (id) { return Money.parseMoney(el(id).value); })
+      .filter(function (v) { return Money.isEntered(v) && v > 0; });
+    put(patch);
+  }
+  function fill() {
+    var r = record() || {};
+    Object.keys(MONEY_IN).forEach(function (id) {
+      var v = r[MONEY_IN[id]];
+      if (document.activeElement !== el(id)) el(id).value = plain(v);
+    });
+    Object.keys(RATE_IN).forEach(function (id) {
+      if (document.activeElement !== el(id)) el(id).value = pctText(r[RATE_IN[id]]);
+    });
+    if (document.activeElement !== el('in-years')) el('in-years').value = Money.isEntered(r.yearsHeld) ? String(r.yearsHeld) : '';
+    UNIT_IN.forEach(function (id, i) {
+      var v = (r.unitRentsCents || [])[i];
+      if (document.activeElement !== el(id)) el(id).value = plain(v);
+    });
+  }
+  ['pr-in-price', 'in-down', 'pr-in-rate', 'in-hoa', 'in-rent', 'in-yourrent', 'in-years', 'in-marginal', 'in-appreciation']
+    .concat(UNIT_IN).forEach(function (id) {
+      el(id).addEventListener('change', commit);
+      el(id).addEventListener('blur', function () { commit(); fill(); });
+    });
+
+  /* ---- The readings: output only, never an input ------------------------ */
+  function opts(extra) {
+    var r = record() || {};
+    return Object.assign({
+      priceCents: r.priceCents, downPct: r.downPct, annualRate: r.rate,
+      hoaMonthlyCents: r.hoaMonthlyCents, tables: TABLES
+    }, extra || {});
+  }
+  function line(label, cents, note) {
+    return '<li><span>' + esc(label) + (note ? '<small>' + esc(note) + '</small>' : '') + '</span><span class="amt">' + esc(m(cents)) + '</span></li>';
+  }
+  function assumedText(list) { return list && list.length ? 'Taken as read: ' + list.join('; ') + '.' : ''; }
+
+  function render() {
+    if (!TABLES) return;
+    var r = record() || {};
+    var base = Own.cost(opts());
+
+    el('month').hidden = !Money.isOk(base);
+    el('need').hidden = Money.isOk(base);
+    if (!Money.isOk(base)) {
+      el('need').textContent = base.reason;
+      el('letting').querySelector('#let-out').hidden = true;
+      el('return').hidden = true; el('stress').hidden = true;
+      el('hack-out').hidden = true;
+      return;
+    }
+    /* The month, line by line. */
+    el('stack').innerHTML = line('Mortgage payment', base.paymentCents, 'Of which ' + m(base.principalFirstMonthCents) + ' is the loan going down, not a cost')
+      + line('Property tax', base.propertyTaxMonthlyCents)
+      + line('Insurance', base.insuranceMonthlyCents)
+      + line('Repairs', base.maintenanceMonthlyCents)
+      + (base.pmiMonthlyCents ? line('Mortgage insurance', base.pmiMonthlyCents, 'Because the down payment is under a fifth') : '')
+      + (base.hoaMonthlyCents ? line('HOA or condo fee', base.hoaMonthlyCents) : '')
+      + '<li class="is-total"><span>Leaves the account each month</span><span class="amt">' + esc(m(base.totalMonthlyCents)) + '</span></li>'
+      + line('Cash to close', base.cashToCloseCents, 'The down payment plus closing costs');
+    el('cost-assumed').textContent = assumedText(base.assumed);
+
+    /* Let it out. */
+    var u = Own.underwrite(opts({ grossRentMonthlyCents: r.rentMonthlyCents }));
+    var haveRent = Money.isOk(u);
+    el('let-out').hidden = !haveRent;
+    if (haveRent) {
+      el('adv').textContent = signed(u.advertisedCashFlowMonthlyCents) + ' a month';
+      el('adv').className = 'big';
+      el('real').textContent = signed(u.cashFlowMonthlyCents) + ' a month';
+      el('real').className = 'big ' + (u.cashFlowMonthlyCents < 0 ? 'is-bad' : 'is-good');
+      el('gap').innerHTML = 'The difference is <b>' + esc(m(u.reservesMissedMonthlyCents)) + ' a month</b>: '
+        + esc(m(u.vacancyCents)) + ' of empty months, ' + esc(m(u.capexMonthlyCents)) + ' set aside for what wears out, and '
+        + esc(m(u.managementMonthlyCents)) + ' of management. None of the three is optional. They are just late.';
+      el('let-stack').innerHTML = u.lines.map(function (l) { return line(l.label, l.cents, l.note); }).join('')
+        + '<li class="is-total"><span>Net operating income</span><span class="amt">' + esc(m(u.noiMonthlyCents)) + '</span></li>'
+        + line('The loan', u.debtServiceMonthlyCents)
+        + '<li class="is-total"><span>' + (u.cashFlowMonthlyCents < 0 ? 'It costs you' : 'It clears') + '</span><span class="amt">' + esc(signed(u.cashFlowMonthlyCents)) + '</span></li>';
+      el('let-flags').innerHTML = u.flags.map(function (f) { return '<p class="flag">' + esc(f) + '</p>'; }).join('');
+      el('screens').innerHTML = u.screens.map(function (s) {
+        return '<div class="screen"><span class="tag ' + (s.passes ? 'is-pass' : 'is-fail') + '">' + esc(s.label) + ' · ' + (s.passes ? 'passes' : 'fails') + '</span> '
+          + esc(s.say) + '<p class="caveat">' + esc(s.caveat) + '</p></div>';
+      }).join('');
+      el('let-assumed').textContent = assumedText(u.assumed);
+    }
+
+    /* The four ways it pays. */
+    var t = Money.isEntered(r.yearsHeld) ? Own.totalReturn(opts({
+      grossRentMonthlyCents: r.rentMonthlyCents, years: r.yearsHeld,
+      marginalRate: r.marginalRate, appreciationRate: r.appreciationRate })) : null;
+    el('return').hidden = !haveRent;
+    if (haveRent) {
+      if (t && Money.isOk(t)) {
+        el('parts').innerHTML = t.parts.map(function (p) {
+          return '<li><span class="lab">' + esc(p.label) + '</span><span class="amt">' + esc(signed(p.cents)) + '</span>'
+            + '<span class="say">' + esc(p.say) + '</span></li>';
+        }).join('') + '<li><span class="lab">Over ' + esc(String(t.years)) + ' years, on ' + esc(m(t.cashInvestedCents)) + ' in</span>'
+          + '<span class="amt">' + esc(signed(t.totalCents)) + '</span>'
+          + '<span class="say">' + (t.returnOnCash === null ? '' : esc(Math.round(t.returnOnCash * 1000) / 10) + '% on the cash put in, about ' + esc(Math.round(t.annualisedReturn * 1000) / 10) + '% a year. ')
+          + 'Of that, ' + esc(signed(t.spendableCents)) + ' is money you could spend; ' + esc(signed(t.lockedCents)) + ' is locked in the building until you sell or borrow against it.</span></li>';
+        el('return-say').textContent = '';
+        el('return-assumed').textContent = assumedText(t.assumed);
+      } else {
+        el('parts').innerHTML = '';
+        el('return-say').textContent = 'Add the years you would hold it to split the return four ways.';
+        el('return-assumed').textContent = '';
+      }
+    }
+
+    /* What breaks it. */
+    var st = haveRent ? Own.stress(opts({ grossRentMonthlyCents: r.rentMonthlyCents })) : null;
+    el('stress').hidden = !(st && Money.isOk(st));
+    if (st && Money.isOk(st)) {
+      el('stress-say').textContent = st.say;
+      el('scenarios').innerHTML = st.scenarios.map(function (s) {
+        return '<li><span class="mark ' + (s.survives ? 'is-holds' : 'is-fails') + '">' + (s.survives ? 'holds' : 'fails') + '</span>'
+          + '<span>' + esc(s.label) + '<small>' + esc(s.say) + '</small></span>'
+          + '<span class="amt">' + (s.oneOffCents ? esc(m(s.oneOffCents)) : esc(signed(s.cashFlowMonthlyCents)) + '/mo') + '</span></li>';
+      }).join('');
+    }
+
+    /* Live in one, let the rest. */
+    var k = Own.houseHack(opts({ unitRentsCents: r.unitRentsCents || [], rentMonthlyCents: r.yourRentMonthlyCents,
+      years: r.yearsHeld, annualReturn: r.appreciationRate }));
+    el('hack-out').hidden = !Money.isOk(k);
+    if (Money.isOk(k)) {
+      el('hack-stack').innerHTML = line('Owning it, everything in', k.fullMonthlyCents, 'Including the reserves: the building needs them whether or not you sleep in it')
+        + line('The ' + (k.unitsLet === 1 ? 'let unit brings' : k.unitsLet + ' let units bring'), k.collectedMonthlyCents, 'After ' + m(k.vacancyCents) + ' of empty months')
+        + '<li class="is-total"><span>' + (k.theyPayYou ? 'So they cover it, and pay you' : 'So living there costs you') + '</span><span class="amt">' + esc(m(Math.abs(k.youPayMonthlyCents))) + ' a month</span></li>'
+        + (Money.isEntered(k.rentMonthlyCents)
+          ? line('Renting a place of your own', k.rentMonthlyCents)
+            + '<li class="is-total"><span>' + (k.beatsRenting ? 'It frees up' : 'It costs you more, by') + '</span><span class="amt">' + esc(m(Math.abs(k.savingMonthlyCents))) + ' a month</span></li>'
+            + (Money.isEntered(k.savingInvestedCents) ? line('That difference, over ' + k.years + ' years', k.savingInvestedCents, Money.isEntered(k.annualReturn) ? 'Invested at ' + Math.round(k.annualReturn * 1000) / 10 + '% a year' : 'Set aside, not invested') : '')
+            + (Money.isEntered(k.principalPaidCents) ? line('And the loan the tenants pay down', k.principalPaidCents) : '')
+          : '')
+        + line('If the biggest unit empties, you pay', k.ifBiggestUnitEmpties.youPayMonthlyCents);
+      el('hack-notes').innerHTML = k.notes.map(function (n) { return '<p class="flag" style="border-left-color:var(--color-caution);background:rgba(232,184,75,.08)">' + esc(n) + '</p>'; }).join('');
+      el('hack-assumed').textContent = assumedText(k.assumed);
+    }
+  }
+
+  function paint() { fill(); render(); }
+  Spine.onChange(paint);
+  Reference.load(['housingConventions']).then(function (t) {
+    TABLES = t;
+    paint();
+  }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'Couldn’t load data/housing_conventions.json (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
   });
 })();
 </script>

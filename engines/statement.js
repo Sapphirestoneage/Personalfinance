@@ -37,7 +37,8 @@
       Schema: root.SLAF && root.SLAF.Schema,
       Tier0: root.SLAF && root.SLAF.Tier0,
       Fire: root.SLAF && root.SLAF.Fire,
-      Ownership: root.SLAF && root.SLAF.Ownership
+      /* the property engine, which publishes as Owning since D-250 */
+      Ownership: root.SLAF && root.SLAF.Owning
     };
   }
   var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Fire, deps.Ownership);

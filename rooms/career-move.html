@@ -133,7 +133,7 @@
   function currentWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
   function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
   function signed(cents) { return (cents > 0 ? '+' : '') + perHour(cents); }
-  function rhwLink() { return Ownership.linkTo('real-hourly-wage', 'inputs'); }
+  function rhwLink() { return Ownership.linkTo('income', 'rhw-inputs'); }
 
   /* The offer this room proposes when none is typed: the Change jobs lever
      from data/levers.json, applied to what you earn now. Read through the

@@ -14448,6 +14448,53 @@ the fields.
 **Compatibility.** No stored shape changes. Checked against the pre-merge
 pages: all three readings render identically.
 
+### D-250 — Housing: rent or buy, the deposit, the deal
+
+**Decision.** The Down Payment Countdown and The Deal become readings of
+Housing. Three hats: `#rent-or-buy` (the default), `#the-deposit`,
+`#the-deal`. Both old pages redirect, hash and all.
+
+**Why.** One building at one price and one rate, asked three ways: should I
+buy it, can I get in, and does it pay. Rule 1 of D-229, and the map named
+The Deal here the day it arrived on main — which is what the map is for.
+The house hack (D-225) already ships inside this room.
+
+**Ownership.** Nothing moves. Housing keeps its four fields; neither other
+reading owns anything, because a place you are weighing is a what-if, not a
+fact about you (D-052).
+
+### Three real bugs this merge exposed
+
+**1. Two modules called `SLAF.Ownership`.** `shared/ownership.js` is the
+field-ownership map; `engines/ownership.js` is the property engine that
+arrived with D-227. They had never shared a page. On the merged page the
+engine loaded second and clobbered the map, so the rent-or-buy reading
+called `Ownership.describe` and got a property engine — the whole reading
+rendered blank behind a "couldn't load the reference tables" notice. The
+engine now publishes as **`SLAF.Owning`**, and both files say so at the top.
+
+**2. `apply_renames` renamed markup but not every reference.** It knew
+`id="x"`, `el('x')`, `getElementById('x')` and `'#x'`. The Deal reads its
+boxes out of a map — `{ 'in-price': 'priceCents' }` — and down-payment out
+of an array of ids, and neither idiom was covered. So The Deal's markup moved
+to `pr-in-price` while its script still asked for `in-price` and found the
+DEPOSIT reading's hidden input. It renames the whole-word string literal in
+both quotes now, which subsumes every helper that takes an id.
+
+**3. Twelve dead links.** `Ownership.linkTo` returns `'#'` for a room that
+is not in the registry. Eleven rooms and the dashboard still linked to rooms
+that had become readings — and one of them, `sleep-at-night`, had been dead
+since D-232 with nothing to say so. All twelve are repointed at the reading
+that replaced them.
+
+### The three checks that should have existed first
+
+- every page gives every element its own id (a duplicate id is silent in a
+  browser and lets one reading write into another's node);
+- every `linkTo` names a live room, and every whole-literal anchor is an id
+  on that page, a card the gate declares, or a hash its router routes;
+- the LIVE-FORM pattern check, per reading rather than per page (D-248).
+
 ---
 
 # The Dungeons & Dividends entries

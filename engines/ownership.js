@@ -1,6 +1,11 @@
 /* ==========================================================================
    engines/ownership.js — what a place actually costs to own. Tier 17.
    --------------------------------------------------------------------------
+   PUBLISHED AS SLAF.Owning, not SLAF.Ownership (D-250). shared/ownership.js
+   is a different module with a different job — which room owns which field —
+   and it had this name first. The two never shared a page until Housing took
+   The Deal, and then the second one loaded clobbered the first: the rent-or-
+   buy reading called Ownership.describe and got a property engine.
    One arithmetic for every question about owning property, so Rent/Buy, a
    rental analysis and a house hack are three readings of the same figures
    rather than three calculators that drift apart.
@@ -30,7 +35,7 @@
   }
   var api = factory(deps.Money, deps.Projection);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
-  if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Ownership = api; }
+  if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Owning = api; }
 })(typeof self !== 'undefined' ? self : null, function (Money, Projection) {
   'use strict';
 

@@ -230,7 +230,7 @@
 
   /* ---- reads: the cover facts live in Sleep At Night ---------------------- */
   function health(h) { return ((h && h.insurance) || {}).health || {}; }
-  function coverLink() { return Ownership.linkTo('sleep-at-night', 'coverage'); }
+  function coverLink() { return Ownership.linkTo('runway', 'coverage'); }
   function startLink(anchor) { return Ownership.linkTo('start', anchor); }
   var HEALTH_LABELS = { employer: 'Through work', marketplace: 'Marketplace', cobra: 'COBRA', medicaid: 'Medicaid', parent: 'A parent’s plan', none: 'None' };
   var HEALTH_TYPES = Schema.HEALTH_TYPES || ['employer', 'marketplace', 'cobra', 'medicaid', 'parent', 'none'];

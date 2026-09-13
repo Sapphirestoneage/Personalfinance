@@ -63,7 +63,7 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 
 ## expenses (8)
 
-- `rentMonthly` — Rent or mortgage, a month · read by cash-flow, housing, property, debates
+- `rentMonthly` — Rent or mortgage, a month · read by cash-flow, financial-snapshot, housing, debates
 - `monthlyExpenses` — Monthly expenses · read by start, cash-flow, income, budget, financial-snapshot, statement, fire, fire-lab, dashboard, skill-tree, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, career-move, partner, housing, big-purchase, enough, adventure, week, reversibility, debates, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
@@ -81,7 +81,7 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 
 - `rentAlternative` — A place you would rent instead, a month · **no other room mentions it**
 - `homePrice` — The place, its price · **no other room mentions it**
-- `downPct` — Down payment, share of price · read by property
+- `downPct` — Down payment, share of price · read by financial-snapshot
 - `mortgageRate` — Mortgage rate · read by debates
 
 ## income (7)
@@ -156,7 +156,7 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by side-hustle, credential, rollover, roth-aca, property, debates
+- `marginalRate` — Marginal tax rate · read by side-hustle, credential, rollover, roth-aca, housing, debates
 - `allocationStocks` — Target: stocks · **no other room mentions it**
 - `allocationBonds` — Target: bonds · **no other room mentions it**
 - `allocationCash` — Target: cash · **no other room mentions it**

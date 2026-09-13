@@ -975,7 +975,7 @@
     var frozen = last
       ? snaps.length + (snaps.length === 1 ? ' snapshot' : ' snapshots') + ', last '
         + (justFroze ? 'just now' : shortDate(last.timestamp))
-        + ' · <a href="' + Ownership.linkTo('history') + '">History →</a>'
+        + ' · <a href="' + Ownership.linkTo('budget', 'over-time') + '">History →</a>'
       : 'Not frozen yet. Freeze once and the panel can say what moved.';
     el('age-line').innerHTML = '<span>' + left + '</span>'
       + '<span class="' + (justFroze ? 'froze' : '') + '" id="freeze-say">' + frozen + '</span>'

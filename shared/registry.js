@@ -1025,43 +1025,16 @@
     daite: { reads: ['expenses', 'income.grossAnnualCents', 'assets.invested'], writes: [] },
     subsections: [{ id: 'date', label: 'Affordable, with no debt' }, { id: 'inputs', label: 'The wedding, and the fund' }, { id: 'tables', label: 'Every extra table' }]
   });
-  /* The Deal — Tier 17 (D-227). Housing Decision asks whether to buy where
-     you live; this asks whether a building pays, and what living in one
-     unit of it would cost. Both sit on engines/ownership.js. */
-  ROOMS.push({
-    id: 'property',
-    group: 'decisions', subgroup: 'home',
-    aliases: ['rental', 'landlord', 'house hack', 'investment property', 'deal', 'cap rate', 'real estate'],
-    kind: 'about-you',
-    needs: [],
-    order: 40.7,
-    title: 'The Deal',
-    blurb: 'A property priced the way it actually runs: the reserves a listing leaves out, the four ways it pays, what breaks it, and what living in one unit would cost against renting.',
-    href: 'rooms/property.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: [], writes: ['assets.property'] },
-    subsections: [
-      { id: 'deal',        label: 'The deal' },
-      { id: 'month',       label: 'What it costs a month' },
-      { id: 'letting',     label: 'Let it out' },
-      { id: 'return',      label: 'The four ways it pays' },
-      { id: 'stress',      label: 'What breaks it' },
-      { id: 'hack',        label: 'Live in one, let the rest' },
-      { id: 'assumptions', label: 'Where the rates come from' }
-    ]
-  });
-
   /* Housing Decision — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'housing',
     features: ['homeDetail'],
-    group: 'decisions', subgroup: 'home', aliases: ['house', 'buy', 'rent', 'mortgage', 'home'],
+    group: 'decisions', subgroup: 'home', aliases: ['house', 'buy', 'rent', 'mortgage', 'home', 'down payment', 'deposit', 'fha', 'the deal', 'rental', 'house hack', 'cap rate'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'grossAnnualIncome', 'cashSavings'],
     order: 40,
-    title: 'Housing Decision',
-    blurb: 'Rent against buying, this place, this rate: the monthly cost of each, the price-to-rent ratio, and the years to a down payment.',
+    title: 'Housing',
+    blurb: 'Rent against buying at this price and this rate, the four ways into a deposit with the date on each, and a property priced the way it actually runs.',
     href: 'rooms/housing.html',
     tier: 2,
     tags: ['cashflow'],
@@ -1072,25 +1045,13 @@
         { id: 'inputs',      label: 'The place' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'dp-inputs', label: 'The deposit' },
+        { id: 'options', label: 'Four ways in' },
+        { id: 'deal', label: 'The deal' },
+        { id: 'hack', label: 'The house hack' },
+        { id: 'stress', label: 'What breaks it' }
       ]
-  });
-
-  /* Down Payment Countdown (K6, D-217): what each way in needs in cash, the
-     date at the pace, and the payment at each. */
-  ROOMS.push({
-    id: 'down-payment',
-    group: 'decisions', subgroup: 'moves', aliases: ['down payment', 'save for a house', 'fha', 'pmi', 'closing costs', 'first home'],
-    kind: 'explore',
-    needs: [],
-    order: 40.5,
-    title: 'Down Payment Countdown',
-    blurb: 'For a home price, the date you could buy at 3.5%, 5%, 10% and 20% down, each with closing costs and the lender’s reserves counted, and the monthly payment at each with tax, insurance and mortgage insurance where it applies.',
-    href: 'rooms/down-payment.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['taxes.state'], writes: [] },
-    subsections: [{ id: 'inputs', label: 'The home, and the fund' }, { id: 'options', label: 'Four ways in' }]
   });
 
   /* Big Purchase — the second wave of tranche rooms (D-099). */

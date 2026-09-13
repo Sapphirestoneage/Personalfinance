@@ -383,7 +383,7 @@
   }
   function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
   function hours(h) { return (Math.round(h * 10) / 10).toLocaleString('en-US', { maximumFractionDigits: 1 }); }
-  function wageLink() { return '<a href="' + esc(Ownership.linkTo('real-hourly-wage', 'inputs')) + '">Real Hourly Wage</a>'; }
+  function wageLink() { return '<a href="' + esc(Ownership.linkTo('income', 'rhw-inputs')) + '">Real Hourly Wage</a>'; }
 
   /* ---- writes: this room owns household.dreams, five slots -------------------- */
   function writeSlot(i, fields) {

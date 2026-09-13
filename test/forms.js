@@ -287,7 +287,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/statement.html',
+    room: '/rooms/statement.html#where-it-lands',
     container: '#allocation',
     seed: 'demo',
     fields: [
@@ -310,7 +310,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/rerank.html',
+    room: '/rooms/values.html#the-rerank',
     container: '#cost-list',
     seed: 'demo',
     /* Stage 1: a proposed line and a custom one, typed. The lists appear
@@ -338,8 +338,8 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/rerank.html',
-    container: '#rate-list',
+    room: '/rooms/values.html#the-rerank',
+    container: '#rr-rate-list',
     seed: 'spending',
     /* Stages 2-4 on the demo month: the rating and the two selects survive
        the tap; then an arrow on stage 3, and stage 4 shows a figure. */
@@ -390,7 +390,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/stacker.html',
+    room: '/rooms/skill-tree.html#the-three',
     container: '#today-list',
     seed: 'spending',
     /* Take the suggestion on, then log a day: the tap lands, the row is
@@ -494,8 +494,8 @@ const CASES = [
   {
     /* The template room (D-097): inputs built once from the spec; typing
        into two of them lands in person.work, each as its own undo entry. */
-    room: '/rooms/real-hourly-wage.html',
-    container: '#room-inputs',
+    room: '/rooms/income.html#what-it-pays',
+    container: '#rhw-room-inputs',
     seed: 'demo',
     fields: [
       { sel: '[data-ctl="contractedHoursPerWeek"]', type: '35' },
@@ -513,8 +513,8 @@ const CASES = [
   },
   {
     /* Giving (D-098): two boxes, both owned; the target wins over the share. */
-    room: '/rooms/giving.html',
-    container: '#room-inputs',
+    room: '/rooms/values.html#what-you-give',
+    container: '#gv-room-inputs',
     seed: 'demo',
     fields: [
       { sel: '[data-ctl="pctOfIncome"]', type: '5' },
@@ -788,7 +788,7 @@ const CASES = [
        them (D-052). So the check is that what was typed is still in the box
        after the room has recomputed around it, and that the household is
        untouched. */
-    room: '/rooms/car.html',
+    room: '/rooms/car.html#what-it-costs',
     container: '#room-inputs',
     seed: 'demo',
     fields: [
@@ -1259,8 +1259,8 @@ const CASES = [
   {
     /* DOWN PAYMENT COUNTDOWN (K6, D-217): five boxes, re-rendered into a
        sibling list on every keystroke. */
-    room: '/rooms/down-payment.html',
-    container: '#inputs',
+    room: '/rooms/housing.html#the-deposit',
+    container: '#dp-inputs',
     seed: 'demo',
     fields: [
       { sel: '#in-price', type: '400000' },
@@ -1370,7 +1370,7 @@ const CASES = [
        property record. The figures below are the hand-checked ones from
        test/run.js, so a tap that goes astray shows up as a wrong reading
        rather than only as a lost keystroke. */
-    room: '/rooms/property.html',
+    room: '/rooms/housing.html#the-deal',
     container: '#deal',
     seed: 'empty',
     fields: [
@@ -1424,7 +1424,7 @@ const SELECT_CASES = [
     read: () => JSON.parse(localStorage.getItem('slaf.household.v2')).valuesProfile.assignments
   },
   {
-    room: '/rooms/fulfillment.html',
+    room: '/rooms/values.html#the-joy-curve',
     container: '#rate-list',
     seed: 'spending',
     picks: [
@@ -1528,7 +1528,7 @@ const SELECT_CASES = [
     /* What A Car Costs. The term select has no default on purpose (the term
        is the leg of 20/3/8 a monthly payment hides), so this also checks that
        choosing one lands and the room notices. */
-    room: '/rooms/car.html',
+    room: '/rooms/car.html#what-it-costs',
     container: '#room-inputs',
     seed: 'demo',
     picks: [

@@ -40,6 +40,8 @@
   }
   var api = factory(deps.Money, deps.Schema, deps.Registry, deps.Spine);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
+  /* SLAF.Ownership is THIS module: who owns which field. engines/ownership.js
+     is the property engine and publishes as SLAF.Owning (D-250). */
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Ownership = api; }
 })(typeof self !== 'undefined' ? self : null, function (Money, Schema, Registry, Spine) {
   'use strict';

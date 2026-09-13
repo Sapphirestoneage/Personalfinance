@@ -148,7 +148,7 @@
     if (!Money.isOk(r)) return '';
     return r.alreadyThere ? ' — already there' : ' in ' + years1(r.value) + ' years';
   }
-  function joyLink() { return '<a href="' + Ownership.linkTo('fulfillment', 'rate') + '">the joy curve →</a>'; }
+  function joyLink() { return '<a href="' + Ownership.linkTo('values', 'rate') + '">the joy curve →</a>'; }
 
   var mounted = null;   /* what Room.mount returns: render(), household(), tables() */
   mounted = Room.mount({

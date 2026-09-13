@@ -685,7 +685,7 @@
     },
     {
       "id": "housing",
-      "title": "Housing Decision",
+      "title": "Housing",
       "file": "rooms/housing.html",
       "reads": [
         "monthlyExpenses",
@@ -701,26 +701,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 40
-    },
-    {
-      "id": "down-payment",
-      "title": "Down Payment Countdown",
-      "file": "rooms/down-payment.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 40.5
-    },
-    {
-      "id": "property",
-      "title": "The Deal",
-      "file": "rooms/property.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 40.7
     },
     {
       "id": "big-purchase",

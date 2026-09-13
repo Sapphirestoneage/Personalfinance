@@ -401,7 +401,7 @@
       verdict.className = 'verdict is-incomplete';
       verdict.textContent = v.reason || Money.EM_DASH;
       el('w-why').innerHTML = v.missing && v.missing.length
-        ? '<a href="' + Ownership.linkTo('real-hourly-wage', 'hours') + '">Fill in Real Hourly Wage →</a>'
+        ? '<a href="' + Ownership.linkTo('income', 'rhw-inputs') + '">Fill in Real Hourly Wage →</a>'
         : '';
       el('w-detail').innerHTML = '';
       return;
@@ -452,7 +452,7 @@
     var wage = SLAF.Hourly.realHourlyWage(h, TABLES);
     el('reading-list').innerHTML =
       '<a class="slaf-owned' + (Money.isOk(wage) ? '' : ' slaf-owned--empty') + '" href="'
-      + Ownership.linkTo('real-hourly-wage', 'number') + '">'
+      + Ownership.linkTo('income', 'rhw-number') + '">'
       + '<span class="slaf-owned-label">Real hourly wage</span>'
       + '<span class="slaf-owned-value">'
       + (Money.isOk(wage) ? perHour(wage.value) : Money.EM_DASH) + '</span>'

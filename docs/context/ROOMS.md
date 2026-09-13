@@ -31,7 +31,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **coast-date** — Your Coast Date · 122 lines · engines: projection, tier0, coast · D-213
 - **race** — The Race to $100K · 155 lines · engines: projection, tier0, countdown, race · D-217
 
-## Decisions (25)
+## Decisions (23)
 
 - **hassle** — Worth the Hassle · 498 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
 - **self-employed** — Going Self-Employed · 380 lines · engines: selfemployed · D-062
@@ -53,9 +53,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **degree** — The Close · 153 lines · engines: projection, tier0, degree · D-237, D-219
 - **partner** — Family · 656 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner, kids · owns: partnerName, partnerDob, splitMode, sharedMonthly, tuitionTarget, tuitionSaved, tuitionMonthly · D-237, D-216, D-109
 - **wedding** — Wedding Countdown · 177 lines · engines: projection, tier0, hourly, countdown, wedding · D-217
-- **housing** — Housing Decision · 329 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing · owns: rentAlternative, homePrice, downPct, mortgageRate · D-130, D-111
-- **down-payment** — Down Payment Countdown · 154 lines · engines: projection, tier0, debt, cashflow, ratios, housing, countdown, downpayment · D-217
-- **property** — The Deal · 403 lines · engines: projection, ownership · D-227, D-066
+- **housing** — Housing · 894 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing, debt, countdown, downpayment, ownership · owns: rentAlternative, homePrice, downPct, mortgageRate · D-237, D-130, D-111
 - **big-purchase** — Big Purchase · 490 lines · engines: projection, tier0, hourly, quickmath, purchase, dreamline · owns: purchasePrice, purchaseMonths, purchaseRate, dreamsMonthly · D-237, D-129, D-112
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 
@@ -79,7 +77,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (41)
+## Files in rooms/ not in the registry (43)
 
 - rooms/accounts.html
 - rooms/between-jobs.html
@@ -89,6 +87,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/credit.html
 - rooms/dashboard.html
 - rooms/doors.html
+- rooms/down-payment.html
 - rooms/dreamline.html
 - rooms/estate.html
 - rooms/exercises.html
@@ -103,6 +102,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/net-worth.html
 - rooms/next-hundred.html
 - rooms/progress-card.html
+- rooms/property.html
 - rooms/quick-math.html
 - rooms/quit-fund.html
 - rooms/rank-guess.html

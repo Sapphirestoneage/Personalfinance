@@ -608,7 +608,7 @@
       if (!Money.isOk(p)) return rows;
       rows.push({ label: 'A year of the kids’ costs', cents: p.annualCents });
       if (p.underFive && p.childcareMonthlyCents > 0) rows.push({ label: 'Childcare, a month', cents: p.childcareMonthlyCents, href: Ownership.linkTo('start', 'q-about') });
-      if (p.tuition) rows.push({ label: 'The tuition gap today', cents: p.tuition.gapCents, href: Ownership.linkTo('kids', 'inputs') });
+      if (p.tuition) rows.push({ label: 'The tuition gap today', cents: p.tuition.gapCents, href: Ownership.linkTo('partner', 'kid-inputs') });
       var spend = Schema.monthlyExpensesCents(h);
       if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
       return rows;

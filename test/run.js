@@ -10588,7 +10588,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 25);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 23);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13733,9 +13733,17 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
     const src = fs.readFileSync(path.join(ROOT, 'engines/' + e + '.js'), 'utf8');
     checkTrue(e + ' dates through goalCountdown and never walks months itself', /Countdown\.goalCountdown\(/.test(src) && !/Math\.pow\(/.test(src) && !/for \(var m = /.test(src));
   });
-  ['race', 'down-payment', 'quit-fund', 'wedding'].forEach(function (r) {
-    const src = fs.readFileSync(path.join(ROOT, 'rooms/' + r + '.html'), 'utf8');
-    checkTrue('rooms/' + r + '.html computes no date of its own', !/Math\.pow\(/.test(src) && src.indexOf('Spine.set(') === -1 && /LIVE-FORM: built once/.test(src));
+  /* The countdowns that are readings now are checked inside the page they
+     live in: the skin still computes no date of its own, but the page it
+     shares may write and may be guarded, so those two clauses are the
+     reading's, not the file's. */
+  [['race', 'rooms/race.html', null], ['wedding', 'rooms/wedding.html', null],
+   ['down-payment', 'rooms/housing.html', 'view-the-deposit'],
+   ['quit-fund', 'rooms/runway.html', 'view-by-choice']].forEach(function (r) {
+    const page = fs.readFileSync(path.join(ROOT, r[1]), 'utf8');
+    const src = r[2] ? page.slice(page.indexOf('<section id="' + r[2] + '"'), page.indexOf('<!-- =====', page.indexOf('<section id="' + r[2] + '"') + 10) + 1 || undefined) : page;
+    checkTrue(r[0] + ' computes no date of its own', !/Math\.pow\(/.test(src));
+    if (!r[2]) checkTrue('rooms/' + r[0] + '.html writes nothing and is built once', src.indexOf('Spine.set(') === -1 && /LIVE-FORM: built once/.test(src));
   });
 
   /* -- K4: the race on the demo (steady saving) ------------------------------------ */
@@ -13800,17 +13808,21 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   check('a typed total wins over the build-up', Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).source + ':' + Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).reachedNow, 'typed:true');
   checkTrue('the defaults table is tagged, every figure editable from the page', T.weddingDefaults.confidence === 'unverified' && /in-perguest/.test(fs.readFileSync(path.join(ROOT, 'rooms/wedding.html'), 'utf8')));
   /* registry and shelves */
-  ['race', 'down-payment', 'wedding'].forEach(function (id) { checkTrue(id + ' is registered', !!Registry.byId(id)); });
+  ['race', 'wedding'].forEach(function (id) { checkTrue(id + ' is registered', !!Registry.byId(id)); });
+  checkTrue('the Down Payment Countdown is Housing\'s deposit reading now (D-250)',
+    !Registry.byId('down-payment') && Registry.byId('housing').subsections.some(x => x.id === 'dp-inputs'));
   checkTrue('the Quit Fund is the Cushion\'s by-choice reading now (D-232)', !Registry.byId('quit-fund') && Registry.byId('runway').subsections.some(x => x.id === 'view-by-choice'));
   const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
-  /* Two of the four pairs have become one room each: Between Jobs beside
-     The Quit Fund is The Cushion (D-232), and Where Do You Think You Rank
-     beside The Race is a Scorecard reading beside a room (D-233). What is
-     left to check is that the two real pairs are still shelved together. */
-  const pairs = { housing: 'down-payment', partner: 'wedding' };
+  /* Three of the four pairs have become one room each: Between Jobs beside
+     The Quit Fund is The Cushion (D-232), Where Do You Think You Rank
+     beside The Race is a Scorecard reading beside a room (D-233), and
+     Housing beside the Down Payment Countdown is one room with two hats
+     (D-250) — shelving a room beside itself is not a thing. What is left
+     to check is that the one real pair is still shelved together. */
+  const pairs = { partner: 'wedding' };
   let shelved = 0;
   (function walk(x) { if (Array.isArray(x) && x.every(i => typeof i === 'string')) { Object.keys(pairs).forEach(k => { if (x.indexOf(k) > -1 && x[x.indexOf(k) + 1] === pairs[k]) shelved++; }); } if (Array.isArray(x)) x.forEach(walk); else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
-  check('each is shelved beside its neighbour in all twenty arrangements', shelved, 40);
+  check('it is shelved beside its neighbour in all twenty arrangements', shelved, 20);
 })();
 
 /* ==========================================================================
@@ -14273,6 +14285,54 @@ section('The thirty (docs/room-map.json)');
       const reg = Registry.byId(r.id);
       if (reg) check('the map and the registry agree on what ' + r.id + ' is called', reg.title, r.title);
     });
+
+  /* Merging rooms puts several pages' markup in one document, and the
+     whole prefix apparatus exists to stop two of them claiming an id. A
+     duplicate id is silent in a browser and catastrophic in a room that
+     calls getElementById: one reading writes into the other's node. Check
+     every page, not only the merged ones — the rule predates the merges. */
+  fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(function (f) {
+    const body = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8')
+      .replace(/<script[\s\S]*?<\/script>/g, '').replace(/<!--[\s\S]*?-->/g, '');
+    const ids = (body.match(/\bid="[^"]+"/g) || []);
+    const dup = ids.filter((x, i) => ids.indexOf(x) !== i);
+    check('rooms/' + f + ' gives every element its own id', [...new Set(dup)].join(', '), '');
+  });
+
+  /* Ownership.linkTo returns '#' for a room that is not in the registry, so
+     a link to a room that has become a reading is a dead link with nothing
+     to show for it. D-232 left one (sleep-at-night) that nobody noticed for
+     a whole programme of merges; this is the check that would have caught
+     it. Every linkTo names a live room, and every anchor it names is either
+     a real id on that room's page or a hash its router routes. */
+  (function () {
+    const live = new Set(Registry.all().map(r => r.id));
+    const gateJs = fs.readFileSync(path.join(ROOT, 'shared/gate.js'), 'utf8');
+    const pages = ['index.html', 'map.html'].concat(
+      fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
+    const dead = [], lost = [];
+    pages.forEach(function (rel) {
+      const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+      /* The anchor is only checked when it is a whole literal: some rooms
+         build one — linkTo('financial-snapshot', 'r-' + row.id) — and the
+         piece before the + is not an anchor to look for. */
+      [...src.matchAll(/linkTo\('([a-z0-9-]+)'(?:,\s*'([a-z0-9-]+)'\s*[,)])?/g)].forEach(function (m) {
+        if (!live.has(m[1])) { dead.push(rel + ' -> ' + m[1]); return; }
+        if (!m[2]) return;
+        const target = Registry.byId(m[1]).href;
+        const page = fs.readFileSync(path.join(ROOT, target), 'utf8');
+        /* Three ways an anchor is real: a static id on the page, a card id
+           the gate declares and the page renders (Start Here's q-* cards),
+           or a hash the page's own router matches. */
+        const hasId = page.indexOf('id="' + m[2] + '"') !== -1 || page.indexOf("id: '" + m[2] + "'") !== -1;
+        const fromGate = gateJs.indexOf("id: '" + m[2] + "'") !== -1;
+        const routed = page.indexOf("'#" + m[2] + "'") !== -1 || new RegExp('[(|]' + m[2] + '[)|]').test(page);
+        if (!hasId && !fromGate && !routed) lost.push(rel + ' -> ' + m[1] + '#' + m[2]);
+      });
+    });
+    check('every linkTo names a room that still exists', dead.join(', '), '');
+    check('every linkTo anchor is an id on that page, or a hash its router routes', lost.join(', '), '');
+  })();
 
   check('every room is accounted for: thirty, plus what they absorb, plus the Net Worth redirect',
     MAP.rooms.length + merged + toGo + 1, 94);
