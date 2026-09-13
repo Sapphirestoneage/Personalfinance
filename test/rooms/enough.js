@@ -45,7 +45,7 @@
 'use strict';
 
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Demo, Registry, Ownership, Spine, Tier0, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Demo, Registry, Ownership, Spine, Tier0, TABLES } = t;
   const Enough = require(path.join(ROOT, 'engines/enough.js'));
   const Fulfillment = require(path.join(ROOT, 'engines/fulfillment.js'));
   const CAT = TABLES.expenseCategories;
@@ -67,12 +67,16 @@ module.exports = function (t) {
 
   /* -- The room, the row --------------------------------------------------- */
   {
-    const room = Registry.byId('enough');
-    checkTrue('Enough is a room', !!room);
-    check('needing a month of spending and investments', (room.needs || []).slice().sort().join(','), 'investments,monthlyExpenses');
+    /* Enough is a reading of The Number since D-255: one multiplication
+       between five rooms, and this is the one that changes the spending it
+       multiplies. */
+    const room = Registry.byId('fire');
+    checkTrue('Enough is a reading of The Number', !Registry.byId('enough')
+      && /url=fire\.html#enough/.test(fs.readFileSync(path.join(ROOT, 'rooms/enough.html'), 'utf8')));
+    check('the room it lives in needs a savings rate', (room.needs || []).slice().sort().join(','), 'dob,investments,monthlyExpenses');
     const f = Ownership.field('enoughMonthly');
-    check('the field is owned by the room', f && f.owner, 'enough');
-    check('anchored at its inputs', f && f.anchor, 'inputs');
+    check('the field is owned by the room it is in', f && f.owner, 'fire');
+    check('anchored at the reading’s inputs', f && f.anchor, 'en-inputs');
     check('unset it reads incomplete, not zero', Ownership.field('enoughMonthly').read(Schema.createHousehold({})).status, 'incomplete');
     check('the schema shapes the branch', JSON.stringify(Schema.createEnough({})), '{"monthlyCents":null,"source":null}');
     check('and refuses a source it does not know', Schema.createEnough({ monthlyCents: 100, source: 'guess' }).source, null);
@@ -206,7 +210,7 @@ module.exports = function (t) {
     check('the gap a month is negative too', two.monthlyGapCents, -85000);
     checkTrue('the years gap runs negative', two.yearsGap < 0);
     check('years to the bigger number, closed form', two.yearsToEnough.value, closedForm(120000000, 4800000, 2268000, 0.05), 0.1);
-    const html = fs.readFileSync(path.join(ROOT, 'rooms/enough.html'), 'utf8');
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8');
     checkTrue('the page words it "enough above spending"', /enough above spending/.test(html));
     checkTrue('and never colours it good', /zone: two\.enoughBelowSpending \? 'good' : null/.test(html));
   }
@@ -318,17 +322,27 @@ module.exports = function (t) {
 
   /* -- The page ------------------------------------------------------------------ */
   {
-    const html = fs.readFileSync(path.join(ROOT, 'rooms/enough.html'), 'utf8');
+    /* Enough is The Number's enough reading since D-255: its own slice of
+       that page, behind en-. `slice.page` is the whole file, for the facts
+       that really are page-wide. */
+    const slice = t.reading('rooms/fire.html', 'view-enough', 'READING view-enough,');
+    const html = slice.html;
     t.Room.IDS.concat(['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-standalone', 'load-notice']).forEach(function (id) {
-      checkTrue('the page has #' + id, new RegExp('id="' + id + '"').test(html));
+      checkTrue('the page has #' + id, new RegExp('id="' + (id === 'load-notice' ? '' : 'en-') + id + '"').test(id === 'load-notice' ? slice.page : html));
     });
     checkTrue('mounted on the template', /mounted = Room\.mount\(\{/.test(html) && /Room\.mount\(\{/.test(html));
-    checkTrue('as the enough room', /id: 'enough'/.test(html));
-    checkTrue('declares its live-form discipline and a place for a theme', /LIVE-FORM: built once/.test(html) && /THEMING:/.test(html));
+    checkTrue('as the enough room', /id: 'fire',\n\s*part: true,\n\s*prefix: 'en-',\n\s*root: 'view-enough',/.test(html));
+    checkTrue('the page declares its live-form discipline and a place for a theme', /LIVE-FORM: guarded/.test(slice.page) && /THEMING:/.test(slice.page));
     const order = ['shared/money.js', 'shared/schema.js', 'shared/registry.js', 'shared/reference.js', 'shared/spine-v2.js', 'shared/ownership.js', 'shared/suggest.js', 'shared/progress.js', 'shared/undo.js', 'shared/gate.js', 'shared/rating.js', 'engines/projection.js', 'engines/tier0.js', 'engines/cashflow.js', 'engines/fulfillment.js', 'engines/hourly.js', 'engines/enough.js', 'shared/lens.js', 'shared/charts.js', 'shared/room.js'];
-    const positions = order.map(function (s) { return html.indexOf('src="../' + s + '"'); });
+    const positions = order.map(function (s) { return slice.page.indexOf('src="../' + s + '"'); });
     checkTrue('every script is included', positions.every(function (p) { return p >= 0; }));
-    checkTrue('in dependency order', positions.every(function (p, i) { return i === 0 || p > positions[i - 1]; }));
+    /* The page serves five readings, so their engines interleave and the
+       exact sequence is not the page's to keep. shared/room.js last still
+       is: it is the one that reads what the others defined (D-252). */
+    checkTrue('and the template loads last', (function () {
+      const tags = slice.page.match(/<script src="\.\.\/[^"]+"><\/script>/g) || [];
+      return /shared\/room\.js/.test(tags[tags.length - 1]);
+    })());
     const writes = html.match(/Spine\.set\('([^']+)'/g) || [];
     check('two spine writes', writes.length, 2);
     checkTrue('both under enough.*', writes.every(function (w) { return /Spine\.set\('enough\./.test(w); }));

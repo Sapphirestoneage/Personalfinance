@@ -14677,6 +14677,39 @@ id="t-years">` lost its class and its stylesheet rule with it. Class
 attributes are parked before the rename and restored after; the "names a
 class no stylesheet defines" check caught it.
 
+### D-255 — The Number, five readings of one multiplication
+
+**Decision.** The FIRE Lab, Your Coast Date, Enough and The Race become
+readings of the FIRE Number, and the room is called The Number. Five hats:
+`#the-number` (the default), `#enough`, `#coast`, `#the-rungs`, `#the-lab`.
+All four old pages redirect, hash and all.
+
+**Why.** Five rooms with one multiplication between them. Rules 1 and 3 of
+D-229 — the same fields at five framings, and the lab is a lens, not a room.
+The plain number is first; the lab is last, because it is the one that
+rewards already knowing what you are looking at.
+
+**Ownership.** `enoughMonthly` moves to `fire`, anchor `en-inputs`. The two
+ages stay. The other three readings write nothing.
+
+**The horizon line.** Every projecting room carries the nominal/today's-money
+line once. Two readings on this page project, so the page mounts it twice —
+once each — and the check now says that rather than "once per file".
+
+### Still not the read-out D-228 asks for
+
+The Number is five readings of `engines/tier0.js fireNumber`, which is
+spending ÷ the withdrawal rate. D-228 wants it to be a read-out of The Back
+Half with the naive 25× beside it and one sentence on the gap. That is the
+same engine change D-254 left standing, waiting on the same owner question:
+whether the income floor is modelled as means-tested. It is written at the
+top of both rooms' specs so the merge is not mistaken for the job.
+
+**What shipped instead, and it is not nothing:** the five ways of asking the
+question are one room, so the person who wants the plain number gets it
+first and the person who wants to move the withdrawal rate can, without
+either of them being a separate destination to find.
+
 ---
 
 # The Dungeons & Dividends entries

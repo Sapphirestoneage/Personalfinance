@@ -312,47 +312,28 @@
       ]
     },
     {
-      id: 'fire-lab',
-      features: ['showNominal', 'sequenceRisk'],
-      group: 'scorecard', aliases: ['lab', 'variants', 'lean', 'fat', 'coast', 'barista'],
-      kind: 'read',
-      needs: ['monthlyExpenses', 'investments'],
-      order: 8.5,
-      title: 'FIRE Lab',
-      blurb: 'Every FIRE calculation on one screen and drawn: the number, how far along you are, the six flavours side by side, the milestones, the path, and what a different withdrawal rate does to all of it.',
-      href: 'rooms/fire-lab.html',
-      tier: 1,
-      tags: ['income', 'cashflow'],
-      daite: { reads: ['assets.invested', 'expenses'], writes: [] },
-      subsections: [
-        { id: 'number',      label: 'The number' },
-        { id: 'swr',         label: 'Withdrawal rate' },
-        { id: 'flavours',    label: 'The flavours' },
-        { id: 'split',       label: 'Where it comes from' },
-        { id: 'milestones',  label: 'Milestones' },
-        { id: 'path',        label: 'The path' },
-        { id: 'sensitivity', label: 'If the assumptions are wrong' }
-      ]
-    },
-    {
       id: 'fire',
       features: ['afterTaxNetWorth', 'showNominal', 'preMedicare', 'incomeFloor'],
-      group: 'scorecard', aliases: ['fire', 'financial independence', 'retire early', 'number'],
+      group: 'scorecard', aliases: ['fire', 'financial independence', 'retire early', 'number', 'fire lab', 'lab', 'coast', 'coast date', 'coasting', 'enough', 'by choice', 'race', '100k', 'rungs', 'first hundred thousand'],
       kind: 'read',
       needs: ['monthlyExpenses', 'investments', 'dob'],
       order: 8,
-      title: 'FIRE Number',
-      blurb: 'What you\u2019d need before work became optional \u2014 lean, standard, chubby, fat, coast or barista, from one formula.',
+      title: 'The Number',
+      blurb: 'What you would need before work became optional, the figure you would live on by choice, the date you could stop saving, the rungs on the way, and every FIRE calculation on one screen.',
       href: 'rooms/fire.html',
       tier: 1,
       tags: ['income', 'cashflow'],
-      daite: { reads: ['assets.invested', 'expenses', 'you.dob'], writes: ['plans.targets'] },
+      daite: { reads: ['assets.invested', 'expenses', 'you.dob'], writes: ['plans.targets', 'plans.enough'] },
       subsections: [
         { id: 'reading',    label: 'What this reads' },
         { id: 'out-target', label: 'Your number' },
         { id: 'variants',   label: 'Six ways to ask it' },
         { id: 'targets',    label: 'Your targets' },
-        { id: 'params',     label: 'Try different assumptions' }
+        { id: 'params',     label: 'Try different assumptions' },
+        { id: 'en-number', label: 'Enough, by choice' },
+        { id: 'date', label: 'The coast date' },
+        { id: 'rungs', label: 'The rungs' },
+        { id: 'swr', label: 'The lab' }
       ]
     },
     {
@@ -934,29 +915,6 @@
       ]
   });
 
-  /* Enough — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'enough',
-    group: 'matters', aliases: ['enough', 'contentment', 'fi two'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses', 'investments'],
-    order: 43,
-    title: 'Enough',
-    blurb: 'The monthly figure you would live on by choice — typed, or proposed from the joy curve — and the second FI number it makes, against the first.',
-    href: 'rooms/enough.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'expenses'], writes: ['plans.enough'] },
-      subsections: [
-        { id: 'number',      label: 'Enough, a month' },
-        { id: 'chart',       label: 'Two FI numbers' },
-        { id: 'inputs',      label: 'What enough is' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
   /* The Long Way Round — four strategies over five years (D-167). Sits beside
      Enough because both ask what the money is for, not just how much. */
   ROOMS.push({
@@ -1085,37 +1043,6 @@
     ]
   });
 
-  /* Your Coast Date (I4, D-213): its own formula, not a FIRE variant. */
-  ROOMS.push({
-    id: 'coast-date',
-    group: 'scorecard', aliases: ['coast', 'coast date', 'stop saving', 'coast fire date'],
-    kind: 'read',
-    needs: ['dob', 'investments', 'monthlyExpenses'],
-    order: 25.5,
-    title: 'Your Coast Date',
-    blurb: 'The earliest date you could stop saving for retirement and still reach the FI number by your target age, in today’s dollars; and what today’s money grows to with nothing more added.',
-    href: 'rooms/coast-date.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
-    subsections: [{ id: 'date', label: 'Coast date' }, { id: 'reverse', label: 'The reverse view' }]
-  });
-  /* The Race to $100K (K4, D-217): the next rung and every rung to $1M, dated
-     through the one countdown, with saving and growth split at each. */
-  ROOMS.push({
-    id: 'race',
-    group: 'scorecard', aliases: ['race', '100k', 'first 100k', 'rungs', 'million'],
-    kind: 'read',
-    needs: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'],
-    order: 25.9,
-    title: 'The Race to $100K',
-    blurb: 'The date your net worth reaches its next $100,000 rung, then every rung to $1 million, with what came from saving and what came from growth at each. The first $100K is the hardest; this shows why.',
-    href: 'rooms/race.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['assets', 'assets.cashCents', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus'], writes: [] },
-    subsections: [{ id: 'next', label: 'The next rung' }, { id: 'rungs', label: 'Every rung to $1 million' }]
-  });
   /* `needs` lists the shared fields a room reads before it can show its main
      output — the ids in shared/ownership.js, which know who owns each one and
      which question to land on. shared/progress.js turns that into "what is
@@ -1149,9 +1076,9 @@
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
     numbers: ['debt-payoff', 'cant-pay', 'statement', 'rollover', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
-    scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
+    scorecard: ['financial-snapshot', 'foo-ladder', 'fire'],
     decisions: ['career-move', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
-    matters: ['values', 'goals', 'enough', 'week'],
+    matters: ['values', 'goals', 'week'],
     levelup: ['skill-tree'],
     upkeep: ['data', 'ledger', 'settings', 'get-help']
   };

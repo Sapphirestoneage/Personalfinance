@@ -6,116 +6,34 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Your Coast Date · SPARKS</title>
-<meta name="description" content="The earliest date you could stop saving for retirement and still reach the FI number by your target age, in today's dollars. And the reverse: what today's money grows to with nothing more added."/>
+<title>Coasting · SPARKS</title>
+<meta name="description" content="Coasting is a reading of The Number now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. I4 (D-213).
-
-  1. READS   Date of birth (Start Here), investments (Start Here), monthly
-             spending, income and filing status (the savings basis), the
-             target age (FIRE's retireAge, else the coast default in
-             data/fire_variants.json), the real return assumption.
-  2. WRITES  Nothing. The target age typed here is this page's what-if.
-  3. CALLS   engines/coast.js. Its own formula, not a FIRE variant.
-  4. EMPTY   No date of birth or no investments: it says which. Not
-             reachable at this pace: says so, never a far-off date.
-  5. CONFIG  data/fire_variants.json (the default target age),
-             data/return_bands.json (the real return).
-
-  LIVE-FORM: built once. One box, in the HTML.
+  REDIRECT — Coasting is a reading of The Number (rooms/fire.html#coast, DECISIONS.md D-255).
+  Five rooms with one multiplication between them. Rules 1 and 3 of
+  D-229.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
-  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
-  .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
-  .reverse { font-size: var(--text-md); margin: var(--space-2) 0 0; }
-</style>
+<meta http-equiv="refresh" content="0; url=fire.html#coast"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>Your Coast Date</h1>
-  <p class="room-lede">The earliest date you could stop saving for retirement and still get there by your target age. In today's dollars, at the real return the app assumes.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <section class="slaf-card" id="date">
-    <span class="slaf-eyebrow">Coast date</span>
-    <p class="head-num" id="c-num"></p>
-    <p class="head-sub" id="c-sub"></p>
-    <div class="ask" style="margin-top:var(--space-3)"><label for="in-age">Target age</label>
-      <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-age" placeholder="e.g. 65" aria-label="Target age"/></span></div>
-  </section>
-  <section class="slaf-card" id="reverse" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The reverse view</span>
-    <p class="reverse" id="c-rev"></p>
-    <p class="slaf-hint" id="c-assume" style="margin:var(--space-2) 0 0"></p>
-  </section>
-  <p class="disclaimer">
-    Educational tool, not financial advice. Today's dollars throughout: the
-    return is real, after inflation. Everything stays in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">Coasting is a reading of The Number now.
+    <a href="fire.html#coast" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/coast.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Coast = SLAF.Coast;
-  var ROOM_ID = 'coast-date';
-  var TABLES = null;
-  function el(id) { return document.getElementById(id); }
-  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
-  function addMonths(ym, n) { var y = Number(ym.slice(0, 4)), m = Number(ym.slice(5, 7)) - 1 + n; return (y + Math.floor(m / 12)) + '-' + ('0' + ((m % 12) + 1)).slice(-2); }
-  function render() {
-    if (!TABLES) return;
-    var typed = Number(String(el('in-age').value || '').replace(/\D/g, ''));
-    var r = Coast.date(Spine.getProfile(), TABLES, { targetAge: typed >= 18 && typed <= 100 ? typed : null });
-    if (!Money.isOk(r)) { el('c-num').textContent = 'Not yet.'; el('c-sub').textContent = r.reason; el('c-rev').textContent = ''; el('c-assume').textContent = ''; return; }
-    if (!el('in-age').value) el('in-age').placeholder = 'e.g. ' + r.targetAge;
-    if (r.neverAtThisPace) { el('c-num').textContent = 'Not reachable at this pace by ' + r.targetAge + '.'; el('c-sub').textContent = 'Saving ' + Money.formatCents(r.annualContributionCents) + ' a year does not get the pot to ' + Money.formatCents(r.fiNumberCents) + ' in time; a later target age or a larger saving would.'; }
-    else if (r.reachedNow) { el('c-num').textContent = 'You could coast now.'; el('c-sub').textContent = 'What is invested today grows to the FI number by ' + r.targetAge + ' with nothing more added.'; }
-    else { var when = addMonths(Schema.localMonth(), r.months); el('c-num').textContent = monthWord(when) + ', at ' + r.coastAge + '.'; el('c-sub').textContent = 'Keep saving ' + Money.formatCents(r.annualContributionCents) + ' a year until then; from that month the pot, about ' + Money.formatCents(r.potAtCoastCents) + ', reaches ' + Money.formatCents(r.fiNumberCents) + ' by ' + r.targetAge + ' on its own.'; }
-    /* J6 (D-214): never a single point without its range. The same walk at
-       the low and high band from data/return_bands.json. */
-    var bands = TABLES.returnBands && TABLES.returnBands.percentiles;
-    if (bands) {
-      var lo = Coast.date(Spine.getProfile(), TABLES, { targetAge: typed >= 18 && typed <= 100 ? typed : null, returnReal: bands.p25 });
-      var hi = Coast.date(Spine.getProfile(), TABLES, { targetAge: typed >= 18 && typed <= 100 ? typed : null, returnReal: bands.p75 });
-      function word(x) { return !Money.isOk(x) ? 'not yet' : x.neverAtThisPace ? 'not at this pace' : x.reachedNow ? 'now' : monthWord(addMonths(Schema.localMonth(), x.months)); }
-      el('c-sub').textContent += ' Range: ' + word(hi) + ' in a good decade (' + (Math.round(bands.p75 * 1000) / 10) + '%) to ' + word(lo) + ' in a poor one (' + (Math.round(bands.p25 * 1000) / 10) + '%).';
-      el('c-sub').setAttribute('data-range', word(hi) + '|' + word(lo));
-    }
-    el('c-rev').textContent = 'With no more contributions, today’s retirement money grows to about ' + Money.formatCents(r.noMoreContributions.atTargetAgeCents) + ' by ' + r.targetAge + ', in today’s dollars.';
-    el('c-assume').textContent = 'At ' + (Math.round(r.returnReal * 1000) / 10) + '% a year real (after inflation), from data/return_bands.json. Its own formula, not a FIRE variant.';
-  }
-  el('in-age').addEventListener('input', render);
-  Spine.registerRoom(ROOM_ID);
-  SLAF.Progress.mount(ROOM_ID);
-  Spine.onChange(render);
-  Reference.load(['fireVariants', 'returnBands', 'effectiveTaxRates', 'federalBrackets']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
-    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = {};
+    var hash = location.hash || '';
+    var target = 'fire.html' + (map[hash] || '#coast');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

@@ -4,14 +4,20 @@ module.exports = function (t) {
   const { section, check, checkTrue, ROOT, fs, path, Registry, Money, Schema, Demo } = t;
   section('The FIRE Lab (D-138): every calculation, drawn');
 
-  const page = fs.readFileSync(path.join(ROOT, 'rooms/fire-lab.html'), 'utf8');
-  const code = page.replace(/<!--[\s\S]*?-->/g, '');
+  /* The lab is a reading of The Number since D-255: its own slice of that
+     page. The page beside it DOES write — The Number owns two ages — and
+     the rule this file protects is that the lab stores nothing. */
+  const slice = t.reading('rooms/fire.html', 'view-the-lab', 'READING view-the-lab,');
+  const page = slice.page;
+  const code = slice.html.replace(/<!--[\s\S]*?-->/g, '');
 
   /* ---- It is a room, in the right place --------------------------------- */
-  const room = Registry.byId('fire-lab');
-  checkTrue('registered as a room', !!room);
-  check('… that reads and never writes', (room.needs || []).join(','), 'monthlyExpenses,investments');
-  checkTrue('… next to the FIRE Number it expands on', room.order > Registry.byId('fire').order && room.order < 9);
+  /* The lab is a reading of The Number since D-255 — it expands on the
+     number rather than sitting beside it, which is what it always did. */
+  const room = Registry.byId('fire');
+  checkTrue('the lab is a reading of The Number', !Registry.byId('fire-lab')
+    && /url=fire\.html#the-lab/.test(fs.readFileSync(path.join(ROOT, 'rooms/fire-lab.html'), 'utf8')));
+  check('… in a room that reads and barely writes', (room.needs || []).slice().sort().join(','), 'dob,investments,monthlyExpenses');
   checkTrue('… with every panel deep-linkable', (room.subsections || []).length >= 7);
 
   /* ---- It owns no formula ----------------------------------------------- */

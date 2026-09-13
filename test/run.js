@@ -10657,7 +10657,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses|prefs)\b/.test(w))));
   check('…and the only prefs writer among them is The Close', Registry.inGroup('numbers', null).filter(r => (Registry.daite(r.id).writes || []).some(w => /^prefs\b/.test(w))).map(r => r.id).join(','), 'budget');
   /* Your Next $100 became a reading of What The Next Dollar Does (D-231). */
-  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,foo-ladder,fire,fire-lab,coast-date,race');
+  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,foo-ladder,fire');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree');
@@ -11201,13 +11201,20 @@ section('15.2: assumptions declared once; real by default; nominal at display ti
   check('back to today’s money', Horizon.on(h), false);
   check('the household is untouched by the switch', Schema.createHousehold(h).assumptions.inflation, 0.03);
 
-  /* Every projection room carries the line once, at the top. */
-  ['adventure', 'fire', 'fire-lab', 'what-if-life', 'decumulation'].forEach(function (id) {
+  /* Every projection room carries the line once, at the top. The FIRE Lab
+     is a reading of The Number since D-255, so the PAGE carries it once per
+     reading that projects — two here, the number and the lab — and each
+     mounts its own. What must not happen is a reading that projects without
+     one. */
+  ['adventure', 'fire', 'what-if-life', 'decumulation'].forEach(function (id) {
     const src = fs.readFileSync(path.join(ROOT, 'rooms/' + id + '.html'), 'utf8');
     checkTrue(id + ' loads horizon.js', src.indexOf('shared/horizon.js') > -1);
-    checkTrue(id + ' mounts the line once', (src.match(/Horizon\.mount\(/g) || []).length === 1 || (id === 'decumulation' && /horizon: true/.test(src)));
+    checkTrue(id + ' mounts the line, once per reading that projects',
+      (src.match(/Horizon\.mount\(/g) || []).length >= 1 || (id === 'decumulation' && /horizon: true/.test(src)));
     checkTrue(id + ' converts at display time', /Horizon\.display\(/.test(src));
   });
+  checkTrue('The Number carries it for both readings that project',
+    (fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8').match(/Horizon\.mount\(/g) || []).length === 2);
   checkTrue('prefs.js loads before features.js wherever a room loads it (the switch reads prefs)', fs.readdirSync(path.join(ROOT, 'rooms')).every(function (f) {
     const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
     const a = src.indexOf('<script src="../shared/prefs.js">'), b = src.indexOf('<script src="../shared/features.js">');
@@ -13603,7 +13610,7 @@ section('I2, J2, J3, J6: the cost of not knowing, the Comeback, the real pay cyc
   const fi = ShareCard.make('fiDate', Demo.build(), T, {});
   checkTrue('the FI card carries the date with its range from the bands', fi.ok && typeof fi.fields.w === 'number' && typeof fi.fields.z === 'number' && fi.fields.w <= fi.fields.y && fi.fields.y <= fi.fields.z && /\(\d{4} to \d{4}\)/.test(fi.title), fi.title);
   checkTrue('and the range survives the link', /\(\d{4} to \d{4}\)/.test(ShareCard.render(ShareCard.decode(ShareCard.link(fi).split('#')[1])).title));
-  checkTrue('the coast date shows its range, a good decade to a poor one', /Range: /.test(fs.readFileSync(path.join(ROOT, 'rooms/coast-date.html'), 'utf8')) && /data-range/.test(fs.readFileSync(path.join(ROOT, 'rooms/coast-date.html'), 'utf8')));
+  checkTrue('the coast date shows its range, a good decade to a poor one', /Range: /.test(fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8')) && /data-range/.test(fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8')));
 })();
 
 /* ==========================================================================
@@ -13835,7 +13842,7 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
      live in: the skin still computes no date of its own, but the page it
      shares may write and may be guarded, so those two clauses are the
      reading's, not the file's. */
-  [['race', 'rooms/race.html', null], ['wedding', 'rooms/wedding.html', null],
+  [['race', 'rooms/fire.html', 'view-the-rungs'], ['wedding', 'rooms/wedding.html', null],
    ['down-payment', 'rooms/housing.html', 'view-the-deposit'],
    ['quit-fund', 'rooms/runway.html', 'view-by-choice']].forEach(function (r) {
     const page = fs.readFileSync(path.join(ROOT, r[1]), 'utf8');
@@ -13906,7 +13913,9 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   check('a typed total wins over the build-up', Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).source + ':' + Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).reachedNow, 'typed:true');
   checkTrue('the defaults table is tagged, every figure editable from the page', T.weddingDefaults.confidence === 'unverified' && /in-perguest/.test(fs.readFileSync(path.join(ROOT, 'rooms/wedding.html'), 'utf8')));
   /* registry and shelves */
-  ['race', 'wedding'].forEach(function (id) { checkTrue(id + ' is registered', !!Registry.byId(id)); });
+  checkTrue('the Wedding Countdown is still a room', !!Registry.byId('wedding'));
+  checkTrue('the Race is a reading of The Number', !Registry.byId('race')
+    && /url=fire\.html#the-rungs/.test(fs.readFileSync(path.join(ROOT, 'rooms/race.html'), 'utf8')));
   checkTrue('the Down Payment Countdown is Housing\'s deposit reading now (D-250)',
     !Registry.byId('down-payment') && Registry.byId('housing').subsections.some(x => x.id === 'dp-inputs'));
   checkTrue('the Quit Fund is the Cushion\'s by-choice reading now (D-232)', !Registry.byId('quit-fund') && Registry.byId('runway').subsections.some(x => x.id === 'view-by-choice'));

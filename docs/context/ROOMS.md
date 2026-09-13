@@ -22,14 +22,11 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **rollover** — The Account You Left Behind · 756 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom · D-150
 - **tax** — Tax · 258 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly · owns: otherPreTax, withheld · D-150, D-142, D-129
 
-## Scorecard (6)
+## Scorecard (3)
 
 - **financial-snapshot** — The Scorecard · 2597 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-233, D-036, D-007
-- **fire** — FIRE Number · 531 lines · engines: projection, tier0, fire, selfemployed, tax, hourly · owns: retireAge, coastAge · D-228, D-162, D-161
-- **fire-lab** — FIRE Lab · 462 lines · engines: projection, tier0, cashflow, fire, hourly · D-228, D-138
+- **fire** — The Number · 1434 lines · engines: projection, tier0, fire, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race · owns: enoughMonthly, retireAge, coastAge · D-237, D-228, D-161
 - **foo-ladder** — What The Next Dollar Does · 695 lines · engines: projection, tier0, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-231, D-058, D-054
-- **coast-date** — Your Coast Date · 122 lines · engines: projection, tier0, coast · D-213
-- **race** — The Race to $100K · 155 lines · engines: projection, tier0, countdown, race · D-217
 
 ## Decisions (14)
 
@@ -48,11 +45,10 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **big-purchase** — Big Purchase · 494 lines · engines: projection, tier0, hourly, quickmath, purchase, dreamline · owns: purchasePrice, purchaseMonths, purchaseRate, dreamsMonthly · D-237, D-129, D-112
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 
-## What Matters (5)
+## What Matters (4)
 
 - **values** — What Matters · 1675 lines · engines: projection, tier0, cashflow, values, fulfillment, rerank, foo, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget, rerankCut · D-237
 - **goals** — The Decision Room · 700 lines · engines: projection, tier0, cashflow, hourly, events, reversibility, goals · owns: reversibilityDecision · D-237, D-090
-- **enough** — Enough · 276 lines · engines: projection, tier0, cashflow, fulfillment, hourly, enough · owns: enoughMonthly · D-164, D-114, D-079
 - **week** — The Life · 522 lines · engines: projection, tier0, hourly, cashflow, week, ratios, buckets · owns: designedHours, bucketsPlanned · D-237
 - **debates** — The Referee · 574 lines · engines: selfemployed, tax, projection, tier0, trap, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-237, D-218
 
@@ -67,12 +63,13 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (53)
+## Files in rooms/ not in the registry (57)
 
 - rooms/accounts.html
 - rooms/between-jobs.html
 - rooms/buckets.html
 - rooms/calendar.html
+- rooms/coast-date.html
 - rooms/comeback.html
 - rooms/credential.html
 - rooms/credit.html
@@ -81,9 +78,11 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/doors.html
 - rooms/down-payment.html
 - rooms/dreamline.html
+- rooms/enough.html
 - rooms/estate.html
 - rooms/exercises.html
 - rooms/express.html
+- rooms/fire-lab.html
 - rooms/first-car.html
 - rooms/first-round.html
 - rooms/fulfillment.html
@@ -100,6 +99,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/property.html
 - rooms/quick-math.html
 - rooms/quit-fund.html
+- rooms/race.html
 - rooms/rank-guess.html
 - rooms/ratios.html
 - rooms/reachable.html

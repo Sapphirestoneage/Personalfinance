@@ -194,7 +194,7 @@
     },
     {
       "id": "fire",
-      "title": "FIRE Number",
+      "title": "The Number",
       "file": "rooms/fire.html",
       "reads": [
         "monthlyExpenses",
@@ -202,6 +202,7 @@
         "dob"
       ],
       "writes": [
+        "enoughMonthly",
         "retireAge",
         "coastAge"
       ],
@@ -210,19 +211,6 @@
       ],
       "dashboardNumber": "fiEtaYear",
       "order": 8
-    },
-    {
-      "id": "fire-lab",
-      "title": "FIRE Lab",
-      "file": "rooms/fire-lab.html",
-      "reads": [
-        "monthlyExpenses",
-        "investments"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 8.5
     },
     {
       "id": "hassle",
@@ -330,34 +318,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 24
-    },
-    {
-      "id": "coast-date",
-      "title": "Your Coast Date",
-      "file": "rooms/coast-date.html",
-      "reads": [
-        "dob",
-        "investments",
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 25.5
-    },
-    {
-      "id": "race",
-      "title": "The Race to $100K",
-      "file": "rooms/race.html",
-      "reads": [
-        "cashSavings",
-        "monthlyExpenses",
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 25.9
     },
     {
       "id": "runway",
@@ -602,21 +562,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 41
-    },
-    {
-      "id": "enough",
-      "title": "Enough",
-      "file": "rooms/enough.html",
-      "reads": [
-        "monthlyExpenses",
-        "investments"
-      ],
-      "writes": [
-        "enoughMonthly"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 43
     },
     {
       "id": "adventure",

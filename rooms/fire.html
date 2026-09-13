@@ -6,69 +6,237 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>FIRE Number · SPARKS</title>
-<meta name="description" content="What you'd need to stop working — lean, standard, chubby, fat, coast or barista."/>
+<title>The Number · SPARKS</title>
+<meta name="description" content="What you would need before work became optional, the figure you would live on by choice, the date you could stop saving, the rungs on the way, and every FIRE calculation on one screen."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11.
+  ROOM SPEC — SPEC.md §11, §12.2. DECISIONS.md D-217, D-228 (the reframe),
+  D-255 (the merge). Registry: fire.
 
-  1. READS   the month of spending (the four numbers, D-172; via Cash Flow when
-             there is one), investments, dob, income, filingStatus.
-  2. WRITES  Nothing. It owns no field. The variant parameters below — coast
-             target age, part-time income, and the withdrawal rate — are
-             LOCAL previews for this view only, never written to the stored
-             assumptions (SPEC.md §12.2, §6).
-  3. CALLS   engines/fire.js — one calculateFIRE() parameterised by variant,
-             per §8. Projection comes from engines/projection.js, the same
-             loop Tier 0 uses. No formula is written in this file.
-  4. EMPTY   No expenses: every variant says so. Barista without a part-time
-             figure, and Coast without a date of birth, each name what they
-             need rather than guessing.
-  5. CONFIG  data/fire_variants.json (the flavours and their expense
-             factors), data/effective_tax_rates_2026.json (for the savings
-             rate that drives the projection).
+  FIVE READINGS OF ONE NUMBER.
+
+    #the-number   what you would need, and the six answers to that question
+    #enough       the monthly figure you would live on BY CHOICE, and the
+                  second FI number it makes, against the first
+    #coast        the earliest date you could stop saving and still arrive
+    #the-rungs    the first $100,000, then every rung to a million
+    #the-lab      every FIRE calculation on one screen, nothing stored
+
+  Five rooms, one multiplication between them. Rule 1 and rule 3 of D-229:
+  the same fields at five framings, and the lab is a lens rather than a
+  room. The plain number is first; the lab is last because it is the one
+  that rewards already knowing what you are looking at.
+
+  WHAT THIS ROOM IS NOT YET, and D-228 says it must become: a READ-OUT of
+  The Back Half, with the naive 25x beside it and one sentence on the gap.
+  Today every reading here is built on spending x 25 through
+  engines/tier0.js fireNumber. Changing that waits on the owner answer
+  recorded in D-228 and D-254 — whether the income floor is means-tested —
+  because it moves the number every other room shows.
+
+  1. READS   what is invested, the month you spend, and the assumptions.
+  2. WRITES  retireAge and coastAge, as before. The other four readings
+             write nothing: the lab says so on the page, and means it.
+  3. CALLS   engines/tier0.js, engines/fire.js, engines/coast.js and
+             engines/race.js — one each, unchanged.
+  4. EMPTY   no pot is not a zero pot, and no spending is not a zero
+             target: each reading names what it needs.
+  5. CONFIG  data/fire_variants.json and the tables each engine names.
+
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css.
+
+  LIVE-FORM: guarded. Every reading keeps the discipline it had; switching
+  readings hides and shows and rebuilds nothing (D-034).
 -->
 <style>
-  .room-back:hover { text-decoration: underline; }
-  section[id] { scroll-margin-top: var(--space-4); }
-
-  .variants { display: grid; gap: var(--space-2); }
-  .variant { text-align: left; font-family: var(--font-body); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
-  .variant:hover { border-color: var(--color-border-active); }
-  .variant[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
-  .variant-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
-  .variant-name { font-weight: 600; }
-  .variant-figure { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .variant-figure.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-sm); }
-  .variant-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
-  .variant-eta { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
-  .variant-eta:empty { display: none; }
-
-  .params { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
-  @media (max-width: 380px) { .params { grid-template-columns: 1fr; } }
-
-  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
-  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
-  .out-detail dt { color: var(--color-text-faint); }
-  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
-
-  .preview-note { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- The number, from rooms/fire.html (D-255) ---- */
+  
+  #view-the-number .room-back:hover { text-decoration: underline; }
+  
+  #view-the-number section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-the-number .variants { display: grid; gap: var(--space-2); }
+  
+  #view-the-number .variant { text-align: left; font-family: var(--font-body); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
+  
+  #view-the-number .variant:hover { border-color: var(--color-border-active); }
+  
+  #view-the-number .variant[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  
+  #view-the-number .variant-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  
+  #view-the-number .variant-name { font-weight: 600; }
+  
+  #view-the-number .variant-figure { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-number .variant-figure.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-sm); }
+  
+  #view-the-number .variant-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-the-number .variant-eta { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  
+  #view-the-number .variant-eta:empty { display: none; }
+
+  
+  #view-the-number .params { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { 
+  #view-the-number .params { grid-template-columns: 1fr; } }
+
+  
+  #view-the-number .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-the-number .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-the-number .out-detail dt { color: var(--color-text-faint); }
+  
+  #view-the-number .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  
+  #view-the-number .preview-note { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
+  
+  #view-the-number .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- Enough, from rooms/enough.html (D-255) ---- */
+  
+  #view-enough section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-enough .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- Coasting, from rooms/coast-date.html (D-255) ---- */
+  
+  #view-coast .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  
+  #view-coast .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-coast .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  
+  #view-coast .reverse { font-size: var(--text-md); margin: var(--space-2) 0 0; }
+
+  /* ---- The rungs, from rooms/race.html (D-255) ---- */
+  
+  #view-the-rungs .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  
+  #view-the-rungs .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-the-rungs ol.rungs { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-rungs ol.rungs li { display: grid; grid-template-columns: 4.5rem 1fr; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: start; }
+  
+  #view-the-rungs ol.rungs li:first-child { border-top: none; }
+  
+  #view-the-rungs ol.rungs .rung { font-family: var(--font-display); font-size: var(--text-lg); }
+  
+  #view-the-rungs ol.rungs .when { font-weight: 600; }
+  
+  #view-the-rungs ol.rungs .gap { display: block; height: 6px; border-radius: 3px; background: var(--color-border); margin: var(--space-1) 0; position: relative; overflow: hidden; }
+  
+  #view-the-rungs ol.rungs .gap i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--color-accent); }
+  
+  #view-the-rungs ol.rungs .gap b { position: absolute; right: 0; top: 0; bottom: 0; background: var(--color-positive, #30a46c); }
+  
+  #view-the-rungs ol.rungs small { color: var(--color-text-muted); }
+  
+  #view-the-rungs ol.rungs li.is-lead .rung::after { content: ' ★'; color: var(--color-positive, #30a46c); }
+  
+  #view-the-rungs .choices { margin-top: var(--space-3); }
+
+  /* ---- The lab, from rooms/fire-lab.html (D-255) ---- */
+  
+  #view-the-lab section[id] { scroll-margin-top: var(--space-4); }
+
+  /* The headline pairing: one figure, one ring. On a phone they stack. */
+  
+  #view-the-lab .headline { display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: center; }
+  @media (max-width: 460px) { 
+  #view-the-lab .headline { grid-template-columns: 1fr; } }
+  
+  #view-the-lab .headline-ring { width: 148px; justify-self: center; }
+  
+  #view-the-lab .big { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.05; }
+  
+  #view-the-lab .big-sub { color: var(--color-text-muted); font-size: var(--text-sm); margin-top: var(--space-2); }
+
+  /* Every figure on one rail with its meaning beside it — the pattern from
+     Debt Payoff (D-133), which is where numbers read best. */
+  
+  #view-the-lab .facts { display: grid; grid-template-columns: minmax(0, auto) 10ch 1fr; margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-the-lab .facts dt { color: var(--color-text-muted); padding: var(--space-2) var(--space-3) var(--space-2) 0; border-top: 1px solid var(--color-border); white-space: nowrap; }
+  
+  #view-the-lab .facts dd { margin: 0; text-align: right; font-family: var(--font-display); font-variant-numeric: tabular-nums; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); white-space: nowrap; }
+  
+  #view-the-lab .facts .why { color: var(--color-text-faint); font-size: var(--text-xs); padding: var(--space-2) 0 var(--space-2) var(--space-3); border-top: 1px solid var(--color-border); }
+  
+  #view-the-lab .facts > :nth-child(-n+3) { border-top: none; }
+  @media (max-width: 460px) {
+    
+  #view-the-lab .facts { grid-template-columns: minmax(0, 1fr) auto; }
+    
+  #view-the-lab .facts dt,
+  #view-the-lab .facts dd { padding-bottom: 0; }
+    
+  #view-the-lab .facts .why { grid-column: 1 / -1; border-top: none; padding: 2px 0 var(--space-2); }
+    
+  #view-the-lab .facts > :nth-child(3n+1):not(:nth-child(-n+3)),
+  #view-the-lab .facts > :nth-child(3n+2):not(:nth-child(-n+3)) { border-top: 1px solid var(--color-border); }
+  }
+
+  
+  #view-the-lab .swr { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); align-items: center; }
+  
+  #view-the-lab .swr input[type="range"] { width: 100%; accent-color: var(--color-accent); }
+  
+  #view-the-lab .swr-read { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* The sensitivity grid: a real table, because that is what it is. */
+  
+  #view-the-lab .grid-wrap { overflow-x: auto; margin-top: var(--space-3); }
+  
+  #view-the-lab table.grid { border-collapse: collapse; width: 100%; font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+  
+  #view-the-lab table.grid th,
+  #view-the-lab table.grid td { padding: var(--space-2); text-align: right; white-space: nowrap; border: 1px solid var(--color-border); }
+  
+  #view-the-lab table.grid th { color: var(--color-text-subtle); font-weight: 600; text-align: center; }
+  
+  #view-the-lab table.grid th[scope="row"] { text-align: right; }
+  
+  #view-the-lab table.grid td.is-base { background: var(--color-surface-active); border-color: var(--color-border-active); color: var(--color-text); font-weight: 600; }
+  
+  #view-the-lab .grid-key { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
+
+  
+  #view-the-lab .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>FIRE Number</h1>
-  <p class="room-lede">What you'd need before work became optional — and the six different answers to that question.</p>
+  <h1>The Number</h1>
+  <p class="room-lede">What you would need before work became optional.</p>
 </header>
 
 <main class="slaf-wrap">
-  <p class="slaf-horizon" id="horizon-line"></p>
+  <nav class="slaf-hats" id="hats" aria-label="Five readings of one number">
+    <a href="#the-number" data-view="view-the-number">The number</a>
+    <a href="#enough" data-view="view-enough">Enough</a>
+    <a href="#coast" data-view="view-coast">Coasting</a>
+    <a href="#the-rungs" data-view="view-the-rungs">The rungs</a>
+    <a href="#the-lab" data-view="view-the-lab">The lab</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ===== THE NUMBER (was rooms/fire.html) ===== -->
+  <section id="view-the-number">
+  <p class="slaf-lede">What you'd need before work became optional — and the six different answers to that question.</p>
+  <p class="slaf-horizon" id="horizon-line"></p>
 
   <section class="slaf-card" id="reading">
     <span class="slaf-eyebrow">What this is reading</span>
@@ -138,13 +306,156 @@
     </div>
     <p class="preview-note" id="preview-note"></p>
   </section>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. A withdrawal rate is a planning
-    assumption, not a promise — the 4% figure comes from historical US market
-    data over 30-year retirements and says nothing certain about yours. Your
-    numbers stay in this browser.
-  </p>
+  <!-- ===== ENOUGH (was rooms/enough.html) ===== -->
+  <section id="view-enough" hidden>
+  <p class="slaf-lede">The monthly figure you would live on by choice — typed, or proposed from the joy curve — and the second FI number it makes, against the first.</p>
+  <div class="room-standalone" id="en-room-standalone" hidden></div>
+
+  <section class="slaf-card" id="en-number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">Enough, a month</span>
+      <div id="en-room-lens"></div>
+    </div>
+    <div class="room-number" id="en-room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="en-chart" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Two FI numbers</span>
+    <div id="en-room-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="en-inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What enough is</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">The month you would choose, not the one you have. Leave it blank and the room proposes one — from your joy curve once a month is categorised and rated, and as 85% of spending until then — but a proposal is never yours until you type it.</p>
+    <div id="en-room-inputs"></div>
+  </section>
+
+  <section class="slaf-card" id="en-amounts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Through the lens</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
+    <ul class="room-amounts" id="en-room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="en-assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="en-room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="en-room-why" hidden></p>
+  <p class="room-scope" id="en-room-scope"></p>
+
+  <section class="slaf-card" id="en-reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="en-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ===== COASTING (was rooms/coast-date.html) ===== -->
+  <section id="view-coast" hidden>
+  <p class="slaf-lede">The earliest date you could stop saving for retirement and still get there by your target age. In today's dollars, at the real return the app assumes.</p>
+  <section class="slaf-card" id="date">
+    <span class="slaf-eyebrow">Coast date</span>
+    <p class="head-num" id="c-num"></p>
+    <p class="head-sub" id="c-sub"></p>
+    <div class="ask" style="margin-top:var(--space-3)"><label for="in-age">Target age</label>
+      <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-age" placeholder="e.g. 65" aria-label="Target age"/></span></div>
+  </section>
+  <section class="slaf-card" id="reverse" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The reverse view</span>
+    <p class="reverse" id="c-rev"></p>
+    <p class="slaf-hint" id="c-assume" style="margin:var(--space-2) 0 0"></p>
+  </section>
+  </section>
+
+  <!-- ===== THE RUNGS (was rooms/race.html) ===== -->
+  <section id="view-the-rungs" hidden>
+  <p class="slaf-lede">The first $100,000 is the hardest. The date you reach your next rung, then every rung to $1 million, and at each one how much was saved and how much just grew.</p>
+  <section class="slaf-card" id="next">
+    <span class="slaf-eyebrow">The next rung</span>
+    <p class="head-num" id="r-num"></p>
+    <p class="head-sub" id="r-sub"></p>
+    <div class="choices" id="basis-choices">
+      <button type="button" class="choice" data-basis="netWorth" aria-pressed="true">Net worth</button>
+      <button type="button" class="choice" data-basis="invested" aria-pressed="false">Invested money only</button>
+    </div>
+    <p class="slaf-hint" id="r-share" style="margin:var(--space-3) 0 0"></p>
+  </section>
+  <section class="slaf-card" id="rungs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Every rung to $1 million</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Each bar is the wait for that rung. Blue is what you put in over the wait; green is what grew on its own. The star marks the first rung where growth did more of the work than you did.</p>
+    <ol class="rungs" id="r-rungs"></ol>
+  </section>
+  </section>
+
+  <!-- ===== THE LAB (was rooms/fire-lab.html) ===== -->
+  <section id="view-the-lab" hidden>
+  <p class="slaf-lede">Every FIRE calculation on one screen, drawn rather than listed. Nothing here is stored — move the withdrawal rate and watch all of it move.</p>
+  <p class="slaf-horizon" id="lab-horizon-line"></p>
+
+  <section class="slaf-card" id="number">
+    <span class="slaf-eyebrow">The number, and how far along you are</span>
+    <div class="headline" style="margin-top:var(--space-3)">
+      <div>
+        <div class="big" id="fire-figure">—</div>
+        <p class="big-sub" id="fire-say"></p>
+      </div>
+      <div class="headline-ring" id="progress-ring"></div>
+    </div>
+    <dl class="facts" id="facts"></dl>
+    <div id="lab-bands"></div>
+    <div id="lab-lens"></div>
+  </section>
+
+  <section class="slaf-card" id="swr">
+    <span class="slaf-eyebrow">The one assumption that moves everything</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Withdrawal rate</h2>
+    <div class="swr">
+      <input type="range" id="swr-range" min="250" max="500" step="10" aria-label="Safe withdrawal rate"/>
+      <span class="swr-read" id="swr-read">—</span>
+    </div>
+    <p class="slaf-hint" id="swr-say" style="margin-top:var(--space-2)"></p>
+  </section>
+
+  <section class="slaf-card" id="flavours">
+    <span class="slaf-eyebrow">Six ways to answer the same question</span>
+    <h2 style="margin:var(--space-2) 0 0">The flavours, side by side</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">One formula, six sets of parameters. A flavour that needs a figure you have not given says so instead of guessing.</p>
+    <div id="variant-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="split">
+    <span class="slaf-eyebrow">Where the number comes from</span>
+    <h2 style="margin:var(--space-2) 0 0">A year of spending, by kind</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The FIRE number is this year, divided by the withdrawal rate. Cutting any slice cuts the number by twenty-five times the saving.</p>
+    <div id="spend-donut"></div>
+  </section>
+
+  <section class="slaf-card" id="milestones">
+    <span class="slaf-eyebrow">Quarter, half, three quarters, done</span>
+    <h2 style="margin:var(--space-2) 0 0">Milestones</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The gaps get shorter as compounding does more of the work. The first quarter is the long one.</p>
+    <div id="milestone-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="path">
+    <span class="slaf-eyebrow">The path</span>
+    <h2 style="margin:var(--space-2) 0 0">Portfolio, year by year</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">What you hold now, plus what you add, compounding at your assumed return, against the line you are aiming at.</p>
+    <div id="path-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="sensitivity">
+    <span class="slaf-eyebrow">If the assumptions are wrong</span>
+    <h2 style="margin:var(--space-2) 0 0">The number at every rate and every lifestyle</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Down the side, the withdrawal rate. Across the top, a year of spending as a share of today's. Your square is lit.</p>
+    <div class="grid-wrap" id="grid"></div>
+    <p class="grid-key">A lower withdrawal rate is a more cautious plan and a bigger number. There is no correct square — there is the one you can live with.</p>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. A withdrawal rate is a convention, not a promise. Everything stays in this browser.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -171,13 +482,90 @@
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../shared/rating.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/fulfillment.js"></script>
+<script src="../engines/enough.js"></script>
+<script src="../engines/coast.js"></script>
+<script src="../engines/countdown.js"></script>
+<script src="../engines/race.js"></script>
+<script src="../shared/sharecard.js"></script>
+<script src="../shared/room.js"></script>
 <script>
+/* ---- the number, enough, coasting, the rungs, the lab (D-255) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   The hash still reaches it — an old link must land somewhere honest — and
+   the reading says for whom it is, which is what Gate.why is for. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-enough', match: /^#(enough|en-)/ },
+    { id: 'view-coast', match: /^#(coast|co-|date|reverse|in-age|c-)/ },
+    { id: 'view-the-rungs', match: /^#(the-rungs|ra-|rungs|next|basis-choices|share-link|r-)/ },
+    { id: 'view-the-lab', match: /^#(the-lab|lab-|swr|swr-|facts|flavours|grid|milestone|milestones|path|path-chart|progress-ring|sensitivity|spend-donut|split|variant-chart|fire-figure|fire-say)/ },
+    { id: 'view-the-number', match: /.*/ }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. When the hash asks for a reading the gate has taken
+       away, fall back to the DEFAULT — the room's plainest reading, and the
+       one the person would have got with no hash at all — not to whichever
+       gated reading happens to sit first in this list. */
+    var fallback = VIEWS[VIEWS.length - 1];
+    var on = open(asked) ? asked
+           : open(fallback) ? fallback
+           : VIEWS.filter(open)[0] || fallback;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('fire');
+  if (SLAF.Progress) SLAF.Progress.mount('fire');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-the-number, from rooms/fire.html (D-255) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership, Fire = SLAF.Fire;
 
-  var ROOM_ID = 'fire';
+  var ROOM_ID = 'fire';   /* the room this reading lives in */
   var TABLES = null;
   var variantId = 'standard';
 
@@ -489,17 +877,6 @@
       if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
     });
   });
-
-  function jumpToHash() {
-    if (!location.hash) return;
-    var target = document.getElementById(location.hash.slice(1));
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  window.addEventListener('hashchange', jumpToHash);
-
-  Spine.registerRoom(ROOM_ID);
-
-  SLAF.Progress.mount(ROOM_ID);
   SLAF.AfterTax.mount(el('nw-basis'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.3 (D-181) */
 
   SLAF.Horizon.mount(document.getElementById('horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.2: today's money, once per screen (D-181) */
@@ -516,12 +893,538 @@
       if (Money.isOk(p)) rows.push({ label: 'Still to go', cents: Math.max(0, p.targetCents - p.investmentsCents) });
       return rows;
     }, function () { return TABLES; });
-    jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');
     notice.hidden = false;
     notice.className = 'notice is-error';
     notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
+      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-enough, from rooms/enough.html (D-255) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry,
+      Enough = SLAF.Enough, Fulfillment = SLAF.Fulfillment, Charts = SLAF.Charts, Room = SLAF.Room;
+
+  /* ---- writes: this room owns household.enough ------------------------------ */
+  /* The figure and where it came from move together, as one undo entry:
+     the template's labelled batch wraps this one, so the label is the
+     box's ("Enough, a month → $2,600"). */
+  function writeEnough(cents, source) {
+    Spine.batch(null, function () {
+      Spine.set('enough.monthlyCents', cents);
+      Spine.set('enough.source', cents === null ? null : source);
+    });
+  }
+  function readEnough(h) { return Schema.createEnough((h && h.enough) || {}); }
+
+  function fmt(c) { return Money.formatCents(c); }
+  function years1(v) { return String(Math.round(v * 10) / 10); }
+  function inYears(r) {
+    if (!Money.isOk(r)) return '';
+    return r.alreadyThere ? ' — already there' : ' in ' + years1(r.value) + ' years';
+  }
+  function joyLink() { return '<a href="' + Ownership.linkTo('values', 'rate') + '">the joy curve →</a>'; }
+
+  var mounted = null;   /* what Room.mount returns: render(), household(), tables() */
+  mounted = Room.mount({
+    id: 'fire',
+    part: true,
+    prefix: 'en-',
+    root: 'view-enough',
+    tables: ['expenseCategories', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['monthlyExpenses', 'investments'],
+
+    number: function (h, T) {
+      var two = Enough.fiTwo(h, T);
+      if (!Money.isOk(two)) return { label: 'Enough, a month', value: null, reason: two.reason };
+      var parts = [];
+      if (two.proposed) {
+        parts.push(two.source === 'curve'
+          ? 'proposed from your joy curve — type your own to keep it'
+          : 'a stand-in: 85% of spending, a convention — type your own');
+      }
+      parts.push('spending ' + fmt(two.spendMonthlyCents));
+      parts.push('FI on enough <strong>' + fmt(two.enoughFiCents) + '</strong>' + inYears(two.yearsToEnough));
+      parts.push('FI on spending ' + fmt(two.spendFiCents) + inYears(two.yearsToSpend));
+      if (two.enoughAboveSpending) {
+        parts.push('<strong>enough above spending</strong>: the gap runs the other way — ' + fmt(-two.gapCents) + ' more'
+          + (two.yearsGap !== null ? ' and ' + years1(-two.yearsGap) + ' years longer' : ''));
+      } else if (two.gapCents === 0) {
+        parts.push('enough equals spending: one number, not two');
+      } else {
+        parts.push('the gap: <strong>' + fmt(two.gapCents) + '</strong>' + (two.yearsGap !== null ? ', ' + years1(two.yearsGap) + ' years' : '') + ' — the cost of not knowing your enough');
+      }
+      if (two.yearsReason) parts.push(two.yearsReason);
+      if (two.source !== 'curve') {
+        var c = Enough.fromCurve(h, T);
+        parts.push(Money.isOk(c)
+          ? 'the joy curve would say ' + fmt(c.value) + ' (' + joyLink() + ')'
+          : 'the joy curve cannot propose yet: ' + c.reason + ' (' + joyLink() + ')');
+      }
+      return { label: 'Enough, a month', value: fmt(two.enoughMonthlyCents), sub: parts.join(' · '),
+        zone: two.enoughBelowSpending ? 'good' : null, result: two };
+    },
+
+    chart: function (h, T) {
+      var p = Enough.path(h, T);
+      if (!Money.isOk(p)) return Charts.area({ series: [], empty: p.reason });
+      var y0 = new Date().getFullYear();
+      var enoughColor = Charts.COLORS.series[0];
+      var dots = [];
+      if (p.crossSpendYear !== null) dots.push({ x: y0 + p.crossSpendYear, y: p.spendFiCents, color: Charts.COLORS.target });
+      if (p.crossEnoughYear !== null) dots.push({ x: y0 + p.crossEnoughYear, y: p.enoughFiCents, color: enoughColor });
+      return Charts.area({
+        title: 'Investments over time against both FI numbers',
+        series: [
+          { label: 'Investments', color: Charts.COLORS.growth, fill: true, points: p.rows.map(function (r) { return [y0 + r.year, Math.max(0, r.balanceCents)]; }) }
+        ],
+        hLines: [
+          { y: p.spendFiCents, label: 'FI on spending ' + Charts.shortMoney(p.spendFiCents), color: Charts.COLORS.target },
+          { y: p.enoughFiCents, label: 'FI on enough ' + Charts.shortMoney(p.enoughFiCents), color: enoughColor }
+        ],
+        dots: dots,
+        x: { label: 'year', format: function (v) { return String(Math.round(v)); } }
+      });
+    },
+
+    inputs: [
+      { ctl: 'monthlyCents', label: 'Enough, a month', kind: 'money', placeholder: 'e.g. 2,600',
+        hint: 'What you would live on by choice, a month — the life you would pick, priced.',
+        read: function (h) { return readEnough(h).monthlyCents; },
+        write: function (v) { writeEnough(v === null || v < 0 ? null : v, 'entered'); },
+        propose: function (h, T) { var p = Enough.propose(h, T); return Money.isOk(p) ? { value: p.value, source: p.source } : null; } },
+      { ctl: 'source', label: 'Where it came from', kind: 'choice', options: [['curve', 'From the joy curve'], ['entered', 'Typed']],
+        hint: 'Typed is whatever is in the box. From the joy curve writes the curve’s figure — spending less the low-joy lines — once a month is categorised and rated; until then it writes nothing.',
+        read: function (h) { return readEnough(h).source; },
+        write: function (v) {
+          if (v === 'curve') {
+            var c = Enough.fromCurve(Spine.getProfile(), mounted ? mounted.tables() : null);
+            if (Money.isOk(c)) writeEnough(c.value, 'curve');
+            return;
+          }
+          var cur = readEnough(Spine.getProfile()).monthlyCents;
+          if (v === 'entered' && Money.isEntered(cur)) writeEnough(cur, 'entered');
+        } }
+    ],
+
+    amounts: function (h, T) {
+      var two = Enough.fiTwo(h, T);
+      var spend = Schema.monthlyExpensesCents(h);
+      var rows = [];
+      if (Money.isOk(two)) rows.push({ label: 'A month of enough', cents: two.enoughMonthlyCents, href: '#en-inputs' });
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
+      if (Money.isOk(two) && two.monthlyGapCents !== 0) rows.push({ label: two.monthlyGapCents > 0 ? 'The gap, a month (spending − enough)' : 'The gap, a month (enough − spending)', cents: Math.abs(two.monthlyGapCents) });
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var a = Schema.resolveAssumptions(h);
+      var two = Enough.fiTwo(h, T);
+      var c = Enough.fromCurve(h, T);
+      var Q = Fulfillment.QUADRANTS;
+      var rows = [
+        { label: 'Withdrawal rate', value: Money.formatRate(a.swrRate, { decimals: 1 }), source: 'assumptions.swrRate — both FI numbers are a year of the month ÷ this rate, through Tier0.fireNumber (default 4%, a convention)' },
+        { label: 'Real return, for the years', value: Money.formatRate(a.returnReal, { decimals: 1 }), source: 'assumptions.returnReal (D-094) — the lens’s rate, so the years here and the months bought or pushed there agree' },
+        { label: 'This year’s savings', value: Money.isOk(two) && two.contribution ? fmt(two.contribution.annualSavingsCents) + ' a year' : 'not known yet', source: Money.isOk(two) && two.contribution ? 'Tier0.savingsRate, ' + (two.contribution.basis === 'includingMatch' ? 'with the employer match' : 'without a match') + ' — the same basis as the lens and the dashboard' : (Money.isOk(two) && two.yearsReason) || 'income, expenses and filing status' },
+        { label: 'The lines the curve drops', value: Q.expensive.label + ' and ' + Q.small_meh.label, source: 'the two low-joy quadrants of the joy curve (engines/fulfillment.js: below the 5.5 joy midpoint); never a line marked essential in data/expense_categories.json' },
+        { label: 'The stand-in', value: Money.formatRate(Enough.CONVENTION_SHARE, { decimals: 0 }) + ' of spending', source: 'most people’s enough sits under their spending — a convention, shown until the curve can speak and never written' }
+      ];
+      if (Money.isOk(c)) rows.push({ label: 'The curve’s thresholds', value: 'spend line ' + fmt(c.spendLineCents) + ', joy line ' + c.joyLine, source: 'the median monthly spend across the rated lines and the midpoint of the 1-10 scale; ' + c.ratedCount + ' rated, ' + fmt(c.droppedMonthlyCents) + ' a month dropped' });
+      return rows;
+    },
+
+    why: function (h, T, situation) {
+      var bj = Registry.byId('between-jobs');
+      return {
+        employed: 'Employed, the FI number everyone quotes is spending × 25. Enough makes a second one, and the years between them are the years a life you did not choose would cost — the number that decides how long the job has to last.',
+        selfEmployed: 'Self-employed, income moves and the FI number on spending moves with it; enough does not. It is the steadiest denominator you have, and the one a lean quarter is measured against.',
+        mixed: 'With a job and your own work, the question is which one you could put down, and when. Enough is the month that decides it: the smaller the number, the sooner the choice is yours.',
+        student: 'At a student’s stage enough is the number that survives graduation: the month you would live on by choice, set before a salary arrives to inflate it. Decide it now and the denominator is yours before the numerator is.',
+        retired: 'Retired, enough is the draw: the month you take from what you built, by choice rather than by habit. Against the balance it says whether the withdrawal rate is a worry or a comfort.',
+        betweenJobs: 'Between jobs, the floor and enough are cousins: the floor is what a month costs while you search, enough is what a month costs when you choose it. One says how long the money lasts; the other says what it is for.' + (bj ? ' The floor lives in ' + bj.title + '.' : '')
+      }[situation] || 'Spending makes one FI number. Enough makes a second, and the distance between them is what this room measures.';
+    },
+
+    scope: 'This room does not judge what is enough; it prices the number you give it against the one you spend.'
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-coast, from rooms/coast-date.html (D-255) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Coast = SLAF.Coast;
+  var ROOM_ID = 'fire';   /* the room this reading lives in */
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
+  function addMonths(ym, n) { var y = Number(ym.slice(0, 4)), m = Number(ym.slice(5, 7)) - 1 + n; return (y + Math.floor(m / 12)) + '-' + ('0' + ((m % 12) + 1)).slice(-2); }
+  function render() {
+    if (!TABLES) return;
+    var typed = Number(String(el('in-age').value || '').replace(/\D/g, ''));
+    var r = Coast.date(Spine.getProfile(), TABLES, { targetAge: typed >= 18 && typed <= 100 ? typed : null });
+    if (!Money.isOk(r)) { el('c-num').textContent = 'Not yet.'; el('c-sub').textContent = r.reason; el('c-rev').textContent = ''; el('c-assume').textContent = ''; return; }
+    if (!el('in-age').value) el('in-age').placeholder = 'e.g. ' + r.targetAge;
+    if (r.neverAtThisPace) { el('c-num').textContent = 'Not reachable at this pace by ' + r.targetAge + '.'; el('c-sub').textContent = 'Saving ' + Money.formatCents(r.annualContributionCents) + ' a year does not get the pot to ' + Money.formatCents(r.fiNumberCents) + ' in time; a later target age or a larger saving would.'; }
+    else if (r.reachedNow) { el('c-num').textContent = 'You could coast now.'; el('c-sub').textContent = 'What is invested today grows to the FI number by ' + r.targetAge + ' with nothing more added.'; }
+    else { var when = addMonths(Schema.localMonth(), r.months); el('c-num').textContent = monthWord(when) + ', at ' + r.coastAge + '.'; el('c-sub').textContent = 'Keep saving ' + Money.formatCents(r.annualContributionCents) + ' a year until then; from that month the pot, about ' + Money.formatCents(r.potAtCoastCents) + ', reaches ' + Money.formatCents(r.fiNumberCents) + ' by ' + r.targetAge + ' on its own.'; }
+    /* J6 (D-214): never a single point without its range. The same walk at
+       the low and high band from data/return_bands.json. */
+    var bands = TABLES.returnBands && TABLES.returnBands.percentiles;
+    if (bands) {
+      var lo = Coast.date(Spine.getProfile(), TABLES, { targetAge: typed >= 18 && typed <= 100 ? typed : null, returnReal: bands.p25 });
+      var hi = Coast.date(Spine.getProfile(), TABLES, { targetAge: typed >= 18 && typed <= 100 ? typed : null, returnReal: bands.p75 });
+      function word(x) { return !Money.isOk(x) ? 'not yet' : x.neverAtThisPace ? 'not at this pace' : x.reachedNow ? 'now' : monthWord(addMonths(Schema.localMonth(), x.months)); }
+      el('c-sub').textContent += ' Range: ' + word(hi) + ' in a good decade (' + (Math.round(bands.p75 * 1000) / 10) + '%) to ' + word(lo) + ' in a poor one (' + (Math.round(bands.p25 * 1000) / 10) + '%).';
+      el('c-sub').setAttribute('data-range', word(hi) + '|' + word(lo));
+    }
+    el('c-rev').textContent = 'With no more contributions, today’s retirement money grows to about ' + Money.formatCents(r.noMoreContributions.atTargetAgeCents) + ' by ' + r.targetAge + ', in today’s dollars.';
+    el('c-assume').textContent = 'At ' + (Math.round(r.returnReal * 1000) / 10) + '% a year real (after inflation), from data/return_bands.json. Its own formula, not a FIRE variant.';
+  }
+  el('in-age').addEventListener('input', render);
+  Spine.onChange(render);
+  Reference.load(['fireVariants', 'returnBands', 'effectiveTaxRates', 'federalBrackets']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-rungs, from rooms/race.html (D-255) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Race = SLAF.Race, ShareCard = SLAF.ShareCard;
+  var ROOM_ID = 'fire';   /* the room this reading lives in */
+  var TABLES = null, BASIS = 'netWorth';
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
+  function k(cents) { return '$' + Math.round(cents / 100000) + 'K'; }
+  function years(months) { return months < 12 ? months + ' month' + (months === 1 ? '' : 's') : (Math.round(months / 12 * 10) / 10) + ' years'; }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    Array.prototype.forEach.call(el('basis-choices').querySelectorAll('[data-basis]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-basis') === BASIS ? 'true' : 'false'); });
+    var r = Race.rungs(h, TABLES, { investedOnly: BASIS === 'invested' });
+    el('r-share').innerHTML = '';
+    if (!Money.isOk(r)) { el('r-num').textContent = 'Not yet.'; el('r-sub').textContent = r.reason; el('r-rungs').innerHTML = ''; return; }
+    var basisWord = BASIS === 'invested' ? 'invested money' : 'net worth';
+    if (r.pastTop) { el('r-num').textContent = 'Past the last rung.'; el('r-sub').textContent = 'Your ' + basisWord + ' is already past $1 million; the race here ends at that rung.'; el('r-rungs').innerHTML = ''; return; }
+    if (r.neverAtThisPace) {
+      el('r-num').textContent = 'Not reachable at this pace.';
+      el('r-sub').textContent = 'From ' + Money.formatCents(r.startCents) + ', saving ' + Money.formatCents(r.monthlyCents) + ' a month does not reach ' + k(r.nextRungCents) + ' in fifty years. Saving ' + Money.formatCents(r.monthlyNeededCents) + ' a month' + (r.neededShareOfTakeHome !== null ? ' (' + Money.formatRate(r.neededShareOfTakeHome, { decimals: 0 }) + ' of take-home)' : '') + ' would get there in ' + r.honestYears + ' years.';
+      el('r-rungs').innerHTML = ''; return;
+    }
+    var first = r.rows[0];
+    el('r-num').textContent = k(first.rungCents) + ' by ' + monthWord(first.date) + '.';
+    var sub = 'From ' + Money.formatCents(r.startCents) + ' of ' + basisWord + ', saving ' + Money.formatCents(r.monthlyCents) + ' a month at ' + Money.formatRate(r.rate, { decimals: 1 }) + ' real: ' + years(first.months) + ' away.';
+    if (first.range.fastDate && first.range.slowDate && first.range.fastDate !== first.range.slowDate) sub += ' Range: ' + monthWord(first.range.fastDate) + ' in a good decade to ' + monthWord(first.range.slowDate) + ' in a poor one.';
+    if (r.firstGrowthLeadsRungCents) sub += ' From the ' + k(r.firstGrowthLeadsRungCents) + ' rung, growth does more of the work than you do.';
+    else if (r.reachedAll) sub += ' All the way to $1 million, what you put in stays the bigger part.';
+    el('r-sub').textContent = sub;
+    el('r-sub').setAttribute('data-range', (first.range.fastDate || '') + '|' + (first.range.slowDate || ''));
+    var maxGap = Math.max.apply(null, r.rows.map(function (x) { return x.gapMonths; })) || 1;
+    el('r-rungs').innerHTML = r.rows.map(function (x) {
+      var w = Math.max(2, x.gapMonths / maxGap * 100);
+      var contribShare = x.contributedCents + Math.max(0, x.grownCents) > 0 ? x.contributedCents / (x.contributedCents + Math.max(0, x.grownCents)) : 1;
+      return '<li' + (x.rungCents === r.firstGrowthLeadsRungCents ? ' class="is-lead"' : '') + '><span class="rung">' + esc(k(x.rungCents)) + '</span><span><span class="when">' + esc(monthWord(x.date)) + '</span> <small>' + esc(years(x.gapMonths)) + ' after the rung before'
+        + (x.range.fastDate && x.range.slowDate && x.range.fastDate !== x.range.slowDate ? ' (' + esc(x.range.fastDate.slice(0, 4)) + ' to ' + esc(x.range.slowDate.slice(0, 4)) + ')' : '') + '</small>'
+        + '<span class="gap" style="width:' + w + '%"><i style="width:' + (contribShare * 100) + '%"></i><b style="width:' + ((1 - contribShare) * 100) + '%"></b></span>'
+        + '<small>' + esc(Money.formatCents(x.contributedCents)) + ' saved, ' + esc(Money.formatCents(Math.max(0, x.grownCents))) + ' grew</small></span></li>';
+    }).join('');
+    var card = ShareCard.make('race', h, TABLES, { investedOnly: BASIS === 'invested' });
+    if (card.ok) {
+      var href = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'progress-card.html#c=' + ShareCard.encode(card);
+      el('r-share').innerHTML = 'Share it as dates only: <a href="' + esc(href) + '" id="share-link">' + esc(card.title) + '</a>. No dollar figure leaves this page.';
+    }
+  }
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-basis]'); if (!b) return;
+    BASIS = b.getAttribute('data-basis') === 'invested' ? 'invested' : 'netWorth'; render();
+  });
+  Spine.onChange(render);
+  Reference.load(['fireVariants', 'returnBands', 'effectiveTaxRates', 'federalBrackets']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-lab, from rooms/fire-lab.html (D-255) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      Fire = SLAF.Fire, Tier0 = SLAF.Tier0, Projection = SLAF.Projection,
+      CashFlow = SLAF.CashFlow,
+      Charts = SLAF.Charts;
+
+  var ROOM_ID = 'fire';   /* the room this reading lives in */
+  var TABLES = null;
+  /* A local override for this view only, never written (SPEC.md §12.2). */
+  var swrPreview = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
+  function opts() { return swrPreview === null ? {} : { localOverrides: { swrRate: swrPreview } }; }
+
+  /* A figure, what it is worth, and what it means — the three-column rail. */
+  function facts(rows) {
+    return rows.map(function (r) {
+      return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd><span class="why">' + esc(r[2] || '') + '</span>';
+    }).join('');
+  }
+
+  /* An incomplete panel says which field it wants and where that field is
+     entered. Never a zero, never an empty chart. */
+  function waiting(result) {
+    var reason = (result && result.reason) || 'Not enough entered yet.';
+    var links = ((result && result.missing) || []).map(function (f) {
+      var chip = Ownership.linkTo ? Ownership.linkTo(f, ROOM_ID) : null;
+      return chip || null;
+    }).filter(Boolean);
+    return '<p class="slaf-reason">' + esc(reason) + (links.length ? ' ' + links.join(' ') : '') + '</p>';
+  }
+
+  function yrs(x) { return x && Money.isOk(x) ? x.value : (Money.isEntered(x) && typeof x === 'number' ? x : 0); }
+  function fut(c, y) { return SLAF.Horizon.display(Spine.getProfile(), c, y); }   /* 15.2: display-time only; the engines stay real (D-181) */
+  function yearsLabel(y) {
+    if (!Money.isEntered(y)) return Money.EM_DASH;
+    if (y <= 0) return 'now';
+    var whole = Math.floor(y), months = Math.round((y - whole) * 12);
+    if (whole === 0) return months + ' mo';
+    return whole + ' yr' + (whole === 1 ? '' : 's') + (months ? ' ' + months + ' mo' : '');
+  }
+
+  render.pending = false;
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+
+    /* ---- The number and the ring ---------------------------------------- */
+    var target = Fire.calculateFIRE(h, TABLES, opts());
+    var prog = Fire.progressToward(h, TABLES, opts());
+
+    el('fire-figure').textContent = Money.isOk(target) ? Money.formatCents(fut(target.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH;
+    el('fire-say').innerHTML = Money.isOk(target)
+      ? 'A year of spending, divided by the withdrawal rate.'
+      : waiting(target);
+
+    if (Money.isOk(prog)) {
+      var share = Math.max(0, Math.min(1, prog.value));
+      var gap = Math.max(0, prog.targetCents - prog.investmentsCents);
+      el('progress-ring').innerHTML = Charts.donut({
+        title: 'Progress toward the FIRE number',
+        centre: Math.round(share * 100) + '%',
+        centreLabel: 'of the way',
+        slices: [
+          { label: 'Invested', value: prog.investmentsCents, color: Charts.COLORS.growth },
+          { label: 'Still to go', value: gap, color: Charts.COLORS.muted }
+        ]
+      });
+      var rows = [
+        ['Invested now', Money.formatCents(prog.investmentsCents), 'What is already working for you.'],
+        ['Still to go', Money.formatCents(gap), 'The gap between here and the number.']
+      ];
+      if (Money.isOk(prog.yearsAway)) {
+        rows.push(['Time to get there', yearsLabel(prog.yearsAway.value),
+          'At your current saving and assumed return.']);
+      }
+      el('facts').innerHTML = facts(rows);
+      /* Three ways (D-170): the same arithmetic at the low, likely and high
+         real return, so "time to get there" carries its own width. */
+      el('lab-bands').innerHTML = SLAF.Bands.lineHtml(TABLES, function (rate) {
+        var o = opts();
+        var p = Fire.progressToward(h, TABLES, Object.assign({}, o, { localOverrides: Object.assign({}, o.localOverrides || {}, { expectedReturnRate: rate }) }));
+        return Money.isOk(p) ? p.yearsAway : p;
+      }, function (v) { return yearsLabel(v); }, { lead: 'Time to get there, three ways' });
+    } else {
+      el('progress-ring').innerHTML = '';
+      el('facts').innerHTML = '';
+      el('lab-bands').innerHTML = '';
+    }
+
+    /* ---- The withdrawal rate -------------------------------------------- */
+    var a = Schema.resolveAssumptions(h, opts().localOverrides);
+    var rate = a.swrRate;
+    el('swr-read').textContent = Money.formatRate(rate, { decimals: 2 });
+    if (!el('swr-range').matches(':active')) el('swr-range').value = Math.round(rate * 10000);
+    el('swr-say').textContent = swrPreview === null
+      ? 'Your stored assumption. Move it to see the whole page move; nothing is saved.'
+      : 'Previewing ' + Money.formatRate(rate, { decimals: 2 }) + '. Your stored assumption is untouched — reload to return to it.';
+
+    /* ---- The six flavours ------------------------------------------------ */
+    var all = Fire.allVariants(h, TABLES, opts());
+    var vrows = Object.keys(all).map(function (id) {
+      var v = all[id];
+      var ok = Money.isOk(v.target);
+      return {
+        label: v.variant.label,
+        value: ok ? v.target.value : null,
+        color: id === 'standard' ? Charts.COLORS.growth : Charts.COLORS.muted,
+        note: ok ? (Money.isOk(v.progress) && Money.isOk(v.progress.yearsAway)
+              ? yearsLabel(v.progress.yearsAway.value) + ' away' : null)
+            : (v.target.reason || 'needs more')
+      };
+    });
+    el('variant-chart').innerHTML = vrows.length
+      ? Charts.bars({ title: 'The FIRE number for each flavour', rows: vrows })
+      : waiting(target);
+
+    /* ---- Where the number comes from ------------------------------------ */
+    var monthly = Schema.monthlyExpensesCents(h);
+    if (Money.isOk(monthly) && Money.isOk(target)) {
+      /* The categorised split when Cash Flow has one. A donut of a single
+         100% slice is not a chart, so when nothing has been categorised the
+         room says what is missing and where to enter it instead of drawing
+         a circle that tells you nothing. */
+      var sum = (CashFlow && TABLES.expenseCategories)
+        ? CashFlow.summarise(h, TABLES.expenseCategories) : null;
+      var cats = (sum && Money.isOk(sum) ? (sum.categories || []) : [])
+        .filter(function (c) { return c.monthlyCents > 0; });
+      if (cats.length > 1) {
+        el('spend-donut').innerHTML = Charts.donut({
+          title: 'A year of spending, by kind',
+          centre: Money.formatCents(monthly.value * 12),
+          centreLabel: 'a year',
+          slices: cats.map(function (c) {
+            return { label: c.label, value: Math.round(c.monthlyCents * 12) };
+          })
+        });
+      } else {
+        el('spend-donut').innerHTML =
+          '<p class="slaf-reason">A year of spending is ' + esc(Money.formatCents(monthly.value * 12))
+          + ', which is what the number divides. Categorise a month in '
+          + (Ownership.linkTo ? Ownership.linkTo('monthlyExpenses', ROOM_ID) : 'Cash Flow')
+          + ' to see which slices it is made of.</p>';
+      }
+    } else {
+      el('spend-donut').innerHTML = waiting(monthly);
+    }
+
+    /* ---- Milestones ------------------------------------------------------ */
+    if (Money.isOk(prog)) {
+      var rates = Tier0.savingsRate(h, TABLES);
+      var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
+      if (Money.isOk(basis)) {
+        var mrows = [0.25, 0.5, 0.75, 1].map(function (m) {
+          var reached = prog.investmentsCents >= prog.targetCents * m;
+          var y = Projection.yearsToTargetCents({
+            startCents: prog.investmentsCents,
+            targetCents: Math.round(prog.targetCents * m),
+            annualRate: a.expectedReturnRate,
+            annualContributionCents: basis.annualSavingsCents
+          });
+          return {
+            label: Math.round(m * 100) + '% · ' + Money.formatCents(Math.round(prog.targetCents * m)),
+            value: reached ? 0 : (Money.isOk(y) ? Math.max(0, y.value) : null),
+            color: reached ? Charts.COLORS.growth : Charts.COLORS.muted,
+            note: reached ? 'reached' : (Money.isOk(y) ? yearsLabel(y.value) : 'not reachable at this rate')
+          };
+        });
+        el('milestone-chart').innerHTML = Charts.bars({ title: 'Years to each milestone', rows: mrows, format: yearsLabel });
+      } else {
+        el('milestone-chart').innerHTML = waiting(basis);
+      }
+    } else {
+      el('milestone-chart').innerHTML = waiting(prog);
+    }
+
+    /* ---- The path -------------------------------------------------------- */
+    if (Money.isOk(prog)) {
+      var r2 = Tier0.savingsRate(h, TABLES);
+      var b2 = Money.isOk(r2.includingMatch) ? r2.includingMatch : r2.excludingMatch;
+      if (Money.isOk(b2)) {
+        /* Charts.area takes [x, y] pairs, not {x, y} objects, and formats
+           the x axis through x.format. */
+        var pts = [], line = [], bal = prog.investmentsCents;
+        /* Stop at the year the line is crossed, plus a little, so the chart
+           is about the journey rather than forty years of flat afterwards. */
+        var years = 40, crossed = null;
+        for (var i = 0; i <= years; i++) {
+          pts.push([i, fut(Math.round(bal), i)]);
+          line.push([i, fut(prog.targetCents, i)]);
+          if (crossed === null && bal >= prog.targetCents) crossed = i;
+          bal = bal * (1 + a.expectedReturnRate) + b2.annualSavingsCents;
+        }
+        if (crossed !== null) {
+          var stop = Math.min(years, crossed + 3);
+          pts = pts.slice(0, stop + 1);
+          line = line.slice(0, stop + 1);
+        }
+        el('path-chart').innerHTML = Charts.area({
+          title: 'Portfolio against the FIRE number, year by year',
+          series: [
+            { label: 'What you would hold', color: Charts.COLORS.growth, points: pts, fill: true, width: 2 },
+            { label: 'The number', color: Charts.COLORS.debt, points: line, fill: false, width: 1 }
+          ],
+          x: { format: function (v) { return v === 0 ? 'now' : '+' + Math.round(v) + 'y'; } }
+        });
+      } else {
+        el('path-chart').innerHTML = waiting(b2);
+      }
+    } else {
+      el('path-chart').innerHTML = waiting(prog);
+    }
+
+    /* ---- The sensitivity grid -------------------------------------------- */
+    var SWRS = [0.03, 0.035, 0.04, 0.045];
+    var FACTORS = [0.7, 0.85, 1, 1.15, 1.3];
+    var cells = [], okGrid = true;
+    SWRS.forEach(function (s) {
+      var row = [];
+      FACTORS.forEach(function (f) {
+        var r = Fire.calculateFIRE(h, TABLES, { expenseFactor: f, localOverrides: { swrRate: s } });
+        if (!Money.isOk(r)) { okGrid = false; row.push(null); return; }
+        row.push(r.value);
+      });
+      cells.push(row);
+    });
+    if (okGrid) {
+      var head = '<tr><th scope="col"></th>' + FACTORS.map(function (f) {
+        return '<th scope="col">' + Math.round(f * 100) + '%</th>';
+      }).join('') + '</tr>';
+      var body = SWRS.map(function (s, i) {
+        return '<tr><th scope="row">' + Money.formatRate(s, { decimals: 1 }) + '</th>'
+          + cells[i].map(function (v, j) {
+              var isBase = Math.abs(s - rate) < 0.0001 && FACTORS[j] === 1;
+              return '<td' + (isBase ? ' class="is-base"' : '') + '>' + Money.formatCents(v) + '</td>';
+            }).join('') + '</tr>';
+      }).join('');
+      el('grid').innerHTML = '<table class="grid"><caption class="slaf-sr-only">The FIRE number at four withdrawal rates and five lifestyle levels</caption><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
+    } else {
+      el('grid').innerHTML = waiting(target);
+    }
+  }
+
+  /* The range is created once in the markup and only ever read, so the live
+     form rule has nothing to guard here (D-034). */
+  el('swr-range').addEventListener('input', function (e) {
+    swrPreview = Number(e.target.value) / 10000;
+    render();
+  });
+  SLAF.Horizon.mount(document.getElementById('lab-horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.2: today's money, once per screen (D-181) */
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    SLAF.Lens.mountStrip('lab-lens', function (h) {
+      var p = Fire.progressToward(h, TABLES, opts());
+      if (!Money.isOk(p)) return [];
+      return [{ label: 'The number', cents: p.targetCents }, { label: 'Invested now', cents: p.investmentsCents, href: Ownership.linkTo('statement', 'portfolios', ROOM_ID) },
+              { label: 'Still to go', cents: Math.max(0, p.targetCents - p.investmentsCents) }];
+    }, function () { return TABLES; });
+    render();
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
       + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
   });
 })();

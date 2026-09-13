@@ -566,7 +566,7 @@
 
     /* ---- The third wave: the LATER.md rooms (D-101). ---- */
     enoughMonthly: {
-      label: 'Enough, a month', owner: 'enough', anchor: 'inputs',
+      label: 'Enough, a month', owner: 'fire', anchor: 'en-inputs',
       read: function (h) { var v = (h.enough || {}).monthlyCents; return Money.isEntered(v) ? Money.ok(v, { source: h.enough.source }) : Money.incomplete('Not decided yet.', ['enough']); },
       format: function (v) { return money(v) + '/mo'; }
     },

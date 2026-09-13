@@ -75,7 +75,7 @@
       "absorbs": ["roth-aca", "middle-class-trap", "reachable"], "done": ["roth-aca", "middle-class-trap", "reachable"],
       "note": "Runs first in the journey, built last of the merges (D-228)." },
     { "n": 14, "id": "fire", "title": "The Number", "group": "back-half",
-      "absorbs": ["fire-lab", "coast-date", "enough", "race"], "done": [],
+      "absorbs": ["fire-lab", "coast-date", "enough", "race"], "done": ["fire-lab", "coast-date", "enough", "race"],
       "note": "Becomes a read-out of what the Back Half produced, with the naive 25x answer beside it (D-228)." },
     { "n": 15, "id": "runway", "title": "The Cushion", "group": "back-half",
       "absorbs": ["between-jobs", "quit-fund", "sleep-at-night"],

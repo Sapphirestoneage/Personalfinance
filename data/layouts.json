@@ -30,11 +30,8 @@
             "income",
             "budget",
             "financial-snapshot",
-            "race",
             "statement",
             "fire",
-            "coast-date",
-            "fire-lab",
             "hassle",
             "dashboard",
             "skill-tree",
@@ -57,7 +54,6 @@
             "wedding",
             "housing",
             "big-purchase",
-            "enough",
             "week",
             "debates"
           ],
@@ -98,9 +94,7 @@
             "income",
             "budget",
             "financial-snapshot",
-            "race",
             "statement",
-            "fire-lab",
             "dashboard",
             "skill-tree",
             "values",
@@ -117,7 +111,6 @@
             "protection",
             "housing",
             "big-purchase",
-            "enough",
             "week",
             "debates"
           ],
@@ -127,7 +120,6 @@
           "name": "Appears for some situations only",
           "rooms": [
             "fire",
-            "coast-date",
             "hassle",
             "decumulation",
             "tax",
@@ -166,7 +158,6 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
-            "race",
             "runway",
             "statement"
           ]
@@ -206,7 +197,6 @@
           "rooms": [
             "what-if-life",
             "adventure",
-            "fire-lab",
             "timeline",
             "career-move"
           ]
@@ -223,7 +213,6 @@
           "name": "What\u2019s it all for?",
           "rooms": [
             "values",
-            "enough",
             "week",
             "debates"
           ]
@@ -232,7 +221,6 @@
           "name": "The long run",
           "rooms": [
             "fire",
-            "coast-date",
             "decumulation",
             "protection",
             "tax",
@@ -301,8 +289,6 @@
           "name": "Grow",
           "rooms": [
             "fire",
-            "coast-date",
-            "fire-lab",
             "foo-ladder",
             "rollover",
             "what-if-life",
@@ -322,8 +308,7 @@
         {
           "name": "Give",
           "rooms": [
-            "values",
-            "enough"
+            "values"
           ]
         },
         {
@@ -351,8 +336,7 @@
             "data",
             "one-pager",
             "get-help",
-            "financial-snapshot",
-            "race"
+            "financial-snapshot"
           ],
           "note": "The verbs have no home for the rooms that are about the app rather than about money.",
           "warn": true
@@ -389,8 +373,7 @@
             "income",
             "debt-payoff",
             "settings",
-            "financial-snapshot",
-            "race"
+            "financial-snapshot"
           ]
         },
         {
@@ -409,8 +392,6 @@
           "name": "This decade",
           "rooms": [
             "fire",
-            "coast-date",
-            "fire-lab",
             "statement",
             "housing",
             "partner",
@@ -424,7 +405,6 @@
           "name": "This life",
           "rooms": [
             "values",
-            "enough",
             "week",
             "decumulation",
             "debates",
@@ -470,7 +450,6 @@
             "income",
             "budget",
             "financial-snapshot",
-            "race",
             "dashboard"
           ],
           "note": "You cannot start until these are entered."
@@ -510,15 +489,13 @@
           "name": "6 \u00b7 Max retirement",
           "rooms": [
             "fire",
-            "coast-date",
             "foo-ladder"
           ]
         },
         {
           "name": "7 \u00b7 Hyper-accumulation",
           "rooms": [
-            "statement",
-            "fire-lab"
+            "statement"
           ]
         },
         {
@@ -534,7 +511,6 @@
           "name": "Beside the ladder \u2014 no rung fits",
           "rooms": [
             "values",
-            "enough",
             "week",
             "debates",
             "worth",
@@ -574,7 +550,6 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
-            "race",
             "settings",
             "start",
             "ledger"
@@ -599,8 +574,6 @@
           "name": "Plan",
           "rooms": [
             "fire",
-            "coast-date",
-            "fire-lab",
             "timeline",
             "goals",
             "what-if-life",
@@ -630,7 +603,6 @@
           "name": "You",
           "rooms": [
             "values",
-            "enough",
             "week",
             "worth",
             "data",
@@ -683,12 +655,8 @@
             "debt-payoff",
             "decumulation",
             "week",
-            "enough",
             "financial-snapshot",
-            "race",
-            "fire-lab",
             "fire",
-            "coast-date",
             "foo-ladder",
             "get-help",
             "goals",
@@ -740,8 +708,7 @@
             "start",
             "ledger",
             "dashboard",
-            "financial-snapshot",
-            "race"
+            "financial-snapshot"
           ],
           "note": "Where you come in and hang your coat."
         },
@@ -771,8 +738,6 @@
             "statement",
             "tax",
             "fire",
-            "coast-date",
-            "fire-lab",
             "foo-ladder"
           ]
         },
@@ -824,7 +789,6 @@
         {
           "name": "The garden",
           "rooms": [
-            "enough",
             "week",
             "debates"
           ],
@@ -866,8 +830,7 @@
             "income",
             "settings",
             "debt-payoff",
-            "financial-snapshot",
-            "race"
+            "financial-snapshot"
           ]
         },
         {
@@ -884,7 +847,6 @@
             "protection",
             "goals",
             "fire",
-            "coast-date",
             "foo-ladder",
             "dashboard"
           ]
@@ -896,7 +858,6 @@
             "partner",
             "wedding",
             "decumulation",
-            "enough",
             "week",
             "debates",
             "worth"
@@ -914,7 +875,6 @@
             "timeline",
             "what-if-life",
             "adventure",
-            "fire-lab",
             "hassle",
             "get-help"
           ],
@@ -949,11 +909,9 @@
           "name": "A number you didn\u2019t have",
           "rooms": [
             "fire",
-            "coast-date",
             "runway",
             "statement",
-            "financial-snapshot",
-            "race"
+            "financial-snapshot"
           ]
         },
         {
@@ -996,12 +954,10 @@
           "name": "A different way of seeing it",
           "rooms": [
             "values",
-            "enough",
             "week",
             "debates",
             "what-if-life",
-            "adventure",
-            "fire-lab"
+            "adventure"
           ]
         },
         {
@@ -1075,7 +1031,6 @@
           "name": "Thirty years on the wrong thing",
           "rooms": [
             "values",
-            "enough",
             "week",
             "debates",
             "worth"
@@ -1086,8 +1041,6 @@
           "name": "Arriving at 65 short",
           "rooms": [
             "fire",
-            "coast-date",
-            "fire-lab",
             "tax",
             "statement",
             "foo-ladder",
@@ -1095,8 +1048,7 @@
             "what-if-life",
             "adventure",
             "housing",
-            "financial-snapshot",
-            "race"
+            "financial-snapshot"
           ]
         },
         {
@@ -1134,7 +1086,6 @@
           "rooms": [
             "hassle",
             "values",
-            "enough",
             "week",
             "debates",
             "worth",
@@ -1173,15 +1124,13 @@
             "tax",
             "protection",
             "decumulation",
-            "fire",
-            "coast-date"
+            "fire"
           ]
         },
         {
           "name": "The market",
           "rooms": [
             "statement",
-            "fire-lab",
             "runway",
             "what-if-life",
             "adventure",
@@ -1199,7 +1148,6 @@
             "cash-flow",
             "budget",
             "financial-snapshot",
-            "race",
             "settings",
             "data",
             "one-pager",
@@ -1250,11 +1198,8 @@
           "name": "Layer 2",
           "rooms": [
             "financial-snapshot",
-            "race",
             "statement",
             "fire",
-            "coast-date",
-            "fire-lab",
             "hassle",
             "dashboard",
             "worth",
@@ -1270,8 +1215,7 @@
             "partner",
             "wedding",
             "housing",
-            "big-purchase",
-            "enough"
+            "big-purchase"
           ],
           "note": "37 rooms sit at exactly the same depth. There is no sequence among them \u2014 the numbered path invents one.",
           "warn": true
@@ -1356,7 +1300,6 @@
           "name": "6 \u00b7 \u201cWhat\u2019s it for?\u201d",
           "rooms": [
             "values",
-            "enough",
             "week",
             "debates",
             "worth"
@@ -1366,14 +1309,11 @@
           "name": "7 \u00b7 \u201cSo where does that land you?\u201d",
           "rooms": [
             "fire",
-            "coast-date",
-            "fire-lab",
             "foo-ladder",
             "goals",
             "what-if-life",
             "adventure",
             "financial-snapshot",
-            "race",
             "dashboard"
           ]
         },
@@ -1407,7 +1347,6 @@
           "rooms": [
             "settings",
             "financial-snapshot",
-            "race",
             "dashboard",
             "runway"
           ],
@@ -1439,7 +1378,6 @@
             "tax",
             "protection",
             "fire",
-            "coast-date",
             "timeline",
             "big-purchase",
             "housing"
@@ -1449,12 +1387,10 @@
           "name": "An evening, and worth it",
           "rooms": [
             "values",
-            "enough",
             "week",
             "debates",
             "what-if-life",
             "adventure",
-            "fire-lab",
             "partner",
             "wedding",
             "career-move",
@@ -1511,7 +1447,6 @@
             "debt-payoff",
             "statement",
             "financial-snapshot",
-            "race",
             "cant-pay",
             "dashboard"
           ],
@@ -1521,8 +1456,6 @@
           "name": "One word to learn",
           "rooms": [
             "fire",
-            "coast-date",
-            "fire-lab",
             "runway",
             "rollover",
             "timeline"
@@ -1536,7 +1469,6 @@
             "worth",
             "week",
             "values",
-            "enough",
             "skill-tree",
             "what-if-life",
             "adventure"
@@ -1623,10 +1555,7 @@
           "rooms": [
             "dashboard",
             "financial-snapshot",
-            "race",
             "fire",
-            "coast-date",
-            "fire-lab",
             "foo-ladder",
             "goals",
             "what-if-life",
@@ -1642,7 +1571,6 @@
           "name": "Hub \u00b7 What Matters",
           "rooms": [
             "values",
-            "enough",
             "week",
             "debates",
             "worth",
@@ -1675,7 +1603,6 @@
             "statement",
             "debt-payoff",
             "financial-snapshot",
-            "race",
             "runway"
           ],
           "note": "Arithmetic on what you typed. If it is wrong, you typed it wrong."
@@ -1684,8 +1611,6 @@
           "name": "Yours, plus one stated assumption",
           "rooms": [
             "fire",
-            "coast-date",
-            "fire-lab",
             "foo-ladder",
             "goals",
             "timeline",
@@ -1719,7 +1644,6 @@
             "debates",
             "values",
             "week",
-            "enough",
             "partner",
             "wedding"
           ],
@@ -1789,8 +1713,7 @@
             "budget",
             "settings",
             "dashboard",
-            "financial-snapshot",
-            "race"
+            "financial-snapshot"
           ]
         },
         {
@@ -1814,8 +1737,6 @@
           "name": "Bigger picture \u203a Where it ends up",
           "rooms": [
             "fire",
-            "coast-date",
-            "fire-lab",
             "foo-ladder",
             "goals",
             "what-if-life",
@@ -1827,7 +1748,6 @@
           "name": "Bigger picture \u203a What it\u2019s for",
           "rooms": [
             "values",
-            "enough",
             "week",
             "debates",
             "worth"
