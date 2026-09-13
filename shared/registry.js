@@ -151,17 +151,21 @@
       /* For most households the second-largest purchase and the most
          frequent large one, and Big Purchase is generic (D-149). */
       id: 'car',
-      group: 'decisions', subgroup: 'home', aliases: ['car', 'vehicle', 'auto', 'lease', '20/3/8'],
+      group: 'decisions', subgroup: 'home',
+      aliases: ['car', 'vehicle', 'auto', 'lease', '20/3/8', 'first car', 'car check', 'car loan', 'new or used'],
       kind: 'explore',
       needs: ['grossAnnualIncome'],
       order: 26.2,
-      title: 'What A Car Costs',
-      blurb: 'The sticker price is the smallest part. Depreciation, the running costs, and whether the loan fits \u2014 against the one test that says if the car fits your life.',
+      title: 'Wheels',
+      blurb: 'Does the car fit \u2014 twenty percent down, three years, under eight percent of what you earn \u2014 and underneath the payment, what it loses, what it costs to run, and whether the loan fits.',
       href: 'rooms/car.html',
-      tier: 2,
+      tier: 1,
       tags: ['cashflow', 'debt'],
-      daite: { reads: ['income.grossAnnualCents'], writes: [] },
+      daite: { reads: ['income.grossAnnualCents', 'expenses', 'assets.invested', 'taxes.filingStatus'], writes: [] },
       subsections: [
+        { id: 'check',      label: '20 / 3 / 8' },
+        { id: 'check-inputs', label: 'The car' },
+        { id: 'newused',    label: 'New against used' },
         { id: 'out-drop',   label: 'What it loses' },
         { id: 'out-run',    label: 'What it costs to run' },
         { id: 'out-loan',   label: 'Whether the loan fits' },
@@ -854,23 +858,6 @@
      A person who does not know which kind they are looking at cannot tell
      what is required from what is optional, which is most of why a suite
      this size feels like homework. See DECISIONS.md D-051.
-
-  /* The First Car Check (K10, D-219): 20/3/8 as a lens, the price that fits,
-     the gap in FI days, new against used at the same budget. */
-  ROOMS.push({
-    id: 'first-car',
-    group: 'decisions', subgroup: 'moves', aliases: ['first car', '20/3/8', 'car check', 'car loan', 'new or used'],
-    kind: 'explore',
-    needs: ['grossAnnualIncome'],
-    order: 41.5,
-    title: 'The First Car Check',
-    blurb: 'The 20/3/8 rule as a lens on the car you are weighing: each part inside or outside, the highest price that fits all three, what the gap costs in days of financial independence, and new against used at the same budget.',
-    href: 'rooms/first-car.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['income.grossAnnualCents', 'expenses', 'assets.invested', 'taxes.filingStatus'], writes: [] },
-    subsections: [{ id: 'check', label: '20 / 3 / 8' }, { id: 'inputs', label: 'The car' }, { id: 'newused', label: 'New against used' }]
-  });
 
   /* The Degree Decision (K9, D-219): a degree as a sum, the break-even age
      and the lifetime difference as ranges, the FI date with and without. */

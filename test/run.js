@@ -10486,7 +10486,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 28);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 27);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13856,13 +13856,25 @@ section('K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, 
   /* -- K10: the car ---------------------------------------------------------------------- */
   const car = FirstCar.check(demo, T, { priceCents: 3000000, downCents: 300000, termMonths: 60, loanRate: 0.07, insuranceMonthlyCents: 15000, gasMonthlyCents: 12000 });
   check('30,000 with 3,000 down over 60 months on $72,000 of pay: all three parts outside', car.parts.map(p => p.inside).join(','), 'false,false,false');
-  checkTrue('...neutral words: inside or outside, never red', /inside|outside/.test(fs.readFileSync(path.join(ROOT, 'rooms/first-car.html'), 'utf8')) && !/is-red|color-critical/.test(fs.readFileSync(path.join(ROOT, 'rooms/first-car.html'), 'utf8')));
+  /* The check reading only. The costs reading beside it has always coloured
+     an over-budget row, and may; the 20/3/8 verdict may not. A part that is
+     outside the rule is a fact about a car, not a failing grade (D-238). */
+  const carPage = fs.readFileSync(path.join(ROOT, 'rooms/car.html'), 'utf8');
+  const checkView = carPage.slice(carPage.indexOf('<section id="view-the-check"'), carPage.indexOf('<section id="view-what-it-costs"'));
+  const checkCss = carPage.slice(carPage.indexOf('#view-the-check'), carPage.indexOf('#view-what-it-costs'));
+  checkTrue('...the check reading exists to be sliced', checkView.length > 500);
+  checkTrue('...neutral words: inside or outside, never red', /inside|outside/.test(checkView) && !/is-red|color-critical/.test(checkView) && !/is-red|color-critical/.test(checkCss));
   checkTrue('the rule test is the one call Quick Math makes', /QuickMath\.carRule2038\(/.test(fs.readFileSync(path.join(ROOT, 'engines/firstcar.js'), 'utf8')));
   checkTrue('the highest price that fits all three, and the gap priced in FI days', car.maxAffordablePriceCents > 0 && car.gapCents === 3000000 - car.maxAffordablePriceCents && car.gapFiDays > 0);
   checkTrue('maintenance estimated from the AAA shares when not typed', car.maintenanceEstimated && car.maintenanceCents === Math.round((15000 + 12000) / (0.25 + 0.24) * 0.2));
   checkTrue('new against used at the same budget from the depreciation curve', car.newVsUsed.newLossCents === Math.round(3000000 * (1 - FirstCar.retained(T.carCosts, 5))) && car.newVsUsed.usedListNewCents === Math.round(3000000 / FirstCar.retained(T.carCosts, 3)));
   checkTrue('inside all three at a fitting price', FirstCar.check(demo, T, { priceCents: 1500000, downCents: 300000, termMonths: 36, loanRate: 0.06 }).insideAll);
-  ['one-pager', 'micro-retirement', 'offer-compare', 'degree', 'first-car'].forEach(id => checkTrue(id + ' is registered', !!Registry.byId(id)));
+  ['micro-retirement', 'offer-compare', 'degree'].forEach(id => checkTrue(id + ' is registered', !!Registry.byId(id)));
+  /* K2 and K10 are readings now, not rooms: the One-Pager opens The Card, the
+     First Car Check opens Wheels. The engines behind them are unchanged and
+     still tested above; what moved is where the page lives (D-234, D-238). */
+  check('the One-Pager is the first reading of The Card', Registry.byId('one-pager').href, 'rooms/one-pager.html');
+  checkTrue('the First Car Check is the first reading of Wheels', /id="view-the-check"/.test(fs.readFileSync(path.join(ROOT, 'rooms/car.html'), 'utf8')));
 })();
 
 /* ==========================================================================

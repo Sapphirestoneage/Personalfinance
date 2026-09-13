@@ -39,7 +39,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **coast-date** — Your Coast Date · 122 lines · engines: projection, tier0, coast · D-213
 - **race** — The Race to $100K · 155 lines · engines: projection, tier0, countdown, race · D-217
 
-## Decisions (28)
+## Decisions (27)
 
 - **hassle** — Worth the Hassle · 498 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
 - **self-employed** — Going Self-Employed · 380 lines · engines: selfemployed · D-062
@@ -48,7 +48,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **credential** — Worth Learning · 485 lines · engines: projection, tier0, hourly, credential · D-062
 - **worth** — Worth It · 606 lines · engines: projection, tier0, hourly, worth
 - **runway** — The Cushion · 1722 lines · engines: projection, tier0, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-232, D-130, D-082
-- **car** — What A Car Costs · 655 lines · engines: projection, tier0, hourly, quickmath · D-151
+- **car** — Wheels · 843 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-237, D-151
 - **what-if-life** — What If, Life · 551 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events · D-146, D-091, D-087
 - **timeline** — What Comes Next · 504 lines · engines: timeline · owns: futureIncome · D-152
 - **micro-retirement** — Micro-Retirement Planner · 166 lines · engines: projection, tier0, hourly, countdown, microretirement · D-219
@@ -67,7 +67,6 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **down-payment** — Down Payment Countdown · 154 lines · engines: projection, tier0, debt, cashflow, ratios, housing, countdown, downpayment · D-217
 - **property** — The Deal · 403 lines · engines: projection, ownership · D-227, D-066
 - **big-purchase** — Big Purchase · 263 lines · engines: projection, tier0, hourly, quickmath, purchase · owns: purchasePrice, purchaseMonths, purchaseRate · D-129, D-112
-- **first-car** — The First Car Check · 147 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-219
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 
 ## What Matters (11)
@@ -98,7 +97,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (22)
+## Files in rooms/ not in the registry (23)
 
 - rooms/between-jobs.html
 - rooms/comeback.html
@@ -106,6 +105,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/doors.html
 - rooms/estate.html
 - rooms/express.html
+- rooms/first-car.html
 - rooms/first-round.html
 - rooms/health.html
 - rooms/net-worth.html

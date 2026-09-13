@@ -1354,9 +1354,10 @@ const CASES = [
     }
   },
   {
-    /* THE FIRST CAR CHECK (K10, D-219): seven boxes. */
-    room: '/rooms/first-car.html',
-    container: '#inputs',
+    /* THE FIRST CAR CHECK (K10, D-219), now the first reading of Wheels
+       (D-238): seven boxes, in the default view, so no hash is needed. */
+    room: '/rooms/car.html',
+    container: '#check-inputs',
     seed: 'demo',
     fields: [{ sel: '#in-price', type: '30000' }, { sel: '#in-down', type: '6000' }, { sel: '#in-term', type: '36' }],
     expect: async (page) => {

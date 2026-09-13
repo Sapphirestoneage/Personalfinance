@@ -6,109 +6,220 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>What A Car Costs · SPARKS</title>
-<meta name="description" content="The monthly payment is the least informative number in a car deal. What the car loses, what it costs to run, whether the loan fits, and how leasing, new and a year old actually compare."/>
+<title>Wheels · SPARKS</title>
+<meta name="description" content="Does this car fit — twenty percent down, three years, under eight percent of what you earn — and underneath the payment, what it loses, what it costs to run, and whether the loan fits."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). Registry: car.
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md
+  D-052, D-219, D-238 (the merge). Registry: car.
 
-  1. READS   Gross annual income (owned by Start Here), through
-             Schema.grossAnnualIncomeCents, and nothing else from the
-             household. Everything else on the page is typed here and thrown
-             away.
-  2. WRITES  NOTHING. It owns no field in shared/ownership.js and never calls
-             Spine.updateProfile. A car someone is thinking about is a
-             what-if, not a fact about them, and a what-if is never written
-             (D-052). The price, the deposit, the term and the rate are page
-             state that dies with the tab, and the room says so on the page.
-  3. CALLS   engines/quickmath.js — carRule2038 for the 20/3/8 test (the same
-             call Quick Math and Big Purchase make, so one rule is computed
-             in one place), retainedShareAt for the depreciation curve, and
-             carUnderwater for where the balance curve and the value curve
-             cross. Charts come from shared/charts.js. No arithmetic is
-             written inline on this page.
-  4. EMPTY   With nothing typed it draws the SHAPE and invents no number: the
-             curve in percent of the price rather than dollars, the running
-             costs as shares, and the 20/3/8 test as its rule with the
-             household's own ceiling beside it. With no income it does not
-             assume one — it names the figure it needs and links to its
-             owner. No term chosen means no term is assumed, because the term
-             is exactly the leg of the test a monthly payment hides.
+  ONE CAR, TWO READINGS.
+
+    #the-check       20 / 3 / 8: each part inside or outside, the price
+                     that fits all three, new against used
+    #what-it-costs   underneath the payment: depreciation, running costs,
+                     whether the loan fits, the three ways to buy
+
+  The First Car Check and What A Car Costs were the same car, the same
+  carRule2038, the same data/car_costs.json, asked at two depths. Rule 1 of
+  D-229 — same fields, different framing is one room with a toggle. The check
+  is first because it is the plainer question, and because someone who only
+  wants a yes or no should not have to read a depreciation curve to find one.
+
+  1. READS   Gross annual income (owned by Start Here) for the 8 percent leg, and
+             for the check reading the savings basis behind the FI-days lens.
+  2. WRITES  NOTHING, in either reading. It owns no field in
+             shared/ownership.js and never calls Spine.updateProfile. A car
+             someone is thinking about is a what-if, not a fact about them,
+             and a what-if is never written (D-052). Both readings say so.
+  3. CALLS   engines/quickmath.js carRule2038 — the one 20/3/8 test, the same
+             call Quick Math and Big Purchase make — plus retainedShareAt and
+             carUnderwater, and engines/firstcar.js for the check. Charts come
+             from shared/charts.js. No arithmetic is written inline here.
+  4. EMPTY   The check asks for a price rather than inventing one, and the 8 percent
+             leg says it has no income rather than assuming one. The costs
+             reading draws the SHAPE with nothing typed: the curve in percent
+             of the price, the running costs as shares, the rule with the
+             household's own ceiling beside it. No term chosen means no term
+             is assumed, because the term is exactly the leg a monthly
+             payment hides.
   5. CONFIG  data/car_costs.json (TABLES.carCosts) — the depreciation curve,
              the running-cost shares, the 20/3/8 guidance, the underwater
              explanation and the three ways to buy. Every word of content on
              this page that is not a calculation comes from there.
 
-  LIVE-FORM: built once — shared/room.js builds the four controls from the
-  spec on load and only ever sets their .value, never under focus. The panels
-  this page fills itself hold no focusable control, and each is written only
-  when its markup actually changes.
-  THEMING: none this pass. A theme is a class on <body> and a palette in
-  shared/theme.css.
+  LIVE-FORM: built once. The check's seven boxes are in the HTML and only
+  ever have .value set; the costs reading's four controls are built once from
+  the template spec on load. Switching readings hides and shows, and rebuilds
+  nothing (D-034).
 -->
 <style>
-  section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- Does it fit?, from rooms/first-car.html (D-238) ---- */
+  
+  #view-the-check .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  
+  #view-the-check .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-the-check .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
+  
+  #view-the-check .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  
+  #view-the-check ul.parts { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-the-check ul.parts li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  
+  #view-the-check ul.parts li:first-child { border-top: none; }
+  
+  #view-the-check ul.parts .state { font-weight: 600; }
+  
+  #view-the-check ul.parts small { grid-column: 1 / -1; color: var(--color-text-muted); font-size: var(--text-xs); }
+  @media (max-width: 480px) { 
+  #view-the-check .ask { grid-template-columns: 1fr; } }
+
+  /* ---- What it costs, from rooms/car.html (D-238) ---- */
+  
+  #view-what-it-costs section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-what-it-costs .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
   /* The room writes nothing. Said once, plainly, where the typing happens. */
-  .kept-nowhere { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); border-left: 3px solid var(--color-border-strong); padding: var(--space-2) var(--space-3); margin: var(--space-3) 0 0; }
-  .kept-nowhere strong { color: var(--color-text); }
+  
+  #view-what-it-costs .kept-nowhere { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); border-left: 3px solid var(--color-border-strong); padding: var(--space-2) var(--space-3); margin: var(--space-3) 0 0; }
+  
+  #view-what-it-costs .kept-nowhere strong { color: var(--color-text); }
 
   /* One row per thing: a name, a figure, and the line that says what it
      means. Shared by the depreciation table and the three loan checks. */
-  ul.rows { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  ul.rows > li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
-  ul.rows > li:first-child { border-top: none; }
-  .r-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
-  .r-name { font-family: var(--font-display); font-size: var(--text-md); }
-  .r-val { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text); }
-  .r-val.is-good { color: var(--color-positive); }
-  .r-val.is-watch { color: var(--color-caution); }
-  .r-val.is-out { color: var(--color-critical-text); }
-  .r-val.is-blank { color: var(--color-text-faint); }
-  .r-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
-  .r-note { font-size: var(--text-sm); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
-  .r-note a { color: var(--color-accent-hover); }
+  
+  #view-what-it-costs ul.rows { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-what-it-costs ul.rows > li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-what-it-costs ul.rows > li:first-child { border-top: none; }
+  
+  #view-what-it-costs .r-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  
+  #view-what-it-costs .r-name { font-family: var(--font-display); font-size: var(--text-md); }
+  
+  #view-what-it-costs .r-val { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text); }
+  
+  #view-what-it-costs .r-val.is-good { color: var(--color-positive); }
+  
+  #view-what-it-costs .r-val.is-watch { color: var(--color-caution); }
+  
+  #view-what-it-costs .r-val.is-out { color: var(--color-critical-text); }
+  
+  #view-what-it-costs .r-val.is-blank { color: var(--color-text-faint); }
+  
+  #view-what-it-costs .r-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-what-it-costs .r-note { font-size: var(--text-sm); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  
+  #view-what-it-costs .r-note a { color: var(--color-accent-hover); }
 
   /* The verdict on the loan, and the underwater stretch under it. */
-  .verdict { font-family: var(--font-display); font-size: var(--text-lg, 1.25rem); line-height: 1.25; margin: var(--space-2) 0 0; }
-  .verdict.is-good { color: var(--color-positive); }
-  .verdict.is-watch { color: var(--color-caution); }
-  .verdict.is-out { color: var(--color-critical-text); }
-  .verdict.is-blank { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
-  .verdict-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
-  .verdict-say a { color: var(--color-accent-hover); }
-  .under { border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.07); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: var(--space-3); margin-top: var(--space-4); }
-  .under h3 { font-family: var(--font-display); font-size: var(--text-md); margin: 0; }
-  .under p { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
-  .under .figure { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  
+  #view-what-it-costs .verdict { font-family: var(--font-display); font-size: var(--text-lg, 1.25rem); line-height: 1.25; margin: var(--space-2) 0 0; }
+  
+  #view-what-it-costs .verdict.is-good { color: var(--color-positive); }
+  
+  #view-what-it-costs .verdict.is-watch { color: var(--color-caution); }
+  
+  #view-what-it-costs .verdict.is-out { color: var(--color-critical-text); }
+  
+  #view-what-it-costs .verdict.is-blank { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  
+  #view-what-it-costs .verdict-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
+  
+  #view-what-it-costs .verdict-say a { color: var(--color-accent-hover); }
+  
+  #view-what-it-costs .under { border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.07); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: var(--space-3); margin-top: var(--space-4); }
+  
+  #view-what-it-costs .under h3 { font-family: var(--font-display); font-size: var(--text-md); margin: 0; }
+  
+  #view-what-it-costs .under p { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
+  
+  #view-what-it-costs .under .figure { color: var(--color-text); font-variant-numeric: tabular-nums; }
 
   /* Lease / new / a year old, side by side where there is room for it. */
-  .ways { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
-  @media (min-width: 760px) { .ways { grid-template-columns: repeat(3, 1fr); } }
-  .way { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); padding: var(--space-3); }
-  .way h3 { font-family: var(--font-display); font-size: var(--text-md); margin: 0 0 var(--space-2); }
-  .way dt { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin-top: var(--space-2); }
-  .way dd { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; line-height: var(--leading-loose); }
-  .way .arith { font-size: var(--text-sm); color: var(--color-text); margin: var(--space-3) 0 0; padding-top: var(--space-2); border-top: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
+  
+  #view-what-it-costs .ways { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
+  @media (min-width: 760px) { 
+  #view-what-it-costs .ways { grid-template-columns: repeat(3, 1fr); } }
+  
+  #view-what-it-costs .way { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); padding: var(--space-3); }
+  
+  #view-what-it-costs .way h3 { font-family: var(--font-display); font-size: var(--text-md); margin: 0 0 var(--space-2); }
+  
+  #view-what-it-costs .way dt { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin-top: var(--space-2); }
+  
+  #view-what-it-costs .way dd { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; line-height: var(--leading-loose); }
+  
+  #view-what-it-costs .way .arith { font-size: var(--text-sm); color: var(--color-text); margin: var(--space-3) 0 0; padding-top: var(--space-2); border-top: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
 
   /* The term picker is a select like the rest, so it lines up with them; it
      just has no answer until somebody gives it one. */
-  #room-inputs .room-grid { align-items: end; }
+  
+  #view-what-it-costs #room-inputs .room-grid { align-items: end; }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>What A Car Costs</h1>
-  <p class="room-lede">The monthly payment is the least informative number in the whole deal. Here is what sits underneath it.</p>
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Wheels</h1>
+  <p class="room-lede">Start with whether the car fits. Then look at what the monthly payment is hiding.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Two readings of the same car">
+    <a href="#the-check" data-view="view-the-check">Does it fit?</a>
+    <a href="#what-it-costs" data-view="view-what-it-costs">What it costs</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ===== DOES IT FIT? (was rooms/first-car.html) ===== -->
+  <section id="view-the-check">
+  <p class="slaf-lede">Twenty percent down, three years at most, under eight percent of what you earn. Each part inside or outside, the highest price that fits all three, and what the gap costs in days of financial independence.</p>
+  <section class="slaf-card" id="check">
+    <span class="slaf-eyebrow">20 / 3 / 8</span>
+    <p class="head-num" id="c-num"></p>
+    <p class="head-sub" id="c-sub"></p>
+    <ul class="parts" id="c-parts"></ul>
+  </section>
+  <section class="slaf-card" id="check-inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The car</span>
+    <div class="ask">
+      <div><label for="in-price">Price</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-price" placeholder="e.g. 30,000" aria-label="Price"/></span></div>
+      <div><label for="in-down">Down payment</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-down" placeholder="e.g. 6,000" aria-label="Down payment"/></span></div>
+      <div><label for="in-term">Loan term, months</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-term" placeholder="e.g. 36" aria-label="Loan term in months"/></span></div>
+      <div><label for="in-rate">Loan rate</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-rate" placeholder="e.g. 7" aria-label="Loan rate"/><span class="slaf-affix">%</span></span></div>
+      <div><label for="in-ins">Insurance a month</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-ins" placeholder="e.g. 150" aria-label="Insurance a month"/></span></div>
+      <div><label for="in-gas">Fuel or charging a month</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-gas" placeholder="e.g. 120" aria-label="Fuel a month"/></span></div>
+      <div><label for="in-maint">Maintenance a month</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-maint" placeholder="estimated from the rest" aria-label="Maintenance a month"/></span>
+        <span class="slaf-hint" id="c-maint-hint"></span></div>
+    </div>
+  </section>
+  <section class="slaf-card" id="newused" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">New against used, same budget</span>
+    <p class="head-sub" id="c-newused"></p>
+  </section>
+  </section>
+
+  <!-- ===== WHAT IT COSTS (was rooms/car.html) ===== -->
+  <section id="view-what-it-costs" hidden>
+  <p class="slaf-lede">The monthly payment is the least informative number in the whole deal. What it loses, what it costs to run, whether the loan fits, and the three ways to buy.</p>
   <div class="room-standalone" id="room-standalone" hidden></div>
 
   <section class="slaf-card" id="number">
@@ -197,13 +308,9 @@
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
   </section>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. Depreciation depends on the model,
-    the mileage and the year you sell; insurance depends on you. Nothing here
-    values a particular car or quotes a rate. Your numbers stay in this
-    browser, and the ones typed on this page are not even kept there.
-  </p>
+  <p class="disclaimer">Educational tool, not financial advice. The 20/3/8 rule is a convention, not a law; the depreciation curve is a shape, not a prediction about one car. Nothing typed here is saved — a car you are weighing is a what-if, not a fact about you.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -212,7 +319,6 @@
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
-<script src="../shared/suggest.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
 <script src="../shared/prefs.js"></script>
@@ -222,10 +328,91 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/hourly.js"></script>
-<script src="../engines/quickmath.js"></script>
 <script src="../shared/lens.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script src="../engines/firstcar.js"></script>
+<script src="../shared/suggest.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
+<script>
+/* ---- Does it fit, then what it costs (D-238) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-what-it-costs', match: /^#(what-it-costs|number|inputs|out-drop|out-run|out-loan|out-ways|room-|drop-|run-|loan-|ways-|amounts|assumptions|reading|scope|why|chart|lens)/ },
+    { id: 'view-the-check', match: /.*/ }
+  ];
+  function route() {
+    var h = location.hash || '';
+    var on = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('car');
+  if (SLAF.Progress) SLAF.Progress.mount('car');
+})();
+</script>
+
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, FirstCar = SLAF.FirstCar;
+  var ROOM_ID = 'car';   /* the room this reading lives in */
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
+  function num(id) { var t = String(el(id).value || '').replace(/[^0-9.]/g, ''); return t === '' ? null : Number(t); }
+  function render() {
+    if (!TABLES) return;
+    var rate = num('in-rate');
+    var r = FirstCar.check(Spine.getProfile(), TABLES, { priceCents: typed('in-price'), downCents: typed('in-down'), termMonths: num('in-term'), loanRate: rate === null ? null : rate / 100, insuranceMonthlyCents: typed('in-ins'), gasMonthlyCents: typed('in-gas'), maintenanceMonthlyCents: typed('in-maint') });
+    if (!Money.isOk(r)) { el('c-num').textContent = 'Not yet.'; el('c-sub').textContent = r.reason; el('c-parts').innerHTML = ''; el('c-newused').textContent = ''; el('c-maint-hint').textContent = ''; return; }
+    el('c-num').textContent = r.insideAll ? 'Inside all three.' : r.value + ' of 3 inside.';
+    el('c-num').setAttribute('data-inside', String(r.value));
+    var sub = 'The highest price that fits all three parts: ' + Money.formatCents(r.maxAffordablePriceCents) + '.';
+    if (r.gapCents) sub += ' This one is ' + Money.formatCents(r.gapCents) + ' over that' + (r.gapFiDays !== null ? ', about ' + r.gapFiDays + ' days of financial independence' : '') + '.';
+    sub += ' All in, ' + Money.formatCents(r.allInMonthlyCents) + ' a month' + (r.allInShare !== null ? ' (' + Money.formatRate(r.allInShare, { decimals: 1 }) + ' of gross pay, ' + (r.allInInside ? 'inside' : 'outside') + ' the 8% when insurance, fuel and maintenance are counted)' : '') + '.';
+    el('c-sub').textContent = sub;
+    var words = { down: 'down', term: 'term', payment: 'payment' };
+    el('c-parts').innerHTML = r.parts.map(function (p) {
+      var detail = p.key === 'down' ? Math.round(p.actual * 100) + '% down against ' + Math.round(p.target * 100) + '%' + (p.shortfallCents ? ', ' + Money.formatCents(p.shortfallCents) + ' short' : '')
+        : p.key === 'term' ? p.actual + ' months against ' + p.target
+        : (p.actual === null ? 'no payment' : Money.formatCents(p.actual) + ' a month against ' + Money.formatCents(p.target)) + (p.overByCents ? ', ' + Money.formatCents(p.overByCents) + ' over' : '');
+      return '<li><span>' + esc(p.label) + '</span><span class="state">' + (p.inside ? 'inside' : 'outside') + '</span><small>' + esc(detail) + '</small></li>';
+    }).join('');
+    el('c-maint-hint').textContent = r.maintenanceEstimated && r.maintenanceEstimateCents ? 'Estimated at ' + Money.formatCents(r.maintenanceEstimateCents) + ' from the AAA cost shares; type your own to replace it.' : '';
+    var nu = r.newVsUsed;
+    el('c-newused').textContent = nu.newLossCents !== null ? 'New at ' + Money.formatCents(r.priceCents) + ': about ' + Money.formatCents(nu.newLossCents) + ' lost to depreciation over ' + nu.holdYears + ' years. The same ' + Money.formatCents(r.priceCents) + ' buys a ' + nu.usedAgeYears + '-year-old car that listed near ' + Money.formatCents(nu.usedListNewCents) + ' new, losing about ' + Money.formatCents(nu.usedLossCents) + ' over the same years.' : '';
+  }
+  ['in-price', 'in-down', 'in-term', 'in-rate', 'in-ins', 'in-gas', 'in-maint'].forEach(function (id) { el(id).addEventListener('input', render); });
+  Spine.onChange(render);
+  Reference.load(['carCosts', 'effectiveTaxRates', 'federalBrackets', 'fireVariants', 'returnBands']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
 <script>
 (function () {
   'use strict';
@@ -308,6 +495,7 @@
 
   Room.mount({
     id: 'car',
+    part: true,
     tables: ['carCosts', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones',
              'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
     reads: ['grossAnnualIncome'],

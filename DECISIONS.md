@@ -14083,6 +14083,31 @@ together.
 **Verified.** `node test/run.js` (31,034 checks). Both readings, the redirect
 and the deep links `#more` and `#found` at 390px with a clean console.
 
+### D-238 — Wheels: does it fit, then what it costs
+
+**Decision.** The First Car Check becomes the first reading of What A Car
+Costs, and the room is called Wheels. Two hats: `#the-check` (the default) and
+`#what-it-costs`. `rooms/first-car.html` becomes a redirect, hash and all.
+
+**Why.** The two rooms were the same car, the same `carRule2038`, the same
+`data/car_costs.json`, asked at two depths. Rule 1 of D-229: same fields,
+different framing is one room with a toggle.
+
+**The check goes first.** Someone who wants a yes or no should not have to
+read a depreciation curve to find one (Alexis: the simplest reading is the
+default).
+
+**Compatibility.** No stored shape changes: neither reading writes a field,
+and the room still owns nothing. `#inputs` collided, so the check's boxes are
+`#check-inputs`; the redirect maps the old hash. The registry keeps the id
+`car`, gains the First Car aliases, moves to tier 1, and lists both readings'
+subsections.
+
+**Test.** The "never red" check is now scoped to the check reading's markup
+and CSS. The costs reading beside it has always coloured an over-budget row
+and still may; a 20/3/8 part that is outside is a fact about a car, not a
+failing grade.
+
 ---
 
 # The Dungeons & Dividends entries

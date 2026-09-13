@@ -525,7 +525,7 @@
     },
     {
       "id": "car",
-      "title": "What A Car Costs",
+      "title": "Wheels",
       "file": "rooms/car.html",
       "reads": [
         "grossAnnualIncome"
@@ -865,18 +865,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 41
-    },
-    {
-      "id": "first-car",
-      "title": "The First Car Check",
-      "file": "rooms/first-car.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 41.5
     },
     {
       "id": "variable-income",
