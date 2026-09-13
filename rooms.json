@@ -130,23 +130,12 @@
       "file": "rooms/budget.html",
       "reads": [],
       "writes": [
-        "monthsClosed"
+        "monthsClosed",
+        "historyCompareTo"
       ],
       "requires": [],
       "dashboardNumber": null,
       "order": 3.4
-    },
-    {
-      "id": "variance",
-      "title": "Estimated vs Actual",
-      "file": "rooms/variance.html",
-      "reads": [
-        "monthsClosed"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 3.5
     },
     {
       "id": "financial-snapshot",
@@ -698,7 +687,7 @@
     },
     {
       "id": "degree",
-      "title": "The Month",
+      "title": "The Close",
       "file": "rooms/degree.html",
       "reads": [
         "dob"
@@ -911,22 +900,6 @@
       ],
       "dashboardNumber": "loanTrajectory",
       "order": 49
-    },
-    {
-      "id": "history",
-      "title": "History",
-      "file": "rooms/history.html",
-      "reads": [
-        "cashSavings",
-        "investments",
-        "totalDebt"
-      ],
-      "writes": [
-        "historyCompareTo"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 51
     },
     {
       "id": "data",

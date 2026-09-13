@@ -10515,14 +10515,20 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
      First Round and Express became views of (D-230). */
   check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
-  check('...fifteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 15);
-  checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
+  check('...fourteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 14);
+  /* The rule is about HOUSEHOLD data: a Your Numbers room writes a DAITE
+     family, not a context. `prefs.*` is not a context — it is a
+     preference, per person and per browser, and D-246 brought one into
+     this group when History became The Close's over-time reading. It is
+     named here so the exception is a decision, not a hole. */
+  checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses|prefs)\b/.test(w))));
+  check('…and the only prefs writer among them is The Close', Registry.inGroup('numbers', null).filter(r => (Registry.daite(r.id).writes || []).some(w => /^prefs\b/.test(w))).map(r => r.id).join(','), 'budget');
   /* Your Next $100 became a reading of What The Next Dollar Does (D-231). */
   check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,foo-ladder,fire,fire-lab,statements,coast-date,race');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree');
-  check('Upkeep, after the Ledger took navigation (D-230) and The Card took the three things you hand over (D-234)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,history,settings,get-help,one-pager');
+  check('Upkeep, after the Ledger took navigation (D-230) and The Card took the three things you hand over (D-234)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,settings,get-help,one-pager');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));

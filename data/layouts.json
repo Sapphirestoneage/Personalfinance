@@ -29,7 +29,6 @@
             "cash-flow",
             "income",
             "budget",
-            "variance",
             "financial-snapshot",
             "race",
             "statements",
@@ -78,8 +77,7 @@
             "week",
             "reversibility",
             "debates",
-            "student-loans",
-            "history"
+            "student-loans"
           ],
           "note": "Registry order 1\u201351 \u2014 the sequence a person is meant to walk."
         },
@@ -117,7 +115,6 @@
             "cash-flow",
             "income",
             "budget",
-            "variance",
             "financial-snapshot",
             "race",
             "statements",
@@ -146,8 +143,7 @@
             "enough",
             "week",
             "reversibility",
-            "debates",
-            "history"
+            "debates"
           ],
           "note": "The same 43 rooms show up whichever answer you give."
         },
@@ -221,7 +217,6 @@
             "cash-flow",
             "budget",
             "income",
-            "variance",
             "accounts",
             "real-hourly-wage"
           ]
@@ -305,7 +300,6 @@
           "rooms": [
             "data",
             "one-pager",
-            "history",
             "skill-tree"
           ]
         }
@@ -346,7 +340,6 @@
             "expenses",
             "cash-flow",
             "budget",
-            "variance",
             "big-purchase",
             "car",
             "housing",
@@ -428,7 +421,6 @@
             "settings",
             "data",
             "one-pager",
-            "history",
             "get-help",
             "financial-snapshot",
             "race",
@@ -468,7 +460,6 @@
             "expenses",
             "cash-flow",
             "budget",
-            "variance",
             "income",
             "debt-payoff",
             "settings",
@@ -537,7 +528,6 @@
             "ledger",
             "data",
             "one-pager",
-            "history",
             "skill-tree",
             "hassle",
             "real-hourly-wage",
@@ -569,7 +559,6 @@
             "cash-flow",
             "income",
             "budget",
-            "variance",
             "financial-snapshot",
             "race",
             "statements",
@@ -669,7 +658,6 @@
             "get-help",
             "data",
             "one-pager",
-            "history",
             "settings"
           ],
           "note": "Everything about time, meaning, skill, work and the end of life. The FOO has nothing to say about any of it.",
@@ -708,7 +696,6 @@
             "cash-flow",
             "income",
             "budget",
-            "variance",
             "debt-payoff",
             "statement",
             "reachable",
@@ -774,7 +761,6 @@
             "worth",
             "data",
             "one-pager",
-            "history",
             "get-help"
           ]
         }
@@ -828,7 +814,6 @@
             "middle-class-trap",
             "week",
             "enough",
-            "variance",
             "financial-snapshot",
             "race",
             "statements",
@@ -839,7 +824,6 @@
             "get-help",
             "goals",
             "self-employed",
-            "history",
             "housing",
             "down-payment",
             "property",
@@ -913,7 +897,6 @@
             "cash-flow",
             "budget",
             "income",
-            "variance",
             "settings"
           ],
           "note": "Where the daily work happens and the mess accumulates."
@@ -997,8 +980,7 @@
           "rooms": [
             "decumulation",
             "roth-aca",
-            "middle-class-trap",
-            "history"
+            "middle-class-trap"
           ]
         },
         {
@@ -1043,7 +1025,6 @@
         {
           "name": "At month end",
           "rooms": [
-            "variance",
             "income",
             "settings",
             "debt-payoff",
@@ -1127,8 +1108,7 @@
             "ledger",
             "skill-tree",
             "data",
-            "one-pager",
-            "history"
+            "one-pager"
           ]
         }
       ]
@@ -1157,8 +1137,7 @@
             "reachable",
             "financial-snapshot",
             "race",
-            "statements",
-            "variance"
+            "statements"
           ]
         },
         {
@@ -1238,8 +1217,7 @@
             "start",
             "ledger",
             "data",
-            "one-pager",
-            "history"
+            "one-pager"
           ]
         }
       ]
@@ -1341,11 +1319,9 @@
             "ledger",
             "dashboard",
             "settings",
-            "variance",
             "income",
             "data",
             "one-pager",
-            "history",
             "get-help",
             "real-hourly-wage",
             "hassle",
@@ -1455,14 +1431,12 @@
             "expenses",
             "cash-flow",
             "budget",
-            "variance",
             "financial-snapshot",
             "race",
             "statements",
             "settings",
             "data",
             "one-pager",
-            "history",
             "get-help"
           ]
         }
@@ -1499,7 +1473,6 @@
           "rooms": [
             "start",
             "ledger",
-            "variance",
             "values",
             "goals",
             "credit",
@@ -1550,8 +1523,7 @@
             "variable-income",
             "enough",
             "reversibility",
-            "student-loans",
-            "history"
+            "student-loans"
           ],
           "note": "37 rooms sit at exactly the same depth. There is no sequence among them \u2014 the numbered path invents one.",
           "warn": true
@@ -1617,7 +1589,6 @@
           "name": "3 \u00b7 \u201cWhat goes out?\u201d",
           "rooms": [
             "budget",
-            "variance",
             "big-purchase",
             "car",
             "housing",
@@ -1684,7 +1655,6 @@
             "settings",
             "data",
             "one-pager",
-            "history",
             "skill-tree"
           ]
         }
@@ -1783,11 +1753,9 @@
         {
           "name": "Ongoing, never done",
           "rooms": [
-            "variance",
             "skill-tree",
             "credential",
             "degree",
-            "history",
             "data",
             "one-pager"
           ]
@@ -1821,7 +1789,6 @@
             "partner",
             "wedding",
             "credit",
-            "history",
             "settings",
             "data",
             "one-pager",
@@ -1844,7 +1811,6 @@
             "race",
             "statements",
             "variable-income",
-            "variance",
             "cant-pay",
             "dashboard"
           ],
@@ -1934,7 +1900,6 @@
             "cash-flow",
             "income",
             "budget",
-            "variance",
             "settings",
             "real-hourly-wage",
             "hassle"
@@ -1989,7 +1954,6 @@
             "goals",
             "what-if-life",
             "adventure",
-            "history",
             "data",
             "one-pager",
             "get-help"
@@ -2032,7 +1996,6 @@
             "cash-flow",
             "income",
             "budget",
-            "variance",
             "statement",
             "reachable",
             "debt-payoff",
@@ -2119,7 +2082,6 @@
             "settings",
             "data",
             "one-pager",
-            "history",
             "skill-tree"
           ]
         }
@@ -2173,7 +2135,6 @@
             "cash-flow",
             "income",
             "budget",
-            "variance",
             "settings",
             "dashboard",
             "financial-snapshot",
@@ -2245,8 +2206,7 @@
             "start",
             "ledger",
             "data",
-            "one-pager",
-            "history"
+            "one-pager"
           ],
           "note": "Reachable from every screen without being one of the three."
         }

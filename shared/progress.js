@@ -363,7 +363,9 @@
 
   /* Upkeep, kept as a named list for the pages that ask for it directly
      (the map, the tests): the rooms a person reaches for from anywhere. */
-  var UPKEEP = ['data', 'ledger', 'history', 'start', 'get-help'];
+  /* History became The Close's over-time reading (D-246); the upkeep
+     strip lists rooms, and it is no longer one. */
+  var UPKEEP = ['data', 'ledger', 'start', 'get-help'];
 
   function globals() { return (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null; }
   function prefs() { var g = globals(); return g && g.SLAF && g.SLAF.Prefs ? g.SLAF.Prefs : null; }

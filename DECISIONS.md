@@ -14315,6 +14315,37 @@ dates reading's number and chart. The calendar reading's link to
 `cash-flow.html#log` now lands on the other hat of its own page, which the
 router handles.
 
+### D-246 — The Close: this month, every month, over time
+
+**Decision.** Estimated vs Actual and History become readings of Budget, and
+the room is called The Close. Three hats: `#this-month` (the default),
+`#every-month`, `#over-time`. Both old pages redirect, hash and all.
+
+**Why.** Closing a month, reading the closed months, and watching the line
+they make are one record at three lengths. Rule 2 of D-229. This month is
+first because it is the only one you can still act on.
+
+**Ownership.** `historyCompareTo` → `budget`, anchor `hi-inputs`.
+`monthsClosed` stays where it was. Only History needed a prefix, and it
+needed the whole skeleton because its mount carries one.
+
+**Three things History leaving Upkeep broke, all of them fixed here.**
+`Progress.UPKEEP` listed it, and the strip lists rooms. The `map.html`
+link in the Upkeep group hung off it with `after: 'history'`, so the map
+link would have silently stopped rendering; it hangs off Your Data now,
+which leads the group. And "no field to type in, ever" is Budget's rule for
+its own sheet, not for a page that now also carries a compare-to select —
+the test reads the close reading's slice.
+
+**A `prefs.*` writer in Your Numbers.** The rule is that a Your Numbers room
+writes a DAITE family, never a context. `prefs.history` is neither: it is a
+preference, per person and per browser. The rule now names `prefs` and a
+second check asserts The Close is the only room in the group that writes
+one, so the exception is a decision rather than a hole.
+
+**Compatibility.** No stored shape changes. Checked against the pre-merge
+pages: all three readings render identically.
+
 ---
 
 # The Dungeons & Dividends entries

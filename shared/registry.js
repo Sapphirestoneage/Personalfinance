@@ -113,7 +113,7 @@
     {
       id: 'budget',
       features: ['annualLines'],
-      group: 'numbers', subgroup: 'expenses', aliases: ['budget', 'buckets', 'estimate', 'plan the month'],
+      group: 'numbers', subgroup: 'expenses', aliases: ['budget', 'buckets', 'estimate', 'plan the month', 'variance', 'estimated vs actual', 'history', 'changes', 'log', 'snapshots'],
       kind: 'about-you',
       needs: [],
       order: 3.4,
@@ -122,29 +122,16 @@
       href: 'rooms/budget.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: [], writes: ['expenses.budget', 'expenses.months'] },
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['expenses.budget', 'expenses.months', 'prefs.history'] },
       subsections: [
         { id: 'sheet',  label: 'The sheet' },
         { id: 'close',  label: 'Month-end' },
-        { id: 'months', label: 'Closed months' }
-      ]
-    },
-    {
-      id: 'variance',
-      group: 'numbers', subgroup: 'expenses', aliases: ['estimated', 'actual', 'over', 'under'],
-      kind: 'read',
-      needs: ['monthsClosed'],
-      order: 3.5,
-      title: 'Estimated vs Actual',
-      blurb: 'Every closed month read back: what you expected against what happened, bucket by bucket, and whether the guesses are getting better.',
-      href: 'rooms/variance.html',
-      tier: 1,
-      tags: ['income', 'cashflow'],
-      daite: { reads: ['expenses.months'], writes: [] },
-      subsections: [
-        { id: 'month',   label: 'One month' },
-        { id: 'trend',   label: 'Month over month' },
-        { id: 'buckets', label: 'Bucket by bucket' }
+        { id: 'months', label: 'Closed months' },
+        { id: 'single', label: 'One closed month' },
+        { id: 'trend', label: 'Are the guesses improving?' },
+        { id: 'hi-number', label: 'Since the first snapshot' },
+        { id: 'hi-chart', label: 'Net worth over time' },
+        { id: 'hi-inputs', label: 'Compare and freeze' }
       ]
     },
     {
@@ -796,8 +783,8 @@
     kind: 'explore',
     needs: ['dob'],
     order: 37.7,
-    title: 'The Month',
-    blurb: 'When the money moves: this month at a glance, every receipt on its date, where it all flows — and paydays against bills across the month, with the low point and the day it lands.',
+    title: 'The Close',
+    blurb: 'Five buckets, what you expected against what happened, the month closed — then every closed month read back, and every snapshot you froze over time.',
     href: 'rooms/degree.html',
     tier: 2,
     tags: ['income'],
@@ -1358,29 +1345,6 @@
       ]
   });
 
-  /* History — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'history',
-    group: 'upkeep', aliases: ['history', 'changes', 'log'],
-    kind: 'read',
-    needs: ['cashSavings', 'investments', 'totalDebt'],
-    order: 51,
-    title: 'History',
-    blurb: 'Every snapshot you froze, and what moved between them: net worth over time, and the log of what you changed.',
-    href: 'rooms/history.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['prefs.history'] },
-      subsections: [
-        { id: 'number',      label: 'Since the first snapshot' },
-        { id: 'chart',       label: 'Net worth over time' },
-        { id: 'inputs',      label: 'Compare and freeze' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
   /* Your Data: every way numbers get in or out of this browser — a file, a
      share link, a pasted statement sorted into the right lists — in one
      place. Writes through the same spine helpers the owner rooms use; owns
@@ -1532,18 +1496,21 @@
     { id: 'matters',   label: 'What Matters' },
     { id: 'levelup',   label: 'Level Up' },
     { id: 'upkeep',    label: 'Upkeep',
-      links: [{ after: 'history', title: 'Every room, on one page', href: 'map.html', aliases: ['map', 'all rooms', 'every room'] }] }
+      /* The map link hung off History, which became The Close's over-time
+         reading in D-246. It hangs off Your Data now, which is the room
+         this group leads with and is not going anywhere. */
+      links: [{ after: 'data', title: 'Every room, on one page', href: 'map.html', aliases: ['map', 'all rooms', 'every room'] }] }
   ];
   /* The order the brief lists rooms within a group, where it differs from
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
-    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance'],
+    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
     decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'enough', 'week', 'reversibility'],
     levelup: ['skill-tree'],
-    upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
+    upkeep: ['data', 'ledger', 'settings', 'get-help']
   };
   function groups() { return GROUPS.slice(); }
   function groupById(id) { return GROUPS.filter(function (g) { return g.id === id; })[0] || null; }

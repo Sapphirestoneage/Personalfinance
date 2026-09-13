@@ -1,6 +1,6 @@
 /* test/rooms/history.js — History: every snapshot, and what moved. D-122. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Demo, Registry, Ownership, Spine, Instruments, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Demo, Registry, Ownership, Spine, Instruments, TABLES } = t;
   const H = require(path.join(ROOT, 'engines/history.js'));
   section('History (D-122): since the first snapshot');
 
@@ -47,12 +47,21 @@ module.exports = function (t) {
   check('… a zero before has no share', H.change(0, 150).pct, null);
   Spine.reset();
 
-  const page = fs.readFileSync(path.join(ROOT, 'rooms/history.html'), 'utf8');
-  checkTrue('the page mounts the template as history', /Room\.mount\(\{/.test(page) && /id: 'history'/.test(page));
-  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + id + '"').test(page)));
+  /* history is a reading of budget since D-246, so this file reads its slice of
+     that page: its own markup and its own script. `slice.page` is the
+     whole file, for the few facts that really are page-wide. */
+  const slice = reading('rooms/budget.html', 'view-over-time', "READING view-over-time,");
+  const page = slice.html;
+  checkTrue('the page mounts the template as a part of The Close', /Room\.mount\(\{/.test(page) && /id: 'budget',\n\s*part: true,\n\s*prefix: 'hi-',\n\s*root: 'view-over-time',/.test(page));
+  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + (id === 'load-notice' ? '' : 'hi-') + id + '"').test(page)));
   checkTrue('… the compare-to select is painted from the snapshots, never under focus', /sel === document\.activeElement/.test(page));
   checkTrue('… freeze goes through the instruments engine', /Instruments\.snapshot\(/.test(page));
   checkTrue('… writes only history.*', (page.match(/Spine\.set\('([a-zA-Z.]+)'/g) || []).every(m => /history\./.test(m)));
-  check('compare-to is owned here', Ownership.field('historyCompareTo').owner, 'history');
-  check('History is a reading, last of the rooms', Registry.byId('history').kind, 'read');
+  check('compare-to is owned here', Ownership.field('historyCompareTo').owner, 'budget');
+  /* History is The Close's over-time reading since D-246. The room it is
+     in is an about-you room, because the reading it opens on closes a
+     month; this reading still reads and freezes rather than asking. */
+  check('the room it lives in is The Close', Registry.byId('budget').href, 'rooms/budget.html');
+  checkTrue('… and History is no longer a room of its own', !Registry.byId('history')
+    && /url=budget\.html#over-time/.test(fs.readFileSync(path.join(ROOT, 'rooms/history.html'), 'utf8')));
 };

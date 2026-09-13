@@ -1,6 +1,6 @@
 /* test/rooms/budget.js — the reflected budget and the month-end close. D-128. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Registry, Ownership, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Registry, Ownership, TABLES } = t;
   const Budget = require(path.join(ROOT, 'engines/budget.js'));
   const Ledger = require(path.join(ROOT, 'engines/ledger.js'));
   const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
@@ -107,15 +107,18 @@ module.exports = function (t) {
   check('never confirmed: nothing to count from', Budget.cashMovedSince(hm, T, CAT, null).status, 'incomplete');
   checkTrue('the Statement sets it beside the cash figure and applies nothing', /cashMovedSince\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')) && /nothing moves it for you/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')));
 
-  /* The page: no field to type in, ever. */
-  const page = fs.readFileSync(path.join(ROOT, 'rooms/budget.html'), 'utf8');
-  const markup = page.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<!--[\s\S]*?-->/g, '');
+  /* The sheet: no field to type in, ever. The rule is this reading's — the
+     over-time reading beside it since D-246 has a compare-to select, which
+     it always had. */
+  const slice = reading('rooms/budget.html', 'view-this-month', 'READING view-this-month,');
+  const page = slice.html;
+  const markup = slice.markup.replace(/<!--[\s\S]*?-->/g, '');
   check('zero input fields on the sheet', (markup.match(/<input|<select|<textarea/g) || []).length, 0);
-  checkTrue('the script builds none either', !/<input|<select|<textarea/.test(page.replace(/<!--[\s\S]*?-->/g, '').split('<script')[1] || ''));
+  checkTrue('the script builds none either', !/<input|<select|<textarea/.test(slice.script.replace(/<!--[\s\S]*?-->/g, '')));
   checkTrue('the Add button navigates with a way back', /sessionStorage\.setItem\(RETURN_KEY/.test(page) && /for=budget&month=/.test(page));
   checkTrue('and the way back lands on the bucket card', /just-added/.test(page) && /bucket-' \+ justAdded/.test(page));
   checkTrue('five cards, each with a comparison bar in the ratios room’s bar language and its Add inside', /class="bucket-card/.test(page) && /slaf-bars/.test(page) && /data-toggle=/.test(page) && /c-body/.test(page) && page.indexOf('data-add="') > page.indexOf('<div class="c-body">'));
-  checkTrue('the bar colours over and under apart, and an income shortfall as its own thing', /is-over/.test(page) && /is-under/.test(page) && /is-short/.test(page));
+  checkTrue('the bar colours over and under apart, and an income shortfall as its own thing', /is-over/.test(slice.page) && /is-under/.test(slice.page) && /is-short/.test(slice.page));
   checkTrue('the room re-renders on every spine change, so a new entry updates the actual with no refresh', /Spine\.onChange\(render\)/.test(page));
   checkTrue('late entries are synced on every render', /Budget\.syncRevised\(/.test(page));
   const room = Registry.byId('budget');

@@ -7,223 +7,33 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>History · SPARKS</title>
-<meta name="description" content="Every snapshot you froze, and what moved between them: net worth over time, and the log of what you changed."/>
+<meta name="description" content="History is the over-time reading of The Close now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-122.
-  THE BRIEF'S LAST STEP: History.
-
-  1. READS   Every snapshot frozen (shared/spine-v2.js listSnapshots — the
-             instruments' outputs and every owned field at that moment), the
-             household as it is now (through shared/instruments.js), and the
-             command log (meta.undoStack).
-  2. WRITES  It OWNS household.history.compareTo — which snapshot to
-             measure from. "Freeze now" appends a snapshot through
-             shared/instruments.js; a snapshot is not in the household, so
-             it is not an undo entry and cannot be undone — only ignored.
-  3. CALLS   engines/history.js: after − before, and the share of before.
-             Nothing financial is derived here.
-  4. EMPTY   With no snapshot the number says "Freeze once to start" and
-             the log is still listed; with an empty spine the guesses
-             banner shows and the freeze button still works.
-  5. CONFIG  none.
-
-  THE COMPARE-TO SELECT: the template builds its inputs once, so the
-  select's options are painted by `after` from the current snapshot list —
-  only when the list has changed, never while the select has focus.
-
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus; `after` sets <option>s
-  on the node it built and never while it is focused.
-  THEMING: none this pass.
+  REDIRECT — History is a reading of The Close (rooms/budget.html#over-time, DECISIONS.md D-246).
+  Closing a month, reading the closed months, and watching the line they
+  make are one record at three lengths. Rule 2 of D-229.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  section[id] { scroll-margin-top: var(--space-4); }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-</style>
+<meta http-equiv="refresh" content="0; url=budget.html#over-time"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>History</h1>
-  <p class="room-lede">Every snapshot you froze, and what moved between them: net worth over time, and the log of what you changed.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <div class="room-standalone" id="room-standalone" hidden></div>
-
-  <section class="slaf-card" id="number">
-    <div class="room-head-row">
-      <span class="slaf-eyebrow">Since the first snapshot</span>
-      <div id="room-lens"></div>
-    </div>
-    <div class="room-number" id="room-number"></div>
-  </section>
-
-  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Net worth over time</span>
-    <div id="room-chart"></div>
-  </section>
-
-  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Compare and freeze</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Pick the snapshot to measure from, or freeze today’s numbers to add one.</p>
-    <div id="room-inputs"></div>
-  </section>
-
-  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Through the lens</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
-    <ul class="room-amounts" id="room-amounts"></ul>
-  </section>
-
-  <details class="room-drawer" id="assumptions">
-    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
-    <div class="room-assumptions-body" id="room-assumptions"></div>
-  </details>
-
-  <p class="room-why" id="room-why" hidden></p>
-  <p class="room-scope" id="room-scope"></p>
-
-  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">What this is reading</span>
-    <div id="reading-list" style="margin-top:var(--space-3)"></div>
-  </section>
-
-  <p class="disclaimer">
-    Educational tool, not financial advice. Your numbers stay in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">History is the over-time reading of The Close now.
+    <a href="budget.html#over-time" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/suggest.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../engines/foo.js"></script>
-<script src="../engines/cashflow.js"></script>
-<script src="../engines/fire.js"></script>
-<script src="../engines/statement.js"></script>
-<script src="../engines/benchmarks.js"></script>
-<script src="../engines/ratios.js"></script>
-<script src="../shared/expr.js"></script>
-<script src="../engines/events.js"></script>
-<script src="../engines/skills.js"></script>
-<script src="../shared/instruments.js"></script>
-<script src="../engines/history.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../shared/charts.js"></script>
-<script src="../shared/room.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Charts = SLAF.Charts, Room = SLAF.Room, History = SLAF.History, Instruments = SLAF.Instruments;
-
-  function review(h, T) { return History.review(h, Spine.listSnapshots(), T, {}); }
-  function pct(v) { return v === null || v === undefined ? '' : ' (' + (v >= 0 ? '+' : '−') + Math.round(Math.abs(v) * 1000) / 10 + '%)'; }
-  function signed(c) { return (c >= 0 ? '+' : '−') + Money.formatCents(Math.abs(c)); }
-  var lastOptions = null;
-
-  var room = Room.mount({
-    id: 'history',
-    reads: ['cashSavings', 'investments', 'totalDebt'],
-
-    number: function (h, T) {
-      var r = review(h, T);
-      var log = r.log;
-      var logLine = log.count ? 'the log holds ' + log.count + (log.count === 1 ? ' change' : ' changes') + ', the last “' + log.last.label + '” ' + log.last.ago : 'nothing changed yet';
-      if (!Money.isOk(r)) return { label: r.count ? 'Since ' + r.sinceLabel : 'Since your first snapshot', value: null, reason: r.reason + ' · ' + logLine };
-      var sub = ['cash', 'investments', 'debt'].map(function (k) { var c = r[k]; return c.before !== null && c.after !== null ? k + ' ' + Money.formatCents(c.before) + ' → ' + Money.formatCents(c.after) : null; }).filter(Boolean).join(' · ')
-        + ' · ' + r.count + (r.count === 1 ? ' snapshot' : ' snapshots') + (r.baselineFallback ? ' (the one you picked is gone; measured from the first)' : '') + ' · ' + logLine;
-      return { label: 'Net worth since ' + r.sinceLabel, value: signed(r.value) + pct(r.netWorth.pct), sub: sub, zone: r.zone, result: r };
-    },
-
-    chart: function (h, T) {
-      var r = review(h, T);
-      if (!r.points || !r.points.length) return Charts.area({ series: [], empty: r.count ? 'That snapshot did not hold a net worth.' : 'Freeze once to start the line.' });
-      return Charts.area({
-        title: 'Net worth at each snapshot, and today',
-        series: [{ label: 'Net worth', color: Charts.COLORS.growth, fill: true, points: r.points.map(function (p) { return [p.x, p.y]; }) }],
-        dots: r.points.filter(function (p) { return p.isBaseline || p.isNow; }).map(function (p) { return { x: p.x, y: p.y }; }),
-        x: { label: 'days since the first snapshot', format: function (v) { return String(Math.round(v)); } }
-      });
-    },
-
-    inputs: [
-      { ctl: 'compareTo', label: 'Compare against', kind: 'select', options: [['', 'The first snapshot']],
-        read: function (h) { return Schema.createHistoryPlan(h.history).compareTo; }, write: function (v) { Spine.set('history.compareTo', v || null); } },
-      { ctl: 'freeze', label: 'Freeze today’s numbers', kind: 'choice', options: [['now', 'Freeze now']], hint: 'A snapshot cannot be undone; it can be ignored.',
-        read: function () { return null; }, write: function () { Instruments.snapshot(Spine.getProfile(), TABLESNOW()); } }
-    ],
-
-    amounts: function (h, T) {
-      var r = review(h, T);
-      if (!Money.isOk(r)) return [];
-      var rows = [{ label: 'Net worth, the change', cents: r.value }];
-      if (r.cash.delta !== null) rows.push({ label: 'Cash, the change', cents: r.cash.delta });
-      if (r.investments.delta !== null) rows.push({ label: 'Investments, the change', cents: r.investments.delta });
-      return rows;
-    },
-
-    assumptions: function (h, T) {
-      return [
-        { label: 'A snapshot holds', value: History.frozenNames().length + ' instruments and every owned field', source: History.frozenNames().join(', ') + ' — shared/instruments.js' },
-        { label: '“Now”', value: 'recomputed', source: 'from the household as it is, never a stored figure' },
-        { label: 'The log', value: 'this browser’s', source: 'meta.undoStack, capped at 100; an export or share code leaves it behind (D-094)' },
-        { label: 'Snapshots', value: 'this browser’s', source: 'kept beside the household; a share code carries them' }
-      ];
-    },
-
-    why: function (h, T, situation) {
-      return {
-        employed: 'Employed, the savings rate is a trend before it is a number: the line here is the one place it shows.',
-        selfEmployed: 'Self-employed, the months are uneven; the snapshots even them out into a slope.',
-        mixed: 'Two incomes, one line. The slope is what both are doing together.',
-        student: 'A student’s line is mostly flat or mostly debt; the first snapshot after graduation is the one to keep.',
-        retired: 'Retired, the draw shows up here first — a line that slopes down is the withdrawal rate made visible.',
-        betweenJobs: 'Between jobs, the runway’s slope is the line; freeze on the day the job ended so the drawdown is measured from there.'
-      }[situation] || 'A number today is one point. A line needs two; this is where the second one comes from.';
-    },
-
-    scope: 'This room does not sync anywhere; snapshots and the log live in this browser, and a share code carries the snapshots but not the log.',
-
-    after: function (h, T) {
-      /* The compare-to options come from the snapshot list, painted only
-         when the list changed and never under focus. */
-      var sel = document.querySelector('[data-ctl="compareTo"]');
-      if (!sel) return;
-      var snaps = Spine.listSnapshots();
-      var key = snaps.map(function (s) { return s.id; }).join(',');
-      if (key === lastOptions || sel === document.activeElement) return;
-      lastOptions = key;
-      var cur = Schema.createHistoryPlan(h.history).compareTo || '';
-      sel.innerHTML = '<option value="">The first snapshot</option>' + snaps.map(function (s) {
-        var d = new Date(s.timestamp);
-        return '<option value="' + s.id + '">' + (isNaN(d.getTime()) ? s.id : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) + '</option>';
-      }).join('');
-      sel.value = cur;
-    }
-  });
-
-  /* The freeze needs the loaded tables; the template holds them. */
-  function TABLESNOW() { return room ? room.tables() : null; }
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#number': '#hi-number', '#chart': '#hi-chart', '#inputs': '#hi-inputs', '#amounts': '#hi-amounts', '#assumptions': '#hi-assumptions', '#reading': '#hi-reading', '#reading-list': '#hi-reading-list' };
+    var hash = location.hash || '';
+    var target = 'budget.html' + (map[hash] || '#over-time');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

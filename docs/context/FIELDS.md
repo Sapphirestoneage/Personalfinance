@@ -25,9 +25,10 @@ Fields: 112. Traced: 103. No other room mentions it: **53**.
 - `purchaseRate` — Financing rate · **no other room mentions it**
 - `dreamsMonthly` — Dreams, a month · **no other room mentions it**
 
-## budget (1)
+## budget (2)
 
 - `monthsClosed` — Months closed · read by skill-tree
+- `historyCompareTo` — Comparing against · **no other room mentions it**
 
 ## career-move (5)
 
@@ -50,7 +51,7 @@ Fields: 112. Traced: 103. No other room mentions it: **53**.
 
 ## debt-payoff (5)
 
-- `totalDebt` — Total debt · read by ledger, start, financial-snapshot, statements, statement, dashboard, credit, what-if-life, student-loans, history, one-pager
+- `totalDebt` — Total debt · read by ledger, start, budget, financial-snapshot, statements, statement, dashboard, credit, what-if-life, student-loans, one-pager
 - `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, financial-snapshot, statements, values, cant-pay, student-loans
 - `debtBalance` — Balance · read by ledger, start
 - `debtRate` — Interest rate · read by ledger, start, foo-ladder, debates
@@ -81,10 +82,6 @@ Fields: 112. Traced: 103. No other room mentions it: **53**.
 
 - `retireAge` — Stop working at · read by dashboard, skill-tree, coast-date, rollover, what-if-life, micro-retirement, decumulation, middle-class-trap, week, one-pager
 - `coastAge` — Coast: arrive by · read by coast-date
-
-## history (1)
-
-- `historyCompareTo` — Comparing against · **no other room mentions it**
 
 ## housing (4)
 
@@ -147,7 +144,7 @@ Fields: 112. Traced: 103. No other room mentions it: **53**.
 - `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, skill-tree, values, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, career-move, offer-compare, degree, partner, housing, big-purchase, variable-income, adventure, week, reversibility, debates, student-loans, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
-- `cashSavings` — Cash & savings · read by ledger, cash-flow, budget, financial-snapshot, statements, statement, dashboard, skill-tree, runway, cant-pay, what-if-life, protection, housing, big-purchase, variable-income, reversibility, debates, history, one-pager
+- `cashSavings` — Cash & savings · read by ledger, cash-flow, budget, financial-snapshot, statements, statement, dashboard, skill-tree, runway, cant-pay, what-if-life, protection, housing, big-purchase, variable-income, reversibility, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, runway, tax, offer-compare, debates, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, debates
@@ -161,7 +158,7 @@ Fields: 112. Traced: 103. No other room mentions it: **53**.
 
 - `otherAssets` — Property & other assets · read by ledger, statements, protection, one-pager
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
-- `netWorth` — Net worth · read by ledger, financial-snapshot, statements, dashboard, race, what-if-life, history, one-pager
+- `netWorth` — Net worth · read by ledger, budget, financial-snapshot, statements, dashboard, race, what-if-life, one-pager
 - `assetValue` — What each account or thing is worth · read by ledger
 - `assetCharacter` — How it is taxed on the way out · read by ledger
 - `assetTier` — Which pile it sits in · read by ledger

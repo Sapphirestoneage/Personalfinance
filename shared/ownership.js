@@ -657,7 +657,7 @@
       notApplicableBecause: 'No month closed yet — close one on the Budget.'
     },
     historyCompareTo: {
-      label: 'Comparing against', owner: 'history', anchor: 'inputs',
+      label: 'Comparing against', owner: 'budget', anchor: 'hi-inputs',
       read: function (h) { var v = (h.history || {}).compareTo; return v ? Money.ok(v) : Money.incomplete('The first snapshot, until you pick one.', ['compareTo']); },
       format: function (v) { return 'snapshot ' + String(v).slice(-4); }
     },
