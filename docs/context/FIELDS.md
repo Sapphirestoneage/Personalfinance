@@ -60,7 +60,7 @@ Fields: 112. Traced: 103. No other room mentions it: **55**.
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by cash-flow, financial-snapshot, housing, debates
-- `monthlyExpenses` — Monthly expenses · read by start, cash-flow, income, budget, financial-snapshot, statement, fire, dashboard, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, adventure, week, debates, one-pager
+- `monthlyExpenses` — Monthly expenses · read by start, cash-flow, income, budget, financial-snapshot, statement, fire, dashboard, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
@@ -137,7 +137,7 @@ Fields: 112. Traced: 103. No other room mentions it: **55**.
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
 - `filingStatus` — Filing status · read by expenses, income, financial-snapshot, statement, dashboard, cant-pay, decumulation, tax, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, income, financial-snapshot, statement, dashboard, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, tax, career-move, partner, housing, big-purchase, adventure, week, debates, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, income, financial-snapshot, statement, dashboard, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, tax, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
 - `cashSavings` — Cash & savings · read by ledger, cash-flow, income, budget, financial-snapshot, statement, dashboard, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager

@@ -55,6 +55,13 @@ const SideHustle = require(path.join(ROOT, 'engines/sidehustle.js'));
 const RatiosEngine = require(path.join(ROOT, 'engines/ratios.js'));
 const Credential = require(path.join(ROOT, 'engines/credential.js'));
 const WorthEngine = require(path.join(ROOT, 'engines/worth.js'));
+const ADV_READING = (function () {
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/what-if-life.html'), 'utf8');
+  const from = page.indexOf('<section id="view-five-years"');
+  const to = page.indexOf('<!-- =====', from + 10);
+  return page.slice(from, to === -1 ? page.indexOf('<p class="disclaimer">', from) : to)
+    + page.split('<script>').filter(x => x.indexOf('READING view-five-years,') !== -1)[0];
+})();
 const WindfallEngine = require(path.join(ROOT, 'engines/windfall.js'));
 const RunwayEngine = require(path.join(ROOT, 'engines/runway.js'));
 const HealthEngine = require(path.join(ROOT, 'engines/health.js'));
@@ -9429,7 +9436,7 @@ section('Four ways through five years');
 
   check('every way the demo is offered runs: Drift, the four, and Change Jobs (D-176)', Adventure.compare(demo, TABLES).length, 6);
   checkTrue('the room writes nothing',
-    fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8').indexOf('Ownership.write') === -1);
+    ADV_READING.indexOf('Ownership.write') === -1);
 
   const t = TABLES.adventurePaths;
   check('the paths are marked unverified, because nobody measured them', t.confidence, 'unverified');
@@ -10471,7 +10478,7 @@ section('Expenses are four numbers (D-172)');
 
   /* The gate: the rooms that read expenses read the new shape and nothing else. */
   ['engines/cashflow.js', 'engines/fire.js', 'engines/adventure.js', 'engines/hourly.js', 'engines/tier0.js',
-   'rooms/cash-flow.html', 'rooms/expenses.html', 'rooms/fire.html', 'rooms/savings-rate.html', 'rooms/real-hourly-wage.html', 'rooms/adventure.html',
+   'rooms/cash-flow.html', 'rooms/expenses.html', 'rooms/fire.html', 'rooms/savings-rate.html', 'rooms/real-hourly-wage.html', 'rooms/what-if-life.html',
    'shared/gate.js', 'shared/importer.js', 'engines/enough.js', 'engines/week.js', 'index.html'].forEach(function (f) {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
     checkTrue(`${f} reads the four numbers, not the legacy pair`, src.indexOf('monthlyEssential') === -1);
@@ -10784,8 +10791,8 @@ section('Pinned scenarios live beside the household, never in it (D-176)');
   checkTrue('the key is its own, not the household\'s', Scenarios.KEY !== 'slaf.prefs.v1' && /scenarios/.test(Scenarios.KEY));
   const Daite = require(path.join(ROOT, 'shared/daite.js'));
   checkTrue('scenarios is a DAITE context, not a family', Daite.CONTEXT.indexOf('scenarios') > -1 && !Daite.FAMILIES.some(f => (f.id || f) === 'scenarios'));
-  checkTrue('the adventure room writes nothing to the household', !/Spine\.(set|updateProfile|setFat|setMonthlyExpenses)\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8')));
-  checkTrue('...has no text input', !/<input|<textarea|contenteditable/.test(fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8')));
+  checkTrue('the five-years reading writes nothing to the household', !/Spine\.(set|updateProfile|setFat|setMonthlyExpenses)\(/.test(ADV_READING));
+  checkTrue('...has no text input', !/<input|<textarea|contenteditable/.test(ADV_READING));
   Scenarios.reset();
 })();
 
@@ -11059,7 +11066,7 @@ section('The lever library: get, applies, apply (D-174)');
   check('no income, no job-change figure', Levers.monthlyGainCents('careermove', Schema.createHousehold()).status, 'incomplete');
 
   /* No room inlines a lever figure again: the three that offer one read the library. */
-  const adv = fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8');
+  const adv = ADV_READING;
   const housing = fs.readFileSync(path.join(ROOT, 'rooms/housing.html'), 'utf8');
   const career = fs.readFileSync(path.join(ROOT, 'rooms/career-move.html'), 'utf8');
   checkTrue('the adventure loads the levers and hands them to the library', /'levers'/.test(adv) && adv.indexOf('SLAF.Levers.use(tables.levers)') > -1);
@@ -11265,7 +11272,7 @@ section('15.2: assumptions declared once; real by default; nominal at display ti
      reading that projects — two here, the number and the lab — and each
      mounts its own. What must not happen is a reading that projects without
      one. */
-  ['adventure', 'fire', 'what-if-life', 'decumulation'].forEach(function (id) {
+  ['fire', 'what-if-life', 'decumulation'].forEach(function (id) {
     const src = fs.readFileSync(path.join(ROOT, 'rooms/' + id + '.html'), 'utf8');
     checkTrue(id + ' loads horizon.js', src.indexOf('shared/horizon.js') > -1);
     checkTrue(id + ' mounts the line, once per reading that projects',
@@ -11274,6 +11281,10 @@ section('15.2: assumptions declared once; real by default; nominal at display ti
   });
   checkTrue('The Number carries it for both readings that project',
     (fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8').match(/Horizon\.mount\(/g) || []).length === 2);
+  /* What If holds two readings and BOTH project — one event over its
+     horizon, five years every way — so it carries two too (D-266). */
+  checkTrue('...and What If carries it for both of its',
+    (fs.readFileSync(path.join(ROOT, 'rooms/what-if-life.html'), 'utf8').match(/Horizon\.mount\(/g) || []).length === 2);
   checkTrue('prefs.js loads before features.js wherever a room loads it (the switch reads prefs)', fs.readdirSync(path.join(ROOT, 'rooms')).every(function (f) {
     const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
     const a = src.indexOf('<script src="../shared/prefs.js">'), b = src.indexOf('<script src="../shared/features.js">');
@@ -11935,7 +11946,7 @@ section('15.9: the ages where a rule changes, dated per person and drawn on ever
   check('no table: no phases, nothing else changes', Decum.plan(d, Object.assign({}, dt, { milestones: null }), { asOf: '2026-09-10' }).phases.length, 0);
 
   /* Every timeline draws them. */
-  [['rooms/adventure.html', /milestoneMarks\(h\(\), TABLES\.milestones, \{ axis: 'years'/],
+  [['rooms/what-if-life.html', /milestoneMarks\(h\(\), TABLES\.milestones, \{ axis: 'years'/],
    ['rooms/decumulation.html', /milestoneMarks\(h, T\.milestones/],
    ['rooms/fire.html', /milestoneMarks\(h, TABLES\.milestones, \{ axis: 'age'/],
    ['rooms/income.html', /milestoneMarks\(h, MILESTONES, \{ axis: 'months'/]].forEach(([f, re]) => {
@@ -14418,9 +14429,15 @@ section('The thirty (docs/room-map.json)');
   const live = {};
   Registry.all().forEach(r => { live[r.id] = r; });
 
-  check('the map lands on thirty rooms', MAP.rooms.length, 30);
-  check('numbered 1 to 30', MAP.rooms.map(r => r.n).join(','),
-    Array.from({ length: 30 }, (_, i) => i + 1).join(','));
+  /* Thirty-one. The plan said thirty and the thirty-first, What If, carries
+     its reason in its own note on the map (D-266): a five-year scenario is
+     not a block, and the two scenario rooms are each other rather than
+     anything the Decision Room should hold. The check is not "thirty" — it
+     is that the map and the registry agree, and that every room the map
+     names as a survivor is one. */
+  check('the map lands on thirty-one rooms', MAP.rooms.length, 31);
+  check('numbered 1 to 31', MAP.rooms.map(r => r.n).join(','),
+    Array.from({ length: 31 }, (_, i) => i + 1).join(','));
 
   /* Every survivor is a room that exists now and keeps its id through the
      merge: the id is what ownership.js, the registry and every deep link
@@ -14525,6 +14542,40 @@ section('The thirty (docs/room-map.json)');
     const dup = ids.filter((x, i) => ids.indexOf(x) !== i);
     check('rooms/' + f + ' gives every element its own id', [...new Set(dup)].join(', '), '');
   });
+
+  /* A retired room's stub must land on the READING that replaced it, not on
+     the host's front page. The hash is the whole point of the stub — that
+     is the programme's rule, old URLs redirecting rather than dying — and
+     six stubs shipped without one because the tool that wrote them stripped
+     the '#'. url=goals.htmlahead-of-you is a path, not an anchor, and the
+     browser lands on the default reading. D-266. */
+  (function () {
+    const live = new Set(Registry.all().map(r => r.id));
+    const bad = [];
+    fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(function (f) {
+      const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+      const m = /<meta http-equiv="refresh" content="0; url=([^"]+)"/.exec(src);
+      if (!m) return;                                   /* a live room */
+      const target = m[1];
+      /* A stub may point outside rooms/ — the Dashboard is index.html. */
+      if (target.indexOf('/') !== -1) return;
+      const host = target.split(/[#?]/)[0].replace(/\.html$/, '');
+      if (!live.has(host)) { bad.push(f + ' → ' + target + ' (not a room)'); return; }
+      const page = fs.readFileSync(path.join(ROOT, 'rooms', host + '.html'), 'utf8');
+      const hasReadings = page.indexOf('<nav class="slaf-hats"') !== -1;
+      if (!hasReadings) return;                         /* nothing to aim at */
+      const hash = target.indexOf('#') === -1 ? '' : target.slice(target.indexOf('#'));
+      if (!hash) { bad.push(f + ' → ' + target + ' (no #, lands on the default reading)'); return; }
+      /* Either a hat, or a real id on the page — a deep link into a card
+         inside a reading is a fine place to land. */
+      if (page.indexOf('href="' + hash + '"') === -1
+        && page.indexOf('id="' + hash.slice(1) + '"') === -1) bad.push(f + ' → ' + target + ' (nothing there)');
+      /* and the script's fallback must carry the same hash */
+      if (src.indexOf("'" + hash + "'") === -1
+        || !/var target = '[a-z-]+\.html' \+ \(map\[hash\]/.test(src)) bad.push(f + ' script fallback is not ' + hash);
+    });
+    check('every redirect stub lands on the reading that replaced it', bad.join(' | '), '');
+  })();
 
   /* The URL follows you (D-170): as a section reaches the top of the screen
      its id becomes the hash. On a MERGED page the router then reads that

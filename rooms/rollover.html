@@ -12,24 +12,24 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  REDIRECT — The Account You Left Behind (rooms/statement.htmlleft-behind, DECISIONS.md D-260).
+  REDIRECT — The Account You Left Behind (rooms/statement.html#left-behind, DECISIONS.md D-260).
   An old workplace plan is something you own that landed somewhere, which is what this room is for. Work was the other candidate and is the wrong one: every reading there is "not retired", and the people most likely to have left a plan behind are exactly the people that rule removes.
   The file stays so every link already out in the world keeps landing, hash
   included. LIVE-FORM: built once. No inputs.
 -->
-<meta http-equiv="refresh" content="0; url=statement.htmlleft-behind"/>
+<meta http-equiv="refresh" content="0; url=statement.html#left-behind"/>
 </head>
 <body class="slaf">
 <main class="slaf-wrap">
   <p style="color:var(--color-text-muted)">It is a reading of The Statement now: <strong>A plan you left behind</strong>.
-    <a href="statement.htmlleft-behind" id="go">Open it →</a></p>
+    <a href="statement.html#left-behind" id="go">Open it →</a></p>
 </main>
 <script>
   /* Carry the section hash across so a deep link still lands. */
   (function () {
     var map = {};
     var hash = location.hash || '';
-    var target = 'statement.html' + (map[hash] || 'left-behind');
+    var target = 'statement.html' + (map[hash] || '#left-behind');
     document.getElementById('go').setAttribute('href', target);
     location.replace(target);
   })();

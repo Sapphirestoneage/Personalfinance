@@ -14993,6 +14993,57 @@ across all five readings, the period list's live-form guard holding — and
 A/B'd against the old room in a browser: the months ahead, the periods and
 the gaps all character-for-character identical, console clean.
 
+## D-266 — What If: two scenario rooms are each other, not two block types
+
+**Why.** The cut list folded What If, Life and The Long Way Round into The
+Decision Room. Neither is a block. A block is one decision with a price and
+a date; each of these is a whole life running for five years, and the shell
+would have answered four of its five questions "not applicable". Making the
+Decision Room hold them would have made it the dumping ground the anti-rule
+of D-229 exists to stop.
+
+**Decision.** They are one room, `what-if-life`, titled **What If**, with
+two readings: `#one-event` (three ways — dream, default, disaster) and
+`#five-years` (every path, against drifting). Same subgroup, same five
+figures, same projection, two scales. `rooms/adventure.html` redirects.
+
+**Replaces or removes.** The Long Way Round's room and entry, twenty
+references in `data/layouts.json`.
+
+**THE MAP SAYS THIRTY-ONE NOW, and that is the point of writing it down.**
+`docs/room-map.json` is the hand-authored cut list and it planned for
+thirty. What If is the thirty-first, with its reason in its own note on the
+row. The check that said "the map lands on thirty rooms" was counting; what
+it should protect is that the map and the registry agree and that every
+survivor is a real room, which it still does.
+
+**Stored shape.** No change. `scenarios[]` keeps its shape and its writer;
+the five-years reading writes nothing at all and never did.
+
+**AND SIX STUBS THAT WENT NOWHERE.** The helper that adds one reading to an
+already-merged page stripped the `#` the redirect template expects, so
+every stub this session wrote said `url=goals.htmlahead-of-you` — a path,
+not an anchor — and the browser landed on the host's DEFAULT reading. Six
+of them: the wedding, the chore, the calendar, the five years, the ones
+behind you, the plan you left behind. The whole point of a stub is the
+hash; without it a merge quietly throws away every deep link it promised
+to keep. Fixed, and a check now walks every stub: its target must be a live
+room, its hash must name a hat or a real id on that page, and the script's
+fallback must carry the same hash. It found two more that predate this
+session — Net Worth, landing on The Statement's front page since D-069
+rather than on What you own — and it is the only check in the suite that
+tests the programme's own promise.
+
+**Verified.** `node test/run.js` (31,679), `node test/adventure.js` (38,
+repointed at the reading — its "no text input" check is scoped to this
+reading now, because the one beside it is a form), `node test/forms.js`.
+A/B'd in a browser: the three panels character-for-character identical, and
+tapping a way card gives the same projection on both — Drift, $184,147
+after five years, FI in 26 years — with the same chart axes and a clean
+console. A `pin-toast` that lived outside `<main>` came with it; the merge
+tool only takes `<main>`, so it was rescued by hand. Every stub followed in
+a browser: all seven land on the reading that replaced the room.
+
 ---
 
 # The Dungeons & Dividends entries

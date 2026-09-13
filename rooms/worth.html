@@ -12,24 +12,24 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  REDIRECT — Worth It (rooms/goals.htmlbehind-you, DECISIONS.md D-262).
+  REDIRECT — Worth It (rooms/goals.html#behind-you, DECISIONS.md D-262).
   The five questions are only worth asking if your answers are any good, and this is the reading that tells you. It keeps its own register rather than becoming a block: every block is a decision ahead of you, and this is a judgement about one behind you.
   The file stays so every link already out in the world keeps landing, hash
   included. LIVE-FORM: built once. No inputs.
 -->
-<meta http-equiv="refresh" content="0; url=goals.htmlbehind-you"/>
+<meta http-equiv="refresh" content="0; url=goals.html#behind-you"/>
 </head>
 <body class="slaf">
 <main class="slaf-wrap">
   <p style="color:var(--color-text-muted)">It is a reading of The Decision Room now: <strong>Behind you</strong>.
-    <a href="goals.htmlbehind-you" id="go">Open it →</a></p>
+    <a href="goals.html#behind-you" id="go">Open it →</a></p>
 </main>
 <script>
   /* Carry the section hash across so a deep link still lands. */
   (function () {
     var map = {};
     var hash = location.hash || '';
-    var target = 'goals.html' + (map[hash] || 'behind-you');
+    var target = 'goals.html' + (map[hash] || '#behind-you');
     document.getElementById('go').setAttribute('href', target);
     location.replace(target);
   })();

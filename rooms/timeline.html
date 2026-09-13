@@ -12,24 +12,24 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  REDIRECT — What Comes Next (rooms/income.htmlwhat-is-coming, DECISIONS.md D-265).
+  REDIRECT — What Comes Next (rooms/income.html#what-is-coming, DECISIONS.md D-265).
   A dated period that pays you is income with a start and an end on it. It was in Decisions, two navigations from the room that holds everything else coming in, and it is not a decision you are weighing — it is a fact about a calendar. futureIncome is owned here now.
   The file stays so every link already out in the world keeps landing, hash
   included. LIVE-FORM: built once. No inputs.
 -->
-<meta http-equiv="refresh" content="0; url=income.htmlwhat-is-coming"/>
+<meta http-equiv="refresh" content="0; url=income.html#what-is-coming"/>
 </head>
 <body class="slaf">
 <main class="slaf-wrap">
   <p style="color:var(--color-text-muted)">It is a reading of Income now: <strong>What is coming</strong>.
-    <a href="income.htmlwhat-is-coming" id="go">Open it →</a></p>
+    <a href="income.html#what-is-coming" id="go">Open it →</a></p>
 </main>
 <script>
   /* Carry the section hash across so a deep link still lands. */
   (function () {
     var map = {};
     var hash = location.hash || '';
-    var target = 'income.html' + (map[hash] || 'what-is-coming');
+    var target = 'income.html' + (map[hash] || '#what-is-coming');
     document.getElementById('go').setAttribute('href', target);
     location.replace(target);
   })();

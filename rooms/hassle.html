@@ -12,24 +12,24 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  REDIRECT — Worth the Hassle (rooms/income.htmlworth-the-hassle, DECISIONS.md D-264).
+  REDIRECT — Worth the Hassle (rooms/income.html#worth-the-hassle, DECISIONS.md D-264).
   This room only ever answered one question — is this chore worth more an hour than your time is? — and the hour it compares against is the one the reading beside it works out. They were in different groups of the app and needed each other. Same branch, same units, one page.
   The file stays so every link already out in the world keeps landing, hash
   included. LIVE-FORM: built once. No inputs.
 -->
-<meta http-equiv="refresh" content="0; url=income.htmlworth-the-hassle"/>
+<meta http-equiv="refresh" content="0; url=income.html#worth-the-hassle"/>
 </head>
 <body class="slaf">
 <main class="slaf-wrap">
   <p style="color:var(--color-text-muted)">It is a reading of Income now: <strong>Worth the hassle?</strong>
-    <a href="income.htmlworth-the-hassle" id="go">Open it →</a></p>
+    <a href="income.html#worth-the-hassle" id="go">Open it →</a></p>
 </main>
 <script>
   /* Carry the section hash across so a deep link still lands. */
   (function () {
     var map = {};
     var hash = location.hash || '';
-    var target = 'income.html' + (map[hash] || 'worth-the-hassle');
+    var target = 'income.html' + (map[hash] || '#worth-the-hassle');
     document.getElementById('go').setAttribute('href', target);
     location.replace(target);
   })();

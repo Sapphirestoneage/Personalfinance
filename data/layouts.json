@@ -41,7 +41,6 @@
             "car",
             "cant-pay",
             "what-if-life",
-            "adventure",
             "protection",
             "decumulation",
             "tax",
@@ -99,7 +98,6 @@
             "car",
             "cant-pay",
             "what-if-life",
-            "adventure",
             "protection",
             "housing",
             "big-purchase",
@@ -184,7 +182,6 @@
           "name": "What if I…?",
           "rooms": [
             "what-if-life",
-            "adventure",
             "career-move"
           ]
         },
@@ -273,8 +270,7 @@
           "rooms": [
             "fire",
             "foo-ladder",
-            "what-if-life",
-            "adventure"
+            "what-if-life"
           ]
         },
         {
@@ -374,8 +370,7 @@
             "statement",
             "housing",
             "partner",
-            "what-if-life",
-            "adventure"
+            "what-if-life"
           ]
         },
         {
@@ -489,7 +484,6 @@
             "skill-tree",
             "career-move",
             "what-if-life",
-            "adventure",
             "partner",
             "decumulation",
             "get-help",
@@ -544,7 +538,6 @@
             "fire",
             "goals",
             "what-if-life",
-            "adventure",
             "foo-ladder",
             "big-purchase",
             "car",
@@ -639,7 +632,6 @@
             "debates",
             "car",
             "what-if-life",
-            "adventure",
             "values",
             "cant-pay",
             "data",
@@ -729,7 +721,6 @@
           "name": "The window",
           "rooms": [
             "what-if-life",
-            "adventure",
             "goals"
           ],
           "note": "Looking out at what has not happened yet."
@@ -824,7 +815,6 @@
             "big-purchase",
             "car",
             "what-if-life",
-            "adventure",
             "get-help"
           ],
           "note": "A third of the app, and none of it can be put in a diary. This is the bay that argues for S-3 or S-5 instead.",
@@ -901,8 +891,7 @@
             "values",
             "week",
             "debates",
-            "what-if-life",
-            "adventure"
+            "what-if-life"
           ]
         },
         {
@@ -986,7 +975,6 @@
             "foo-ladder",
             "goals",
             "what-if-life",
-            "adventure",
             "housing",
             "financial-snapshot"
           ]
@@ -1067,7 +1055,6 @@
             "statement",
             "runway",
             "what-if-life",
-            "adventure",
             "goals",
             "foo-ladder"
           ]
@@ -1137,7 +1124,6 @@
             "runway",
             "car",
             "what-if-life",
-            "adventure",
             "protection",
             "decumulation",
             "tax",
@@ -1236,7 +1222,6 @@
             "foo-ladder",
             "goals",
             "what-if-life",
-            "adventure",
             "financial-snapshot",
             "dashboard"
           ]
@@ -1310,7 +1295,6 @@
             "week",
             "debates",
             "what-if-life",
-            "adventure",
             "partner",
             "career-move",
             "decumulation",
@@ -1384,8 +1368,7 @@
             "week",
             "values",
             "skill-tree",
-            "what-if-life",
-            "adventure"
+            "what-if-life"
           ],
           "note": "Not a word — a concept. These need a sentence before the room makes sense."
         },
@@ -1469,7 +1452,6 @@
             "foo-ladder",
             "goals",
             "what-if-life",
-            "adventure",
             "data",
             "one-pager",
             "get-help"
@@ -1523,7 +1505,6 @@
             "foo-ladder",
             "goals",
             "what-if-life",
-            "adventure",
             "decumulation",
             "big-purchase",
             "housing",
@@ -1641,7 +1622,6 @@
             "foo-ladder",
             "goals",
             "what-if-life",
-            "adventure",
             "decumulation"
           ]
         },

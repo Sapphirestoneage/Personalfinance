@@ -554,23 +554,26 @@
     },
     {
       id: 'what-if-life',
-      features: ['showNominal'],
-      group: 'decisions', subgroup: 'years', aliases: ['what if', 'sabbatical', 'life event', 'triple d'],
+      features: ['showNominal', 'showMilestones', 'sequenceRisk', 'jobLossCushions', 'timeBudget'],
+      group: 'decisions', subgroup: 'years', aliases: ['what if', 'sabbatical', 'life event', 'triple d', 'five years', 'long way', 'paths', 'scenario', 'shocks'],
       kind: 'explore',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
       order: 28,
-      title: 'What If, Life',
-      blurb: 'A sabbatical, a move, a second income \u2014 one event at a time, three ways: dream, default, disaster.',
+      title: 'What If',
+      blurb: 'A sabbatical, a move, a second income \u2014 one event at a time, three ways: dream, default, disaster. Or the whole of the next five years, every way through it, measured against drifting.',
       href: 'rooms/what-if-life.html',
       tier: 2,
       tags: ['cashflow', 'income'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'expenses', 'income.grossAnnualCents'], writes: ['scenarios'] },
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'expenses', 'income.grossAnnualCents', 'debt.items'], writes: ['scenarios'] },
       subsections: [
         { id: 'pick',     label: 'Pick an event' },
         { id: 'answers',  label: 'Its questions' },
         { id: 'three',    label: 'Dream, default, disaster' },
         { id: 'saved',    label: 'Saved scenarios' },
-        { id: 'reading',  label: 'Reading from elsewhere' }
+        { id: 'reading',  label: 'Reading from elsewhere' },
+        { id: 's-stand',  label: 'Where you stand' },
+        { id: 's-ways',   label: 'Every way through' },
+        { id: 's-way',    label: 'One way, in full' }
       ]
     }
   ];
@@ -826,29 +829,6 @@
         { id: 'dl-chart', label: 'Dreams against the month' },
         { id: 'dl-inputs', label: 'The dreams' }
       ]
-  });
-
-  /* The Long Way Round — four strategies over five years (D-167). Sits beside
-     Enough because both ask what the money is for, not just how much. */
-  ROOMS.push({
-    id: 'adventure',
-    features: ['showNominal', 'showMilestones', 'sequenceRisk', 'jobLossCushions', 'timeBudget'],
-    group: 'decisions', subgroup: 'years', aliases: ['five years', 'long way', 'paths', 'scenario', 'shocks'],
-    kind: 'explore',
-    needs: ['grossAnnualIncome', 'monthlyExpenses', 'investments'],
-    order: 43.5,
-    title: 'The Long Way Round',
-    blurb: 'Every way through the next five years on one card each, measured against drifting \u2014 then one chart, the headwinds and tailwinds, and a link you can keep.',
-    href: 'rooms/adventure.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'assets.cashCents', 'expenses', 'income.grossAnnualCents', 'debt.items'], writes: [] },
-    utility: false,
-    subsections: [
-      { id: 's-stand', label: 'Where you stand' },
-      { id: 's-ways',  label: 'The ways through' },
-      { id: 's-way',   label: 'The chosen way' }
-    ]
   });
 
   /* Designed Week — the LATER.md rooms (D-101). */

@@ -342,7 +342,7 @@
     },
     {
       "id": "what-if-life",
-      "title": "What If, Life",
+      "title": "What If",
       "file": "rooms/what-if-life.html",
       "reads": [
         "grossAnnualIncome",
@@ -504,20 +504,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 41
-    },
-    {
-      "id": "adventure",
-      "title": "The Long Way Round",
-      "file": "rooms/adventure.html",
-      "reads": [
-        "grossAnnualIncome",
-        "monthlyExpenses",
-        "investments"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 43.5
     },
     {
       "id": "week",

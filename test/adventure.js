@@ -34,7 +34,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   page.on('console', m => { if (m.type() === 'error' && !/favicon/.test((m.location() && m.location().url) || '')) errors.push(m.text()); });
 
   /* Screen one. */
-  await page.goto(BASE + '/rooms/adventure.html', { waitUntil: 'networkidle' });
+  await page.goto(BASE + '/rooms/what-if-life.html#five-years', { waitUntil: 'networkidle' });
   await page.waitForSelector('#pathlist .pathcard', { timeout: 15000 });
   const cards = await page.$$eval('#pathlist .pathcard', els => els.map(e => ({ id: e.getAttribute('data-path'), text: e.textContent })));
   check('screen one shows at least five cards', cards.length >= 5, 'saw ' + cards.length);
@@ -56,7 +56,11 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('one chart with every way and the target rule', (await page.$$('#chart svg path.line')).length >= 5 && (await page.$$('#chart svg line.hline')).length === 1);
   check('the band is shaded behind the chosen way', (await page.$$('#chart svg path.band')).length === 1);
   check('headwinds and tailwinds are separate lists', (await page.$$('#headwinds .shock')).length === 3 && (await page.$$('#tailwinds .shock')).length === 1);
-  check('steppers are buttons, no text input', (await page.$$('#steppers button')).length >= 2 && (await page.$$('main input, main textarea')).length === 0);   /* the sidebar's own search box (D-177) is outside main */
+  /* Scoped to the READING since D-266: this is one of two on the page, and
+     the other one — One event, three ways — is a form. The rule is that
+     THIS reading takes no typing, not that the page takes none. The
+     sidebar's own search box (D-177) is outside main either way. */
+  check('steppers are buttons, no text input', (await page.$$('#steppers button')).length >= 2 && (await page.$$('#view-five-years input, #view-five-years textarea')).length === 0);
   check('savings rate with a link to Shockingly Simple Math', /Savings rate/.test(await page.$eval('#rate-line', e => e.textContent)) && !!(await page.$('#rate-line a[href*="financial-snapshot"]')));
   check('the walk is folded by default', await page.$eval('#walk', e => !e.open));
 

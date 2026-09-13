@@ -12,24 +12,24 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  REDIRECT — Wedding Countdown (rooms/goals.htmlahead-of-you, DECISIONS.md D-263).
+  REDIRECT — Wedding Countdown (rooms/goals.html#ahead-of-you, DECISIONS.md D-263).
   A wedding is a dated target made of line items, which is what every block here is. The one thing it needed that no other block had is a line priced PER GUEST, so the room could say what one more table costs — and that is a property of any block now, in dollars, in hours of your life and in FI days. engines/wedding.js went with the room: a second way to date the same fund is the duplication the shell exists to stop.
   The file stays so every link already out in the world keeps landing, hash
   included. LIVE-FORM: built once. No inputs.
 -->
-<meta http-equiv="refresh" content="0; url=goals.htmlahead-of-you"/>
+<meta http-equiv="refresh" content="0; url=goals.html#ahead-of-you"/>
 </head>
 <body class="slaf">
 <main class="slaf-wrap">
   <p style="color:var(--color-text-muted)">It is a block in The Decision Room now, started from the <strong>Wedding</strong> template.
-    <a href="goals.htmlahead-of-you" id="go">Open it →</a></p>
+    <a href="goals.html#ahead-of-you" id="go">Open it →</a></p>
 </main>
 <script>
   /* Carry the section hash across so a deep link still lands. */
   (function () {
     var map = {};
     var hash = location.hash || '';
-    var target = 'goals.html' + (map[hash] || 'ahead-of-you');
+    var target = 'goals.html' + (map[hash] || '#ahead-of-you');
     document.getElementById('go').setAttribute('href', target);
     location.replace(target);
   })();

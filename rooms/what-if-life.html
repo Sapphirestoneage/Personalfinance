@@ -12,7 +12,22 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. BRIEF §6.2. DECISIONS.md D-087.
+  ROOM SPEC — SPEC.md §11. BRIEF §6.2. DECISIONS.md D-087, D-266 (the merge).
+
+  TWO READINGS OF THE YEARS AHEAD.
+
+    #one-event    one thing you are turning over, three ways: dream,
+                  default, disaster
+    #five-years   every way through the next five years on a card each,
+                  measured against drifting
+
+  NEITHER IS A BLOCK IN THE DECISION ROOM, and the cut list planned for
+  both to be. A block is one decision with a price and a date; each of
+  these is a whole life running for five years, and the shell would have
+  answered four of its five questions "not applicable". They ARE each
+  other, though — the same five figures projected the same way, one event
+  at a time or every path at once — so they are one room of two readings.
+  Both project, so both mount the horizon line (D-131), once each.
 
   1. READS   income, take-home, spending, cash, investments, the captured
              401(k) match, the deductible and state (for the disaster
@@ -63,6 +78,105 @@
   .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
   .notice { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); font-size: var(--text-sm); }
   .notice.is-error { border-color: #b5544d; }
+
+/* ---- Five years, every way ---- */
+  
+  #view-five-years .stage { display: none; }
+  
+  #view-five-years .stage.on { display: block; }
+  
+  #view-five-years .baseline { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-3); }
+  
+  #view-five-years .bcell { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  
+  #view-five-years .bcell .k { display: block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); }
+  
+  #view-five-years .bcell .v { display: block; font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-1); font-variant-numeric: tabular-nums; }
+  
+  #view-five-years .bcell a { font-size: var(--text-xs); }
+  
+  #view-five-years .need { font-size: var(--text-md); margin: var(--space-3) 0 0; }
+  
+  #view-five-years .gate { border-left: 3px solid var(--color-caution); padding-left: var(--space-3); }
+
+  
+  #view-five-years .sortrow { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 var(--space-3); }
+  
+  #view-five-years .paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-3); }
+  
+  #view-five-years .pathcard { background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+    padding: var(--space-3); text-align: left; cursor: pointer; min-height: 44px; display: block; width: 100%; color: inherit; font: inherit; }
+  
+  #view-five-years .pathcard:hover { border-color: var(--color-accent-hover); }
+  
+  #view-five-years .pathcard.is-baseline { border-style: dashed; }
+  
+  #view-five-years .pathcard b { display: block; font-size: var(--text-md); }
+  
+  #view-five-years .pathcard .line { display: block; color: var(--color-text-muted); font-size: var(--text-sm); margin-top: 4px; line-height: 1.45; }
+  
+  #view-five-years .pathcard .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px var(--space-3); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-five-years .pathcard .facts b { display: block; font-size: var(--text-sm); font-family: var(--font-display); font-variant-numeric: tabular-nums; color: var(--color-text); }
+  
+  #view-five-years .pathcard .delta { display: block; margin-top: var(--space-2); font-size: var(--text-sm); color: var(--color-accent-hover); }
+  
+  #view-five-years .pathcard .tag { display: inline-block; margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-faint); border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 1px 8px; }
+
+  
+  #view-five-years .delta-line { font-size: var(--text-md); margin: var(--space-2) 0 var(--space-3); }
+  
+  #view-five-years .winds { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-five-years .winds .k { display: block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); margin-bottom: var(--space-2); }
+  
+  #view-five-years .shock { background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3); text-align: left; cursor: pointer; min-height: 44px; display: block; width: 100%; color: inherit; font: inherit; margin-bottom: var(--space-2); }
+  
+  #view-five-years .shock[aria-pressed="true"] { border-color: var(--color-warning, #D9A441); background: color-mix(in srgb, #D9A441 12%, transparent); }
+  
+  #view-five-years .shock.is-tailwind[aria-pressed="true"] { border-color: var(--color-positive); background: color-mix(in srgb, var(--color-positive) 12%, transparent); }
+  
+  #view-five-years .shock b { display: block; font-size: var(--text-sm); }
+  
+  #view-five-years .shock span { display: block; color: var(--color-text-muted); font-size: var(--text-xs); margin-top: 3px; line-height: 1.45; }
+  
+  #view-five-years .rowline { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-3); }
+  
+  #view-five-years .steppers { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-five-years .stepper { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: var(--space-2); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
+  
+  #view-five-years .stepper .k { font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-five-years .stepper b { font-family: var(--font-display); font-variant-numeric: tabular-nums; min-width: 4.5em; text-align: center; }
+  
+  #view-five-years .stepper button { min-width: 44px; }
+  
+  #view-five-years .years { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
+  
+  #view-five-years .yearrow { display: grid; grid-template-columns: 54px minmax(0,1fr) auto; gap: var(--space-3); align-items: center;
+    padding: var(--space-3); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  
+  #view-five-years .yearrow .yr { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-subtle); }
+  
+  #view-five-years .yearrow .ev { display: block; font-size: var(--text-xs); color: var(--color-caution); }
+  
+  #view-five-years .yearrow .num { font-family: var(--font-mono); font-size: var(--text-sm); text-align: right; white-space: nowrap; }
+  
+  #view-five-years .yearrow small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 3px; }
+  
+  #view-five-years .navrow { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-4); }
+  
+  #view-five-years .pin-toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); background: var(--color-surface-raised); border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); font-size: var(--text-sm); display: flex; gap: var(--space-3); align-items: center; z-index: 50; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+  
+  #view-five-years .pins { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-five-years .pins li { display: flex; gap: var(--space-2); align-items: center; padding: 2px 0; }
+  
+  #view-five-years .pins a { color: var(--color-accent-hover); text-decoration: none; }
+
 </style>
 </head>
 <body class="slaf">
@@ -70,12 +184,20 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>What If, Life</h1>
-  <p class="room-lede">One event at a time, three ways: the dream version, the default version, and the disaster.</p>
+  <p class="room-lede">One thing you are turning over, three ways — or the whole of the next five years, every way through it.</p>
 </header>
 
 <main class="slaf-wrap">
-  <p class="slaf-horizon" id="horizon-line"></p>
+  <nav class="slaf-hats" id="hats" aria-label="Two readings of the years ahead">
+    <a href="#one-event" data-view="view-one-event">One event, three ways</a>
+    <a href="#five-years" data-view="view-five-years">Five years, every way</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ===== ONE EVENT, THREE WAYS (this room's own reading) ===== -->
+  <section id="view-one-event">
+  <p class="slaf-horizon" id="horizon-line"></p>
 
   <section class="slaf-card" id="pick">
     <span class="slaf-eyebrow">Pick an event</span>
@@ -127,6 +249,79 @@
     <span class="slaf-eyebrow">Reading from elsewhere</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
   </section>
+  </section>
+
+  <!-- ===== FIVE YEARS, EVERY WAY (was rooms/adventure.html) ===== -->
+  <section id="view-five-years" hidden>
+  <p class="slaf-lede">Every way through the next five years on one card each, measured against drifting — then one chart, the headwinds and tailwinds, and a link you can keep.</p>
+
+  <p class="slaf-horizon" id="ad-horizon-line"></p>
+  <div class="slaf-reason" id="blocked" hidden></div>
+
+  <!-- Screen one, part one -->
+  <section class="stage on" id="s-stand">
+    <h2 class="slaf-eyebrow">Where you stand</h2>
+    <p class="slaf-hint">Taken from the rooms that own these numbers. Nothing to type here.</p>
+    <div class="baseline" id="baseline"></div>
+    <p class="need" id="need"></p>
+    <p class="slaf-hint gate" id="gate" hidden></p>
+  </section>
+
+  <!-- Screen one, part two -->
+  <section class="stage on" id="s-ways">
+    <h2 class="slaf-eyebrow">The ways through</h2>
+    <p class="slaf-hint">Drift first: nothing changes and the raises get spent. Every other card says how far it moves you from that. None is marked the winner; they cost different things.</p>
+    <div class="sortrow"><span>Sort by</span>
+      <span class="slaf-lens" role="group" aria-label="Sort the ways">
+        <button type="button" class="slaf-lens-btn" data-sort="fi">FI date</button>
+        <button type="button" class="slaf-lens-btn" data-sort="hours">hours</button>
+        <button type="button" class="slaf-lens-btn" data-sort="dollars">dollars</button>
+      </span></div>
+    <div class="paths" id="pathlist"></div>
+    <div id="one-bands"></div>
+    <div id="one-lens"></div>
+  </section>
+
+  <!-- Screen two -->
+  <section class="stage" id="s-way">
+    <div class="navrow" style="margin-top:0"><button type="button" class="slaf-btn" id="back-ways">← All the ways</button></div>
+    <h2 class="slaf-eyebrow" id="way-head">The chosen way</h2>
+    <p class="delta-line" id="delta"></p>
+    <div id="chart"></div>
+    <div class="winds">
+      <div><span class="k">Headwinds</span><div id="headwinds"></div></div>
+      <div><span class="k">Tailwinds</span><div id="tailwinds"></div></div>
+    </div>
+    <div class="rowline"><span>Returns, after inflation:</span>
+      <span class="slaf-lens" role="group" aria-label="Which return">
+        <button type="button" class="slaf-lens-btn" data-returns="low">low</button>
+        <button type="button" class="slaf-lens-btn" data-returns="likely">likely</button>
+        <button type="button" class="slaf-lens-btn" data-returns="high">high</button>
+      </span><span id="returns-note"></span></div>
+    <p class="slaf-hint" id="rate-line"></p>
+    <div class="steppers" id="steppers"></div>
+    <p class="slaf-hint" id="way-assume"></p>
+    <div id="cmp-bands"></div>
+    <div id="cmp-lens"></div>
+    <details class="drawer" id="walk">
+      <summary>Year by year <small>Each year that something happened.</small></summary>
+      <div class="years" id="yearlist"></div>
+    </details>
+    <div class="navrow">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="pin">Pin this way</button>
+      <button type="button" class="slaf-btn" id="copylink">Copy link to this scenario</button>
+    </div>
+    <p class="slaf-hint" id="copied" hidden>Link copied.</p>
+    <ul class="pins" id="pins"></ul>
+  </section>
+
+  <details class="drawer">
+    <summary>What this assumes <small>All of it, in one place.</small></summary>
+    <div id="assumptions"></div>
+  </details>
+  <!-- kept from this room: a fixed-position toast that lived outside <main> -->
+  <div class="pin-toast" id="pin-toast" role="status" aria-live="polite" hidden></div>
+  </section>
 
   <p class="disclaimer">
     Educational tool, not financial advice. The three columns are three
@@ -171,6 +366,10 @@
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/scenarios.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/adventure.js"></script>
 <script>
 (function () {
   'use strict';
@@ -510,16 +709,6 @@
     queued = true;
     setTimeout(function () { queued = false; renderNow(); }, 0);
   }
-
-  function jumpToHash() {
-    if (!location.hash) return;
-    var t = document.getElementById(location.hash.slice(1));
-    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  window.addEventListener('hashchange', jumpToHash);
-
-  Spine.registerRoom(ROOM_ID);
-  SLAF.Progress.mount(ROOM_ID);
   SLAF.Horizon.mount(document.getElementById('horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.2: today's money, once per screen (D-181) */
   Spine.onChange(render);
 
@@ -537,7 +726,6 @@
       return [{ label: d.vsBaselineCents < 0 ? 'Behind doing nothing by' : 'Ahead of doing nothing by', cents: Math.abs(d.vsBaselineCents) },
               { label: 'Net worth then', cents: d.netWorthAtEndCents }];
     }, function () { return TABLES; });
-    jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');
     notice.hidden = false;
@@ -546,5 +734,519 @@
   });
 })();
 </script>
+
+<script>
+/* ---- one event three ways, and five years every way (D-266) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241). */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-five-years', match: /^#(five-years|ad-|s-stand|s-ways|s-way|stage|ways|way-)/ },
+    { id: 'view-one-event', match: /.*/ }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. When the hash asks for a reading the gate has taken
+       away, fall back to the DEFAULT — the room's plainest reading, and the
+       one the person would have got with no hash at all — not to whichever
+       gated reading happens to sit first in this list. */
+    var fallback = VIEWS[VIEWS.length - 1];
+    var on = open(asked) ? asked
+           : open(fallback) ? fallback
+           : VIEWS.filter(open)[0] || fallback;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('what-if-life');
+  if (SLAF.Progress) SLAF.Progress.mount('what-if-life');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-five-years, from rooms/adventure.html (D-266) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Schema = SLAF.Schema,
+      Ownership = SLAF.Ownership, Adventure = SLAF.Adventure, Scenarios = SLAF.Scenarios,
+      Bands = SLAF.Bands, Charts = SLAF.Charts;
+
+  var ROOM_ID = 'what-if-life';   /* the room this reading lives in */
+  var TABLES = null;
+  var SORTS = ['fi', 'hours', 'dollars'], RETURNS = ['low', 'likely', 'high'];
+  /* Page-local, and the URL's. A way you are considering is not a fact
+     about your household. */
+  var state = { pathId: null, shocks: [], returns: 'likely', hustle: null, housing: null, hours: null, sort: 'fi' };
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s)
+    .replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
+  function fmt(c) { return Money.formatCents(c); }
+  function fut(c, y) { return SLAF.Horizon.display(Spine.getProfile(), c, y); }   /* 15.2: display-time only; the engines stay real (D-181) */
+  function h() { return Spine.getProfile(); }
+  function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+  /* ---- URL state ---------------------------------------------------------- */
+  function readUrl() {
+    var q = new URLSearchParams(location.search);
+    state.pathId = q.get('path') || null;
+    state.shocks = (q.get('shocks') || '').split(',').filter(Boolean);
+    state.returns = RETURNS.indexOf(q.get('returns')) > -1 ? q.get('returns') : 'likely';
+    state.hustle = q.has('hustle') && q.get('hustle') !== '' ? Math.max(0, parseInt(q.get('hustle'), 10) || 0) : null;
+    state.housing = q.has('housing') && q.get('housing') !== '' ? Math.max(0, Math.min(100, parseInt(q.get('housing'), 10) || 0)) : null;
+    state.hours = q.has('hours') && q.get('hours') !== '' ? Math.max(0, parseInt(q.get('hours'), 10) || 0) : null;
+    state.sort = SORTS.indexOf(q.get('sort')) > -1 ? q.get('sort') : 'fi';
+  }
+  function query() {
+    var q = new URLSearchParams();
+    if (state.pathId) q.set('path', state.pathId);
+    if (state.shocks.length) q.set('shocks', state.shocks.join(','));
+    if (state.returns !== 'likely') q.set('returns', state.returns);
+    if (state.hustle !== null) q.set('hustle', String(state.hustle));
+    if (state.housing !== null) q.set('housing', String(state.housing));
+    if (state.hours !== null) q.set('hours', String(state.hours));
+    if (state.sort !== 'fi') q.set('sort', state.sort);
+    return q.toString();
+  }
+  function writeUrl() {
+    var qs = query();
+    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + (state.pathId ? '#s-way' : ''));
+  }
+
+  /* ---- The run, from the state ------------------------------------------- */
+  function overrides() {
+    var o = {};
+    if (state.hustle !== null) o.hustleMonthlyCents = state.hustle * 100;
+    if (state.housing !== null) o.housingShare = state.housing / 100;
+    if (state.hours !== null) o.hustleHoursPerWeek = state.hours;
+    return o;
+  }
+  function rateFor(which) {
+    var r = Bands.rates(TABLES);
+    if (!r) return undefined;
+    return which === 'low' ? r.low : which === 'high' ? r.high : r.likely;
+  }
+  function runWay(pathId, shocks, which) {
+    return Adventure.run(h(), TABLES, { pathId: pathId, shockIds: shocks, returnRate: rateFor(which || state.returns), overrides: overrides() });
+  }
+  function figures() {
+    /* The lever figures in play, table or stepper, said once. */
+    var hustle = SLAF.Levers.get('hustle'), hack = SLAF.Levers.get('househack');
+    return {
+      hustleCents: state.hustle !== null ? state.hustle * 100 : (hustle ? hustle.moves['income.extraMonthlyCents'] : 0),
+      housingPct: state.housing !== null ? state.housing : (hack ? Math.round(Math.abs(hack.moves['expenses.needs.accommodation']) * 100) : 0),
+      hours: state.hours !== null ? state.hours : (hustle ? hustle.hoursPerWeek : 0)
+    };
+  }
+
+  /* ---- Screen one: where you stand, and the cards ------------------------ */
+  function paintBaseline() {
+    var b = Adventure.baseline(h(), TABLES);
+    if (!Money.isOk(b)) {
+      el('blocked').hidden = false;
+      el('blocked').textContent = b.reason;
+      el('baseline').innerHTML = '';
+      el('need').textContent = '';
+      el('pathlist').innerHTML = '';
+      return false;
+    }
+    el('blocked').hidden = true;
+    var v = b.value;
+    var cells = [
+      ['You take home', fmt(v.annualIncomeCents) + ' a year, after ' + fmt(v.estimatedTaxCents) + ' of tax', 'grossAnnualIncome'],
+      ['You spend', fmt(v.annualSpendCents) + ' a year', 'monthlyExpenses'],
+      ['You have', (v.investedCents === null ? 'no investments entered' : fmt(v.investedCents) + ' invested') + (v.cashCents === null ? ', cash not entered' : ', ' + fmt(v.cashCents) + ' in cash'), 'investments']
+    ];
+    el('baseline').innerHTML = cells.map(function (c) {
+      var d = Ownership.describe(c[2], h(), ROOM_ID);
+      var where = d ? '<a href="' + esc(d.href) + '">Change it in ' + esc(d.ownerTitle) + ' →</a>' : '';
+      return '<div class="bcell"><span class="k">' + esc(c[0]) + '</span>'
+        + '<span class="v">' + esc(c[1]) + '</span>' + where + '</div>';
+    }).join('');
+    el('need').textContent = 'You’d need ' + fmt(v.targetCents) + ' to stop working: ' + v.targetYears + ' years of what you spend.';
+    var g = Adventure.gate(h(), TABLES);
+    el('gate').hidden = !g.blocked;
+    el('gate').textContent = g.blocked ? g.sentence : '';
+    return true;
+  }
+
+  function paintCards() {
+    document.querySelectorAll('[data-sort]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-sort') === state.sort)); });
+    var cards = Adventure.cards(h(), TABLES, { sort: state.sort, returnRate: rateFor(state.returns), overrides: overrides() });
+    var lead = cards[0];
+    el('one-bands').innerHTML = lead ? Bands.lineHtml(TABLES, function (rate) {
+      var x = Adventure.run(h(), TABLES, { pathId: lead.pathId, shockIds: [], returnRate: rate, overrides: overrides() });
+      return Money.isOk(x) ? Money.ok(x.value.portfolioCents) : x;
+    }, fmt, { lead: lead.label + ' after five years, three ways' }) : '';
+    if (oneStrip) oneStrip.repaint();
+    el('pathlist').innerHTML = cards.map(function (c) {
+      var fi = c.yearsToFI === null ? 'not at this rate' : 'in ' + plural(c.yearsToFI, 'year');
+      var delta = '';
+      if (c.delta) {
+        var bits = [];
+        if (c.delta.years !== null) bits.push(c.delta.years === 0 ? 'the same year as Drift' : Math.abs(c.delta.years) + (c.delta.years > 0 ? ' years sooner' : ' years later') + ' than Drift');
+        else bits.push('FI ' + (c.yearsToFI === null ? 'still out of reach' : 'in reach where Drift never gets there'));
+        bits.push((c.delta.potCents >= 0 ? '+' : '−') + fmt(fut(Math.abs(c.delta.potCents), 5)) + ' after five years');
+        delta = '<span class="delta">' + esc(bits.join(' · ')) + '</span>';
+      }
+      return '<button type="button" class="pathcard' + (c.baseline ? ' is-baseline' : '') + '" data-path="' + esc(c.pathId) + '">'
+        + '<b>' + esc(c.label) + (c.baseline ? ' — the baseline' : '') + '</b>'
+        + '<span class="line">' + esc(c.line) + '</span>'
+        + '<span class="facts">'
+        + '<span>After 5 years<b>' + esc(fmt(fut(c.potCents, 5))) + '</b></span>'
+        + '<span>FI<b>' + esc(fi) + '</b></span>'
+        + '<span>Costs<b>' + (c.hoursPerWeek > 0 ? esc(c.hoursPerWeek + ' h a week') : 'no extra hours') + '</b></span>'
+        + '<span>The extra, an hour<b>' + (c.impliedHourlyCents !== null ? esc(Money.formatCents(c.impliedHourlyCents, { decimals: 2 })) : (c.monthlyGainCents > 0 ? esc(fmt(c.monthlyGainCents)) + ' a month, no hours' : '—')) + '</b></span>'
+        + '</span>' + delta
+        + '<span class="tag">' + esc(c.flex) + '</span></button>';
+    }).join('');
+  }
+  el('pathlist').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-path]'); if (!b) return;
+    state.pathId = b.getAttribute('data-path');
+    writeUrl(); show(); paintWay();
+  });
+  document.querySelector('.sortrow').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-sort]'); if (!b) return;
+    state.sort = b.getAttribute('data-sort');
+    writeUrl(); paintCards();
+  });
+
+  /* ---- Screen two: the chosen way ---------------------------------------- */
+  function show() {
+    var two = !!state.pathId && !!Adventure.pathById(TABLES, state.pathId);
+    el('s-stand').classList.toggle('on', !two);
+    el('s-ways').classList.toggle('on', !two);
+    el('s-way').classList.toggle('on', two);
+    if (!two) state.pathId = null;
+    window.scrollTo(0, 0);
+  }
+  function shockLabels(ids) {
+    return ids.map(function (id) { var c = Adventure.contingencies(TABLES).filter(function (x) { return x.id === id; })[0]; return c ? c.label.toLowerCase() : id; });
+  }
+  function joinWords(list) { return list.length <= 1 ? list.join('') : list.slice(0, -1).join(', ') + ' plus ' + list[list.length - 1]; }
+  function yearsWord(n) { return plural(Math.abs(n), 'year'); }
+
+  function paintDelta(hit, clean, drift) {
+    var out = [];
+    var mine = hit.value, mineClean = clean.value, base = drift ? drift.value : null;
+    var names = joinWords(shockLabels(state.shocks));
+    var cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
+    if (state.shocks.length) {
+      if (mine.yearsAfter === null || mineClean.yearsAfter === null) out.push(cap(names) + ': at this rate the target does not arrive on its own.');
+      else {
+        var d = mine.yearsAfter - mineClean.yearsAfter;
+        out.push(cap(names) + (d > 0 ? ' puts the finish line back ' + yearsWord(d) + '.' : d < 0 ? ' brings the finish line forward ' + yearsWord(d) + '.' : ' costs nothing you can see in five years.'));
+      }
+    }
+    if (mine.baseline) {
+      out.push((state.shocks.length ? 'Without them, this' : 'This') + ' is Drift, the baseline: ' + fmt(fut(mineClean.portfolioCents, 5)) + ' after five years, FI ' + (mineClean.yearsAfter === null ? 'not at this rate' : 'in ' + yearsWord(5 + mineClean.yearsAfter)) + '.');
+    } else if (base) {
+      var dy = mineClean.yearsAfter === null || base.yearsAfter === null ? null : base.yearsAfter - mineClean.yearsAfter;
+      var lead = state.shocks.length ? 'Without them, ' : '';
+      var sooner = dy === null ? (mineClean.yearsAfter === null ? 'FI still out of reach' : 'FI in reach where Drift never gets there')
+        : dy === 0 ? 'the same FI year as Drift' : yearsWord(dy) + (dy > 0 ? ' sooner' : ' later') + ' than Drift';
+      out.push(lead + sooner + ', and ' + (mineClean.portfolioCents >= base.portfolioCents ? '+' : '−') + fmt(fut(Math.abs(mineClean.portfolioCents - base.portfolioCents), 5)) + ' after five years.');
+    }
+    el('delta').textContent = out.join(' ');
+  }
+
+  function paintChart(chosen) {
+    var b = Adventure.baseline(h(), TABLES);
+    if (!Money.isOk(b)) { el('chart').innerHTML = ''; return; }
+    var start = b.value.portfolioCents;
+    var series = Adventure.paths(TABLES, h()).map(function (p, i) {
+      var r = runWay(p.id, state.shocks);
+      if (!Money.isOk(r)) return null;
+      var mine = p.id === state.pathId;
+      return { id: p.id, label: p.label, color: Charts.COLORS.series[i % Charts.COLORS.series.length],
+        points: [[0, start]].concat(r.value.rows.map(function (row) { return [row.year, fut(row.portfolioCents, row.year)]; })),
+        fill: false, width: mine ? 3 : 1, dash: !mine };
+    }).filter(Boolean);
+    var lo = runWay(state.pathId, state.shocks, 'low'), hi = runWay(state.pathId, state.shocks, 'high');
+    var bands = Money.isOk(lo) && Money.isOk(hi) ? [{ color: (series.filter(function (s) { return s.id === state.pathId; })[0] || {}).color,
+      points: [[0, start, start]].concat(lo.value.rows.map(function (row, i) { return [row.year, fut(row.portfolioCents, row.year), fut(hi.value.rows[i].portfolioCents, row.year)]; })) }] : [];
+    var marks = [];
+    state.shocks.forEach(function (id) {
+      var c = Adventure.contingencies(TABLES).filter(function (x) { return x.id === id; })[0];
+      if (c && Money.isEntered(c.shockYear)) marks.push({ x: c.shockYear, label: c.label });
+    });
+    /* 15.9: the age milestones inside the five years, faint. D-181. */
+    var milestones = Schema.milestoneMarks(h(), TABLES.milestones, { axis: 'years', from: 0, to: 5 });
+    el('chart').innerHTML = Charts.area({
+      title: 'Every way through five years, the chosen one bold',
+      series: series, bands: bands, vLines: milestones.concat(marks),
+      hLines: [{ y: chosen.value.targetCents, label: 'the target' }],
+      x: { label: 'year', format: function (v) { return String(Math.round(v)); } },
+      width: 360, height: 230
+    });
+  }
+
+  function paintWinds() {
+    var mk = function (c) {
+      return '<button type="button" class="shock' + (c.kind === 'tailwind' ? ' is-tailwind' : '') + '" data-shock="' + esc(c.id) + '"'
+        + ' aria-pressed="' + (state.shocks.indexOf(c.id) > -1) + '"><b>' + esc(c.label) + '</b><span>' + esc(c.line) + '</span></button>';
+    };
+    el('headwinds').innerHTML = Adventure.headwinds(TABLES).map(mk).join('');
+    el('tailwinds').innerHTML = Adventure.tailwinds(TABLES).map(mk).join('');
+    document.querySelectorAll('[data-returns]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-returns') === state.returns)); });
+    var r = Bands.rates(TABLES);
+    el('returns-note').textContent = r ? (Money.formatRate(rateFor(state.returns), { decimals: 1 }) + ' a year real, from data/return_bands.json v' + r.version) : '';
+  }
+
+  function paintSteppers(v) {
+    var ids = v.levers.map(function (x) { return x.id; });
+    var f = figures();
+    var rows = [];
+    if (ids.indexOf('hustle') > -1) {
+      rows.push({ k: 'The side hustle, a month, net', key: 'hustle', step: 100, val: fmt(f.hustleCents), unit: '$100' });
+      rows.push({ k: 'Hours a week it takes', key: 'hours', step: 5, val: f.hours + ' h', unit: '5 h' });
+    }
+    if (ids.indexOf('househack') > -1) rows.push({ k: 'The housing cut', key: 'housing', step: 10, val: f.housingPct + '%', unit: '10%' });
+    el('steppers').innerHTML = rows.map(function (r) {
+      return '<div class="stepper"><span class="k">' + esc(r.k) + '</span>'
+        + '<button type="button" class="slaf-btn" data-step="' + r.key + ':-' + r.step + '" aria-label="' + esc(r.k) + ', less">−' + esc(r.unit) + '</button>'
+        + '<b>' + esc(r.val) + '</b>'
+        + '<button type="button" class="slaf-btn" data-step="' + r.key + ':' + r.step + '" aria-label="' + esc(r.k) + ', more">+' + esc(r.unit) + '</button></div>';
+    }).join('');
+  }
+
+  function paintWalk(v) {
+    var prev = null;
+    el('yearlist').innerHTML = v.rows.map(function (row) {
+      var changed = !prev || row.spendCents !== prev.spendCents || row.incomeCents !== prev.incomeCents;
+      var keep = row.events.length || changed;
+      prev = row;
+      if (!keep) return '';
+      var ev = row.events.length ? '<span class="ev">' + esc(row.events.join(' · ')) + '</span>' : '';
+      /* 15.8: cash, then the taxable pile (sold, net of the gains tax when
+         the rates are known, before tax otherwise), then borrowing. */
+      var sold = row.investmentsSoldCents ? '; sold ' + fmt(row.investmentsSoldCents) + ' of taxable investments' + (v.taxableTaxApplied ? ' (net of tax)' : ' (before tax)') : '';
+      var runway = row.runwayMonths !== null
+        ? (row.runwayMonths >= (row.lostMonths || 0) ? 'cash covered the ' + plural(row.lostMonths, 'month') : 'cash covered ' + plural(row.runwayMonths, 'month') + sold + (row.borrowingFromMonth ? '; borrowing from month ' + row.borrowingFromMonth + (row.borrowedInYearCents ? ' (' + fmt(row.borrowedInYearCents) + ')' : '') : ''))
+        : (row.borrowingFromMonth ? 'borrowing ' + fmt(row.borrowedInYearCents) : '');
+      var debt = row.debtPaidCents > 0 ? fmt(row.debtPaidCents) + ' to high-interest debt' : '';
+      return '<div class="yearrow"><span class="yr">Year ' + row.year + '</span>'
+        + '<span>' + ev + '<small>' + esc(fmt(row.savedCents)) + ' saved · spending ' + esc(fmt(row.spendCents))
+        + (runway ? ' · ' + esc(runway) : '') + (debt ? ' · ' + esc(debt) : '') + '</small></span>'
+        + '<span class="num">' + esc(fmt(fut(row.portfolioCents, row.year))) + '<small>' + Math.round((row.shareOfTarget || 0) * 100) + '% of ' + esc(fmt(fut(row.targetCents, row.year))) + '</small></span></div>';
+    }).join('');
+  }
+
+  var lensStrip = null, oneStrip = null;
+  function paintWay() {
+    if (!state.pathId) return;
+    var chosen = runWay(state.pathId, state.shocks);
+    if (!Money.isOk(chosen)) { el('delta').textContent = chosen.reason; return; }
+    var clean = runWay(state.pathId, []);
+    var driftPath = Adventure.baselinePath(TABLES);
+    var drift = driftPath ? runWay(driftPath.id, []) : null;
+    var v = chosen.value;
+    el('way-head').textContent = v.label + ' — five years';
+    paintDelta(chosen, clean, drift && Money.isOk(drift) ? drift : null);
+    paintChart(chosen);
+    paintWinds();
+    el('rate-line').innerHTML = 'Savings rate on this way: <strong>' + (v.savingsRate === null ? '—' : Money.formatRate(v.savingsRate, { decimals: 0 })) + '</strong> of take-home in year five. '
+      + '<a href="financial-snapshot.html#lenses">Shockingly Simple Math →</a> says what that rate alone does to the date.';
+    paintSteppers(v);
+    el('way-assume').textContent = 'Assumes: ' + v.assumption + (v.accommodationNote ? ' (' + v.accommodationNote + ')' : '') + (v.routedToDebt ? ' Side income goes to high-interest debt first (the FOO gate above).' : '');
+    el('cmp-bands').innerHTML = Bands.lineHtml(TABLES, function (rate) {
+      var x = Adventure.run(h(), TABLES, { pathId: state.pathId, shockIds: state.shocks, returnRate: rate, overrides: overrides() });
+      return Money.isOk(x) ? Money.ok(x.value.portfolioCents) : x;
+    }, fmt, { lead: v.label + ' after five years, three ways' });
+    paintWalk(v);
+    if (lensStrip) lensStrip.repaint();
+    paintAssumptions();
+    paintPins();
+  }
+
+  el('back-ways').addEventListener('click', function () { state.pathId = null; writeUrl(); show(); paintCards(); });
+  el('s-way').addEventListener('click', function (e) {
+    var s = e.target.closest('[data-shock]');
+    if (s) {
+      var id = s.getAttribute('data-shock');
+      var i = state.shocks.indexOf(id);
+      if (i > -1) state.shocks.splice(i, 1); else state.shocks.push(id);
+      writeUrl(); paintWay(); return;
+    }
+    var r = e.target.closest('[data-returns]');
+    if (r) { state.returns = r.getAttribute('data-returns'); writeUrl(); paintWay(); return; }
+    var st = e.target.closest('[data-step]');
+    if (st) {
+      var parts = st.getAttribute('data-step').split(':'), key = parts[0], delta = parseInt(parts[1], 10);
+      var f = figures();
+      if (key === 'hustle') state.hustle = Math.max(0, Math.round(f.hustleCents / 100) + delta);
+      if (key === 'hours') state.hours = Math.max(0, f.hours + delta);
+      if (key === 'housing') state.housing = Math.max(0, Math.min(100, f.housingPct + delta));
+      writeUrl(); paintWay(); return;
+    }
+  });
+
+  /* ---- Pin and share ------------------------------------------------------ */
+  var toastTimer = null;
+  function toast(text, undo) {
+    var t = el('pin-toast');
+    t.innerHTML = '<span>' + esc(text) + '</span>' + (undo ? '<button type="button" class="slaf-btn" id="pin-undo">Undo</button>' : '');
+    t.hidden = false;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 7000);
+    if (undo) el('pin-undo').addEventListener('click', function () { undo(); t.hidden = true; paintPins(); });
+  }
+  function pinLabel() {
+    var p = Adventure.pathById(TABLES, state.pathId);
+    var bits = [p ? p.label : state.pathId];
+    if (state.shocks.length) bits.push(shockLabels(state.shocks).join(', '));
+    bits.push(state.returns + ' returns');
+    var f = figures();
+    if (state.hustle !== null) bits.push(fmt(f.hustleCents) + ' a month');
+    if (state.housing !== null) bits.push('housing −' + f.housingPct + '%');
+    if (state.hours !== null) bits.push(f.hours + ' h');
+    return bits.join(' · ');
+  }
+  el('pin').addEventListener('click', function () {
+    var r = Scenarios.pin({ room: ROOM_ID, label: pinLabel(), query: query() });
+    paintPins();
+    if (r.dropped) toast('Pinned. The oldest pin dropped off: ' + r.dropped.label, function () { Scenarios.restore(r.dropped); });
+    else toast('Pinned: ' + r.item.label);
+  });
+  el('copylink').addEventListener('click', function () {
+    var url = location.href;
+    var done = function () { el('copied').hidden = false; setTimeout(function () { el('copied').hidden = true; }, 3000); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, done);
+    else done();
+  });
+  function paintPins() {
+    var mine = Scenarios.all().filter(function (s) { return s.room === ROOM_ID; });
+    el('pins').innerHTML = mine.length ? '<li><strong>Pinned ways (' + mine.length + ' of ' + Scenarios.CAP + '):</strong></li>' + mine.map(function (s) {
+      return '<li><a href="?' + esc(s.query) + '#s-way">' + esc(s.label) + '</a><button type="button" class="slaf-btn slaf-btn--quiet" data-unpin="' + esc(s.id) + '" aria-label="Remove this pin">×</button></li>';
+    }).join('') : '';
+  }
+  el('pins').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-unpin]'); if (!b) return;
+    var gone = Scenarios.remove(b.getAttribute('data-unpin'));
+    paintPins();
+    if (gone) toast('Pin removed: ' + gone.label, function () { Scenarios.restore(gone); });
+  });
+
+  /* ---- Assumptions, said once, in full ----------------------------------- */
+  function paintAssumptions() {
+    var t = TABLES && TABLES.adventurePaths;
+    if (!t) return;
+    var r = Bands.rates(TABLES);
+    var lensIds = ['savingsrate', 'simplemath', 'househack'];
+    var lensList = TABLES.lenses && TABLES.lenses.lenses ? TABLES.lenses.lenses.filter(function (l) { return lensIds.indexOf(l.id) > -1; }) : [];
+    el('assumptions').innerHTML =
+      '<p class="slaf-hint">' + esc(t.source) + '</p>'
+      + '<p class="slaf-hint"><strong>Confidence: ' + esc(t.confidence) + '.</strong> ' + esc(t.confidenceNote) + '</p>'
+      + '<ul class="slaf-hint">'
+      + '<li>Returns: ' + (r ? 'low ' + Money.formatRate(r.low, { decimals: 1 }) + ', likely ' + Money.formatRate(r.likely, { decimals: 1 }) + ', high ' + Money.formatRate(r.high, { decimals: 1 }) + ' a year after inflation, from data/return_bands.json v' + esc(r.version) + '. In play: <strong>' + esc(state.returns) + '</strong>.' : (t.returnRateReal * 100).toFixed(0) + '% a year after inflation.') + '</li>'
+      + '<li>Saving is take-home minus spending, never gross. The target: a year of spending divided by ' + (t.withdrawalRate * 100).toFixed(0) + '%, the same arithmetic the FIRE room uses; a raise not kept is spent, which moves it.</li>'
+      + '<li>Cash and investments are kept apart. A crash hits what is invested only. A lost job draws on cash first, month by month, then sells taxable investments (net of the gains tax when the rates are known), and only then borrows: the year says “borrowing from month N” and the pot is never quietly drawn below zero. Retirement money is never sold in these five years. Side income that survives a job loss keeps paying through it.</li>'
+      + '<li>The house hack cuts your rent or mortgage line from Expenses. ' + esc(t.accommodationShareFallbackNote) + '</li>'
+      + '<li>Below the FOO’s high-interest-debt step, side income pays that debt before it joins the pot.</li>'
+      + '<li>Everything is in today’s money, so a dollar in year five means what it means now.</li></ul>'
+      + paintLevers()
+      + (lensList.length ? '<p class="slaf-hint"><strong>Lenses that read these numbers</strong> (on the Snapshot): ' + lensList.map(function (l) { return esc(l.name) + ' — ' + esc(l.source); }).join(' · ') + '.</p>' : '');
+  }
+  /* The levers the ways pull, each with its figure (table or stepper), its
+     hours and what that makes an hour worth for THIS household. D-174. */
+  function paintLevers() {
+    var L = TABLES && TABLES.levers;
+    if (!L) return '';
+    var ov = overrides();
+    var rows = Adventure.leversUsed(TABLES).map(function (lv) {
+      var opts = {};
+      if (lv.id === 'hustle') { if (Money.isEntered(ov.hustleMonthlyCents)) opts.monthlyGainCents = ov.hustleMonthlyCents; if (Money.isEntered(ov.hustleHoursPerWeek)) opts.hoursPerWeek = ov.hustleHoursPerWeek; }
+      var hourly = SLAF.Levers.impliedHourlyCents(lv.id, h(), opts);
+      var gain = SLAF.Levers.monthlyGainCents(lv.id, h());
+      var worth = Money.isOk(hourly)
+        ? 'Worth about <strong>' + esc(Money.formatCents(hourly.value, { decimals: 2 })) + ' an hour</strong> for you, at ' + hourly.hoursPerWeek + ' hours a week'
+        : Money.isOk(gain) ? 'Worth about <strong>' + esc(Money.formatCents(gain.value)) + ' a month</strong> for you, no extra hours'
+        : esc(hourly.reason || gain.reason || '');
+      return '<li><strong>' + esc(lv.label) + '.</strong> ' + esc(Adventure.leverSentence(lv, 1, ov)) + ' '
+        + worth + '. ' + (lv.survivesJobLoss ? 'Keeps paying if the job goes' : 'Stops with the job') + '; ' + esc(lv.flex) + '.'
+        + (SLAF.Levers.applies(lv.id, h()) ? '' : ' <em>Not offered to you yet: ' + esc(lv.appliesWhen) + '.</em>') + '</li>';
+    }).join('');
+    return '<p class="slaf-hint"><strong>The levers.</strong> ' + esc(L.source) + ' data/levers.json v' + esc(L.version) + ' (' + esc(L.confidence) + ').</p>'
+      + '<ul class="slaf-hint">' + rows + '</ul>';
+  }
+
+  /* ---- Wiring ------------------------------------------------------------ */
+  /* The header goes up BEFORE anything that can fail. It carries the menu, the
+     way back and the hop strip, and a room you cannot navigate out of is worse
+     than a room that is merely empty. D-168. */
+  if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
+  SLAF.Horizon.mount(document.getElementById('ad-horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { paintAll(); } });   /* 15.2: today's money, once per screen (D-181) */
+
+  function paintAll() {
+    if (!TABLES) return;
+    var ok = paintBaseline();
+    if (ok) paintCards();
+    show();
+    if (state.pathId) paintWay(); else paintAssumptions();
+  }
+
+  Reference.load(['adventurePaths', 'returnBands', 'effectiveTaxRates', 'levers', 'fooRules', 'irsLimits', 'matchDefaults', 'lenses', 'milestones']).then(function (tables) {
+    if (!tables || !tables.adventurePaths || !tables.levers) throw new Error('no adventurePaths or levers table');
+    TABLES = tables;
+    SLAF.Levers.use(tables.levers);
+    readUrl();
+    lensStrip = SLAF.Lens.mountStrip('cmp-lens', function () {
+      if (!state.pathId) return [];
+      var mine = runWay(state.pathId, state.shocks);
+      var d = Adventure.baselinePath(TABLES);
+      var drift = d ? runWay(d.id, state.shocks) : null;
+      var rows = [];
+      if (Money.isOk(mine)) rows.push({ label: mine.value.label + ' after five years', cents: mine.value.portfolioCents });
+      if (drift && Money.isOk(drift) && d.id !== state.pathId) rows.push({ label: 'Drift after five years', cents: drift.value.portfolioCents });
+      return rows;
+    }, function () { return TABLES; });
+    oneStrip = SLAF.Lens.mountStrip('one-lens', function () {
+      if (state.pathId) return [];
+      return Adventure.cards(h(), TABLES, { sort: state.sort, returnRate: rateFor(state.returns), overrides: overrides() })
+        .map(function (c) { return { label: c.label + ' after five years', cents: c.potCents }; });
+    }, function () { return TABLES; });
+    paintAll();
+    Spine.onChange(function () { paintAll(); });
+  }).catch(function (e) {
+    el('blocked').hidden = false;
+    el('blocked').textContent = 'The tables did not load: ' + (e && e.message ? e.message : e);
+  });
+})();
+</script>
+
 </body>
 </html>

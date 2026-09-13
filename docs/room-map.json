@@ -2,7 +2,7 @@
   "version": 1,
   "decision": "D-229",
   "asOf": "2026-09-12",
-  "what": "The thirty rooms the suite is merging down to, and what each one absorbs. Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app.",
+  "what": "The rooms the suite is merging down to, and what each one absorbs. The plan said thirty; it is thirty-one, and the extra one carries its reason in its own note (What If, D-266). Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app.",
   "howToRead": {
     "survivors": "One entry per surviving room. 'id' is its registry id and stays its id; 'title' is what it is called after the merge (the registry may still carry the old title until that merge ships).",
     "absorbs": "Registry ids that become a view, a toggle, a block type or a card inside the survivor. Every one of them ends as a redirect file, never a deleted file: the links are out in the world.",
@@ -114,7 +114,7 @@
         "refresh"
       ],
       "held": {
-        "start": "Start Here owns 17 shared fields, more than any other room. Where those owners go is the open question at the top of STATUS.md, and it is the owner's to answer, not a session's to guess."
+        "start": "NOT an ownership question, which is what this note used to say. The 17 owners would go to the Ledger, the way every other merge moved them — the Ledger already WRITES dob, state, zip, filingStatus, grossAnnualIncome, cashSavings, investments, contributionPercent and employmentStatus through Ownership.write, so the label would simply follow the asking. The real question is which INTAKE survives. The Ledger already holds two: Round 1 (five questions, one a screen, deliberately gentle — D-230) and All at once (every question on one page, grouped by DAITE door). Start Here is a third shape: one situation gate, then only the cards that apply, every box filled with a guess shown as one and badged. Folding it in as a seventh reading would give the room three overlapping ways in, which is accumulation, not a merge — the freeze asks what a thing replaces and the honest answer is 'nothing'. What would actually help is Express gaining the situation filter and the guess badges so Start Here retires INTO it. That is a feature, not a move, and it changes the first screen every new arrival sees. Owner's call. D-266."
       },
       "note": "First Round is Round 1, Express is the all-at-once door, Welcome Back and Refresh are one 'since last time'."
     },
@@ -342,23 +342,31 @@
       "absorbs": [
         "wedding",
         "reversibility",
-        "what-if-life",
-        "worth",
-        "adventure"
+        "worth"
       ],
       "done": [
         "reversibility",
         "worth",
         "wedding"
       ],
-      "held": {
-        "what-if-life": "A deep module, in STATUS.md's own sequencing: one event in three versions (dream, default, disaster) is three blocks that have to be read together, which the shell cannot yet do.",
-        "adventure": "A deep module: every way through five years on a card each, with a crash or a lost job thrown at it. That is a scenario walker over blocks, and the shell has to be able to hold a block before it can walk a set of them."
-      },
+      "held": {},
       "note": "One shell, many block types; five outputs on every block. Reversibility becomes a field on every block, not a room."
     },
     {
       "n": 18,
+      "id": "what-if-life",
+      "title": "What If",
+      "group": "decisions",
+      "absorbs": [
+        "adventure"
+      ],
+      "done": [
+        "adventure"
+      ],
+      "note": "The thirty-first, and the one room the cut list did not plan for. The plan folded What If, Life and The Long Way Round into The Decision Room as block types; they are not blocks. A block is one decision with a price and a date, and both of these are a whole life running for five years — the shell would have answered four of its five questions 'not applicable'. They ARE each other, though: the same five figures projected the same way, one event at a time or every path at once. So they are one room of two readings rather than two rooms or one block type. D-266."
+    },
+    {
+      "n": 19,
       "id": "housing",
       "title": "Housing",
       "group": "decisions",
@@ -373,7 +381,7 @@
       "note": "The house hack (D-225) already ships inside this room; it never became a room of its own. The Deal (D-227) arrived on main after this map was written and is named here by rule 1: it and Housing sit on the same engines/ownership.js arithmetic and differ in framing — whether a building pays, against whether to buy where you live. Naming it is not a verdict on shipping it; it is what the map is for."
     },
     {
-      "n": 19,
+      "n": 20,
       "id": "car",
       "title": "Wheels",
       "group": "decisions",
@@ -386,7 +394,7 @@
       "note": "Same car, same 20/3/8 test, same table, asked at two depths. The check is the default because someone who wants a yes or no should not have to read a depreciation curve to find one."
     },
     {
-      "n": 20,
+      "n": 21,
       "id": "career-move",
       "title": "Work",
       "group": "decisions",
@@ -409,7 +417,7 @@
       "note": "Seven old rooms, every one about a job. Nothing here is about building something that pays you; that gap is now more visible, not less."
     },
     {
-      "n": 21,
+      "n": 22,
       "id": "debt-payoff",
       "title": "Debt",
       "group": "decisions",
@@ -424,7 +432,7 @@
       ]
     },
     {
-      "n": 22,
+      "n": 23,
       "id": "big-purchase",
       "title": "Big Purchase",
       "group": "decisions",
@@ -437,7 +445,7 @@
       "note": "Pricing the thing you want is the same form."
     },
     {
-      "n": 23,
+      "n": 24,
       "id": "partner",
       "title": "Family",
       "group": "decisions",
@@ -450,7 +458,7 @@
       ]
     },
     {
-      "n": 24,
+      "n": 25,
       "id": "values",
       "title": "What Matters",
       "group": "meaning",
@@ -467,7 +475,7 @@
       ]
     },
     {
-      "n": 25,
+      "n": 26,
       "id": "week",
       "title": "The Life",
       "group": "meaning",
@@ -480,7 +488,7 @@
       "note": "One question at two scales: is the life you want the one you are paying for. The week is the default because it is the scale you can act on tomorrow."
     },
     {
-      "n": 26,
+      "n": 27,
       "id": "skill-tree",
       "title": "The Skill Tree",
       "group": "levelup",
@@ -495,7 +503,7 @@
       ]
     },
     {
-      "n": 27,
+      "n": 28,
       "id": "debates",
       "title": "The Referee",
       "group": "levelup",
@@ -508,7 +516,7 @@
       "note": "Does this advice still apply to you is the same question as which side are you on."
     },
     {
-      "n": 28,
+      "n": 29,
       "id": "protection",
       "title": "Protection",
       "group": "alone",
@@ -521,7 +529,7 @@
       "note": "Estate Basics was one fact three times (rule 4): what stands behind you if a year goes wrong, and where it goes if the worst does, are one page."
     },
     {
-      "n": 29,
+      "n": 30,
       "id": "cant-pay",
       "title": "When It Won't All Get Paid",
       "group": "alone",
@@ -530,7 +538,7 @@
       "note": "The anti-rule. Different register, different failure cost. Never behind a toggle."
     },
     {
-      "n": 30,
+      "n": 31,
       "id": "get-help",
       "title": "Get Help",
       "group": "alone",
