@@ -31,19 +31,16 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **coast-date** — Your Coast Date · 122 lines · engines: projection, tier0, coast · D-213
 - **race** — The Race to $100K · 155 lines · engines: projection, tier0, countdown, race · D-217
 
-## Decisions (17)
+## Decisions (14)
 
 - **hassle** — Worth the Hassle · 498 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
-- **reachable** — Reachable Money · 150 lines · engines: selfemployed, tax, reachable · D-228, D-212
 - **worth** — Worth It · 606 lines · engines: projection, tier0, hourly, worth
 - **runway** — The Cushion · 1726 lines · engines: projection, tier0, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-232, D-130, D-082
 - **car** — Wheels · 847 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-237, D-151
 - **what-if-life** — What If, Life · 551 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events · D-146, D-091, D-087
 - **timeline** — What Comes Next · 504 lines · engines: timeline · owns: futureIncome · D-152
 - **protection** — Protection · 467 lines · engines: projection, tier0, protection, hourly, estate · owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists · D-236, D-103, D-098
-- **decumulation** — Drawing It Down · 273 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-228, D-104, D-098
-- **roth-aca** — Roth Conversions Before 65 · 206 lines · engines: selfemployed, tax, rothaca · D-228, D-216
-- **middle-class-trap** — The Middle Class Trap Test · 201 lines · engines: selfemployed, tax, projection, tier0, trap · D-228, D-218
+- **decumulation** — The Back Half · 793 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation, selfemployed, tax, reachable, trap, rothaca · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-228, D-104, D-098
 - **career-move** — Work · 2003 lines · engines: projection, tier0, hourly, careermove, offers, selfemployed, sidehustle, credential, degree, countdown, microretirement · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-237
 - **partner** — Family · 660 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner, kids · owns: partnerName, partnerDob, splitMode, sharedMonthly, tuitionTarget, tuitionSaved, tuitionMonthly · D-237, D-216, D-109
 - **wedding** — Wedding Countdown · 177 lines · engines: projection, tier0, hourly, countdown, wedding · D-217
@@ -70,7 +67,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (50)
+## Files in rooms/ not in the registry (53)
 
 - rooms/accounts.html
 - rooms/between-jobs.html
@@ -95,6 +92,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/history.html
 - rooms/kids.html
 - rooms/micro-retirement.html
+- rooms/middle-class-trap.html
 - rooms/net-worth.html
 - rooms/next-hundred.html
 - rooms/offer-compare.html
@@ -104,10 +102,12 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/quit-fund.html
 - rooms/rank-guess.html
 - rooms/ratios.html
+- rooms/reachable.html
 - rooms/real-hourly-wage.html
 - rooms/refresh.html
 - rooms/rerank.html
 - rooms/reversibility.html
+- rooms/roth-aca.html
 - rooms/savings-rate.html
 - rooms/self-employed.html
 - rooms/side-hustle.html

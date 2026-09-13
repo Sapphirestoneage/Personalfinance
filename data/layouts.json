@@ -32,7 +32,6 @@
             "financial-snapshot",
             "race",
             "statement",
-            "reachable",
             "fire",
             "coast-date",
             "fire-lab",
@@ -52,8 +51,6 @@
             "timeline",
             "protection",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "tax",
             "career-move",
             "partner",
@@ -103,7 +100,6 @@
             "financial-snapshot",
             "race",
             "statement",
-            "reachable",
             "fire-lab",
             "dashboard",
             "skill-tree",
@@ -134,8 +130,6 @@
             "coast-date",
             "hassle",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "tax",
             "career-move",
             "partner",
@@ -174,8 +168,7 @@
             "financial-snapshot",
             "race",
             "runway",
-            "statement",
-            "reachable"
+            "statement"
           ]
         },
         {
@@ -241,8 +234,6 @@
             "fire",
             "coast-date",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "protection",
             "tax",
             "rollover",
@@ -303,8 +294,7 @@
           "name": "Keep",
           "rooms": [
             "runway",
-            "statement",
-            "reachable"
+            "statement"
           ]
         },
         {
@@ -324,8 +314,6 @@
           "rooms": [
             "protection",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "tax",
             "partner",
             "wedding"
@@ -424,7 +412,6 @@
             "coast-date",
             "fire-lab",
             "statement",
-            "reachable",
             "housing",
             "partner",
             "wedding",
@@ -440,8 +427,6 @@
             "enough",
             "week",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "debates",
             "worth"
           ]
@@ -533,7 +518,6 @@
           "name": "7 \u00b7 Hyper-accumulation",
           "rooms": [
             "statement",
-            "reachable",
             "fire-lab"
           ]
         },
@@ -563,8 +547,6 @@
             "partner",
             "wedding",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "get-help",
             "data",
             "one-pager",
@@ -607,7 +589,6 @@
             "budget",
             "debt-payoff",
             "statement",
-            "reachable",
             "runway",
             "cant-pay",
             "rollover",
@@ -630,8 +611,6 @@
             "housing",
             "career-move",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "protection",
             "partner",
             "wedding"
@@ -703,8 +682,6 @@
             "cash-flow",
             "debt-payoff",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "week",
             "enough",
             "financial-snapshot",
@@ -729,7 +706,6 @@
             "runway",
             "skill-tree",
             "statement",
-            "reachable",
             "debates",
             "car",
             "timeline",
@@ -793,7 +769,6 @@
           "name": "The study",
           "rooms": [
             "statement",
-            "reachable",
             "tax",
             "fire",
             "coast-date",
@@ -843,9 +818,7 @@
         {
           "name": "The attic",
           "rooms": [
-            "decumulation",
-            "roth-aca",
-            "middle-class-trap"
+            "decumulation"
           ]
         },
         {
@@ -901,7 +874,6 @@
           "name": "Each quarter",
           "rooms": [
             "statement",
-            "reachable",
             "runway"
           ]
         },
@@ -924,8 +896,6 @@
             "partner",
             "wedding",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "enough",
             "week",
             "debates",
@@ -982,7 +952,6 @@
             "coast-date",
             "runway",
             "statement",
-            "reachable",
             "financial-snapshot",
             "race"
           ]
@@ -1008,9 +977,7 @@
             "timeline",
             "tax",
             "protection",
-            "decumulation",
-            "roth-aca",
-            "middle-class-trap"
+            "decumulation"
           ]
         },
         {
@@ -1101,9 +1068,7 @@
             "protection",
             "partner",
             "wedding",
-            "decumulation",
-            "roth-aca",
-            "middle-class-trap"
+            "decumulation"
           ]
         },
         {
@@ -1125,7 +1090,6 @@
             "fire-lab",
             "tax",
             "statement",
-            "reachable",
             "foo-ladder",
             "goals",
             "what-if-life",
@@ -1209,8 +1173,6 @@
             "tax",
             "protection",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "fire",
             "coast-date"
           ]
@@ -1219,7 +1181,6 @@
           "name": "The market",
           "rooms": [
             "statement",
-            "reachable",
             "fire-lab",
             "runway",
             "what-if-life",
@@ -1291,7 +1252,6 @@
             "financial-snapshot",
             "race",
             "statement",
-            "reachable",
             "fire",
             "coast-date",
             "fire-lab",
@@ -1305,8 +1265,6 @@
             "timeline",
             "protection",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "tax",
             "career-move",
             "partner",
@@ -1380,7 +1338,6 @@
           "name": "4 \u00b7 \u201cWhat do you hold?\u201d",
           "rooms": [
             "statement",
-            "reachable",
             "debt-payoff",
             "rollover",
             "tax"
@@ -1392,9 +1349,7 @@
             "protection",
             "partner",
             "wedding",
-            "decumulation",
-            "roth-aca",
-            "middle-class-trap"
+            "decumulation"
           ]
         },
         {
@@ -1479,7 +1434,6 @@
             "income",
             "budget",
             "statement",
-            "reachable",
             "debt-payoff",
             "goals",
             "tax",
@@ -1505,8 +1459,6 @@
             "wedding",
             "career-move",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "foo-ladder"
           ],
           "note": "A third of the app asks for a real evening. Worth knowing before you open one on a Tuesday.",
@@ -1558,7 +1510,6 @@
             "career-move",
             "debt-payoff",
             "statement",
-            "reachable",
             "financial-snapshot",
             "race",
             "cant-pay",
@@ -1597,8 +1548,6 @@
           "rooms": [
             "foo-ladder",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "debates"
           ],
           "note": "Invented or borrowed vocabulary a stranger cannot decode from the words. Six rooms are effectively unnamed until you have been told what they are.",
@@ -1648,14 +1597,11 @@
           "name": "Hub \u00b7 The Statement",
           "rooms": [
             "statement",
-            "reachable",
             "runway",
             "rollover",
             "tax",
             "protection",
-            "decumulation",
-            "roth-aca",
-            "middle-class-trap"
+            "decumulation"
           ],
           "note": "What you hold and what protects it. Ten spokes.",
           "hub": "statement"
@@ -1727,7 +1673,6 @@
             "income",
             "budget",
             "statement",
-            "reachable",
             "debt-payoff",
             "financial-snapshot",
             "race",
@@ -1747,8 +1692,6 @@
             "what-if-life",
             "adventure",
             "decumulation",
-            "roth-aca",
-            "middle-class-trap",
             "big-purchase",
             "housing",
             "car",
@@ -1854,7 +1797,6 @@
           "name": "Regular \u203a What I hold",
           "rooms": [
             "statement",
-            "reachable",
             "tax",
             "protection"
           ]
@@ -1878,9 +1820,7 @@
             "goals",
             "what-if-life",
             "adventure",
-            "decumulation",
-            "roth-aca",
-            "middle-class-trap"
+            "decumulation"
           ]
         },
         {

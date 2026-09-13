@@ -6,56 +6,199 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Drawing It Down · SPARKS</title>
-<meta name="description" content="How a retiree draws: the withdrawal rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to."/>
+<title>The Back Half · SPARKS</title>
+<meta name="description" content="How the money comes down: what you draw and how long it lasts, what you could actually reach today, what sits behind the 59½ wall, and what health cover costs before Medicare."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-098.
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md
+  D-216, D-218, D-228 (the reframe), D-254 (the merge). Registry: decumulation.
 
-  1. READS   Investments, a month's spending and the income that comes in
-             (a pension or Social Security entered as income), all owned by
-             Start Here; the date of birth for the age; the real-return
-             assumption (D-094).
-  2. WRITES  It OWNS household.decumulation — the share in stocks, a planned
-             draw a year, and the age Social Security starts. Nothing else
-             edits those. It does not touch income, spending or investments.
-  3. CALLS   engines/decumulation.js, which reads the withdrawal rate from
-             engines/ratios.js, the years-until-empty from
-             engines/projection.js (the dashboard's loop, so the two agree)
-             and the VPW share from engines/vpw.js — never a second copy.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). Each box here
-             is optional: blank means the table's middle column, the
-             computed draw, and no Social Security note.
-  5. CONFIG  data/vpw_table.json, data/ratio_benchmarks.json (withdrawalRate).
+  FOUR READINGS OF COMING DOWN.
 
-  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens,
-  three inputs, the assumptions drawer with sources, why this matters at
-  your stage, one out-of-scope line to Get Help. The ids below are the deep
-  links.
+    #the-draw             the rate against the convention, what VPW allows
+                          at your age, and the age the money lasts to
+    #what-you-can-reach   if you needed money today: where it comes from
+                          and what each dollar costs on the way out
+    #before-59            what sits behind the 59½ wall, both sides of the
+                          argument, and the doors through it
+    #the-price-of-cover   Roth conversions before 65 against what the
+                          marketplace charges on reported income
 
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
+  D-228 is why these are one room: you cannot size the mountain until you
+  know how you come down it, and every one of these four is part of coming
+  down. The trap test and what you can reach were rooms you had to already
+  know to look for; they are readings of the one question now.
+
+  WHAT THIS ROOM DOES NOT YET DO, and D-228 says it must: produce the FI
+  TARGET. Today the target is still spending x 25 from engines/tier0.js
+  fireNumber, and The Number reads that. Making the target fall out of the
+  draw is the engine change D-228 describes, and it waits on an owner
+  answer that is recorded there: whether the income floor is modelled as
+  means-tested. Guessing that would change the number every other room in
+  the app shows.
+
+  1. READS   what is invested and where, the month you spend, your age, and
+             the tables each reading names.
+  2. WRITES  the three draw fields as before. The other three readings write
+             nothing: they are what-ifs about money you have not drawn yet.
+  3. CALLS   engines/decumulation.js, engines/reachable.js, engines/trap.js
+             and engines/rothaca.js — one each, unchanged.
+  4. EMPTY   each reading names the figure it needs. No pot is not a zero
+             pot.
+  5. CONFIG  the tables each engine names.
+
   THEMING: none this pass. A theme is a class on <body> and a palette in
   shared/theme.css.
+
+  LIVE-FORM: guarded. Every reading keeps the discipline it had; switching
+  readings hides and shows and rebuilds nothing (D-034).
 -->
 <style>
-  section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- The draw, from rooms/decumulation.html (D-254) ---- */
+  
+  #view-the-draw section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-draw .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- What you can reach, from rooms/reachable.html (D-254) ---- */
+  
+  #view-what-you-can-reach .ask { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  @media (max-width: 420px) { 
+  #view-what-you-can-reach .ask { grid-template-columns: 1fr; } }
+  
+  #view-what-you-can-reach .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  
+  #view-what-you-can-reach .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  
+  #view-what-you-can-reach .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-what-you-can-reach ol.tiers { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-what-you-can-reach ol.tiers li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-what-you-can-reach ol.tiers li:first-child { border-top: none; }
+  
+  #view-what-you-can-reach ol.tiers .lab { font-weight: 600; }
+  
+  #view-what-you-can-reach ol.tiers .amt { font-variant-numeric: tabular-nums; text-align: right; }
+  
+  #view-what-you-can-reach ol.tiers .cost { font-size: var(--text-xs); color: var(--color-text-faint); text-align: right; }
+  
+  #view-what-you-can-reach ol.tiers .note { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-what-you-can-reach ol.tiers .note.is-rough { color: var(--color-warning, #d97706); }
+  
+  #view-what-you-can-reach ol.tiers li.is-free .cost { color: var(--color-positive); }
+  
+  #view-what-you-can-reach .pulls { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-what-you-can-reach .home { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); }
+
+  /* ---- Before 59½, from rooms/middle-class-trap.html (D-254) ---- */
+  
+  #view-before-59 .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  
+  #view-before-59 .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-before-59 .sides { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-before-59 .side { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--text-sm); }
+  
+  #view-before-59 .side h3 { margin: 0 0 var(--space-1); font-size: var(--text-md); }
+  
+  #view-before-59 .side small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: var(--space-2); }
+  
+  #view-before-59 .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-before-59 .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  
+  #view-before-59 ul.paths { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-before-59 ul.paths li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  
+  #view-before-59 ul.paths li:first-child { border-top: none; }
+  
+  #view-before-59 ul.paths .lab { font-weight: 600; }
+  
+  #view-before-59 ul.paths .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-1) 0; }
+  
+  #view-before-59 ul.paths .verdict.is-Trapped { color: var(--color-critical); }
+  
+  #view-before-59 ul.paths .verdict.is-Tight { color: var(--color-warning, #d97706); }
+  
+  #view-before-59 ul.paths .verdict.is-Free { color: var(--color-positive, #30a46c); }
+  
+  #view-before-59 ul.paths small { display: block; color: var(--color-text-muted); font-size: var(--text-xs); line-height: var(--leading-loose); }
+  
+  #view-before-59 table.years { width: 100%; border-collapse: collapse; font-size: var(--text-xs); margin-top: var(--space-3); font-variant-numeric: tabular-nums; }
+  
+  #view-before-59 table.years th,
+  #view-before-59 table.years td { text-align: right; padding: var(--space-1) var(--space-2); border-top: 1px solid var(--color-border); }
+  
+  #view-before-59 table.years th:first-child,
+  #view-before-59 table.years td:first-child { text-align: left; }
+  
+  #view-before-59 table.years tr.is-short td { color: var(--color-critical); }
+  
+  #view-before-59 .wrap-x { overflow-x: auto; }
+  @media (max-width: 480px) { 
+  #view-before-59 .sides { grid-template-columns: 1fr; } }
+
+  /* ---- The price of cover, from rooms/roth-aca.html (D-254) ---- */
+  
+  #view-the-price-of-cover .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  
+  #view-the-price-of-cover .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-the-price-of-cover .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-the-price-of-cover .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  
+  #view-the-price-of-cover .ask .use { margin-top: var(--space-1); font-size: var(--text-xs); }
+  
+  #view-the-price-of-cover .rows { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-the-price-of-cover .rows li { display: grid; grid-template-columns: 3rem 1fr auto; gap: var(--space-2); padding: var(--space-1) 0; border-top: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
+  
+  #view-the-price-of-cover .rows li:first-child { border-top: none; }
+  
+  #view-the-price-of-cover .rows li.is-over { color: var(--color-critical); }
+  
+  #view-the-price-of-cover .rows .r { text-align: right; }
+  
+  #view-the-price-of-cover .assume { list-style: none; margin: 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-the-price-of-cover .assume li { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-price-of-cover .assume li:first-child { border-top: none; }
+  
+  #view-the-price-of-cover .assume small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Drawing It Down</h1>
-  <p class="room-lede">How you draw on what you saved: the rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to.</p>
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Back Half</h1>
+  <p class="room-lede">How you come down the mountain. Read this before you size it.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Four readings of coming down">
+    <a href="#the-draw" data-view="view-the-draw">The draw</a>
+    <a href="#what-you-can-reach" data-view="view-what-you-can-reach">What you can reach</a>
+    <a href="#before-59" data-view="view-before-59">Before 59½</a>
+    <a href="#the-price-of-cover" data-view="view-the-price-of-cover">The price of cover</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ===== THE DRAW (was rooms/decumulation.html) ===== -->
+  <section id="view-the-draw">
+  <p class="slaf-lede">How you draw on what you saved: the rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to.</p>
   <div class="room-standalone" id="room-standalone" hidden></div>
 
   <section class="slaf-card" id="number">
@@ -95,11 +238,118 @@
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
   </section>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. Every figure here is before tax
-    on withdrawals, at one steady real return. Your numbers stay in this browser.
-  </p>
+  <!-- ===== WHAT YOU CAN REACH (was rooms/reachable.html) ===== -->
+  <section id="view-what-you-can-reach" hidden>
+  <p class="slaf-lede">If you needed money, where would it come from and what would each dollar cost on the way out? The cheapest dollars first.</p>
+  <section class="slaf-card" id="headline">
+    <span class="slaf-eyebrow">In an emergency</span>
+    <p class="head-num" id="reach"></p>
+    <p class="head-sub" id="reach-sub"></p>
+    <ol class="tiers" id="tiers"></ol>
+    <p class="home" id="home" hidden></p>
+    <p class="slaf-hint" id="rough" hidden></p>
+  </section>
+
+  <section class="slaf-card" id="pull" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">A specific amount</span>
+    <div class="ask">
+      <div><label for="in-amount">How much</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-amount" placeholder="e.g. 8,000" aria-label="Amount"/></span></div>
+      <div><label for="in-when">By when</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-when" placeholder="e.g. 3" aria-label="Months"/><span class="slaf-affix">months</span></span></div>
+    </div>
+    <div class="pulls" id="pulls"></div>
+  </section>
+  </section>
+
+  <!-- ===== BEFORE 59½ (was rooms/middle-class-trap.html) ===== -->
+  <section id="view-before-59" hidden>
+  <p class="slaf-lede">A high net worth on paper, mostly the house and the 401(k), and too little to live on before 59 and a half. One side calls it a trap; the other a plan with a door in it.</p>
+  <section class="slaf-card" id="verdict">
+    <span class="slaf-eyebrow">What the numbers say</span>
+    <p class="head-num" id="t-num"></p>
+    <p class="head-sub" id="t-sub"></p>
+    <div class="ask">
+      <div><label for="in-age">Retire at</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-age" placeholder="e.g. 55" aria-label="Retire at"/></span>
+        <span class="slaf-hint" id="t-age-hint"></span></div>
+      <div><span class="slaf-label">Home equity</span>
+        <div class="choices" id="equity-choices">
+          <button type="button" class="choice" data-equity="ignore" aria-pressed="true">Shown, not counted</button>
+          <button type="button" class="choice" data-equity="sell" aria-pressed="false">Sell</button>
+          <button type="button" class="choice" data-equity="borrow" aria-pressed="false">Borrow against it</button>
+        </div>
+        <span class="slaf-hint" id="t-equity-hint"></span></div>
+      <div><span class="slaf-label">Rule of 55</span>
+        <div class="choices" id="rule55-choices">
+          <button type="button" class="choice" data-rule55="on" aria-pressed="true">The money is in the plan I would leave</button>
+          <button type="button" class="choice" data-rule55="off" aria-pressed="false">It is in an IRA</button>
+        </div></div>
+    </div>
+  </section>
+  <section class="slaf-card" id="debate" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The debate</span>
+    <div class="sides" id="t-sides"></div>
+  </section>
+  <section class="slaf-card" id="paths" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Four paths, each with its verdict and range</span>
+    <ul class="paths" id="t-paths"></ul>
+  </section>
+  <section class="slaf-card" id="tr-years" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Year by year</span>
+    <div class="choices" id="path-choices" style="margin-top:var(--space-2)"></div>
+    <div class="wrap-x"><table class="years" id="t-years"></table></div>
+  </section>
+  <section class="slaf-card" id="tr-assumptions" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Assumptions</span>
+    <ul class="plain" id="t-assume" style="font-size:var(--text-sm);margin:var(--space-2) 0 0;padding-left:1.2em"></ul>
+  </section>
+  </section>
+
+  <!-- ===== THE PRICE OF COVER (was rooms/roth-aca.html) ===== -->
+  <section id="view-the-price-of-cover" hidden>
+  <p class="slaf-lede">Converting pre-tax money to Roth is reported income, and reported income sets what the marketplace charges for health cover until Medicare. This prices the trade.</p>
+  <div class="notice" id="switch-notice" hidden>This room sits behind the <strong>Health cover before 65</strong> switch, which is off. <a href="settings.html#features">Turn it on in Settings</a> to use it.</div>
+
+  <section class="slaf-card" id="ra-number">
+    <span class="slaf-eyebrow">Tax and premiums, together, to 65</span>
+    <p class="head-num" id="r-num"></p>
+    <p class="head-sub" id="r-sub"></p>
+  </section>
+
+  <section class="slaf-card" id="ra-inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The what-if</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Nothing here is saved. The premium is the benchmark plan for your household on the marketplace, which only the marketplace can tell you.</p>
+    <div class="ask">
+      <div><label for="in-premium">Benchmark premium, a month</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-premium" placeholder="e.g. 800" aria-label="Benchmark premium a month"/></span></div>
+      <div><label for="in-conv">Converted to Roth, a year</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-conv" placeholder="e.g. 40,000" aria-label="Converted to Roth a year"/></span>
+        <div class="use" id="use-conv"></div></div>
+      <div><label for="in-other">Other income a year, before conversions</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-other" placeholder="e.g. 20,000" aria-label="Other income a year"/></span>
+        <div class="use" id="use-other"></div></div>
+      <div><label for="in-pretax">Pre-tax balance</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-pretax" placeholder="e.g. 500,000" aria-label="Pre-tax balance"/></span>
+        <div class="use" id="use-pretax"></div></div>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="years" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Year by year, with the cliff</span>
+    <div id="r-chart"></div>
+    <ul class="rows" id="r-rows"></ul>
+  </section>
+
+  <section class="slaf-card" id="ra-assumptions" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Assumptions</span>
+    <ul class="assume" id="r-assume"></ul>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. Nothing here is a tax opinion, and none of it is sent anywhere.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -130,8 +380,79 @@
 <script src="../engines/decumulation.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/reachable.js"></script>
+<script src="../engines/trap.js"></script>
+<script src="../engines/rothaca.js"></script>
 <script src="../shared/room.js"></script>
 <script>
+/* ---- the draw, what you can reach, the wall, the price of cover (D-254) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   The hash still reaches it — an old link must land somewhere honest — and
+   the reading says for whom it is, which is what Gate.why is for. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-what-you-can-reach', match: /^#(what-you-can-reach|rc-|headline|home|pull|pulls|reach|reach-sub|rough|tiers|in-amount|in-when)/ },
+    { id: 'view-before-59', match: /^#(before-59|tr-|debate|paths|verdict|equity-choices|path-choices|rule55-choices|t-)/ },
+    { id: 'view-the-price-of-cover', match: /^#(the-price-of-cover|ra-|in-conv|in-other|in-premium|in-pretax|use-conv|use-other|use-pretax|r-|switch-notice)/ },
+    { id: 'view-the-draw', match: /.*/ }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. When the hash asks for a reading the gate has taken
+       away, fall back to the DEFAULT — the room's plainest reading, and the
+       one the person would have got with no hash at all — not to whichever
+       gated reading happens to sit first in this list. */
+    var fallback = VIEWS[VIEWS.length - 1];
+    var on = open(asked) ? asked
+           : open(fallback) ? fallback
+           : VIEWS.filter(open)[0] || fallback;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('decumulation');
+  if (SLAF.Progress) SLAF.Progress.mount('decumulation');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-the-draw, from rooms/decumulation.html (D-254) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -155,6 +476,8 @@
 
   Room.mount({
     id: 'decumulation',
+    part: true,
+    root: 'view-the-draw',
     horizon: true,   /* 15.2: today's money, once per screen (D-181) */
     guessAs: 'retired',
     reads: ['investments', 'monthlyExpenses', 'grossAnnualIncome', 'dob'],
@@ -265,6 +588,203 @@
     },
 
     scope: 'This room does not model taxes on withdrawals, Medicare, or sequence-of-returns risk.'
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-what-you-can-reach, from rooms/reachable.html (D-254) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Reachable = SLAF.Reachable;
+  var ROOM_ID = 'decumulation';   /* the room this reading lives in */
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function pct(r) { return r === null ? 'unknown' : (Math.round(r * 1000) / 10) + '%'; }
+  function render() {
+    if (!TABLES) return;
+    var amount = Money.parseMoney(el('in-amount').value || '');
+    var r = Reachable.waterfall(Spine.getProfile(), TABLES, { amountCents: Money.isEntered(amount) ? amount : null });
+    if (r.status !== 'ok') {
+      el('reach').textContent = 'Nothing to reach yet.';
+      el('reach-sub').textContent = 'Add an account or two in The Statement and the waterfall appears.';
+      el('tiers').innerHTML = ''; el('pulls').innerHTML = ''; return;
+    }
+    el('reach').textContent = Money.formatCents(r.reachableCents) + ' reachable';
+    el('reach-sub').textContent = r.costCents === null ? 'The true cost of pulling all of it needs the tax rates (income and filing status).' : 'Pulling all of it would cost ' + Money.formatCents(r.costCents) + ' in tax and penalties, leaving ' + Money.formatCents(r.netCents) + '.';
+    el('tiers').innerHTML = r.tiers.map(function (t) {
+      return '<li class="' + (t.free ? 'is-free' : '') + '"><span class="lab">' + esc(t.label) + '</span><span class="amt">' + esc(Money.formatCents(t.availableCents)) + '</span>'
+        + '<span class="note' + (t.rough ? ' is-rough' : '') + '">' + esc(t.note) + '</span><span class="cost">' + (t.costCents === null ? 'cost unknown' : t.costCents === 0 ? 'free' : 'costs ' + esc(Money.formatCents(t.costCents)) + ' (' + esc(pct(t.costRate)) + ')') + '</span></li>';
+    }).join('');
+    el('home').hidden = !r.homeShown;
+    el('home').textContent = r.homeShown ? 'Home equity, shown and not counted: ' + Money.formatCents(r.homeEquityCents) + '. A house is not a bank account; selling or borrowing against it is its own decision.' : '';
+    var roughBits = r.assumed.slice();
+    el('rough').hidden = !(r.rough && (roughBits.length || r.missing.length));
+    el('rough').textContent = r.rough ? 'Rough: ' + roughBits.concat(r.missing.map(function (m) { return 'missing ' + m.replace(':', ' for '); })).join('; ') + '.' : '';
+    if (!Money.isEntered(amount)) { el('pulls').innerHTML = '<p class="slaf-hint">Type an amount and the order to pull it appears.</p>'; return; }
+    var when = Number(String(el('in-when').value || '').replace(/\D/g, ''));
+    el('pulls').innerHTML = (r.pulls.length ? '<ol class="tiers">' + r.pulls.map(function (p) {
+      return '<li class="' + (p.costCents === 0 ? 'is-free' : '') + '"><span class="lab">' + esc(p.label) + '</span><span class="amt">' + esc(Money.formatCents(p.cents)) + '</span><span class="cost">' + (p.costCents === null ? 'cost unknown' : p.costCents === 0 ? 'free' : 'costs ' + esc(Money.formatCents(p.costCents))) + '</span></li>';
+    }).join('') + '</ol>' : '')
+      + '<p>' + (r.shortfallCents > 0 ? esc(Money.formatCents(r.shortfallCents)) + ' short of ' + esc(Money.formatCents(amount)) + ' even after every account.' : esc(Money.formatCents(amount)) + (when ? ' within ' + when + ' month' + (when === 1 ? '' : 's') : '') + ' would cost ' + (r.pullCostCents === null ? 'an amount the rates do not yet say' : esc(Money.formatCents(r.pullCostCents))) + ' on the way out.') + '</p>';
+  }
+  ['in-amount', 'in-when'].forEach(function (id) { el(id).addEventListener('input', render); });
+  Spine.onChange(render);
+  Reference.load(['accessRules', 'federalBrackets', 'seTax', 'stateBrackets', 'aca']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-before-59, from rooms/middle-class-trap.html (D-254) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Trap = SLAF.Trap;
+  var ROOM_ID = 'decumulation';   /* the room this reading lives in */
+  var TABLES = null, EQUITY = 'ignore', RULE55 = true, SHOW = 'bridge';
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function press(holder, attr, value) { Array.prototype.forEach.call(el(holder).querySelectorAll('[' + attr + ']'), function (b) { b.setAttribute('aria-pressed', b.getAttribute(attr) === value ? 'true' : 'false'); }); }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    press('equity-choices', 'data-equity', EQUITY); press('rule55-choices', 'data-rule55', RULE55 ? 'on' : 'off');
+    var typed = Number(String(el('in-age').value || '').replace(/\D/g, ''));
+    var r = Trap.run(h, TABLES, { retireAge: typed >= 30 && typed <= 70 ? typed : null, homeEquity: EQUITY, rule55: RULE55 });
+    var D = (TABLES.debates.debates || []).filter(function (d) { return d.id === 'middleClassTrap'; })[0];
+    el('t-sides').innerHTML = D ? D.sides.map(function (s) { return '<div class="side"><h3>' + esc(s.label) + '</h3>' + esc(s.case) + '<small>' + esc(s.source) + '</small></div>'; }).join('') : '';
+    if (!Money.isOk(r)) { el('t-num').textContent = 'Not yet.'; el('t-sub').textContent = r.reason; el('t-paths').innerHTML = ''; el('t-years').innerHTML = ''; el('t-assume').innerHTML = ''; el('path-choices').innerHTML = ''; return; }
+    var I = r.inputs;
+    if (!el('in-age').value) el('in-age').placeholder = 'e.g. ' + I.retireAge;
+    el('t-age-hint').textContent = 'Blank uses your FIRE target of ' + I.retireAge + '. ' + I.horizonYears + ' year' + (I.horizonYears === 1 ? '' : 's') + ' to bridge from ' + I.retireAge + ' to ' + I.accessAge + '.';
+    el('t-equity-hint').textContent = I.piles.homeEquityCents ? Money.formatCents(I.piles.homeEquityCents) + ' of home equity' + (I.extraCashCents ? ', ' + Money.formatCents(I.extraCashCents) + ' of it counted as cash at ' + I.retireAge : ', shown and not counted') + '.' : 'No home on the Statement.';
+    el('t-num').textContent = r.bestVerdict === 'Free' ? 'Not trapped.' : r.bestVerdict === 'Tight' ? 'Tight, not trapped.' : 'Trapped at ' + I.retireAge + '.';
+    el('t-num').setAttribute('data-verdict', r.bestVerdict);
+    var free = r.paths.filter(function (p) { return p.available && p.verdict !== 'Trapped'; });
+    var bridge = r.paths[0];
+    var sub = 'Retiring at ' + I.retireAge + ' with ' + Money.formatCents(I.spendAnnualCents) + ' a year of spending and ' + (Math.round(r.bridgeYears * 10) / 10) + ' years of bridge money by then (' + Money.formatCents(I.atRetirement.cashCents + I.atRetirement.taxableCents + I.atRetirement.rothBasisCents) + ' of cash, taxable accounts and Roth contributions) against ' + Money.formatCents(I.atRetirement.pretaxCents) + ' pre-tax. ';
+    sub += bridge.verdict === 'Trapped' ? 'Bridge accounts alone run out' + (bridge.shortfallYears.length ? ' at ' + bridge.shortfallYears[0] : '') + '. ' : 'Bridge accounts alone get there. ';
+    sub += free.length ? (bridge.verdict === 'Trapped' ? 'But ' : 'And ') + free.map(function (p) { return p.label.toLowerCase() + ' reads ' + p.verdict; }).join(', ') + '.' : 'No path reaches the pre-tax money in time from ' + I.retireAge + '.';
+    var earliest = r.paths.filter(function (p) { return p.earliestAge !== null; }).map(function (p) { return p.earliestAge; });
+    if (earliest.length) sub += ' The earliest retirement age that is not trapped on any path: ' + Math.min.apply(null, earliest) + '.';
+    el('t-sub').textContent = sub;
+    el('t-paths').innerHTML = r.paths.map(function (p) {
+      if (!p.available) return '<li><span class="lab">' + esc(p.label) + '</span><div class="verdict">Not available</div><small>' + esc(p.reason) + '</small><small>' + esc(p.words) + '</small></li>';
+      var range = p.verdicts.p25 && p.verdicts.p75 ? (p.verdicts.p25 === p.verdicts.p75 ? p.verdicts.p25 + ' across a poor decade and a good one' : p.verdicts.p75 + ' in a good decade, ' + p.verdicts.p25 + ' in a poor one') : '';
+      return '<li data-path="' + esc(p.id) + '"><span class="lab">' + esc(p.label) + '</span><div class="verdict is-' + esc(p.verdict) + '">' + esc(p.verdict) + '</div>'
+        + '<small>' + esc(range) + '. ' + (p.shortfallYears.length ? 'Short in ' + p.shortfallYears.length + ' year' + (p.shortfallYears.length === 1 ? '' : 's') + ' (' + esc(Money.formatCents(p.shortfallCents)) + ' in all; filling it from penalised money would cost about ' + esc(Money.formatCents(p.penaltyIfFilledCents)) + ' in penalties). ' : 'No shortfall. ') + 'Federal tax on the way: ' + esc(Money.formatCents(p.taxCents)) + '.' + (p.seppPaymentCents ? ' The 72(t) payment: ' + esc(Money.formatCents(p.seppPaymentCents)) + ' a year.' : '') + (p.earliestAge !== null ? ' Earliest age not trapped on this path: ' + p.earliestAge + '.' : '') + '</small>'
+        + '<small>' + esc(p.words) + '</small></li>';
+    }).join('');
+    var avail = r.paths.filter(function (p) { return p.available; });
+    if (!avail.some(function (p) { return p.id === SHOW; })) SHOW = avail.length ? avail[0].id : null;
+    el('path-choices').innerHTML = avail.map(function (p) { return '<button type="button" class="choice" data-path="' + esc(p.id) + '" aria-pressed="' + (p.id === SHOW ? 'true' : 'false') + '">' + esc(p.label) + '</button>'; }).join('');
+    var shown = avail.filter(function (p) { return p.id === SHOW; })[0];
+    el('t-years').innerHTML = shown ? '<tr><th>Age</th><th>Spend</th><th>Cash</th><th>Taxable</th><th>Roth</th><th>Pre-tax</th><th>Converted</th><th>Tax</th><th>Short</th><th>Bridge left</th></tr>' + shown.rows.map(function (y) {
+      return '<tr' + (y.shortfallCents ? ' class="is-short"' : '') + '><td>' + y.age + '</td><td>' + esc(Money.formatCents(y.spendCents)) + '</td><td>' + esc(Money.formatCents(y.fromCashCents)) + '</td><td>' + esc(Money.formatCents(y.fromTaxableCents)) + '</td><td>' + esc(Money.formatCents(y.fromRothCents)) + '</td><td>' + esc(Money.formatCents(y.fromPretaxCents)) + '</td><td>' + esc(Money.formatCents(y.conversionCents)) + '</td><td>' + esc(Money.formatCents(y.taxCents)) + '</td><td>' + (y.shortfallCents ? esc(Money.formatCents(y.shortfallCents)) : '') + '</td><td>' + esc(Money.formatCents(y.bridgeLeftCents)) + '</td></tr>';
+    }).join('') : '';
+    var R = TABLES.earlyAccessRules;
+    var rows = [
+      'Access age ' + R.accessAge + ', penalty ' + Money.formatRate(R.penaltyRate, { decimals: 0 }) + ' under it, ' + R.conversionSeasoningYears + ' years before a conversion can be spent, 72(t) by the ' + R.sepp.methodUsed.replace(/([A-Z])/g, ' $1').toLowerCase() + ' method at ' + Money.formatRate(R.sepp.maxRate, { decimals: 0 }) + ', the Rule of 55 from ' + R.ruleOf55.separationAge + ': data/early_access_rules_2026.json v' + R.version + ' (' + R.confidence + ').',
+      'Invested money grows at ' + Money.formatRate(I.rate, { decimals: 1 }) + ' real; the range runs a poor decade (' + Money.formatRate(I.bands.p25, { decimals: 0 }) + ') to a good one (' + Money.formatRate(I.bands.p75, { decimals: 0 }) + '), data/return_bands.json. Cash does not grow.',
+      'Federal ordinary tax at the ' + I.filingStatus + ' ladder on conversions and pre-tax withdrawals; the capital gains stack on taxable draws. No state tax.',
+      'Spending stays ' + Money.formatCents(I.spendAnnualCents) + ' a year in today\'s dollars; a shortfall year is a year the path\'s own sources cannot cover it.'
+    ].concat(I.assumed);
+    el('t-assume').innerHTML = rows.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+  }
+  el('in-age').addEventListener('input', render);
+  document.addEventListener('click', function (evt) {
+    var e = evt.target.closest('[data-equity]'), r = evt.target.closest('[data-rule55]'), p = evt.target.closest('[data-path]');
+    if (e) EQUITY = e.getAttribute('data-equity');
+    if (r) RULE55 = r.getAttribute('data-rule55') === 'on';
+    if (p && p.tagName === 'BUTTON') SHOW = p.getAttribute('data-path');
+    if (e || r || (p && p.tagName === 'BUTTON')) render();
+  });
+  Spine.onChange(render);
+  Reference.load(['earlyAccessRules', 'federalBrackets', 'seTax', 'returnBands', 'effectiveTaxRates', 'debates', 'fireVariants']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-the-price-of-cover, from rooms/roth-aca.html (D-254) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Features = SLAF.Features,
+      RothAca = SLAF.RothAca, Charts = SLAF.Charts;
+  var ROOM_ID = 'decumulation';   /* the room this reading lives in */
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
+  function pct(r) { return Money.formatRate(r, { decimals: 1 }); }
+  function useButton(holder, cents, words, target) {
+    var box = el(holder);
+    if (!Money.isEntered(cents)) { box.textContent = ''; return; }
+    box.innerHTML = '<button type="button" class="slaf-btn slaf-btn--quiet" data-use="' + target + '" data-cents="' + cents + '">Use ' + Money.formatCents(cents) + '</button> <span class="slaf-hint">' + esc(words) + '</span>';
+  }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var on = Features.on('preMedicare', h);
+    el('switch-notice').hidden = on;
+    ['ra-number', 'ra-inputs', 'years', 'ra-assumptions'].forEach(function (id) { el(id).hidden = !on; });
+    if (!on) return;
+    var gross = Schema.grossAnnualIncomeCents(h);
+    var held = RothAca.pretaxCents(h);
+    useButton('use-other', Money.isOk(gross) ? gross.value : null, 'your gross income from Start Here; leave blank for none', 'in-other');
+    useButton('use-pretax', held ? held.cents : null, 'the pre-tax accounts on the Statement; used when this is blank', 'in-pretax');
+    var opts = { benchmarkPremiumMonthlyCents: typed('in-premium'), conversionAnnualCents: typed('in-conv'), otherIncomeAnnualCents: typed('in-other'), pretaxCents: typed('in-pretax') };
+    var r = RothAca.plan(h, TABLES, opts);
+    if (!Money.isOk(r)) {
+      el('r-num').textContent = 'Not yet.'; el('r-sub').textContent = r.reason;
+      el('r-chart').innerHTML = ''; el('r-rows').innerHTML = ''; el('r-assume').innerHTML = ''; el('use-conv').textContent = '';
+      return;
+    }
+    useButton('use-conv', r.fillToCliffCents, 'fills year one to just under the cliff', 'in-conv');
+    var same = r.lowCents === r.highCents;
+    el('r-num').textContent = same ? Money.formatCents(r.lowCents) : Money.formatCents(r.lowCents) + ' to ' + Money.formatCents(r.highCents);
+    el('r-num').setAttribute('data-range', r.lowCents + '|' + r.highCents);
+    var sub = r.years + ' year' + (r.years === 1 ? '' : 's') + ' from ' + r.startAge + ' to ' + r.endAge + ', converting ' + Money.formatCents(r.conversionAnnualCents) + ' a year: '
+      + Money.formatCents(r.cliffOn.taxCents) + ' of federal tax and ' + Money.formatCents(r.cliffOn.premiumCents) + ' of premiums with the cliff, ' + Money.formatCents(r.cliffOff.premiumCents) + ' of premiums without it.';
+    if (r.conversionAnnualCents > 0) {
+      sub += ' Converting nothing would cost ' + Money.formatCents(r.baseline.cliffOn.totalCents) + (r.baseline.cliffOn.totalCents === r.baseline.cliffOff.totalCents ? '' : ' to ' + Money.formatCents(Math.max(r.baseline.cliffOn.totalCents, r.baseline.cliffOff.totalCents)))
+        + ', so the conversions add ' + Money.formatCents(Math.min(r.extraOnCents, r.extraOffCents)) + (r.extraOnCents === r.extraOffCents ? '' : ' to ' + Money.formatCents(Math.max(r.extraOnCents, r.extraOffCents))) + ' now and move ' + Money.formatCents(r.convertedCents) + ' into Roth, about ' + Money.formatCents(r.rothCents) + ' by 65.';
+      if (r.yearsOverCliff) sub += ' Over the cliff in ' + r.yearsOverCliff + ' of the ' + r.years + ' years: with the ceiling in force, the whole premium is yours those years.';
+    } else sub += ' Type a conversion a year to see what it adds.';
+    el('r-sub').textContent = sub;
+    el('r-chart').innerHTML = Charts.stacked({
+      title: 'Year by year', rows: r.rows.map(function (y) {
+        return { label: String(y.age), note: y.overCliff ? 'over the cliff' : Money.formatRate(y.fplMultiple, { decimals: 0 }) + ' of the poverty level',
+          parts: [{ label: 'Federal tax', value: y.taxCents, color: Charts.COLORS.spend }, { label: 'Premium, cliff on', value: y.premiumOnCents, color: Charts.COLORS.target }] };
+      })
+    });
+    el('r-rows').innerHTML = r.rows.map(function (y) {
+      return '<li' + (y.overCliff ? ' class="is-over"' : '') + '><span>' + y.age + '</span><span>income ' + esc(Money.formatCents(y.magiCents)) + (y.overCliff ? ', over the cliff' : ', ' + esc(Money.formatCents(y.roomBeforeCliffCents)) + ' under it') + '</span><span class="r">' + esc(Money.formatCents(y.taxCents + y.premiumOnCents)) + '</span></li>';
+    }).join('');
+    var A = TABLES.aca, B = TABLES.federalBrackets;
+    var rows = [
+      ['The cliff', Money.formatCents(r.cliffCents) + ' for a household of ' + r.householdSize + ' (' + A.cliffMultiple + ' times the poverty level of $' + r.fplDollars.toLocaleString() + ')', 'data/aca_2026.json v' + A.version + ' (' + A.confidence + ')'],
+      ['Without the cliff', 'the contribution is capped at ' + pct(A.ifNoCliff.capPercent) + ' of income, the 2021 to 2025 rule if it is extended', 'the high and low ends of the range are these two rules'],
+      ['Filing status', r.filingStatus + (r.assumed.indexOf('filingStatus') > -1 ? ' (assumed: none chosen in Start Here)' : ''), 'data/federal_brackets_2026.json v' + B.version + ' (' + B.confidence + '), federal ordinary ladder only; the tax is paid from other money, so the whole conversion lands in the Roth'],
+      ['Other income', Money.formatCents(r.otherIncomeCents) + ' a year' + (r.assumed.indexOf('otherIncome') > -1 ? ' (none typed, so none)' : ''), 'what you would report apart from the conversions: pensions, interest, part-time pay'],
+      ['Pre-tax balance', Money.formatCents(r.pretaxCents) + (r.pretaxSource === 'household' ? ', from the Statement' : ', typed') + (r.assumed.indexOf('pretaxOrientation') > -1 ? ' (a retirement account with no tax character is read as pre-tax)' : ''), 'grows at ' + pct(r.growthRate) + ' a year real, data/return_bands.json p50'],
+      ['Household size', String(r.householdSize), 'everyone on the household record, for the poverty level']
+    ];
+    if (r.rows.some(function (y) { return y.belowFpl; })) rows.push(['Below the poverty level', 'in some years', 'in most states Medicaid, not the marketplace credit, covers that income; this room prices the credit anyway']);
+    el('r-assume').innerHTML = rows.map(function (x) { return '<li><strong>' + esc(x[0]) + '</strong> ' + esc(x[1]) + '<small>' + esc(x[2]) + '</small></li>'; }).join('');
+  }
+  ['in-premium', 'in-conv', 'in-other', 'in-pretax'].forEach(function (id) { el(id).addEventListener('input', render); });
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-use]'); if (!b) return;
+    el(b.getAttribute('data-use')).value = Money.formatCents(Number(b.getAttribute('data-cents')), { exact: true }).replace(/^\$/, '');
+    render();
+  });
+  Spine.onChange(render);
+  Promise.all([Reference.load(['federalBrackets', 'aca', 'returnBands', 'seTax']), Features.ready()]).then(function (r) { TABLES = r[0]; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
   });
 })();
 </script>

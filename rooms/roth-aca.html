@@ -6,200 +6,34 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Roth Conversions Before 65 · SPARKS</title>
-<meta name="description" content="Converting pre-tax money to Roth before Medicare is reported income, and reported income sets the marketplace premium. Year by year to 65: the tax, the premium, and the lifetime total as a range."/>
+<title>The price of cover · SPARKS</title>
+<meta name="description" content="The price of cover is a reading of The Back Half now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. J8 (D-216).
-
-  1. READS   Date of birth and filing status (Start Here), the household
-             size, the pre-tax accounts on the Statement, the real return
-             convention. Behind the "Health cover before 65" switch
-             (preMedicare, the feature table, through shared/features.js).
-  2. WRITES  Nothing. The four boxes here are this page's what-if: the
-             benchmark premium (typed, never guessed), the conversion a
-             year, other income a year, the pre-tax balance.
-  3. CALLS   engines/rothaca.js, which calls engines/tax.js for the
-             ordinary ladder and the marketplace cliff. No formula here.
-  4. EMPTY   No premium typed: it says so and asks for it. No date of
-             birth or no pre-tax account: it says which. At 65 or past:
-             Medicare, the question ends.
-  5. CONFIG  data/aca_2026.json (FPL, the cliff, the percentages, the
-             no-cliff cap), data/federal_brackets_2026.json,
-             data/return_bands.json.
-
-  LIVE-FORM: built once. Four boxes, in the HTML; only .value is set.
+  REDIRECT — The price of cover is a reading of The Back Half (rooms/decumulation.html#the-price-of-cover, DECISIONS.md D-254).
+  You cannot size the mountain until you know how you come down it, and
+  every one of these is part of coming down. D-228.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
-  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
-  .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
-  .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
-  .ask .use { margin-top: var(--space-1); font-size: var(--text-xs); }
-  .rows { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
-  .rows li { display: grid; grid-template-columns: 3rem 1fr auto; gap: var(--space-2); padding: var(--space-1) 0; border-top: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
-  .rows li:first-child { border-top: none; }
-  .rows li.is-over { color: var(--color-critical); }
-  .rows .r { text-align: right; }
-  .assume { list-style: none; margin: 0; padding: 0; font-size: var(--text-sm); }
-  .assume li { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
-  .assume li:first-child { border-top: none; }
-  .assume small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
-</style>
+<meta http-equiv="refresh" content="0; url=decumulation.html#the-price-of-cover"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>Roth Conversions Before 65</h1>
-  <p class="room-lede">Converting pre-tax money to Roth is reported income, and reported income sets what the marketplace charges for health cover until Medicare. This prices the two together, year by year, as a range.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <div class="notice" id="switch-notice" hidden>This room sits behind the <strong>Health cover before 65</strong> switch, which is off. <a href="settings.html#features">Turn it on in Settings</a> to use it.</div>
-
-  <section class="slaf-card" id="number">
-    <span class="slaf-eyebrow">Tax and premiums, together, to 65</span>
-    <p class="head-num" id="r-num"></p>
-    <p class="head-sub" id="r-sub"></p>
-  </section>
-
-  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The what-if</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Nothing here is saved. The premium is the benchmark plan for your household on the marketplace, which only the marketplace can tell you.</p>
-    <div class="ask">
-      <div><label for="in-premium">Benchmark premium, a month</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-premium" placeholder="e.g. 800" aria-label="Benchmark premium a month"/></span></div>
-      <div><label for="in-conv">Converted to Roth, a year</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-conv" placeholder="e.g. 40,000" aria-label="Converted to Roth a year"/></span>
-        <div class="use" id="use-conv"></div></div>
-      <div><label for="in-other">Other income a year, before conversions</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-other" placeholder="e.g. 20,000" aria-label="Other income a year"/></span>
-        <div class="use" id="use-other"></div></div>
-      <div><label for="in-pretax">Pre-tax balance</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-pretax" placeholder="e.g. 500,000" aria-label="Pre-tax balance"/></span>
-        <div class="use" id="use-pretax"></div></div>
-    </div>
-  </section>
-
-  <section class="slaf-card" id="years" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Year by year, with the cliff</span>
-    <div id="r-chart"></div>
-    <ul class="rows" id="r-rows"></ul>
-  </section>
-
-  <section class="slaf-card" id="assumptions" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Assumptions</span>
-    <ul class="assume" id="r-assume"></ul>
-  </section>
-
-  <p class="disclaimer">
-    Educational tool, not financial advice. Federal ordinary tax only, no
-    state, no credits; the marketplace figures are from a table marked
-    unverified. Everything stays in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">The price of cover is a reading of The Back Half now.
+    <a href="decumulation.html#the-price-of-cover" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/features.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../engines/selfemployed.js"></script>
-<script src="../engines/tax.js"></script>
-<script src="../engines/rothaca.js"></script>
-<script src="../shared/charts.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Features = SLAF.Features,
-      RothAca = SLAF.RothAca, Charts = SLAF.Charts;
-  var ROOM_ID = 'roth-aca';
-  var TABLES = null;
-  function el(id) { return document.getElementById(id); }
-  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
-  function pct(r) { return Money.formatRate(r, { decimals: 1 }); }
-  function useButton(holder, cents, words, target) {
-    var box = el(holder);
-    if (!Money.isEntered(cents)) { box.textContent = ''; return; }
-    box.innerHTML = '<button type="button" class="slaf-btn slaf-btn--quiet" data-use="' + target + '" data-cents="' + cents + '">Use ' + Money.formatCents(cents) + '</button> <span class="slaf-hint">' + esc(words) + '</span>';
-  }
-  function render() {
-    if (!TABLES) return;
-    var h = Spine.getProfile();
-    var on = Features.on('preMedicare', h);
-    el('switch-notice').hidden = on;
-    ['number', 'inputs', 'years', 'assumptions'].forEach(function (id) { el(id).hidden = !on; });
-    if (!on) return;
-    var gross = Schema.grossAnnualIncomeCents(h);
-    var held = RothAca.pretaxCents(h);
-    useButton('use-other', Money.isOk(gross) ? gross.value : null, 'your gross income from Start Here; leave blank for none', 'in-other');
-    useButton('use-pretax', held ? held.cents : null, 'the pre-tax accounts on the Statement; used when this is blank', 'in-pretax');
-    var opts = { benchmarkPremiumMonthlyCents: typed('in-premium'), conversionAnnualCents: typed('in-conv'), otherIncomeAnnualCents: typed('in-other'), pretaxCents: typed('in-pretax') };
-    var r = RothAca.plan(h, TABLES, opts);
-    if (!Money.isOk(r)) {
-      el('r-num').textContent = 'Not yet.'; el('r-sub').textContent = r.reason;
-      el('r-chart').innerHTML = ''; el('r-rows').innerHTML = ''; el('r-assume').innerHTML = ''; el('use-conv').textContent = '';
-      return;
-    }
-    useButton('use-conv', r.fillToCliffCents, 'fills year one to just under the cliff', 'in-conv');
-    var same = r.lowCents === r.highCents;
-    el('r-num').textContent = same ? Money.formatCents(r.lowCents) : Money.formatCents(r.lowCents) + ' to ' + Money.formatCents(r.highCents);
-    el('r-num').setAttribute('data-range', r.lowCents + '|' + r.highCents);
-    var sub = r.years + ' year' + (r.years === 1 ? '' : 's') + ' from ' + r.startAge + ' to ' + r.endAge + ', converting ' + Money.formatCents(r.conversionAnnualCents) + ' a year: '
-      + Money.formatCents(r.cliffOn.taxCents) + ' of federal tax and ' + Money.formatCents(r.cliffOn.premiumCents) + ' of premiums with the cliff, ' + Money.formatCents(r.cliffOff.premiumCents) + ' of premiums without it.';
-    if (r.conversionAnnualCents > 0) {
-      sub += ' Converting nothing would cost ' + Money.formatCents(r.baseline.cliffOn.totalCents) + (r.baseline.cliffOn.totalCents === r.baseline.cliffOff.totalCents ? '' : ' to ' + Money.formatCents(Math.max(r.baseline.cliffOn.totalCents, r.baseline.cliffOff.totalCents)))
-        + ', so the conversions add ' + Money.formatCents(Math.min(r.extraOnCents, r.extraOffCents)) + (r.extraOnCents === r.extraOffCents ? '' : ' to ' + Money.formatCents(Math.max(r.extraOnCents, r.extraOffCents))) + ' now and move ' + Money.formatCents(r.convertedCents) + ' into Roth, about ' + Money.formatCents(r.rothCents) + ' by 65.';
-      if (r.yearsOverCliff) sub += ' Over the cliff in ' + r.yearsOverCliff + ' of the ' + r.years + ' years: with the ceiling in force, the whole premium is yours those years.';
-    } else sub += ' Type a conversion a year to see what it adds.';
-    el('r-sub').textContent = sub;
-    el('r-chart').innerHTML = Charts.stacked({
-      title: 'Year by year', rows: r.rows.map(function (y) {
-        return { label: String(y.age), note: y.overCliff ? 'over the cliff' : Money.formatRate(y.fplMultiple, { decimals: 0 }) + ' of the poverty level',
-          parts: [{ label: 'Federal tax', value: y.taxCents, color: Charts.COLORS.spend }, { label: 'Premium, cliff on', value: y.premiumOnCents, color: Charts.COLORS.target }] };
-      })
-    });
-    el('r-rows').innerHTML = r.rows.map(function (y) {
-      return '<li' + (y.overCliff ? ' class="is-over"' : '') + '><span>' + y.age + '</span><span>income ' + esc(Money.formatCents(y.magiCents)) + (y.overCliff ? ', over the cliff' : ', ' + esc(Money.formatCents(y.roomBeforeCliffCents)) + ' under it') + '</span><span class="r">' + esc(Money.formatCents(y.taxCents + y.premiumOnCents)) + '</span></li>';
-    }).join('');
-    var A = TABLES.aca, B = TABLES.federalBrackets;
-    var rows = [
-      ['The cliff', Money.formatCents(r.cliffCents) + ' for a household of ' + r.householdSize + ' (' + A.cliffMultiple + ' times the poverty level of $' + r.fplDollars.toLocaleString() + ')', 'data/aca_2026.json v' + A.version + ' (' + A.confidence + ')'],
-      ['Without the cliff', 'the contribution is capped at ' + pct(A.ifNoCliff.capPercent) + ' of income, the 2021 to 2025 rule if it is extended', 'the high and low ends of the range are these two rules'],
-      ['Filing status', r.filingStatus + (r.assumed.indexOf('filingStatus') > -1 ? ' (assumed: none chosen in Start Here)' : ''), 'data/federal_brackets_2026.json v' + B.version + ' (' + B.confidence + '), federal ordinary ladder only; the tax is paid from other money, so the whole conversion lands in the Roth'],
-      ['Other income', Money.formatCents(r.otherIncomeCents) + ' a year' + (r.assumed.indexOf('otherIncome') > -1 ? ' (none typed, so none)' : ''), 'what you would report apart from the conversions: pensions, interest, part-time pay'],
-      ['Pre-tax balance', Money.formatCents(r.pretaxCents) + (r.pretaxSource === 'household' ? ', from the Statement' : ', typed') + (r.assumed.indexOf('pretaxOrientation') > -1 ? ' (a retirement account with no tax character is read as pre-tax)' : ''), 'grows at ' + pct(r.growthRate) + ' a year real, data/return_bands.json p50'],
-      ['Household size', String(r.householdSize), 'everyone on the household record, for the poverty level']
-    ];
-    if (r.rows.some(function (y) { return y.belowFpl; })) rows.push(['Below the poverty level', 'in some years', 'in most states Medicaid, not the marketplace credit, covers that income; this room prices the credit anyway']);
-    el('r-assume').innerHTML = rows.map(function (x) { return '<li><strong>' + esc(x[0]) + '</strong> ' + esc(x[1]) + '<small>' + esc(x[2]) + '</small></li>'; }).join('');
-  }
-  ['in-premium', 'in-conv', 'in-other', 'in-pretax'].forEach(function (id) { el(id).addEventListener('input', render); });
-  document.addEventListener('click', function (evt) {
-    var b = evt.target.closest('[data-use]'); if (!b) return;
-    el(b.getAttribute('data-use')).value = Money.formatCents(Number(b.getAttribute('data-cents')), { exact: true }).replace(/^\$/, '');
-    render();
-  });
-  Spine.registerRoom(ROOM_ID);
-  SLAF.Progress.mount(ROOM_ID);
-  Spine.onChange(render);
-  Promise.all([Reference.load(['federalBrackets', 'aca', 'returnBands', 'seTax']), Features.ready()]).then(function (r) { TABLES = r[0]; render(); }).catch(function (err) {
-    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#assumptions': '#ra-assumptions', '#inputs': '#ra-inputs', '#number': '#ra-number' };
+    var hash = location.hash || '';
+    var target = 'decumulation.html' + (map[hash] || '#the-price-of-cover');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

@@ -80,7 +80,7 @@ module.exports = function (t) {
     employed:     ['decumulation', 'partner'],
     selfEmployed: ['decumulation', 'partner'],
     unemployed:   ['fire', 'hassle', 'decumulation', 'tax', 'partner'],
-    student:      ['protection', 'decumulation', 'roth-aca', 'middle-class-trap', 'partner'],
+    student:      ['protection', 'decumulation', 'partner'],
     retired:      ['fire', 'hassle', 'career-move', 'partner'],
     both:         ['decumulation', 'partner']
   };

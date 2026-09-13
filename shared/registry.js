@@ -742,70 +742,29 @@
   ROOMS.push({
     id: 'decumulation',
     features: ['showNominal', 'showMilestones', 'sequenceRisk', 'preMedicare', 'incomeFloor', 'inheritanceRules'],
-    group: 'decisions', subgroup: 'moves', aliases: ['retirement withdrawals', 'draw down', '4%', 'vpw', 'social security'], appliesWhen: 'situation != student',
+    group: 'decisions', subgroup: 'moves', aliases: ['retirement withdrawals', 'draw down', '4%', 'vpw', 'social security', 'roth conversion', 'aca', 'marketplace', 'middle class trap', '59 and a half', 'reachable', 'what can i reach', 'penalty'], appliesWhen: 'situation != student',
     kind: 'about-you',
     needs: ['investments', 'monthlyExpenses', 'grossAnnualIncome'],
     order: 33,
-    title: 'Drawing It Down',
-    blurb: 'How a retiree draws: the withdrawal rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to.',
+    title: 'The Back Half',
+    blurb: 'How the money comes down: what you draw and how long it lasts, what you could actually reach today, what sits behind the 59½ wall, and what health cover costs before Medicare.',
     href: 'rooms/decumulation.html',
     tier: 2,
     tags: ['income'],
-    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents'], writes: ['assets.allocation', 'plans.decumulation'] },
+    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents', 'assets.items', 'you.dob'], writes: ['assets.allocation', 'plans.decumulation'] },
       subsections: [
         { id: 'number',      label: 'The age the money lasts to' },
         { id: 'chart',       label: 'The balance, year by year' },
         { id: 'inputs',      label: 'How you draw' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'reach', label: 'What you can reach' },
+        { id: 'paths', label: 'Through the wall' },
+        { id: 'ra-number', label: 'The price of cover' }
       ]
   });
 
-  /* Roth Conversions Before 65 (J8, D-216): conversions are reported
-     income and reported income sets the marketplace premium; the two priced
-     together to Medicare, as a range across the cliff-on and cliff-off
-     rules. Behind the preMedicare switch. */
-  ROOMS.push({
-    id: 'roth-aca',
-    features: ['preMedicare'],
-    group: 'decisions', subgroup: 'moves', aliases: ['roth conversion', 'aca', 'marketplace', 'obamacare', 'subsidy cliff', 'premium tax credit', 'before 65'],
-    appliesWhen: 'situation != student',
-    kind: 'explore',
-    needs: ['dob', 'filingStatus'],
-    order: 33.5,
-    title: 'Roth Conversions Before 65',
-    blurb: 'Converting pre-tax money to Roth is reported income, and reported income sets what the marketplace charges for health cover until Medicare. Year by year to 65, tax and premiums together, as a range.',
-    href: 'rooms/roth-aca.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['assets.invested', 'taxes.filingStatus', 'you.dob'], writes: [] },
-    subsections: [
-      { id: 'number',      label: 'Tax and premiums, together, to 65' },
-      { id: 'inputs',      label: 'The what-if' },
-      { id: 'years',       label: 'Year by year' },
-      { id: 'assumptions', label: 'Assumptions' }
-    ]
-  });
-
-  /* The Middle Class Trap Test (K1, D-218): both sides of the debate on
-     the household's numbers, four paths to the pre-tax money, each with a
-     verdict and its range. */
-  ROOMS.push({
-    id: 'middle-class-trap',
-    group: 'decisions', subgroup: 'moves', aliases: ['middle class trap', 'trap', 'bridge', 'roth ladder', '72t', 'rule of 55', 'early retirement'],
-    appliesWhen: 'situation != student',
-    kind: 'explore',
-    needs: ['dob', 'monthlyExpenses'],
-    order: 33.7,
-    title: 'The Middle Class Trap Test',
-    blurb: 'Is a net worth that is mostly the house and the 401(k) a trap before 59 and a half, or a planning problem? Both sides on your numbers: bridge accounts, the Roth conversion ladder, 72(t) payments and the Rule of 55, year by year, each with a verdict and its range.',
-    href: 'rooms/middle-class-trap.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['assets', 'assets.invested', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob', 'plans.targets'], writes: [] },
-    subsections: [{ id: 'verdict', label: 'What the numbers say' }, { id: 'debate', label: 'The debate' }, { id: 'paths', label: 'Four paths' }, { id: 'years', label: 'Year by year' }, { id: 'assumptions', label: 'Assumptions' }]
-  });
   /* The Referee (K3, D-218): debates as buttons, both sides on your numbers. */
   ROOMS.push({
     id: 'debates',
@@ -1123,26 +1082,6 @@
       { id: 'not-here', label: 'What these rooms do not do' },
       { id: 'who',      label: 'Who answers them' },
       { id: 'stage',    label: 'At your stage' }
-    ]
-  });
-
-  /* Reachable Money (H4, D-212): an amount and a by-when; the order to pull
-     it and what each dollar costs on the way out. Reads only. */
-  ROOMS.push({
-    id: 'reachable',
-    group: 'decisions', subgroup: 'moves', aliases: ['reachable', 'waterfall', 'emergency money', 'pull money', 'liquid'],
-    kind: 'explore',
-    needs: ['cashSavings'],
-    order: 12.5,
-    title: 'Reachable Money',
-    blurb: 'If you needed money, where would it come from and what would each dollar cost on the way out? Cash and Roth contributions free, taxable on the gains, pre-tax with the penalty. Home equity shown, never counted.',
-    href: 'rooms/reachable.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'assets.items', 'debt.items', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
-    subsections: [
-      { id: 'headline', label: 'In an emergency' },
-      { id: 'pull',     label: 'A specific amount' }
     ]
   });
 

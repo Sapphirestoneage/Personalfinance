@@ -14634,6 +14634,49 @@ anti-rule of D-229 and not a block; and Worth The Hassle is a block whose
 cost is negative, which the shell cannot price until it can price what a
 thing pays.
 
+### D-254 — The Back Half, four readings of coming down
+
+**Decision.** Reachable Money, the Middle Class Trap Test and Roth
+Conversions Before 65 become readings of Drawing It Down, and the room is
+called The Back Half. Four hats: `#the-draw` (the default),
+`#what-you-can-reach`, `#before-59`, `#the-price-of-cover`. All three old
+pages redirect, hash and all.
+
+**Why.** D-228: you cannot size the mountain until you know how you come
+down it, and every one of these four is part of coming down. The trap test
+and what you can reach were rooms you had to already know to look for.
+
+**Ownership.** Nothing moves. The three draw fields stay where they are, and
+the other three readings write nothing — they are what-ifs about money not
+yet drawn.
+
+### What is NOT done, and why it is not
+
+D-228 asks for more than a merge: the FI **target** should fall out of the
+draw, and The Number should become a read-out of it with the naive 25×
+beside it. That has not happened. Today the target is still
+`engines/tier0.js fireNumber` — annual spending ÷ SWR — and every room reads
+it.
+
+This is not a merge left half-finished; it is the engine change D-228
+describes, and it waits on the open question D-228 itself records: **whether
+the income floor is modelled as means-tested.** Galloway's objection is that
+without it the room sells comfort. That answer changes the target, and the
+target changes the number every other room in the app shows a person about
+their own life. Guessing it would be the most consequential guess in the
+programme.
+
+So the four readings are one room, which is real and useful on its own, and
+the reframe is stated at the top of the room's own spec so nobody reads the
+merge as the job being done.
+
+**A tool fix this merge forced.** `apply_renames` was widened in D-250 to
+rename whole-word string literals. That is right for ids and wrong for a
+CLASS that happens to share an id's name — `<table class="years"
+id="t-years">` lost its class and its stylesheet rule with it. Class
+attributes are parked before the rename and restored after; the "names a
+class no stylesheet defines" check caught it.
+
 ---
 
 # The Dungeons & Dividends entries

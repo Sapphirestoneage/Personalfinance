@@ -10671,7 +10671,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 17);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 14);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13400,7 +13400,13 @@ section('H4, H5, H7, H8: the waterfall, does the rule apply, the receipt, share 
   checkTrue('no date of birth: the penalty is assumed and said, never silently dropped', Reachable.waterfall(noDob, T, { rates: rates }).assumed.some(a => /under 59/.test(a)));
   const wd = Reachable.waterfall(Demo.build(), T, {});
   checkTrue('on the demo the rates come from the tax tables: a marginal rate and a gains rate above zero', wd.rates.source === 'tax tables' && wd.rates.marginalRate > 0 && wd.rates.capitalGainsRate > 0, JSON.stringify(wd.rates));
-  checkTrue('the room reads only and is in every arrangement', Registry.byId('reachable').daite.writes.length === 0 && JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts.every(l => l.groups.some(g => g.rooms.indexOf('reachable') >= 0)));
+  /* Reachable Money is The Back Half's what-you-can-reach reading since
+     D-254, and it still writes nothing — the room it is in writes only the
+     three draw fields. */
+  checkTrue('the reading writes nothing, and is in every arrangement',
+    !Registry.byId('reachable')
+    && /url=decumulation\.html#what-you-can-reach/.test(fs.readFileSync(path.join(ROOT, 'rooms/reachable.html'), 'utf8'))
+    && JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts.every(l => l.groups.some(g => g.rooms.indexOf('decumulation') >= 0)));
 
   /* -- H5: does the rule apply to you now? ------------------------------------- */
   const rules = T.advice.rules;
@@ -13772,18 +13778,27 @@ section('J7, J8: two views of Partner, Roth conversions before 65 (D-216)');
   checkTrue('...a retirement account with no character is assumed pre-tax, and said so; no filing status is assumed single, and said so', fromStatement.assumed.indexOf('pretaxOrientation') > -1 && fromStatement.assumed.indexOf('filingStatus') > -1 && fromStatement.filingStatus === 'single');
   checkTrue('the no-cliff cap lives in the table, not the engine', T.aca.ifNoCliff.capPercent === 0.085 && !/0\.085/.test(fs.readFileSync(path.join(ROOT, 'engines/rothaca.js'), 'utf8')));
   /* the room */
-  const rothRoom = fs.readFileSync(path.join(ROOT, 'rooms/roth-aca.html'), 'utf8');
+  /* Roth Conversions Before 65 is The Back Half's price-of-cover reading
+     since D-254. These assertions are about that reading. */
+  const backHalf = fs.readFileSync(path.join(ROOT, 'rooms/decumulation.html'), 'utf8');
+  const rothRoom = backHalf.split('/* ---- READING ').filter(b => b.indexOf('view-the-price-of-cover') === 0)[0]
+    + backHalf.slice(backHalf.indexOf('<section id="view-the-price-of-cover"'), backHalf.indexOf('<p class="disclaimer">'));
   checkTrue('the room sits behind the preMedicare switch, through Features.on', /Features\.on\('preMedicare', h\)/.test(rothRoom) && /switch-notice/.test(rothRoom));
   checkTrue('...writes nothing to the household', rothRoom.indexOf('Spine.set(') === -1 && rothRoom.indexOf('Spine.updateProfile(') === -1);
   checkTrue('...never a point without its range', /data-range/.test(rothRoom) && / to /.test(rothRoom));
   checkTrue('...the premium is typed, never guessed: no premium table in data/', !fs.readdirSync(path.join(ROOT, 'data')).some(f => /premium/i.test(f)) && /only the marketplace can tell you/.test(rothRoom));
   checkTrue('...no em-dash on screen', rothRoom.replace(/<!--[\s\S]*?-->/g, '').indexOf('—') === -1);
-  const rr = Registry.byId('roth-aca');
-  checkTrue('the registry lists it under moves with the switch, and the layouts shelve it beside Drawing It Down', rr && rr.subgroup === 'moves' && rr.features.indexOf('preMedicare') > -1 && rr.order === 33.5);
+  const rr = Registry.byId('decumulation');
+  checkTrue('the room it lives in is under moves, and the reading keeps the switch',
+    rr && rr.subgroup === 'moves' && !Registry.byId('roth-aca')
+    && /Features\.on\('preMedicare', h\)/.test(rothRoom));
   const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
   const shelves = [];
   (function walk(x) { if (Array.isArray(x)) { if (x.indexOf('decumulation') > -1) shelves.push(x); x.forEach(walk); } else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
-  checkTrue('...in every arrangement, right after it', shelves.length === 20 && shelves.every(a => a[a.indexOf('decumulation') + 1] === 'roth-aca'));
+  /* It was shelved beside Drawing It Down in all twenty arrangements; it is
+     inside it now, so what has to hold is that the room is still on every
+     shelf (D-254). */
+  checkTrue('...and The Back Half is on every shelf', shelves.length === 20);
 })();
 
 /* ==========================================================================
@@ -13959,7 +13974,10 @@ section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
   checkTrue('the earliest age not trapped is found per path', by(soon, 'sepp').earliestAge === 50 && by(soon, 'ladder').earliestAge > 52);
   checkTrue('every path totals its federal tax; the bridge alone pays none on cash and basis', by(soon, 'bridge').taxCents === 0 && by(soon, 'ladder').taxCents > 0 && by(soon, 'sepp').taxCents > 0);
   checkTrue('no date of birth: incomplete, asking for it', Trap.run(Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult' })] }), T, {}).missing[0] === 'dob');
-  const trapRoom = fs.readFileSync(path.join(ROOT, 'rooms/middle-class-trap.html'), 'utf8');
+  /* The trap test is The Back Half's before-59 reading since D-254. */
+  const backHalfPage = fs.readFileSync(path.join(ROOT, 'rooms/decumulation.html'), 'utf8');
+  const trapRoom = backHalfPage.split('/* ---- READING ').filter(b => b.indexOf('view-before-59') === 0)[0]
+    + backHalfPage.slice(backHalfPage.indexOf('<section id="view-before-59"'), backHalfPage.indexOf('<!-- ===== THE PRICE OF COVER'));
   checkTrue('the room names both sides with their sources, from the debates table', /middleClassTrap/.test(trapRoom) && /s\.source/.test(trapRoom));
   checkTrue('...and writes nothing', trapRoom.indexOf('Spine.set(') === -1 && trapRoom.indexOf('Spine.updateProfile(') === -1);
 
@@ -13997,7 +14015,9 @@ section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
   const debRoom = debPage.slice(debPage.indexOf('<section id="view-which-side"'), debPage.indexOf('<!-- =====', debPage.indexOf('<section id="view-which-side"')))
     + debPage.split('<script>').filter(x => x.indexOf('READING view-which-side,') !== -1)[0];
   checkTrue('the Referee never says "you should"', !/you should/i.test(debRoom.replace(/Never "you should"/, '')) && debRoom.indexOf('Spine.set(') === -1);
-  ['middle-class-trap', 'debates'].forEach(id => checkTrue(id + ' is registered', !!Registry.byId(id)));
+  checkTrue('The Referee is registered', !!Registry.byId('debates'));
+  checkTrue('the trap test is a reading of The Back Half', !Registry.byId('middle-class-trap')
+    && /url=decumulation\.html#before-59/.test(fs.readFileSync(path.join(ROOT, 'rooms/middle-class-trap.html'), 'utf8')));
 })();
 
 /* ==========================================================================
@@ -14485,7 +14505,7 @@ section('Every class a page names has a rule somewhere (D-226)');
     'rooms/debt-payoff.html': ['grid-2'],
     'rooms/ledger.html': ['xbody'],   /* Express is a Ledger view now (D-230); the hook moved with its markup */
     'rooms/fire.html': ['why'],
-    'rooms/middle-class-trap.html': ['plain'],
+    'rooms/decumulation.html': ['plain'],
     'rooms/debates.html': ['acts']    /* Unlearning is a Referee reading now (D-242); the hook moved with its markup */
   };
   const pages = ['index.html', 'map.html'].concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));

@@ -2,7 +2,7 @@
    test/run.js's room-test loader with its context. Every expected figure
    below is worked by hand from the persona, never copied from the engine. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Ratios, Projection, Vpw, Room, Gate, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Ratios, Projection, Vpw, Room, Gate, TABLES } = t;
   const Decumulation = require(path.join(ROOT, 'engines/decumulation.js'));
 
   section('Decumulation (D-098): the draw, the rate, VPW, and the age the money lasts to');
@@ -148,17 +148,21 @@ module.exports = function (t) {
   checkTrue('with the intake’s guesses for a retiree the room has a number', Money.isOk(pg), pg.reason);
 
   /* ---- The page ------------------------------------------------------------ */
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/decumulation.html'), 'utf8');
+  /* This room carries a second reading since D-254, so these assertions
+     read its own slice; `page` is the whole file, for the facts that
+     really are page-wide. */
+  const slice = reading('rooms/decumulation.html', 'view-the-draw', "READING view-the-draw,");
+  const html = slice.html, page = slice.page;
   Room.IDS.forEach(id => checkTrue(`Decumulation has #${id}`, new RegExp('id="' + id + '"').test(html)));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue(`… and the deep link #${id}`, new RegExp('id="' + id + '"').test(html)));
   checkTrue('it mounts the template as decumulation', /Room\.mount\(\{/.test(html) && /id: 'decumulation'/.test(html) && html.indexOf('STUB') === -1);
   checkTrue('with a number, a chart, inputs, amounts, assumptions, why and scope', ['number:', 'chart:', 'inputs:', 'amounts:', 'assumptions:', 'why:', 'scope:'].every(k => html.indexOf(k) !== -1));
   check('three inputs: the stock share, the planned draw, Social Security from', ['stockShare', 'plannedAnnualDrawCents', 'socialSecurityAt'].filter(c => html.indexOf("ctl: '" + c + "'") !== -1).length, 3);
   checkTrue('it writes only its own three paths', (html.match(/Spine\.set\('decumulation\.' \+ key/g) || []).length === 1 && !/Spine\.(upsert|setMonthlyExpenses|set\('(?!decumulation))/.test(html));
-  checkTrue('it loads the engines it calls', ['engines/ratios.js', 'engines/vpw.js', 'engines/projection.js', 'engines/decumulation.js'].every(s => html.indexOf(s) !== -1));
+  checkTrue('it loads the engines it calls', ['engines/ratios.js', 'engines/vpw.js', 'engines/projection.js', 'engines/decumulation.js'].every(s => page.indexOf(s) !== -1));
   checkTrue('one chart: an area', (html.match(/Charts\.area\(/g) || []).length === 2 && !/Charts\.(donut|bars|stacked)\(/.test(html));
   checkTrue('it says what it does not do', /scope: 'This room does not model taxes on withdrawals, Medicare, or sequence-of-returns risk\.'/.test(html));
-  checkTrue('it declares its live-form discipline and a place for a theme', /LIVE-FORM: built once/.test(html) && /THEMING:/.test(html));
+  checkTrue('the page declares its live-form discipline and a place for a theme', /LIVE-FORM: guarded/.test(page) && /THEMING:/.test(page));
   checkTrue('it says plainly that withdrawals are not taxed here', /Tax on withdrawals/.test(html) && /none modelled/.test(html));
   checkTrue('the why speaks to the retired only', /retired: 'Retired,/.test(html) && /employed: ''/.test(html));
 };
