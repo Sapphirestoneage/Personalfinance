@@ -14586,6 +14586,54 @@ It has more listeners, more boot, and one DOM, and three of the five above
 are only visible with a browser open. The phone walk runs before a merge
 ships, not after the programme.
 
+### D-253 — The Decision Room: one shell, five outputs on every block
+
+**Decision.** Goals becomes The Decision Room. Every block answers the same
+five questions, and Can It Be Undone stops being a room: its two figures are
+fields on every block, and its catalogue is a way to start one.
+
+**The five, and what each already was.**
+
+| | | |
+|---|---|---|
+| what it costs | the total, itemised or one figure | already in `plan` |
+| what it costs you | hours of your life, months FI is pushed | `shared/lens.js` |
+| when it lands | the date you named, or the date the money says | already in `plan` |
+| whether it fits | against the money spare each month | Cash Flow's surplus |
+| can it be undone | the cost, the months, and the verdict | `engines/reversibility.js` |
+
+**None of the five is a new formula.** That is the discipline the shell
+exists for: a block type adds a way to FILL the five, never a sixth answer.
+
+**Three fields on a block** (`shared/schema.js`): `undoCostCents`,
+`undoMonths`, `decisionId`. All three default to null — not asked, never
+"free" or "instant". **Compatibility:** a household stored before this reads
+back with the three as null and every block behaves exactly as it did; the
+ownership row still reads a pre-merge `reversibility.decisionId`.
+
+**The catalogue survives as a way in.** The ten decisions people weigh are
+now a second picker. Picking one starts a block named after it, priced by
+`Reversibility.undo` — the room's own engine, not a second rule — and
+carrying what the table knows that two figures cannot say: that some things
+do not come undone at any price. "Have a child" is answered. "Get married"
+is answered. Neither was ever priced.
+
+**A block with no price still answers the fifth.** A decision may never carry
+a figure, so `plan` returns an incomplete result that CARRIES the undo
+answer rather than nothing, and every row says what it lacks instead of
+showing a blank — a blank reads as a zero, and none of these is ever zero.
+
+**The row that moved.** `reversibilityDecision` was "the decision being
+weighed", owned by a room that asked it of one thing. It reads across blocks
+now: how many of the things you are weighing you have asked it of.
+
+**Six rooms are held, with reasons, on the map** — wedding, what-if-life,
+worth, hassle, adventure, timeline. Two of those reasons are worth repeating
+here: Worth It is a judgement about a decision BEHIND you, which is the
+anti-rule of D-229 and not a block; and Worth The Hassle is a block whose
+cost is negative, which the shell cannot price until it can price what a
+thing pays.
+
 ---
 
 # The Dungeons & Dividends entries

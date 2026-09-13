@@ -51,13 +51,12 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **big-purchase** — Big Purchase · 494 lines · engines: projection, tier0, hourly, quickmath, purchase, dreamline · owns: purchasePrice, purchaseMonths, purchaseRate, dreamsMonthly · D-237, D-129, D-112
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 
-## What Matters (6)
+## What Matters (5)
 
 - **values** — What Matters · 1675 lines · engines: projection, tier0, cashflow, values, fulfillment, rerank, foo, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget, rerankCut · D-237
-- **goals** — Goals · 493 lines · engines: projection, tier0, cashflow, goals · D-091, D-090, D-029
+- **goals** — The Decision Room · 700 lines · engines: projection, tier0, cashflow, hourly, events, reversibility, goals · owns: reversibilityDecision · D-237, D-090
 - **enough** — Enough · 276 lines · engines: projection, tier0, cashflow, fulfillment, hourly, enough · owns: enoughMonthly · D-164, D-114, D-079
 - **week** — The Life · 522 lines · engines: projection, tier0, hourly, cashflow, week, ratios, buckets · owns: designedHours, bucketsPlanned · D-237
-- **reversibility** — Can It Be Undone · 328 lines · engines: projection, tier0, cashflow, hourly, events, reversibility · owns: reversibilityDecision · D-101
 - **debates** — The Referee · 574 lines · engines: selfemployed, tax, projection, tier0, trap, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-237, D-218
 
 ## Level Up (1)
@@ -71,7 +70,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (49)
+## Files in rooms/ not in the registry (50)
 
 - rooms/accounts.html
 - rooms/between-jobs.html
@@ -108,6 +107,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/real-hourly-wage.html
 - rooms/refresh.html
 - rooms/rerank.html
+- rooms/reversibility.html
 - rooms/savings-rate.html
 - rooms/self-employed.html
 - rooms/side-hustle.html

@@ -6,13 +6,31 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Goals · SPARKS</title>
-<meta name="description" content="A wedding, a deposit, a big trip — what it costs, what it needs a month, and whether that actually fits."/>
+<title>The Decision Room · SPARKS</title>
+<meta name="description" content="Anything you are weighing, in one place — what it costs, what it costs you, when it lands, whether it fits, and whether it can be undone."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11, §9 item 6, §13.
+  ROOM SPEC — SPEC.md §11, §9 item 6, §13. DECISIONS.md D-253 (the shell).
+
+  ONE SHELL, FIVE OUTPUTS ON EVERY BLOCK.
+
+    what it costs      the total, itemised or as one figure
+    what it costs you  hours of your life, and the months of FI it pushes
+    when it lands      the date you named, or the date the money says
+    whether it fits    against the money actually spare each month
+    can it be undone   the cost and the months to reverse it, and the
+                       verdict those two make
+
+  None of the five is a new formula: the lens converts, Cash Flow says what
+  is spare, and engines/reversibility.js gives the verdict it gave when it
+  was a room. A BLOCK TYPE adds a way to FILL the five, never a sixth
+  answer — that is the whole discipline of the shell.
+
+  Two ways to start a block: a goal template (data/goal_templates.json), or
+  a decision people weigh (data/reversibility.json), which arrives with the
+  undo question already priced where there is an honest figure for it.
 
   1. READS   Cash Flow's net surplus, to say whether the required monthly
              figure actually fits.
@@ -49,6 +67,23 @@
   .goal-note.warn { color: var(--color-caution); }
   .goal-note.good { color: var(--color-positive); }
 
+  /* The five, on every block (D-253). One row per question, the question in
+     the muted face and the answer in the reading one, so a block scans as
+     five answers rather than a paragraph. */
+  .five { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .five li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2);
+    align-items: baseline; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  .five li:first-child { border-top: none; }
+  .five .five-q { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .five .five-a { font-variant-numeric: tabular-nums; text-align: right; }
+  .five .five-a.warn { color: var(--color-caution); }
+  .five .five-a.is-open { color: var(--color-text-faint); font-size: var(--text-sm); }
+  .five small { grid-column: 1 / -1; color: var(--color-text-faint); font-size: var(--text-xs); }
+  @media (max-width: 380px) {
+    .five li { grid-template-columns: 1fr; }
+    .five .five-a { text-align: left; }
+  }
+
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; margin-top: var(--space-3); }
   @media (max-width: 380px) { .grid-2 { grid-template-columns: 1fr; } }
 
@@ -69,8 +104,8 @@
 
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>Goals</h1>
-  <p class="room-lede">A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits.</p>
+  <h1>The Decision Room</h1>
+  <p class="room-lede">Anything you are weighing, on a card of its own — and the same five questions asked of every one.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -94,6 +129,14 @@
       prices.
     </p>
     <div class="picker" id="picker"></div>
+
+    <span class="slaf-label" style="display:block;margin-top:var(--space-4)">Or a decision people weigh</span>
+    <p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">
+      Not everything you are weighing is something you save up for. These
+      start a block with the undo question already priced, where there is an
+      honest figure for it.
+    </p>
+    <div class="picker" id="decisions"></div>
   </section>
 
   <p class="disclaimer">
@@ -119,20 +162,36 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
+<!-- The five outputs (D-253). Order matters and each of these captures the
+     one before it at load: hourly before the lens, expr before events,
+     events before reversibility, all of them before goals. -->
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/expr.js"></script>
+<script src="../engines/events.js"></script>
+<script src="../engines/reversibility.js"></script>
 <script src="../engines/goals.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Goals = SLAF.Goals, Charts = SLAF.Charts;
+      Reference = SLAF.Reference, Goals = SLAF.Goals, Charts = SLAF.Charts,
+      Reversibility = SLAF.Reversibility;
 
   var ROOM_ID = 'goals';
   var TABLES = null;
   var openGoalId = null;
 
   function el(id) { return document.getElementById(id); }
-  function esc(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;'); }
+  /* Attribute AND text: the five outputs and the decision picker put table
+     text and a person's own block name into element content, not only into
+     value="" (D-253). Escaping & and < as well is correct in both places. */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
 
   function monthsLabel(n) {
     if (n < 12) return n + (n === 1 ? ' month' : ' months');
@@ -147,6 +206,122 @@
       return '<button type="button" class="pick" data-template="' + t.id + '">'
         + '<strong>' + t.label + '</strong><span>' + t.blurb + '</span></button>';
     }).join('');
+
+    /* The decisions Can It Be Undone used to list, as a way to START a
+       block (D-253). The room went; its catalogue and its engine did not. */
+    el('decisions').innerHTML = Reversibility.list(TABLES).map(function (d) {
+      return '<button type="button" class="pick" data-decision="' + esc(d.id) + '">'
+        + '<strong>' + esc(d.label) + '</strong><span>' + esc(d.why || '') + '</span></button>';
+    }).join('');
+  }
+
+  /* A block started from a named decision. The undo figures are priced by
+     the same engine the room used — no second formula — and left blank,
+     with the engine's own reason, when the table has no honest figure for
+     it (the child, the marriage) or still wants an answer. */
+  function blockFromDecision(id) {
+    var d = Reversibility.byId(TABLES, id);
+    if (!d) return null;
+    var r = Reversibility.undo(Spine.getProfile(), id, {}, TABLES);
+    var cents = Money.isOk(r) && Money.isEntered(r.value) ? r.value : null;
+    var months = Money.isOk(r) && Money.isEntered(r.months) ? r.months : null;
+    return Schema.createGoal({
+      name: d.label, decisionId: d.id,
+      undoCostCents: cents, undoMonths: months
+    });
+  }
+
+  /* ---- The five, on every block (D-253) -------------------------------
+     One shell asks the same five questions of anything you are weighing.
+     Every one of them either answers or says what it is missing: a blank
+     row would read as a zero, and none of these is ever zero by default. */
+  var FIVE = [
+    { key: 'costs',  label: 'What it costs' },
+    { key: 'life',   label: 'What it costs you' },
+    { key: 'when',   label: 'When it lands' },
+    { key: 'fits',   label: 'Whether it fits' },
+    { key: 'undone', label: 'Can it be undone' }
+  ];
+
+  function fiveOf(p) {
+    var out = {};
+    var priced = Money.isOk(p);
+    out.costs = priced
+      ? { said: Money.formatCents(p.totalCents) }
+      : { missing: p.reason || 'No price on it yet.' };
+    if (!priced) {
+      out.life = { missing: 'Needs a price first.' };
+      out.when = { missing: 'Needs a price and a date.' };
+      out.fits = { missing: 'Needs a price first.' };
+      out.undone = undoRow(p.undo || {});
+      return out;
+    }
+
+    out.life = p.inLife && p.inLife.hoursDisplay
+      ? { said: p.inLife.hoursDisplay + ' of your life'
+            + (p.inLife.fiPushedDisplay ? ' · ' + p.inLife.fiPushedDisplay : '') }
+      : { missing: (p.inLife && p.inLife.reason) || 'No real hourly wage yet.' };
+
+    if (p.alreadyThere) {
+      out.when = { said: 'Funded' };
+    } else if (Money.isEntered(p.monthsAtCurrentContribution)) {
+      out.when = { said: monthsLabel(p.monthsAtCurrentContribution)
+        + (p.arrivesLate ? ' — ' + monthsLabel(p.monthsLate) + ' after the date' : ''),
+        warn: !!p.arrivesLate };
+    } else if (p.monthsUntil && Money.isOk(p.monthsUntil)) {
+      out.when = { said: monthsLabel(p.monthsUntil.value) + ' to the date you named' };
+    } else {
+      out.when = { missing: 'No date, and nothing going in a month.' };
+    }
+
+    if (p.alreadyThere) {
+      out.fits = { said: 'Already paid for' };
+    } else if (p.affordability) {
+      out.fits = p.affordability.fitsInSurplus
+        ? { said: Money.formatRate(p.affordability.shareOfSurplus, { decimals: 0 }) + ' of what you have spare' }
+        : { said: Money.formatCents(p.affordability.shortPerMonthCents) + ' a month more than you have spare', warn: true };
+    } else {
+      out.fits = { missing: p.affordabilityReason || 'Needs a month of spending to compare against.' };
+    }
+
+    out.undone = undoRow(p.undo || {});
+    return out;
+  }
+
+  /* The fifth row, apart, because it is the one answer a block can give
+     before it has a price at all (D-253). */
+  function undoRow(u) {
+    if (!u.asked) {
+      return { missing: 'Not asked yet. What would undoing it cost, and take?' };
+    }
+    /* No price is not the same as no answer: the table says some of these
+       do not come undone, and that IS the answer. */
+    if ((u.reversible === false || u.unpriced) && u.costCents === null) {
+      return { said: u.verdict || 'a one-way street', warn: true,
+        missingWhy: 'There is no honest figure for undoing this one.' };
+    }
+    if (u.verdict) {
+      return { said: u.verdict
+          + (u.costCents !== null ? ' · ' + Money.formatCents(u.costCents) : '')
+          + (u.months !== null ? ' · ' + monthsLabel(u.months) : ''),
+        warn: u.verdict === Reversibility.VERDICTS.oneWay };
+    }
+    return { said: (u.costCents !== null ? Money.formatCents(u.costCents) + ' to undo' : 'No cost named')
+        + (u.months !== null ? ' · ' + monthsLabel(u.months) : ''),
+      missingWhy: 'A month of spending would turn that into a verdict.' };
+  }
+
+  function fiveHtml(p) {
+    var f = fiveOf(p);
+    return '<ul class="five">' + FIVE.map(function (row) {
+      var v = f[row.key] || {};
+      return '<li><span class="five-q">' + esc(row.label) + '</span>'
+        + (v.said
+            ? '<span class="five-a' + (v.warn ? ' warn' : '') + '">' + esc(v.said) + '</span>'
+            : '<span class="five-a is-open">' + esc(v.missing) + '</span>')
+        + (v.missingWhy ? '<small>' + esc(v.missingWhy) + '</small>' : '')
+        + '</li>';
+    }).join('') + '</ul>';
   }
 
   function goalCard(h, goal) {
@@ -194,6 +369,10 @@
       out.push('<div class="goal-figure is-incomplete">' + (p.reason || '—') + '</div>');
     }
 
+    /* The five, under whatever the headline said — including on a block
+       with no price, which still has an answer to the fifth (D-253). */
+    out.push(fiveHtml(p));
+
     out.push('<button type="button" class="toggle" data-toggle="' + goal.id + '">'
       + (open ? 'Hide the detail' : 'Open it up') + '</button>');
 
@@ -217,6 +396,22 @@
         + goal.id + '" data-field="lumpTargetCents" value="'
         + (Money.isEntered(goal.lumpTargetCents) ? Money.formatCents(goal.lumpTargetCents) : '')
         + '" placeholder="if not itemised" aria-label="Lump target"/></span></label>'
+        + '</div>');
+
+      /* Can it be undone: two figures, on every block (D-253). Blank is
+         "not asked" — the fifth row says so rather than calling it a door. */
+      out.push('<span class="slaf-label" style="display:block;margin-top:var(--space-4)">If you changed your mind</span>');
+      out.push('<div class="grid-2">'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">What undoing it would cost</span>'
+        + '<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" data-goal="'
+        + goal.id + '" data-field="undoCostCents" value="'
+        + (Money.isEntered(goal.undoCostCents) ? Money.formatCents(goal.undoCostCents) : '')
+        + '" placeholder="e.g. 2,000" aria-label="Cost to undo"/></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">And how long, in months</span>'
+        + '<span class="slaf-input-shell"><input type="text" inputmode="numeric" data-goal="'
+        + goal.id + '" data-field="undoMonths" value="'
+        + (Money.isEntered(goal.undoMonths) ? String(goal.undoMonths) : '')
+        + '" placeholder="e.g. 3" aria-label="Months to undo"/></span></label>'
         + '</div>');
 
       out.push('<div class="items">');
@@ -343,7 +538,12 @@
     var patch = { id: id };
     if (field === 'name') patch.name = raw === '' ? null : raw;
     else if (field === 'targetDate') patch.targetDate = raw === '' ? null : raw;
-    else patch[field] = Money.parseMoney(raw);
+    /* Months are a count, not money: parseMoney would read 3 as $3.00 and
+       store 300 (D-253). Blank stays null — not asked, not zero. */
+    else if (field === 'undoMonths') {
+      var n = String(raw).replace(/[^0-9.]/g, '');
+      patch.undoMonths = n === '' ? null : Number(n);
+    } else patch[field] = Money.parseMoney(raw);
     Spine.upsertGoal(patch);
     render();
   }
@@ -367,6 +567,13 @@
     if (pick) {
       var goal = Goals.fromTemplate(TABLES.goalTemplates, pick.getAttribute('data-template'));
       if (goal) { Spine.upsertGoal(goal); openGoalId = goal.id; goalForm.force(); render();
+        el('goal-list').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      return;
+    }
+    var dec = evt.target.closest('[data-decision]');
+    if (dec) {
+      var block = blockFromDecision(dec.getAttribute('data-decision'));
+      if (block) { Spine.upsertGoal(block); openGoalId = block.id; goalForm.force(); render();
         el('goal-list').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       return;
     }

@@ -73,6 +73,9 @@ const TABLES = {
   fireVariants: require(path.join(ROOT, 'data/fire_variants.json')),
   seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
   goalTemplates: require(path.join(ROOT, 'data/goal_templates.json')),
+  /* The Decision Room prices a block started from a named decision with the
+     same table Can It Be Undone used (D-253). */
+  reversibility: require(path.join(ROOT, 'data/reversibility.json')),
   healthScore: require(path.join(ROOT, 'data/health_score.json')),
   liquidityBenchmarks: require(path.join(ROOT, 'data/liquidity_benchmarks.json')),
   values: require(path.join(ROOT, 'data/values.json')),
@@ -1703,6 +1706,72 @@ function weddingHousehold() {
   check('a date in the past is incomplete',
     Goals.plan(h, Schema.createGoal({ lumpTargetCents: 100000, targetDate: '2020-01-01' }),
       TABLES, { asOf: '2026-09-03' }).status, 'incomplete');
+})();
+
+/* ==========================================================================
+   The five outputs, on every block (D-253)
+   --------------------------------------------------------------------------
+   The Decision Room asks the same five questions of anything you are
+   weighing. None of them is a new formula — that is the point of a shell —
+   so what is checked here is that all five are ANSWERED or say what they
+   lack, and that the fifth is answered even for a block with no price.
+   ========================================================================== */
+(function () {
+  section('The Decision Room: five outputs on every block (D-253)');
+  const demo = Demo.build();
+  const block = Schema.createGoal({ name: 'A wedding', lumpTargetCents: 2500000,
+    targetDate: '2027-09-01', monthlyContributionCents: 150000,
+    undoCostCents: 200000, undoMonths: 3 });
+  demo.goals = [block];
+  const p = Goals.plan(demo, block, TABLES, { asOf: '2026-09-13' });
+
+  check('1. what it costs', p.totalCents, 2500000);
+  checkTrue('2. what it costs you, in hours of your life', p.inLife.hours > 0 && /h$/.test(p.inLife.hoursDisplay));
+  checkTrue('… through the lens, never a second conversion here',
+    /Lens\.apply\(total\.value, 'hours'/.test(fs.readFileSync(path.join(ROOT, 'engines/goals.js'), 'utf8')));
+  checkTrue('3. when it lands', Money.isOk(p.monthsUntil) && p.monthsUntil.value > 0);
+  checkTrue('4. whether it fits: an answer, or the reason there is none',
+    p.affordability !== null || typeof p.affordabilityReason === 'string');
+  check('5. can it be undone', p.undo.verdict, 'a heavy door');
+  check('… priced against the month, not invented', p.undo.monthsOfSpending,
+    200000 / Schema.monthlyExpensesCents(demo).value);
+
+  /* Not asked is not "a door". */
+  const silent = Schema.createGoal({ name: 'Something', lumpTargetCents: 100000, targetDate: '2027-09-01' });
+  const q = Goals.plan(demo, silent, TABLES, { asOf: '2026-09-13' });
+  check('an unanswered block is not called reversible', q.undo.asked, false);
+  check('… and gets no verdict either way', q.undo.verdict, null);
+
+  /* A block with no price still answers the fifth: a decision may never
+     carry a figure, and "have a child" is answered by the table. */
+  const unpriced = Schema.createGoal({ name: 'Have a child', decisionId: 'have-a-child' });
+  const r = Goals.plan(demo, unpriced, TABLES, {});
+  check('an unpriced block is incomplete', r.status, 'incomplete');
+  check('… and says it is not priced', r.priced, false);
+  check('… and still answers whether it can be undone', r.undo.verdict, 'a one-way street');
+  check('… from the table, which says it is irreversible', r.undo.reversible, false);
+
+  /* The other way the table answers without a figure: a decision it prices
+     as null. Get married is "partly" reversible and has no honest cost, and
+     the room said so; a block must too, rather than "not asked yet". */
+  const married = Goals.plan(demo, Schema.createGoal({ name: 'Get married', decisionId: 'get-married' }), TABLES, {});
+  check('an unpriced decision is answered, not silent', married.undo.asked, true);
+  check('… and the answer is the room\'s own', married.undo.verdict, 'a one-way street');
+  check('… flagged as unpriced rather than irreversible', married.undo.unpriced, true);
+
+  /* The shell, on the page. */
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/goals.html'), 'utf8');
+  check('the room is The Decision Room', Registry.byId('goals').title, 'The Decision Room');
+  /* And the page says so too. The map-and-registry check cannot see the
+     <h1>, and two rooms shipped a whole commit under their old names
+     because of exactly that (D-247). */
+  checkTrue('… and the page calls itself that', /<h1>The Decision Room<\/h1>/.test(room)
+    && /<title>The Decision Room/.test(room));
+  checkTrue('the page renders five rows, named', (room.match(/label: 'What it costs'|label: 'What it costs you'|label: 'When it lands'|label: 'Whether it fits'|label: 'Can it be undone'/g) || []).length === 5);
+  checkTrue('a missing answer says what it lacks rather than showing a blank',
+    /five-a is-open/.test(room) && /esc\(v\.missing\)/.test(room));
+  checkTrue('the five ride on every block, priced or not', /out\.push\(fiveHtml\(p\)\);/.test(room)
+    && !/if \(Money\.isOk\(p\)\) out\.push\(fiveHtml/.test(room));
 })();
 
 /* Two goals that each fit the surplus can fail to fit it together — which is

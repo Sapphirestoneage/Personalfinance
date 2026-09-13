@@ -19,6 +19,23 @@
    The output that matters is not the total. It is whether the required
    monthly figure fits in the money you actually have spare — which is why
    this reads Cash Flow's surplus rather than asking again.
+
+   FIVE OUTPUTS ON EVERY BLOCK (D-253). The Decision Room asks the same five
+   questions of anything you are weighing, and `plan` answers all five:
+
+       what it costs      totalCents
+       what it costs you  hours of your life at your real hourly wage, and
+                          the months of FI it pushes back — both through
+                          shared/lens.js, never a second conversion here
+       when it lands      monthsUntil, and monthsAtCurrentContribution when
+                          the two differ
+       whether it fits    affordability, against Cash Flow's surplus
+       can it be undone   undo: the cost and the months to reverse it, and
+                          the verdict those two make — engines/reversibility
+                          .js verdict(), which was a room and is a field
+
+   None of the five is a new formula. That is the point of the shell: a
+   block type adds a way to FILL these, never a sixth answer.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -26,19 +43,23 @@
     deps = {
       Money: require('../shared/money.js'),
       Schema: require('../shared/schema.js'),
-      CashFlow: require('./cashflow.js')
+      CashFlow: require('./cashflow.js'),
+      Lens: require('../shared/lens.js'),
+      Reversibility: require('./reversibility.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Schema: root.SLAF && root.SLAF.Schema,
-      CashFlow: root.SLAF && root.SLAF.CashFlow
+      CashFlow: root.SLAF && root.SLAF.CashFlow,
+      Lens: root.SLAF && root.SLAF.Lens,
+      Reversibility: root.SLAF && root.SLAF.Reversibility
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.CashFlow);
+  var api = factory(deps.Money, deps.Schema, deps.CashFlow, deps.Lens, deps.Reversibility);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Goals = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, CashFlow) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, CashFlow, Lens, Reversibility) {
   'use strict';
 
   function templateById(table, id) {
@@ -86,22 +107,96 @@
    * Every part is independently incomplete-able: a goal with a total but no
    * date still reports its total and what is left to find.
    */
+  /**
+   * Can it be undone — the fifth output, on every block (D-253).
+   *
+   * Reversibility was a room that priced ONE named decision from a table of
+   * questions. The table is still how a block can be STARTED, but the two
+   * figures live on the block, so this is the pure part: two numbers and the
+   * verdict they make. `verdict()` is the room's own, not a second rule.
+   */
+  function undoOf(goal, spendingCents, tables) {
+    var cost = Money.isEntered(goal.undoCostCents) ? goal.undoCostCents : null;
+    var months = Money.isEntered(goal.undoMonths) ? goal.undoMonths : null;
+    /* A block started from a named decision keeps what the table knows that
+       two figures cannot say: that some things do not come undone at any
+       price. "Have a child" has no honest cost and is still answered. */
+    var reversible = null, unpriced = false;
+    if (goal.decisionId && Reversibility && tables) {
+      var d = Reversibility.byId(tables, goal.decisionId);
+      if (d) {
+        reversible = d.reversible;
+        /* The room's own rule: a decision the table gives no figure for is
+           answered, and the answer is that it does not come undone. The
+           child, the marriage. Not "not asked". */
+        unpriced = d.undoCents === null;
+      }
+    }
+    var asked = cost !== null || months !== null || reversible === false || unpriced;
+    if (unpriced && cost === null) {
+      return { asked: true, reversible: reversible, unpriced: true, costCents: null, months: months,
+        fromDecisionId: goal.decisionId, monthsOfSpending: null,
+        verdict: Reversibility ? Reversibility.VERDICTS.oneWay : null };
+    }
+    return {
+      asked: asked,
+      reversible: reversible,
+      unpriced: unpriced,
+      costCents: cost,
+      months: months,
+      fromDecisionId: goal.decisionId || null,
+      monthsOfSpending: cost !== null && Money.isEntered(spendingCents) && spendingCents > 0
+        ? cost / spendingCents : null,
+      /* No answer is an open question, not an easy door. */
+      verdict: asked && Reversibility ? Reversibility.verdict(cost, months, spendingCents, reversible) : null
+    };
+  }
+
   function plan(household, goal, tables, opts) {
     var o = opts || {};
+    var spendNow = Schema.monthlyExpensesCents(household);
+    var undoNow = undoOf(goal, Money.isOk(spendNow) ? spendNow.value : null, tables);
     var total = goalTotalCents(goal);
-    if (!Money.isOk(total)) return total;
+    /* A block with no price is not a block with no answers. A decision —
+       change jobs, have a child — may never carry a figure, and the undo
+       question is answered for it either way, so the incomplete result
+       carries what IS known rather than nothing (D-253). */
+    if (!Money.isOk(total)) {
+      return Object.assign(Money.incomplete(total.reason, total.missing),
+        { goalId: goal.id, name: goal.name, undo: undoNow, priced: false });
+    }
 
     var saved = Money.isEntered(goal.savedCents) ? goal.savedCents : 0;
     var remaining = Math.max(0, total.value - saved);
     var months = monthsUntil(goal.targetDate, o.asOf);
 
+    /* ---- The two outputs that are about you rather than the money ------
+       Both ride on every return path below, including the already-there and
+       the incomplete ones: what a thing costs in hours of your life does
+       not depend on whether you have saved for it yet. */
+    var lensHours = Lens ? Lens.apply(total.value, 'hours', household, tables) : null;
+    var lensFi = Lens ? Lens.apply(total.value, 'pushed', household, tables) : null;
     var shared = {
       goalId: goal.id, name: goal.name,
       totalCents: total.value, basis: total.basis,
       itemsBlank: total.itemsBlank,
       savedCents: saved, remainingCents: remaining,
       alreadyThere: remaining === 0,
-      monthsUntil: months
+      monthsUntil: months,
+      /* what it costs you, not what it costs */
+      inLife: {
+        hours: lensHours && Money.isOk(lensHours) ? lensHours.value : null,
+        hoursDisplay: lensHours && Money.isOk(lensHours) ? lensHours.display : null,
+        fiPushedDisplay: lensFi && Money.isOk(lensFi) ? lensFi.display : null,
+        fiPushedMonths: lensFi && Money.isOk(lensFi) ? lensFi.value : null,
+        /* One reason, not two: they fail for the same missing wage. */
+        reason: lensHours && !Money.isOk(lensHours) ? lensHours.reason : null
+      },
+      /* can it be undone: the two figures the block carries, and what they
+         make of each other. Not asked is not the same as reversible, so a
+         block with neither figure gets a null verdict and says so. */
+      undo: undoNow,
+      priced: true
     };
 
     if (remaining === 0) {
@@ -124,9 +219,13 @@
 
     /* Does the required figure fit in the money actually spare? Reads Cash
        Flow rather than asking for a surplus a second time. */
-    var affordability = null;
+    var affordability = null, affordabilityReason = null;
     if (tables && tables.expenseCategories) {
       var flow = CashFlow.netCashFlow(household, tables.expenseCategories, tables);
+      /* When there is no surplus to compare against, say what Cash Flow
+         says — it names the thing to go and do. A room guessing its own
+         reason here would send people to the wrong place (D-253). */
+      if (!Money.isOk(flow)) affordabilityReason = flow.reason;
       if (Money.isOk(flow)) {
         affordability = {
           surplusCents: flow.value,
@@ -146,7 +245,8 @@
       onTrack: Money.isEntered(contributing) ? contributing >= required : null,
       shortfallPerMonthCents: Money.isEntered(contributing)
         ? Math.max(0, required - contributing) : null,
-      affordability: affordability
+      affordability: affordability,
+      affordabilityReason: affordabilityReason
     }, shared));
   }
 
@@ -168,9 +268,13 @@
       }
     });
 
-    var affordability = null;
+    var affordability = null, affordabilityReason = null;
     if (tables && tables.expenseCategories) {
       var flow = CashFlow.netCashFlow(household, tables.expenseCategories, tables);
+      /* When there is no surplus to compare against, say what Cash Flow
+         says — it names the thing to go and do. A room guessing its own
+         reason here would send people to the wrong place (D-253). */
+      if (!Money.isOk(flow)) affordabilityReason = flow.reason;
       if (Money.isOk(flow)) {
         affordability = {
           surplusCents: flow.value,

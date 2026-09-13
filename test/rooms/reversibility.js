@@ -49,12 +49,36 @@ module.exports = function (t) {
   checkTrue('… and with no spending there is no verdict, with a reason', R.undo(Schema.createHousehold({}), 'buy-a-house', { price: 30000000 }, T).verdict === null);
   checkTrue('slots sort questions by the box they need', (function () { const s = R.slots(R.byId(T, 'move-cities')); return s.choice.length === 1 && s.choice[0].id === 'distance'; })());
 
-  /* The page and the map. */
-  const page = fs.readFileSync(path.join(ROOT, 'rooms/reversibility.html'), 'utf8');
-  checkTrue('the page mounts the template as reversibility', /Room\.mount\(\{/.test(page) && /id: 'reversibility'/.test(page));
-  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + id + '"').test(page)));
-  checkTrue('… writes only reversibility.*', (page.match(/Spine\.set\('([a-zA-Z.]+)'/g) || []).every(m => /reversibility\./.test(m)));
-  checkTrue('… declares its live-form discipline', /LIVE-FORM: built once/.test(page));
-  check('the decision is owned here', Ownership.field('reversibilityDecision').owner, 'reversibility');
-  checkTrue('the room is for everyone', Registry.requires('reversibility').length === 0);
+  /* The page and the map. Can It Be Undone is not a room since D-253: the
+     two figures are fields on every block of the Decision Room, the
+     catalogue is a way to START a block, and this engine is what prices it.
+     Everything above still holds — the verdict rule, the table, the ten
+     decisions — because none of it moved. */
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/goals.html'), 'utf8');
+  checkTrue('Can It Be Undone is no longer a room', !Registry.byId('reversibility')
+    && /url=goals\.html#goal-list/.test(fs.readFileSync(path.join(ROOT, 'rooms/reversibility.html'), 'utf8')));
+  checkTrue('the Decision Room lists the decisions as a way to start a block',
+    /data-decision="/.test(page) && /Reversibility\.list\(TABLES\)/.test(page));
+  checkTrue('… and prices them with this engine, not a second rule',
+    /Reversibility\.undo\(Spine\.getProfile\(\), id, \{\}, TABLES\)/.test(page));
+  checkTrue('… the two figures are fields on a block', /data-field="undoCostCents"/.test(page)
+    && /data-field="undoMonths"/.test(page));
+  checkTrue('… months are stored as a count, never through parseMoney',
+    /field === 'undoMonths'/.test(page) && /patch\.undoMonths = n === '' \? null : Number\(n\)/.test(page));
+  check('the decision is owned by the Decision Room', Ownership.field('reversibilityDecision').owner, 'goals');
+  check('… anchored at the blocks', Ownership.field('reversibilityDecision').anchor, 'goal-list');
+  checkTrue('the room is for everyone', Registry.requires('goals').length === 0);
+
+  /* The row reads across blocks now, and still reads a household written
+     before the merge. */
+  const asked = Schema.createHousehold({ goals: [
+    Schema.createGoal({ name: 'A car', undoCostCents: 200000 }),
+    Schema.createGoal({ name: 'A child', decisionId: 'have-a-child' }),
+    Schema.createGoal({ name: 'Unasked' })
+  ] });
+  check('two of three blocks have been asked', Ownership.field('reversibilityDecision').read(asked).value, 2);
+  check('… and none is not zero, it is unanswered',
+    Ownership.field('reversibilityDecision').read(Schema.createHousehold({})).status, 'incomplete');
+  check('a household stored before the merge still reads',
+    Ownership.field('reversibilityDecision').read(Schema.createHousehold({ reversibility: { decisionId: 'buy-a-house' } })).value, 1);
 };

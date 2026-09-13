@@ -585,10 +585,23 @@
       read: function (h) { var ds = (h.dreams || []).filter(function (d) { return Money.isEntered(d.monthlyCents); }); return ds.length ? Money.ok(ds.reduce(function (t, d) { return t + d.monthlyCents; }, 0), { count: ds.length }) : Money.incomplete('No dream priced yet.', ['dreams']); },
       format: function (v) { return money(v) + '/mo'; }
     },
+    /* Can It Be Undone asked this of ONE decision. It is a field on every
+       block of the Decision Room now (D-253), so the row reads across them:
+       how many of the things you are weighing you have asked it of. The
+       stored `reversibility.decisionId` is still read, for a household
+       written before the merge. */
     reversibilityDecision: {
-      label: 'The decision being weighed', owner: 'reversibility', anchor: 'inputs',
-      read: function (h) { var v = (h.reversibility || {}).decisionId; return v ? Money.ok(v) : Money.incomplete('None picked yet.', ['reversibility']); },
-      format: function (v) { return String(v).replace(/[-_]/g, ' '); }
+      label: 'Weighed for undoing', owner: 'goals', anchor: 'goal-list',
+      read: function (h) {
+        var asked = (h.goals || []).filter(function (g) {
+          return Money.isEntered(g.undoCostCents) || Money.isEntered(g.undoMonths) || g.decisionId;
+        });
+        if (asked.length) return Money.ok(asked.length, { ids: asked.map(function (g) { return g.id; }) });
+        var old = (h.reversibility || {}).decisionId;
+        if (old) return Money.ok(1, { ids: [old], legacy: true });
+        return Money.incomplete('Nothing weighed for undoing yet.', ['goals']);
+      },
+      format: function (v) { return v + (v === 1 ? ' block' : ' blocks'); }
     },
     unlearningDropped: {
       label: 'Rules let go of', owner: 'debates', anchor: 'inputs',

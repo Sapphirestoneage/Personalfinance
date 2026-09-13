@@ -298,12 +298,14 @@
     },
     {
       "id": "goals",
-      "title": "Goals",
+      "title": "The Decision Room",
       "file": "rooms/goals.html",
       "reads": [
         "monthlyExpenses"
       ],
-      "writes": [],
+      "writes": [
+        "reversibilityDecision"
+      ],
       "requires": [],
       "dashboardNumber": null,
       "order": 22
@@ -682,21 +684,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 44
-    },
-    {
-      "id": "reversibility",
-      "title": "Can It Be Undone",
-      "file": "rooms/reversibility.html",
-      "reads": [
-        "cashSavings",
-        "monthlyExpenses"
-      ],
-      "writes": [
-        "reversibilityDecision"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 47
     },
     {
       "id": "debates",

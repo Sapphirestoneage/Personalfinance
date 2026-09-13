@@ -1880,7 +1880,18 @@
       monthlyContributionCents: f.monthlyContributionCents === undefined ? null : f.monthlyContributionCents,
       /* Either itemise it or name one lump figure — never both silently. */
       lineItems: f.lineItems || [],
-      lumpTargetCents: f.lumpTargetCents === undefined ? null : f.lumpTargetCents
+      lumpTargetCents: f.lumpTargetCents === undefined ? null : f.lumpTargetCents,
+      /* Can it be undone (D-253). Reversibility was a room that asked this
+         of ONE decision; it is two fields on every block now. Both default
+         to null, which is "not asked", never "free" or "instant" — a block
+         with no answer says the question is open rather than that the door
+         swings. `decisionId` records that the figures were started from a
+         named decision in data/reversibility_decisions.json, so the room
+         can say where they came from; typing over them keeps the id and
+         marks the figure as the person's own. */
+      decisionId: f.decisionId === undefined ? null : f.decisionId,
+      undoCostCents: f.undoCostCents === undefined ? null : f.undoCostCents,
+      undoMonths: f.undoMonths === undefined ? null : f.undoMonths
     };
   }
 

@@ -500,19 +500,20 @@
     },
     {
       id: 'goals',
-      group: 'matters', aliases: ['goals', 'targets', 'wedding', 'dream'],
+      group: 'matters', aliases: ['goals', 'targets', 'wedding', 'dream', 'decisions', 'undo', 'reversible', 'one-way door', 'can it be undone', 'weighing'],
       kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 22,
-      title: 'Goals',
-      blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
+      title: 'The Decision Room',
+      blurb: 'Anything you are weighing, in one place — what it costs, what it costs you, when it lands, whether it fits, and whether it can be undone.',
       href: 'rooms/goals.html',
       tier: 2,
       tags: ['cashflow'],
-      daite: { reads: ['expenses'], writes: ['plans.goals'] },
+      daite: { reads: ['expenses', 'assets.cashCents'], writes: ['plans.goals', 'plans.reversibility'] },
       subsections: [
         { id: 'out-together', label: 'All of it together' },
-        { id: 'add',          label: 'Start something' }
+        { id: 'add',          label: 'Start something' },
+        { id: 'decisions', label: 'Start from a decision' }
       ]
     },
     {
@@ -1048,29 +1049,6 @@
       ]
   });
 
-  /* Reversibility — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'reversibility',
-    group: 'matters', aliases: ['undo', 'reversible', 'one-way door'],
-    kind: 'about-you',
-    needs: ['cashSavings', 'monthlyExpenses'],
-    order: 47,
-    title: 'Can It Be Undone',
-    blurb: 'A decision you are weighing: what it would cost to undo, and how long — a door, or a one-way street.',
-    href: 'rooms/reversibility.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses'], writes: ['plans.reversibility'] },
-      subsections: [
-        { id: 'number',      label: 'What undoing costs' },
-        { id: 'chart',       label: 'Cost and months to undo' },
-        { id: 'inputs',      label: 'The decision' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
   /* Your Data: every way numbers get in or out of this browser — a file, a
      share link, a pasted statement sorted into the right lists — in one
      place. Writes through the same spine helpers the owner rooms use; owns
@@ -1234,7 +1212,7 @@
     numbers: ['debt-payoff', 'cant-pay', 'statement', 'rollover', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
     decisions: ['career-move', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
-    matters: ['values', 'goals', 'enough', 'week', 'reversibility'],
+    matters: ['values', 'goals', 'enough', 'week'],
     levelup: ['skill-tree'],
     upkeep: ['data', 'ledger', 'settings', 'get-help']
   };

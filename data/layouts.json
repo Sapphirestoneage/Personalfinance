@@ -62,7 +62,6 @@
             "big-purchase",
             "enough",
             "week",
-            "reversibility",
             "debates"
           ],
           "note": "Registry order 1\u201351 \u2014 the sequence a person is meant to walk."
@@ -124,7 +123,6 @@
             "big-purchase",
             "enough",
             "week",
-            "reversibility",
             "debates"
           ],
           "note": "The same 43 rooms show up whichever answer you give."
@@ -217,8 +215,7 @@
             "adventure",
             "fire-lab",
             "timeline",
-            "career-move",
-            "reversibility"
+            "career-move"
           ]
         },
         {
@@ -345,7 +342,6 @@
           "name": "Decide",
           "rooms": [
             "worth",
-            "reversibility",
             "goals",
             "week"
           ]
@@ -447,7 +443,6 @@
             "roth-aca",
             "middle-class-trap",
             "debates",
-            "reversibility",
             "worth"
           ]
         },
@@ -559,7 +554,6 @@
             "week",
             "debates",
             "worth",
-            "reversibility",
             "hassle",
             "skill-tree",
             "career-move",
@@ -659,7 +653,6 @@
             "values",
             "enough",
             "week",
-            "reversibility",
             "worth",
             "data",
             "one-pager",
@@ -728,7 +721,6 @@
             "wedding",
             "protection",
             "settings",
-            "reversibility",
             "start",
             "ledger",
             "tax",
@@ -844,7 +836,6 @@
             "adventure",
             "timeline",
             "goals",
-            "reversibility",
             "worth"
           ],
           "note": "Looking out at what has not happened yet."
@@ -938,7 +929,6 @@
             "enough",
             "week",
             "debates",
-            "reversibility",
             "worth"
           ]
         },
@@ -1006,8 +996,7 @@
             "housing",
             "car",
             "rollover",
-            "career-move",
-            "reversibility"
+            "career-move"
           ]
         },
         {
@@ -1124,8 +1113,7 @@
             "enough",
             "week",
             "debates",
-            "worth",
-            "reversibility"
+            "worth"
           ],
           "note": "The failure nobody insures against, and the one this app is unusually good at."
         },
@@ -1186,7 +1174,6 @@
             "week",
             "debates",
             "worth",
-            "reversibility",
             "skill-tree"
           ]
         },
@@ -1326,8 +1313,7 @@
             "wedding",
             "housing",
             "big-purchase",
-            "enough",
-            "reversibility"
+            "enough"
           ],
           "note": "37 rooms sit at exactly the same depth. There is no sequence among them \u2014 the numbered path invents one.",
           "warn": true
@@ -1418,8 +1404,7 @@
             "enough",
             "week",
             "debates",
-            "worth",
-            "reversibility"
+            "worth"
           ]
         },
         {
@@ -1479,7 +1464,6 @@
             "hassle",
             "worth",
             "car",
-            "reversibility",
             "cant-pay",
             "get-help",
             "rollover"
@@ -1599,7 +1583,6 @@
           "rooms": [
             "hassle",
             "worth",
-            "reversibility",
             "week",
             "values",
             "enough",
@@ -1717,7 +1700,6 @@
             "week",
             "debates",
             "worth",
-            "reversibility",
             "skill-tree"
           ],
           "note": "What any of it is for. Twelve spokes.",
@@ -1792,7 +1774,6 @@
             "cant-pay",
             "get-help",
             "debates",
-            "reversibility",
             "values",
             "week",
             "enough",
@@ -1909,8 +1890,7 @@
             "enough",
             "week",
             "debates",
-            "worth",
-            "reversibility"
+            "worth"
           ]
         },
         {
