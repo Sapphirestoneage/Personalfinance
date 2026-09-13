@@ -542,22 +542,22 @@
       format: function (v) { return Money.formatRate(v, { decimals: 1 }); }
     },
     incomeLow: {
-      label: 'A low month', owner: 'variable-income', anchor: 'inputs',
+      label: 'A low month', owner: 'income', anchor: 'vi-inputs',
       read: function (h) { var s = variableSource(h); return s && Money.isEntered(s.variableLowCents) ? Money.ok(s.variableLowCents) : Money.incomplete('Not entered yet.', ['variableLowCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
     incomeHigh: {
-      label: 'A high month', owner: 'variable-income', anchor: 'inputs',
+      label: 'A high month', owner: 'income', anchor: 'vi-inputs',
       read: function (h) { var s = variableSource(h); return s && Money.isEntered(s.variableHighCents) ? Money.ok(s.variableHighCents) : Money.incomplete('Not entered yet.', ['variableHighCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
     bufferMonths: {
-      label: 'Buffer, months', owner: 'variable-income', anchor: 'inputs',
+      label: 'Buffer, months', owner: 'income', anchor: 'vi-inputs',
       read: function (h) { var v = (h.variableIncome || {}).bufferMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['bufferMonths']); },
       format: function (v) { return v + ' mo'; }
     },
     variableWindow: {
-      label: 'Rolling window', owner: 'variable-income', anchor: 'inputs',
+      label: 'Rolling window', owner: 'income', anchor: 'vi-inputs',
       read: function (h) { var v = (h.variableIncome || {}).windowMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Three months until chosen.', ['windowMonths']); },
       format: function (v) { return v + ' months'; }
     },

@@ -8132,10 +8132,10 @@ section('Core (D-094): the gate — exists() per situation');
   check('unanswered: every room but the ones that need a fact (a partner, a dependent)', gone(none), 'partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  check('retired: the working rooms are gone', gone(hh('retired')), 'accounts,career-move,credential,fire,hassle,partner,real-hourly-wage,self-employed,side-hustle,variable-income');
+  check('retired: the working rooms are gone', gone(hh('retired')), 'accounts,career-move,credential,fire,hassle,partner,self-employed,side-hustle');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
-  check('employed, alone, no dependents: own work, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'decumulation,partner,self-employed,variable-income');
+  check('employed, alone, no dependents: own work, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'decumulation,partner,self-employed');
   checkTrue('self-employed: the 401(k) room is gone', Registry.forHousehold(hh('selfEmployed')).map(r => r.id).indexOf('accounts') === -1);
   /* A requirement may be a key or an array of keys meaning any-of (D-241);
      flatten before checking that each one names a real branch. */
@@ -8143,7 +8143,7 @@ section('Core (D-094): the gate — exists() per situation');
   checkTrue('every requires room is a room', Object.keys(Registry.REQUIRES).every(id => !!Registry.byId(id)));
   check('byTag with a household filters the same way', Registry.byTag('all', hh('retired')).length, retiredRooms.length);
   check('byTag without one is every room', Registry.byTag('all').length, all);
-  check('the demo is five rooms short — no own work, not drawing down, alone, nobody depending', gone(Demo.build()), 'decumulation,partner,self-employed,variable-income');
+  check('the demo is five rooms short — no own work, not drawing down, alone, nobody depending', gone(Demo.build()), 'decumulation,partner,self-employed');
 
   /* Guesses: a default for every guessable control, from the tables. */
   const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
@@ -8480,15 +8480,19 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
 
   /* The shape: the ids every template room has, and the room that proved it. */
   check('the template names its hosts', Room.IDS.join(','), 'room-number,room-chart,room-inputs,room-lens,room-amounts,room-assumptions,room-why,room-scope,reading-list');
-  const rhw = fs.readFileSync(path.join(ROOT, 'rooms/real-hourly-wage.html'), 'utf8');
-  Room.IDS.forEach(id => checkTrue(`Real Hourly Wage has #${id}`, new RegExp('id="' + id + '"').test(rhw)));
-  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue(`… and the deep link #${id}`, new RegExp('id="' + id + '"').test(rhw)));
+  /* The Real Hourly Wage proved the template (D-097) and is the what-it-pays
+     reading of Income since D-247; its skeleton moved behind rhw-. */
+  const incomePage = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
+  const rhw = incomePage.slice(incomePage.indexOf('<section id="view-what-it-pays"'), incomePage.indexOf('<p class="disclaimer">', incomePage.indexOf('<section id="view-what-it-pays"')))
+    + incomePage.split('<script>').filter(x => x.indexOf('READING view-what-it-pays,') !== -1)[0];
+  Room.IDS.forEach(id => checkTrue(`Real Hourly Wage has #rhw-${id}`, new RegExp('id="rhw-' + id + '"').test(rhw)));
+  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue(`… and the deep link #rhw-${id}`, new RegExp('id="rhw-' + id + '"').test(rhw)));
   checkTrue('it mounts the template', /Room\.mount\(\{/.test(rhw));
   checkTrue('with a number, a chart, inputs, amounts, assumptions, why and scope', ['number:', 'chart:', 'inputs:', 'amounts:', 'assumptions:', 'why:', 'scope:'].every(k => rhw.indexOf(k) !== -1));
   const inputs = (rhw.match(/hoursInput\('(contractedHoursPerWeek|unpaidOvertimeHoursPerWeek|commuteHoursPerWeek)'/g) || []).length + (rhw.match(/ctl: 'workCostsMonthlyCents'|ctl: 'weeksPerYear'/g) || []).length;
   check('five inputs on the page, two folded', inputs, 5);
   checkTrue('its old sections are gone', rhw.indexOf('id="out-rate"') === -1 && rhw.indexOf('id="out-hours"') === -1 && rhw.indexOf('id="out-price"') === -1);
-  checkTrue('it declares its live-form discipline and a place for a theme', /LIVE-FORM: built once/.test(rhw) && /THEMING:/.test(rhw));
+  checkTrue('the page declares its live-form discipline and a place for a theme', /LIVE-FORM: guarded/.test(incomePage) && /THEMING:/.test(incomePage));
   checkTrue('the room refuses fewer than two or more than five inputs', /inputs\.length < 2 \|\| spec\.inputs\.length > 5/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
   checkTrue('the chart redraws only when it changes', /if \(html === lastChart\) return;/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
   checkTrue('every write is one labelled undo entry', /Spine\.batch\(c\.label \+ ' → ' \+ shown, fn\)/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
@@ -10515,7 +10519,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
      First Round and Express became views of (D-230). */
   check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
-  check('...fourteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 14);
+  check('...twelve of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 12);
   /* The rule is about HOUSEHOLD data: a Your Numbers room writes a DAITE
      family, not a context. `prefs.*` is not a context — it is a
      preference, per person and per browser, and D-246 brought one into
@@ -11306,8 +11310,9 @@ section('15.4: income by type, take-home per source, what survives a job loss (D
   checkTrue('...and writes type and survivesJobLoss through the spine', /payType: function \(v\) \{ writeSource\(INCOME_ID, \{ type: v \}\)/.test(start));
   const income = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
   checkTrue('the Income room shows pay source by source', income.indexOf('takeHomeBySource') > -1 && income.indexOf('id="sources"') > -1);
-  const rhw = fs.readFileSync(path.join(ROOT, 'rooms/real-hourly-wage.html'), 'utf8');
-  checkTrue('Real Hourly Wage paints a line per source', rhw.indexOf('perSource') > -1 && rhw.indexOf('id="per-source"') > -1);
+  /* The Real Hourly Wage is Income's what-it-pays reading since D-247, so
+     this reads the same file — the line per source is still its own. */
+  checkTrue('Real Hourly Wage paints a line per source', income.indexOf('perSource') > -1 && income.indexOf('id="per-source"') > -1);
   const runway = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
   checkTrue('Runway defaults other income to what survives', runway.indexOf('survivingGrossAnnualIncomeCents') > -1);
   Spine.reset();
@@ -14207,6 +14212,18 @@ section('The thirty (docs/room-map.json)');
      merge was running and is named under Housing, so the ledger is 94 now.
      The literal stays a literal on purpose: a room added without a place on
      the map still fails here, which is the whole point of the alarm. */
+  /* The map names each survivor's title after the merge. Two of them once
+     sat in the registry under their old names for a whole commit, because
+     the tool that renames them failed silently on one of the two entry
+     shapes in registry.js. The map and the app say the same thing or this
+     fails. A room whose absorptions have not shipped yet may still carry
+     its old title. */
+  MAP.rooms.filter(r => (r.absorbs || []).length && (r.done || []).length === (r.absorbs || []).length)
+    .forEach(function (r) {
+      const reg = Registry.byId(r.id);
+      if (reg) check('the map and the registry agree on what ' + r.id + ' is called', reg.title, r.title);
+    });
+
   check('every room is accounted for: thirty, plus what they absorb, plus the Net Worth redirect',
     MAP.rooms.length + merged + toGo + 1, 94);
   check('and the registry holds exactly the survivors plus what has not merged yet',

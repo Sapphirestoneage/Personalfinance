@@ -1,5 +1,6 @@
 /* test/rooms/variable-income.js — Variable Income (D-099). Run by test/run.js. */
 module.exports = function (t) {
+  var reading = t.reading;
   var check = t.check, checkTrue = t.checkTrue, Money = t.Money, Schema = t.Schema, SE = t.SelfEmployed;
   var VI = require(t.path.join(t.ROOT, 'engines/variableincome.js'));
   var T = t.TABLES;
@@ -169,20 +170,28 @@ module.exports = function (t) {
   /* -- Ownership: the three fields are this room's --------------------------- */
   ['incomeLow', 'incomeHigh', 'bufferMonths'].forEach(function (f) {
     var d = t.Ownership.field(f);
-    check('ownership: ' + f + ' is owned by variable-income at #inputs', d && (d.owner + '/' + d.anchor), 'variable-income/inputs');
+    check('ownership: ' + f + ' is owned by variable-income at #inputs', d && (d.owner + '/' + d.anchor), 'income/vi-inputs');
   });
   check('Ownership.variableSource picks the 1099 source', t.Ownership.variableSource(mixed2).id, 's');
   check('… reads the low month from it', t.Ownership.field('incomeLow').read(h1).value, 350000);
-  checkTrue('the room appears for the variableIncome branch', t.Registry.requires('variable-income').indexOf('variableIncome') !== -1);
+  /* The branch moved from the room to the reading (D-247): Income is open
+     to everyone, and this reading's hat is absent without the branch. */
+  check('the room it lives in requires no branch', t.Registry.requires('income').join(','), '');
+  checkTrue('… and the reading declares the branch its room had',
+    /\{ id: 'view-when-it-varies', match: [^}]*branch: 'variableIncome' \}/.test(reading('rooms/income.html', 'view-when-it-varies', 'READING view-when-it-varies,').page));
   checkTrue('… which exists for the self-employed and mixed, not the employed', t.Gate.exists(h1, 'variableIncome') && t.Gate.exists(mixed, 'variableIncome') && !t.Gate.exists(emp, 'variableIncome'));
 
   /* -- The page ----------------------------------------------------------- */
-  var html = t.fs.readFileSync(t.path.join(t.ROOT, 'rooms/variable-income.html'), 'utf8');
-  checkTrue('the page mounts the template', /Room\.mount\(\{/.test(html) && /id: 'variable-income'/.test(html));
-  t.Room.IDS.forEach(function (id) { checkTrue('the page has #' + id, html.indexOf('id="' + id + '"') !== -1); });
-  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-standalone', 'load-notice'].forEach(function (id) { checkTrue('the page has the section #' + id, html.indexOf('id="' + id + '"') !== -1); });
-  checkTrue('the page loads the engine after selfemployed.js', html.indexOf('engines/selfemployed.js') < html.indexOf('engines/variableincome.js') && html.indexOf('engines/variableincome.js') < html.indexOf('shared/room.js'));
-  checkTrue('the page declares LIVE-FORM: built once', /LIVE-FORM: built once/.test(html));
+  /* variable-income is a reading of income since D-247, so this file reads its slice of
+     that page: its own markup and its own script. `slice.page` is the
+     whole file, for the few facts that really are page-wide. */
+  const slice = reading('rooms/income.html', 'view-when-it-varies', "READING view-when-it-varies,");
+  const html = slice.html;
+  checkTrue('the page mounts the template', /Room\.mount\(\{/.test(html) && /id: 'income',\n\s*part: true,\n\s*prefix: 'vi-',\n\s*root: 'view-when-it-varies',/.test(html));
+  t.Room.IDS.forEach(function (id) { checkTrue('the page has #' + id, (id === 'load-notice' ? slice.page : html).indexOf('id="' + (id === 'load-notice' ? '' : 'vi-') + id + '"') !== -1); });
+  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-standalone', 'load-notice'].forEach(function (id) { checkTrue('the page has the section #' + id, (id === 'load-notice' ? slice.page : html).indexOf('id="' + (id === 'load-notice' ? '' : 'vi-') + id + '"') !== -1); });
+  checkTrue('the page loads the engine after selfemployed.js', slice.page.indexOf('engines/selfemployed.js') < slice.page.indexOf('engines/variableincome.js') && slice.page.indexOf('engines/variableincome.js') < slice.page.indexOf('<script src="../shared/room.js"'));
+  checkTrue('the page declares LIVE-FORM: guarded', /LIVE-FORM: guarded/.test(slice.page));
   checkTrue('bars for the typed months, one area for the ledger’s, no other chart (D-128)', (html.match(/Charts\.(bars|area|donut|stacked)\(/g) || []).every(function (m) { return m === 'Charts.bars(' || m === 'Charts.area('; }) && (html.match(/Charts\.area\(/g) || []).length === 1);
   checkTrue('writes go through upsertIncomeSource and Spine.set', /Spine\.upsertIncomeSource\(person\.id/.test(html) && /Spine\.set\('variableIncome\.bufferMonths'/.test(html));
   checkTrue('the room says what it does not do', /scope: 'This room does not forecast a season/.test(html));
@@ -216,9 +225,9 @@ module.exports = function (t) {
     check('… low is the observed low, not the typed one', p.lowCents, 300000);
     check('… and the average is the rolling one', p.averageMonthCents, Math.round((400000 + 600000 + 300000) / 3));
     check('the typed figures still serve when asked', VI.plan(h, T, { entries: false }).lowCents, 350000);
-    var page = t.fs.readFileSync(t.path.join(t.ROOT, 'rooms/variable-income.html'), 'utf8');
+    var page = slice.html;
     checkTrue('the room offers the window and no add-income form', /ctl: 'windowMonths'/.test(page) && !/upsertIncomeEntry/.test(page) && !/btn-save/.test(page));
     checkTrue('the chart is the months with the rolling average when observed', /rolling average/.test(page) && /p\.observed/.test(page));
-    check('the window is owned here', t.Ownership.field('variableWindow').owner, 'variable-income');
+    check('the window is owned here', t.Ownership.field('variableWindow').owner, 'income');
   })();
 };

@@ -443,8 +443,14 @@
     var h = location.hash || '';
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
-       is always one. If it is gated away, fall to the first one that is not. */
-    var on = open(asked) ? asked : VIEWS.filter(open)[0] || asked;
+       is always one. When the hash asks for a reading the gate has taken
+       away, fall back to the DEFAULT — the room's plainest reading, and the
+       one the person would have got with no hash at all — not to whichever
+       gated reading happens to sit first in this list. */
+    var fallback = VIEWS[VIEWS.length - 1];
+    var on = open(asked) ? asked
+           : open(fallback) ? fallback
+           : VIEWS.filter(open)[0] || fallback;
     VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
     Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
       var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];

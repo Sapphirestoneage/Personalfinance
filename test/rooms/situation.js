@@ -64,18 +64,19 @@ module.exports = function (t) {
      gated: Family requires a partner OR a dependent, and each reading keeps
      the branch its room had, so the hat is absent when the branch is. What
      changed is that one entry covers both — a household with children and
-     no partner now has the room, and only the children's hat in it. */
+     no partner now has the room, and only the children's hat in it.
+     Variable Income and the Real Hourly Wage left it in D-247, readings of
+     Income, which requires nothing: what comes in is a question for
+     everybody, and each of those two readings keeps its own branch, so its
+     hat is absent exactly where its room used to be. */
   var EXPECTED = {
-    employed:     ['self-employed', 'decumulation', 'partner', 'variable-income'],
+    employed:     ['self-employed', 'decumulation', 'partner'],
     selfEmployed: ['accounts', 'decumulation', 'partner'],
-    unemployed:   ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner',
-                   'variable-income'],
-    student:      ['self-employed', 'accounts', 'protection', 'decumulation', 'partner',
-                   'variable-income'],
-    retired:      ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'career-move', 'partner',
-                   'variable-income'],
+    unemployed:   ['fire', 'hassle', 'self-employed', 'side-hustle',
+                   'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner'],
+    student:      ['self-employed', 'accounts', 'protection', 'decumulation', 'partner'],
+    retired:      ['fire', 'hassle', 'self-employed', 'side-hustle',
+                   'credential', 'accounts', 'career-move', 'partner'],
     both:         ['decumulation', 'partner']
   };
   Object.keys(EXPECTED).forEach(function (status) {

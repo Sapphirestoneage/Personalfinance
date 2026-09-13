@@ -7,134 +7,250 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Income · SPARKS</title>
-<meta name="description" content="Everything coming in, logged as it lands: paycheques, gigs, gifts, dividends, rent — each netted the way it is actually taxed."/>
+<meta name="description" content="Everything coming in, logged as it lands and netted the way it is taxed — the salary to pay yourself when it is irregular, and what the job actually pays once every hour and cost is counted."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-128 (the ledger).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-097, D-101, D-247 (the merge).
+  Registry: income.
 
-  1. READS   filingStatus and the annual gross (Start Here) to place each
-             entry in its tax band; the expense log, for what was logged
-             against an income entry.
-  2. WRITES  It OWNS household.ledger.income[] — every dated income entry
-             and the costs of producing it, on the entry. Nothing else
-             edits those; it edits nothing else. Income SOURCES (Start
-             Here's annualised profile) are not touched here.
-  3. CALLS   engines/ledger.js for every net figure and for the month —
-             one tax engine for entries, shared with the Tax room — and
-             shared/charts.js for the picture (D-194), twelve months of
-             landings by kind, where this month's gross goes, and each
-             source's share; every figure comes off Ledger.month.
-  4. EMPTY   No entries: the month says so, the picture stays hidden and
-             the form is the whole page. An entry with no amount is listed
-             and asks for one.
-  5. CONFIG  data/effective_tax_rates_2026.json, data/se_tax_2026.json.
+  THREE READINGS OF WHAT COMES IN.
 
-  LIVE-FORM: built once. The two forms — the entry, and a cost on it — are
-  markup, built once, and only ever have .value set. The entry form sits
-  in a <details> fold (D-193): opening and closing it toggles `open` on
-  the fold and never touches the inputs. The lists rebuild freely: they
-  hold buttons, never a text field.
-  THEMING: none this pass.
+    #what-lands       every payment logged as it arrives — a paycheque, a
+                      gig, a gift, a dividend, the rent — each netted the
+                      way it is actually taxed
+    #when-it-varies   a low month, a high month, an average: the salary to
+                      pay yourself, the buffer that smooths the gap, and
+                      how many low months it covers
+    #what-it-pays     what the job actually pays, once every hour it takes
+                      and everything it costs you to do it are counted
+
+  One question at three framings: what comes in, what it averages, and what
+  an hour of it is worth. Rule 1 of D-229. What lands is first because it is
+  the record the other two read.
+
+  EACH OF THE TWO LATER READINGS IS GATED, AS ITS ROOM WAS: varies on the
+  variableIncome branch, pays on the hours branch. A merge must not widen
+  who sees what, so each keeps its branch and its hat is ABSENT when the
+  branch is not there. The room itself requires nothing: what comes in is a
+  question for everybody.
+
+  1. READS   the log this room owns, and what the household spends.
+  2. WRITES  ledgerIncome, incomeType and paySurvives as before, and the
+             four variable-income fields, whose owner moved here with their
+             boxes (D-247). The real-hourly reading writes nothing.
+  3. CALLS   the engines each reading already called; no arithmetic moved.
+  4. EMPTY   nothing logged is nothing logged, never a zero.
+  5. CONFIG  the tables each engine names.
+
+  THE TWO LATER READINGS are built from shared/room.js as parts of this
+  room (D-235), each with a prefix and a root of its own.
+
+  THEMING: none this pass. A theme is a class on <body> and a palette in
+  shared/theme.css.
+
+  LIVE-FORM: guarded. The log form is the room's own and is guarded as it
+  always was; each template reading's controls are built once. Switching
+  readings hides and shows and rebuilds nothing (D-034).
 -->
 <style>
-  section[id] { scroll-margin-top: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- What lands, from rooms/income.html (D-247) ---- */
+  
+  #view-what-lands section[id] { scroll-margin-top: var(--space-4); }
   /* D-193: the entry form folds behind one line. The card's face is the
      summary; the body carries the card padding so the closed card is a
      single tappable row. */
-  #add.slaf-card { padding: 0; }
-  .add-fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); min-height: 56px; box-sizing: border-box; }
-  .add-fold > summary::-webkit-details-marker { display: none; }
-  .add-fold .add-plus { flex: none; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--sapphire-600); color: var(--color-accent-contrast); font-size: 20px; line-height: 1; transition: transform .15s; }
-  .add-fold[open] .add-plus { transform: rotate(45deg); }
-  .add-fold .add-title { font-family: var(--font-display); font-size: var(--text-md); }
-  .add-fold .add-sub { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
-  .add-fold[open] .add-sub { display: none; }
-  .add-body { padding: 0 var(--space-4) var(--space-4); }
-  #form-say { margin: 0; padding: 0 var(--space-4) var(--space-4); }
-  .pair { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); }
-  .form-more { grid-column: 1 / -1; }
-  .form-more > summary { list-style: none; cursor: pointer; font-size: var(--text-sm); color: var(--color-text-muted); padding: var(--space-2) 0; }
-  .form-more > summary::-webkit-details-marker { display: none; }
-  .form-more > summary::before { content: '▸ '; font-size: 10px; }
-  .form-more[open] > summary::before { content: '▾ '; }
-  .form-more > summary small { color: var(--color-text-faint); }
-  .form-more .form-grid { margin-top: 0; }
-  .card-gap { margin-top: var(--space-4); }
+  
+  #view-what-lands #add.slaf-card { padding: 0; }
+  
+  #view-what-lands .add-fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); min-height: 56px; box-sizing: border-box; }
+  
+  #view-what-lands .add-fold > summary::-webkit-details-marker { display: none; }
+  
+  #view-what-lands .add-fold .add-plus { flex: none; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--sapphire-600); color: var(--color-accent-contrast); font-size: 20px; line-height: 1; transition: transform .15s; }
+  
+  #view-what-lands .add-fold[open] .add-plus { transform: rotate(45deg); }
+  
+  #view-what-lands .add-fold .add-title { font-family: var(--font-display); font-size: var(--text-md); }
+  
+  #view-what-lands .add-fold .add-sub { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-what-lands .add-fold[open] .add-sub { display: none; }
+  
+  #view-what-lands .add-body { padding: 0 var(--space-4) var(--space-4); }
+  
+  #view-what-lands #form-say { margin: 0; padding: 0 var(--space-4) var(--space-4); }
+  
+  #view-what-lands .pair { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); }
+  
+  #view-what-lands .form-more { grid-column: 1 / -1; }
+  
+  #view-what-lands .form-more > summary { list-style: none; cursor: pointer; font-size: var(--text-sm); color: var(--color-text-muted); padding: var(--space-2) 0; }
+  
+  #view-what-lands .form-more > summary::-webkit-details-marker { display: none; }
+  
+  #view-what-lands .form-more > summary::before { content: '▸ '; font-size: 10px; }
+  
+  #view-what-lands .form-more[open] > summary::before { content: '▾ '; }
+  
+  #view-what-lands .form-more > summary small { color: var(--color-text-faint); }
+  
+  #view-what-lands .form-more .form-grid { margin-top: 0; }
+  
+  #view-what-lands .card-gap { margin-top: var(--space-4); }
   /* D-194: the picture. Three charts in one card, each under its own line. */
-  .pic-h { margin: var(--space-4) 0 0; font-size: var(--text-base); font-family: var(--font-display); font-weight: 600; }
-  .pic-h:first-of-type { margin-top: var(--space-2); }
-  .pic-h small { display: block; font-family: var(--font-body); font-weight: 400; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 2px; }
+  
+  #view-what-lands .pic-h { margin: var(--space-4) 0 0; font-size: var(--text-base); font-family: var(--font-display); font-weight: 600; }
+  
+  #view-what-lands .pic-h:first-of-type { margin-top: var(--space-2); }
+  
+  #view-what-lands .pic-h small { display: block; font-family: var(--font-body); font-weight: 400; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 2px; }
   /* D-195: the year reads as a sentence first, then as what has come in
      and what is only assumed; the assumed half is faded. */
-  .pic-sum { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
-  .pic-sum b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  
+  #view-what-lands .pic-sum { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
+  
+  #view-what-lands .pic-sum b { color: var(--color-text); font-variant-numeric: tabular-nums; }
   /* D-198: the picture folds; its closed face is the sentence. */
-  #picture.slaf-card { padding: 0; }
-  .pic-fold > summary { list-style: none; cursor: pointer; display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-4); }
-  .pic-fold > summary::-webkit-details-marker { display: none; }
-  .pic-fold .pic-caret { flex: none; color: var(--color-text-faint); font-size: 12px; margin-top: 3px; transition: transform .15s; }
-  .pic-fold:not([open]) .pic-caret { transform: rotate(-90deg); }
-  .pic-fold > summary .pic-sum { display: block; margin-top: var(--space-1); }
-  .pic-body { padding: 0 var(--space-4) var(--space-4); }
-  .pic-body .pic-h:first-of-type { margin-top: 0; }
-  .pic-nudge { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: space-between; font-size: var(--text-sm); color: var(--color-text-muted); border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.08); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: var(--space-2) var(--space-3); margin-top: var(--space-3); }
-  .pic-nudge b { color: var(--color-text); }
-  .return-chip { display: inline-block; margin-bottom: var(--space-3); font-size: var(--text-sm); color: var(--color-accent-hover); border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 4px var(--space-3); text-decoration: none; }
-  .month-figure { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
-  .month-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-1); }
+  
+  #view-what-lands #picture.slaf-card { padding: 0; }
+  
+  #view-what-lands .pic-fold > summary { list-style: none; cursor: pointer; display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-4); }
+  
+  #view-what-lands .pic-fold > summary::-webkit-details-marker { display: none; }
+  
+  #view-what-lands .pic-fold .pic-caret { flex: none; color: var(--color-text-faint); font-size: 12px; margin-top: 3px; transition: transform .15s; }
+  
+  #view-what-lands .pic-fold:not([open]) .pic-caret { transform: rotate(-90deg); }
+  
+  #view-what-lands .pic-fold > summary .pic-sum { display: block; margin-top: var(--space-1); }
+  
+  #view-what-lands .pic-body { padding: 0 var(--space-4) var(--space-4); }
+  
+  #view-what-lands .pic-body .pic-h:first-of-type { margin-top: 0; }
+  
+  #view-what-lands .pic-nudge { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: space-between; font-size: var(--text-sm); color: var(--color-text-muted); border-left: 3px solid var(--color-caution); background: rgba(232,184,75,.08); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+  
+  #view-what-lands .pic-nudge b { color: var(--color-text); }
+  
+  #view-what-lands .return-chip { display: inline-block; margin-bottom: var(--space-3); font-size: var(--text-sm); color: var(--color-accent-hover); border: 1px dashed var(--color-border-active); border-radius: var(--radius-pill); padding: 4px var(--space-3); text-decoration: none; }
+  
+  #view-what-lands .month-figure { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); }
+  
+  #view-what-lands .month-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-1); }
   /* D-195: how the month was worked out, entry by entry, behind a line. */
-  .month-how { margin-top: var(--space-2); }
-  .month-how > summary { list-style: none; cursor: pointer; font-size: var(--text-sm); color: var(--color-accent-hover); padding: var(--space-1) 0; }
-  .month-how > summary::-webkit-details-marker { display: none; }
-  .month-how > summary::before { content: '▸ '; font-size: 10px; }
-  .month-how[open] > summary::before { content: '▾ '; }
-  ul.how { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-sm); }
-  ul.how li { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
-  ul.how b { font-variant-numeric: tabular-nums; }
-  ul.how small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 2px; line-height: var(--leading-loose); }
-  ul.entries { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  ul.entries li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: baseline; }
-  ul.entries li:first-child { border-top: none; }
-  ul.entries li.is-editing { background: rgba(46,111,232,.06); }
-  ul.entries .e-name { font-weight: 600; }
-  ul.entries .e-kind { display: block; font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 400; }
-  ul.entries .e-amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
-  ul.entries .e-net { display: block; font-size: var(--text-xs); color: var(--color-text-muted); font-family: var(--font-body); }
-  ul.entries .e-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2); }
-  .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
-  .pill:hover { border-color: var(--color-border-active); color: var(--color-text); }
-  .pill.is-on { border-color: var(--color-accent); color: var(--color-accent-hover); }
-  .pill.danger:hover { border-color: var(--color-critical); color: var(--color-critical); }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
-  .form-grid .wide { grid-column: 1 / -1; }
-  .flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--color-text-muted); cursor: pointer; }
-  .flag input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
-  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
-  .say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
-  .say.is-good { color: var(--color-positive); }
-  .say.is-error { color: var(--color-critical); }
-  .net-line { display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); margin-top: var(--space-2); }
-  .net-line dt { color: var(--color-text-faint); }
-  .net-line dd { margin: 0; font-variant-numeric: tabular-nums; }
-  ul.costs { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
-  ul.costs li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: center; }
-  ul.costs li:first-child { border-top: none; }
-  ul.costs small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
-  @media (max-width: 420px) { .form-grid { grid-template-columns: 1fr; } }
+  
+  #view-what-lands .month-how { margin-top: var(--space-2); }
+  
+  #view-what-lands .month-how > summary { list-style: none; cursor: pointer; font-size: var(--text-sm); color: var(--color-accent-hover); padding: var(--space-1) 0; }
+  
+  #view-what-lands .month-how > summary::-webkit-details-marker { display: none; }
+  
+  #view-what-lands .month-how > summary::before { content: '▸ '; font-size: 10px; }
+  
+  #view-what-lands .month-how[open] > summary::before { content: '▾ '; }
+  
+  #view-what-lands ul.how { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-what-lands ul.how li { padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-what-lands ul.how b { font-variant-numeric: tabular-nums; }
+  
+  #view-what-lands ul.how small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: 2px; line-height: var(--leading-loose); }
+  
+  #view-what-lands ul.entries { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-what-lands ul.entries li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: baseline; }
+  
+  #view-what-lands ul.entries li:first-child { border-top: none; }
+  
+  #view-what-lands ul.entries li.is-editing { background: rgba(46,111,232,.06); }
+  
+  #view-what-lands ul.entries .e-name { font-weight: 600; }
+  
+  #view-what-lands ul.entries .e-kind { display: block; font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 400; }
+  
+  #view-what-lands ul.entries .e-amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+  
+  #view-what-lands ul.entries .e-net { display: block; font-size: var(--text-xs); color: var(--color-text-muted); font-family: var(--font-body); }
+  
+  #view-what-lands ul.entries .e-acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  
+  #view-what-lands .pill { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); cursor: pointer; white-space: nowrap; }
+  
+  #view-what-lands .pill:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  
+  #view-what-lands .pill.is-on { border-color: var(--color-accent); color: var(--color-accent-hover); }
+  
+  #view-what-lands .pill.danger:hover { border-color: var(--color-critical); color: var(--color-critical); }
+  
+  #view-what-lands .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+  
+  #view-what-lands .form-grid .wide { grid-column: 1 / -1; }
+  
+  #view-what-lands .flag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--color-text-muted); cursor: pointer; }
+  
+  #view-what-lands .flag input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
+  
+  #view-what-lands .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
+  
+  #view-what-lands .say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  
+  #view-what-lands .say.is-good { color: var(--color-positive); }
+  
+  #view-what-lands .say.is-error { color: var(--color-critical); }
+  
+  #view-what-lands .net-line { display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); margin-top: var(--space-2); }
+  
+  #view-what-lands .net-line dt { color: var(--color-text-faint); }
+  
+  #view-what-lands .net-line dd { margin: 0; font-variant-numeric: tabular-nums; }
+  
+  #view-what-lands ul.costs { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  
+  #view-what-lands ul.costs li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: center; }
+  
+  #view-what-lands ul.costs li:first-child { border-top: none; }
+  
+  #view-what-lands ul.costs small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  @media (max-width: 420px) { 
+  #view-what-lands .form-grid { grid-template-columns: 1fr; } }
+
+  /* ---- When it varies, from rooms/variable-income.html (D-247) ---- */
+  
+  #view-when-it-varies section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-when-it-varies .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- What it pays, from rooms/real-hourly-wage.html (D-247) ---- */
+  
+  #view-what-it-pays section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-what-it-pays .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
+  <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Income</h1>
-  <p class="room-lede">Everything coming in, logged as it lands — a paycheque, a gig, a gift, a dividend, the rent — each netted the way it is actually taxed.</p>
+  <p class="room-lede">Everything coming in. What it averages when it is uneven, and what it really pays an hour.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Three readings of what comes in">
+    <a href="#what-lands" data-view="view-what-lands">What lands</a>
+    <a href="#when-it-varies" data-view="view-when-it-varies">When it varies</a>
+    <a href="#what-it-pays" data-view="view-what-it-pays">What it pays</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ===== WHAT LANDS (was rooms/income.html) ===== -->
+  <section id="view-what-lands">
+  <p class="slaf-lede">Everything coming in, logged as it lands — a paycheque, a gig, a gift, a dividend, the rent — each netted the way it is actually taxed.</p>
   <a class="return-chip" id="return-chip" href="budget.html#bucket-income" hidden>← Back to the budget</a>
 
   <section class="slaf-card" id="month">
@@ -267,10 +383,98 @@
     <p class="slaf-hint" style="margin:var(--space-1) 0 0">Logged in <a href="cash-flow.html#log">Cash Flow’s expense log</a> with this entry picked as what it produced. Only the ones ticked deductible reduce the tax.</p>
     <ul class="costs" id="linked-list"></ul>
   </section>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. Withholding is the year’s blended rate (federal plus the employee half of FICA, an unverified table); self-employment tax is computed in named steps. Rental income is netted here the way the spec asked — as self-employment — which is not how a return treats it. Your numbers stay in this browser.
-  </p>
+  <!-- ===== WHEN IT VARIES (was rooms/variable-income.html) ===== -->
+  <section id="view-when-it-varies" hidden>
+  <p class="slaf-lede">A low month, a high month, an average: the salary to pay yourself, the buffer that smooths the gap, and how many low months it covers.</p>
+  <div class="room-standalone" id="vi-room-standalone" hidden></div>
+
+  <section class="slaf-card" id="vi-number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">Pay yourself</span>
+      <div id="vi-room-lens"></div>
+    </div>
+    <div class="room-number" id="vi-room-number"></div>
+  </section>
+
+  <section class="slaf-card" id="vi-chart" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Low, average, high</span>
+    <div id="vi-room-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="vi-inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The months</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">What a bad month and a good month actually bring in, before tax. The average comes from your income in Start Here; the guesses shown are only a shape until you type over them.</p>
+    <div id="vi-room-inputs"></div>
+  </section>
+
+  <section class="slaf-card" id="vi-amounts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Through the lens</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
+    <ul class="room-amounts" id="vi-room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="vi-assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="vi-room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="vi-room-why" hidden></p>
+  <p class="room-scope" id="vi-room-scope"></p>
+
+  <section class="slaf-card" id="vi-reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="vi-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ===== WHAT IT PAYS (was rooms/real-hourly-wage.html) ===== -->
+  <section id="view-what-it-pays" hidden>
+  <p class="slaf-lede">What the job actually pays, once you count every hour it takes and everything it costs you to do it.</p>
+  <div class="room-standalone" id="rhw-room-standalone" hidden></div>
+
+  <section class="slaf-card" id="rhw-number">
+    <div class="room-head-row">
+      <span class="slaf-eyebrow">Your real rate</span>
+      <div id="rhw-room-lens"></div>
+    </div>
+    <div class="room-number" id="rhw-room-number"></div>
+    <p class="slaf-hint" id="per-source" hidden></p>
+  </section>
+
+  <section class="slaf-card" id="rhw-chart" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Where the week goes</span>
+    <div id="rhw-room-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="rhw-inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The hours the job takes</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <div id="rhw-room-inputs"></div>
+  </section>
+
+  <section class="slaf-card" id="rhw-amounts" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Priced in life</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
+    <ul class="room-amounts" id="rhw-room-amounts"></ul>
+  </section>
+
+  <details class="room-drawer" id="rhw-assumptions">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <div class="room-assumptions-body" id="rhw-room-assumptions"></div>
+  </details>
+
+  <p class="room-why" id="rhw-room-why" hidden></p>
+  <p class="room-scope" id="rhw-room-scope"></p>
+
+  <section class="slaf-card" id="rhw-reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="rhw-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. Nothing here is sent anywhere.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -295,12 +499,82 @@
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/budget.js"></script>
 <script src="../shared/manage.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../engines/variableincome.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/room.js"></script>
 <script>
+/* ---- what lands, what it averages, what it pays (D-247) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   The hash still reaches it — an old link must land somewhere honest — and
+   the reading says for whom it is, which is what Gate.why is for. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-when-it-varies', match: /^#(when-it-varies|vi-)/, branch: 'variableIncome' },
+    { id: 'view-what-it-pays', match: /^#(what-it-pays|rhw-|per-source)/, branch: 'hours' },
+    { id: 'view-what-lands', match: /.*/ }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. When the hash asks for a reading the gate has taken
+       away, fall back to the DEFAULT — the room's plainest reading, and the
+       one the person would have got with no hash at all — not to whichever
+       gated reading happens to sit first in this list. */
+    var fallback = VIEWS[VIEWS.length - 1];
+    var on = open(asked) ? asked
+           : open(fallback) ? fallback
+           : VIEWS.filter(open)[0] || fallback;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('income');
+  if (SLAF.Progress) SLAF.Progress.mount('income');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-what-lands, from rooms/income.html (D-247) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Ledger = SLAF.Ledger, Manage = SLAF.Manage, Budget = SLAF.Budget;
   var manageOpen = false, manageState = 'active';
-  var ROOM_ID = 'income';
+  var ROOM_ID = 'income';   /* the room this reading lives in */
   var TABLES = null;
   var editingId = null;     /* the entry the form holds, or null for a new one */
   var detailId = null;      /* the entry whose costs are open */
@@ -758,26 +1032,311 @@
     renderManage(h);
     renderCosts(h);
   }
-  function jumpToHash() {
-    if (!location.hash) return;
-    if (location.hash === '#add') openForm(false);   /* a deep link to the form opens it */
-    var t = document.getElementById(location.hash.slice(1));
-    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  window.addEventListener('hashchange', jumpToHash);
-
-  Spine.registerRoom(ROOM_ID);
-  SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
   buildKinds();
   fillForm(null);
   Reference.load(['effectiveTaxRates', 'seTax', 'federalBrackets']).then(function (tables) {
     TABLES = tables;
     render();
-    jumpToHash();
   }).catch(function (err) {
     var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
     n.textContent = 'Couldn’t load the tax tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-when-it-varies, from rooms/variable-income.html (D-247) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      VI = SLAF.VariableIncome, Charts = SLAF.Charts, Room = SLAF.Room;
+
+  /* ---- writes: this room owns the low and high month on the variable
+     source, and variableIncome.bufferMonths --------------------------------- */
+  var createdSource = false;
+  function writeSource(key, value) {
+    var person = Spine.ensurePrimaryPerson('You');
+    var source = Ownership.variableSource(Spine.getProfile());
+    var patch;
+    if (source) { patch = { id: source.id }; }
+    else {
+      /* No income source at all: make an own-work one and say so. */
+      patch = Schema.createIncomeSource({ id: 'intake_own_work', personId: person.id, type: '1099', frequency: 'variable' });
+      createdSource = true;
+    }
+    patch[key] = value;
+    Spine.upsertIncomeSource(person.id, patch);
+  }
+  function readSource(h, key) {
+    var s = Ownership.variableSource(h);
+    return s && Money.isEntered(s[key]) ? s[key] : null;
+  }
+  function months(n) { return Money.formatMonths(n); }
+  function count(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
+
+  Room.mount({
+    id: 'income',
+    part: true,
+    prefix: 'vi-',
+    root: 'view-when-it-varies',
+    tables: ['variableIncomeConventions', 'seTax', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'ledgerIncome'],
+    guessAs: 'selfEmployed',
+
+    number: function (h, T) {
+      var p = VI.plan(h, T);
+      if (!Money.isOk(p)) return { label: 'The salary to pay yourself', value: null, reason: p.reason };
+      var parts = [
+        (p.observed ? 'from <strong>' + p.entries.entries + (p.entries.entries === 1 ? ' entry' : ' entries') + '</strong> over ' + p.entries.count + (p.entries.count === 1 ? ' month' : ' months') + ' in Income · ' : '') + 'low <strong>' + Money.formatCents(p.lowCents) + '</strong>',
+        'average <strong>' + Money.formatCents(p.averageMonthCents) + '</strong>',
+        'high <strong>' + (Money.isEntered(p.highCents) ? Money.formatCents(p.highCents) : 'not entered') + '</strong>'
+      ];
+      var sub = parts.join(' · ');
+      if (Money.isEntered(p.bufferNeededCents)) {
+        sub += ' · buffer <strong>' + Money.formatCents(p.bufferNeededCents) + '</strong> for ' + months(p.bufferMonths) + ' of the gap';
+        if (Money.isEntered(p.bufferHeldCents)) {
+          sub += ', you hold <strong>' + Money.formatCents(p.bufferHeldCents) + '</strong>';
+          if (p.cushionCompetes) sub += ' — the ' + months(p.cushionMonths) + ' emergency cushion comes first and takes ' + (p.freeCashCents === 0 ? 'all of the cash' : 'most of it');
+        } else sub += ' (add your cash to see what you hold)';
+      } else sub += ' · add a buffer in months to size it';
+      if (!Money.isEntered(p.spendingCents)) sub += ' · spending is not in yet, so the low month stands as the salary';
+      else if (p.shortfallCents > 0) {
+        sub += ' · a low month is <strong>' + Money.formatCents(p.shortfallCents) + '</strong> short of spending, so spending is the salary; the cash covers '
+          + (Money.isEntered(p.lowMonthsCovered) ? '<strong>' + count(p.lowMonthsCovered, 'low month') + '</strong> in a row' : 'an unknown number of them — add your cash');
+      } else sub += ' · a low month clears spending; the cash covers every one';
+      if (p.lowAboveAverage) sub += ' · the low month is above the average, so there is no gap to buffer — check the two';
+      if (Money.isEntered(p.taxSetAsideMonthlyCents)) sub += ' · <strong>' + Money.formatCents(p.taxSetAsideMonthlyCents) + '</strong> a month comes off the top for the quarterly';
+      return { label: 'The salary to pay yourself', value: Money.formatCents(p.salaryCents) + ' a month', sub: sub, zone: p.zone, result: p };
+    },
+
+    /* With variable entries in the ledger the chart is the months as they
+       landed with the rolling average over them; without, the five bars. */
+    chart: function (h, T) {
+      var p = VI.plan(h, T);
+      if (!Money.isOk(p)) return Charts.bars({ rows: [], empty: 'Add a low month to draw the swing.' });
+      if (p.observed && p.entries && p.entries.count >= 2) {
+        var fe = p.entries;
+        return Charts.area({
+          title: 'Variable income by month, with the rolling average',
+          series: [
+            { label: 'A month', color: Charts.COLORS.series[1], fill: true, points: fe.months.map(function (m, i) { return [i, m.cents]; }) },
+            { label: fe.window + '-month average', color: Charts.COLORS.target, fill: false, points: fe.rolling.map(function (r, i) { return [i, r.cents]; }) }
+          ],
+          hLines: Money.isEntered(p.spendingCents) ? [{ y: p.spendingCents, label: 'spending', color: Charts.COLORS.spend }] : [],
+          x: { label: 'month', format: function (v) { var m = fe.months[Math.round(v)]; return m ? m.label.slice(0, 3) : ''; } },
+          y: { min: 0 }
+        });
+      }
+      return Charts.bars({
+        rows: [
+          { label: 'Low month', value: p.lowCents, color: Charts.COLORS.series[3] },
+          { label: 'Average', value: p.averageMonthCents, note: p.averageBasis === 'source' ? 'your own-work average' : 'gross ÷ 12', color: Charts.COLORS.series[0] },
+          { label: 'High month', value: p.highCents, color: Charts.COLORS.series[1], empty: 'not entered' },
+          { label: 'Spending', value: p.spendingCents, note: 'the line to clear', color: Charts.COLORS.spend, empty: 'not entered' },
+          { label: 'The salary', value: p.salaryCents, note: p.salaryIsSpending ? 'spending, since the low month is below it' : 'the low month', color: Charts.COLORS.target }
+        ]
+      });
+    },
+
+    inputs: [
+      { ctl: 'variableLowCents', label: 'A low month', kind: 'money', placeholder: 'e.g. 3,500', hint: 'What a bad month brings in, before tax.',
+        read: function (h) { return readSource(h, 'variableLowCents'); },
+        write: function (v) { writeSource('variableLowCents', v); },
+        propose: function (h, T) { var g = VI.propose(h, T); return Money.isEntered(g.lowCents) ? { value: g.lowCents, source: 'seven-tenths of your average (convention)' } : null; } },
+      { ctl: 'variableHighCents', label: 'A high month', kind: 'money', placeholder: 'e.g. 6,500', hint: 'What a good month brings in.',
+        read: function (h) { return readSource(h, 'variableHighCents'); },
+        write: function (v) { writeSource('variableHighCents', v); },
+        propose: function (h, T) { var g = VI.propose(h, T); return Money.isEntered(g.highCents) ? { value: g.highCents, source: 'thirteen-tenths of your average (convention)' } : null; } },
+      { ctl: 'windowMonths', label: 'Smooth over', kind: 'select', options: [['', 'Three months'], ['3', 'Three months'], ['6', 'Six months'], ['12', 'Twelve months']], hint: 'The rolling average over the ledger’s variable months — 1099, side income, bonuses — logged in Income. Nothing is added here.',
+        read: function (h) { return h.variableIncome && Money.isEntered(h.variableIncome.windowMonths) ? h.variableIncome.windowMonths : null; },
+        write: function (v) { var n = Number(v); Spine.set('variableIncome.windowMonths', [3, 6, 12].indexOf(n) >= 0 ? n : null); } },
+      { ctl: 'bufferMonths', label: 'Buffer, months of the gap', kind: 'number', placeholder: 'e.g. 3', affix: 'mo', hint: 'How many months of the low-to-average gap to hold. Three is the usual floor, six is full.',
+        read: function (h) { return h.variableIncome && Money.isEntered(h.variableIncome.bufferMonths) ? h.variableIncome.bufferMonths : null; },
+        write: function (v) { Spine.set('variableIncome.bufferMonths', v === null || v < 0 ? null : v); },
+        propose: function (h, T) { var g = VI.propose(h, T); return { value: g.bufferMonths, source: 'the usual floor, ' + count(g.bufferMonths, 'month') + ' of the gap (convention)' }; } }
+    ],
+
+    amounts: function (h, T) {
+      var p = VI.plan(h, T);
+      var rows = [];
+      if (!Money.isOk(p)) return rows;
+      if (Money.isEntered(p.bufferNeededCents)) rows.push({ label: 'The buffer to hold', cents: p.bufferNeededCents, href: '#vi-inputs' });
+      if (p.shortfallCents > 0) rows.push({ label: 'A low month’s shortfall against spending', cents: p.shortfallCents, href: Ownership.linkTo('expenses', 'spending') });
+      if (Money.isEntered(p.taxSetAsideMonthlyCents)) rows.push({ label: 'The tax set-aside, a month', cents: p.taxSetAsideMonthlyCents, href: Ownership.linkTo('self-employed', 'quarterly') });
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var p = VI.plan(h, T);
+      var c = T.variableIncomeConventions || {};
+      var g = VI.propose(h, T);
+      var se = T.seTax || {};
+      var conv = 'data/variable_income_conventions.json v' + c.version + ' — ' + c.confidence;
+      var rows = [
+        { label: 'The salary', value: 'the low month', source: (c.payYourself && c.payYourself.rule) + ' ' + conv },
+        { label: 'Buffer', value: (c.buffer ? c.buffer.usualMonths + ' months usual, ' + c.buffer.fullMonths + ' full' : '3 usual, 6 full') + ' — of the low-to-average gap', source: conv },
+        { label: 'Emergency cushion, first', value: count(Money.isEntered(c.emergencyCushionMonths) ? c.emergencyCushionMonths : 3, 'month') + ' of spending', source: 'cash beyond it is what is free for the buffer ' + conv },
+        { label: 'The average month', value: Money.isOk(p) ? Money.formatCents(p.averageMonthCents) : 'not known yet', source: Money.isOk(p) && p.averageBasis === 'source' ? 'your own-work source, entered as a month on average (D-094)' : 'gross annual income ÷ 12 (Start Here)' },
+        { label: 'Low and high, proposed', value: Money.isEntered(g.lowCents) ? Money.formatCents(g.lowCents) + ' / ' + Money.formatCents(g.highCents) : 'need an average first', source: Math.round(g.lowShare * 100) + '% and ' + Math.round(g.highShare * 100) + '% of the average — only until yours replace them ' + conv }
+      ];
+      if (Money.isOk(p) && p.taxSetAside) {
+        rows.push({ label: 'Tax set-aside, a month', value: Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAsideMonthlyCents) + ' (quarterly ' + Money.formatCents(p.taxSetAside.perQuarterCents) + ' ÷ 3)' : 'not estimated: ' + p.taxSetAside.reason,
+          source: 'the Self-Employed room’s quarterly estimate on ' + (Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAside.expectedNetProfitCents) + ' of ' + p.taxSetAside.profitBasis + ' read as profit (no expenses stored)' : 'your income') + ' — data/se_tax_2026.json v' + se.version + ' (' + se.confidence + '), data/effective_tax_rates_2026.json v' + (T.effectiveTaxRates || {}).version });
+      }
+      return rows;
+    },
+
+    why: function (h, T, situation) {
+      return {
+        selfEmployed: 'Self-employed, there is no payslip to set the month; this is the room that sets it. The salary is what the worst month can pay, the buffer is what the good months build, and the quarterly comes off the top before either.',
+        mixed: 'With a job and your own work, the job steadies the month and the own-work part is the variable one. This room reads the whole gross as the average unless the own-work income was entered as a month on average, in which case it reads that source alone.',
+        employed: '', betweenJobs: '', student: '', retired: ''
+      }[situation] || '';
+    },
+
+    scope: 'This room does not forecast a season, invoice anyone, or replace the quarterly estimate.',
+
+    after: function () {
+      var notice = document.getElementById('load-notice');
+      if (!notice || !createdSource) return;
+      notice.hidden = false;
+      notice.className = 'notice';
+      notice.textContent = 'There was no income source yet, so this room made one for your own work (1099, a month on average). Give it a figure in Start Here and the average will follow.';
+    }
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-what-it-pays, from rooms/real-hourly-wage.html (D-247) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+
+  /* ---- writes: this room owns person.work ------------------------------------ */
+  function writeWork(key, value) {
+    var person = Spine.ensurePrimaryPerson('You');
+    var current = Schema.workProfile(Schema.personById(Spine.getProfile(), person.id));
+    var next = Object.assign({}, current);
+    next[key] = value;
+    Spine.upsertPerson({ id: person.id, work: next });
+  }
+  function readWork(h) { return Schema.workProfile(Schema.primaryPerson(h)); }
+  function hoursInput(key, label, placeholder, hint) {
+    return { ctl: key, label: label, kind: 'number', placeholder: placeholder, affix: 'h', hint: hint,
+      read: function (h) { return readWork(h)[key]; }, write: function (v) { writeWork(key, v === null || v <= 0 ? null : v); } };
+  }
+  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
+
+  var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
+
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  Room.mount({
+    id: 'income',
+    part: true,
+    prefix: 'rhw-',
+    root: 'view-what-it-pays',
+    tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
+
+    number: function (h, T) {
+      var w = Hourly.realHourlyWage(h, T, {});
+      if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
+      var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
+        + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
+      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
+      if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
+      if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
+      return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
+    },
+
+    chart: function (h, T) {
+      var w = Hourly.realHourlyWage(h, T, {});
+      if (!Money.isOk(w)) return Charts.stacked({ rows: [], empty: 'Add your paid hours to see where the week goes.' });
+      var parts = [{ label: 'Paid', value: w.paidHoursPerWeek, color: HOUR_COLOURS.paid }].concat((w.unpaidParts || []).map(function (p) { return { label: p.label, value: p.hours, color: HOUR_COLOURS[p.key] }; }));
+      var gross = w.grossAnnualIncomeCents, tax = w.estimatedTaxCents || 0, costs = w.annualWorkCostsCents, kept = w.keptAnnualCents;
+      return Charts.stacked({
+        title: 'Hours a week, and where the pay goes',
+        rows: [
+          { label: 'Your week', note: w.totalHoursPerWeek + ' h, ' + w.paidHoursPerWeek + ' paid', parts: parts },
+          { label: 'A year of pay', note: 'per ' + Money.formatCents(gross), parts: [
+            { label: 'Kept', value: kept / gross * w.totalHoursPerWeek, color: Charts.COLORS.growth },
+            { label: 'Tax', value: tax / gross * w.totalHoursPerWeek, color: Charts.COLORS.debt },
+            { label: 'Costs of working', value: costs / gross * w.totalHoursPerWeek, color: Charts.COLORS.series[3] }
+          ] }
+        ],
+        format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
+      });
+    },
+
+    /* 15.4: more than one source, each with its own hours, gets a line
+       each: the headline rate from its own hours. D-181. */
+    after: function (h, T) {
+      var host = document.getElementById('per-source');
+      var w = Hourly.realHourlyWage(h, T, {});
+      var rows = Money.isOk(w) ? (w.perSource || []) : [];
+      if (!host) return;
+      if (!rows.length) { host.hidden = true; host.innerHTML = ''; return; }
+      host.hidden = false;
+      host.innerHTML = 'Source by source: ' + rows.map(function (r) {
+        var name = r.source || Schema.INCOME_TYPE_LABELS[r.type] || 'pay';
+        return '<strong>' + esc(name) + '</strong> ' + (r.nominalHourlyCents !== null ? perHour(r.nominalHourlyCents) + ' on paper' + (r.afterTaxHourlyCents !== null ? ', ' + perHour(r.afterTaxHourlyCents) + ' after tax' : '') + ' from ' + r.hoursPerWeek + ' h a week' : Money.formatCents(r.grossAnnualIncomeCents) + ' a year, no hours given');
+      }).join(' · ') + '.';
+    },
+
+    inputs: [
+      hoursInput('contractedHoursPerWeek', 'Paid hours a week', 'e.g. 40'),
+      hoursInput('unpaidOvertimeHoursPerWeek', 'Unpaid overtime', 'e.g. 3'),
+      hoursInput('commuteHoursPerWeek', 'Commuting', 'e.g. 5'),
+      { ctl: 'workCostsMonthlyCents', label: 'Costs of working, a month', kind: 'money', placeholder: 'e.g. 400', hint: 'Petrol, parking, transit, work clothes, lunches you would not otherwise buy, childcare only while working.',
+        read: function (h) { return readWork(h).workCostsMonthlyCents; }, write: function (v) { writeWork('workCostsMonthlyCents', v); } },
+      { ctl: 'weeksPerYear', label: 'Weeks worked a year', kind: 'number', placeholder: String(Schema.WORK_DEFAULTS.weeksPerYear),
+        read: function (h) { var w = readWork(h).weeksPerYear; return w === Schema.WORK_DEFAULTS.weeksPerYear ? null : w; }, write: function (v) { writeWork('weeksPerYear', v === null || v <= 0 ? Schema.WORK_DEFAULTS.weeksPerYear : v); } }
+    ],
+    moreLabel: 'The hours around the job',
+    more: [
+      hoursInput('prepHoursPerWeek', 'Getting ready', 'e.g. 2.5'),
+      hoursInput('decompressHoursPerWeek', 'Decompressing', 'e.g. 2.5')
+    ],
+
+    amounts: function (h, T) {
+      var w = Hourly.realHourlyWage(h, T, {});
+      var spend = Schema.monthlyExpensesCents(h);
+      var rows = [];
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
+      if (Money.isOk(w)) {
+        rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
+        if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });
+      }
+      rows.push({ label: 'A $1,200 thing you are eyeing', cents: 120000 });
+      return rows;
+    },
+
+    assumptions: function (h, T) {
+      var w = Hourly.realHourlyWage(h, T, {});
+      var tax = T.effectiveTaxRates;
+      var work = readWork(h);
+      return [
+        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
+        { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
+        { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
+        { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
+      ];
+    },
+
+    why: function (h, T, situation) {
+      return {
+        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
+        selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
+        mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
+        student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
+        betweenJobs: '', retired: ''
+      }[situation] || 'Any job has a headline rate and a real one. The gap between them is what this room measures.';
+    },
+
+    scope: 'This room does not model overtime pay, shift differentials, or a second job’s hours on their own. Tax is a flat estimate, not a return.'
   });
 })();
 </script>

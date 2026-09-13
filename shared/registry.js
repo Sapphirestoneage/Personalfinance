@@ -93,21 +93,25 @@
     {
       id: 'income',
       features: ['equityComp', 'matchVesting'],
-      group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources'],
+      group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources', 'variable income', 'irregular', 'uneven', 'real hourly wage', 'what it pays', 'per hour'],
       kind: 'about-you',
       needs: [],
       order: 3.2,
       title: 'Income',
-      blurb: 'Everything coming in, logged as it lands — a paycheque, a gig, a gift, a dividend, the rent — each netted the way it is actually taxed.',
+      blurb: 'Everything coming in, logged as it lands and netted the way it is taxed — the salary to pay yourself when it is irregular, and what the job actually pays once every hour and cost is counted.',
       href: 'rooms/income.html',
       tier: 1,
       tags: ['income'],
-      daite: { reads: [], writes: ['income.costs', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss'] },
+      daite: { reads: ['you.hours'], writes: ['income.costs', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss', 'income.variable'] },
       subsections: [
         { id: 'month', label: 'This month' },
         { id: 'log',   label: 'Every entry' },
         { id: 'add',   label: 'Add an entry' },
-        { id: 'costs', label: 'The costs of earning it' }
+        { id: 'costs', label: 'The costs of earning it' },
+        { id: 'vi-number', label: 'The salary to pay yourself' },
+        { id: 'vi-inputs', label: 'A low month, a high month' },
+        { id: 'rhw-number', label: 'What an hour really pays' },
+        { id: 'rhw-inputs', label: 'The hours and the costs' }
       ]
     },
     {
@@ -117,8 +121,8 @@
       kind: 'about-you',
       needs: [],
       order: 3.4,
-      title: 'Budget',
-      blurb: 'Five buckets, estimated beside actual, read from what Income and Cash Flow logged \u2014 never typed here \u2014 and closed at the end of the month.',
+      title: 'The Close',
+      blurb: 'Five buckets, what you expected against what happened, the month closed — then every closed month read back, and every snapshot you froze over time.',
       href: 'rooms/budget.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
@@ -262,8 +266,8 @@
       kind: 'about-you',
       needs: [],
       order: 3.1,
-      title: 'Cash Flow',
-      blurb: 'When the money moves: this month at a glance, every receipt logged on its date, and where it all flows.',
+      title: 'The Month',
+      blurb: 'When the money moves: this month at a glance, every receipt on its date, where it all flows — and paydays against bills across the month, with the low point and the day it lands.',
       href: 'rooms/cash-flow.html',
       tier: 1,
       tags: ['cashflow', 'income'],
@@ -367,29 +371,6 @@
         { id: 'variants',   label: 'Six ways to ask it' },
         { id: 'targets',    label: 'Your targets' },
         { id: 'params',     label: 'Try different assumptions' }
-      ]
-    },
-    {
-      id: 'real-hourly-wage',
-      group: 'numbers', subgroup: 'income', aliases: ['hourly', 'wage', 'commute', 'hours', 'ymoyl'],
-      kind: 'about-you',
-      needs: ['grossAnnualIncome'],
-      order: 9,
-      title: 'Real Hourly Wage',
-      blurb: 'What the job actually pays, once you count every hour it takes and everything it costs you to do it.',
-      href: 'rooms/real-hourly-wage.html',
-      tier: 1,
-      tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents'], writes: [] },
-      /* The template room (D-097): the same six ids every room on the
-         template has, so a deep link means the same thing everywhere. */
-      subsections: [
-        { id: 'number',      label: 'Your real rate' },
-        { id: 'chart',       label: 'Where the week goes' },
-        { id: 'inputs',      label: 'The hours it takes' },
-        { id: 'amounts',     label: 'Priced in life' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
       ]
     },
     {
@@ -784,7 +765,7 @@
     needs: ['dob'],
     order: 37.7,
     title: 'The Close',
-    blurb: 'Five buckets, what you expected against what happened, the month closed — then every closed month read back, and every snapshot you froze over time.',
+    blurb: 'Everything coming in, logged as it lands and netted the way it is taxed — the salary to pay yourself when it is irregular, and what the job actually pays once every hour and cost is counted.',
     href: 'rooms/degree.html',
     tier: 2,
     tags: ['income'],
@@ -1201,29 +1182,6 @@
       ]
   });
 
-  /* Variable Income — the second wave of tranche rooms (D-099). */
-  ROOMS.push({
-    id: 'variable-income',
-    group: 'numbers', subgroup: 'income', aliases: ['freelance', 'commission', 'irregular', 'rolling average'],
-    kind: 'about-you',
-    needs: ['grossAnnualIncome', 'monthlyExpenses'],
-    order: 42,
-    title: 'Variable Income',
-    blurb: 'A low month, a high month, an average: the salary to pay yourself, the buffer that smooths the gap, and how many low months it covers.',
-    href: 'rooms/variable-income.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['income.variable'] },
-      subsections: [
-        { id: 'number',      label: 'The salary to pay yourself' },
-        { id: 'chart',       label: 'Low, average, high' },
-        { id: 'inputs',      label: 'The months' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
   /* Enough — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'enough',
@@ -1505,7 +1463,7 @@
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
-    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow'],
+    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
     decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'enough', 'week', 'reversibility'],
@@ -1562,7 +1520,6 @@
     credential: ['career'],
     'self-employed': ['ownWork'],
     'side-hustle': ['career'],
-    'real-hourly-wage': ['hours'],
     hassle: ['hours'],
     fire: ['savingsRate'],
     /* Between Jobs became the Cushion's while-job-hunting reading (D-232),
@@ -1579,7 +1536,10 @@
        absent when its own branch is not there — the merge does not widen
        who sees what. */
     partner: [['partner', 'dependents']],
-    'variable-income': ['variableIncome'],
+    /* Variable Income and the Real Hourly Wage became readings of Income
+       (D-247). Income requires nothing — what comes in is a question for
+       everybody — and each READING keeps the branch its room had, declared
+       on the router, so its hat is absent when the branch is not there. */
     /* Price the Dream became Big Purchase's whole-list reading (D-240). The
        hours branch was its requirement, not the room's: the one-thing
        reading applies to anyone, and the dream reading says it has no wage

@@ -37,7 +37,6 @@
             "fire",
             "coast-date",
             "fire-lab",
-            "real-hourly-wage",
             "hassle",
             "self-employed",
             "side-hustle",
@@ -72,7 +71,6 @@
             "down-payment",
             "property",
             "big-purchase",
-            "variable-income",
             "enough",
             "week",
             "reversibility",
@@ -152,7 +150,6 @@
           "rooms": [
             "fire",
             "coast-date",
-            "real-hourly-wage",
             "hassle",
             "self-employed",
             "side-hustle",
@@ -168,7 +165,6 @@
             "offer-compare",
             "partner",
             "wedding",
-            "variable-income",
             "student-loans"
           ],
           "note": "What the gate actually moves \u2014 between 8 and 19 rooms."
@@ -217,8 +213,7 @@
             "cash-flow",
             "budget",
             "income",
-            "accounts",
-            "real-hourly-wage"
+            "accounts"
           ]
         },
         {
@@ -266,8 +261,7 @@
           "rooms": [
             "cant-pay",
             "micro-retirement",
-            "get-help",
-            "variable-income"
+            "get-help"
           ],
           "note": "The rooms someone opens on their worst day. Worth being one tap from the front door."
         },
@@ -321,12 +315,10 @@
           "name": "Earn",
           "rooms": [
             "income",
-            "real-hourly-wage",
             "side-hustle",
             "self-employed",
             "career-move",
             "offer-compare",
-            "variable-income",
             "hassle",
             "credential",
             "degree",
@@ -482,8 +474,7 @@
             "career-move",
             "offer-compare",
             "credential",
-            "degree",
-            "variable-income"
+            "degree"
           ]
         },
         {
@@ -530,7 +521,6 @@
             "one-pager",
             "skill-tree",
             "hassle",
-            "real-hourly-wage",
             "foo-ladder"
           ],
           "note": "The bay that catches everything that is not time-bound \u2014 nearly a quarter of the app.",
@@ -637,7 +627,6 @@
             "worth",
             "reversibility",
             "hassle",
-            "real-hourly-wage",
             "skill-tree",
             "credential",
             "degree",
@@ -645,7 +634,6 @@
             "offer-compare",
             "side-hustle",
             "self-employed",
-            "variable-income",
             "timeline",
             "what-if-life",
             "adventure",
@@ -734,7 +722,6 @@
             "wedding",
             "self-employed",
             "side-hustle",
-            "variable-income",
             "micro-retirement"
           ],
           "note": "A third of the app behind one word \u2014 the price of a tidy tab bar.",
@@ -747,8 +734,7 @@
             "debates",
             "credential",
             "degree",
-            "hassle",
-            "real-hourly-wage"
+            "hassle"
           ]
         },
         {
@@ -831,7 +817,6 @@
             "partner",
             "wedding",
             "protection",
-            "real-hourly-wage",
             "settings",
             "reversibility",
             "side-hustle",
@@ -846,7 +831,6 @@
             "statement",
             "reachable",
             "debates",
-            "variable-income",
             "car",
             "timeline",
             "what-if-life",
@@ -949,8 +933,6 @@
             "offer-compare",
             "side-hustle",
             "self-employed",
-            "variable-income",
-            "real-hourly-wage",
             "hassle"
           ],
           "note": "What you can do, and what it is worth."
@@ -1087,7 +1069,6 @@
             "rollover",
             "self-employed",
             "side-hustle",
-            "variable-income",
             "timeline",
             "what-if-life",
             "adventure",
@@ -1095,7 +1076,6 @@
             "credential",
             "degree",
             "hassle",
-            "real-hourly-wage",
             "get-help"
           ],
           "note": "A third of the app, and none of it can be put in a diary. This is the bay that argues for S-3 or S-5 instead.",
@@ -1128,7 +1108,6 @@
         {
           "name": "A number you didn\u2019t have",
           "rooms": [
-            "real-hourly-wage",
             "fire",
             "coast-date",
             "runway",
@@ -1206,7 +1185,6 @@
             "cant-pay",
             "micro-retirement",
             "get-help",
-            "variable-income",
             "partner",
             "wedding"
           ]
@@ -1249,7 +1227,6 @@
           "name": "The income stopping",
           "rooms": [
             "micro-retirement",
-            "variable-income",
             "self-employed",
             "side-hustle",
             "career-move",
@@ -1323,7 +1300,6 @@
             "data",
             "one-pager",
             "get-help",
-            "real-hourly-wage",
             "hassle",
             "credential",
             "degree",
@@ -1348,7 +1324,6 @@
         {
           "name": "Just you",
           "rooms": [
-            "real-hourly-wage",
             "hassle",
             "values",
             "enough",
@@ -1380,7 +1355,6 @@
             "micro-retirement",
             "side-hustle",
             "self-employed",
-            "variable-income",
             "income",
             "rollover",
             "timeline"
@@ -1492,7 +1466,6 @@
             "fire",
             "coast-date",
             "fire-lab",
-            "real-hourly-wage",
             "hassle",
             "self-employed",
             "side-hustle",
@@ -1520,7 +1493,6 @@
             "down-payment",
             "property",
             "big-purchase",
-            "variable-income",
             "enough",
             "reversibility",
             "student-loans"
@@ -1573,10 +1545,8 @@
           "name": "2 \u00b7 \u201cWhat comes in?\u201d",
           "rooms": [
             "income",
-            "variable-income",
             "self-employed",
             "side-hustle",
-            "real-hourly-wage",
             "hassle",
             "career-move",
             "offer-compare",
@@ -1688,7 +1658,6 @@
         {
           "name": "Five minutes",
           "rooms": [
-            "real-hourly-wage",
             "hassle",
             "worth",
             "car",
@@ -1741,7 +1710,6 @@
             "offer-compare",
             "self-employed",
             "side-hustle",
-            "variable-income",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
@@ -1810,7 +1778,6 @@
             "financial-snapshot",
             "race",
             "statements",
-            "variable-income",
             "cant-pay",
             "dashboard"
           ],
@@ -1832,7 +1799,6 @@
         {
           "name": "A whole idea to hold",
           "rooms": [
-            "real-hourly-wage",
             "hassle",
             "worth",
             "credential",
@@ -1882,7 +1848,6 @@
             "partner",
             "wedding",
             "micro-retirement",
-            "variable-income",
             "self-employed",
             "side-hustle",
             "career-move",
@@ -1901,7 +1866,6 @@
             "income",
             "budget",
             "settings",
-            "real-hourly-wage",
             "hassle"
           ],
           "note": "The month as it actually happens. Nine spokes.",
@@ -2038,7 +2002,6 @@
             "tax",
             "protection",
             "dashboard",
-            "real-hourly-wage",
             "hassle",
             "credential",
             "degree",
@@ -2066,7 +2029,6 @@
           "name": "Nothing yet, and it says so",
           "rooms": [
             "micro-retirement",
-            "variable-income",
             "self-employed",
             "side-hustle",
             "career-move",
@@ -2115,7 +2077,6 @@
             "offer-compare",
             "self-employed",
             "side-hustle",
-            "variable-income",
             "timeline",
             "rollover"
           ]
@@ -2196,7 +2157,6 @@
             "skill-tree",
             "credential",
             "degree",
-            "real-hourly-wage",
             "hassle"
           ]
         },

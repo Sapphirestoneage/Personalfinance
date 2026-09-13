@@ -1,13 +1,14 @@
 ---
 paths:
   - "rooms/income.html"
+  - "engines/variableincome.js"
 ---
 # Income (`income`)
-File: rooms/income.html · 786 lines
-Engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget
-Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, se_tax_2026.json
-Owns: ledgerIncome, incomeType, paySurvives
-Reads from other owners: filingStatus (start)
+File: rooms/income.html · 1345 lines
+Engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget, variableincome, hourly
+Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, se_tax_2026.json, variable_income_conventions.json
+Owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, incomeType, paySurvives
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:
   - D-237 — Expenses: the month, and what repeats in it
   - D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line

@@ -130,7 +130,7 @@
       ],
       "headline": "“Cut the coffee.”",
       "body": "At your real hourly wage of {wage} a {coffee} coffee is {coffeeTime} of your life; your rent is {rentTime}. Pointing at the small one is the mistake.",
-      "room": "real-hourly-wage",
+      "room": "income",
       "anchor": "amounts"
     },
     {

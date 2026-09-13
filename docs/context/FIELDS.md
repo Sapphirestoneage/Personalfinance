@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 112. Traced: 103. No other room mentions it: **53**.
+Fields: 112. Traced: 103. No other room mentions it: **54**.
 
 
 ## accounts (7)
@@ -70,7 +70,7 @@ Fields: 112. Traced: 103. No other room mentions it: **53**.
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by cash-flow, housing, property, debates
-- `monthlyExpenses` — Monthly expenses · read by start, cash-flow, budget, financial-snapshot, statements, statement, fire, fire-lab, real-hourly-wage, dashboard, skill-tree, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, career-move, partner, housing, big-purchase, variable-income, enough, adventure, week, reversibility, debates, one-pager
+- `monthlyExpenses` — Monthly expenses · read by start, cash-flow, income, budget, financial-snapshot, statements, statement, fire, fire-lab, dashboard, skill-tree, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, career-move, partner, housing, big-purchase, enough, adventure, week, reversibility, debates, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
@@ -90,9 +90,13 @@ Fields: 112. Traced: 103. No other room mentions it: **53**.
 - `downPct` — Down payment, share of price · read by property
 - `mortgageRate` — Mortgage rate · read by debates
 
-## income (3)
+## income (7)
 
-- `ledgerIncome` — Income logged, a month · read by variable-income
+- `incomeLow` — A low month · **no other room mentions it**
+- `incomeHigh` — A high month · **no other room mentions it**
+- `bufferMonths` — Buffer, months · **no other room mentions it**
+- `variableWindow` — Rolling window · **no other room mentions it**
+- `ledgerIncome` — Income logged, a month · **no other room mentions it**
 - `incomeType` — What kind of pay · read by ledger
 - `paySurvives` — Keeps paying if the job goes · read by ledger, start
 
@@ -140,11 +144,11 @@ Fields: 112. Traced: 103. No other room mentions it: **53**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by expenses, income, financial-snapshot, statement, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, skill-tree, values, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, career-move, offer-compare, degree, partner, housing, big-purchase, variable-income, adventure, week, reversibility, debates, student-loans, one-pager
+- `filingStatus` — Filing status · read by expenses, income, financial-snapshot, statement, fire, fire-lab, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, income, financial-snapshot, statements, statement, hassle, self-employed, side-hustle, dashboard, credential, accounts, skill-tree, values, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, career-move, offer-compare, degree, partner, housing, big-purchase, adventure, week, reversibility, debates, student-loans, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
-- `cashSavings` — Cash & savings · read by ledger, cash-flow, budget, financial-snapshot, statements, statement, dashboard, skill-tree, runway, cant-pay, what-if-life, protection, housing, big-purchase, variable-income, reversibility, debates, one-pager
+- `cashSavings` — Cash & savings · read by ledger, cash-flow, income, budget, financial-snapshot, statements, statement, dashboard, skill-tree, runway, cant-pay, what-if-life, protection, housing, big-purchase, reversibility, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, runway, tax, offer-compare, debates, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, debates
@@ -185,13 +189,6 @@ Fields: 112. Traced: 103. No other room mentions it: **53**.
 - `givingPct` — Giving, share of income · **no other room mentions it**
 - `givingTarget` — Giving, a year · **no other room mentions it**
 - `rerankCut` — What The Rerank would cut · read by skill-tree
-
-## variable-income (4)
-
-- `incomeLow` — A low month · **no other room mentions it**
-- `incomeHigh` — A high month · **no other room mentions it**
-- `bufferMonths` — Buffer, months · **no other room mentions it**
-- `variableWindow` — Rolling window · **no other room mentions it**
 
 ## week (2)
 

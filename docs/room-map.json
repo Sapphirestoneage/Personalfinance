@@ -50,7 +50,7 @@
     { "n": 4, "id": "data", "title": "Your Data", "group": "way-in", "absorbs": [], "done": [], "note": "Infrastructure, same reason." },
 
     { "n": 5, "id": "income", "title": "Income", "group": "facts",
-      "absorbs": ["variable-income", "real-hourly-wage"], "done": [],
+      "absorbs": ["variable-income", "real-hourly-wage"], "done": ["variable-income", "real-hourly-wage"],
       "note": "Variable income is a mode when pay is irregular; the real hourly wage is the conversion the whole app reads." },
     { "n": 6, "id": "expenses", "title": "Expenses", "group": "facts",
       "absorbs": ["subscriptions"], "done": ["subscriptions"],

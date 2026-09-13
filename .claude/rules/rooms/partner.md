@@ -5,7 +5,7 @@ paths:
   - "engines/kids.js"
 ---
 # Family (`partner`)
-File: rooms/partner.html · 650 lines
+File: rooms/partner.html · 656 lines
 Engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner, kids
 Reference data: child_cost.json, childcare_by_state.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +4 more
 Owns: partnerName, partnerDob, splitMode, sharedMonthly, tuitionTarget, tuitionSaved, tuitionMonthly

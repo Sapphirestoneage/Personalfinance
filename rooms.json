@@ -97,7 +97,7 @@
     },
     {
       "id": "cash-flow",
-      "title": "Cash Flow",
+      "title": "The Month",
       "file": "rooms/cash-flow.html",
       "reads": [],
       "writes": [
@@ -116,6 +116,10 @@
       "file": "rooms/income.html",
       "reads": [],
       "writes": [
+        "incomeLow",
+        "incomeHigh",
+        "bufferMonths",
+        "variableWindow",
         "ledgerIncome",
         "incomeType",
         "paySurvives"
@@ -126,7 +130,7 @@
     },
     {
       "id": "budget",
-      "title": "Budget",
+      "title": "The Close",
       "file": "rooms/budget.html",
       "reads": [],
       "writes": [
@@ -224,20 +228,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 8.5
-    },
-    {
-      "id": "real-hourly-wage",
-      "title": "Real Hourly Wage",
-      "file": "rooms/real-hourly-wage.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [
-        "hours"
-      ],
-      "dashboardNumber": null,
-      "order": 9
     },
     {
       "id": "hassle",
@@ -789,26 +779,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 41
-    },
-    {
-      "id": "variable-income",
-      "title": "Variable Income",
-      "file": "rooms/variable-income.html",
-      "reads": [
-        "grossAnnualIncome",
-        "monthlyExpenses"
-      ],
-      "writes": [
-        "incomeLow",
-        "incomeHigh",
-        "bufferMonths",
-        "variableWindow"
-      ],
-      "requires": [
-        "variableIncome"
-      ],
-      "dashboardNumber": null,
-      "order": 42
     },
     {
       "id": "enough",

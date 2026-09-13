@@ -488,7 +488,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "variable-income",
+      "askIn": "income",
       "moves": true,
       "unlocks": "the planning base for variable income: the low month"
     },
@@ -507,7 +507,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "variable-income",
+      "askIn": "income",
       "moves": true,
       "unlocks": "how much a high month can send to the next step"
     },
@@ -526,7 +526,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": "bufferFromAge",
-      "askIn": "variable-income",
+      "askIn": "income",
       "moves": false,
       "unlocks": "the buffer target, and how far the cash is from it",
       "note": "A buffer target applies to anyone; Variable Income reads it, the Rule of 5 suggests it (D-205)."
@@ -546,7 +546,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "variable-income",
+      "askIn": "income",
       "moves": false,
       "unlocks": "the rolling average the variable-income view reads"
     },

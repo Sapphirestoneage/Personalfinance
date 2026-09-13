@@ -14346,6 +14346,51 @@ one, so the exception is a decision rather than a hole.
 **Compatibility.** No stored shape changes. Checked against the pre-merge
 pages: all three readings render identically.
 
+### D-247 — Income: what lands, what it averages, what it pays
+
+**Decision.** Variable Income and the Real Hourly Wage become readings of
+Income. Three hats: `#what-lands` (the default), `#when-it-varies`,
+`#what-it-pays`. Both old pages redirect, hash and all.
+
+**Why.** One question at three framings: what comes in, what it averages, and
+what an hour of it is worth. Rule 1 of D-229. What lands is first because it
+is the record the other two read.
+
+**Gating.** Income requires nothing — what comes in is a question for
+everybody — and each later reading keeps the branch its room had:
+`variableIncome` and `hours`. So a retired household sees one hat where it
+used to see one room, and an employed one sees two where it saw two.
+
+**A gated-away deep link falls back to the default.** The router used to pick
+the first ungated reading in its list, which is whatever happens to sit
+first. It now falls to the room's default reading — the plainest one, and
+the one a person with no hash would have got. Applied to every merged page
+that ships a gate.
+
+**Ownership.** The four variable-income fields → owner `income`, anchor
+`vi-inputs`, with `data/ledger-rows.json`. The Real Hourly Wage owned
+nothing and still does.
+
+### The tool bug this merge exposed
+
+`registry_absorb` bounded a registry entry by the next `});`. Two entry
+shapes live in `shared/registry.js` — `ROOMS.push({…});` and a plain `{…}`
+inside an array — and for the second the slice ran on through later rooms.
+Two things followed from that:
+
+- a `daite` write meant for Income landed on **Budget**, the room next door,
+  because Income's own `daite` line contains `sources[].type` and the
+  regex's `[^\]]*` stopped at the `]` inside it;
+- `title:` and `blurb:` edits matched only a four-space indent, so **The
+  Month** and **The Close** kept their old titles for a whole commit while
+  everything else about them changed.
+
+Both are fixed: entries are bounded by indentation, the `daite` line is
+matched as a line, and `title`/`blurb` take the indent they find. Budget's
+`daite` is repaired. And `test/run.js` now checks that every fully-merged
+room's registry title equals its title in `docs/room-map.json`, so the map
+and the app cannot disagree silently again.
+
 ---
 
 # The Dungeons & Dividends entries
