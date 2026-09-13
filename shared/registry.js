@@ -1400,47 +1400,27 @@
   ROOMS.push({
     id: 'week',
     features: ['timeBudget'],
-    group: 'matters', aliases: ['week', 'hours', 'designed week', 'time'],
+    group: 'matters',
+    aliases: ['week', 'hours', 'designed week', 'time', 'time buckets', 'decades', 'experiences', 'die with zero'],
     kind: 'about-you',
     needs: ['monthlyExpenses'],
     order: 44,
-    title: 'Designed Week',
-    blurb: 'The week you would design: 168 hours in blocks, what each block costs and buys, and the month that week adds up to against the one you have.',
+    title: 'The Life',
+    blurb: 'The week you would design, priced, and the decades you plan to spend \u2014 whether the life you want and the money for it line up in time.',
     href: 'rooms/week.html',
     tier: 2,
     tags: ['cashflow'],
-    daite: { reads: ['expenses'], writes: ['plans.week'] },
+    daite: { reads: ['expenses', 'assets.invested'], writes: ['plans.week', 'plans.buckets'] },
       subsections: [
         { id: 'number',      label: 'The designed week, a month' },
         { id: 'chart',       label: 'Where the hours go' },
         { id: 'inputs',      label: 'The blocks' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Time Buckets — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'buckets',
-    features: ['timeBudget'],
-    group: 'matters', aliases: ['time buckets', 'decades', 'experiences', 'die with zero'],
-    kind: 'about-you',
-    needs: ['investments', 'monthlyExpenses'],
-    order: 45,
-    title: 'Time Buckets',
-    blurb: 'What you plan to do in each decade, priced, and whether the plan and the money line up in time.',
-    href: 'rooms/buckets.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'expenses'], writes: ['plans.buckets'] },
-      subsections: [
-        { id: 'number',      label: 'Planned, all decades' },
-        { id: 'chart',       label: 'By decade' },
-        { id: 'inputs',      label: 'Each decade' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'bk-number',   label: 'Planned, all decades' },
+        { id: 'bk-chart',    label: 'By decade' },
+        { id: 'bk-inputs',   label: 'Each decade' }
       ]
   });
 

@@ -7,256 +7,33 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Time Buckets · SPARKS</title>
-<meta name="description" content="What you plan to do in each decade, priced, and whether the plan and the money line up in time."/>
+<meta name="description" content="Time Buckets is the decades reading of The Life now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. Time Buckets, on the frozen template (D-097).
-  Schema D-101; the room's own DECISIONS.md entry follows.
-
-  1. READS   Investments and a month's spending (the registry row's needs),
-             the date of birth for the decades and the years until each,
-             and the savings basis Tier 0 already computes — all as chips.
-             The ideas in data/bucket_ideas.json are proposals only.
-  2. WRITES  It OWNS household.timeBuckets: one 'Planned' experience per
-             decade from the money boxes, on top of any itemised list a
-             later room may keep. Nothing else edits those.
-  3. CALLS   engines/buckets.js. The climb is Projection.pathCents, the
-             savings basis Tier0.savingsRate, the FI number Tier0.fireNumber
-             — never a second calculation.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses). With no date
-             of birth the decades run from the thirties, and it says so.
-  5. CONFIG  data/bucket_ideas.json (convention).
-
-  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, up
-  to five inputs (one a decade) with the rest folded, the assumptions
-  drawer with sources, why this matters at your stage, one out-of-scope
-  line to Get Help. The ids below are the deep links.
-
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
-  THEMING: none this pass. A theme is a class on <body> and a palette in
-  shared/theme.css.
+  REDIRECT — Time Buckets is a reading of The Life (rooms/week.html#the-decades, DECISIONS.md D-239).
+  Both rooms asked whether the life you want is the one you are paying for,
+  at two scales. Rule 1 of D-229.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  section[id] { scroll-margin-top: var(--space-4); }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-</style>
+<meta http-equiv="refresh" content="0; url=week.html#the-decades"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Time Buckets</h1>
-  <p class="room-lede">What you plan to do in each decade, priced, and whether the plan and the money line up in time.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <div class="room-standalone" id="room-standalone" hidden></div>
-
-  <section class="slaf-card" id="number">
-    <div class="room-head-row">
-      <span class="slaf-eyebrow">Planned, all decades</span>
-      <div id="room-lens"></div>
-    </div>
-    <div class="room-number" id="room-number"></div>
-  </section>
-
-  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">By decade</span>
-    <div id="room-chart"></div>
-  </section>
-
-  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Each decade</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">A price on what you want that decade to hold — the trips, the sabbatical, the thing. The proposals are typical experiences for the decade, not yours; type over them. Blank or zero is nothing planned there.</p>
-    <div id="room-inputs"></div>
-  </section>
-
-  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Through the lens</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
-    <ul class="room-amounts" id="room-amounts"></ul>
-  </section>
-
-  <details class="room-drawer" id="assumptions">
-    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
-    <div class="room-assumptions-body" id="room-assumptions"></div>
-  </details>
-
-  <p class="room-why" id="room-why" hidden></p>
-  <p class="room-scope" id="room-scope"></p>
-
-  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">What this is reading</span>
-    <div id="reading-list" style="margin-top:var(--space-3)"></div>
-  </section>
-
-  <p class="disclaimer">
-    Educational tool, not financial advice. The money projected for each
-    decade is a straight-line climb at a stated real return, not a forecast.
-    Your numbers stay in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">Time Buckets is the decades reading of The Life now.
+    <a href="week.html#the-decades" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/suggest.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/cashflow.js"></script>
-<script src="../engines/ratios.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../engines/buckets.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../shared/charts.js"></script>
-<script src="../shared/room.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Buckets = SLAF.Buckets, Charts = SLAF.Charts, Room = SLAF.Room;
-
-  /* ---- The decades this page has boxes for ---------------------------------
-     Built once, from the household in the spine when the page loads: the
-     decade the person is in (the thirties with no date of birth) forward to
-     the plan age. The first five are the room's inputs; any beyond fold. */
-  var laid = Buckets.decades(Spine.getProfile());
-  var DECADES = laid.decades.map(function (d) { return d.decade; });
-
-  /* ---- writes: this room owns household.timeBuckets ------------------------ */
-  function writeDecade(decade, cents) {
-    Spine.set('timeBuckets', Buckets.setDecadeCents(Spine.getProfile().timeBuckets, decade, cents));
-  }
-  function readDecade(h, decade) {
-    var b = ((h && h.timeBuckets) || []).filter(function (x) { return x.decade === decade; })[0];
-    var xs = b ? (b.experiences || []).filter(function (x) { return Money.isEntered(x.costCents); }) : [];
-    return xs.length ? xs.reduce(function (t, x) { return t + x.costCents; }, 0) : null;
-  }
-  function decadeInput(decade) {
-    return {
-      ctl: 'decade' + decade, label: Buckets.inYour(decade), kind: 'money', placeholder: 'e.g. 12,000',
-      hint: 'The whole decade’s price. Typing over an itemised list keeps it and sets a ‘Planned’ remainder so the decade adds up; zero clears it.',
-      read: function (h) { return readDecade(h, decade); },
-      write: function (v) { writeDecade(decade, v); },
-      propose: function (h, T) {
-        var ideas = Buckets.ideasFor(decade, T);
-        return ideas.totalCents > 0 ? { value: ideas.totalCents, source: 'typical experiences for this decade (convention)' } : null;
-      }
-    };
-  }
-
-  function yearsWord(d) {
-    if (d.yearsUntil === null) return '';
-    if (d.yearsUntil === 0) return d.current ? 'now' : 'this year';
-    return 'in ' + d.yearsUntil + ' year' + (d.yearsUntil === 1 ? '' : 's');
-  }
-
-  Room.mount({
-    id: 'buckets',
-    tables: ['bucketIdeas', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['investments', 'monthlyExpenses', 'dob', 'savingsRate'],
-
-    number: function (h, T) {
-      var p = Buckets.plan(h, T);
-      if (!Money.isOk(p)) return { label: 'Planned, all decades', value: null, reason: p.reason };
-      var bits = [p.rows.length + ' decade' + (p.rows.length === 1 ? '' : 's') + (p.ageAssumed ? ' from 30, with no date of birth in' : '')];
-      var first = p.first;
-      bits.push('<strong>' + Money.formatCents(first.plannedCents) + '</strong> in your ' + first.label + (yearsWord(first) ? ' ' + yearsWord(first) : ''));
-      var aff = p.affordability;
-      if (Money.isOk(aff)) {
-        if (!p.anyStrained) {
-          var last = p.rows[p.rows.length - 1];
-          bits.push('the money outruns the plan in every decade — ' + Money.formatCents(last.projectedCents) + ' projected by your ' + last.label);
-        } else {
-          var s = p.rows.filter(function (r) { return r.decade === p.firstStrained; })[0];
-          bits.push(s === p.rows[0]
-            ? '<strong>the plan outruns the money from your ' + s.label + '</strong>: ' + Money.formatCents(s.cumulativeCents) + ' planned against ' + Money.formatCents(s.projectedCents) + ' there'
-            : 'the money outruns the plan until your ' + s.label + ', where <strong>' + Money.formatCents(s.cumulativeCents) + ' planned by then meets ' + Money.formatCents(s.projectedCents) + ' projected</strong>');
-        }
-      } else {
-        bits.push('not set against the money yet: ' + aff.reason);
-      }
-      if (p.shareOfFi !== null) bits.push(Money.formatRate(p.shareOfFi, { decimals: 0 }) + ' of your FI number');
-      if (p.pastCents > 0) bits.push(Money.formatCents(p.pastCents) + ' in decades already past, not counted');
-      return { label: 'Planned, all decades', value: Money.formatCents(p.value), sub: bits.join(' · '), zone: p.anyStrained ? 'watch' : null, result: p };
-    },
-
-    chart: function (h, T) {
-      var p = Buckets.plan(h, T);
-      if (!Money.isOk(p)) return Charts.bars({ rows: [], empty: 'Put a price on a decade to see it against the money there will be.' });
-      var projected = Money.isOk(p.affordability);
-      var max = p.rows.reduce(function (m, r) { return Math.max(m, r.plannedCents, projected ? r.projectedCents : 0); }, 0);
-      return Charts.bars({
-        title: 'Planned by decade, against the money projected at its start',
-        max: max,
-        rows: p.rows.map(function (r) {
-          var note = yearsWord(r);
-          if (projected) note += (note ? ' · ' : '') + Money.formatCents(r.projectedCents) + ' there';
-          return {
-            label: 'Your ' + r.label, note: note,
-            value: r.plannedCents > 0 ? r.plannedCents : null, empty: 'nothing planned',
-            color: r.strained ? Charts.COLORS.debt : Charts.COLORS.series[0],
-            marker: projected ? { at: r.projectedCents, label: Money.formatCents(r.projectedCents) + ' projected at the start of your ' + r.label } : null
-          };
-        })
-      });
-    },
-
-    inputs: DECADES.slice(0, 5).map(decadeInput),
-    moreLabel: 'Later still',
-    more: DECADES.slice(5).map(decadeInput),
-
-    amounts: function (h, T) {
-      var p = Buckets.plan(h, T);
-      if (!Money.isOk(p)) return [];
-      var rows = [{ label: 'The whole plan', cents: p.value, href: '#inputs' }];
-      var current = p.rows.filter(function (r) { return r.current; })[0] || p.rows[0];
-      if (current.plannedCents > 0) rows.push({ label: 'This decade, your ' + current.label, cents: current.plannedCents, href: '#inputs' });
-      if (p.next && p.next.plannedCents > 0) rows.push({ label: 'The next, your ' + p.next.label + (yearsWord(p.next) ? ', ' + yearsWord(p.next) : ''), cents: p.next.plannedCents, href: '#inputs' });
-      return rows;
-    },
-
-    assumptions: function (h, T) {
-      var ideas = T.bucketIdeas || {};
-      var a = Schema.resolveAssumptions(h);
-      var aff = Buckets.affordability(h, T);
-      return [
-        { label: 'The proposals', value: 'typical experiences, a decade at a time', source: 'data/bucket_ideas.json v' + (ideas.version || '?') + ' — ' + (ideas.source || '') + ' (' + (ideas.confidence || 'convention') + ')' },
-        { label: 'Real return', value: Money.formatRate(a.returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094), the same figure the lens uses' },
-        { label: 'Saved a year', value: Money.isOk(aff) ? Money.formatCents(aff.annualSavingsCents) + (aff.savingsVariant === 'includingMatch' ? ', including the match' : '') : 'not projected yet', source: 'Tier 0’s savings rate from your income, spending and estimated tax — yours, read from Start Here' + (Money.isOk(aff) && aff.stopAge !== null ? '; contributions stop at ' + aff.stopAge + ', your stop age' : '') },
-        { label: 'When a decade is paid for', value: 'at its start', source: 'a decade’s plan is read as spent in its first year, against the balance projected there (convention)' },
-        { label: 'The last decade', value: 'the one before ' + Buckets.PLAN_AGE, source: 'PLAN_AGE in engines/buckets.js — a planning horizon, not a life expectancy (convention)' }
-      ];
-    },
-
-    why: function (h, T, situation) {
-      return {
-        employed: 'Employed, the money is set to arrive in one long climb and the plans stay vague. A price on each decade turns the climb into a schedule: which decade the paycheque has to have paid for by then, and whether it will have.',
-        selfEmployed: 'Self-employed, good years and thin ones blur what any one decade can afford. Pricing the decades says what the good years are for, and which decade a thin one quietly costs.',
-        mixed: 'With a job and your own work there are two climbs feeding one plan. This reads them as one pot against the decades; if the own-work side is the one that pays for the fifties, that is worth knowing now.',
-        student: 'At a student’s stage the twenties are the cheapest experiences there will ever be — a long trip on a shoestring costs a fraction of the same trip at fifty. The price on this decade is small; the point is to put one on it.',
-        retired: 'Retired, the buckets that are left are the ones that matter, and health rather than money is the usual limit on them. Price the next decade first; the ones after it will not be cheaper to wait for.',
-        betweenJobs: 'Between jobs, this is a plan to write, not to fund. Price the decades so the next job knows what it is for; the money to set against them is the runway’s question, not this room’s.'
-      }[situation] || 'A decade has a price whether or not anyone puts one on it. This room puts one on each, and sets it against the money there will be.';
-    },
-
-    scope: 'This room does not book anything or know what you would enjoy; it puts prices on decades so they can be argued with.'
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#amounts': '#bk-amounts', '#assumptions': '#bk-assumptions', '#chart': '#bk-chart', '#inputs': '#bk-inputs', '#number': '#bk-number', '#reading': '#bk-reading', '#reading-list': '#bk-reading-list' };
+    var hash = location.hash || '';
+    var target = 'week.html' + (map[hash] || '#the-decades');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

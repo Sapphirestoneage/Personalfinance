@@ -24,10 +24,6 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `purchaseMonths` — Months until the purchase · **no other room mentions it**
 - `purchaseRate` — Financing rate · **no other room mentions it**
 
-## buckets (1)
-
-- `bucketsPlanned` — Time buckets, planned · **no other room mentions it**
-
 ## budget (1)
 
 - `monthsClosed` — Months closed · read by skill-tree, exercises
@@ -76,7 +72,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by housing, property, debates, calendar
-- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, fire, fire-lab, real-hourly-wage, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, buckets, dreamline, reversibility, unlearning, debates, calendar, one-pager
+- `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, fire, fire-lab, real-hourly-wage, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, dreamline, reversibility, unlearning, debates, calendar, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
@@ -86,7 +82,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 ## fire (2)
 
-- `retireAge` — Stop working at · read by dashboard, stacker, exercises, coast-date, rollover, what-if-life, micro-retirement, decumulation, middle-class-trap, buckets, one-pager
+- `retireAge` — Stop working at · read by dashboard, stacker, exercises, coast-date, rollover, what-if-life, micro-retirement, decumulation, middle-class-trap, week, one-pager
 - `coastAge` — Coast: arrive by · read by coast-date
 
 ## giving (2)
@@ -165,7 +161,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
 - `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, variable-income, adventure, week, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
 - `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, one-pager
@@ -215,6 +211,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `bufferMonths` — Buffer, months · **no other room mentions it**
 - `variableWindow` — Rolling window · **no other room mentions it**
 
-## week (1)
+## week (2)
 
 - `designedHours` — The designed week, hours placed · **no other room mentions it**
+- `bucketsPlanned` — Time buckets, planned · **no other room mentions it**

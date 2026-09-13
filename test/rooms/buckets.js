@@ -4,7 +4,7 @@
 'use strict';
 
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Demo, Registry, Ownership, Gate, Room, Tier0, Projection, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Demo, Registry, Ownership, Gate, Room, Tier0, Projection, TABLES } = t;
   const Buckets = require(path.join(ROOT, 'engines/buckets.js'));
   const T = TABLES;
 
@@ -213,17 +213,28 @@ module.exports = function (t) {
   checkTrue('no extra is named status', !Object.keys(p).some((k, i, arr) => arr.indexOf(k) !== i));
 
   /* ---- Ownership, registry, schema ----------------------------------------------- */
-  check('the planned total is owned by Time Buckets', Ownership.field('bucketsPlanned').owner, 'buckets');
-  check('… anchored at the inputs', Ownership.field('bucketsPlanned').anchor, 'inputs');
-  check('the registry row needs investments and spending', Registry.byId('buckets').needs.join(','), 'investments,monthlyExpenses');
+  /* Time Buckets is the decades reading of The Life since D-239, so the
+     owner moved with the boxes that ask for it. */
+  check('the planned total is owned by The Life', Ownership.field('bucketsPlanned').owner, 'week');
+  check('… anchored at the decades reading’s inputs', Ownership.field('bucketsPlanned').anchor, 'bk-inputs');
+  checkTrue('Time Buckets is no longer a room of its own', !Registry.byId('buckets'));
+  check('the room it lives in is The Life', Registry.byId('week').href, 'rooms/week.html');
+  checkTrue('… which lists the decades reading as a deep link', Registry.byId('week').subsections.some(x => x.id === 'bk-inputs'));
+  checkTrue('and the old page redirects to that reading', /url=week\.html#the-decades/.test(fs.readFileSync(path.join(ROOT, 'rooms/buckets.html'), 'utf8')));
+  /* The gate moved with it: the reading is no longer held back until
+     investments are entered, because the engine already says what it lacks
+     rather than guessing (the incomplete checks above). */
+  check('The Life is gated on the spending both readings use', Registry.byId('week').needs.join(','), 'monthlyExpenses');
   check('time buckets start empty', JSON.stringify(Schema.createHousehold({}).timeBuckets), '[]');
   check('an experience has a label, a cost and a year', Object.keys(Schema.createExperience({})).join(','), 'id,label,costCents,year');
 
   /* ---- The page -------------------------------------------------------------------- */
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/buckets.html'), 'utf8');
-  Room.IDS.forEach(id => checkTrue(`Time Buckets has #${id}`, new RegExp('id="' + id + '"').test(html)));
-  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-standalone', 'load-notice'].forEach(id => checkTrue(`… and #${id}`, new RegExp('id="' + id + '"').test(html)));
-  checkTrue('it mounts the template as buckets', /Room\.mount\(\{\s*id: 'buckets'/.test(html));
+  const page = reading('rooms/week.html', 'view-the-decades', "prefix: 'bk-'");
+  const html = page.html;
+  Room.IDS.forEach(id => checkTrue(`the decades reading has #bk-${id}`, new RegExp('id="bk-' + id + '"').test(html)));
+  ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-standalone'].forEach(id => checkTrue(`… and #bk-${id}`, new RegExp('id="bk-' + id + '"').test(html)));
+  checkTrue('one load notice on the page, the room’s', (page.page.match(/id="load-notice"/g) || []).length === 1);
+  checkTrue('it mounts the template as a part of The Life', /id: 'week',\n\s*part: true,\n\s*prefix: 'bk-',\n\s*root: 'view-the-decades',/.test(html));
   checkTrue('no stub marker remains', html.indexOf('STUB') === -1 && html.indexOf('Hourly.realHourlyWage') === -1);
   checkTrue('one box a decade, the first five as inputs and the rest folded', /inputs: DECADES\.slice\(0, 5\)\.map\(decadeInput\)/.test(html) && /more: DECADES\.slice\(5\)\.map\(decadeInput\)/.test(html));
   checkTrue('it writes only through Spine.set on timeBuckets, via the engine', /Spine\.set\('timeBuckets', Buckets\.setDecadeCents\(/.test(html) && !/upsertPerson|updateProfile/.test(html));
@@ -231,13 +242,21 @@ module.exports = function (t) {
   checkTrue('the hint says what typing over an itemised list does', /keeps it and sets a ‘Planned’ remainder/.test(html) && /zero clears it/.test(html));
   checkTrue('one chart, bars, with a marker for the money', (html.match(/Charts\.bars\(/g) || []).length === 2 && !/Charts\.(area|donut|stacked)\(/.test(html) && /marker: projected \? \{ at: r\.projectedCents/.test(html));
   checkTrue('it reads investments, spending and the date of birth as chips', /reads: \['investments', 'monthlyExpenses', 'dob'/.test(html));
-  checkTrue('it declares its live-form discipline and a place for a theme', /LIVE-FORM: built once/.test(html) && /THEMING:/.test(html));
+  checkTrue('the page declares its live-form discipline', /LIVE-FORM: built once/.test(page.page));
   checkTrue('the scope line says what it does not do', /scope: 'This room does not book anything or know what you would enjoy; it puts prices on decades so they can be argued with\.'/.test(html));
   checkTrue('why is written for all six situations', ['employed', 'selfEmployed', 'mixed', 'student', 'retired', 'betweenJobs'].every(s => new RegExp(s + ": '").test(html)));
-  checkTrue('the scripts it needs, in order', (function () {
-    const order = ['shared/gate.js', 'engines/projection.js', 'engines/tier0.js', 'engines/cashflow.js', 'engines/ratios.js', 'engines/hourly.js', 'engines/buckets.js', 'shared/lens.js', 'shared/charts.js', 'shared/room.js'];
-    const idx = order.map(s => html.indexOf('<script src="../' + s + '"'));
-    return idx.every((v, i) => v !== -1 && (i === 0 || v > idx[i - 1]));
+  /* The page serves two readings, so the exact sequence this test used to
+     pin is not the page's to keep: one reading's engines are interleaved
+     with the other's. What still has to hold is that every script this
+     reading needs is loaded, and that shared/room.js is last, because it is
+     the one script that reads what the others defined. */
+  checkTrue('the scripts it needs are all loaded', (function () {
+    const needed = ['shared/gate.js', 'engines/projection.js', 'engines/tier0.js', 'engines/cashflow.js', 'engines/ratios.js', 'engines/hourly.js', 'engines/buckets.js', 'shared/lens.js', 'shared/charts.js', 'shared/room.js'];
+    return needed.every(s => page.page.indexOf('<script src="../' + s + '"') !== -1);
+  })());
+  checkTrue('… and the template is the last of them', (function () {
+    const tags = page.page.match(/<script src="\.\.\/[^"]+"><\/script>/g) || [];
+    return /shared\/room\.js/.test(tags[tags.length - 1]);
   })());
   const engine = fs.readFileSync(path.join(ROOT, 'engines/buckets.js'), 'utf8');
   checkTrue('the engine projects with pathCents, once', (engine.match(/Projection\.pathCents\(/g) || []).length === 1 && !/futureValue|yearsToTarget/.test(engine));

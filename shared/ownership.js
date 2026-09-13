@@ -574,7 +574,7 @@
       format: function (v) { return v + ' h'; }
     },
     bucketsPlanned: {
-      label: 'Time buckets, planned', owner: 'buckets', anchor: 'inputs',
+      label: 'Time buckets, planned', owner: 'week', anchor: 'bk-inputs',
       read: function (h) { var xs = []; (h.timeBuckets || []).forEach(function (b) { (b.experiences || []).forEach(function (x) { if (Money.isEntered(x.costCents)) xs.push(x.costCents); }); }); return xs.length ? Money.ok(xs.reduce(function (t, c) { return t + c; }, 0), { count: xs.length }) : Money.incomplete('Nothing planned yet.', ['timeBuckets']); },
       format: money
     },

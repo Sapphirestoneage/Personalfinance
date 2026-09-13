@@ -8492,8 +8492,26 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
   const Reference = require(path.join(ROOT, 'shared/reference.js'));
   const ALL_TABLES = {};
   Object.keys(Reference.TABLE_FILES).forEach(function (k) { try { ALL_TABLES[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) { /* a room test that needs it will say */ } });
+  /* A merged room is one page with several readings on it (D-229), so a
+     reading's test must see its own markup and its own script and nothing
+     else. Pass the view's id and a string that appears only in that
+     reading's script block (its prefix, or its ROOM_ID line) and this hands
+     back that slice. `page` is the whole file, for the few assertions that
+     really are about the page: one load notice, the script order. */
+  function reading(file, viewId, scriptMarker) {
+    const page = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    const a = page.indexOf('<section id="' + viewId + '"');
+    if (a === -1) throw new Error('no reading ' + viewId + ' in ' + file);
+    let b = page.indexOf('<!-- =====', a + 10);
+    if (b === -1) b = page.indexOf('<p class="disclaimer">', a);
+    const blocks = page.split('<script>').filter(x => x.indexOf(scriptMarker) !== -1);
+    if (!blocks.length) throw new Error('no script block matching ' + scriptMarker + ' in ' + file);
+    const markup = page.slice(a, b);
+    return { page, markup, script: blocks[0], html: markup + '\n' + blocks[0] };
+  }
+
   const ctx = {
-    check, checkTrue, section, ROOT, fs, path,
+    check, checkTrue, section, ROOT, fs, path, reading,
     Money, Schema, Demo, Registry, Ownership, Progress, Tier0, Foo, CashFlow, Debt, Projection, Hourly,
     Spine: SpineMain, Instruments: InstrumentsMain, TABLES: ALL_TABLES,
     Gate: require(path.join(ROOT, 'shared/gate.js')), Lens: require(path.join(ROOT, 'shared/lens.js')),

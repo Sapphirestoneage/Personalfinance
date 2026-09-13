@@ -14108,6 +14108,34 @@ and CSS. The costs reading beside it has always coloured an over-budget row
 and still may; a 20/3/8 part that is outside is a fact about a car, not a
 failing grade.
 
+### D-239 — The Life: the week, and the decades
+
+**Decision.** Time Buckets becomes the decades reading of Designed Week, and
+the room is called The Life. Two hats: `#the-week` (the default) and
+`#the-decades`. `rooms/buckets.html` becomes a redirect, hash and all.
+
+**Why.** Both rooms asked whether the life you want is the one you are paying
+for — one at 168 hours, one at seven decades. Rule 1 of D-229. The week is
+first because it is the scale you can act on tomorrow.
+
+**Ownership.** `bucketsPlanned` moves with its boxes: owner `week`, anchor
+`bk-inputs`. Both readings are built from `shared/room.js`, so the decades
+one carries `prefix: 'bk-'` and `root: 'view-the-decades'` (D-235).
+
+**Compatibility.** No stored shape changes; `timeBuckets` and
+`designedWeek` are untouched and each reading still writes only its own. The
+gate is the one behaviour that moved: Time Buckets used to be held back until
+investments were entered, and the decades reading is now reachable without
+them. It says what it lacks instead of guessing, which is what the template
+does everywhere else.
+
+**Tests.** `t.reading(file, viewId, scriptMarker)` is new in the harness: it
+hands a room test the slice of a merged page that is its own reading, so the
+page assertions stay about one reading. Buckets' exact script-order assertion
+is now "every script it needs is loaded, and `shared/room.js` is last" — on a
+page serving two readings the interleaving is not the page's to keep, but the
+template loading last still is.
+
 ---
 
 # The Dungeons & Dividends entries

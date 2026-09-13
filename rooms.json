@@ -917,32 +917,18 @@
     },
     {
       "id": "week",
-      "title": "Designed Week",
+      "title": "The Life",
       "file": "rooms/week.html",
       "reads": [
         "monthlyExpenses"
       ],
       "writes": [
-        "designedHours"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 44
-    },
-    {
-      "id": "buckets",
-      "title": "Time Buckets",
-      "file": "rooms/buckets.html",
-      "reads": [
-        "investments",
-        "monthlyExpenses"
-      ],
-      "writes": [
+        "designedHours",
         "bucketsPlanned"
       ],
       "requires": [],
       "dashboardNumber": null,
-      "order": 45
+      "order": 44
     },
     {
       "id": "dreamline",

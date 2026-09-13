@@ -1,7 +1,7 @@
 /* test/rooms/week.js — the Designed Week room (D-101).
    Hand-derived numbers as literals; nothing copied from engine output. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Registry, Ownership, Gate, Tier0, Hourly, Demo, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Registry, Ownership, Gate, Tier0, Hourly, Demo, TABLES } = t;
   const Week = require(path.join(ROOT, 'engines/week.js'));
   const T = { weekBlocks: TABLES.weekBlocks, expenseCategories: TABLES.expenseCategories, effectiveTaxRates: TABLES.effectiveTaxRates };
 
@@ -169,15 +169,19 @@ module.exports = function (t) {
 
   section('Designed Week — the room on the template');
 
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/week.html'), 'utf8');
+  /* The Life carries two readings since D-239. These assertions are about
+     the week; `page` is the whole file, for the facts that really are about
+     the page. */
+  const slice = reading("rooms/week.html", "view-the-week", "tables: ['weekBlocks'");
+  const html = slice.html, page = slice.page;
   checkTrue('rooms/week.html mounts on the template', /Room\.mount\(\{/.test(html) && /id: 'week'/.test(html));
   ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list', 'room-standalone', 'load-notice']
-    .forEach(id => checkTrue('… host #' + id, html.indexOf('id="' + id + '"') !== -1));
+    .forEach(id => checkTrue('… host #' + id, (id === 'load-notice' ? page : html).indexOf('id="' + id + '"') !== -1));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue('… section #' + id, html.indexOf('id="' + id + '"') !== -1));
-  const tag = f => html.indexOf('src="../' + f + '"');
+  const tag = f => page.indexOf('src="../' + f + '"');
   checkTrue('… loads the engine after tier0, hourly and cashflow, before the lens', tag('engines/tier0.js') < tag('engines/week.js') && tag('engines/hourly.js') < tag('engines/week.js') && tag('engines/cashflow.js') < tag('engines/week.js') && tag('engines/week.js') < tag('shared/lens.js') && tag('engines/week.js') > 0);
   checkTrue('… is not the stub', html.indexOf('STUB') === -1 && html.indexOf('Hourly.realHourlyWage') === -1);
-  checkTrue('… declares LIVE-FORM: built once', /LIVE-FORM: built once/.test(html));
+  checkTrue('… declares LIVE-FORM: built once', /LIVE-FORM: built once/.test(page));
   checkTrue('… writes designedWeek.blocks through Spine.set and nothing else', (html.match(/Spine\.set\(/g) || []).length === 1 && html.indexOf("Spine.set('designedWeek.blocks'") !== -1 && !/upsertPerson|upsertAsset|updateProfile/.test(html));
   checkTrue('… the cost rides in the same write', /costCents: cost/.test(html) && /proposeCost\(/.test(html));
   checkTrue('… the shared numbers are read, not edited', /reads: \['monthlyExpenses', 'grossAnnualIncome'\]/.test(html));
