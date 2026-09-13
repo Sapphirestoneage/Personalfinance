@@ -1163,7 +1163,7 @@
       if (!Money.isOk(p)) return rows;
       if (Money.isEntered(p.bufferNeededCents)) rows.push({ label: 'The buffer to hold', cents: p.bufferNeededCents, href: '#vi-inputs' });
       if (p.shortfallCents > 0) rows.push({ label: 'A low month’s shortfall against spending', cents: p.shortfallCents, href: Ownership.linkTo('expenses', 'spending') });
-      if (Money.isEntered(p.taxSetAsideMonthlyCents)) rows.push({ label: 'The tax set-aside, a month', cents: p.taxSetAsideMonthlyCents, href: Ownership.linkTo('self-employed', 'quarterly') });
+      if (Money.isEntered(p.taxSetAsideMonthlyCents)) rows.push({ label: 'The tax set-aside, a month', cents: p.taxSetAsideMonthlyCents, href: Ownership.linkTo('career-move', 'quarterly') });
       return rows;
     },
 

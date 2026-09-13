@@ -1,7 +1,7 @@
 /* test/rooms/career-move.js — the Career Move room (D-099).
    Hand-derived numbers as literals; nothing copied from engine output. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Demo, Registry, Ownership, Gate, Hourly, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Demo, Registry, Ownership, Gate, Hourly, TABLES } = t;
   const CareerMove = require(path.join(ROOT, 'engines/careermove.js'));
   const T = TABLES;
 
@@ -157,15 +157,19 @@ module.exports = function (t) {
 
   section('Career Move — the room on the template');
 
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/career-move.html'), 'utf8');
+  /* This room carries a second reading since D-251, so these assertions
+     read its own slice; `page` is the whole file, for the facts that
+     really are page-wide. */
+  const slice = reading('rooms/career-move.html', 'view-the-offer', "READING view-the-offer,");
+  const html = slice.html, page = slice.page;
   checkTrue('rooms/career-move.html mounts on the template', /Room\.mount\(\{/.test(html) && /id: 'career-move'/.test(html));
   ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list', 'room-standalone', 'load-notice']
-    .forEach(id => checkTrue('… host #' + id, html.indexOf('id="' + id + '"') !== -1));
+    .forEach(id => checkTrue('… host #' + id, (id === 'load-notice' ? page : html).indexOf('id="' + id + '"') !== -1));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue('… section #' + id, html.indexOf('id="' + id + '"') !== -1));
-  const tag = f => html.indexOf('<script src="../' + f + '"></script>');
+  const tag = f => page.indexOf('<script src="../' + f + '"></script>');
   checkTrue('… loads the engine after hourly and before the lens', tag('engines/hourly.js') !== -1 && tag('engines/hourly.js') < tag('engines/careermove.js') && tag('engines/careermove.js') < tag('shared/lens.js'));
   checkTrue('… is not the stub', html.indexOf('STUB') === -1 && html.indexOf('Hourly.realHourlyWage') === -1);
-  checkTrue('… declares LIVE-FORM: built once', html.indexOf('LIVE-FORM: built once') !== -1);
+  checkTrue('… the page declares its live-form discipline', page.indexOf('LIVE-FORM: guarded') !== -1);
   ['grossAnnualCents', 'hoursPerWeek', 'commuteHoursPerWeek', 'workCostsMonthlyCents', 'signOnCents']
     .forEach(k => checkTrue('… writes career.offer.' + k + ' through Spine.set', html.indexOf("Spine.set('career.offer." + k + "'") !== -1));
   checkTrue('… and nothing else', (html.match(/Spine\.set\(/g) || []).length === 5 && !/upsertPerson|upsertAsset|updateProfile/.test(html));
@@ -180,7 +184,14 @@ module.exports = function (t) {
   function situ(status) {
     return Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', employmentStatus: status, incomeSources: [Schema.createIncomeSource({ id: 'i', personId: 'p', grossAnnualIncomeCents: 5000000 })] })] });
   }
-  check('… appears for employed, self-employed, student and mixed', Gate.SITUATIONS.filter(s => Registry.applies(room, situ(s.status))).map(s => s.id).join(','), 'employed,selfEmployed,student,mixed');
+  /* Work is open to someone between jobs since D-251: Offers side by side,
+     A degree and A break never required the career branch, and they are
+     exactly what a person between jobs opens. It is still not for a retired
+     one — that is the room's appliesWhen, which every room on this page
+     carried. The readings that do want the branch keep it on the router. */
+  check('… appears for everyone but the retired', Gate.SITUATIONS.filter(s => Registry.applies(room, situ(s.status))).map(s => s.id).join(','), 'employed,selfEmployed,betweenJobs,student,mixed');
+  checkTrue('… and the three readings that wanted the career branch still declare it',
+    (fs.readFileSync(path.join(ROOT, 'rooms/career-move.html'), 'utf8').match(/branch: 'career'/g) || []).length === 3);
   check('… the five writes are owned here', ['offerGross', 'offerHours', 'offerCommute', 'offerCosts', 'offerSignOn'].map(f => Ownership.field(f).owner).join(','), 'career-move,career-move,career-move,career-move,career-move');
   check('… anchored at the inputs', ['offerGross', 'offerHours', 'offerCommute', 'offerCosts', 'offerSignOn'].map(f => Ownership.field(f).anchor).join(','), 'inputs,inputs,inputs,inputs,inputs');
   check('… and the chip reads the offer once written', Ownership.field('offerGross').read(h).value, 8000000);

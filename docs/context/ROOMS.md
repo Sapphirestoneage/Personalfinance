@@ -31,26 +31,20 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **coast-date** — Your Coast Date · 122 lines · engines: projection, tier0, coast · D-213
 - **race** — The Race to $100K · 155 lines · engines: projection, tier0, countdown, race · D-217
 
-## Decisions (23)
+## Decisions (17)
 
 - **hassle** — Worth the Hassle · 498 lines · engines: projection, tier0, hourly, hassle · D-066, D-032
-- **self-employed** — Going Self-Employed · 380 lines · engines: selfemployed · D-062
 - **reachable** — Reachable Money · 150 lines · engines: selfemployed, tax, reachable · D-228, D-212
-- **side-hustle** — Side Hustle · 506 lines · engines: projection, tier0, selfemployed, hourly, sidehustle · D-062, D-033
-- **credential** — Worth Learning · 485 lines · engines: projection, tier0, hourly, credential · D-062
 - **worth** — Worth It · 606 lines · engines: projection, tier0, hourly, worth
 - **runway** — The Cushion · 1722 lines · engines: projection, tier0, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-232, D-130, D-082
 - **car** — Wheels · 843 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-237, D-151
 - **what-if-life** — What If, Life · 551 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events · D-146, D-091, D-087
 - **timeline** — What Comes Next · 504 lines · engines: timeline · owns: futureIncome · D-152
-- **micro-retirement** — Micro-Retirement Planner · 166 lines · engines: projection, tier0, hourly, countdown, microretirement · D-219
 - **protection** — Protection · 467 lines · engines: projection, tier0, protection, hourly, estate · owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists · D-236, D-103, D-098
 - **decumulation** — Drawing It Down · 273 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-228, D-104, D-098
 - **roth-aca** — Roth Conversions Before 65 · 206 lines · engines: selfemployed, tax, rothaca · D-228, D-216
 - **middle-class-trap** — The Middle Class Trap Test · 201 lines · engines: selfemployed, tax, projection, tier0, trap · D-228, D-218
-- **career-move** — Career Move · 291 lines · engines: projection, tier0, hourly, careermove · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-108
-- **offer-compare** — Offer Compare · 188 lines · engines: projection, tier0, offers · D-219
-- **degree** — The Close · 153 lines · engines: projection, tier0, degree · D-237, D-219
+- **career-move** — Work · 1999 lines · engines: projection, tier0, hourly, careermove, offers, selfemployed, sidehustle, credential, degree, countdown, microretirement · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-237
 - **partner** — Family · 656 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner, kids · owns: partnerName, partnerDob, splitMode, sharedMonthly, tuitionTarget, tuitionSaved, tuitionMonthly · D-237, D-216, D-109
 - **wedding** — Wedding Countdown · 177 lines · engines: projection, tier0, hourly, countdown, wedding · D-217
 - **housing** — Housing · 894 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing, debt, countdown, downpayment, ownership · owns: rentAlternative, homePrice, downPct, mortgageRate · D-237, D-130, D-111
@@ -77,15 +71,17 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (43)
+## Files in rooms/ not in the registry (49)
 
 - rooms/accounts.html
 - rooms/between-jobs.html
 - rooms/buckets.html
 - rooms/calendar.html
 - rooms/comeback.html
+- rooms/credential.html
 - rooms/credit.html
 - rooms/dashboard.html
+- rooms/degree.html
 - rooms/doors.html
 - rooms/down-payment.html
 - rooms/dreamline.html
@@ -99,8 +95,10 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/health.html
 - rooms/history.html
 - rooms/kids.html
+- rooms/micro-retirement.html
 - rooms/net-worth.html
 - rooms/next-hundred.html
+- rooms/offer-compare.html
 - rooms/progress-card.html
 - rooms/property.html
 - rooms/quick-math.html
@@ -111,6 +109,8 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/refresh.html
 - rooms/rerank.html
 - rooms/savings-rate.html
+- rooms/self-employed.html
+- rooms/side-hustle.html
 - rooms/sleep-at-night.html
 - rooms/stacker.html
 - rooms/statements.html

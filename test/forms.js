@@ -1140,7 +1140,7 @@ const CASES = [
        every other case here — that nothing reached the household (D-052).
        The pinned $14,500 is the demo persona's cash-out cost: $8,800 federal
        at 22%, $1,700 North Carolina at 4.25%, $4,000 penalty on $40,000. */
-    room: '/rooms/rollover.html',
+    room: '/rooms/career-move.html',
     container: '#room-inputs',
     seed: 'demo',
     fields: [
@@ -1322,7 +1322,7 @@ const CASES = [
   },
   {
     /* MICRO-RETIREMENT PLANNER (K5, D-219): six boxes. */
-    room: '/rooms/micro-retirement.html',
+    room: '/rooms/career-move.html',
     container: '#fund',
     seed: 'demo',
     fields: [{ sel: '#in-months', type: '6' }, { sel: '#in-income', type: '500' }],
@@ -1333,7 +1333,7 @@ const CASES = [
   },
   {
     /* OFFER COMPARE (K8, D-219): four columns built once, two shown. */
-    room: '/rooms/offer-compare.html',
+    room: '/rooms/career-move.html',
     container: '#offers',
     seed: 'demo',
     fields: [{ sel: '#o0-base', type: '95000' }, { sel: '#o1-base', type: '100000' }, { sel: '#o1-commute', type: '200' }],
@@ -1344,7 +1344,7 @@ const CASES = [
   },
   {
     /* THE DEGREE DECISION (K9, D-219): ten boxes. */
-    room: '/rooms/degree.html',
+    room: '/rooms/career-move.html',
     container: '#inputs',
     seed: 'demo',
     fields: [{ sel: '#in-tuition', type: '60000' }, { sel: '#in-years', type: '2' }, { sel: '#in-with-low', type: '95000' }],

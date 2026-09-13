@@ -64,7 +64,7 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by cash-flow, financial-snapshot, housing, debates
-- `monthlyExpenses` — Monthly expenses · read by start, cash-flow, income, budget, financial-snapshot, statement, fire, fire-lab, dashboard, skill-tree, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, career-move, partner, housing, big-purchase, enough, adventure, week, reversibility, debates, one-pager
+- `monthlyExpenses` — Monthly expenses · read by start, cash-flow, income, budget, financial-snapshot, statement, fire, fire-lab, dashboard, skill-tree, values, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, enough, adventure, week, reversibility, debates, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
@@ -74,7 +74,7 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 
 ## fire (2)
 
-- `retireAge` — Stop working at · read by dashboard, skill-tree, coast-date, rollover, what-if-life, micro-retirement, decumulation, middle-class-trap, week, one-pager
+- `retireAge` — Stop working at · read by dashboard, skill-tree, coast-date, rollover, what-if-life, decumulation, middle-class-trap, career-move, week, one-pager
 - `coastAge` — Coast: arrive by · read by coast-date
 
 ## housing (4)
@@ -107,7 +107,7 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 ## protection (5)
 
 - `healthCover` — Health cover · read by runway
-- `healthMonthly` — Health cover, a month · read by runway, offer-compare
+- `healthMonthly` — Health cover, a month · read by runway, career-move
 - `beneficiariesSet` — Beneficiaries named · **no other room mentions it**
 - `willExists` — A will · **no other room mentions it**
 - `poaExists` — A power of attorney · **no other room mentions it**
@@ -138,14 +138,14 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by expenses, income, financial-snapshot, statement, fire, fire-lab, self-employed, side-hustle, dashboard, credential, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, income, financial-snapshot, statement, hassle, self-employed, side-hustle, dashboard, credential, skill-tree, values, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, career-move, offer-compare, degree, partner, housing, big-purchase, adventure, week, reversibility, debates, one-pager
+- `filingStatus` — Filing status · read by expenses, income, financial-snapshot, statement, fire, fire-lab, dashboard, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, income, financial-snapshot, statement, hassle, dashboard, skill-tree, values, worth, runway, car, cant-pay, rollover, what-if-life, protection, decumulation, roth-aca, tax, career-move, partner, housing, big-purchase, adventure, week, reversibility, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
 - `cashSavings` — Cash & savings · read by ledger, cash-flow, income, budget, financial-snapshot, statement, dashboard, skill-tree, runway, cant-pay, what-if-life, protection, housing, big-purchase, reversibility, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
-- `employmentStatus` — Working situation · read by ledger, debt-payoff, runway, tax, offer-compare, debates
-- `employerMatch` — Employer match · read by financial-snapshot, statement, foo-ladder, offer-compare, debates
+- `employmentStatus` — Working situation · read by ledger, debt-payoff, runway, tax, career-move, debates
+- `employerMatch` — Employer match · read by financial-snapshot, statement, foo-ladder, career-move, debates
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, skill-tree, one-pager
 - `hasDebt` — Any debt · read by debt-payoff, dashboard, debates
 - `contributionPercent` — Workplace contribution · read by ledger, statement, what-if-life, tax
@@ -156,7 +156,7 @@ Fields: 112. Traced: 103. No other room mentions it: **54**.
 
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by side-hustle, credential, rollover, roth-aca, housing, debates
+- `marginalRate` — Marginal tax rate · read by rollover, roth-aca, career-move, housing, debates
 - `allocationStocks` — Target: stocks · **no other room mentions it**
 - `allocationBonds` — Target: bonds · **no other room mentions it**
 - `allocationCash` — Target: cash · **no other room mentions it**

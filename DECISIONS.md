@@ -14495,6 +14495,47 @@ that replaced them.
   on that page, a card the gate declares, or a hash its router routes;
 - the LIVE-FORM pattern check, per reading rather than per page (D-248).
 
+### D-251 — Work: seven questions about a job
+
+**Decision.** Offer Compare, Side Hustle, Going Self-Employed, Worth
+Learning, The Degree Decision and the Micro-Retirement Planner become
+readings of Career Move, and the room is called Work. Seven hats, opening on
+`#the-offer`. All six old pages redirect, hash and all.
+
+**Rollover is HELD, not merged.** Every room on this page carries
+`appliesWhen: 'situation != retired'`. The Account You Left Behind never did
+— it lives in Your Numbers, not in Work — so folding it in would take it
+from exactly the people most likely to have left a plan behind. The reason
+is in `docs/room-map.json`, and the choice (a different home, per D-228, or
+a per-reading situation rule) is the owner's.
+
+**Donegan's note stands, and is now visible.** Seven readings about having a
+job and not one about building something that pays you. That gap used to be
+seven entries in a list; it is one strip now, which is the point.
+
+### Two mechanisms that had to be made to agree
+
+A room can be absent for two reasons: a gate branch it requires, and a
+situation it declares it is not for. Every room carried both, so they never
+disagreed — Career Move required `career` AND said "not retired". This merge
+pulled them apart: Work requires no branch, because Offers side by side, A
+degree and A break never did and are exactly what someone between jobs
+opens, and it still says "not retired".
+
+`Registry.applies` only read the first, while `inGroup` read both, so Work
+would have been offered to a retired person by every path that asks
+`applies` — including "the next room". It reads both now.
+
+And `Registry.whyAbsent(room, household)` is new: a room absent for a
+situation could not say why, because `Gate.why` only knows branches. A room
+that vanishes without saying why is the one thing this app is not allowed to
+do (D-142), so the registry — which knows both reasons — answers now.
+
+**Compatibility.** No stored shape changes. Only the five offer fields are
+written, by the offer reading, as before; the other six readings are
+what-ifs and own nothing. Checked against the pre-merge pages: all seven
+render identically.
+
 ---
 
 # The Dungeons & Dividends entries

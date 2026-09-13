@@ -37,11 +37,7 @@
             "coast-date",
             "fire-lab",
             "hassle",
-            "self-employed",
-            "side-hustle",
             "dashboard",
-            "credential",
-            "degree",
             "skill-tree",
             "values",
             "goals",
@@ -54,14 +50,12 @@
             "what-if-life",
             "adventure",
             "timeline",
-            "micro-retirement",
             "protection",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
             "tax",
             "career-move",
-            "offer-compare",
             "partner",
             "wedding",
             "housing",
@@ -141,17 +135,11 @@
             "fire",
             "coast-date",
             "hassle",
-            "self-employed",
-            "side-hustle",
-            "credential",
-            "degree",
-            "micro-retirement",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
             "tax",
             "career-move",
-            "offer-compare",
             "partner",
             "wedding"
           ],
@@ -230,11 +218,6 @@
             "fire-lab",
             "timeline",
             "career-move",
-            "offer-compare",
-            "self-employed",
-            "side-hustle",
-            "credential",
-            "degree",
             "reversibility"
           ]
         },
@@ -242,7 +225,6 @@
           "name": "Something\u2019s gone wrong",
           "rooms": [
             "cant-pay",
-            "micro-retirement",
             "get-help"
           ],
           "note": "The rooms someone opens on their worst day. Worth being one tap from the front door."
@@ -297,15 +279,9 @@
           "name": "Earn",
           "rooms": [
             "income",
-            "side-hustle",
-            "self-employed",
             "career-move",
-            "offer-compare",
             "hassle",
-            "credential",
-            "degree",
-            "timeline",
-            "micro-retirement"
+            "timeline"
           ]
         },
         {
@@ -415,7 +391,6 @@
           "name": "Right now",
           "rooms": [
             "cant-pay",
-            "micro-retirement",
             "runway",
             "get-help"
           ],
@@ -443,10 +418,7 @@
             "car",
             "big-purchase",
             "rollover",
-            "career-move",
-            "offer-compare",
-            "credential",
-            "degree"
+            "career-move"
           ]
         },
         {
@@ -462,9 +434,7 @@
             "wedding",
             "timeline",
             "what-if-life",
-            "adventure",
-            "self-employed",
-            "side-hustle"
+            "adventure"
           ]
         },
         {
@@ -592,16 +562,10 @@
             "reversibility",
             "hassle",
             "skill-tree",
-            "credential",
-            "degree",
             "career-move",
-            "offer-compare",
-            "side-hustle",
-            "self-employed",
             "timeline",
             "what-if-life",
             "adventure",
-            "micro-retirement",
             "partner",
             "wedding",
             "decumulation",
@@ -671,16 +635,12 @@
             "car",
             "housing",
             "career-move",
-            "offer-compare",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
             "protection",
             "partner",
-            "wedding",
-            "self-employed",
-            "side-hustle",
-            "micro-retirement"
+            "wedding"
           ],
           "note": "A third of the app behind one word \u2014 the price of a tidy tab bar.",
           "warn": true
@@ -690,8 +650,6 @@
           "rooms": [
             "skill-tree",
             "debates",
-            "credential",
-            "degree",
             "hassle"
           ]
         },
@@ -745,11 +703,9 @@
         {
           "name": "Everything, A\u2013Z",
           "rooms": [
-            "micro-retirement",
             "big-purchase",
             "budget",
             "career-move",
-            "offer-compare",
             "expenses",
             "cash-flow",
             "debt-payoff",
@@ -766,7 +722,6 @@
             "foo-ladder",
             "get-help",
             "goals",
-            "self-employed",
             "housing",
             "income",
             "partner",
@@ -774,7 +729,6 @@
             "protection",
             "settings",
             "reversibility",
-            "side-hustle",
             "start",
             "ledger",
             "tax",
@@ -792,8 +746,6 @@
             "values",
             "cant-pay",
             "worth",
-            "credential",
-            "degree",
             "hassle",
             "data",
             "one-pager"
@@ -841,8 +793,7 @@
           "rooms": [
             "runway",
             "protection",
-            "cant-pay",
-            "micro-retirement"
+            "cant-pay"
           ],
           "note": "What you lie awake about."
         },
@@ -873,12 +824,7 @@
           "name": "The workshop",
           "rooms": [
             "skill-tree",
-            "credential",
-            "degree",
             "career-move",
-            "offer-compare",
-            "side-hustle",
-            "self-employed",
             "hassle"
           ],
           "note": "What you can do, and what it is worth."
@@ -999,22 +945,16 @@
         {
           "name": "When something happens",
           "rooms": [
-            "micro-retirement",
             "cant-pay",
             "career-move",
-            "offer-compare",
             "housing",
             "big-purchase",
             "car",
             "rollover",
-            "self-employed",
-            "side-hustle",
             "timeline",
             "what-if-life",
             "adventure",
             "fire-lab",
-            "credential",
-            "degree",
             "hassle",
             "get-help"
           ],
@@ -1067,12 +1007,7 @@
             "car",
             "rollover",
             "career-move",
-            "offer-compare",
-            "credential",
-            "degree",
-            "reversibility",
-            "self-employed",
-            "side-hustle"
+            "reversibility"
           ]
         },
         {
@@ -1117,7 +1052,6 @@
           "name": "Somewhere to stand when it\u2019s bad",
           "rooms": [
             "cant-pay",
-            "micro-retirement",
             "get-help",
             "partner",
             "wedding"
@@ -1159,11 +1093,7 @@
         {
           "name": "The income stopping",
           "rooms": [
-            "micro-retirement",
-            "self-employed",
-            "side-hustle",
             "career-move",
-            "offer-compare",
             "timeline"
           ]
         },
@@ -1229,8 +1159,6 @@
             "one-pager",
             "get-help",
             "hassle",
-            "credential",
-            "degree",
             "skill-tree"
           ],
           "note": "The risk of not measuring. Everything here exists so the other six bays are not a surprise."
@@ -1274,12 +1202,6 @@
           "name": "An employer",
           "rooms": [
             "career-move",
-            "offer-compare",
-            "credential",
-            "degree",
-            "micro-retirement",
-            "side-hustle",
-            "self-employed",
             "income",
             "rollover",
             "timeline"
@@ -1387,25 +1309,19 @@
             "coast-date",
             "fire-lab",
             "hassle",
-            "self-employed",
-            "side-hustle",
             "dashboard",
-            "credential",
-            "degree",
             "worth",
             "runway",
             "car",
             "what-if-life",
             "adventure",
             "timeline",
-            "micro-retirement",
             "protection",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
             "tax",
             "career-move",
-            "offer-compare",
             "partner",
             "wedding",
             "housing",
@@ -1450,7 +1366,6 @@
           "name": "1 \u00b7 \u201cWhat\u2019s happening?\u201d",
           "rooms": [
             "cant-pay",
-            "micro-retirement",
             "runway",
             "get-help",
             "expenses",
@@ -1461,13 +1376,8 @@
           "name": "2 \u00b7 \u201cWhat comes in?\u201d",
           "rooms": [
             "income",
-            "self-employed",
-            "side-hustle",
             "hassle",
             "career-move",
-            "offer-compare",
-            "credential",
-            "degree",
             "timeline"
           ]
         },
@@ -1594,8 +1504,7 @@
             "coast-date",
             "timeline",
             "big-purchase",
-            "housing",
-            "micro-retirement"
+            "housing"
           ]
         },
         {
@@ -1611,9 +1520,6 @@
             "partner",
             "wedding",
             "career-move",
-            "offer-compare",
-            "self-employed",
-            "side-hustle",
             "decumulation",
             "roth-aca",
             "middle-class-trap",
@@ -1626,8 +1532,6 @@
           "name": "Ongoing, never done",
           "rooms": [
             "skill-tree",
-            "credential",
-            "degree",
             "data",
             "one-pager"
           ]
@@ -1667,11 +1571,7 @@
             "housing",
             "car",
             "big-purchase",
-            "micro-retirement",
             "career-move",
-            "offer-compare",
-            "side-hustle",
-            "self-employed",
             "debt-payoff",
             "statement",
             "reachable",
@@ -1699,8 +1599,6 @@
           "rooms": [
             "hassle",
             "worth",
-            "credential",
-            "degree",
             "reversibility",
             "week",
             "values",
@@ -1745,13 +1643,7 @@
             "timeline",
             "partner",
             "wedding",
-            "micro-retirement",
-            "self-employed",
-            "side-hustle",
-            "career-move",
-            "offer-compare",
-            "credential",
-            "degree"
+            "career-move"
           ],
           "note": "Who you are and what is changing. Nine spokes.",
           "hub": "start"
@@ -1889,8 +1781,6 @@
             "protection",
             "dashboard",
             "hassle",
-            "credential",
-            "degree",
             "worth"
           ],
           "note": "These lean on data/*.json. Only 4 of the 72 tables are marked sourced; 17 are marked unverified. The rooms here are exactly as good as those files.",
@@ -1914,11 +1804,7 @@
         {
           "name": "Nothing yet, and it says so",
           "rooms": [
-            "micro-retirement",
-            "self-employed",
-            "side-hustle",
-            "career-move",
-            "offer-compare"
+            "career-move"
           ],
           "note": "Rooms that refuse to compute until you enter something, rather than guessing. The behaviour this whole app is built around."
         },
@@ -1957,11 +1843,7 @@
         {
           "name": "Wrong right now \u203a Work changed",
           "rooms": [
-            "micro-retirement",
             "career-move",
-            "offer-compare",
-            "self-employed",
-            "side-hustle",
             "timeline",
             "rollover"
           ]
@@ -2035,8 +1917,6 @@
           "name": "Bigger picture \u203a What I can do",
           "rooms": [
             "skill-tree",
-            "credential",
-            "degree",
             "hassle"
           ]
         },

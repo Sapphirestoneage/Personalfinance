@@ -49,7 +49,7 @@ module.exports = function (t) {
      What belongs here is that whatever IS absent can still say why. */
   var offAtStart = Registry.inOrder().filter(function (r) { return !Registry.applies(r, {}); });
   checkTrue('before you say anything, a room that is absent still says why',
-    offAtStart.length > 0 && offAtStart.every(function (r) { return !!Gate.why({}, Registry.requires(r.id)); }));
+    offAtStart.length > 0 && offAtStart.every(function (r) { return !!Registry.whyAbsent(r, {}); }));
 
   /* The six situations, and what each turns off. Written out rather than
      computed, so a change to the gate has to be agreed to here too.
@@ -70,24 +70,30 @@ module.exports = function (t) {
      everybody, and each of those two readings keeps its own branch, so its
      hat is absent exactly where its room used to be. Where It Goes left it
      in D-248 the same way — a reading of The Statement, which everybody
-     has, keeping the retirement branch on its own hat. */
+     has, keeping the retirement branch on its own hat.
+     Six work rooms left it in D-251 as readings of Work, which keeps the
+     appliesWhen every one of them carried. The Account You Left Behind is
+     NOT among them: it never had that rule, and folding it in would have
+     taken it from exactly the people it is for. It is held, with the
+     reason, in docs/room-map.json. */
   var EXPECTED = {
-    employed:     ['self-employed', 'decumulation', 'partner'],
+    employed:     ['decumulation', 'partner'],
     selfEmployed: ['decumulation', 'partner'],
-    unemployed:   ['fire', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'decumulation', 'tax', 'career-move', 'partner'],
-    student:      ['self-employed', 'protection', 'decumulation', 'partner'],
-    retired:      ['fire', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'career-move', 'partner'],
+    unemployed:   ['fire', 'hassle', 'decumulation', 'tax', 'partner'],
+    student:      ['protection', 'decumulation', 'roth-aca', 'middle-class-trap', 'partner'],
+    retired:      ['fire', 'hassle', 'career-move', 'partner'],
     both:         ['decumulation', 'partner']
   };
   Object.keys(EXPECTED).forEach(function (status) {
     var h = household(status);
     var off = Registry.inOrder().filter(function (r) { return !Registry.applies(r, h); }).map(function (r) { return r.id; });
     check(status + ': the rooms that do not apply', off.join(','), EXPECTED[status].join(','));
-    /* And every one of them can say why, in words. */
+    /* And every one of them can say why, in words. Two things can take a
+       room away since D-251 — a branch it needs, or a situation it says it
+       is not for — so this asks the registry, which knows both, rather
+       than the gate, which knows one. */
     checkTrue(status + ': … and each says why in a sentence',
-      off.every(function (id) { return !!Gate.why(h, Registry.requires(id)); }));
+      off.every(function (id) { return !!Registry.whyAbsent(Registry.byId(id), h); }));
   });
 
   /* A room that applies must never produce a reason — that is what would

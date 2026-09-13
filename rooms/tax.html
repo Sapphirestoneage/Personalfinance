@@ -169,7 +169,7 @@
           + ' against ' + Money.formatCents(p.withheldCents) + ' withheld' + (p.stateIncluded ? '' : ' (federal only)');
       }
       if (p.mixedWithoutOwnWork) sub += '. No own-work income entered yet, so all of it is treated as wages';
-      if (p.selfEmploymentTaxCents > 0 || p.employment === 'selfEmployed' || p.employment === 'both') sub += '. <a href="' + Ownership.linkTo('self-employed', 'quarterly') + '">The quarterly estimates for this →</a>';
+      if (p.selfEmploymentTaxCents > 0 || p.employment === 'selfEmployed' || p.employment === 'both') sub += '. <a href="' + Ownership.linkTo('career-move', 'quarterly') + '">The quarterly estimates for this →</a>';
       return { label: 'Tax, as a share of pay', value: pct(p.value), sub: sub, zone: null, result: p };
     },
 

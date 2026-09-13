@@ -376,45 +376,6 @@
       ]
     },
     {
-      id: 'self-employed',
-      group: 'decisions', subgroup: 'work', aliases: ['self-employed', 'freelance', '1099', 'own business'], appliesWhen: 'situation != retired',
-      kind: 'explore',
-      needs: ['grossAnnualIncome', 'filingStatus', 'state'],
-      order: 12,
-      title: 'Going Self-Employed',
-      blurb: 'What a contract rate has to be to match a salary, where the 15.3% actually lands, and what to send in each quarter.',
-      href: 'rooms/self-employed.html',
-      tier: 1,
-      tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state'], writes: [] },
-      subsections: [
-        { id: 'compare',   label: 'Salary vs. contract' },
-        { id: 'setax',     label: 'Self-employment tax' },
-        { id: 'quarterly', label: 'Quarterly estimates' },
-        { id: 'reading',   label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'side-hustle',
-      group: 'decisions', subgroup: 'work', aliases: ['hustle', 'side income', 'gig'], appliesWhen: 'situation != retired',
-      kind: 'explore',
-      needs: ['grossAnnualIncome', 'filingStatus'],
-      order: 13,
-      title: 'Side Hustle',
-      blurb: 'What the second job actually pays after tax, costs and the hours it eats \u2014 and what a week looks like with it in.',
-      href: 'rooms/side-hustle.html',
-      tier: 2,
-      tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus'], writes: [] },
-      subsections: [
-        { id: 'hustle',      label: 'The hustle' },
-        { id: 'out-net',     label: 'What you keep' },
-        { id: 'out-vs-job',  label: 'Against the day job' },
-        { id: 'out-week',    label: 'What a week becomes' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
-      ]
-    },
-    {
       id: 'dashboard',
       features: ['afterTaxNetWorth'],
       group: 'home', aliases: ['home', 'overview', 'tiles'],
@@ -509,26 +470,6 @@
         { id: 'gap', label: 'Where the orders disagree' },
         { id: 'gv-number', label: 'A share given' },
         { id: 'gv-inputs', label: 'What you give' }
-      ]
-    },
-    {
-      id: 'credential',
-      group: 'decisions', subgroup: 'work', aliases: ['degree', 'course', 'certification', 'learning', 'school'], appliesWhen: 'situation != retired',
-      kind: 'explore',
-      needs: ['grossAnnualIncome'],
-      order: 16,
-      title: 'Worth Learning',
-      blurb: 'A degree, a bootcamp or a weekend course \u2014 what it costs including the time, what the raise is worth after tax, and when it pays back.',
-      href: 'rooms/credential.html',
-      tier: 2,
-      tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents'], writes: [] },
-      subsections: [
-        { id: 'what',        label: 'What you are weighing' },
-        { id: 'out-payback', label: 'When it pays back' },
-        { id: 'out-value',   label: 'What it is worth today' },
-        { id: 'out-hours',   label: 'Priced in hours' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
       ]
     },
         /* The Skill Tree and the Exercise Library (D-131): what the next hour
@@ -714,24 +655,6 @@
      what is required from what is optional, which is most of why a suite
      this size feels like homework. See DECISIONS.md D-051.
 
-  /* The Degree Decision (K9, D-219): a degree as a sum, the break-even age
-     and the lifetime difference as ranges, the FI date with and without. */
-  ROOMS.push({
-    id: 'degree',
-    group: 'decisions', subgroup: 'work', aliases: ['degree', 'masters', 'mba', 'go back to school', 'tuition', 'break-even'],
-    appliesWhen: 'situation != retired',
-    kind: 'explore',
-    needs: ['dob'],
-    order: 37.7,
-    title: 'The Close',
-    blurb: 'Everything coming in, logged as it lands and netted the way it is taxed — the salary to pay yourself when it is irregular, and what the job actually pays once every hour and cost is counted.',
-    href: 'rooms/degree.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['income.grossAnnualCents', 'you.dob', 'expenses', 'taxes.filingStatus', 'assets.invested'], writes: [] },
-    subsections: [{ id: 'answer', label: 'Break-even' }, { id: 'inputs', label: 'The degree' }, { id: 'sum', label: 'The sum' }]
-  });
-
   /* The Timeline — jobs and benefits as dated periods that stack, and the
      months they add up to (D-152). It OWNS futureIncome[], which used to be
      edited on The Statement: a dated period belongs in the room that draws
@@ -864,23 +787,6 @@
     ]
   });
 
-  /* Micro-Retirement Planner (K5, D-219): a planned break of 1 to 12 months,
-     what it costs and what it buys on one screen. */
-  ROOMS.push({
-    id: 'micro-retirement',
-    group: 'decisions', subgroup: 'work', aliases: ['micro-retirement', 'mini retirement', 'sabbatical', 'break', 'gap year', 'time off'],
-    appliesWhen: 'situation != retired',
-    kind: 'explore',
-    needs: ['monthlyExpenses'],
-    order: 31.7,
-    title: 'Micro-Retirement Planner',
-    blurb: 'A planned break from work of one to twelve months: the fund it needs with health cover and a re-entry cushion, the date you would be ready, how far the FI date moves, the career-momentum cost as a range, and what the break buys in weeks.',
-    href: 'rooms/micro-retirement.html',
-    tier: 2,
-    tags: ['cashflow', 'income'],
-    daite: { reads: ['expenses', 'assets.cashCents', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob', 'assets.invested'], writes: [] },
-    subsections: [{ id: 'fund', label: 'The fund' }, { id: 'sides', label: 'Both sides' }]
-  });
   /* The Middle Class Trap Test (K1, D-218): both sides of the debate on
      the household's numbers, four paths to the pre-tax money, each with a
      verdict and its range. */
@@ -942,42 +848,30 @@
   ROOMS.push({
     id: 'career-move',
     features: ['matchVesting', 'studentLoanPaths'],
-    group: 'decisions', subgroup: 'work', aliases: ['job offer', 'new job', 'raise', 'offer'], appliesWhen: 'situation != retired',
+    group: 'decisions', subgroup: 'work', aliases: ['job offer', 'new job', 'raise', 'offer', 'offers', 'offer compare', 'side hustle', 'self-employed', '1099', 'contract', 'credential', 'bootcamp', 'degree', 'sabbatical', 'micro-retirement', 'break'], appliesWhen: 'situation != retired',
     kind: 'about-you',
     needs: ['grossAnnualIncome'],
     order: 37,
-    title: 'Career Move',
-    blurb: 'An offer against the job you have: the real hourly wage of each, the take-home difference, and how far the FI date moves.',
+    title: 'Work',
+    blurb: 'Every question about a job in one place: this offer against the one you have, offers side by side, a second job, going out on your own, whether a course pays, a degree, and a planned break.',
     href: 'rooms/career-move.html',
     tier: 2,
     tags: ['income'],
-    daite: { reads: ['income.grossAnnualCents'], writes: ['plans.careerMove'] },
+    daite: { reads: ['income.grossAnnualCents', 'expenses', 'taxes.filingStatus', 'assets.invested'], writes: ['plans.careerMove'] },
       subsections: [
         { id: 'number',      label: 'The real difference an hour' },
         { id: 'chart',       label: 'Now against the offer' },
         { id: 'inputs',      label: 'The offer' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'offers', label: 'Offers side by side' },
+        { id: 'hustle', label: 'A second job' },
+        { id: 'equivalent', label: 'The contract rate' },
+        { id: 'what', label: 'Worth learning?' },
+        { id: 'sum', label: 'A degree as a sum' },
+        { id: 'sides', label: 'A planned break' }
       ]
-  });
-
-  /* Offer Compare (K8, D-219): two to four offers priced as what they are
-     worth in a year and per real hour, with the FI date under each. */
-  ROOMS.push({
-    id: 'offer-compare',
-    group: 'decisions', subgroup: 'work', aliases: ['offer', 'offers', 'job offer', 'compare offers', 'match', 'equity', 'negotiate'],
-    appliesWhen: 'situation != retired',
-    kind: 'explore',
-    needs: [],
-    order: 37.5,
-    title: 'Offer Compare',
-    blurb: 'Two to four job offers side by side: each one’s real yearly value after the match, health premiums and the commute, its value per real hour, the FI date under each, and the one line that decides it.',
-    href: 'rooms/offer-compare.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state', 'assets.invested'], writes: ['income.grossAnnualCents', 'income.sources[].employerMatch', 'taxes.state'] },
-    subsections: [{ id: 'decider', label: 'What decides it' }, { id: 'offers', label: 'The offers' }, { id: 'results', label: 'Side by side' }]
   });
 
   /* Partner — the second wave of tranche rooms (D-099). */
@@ -1339,7 +1233,7 @@
     home: ['dashboard', 'planner', 'start'],
     numbers: ['debt-payoff', 'cant-pay', 'statement', 'rollover', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
-    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
+    decisions: ['career-move', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'enough', 'week', 'reversibility'],
     levelup: ['skill-tree'],
     upkeep: ['data', 'ledger', 'settings', 'get-help']
@@ -1394,9 +1288,6 @@
        The Statement requires nothing — what you own is a question for
        everybody — and that READING keeps the retirement branch, declared on
        the router, so its hat is absent when there is no employer plan. */
-    credential: ['career'],
-    'self-employed': ['ownWork'],
-    'side-hustle': ['career'],
     hassle: ['hours'],
     fire: ['savingsRate'],
     /* Between Jobs became the Cushion's while-job-hunting reading (D-232),
@@ -1405,7 +1296,10 @@
     protection: ['protection'],
     decumulation: ['decumulation'],
     tax: ['income'],
-    'career-move': ['career'],
+    /* Work holds seven readings (D-251). The room keeps the situation rule
+       every one of them had — appliesWhen "situation != retired" — but not
+       the career branch: Offers side by side, A degree and A break never
+       required it. Each READING that did carries it on the router. */
     /* Family holds both readings (D-241), so it exists when EITHER does: a
        household with children and no partner is a household, and so is the
        reverse. The nested array is the gate's any-of form. Each READING
@@ -1443,9 +1337,33 @@
   function writersOf(path) {
     return ROOMS.filter(function (r) { return r.daite && r.daite.writes.indexOf(path) !== -1; }).map(function (r) { return r.id; });
   }
+  /* Why a room is absent, in a sentence. Two things can take a room away
+     (see `applies`), so two kinds of answer: the gate's sentence for a
+     branch that is not there, and the room's own for a situation it says
+     it is not for. A room that vanishes without being able to say why is
+     the thing this app is not allowed to do (D-142). */
+  function whyAbsent(room, household) {
+    var G = gate();
+    if (!G || !household || !room) return null;
+    var sit = G.situationOf ? G.situationOf(household) : null;
+    if (!appliesToSituation(room, sit)) {
+      var s = sit && G.byId ? G.byId(sit) : null;
+      return 'This one is not for where you are right now' + (s ? ' \u2014 ' + s.label.toLowerCase() + '.' : '.');
+    }
+    return G.why(household, requires(room.id));
+  }
+
   function applies(room, household) {
     var G = gate();
     if (!G || !household) return true;
+    /* Two things can make a room absent, and they have to agree: the
+       branches it requires, and the situations it declares it is not for.
+       They always did agree while every room carried both — Career Move
+       required `career` AND said "not retired" — and D-251 pulled them
+       apart: Work requires nothing, because Offers side by side is for a
+       person between jobs, and still is not for a retired one. So this
+       reads both, as inGroup already did. */
+    if (!appliesToSituation(room, G.situationOf ? G.situationOf(household) : null)) return false;
     /* A requirement is a branch key, or an array of keys meaning any one
        will do — a merged room exists when any of its readings does (D-241). */
     return requires(room.id).every(function (k) {
@@ -1504,6 +1422,7 @@
     REQUIRES: REQUIRES,
     requires: requires,
     applies: applies,
+    whyAbsent: whyAbsent,
     forHousehold: forHousehold,
     nextAfter: nextAfter,
     byId: byId,

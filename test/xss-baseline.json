@@ -22,7 +22,7 @@
     "rooms/history.html": 0,
     "rooms/ledger.html": 2,
     "rooms/runway.html": 2,
-    "rooms/self-employed.html": 1,
+    "rooms/self-employed.html": 0,
     "rooms/settings.html": 1,
     "rooms/skill-tree.html": 2,
     "rooms/stacker.html": 0,
@@ -30,6 +30,7 @@
     "rooms/worth.html": 2,
     "shared/lenses.js": 1,
     "shared/progress.js": 1,
-    "rooms/statement.html": 2
+    "rooms/statement.html": 2,
+    "rooms/career-move.html": 1
   }
 }

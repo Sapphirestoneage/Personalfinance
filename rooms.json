@@ -239,22 +239,6 @@
       "order": 10
     },
     {
-      "id": "self-employed",
-      "title": "Going Self-Employed",
-      "file": "rooms/self-employed.html",
-      "reads": [
-        "grossAnnualIncome",
-        "filingStatus",
-        "state"
-      ],
-      "writes": [],
-      "requires": [
-        "ownWork"
-      ],
-      "dashboardNumber": "ownersPay",
-      "order": 12
-    },
-    {
       "id": "reachable",
       "title": "Reachable Money",
       "file": "rooms/reachable.html",
@@ -265,21 +249,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 12.5
-    },
-    {
-      "id": "side-hustle",
-      "title": "Side Hustle",
-      "file": "rooms/side-hustle.html",
-      "reads": [
-        "grossAnnualIncome",
-        "filingStatus"
-      ],
-      "writes": [],
-      "requires": [
-        "career"
-      ],
-      "dashboardNumber": null,
-      "order": 13
     },
     {
       "id": "dashboard",
@@ -296,20 +265,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 15
-    },
-    {
-      "id": "credential",
-      "title": "Worth Learning",
-      "file": "rooms/credential.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [
-        "career"
-      ],
-      "dashboardNumber": null,
-      "order": 16
     },
     {
       "id": "skill-tree",
@@ -507,18 +462,6 @@
       "order": 29
     },
     {
-      "id": "micro-retirement",
-      "title": "Micro-Retirement Planner",
-      "file": "rooms/micro-retirement.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 31.7
-    },
-    {
       "id": "protection",
       "title": "Protection",
       "file": "rooms/protection.html",
@@ -607,7 +550,7 @@
     },
     {
       "id": "career-move",
-      "title": "Career Move",
+      "title": "Work",
       "file": "rooms/career-move.html",
       "reads": [
         "grossAnnualIncome"
@@ -619,33 +562,9 @@
         "offerCosts",
         "offerSignOn"
       ],
-      "requires": [
-        "career"
-      ],
+      "requires": [],
       "dashboardNumber": null,
       "order": 37
-    },
-    {
-      "id": "offer-compare",
-      "title": "Offer Compare",
-      "file": "rooms/offer-compare.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 37.5
-    },
-    {
-      "id": "degree",
-      "title": "The Close",
-      "file": "rooms/degree.html",
-      "reads": [
-        "dob"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 37.7
     },
     {
       "id": "partner",

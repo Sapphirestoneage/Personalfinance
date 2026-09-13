@@ -5325,23 +5325,34 @@ section('Proposed, not taken');
     checkTrue('Seed exposes mount()', typeof Seed.mount === 'function');
     checkTrue('seed.js never touches the spine', !/Spine\.|updateProfile|upsert|localStorage/.test(seedSrc));
     checkTrue('it shows through Suggest', seedSrc.indexOf('Suggest.show(') !== -1);
-    ['runway', 'financial-snapshot', 'self-employed'].forEach(function (room) {   /* Quick Math is a Scorecard reading, D-233 */
+    /* Quick Math is a Scorecard reading (D-233); Going Self-Employed is a
+       Work reading (D-251). The rooms are named, the readings ride along. */
+    ['runway', 'financial-snapshot', 'career-move'].forEach(function (room) {
       const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
       checkTrue(`${room} mounts the seed toggle`, html.indexOf('SLAF.Seed.mount(') !== -1);
       checkTrue(`${room} loads seed.js after suggest.js`, html.indexOf('shared/suggest.js') !== -1 && html.indexOf('shared/suggest.js') < html.indexOf('shared/seed.js'));
       /* The Cushion's other three readings DO write, each through its owner
          (D-232); the how-long reading is the page-local one and says so
          between its markers, which is the part this rule is about. */
+      /* Both of these pages carry several readings now, and the rule is
+         about ONE of them: The Cushion's how-long reading, which is marked
+         in place, and Work's on-your-own reading, which is a labelled
+         block (D-251). The rest of each page does write, through its
+         owners, and may. */
       const local = room === 'runway'
         ? html.slice(html.indexOf('---- HOW LONG:'), html.indexOf('---- end HOW LONG ----'))
-        : html;
+        : room === 'career-move'
+          ? html.split('/* ---- READING ').filter(b => b.indexOf('view-on-your-own') === 0)[0] || ''
+          : html;
       checkTrue(`${room} is the marked page-local reading`, local.length > 500);
       checkTrue(`${room} still writes nothing to the household`, !/Spine\.(updateProfile|upsert[A-Za-z]+|setMonthlyExpenses)\(/.test(local.replace(/\/\*[\s\S]*?\*\//g, '')));
     });
-    const se = fs.readFileSync(path.join(ROOT, 'rooms/self-employed.html'), 'utf8');
+    const se = fs.readFileSync(path.join(ROOT, 'rooms/career-move.html'), 'utf8');
     checkTrue('W2 vs 1099 no longer writes the salary straight into the box', !/v\['w-salary'\] = gross\.value/.test(se));
     /* Where It Goes is The Statement's where-it-lands reading (D-248). */
-    ['side-hustle', 'credential', 'statement'].forEach(function (room) {
+    /* Side Hustle and Worth Learning are Work readings (D-251), Where It
+       Goes a Statement reading (D-248) — all three on two pages now. */
+    ['career-move', 'statement'].forEach(function (room) {
       const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
       checkTrue(`${room} proposes the federal bracket`, html.indexOf('Reference.marginalBracket(') !== -1);
       checkTrue(`${room} labels it federal only and unverified`, /federal only, an estimate/.test(html));
@@ -5828,7 +5839,10 @@ section('What is finished');
 
     /* A room that reads nothing shared is not "incomplete" — it is never
        blocked, which is a different state and says so. */
-    const solo = Progress.forRoom('offer-compare', h);   /* Quick Math became a Scorecard reading, D-233 */
+    /* Quick Math became a Scorecard reading (D-233) and Offer Compare a
+       Work reading (D-251); The Referee reads nothing shared and is the
+       standalone room now. */
+    const solo = Progress.forRoom('debates', h);
     checkTrue('a standalone room is flagged as standalone', solo.standalone);
     checkTrue('and counts as complete rather than as behind', solo.complete);
     check('unknown room ids return nothing', Progress.forRoom('no-such-room', h), null);
@@ -8173,10 +8187,10 @@ section('Core (D-094): the gate — exists() per situation');
   check('unanswered: every room but the ones that need a fact (a partner, a dependent)', gone(none), 'partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  check('retired: the working rooms are gone', gone(hh('retired')), 'career-move,credential,fire,hassle,partner,self-employed,side-hustle');
+  check('retired: the working rooms are gone', gone(hh('retired')), 'career-move,fire,hassle,partner');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
-  check('employed, alone, no dependents: own work, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'decumulation,partner,self-employed');
+  check('employed, alone, no dependents: own work, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'decumulation,partner');
   checkTrue('self-employed: the 401(k) room is gone', Registry.forHousehold(hh('selfEmployed')).map(r => r.id).indexOf('accounts') === -1);
   /* A requirement may be a key or an array of keys meaning any-of (D-241);
      flatten before checking that each one names a real branch. */
@@ -8184,7 +8198,7 @@ section('Core (D-094): the gate — exists() per situation');
   checkTrue('every requires room is a room', Object.keys(Registry.REQUIRES).every(id => !!Registry.byId(id)));
   check('byTag with a household filters the same way', Registry.byTag('all', hh('retired')).length, retiredRooms.length);
   check('byTag without one is every room', Registry.byTag('all').length, all);
-  check('the demo is five rooms short — no own work, not drawing down, alone, nobody depending', gone(Demo.build()), 'decumulation,partner,self-employed');
+  check('the demo is five rooms short — no own work, not drawing down, alone, nobody depending', gone(Demo.build()), 'decumulation,partner');
 
   /* Guesses: a default for every guessable control, from the tables. */
   const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
@@ -10588,7 +10602,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 23);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 17);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13969,7 +13983,7 @@ section('K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, 
   checkTrue('two offers priced, each with a value range, a per-hour figure with the commute in the hours, and an FI date', Money.isOk(cmp) && cmp.offers.every(o => o.ok && o.valueLowCents <= o.valueHighCents && o.hoursAYear > 0 && o.fiYears !== null) && cmp.offers[0].commuteHoursAYear > 0 && cmp.offers[1].commuteHoursAYear === 0);
   checkTrue('the one line that decides it is named', cmp.decider && cmp.decider.label && cmp.decider.diffCents > 0);
   checkTrue('one offer is not a comparison', !Money.isOk(Offers.compare(demo, T, { offers: [{ baseCents: 100 }] })));
-  const ocRoom = fs.readFileSync(path.join(ROOT, 'rooms/offer-compare.html'), 'utf8');
+  const ocRoom = fs.readFileSync(path.join(ROOT, 'rooms/career-move.html'), 'utf8');
   checkTrue('accepting an offer writes the pay and records the life change for the reopen sheet', /Spine\.upsertIncomeSource\(/.test(ocRoom) && /Spine\.setReopen\(\{ field: 'grossAnnualIncome', from: 'offer-compare'/.test(ocRoom));
 
   /* -- K9: the degree -------------------------------------------------------------------- */
@@ -13997,7 +14011,12 @@ section('K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, 
   checkTrue('maintenance estimated from the AAA shares when not typed', car.maintenanceEstimated && car.maintenanceCents === Math.round((15000 + 12000) / (0.25 + 0.24) * 0.2));
   checkTrue('new against used at the same budget from the depreciation curve', car.newVsUsed.newLossCents === Math.round(3000000 * (1 - FirstCar.retained(T.carCosts, 5))) && car.newVsUsed.usedListNewCents === Math.round(3000000 / FirstCar.retained(T.carCosts, 3)));
   checkTrue('inside all three at a fitting price', FirstCar.check(demo, T, { priceCents: 1500000, downCents: 300000, termMonths: 36, loanRate: 0.06 }).insideAll);
-  ['micro-retirement', 'offer-compare', 'degree'].forEach(id => checkTrue(id + ' is registered', !!Registry.byId(id)));
+  /* All three are readings of Work since D-251; their engines are
+     unchanged and tested above, and the page they live on is the room. */
+  ['micro-retirement', 'offer-compare', 'degree'].forEach(function (id) {
+    checkTrue(id + ' is a reading of Work', !Registry.byId(id)
+      && /url=career-move\.html#/.test(fs.readFileSync(path.join(ROOT, 'rooms/' + id + '.html'), 'utf8')));
+  });
   /* K2 and K10 are readings now, not rooms: the One-Pager opens The Card, the
      First Car Check opens Wheels. The engines behind them are unchanged and
      still tested above; what moved is where the page lives (D-234, D-238). */

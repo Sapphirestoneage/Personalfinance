@@ -193,7 +193,7 @@ module.exports = function (t) {
     var tag = function (f) { return html.indexOf('<script src="../' + f + '"></script>'); };
     checkTrue('loads the engine after tax.js and selfemployed.js', tag('engines/selfemployed.js') > 0 && tag('engines/selfemployed.js') < tag('engines/tax.js') && tag('engines/tax.js') < tag('engines/taxroom.js'));
     checkTrue('writes only its own two fields', /Spine\.set\('tax\.' \+ key/.test(html) && !/upsertPerson|updateProfile/.test(html));
-    checkTrue('links the self-employed quarterly', /linkTo\('self-employed', 'quarterly'\)/.test(html));
+    checkTrue('links the quarterly estimates, which are a Work reading now (D-251)', /linkTo\('career-move', 'quarterly'\)/.test(html));
     checkTrue('one chart: Charts.stacked', (html.match(/Charts\.(stacked|area|donut|bars)\(/g) || []).every(function (m) { return m === 'Charts.stacked('; }));
     checkTrue('the scope line', /does not file, itemise, or handle credits/.test(html));
     var reg = t.Registry.byId('tax');

@@ -6,55 +6,375 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Career Move · SPARKS</title>
-<meta name="description" content="An offer against the job you have: the real hourly wage of each, the take-home difference, and how far the FI date moves."/>
+<title>Work · SPARKS</title>
+<meta name="description" content="Every question about a job in one place: this offer against the one you have, offers side by side, a second job, going out on your own, whether a course pays, a degree, and a planned break."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-099 (the second wave).
+  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md
+  D-101, D-216, D-217, D-219, D-251 (the merge). Registry: career-move.
 
-  1. READS   The person's income and filingStatus (Start Here), the current
-             job's work profile (Real Hourly Wage owns person.work), a
-             month's spending and the investments (for the FI move).
-  2. WRITES  It OWNS household.career.offer — what the offer pays a year,
-             its hours a week, its commute a week, its costs of working a
-             month, and the sign-on. Nothing else edits those; it edits
-             nothing else.
-  3. CALLS   engines/careermove.js, which prices both jobs with the SAME
-             function — engines/hourly.js realHourlyWage — and reads
-             take-home from engines/tier0.js and the FI move from
-             engines/projection.js the way the lens does.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses); with no offer
-             typed it says what it needs. The offer's commute and costs
-             left blank carry the current job's; a typed 0 is a zero.
-  5. CONFIG  data/effective_tax_rates_2026.json, via the engines above.
+  EIGHT READINGS, EVERY ONE ABOUT HAVING A JOB.
 
-  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, five
-  inputs, the assumptions drawer with sources, why this matters at your
-  stage, one out-of-scope line to Get Help. The ids below are the deep links.
+    #the-offer        this offer against the job you have
+    #side-by-side     two to four offers at once
+    #a-second-job     what the second job actually pays
+    #on-your-own      the contract rate that matches a salary
+    #worth-learning   whether a course or a credential pays back
+    #a-degree         a degree as a sum
+    #a-break          a planned break, one to twelve months
 
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
+  Seven rooms about one subject, every one of them a what-if on the same
+  pay. Rule 1 of D-229. The offer is first because it is the question people
+  arrive with.
+
+  THE ACCOUNT YOU LEFT BEHIND IS NOT HERE, and the map says why: every room
+  on this page carries appliesWhen "situation != retired", and rollover
+  never did. Folding it in would take it from the people most likely to
+  have left a plan behind. It is held, not skipped.
+
+  DONEGAN'S NOTE STANDS, and this room makes it plain rather than hiding it:
+  seven readings about HAVING a job and not one about building something
+  that pays you. That gap is now a single visible strip instead of seven
+  entries in a list, which is the point of saying it here.
+
+  EVERY READING CARRIES THE RULES ITS ROOM HAD: the same
+  appliesWhen on the room, and the career branch on the offer, the second
+  job and worth-learning; ownWork on on-your-own.
+
+  1. READS   what you earn, the hours behind it, the month, and the rates.
+  2. WRITES  the five offer fields, as before. NOTHING ELSE WRITES: six of
+             the seven readings are what-ifs and own no field (D-052).
+  3. CALLS   the engines each reading already called; no arithmetic moved.
+  4. EMPTY   every reading names the figure it needs rather than assuming
+             one.
+  5. CONFIG  the tables each engine names.
+
   THEMING: none this pass. A theme is a class on <body> and a palette in
   shared/theme.css.
+
+  LIVE-FORM: guarded. Every reading keeps the discipline it had; switching
+  readings hides and shows and rebuilds nothing (D-034).
 -->
 <style>
-  section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- This offer, from rooms/career-move.html (D-251) ---- */
+  
+  #view-the-offer section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-offer .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- Offers side by side, from rooms/offer-compare.html (D-251) ---- */
+  
+  #view-side-by-side .offers { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-side-by-side .offers.show-3 { grid-template-columns: repeat(3, 1fr); }
+  
+  #view-side-by-side .offers.show-4 { grid-template-columns: repeat(4, 1fr); }
+  
+  #view-side-by-side .offer { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  
+  #view-side-by-side .offer label { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 2px; }
+  
+  #view-side-by-side .offer input { width: 100%; }
+  
+  #view-side-by-side .offer .slaf-input-shell { width: 100%; }
+  
+  #view-side-by-side .results { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-side-by-side .results.show-3 { grid-template-columns: repeat(3, 1fr); }
+  
+  #view-side-by-side .results.show-4 { grid-template-columns: repeat(4, 1fr); }
+  
+  #view-side-by-side .result { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--text-sm); }
+  
+  #view-side-by-side .result.is-best { border-color: var(--color-accent); }
+  
+  #view-side-by-side .result h3 { margin: 0 0 var(--space-1); font-size: var(--text-md); }
+  
+  #view-side-by-side .result .big { font-family: var(--font-display); font-size: var(--text-lg); }
+  
+  #view-side-by-side .result ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  
+  #view-side-by-side .result li { display: flex; justify-content: space-between; gap: var(--space-2); padding: 2px 0; border-top: 1px solid var(--color-border); }
+  
+  #view-side-by-side .result b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-side-by-side .head-num { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-2) 0 0; }
+  
+  #view-side-by-side .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  @media (max-width: 640px) { 
+  #view-side-by-side .offers,
+  #view-side-by-side .offers.show-3,
+  #view-side-by-side .offers.show-4,
+  #view-side-by-side .results,
+  #view-side-by-side .results.show-3,
+  #view-side-by-side .results.show-4 { grid-template-columns: 1fr; } }
+
+  /* ---- A second job, from rooms/side-hustle.html (D-251) ---- */
+  
+  #view-a-second-job .room-back:hover { text-decoration: underline; }
+  
+  #view-a-second-job section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-a-second-job .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { 
+  #view-a-second-job .grid-2 { grid-template-columns: 1fr; } }
+
+  
+  #view-a-second-job .kind { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin: var(--space-3) 0; }
+  
+  #view-a-second-job .kind button { text-align: center; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
+  
+  #view-a-second-job .kind button:hover { border-color: var(--color-border-active); }
+  
+  #view-a-second-job .kind button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+  
+  #view-a-second-job .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
+  
+  #view-a-second-job .verdict.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  
+  #view-a-second-job .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  
+  #view-a-second-job .waterfall { margin-top: var(--space-3); }
+  
+  #view-a-second-job .wf-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  
+  #view-a-second-job .wf-row:last-child { border-bottom: none; }
+  
+  #view-a-second-job .wf-row .v { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-a-second-job .wf-row.total { font-weight: 600; }
+  
+  #view-a-second-job .wf-row.out .v { color: var(--color-critical); }
+  
+  #view-a-second-job .wf-bar { grid-column: 1 / -1; height: 8px; border-radius: var(--radius-pill); background: rgba(30,58,138,.4); overflow: hidden; margin-top: var(--space-1); }
+  
+  #view-a-second-job .wf-bar > span { display: block; height: 100%; background: var(--color-accent); }
+
+  
+  #view-a-second-job .weekbar { display: flex; height: 26px; border-radius: var(--radius-sm); overflow: hidden; margin-top: var(--space-3); background: rgba(30,58,138,.4); }
+  
+  #view-a-second-job .weekbar > span { height: 100%; }
+  
+  #view-a-second-job .seg-job { background: rgba(46,111,232,.5); }
+  
+  #view-a-second-job .seg-side { background: var(--color-accent); }
+  
+  #view-a-second-job .seg-rest { background: var(--color-text-faint); }
+  
+  #view-a-second-job .key { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-a-second-job .key span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+  
+  #view-a-second-job .key .k-job::before { background: rgba(46,111,232,.5); }
+  
+  #view-a-second-job .key .k-side::before { background: var(--color-accent); }
+  
+  #view-a-second-job .key .k-rest::before { background: var(--color-text-faint); }
+
+  
+  #view-a-second-job .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-a-second-job .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-a-second-job .out-detail dt { color: var(--color-text-faint); }
+  
+  #view-a-second-job .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  
+  #view-a-second-job .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-a-second-job .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- On your own, from rooms/self-employed.html (D-251) ---- */
+  
+  #view-on-your-own .room-back:hover { text-decoration: underline; }
+  
+  #view-on-your-own section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-on-your-own .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { 
+  #view-on-your-own .grid-2 { grid-template-columns: 1fr; } }
+
+  
+  #view-on-your-own .versus { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-on-your-own .versus > div { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); }
+  
+  #view-on-your-own .versus .winner { border-color: var(--color-border-active); background: var(--color-surface-active); }
+  
+  #view-on-your-own .versus .lbl { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); display: block; }
+  
+  #view-on-your-own .versus .val { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+  
+  #view-on-your-own .versus ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-xs); color: var(--color-text-faint); }
+  
+  #view-on-your-own .versus li { display: flex; justify-content: space-between; gap: var(--space-2); padding: 2px 0; font-variant-numeric: tabular-nums; }
+
+  
+  #view-on-your-own .headline { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-3); }
+  
+  #view-on-your-own .headline.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+
+  
+  #view-on-your-own .working { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-on-your-own .working dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-on-your-own .working dt { color: var(--color-text-faint); }
+  
+  #view-on-your-own .working dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  
+  #view-on-your-own .working .step { color: var(--color-text-muted); }
+
+  
+  #view-on-your-own .quarters { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); margin-top: var(--space-3); }
+  
+  #view-on-your-own .quarter { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); text-align: center; }
+  
+  #view-on-your-own .quarter .when { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); display: block; }
+  
+  #view-on-your-own .quarter .amt { font-family: var(--font-display); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+
+  
+  #view-on-your-own .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-2) var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-on-your-own .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- Worth learning?, from rooms/credential.html (D-251) ---- */
+  
+  #view-worth-learning .room-back:hover { text-decoration: underline; }
+  
+  #view-worth-learning section[id] { scroll-margin-top: var(--space-4); }
+
+  
+  #view-worth-learning .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 380px) { 
+  #view-worth-learning .grid-2 { grid-template-columns: 1fr; } }
+
+  
+  #view-worth-learning .preset { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-3); }
+  
+  #view-worth-learning .preset button { text-align: center; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; transition: all 150ms ease; }
+  
+  #view-worth-learning .preset button:hover { border-color: var(--color-border-active); }
+  
+  #view-worth-learning .preset button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+  
+  #view-worth-learning .verdict { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-3); }
+  
+  #view-worth-learning .verdict.is-incomplete { color: var(--color-text-faint); font-family: var(--font-body); font-size: var(--text-base); }
+  
+  #view-worth-learning .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+
+  
+  #view-worth-learning .waterfall .wf-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  
+  #view-worth-learning .waterfall .wf-row:last-child { border-bottom: none; }
+  
+  #view-worth-learning .waterfall .v { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-worth-learning .waterfall .wf-row.total { font-weight: 600; }
+  
+  #view-worth-learning .waterfall .wf-row.out .v { color: var(--color-critical); }
+  
+  #view-worth-learning .waterfall .wf-row.gain .v { color: var(--color-positive); }
+
+  
+  #view-worth-learning .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-worth-learning .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-worth-learning .out-detail dt { color: var(--color-text-faint); }
+  
+  #view-worth-learning .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  
+  #view-worth-learning .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
+  
+  #view-worth-learning .flag--warn { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-worth-learning .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- A degree, from rooms/degree.html (D-251) ---- */
+  
+  #view-a-degree .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  
+  #view-a-degree .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-a-degree .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
+  
+  #view-a-degree .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  
+  #view-a-degree ul.plain { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-a-degree ul.plain li { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-a-degree ul.plain li:first-child { border-top: none; }
+  
+  #view-a-degree ul.plain b { font-variant-numeric: tabular-nums; text-align: right; }
+  @media (max-width: 480px) { 
+  #view-a-degree .ask { grid-template-columns: 1fr; } }
+
+  /* ---- A break, from rooms/micro-retirement.html (D-251) ---- */
+  
+  #view-a-break .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  
+  #view-a-break .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  
+  #view-a-break .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
+  
+  #view-a-break .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  
+  #view-a-break .two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+  
+  #view-a-break .two > div { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  
+  #view-a-break .two h3 { margin: 0 0 var(--space-2); font-size: var(--text-md); }
+  
+  #view-a-break .two ul { list-style: none; margin: 0; padding: 0; font-size: var(--text-sm); }
+  
+  #view-a-break .two li { padding: var(--space-1) 0; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; gap: var(--space-2); }
+  
+  #view-a-break .two li:first-child { border-top: none; }
+  
+  #view-a-break .two li b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  @media (max-width: 480px) { 
+  #view-a-break .ask,
+  #view-a-break .two { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Career Move</h1>
-  <p class="room-lede">An offer against the job you have: the real hourly wage of each, the take-home difference, and how far the FI date moves.</p>
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>Work</h1>
+  <p class="room-lede">Every question about a job, in one place.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Seven readings of working for money">
+    <a href="#the-offer" data-view="view-the-offer">This offer</a>
+    <a href="#side-by-side" data-view="view-side-by-side">Offers side by side</a>
+    <a href="#a-second-job" data-view="view-a-second-job">A second job</a>
+    <a href="#on-your-own" data-view="view-on-your-own">On your own</a>
+    <a href="#worth-learning" data-view="view-worth-learning">Worth learning?</a>
+    <a href="#a-degree" data-view="view-a-degree">A degree</a>
+    <a href="#a-break" data-view="view-a-break">A break</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ===== THIS OFFER (was rooms/career-move.html) ===== -->
+  <section id="view-the-offer">
+  <p class="slaf-lede">An offer against the job you have: the real hourly wage of each, the take-home difference, and how far the FI date moves.</p>
   <div class="room-standalone" id="room-standalone" hidden></div>
 
   <section class="slaf-card" id="number">
@@ -94,11 +414,293 @@
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
   </section>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. Tax is estimated from a flat
-    effective-rate table, not a return. Your numbers stay in this browser.
-  </p>
+  <!-- ===== OFFERS SIDE BY SIDE (was rooms/offer-compare.html) ===== -->
+  <section id="view-side-by-side" hidden>
+  <p class="slaf-lede">Two to four offers side by side, each priced as what it is really worth in a year and per real hour, with the FI date under each.</p>
+  <section class="slaf-card" id="decider">
+    <span class="slaf-eyebrow">What decides it</span>
+    <p class="head-num" id="o-num"></p>
+    <p class="head-sub" id="o-sub"></p>
+  </section>
+  <section class="slaf-card" id="offers">
+    <span class="slaf-eyebrow">The offers</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Rough is fine for the bonus and the equity; equity is always a range. Match: a 50%-up-to-6% plan is rate 50 and cap 6.</p>
+    <div class="offers" id="offer-grid"></div>
+    <p style="margin:var(--space-3) 0 0"><button type="button" class="slaf-btn slaf-btn--quiet" id="btn-more">Add a third offer</button></p>
+  </section>
+  <section class="slaf-card" id="results" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Side by side</span>
+    <div class="results" id="result-grid"></div>
+    <p class="slaf-hint" id="accept-note" style="margin:var(--space-3) 0 0"></p>
+  </section>
+  </section>
+
+  <!-- ===== A SECOND JOB (was rooms/side-hustle.html) ===== -->
+  <section id="view-a-second-job" hidden>
+  <p class="slaf-lede">What the second job actually pays after tax, costs and the hours it eats — and what a week looks like with it in.</p>
+  <section class="slaf-card" id="hustle">
+    <span class="slaf-eyebrow">The hustle</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Per month, as it actually runs</h2>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">What it brings in</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-revenue" placeholder="e.g. 1000" aria-label="Monthly revenue"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">What it costs to run</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-expenses" placeholder="0 if nothing" aria-label="Monthly expenses"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Hours a month</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-hours" placeholder="e.g. 16" aria-label="Hours a month"/><span class="slaf-affix">hrs</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Your marginal tax rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-marginal" placeholder="e.g. 22" aria-label="Marginal tax rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+
+    <div class="kind" role="group" aria-label="How the income is taxed">
+      <button type="button" data-kind="1099" aria-pressed="true">Self-employed / 1099</button>
+      <button type="button" data-kind="w2" aria-pressed="false">A second W2 job</button>
+    </div>
+    <p class="slaf-hint" style="margin:0" id="kind-hint"></p>
+
+    <p class="slaf-hint" id="marginal-shared" style="margin:var(--space-3) 0 0"></p>
+    <p class="slaf-hint" data-suggest-note style="margin:var(--space-2) 0 0"></p>
+    <div class="flag" id="marginal-note"></div>
+  </section>
+
+  <section class="slaf-card" id="out-net">
+    <span class="slaf-eyebrow">What you keep</span>
+    <h2 style="margin:var(--space-2) 0 0">Where the money goes</h2>
+    <div class="verdict" id="n-verdict">—</div>
+    <p class="why" id="n-why"></p>
+    <div class="waterfall" id="n-waterfall"></div>
+  </section>
+
+  <section class="slaf-card" id="out-vs-job">
+    <span class="slaf-eyebrow">Against the day job</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Is the second hour better than the first?</h2>
+    <div class="verdict" id="v-verdict">—</div>
+    <p class="why" id="v-why"></p>
+    <div class="out-detail" id="v-detail"></div>
+  </section>
+
+  <section class="slaf-card" id="out-week">
+    <span class="slaf-eyebrow">What a week becomes</span>
+    <h2 style="margin:var(--space-2) 0 0">The hours, honestly</h2>
+    <div id="week-body" hidden>
+      <div class="weekbar" id="week-bar"></div>
+      <div class="key">
+        <span class="k-job">The job, all in</span><span class="k-side">The hustle</span><span class="k-rest">Everything else</span>
+      </div>
+      <div class="out-detail" id="week-detail"></div>
+    </div>
+    <p class="why" id="week-why"></p>
+  </section>
+
+  <section class="slaf-card" id="sh-reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="sh-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ===== ON YOUR OWN (was rooms/self-employed.html) ===== -->
+  <section id="view-on-your-own" hidden>
+  <p class="slaf-lede">What a contract rate has to be to match a salary — and what to send in each quarter once it is.</p>
+  <section class="slaf-card" id="compare">
+    <span class="slaf-eyebrow">Salary vs. contract</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Which actually pays more?</h2>
+    <div class="grid-2">
+      <div id="seed-host" style="grid-column:1 / -1" hidden></div>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Salary on offer</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="w-salary" placeholder="e.g. 72000" aria-label="W2 salary"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Benefits it comes with</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="w-benefits" placeholder="e.g. 8000" aria-label="Value of W2 benefits"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Contract income</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-income" placeholder="e.g. 85000" aria-label="Contract income"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Business expenses</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-expenses" placeholder="e.g. 5000" aria-label="Business expenses"/></span></label>
+    </div>
+    <p class="slaf-hint" style="margin-top:var(--space-3)">
+      Benefits means what you'd have to buy yourself: health cover, the
+      employer's retirement match, paid leave.
+    </p>
+
+    <div class="headline" id="verdict">—</div>
+    <div class="versus" id="versus" hidden>
+      <div id="side-w2"><span class="lbl">Salary, take-home</span><span class="val" id="w2-net">—</span><ul id="w2-lines"></ul></div>
+      <div id="side-c"><span class="lbl">Contract, take-home</span><span class="val" id="c-net">—</span><ul id="c-lines"></ul></div>
+    </div>
+    <div class="flag" id="equivalent" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="setax">
+    <span class="slaf-eyebrow">Self-employment tax</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Where the 15.3% actually lands</h2>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)">
+      It isn't 15.3% of what you make — it's 15.3% of 92.35% of it, and half
+      comes back as a deduction. Both are easy to get wrong, so here is the
+      working.
+    </p>
+    <div class="working" id="se-working"><p class="slaf-reason">Enter a contract income above.</p></div>
+  </section>
+
+  <section class="slaf-card" id="quarterly">
+    <span class="slaf-eyebrow">Quarterly estimates</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What to send in, and when</h2>
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Profit you expect</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="q-profit" placeholder="e.g. 80000" aria-label="Expected net profit"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Tax withheld elsewhere</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="q-withheld" placeholder="e.g. 0" aria-label="Tax already withheld"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Last year's tax bill</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="q-prior" placeholder="e.g. 9000" aria-label="Prior year tax liability"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Last year's income</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="q-prior-agi" placeholder="e.g. 72000" aria-label="Prior year AGI"/></span></label>
+    </div>
+    <div class="headline" id="q-amount">—</div>
+    <div class="quarters" id="q-schedule" hidden></div>
+    <div class="working" id="q-working"></div>
+    <div class="flag" id="q-harbor" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="se-reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="se-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ===== WORTH LEARNING? (was rooms/credential.html) ===== -->
+  <section id="view-worth-learning" hidden>
+  <p class="slaf-lede">A degree, a bootcamp or a weekend course — what it costs including the time, what the raise is worth after tax, and when it pays back.</p>
+  <section class="slaf-card" id="what">
+    <span class="slaf-eyebrow">What you are weighing</span>
+    <div class="preset" role="group" aria-label="What kind of thing this is">
+      <button type="button" data-preset="career" aria-pressed="true">A career move</button>
+      <button type="button" data-preset="skill" aria-pressed="false">A single skill</button>
+    </div>
+    <p class="slaf-hint" style="margin:0 0 var(--space-3)" id="preset-blurb"></p>
+
+    <div class="grid-2">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label" id="lbl-cost">What it costs</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-cost" placeholder="e.g. 15000" aria-label="What it costs"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label" id="lbl-delta">The raise it should bring</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-delta" placeholder="e.g. 12000" aria-label="Annual raise"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label" id="lbl-months">Months not earning</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-months" placeholder="0 if none" aria-label="Months not earning"/><span class="slaf-affix">mo</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">A month out costs you</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-forgone" placeholder="per month" aria-label="Monthly income given up"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label" id="lbl-years">Years it pays over</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-years" placeholder="e.g. 25" aria-label="Years of benefit"/><span class="slaf-affix">yrs</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Your marginal tax rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="cd-in-marginal" placeholder="e.g. 22" aria-label="Marginal tax rate"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Discount rate</span>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-discount" placeholder="3" aria-label="Discount rate"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <p class="slaf-hint" id="cd-marginal-note" style="margin:var(--space-3) 0 0"></p>
+    <p class="slaf-hint" data-suggest-note style="margin:var(--space-2) 0 0"></p>
+    <div class="flag" id="forgone-note"></div>
+  </section>
+
+  <section class="slaf-card" id="out-payback">
+    <span class="slaf-eyebrow">When it pays back</span>
+    <h2 style="margin:var(--space-2) 0 0">The whole price, and how long the raise takes to cover it</h2>
+    <div class="verdict" id="p-verdict">—</div>
+    <p class="why" id="p-why"></p>
+    <div class="waterfall" id="p-waterfall" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <section class="slaf-card" id="out-value">
+    <span class="slaf-eyebrow">What it is worth today</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Money later is worth less than money now</h2>
+    <div class="verdict" id="cd-v-verdict">—</div>
+    <p class="why" id="cd-v-why"></p>
+    <div class="out-detail" id="cd-v-detail"></div>
+    <div class="flag" id="v-breakeven" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="out-hours">
+    <span class="slaf-eyebrow">Priced in hours</span>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">What it costs in hours of your life</h2>
+    <div class="verdict" id="h-verdict">—</div>
+    <p class="why" id="h-why"></p>
+  </section>
+
+  <section class="slaf-card" id="cd-reading">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <div id="cd-reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+  </section>
+
+  <!-- ===== A DEGREE (was rooms/degree.html) ===== -->
+  <section id="view-a-degree" hidden>
+  <p class="slaf-lede">A degree as a sum. What it costs, what it pays back, the age the two cross, and what it does to the FI date.</p>
+  <section class="slaf-card" id="answer">
+    <span class="slaf-eyebrow">Break-even</span>
+    <p class="head-num" id="g-num"></p>
+    <p class="head-sub" id="g-sub"></p>
+  </section>
+  <section class="slaf-card" id="dg-inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The degree</span>
+    <div class="ask">
+      <div><label for="in-tuition">Tuition and fees, in all</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-tuition" placeholder="e.g. 60,000" aria-label="Tuition and fees"/></span></div>
+      <div><label for="dg-in-years">Years in school</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="dg-in-years" placeholder="e.g. 2" aria-label="Years in school"/></span></div>
+      <div><label for="in-keep">Pay kept while studying</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-keep" placeholder="0 full time, 50 part time" aria-label="Pay kept while studying"/><span class="slaf-affix">%</span></span></div>
+      <div><label for="in-help">Employer tuition help</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-help" placeholder="if any" aria-label="Employer tuition help"/></span></div>
+      <div><label for="in-loan">Loan</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-loan" placeholder="if any" aria-label="Loan"/></span></div>
+      <div><label for="in-rate">Loan rate</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-rate" placeholder="e.g. 6" aria-label="Loan rate"/><span class="slaf-affix">%</span></span></div>
+      <div><label for="in-with-low">Pay with the degree, low</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-with-low" placeholder="a year" aria-label="Pay with the degree, low"/></span></div>
+      <div><label for="in-with-high">Pay with the degree, high</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-with-high" placeholder="blank if one figure" aria-label="Pay with the degree, high"/></span></div>
+      <div><label for="in-wo-low">Pay without it, low</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-wo-low" placeholder="your pay now" aria-label="Pay without it, low"/></span></div>
+      <div><label for="in-wo-high">Pay without it, high</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-wo-high" placeholder="blank if one figure" aria-label="Pay without it, high"/></span></div>
+    </div>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Not sure of a salary? Leave the high box blank for one figure, or type a wide range; the answer is a range either way.</p>
+  </section>
+  <section class="slaf-card" id="sum" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The sum</span>
+    <ul class="plain" id="g-sum"></ul>
+  </section>
+  </section>
+
+  <!-- ===== A BREAK (was rooms/micro-retirement.html) ===== -->
+  <section id="view-a-break" hidden>
+  <p class="slaf-lede">A planned break from work, one to twelve months. What it costs and what it buys, both on one screen.</p>
+  <section class="slaf-card" id="fund">
+    <span class="slaf-eyebrow">The fund</span>
+    <p class="head-num" id="m-num"></p>
+    <p class="head-sub" id="m-sub"></p>
+    <div class="ask">
+      <div><label for="mr-in-months">Months away</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="mr-in-months" placeholder="1 to 12" aria-label="Months away"/></span></div>
+      <div><label for="in-start">Starting</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-start" placeholder="YYYY-MM" aria-label="Starting"/></span></div>
+      <div><label for="in-spend">Spending a month, during</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-spend" placeholder="your month" aria-label="Spending a month during the break"/></span></div>
+      <div><label for="in-income">Income a month, during</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-income" placeholder="e.g. 0" aria-label="Income a month during the break"/></span></div>
+      <div><label for="in-cover">Health cover a month</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-cover" placeholder="COBRA" aria-label="Health cover a month"/></span></div>
+      <div><label for="in-momentum">Pay penalty, per year of break</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-momentum" placeholder="e.g. 4" aria-label="Pay penalty per year of break"/><span class="slaf-affix">%</span></span></div>
+    </div>
+    <p style="margin:var(--space-3) 0 0"><button type="button" class="slaf-btn slaf-btn--quiet" id="add-block" hidden>Add this as a block</button> <span class="slaf-hint" id="block-note"></span></p>
+  </section>
+  <section class="slaf-card" id="sides" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Both sides</span>
+    <div class="two">
+      <div><h3>What it costs</h3><ul id="m-costs"></ul></div>
+      <div><h3>What it buys</h3><ul id="m-buys"></ul></div>
+    </div>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. An offer you are weighing is a what-if, not a fact about you. Everything stays in this browser.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -121,8 +723,88 @@
 <script src="../engines/careermove.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../engines/offers.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/sidehustle.js"></script>
+<script src="../shared/seed.js"></script>
+<script src="../engines/credential.js"></script>
+<script src="../engines/degree.js"></script>
+<script src="../shared/expr.js"></script>
+<script src="../shared/scenarios.js"></script>
+<script src="../engines/countdown.js"></script>
+<script src="../engines/microretirement.js"></script>
+<script src="../shared/blocks.js"></script>
 <script src="../shared/room.js"></script>
 <script>
+/* ---- seven questions about a job (D-251) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   The hash still reaches it — an old link must land somewhere honest — and
+   the reading says for whom it is, which is what Gate.why is for. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-side-by-side', match: /^#(side-by-side|oc-|offers|offer-grid|results|result-grid|decider|accept-note|o-num|o-sub|btn-more)/ },
+    { id: 'view-a-second-job', match: /^#(a-second-job|sh-|hustle|out-net|out-vs-job|out-week|week-|n-verdict|n-waterfall|n-why|kind-hint|marginal-shared)/, branch: 'career' },
+    { id: 'view-on-your-own', match: /^#(on-your-own|se-|equivalent|quarterly|compare|versus|verdict|setax|w2-|w-|c-|q-|side-|seed-host)/, branch: 'ownWork' },
+    { id: 'view-worth-learning', match: /^#(worth-learning|cd-|what|out-hours|out-payback|out-value|p-verdict|p-waterfall|p-why|h-verdict|h-why|lbl-|preset-blurb|forgone-note)/, branch: 'career' },
+    { id: 'view-a-degree', match: /^#(a-degree|dg-|answer|sum|g-num|g-sub|g-sum)/ },
+    { id: 'view-a-break', match: /^#(a-break|mr-|sides|fund|m-num|m-sub|m-buys|m-costs|add-block|block-note)/ },
+    { id: 'view-the-offer', match: /.*/, branch: 'career' }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. When the hash asks for a reading the gate has taken
+       away, fall back to the DEFAULT — the room's plainest reading, and the
+       one the person would have got with no hash at all — not to whichever
+       gated reading happens to sit first in this list. */
+    var fallback = VIEWS[VIEWS.length - 1];
+    var on = open(asked) ? asked
+           : open(fallback) ? fallback
+           : VIEWS.filter(open)[0] || fallback;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('career-move');
+  if (SLAF.Progress) SLAF.Progress.mount('career-move');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-the-offer, from rooms/career-move.html (D-251) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -164,6 +846,7 @@
 
   Room.mount({
     id: 'career-move',
+    part: true,
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'levers'],
     reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses', 'investments'],
 
@@ -283,6 +966,1031 @@
     },
 
     scope: 'This room does not weigh benefits, equity, growth, or what the job is like; and the tax on each is a flat estimate.'
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-side-by-side, from rooms/offer-compare.html (D-251) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Offers = SLAF.Offers;
+  var ROOM_ID = 'career-move';   /* the room this reading lives in */
+  var TABLES = null, SHOWN = 2, LAST = null;
+  var FIELDS = [
+    ['label', 'What to call it', 'text', 'e.g. Acme'], ['base', 'Base pay a year', 'money', 'e.g. 95,000'], ['bonus', 'Bonus, rough', 'money', 'a year'],
+    ['eqlow', 'Equity a year, low', 'money', 'rough'], ['eqhigh', 'Equity a year, high', 'money', 'rough'],
+    ['mrate', 'Match rate', 'pct', 'e.g. 50'], ['mcap', 'Match cap, % of pay', 'pct', 'e.g. 6'], ['vest', 'Vesting, years', 'num', 'e.g. 3'],
+    ['health', 'Health premium a month', 'money', 'your share'], ['deduct', 'Deductible', 'money', 'a year'],
+    ['commute', 'Commute cost a month', 'money', 'fuel, transit, parking'], ['cmin', 'Commute, minutes a day', 'num', 'both ways'],
+    ['pto', 'Days off a year', 'num', 'e.g. 15'], ['remote', 'Remote days a week', 'num', '0 to 5'], ['state', 'State', 'text', 'e.g. NC']
+  ];
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function box(i, f) {
+    var id = 'o' + i + '-' + f[0];
+    var pre = f[2] === 'money' ? '<span class="slaf-affix">$</span>' : '', post = f[2] === 'pct' ? '<span class="slaf-affix">%</span>' : '';
+    return '<label for="' + esc(id) + '">' + esc(f[1]) + '</label><span class="slaf-input-shell">' + pre + '<input type="text" ' + (f[2] === 'text' ? '' : 'inputmode="decimal" ') + 'id="' + esc(id) + '" data-offer="' + esc(i) + '" placeholder="' + esc(f[3]) + '" aria-label="Offer ' + esc(i + 1) + ': ' + esc(f[1]) + '"/>' + post + '</span>';
+  }
+  /* LIVE-FORM: built once, here, before anything renders. */
+  el('offer-grid').innerHTML = [0, 1, 2, 3].map(function (i) { return '<div class="offer" id="offer-' + esc(i) + '"' + (i >= 2 ? ' hidden' : '') + '><strong>Offer ' + esc(i + 1) + '</strong>' + FIELDS.map(function (f) { return box(i, f); }).join('') + '</div>'; }).join('');
+  function read(i) {
+    function v(k) { var t = String(el('o' + i + '-' + k).value || '').trim(); return t === '' ? null : t; }
+    function m(k) { var t = v(k); return t === null ? null : Money.parseMoney(t); }
+    function n(k) { var t = v(k); return t === null ? null : Number(t.replace(/[^0-9.]/g, '')); }
+    var mr = n('mrate'), mc = n('mcap');
+    return { label: v('label') || 'Offer ' + (i + 1), baseCents: m('base'), bonusCents: m('bonus'), equityLowCents: m('eqlow'), equityHighCents: m('eqhigh'),
+      matchRate: mr === null ? null : mr / 100, matchCapPct: mc === null ? null : mc / 100, vestingYears: n('vest'), healthMonthlyCents: m('health'), deductibleCents: m('deduct'),
+      commuteMonthlyCents: m('commute'), commuteMinutesPerDay: n('cmin'), ptoDays: n('pto'), remoteDays: n('remote'), state: (v('state') || '').toUpperCase().slice(0, 2) || null };
+  }
+  function render() {
+    if (!TABLES) return;
+    el('offer-grid').className = 'offers show-' + SHOWN; el('result-grid').className = 'results show-' + SHOWN;
+    [0, 1, 2, 3].forEach(function (i) { el('offer-' + i).hidden = i >= SHOWN; });
+    el('btn-more').hidden = SHOWN >= 4; el('btn-more').textContent = SHOWN === 2 ? 'Add a third offer' : 'Add a fourth offer';
+    var offers = []; for (var i = 0; i < SHOWN; i++) offers.push(read(i));
+    var r = Offers.compare(Spine.getProfile(), TABLES, { offers: offers });
+    LAST = Money.isOk(r) ? r : null;
+    if (!Money.isOk(r)) { el('o-num').textContent = 'Not yet.'; el('o-sub').textContent = r.reason; el('result-grid').innerHTML = ''; return; }
+    var best = r.offers[r.value], second = r.offers[r.order[1]];
+    el('o-num').textContent = best.label + ' by ' + Money.formatCents(r.gapCents) + ' a year' + (r.overlap ? ', though the equity ranges overlap' : '') + '.';
+    el('o-num').setAttribute('data-best', String(r.value));
+    el('o-sub').textContent = 'The one line that decides it: ' + r.decider.label + ', ' + Money.formatCents(r.decider.diffCents) + ' a year apart between ' + best.label + ' and ' + second.label + '. Move that line and the answer moves.';
+    el('result-grid').innerHTML = r.offers.map(function (o, i) {
+      if (!o.ok) return '<div class="result"><h3>' + esc(o.label) + '</h3><p class="slaf-hint">' + esc(o.reason) + '</p></div>';
+      var value = o.valueLowCents === o.valueHighCents ? Money.formatCents(o.valueMidCents) : Money.formatCents(o.valueLowCents) + ' to ' + Money.formatCents(o.valueHighCents);
+      var perHour = o.perHourLowCents === o.perHourHighCents ? Money.formatCents(o.perHourMidCents) : Money.formatCents(o.perHourLowCents) + ' to ' + Money.formatCents(o.perHourHighCents);
+      return '<div class="result' + (i === r.value ? ' is-best' : '') + '"><h3>' + esc(o.label) + (i === r.value ? ' · best by the middle' : '') + '</h3><div class="big">' + esc(value) + ' a year</div>'
+        + '<ul><li><span>Take-home on ' + esc(Money.formatCents(o.grossCents)) + (o.state ? ' in ' + esc(o.state) : '') + '</span><b>' + esc(Money.formatCents(o.takeHomeCents)) + '</b></li>'
+        + '<li><span>Match' + (o.matchKnown ? '' : ' (none typed)') + '</span><b>' + esc(Money.formatCents(o.matchCents)) + '</b></li>'
+        + '<li><span>Equity</span><b>' + esc(o.equityLowCents === o.equityHighCents ? Money.formatCents(o.equityLowCents) : Money.formatCents(o.equityLowCents) + ' to ' + Money.formatCents(o.equityHighCents)) + '</b></li>'
+        + '<li><span>Health premiums' + (o.deductibleCents !== null ? ' (deductible ' + esc(Money.formatCents(o.deductibleCents)) + ', not charged)' : '') + '</span><b>- ' + esc(Money.formatCents(o.healthCents)) + '</b></li>'
+        + '<li><span>Commute</span><b>- ' + esc(Money.formatCents(o.commuteCents)) + '</b></li>'
+        + '<li><span>Per real hour, ' + o.hoursAYear + ' hours' + (o.commuteHoursAYear ? ' (' + o.commuteHoursAYear + ' of them commuting)' : '') + '</span><b>' + esc(perHour) + '</b></li>'
+        + '<li><span>FI</span><b>' + (o.fiYears === null ? esc(o.fiReason || 'not known') : 'about ' + o.fiYears + ' years') + '</b></li></ul>'
+        + '<p style="margin:var(--space-2) 0 0"><button type="button" class="slaf-btn slaf-btn--quiet" data-accept="' + i + '">Accept this offer</button></p></div>';
+    }).join('');
+  }
+  el('offer-grid').addEventListener('input', render);
+  el('btn-more').addEventListener('click', function () { SHOWN = Math.min(4, SHOWN + 1); render(); });
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-accept]'); if (!b || !LAST) return;
+    var i = Number(b.getAttribute('data-accept')), o = read(i), p = LAST.offers[i];
+    if (!p.ok) return;
+    var h = Spine.getProfile(), person = Schema.adults(h)[0];
+    if (!person) { el('accept-note').textContent = 'Add yourself in Start Here first.'; return; }
+    Spine.batch('Accepted ' + o.label, function () {
+      var src = (person.incomeSources || [])[0] || Schema.createIncomeSource({ personId: person.id, source: o.label, type: 'w2' });
+      Spine.upsertIncomeSource(person.id, Object.assign({}, src, { source: o.label, grossAnnualIncomeCents: p.grossCents, type: 'w2',
+        employerMatch: Money.isEntered(o.matchRate) && Money.isEntered(o.matchCapPct) ? { matchPercent: o.matchRate, matchCapPercentOfSalary: o.matchCapPct } : (src.employerMatch || {}) }));
+      if (o.state) Spine.set('state', o.state);
+      Spine.setReopen({ field: 'grossAnnualIncome', from: 'offer-compare', label: 'Accepted ' + o.label, at: Date.now() });
+    });
+    el('accept-note').textContent = 'Accepted ' + o.label + ': your pay' + (o.state ? ' and state' : '') + ' now read from it, and the next page you open will ask what else the change touches.';
+  });
+  Spine.onChange(render);
+  Reference.load(['effectiveTaxRates', 'federalBrackets', 'stateBrackets', 'fireVariants', 'returnBands']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-a-second-job, from rooms/side-hustle.html (D-251) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      Tier0 = SLAF.Tier0, SideHustle = SLAF.SideHustle;
+
+  var ROOM_ID = 'career-move';   /* the room this reading lives in */
+  var MONTHS = 12;
+  var TABLES = null;
+
+  /* Local. A hustle you are weighing up is not a fact about your household. */
+  var v = { revenue: null, expenses: null, hours: null, marginal: null, kind: '1099' };
+
+  function el(id) { return document.getElementById(id); }
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+  function hrs(n) {
+    var r = Math.round(n * 10) / 10;
+    return r + (r === 1 ? ' hour' : ' hours');
+  }
+
+  function bind(id, kind, key) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      var raw = v[key];
+      node.value = !Money.isEntered(raw) ? ''
+        : kind === 'money' ? String(raw / 100)
+        : kind === 'rate' ? String(Math.round(raw * 10000) / 100)
+        : String(raw);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      v[key] = raw === '' ? null
+        : kind === 'money' ? Money.parseMoney(raw)
+        : kind === 'rate' ? Money.parseRatePercent(raw)
+        : (Number.isFinite(Number(raw)) ? Number(raw) : null);
+      node.value = !Money.isEntered(v[key]) ? ''
+        : kind === 'money' ? Money.formatCents(v[key])
+        : kind === 'rate' ? Money.formatRate(v[key], { decimals: 2 }).replace(/\.?0+%$/, '%')
+        : String(v[key]);
+      render();
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  }
+  bind('in-revenue', 'money', 'revenue');
+  bind('in-expenses', 'money', 'expenses');
+  bind('in-hours', 'number', 'hours');
+  bind('in-marginal', 'rate', 'marginal');
+
+  Array.prototype.forEach.call(document.querySelectorAll('.kind button'), function (b) {
+    b.addEventListener('click', function () {
+      v.kind = b.getAttribute('data-kind');
+      render();
+    });
+  });
+
+  function opts() {
+    return {
+      annualRevenueCents: Money.isEntered(v.revenue) ? v.revenue * MONTHS : null,
+      annualExpensesCents: Money.isEntered(v.expenses) ? v.expenses * MONTHS : null,
+      annualHours: Money.isEntered(v.hours) ? v.hours * MONTHS : null,
+      marginalRate: v.marginal,
+      selfEmployment: v.kind === '1099'
+    };
+  }
+
+  function renderInputs(h) {
+    Array.prototype.forEach.call(document.querySelectorAll('.kind button'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-kind') === v.kind));
+    });
+    el('kind-hint').textContent = v.kind === '1099'
+      ? 'You pay both halves of Social Security and Medicare on this — the 15.3% '
+        + 'that an employer would otherwise split with you.'
+      : 'A second W2 job withholds payroll tax the ordinary way, so only income '
+        + 'tax is applied here.';
+
+    /* The effective rate the app already knows is the WRONG number for this,
+       so it is shown as a floor with the reason, not offered as a default. */
+    var tax = Tier0.estimatedAnnualTaxCents(h, TABLES);
+    el('marginal-note').innerHTML = Money.isOk(tax)
+      ? '<strong>Marginal, not effective.</strong> The first dollar of side income is '
+        + 'taxed at the rate on your <em>last</em> dollar of salary. Your estimated '
+        + 'effective rate is ' + Money.formatRate(tax.effectiveRate, { decimals: 1 })
+        + ' — your marginal rate is higher than that, and adding your state rate is '
+        + 'usually right too.'
+      : '<strong>Marginal, not effective.</strong> The first dollar of side income is '
+        + 'taxed at the rate on your <em>last</em> dollar of salary — your top bracket, '
+        + 'plus your state rate if you have one. Not your average rate.';
+  }
+
+  function renderNet() {
+    var r = SideHustle.sideHustle(Object.assign({}, opts(), {
+      filingStatus: Spine.getProfile().filingStatus,
+      priorWagesCents: (function () {
+        var g = Schema.grossAnnualIncomeCents(Spine.getProfile());
+        return Money.isOk(g) ? g.value : null;
+      })()
+    }), TABLES);
+
+    var verdict = el('n-verdict');
+    if (!Money.isOk(r)) {
+      verdict.className = 'verdict is-incomplete';
+      verdict.textContent = r.reason || Money.EM_DASH;
+      el('n-why').textContent = '';
+      el('n-waterfall').innerHTML = '';
+      return r;
+    }
+    verdict.className = 'verdict';
+    verdict.textContent = !r.atALoss ? Money.formatCents(r.value) + ' an hour, kept'
+      : r.profitCents === 0 ? 'It breaks even'
+      : Money.formatCents(-r.value) + ' an hour, out of pocket';
+
+    if (r.atALoss) {
+      el('n-why').textContent = r.reasonNoTax;
+      el('n-waterfall').innerHTML = dl([
+        ['Brings in', Money.formatCents(Math.round(r.annualRevenueCents / MONTHS))],
+        ['Costs', '−' + Money.formatCents(Math.round(r.annualExpensesCents / MONTHS))],
+        ['Leaves', Money.formatCents(Math.round(r.profitCents / MONTHS))]
+      ]);
+      return r;
+    }
+
+    el('n-why').textContent = 'You keep '
+      + Money.formatRate(r.keptShare, { decimals: 0 }) + ' of what comes in. '
+      + 'Tax takes ' + Money.formatRate(r.taxShareOfProfit, { decimals: 0 })
+      + ' of the profit'
+      + (r.selfEmployment
+        ? ', and most of the surprise is the self-employment half rather than income tax.'
+        : '.');
+
+    function row(label, cents, cls) {
+      return '<div class="wf-row ' + (cls || '') + '"><span>' + label + '</span>'
+        + '<span class="v">' + (cls === 'out' ? '−' : '') + Money.formatCents(Math.abs(cents)) + '</span></div>';
+    }
+    var monthly = function (c) { return Math.round(c / MONTHS); };
+    el('n-waterfall').innerHTML =
+      row('Brings in', monthly(r.annualRevenueCents))
+      + row('Running costs', monthly(r.annualExpensesCents), 'out')
+      + row('Profit', monthly(r.profitCents), 'total')
+      + (r.selfEmployment ? row('Self-employment tax', monthly(r.seTaxCents), 'out') : '')
+      + row('Income tax at ' + Money.formatRate(r.marginalRate, { decimals: 0 }),
+          monthly(r.incomeTaxCents), 'out')
+      + row('Yours', monthly(r.netCents), 'total')
+      + '<div class="wf-bar"><span style="width:'
+      + (r.annualRevenueCents === 0 ? 0 : Math.max(0, r.netCents / r.annualRevenueCents) * 100)
+      + '%"></span></div>';
+    return r;
+  }
+
+  function renderVsJob(h) {
+    var res = SideHustle.versusJob(h, TABLES, opts());
+    var verdict = el('v-verdict');
+    if (!Money.isOk(res)) {
+      verdict.className = 'verdict is-incomplete';
+      verdict.textContent = res.reason || Money.EM_DASH;
+      el('v-why').innerHTML = (res.missing || []).length
+        ? '<a href="' + Ownership.linkTo('income', 'rhw-inputs') + '">Fill in Real Hourly Wage →</a>'
+        : '';
+      el('v-detail').innerHTML = '';
+      el('week-body').hidden = true;
+      el('week-why').textContent = 'This needs the Real Hourly Wage room filled in.';
+      return;
+    }
+    verdict.className = 'verdict';
+    verdict.textContent = res.beatsJob
+      ? Money.formatCents(res.value) + ' an hour better than the day job'
+      : Money.formatCents(-res.value) + ' an hour worse than the day job';
+
+    el('v-why').textContent = res.beatsJob
+      ? 'Compared against what an hour of your life already earns — after tax, work '
+        + 'costs and the unpaid hours the job takes. The hustle clears it.'
+      : 'Compared against what an hour of your life already earns. That is not the '
+        + 'whole story — a side hustle can build something a salary never will — but '
+        + 'on the money alone, these hours pay less than the ones you already work.';
+
+    el('v-detail').innerHTML = dl([
+      ['The hustle, kept', Money.formatCents(res.hustle.value) + '/hr'],
+      ['Before tax and costs', Money.formatCents(res.hustle.grossPerHourCents) + '/hr'],
+      ['An hour of your life', Money.formatCents(res.realHourlyCents) + '/hr']
+    ]);
+
+    renderWeek(res);
+  }
+
+  function renderWeek(res) {
+    var job = res.jobWeeklyHours, side = res.addedWeeklyHours;
+    if (!Money.isEntered(job) || !Money.isEntered(side)) {
+      el('week-body').hidden = true;
+      el('week-why').textContent = '';
+      return;
+    }
+    el('week-body').hidden = false;
+    var week = 168;
+    var rest = Math.max(0, week - job - side);
+    el('week-bar').innerHTML =
+      '<span class="seg-job" style="width:' + (job / week * 100) + '%"></span>'
+      + '<span class="seg-side" style="width:' + (side / week * 100) + '%"></span>'
+      + '<span class="seg-rest" style="width:' + (rest / week * 100) + '%"></span>';
+
+    el('week-detail').innerHTML = dl([
+      ['The job, all in', hrs(job) + ' a week'],
+      ['The hustle', hrs(side) + ' a week'],
+      ['Together', hrs(res.combinedWeeklyHours) + ' a week'],
+      ['Left for everything else', hrs(rest) + ' a week']
+    ]);
+
+    el('week-why').textContent = 'The job figure already counts commute, prep and '
+      + 'decompression, so this is the whole of it. The hustle hours are on top of '
+      + 'that, not inside it.';
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderInputs(h);
+    renderNet();
+    renderVsJob(h);
+    el('sh-reading-list').innerHTML = ['grossAnnualIncome', 'filingStatus']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  var queued = false;
+  function render() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () { queued = false; renderNow(); }, 0);
+  }
+
+
+  /* The marginal rate is a FACT about you, and it was being asked for here
+     and in the other room and kept by neither. It is stored once now
+     (Where It Goes owns it); this room prefills from it and writes back, so
+     answering it in either place answers it in both. D-052. */
+
+  /* With no stored rate, the federal bracket is PROPOSED — muted, dashed,
+     "Use this" — from data/federal_brackets_2026.json: gross minus the
+     standard deduction, walked up the ladder. Federal only, an estimate,
+     and unverified until that table is checked against the IRS text; the
+     source line says all three. Tapping it writes the shared rate exactly
+     as typing it would. D-062. */
+  function suggestBracket(node) {
+    if (!node || !TABLES || !TABLES.federalBrackets) return;
+    var h = Spine.getProfile();
+    var gross = Schema.grossAnnualIncomeCents(h);
+    if (!Money.isOk(gross)) return;
+    var b = Reference.marginalBracket(TABLES.federalBrackets, gross.value / 100, h.filingStatus);
+    if (!Money.isOk(b)) return;
+    SLAF.Suggest.show(node, {
+      value: b.value,
+      display: String(Math.round(b.value * 1000) / 10),
+      source: 'the ' + TABLES.federalBrackets.taxYear + ' federal bracket for '
+        + Money.formatCents(gross.value) + ' gross, ' + (Ownership.FILING_LABELS[h.filingStatus] || h.filingStatus).toLowerCase()
+        + ' \u2014 federal only, an estimate (' + TABLES.federalBrackets.confidence + ')',
+      onUse: function (rate) { Spine.setAssumptionOverride('marginalRate', rate); }
+    });
+  }
+
+  function syncMarginal() {
+    var node = document.getElementById('in-marginal');
+    var note = document.getElementById('marginal-shared');
+    if (!node) return;
+    var stored = Schema.resolveAssumptions(Spine.getProfile()).marginalRate;
+    /* Seed the room's own STATE, not just the box. This room repaints its
+       inputs from `v` on every render, so writing only to the DOM would be
+       erased by the next paint — which is exactly what happened first. */
+    if (!Money.isEntered(v.marginal) && Money.isEntered(stored)) {
+      v.marginal = stored;
+      if (node !== document.activeElement) {
+        SLAF.Suggest.clear(node);
+        node.value = String(Math.round(stored * 1000) / 10);
+      }
+      render();
+    }
+    if (!Money.isEntered(stored) && !Money.isEntered(v.marginal)) suggestBracket(node);
+    if (note) {
+      note.innerHTML = Money.isEntered(stored)
+        ? 'Your saved rate, from <a href="' + Ownership.linkTo('statement', 'setup')
+          + '">Where It Goes</a>. Changing it here changes it there too.'
+        : 'Answered once and shared: whatever you type here is remembered for '
+          + 'every other room that needs it.';
+    }
+  }
+
+  (function () {
+    var node = document.getElementById('in-marginal');
+    if (!node) return;
+    node.addEventListener('blur', function () {
+      var rate = Money.parseRatePercent(SLAF.Suggest.entered(node));
+      var stored = Schema.resolveAssumptions(Spine.getProfile()).marginalRate;
+      if (rate !== stored) Spine.setAssumptionOverride('marginalRate', rate);
+      syncMarginal();
+    });
+    Spine.onChange(syncMarginal);
+    syncMarginal();
+  })();
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    syncMarginal();
+    renderNow();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-on-your-own, from rooms/self-employed.html (D-251) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
+      Reference = SLAF.Reference, SE = SLAF.SelfEmployed, Schema = SLAF.Schema;
+
+  var ROOM_ID = 'career-move';   /* the room this reading lives in */
+  var TABLES = null;
+  var v = {};
+
+  function el(id) { return document.getElementById(id); }
+
+  function bind(id) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      node.value = Money.isEntered(v[id]) ? String(v[id] / 100) : '';
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      v[id] = node.value.trim() === '' ? null : Money.parseMoney(node.value);
+      node.value = Money.isEntered(v[id]) ? Money.formatCents(v[id]) : '';
+      render();
+    });
+    node.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); node.blur(); }
+    });
+  }
+  ['w-salary', 'w-benefits', 'c-income', 'c-expenses',
+   'q-profit', 'q-withheld', 'q-prior', 'q-prior-agi'].forEach(bind);
+
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt' + (r[2] ? ' class="step"' : '') + '>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+  function lines(rows) {
+    return rows.map(function (r) {
+      return '<li><span>' + r[0] + '</span><span>' + r[1] + '</span></li>';
+    }).join('');
+  }
+
+  function renderCompare(h) {
+    var r = SE.compareW2vs1099(h, TABLES, {
+      w2SalaryCents: v['w-salary'], w2BenefitsValueCents: v['w-benefits'],
+      contractIncomeCents: v['c-income'], businessExpensesCents: v['c-expenses']
+    });
+    var verdict = el('verdict');
+    if (!Money.isOk(r)) {
+      verdict.textContent = r.reason || Money.EM_DASH;
+      verdict.className = 'headline is-incomplete';
+      el('versus').hidden = true;
+      el('equivalent').hidden = true;
+      return;
+    }
+    verdict.className = 'headline';
+    verdict.textContent = r.contractIsBetter
+      ? 'Contract wins by ' + Money.formatCents(Math.abs(r.differenceCents)) + '/yr'
+      : 'Salary wins by ' + Money.formatCents(Math.abs(r.differenceCents)) + '/yr';
+
+    el('versus').hidden = false;
+    el('side-w2').className = r.contractIsBetter ? '' : 'winner';
+    el('side-c').className = r.contractIsBetter ? 'winner' : '';
+    el('w2-net').textContent = Money.formatCents(r.w2.netCents);
+    el('c-net').textContent = Money.formatCents(r.contract.netCents);
+    el('w2-lines').innerHTML = lines([
+      ['Gross', Money.formatCents(r.w2.grossCents)],
+      ['FICA', '−' + Money.formatCents(r.w2.ficaCents)],
+      ['Income tax', '−' + Money.formatCents(r.w2.incomeTaxCents)],
+      ['Benefits', '+' + Money.formatCents(r.w2.benefitsCents)]
+    ]);
+    el('c-lines').innerHTML = lines([
+      ['Gross', Money.formatCents(r.contract.grossCents)],
+      ['Expenses', '−' + Money.formatCents(r.contract.businessExpensesCents)],
+      ['SE tax', '−' + Money.formatCents(r.contract.seTaxCents)],
+      ['Income tax', '−' + Money.formatCents(r.contract.incomeTaxCents)]
+    ]);
+
+    if (Money.isEntered(r.equivalentContractCents)) {
+      el('equivalent').hidden = false;
+      el('equivalent').innerHTML = '<strong>To match that salary you’d need to bill about '
+        + Money.formatCents(r.equivalentContractCents) + '.</strong> '
+        + (r.extraNeededCents > 0
+            ? 'That is ' + Money.formatCents(r.extraNeededCents) + ' more than the salary — the gap is the employer’s half of FICA, the benefits, and the tax you now pay yourself.'
+            : 'You are already above it.');
+    } else {
+      el('equivalent').hidden = true;
+    }
+
+    renderSeWorking(r.contract.se);
+  }
+
+  function renderSeWorking(se) {
+    if (!se || !Money.isOk(se)) {
+      el('se-working').innerHTML = '<p class="slaf-reason">Enter a contract income above.</p>';
+      return;
+    }
+    var rows = [
+      ['Net profit', Money.formatCents(se.netProfitCents)],
+      ['× 92.35% = net earnings', Money.formatCents(se.netEarningsCents), true],
+      ['Social Security at 12.4%', Money.formatCents(se.socialSecurityCents), true],
+      ['Medicare at 2.9%', Money.formatCents(se.medicareCents), true]
+    ];
+    if (se.additionalMedicareCents > 0) {
+      rows.push(['Additional Medicare at 0.9%', Money.formatCents(se.additionalMedicareCents), true]);
+    }
+    rows.push(['Self-employment tax', Money.formatCents(se.value)]);
+    rows.push(['Half of it, deductible', '−' + Money.formatCents(se.deductibleHalfCents), true]);
+    el('se-working').innerHTML = dl(rows)
+      + '<p class="slaf-reason">That works out to '
+      + Money.formatRate(se.effectiveRateOnProfit, { decimals: 2 })
+      + ' of your profit — not 15.3%, because only 92.35% of it is taxed.'
+      + (se.socialSecurityCappedAt
+          ? ' Social Security stopped at the ' + Money.formatCents(se.socialSecurityCappedAt) + ' wage base.'
+          : '')
+      + '</p>';
+  }
+
+  function renderQuarterly(h) {
+    var r = SE.quarterlyEstimated(h, TABLES, {
+      expectedNetProfitCents: v['q-profit'],
+      taxAlreadyWithheldCents: v['q-withheld'],
+      priorYearLiabilityCents: v['q-prior'],
+      priorYearAgiCents: v['q-prior-agi']
+    });
+    var amount = el('q-amount');
+    if (!Money.isOk(r)) {
+      amount.textContent = r.reason || Money.EM_DASH;
+      amount.className = 'headline is-incomplete';
+      el('q-schedule').hidden = true;
+      el('q-working').innerHTML = '';
+      el('q-harbor').hidden = true;
+      return;
+    }
+    amount.className = 'headline';
+    amount.textContent = Money.formatCents(r.perQuarterCents) + ' a quarter';
+
+    el('q-schedule').hidden = false;
+    el('q-schedule').innerHTML = r.dueDates.map(function (d) {
+      return '<div class="quarter"><span class="when">' + d + '</span>'
+        + '<span class="amt">' + Money.formatCents(r.perQuarterCents) + '</span></div>';
+    }).join('');
+
+    var rows = [
+      ['SE tax on the profit', Money.formatCents(r.seTaxCents)],
+      ['Income tax on it', Money.formatCents(r.incomeTaxCents)],
+      ['This year’s bill', Money.formatCents(r.thisYearLiabilityCents)],
+      ['90% of it', Money.formatCents(r.currentYearTargetCents), true]
+    ];
+    if (Money.isEntered(r.priorYearTargetCents)) {
+      rows.push([Money.formatRate(r.priorYearShare, { decimals: 0 }) + ' of last year’s',
+        Money.formatCents(r.priorYearTargetCents), true]);
+    }
+    rows.push(['You must cover', Money.formatCents(r.requiredAnnualCents)]);
+    if (r.withheldElsewhereCents > 0) {
+      rows.push(['Already withheld', '−' + Money.formatCents(r.withheldElsewhereCents), true]);
+    }
+    el('q-working').innerHTML = dl(rows);
+
+    el('q-harbor').hidden = false;
+    el('q-harbor').innerHTML = r.basedOn === 'prior-year safe harbour'
+      ? '<strong>The safe harbour is doing the work here.</strong> Paying '
+        + Money.formatRate(r.priorYearShare, { decimals: 0 })
+        + ' of last year’s bill avoids a penalty even if you end up owing far more — and last year’s bill is a number you already know.'
+        + (r.priorYearIsHighIncome ? ' Last year’s income was above the threshold, so the share is 110% rather than 100%.' : '')
+      : Money.isEntered(r.priorYearTargetCents)
+        ? '<strong>Your current-year estimate is the lower target.</strong> Last year’s bill was big enough that 90% of this year is the cheaper way to stay safe.'
+        : '<strong>Add last year’s tax bill above.</strong> If it was small, the safe harbour lets you pay far less this year without a penalty — most calculators skip this.';
+  }
+
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    el('se-reading-list').innerHTML = ['filingStatus', 'grossAnnualIncome']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+    renderCompare(h);
+    renderQuarterly(h);
+  }
+
+  /* The salary to compare against is what you already told Start Here
+     you earn — proposed, not taken. It used to be written straight into
+     the box; now it is a suggestion until tapped. D-062. */
+  var seed = SLAF.Seed.mount({
+    roomId: ROOM_ID, host: el('seed-host'),
+    seeds: function () {
+      var gross = Schema.grossAnnualIncomeCents(Spine.getProfile());
+      return [{ node: el('w-salary'),
+        value: Money.isOk(gross) ? gross.value : null, display: Money.isOk(gross) ? Money.formatCents(gross.value) : '',
+        source: 'your gross income, from Start Here',
+        apply: function (c) { v['w-salary'] = c; el('w-salary').value = Money.formatCents(c); render(); } }];
+    }
+  });
+  Spine.onChange(function () { seed.refresh(); render(); });
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    seed.refresh();
+    render();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-worth-learning, from rooms/credential.html (D-251) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
+      Reference = SLAF.Reference, Ownership = SLAF.Ownership,
+      Hourly = SLAF.Hourly, Credential = SLAF.Credential;
+
+  var ROOM_ID = 'career-move';   /* the room this reading lives in */
+  var MONTHS = 12;
+  var TABLES = null;
+
+  /* Local. A course you are weighing is not household data. */
+  var v = { preset: 'career', cost: null, delta: null, months: null,
+            forgone: null, years: null, marginal: null, discount: 0.03 };
+
+  function el(id) { return document.getElementById(id); }
+  function dl(rows) {
+    return '<dl>' + rows.map(function (r) {
+      return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>';
+    }).join('') + '</dl>';
+  }
+  function years(n) {
+    var r = Math.round(n * 10) / 10;
+    return r + (r === 1 ? ' year' : ' years');
+  }
+
+  function bind(id, kind, key) {
+    var node = el(id);
+    node.addEventListener('focus', function () {
+      var raw = v[key];
+      node.value = !Money.isEntered(raw) ? ''
+        : kind === 'money' ? String(raw / 100)
+        : kind === 'rate' ? String(Math.round(raw * 10000) / 100)
+        : String(raw);
+      node.select();
+    });
+    node.addEventListener('blur', function () {
+      var raw = node.value.trim();
+      v[key] = raw === '' ? null
+        : kind === 'money' ? Money.parseMoney(raw)
+        : kind === 'rate' ? Money.parseRatePercent(raw)
+        : (Number.isFinite(Number(raw)) ? Number(raw) : null);
+      node.value = !Money.isEntered(v[key]) ? ''
+        : kind === 'money' ? Money.formatCents(v[key])
+        : kind === 'rate' ? Money.formatRate(v[key], { decimals: 2 }).replace(/\.?0+%$/, '%')
+        : String(v[key]);
+      render();
+    });
+    node.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); node.blur(); }
+    });
+  }
+  bind('in-cost', 'money', 'cost');
+  bind('in-delta', 'money', 'delta');
+  bind('in-months', 'number', 'months');
+  bind('in-forgone', 'money', 'forgone');
+  bind('in-years', 'number', 'years');
+  bind('cd-in-marginal', 'rate', 'marginal');
+  bind('in-discount', 'rate', 'discount');
+
+  Array.prototype.forEach.call(document.querySelectorAll('.preset button'), function (b) {
+    b.addEventListener('click', function () {
+      v.preset = b.getAttribute('data-preset');
+      /* Switching pathway sets the horizon default, since 25 years of a
+         degree and 5 years of a course are the whole difference between
+         them. Anything already typed is left alone. */
+      if (!Money.isEntered(v.years)) v.years = Credential.PRESETS[v.preset].defaultYears;
+      render();
+    });
+  });
+
+  function opts() {
+    return {
+      costCents: v.cost, annualDeltaCents: v.delta,
+      monthsOut: v.months, forgoneMonthlyCents: v.forgone,
+      yearsOfBenefit: v.years, marginalRate: v.marginal,
+      discountRate: v.discount
+    };
+  }
+
+  function renderInputs(h) {
+    var p = Credential.PRESETS[v.preset];
+    Array.prototype.forEach.call(document.querySelectorAll('.preset button'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-preset') === v.preset));
+    });
+    el('preset-blurb').textContent = p.blurb;
+    el('lbl-cost').textContent = p.costLabel;
+    el('lbl-delta').textContent = p.deltaLabel;
+    el('lbl-months').textContent = p.timeLabel;
+    el('lbl-years').textContent = p.yearsLabel;
+
+    ['cost', 'delta', 'months', 'forgone', 'years', 'marginal', 'discount'].forEach(function (k) {
+      var node = el('in-' + k);
+      if (document.activeElement === node) return;
+      var raw = v[k];
+      node.value = !Money.isEntered(raw) ? ''
+        : (k === 'cost' || k === 'delta' || k === 'forgone') ? Money.formatCents(raw)
+        : (k === 'marginal' || k === 'discount')
+          ? Money.formatRate(raw, { decimals: 2 }).replace(/\.?0+%$/, '%')
+          : String(raw);
+    });
+
+    /* What a month out is worth, if the household knows. Offered as a
+       prompt, never filled in silently — it is this room's own input. */
+    var gross = Schema.grossAnnualIncomeCents(h);
+    el('forgone-note').innerHTML = Money.isOk(gross)
+      ? '<strong>Time is usually the bigger half.</strong> A month of your gross pay is '
+        + Money.formatCents(Math.round(gross.value / MONTHS))
+        + ' — if you would be out and not earning, that is what a month costs. '
+        + 'Enter 0 if you keep working throughout.'
+      : '<strong>Time is usually the bigger half.</strong> If you would stop earning while '
+        + 'you do this, what a month of that costs belongs in the price. Enter 0 if you '
+        + 'keep working throughout.';
+  }
+
+  function renderPayback(r) {
+    var verdict = el('p-verdict');
+    if (!Money.isOk(r)) {
+      verdict.className = 'verdict is-incomplete';
+      verdict.textContent = r.reason || Money.EM_DASH;
+      el('p-why').textContent = '';
+      el('p-waterfall').innerHTML = '';
+      return;
+    }
+    verdict.className = 'verdict';
+    verdict.textContent = r.neverPaysBack ? 'It never pays back'
+      : r.value < MONTHS ? Math.round(r.value) + ' months'
+      : years(r.value / MONTHS);
+
+    el('p-why').textContent = r.neverPaysBack
+      ? 'The raise is zero or negative, so there is nothing to pay the cost back with.'
+      : r.paybackBeyondHorizon
+        ? 'That is longer than the ' + years(r.yearsOfBenefit) + ' you said it pays over — '
+          + 'on these numbers it does not finish paying for itself.'
+        : 'At ' + Money.formatCents(Math.round(r.netAnnualDeltaCents / MONTHS))
+          + ' a month after tax, against a total price of ' + Money.formatCents(r.totalCostCents) + '.';
+
+    function row(label, cents, cls) {
+      return '<div class="wf-row ' + (cls || '') + '"><span>' + label + '</span>'
+        + '<span class="v">' + (cls === 'out' ? '−' : '') + Money.formatCents(Math.abs(cents)) + '</span></div>';
+    }
+    el('p-waterfall').innerHTML =
+      row('The fee', r.costCents, 'out')
+      + (r.monthsOut > 0
+        ? row(r.monthsOut + ' month' + (r.monthsOut === 1 ? '' : 's') + ' not earning', r.forgoneCents, 'out')
+        : '')
+      + row('The whole price', r.totalCostCents, 'total')
+      + row('The raise, before tax', r.annualDeltaCents, 'gain')
+      + row('Tax at ' + Money.formatRate(r.marginalRate, { decimals: 0 }), r.taxOnDeltaCents, 'out')
+      + row('What the raise is really worth, a year', r.netAnnualDeltaCents, 'total');
+  }
+
+  function renderValue(r) {
+    var verdict = el('cd-v-verdict');
+    var note = el('v-breakeven');
+    if (!Money.isOk(r)) {
+      verdict.className = 'verdict is-incomplete';
+      verdict.textContent = r.reason || Money.EM_DASH;
+      el('cd-v-why').textContent = '';
+      el('cd-v-detail').innerHTML = '';
+      note.hidden = true;
+      return;
+    }
+    verdict.className = 'verdict';
+    verdict.textContent = r.worthIt
+      ? Money.formatCents(r.netPresentValueCents) + ' ahead'
+      : Money.formatCents(-r.netPresentValueCents) + ' behind';
+
+    el('cd-v-why').textContent = r.worthIt
+      ? 'Every year of the raise, discounted back to today at '
+        + Money.formatRate(r.discountRate, { decimals: 0 })
+        + ', comes to more than the whole price.'
+      : 'Discounted back to today, the raise does not cover what this costs.';
+
+    el('cd-v-detail').innerHTML = dl([
+      ['The whole price', Money.formatCents(r.totalCostCents)],
+      ['The raise over ' + years(r.yearsOfBenefit) + ', after tax',
+        Money.formatCents(r.netAnnualDeltaCents * r.yearsOfBenefit)],
+      ['Worth today, discounted', Money.formatCents(r.presentValueCents)],
+      ['Return on the price', r.returnMultiple === null ? Money.EM_DASH
+        : Money.formatMultiple(r.returnMultiple)]
+    ]);
+
+    note.hidden = r.worthIt || r.breakEvenAnnualDeltaCents === null;
+    if (!note.hidden) {
+      note.className = 'flag flag--warn';
+      note.innerHTML = '<strong>It would break even at a '
+        + Money.formatCents(r.breakEvenAnnualDeltaCents) + ' raise.</strong> '
+        + 'That is the number to test against the market before deciding — not '
+        + 'whether the raise is nice, but whether it is that big.';
+    }
+  }
+
+  function renderHours(h, r) {
+    var verdict = el('h-verdict');
+    var wage = Hourly.realHourlyWage(h, TABLES);
+    if (!Money.isOk(r) || !Money.isOk(wage)) {
+      verdict.className = 'verdict is-incomplete';
+      verdict.textContent = !Money.isOk(r) ? (r.reason || Money.EM_DASH)
+        : 'Fill in Real Hourly Wage to price this in hours.';
+      el('h-why').innerHTML = Money.isOk(r) && !Money.isOk(wage)
+        ? '<a href="' + Ownership.linkTo('income', 'rhw-inputs') + '">Real Hourly Wage →</a>'
+        : '';
+      return;
+    }
+    var hours = Credential.costInHours(r, wage.value);
+    verdict.className = 'verdict';
+    verdict.textContent = Money.isOk(hours)
+      ? Math.round(hours.value).toLocaleString('en-US') + ' hours'
+      : (hours.reason || Money.EM_DASH);
+    el('h-why').textContent = Money.isOk(hours)
+      ? 'At ' + Money.formatCents(wage.value) + ' an hour — what an hour of your life actually '
+        + 'earns after tax, work costs and the unpaid hours the job already takes. That is '
+        + (Math.round(hours.value / (wage.totalHoursPerWeek || 40) * 10) / 10)
+        + ' weeks of your current working life.'
+      : '';
+  }
+
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderInputs(h);
+    var r = Credential.credentialROI(opts());
+    renderPayback(r);
+    renderValue(r);
+    renderHours(h, r);
+    el('cd-reading-list').innerHTML = ['grossAnnualIncome']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+
+  /* The marginal rate is a FACT about you, and it was being asked for here
+     and in the other room and kept by neither. It is stored once now
+     (Where It Goes owns it); this room prefills from it and writes back, so
+     answering it in either place answers it in both. D-052. */
+
+  /* With no stored rate, the federal bracket is PROPOSED — muted, dashed,
+     "Use this" — from data/federal_brackets_2026.json: gross minus the
+     standard deduction, walked up the ladder. Federal only, an estimate,
+     and unverified until that table is checked against the IRS text; the
+     source line says all three. Tapping it writes the shared rate exactly
+     as typing it would. D-062. */
+  function suggestBracket(node) {
+    if (!node || !TABLES || !TABLES.federalBrackets) return;
+    var h = Spine.getProfile();
+    var gross = Schema.grossAnnualIncomeCents(h);
+    if (!Money.isOk(gross)) return;
+    var b = Reference.marginalBracket(TABLES.federalBrackets, gross.value / 100, h.filingStatus);
+    if (!Money.isOk(b)) return;
+    SLAF.Suggest.show(node, {
+      value: b.value,
+      display: String(Math.round(b.value * 1000) / 10),
+      source: 'the ' + TABLES.federalBrackets.taxYear + ' federal bracket for '
+        + Money.formatCents(gross.value) + ' gross, ' + (Ownership.FILING_LABELS[h.filingStatus] || h.filingStatus).toLowerCase()
+        + ' \u2014 federal only, an estimate (' + TABLES.federalBrackets.confidence + ')',
+      onUse: function (rate) { Spine.setAssumptionOverride('marginalRate', rate); }
+    });
+  }
+
+  function syncMarginal() {
+    var node = document.getElementById('cd-in-marginal');
+    var note = document.getElementById('cd-marginal-note');
+    if (!node) return;
+    var stored = Schema.resolveAssumptions(Spine.getProfile()).marginalRate;
+    /* Seed the room's own STATE, not just the box. This room repaints its
+       inputs from `v` on every render, so writing only to the DOM would be
+       erased by the next paint — which is exactly what happened first. */
+    if (!Money.isEntered(v.marginal) && Money.isEntered(stored)) {
+      v.marginal = stored;
+      if (node !== document.activeElement) {
+        SLAF.Suggest.clear(node);
+        node.value = String(Math.round(stored * 1000) / 10);
+      }
+      render();
+    }
+    if (!Money.isEntered(stored) && !Money.isEntered(v.marginal)) suggestBracket(node);
+    if (note) {
+      note.innerHTML = Money.isEntered(stored)
+        ? 'Your saved rate, from <a href="' + Ownership.linkTo('statement', 'setup')
+          + '">Where It Goes</a>. Changing it here changes it there too.'
+        : 'Answered once and shared: whatever you type here is remembered for '
+          + 'every other room that needs it.';
+    }
+  }
+
+  (function () {
+    var node = document.getElementById('cd-in-marginal');
+    if (!node) return;
+    node.addEventListener('blur', function () {
+      var rate = Money.parseRatePercent(SLAF.Suggest.entered(node));
+      var stored = Schema.resolveAssumptions(Spine.getProfile()).marginalRate;
+      if (rate !== stored) Spine.setAssumptionOverride('marginalRate', rate);
+      syncMarginal();
+    });
+    Spine.onChange(syncMarginal);
+    syncMarginal();
+  })();
+  Spine.onChange(render);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    syncMarginal();
+    v.years = Credential.PRESETS[v.preset].defaultYears;
+    render();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false;
+    notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-a-degree, from rooms/degree.html (D-251) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Degree = SLAF.Degree;
+  var ROOM_ID = 'career-move';   /* the room this reading lives in */
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
+  function num(id) { var t = String(el(id).value || '').replace(/[^0-9.]/g, ''); return t === '' ? null : Number(t); }
+  function li(label, value) { return '<li><span>' + esc(label) + '</span><b>' + esc(value) + '</b></li>'; }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var g = Schema.grossAnnualIncomeCents(h);
+    if (Money.isOk(g) && !el('in-wo-low').value) el('in-wo-low').placeholder = 'your pay now, ' + Money.formatCents(g.value, { exact: true }).replace(/^\$/, '');
+    var keep = num('in-keep'), rate = num('in-rate');
+    var r = Degree.decide(h, TABLES, { tuitionCents: typed('in-tuition'), years: num('dg-in-years'), partTimeShare: keep === null ? null : keep / 100, employerHelpCents: typed('in-help'), loanCents: typed('in-loan'), loanRate: rate === null ? null : rate / 100,
+      withLowCents: typed('in-with-low'), withHighCents: typed('in-with-high'), withoutLowCents: typed('in-wo-low'), withoutHighCents: typed('in-wo-high') });
+    if (!Money.isOk(r)) { el('g-num').textContent = 'Not yet.'; el('g-sub').textContent = r.reason; el('g-sum').innerHTML = ''; return; }
+    if (r.breakEvenAge === null) { el('g-num').textContent = 'Does not break even.'; el('g-sub').textContent = 'With no gain in pay (' + Money.formatCents(r.gainLowCents) + ' to ' + Money.formatCents(r.gainHighCents) + ' a year), ' + Money.formatCents(r.costCents) + ' never comes back.'; }
+    else {
+      el('g-num').textContent = 'Breaks even at ' + r.breakEvenAge + (r.breaksEven ? '.' : ', past 65.');
+      var range = r.breakEvenLowAge !== null && r.breakEvenHighAge !== null && r.breakEvenLowAge !== r.breakEvenHighAge ? ' Range: ' + r.breakEvenLowAge + ' on the high pay to ' + (r.breakEvenHighAge === null ? 'never' : r.breakEvenHighAge) + ' on the low.' : '';
+      el('g-sub').textContent = Money.formatCents(r.costCents) + ' in, ' + Money.formatCents(r.gainLowCents) + ' to ' + Money.formatCents(r.gainHighCents) + ' a year back from ' + r.doneAt + '.' + range + ' By 65 that is ' + Money.formatCents(r.lifetimeLowCents) + ' to ' + Money.formatCents(r.lifetimeHighCents) + ' more' + (r.lifetimeLowCents < 0 ? ' (or less)' : '') + ' in lifetime earnings.';
+    }
+    el('g-num').setAttribute('data-breakeven', r.breakEvenAge === null ? 'never' : String(r.breakEvenAge));
+    var rows = [li('Tuition and fees', Money.formatCents(r.tuitionCents))];
+    if (r.employerHelpCents) rows.push(li('Employer help', '- ' + Money.formatCents(r.employerHelpCents)));
+    rows.push(li('Pay given up over ' + r.years + ' year' + (r.years === 1 ? '' : 's') + (r.keepShare ? ', keeping ' + Math.round(r.keepShare * 100) + '%' : ''), Money.formatCents(r.forgoneCents)));
+    if (r.interestCents) rows.push(li('Interest on the loan over ' + Degree.LOAN_YEARS + ' years', Money.formatCents(r.interestCents)));
+    rows.push(li('The cost, in all', Money.formatCents(r.costCents)));
+    rows.push(li('Gain a year', Money.formatCents(r.gainLowCents) + ' to ' + Money.formatCents(r.gainHighCents)));
+    rows.push(li('FI without the degree', r.fiWithoutYears === null ? 'not known' : 'about ' + r.fiWithoutYears + ' years'));
+    rows.push(li('FI with it (study years counted)', r.fiWithYears === null ? (r.fiReason || 'not known') : 'about ' + r.fiWithYears + ' years'));
+    el('g-sum').innerHTML = rows.join('');
+  }
+  ['in-tuition', 'dg-in-years', 'in-keep', 'in-help', 'in-loan', 'in-rate', 'in-with-low', 'in-with-high', 'in-wo-low', 'in-wo-high'].forEach(function (id) { el(id).addEventListener('input', render); });
+  Spine.onChange(render);
+  Reference.load(['effectiveTaxRates', 'federalBrackets', 'fireVariants', 'returnBands']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+
+<script>
+/* ---- READING view-a-break, from rooms/micro-retirement.html (D-251) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Micro = SLAF.MicroRetirement, Blocks = SLAF.Blocks, Scenarios = SLAF.Scenarios;
+  var ROOM_ID = 'career-move';   /* the room this reading lives in */
+  var TABLES = null, LAST = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
+  function num(id) { var t = String(el(id).value || '').replace(/[^0-9.]/g, ''); return t === '' ? null : Number(t); }
+  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
+  function li(label, value) { return '<li><span>' + esc(label) + '</span><b>' + esc(value) + '</b></li>'; }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var start = String(el('in-start').value || '').trim();
+    var mom = num('in-momentum');
+    var r = Micro.plan(h, TABLES, { months: num('mr-in-months'), start: /^\d{4}-\d{2}$/.test(start) ? start : null, spendMonthlyCents: typed('in-spend'), incomeMonthlyCents: typed('in-income'), coverMonthlyCents: typed('in-cover'), momentumRate: mom === null ? null : mom / 100 });
+    LAST = Money.isOk(r) ? r : null;
+    el('add-block').hidden = !LAST;
+    if (TABLES.careerMomentum && !el('in-momentum').value) el('in-momentum').placeholder = 'e.g. ' + Math.round(TABLES.careerMomentum.penaltyPerYearOfBreak[TABLES.careerMomentum.defaultBand || 'mid'] * 100);
+    if (!Money.isOk(r)) { el('m-num').textContent = 'Not yet.'; el('m-sub').textContent = r.reason; el('m-costs').innerHTML = ''; el('m-buys').innerHTML = ''; return; }
+    if (!el('in-spend').value) el('in-spend').placeholder = 'e.g. ' + Money.formatCents(r.spendMonthlyCents, { exact: true }).replace(/^\$/, '');
+    if (!el('in-cover').value && r.coverSource === 'cobra') el('in-cover').placeholder = 'COBRA ' + Money.formatCents(r.coverMonthlyCents, { exact: true }).replace(/^\$/, '');
+    el('m-num').textContent = Money.formatCents(r.fundCents) + '.';
+    var ready = r.reachedNow ? 'You have it now.' : r.neverAtThisPace ? 'Not at the current pace: ' + Money.formatCents(r.monthlyNeededCents) + ' a month would have it in five years.' : 'Ready by ' + monthWord(r.readyDate) + ' at ' + Money.formatCents(r.monthlyCents) + ' a month on top of ' + Money.formatCents(r.cashCents || 0) + ' of cash.';
+    el('m-sub').textContent = r.months + ' month' + (r.months === 1 ? '' : 's') + ' at ' + Money.formatCents(r.spendMonthlyCents) + ' a month' + (r.spendSource === 'household' ? ' (your household month)' : '') + ' plus ' + Money.formatCents(r.coverMonthlyCents) + ' of cover' + (r.incomeMonthlyCents ? ', less ' + Money.formatCents(r.incomeMonthlyCents) + ' coming in' : '') + ', and a ' + Money.formatCents(r.cushionCents) + ' cushion for the ' + r.cushionMonths + ' months a return usually takes. ' + ready;
+    el('m-sub').setAttribute('data-fund', String(r.fundCents));
+    var costs = [li('The break itself', Money.formatCents(r.breakCents)), li('Re-entry cushion', Money.formatCents(r.cushionCents))];
+    if (r.fiMovesMonths !== null) costs.push(li('FI date moves', r.fiMovesMonths + ' month' + (r.fiMovesMonths === 1 ? '' : 's') + ' later'));
+    else if (r.fiReason) costs.push(li('FI date moves', 'not known: ' + r.fiReason));
+    if (r.momentum && r.momentum.cents > 0) costs.push(li('Career momentum, to ' + r.endAge, Money.formatCents(r.momentum.lowCents) + ' to ' + Money.formatCents(r.momentum.highCents)));
+    else if (r.momentum && r.momentum.cents === 0 && r.momentum.source === 'typed') { /* zero typed: the line goes */ }
+    else if (!r.momentum) costs.push(li('Career momentum', 'add pay and a date of birth to price it'));
+    el('m-costs').innerHTML = costs.join('');
+    el('m-costs').setAttribute('data-momentum', r.momentum ? String(r.momentum.cents) : '');
+    el('m-buys').innerHTML = [li('Time', r.weeksBought + ' weeks of your own'), li('Months', r.months + ' of them' + (r.start ? ', from ' + monthWord(r.start) : ''))].join('');
+  }
+  ['mr-in-months', 'in-start', 'in-spend', 'in-income', 'in-cover', 'in-momentum'].forEach(function (id) { el(id).addEventListener('input', render); });
+  el('add-block').addEventListener('click', function () {
+    if (!LAST) return;
+    var h = Spine.getProfile();
+    var built = Blocks.build('sabbatical', { months: LAST.months, when: LAST.start || null, incomeDuring: LAST.incomeMonthlyCents || null }, h, { label: 'Break: ' + LAST.months + ' month' + (LAST.months === 1 ? '' : 's'), start: LAST.start || null });
+    if (!Money.isOk(built)) { el('block-note').textContent = built.reason; return; }
+    var b = Scenarios.addBlock(built.value);
+    el('block-note').textContent = 'Saved as a block: ' + b.label + (b.dates[0] ? ', from ' + monthWord(b.dates[0].start) : '') + '. It lives beside your numbers, never in them.';
+  });
+  Spine.onChange(render);
+  Reference.load(['cobraAca', 'reentryGap', 'careerMomentum', 'effectiveTaxRates', 'federalBrackets', 'fireVariants', 'returnBands', 'blockSabbatical', 'states']).then(function (t) { TABLES = t; Blocks.use(t); render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
   });
 })();
 </script>

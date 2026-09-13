@@ -6,160 +6,34 @@
 <meta name="slaf-build" content="2026-09-12 14:16Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Micro-Retirement Planner · SPARKS</title>
-<meta name="description" content="A planned break from work of one to twelve months: the fund it needs with health cover and a re-entry cushion, the date you would be ready, how far the FI date moves, the career-momentum cost as a range, and what the break buys in weeks."/>
+<title>A break · SPARKS</title>
+<meta name="description" content="A break is a reading of Work now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. K5 (D-219).
-
-  1. READS   The household month, cash on hand, what is saved a month,
-             gross pay, age and the target age (for the momentum cost),
-             whether there are others in the household (cover).
-  2. WRITES  Nothing to the household. "Add this as a block" saves a
-             sabbatical block in the scenarios store.
-  3. CALLS   engines/microretirement.js: the fund, the ready date through
-             the one countdown, the FI move through the lens, the momentum
-             cost from data/career_momentum.json.
-  4. EMPTY   No months: it asks. No spending: it says so.
-  5. CONFIG  data/cobra_aca_2024.json, data/reentry_gap.json,
-             data/career_momentum.json.
-
-  LIVE-FORM: built once. Six boxes, in the HTML; only .value is set.
+  REDIRECT — A break is a reading of Work (rooms/career-move.html#a-break, DECISIONS.md D-251).
+  Eight rooms about one subject, every one a what-if on the same pay.
+  Rule 1 of D-229.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
-  .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
-  .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
-  .ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
-  .two > div { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
-  .two h3 { margin: 0 0 var(--space-2); font-size: var(--text-md); }
-  .two ul { list-style: none; margin: 0; padding: 0; font-size: var(--text-sm); }
-  .two li { padding: var(--space-1) 0; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; gap: var(--space-2); }
-  .two li:first-child { border-top: none; }
-  .two li b { font-variant-numeric: tabular-nums; white-space: nowrap; }
-  @media (max-width: 480px) { .ask, .two { grid-template-columns: 1fr; } }
-</style>
+<meta http-equiv="refresh" content="0; url=career-move.html#a-break"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../map.html">← All rooms</a>
-  <h1>Micro-Retirement Planner</h1>
-  <p class="room-lede">A planned break from work, one to twelve months. What it costs and what it buys, both on one screen.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <section class="slaf-card" id="fund">
-    <span class="slaf-eyebrow">The fund</span>
-    <p class="head-num" id="m-num"></p>
-    <p class="head-sub" id="m-sub"></p>
-    <div class="ask">
-      <div><label for="in-months">Months away</label>
-        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-months" placeholder="1 to 12" aria-label="Months away"/></span></div>
-      <div><label for="in-start">Starting</label>
-        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="in-start" placeholder="YYYY-MM" aria-label="Starting"/></span></div>
-      <div><label for="in-spend">Spending a month, during</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-spend" placeholder="your month" aria-label="Spending a month during the break"/></span></div>
-      <div><label for="in-income">Income a month, during</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-income" placeholder="e.g. 0" aria-label="Income a month during the break"/></span></div>
-      <div><label for="in-cover">Health cover a month</label>
-        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-cover" placeholder="COBRA" aria-label="Health cover a month"/></span></div>
-      <div><label for="in-momentum">Pay penalty, per year of break</label>
-        <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-momentum" placeholder="e.g. 4" aria-label="Pay penalty per year of break"/><span class="slaf-affix">%</span></span></div>
-    </div>
-    <p style="margin:var(--space-3) 0 0"><button type="button" class="slaf-btn slaf-btn--quiet" id="add-block" hidden>Add this as a block</button> <span class="slaf-hint" id="block-note"></span></p>
-  </section>
-  <section class="slaf-card" id="sides" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Both sides</span>
-    <div class="two">
-      <div><h3>What it costs</h3><ul id="m-costs"></ul></div>
-      <div><h3>What it buys</h3><ul id="m-buys"></ul></div>
-    </div>
-  </section>
-  <p class="disclaimer">
-    Educational tool, not financial advice. The cover figure is a national average and the pay penalty a recalled range; both are yours to replace. Everything stays in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">A break is a reading of Work now.
+    <a href="career-move.html#a-break" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../shared/expr.js"></script>
-<script src="../shared/scenarios.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../engines/countdown.js"></script>
-<script src="../engines/microretirement.js"></script>
-<script src="../shared/blocks.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Micro = SLAF.MicroRetirement, Blocks = SLAF.Blocks, Scenarios = SLAF.Scenarios;
-  var ROOM_ID = 'micro-retirement';
-  var TABLES = null, LAST = null;
-  function el(id) { return document.getElementById(id); }
-  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function typed(id) { var t = String(el(id).value || '').trim(); return t === '' ? null : Money.parseMoney(t); }
-  function num(id) { var t = String(el(id).value || '').replace(/[^0-9.]/g, ''); return t === '' ? null : Number(t); }
-  function monthWord(ym) { var m = Number(ym.slice(5, 7)); return ['January','February','March','April','May','June','July','August','September','October','November','December'][m - 1] + ' ' + ym.slice(0, 4); }
-  function li(label, value) { return '<li><span>' + esc(label) + '</span><b>' + esc(value) + '</b></li>'; }
-  function render() {
-    if (!TABLES) return;
-    var h = Spine.getProfile();
-    var start = String(el('in-start').value || '').trim();
-    var mom = num('in-momentum');
-    var r = Micro.plan(h, TABLES, { months: num('in-months'), start: /^\d{4}-\d{2}$/.test(start) ? start : null, spendMonthlyCents: typed('in-spend'), incomeMonthlyCents: typed('in-income'), coverMonthlyCents: typed('in-cover'), momentumRate: mom === null ? null : mom / 100 });
-    LAST = Money.isOk(r) ? r : null;
-    el('add-block').hidden = !LAST;
-    if (TABLES.careerMomentum && !el('in-momentum').value) el('in-momentum').placeholder = 'e.g. ' + Math.round(TABLES.careerMomentum.penaltyPerYearOfBreak[TABLES.careerMomentum.defaultBand || 'mid'] * 100);
-    if (!Money.isOk(r)) { el('m-num').textContent = 'Not yet.'; el('m-sub').textContent = r.reason; el('m-costs').innerHTML = ''; el('m-buys').innerHTML = ''; return; }
-    if (!el('in-spend').value) el('in-spend').placeholder = 'e.g. ' + Money.formatCents(r.spendMonthlyCents, { exact: true }).replace(/^\$/, '');
-    if (!el('in-cover').value && r.coverSource === 'cobra') el('in-cover').placeholder = 'COBRA ' + Money.formatCents(r.coverMonthlyCents, { exact: true }).replace(/^\$/, '');
-    el('m-num').textContent = Money.formatCents(r.fundCents) + '.';
-    var ready = r.reachedNow ? 'You have it now.' : r.neverAtThisPace ? 'Not at the current pace: ' + Money.formatCents(r.monthlyNeededCents) + ' a month would have it in five years.' : 'Ready by ' + monthWord(r.readyDate) + ' at ' + Money.formatCents(r.monthlyCents) + ' a month on top of ' + Money.formatCents(r.cashCents || 0) + ' of cash.';
-    el('m-sub').textContent = r.months + ' month' + (r.months === 1 ? '' : 's') + ' at ' + Money.formatCents(r.spendMonthlyCents) + ' a month' + (r.spendSource === 'household' ? ' (your household month)' : '') + ' plus ' + Money.formatCents(r.coverMonthlyCents) + ' of cover' + (r.incomeMonthlyCents ? ', less ' + Money.formatCents(r.incomeMonthlyCents) + ' coming in' : '') + ', and a ' + Money.formatCents(r.cushionCents) + ' cushion for the ' + r.cushionMonths + ' months a return usually takes. ' + ready;
-    el('m-sub').setAttribute('data-fund', String(r.fundCents));
-    var costs = [li('The break itself', Money.formatCents(r.breakCents)), li('Re-entry cushion', Money.formatCents(r.cushionCents))];
-    if (r.fiMovesMonths !== null) costs.push(li('FI date moves', r.fiMovesMonths + ' month' + (r.fiMovesMonths === 1 ? '' : 's') + ' later'));
-    else if (r.fiReason) costs.push(li('FI date moves', 'not known: ' + r.fiReason));
-    if (r.momentum && r.momentum.cents > 0) costs.push(li('Career momentum, to ' + r.endAge, Money.formatCents(r.momentum.lowCents) + ' to ' + Money.formatCents(r.momentum.highCents)));
-    else if (r.momentum && r.momentum.cents === 0 && r.momentum.source === 'typed') { /* zero typed: the line goes */ }
-    else if (!r.momentum) costs.push(li('Career momentum', 'add pay and a date of birth to price it'));
-    el('m-costs').innerHTML = costs.join('');
-    el('m-costs').setAttribute('data-momentum', r.momentum ? String(r.momentum.cents) : '');
-    el('m-buys').innerHTML = [li('Time', r.weeksBought + ' weeks of your own'), li('Months', r.months + ' of them' + (r.start ? ', from ' + monthWord(r.start) : ''))].join('');
-  }
-  ['in-months', 'in-start', 'in-spend', 'in-income', 'in-cover', 'in-momentum'].forEach(function (id) { el(id).addEventListener('input', render); });
-  el('add-block').addEventListener('click', function () {
-    if (!LAST) return;
-    var h = Spine.getProfile();
-    var built = Blocks.build('sabbatical', { months: LAST.months, when: LAST.start || null, incomeDuring: LAST.incomeMonthlyCents || null }, h, { label: 'Break: ' + LAST.months + ' month' + (LAST.months === 1 ? '' : 's'), start: LAST.start || null });
-    if (!Money.isOk(built)) { el('block-note').textContent = built.reason; return; }
-    var b = Scenarios.addBlock(built.value);
-    el('block-note').textContent = 'Saved as a block: ' + b.label + (b.dates[0] ? ', from ' + monthWord(b.dates[0].start) : '') + '. It lives beside your numbers, never in them.';
-  });
-  Spine.registerRoom(ROOM_ID);
-  SLAF.Progress.mount(ROOM_ID);
-  Spine.onChange(render);
-  Reference.load(['cobraAca', 'reentryGap', 'careerMomentum', 'effectiveTaxRates', 'federalBrackets', 'fireVariants', 'returnBands', 'blockSabbatical', 'states']).then(function (t) { TABLES = t; Blocks.use(t); render(); }).catch(function (err) {
-    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#in-months': '#mr-in-months' };
+    var hash = location.hash || '';
+    var target = 'career-move.html' + (map[hash] || '#a-break');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>
