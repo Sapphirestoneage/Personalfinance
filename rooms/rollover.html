@@ -77,7 +77,7 @@
   .o-when { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
   .o-cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
   @media (max-width: 560px) { .o-cols { grid-template-columns: 1fr; } }
-  .o-col h4 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 var(--space-2); color: var(--color-text-faint); }
+  .o-col h3 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 var(--space-2); color: var(--color-text-faint); }
   .o-col.is-good h4 { color: var(--color-positive); }
   .o-col.is-bad h4 { color: var(--color-critical-text); }
   .o-col ul { list-style: none; margin: 0; padding: 0; }
@@ -86,7 +86,7 @@
 
   /* The two trade-offs people do not know they are making. */
   .tradeoff { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); margin-top: var(--space-3); }
-  .tradeoff h3 { font-family: var(--font-display); font-size: var(--text-md); margin: 0; }
+  .tradeoff h2 { font-family: var(--font-display); font-size: var(--text-md); margin: 0; }
   .tradeoff p { font-size: var(--text-sm); line-height: var(--leading-loose); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   .tradeoff p strong { color: var(--color-text); }
   .tradeoff .who { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
@@ -653,7 +653,7 @@
       el('four-confidence').textContent = t.confidenceNote;
 
       el('tradeoffs').innerHTML = TRADEOFFS.map(function (x) {
-        return '<div class="tradeoff"><h3>' + esc(x.title) + '</h3>'
+        return '<div class="tradeoff"><h2>' + esc(x.title) + '</h2>'
           + '<p>' + x.body + '</p>'
           + '<p class="who">' + esc(x.who) + '</p></div>';
       }).join('');
@@ -666,8 +666,8 @@
           + '<span class="o-rank">' + (i + 1) + ' of ' + t.options.length + '</span></div>'
           + '<p class="o-when">' + esc(o.allowedWhen) + '</p>'
           + '<div class="o-cols">'
-          + '<div class="o-col is-good"><h4>What it gives you</h4>' + list(o.good) + '</div>'
-          + '<div class="o-col is-bad"><h4>What it costs you</h4>' + list(o.bad) + '</div>'
+          + '<div class="o-col is-good"><h3>What it gives you</h3>' + list(o.good) + '</div>'
+          + '<div class="o-col is-bad"><h3>What it costs you</h3>' + list(o.bad) + '</div>'
           + '</div></li>';
       }).join('');
 

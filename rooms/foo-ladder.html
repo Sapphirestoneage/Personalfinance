@@ -54,7 +54,11 @@
 </style>
 </head>
 <body class="slaf">
-<div id="root"></div>
+<!-- A <main>, not a <div>: everything this room draws goes in here, and
+     without a landmark the page had no main region and eleven elements
+     outside any landmark at all. Every other room wraps its content the
+     same way. D-228. -->
+<main id="root"></main>
 
 <script src="../shared/money.js"></script>
 <script src="../shared/schema.js"></script>

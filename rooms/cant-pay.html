@@ -89,7 +89,7 @@
     border-radius: var(--radius-sm); padding: var(--space-3); margin-top: var(--space-4);
     background: var(--color-surface-raised); }
   .callout--first { border-left-color: var(--color-accent); }
-  .callout h3 { margin: 0; font-size: var(--text-md); line-height: var(--leading-tight); }
+  .callout h2 { margin: 0; font-size: var(--text-md); line-height: var(--leading-tight); }
   .callout p { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted);
     line-height: var(--leading-loose); }
 
@@ -322,7 +322,7 @@
     if (nb) {
       var last = tiers(T)[tiers(T).length - 1];
       var names = last ? (last.kinds || []).map(function (k) { return k.label.toLowerCase(); }).join(', ') : '';
-      out.push('<div class="callout"><h3>' + esc(nb.what) + '</h3><p>' + esc(nb.why)
+      out.push('<div class="callout"><h2>' + esc(nb.what) + '</h2><p>' + esc(nb.why)
         + (names ? ' <span class="who">Tier 3 is the last group below: ' + esc(names) + '.</span>' : '')
         + '</p></div>');
     }
@@ -338,7 +338,7 @@
       + 'comes before a bigger one you can: losing the roof, the heat, or the car you get to work in costs '
       + 'far more than a late fee and a mark on your file, however much larger the fee feels today.</p>');
     if (t.confidenceNote) {
-      out.push('<div class="callout"><h3>What actually happens depends on where you live and what you signed.</h3>'
+      out.push('<div class="callout"><h2>What actually happens depends on where you live and what you signed.</h2>'
         + '<p>' + esc(t.confidenceNote) + '</p></div>');
     }
     tiers(T).forEach(function (tier) {
@@ -360,7 +360,7 @@
     var out = [];
     var first = before(T, 'callFirst');
     if (first) {
-      out.push('<div class="callout callout--first"><h3>' + esc(first.what) + '</h3>'
+      out.push('<div class="callout callout--first"><h2>' + esc(first.what) + '</h2>'
         + '<p>' + esc(first.why) + '</p></div>');
     }
     out.push('<p class="rule">Who to ring, and what to ask for, in the same order. Nothing here knows your '
@@ -380,7 +380,7 @@
     var out = [];
     var na = before(T, 'notAlone');
     if (na) {
-      out.push('<div class="callout callout--first"><h3>' + esc(na.what) + '</h3>'
+      out.push('<div class="callout callout--first"><h2>' + esc(na.what) + '</h2>'
         + '<p>' + esc(na.why) + '</p></div>');
     }
     var rows = [];

@@ -56,7 +56,7 @@
   .portfolio { border-top: 1px solid var(--color-border); padding: var(--space-3) 0; }
   .portfolio:first-of-type { border-top: none; }
   .portfolio .head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
-  .portfolio .head h3 { margin: 0; font-size: var(--text-base); }
+  .portfolio .head h2 { margin: 0; font-size: var(--text-base); }
   .portfolio .head .tot { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .portfolio .blurb { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
   .portfolio ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-sm); }
@@ -529,7 +529,7 @@
     renderPortfolioCharts(h, p);
     list.innerHTML = p.order.map(function (id) {
       var b = p.buckets[id];
-      return '<div class="portfolio"><div class="head"><h3>' + esc(b.label) + '</h3><span class="tot">' + fmt(b.totalCents) + '</span></div>'
+      return '<div class="portfolio"><div class="head"><h2>' + esc(b.label) + '</h2><span class="tot">' + fmt(b.totalCents) + '</span></div>'
         + '<p class="blurb">' + esc(b.blurb) + (b.cashFlowMonthlyCents ? ' Throws off ' + fmt(b.cashFlowMonthlyCents) + ' a month.' : '') + '</p>'
         + (b.assets.length ? '<ul>' + b.assets.map(function (x) {
             return '<li><span>' + esc(x.asset.label || x.rule.key) + (x.asset.taxCharacter ? '' : ' <em style="color:var(--color-text-faint)">(' + esc(x.rule.key) + ', by category)</em>') + '</span><span class="amt">' + fmt(x.asset.valueCents) + '</span></li>';

@@ -13635,6 +13635,36 @@ serious or critical violations in each, where there had been one apiece.
 `node test/run.js` (30,335). The FIRE Lab grid checked in a browser at phone
 width — three cells a row, no sideways scroll.
 
+## D-228 — Every page clears the accessibility suite
+
+**Why.** With the serious failures gone, a sweep of all 94 pages left ten
+moderate and minor ones: seven rooms skipping a heading level, the FOO
+ladder with no main landmark and eleven elements outside any landmark, and
+two empty table header cells. Each was one element.
+
+**Decision.** `rooms/foo-ladder.html` renders into a `<main>` rather than a
+bare `<div>`, as every other room does. Seven rooms promote a heading to the
+level the document reaches: the Micro-Retirement Planner, the Middle Class
+Trap Test and The Referee jumped h1 to h3 with no h2 at all; When It Won't
+All Get Paid, The Account You Left Behind, The Statement and Expenses had an
+h3 before any h2, and Rollover also jumped h2 to h4 inside an option. Each
+CSS selector moved with its heading, so nothing changed visually.
+`rooms/statements.html` gives a section row one `<th colspan="2">` instead of
+a label plus an empty header cell a screen reader announces as an unnamed
+column.
+
+**Replaces or removes.** Removes the last ten accessibility violations. No
+room, screen or field added.
+
+**Stored shape.** No change to `slaf.household.v2`.
+
+**Verified.** axe-core with the WCAG 2.0/2.1 A and AA tags plus best
+practices over all 94 pages: **no violations of any impact, and no load
+errors**. `node test/run.js` (30,363), `node test/forms.js` (604), and every
+page driven with a full and an empty household — zero console errors, zero
+dead links. The FIRE Lab grid and the income statement table were read in a
+browser at phone width to confirm the markup changes moved nothing.
+
 ---
 
 # The Dungeons & Dividends entries

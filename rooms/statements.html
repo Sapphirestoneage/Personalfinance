@@ -207,10 +207,10 @@
     if (!Money.isOk(r)) return '<p class="slaf-reason">' + esc(r.reason) + '</p>';
     var s = r.value;
     var out = [docHead('Income statement', s.period), '<table class="ledger">'];
-    out.push('<tr><th>What came in</th><th class="amt"></th></tr>');
+    out.push('<tr><th colspan="2">What came in</th></tr>');
     s.revenue.forEach(function (l) { out.push(row(l)); });
     out.push(totalRow('Total in', s.revenueTotal));
-    out.push('<tr><th>What went out</th><th class="amt"></th></tr>');
+    out.push('<tr><th colspan="2">What went out</th></tr>');
     s.costs.forEach(function (l) { out.push(row(l)); });
     out.push(totalRow('Total out', { cents: -s.costsTotal.cents, complete: s.costsTotal.complete, missing: s.costsTotal.missing }));
     out.push('<tr class="is-grand"><td class="lbl">What was left</td><td class="amt">'
@@ -229,12 +229,12 @@
     if (!Money.isOk(r)) return '<p class="slaf-reason">' + esc(r.reason) + '</p>';
     var s = r.value;
     var out = [docHead('Cash flow statement', s.period), '<table class="ledger">'];
-    out.push('<tr><th>Operating — living</th><th class="amt"></th></tr>');
+    out.push('<tr><th colspan="2">Operating — living</th></tr>');
     s.operating.forEach(function (l) { out.push(row(l)); });
     out.push(totalRow('Cash from living', s.operatingTotal));
-    out.push('<tr><th>Investing — what you put away</th><th class="amt"></th></tr>');
+    out.push('<tr><th colspan="2">Investing — what you put away</th></tr>');
     s.investing.forEach(function (l) { out.push(row(l)); });
-    out.push('<tr><th>Financing — debt</th><th class="amt"></th></tr>');
+    out.push('<tr><th colspan="2">Financing — debt</th></tr>');
     s.financing.forEach(function (l) { out.push(row(l)); });
     out.push('<tr class="is-grand"><td class="lbl">Change in cash'
       + '<span class="n">Debt payments are inside living costs already, so they are shown above but not '
@@ -250,10 +250,10 @@
     var s = r.value;
     var out = ['<div class="doc-h"><h2>Balance sheet</h2><span class="per">As at today</span></div>',
                '<table class="ledger">'];
-    out.push('<tr><th>What you own</th><th class="amt"></th></tr>');
+    out.push('<tr><th colspan="2">What you own</th></tr>');
     s.current.concat(s.nonCurrent).forEach(function (l) { out.push(row(l)); });
     out.push(totalRow('Total owned', s.assetsTotal));
-    out.push('<tr><th>What you owe</th><th class="amt"></th></tr>');
+    out.push('<tr><th colspan="2">What you owe</th></tr>');
     s.liabilities.forEach(function (l) { out.push(row(l)); });
     out.push('<tr class="is-grand"><td class="lbl">Net worth</td><td class="amt">'
       + esc(s.netWorthComplete ? money(s.netWorth) : DASH) + '</td></tr>');

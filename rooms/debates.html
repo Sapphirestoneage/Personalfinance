@@ -31,7 +31,7 @@
   .sides { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
   .side { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--text-sm); }
   .side.is-answer { border-color: var(--color-accent); }
-  .side h3 { margin: 0 0 var(--space-1); font-size: var(--text-md); }
+  .side h2 { margin: 0 0 var(--space-1); font-size: var(--text-md); }
   .side .line { margin-top: var(--space-2); font-weight: 600; }
   .side small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); margin-top: var(--space-2); }
   .head-num { font-family: var(--font-display); font-size: var(--text-xl); margin: var(--space-2) 0 0; }
@@ -116,7 +116,7 @@
     el('d-share').innerHTML = '';
     if (!Money.isOk(r)) {
       el('d-num').textContent = 'Can’t run this one yet.'; el('d-sub').textContent = r.reason; el('d-flip').textContent = '';
-      el('d-sides').innerHTML = d.sides.map(function (s) { return '<div class="side"><h3>' + esc(s.label) + '</h3>' + esc(s.case) + '<small>' + esc(s.source) + '</small></div>'; }).join('');
+      el('d-sides').innerHTML = d.sides.map(function (s) { return '<div class="side"><h2>' + esc(s.label) + '</h2>' + esc(s.case) + '<small>' + esc(s.source) + '</small></div>'; }).join('');
       return;
     }
     el('d-num').textContent = r.sentence;
@@ -125,7 +125,7 @@
     el('d-flip').textContent = 'The flip point: ' + d.flip.label + '. ' + r.flip.words + '.';
     el('d-sides').innerHTML = d.sides.map(function (s, i) {
       var line = (r.sides || []).filter(function (x) { return x.id === s.id; })[0];
-      return '<div class="side' + (r.answerSide === s.id ? ' is-answer' : '') + '"><h3>' + esc(s.label) + (r.answerSide === s.id ? ' · what the numbers say' : '') + '</h3>' + esc(s.case) + (line ? '<div class="line">' + esc(line.line) + '</div>' : '') + '<small>' + esc(s.source) + '</small></div>';
+      return '<div class="side' + (r.answerSide === s.id ? ' is-answer' : '') + '"><h2>' + esc(s.label) + (r.answerSide === s.id ? ' · what the numbers say' : '') + '</h2>' + esc(s.case) + (line ? '<div class="line">' + esc(line.line) + '</div>' : '') + '<small>' + esc(s.source) + '</small></div>';
     }).join('');
     var card = ShareCard.make('debate', h, TABLES, { debate: d.id, result: r });
     if (card.ok) {

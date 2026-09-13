@@ -33,12 +33,12 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Scorecard (12)
 
 - **financial-snapshot** — Financial Snapshot · 858 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath · D-056, D-036, D-008
-- **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-156
+- **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-228, D-156
 - **savings-rate** — Savings Rate · 490 lines · engines: projection, tier0, foo, hourly · D-130, D-091, D-054
 - **fire** — FIRE Number · 532 lines · engines: projection, tier0, fire, selfemployed, tax, hourly · owns: retireAge, coastAge · D-221, D-162, D-161
 - **fire-lab** — FIRE Lab · 480 lines · engines: projection, tier0, cashflow, fire, hourly · D-227, D-138
 - **ratios** — Every Ratio · 410 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-143, D-139, D-136
-- **foo-ladder** — FOO Ladder · 77 lines · engines: projection, tier0 · D-058, D-054, D-007
+- **foo-ladder** — FOO Ladder · 81 lines · engines: projection, tier0 · D-228, D-058, D-054
 - **next-hundred** — Your Next $100 · 134 lines · engines: projection, tier0, foo, next100 · D-211
 - **coast-date** — Your Coast Date · 123 lines · engines: projection, tier0, coast · D-213
 - **rank-guess** — Where Do You Think You Rank? · 115 lines · engines: projection, tier0, rankguess · D-213
