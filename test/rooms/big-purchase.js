@@ -1,7 +1,7 @@
 /* test/rooms/big-purchase.js — the Big Purchase room (D-099).
    Hand-derived numbers as literals; nothing copied from engine output. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Demo, Registry, Ownership, Gate, Lens, Hourly, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Demo, Registry, Ownership, Gate, Lens, Hourly, TABLES } = t;
   const Purchase = require(path.join(ROOT, 'engines/purchase.js'));
   const T = TABLES;
 
@@ -155,12 +155,16 @@ module.exports = function (t) {
 
   section('Big Purchase — the room on the template');
 
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/big-purchase.html'), 'utf8');
+  /* This room carries a second reading since D-240, so these assertions
+     read its own slice; `page` is the whole file, for the facts that
+     really are page-wide. */
+  const slice = reading('rooms/big-purchase.html', 'view-one-thing', "READING view-one-thing,");
+  const html = slice.html, page = slice.page;
   checkTrue('rooms/big-purchase.html mounts on the template', /Room\.mount\(\{/.test(html) && /id: 'big-purchase'/.test(html));
   ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list', 'room-standalone', 'load-notice']
-    .forEach(id => checkTrue('… host #' + id, html.indexOf('id="' + id + '"') !== -1));
+    .forEach(id => checkTrue('… host #' + id, (id === 'load-notice' ? page : html).indexOf('id="' + id + '"') !== -1));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading'].forEach(id => checkTrue('… section #' + id, html.indexOf('id="' + id + '"') !== -1));
-  const at = f => html.indexOf('src="../' + f + '"');
+  const at = f => page.indexOf('src="../' + f + '"');
   checkTrue('… loads the engine after hourly and quickmath and before the lens',
     at('engines/hourly.js') !== -1 && at('engines/hourly.js') < at('engines/purchase.js') && at('engines/quickmath.js') < at('engines/purchase.js') && at('engines/purchase.js') < at('shared/lens.js'));
   checkTrue('… is not the stub', html.indexOf('STUB') === -1 && html.indexOf('Hourly.realHourlyWage') === -1 && html.indexOf('person.work') === -1);

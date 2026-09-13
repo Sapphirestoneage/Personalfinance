@@ -1307,23 +1307,26 @@
   /* Big Purchase — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'big-purchase',
-    group: 'decisions', subgroup: 'home', aliases: ['purchase', 'buy something', 'save up'],
+    group: 'decisions', subgroup: 'home', aliases: ['purchase', 'buy something', 'save up', 'dream', 'price the dream', 'dreamline'],
     kind: 'about-you',
     needs: ['cashSavings', 'monthlyExpenses'],
     order: 41,
     title: 'Big Purchase',
-    blurb: 'One thing you are eyeing: hours of your life, months of FI, what the cash looks like after, and what financing it costs.',
+    blurb: 'One thing you are eyeing, priced in hours of your life and months of FI — and the same arithmetic over everything you want, for the monthly income the whole list would take.',
     href: 'rooms/big-purchase.html',
     tier: 2,
     tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses'], writes: ['plans.purchase'] },
+    daite: { reads: ['assets.cashCents', 'expenses', 'income.grossAnnualCents'], writes: ['plans.purchase', 'plans.dreams'] },
       subsections: [
         { id: 'number',      label: 'What it costs in life' },
         { id: 'chart',       label: 'Cash before and after' },
         { id: 'inputs',      label: 'The purchase' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'dl-number', label: 'Target monthly income' },
+        { id: 'dl-chart', label: 'Dreams against the month' },
+        { id: 'dl-inputs', label: 'The dreams' }
       ]
   });
 
@@ -1421,29 +1424,6 @@
         { id: 'bk-number',   label: 'Planned, all decades' },
         { id: 'bk-chart',    label: 'By decade' },
         { id: 'bk-inputs',   label: 'Each decade' }
-      ]
-  });
-
-  /* Dreamline — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'dreamline',
-    group: 'matters', aliases: ['dream', 'price the dream', 'dreamline'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses', 'grossAnnualIncome'],
-    order: 46,
-    title: 'Price the Dream',
-    blurb: 'Price the dreams a month, add the cost of living, pad it: the target monthly income, and the hours a week at your real rate it takes.',
-    href: 'rooms/dreamline.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['plans.dreams'] },
-      subsections: [
-        { id: 'number',      label: 'Target monthly income' },
-        { id: 'chart',       label: 'Dreams against the month' },
-        { id: 'inputs',      label: 'The dreams' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
       ]
   });
 
@@ -1724,9 +1704,9 @@
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
     numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
-    scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
-    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
-    matters: ['values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
+    scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab'],
+    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'giving', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
+    matters: ['values', 'goals', 'enough', 'fulfillment', 'rerank', 'week', 'reversibility', 'unlearning'],
     levelup: ['skill-tree', 'stacker', 'exercises'],
     upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
   };
@@ -1793,7 +1773,10 @@
     partner: ['partner'],
     kids: ['dependents'],
     'variable-income': ['variableIncome'],
-    dreamline: ['hours'],
+    /* Price the Dream became Big Purchase's whole-list reading (D-240). The
+       hours branch was its requirement, not the room's: the one-thing
+       reading applies to anyone, and the dream reading says it has no wage
+       rather than vanishing. Same call as Between Jobs above. */
     'student-loans': ['debt']
   };
   function gate() {

@@ -860,7 +860,8 @@
       "writes": [
         "purchasePrice",
         "purchaseMonths",
-        "purchaseRate"
+        "purchaseRate",
+        "dreamsMonthly"
       ],
       "requires": [],
       "dashboardNumber": null,
@@ -929,23 +930,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 44
-    },
-    {
-      "id": "dreamline",
-      "title": "Price the Dream",
-      "file": "rooms/dreamline.html",
-      "reads": [
-        "monthlyExpenses",
-        "grossAnnualIncome"
-      ],
-      "writes": [
-        "dreamsMonthly"
-      ],
-      "requires": [
-        "hours"
-      ],
-      "dashboardNumber": null,
-      "order": 46
     },
     {
       "id": "reversibility",

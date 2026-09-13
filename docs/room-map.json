@@ -94,7 +94,7 @@
       "absorbs": ["offer-compare", "side-hustle", "self-employed", "credential", "degree", "micro-retirement", "rollover"], "done": [],
       "note": "Eight old rooms, every one about a job. Nothing here is about building something that pays you; that gap is now more visible, not less." },
     { "n": 21, "id": "debt-payoff", "title": "Debt", "group": "decisions", "absorbs": ["student-loans", "credit"], "done": [] },
-    { "n": 22, "id": "big-purchase", "title": "Big Purchase", "group": "decisions", "absorbs": ["dreamline"], "done": [],
+    { "n": 22, "id": "big-purchase", "title": "Big Purchase", "group": "decisions", "absorbs": ["dreamline"], "done": ["dreamline"],
       "note": "Pricing the thing you want is the same form." },
     { "n": 23, "id": "partner", "title": "Family", "group": "decisions", "absorbs": ["kids"], "done": [] },
 

@@ -55,18 +55,22 @@ module.exports = function (t) {
      computed, so a change to the gate has to be agreed to here too.
      Between Jobs left this list in D-232: it is a reading of The Cushion
      now, and The Cushion applies to everyone — the question "how long while
-     job hunting" is one an employed person is entitled to ask. */
+     job hunting" is one an employed person is entitled to ask.
+     Price the Dream left it in D-240 for the same reason: it is a reading
+     of Big Purchase, and what one thing costs is a question anyone may ask.
+     The dream reading still needs a wage to price the list in hours, and
+     says so rather than disappearing. */
   var EXPECTED = {
     employed:     ['self-employed', 'decumulation', 'partner', 'kids', 'variable-income'],
     selfEmployed: ['accounts', 'decumulation', 'partner', 'kids'],
     unemployed:   ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
                    'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner', 'kids',
-                   'variable-income', 'dreamline'],
+                   'variable-income'],
     student:      ['self-employed', 'accounts', 'protection', 'decumulation', 'partner',
                    'kids', 'variable-income'],
     retired:      ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
                    'credential', 'accounts', 'career-move', 'partner', 'kids',
-                   'variable-income', 'dreamline'],
+                   'variable-income'],
     both:         ['decumulation', 'partner', 'kids']
   };
   Object.keys(EXPECTED).forEach(function (status) {

@@ -66,18 +66,17 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **housing** — Housing Decision · 329 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing · owns: rentAlternative, homePrice, downPct, mortgageRate · D-130, D-111
 - **down-payment** — Down Payment Countdown · 154 lines · engines: projection, tier0, debt, cashflow, ratios, housing, countdown, downpayment · D-217
 - **property** — The Deal · 403 lines · engines: projection, ownership · D-227, D-066
-- **big-purchase** — Big Purchase · 263 lines · engines: projection, tier0, hourly, quickmath, purchase · owns: purchasePrice, purchaseMonths, purchaseRate · D-129, D-112
+- **big-purchase** — Big Purchase · 490 lines · engines: projection, tier0, hourly, quickmath, purchase, dreamline · owns: purchasePrice, purchaseMonths, purchaseRate, dreamsMonthly · D-237, D-129, D-112
 - **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 
-## What Matters (10)
+## What Matters (9)
 
 - **fulfillment** — The Joy Curve · 377 lines · engines: projection, tier0, cashflow, fulfillment · D-164
 - **rerank** — The Rerank · 619 lines · engines: projection, tier0, cashflow, rerank · owns: rerankCut · D-089, D-085
 - **values** — What Matters · 428 lines · engines: projection, tier0, cashflow, values
 - **goals** — Goals · 493 lines · engines: projection, tier0, cashflow, goals · D-091, D-090, D-029
 - **enough** — Enough · 276 lines · engines: projection, tier0, cashflow, fulfillment, hourly, enough · owns: enoughMonthly · D-164, D-114, D-079
-- **week** — The Life · 515 lines · engines: projection, tier0, hourly, cashflow, week, ratios, buckets · owns: designedHours, bucketsPlanned · D-237
-- **dreamline** — Price the Dream · 238 lines · engines: projection, tier0, hourly, dreamline · owns: dreamsMonthly · D-101
+- **week** — The Life · 518 lines · engines: projection, tier0, hourly, cashflow, week, ratios, buckets · owns: designedHours, bucketsPlanned · D-237
 - **reversibility** — Can It Be Undone · 328 lines · engines: projection, tier0, cashflow, hourly, events, reversibility · owns: reversibilityDecision · D-101
 - **unlearning** — Unlearning · 379 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-213, D-212, D-119
 - **debates** — The Referee · 151 lines · engines: selfemployed, tax, projection, tier0, trap, debates · D-218
@@ -96,13 +95,14 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (24)
+## Files in rooms/ not in the registry (25)
 
 - rooms/between-jobs.html
 - rooms/buckets.html
 - rooms/comeback.html
 - rooms/dashboard.html
 - rooms/doors.html
+- rooms/dreamline.html
 - rooms/estate.html
 - rooms/express.html
 - rooms/first-car.html

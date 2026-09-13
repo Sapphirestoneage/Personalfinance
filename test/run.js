@@ -8109,7 +8109,7 @@ section('Core (D-094): the gate — exists() per situation');
   check('unanswered: every room but the ones that need a fact (a partner, a dependent)', gone(none), 'kids,partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  check('retired: the working rooms are gone', gone(hh('retired')), 'accounts,career-move,credential,dreamline,fire,hassle,kids,partner,real-hourly-wage,self-employed,side-hustle,variable-income');
+  check('retired: the working rooms are gone', gone(hh('retired')), 'accounts,career-move,credential,fire,hassle,kids,partner,real-hourly-wage,self-employed,side-hustle,variable-income');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
   check('employed, alone, no dependents: own work, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'decumulation,kids,partner,self-employed,variable-income');
@@ -8499,6 +8499,9 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
      back that slice. `page` is the whole file, for the few assertions that
      really are about the page: one load notice, the script order. */
   function reading(file, viewId, scriptMarker) {
+    /* The merge tool names each reading's script block; older merged pages
+       predate that, so a caller may still pass its own marker. */
+    scriptMarker = scriptMarker || ('READING ' + viewId + ',');
     const page = fs.readFileSync(path.join(ROOT, file), 'utf8');
     const a = page.indexOf('<section id="' + viewId + '"');
     if (a === -1) throw new Error('no reading ' + viewId + ' in ' + file);

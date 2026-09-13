@@ -14136,6 +14136,35 @@ is now "every script it needs is loaded, and `shared/room.js` is last" — on a
 page serving two readings the interleaving is not the page's to keep, but the
 template loading last still is.
 
+### D-240 — Big Purchase: one thing, or the whole list
+
+**Decision.** Price the Dream becomes the whole-list reading of Big Purchase.
+Two hats: `#one-thing` (the default) and `#the-dream`.
+`rooms/dreamline.html` becomes a redirect, hash and all.
+
+**Why.** The same form, run once or run over a list: price it, put it in hours
+of your life at your real rate. Rule 1 of D-229. One thing is first because
+most people arrive holding one thing, not a list.
+
+**Ownership.** `dreamsMonthly` moves with its boxes: owner `big-purchase`,
+anchor `dl-inputs`. The dream reading carries `prefix: 'dl-'` and
+`root: 'view-the-dream'` (D-235).
+
+**The gate moved, on purpose.** Price the Dream required the `hours` branch,
+so it vanished for anyone retired or between jobs. That was the reading's
+requirement, not the room's — what one thing costs is a question anybody may
+ask — so the merged room requires no branch, and the dream reading says it
+has no wage rather than disappearing. Same call as Between Jobs in D-232.
+The branch itself is untouched and still gates what it always did.
+
+**Compatibility.** No stored shape changes. Each reading still writes only
+its own fields: four `purchase.*` on one side, `dreams` on the other.
+
+**Tooling.** The merge tool now labels each reading's script block
+(`READING view-…`), so `t.reading()` can find one without a test guessing at
+a string that reading happens to contain. Merged pages carry the THEMING note
+the template rooms carry.
+
 ---
 
 # The Dungeons & Dividends entries

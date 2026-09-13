@@ -7,231 +7,32 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Price the Dream · SPARKS</title>
-<meta name="description" content="Price the dreams a month, add the cost of living, pad it: the target monthly income, and the hours a week at your real rate it takes."/>
+<meta name="description" content="Price the Dream is the whole-list reading of Big Purchase now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. BRIEF §8 "Dreamline". DECISIONS.md D-093 / D-101.
-
-  1. READS   A month's spending (Cash Flow) and the income (Start Here) as
-             chips; the real hourly wage from engines/hourly.js and take-home
-             from engines/tier0.js — both shown, neither re-derived; the pad
-             and the horizon in data/dreamline.json.
-  2. WRITES  It OWNS household.dreams: five slots, dream_1 … dream_5, each a
-             price a month and (folded) a kind. Ownership row dreamsMonthly.
-             Nothing else edits those; it touches nothing else.
-  3. CALLS   engines/dreamline.js. The rate is Real Hourly Wage's, the tax
-             is Tier 0's effective-rate lookup, never a second calculation.
-  4. EMPTY   Opened by deep link with an empty spine it renders with the
-             intake's guesses and says so (Gate.fillGuesses): the target
-             shows from guessed spending; the hours wait for paid hours in
-             Real Hourly Wage. A blank dream is no dream, not a zero.
-  5. CONFIG  data/dreamline.json (bufferMultiplier 1.3, horizonMonths 6).
-
-  THE SHAPE (shared/room.js, frozen): one number, one chart, the lens, five
-  inputs and five folded, the assumptions drawer with sources, why this
-  matters at your stage, one out-of-scope line to Get Help. The ids below
-  are the deep links.
-
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
-  on load and only sets .value, never under focus.
-  THEMING: none this pass. A theme is a class on <body> and a palette in
-  shared/theme.css.
+  REDIRECT — Price the Dream is a reading of Big Purchase (rooms/big-purchase.html#the-dream, DECISIONS.md D-240).
+  The same form, run once or run over a list. Rule 1 of D-229.
+  The file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
 -->
-<style>
-  section[id] { scroll-margin-top: var(--space-4); }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-</style>
+<meta http-equiv="refresh" content="0; url=big-purchase.html#the-dream"/>
 </head>
 <body class="slaf">
-
-<header class="room-head">
-  <a class="room-back" href="../index.html">← Home</a>
-  <h1>Price the Dream</h1>
-  <p class="room-lede">Price the dreams a month, add the cost of living, pad it: the target monthly income, and the hours a week at your real rate it takes.</p>
-</header>
-
 <main class="slaf-wrap">
-  <div class="notice" id="load-notice" hidden></div>
-  <div class="room-standalone" id="room-standalone" hidden></div>
-
-  <section class="slaf-card" id="number">
-    <div class="room-head-row">
-      <span class="slaf-eyebrow">The life, a month</span>
-      <div id="room-lens"></div>
-    </div>
-    <div class="room-number" id="room-number"></div>
-  </section>
-
-  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Dreams against the month</span>
-    <div id="room-chart"></div>
-  </section>
-
-  <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">The dreams</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Price each one as what it would cost a month — a trip saved for over the year, a course by its instalments, a place by its rent. Leave a slot blank and it is simply not a dream yet, not a dream of nothing.</p>
-    <div id="room-inputs"></div>
-  </section>
-
-  <section class="slaf-card" id="amounts" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Through the lens</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The toggle up top reads these as dollars, hours of your life, or months of FI bought or pushed.</p>
-    <ul class="room-amounts" id="room-amounts"></ul>
-  </section>
-
-  <details class="room-drawer" id="assumptions">
-    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
-    <div class="room-assumptions-body" id="room-assumptions"></div>
-  </details>
-
-  <p class="room-why" id="room-why" hidden></p>
-  <p class="room-scope" id="room-scope"></p>
-
-  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">What this is reading</span>
-    <div id="reading-list" style="margin-top:var(--space-3)"></div>
-  </section>
-
-  <p class="disclaimer">
-    Educational tool, not financial advice. The pad is a convention, tax is
-    estimated from a flat effective-rate table, not a return. Your numbers
-    stay in this browser.
-  </p>
+  <p style="color:var(--color-text-muted)">Price the Dream is the whole-list reading of Big Purchase now.
+    <a href="big-purchase.html#the-dream" id="go">Open it →</a></p>
 </main>
-
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/suggest.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/progress.js"></script>
-<script src="../shared/roomexport.js"></script>
-<script src="../shared/undo.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../engines/dreamline.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../shared/charts.js"></script>
-<script src="../shared/room.js"></script>
 <script>
-(function () {
-  'use strict';
-  var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Engine = SLAF.Dreamline, Charts = SLAF.Charts, Room = SLAF.Room;
-
-  function esc(s) {
-    return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
-  function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
-  function hours(h) { return (Math.round(h * 10) / 10).toLocaleString('en-US', { maximumFractionDigits: 1 }); }
-  function wageLink() { return '<a href="' + esc(Ownership.linkTo('real-hourly-wage', 'inputs')) + '">Real Hourly Wage</a>'; }
-
-  /* ---- writes: this room owns household.dreams, five slots -------------------- */
-  function writeSlot(i, fields) {
-    Spine.set('dreams', Engine.withSlot(Engine.dreams(Spine.getProfile()), i, fields));
-  }
-  function priceInput(i) {
-    return { ctl: 'dream' + i, label: 'Dream ' + i + ', a month', kind: 'money', placeholder: 'e.g. ' + [800, 600, 250, 150, 100][i - 1],
-      read: function (h) { var d = Engine.slot(h, i); return d ? d.monthlyCents : null; },
-      write: function (v) { writeSlot(i, { monthlyCents: v === null || v <= 0 ? null : v }); } };
-  }
-  function kindInput(i) {
-    return { ctl: 'kind' + i, label: 'Dream ' + i + ' is', kind: 'select', options: [['', '—']].concat(Engine.KINDS),
-      read: function (h) { var d = Engine.slot(h, i); return d ? d.label : null; },
-      write: function (v) { writeSlot(i, { label: v }); } };
-  }
-  var slots = [1, 2, 3, 4, 5];
-
-  var PART_COLOURS = { spending: Charts.COLORS.spend, buffer: Charts.COLORS.muted, dreams: [Charts.COLORS.series[0], Charts.COLORS.series[1], Charts.COLORS.series[4], Charts.COLORS.series[5], Charts.COLORS.series[6]] };
-
-  Room.mount({
-    id: 'dreamline',
-    tables: ['dreamline', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['monthlyExpenses', 'grossAnnualIncome'],
-
-    number: function (h, T) {
-      var p = Engine.picture(h, T);
-      if (!Money.isOk(p)) return { label: 'Target monthly income', value: null, reason: p.reason };
-      var t = p.target, g = p.gap, hrs = p.hours;
-      var parts = [];
-      if (t.pricedCount === 0) parts.push('no dream priced' + (t.unpricedCount ? ' (' + t.unpricedCount + ' named)' : ''));
-      else parts.push('<strong>' + t.pricedCount + (t.pricedCount === 1 ? ' dream' : ' dreams') + ', ' + Money.formatCents(t.dreamsCents) + ' a month</strong>' + (t.unpricedCount ? ' (' + t.unpricedCount + ' unpriced)' : ''));
-      parts.push('spending ' + Money.formatCents(t.expensesCents));
-      parts.push('× ' + t.bufferMultiplier);
-      if (Money.isOk(g)) parts.push('you take home ' + Money.formatCents(g.takeHomeMonthlyCents) + ': <strong>' + Money.formatCents(Math.abs(g.value)) + (g.short ? ' short' : ' to spare') + '</strong>');
-      else parts.push('take-home is not in yet — ' + esc(g.reason));
-      var sub = parts.join(' · ');
-      if (Money.isOk(hrs)) sub += '. <strong>' + hours(hrs.value) + ' hours a week</strong> at ' + perHour(hrs.wageCents) + ' (' + wageLink() + '), ' + hours(hrs.hoursNow) + ' now';
-      else sub += '. To see it in hours a week: ' + esc(hrs.reason) + ' — in ' + wageLink();
-      return { label: 'Target monthly income', value: Money.formatCents(p.value), sub: sub, zone: p.zone, result: p };
-    },
-
-    chart: function (h, T) {
-      var p = Engine.picture(h, T);
-      if (!Money.isOk(p)) return Charts.stacked({ rows: [], empty: 'Add your monthly spending to draw the month.' });
-      var parts = [{ label: 'Spending', value: p.target.expensesCents, color: PART_COLOURS.spending }];
-      p.dreams.forEach(function (d, k) {
-        if (Money.isEntered(d.monthlyCents)) parts.push({ label: d.name, value: d.monthlyCents, color: PART_COLOURS.dreams[k % PART_COLOURS.dreams.length] });
-      });
-      parts.push({ label: 'The pad, × ' + p.target.bufferMultiplier, value: p.target.bufferCents, color: PART_COLOURS.buffer });
-      return Charts.stacked({
-        title: 'The target month: spending, each dream, the pad',
-        rows: [{ label: 'The target month', note: p.target.pricedCount ? p.target.pricedCount + ' priced' : 'no dream yet', parts: parts }]
-      });
-    },
-
-    inputs: slots.map(priceInput),
-    moreLabel: 'Name each dream',
-    more: slots.map(kindInput),
-
-    amounts: function (h, T) {
-      var p = Engine.picture(h, T);
-      if (!Money.isOk(p)) return [];
-      var rows = [{ label: 'The target month', cents: p.value }];
-      if (p.target.pricedCount) rows.push({ label: 'The dreams, a month', cents: p.target.dreamsCents, href: '#inputs' });
-      if (Money.isOk(p.gap) && p.gap.value !== 0) rows.push({ label: p.gap.short ? 'Short of the target, a month' : 'Over the target, a month', cents: Math.abs(p.gap.value) });
-      if (p.target.pricedCount) rows.push({ label: 'The dreams over ' + p.horizon.months + ' months', cents: p.horizon.dreamsOverHorizonCents });
-      rows.push({ label: 'A month of spending', cents: p.target.expensesCents, href: Ownership.linkTo('expenses', 'spending') });
-      return rows;
-    },
-
-    assumptions: function (h, T) {
-      var d = T.dreamline || {}, tax = T.effectiveTaxRates || {};
-      var p = Engine.picture(h, T);
-      var hrs = Money.isOk(p) ? p.hours : null, g = Money.isOk(p) ? p.gap : null;
-      var tableSource = 'data/dreamline.json v' + (d.version || '?') + ' — ' + (d.source || '') + ' (' + (d.confidence || 'convention') + ')';
-      return [
-        { label: 'The pad', value: '× ' + Engine.buffer(T), source: tableSource + (d.confidenceNote ? ' — ' + d.confidenceNote : '') },
-        { label: 'The horizon', value: Money.formatMonths(Engine.horizonMonths(T)), source: 'the timeline the exercise is written for; each dream is also shown as what it costs over it (convention, data/dreamline.json)' },
-        { label: 'Real hourly wage', value: hrs && Money.isOk(hrs) ? perHour(hrs.wageCents) + ', ' + hours(hrs.hoursNow) + ' h a week now' : 'not in yet' + (hrs && hrs.reason ? ' — ' + hrs.reason : ''), source: 'Real Hourly Wage, with its own assumptions: the flat tax estimate, weeks a year, and every hour the job takes counted as work' },
-        { label: 'Take-home', value: g && Money.isOk(g) ? Money.formatCents(g.takeHomeMonthlyCents) + ' a month at ' + Money.formatRate(g.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + (tax.version || '?') + ' — ' + (tax.source || '') + ' (' + (tax.confidence || '') + ')' },
-        { label: 'Weeks in a month', value: String(Math.round(Engine.WEEKS_PER_MONTH * 100) / 100), source: '52 ÷ 12: a monthly figure over a weekly rate (convention)' }
-      ];
-    },
-
-    why: function (h, T, situation) {
-      return {
-        employed: 'Employed, the salary is fixed and the dreams feel like a someday. Priced a month and turned into hours a week at the rate the job really pays, a dream becomes a number of Tuesdays — and the gap between the target and what you take home is the size of the raise, the side income, or the cut in spending that closes it.',
-        selfEmployed: 'Self-employed, the target monthly income is the number to set your rate and your hours against. Priced this way, a dream is so many billable hours a week at what you actually keep — and the pad is the slack a variable income needs to fund a dream without missing a month.',
-        mixed: 'With a job and your own work, the target is what the two together need to bring in a month. The hours here are at the job’s real rate; if your own work keeps more per hour, the dreams cost fewer of them, and that is a reason to lean that way.',
-        student: 'At a student’s stage the dreams are cheap to price and dear in hours: a part-time rate turns a modest dream into a large slice of the week. That is the honest arithmetic of the next few years, and a reason to price the dream now and time it for later.',
-        betweenJobs: '', retired: ''
-      }[situation] || 'A dream priced a month is a number; at your real hourly wage it is hours of your week. This room does that arithmetic and nothing else.';
-    },
-
-    scope: 'This room does not plan the dreams or find the hours; it prices them a month and turns that into hours of your week.'
-  });
-})();
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#amounts': '#dl-amounts', '#assumptions': '#dl-assumptions', '#chart': '#dl-chart', '#inputs': '#dl-inputs', '#number': '#dl-number', '#reading': '#dl-reading', '#reading-list': '#dl-reading-list' };
+    var hash = location.hash || '';
+    var target = 'big-purchase.html' + (map[hash] || '#the-dream');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
 </script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 /* test/rooms/dreamline.js — the Dreamline room (D-093 / D-101).
    Hand-derived numbers as literals; nothing copied from engine output. */
 module.exports = function (t) {
-  const { section, check, checkTrue, ROOT, fs, path, Money, Schema, Demo, Registry, Ownership, Gate, Spine, Hourly, Tier0, TABLES } = t;
+  const { section, check, checkTrue, ROOT, fs, path, reading, Money, Schema, Demo, Registry, Ownership, Gate, Spine, Hourly, Tier0, TABLES } = t;
   const D = require(path.join(ROOT, 'engines/dreamline.js'));
 
   section('Dreamline — the table');
@@ -212,22 +212,27 @@ module.exports = function (t) {
 
   /* Through the spine: Spine.set('dreams', …) is what the room writes. */
   Spine.reset();
-  Spine.registerRoom('dreamline');
+  Spine.registerRoom('big-purchase');
   Spine.batch('Dream 1, a month → $800', function () { Spine.set('dreams', D.withSlot(D.dreams(Spine.getProfile()), 1, { monthlyCents: 80000 })); });
   check('the spine holds the slot', Spine.getProfile().dreams[0].id + ':' + Spine.getProfile().dreams[0].monthlyCents, 'dream_1:80000');
   check('the undo entry names the slot', Spine.peekUndo().label, 'Dream 1, a month → $800');
-  const own = Ownership.describe('dreamsMonthly', Spine.getProfile(), 'dreamline');
+  const own = Ownership.describe('dreamsMonthly', Spine.getProfile(), 'big-purchase');
   checkTrue('the ownership row reads it, owned here', own && own.isSet && own.result.value === 80000 && own.isOwnHere);
   Spine.batch('Dream 1, a month → —', function () { Spine.set('dreams', D.withSlot(D.dreams(Spine.getProfile()), 1, { monthlyCents: null })); });
   check('blank through the spine removes it', Spine.getProfile().dreams.length, 0);
-  checkTrue('… and the ownership row goes incomplete', !Ownership.describe('dreamsMonthly', Spine.getProfile(), 'dreamline').isSet);
+  checkTrue('… and the ownership row goes incomplete', !Ownership.describe('dreamsMonthly', Spine.getProfile(), 'big-purchase').isSet);
   Spine.reset();
 
   section('Dreamline — the room and the registry');
 
-  const room = Registry.byId('dreamline');
-  checkTrue('registered', !!room && room.href === 'rooms/dreamline.html');
-  check('requires the hours branch', Registry.requires('dreamline').join(','), 'hours');
+  const room = Registry.byId('big-purchase');
+  checkTrue('registered', !!room && room.href === 'rooms/big-purchase.html');
+  /* The hours branch was Price the Dream's requirement, not the room's.
+     Big Purchase asks what one thing costs, which applies to anybody, so
+     the merged room requires nothing and the dream reading says it has no
+     wage rather than vanishing (D-240). The branch is unchanged and still
+     gates what it always did. */
+  check('the merged room requires no branch', Registry.requires('big-purchase').join(','), '');
   ['employed', 'selfEmployed', 'mixed', 'student'].forEach(function (s) {
     const hh = Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', employmentStatus: Gate.byId(s).status })] });
     checkTrue('the hours branch exists for ' + s, Gate.exists(hh, 'hours'));
@@ -236,18 +241,26 @@ module.exports = function (t) {
     const hh = Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', employmentStatus: Gate.byId(s).status })] });
     checkTrue('… and not for ' + s, !Gate.exists(hh, 'hours'));
   });
-  check('the ownership row is owned by this room at its inputs', Ownership.field('dreamsMonthly').owner + '#' + Ownership.field('dreamsMonthly').anchor, 'dreamline#inputs');
+  checkTrue('… so the room is open in every situation', ['employed', 'selfEmployed', 'mixed', 'student', 'retired', 'betweenJobs'].every(function (s) {
+    const hh = Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', employmentStatus: Gate.byId(s).status })] });
+    return Registry.applies(Registry.byId('big-purchase'), hh);
+  }));
+  check('the ownership row is owned by this room at its inputs', Ownership.field('dreamsMonthly').owner + '#' + Ownership.field('dreamsMonthly').anchor, 'big-purchase#dl-inputs');
 
-  const html = fs.readFileSync(path.join(ROOT, 'rooms/dreamline.html'), 'utf8');
-  checkTrue('the page mounts the template', /Room\.mount\(\{/.test(html) && /id: 'dreamline'/.test(html));
+  /* dreamline is a reading of big-purchase since D-240, so this file reads its slice of
+     that page: its own markup and its own script. `slice.page` is the
+     whole file, for the few facts that really are page-wide. */
+  const slice = reading('rooms/big-purchase.html', 'view-the-dream', "READING view-the-dream,");
+  const html = slice.html;
+  checkTrue('the page mounts the template', /Room\.mount\(\{/.test(html) && /id: 'big-purchase',\n\s*part: true,\n\s*prefix: 'dl-',\n\s*root: 'view-the-dream',/.test(html));
   ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list', 'room-standalone', 'load-notice'].forEach(function (id) {
-    checkTrue('… host #' + id, html.indexOf('id="' + id + '"') >= 0);
+    checkTrue('… host #' + id, (id === 'load-notice' ? slice.page : html).indexOf('id="' + (id === 'load-notice' ? '' : 'dl-') + id + '"') >= 0);
   });
   (room.subsections || []).forEach(function (s) {
-    checkTrue('… deep link #' + s.id, html.indexOf('id="' + s.id + '"') >= 0);
+    checkTrue('… deep link #' + s.id, slice.page.indexOf('id="' + s.id + '"') >= 0);
   });
-  checkTrue('… declares its live-form discipline and a place for a theme', /LIVE-FORM: built once/.test(html) && /THEMING:/.test(html));
-  checkTrue('… loads the engine after hourly and before the template', html.indexOf('engines/hourly.js') < html.indexOf('engines/dreamline.js') && html.indexOf('engines/dreamline.js') < html.indexOf('shared/room.js'));
+  checkTrue('… declares its live-form discipline and a place for a theme', /LIVE-FORM: built once/.test(slice.page) && /THEMING:/.test(slice.page));
+  checkTrue('… loads the engine after hourly and before the template', slice.page.indexOf('engines/hourly.js') < slice.page.indexOf('engines/dreamline.js') && slice.page.indexOf('engines/dreamline.js') < slice.page.indexOf('<script src="../shared/room.js"'));
   checkTrue('… writes only through Spine.set(\'dreams\', …)', (html.match(/Spine\.set\(/g) || []).length === 1 && /Spine\.set\('dreams'/.test(html) && !/upsertPerson|updateProfile/.test(html));
   checkTrue('… reads spending and income as chips', /reads: \['monthlyExpenses', 'grossAnnualIncome'\]/.test(html));
   checkTrue('… one stacked chart', (html.match(/Charts\.(stacked|bars|donut|area)\(/g) || []).length === 2 && !/Charts\.(bars|donut|area)\(/.test(html));
