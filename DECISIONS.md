@@ -14536,6 +14536,56 @@ written, by the offer reading, as before; the other six readings are
 what-ifs and own nothing. Checked against the pre-merge pages: all seven
 render identically.
 
+### D-252 — What the phone walk found
+
+`node test/run.js` reads files. `node test/forms.js` opens a phone and taps.
+Every merge in D-238..D-251 was green on the first and had not been run
+through the second since D-237. It found five things, and four of them were
+shipped and live.
+
+**1. A reading calling a helper the merge had removed.** The tool strips
+`jumpToHash` — the router owns the hash on a merged page — but it only
+stripped the definition and the top-level call. Two rooms called it from
+inside their table-load handler, so The Close and Debt threw on every load
+and showed "part of this room could not draw". The tool strips the call
+wherever it is now.
+
+**2. Elements lost with the header and the small print.** `body_of` drops a
+room's header and disclaimer, which belong to the merged page. But a room
+may hang a real element in either — The Statement a print-only date, the
+Scorecard two provenance lines — and its script reaches for them on load.
+Because that work happens inside the reference-table promise, what a person
+SAW was "couldn't load the reference tables in data/", which is a lie about
+the data files. The Scorecard had been in that state since **D-233**. The
+tool keeps anything with an id now, and a check asserts that every element a
+room's script names exists.
+
+**3. Template readings with no root.** `shared/room.js` hangs its listeners
+on the document and filters them by `root`. The host's mount never got one,
+so on seven pages the host reading's listeners answered every other
+reading's boxes. **The Cushion has been like that since D-232.**
+
+**4. `Progress.mount` inserting before a nested `.disclaimer`.** It put the
+sidebar before the first `.disclaimer` in `<main>`; once a reading carried
+one of its own (see 2), that is not a direct child and `insertBefore` threw.
+It walks direct children now.
+
+**5. `test/forms.js` and `test/alignment.js` were walking rooms that are
+readings.** Both repointed, with the renamed containers and ids. The layout
+pass also counted rows in HIDDEN readings — the joy curve and the rerank
+both draw `.rate-row` — and a hidden row is zero-height, which it reported
+as "nothing rendered". It measures what is on screen now.
+
+**Two failures are NOT from the merges**, and the same run against
+`65bc760` proves it: the income stub's withholding and the cash-flow
+receipt both store a rounder number than was typed when the walk types fast.
+They are in STATUS.md as open.
+
+**The lesson, written down:** a merged page is not a static rearrangement.
+It has more listeners, more boot, and one DOM, and three of the five above
+are only visible with a browser open. The phone walk runs before a merge
+ships, not after the programme.
+
 ---
 
 # The Dungeons & Dividends entries

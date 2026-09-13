@@ -1160,8 +1160,14 @@
     var box = document.createElement('section');
     box.className = 'slaf-progress-host';
     box.id = 'slaf-progress';
-    /* Before the disclaimer if there is one, so the small print stays last. */
-    var tail = host.querySelector('.disclaimer');
+    /* Before the page's small print if there is one, so it stays last. The
+       page's is a DIRECT child: a merged room carries a reading's own
+       provenance line, also .disclaimer, nested inside a section, and
+       insertBefore against that throws (D-252). */
+    var tail = null;
+    for (var k = 0; k < host.children.length; k++) {
+      if (host.children[k].classList && host.children[k].classList.contains('disclaimer')) { tail = host.children[k]; break; }
+    }
     if (tail) host.insertBefore(box, tail); else host.appendChild(box);
 
     /* The version, printed in every room's footer (D-131): version.json

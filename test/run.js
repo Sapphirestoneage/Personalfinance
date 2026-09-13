@@ -14305,6 +14305,20 @@ section('The thirty (docs/room-map.json)');
       if (reg) check('the map and the registry agree on what ' + r.id + ' is called', reg.title, r.title);
     });
 
+  /* A room that reaches for an element it does not have throws on load, and
+     because most of that work happens inside the reference-table promise,
+     what the person SEES is "couldn't load the reference tables" — a lie
+     about the data files. Two pages were in exactly that state: the merge
+     tool strips a room's header and small print, and both had hung a real
+     element there (a print-only date, a provenance line). This is the
+     check that would have said so; the tool keeps them now (D-252). */
+  fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+    const ids = new Set([...src.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
+    const named = [...new Set([...src.matchAll(/(?:\bel|getElementById)\('([a-z][a-z0-9-]*)'\)/g)].map(m => m[1]))];
+    check('rooms/' + f + ' has every element its script names', named.filter(i2 => !ids.has(i2)).join(', '), '');
+  });
+
   /* Merging rooms puts several pages' markup in one document, and the
      whole prefix apparatus exists to stop two of them claiming an id. A
      duplicate id is silent in a browser and catastrophic in a room that

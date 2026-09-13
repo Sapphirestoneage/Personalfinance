@@ -287,6 +287,10 @@
   Room.mount({
     id: 'big-purchase',
     part: true,
+    /* shared/room.js filters its document-level listeners by root. A
+       part mount without one answers the whole page, including the
+       other readings' boxes (D-252). */
+    root: 'view-one-thing',
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
     reads: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'],
 

@@ -4,7 +4,7 @@ paths:
   - "engines/firstcar.js"
 ---
 # Wheels (`car`)
-File: rooms/car.html · 843 lines
+File: rooms/car.html · 847 lines
 Engines: projection, tier0, hourly, quickmath, firstcar
 Reference data: car_costs.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json, states.json
 Owns: nothing

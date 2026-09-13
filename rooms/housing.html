@@ -513,6 +513,10 @@
   Room.mount({
     id: 'housing',
     part: true,
+    /* shared/room.js filters its document-level listeners by root. A
+       part mount without one answers the whole page, including the
+       other readings' boxes (D-252). */
+    root: 'view-rent-or-buy',
     tables: ['housingConventions', 'priceToRent', 'mortgageRates', 'ratioBenchmarks', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'levers'],
     reads: ['rentMonthly', 'monthlyExpenses', 'grossAnnualIncome', 'cashSavings', 'state'],
 

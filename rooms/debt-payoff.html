@@ -2213,7 +2213,7 @@
     el('f-stop').value = stopAfter;
     /* A failure here is the room's own, not the table's: say so, and
        leave what did paint on screen. */
-    try { renderNow(); jumpToHash(); }
+    try { renderNow(); }
     catch (e) {
       var n = el('load-notice');
       n.hidden = false; n.className = 'notice is-error';

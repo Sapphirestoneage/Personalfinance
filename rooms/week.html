@@ -299,6 +299,10 @@
   Room.mount({
     id: 'week',
     part: true,
+    /* shared/room.js filters its document-level listeners by root. A
+       part mount without one answers the whole page, including the
+       other readings' boxes (D-252). */
+    root: 'view-the-week',
     tables: ['weekBlocks', 'expenseCategories', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
     reads: ['monthlyExpenses', 'grossAnnualIncome'],
     ready: function (T) { TABLES = T; },

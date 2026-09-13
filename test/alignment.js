@@ -56,15 +56,17 @@ const EQUAL_HEIGHT = [
   ['/rooms/hassle.html', '.rates'],
   ['/rooms/runway.html#at-3am', '.pair'],
   ['/rooms/runway.html#at-3am', '.cover-grid'],
-  ['/rooms/financial-snapshot.html', '.three'],
-  ['/rooms/rerank.html', '.rate-row'],
-  ['/rooms/rerank.html', '.pair'],
+  /* A merged room opens on its default reading, so a row that belongs to
+     another one has to be asked for by hash or it measures nothing (D-252). */
+  ['/rooms/financial-snapshot.html#the-nine', '.three'],
+  ['/rooms/values.html#the-rerank', '.rate-row'],
+  ['/rooms/values.html#the-rerank', '.pair'],
   ['/rooms/what-if-life.html', '.qgrid'],
   ['/rooms/what-if-life.html', '.cols'],
-  ['/rooms/stacker.html', '.figures'],
-  ['/rooms/stacker.html', '.three'],
+  ['/rooms/skill-tree.html#the-three', '.figures'],
+  ['/rooms/skill-tree.html#the-three', '.three'],
   ['/rooms/values.html', '.two'],
-  ['/rooms/fulfillment.html', '.quads'],
+  ['/rooms/values.html#the-joy-curve', '.quads'],
   ['/rooms/runway.html#at-3am', '.basis']
 ];
 (async () => {
@@ -114,6 +116,12 @@ const EQUAL_HEIGHT = [
       const rows = await p.evaluate((sel) => {
         const out = [];
         document.querySelectorAll(sel).forEach(grid => {
+          /* A merged room holds several readings and shows one (D-229). The
+             same class can exist in a hidden one — the joy curve and the
+             rerank both draw .rate-row — and measuring that reports a row
+             of zero-height cells, which reads as "nothing rendered" and is
+             a false alarm. Measure what is on screen. */
+          if (grid.offsetParent === null) return;
           /* Group the grid's cells into visual rows by their own top edge,
              then check that the interactive box in each cell of a row starts
              at the same y. Cells alone on a row are trivially aligned. */
@@ -157,6 +165,12 @@ const EQUAL_HEIGHT = [
       const rows = await p.evaluate((sel) => {
         const out = [];
         document.querySelectorAll(sel).forEach(grid => {
+          /* A merged room holds several readings and shows one (D-229). The
+             same class can exist in a hidden one — the joy curve and the
+             rerank both draw .rate-row — and measuring that reports a row
+             of zero-height cells, which reads as "nothing rendered" and is
+             a false alarm. Measure what is on screen. */
+          if (grid.offsetParent === null) return;
           const byRow = {};
           Array.from(grid.children).forEach(c => {
             const t = Math.round(c.getBoundingClientRect().top);

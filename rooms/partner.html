@@ -389,6 +389,10 @@
   var ROOM = Room.mount({
     id: 'partner',
     part: true,
+    /* shared/room.js filters its document-level listeners by root. A
+       part mount without one answers the whole page, including the
+       other readings' boxes (D-252). */
+    root: 'view-two-of-you',
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'partnerConventions', 'ratioBenchmarks'],
     reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
 

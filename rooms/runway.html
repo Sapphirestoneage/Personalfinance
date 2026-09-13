@@ -1182,6 +1182,10 @@
   Room.mount({
     id: 'runway',
     part: true,
+    /* shared/room.js filters its document-level listeners by root. A
+       part mount without one answers the whole page, including the
+       other readings' boxes (D-252). */
+    root: 'view-job-hunting',
     tables: ['reentryGap', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'federalBrackets', 'accessRules'],
     reads: ['unemployment', 'monthlyExpenses', 'cashSavings', 'dependents', 'healthCover', 'healthMonthly'],
 

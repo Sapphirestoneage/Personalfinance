@@ -5,7 +5,7 @@ paths:
   - "engines/buckets.js"
 ---
 # The Life (`week`)
-File: rooms/week.html · 518 lines
+File: rooms/week.html · 522 lines
 Engines: projection, tier0, hourly, cashflow, week, ratios, buckets
 Reference data: bucket_ideas.json, confidence_weights.json, expense_categories.json, ratio_benchmarks.json, ratio_explainers.json, week_blocks.json
 Owns: designedHours, bucketsPlanned

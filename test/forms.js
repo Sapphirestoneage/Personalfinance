@@ -343,16 +343,16 @@ const CASES = [
     seed: 'spending',
     /* Stages 2-4 on the demo month: the rating and the two selects survive
        the tap; then an arrow on stage 3, and stage 4 shows a figure. */
-    prepare: async (page) => { await page.waitForSelector('#rate-list .rate-row'); },
+    prepare: async (page) => { await page.waitForSelector('#rr-rate-list .rate-row'); },
     fields: [
-      { sel: '#rate-list select[data-rating-item="housing"]', type: '' },
-      { sel: '#rate-list select[data-row="housing"][data-field="miss"]', type: '' },
-      { sel: '#rate-list select[data-row="housing"][data-field="who"]', type: '' }
+      { sel: '#rr-rate-list select[data-rating-item="housing"]', type: '' },
+      { sel: '#rr-rate-list select[data-row="housing"][data-field="miss"]', type: '' },
+      { sel: '#rr-rate-list select[data-row="housing"][data-field="who"]', type: '' }
     ],
     expect: async (page) => {
-      await page.selectOption('#rate-list select[data-rating-item="housing"]', '7');
+      await page.selectOption('#rr-rate-list select[data-rating-item="housing"]', '7');
       await page.waitForTimeout(500);
-      await page.selectOption('#rate-list select[data-row="housing"][data-field="miss"]', 'some');
+      await page.selectOption('#rr-rate-list select[data-row="housing"][data-field="miss"]', 'some');
       await page.waitForTimeout(500);
       await page.tap('#rank-list [data-move="down"]:not([disabled])');
       await page.waitForTimeout(500);
@@ -502,7 +502,7 @@ const CASES = [
       { sel: '[data-ctl="workCostsMonthlyCents"]', type: '650' }
     ],
     expect: async (page) => {
-      const r = await page.evaluate(() => { const S = SLAF; const w = S.Schema.workProfile(S.Schema.primaryPerson(S.Spine.getProfile())); return { hours: w.contractedHoursPerWeek, costs: w.workCostsMonthlyCents, label: S.Spine.peekUndo().label, number: document.getElementById('room-number').innerText }; });
+      const r = await page.evaluate(() => { const S = SLAF; const w = S.Schema.workProfile(S.Schema.primaryPerson(S.Spine.getProfile())); return { hours: w.contractedHoursPerWeek, costs: w.workCostsMonthlyCents, label: S.Spine.peekUndo().label, number: document.getElementById('rhw-room-number').innerText }; });
       return [
         ['the paid hours landed', r.hours, 35],
         ['the costs landed, in cents', r.costs, 65000],
@@ -521,7 +521,7 @@ const CASES = [
       { sel: '[data-ctl="annualTargetCents"]', type: '1200' }
     ],
     expect: async (page) => {
-      const r = await page.evaluate(() => { const S = SLAF; const g = S.Spine.getProfile().giving; return { pct: g.pctOfIncome, target: g.annualTargetCents, number: document.getElementById('room-number').innerText }; });
+      const r = await page.evaluate(() => { const S = SLAF; const g = S.Spine.getProfile().giving; return { pct: g.pctOfIncome, target: g.annualTargetCents, number: document.getElementById('gv-room-number').innerText }; });
       return [
         ['the share landed as a ratio', r.pct, 0.05],
         ['the target landed, in cents', r.target, 120000],
@@ -1140,7 +1140,7 @@ const CASES = [
        every other case here — that nothing reached the household (D-052).
        The pinned $14,500 is the demo persona's cash-out cost: $8,800 federal
        at 22%, $1,700 North Carolina at 4.25%, $4,000 penalty on $40,000. */
-    room: '/rooms/career-move.html',
+    room: '/rooms/rollover.html',
     container: '#room-inputs',
     seed: 'demo',
     fields: [
@@ -1322,10 +1322,10 @@ const CASES = [
   },
   {
     /* MICRO-RETIREMENT PLANNER (K5, D-219): six boxes. */
-    room: '/rooms/career-move.html',
+    room: '/rooms/career-move.html#a-break',
     container: '#fund',
     seed: 'demo',
-    fields: [{ sel: '#in-months', type: '6' }, { sel: '#in-income', type: '500' }],
+    fields: [{ sel: '#mr-in-months', type: '6' }, { sel: '#in-income', type: '500' }],
     expect: async (page) => {
       const fund = await page.evaluate(() => Number(document.getElementById('m-sub').getAttribute('data-fund')));
       return [['a fund is priced', fund > 0, true]];
@@ -1333,7 +1333,7 @@ const CASES = [
   },
   {
     /* OFFER COMPARE (K8, D-219): four columns built once, two shown. */
-    room: '/rooms/career-move.html',
+    room: '/rooms/career-move.html#side-by-side',
     container: '#offers',
     seed: 'demo',
     fields: [{ sel: '#o0-base', type: '95000' }, { sel: '#o1-base', type: '100000' }, { sel: '#o1-commute', type: '200' }],
@@ -1344,10 +1344,10 @@ const CASES = [
   },
   {
     /* THE DEGREE DECISION (K9, D-219): ten boxes. */
-    room: '/rooms/career-move.html',
-    container: '#inputs',
+    room: '/rooms/career-move.html#a-degree',
+    container: '#dg-inputs',
     seed: 'demo',
-    fields: [{ sel: '#in-tuition', type: '60000' }, { sel: '#in-years', type: '2' }, { sel: '#in-with-low', type: '95000' }],
+    fields: [{ sel: '#in-tuition', type: '60000' }, { sel: '#dg-in-years', type: '2' }, { sel: '#in-with-low', type: '95000' }],
     expect: async (page) => {
       const be = await page.evaluate(() => document.getElementById('g-num').getAttribute('data-breakeven'));
       return [['a break-even age', /^\d+(\.\d)?$/.test(be), true]];
@@ -1374,9 +1374,9 @@ const CASES = [
     container: '#deal',
     seed: 'empty',
     fields: [
-      { sel: '#in-price', type: '320000' },
+      { sel: '#pr-in-price', type: '320000' },
       { sel: '#in-down', type: '20' },
-      { sel: '#in-rate', type: '6.9' }
+      { sel: '#pr-in-rate', type: '6.9' }
     ],
     expect: async (page) => {
       await page.tap('#in-rent'); await page.waitForTimeout(200);

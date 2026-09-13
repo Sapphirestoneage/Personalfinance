@@ -847,6 +847,10 @@
   Room.mount({
     id: 'career-move',
     part: true,
+    /* shared/room.js filters its document-level listeners by root. A
+       part mount without one answers the whole page, including the
+       other readings' boxes (D-252). */
+    root: 'view-the-offer',
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'levers'],
     reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses', 'investments'],
 
