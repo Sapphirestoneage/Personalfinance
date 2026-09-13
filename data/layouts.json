@@ -92,8 +92,7 @@
             "debates",
             "student-loans",
             "calendar",
-            "history",
-            "wrapped"
+            "history"
           ],
           "note": "Registry order 1\u201351 \u2014 the sequence a person is meant to walk."
         },
@@ -103,7 +102,6 @@
             "get-help",
             "data",
             "one-pager",
-            "progress-card",
             "settings"
           ],
           "note": "Utilities at orders 29 and 97\u201399 \u2014 reachable any time, never a step."
@@ -173,8 +171,7 @@
             "unlearning",
             "debates",
             "calendar",
-            "history",
-            "wrapped"
+            "history"
           ],
           "note": "The same 43 rooms show up whichever answer you give."
         },
@@ -212,7 +209,6 @@
             "get-help",
             "data",
             "one-pager",
-            "progress-card",
             "settings"
           ],
           "note": "Utilities the gate never touches."
@@ -346,9 +342,7 @@
           "rooms": [
             "data",
             "one-pager",
-            "progress-card",
             "history",
-            "wrapped",
             "stacker",
             "skill-tree",
             "exercises"
@@ -486,9 +480,7 @@
             "settings",
             "data",
             "one-pager",
-            "progress-card",
             "history",
-            "wrapped",
             "get-help",
             "financial-snapshot",
             "race",
@@ -608,9 +600,7 @@
             "ledger",
             "data",
             "one-pager",
-            "progress-card",
             "history",
-            "wrapped",
             "stacker",
             "skill-tree",
             "exercises",
@@ -757,9 +747,7 @@
             "get-help",
             "data",
             "one-pager",
-            "progress-card",
             "history",
-            "wrapped",
             "settings"
           ],
           "note": "Everything about time, meaning, skill, work and the end of life. The FOO has nothing to say about any of it.",
@@ -877,9 +865,7 @@
             "giving",
             "data",
             "one-pager",
-            "progress-card",
             "history",
-            "wrapped",
             "get-help"
           ]
         }
@@ -951,7 +937,6 @@
             "goals",
             "self-employed",
             "history",
-            "wrapped",
             "housing",
             "down-payment",
             "property",
@@ -995,8 +980,7 @@
             "hassle",
             "credit",
             "data",
-            "one-pager",
-            "progress-card"
+            "one-pager"
           ],
           "note": "One flat alphabetical list. No hierarchy to learn and none to get wrong."
         }
@@ -1127,8 +1111,7 @@
             "decumulation",
             "roth-aca",
             "middle-class-trap",
-            "history",
-            "wrapped"
+            "history"
           ]
         },
         {
@@ -1149,7 +1132,6 @@
           "rooms": [
             "data",
             "one-pager",
-            "progress-card",
             "get-help"
           ]
         }
@@ -1276,9 +1258,7 @@
             "skill-tree",
             "data",
             "one-pager",
-            "progress-card",
-            "history",
-            "wrapped"
+            "history"
           ]
         }
       ]
@@ -1402,9 +1382,7 @@
             "ledger",
             "data",
             "one-pager",
-            "progress-card",
-            "history",
-            "wrapped"
+            "history"
           ]
         }
       ]
@@ -1521,9 +1499,7 @@
             "income",
             "data",
             "one-pager",
-            "progress-card",
             "history",
-            "wrapped",
             "get-help",
             "real-hourly-wage",
             "hassle",
@@ -1655,9 +1631,7 @@
             "settings",
             "data",
             "one-pager",
-            "progress-card",
             "history",
-            "wrapped",
             "get-help"
           ]
         }
@@ -1759,8 +1733,7 @@
             "reversibility",
             "student-loans",
             "calendar",
-            "history",
-            "wrapped"
+            "history"
           ],
           "note": "37 rooms sit at exactly the same depth. There is no sequence among them \u2014 the numbered path invents one.",
           "warn": true
@@ -1778,7 +1751,6 @@
             "get-help",
             "data",
             "one-pager",
-            "progress-card",
             "settings"
           ]
         }
@@ -1905,9 +1877,7 @@
             "settings",
             "data",
             "one-pager",
-            "progress-card",
             "history",
-            "wrapped",
             "stacker",
             "skill-tree",
             "exercises"
@@ -2026,10 +1996,8 @@
             "credential",
             "degree",
             "history",
-            "wrapped",
             "data",
-            "one-pager",
-            "progress-card"
+            "one-pager"
           ]
         }
       ]
@@ -2065,12 +2033,10 @@
             "credit",
             "calendar",
             "history",
-            "wrapped",
             "exercises",
             "settings",
             "data",
             "one-pager",
-            "progress-card",
             "get-help",
             "housing",
             "down-payment",
@@ -2251,10 +2217,8 @@
             "what-if-life",
             "adventure",
             "history",
-            "wrapped",
             "data",
             "one-pager",
-            "progress-card",
             "get-help"
           ],
           "note": "How it is going and where it lands. Twelve spokes.",
@@ -2400,9 +2364,7 @@
             "settings",
             "data",
             "one-pager",
-            "progress-card",
             "history",
-            "wrapped",
             "stacker",
             "skill-tree",
             "exercises"
@@ -2544,9 +2506,7 @@
             "ledger",
             "data",
             "one-pager",
-            "progress-card",
-            "history",
-            "wrapped"
+            "history"
           ],
           "note": "Reachable from every screen without being one of the three."
         }

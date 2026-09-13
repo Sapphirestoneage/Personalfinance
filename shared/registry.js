@@ -1645,17 +1645,28 @@
      conversation; Private with full numbers, Public with ratios and time. */
   ROOMS.push({
     id: 'one-pager',
-    group: 'upkeep', aliases: ['one pager', 'one-pager', 'snapshot page', 'print', 'share with a coach', 'lender', 'planner'],
+    /* Three things to hand over since D-234: the progress card, the year in
+       four lines, and the whole page. The aliases carry all three. */
+    group: 'upkeep', aliases: ['one pager', 'one-pager', 'snapshot page', 'print', 'share with a coach', 'lender', 'planner',
+                               'card', 'progress card', 'share progress', 'shape not size',
+                               'wrapped', 'money wrapped', 'my year', 'year in review'],
     kind: 'read',
     needs: ['grossAnnualIncome'],
     order: 98.3,
-    title: 'The One-Pager',
-    blurb: 'One page of your money for any conversation: a partner, a coach, a lender, a planner, a podcast. Private with full numbers, or Public with ratios, percentages and time only. Print it, or hand over the file.',
+    title: 'The Card',
+    blurb: 'Everything you would hand someone else, three ways: a progress card that carries the shape and never the size, your year in four lines, and the whole page for a lender or a planner.',
     href: 'rooms/one-pager.html',
     tier: 1,
     tags: ['income', 'cashflow', 'debt'],
     daite: { reads: ['assets', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state', 'you.dob', 'you.situation', 'plans.targets'], writes: [] },
-    subsections: [{ id: 'audience', label: 'Who is it for' }, { id: 'page', label: 'The page' }]
+    subsections: [
+      { id: 'view-the-card', label: 'The card' },
+      { id: 'view-the-year', label: 'The year' },
+      { id: 'view-the-page', label: 'The whole page' },
+      { id: 'the-card',      label: 'Share the shape' },
+      { id: 'audience',      label: 'Who is it for' },
+      { id: 'page',          label: 'The page' }
+    ]
   });
 
   /* Where every room's out-of-scope line points (D-097). Reads the gate for
@@ -1700,44 +1711,6 @@
     ]
   });
 
-  /* The progress card (H8, D-212): a share that carries ratios, percentages
-     and time only, never a balance. Reached from the doors home. */
-  ROOMS.push({
-    id: 'progress-card',
-    group: 'upkeep', aliases: ['share', 'card', 'progress card', 'brag'],
-    kind: 'core',
-    utility: true,
-    needs: [],
-    order: 98.7,
-    title: 'Progress Card',
-    blurb: 'A card to share: how far the FI date moved, the savings rate, the debt-free month. Ratios, percentages and time only, never a dollar amount.',
-    href: 'rooms/progress-card.html',
-    tier: 0,
-    tags: ['cashflow'],
-    daite: { reads: [], writes: [] },
-    subsections: [
-      { id: 'card',  label: 'The card' },
-      { id: 'make',  label: 'Make one' }
-    ]
-  });
-
-  /* Money Wrapped (I1, D-213): the year in four lines from the year's
-     snapshots, days, hours, a percent and a count. Every December and
-     on demand. Reads only. */
-  ROOMS.push({
-    id: 'wrapped',
-    group: 'upkeep', aliases: ['wrapped', 'year in review', 'money wrapped', 'december'],
-    kind: 'read',
-    needs: ['investments', 'monthlyExpenses'],
-    order: 51.5,
-    title: 'Money Wrapped',
-    blurb: 'Your year in four lines: days of freedom bought, the priciest recurring cost in hours of work, the biggest earned change, and how many numbers you learned. No amounts, so it is safe to share.',
-    href: 'rooms/wrapped.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents'], writes: [] },
-    subsections: [{ id: 'card', label: 'The year' }]
-  });
   /* Your Coast Date (I4, D-213): its own formula, not a FIRE variant. */
   ROOMS.push({
     id: 'coast-date',

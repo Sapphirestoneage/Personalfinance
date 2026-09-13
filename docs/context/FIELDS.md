@@ -49,7 +49,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 ## debt-payoff (5)
 
-- `totalDebt` — Total debt · read by ledger, start, financial-snapshot, statements, statement, dashboard, credit, what-if-life, student-loans, history, wrapped
+- `totalDebt` — Total debt · read by ledger, start, financial-snapshot, statements, statement, dashboard, credit, what-if-life, student-loans, history, one-pager
 - `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, financial-snapshot, statements, rerank, cant-pay, student-loans, calendar
 - `debtBalance` — Balance · read by ledger, start
 - `debtRate` — Interest rate · read by ledger, start, foo-ladder, debates
@@ -167,15 +167,15 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, wrapped, one-pager
+- `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, one-pager
 - `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
-- `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
+- `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, runway, tax, offer-compare, unlearning, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, unlearning
-- `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, wrapped
+- `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, one-pager
 - `hasDebt` — Any debt · read by dashboard, unlearning, student-loans
 - `contributionPercent` — Workplace contribution · read by ledger, statements, accounts, what-if-life, tax
 - `highestDeductible` — Highest deductible · read by statement, runway, protection
@@ -183,9 +183,9 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 ## statement (7)
 
-- `otherAssets` — Property & other assets · read by ledger, statements, estate, wrapped
+- `otherAssets` — Property & other assets · read by ledger, statements, estate, one-pager
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
-- `netWorth` — Net worth · read by ledger, financial-snapshot, statements, dashboard, race, what-if-life, history, wrapped, one-pager
+- `netWorth` — Net worth · read by ledger, financial-snapshot, statements, dashboard, race, what-if-life, history, one-pager
 - `assetValue` — What each account or thing is worth · read by ledger
 - `assetCharacter` — How it is taxed on the way out · read by ledger
 - `assetTier` — Which pile it sits in · read by ledger

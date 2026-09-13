@@ -1090,19 +1090,6 @@
       "order": 51
     },
     {
-      "id": "wrapped",
-      "title": "Money Wrapped",
-      "file": "rooms/wrapped.html",
-      "reads": [
-        "investments",
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 51.5
-    },
-    {
       "id": "data",
       "title": "Your Data",
       "file": "rooms/data.html",
@@ -1114,7 +1101,7 @@
     },
     {
       "id": "one-pager",
-      "title": "The One-Pager",
+      "title": "The Card",
       "file": "rooms/one-pager.html",
       "reads": [
         "grossAnnualIncome"
@@ -1133,16 +1120,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 98.5
-    },
-    {
-      "id": "progress-card",
-      "title": "Progress Card",
-      "file": "rooms/progress-card.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 98.7
     }
   ]
 }

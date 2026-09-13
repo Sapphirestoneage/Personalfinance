@@ -10476,7 +10476,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
-  check('Upkeep, with Front Doors, the Walk-Through, Refresh and Welcome Back gone into the Ledger (D-230)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,history,settings,get-help,wrapped,one-pager,progress-card');
+  check('Upkeep, after the Ledger took navigation (D-230) and The Card took the three things you hand over (D-234)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,history,settings,get-help,one-pager');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
@@ -13294,7 +13294,9 @@ section('I1, I3, I4, I5: Money Wrapped, where do you think you rank, your coast 
   checkTrue('and renders from its link', /days of freedom bought/.test(ShareCard.render(ShareCard.decode(ShareCard.link(wc).split('#')[1])).line));
   const W0 = Wrapped.year(now, [], T, { year: y });
   checkTrue('a year with no earlier snapshot says what each line needs, never invents', !W0.ok && W0.lines.every(l => l.value === null || l.id === 'priciest') && W0.missing.length >= 1);
-  checkTrue('the room exists, reads only, and is shelved everywhere', Registry.byId('wrapped') && Registry.byId('wrapped').daite.writes.length === 0 && JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts.every(l => l.groups.some(g => g.rooms.indexOf('wrapped') >= 0)));
+  /* Money Wrapped is The Card's year reading since D-234; the room that
+     holds it is what must be shelved, and it still writes nothing. */
+  checkTrue('the reading lives in The Card, which reads only and is shelved everywhere', !Registry.byId('wrapped') && Registry.byId('one-pager').daite.writes.length === 0 && JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts.every(l => l.groups.some(g => g.rooms.indexOf('one-pager') >= 0)));
 
   /* -- I4: the coast date, by hand ------------------------------------------------- */
   const hc = Schema.createHousehold(); hc.people = [Schema.createPerson({ role: 'adult', dob: '1996-06-01' })];

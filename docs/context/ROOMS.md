@@ -92,17 +92,15 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **skill-tree** — The Skill Tree · 609 lines · engines: projection, tier0, foo, skilltree · owns: skillsDone · D-141, D-140, D-139
 - **exercises** — Exercises · 210 lines · engines: projection, tier0, foo, skilltree, income, selfemployed, tax, fire, statement, vpw, decumulation, cashflow, events, exercises · owns: exercisesDone · D-141, D-139, D-136
 
-## Upkeep (7)
+## Upkeep (5)
 
 - **get-help** — Get Help (utility) · 120 lines · no engines · D-097
 - **history** — History · 230 lines · engines: projection, tier0, hourly, foo, cashflow, fire, statement, benchmarks, ratios, events, skills, history · owns: historyCompareTo · D-122, D-101
-- **wrapped** — Money Wrapped · 129 lines · engines: projection, tier0, selfemployed, tax, hourly, debt, sincelast, wrapped · D-213
 - **data** — Your Data (utility) · 702 lines · engines: tax, bankcsv · D-221, D-220, D-125
-- **one-pager** — The One-Pager · 172 lines · engines: selfemployed, tax, projection, tier0, debt, cashflow, ratios, trap, onepager · D-219
+- **one-pager** — The Card · 412 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
-- **progress-card** — Progress Card (utility) · 139 lines · engines: projection, tier0, tax, debt · D-212
 
-## Files in rooms/ not in the registry (18)
+## Files in rooms/ not in the registry (20)
 
 - rooms/between-jobs.html
 - rooms/comeback.html
@@ -113,6 +111,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/health.html
 - rooms/net-worth.html
 - rooms/next-hundred.html
+- rooms/progress-card.html
 - rooms/quick-math.html
 - rooms/quit-fund.html
 - rooms/rank-guess.html
@@ -122,3 +121,4 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/sleep-at-night.html
 - rooms/walk.html
 - rooms/windfall.html
+- rooms/wrapped.html

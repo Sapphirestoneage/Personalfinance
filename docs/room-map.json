@@ -64,7 +64,9 @@
       "absorbs": ["health", "ratios", "savings-rate", "quick-math", "rank-guess"],
       "done": ["health", "ratios", "savings-rate", "quick-math", "rank-guess"],
       "note": "The simplest reading is the default: one score opens the room, the nine numbers are one tap away." },
-    { "n": 12, "id": "one-pager", "title": "The Card", "group": "scorecard", "absorbs": ["progress-card", "wrapped"], "done": [] },
+    { "n": 12, "id": "one-pager", "title": "The Card", "group": "scorecard",
+      "absorbs": ["progress-card", "wrapped"], "done": ["progress-card", "wrapped"],
+      "note": "Three things to hand over. The share rule is per reading, not per room: two of the three may never carry an amount (D-212), the whole page may, and merging them does not pool that permission." },
 
     { "n": 13, "id": "decumulation", "title": "The Back Half", "group": "back-half",
       "absorbs": ["roth-aca", "middle-class-trap", "reachable"], "done": [],

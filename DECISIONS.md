@@ -13962,6 +13962,41 @@ redirects and the deep links `#draftt`, `#out-rate`, `#out-wealth`, `#habit`
 and `#guess` loaded at 390px with a clean console.
 
 
+## D-234 — The Card: three things to hand over
+
+**Why.** The One-Pager, the Progress Card and Money Wrapped were three rooms
+for one act — making something you can give to somebody else. All three read
+numbers already entered and none asked for a figure of its own. Rule 1 of
+D-229.
+
+**Decision.** `rooms/one-pager.html` becomes **The Card**, three readings on
+the hats strip, the most shareable first: `#the-card` (ratios, percentages
+and time, no balance), `#the-year` (four lines, never an amount), `#the-page`
+(every figure, for a lender or a planner). The room owns nothing and writes
+nothing; the audience, version and section choices stay page-local.
+
+**The share rule is per reading, not per room.** Two of the three may never
+carry an amount (D-212); the whole page may, because it is the one you hand a
+lender on purpose. Merging them does not pool that permission, and each
+card's own rule is still checked where it was.
+
+**Replaces or removes.** Two registry rooms (77 → 75), both redirects
+carrying their deep links. Upkeep is down to five.
+
+**Stored shape.** No change. None of the three ever stored anything.
+
+**How it was built.** The four merges before this one were assembled by hand;
+this one was assembled by a tool that does the mechanical half — scope each
+absorbed room's CSS under its view, lift its markup and script, strip the
+boot calls only the host may make, route by hash, leave a redirect. The tool
+refuses to run against a room that is already a redirect, because a re-run
+would otherwise merge the stub and silently drop the room. It did exactly
+that once before the guard existed, which is why the guard exists.
+
+**Verified.** `node test/run.js` (30,965 checks). All three readings, both
+redirects and the deep links `#audience` and `#w-lines` loaded at 390px with
+a gutter, no horizontal scroll and a clean console.
+
 ---
 
 # The Dungeons & Dividends entries
