@@ -27,7 +27,6 @@
             "debt-payoff",
             "expenses",
             "cash-flow",
-            "subscriptions",
             "income",
             "budget",
             "variance",
@@ -127,7 +126,6 @@
             "debt-payoff",
             "expenses",
             "cash-flow",
-            "subscriptions",
             "income",
             "budget",
             "variance",
@@ -243,7 +241,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "subscriptions",
             "budget",
             "income",
             "variance",
@@ -381,7 +378,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "subscriptions",
             "budget",
             "variance",
             "rerank",
@@ -515,7 +511,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "subscriptions",
             "budget",
             "calendar",
             "variance",
@@ -627,7 +622,6 @@
             "ledger",
             "expenses",
             "cash-flow",
-            "subscriptions",
             "income",
             "budget",
             "variance",
@@ -778,7 +772,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "subscriptions",
             "income",
             "budget",
             "variance",
@@ -906,7 +899,6 @@
             "offer-compare",
             "expenses",
             "cash-flow",
-            "subscriptions",
             "debt-payoff",
             "decumulation",
             "roth-aca",
@@ -1007,7 +999,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "subscriptions",
             "budget",
             "income",
             "variance",
@@ -1145,7 +1136,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "subscriptions",
             "calendar",
             "budget",
             "stacker",
@@ -1323,7 +1313,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "subscriptions",
             "budget",
             "calendar",
             "income",
@@ -1394,7 +1383,6 @@
             "cant-pay",
             "expenses",
             "cash-flow",
-            "subscriptions",
             "calendar",
             "budget",
             "runway",
@@ -1608,7 +1596,6 @@
             "dashboard",
             "expenses",
             "cash-flow",
-            "subscriptions",
             "budget",
             "variance",
             "calendar",
@@ -1642,7 +1629,6 @@
             "debt-payoff",
             "expenses",
             "cash-flow",
-            "subscriptions",
             "income",
             "budget",
             "stacker",
@@ -1762,8 +1748,7 @@
             "runway",
             "get-help",
             "expenses",
-            "cash-flow",
-            "subscriptions"
+            "cash-flow"
           ]
         },
         {
@@ -1917,7 +1902,6 @@
             "ledger",
             "expenses",
             "cash-flow",
-            "subscriptions",
             "income",
             "budget",
             "statement",
@@ -2007,7 +1991,6 @@
             "budget",
             "expenses",
             "cash-flow",
-            "subscriptions",
             "goals",
             "protection",
             "tax",
@@ -2137,7 +2120,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "subscriptions",
             "income",
             "budget",
             "variance",
@@ -2246,7 +2228,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "subscriptions",
             "income",
             "budget",
             "variance",
@@ -2402,7 +2383,6 @@
           "rooms": [
             "expenses",
             "cash-flow",
-            "subscriptions",
             "income",
             "budget",
             "variance",

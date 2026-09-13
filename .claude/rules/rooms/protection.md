@@ -5,7 +5,7 @@ paths:
   - "engines/estate.js"
 ---
 # Protection (`protection`)
-File: rooms/protection.html · 462 lines
+File: rooms/protection.html · 467 lines
 Engines: projection, tier0, protection, hourly, estate
 Reference data: estate_basics.json, protection_conventions.json
 Owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists

@@ -7,162 +7,293 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Expenses · SPARKS</title>
-<meta name="description" content="What a month costs you: four numbers, the yearly costs, and an optional split by category, measured against a budget."/>
+<meta name="description" content="What a month costs you — food, accommodation, transportation, the lean month, and every line you name — plus the charges that come back on a rhythm."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. Split out of Cash Flow in D-192: this room is
-  WHAT a month costs; Cash Flow is WHEN the money moves.
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-172, D-197, D-198, D-215,
+  D-237 (the merge).
 
-  1. READS   household.expenses.needs / wants (the four numbers, D-172),
-             expenses.entries[] (the typical-month lines, source manual),
-             expenses.annual[], people[].incomeSources[].grossAnnualIncomeCents,
-             filingStatus.
-  2. WRITES  THE FOUR NUMBERS - food, rent or mortgage, getting around,
-             everything else - and the optional therapy line, via
-             Spine.setFat / setTherapyTracked (D-172). This room is their
-             one owner. The yearly lines (15.5, D-181). The optional split
-             by category: expenses.entries[] with source 'manual'. The
-             lines never write the four numbers on their own; "Use the
-             lines as my month" does, once, on purpose. Nothing else. The
-             dated LOG is Cash Flow's, not this room's.
-  3. CALLS   engines/cashflow.js for every figure. Take-home pay comes from
-             engines/tier0.js's effective-tax lookup, not a second tax
-             calculation.
-  4. EMPTY   Nothing typed: the summary, the template comparison and the
-             divergence each say what they need. A category with no amount
-             is skipped, never counted as zero. With take-home known, every
-             empty line is PROPOSED from the chosen split (D-063) - shown
-             dashed, never stored, never counted until tapped.
-             THE SHAPE: the four numbers first, then the yearly costs
-             folded, then the split folded, then what they add up to.
-  5. CONFIG  data/expense_categories.json (categories and buckets),
-             data/budget_templates.json (the splits),
-             data/effective_tax_rates_2026.json (take-home).
+  TWO READINGS OF WHAT GOES OUT.
+
+    #the-month       F, A, T, the lean month, and the lines you name
+    #subscriptions   the charges that come back on a rhythm
+
+  The Subscription Finder never held a figure of its own: it read the expense
+  log and pointed at the rows that repeat. Rule 3 of D-229 — a finder over a
+  log this room already owns is a reading of it, not a room beside it.
+
+  1. READS   the expense log and the month this room owns.
+  2. WRITES  the eight expense fields, as before. The finder writes nothing.
+  3. CALLS   engines/expenses.js and engines/subscriptions.js.
+  4. EMPTY   the finder says it needs a log rather than showing an empty list.
+  5. CONFIG  data/expense_categories.json and the rhythm rules.
+
+  LIVE-FORM: guarded. The month's boxes are the room's own and are guarded as
+  they always were; the finder holds no input at all.
 -->
 <style>
-  .room-back:hover { text-decoration: underline; }
-  section[id] { scroll-margin-top: var(--space-4); }
-  .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- The month, from rooms/expenses.html (D-237) ---- */
+  
+  #view-the-month .room-back:hover { text-decoration: underline; }
+  
+  #view-the-month section[id] { scroll-margin-top: var(--space-4); }
+  
+  #view-the-month .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
-  .form-grid .wide { grid-column: 1 / -1; }
+  
+  #view-the-month .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+  
+  #view-the-month .form-grid .wide { grid-column: 1 / -1; }
 
   /* At a glance (D-196): the ring and the estimated-vs-actual bars side by
      side, stacked on a phone. The bars borrow .slaf-bars from theme.css. */
-  .picture-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-4); align-items: start; margin-top: var(--space-3); }
-  @media (max-width: 640px) { .picture-grid { grid-template-columns: 1fr; } }
-  .eva-title { margin: 0 0 var(--space-2); font-size: var(--text-base); }
-  .eva-title small { font-weight: normal; color: var(--color-text-muted); font-size: var(--text-xs); }
-  .eva .slaf-bars .row { grid-template-columns: minmax(88px, 30%) 1fr auto; padding: 3px 0; }
-  .eva .slaf-bars .row.is-total { border-top: 1px solid var(--color-border); margin-top: var(--space-1); padding-top: var(--space-2); font-weight: 600; }
-  .eva .slaf-bars .val { font-size: var(--text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .eva .slaf-bars .val small { display: block; font-size: var(--text-xs); color: var(--color-text-faint); font-weight: normal; }
-  .eva .slaf-bars .val.is-over { color: var(--color-critical); }
-  .eva .slaf-bars .val.is-under { color: var(--color-positive); }
-  .eva-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); margin: 0 0 var(--space-2); }
-  .eva-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+  
+  #view-the-month .picture-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-4); align-items: start; margin-top: var(--space-3); }
+  @media (max-width: 640px) { 
+  #view-the-month .picture-grid { grid-template-columns: 1fr; } }
+  
+  #view-the-month .eva-title { margin: 0 0 var(--space-2); font-size: var(--text-base); }
+  
+  #view-the-month .eva-title small { font-weight: normal; color: var(--color-text-muted); font-size: var(--text-xs); }
+  
+  #view-the-month .eva .slaf-bars .row { grid-template-columns: minmax(88px, 30%) 1fr auto; padding: 3px 0; }
+  
+  #view-the-month .eva .slaf-bars .row.is-total { border-top: 1px solid var(--color-border); margin-top: var(--space-1); padding-top: var(--space-2); font-weight: 600; }
+  
+  #view-the-month .eva .slaf-bars .val { font-size: var(--text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-month .eva .slaf-bars .val small { display: block; font-size: var(--text-xs); color: var(--color-text-faint); font-weight: normal; }
+  
+  #view-the-month .eva .slaf-bars .val.is-over { color: var(--color-critical); }
+  
+  #view-the-month .eva .slaf-bars .val.is-under { color: var(--color-positive); }
+  
+  #view-the-month .eva-legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); margin: 0 0 var(--space-2); }
+  
+  #view-the-month .eva-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
   /* What the lines in a bucket add up to, under its box. */
-  .bucket-lines { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; min-height: 0; }
-  .bucket-lines:empty { display: none; }
-  .bucket-lines.is-caution { color: var(--color-caution); }
-  .bucket-lines button { background: none; border: none; padding: 0; margin-left: 4px; font: inherit; color: var(--color-accent-hover); cursor: pointer; text-decoration: underline; min-height: 24px; }
+  
+  #view-the-month .bucket-lines { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; min-height: 0; }
+  
+  #view-the-month .bucket-lines:empty { display: none; }
+  
+  #view-the-month .bucket-lines.is-caution { color: var(--color-caution); }
+  
+  #view-the-month .bucket-lines button { background: none; border: none; padding: 0; margin-left: 4px; font: inherit; color: var(--color-accent-hover); cursor: pointer; text-decoration: underline; min-height: 24px; }
   /* Named lines and subscriptions (D-196). */
-  .line-group { margin-top: var(--space-4); }
-  .line-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
-  .line-head h3 { margin: 0; font-size: var(--text-base); }
-  .line-head span { font-size: var(--text-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
-  ul.line-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
-  ul.line-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: var(--space-1) var(--space-3); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
-  ul.line-list li:first-child { border-top: none; }
-  ul.line-list .ln-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  ul.line-list .ln-name small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
-  ul.line-list .ln-every { color: var(--color-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
-  ul.line-list .ln-month { font-variant-numeric: tabular-nums; white-space: nowrap; }
-  ul.line-list .ln-x { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 1px var(--space-2); cursor: pointer; min-height: 28px; }
-  ul.line-list .ln-empty { grid-column: 1 / -1; color: var(--color-text-faint); font-size: var(--text-xs); }
-  @media (max-width: 480px) { ul.line-list li { grid-template-columns: minmax(0, 1fr) auto auto; } ul.line-list .ln-every { grid-column: 1 / 2; } }
+  
+  #view-the-month .line-group { margin-top: var(--space-4); }
+  
+  #view-the-month .line-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+  
+  #view-the-month .line-head h3 { margin: 0; font-size: var(--text-base); }
+  
+  #view-the-month .line-head span { font-size: var(--text-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+  
+  #view-the-month ul.line-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  
+  #view-the-month ul.line-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: var(--space-1) var(--space-3); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  
+  #view-the-month ul.line-list li:first-child { border-top: none; }
+  
+  #view-the-month ul.line-list .ln-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  
+  #view-the-month ul.line-list .ln-name small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  
+  #view-the-month ul.line-list .ln-every { color: var(--color-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  
+  #view-the-month ul.line-list .ln-month { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  
+  #view-the-month ul.line-list .ln-x { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 1px var(--space-2); cursor: pointer; min-height: 28px; }
+  
+  #view-the-month ul.line-list .ln-empty { grid-column: 1 / -1; color: var(--color-text-faint); font-size: var(--text-xs); }
+  @media (max-width: 480px) { 
+  #view-the-month ul.line-list li { grid-template-columns: minmax(0, 1fr) auto auto; } 
+  #view-the-month ul.line-list .ln-every { grid-column: 1 / 2; } }
 
   /* The four numbers (D-172): one row on a wide screen, two by two on a phone. */
-  .fat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); align-items: start; }
-  .fat-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  @media (max-width: 720px) { .fat-grid, .fat-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 480px) { .fat-grid--3 { grid-template-columns: 1fr; } }
-  .fat-letter { display: inline-block; font-family: var(--font-display); font-size: var(--text-lg); line-height: 1; color: var(--color-accent-hover); margin-right: 2px; }
+  
+  #view-the-month .fat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); align-items: start; }
+  
+  #view-the-month .fat-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 720px) { 
+  #view-the-month .fat-grid,
+  #view-the-month .fat-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 480px) { 
+  #view-the-month .fat-grid--3 { grid-template-columns: 1fr; } }
+  
+  #view-the-month .fat-letter { display: inline-block; font-family: var(--font-display); font-size: var(--text-lg); line-height: 1; color: var(--color-accent-hover); margin-right: 2px; }
   /* One line under the three (D-197, D-199): FAT and the lean number. */
-  .fat-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); margin: var(--space-4) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
-  .fat-line b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--color-text); font-size: var(--text-md); }
-  .fat-line b small { font-family: var(--font-body); font-weight: normal; font-size: var(--text-xs); color: var(--color-text-muted); }
-  .fat-line #lean-fi { color: var(--color-positive); }
-  .fat-line .fat-sep { color: var(--color-text-faint); }
-  .fat-line .is-waiting { font-family: var(--font-body); font-weight: normal; font-size: var(--text-sm); color: var(--color-text-faint); }
-  .else-line { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); margin: var(--space-4) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
-  .else-line b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--color-text); font-size: var(--text-md); }
-  .else-line b small { display: block; font-family: var(--font-body); font-weight: normal; font-size: var(--text-xs); color: var(--color-text-muted); text-align: right; }
-  .else-line .is-waiting { font-family: var(--font-body); font-weight: normal; font-size: var(--text-sm); color: var(--color-text-faint); }
-  .month-how { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
-  .month-how b { color: var(--color-text); font-variant-numeric: tabular-nums; }
-  details.more-card > summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
-  details.more-card > summary::-webkit-details-marker { display: none; }
-  details.more-card > summary .more-what { font-size: var(--text-sm); color: var(--color-text-muted); }
-  details.more-card > summary::after { content: 'Open'; font-size: var(--text-xs); color: var(--color-accent-hover); }
-  details.more-card[open] > summary::after { content: 'Close'; }
-  details.more-card > section, details.more-card > details { margin-top: var(--space-4); }
-  details.more-card > section { border-top: 1px solid var(--color-border); padding-top: var(--space-4); }
-  .fat-grid .slaf-field { margin: 0; align-self: start; justify-content: flex-start; }
-  .fat-grid .slaf-hint { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; }
-  .annual-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
-  .annual-list li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); flex-wrap: wrap; }
-  .annual-list li:first-child { border-top: none; }
-  .annual-list small { color: var(--color-text-muted); font-size: var(--text-xs); }
-  .annual-list .amt { font-variant-numeric: tabular-nums; }
-  .choices .choice[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); }
-  .fat-toggle { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); cursor: pointer; min-height: 32px; }
-  .fat-toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--color-accent); }
-  .fat-total { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
-  .fat-total b { color: var(--color-text); font-variant-numeric: tabular-nums; }
-  details#split-more { margin-top: var(--space-4); }
-  .bucket { margin-bottom: var(--space-4); }
-  .bucket:last-child { margin-bottom: 0; }
-  .bucket-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-2); }
-  .bucket-total { font-family: var(--font-display); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
-  .bucket-note { font-size: var(--text-xs); color: var(--color-text-faint); margin: 0 0 var(--space-3); }
-  details.more { margin-top: var(--space-2); }
-  details.more summary { cursor: pointer; font-size: var(--text-xs); color: var(--color-accent-hover); padding: var(--space-1) 0; list-style: none; }
-  details.more summary::-webkit-details-marker { display: none; }
-  details.more summary::before { content: '+ '; }
-  details.more[open] summary::before { content: '− '; }
+  
+  #view-the-month .fat-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); margin: var(--space-4) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-month .fat-line b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--color-text); font-size: var(--text-md); }
+  
+  #view-the-month .fat-line b small { font-family: var(--font-body); font-weight: normal; font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-the-month .fat-line #lean-fi { color: var(--color-positive); }
+  
+  #view-the-month .fat-line .fat-sep { color: var(--color-text-faint); }
+  
+  #view-the-month .fat-line .is-waiting { font-family: var(--font-body); font-weight: normal; font-size: var(--text-sm); color: var(--color-text-faint); }
+  
+  #view-the-month .else-line { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); margin: var(--space-4) 0 0; padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-month .else-line b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--color-text); font-size: var(--text-md); }
+  
+  #view-the-month .else-line b small { display: block; font-family: var(--font-body); font-weight: normal; font-size: var(--text-xs); color: var(--color-text-muted); text-align: right; }
+  
+  #view-the-month .else-line .is-waiting { font-family: var(--font-body); font-weight: normal; font-size: var(--text-sm); color: var(--color-text-faint); }
+  
+  #view-the-month .month-how { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-month .month-how b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  
+  #view-the-month details.more-card > summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+  
+  #view-the-month details.more-card > summary::-webkit-details-marker { display: none; }
+  
+  #view-the-month details.more-card > summary .more-what { font-size: var(--text-sm); color: var(--color-text-muted); }
+  
+  #view-the-month details.more-card > summary::after { content: 'Open'; font-size: var(--text-xs); color: var(--color-accent-hover); }
+  
+  #view-the-month details.more-card[open] > summary::after { content: 'Close'; }
+  
+  #view-the-month details.more-card > section,
+  #view-the-month details.more-card > details { margin-top: var(--space-4); }
+  
+  #view-the-month details.more-card > section { border-top: 1px solid var(--color-border); padding-top: var(--space-4); }
+  
+  #view-the-month .fat-grid .slaf-field { margin: 0; align-self: start; justify-content: flex-start; }
+  
+  #view-the-month .fat-grid .slaf-hint { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; }
+  
+  #view-the-month .annual-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  
+  #view-the-month .annual-list li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); flex-wrap: wrap; }
+  
+  #view-the-month .annual-list li:first-child { border-top: none; }
+  
+  #view-the-month .annual-list small { color: var(--color-text-muted); font-size: var(--text-xs); }
+  
+  #view-the-month .annual-list .amt { font-variant-numeric: tabular-nums; }
+  
+  #view-the-month .choices .choice[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); }
+  
+  #view-the-month .fat-toggle { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); cursor: pointer; min-height: 32px; }
+  
+  #view-the-month .fat-toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--color-accent); }
+  
+  #view-the-month .fat-total { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  
+  #view-the-month .fat-total b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  
+  #view-the-month details#split-more { margin-top: var(--space-4); }
+  
+  #view-the-month .bucket { margin-bottom: var(--space-4); }
+  
+  #view-the-month .bucket:last-child { margin-bottom: 0; }
+  
+  #view-the-month .bucket-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-2); }
+  
+  #view-the-month .bucket-total { font-family: var(--font-display); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
+  
+  #view-the-month .bucket-note { font-size: var(--text-xs); color: var(--color-text-faint); margin: 0 0 var(--space-3); }
+  
+  #view-the-month details.more { margin-top: var(--space-2); }
+  
+  #view-the-month details.more summary { cursor: pointer; font-size: var(--text-xs); color: var(--color-accent-hover); padding: var(--space-1) 0; list-style: none; }
+  
+  #view-the-month details.more summary::-webkit-details-marker { display: none; }
+  
+  #view-the-month details.more summary::before { content: '+ '; }
+  
+  #view-the-month details.more[open] summary::before { content: '− '; }
 
-  .cat-row { display: grid; grid-template-columns: minmax(0, 1fr) 118px 72px 56px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
-  .cat-row .slaf-input-shell select { padding-left: 4px; padding-right: 4px; }
-  .cat-hint { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); margin: -4px 0 var(--space-1); min-height: 0; }
-  .cat-hint:empty { display: none; }
-  .cat-fixed { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: var(--text-xs); color: var(--color-text-faint); cursor: pointer; white-space: nowrap; }
-  .cat-fixed input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
-  .cat-fixed.is-derived { cursor: default; }
-  .cat-label { font-size: var(--text-sm); color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .cat-label small { display: block; font-size: var(--text-xs); color: var(--color-text-faint); white-space: normal; }
-  .cat-derived { display: flex; justify-content: flex-end; align-items: center; font-size: var(--text-sm); grid-column: 2 / -1; }
-  .cat-derived .slaf-owned-from { font-size: 10px; }
+  
+  #view-the-month .cat-row { display: grid; grid-template-columns: minmax(0, 1fr) 118px 72px 56px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+  
+  #view-the-month .cat-row .slaf-input-shell select { padding-left: 4px; padding-right: 4px; }
+  
+  #view-the-month .cat-hint { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); margin: -4px 0 var(--space-1); min-height: 0; }
+  
+  #view-the-month .cat-hint:empty { display: none; }
+  
+  #view-the-month .cat-fixed { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: var(--text-xs); color: var(--color-text-faint); cursor: pointer; white-space: nowrap; }
+  
+  #view-the-month .cat-fixed input { margin: 0; width: 16px; height: 16px; accent-color: var(--color-accent); }
+  
+  #view-the-month .cat-fixed.is-derived { cursor: default; }
+  
+  #view-the-month .cat-label { font-size: var(--text-sm); color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  
+  #view-the-month .cat-label small { display: block; font-size: var(--text-xs); color: var(--color-text-faint); white-space: normal; }
+  
+  #view-the-month .cat-derived { display: flex; justify-content: flex-end; align-items: center; font-size: var(--text-sm); grid-column: 2 / -1; }
+  
+  #view-the-month .cat-derived .slaf-owned-from { font-size: 10px; }
   @media (max-width: 420px) {
-    .cat-row { grid-template-columns: minmax(0, 1fr) 84px 56px; }
-    .cat-row .cat-label { grid-column: 1 / -1; }
-    .cat-row .cat-amount { grid-column: 1 / 2; }
+    
+  #view-the-month .cat-row { grid-template-columns: minmax(0, 1fr) 84px 56px; }
+    
+  #view-the-month .cat-row .cat-label { grid-column: 1 / -1; }
+    
+  #view-the-month .cat-row .cat-amount { grid-column: 1 / 2; }
   }
 
-  table.cmp { width: 100%; border-collapse: collapse; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
-  table.cmp th { text-align: right; font-weight: 400; color: var(--color-text-faint); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding-bottom: var(--space-2); }
-  table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
-  table.cmp td { text-align: right; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
-  .over { color: var(--color-caution); }
-  .under { color: var(--color-positive); }
+  
+  #view-the-month table.cmp { width: 100%; border-collapse: collapse; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+  
+  #view-the-month table.cmp th { text-align: right; font-weight: 400; color: var(--color-text-faint); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding-bottom: var(--space-2); }
+  
+  #view-the-month table.cmp th:first-child,
+  #view-the-month table.cmp td:first-child { text-align: left; }
+  
+  #view-the-month table.cmp td { text-align: right; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-the-month .over { color: var(--color-caution); }
+  
+  #view-the-month .under { color: var(--color-positive); }
 
-  .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
-  .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
-  .out-detail dt { color: var(--color-text-faint); }
-  .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
-  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  
+  #view-the-month .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
+  
+  #view-the-month .out-detail dl { display: grid; grid-template-columns: auto auto; gap: var(--space-1) var(--space-3); margin: 0; }
+  
+  #view-the-month .out-detail dt { color: var(--color-text-faint); }
+  
+  #view-the-month .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  
+  #view-the-month .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+
+  /* ---- What repeats, from rooms/subscriptions.html (D-237) ---- */
+  
+  #view-subscriptions ul.subs { list-style: none; margin: 0; padding: 0; }
+  
+  #view-subscriptions ul.subs li { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  
+  #view-subscriptions ul.subs li:first-child { border-top: none; }
+  
+  #view-subscriptions ul.subs .lab { font-weight: 600; }
+  
+  #view-subscriptions ul.subs .amt { font-variant-numeric: tabular-nums; text-align: right; }
+  
+  #view-subscriptions ul.subs .amt small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+  
+  #view-subscriptions ul.subs .meta { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); }
+  
+  #view-subscriptions ul.subs .acts { grid-column: 1 / -1; display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  
+  #view-subscriptions ul.subs li.is-dismissed { opacity: .55; }
+  
+  #view-subscriptions ul.subs li.is-cancel .lab::after { content: ' · reminder: cancel this'; color: var(--color-warning, #d97706); font-weight: 400; font-size: var(--text-xs); }
+  
+  #view-subscriptions .empty { font-size: var(--text-sm); color: var(--color-text-faint); }
+  
+  #view-subscriptions .leak { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-2) 0 0; }
 </style>
 </head>
 <body class="slaf">
@@ -170,12 +301,20 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Expenses</h1>
-  <p class="room-lede">What a month costs you. F, A, T: food, accommodation, transportation, the lean month. Everything else is a line you name. Every other room reads this month.</p>
+  <p class="room-lede">What a month costs you, and which parts of it keep coming back on their own.</p>
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Two readings of what goes out">
+    <a href="#the-month" data-view="view-the-month">The month</a>
+    <a href="#subscriptions" data-view="view-subscriptions">What repeats</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
 
+  <!-- ===== THE MONTH (was rooms/expenses.html) ===== -->
+  <section id="view-the-month">
+  <p class="slaf-lede">What a month costs you. F, A, T: food, accommodation, transportation, the lean month. Everything else is a line you name.</p>
   <section class="slaf-card" id="picture">
     <span class="slaf-eyebrow">Your month at a glance</span>
     <p class="slaf-reason" id="picture-empty" hidden>Type the three numbers in step 1 and your month draws here.</p>
@@ -338,10 +477,24 @@
   </section>
 
   </details>
+  </section>
 
-  <p class="disclaimer">
-    Educational tool, not financial advice. Your numbers stay in this browser.
-  </p>
+  <!-- ===== WHAT REPEATS (was rooms/subscriptions.html) ===== -->
+  <section id="view-subscriptions" hidden>
+  <p class="slaf-lede">Charges that come back on a rhythm at about the same amount. Each with what it costs a year, and in hours of your work. Marking one is a note to yourself — nothing here cancels anything.</p>
+  <section class="slaf-card" id="leak">
+    <span class="slaf-eyebrow">The leak line</span>
+    <p class="leak" id="leak-line"></p>
+    <p class="slaf-hint" id="leak-note" style="margin:var(--space-2) 0 0"></p>
+  </section>
+  <section class="slaf-card" id="found" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Found</span>
+    <ul class="subs" id="list"></ul>
+    <p class="empty" id="empty" hidden>Nothing repeating yet. Dated spending lines come from a bank CSV in <a href="data.html#bank">Your Data</a> or the log in <a href="cash-flow.html">Cash Flow</a>; a charge needs two dated lines before it counts.</p>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. "Cancel this" is a note to yourself; nothing here cancels anything. Everything stays in this browser.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -366,6 +519,48 @@
 <script src="../engines/income.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../engines/subscriptions.js"></script>
+<script>
+/* ---- The month, and what repeats in it (D-237) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default. */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-subscriptions', match: /^#(subscriptions|found|leak|list|empty)/ },
+    { id: 'view-the-month', match: /.*/ }
+  ];
+  function route() {
+    var h = location.hash || '';
+    var on = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('expenses');
+  if (SLAF.Progress) SLAF.Progress.mount('expenses');
+})();
+</script>
+
+
 <script>
 (function () {
   'use strict';
@@ -373,7 +568,7 @@
       Reference = SLAF.Reference, Demo = SLAF.DemoPersona, CashFlow = SLAF.CashFlow,
       Ownership = SLAF.Ownership, Charts = SLAF.Charts, Income = SLAF.Income, Tier0 = SLAF.Tier0;
 
-  var ROOM_ID = 'expenses';
+  var ROOM_ID = 'expenses';   /* the room this reading lives in */
   var TABLES = null;
   var templateId = '50_30_20';
 
@@ -1139,22 +1334,7 @@
     proposeMonth(Spine.getProfile());
   });
 
-  function jumpToHash() {
-    if (!location.hash) return;
-    var target = document.getElementById(location.hash.slice(1));
-    if (!target) return;
-    /* A section inside the More fold opens the fold on its way in. */
-    var p = target.parentElement;
-    while (p) { if (p.tagName === 'DETAILS') p.open = true; p = p.parentElement; }
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  window.addEventListener('hashchange', jumpToHash);
-
   /* ---------- boot ------------------------------------------------------ */
-
-  Spine.registerRoom(ROOM_ID);
-
-  SLAF.Progress.mount(ROOM_ID);
   Spine.onChange(render);
 
   if (SLAF.Features && SLAF.Features.ready) SLAF.Features.ready().then(function () { render(); });   /* 15.5: the annualLines switch (D-181) */
@@ -1173,7 +1353,6 @@
     var lines0 = Schema.fatFromLines(Spine.getProfile().expenses.entries);
     if (Object.keys(lines0).some(function (k) { return lines0[k] !== null; })) el('split-more').open = true;
     render();
-    jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');
     notice.hidden = false;
@@ -1181,6 +1360,41 @@
     notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
       + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
   });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Subs = SLAF.Subscriptions;
+  var ROOM_ID = 'expenses';   /* the room this reading lives in */
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var found = Subs.find(h, TABLES);
+    var leak = Subs.leak(h, TABLES);
+    el('leak-line').textContent = found.length ? Money.formatCents(leak.yearlyCents) + ' a year in ' + leak.count + ' repeating charge' + (leak.count === 1 ? '' : 's') + (leak.hours !== null ? ', about ' + leak.hours + ' hours of work' : '') + '.' : 'No repeating charges found yet.';
+    el('leak-note').textContent = leak.cancel ? leak.cancel + ' marked to cancel: a reminder here, not an action.' : (found.length ? 'Dismissed ones are left out of the line.' : '');
+    el('empty').hidden = found.length > 0;
+    el('list').innerHTML = found.map(function (s) {
+      return '<li class="' + (s.status ? 'is-' + esc(s.status) : '') + '" data-key="' + esc(s.key) + '"><span class="lab">' + esc(s.label) + '</span>'
+        + '<span class="amt">' + esc(Money.formatCents(s.yearlyCents)) + ' a year<small>' + esc(Money.formatCents(s.typicalCents)) + ' ' + esc(s.rhythmLabel) + (s.hours !== null ? ' · ' + s.hours + ' hours of work a year' : '') + '</small></span>'
+        + '<span class="meta">' + s.count + ' times, ' + esc(s.firstDate) + ' to ' + esc(s.lastDate) + (s.status ? ' · ' + esc(s.status === 'cancel' ? 'marked to cancel' : s.status) : '') + '</span>'
+        + '<span class="acts"><button type="button" class="slaf-btn slaf-btn--small" data-decide="confirmed">Yes, it is one</button><button type="button" class="slaf-btn slaf-btn--small slaf-btn--quiet" data-decide="dismissed">Not a subscription</button><button type="button" class="slaf-btn slaf-btn--small" data-decide="cancel">Cancel this (a reminder)</button></span></li>';
+    }).join('');
+  }
+  el('list').addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('[data-decide]') : null; if (!b) return;
+    var li = b.closest('[data-key]'); var k = li.getAttribute('data-key');
+    var h = Spine.getProfile();
+    var found = Subs.find(h, TABLES).filter(function (s) { return s.key === k; })[0];
+    Spine.set('subscriptions', Subs.decide(h.subscriptions, k, b.getAttribute('data-decide'), found ? found.label : k, found ? found.yearlyCents : null), 'Subscription: ' + b.getAttribute('data-decide'));
+  });
+  Spine.onChange(render);
+  Reference.load(['effectiveTaxRates', 'federalBrackets', 'seTax']).then(function (t) { TABLES = t; render(); }).catch(function () { TABLES = {}; render(); });
 })();
 </script>
 </body>

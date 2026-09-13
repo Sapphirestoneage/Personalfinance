@@ -14051,6 +14051,38 @@ and the deep links `#es-inputs` and `#inputs` at 390px with a clean console,
 and a write from the estate reading landing on `estate.beneficiariesSet`
 while the cover fields stayed null.
 
+## D-237 — Expenses: the month, and what repeats in it
+
+**Why.** The Subscription Finder never held a figure of its own. It read the
+expense log Expenses owns and pointed at the rows that come back on a rhythm.
+Rule 3 of D-229: a finder over a log is a reading of the room that owns the
+log, not a room beside it.
+
+**Decision.** `rooms/expenses.html` gains a second reading: `#the-month` (F,
+A, T, the lean month, the lines you name) and `#subscriptions` (what repeats,
+each with what it costs a year and in hours of your work). Expenses keeps its
+eight fields; the finder writes nothing, as before.
+
+**The promise stays where a reader meets it.** "Cancel this" is a note to
+yourself and nothing here cancels anything — that line was in the finder's
+small print, and it is now both in the reading's own lede and in the room's
+small print. A merge that quietly drops a promise is worse than no merge.
+
+**Replaces or removes.** One registry room (74 → 73), a redirect carrying its
+deep links.
+
+**Stored shape.** No change.
+
+**Also.** Every merged room's router now opens *every* fold above a deep
+link's target rather than the nearest one. Expenses had its own opener that
+walked all the ancestors, the merge tool stripped it with the rest of the old
+hash handling, and a deep link into a card inside the More fold would have
+landed on a closed fold. The routers in the six merged rooms were corrected
+together.
+
+**Verified.** `node test/run.js` (31,034 checks). Both readings, the redirect
+and the deep links `#more` and `#found` at 390px with a clean console.
+
 ---
 
 # The Dungeons & Dividends entries

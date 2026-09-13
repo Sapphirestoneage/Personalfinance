@@ -288,18 +288,6 @@
       "order": 12.5
     },
     {
-      "id": "subscriptions",
-      "title": "Subscription Finder",
-      "file": "rooms/subscriptions.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 12.7
-    },
-    {
       "id": "side-hustle",
       "title": "Side Hustle",
       "file": "rooms/side-hustle.html",

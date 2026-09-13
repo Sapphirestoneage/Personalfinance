@@ -10486,7 +10486,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 29);
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 28);
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */
@@ -13479,7 +13479,8 @@ section('J4, J5: bank CSV import on-device, the subscription finder (D-215)');
   check('a dismissed charge leaves the leak line', leak.count + ':' + leak.yearlyCents, '1:' + (1199 * 12));
   checkTrue('the Expenses door’s level 4 reads the leak line', /Subscriptions\.leak\(h, T\)/.test(fs.readFileSync(path.join(ROOT, 'shared/doors.js'), 'utf8')) && (function () { const ins = Doors.levelInsight(Spine.getProfile(), T, 'E', 4, []); return ins && /repeating charge/.test(ins.headline); })());
   checkTrue('Money Wrapped gains the leak line only when something was found', Wrapped.year(Spine.getProfile(), [], T, {}).lines.some(l => l.id === 'leak') && !Wrapped.year(Demo.build(), [], T, {}).lines.some(l => l.id === 'leak'));
-  checkTrue('the room never cancels anything: it writes a decision and says so', /a reminder, never an action|a note to\n?\s*yourself/.test(fs.readFileSync(path.join(ROOT, 'rooms/subscriptions.html'), 'utf8')) && !/cancelSubscription|fetch\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/subscriptions.html'), 'utf8')));
+  /* The finder is a reading of Expenses since D-237. */
+  checkTrue('the reading never cancels anything: it writes a decision and says so', (function () { const e = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8'); return /a reminder, never an action|a note to\n?\s*yourself/.test(e) && !/cancelSubscription|fetch\(/.test(e); })());
 })();
 
 /* ==========================================================================

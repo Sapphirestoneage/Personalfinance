@@ -6,7 +6,7 @@ paths:
   - "engines/rankguess.js"
 ---
 # The Scorecard (`financial-snapshot`)
-File: rooms/financial-snapshot.html · 2584 lines
+File: rooms/financial-snapshot.html · 2589 lines
 Engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess
 Reference data: bands.json, car_costs.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +11 more
 Owns: nothing

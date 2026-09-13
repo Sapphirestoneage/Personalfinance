@@ -6,7 +6,7 @@ paths:
   - "engines/onepager.js"
 ---
 # The Card (`one-pager`)
-File: rooms/one-pager.html · 412 lines
+File: rooms/one-pager.html · 417 lines
 Engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager
 Reference data: confidence_weights.json, debt_rules.json, early_access_rules_2026.json, effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, +8 more
 Owns: nothing

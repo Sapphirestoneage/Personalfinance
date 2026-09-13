@@ -1727,27 +1727,6 @@
     daite: { reads: ['assets', 'assets.cashCents', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus'], writes: [] },
     subsections: [{ id: 'next', label: 'The next rung' }, { id: 'rungs', label: 'Every rung to $1 million' }]
   });
-  /* The Subscription Finder (J5, D-215): repeating charges from the dated
-     log, each priced a year and in hours; confirm, dismiss, or a reminder
-     to cancel. Owns household.subscriptions. */
-  ROOMS.push({
-    id: 'subscriptions',
-    group: 'decisions', subgroup: 'moves', aliases: ['subscriptions', 'recurring', 'repeating charges', 'leak', 'cancel'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses'],
-    order: 12.7,
-    title: 'Subscription Finder',
-    blurb: 'Charges that repeat on a rhythm at about the same amount, from your logged or imported spending, each with its yearly cost and its cost in hours of work. Confirm, dismiss, or set a reminder to cancel.',
-    href: 'rooms/subscriptions.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['plans.subscriptions'] },
-    subsections: [
-      { id: 'leak',  label: 'The leak line' },
-      { id: 'found', label: 'Found' }
-    ]
-  });
-
   /* `needs` lists the shared fields a room reads before it can show its main
      output — the ids in shared/ownership.js, which know who owns each one and
      which question to land on. shared/progress.js turns that into "what is

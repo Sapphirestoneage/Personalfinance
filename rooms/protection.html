@@ -204,7 +204,12 @@
       a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
     });
     var t = h && h.length > 1 ? el(h.slice(1)) : null;
-    if (t && !t.hidden) { var d = t.closest('details'); if (d) d.open = true; t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
   window.addEventListener('hashchange', route);
   route();
