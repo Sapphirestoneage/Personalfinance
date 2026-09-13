@@ -1140,8 +1140,8 @@ const CASES = [
        every other case here — that nothing reached the household (D-052).
        The pinned $14,500 is the demo persona's cash-out cost: $8,800 federal
        at 22%, $1,700 North Carolina at 4.25%, $4,000 penalty on $40,000. */
-    room: '/rooms/rollover.html',
-    container: '#room-inputs',
+    room: '/rooms/statement.html#left-behind',
+    container: '#ro-room-inputs',
     seed: 'demo',
     fields: [
       { sel: '[data-ctl="balance"]', type: '40000' },
@@ -1149,7 +1149,7 @@ const CASES = [
     ],
     expect: async (page) => {
       const r = await page.evaluate(() => ({
-        number: document.getElementById('room-number').innerText,
+        number: document.getElementById('ro-room-number').innerText,
         rows: document.getElementById('cost-rows').innerText,
         blob: localStorage.getItem('slaf.household.v2') || ''
       }));

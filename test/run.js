@@ -10665,7 +10665,10 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
      First Round and Express became views of (D-230). */
   check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
-  check('...nine of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 9);
+  /* Eight since D-260: The Account You Left Behind became The Statement's
+     "a plan you left behind" reading, which is where an old workplace
+     account belongs — something you own that landed somewhere. */
+  check('...eight of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 8);
   /* The rule is about HOUSEHOLD data: a Your Numbers room writes a DAITE
      family, not a context. `prefs.*` is not a context — it is a
      preference, per person and per browser, and D-246 brought one into

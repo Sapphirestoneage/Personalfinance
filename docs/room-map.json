@@ -19,75 +19,334 @@
     "ANTI-RULE, and it outranks the five: a room with a different emotional register does not merge, even when the math is identical."
   ],
   "order": [
-    { "step": 1, "target": "ledger", "title": "The Ledger swallows navigation", "state": "shipped-in-part" },
-    { "step": 2, "target": "runway", "title": "The Cushion, four readings of one number", "state": "shipped" },
-    { "step": 3, "target": "financial-snapshot", "title": "The Scorecard", "state": "shipped" },
-    { "step": 4, "target": "foo-ladder", "title": "What The Next Dollar Does", "state": "shipped" },
-    { "step": 5, "target": "goals", "title": "The Decision Room shell, then three easy block types", "state": "todo" },
-    { "step": 6, "target": "decumulation", "title": "The Back Half, which then defines the target every other room reads", "state": "todo" }
+    {
+      "step": 1,
+      "target": "ledger",
+      "title": "The Ledger swallows navigation",
+      "state": "shipped-in-part"
+    },
+    {
+      "step": 2,
+      "target": "runway",
+      "title": "The Cushion, four readings of one number",
+      "state": "shipped"
+    },
+    {
+      "step": 3,
+      "target": "financial-snapshot",
+      "title": "The Scorecard",
+      "state": "shipped"
+    },
+    {
+      "step": 4,
+      "target": "foo-ladder",
+      "title": "What The Next Dollar Does",
+      "state": "shipped"
+    },
+    {
+      "step": 5,
+      "target": "goals",
+      "title": "The Decision Room shell, then three easy block types",
+      "state": "todo"
+    },
+    {
+      "step": 6,
+      "target": "decumulation",
+      "title": "The Back Half, which then defines the target every other room reads",
+      "state": "todo"
+    }
   ],
   "groups": [
-    { "id": "way-in", "title": "The way in" },
-    { "id": "facts", "title": "The facts" },
-    { "id": "scorecard", "title": "The scorecard" },
-    { "id": "back-half", "title": "The back half (runs first)" },
-    { "id": "decisions", "title": "Decisions (one shell, block types inside)" },
-    { "id": "meaning", "title": "Meaning" },
-    { "id": "levelup", "title": "Level up" },
-    { "id": "alone", "title": "Standing alone on purpose" }
+    {
+      "id": "way-in",
+      "title": "The way in"
+    },
+    {
+      "id": "facts",
+      "title": "The facts"
+    },
+    {
+      "id": "scorecard",
+      "title": "The scorecard"
+    },
+    {
+      "id": "back-half",
+      "title": "The back half (runs first)"
+    },
+    {
+      "id": "decisions",
+      "title": "Decisions (one shell, block types inside)"
+    },
+    {
+      "id": "meaning",
+      "title": "Meaning"
+    },
+    {
+      "id": "levelup",
+      "title": "Level up"
+    },
+    {
+      "id": "alone",
+      "title": "Standing alone on purpose"
+    }
   ],
   "rooms": [
     {
-      "n": 1, "id": "ledger", "title": "The Ledger", "group": "way-in",
-      "absorbs": ["start", "first-round", "express", "doors", "walk", "comeback", "refresh"],
-      "done": ["first-round", "express", "doors", "walk", "comeback", "refresh"],
-      "held": { "start": "Start Here owns 17 shared fields, more than any other room. Where those owners go is the open question at the top of STATUS.md, and it is the owner's to answer, not a session's to guess." },
+      "n": 1,
+      "id": "ledger",
+      "title": "The Ledger",
+      "group": "way-in",
+      "absorbs": [
+        "start",
+        "first-round",
+        "express",
+        "doors",
+        "walk",
+        "comeback",
+        "refresh"
+      ],
+      "done": [
+        "first-round",
+        "express",
+        "doors",
+        "walk",
+        "comeback",
+        "refresh"
+      ],
+      "held": {
+        "start": "Start Here owns 17 shared fields, more than any other room. Where those owners go is the open question at the top of STATUS.md, and it is the owner's to answer, not a session's to guess."
+      },
       "note": "First Round is Round 1, Express is the all-at-once door, Welcome Back and Refresh are one 'since last time'."
     },
-    { "n": 2, "id": "dashboard", "title": "The Dashboard", "group": "way-in", "absorbs": [], "done": [],
-      "note": "Gains the one next thing and the reachability diagnostic when step 6 lands." },
-    { "n": 3, "id": "settings", "title": "Settings", "group": "way-in", "absorbs": [], "done": [], "note": "Infrastructure. Merging it makes it findable by nobody." },
-    { "n": 4, "id": "data", "title": "Your Data", "group": "way-in", "absorbs": [], "done": [], "note": "Infrastructure, same reason." },
-
-    { "n": 5, "id": "income", "title": "Income", "group": "facts",
-      "absorbs": ["variable-income", "real-hourly-wage"], "done": ["variable-income", "real-hourly-wage"],
-      "note": "Variable income is a mode when pay is irregular; the real hourly wage is the conversion the whole app reads." },
-    { "n": 6, "id": "expenses", "title": "Expenses", "group": "facts",
-      "absorbs": ["subscriptions"], "done": ["subscriptions"],
-      "note": "A finder over a log this room already owns is a reading of it, not a room beside it (rule 3)." },
-    { "n": 7, "id": "cash-flow", "title": "The Month", "group": "facts", "absorbs": ["calendar"], "note": "What happened in the month and what is still to land in it are one month.",
-      "done": ["calendar"] },
-    { "n": 8, "id": "budget", "title": "The Close", "group": "facts", "absorbs": ["variance", "history"], "note": "One record at three lengths: the month you can still act on, the months you closed, and the line they make.",
-      "done": ["variance", "history"] },
-    { "n": 9, "id": "statement", "title": "The Statement", "group": "facts", "absorbs": ["accounts", "statements"], "done": ["accounts", "statements"],
-      "note": "rooms/net-worth.html is already a redirect here and is not in the registry. Accounts merges upward because where the next dollar lands moves the target (D-228)." },
-    { "n": 10, "id": "tax", "title": "Tax", "group": "facts", "absorbs": [], "done": [] },
-
-    { "n": 11, "id": "financial-snapshot", "title": "The Scorecard", "group": "scorecard",
-      "absorbs": ["health", "ratios", "savings-rate", "quick-math", "rank-guess"],
-      "done": ["health", "ratios", "savings-rate", "quick-math", "rank-guess"],
-      "note": "The simplest reading is the default: one score opens the room, the nine numbers are one tap away." },
-    { "n": 12, "id": "one-pager", "title": "The Card", "group": "scorecard",
-      "absorbs": ["progress-card", "wrapped"], "done": ["progress-card", "wrapped"],
-      "note": "Three things to hand over. The share rule is per reading, not per room: two of the three may never carry an amount (D-212), the whole page may, and merging them does not pool that permission." },
-
-    { "n": 13, "id": "decumulation", "title": "The Back Half", "group": "back-half",
-      "absorbs": ["roth-aca", "middle-class-trap", "reachable"], "done": ["roth-aca", "middle-class-trap", "reachable"],
-      "note": "Runs first in the journey, built last of the merges (D-228)." },
-    { "n": 14, "id": "fire", "title": "The Number", "group": "back-half",
-      "absorbs": ["fire-lab", "coast-date", "enough", "race"], "done": ["fire-lab", "coast-date", "enough", "race"],
-      "note": "Becomes a read-out of what the Back Half produced, with the naive 25x answer beside it (D-228)." },
-    { "n": 15, "id": "runway", "title": "The Cushion", "group": "back-half",
-      "absorbs": ["between-jobs", "quit-fund", "sleep-at-night"],
-      "done": ["between-jobs", "quit-fund", "sleep-at-night"],
-      "note": "Four readings of one number: how long can you not earn. The toggle is the insight; four rooms hid it." },
-    { "n": 16, "id": "foo-ladder", "title": "What The Next Dollar Does", "group": "back-half",
-      "absorbs": ["next-hundred", "windfall"], "done": ["next-hundred", "windfall"],
-      "note": "One question at three amounts. The FOO step number stays visible everywhere." },
-
-    { "n": 17, "id": "goals", "title": "The Decision Room", "group": "decisions",
-      "absorbs": ["wedding", "reversibility", "what-if-life", "worth", "hassle", "adventure", "timeline"],
-      "done": ["reversibility"],
+    {
+      "n": 2,
+      "id": "dashboard",
+      "title": "The Dashboard",
+      "group": "way-in",
+      "absorbs": [],
+      "done": [],
+      "note": "Gains the one next thing and the reachability diagnostic when step 6 lands."
+    },
+    {
+      "n": 3,
+      "id": "settings",
+      "title": "Settings",
+      "group": "way-in",
+      "absorbs": [],
+      "done": [],
+      "note": "Infrastructure. Merging it makes it findable by nobody."
+    },
+    {
+      "n": 4,
+      "id": "data",
+      "title": "Your Data",
+      "group": "way-in",
+      "absorbs": [],
+      "done": [],
+      "note": "Infrastructure, same reason."
+    },
+    {
+      "n": 5,
+      "id": "income",
+      "title": "Income",
+      "group": "facts",
+      "absorbs": [
+        "variable-income",
+        "real-hourly-wage"
+      ],
+      "done": [
+        "variable-income",
+        "real-hourly-wage"
+      ],
+      "note": "Variable income is a mode when pay is irregular; the real hourly wage is the conversion the whole app reads."
+    },
+    {
+      "n": 6,
+      "id": "expenses",
+      "title": "Expenses",
+      "group": "facts",
+      "absorbs": [
+        "subscriptions"
+      ],
+      "done": [
+        "subscriptions"
+      ],
+      "note": "A finder over a log this room already owns is a reading of it, not a room beside it (rule 3)."
+    },
+    {
+      "n": 7,
+      "id": "cash-flow",
+      "title": "The Month",
+      "group": "facts",
+      "absorbs": [
+        "calendar"
+      ],
+      "note": "What happened in the month and what is still to land in it are one month.",
+      "done": [
+        "calendar"
+      ]
+    },
+    {
+      "n": 8,
+      "id": "budget",
+      "title": "The Close",
+      "group": "facts",
+      "absorbs": [
+        "variance",
+        "history"
+      ],
+      "note": "One record at three lengths: the month you can still act on, the months you closed, and the line they make.",
+      "done": [
+        "variance",
+        "history"
+      ]
+    },
+    {
+      "n": 9,
+      "id": "statement",
+      "title": "The Statement",
+      "group": "facts",
+      "absorbs": [
+        "accounts",
+        "statements",
+        "rollover"
+      ],
+      "done": [
+        "accounts",
+        "statements",
+        "rollover"
+      ],
+      "note": "rooms/net-worth.html is already a redirect here and is not in the registry. Accounts merges upward because where the next dollar lands moves the target (D-228)."
+    },
+    {
+      "n": 10,
+      "id": "tax",
+      "title": "Tax",
+      "group": "facts",
+      "absorbs": [],
+      "done": []
+    },
+    {
+      "n": 11,
+      "id": "financial-snapshot",
+      "title": "The Scorecard",
+      "group": "scorecard",
+      "absorbs": [
+        "health",
+        "ratios",
+        "savings-rate",
+        "quick-math",
+        "rank-guess"
+      ],
+      "done": [
+        "health",
+        "ratios",
+        "savings-rate",
+        "quick-math",
+        "rank-guess"
+      ],
+      "note": "The simplest reading is the default: one score opens the room, the nine numbers are one tap away."
+    },
+    {
+      "n": 12,
+      "id": "one-pager",
+      "title": "The Card",
+      "group": "scorecard",
+      "absorbs": [
+        "progress-card",
+        "wrapped"
+      ],
+      "done": [
+        "progress-card",
+        "wrapped"
+      ],
+      "note": "Three things to hand over. The share rule is per reading, not per room: two of the three may never carry an amount (D-212), the whole page may, and merging them does not pool that permission."
+    },
+    {
+      "n": 13,
+      "id": "decumulation",
+      "title": "The Back Half",
+      "group": "back-half",
+      "absorbs": [
+        "roth-aca",
+        "middle-class-trap",
+        "reachable"
+      ],
+      "done": [
+        "roth-aca",
+        "middle-class-trap",
+        "reachable"
+      ],
+      "note": "Runs first in the journey, built last of the merges (D-228)."
+    },
+    {
+      "n": 14,
+      "id": "fire",
+      "title": "The Number",
+      "group": "back-half",
+      "absorbs": [
+        "fire-lab",
+        "coast-date",
+        "enough",
+        "race"
+      ],
+      "done": [
+        "fire-lab",
+        "coast-date",
+        "enough",
+        "race"
+      ],
+      "note": "Becomes a read-out of what the Back Half produced, with the naive 25x answer beside it (D-228)."
+    },
+    {
+      "n": 15,
+      "id": "runway",
+      "title": "The Cushion",
+      "group": "back-half",
+      "absorbs": [
+        "between-jobs",
+        "quit-fund",
+        "sleep-at-night"
+      ],
+      "done": [
+        "between-jobs",
+        "quit-fund",
+        "sleep-at-night"
+      ],
+      "note": "Four readings of one number: how long can you not earn. The toggle is the insight; four rooms hid it."
+    },
+    {
+      "n": 16,
+      "id": "foo-ladder",
+      "title": "What The Next Dollar Does",
+      "group": "back-half",
+      "absorbs": [
+        "next-hundred",
+        "windfall"
+      ],
+      "done": [
+        "next-hundred",
+        "windfall"
+      ],
+      "note": "One question at three amounts. The FOO step number stays visible everywhere."
+    },
+    {
+      "n": 17,
+      "id": "goals",
+      "title": "The Decision Room",
+      "group": "decisions",
+      "absorbs": [
+        "wedding",
+        "reversibility",
+        "what-if-life",
+        "worth",
+        "hassle",
+        "adventure",
+        "timeline"
+      ],
+      "done": [
+        "reversibility"
+      ],
       "held": {
         "wedding": "The shell is built and Reversibility is a field on every block (D-253). The wedding is the next block TYPE, and it is more than a goal template: the per-guest slider that prices one more table in days of FI is the thing people actually use it for, and it needs a block type that carries a per-unit figure. That is a session, not a paragraph.",
         "what-if-life": "A deep module, in STATUS.md's own sequencing: one event in three versions (dream, default, disaster) is three blocks that have to be read together, which the shell cannot yet do.",
@@ -96,39 +355,188 @@
         "adventure": "A deep module: every way through five years on a card each, with a crash or a lost job thrown at it. That is a scenario walker over blocks, and the shell has to be able to hold a block before it can walk a set of them.",
         "timeline": "A period of future income is not a decision you are weighing; it is a fact about a calendar. It may belong with Income or The Month rather than here, and that is the owner's call."
       },
-      "note": "One shell, many block types; five outputs on every block. Reversibility becomes a field on every block, not a room." },
-    { "n": 18, "id": "housing", "title": "Housing", "group": "decisions", "absorbs": ["down-payment", "property"], "done": ["down-payment", "property"],
-      "note": "The house hack (D-225) already ships inside this room; it never became a room of its own. The Deal (D-227) arrived on main after this map was written and is named here by rule 1: it and Housing sit on the same engines/ownership.js arithmetic and differ in framing — whether a building pays, against whether to buy where you live. Naming it is not a verdict on shipping it; it is what the map is for." },
-    { "n": 19, "id": "car", "title": "Wheels", "group": "decisions", "absorbs": ["first-car"], "done": ["first-car"],
-      "note": "Same car, same 20/3/8 test, same table, asked at two depths. The check is the default because someone who wants a yes or no should not have to read a depreciation curve to find one." },
-    { "n": 20, "id": "career-move", "title": "Work", "group": "decisions",
-      "absorbs": ["offer-compare", "side-hustle", "self-employed", "credential", "degree", "micro-retirement", "rollover"],
-      "done": ["offer-compare", "side-hustle", "self-employed", "credential", "degree", "micro-retirement"],
-      "held": { "rollover": "Every other room on this page carries appliesWhen \"situation != retired\"; The Account You Left Behind never did, because it sits in Your Numbers rather than in Work. Folding it in would take it from the people most likely to have left a plan behind. It wants a different home \u2014 The Statement's where-it-lands reading is the candidate, per D-228 \u2014 or a per-reading situation rule, and that is the owner's call rather than a session's." },
-      "note": "Seven old rooms, every one about a job. Nothing here is about building something that pays you; that gap is now more visible, not less." },
-    { "n": 21, "id": "debt-payoff", "title": "Debt", "group": "decisions", "absorbs": ["student-loans", "credit"], "note": "One pile of debt: the order, the plans for the part that has plans, and the record it leaves.",
-      "done": ["student-loans", "credit"] },
-    { "n": 22, "id": "big-purchase", "title": "Big Purchase", "group": "decisions", "absorbs": ["dreamline"], "done": ["dreamline"],
-      "note": "Pricing the thing you want is the same form." },
-    { "n": 23, "id": "partner", "title": "Family", "group": "decisions", "absorbs": ["kids"], "note": "Each reading keeps the gate branch its room had: the hat is absent when the branch is not there, so a merge does not widen who sees what.",
-      "done": ["kids"] },
-
-    { "n": 24, "id": "values", "title": "What Matters", "group": "meaning", "absorbs": ["fulfillment", "rerank", "giving"], "note": "Four readings of one expense log, all asking whether the money goes where you say it should.",
-      "done": ["fulfillment", "rerank", "giving"] },
-    { "n": 25, "id": "week", "title": "The Life", "group": "meaning", "absorbs": ["buckets"], "done": ["buckets"],
-      "note": "One question at two scales: is the life you want the one you are paying for. The week is the default because it is the scale you can act on tomorrow." },
-
-    { "n": 26, "id": "skill-tree", "title": "The Skill Tree", "group": "levelup", "absorbs": ["stacker", "exercises"], "note": "One set of skills read as a map, as a shortlist and as a to-do.",
-      "done": ["stacker", "exercises"] },
-    { "n": 27, "id": "debates", "title": "The Referee", "group": "levelup", "absorbs": ["unlearning"], "done": ["unlearning"],
-      "note": "Does this advice still apply to you is the same question as which side are you on." },
-
-    { "n": 28, "id": "protection", "title": "Protection", "group": "alone",
-      "absorbs": ["estate"], "done": ["estate"],
-      "note": "Estate Basics was one fact three times (rule 4): what stands behind you if a year goes wrong, and where it goes if the worst does, are one page." },
-    { "n": 29, "id": "cant-pay", "title": "When It Won't All Get Paid", "group": "alone", "absorbs": [], "done": [],
-      "note": "The anti-rule. Different register, different failure cost. Never behind a toggle." },
-    { "n": 30, "id": "get-help", "title": "Get Help", "group": "alone", "absorbs": [], "done": [],
-      "note": "Its independence is the point." }
+      "note": "One shell, many block types; five outputs on every block. Reversibility becomes a field on every block, not a room."
+    },
+    {
+      "n": 18,
+      "id": "housing",
+      "title": "Housing",
+      "group": "decisions",
+      "absorbs": [
+        "down-payment",
+        "property"
+      ],
+      "done": [
+        "down-payment",
+        "property"
+      ],
+      "note": "The house hack (D-225) already ships inside this room; it never became a room of its own. The Deal (D-227) arrived on main after this map was written and is named here by rule 1: it and Housing sit on the same engines/ownership.js arithmetic and differ in framing — whether a building pays, against whether to buy where you live. Naming it is not a verdict on shipping it; it is what the map is for."
+    },
+    {
+      "n": 19,
+      "id": "car",
+      "title": "Wheels",
+      "group": "decisions",
+      "absorbs": [
+        "first-car"
+      ],
+      "done": [
+        "first-car"
+      ],
+      "note": "Same car, same 20/3/8 test, same table, asked at two depths. The check is the default because someone who wants a yes or no should not have to read a depreciation curve to find one."
+    },
+    {
+      "n": 20,
+      "id": "career-move",
+      "title": "Work",
+      "group": "decisions",
+      "absorbs": [
+        "offer-compare",
+        "side-hustle",
+        "self-employed",
+        "credential",
+        "degree",
+        "micro-retirement"
+      ],
+      "done": [
+        "offer-compare",
+        "side-hustle",
+        "self-employed",
+        "credential",
+        "degree",
+        "micro-retirement"
+      ],
+      "note": "Seven old rooms, every one about a job. Nothing here is about building something that pays you; that gap is now more visible, not less."
+    },
+    {
+      "n": 21,
+      "id": "debt-payoff",
+      "title": "Debt",
+      "group": "decisions",
+      "absorbs": [
+        "student-loans",
+        "credit"
+      ],
+      "note": "One pile of debt: the order, the plans for the part that has plans, and the record it leaves.",
+      "done": [
+        "student-loans",
+        "credit"
+      ]
+    },
+    {
+      "n": 22,
+      "id": "big-purchase",
+      "title": "Big Purchase",
+      "group": "decisions",
+      "absorbs": [
+        "dreamline"
+      ],
+      "done": [
+        "dreamline"
+      ],
+      "note": "Pricing the thing you want is the same form."
+    },
+    {
+      "n": 23,
+      "id": "partner",
+      "title": "Family",
+      "group": "decisions",
+      "absorbs": [
+        "kids"
+      ],
+      "note": "Each reading keeps the gate branch its room had: the hat is absent when the branch is not there, so a merge does not widen who sees what.",
+      "done": [
+        "kids"
+      ]
+    },
+    {
+      "n": 24,
+      "id": "values",
+      "title": "What Matters",
+      "group": "meaning",
+      "absorbs": [
+        "fulfillment",
+        "rerank",
+        "giving"
+      ],
+      "note": "Four readings of one expense log, all asking whether the money goes where you say it should.",
+      "done": [
+        "fulfillment",
+        "rerank",
+        "giving"
+      ]
+    },
+    {
+      "n": 25,
+      "id": "week",
+      "title": "The Life",
+      "group": "meaning",
+      "absorbs": [
+        "buckets"
+      ],
+      "done": [
+        "buckets"
+      ],
+      "note": "One question at two scales: is the life you want the one you are paying for. The week is the default because it is the scale you can act on tomorrow."
+    },
+    {
+      "n": 26,
+      "id": "skill-tree",
+      "title": "The Skill Tree",
+      "group": "levelup",
+      "absorbs": [
+        "stacker",
+        "exercises"
+      ],
+      "note": "One set of skills read as a map, as a shortlist and as a to-do.",
+      "done": [
+        "stacker",
+        "exercises"
+      ]
+    },
+    {
+      "n": 27,
+      "id": "debates",
+      "title": "The Referee",
+      "group": "levelup",
+      "absorbs": [
+        "unlearning"
+      ],
+      "done": [
+        "unlearning"
+      ],
+      "note": "Does this advice still apply to you is the same question as which side are you on."
+    },
+    {
+      "n": 28,
+      "id": "protection",
+      "title": "Protection",
+      "group": "alone",
+      "absorbs": [
+        "estate"
+      ],
+      "done": [
+        "estate"
+      ],
+      "note": "Estate Basics was one fact three times (rule 4): what stands behind you if a year goes wrong, and where it goes if the worst does, are one page."
+    },
+    {
+      "n": 29,
+      "id": "cant-pay",
+      "title": "When It Won't All Get Paid",
+      "group": "alone",
+      "absorbs": [],
+      "done": [],
+      "note": "The anti-rule. Different register, different failure cost. Never behind a toggle."
+    },
+    {
+      "n": 30,
+      "id": "get-help",
+      "title": "Get Help",
+      "group": "alone",
+      "absorbs": [],
+      "done": [],
+      "note": "Its independence is the point."
+    }
   ]
 }

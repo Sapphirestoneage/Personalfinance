@@ -363,16 +363,6 @@
       "order": 26.6
     },
     {
-      "id": "rollover",
-      "title": "The Account You Left Behind",
-      "file": "rooms/rollover.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 26.8
-    },
-    {
       "id": "what-if-life",
       "title": "What If, Life",
       "file": "rooms/what-if-life.html",

@@ -951,7 +951,23 @@
      and on every hashchange. Rooms that fold on their own terms (Start
      Here's cards, the dashboard's panel) say so with data-fold="own". */
   var FOLD_KEEP = 4;
+  /* On a MERGED page <main>'s children are the readings, and only the one
+     on screen is not hidden. The room's own sections are that reading's
+     children, not main's. Without this, main has exactly one visible
+     section child, so `secs.length <= FOLD_KEEP` and `secs.length < 2` are
+     both true and the fold (D-166) and the URL-follows-you sync (D-170)
+     silently do nothing — which is what all thirteen merged pages have
+     done since the merges. The Statement was 6,200px on a phone with no
+     "Show the rest" on it. D-261. */
+  function sectionHost(host) {
+    var views = Array.prototype.filter.call(host.children, function (n) {
+      return n.tagName === 'SECTION' && /^view-/.test(n.id || '');
+    });
+    if (!views.length) return host;
+    return views.filter(function (v) { return !v.hidden; })[0] || host;
+  }
   function roomSections(host) {
+    host = sectionHost(host);
     /* The situation notice folds the whole room (D-142) with a class on the
        host; lift it for the measurement so the room's own sections are seen
        as they will be once "show it anyway" is tapped. Synchronous, so no
@@ -978,14 +994,37 @@
   }
   function mountFold(roomId) {
     if (typeof document === 'undefined') return null;
-    var host = document.querySelector('main') || document.querySelector('.wrap');
-    if (!host || host.getAttribute('data-fold') === 'own') return null;
+    var page = document.querySelector('main') || document.querySelector('.wrap');
+    if (!page || page.getAttribute('data-fold') === 'own') return null;
+    /* A merged page swaps readings under this. Each reading folds on its
+       own terms, so a change of reading tears the old fold down and builds
+       the new one. D-261. */
+    var host = sectionHost(page);
+    if (host !== page && !mountFold.watching) {
+      mountFold.watching = true;
+      window.addEventListener('hashchange', function () {
+        setTimeout(function () {
+          var now = sectionHost(page);
+          if (now === mountFold.on) return;
+          var old = document.getElementById('showrest');
+          if (old && old.parentNode) old.parentNode.removeChild(old);
+          if (mountFold.on) {
+            mountFold.on.classList.remove('slaf-tail-folded');
+            Array.prototype.forEach.call(mountFold.on.querySelectorAll('.slaf-tail'),
+              function (n) { n.classList.remove('slaf-tail'); });
+          }
+          mountFold.on = null;
+          mountFold(roomId);
+        }, 0);
+      });
+    }
     if (document.getElementById('showrest')) return null;
-    var secs = roomSections(host);
+    var secs = roomSections(page);
     if (secs.length <= FOLD_KEEP) return null;
     var folded = secs.slice(FOLD_KEEP);
     folded.forEach(function (sec) { sec.classList.add('slaf-tail'); });
     host.classList.add('slaf-tail-folded');
+    mountFold.on = host;
 
     var btn = document.createElement('button');
     btn.type = 'button';
@@ -997,6 +1036,7 @@
 
     function unfold() {
       host.classList.remove('slaf-tail-folded');
+      mountFold.on = null;
       if (btn.parentNode) btn.parentNode.removeChild(btn);
       window.removeEventListener('hashchange', check);
     }
@@ -1024,15 +1064,15 @@
     if (typeof document === 'undefined' || typeof window === 'undefined') return null;
     var host = document.querySelector('main') || document.querySelector('.wrap');
     if (!host) return null;
-    var secs = roomSections(host);
-    if (secs.length < 2) return null;
+    if (roomSections(host).length < 2) return null;
     var queued = false;
     function current() {
       /* The last section whose top has passed the upper third of the
          screen; at the very bottom, the last section on the page. */
       var line = window.innerHeight * 0.35, hit = null;
       var atEnd = window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 2;
-      secs.forEach(function (sec) {
+      /* Re-read: on a merged page the reading under this changes. D-261. */
+      roomSections(host).forEach(function (sec) {
         if (sec.hidden || getComputedStyle(sec).display === 'none') return;
         var top = sec.getBoundingClientRect().top;
         if (top <= line || (atEnd && top < window.innerHeight)) hit = sec;

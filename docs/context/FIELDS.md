@@ -71,7 +71,7 @@ Fields: 112. Traced: 103. No other room mentions it: **55**.
 ## fire (3)
 
 - `enoughMonthly` — Enough, a month · **no other room mentions it**
-- `retireAge` — Stop working at · read by dashboard, skill-tree, rollover, what-if-life, decumulation, career-move, week, one-pager
+- `retireAge` — Stop working at · read by statement, dashboard, skill-tree, what-if-life, decumulation, career-move, week, one-pager
 - `coastAge` — Coast: arrive by · **no other room mentions it**
 
 ## goals (1)
@@ -135,8 +135,8 @@ Fields: 112. Traced: 103. No other room mentions it: **55**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by expenses, income, financial-snapshot, statement, dashboard, cant-pay, rollover, decumulation, tax, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, income, financial-snapshot, statement, hassle, dashboard, skill-tree, values, goals, worth, runway, car, cant-pay, rollover, what-if-life, protection, decumulation, tax, career-move, partner, housing, big-purchase, adventure, week, debates, one-pager
+- `filingStatus` — Filing status · read by expenses, income, financial-snapshot, statement, dashboard, cant-pay, decumulation, tax, career-move, partner, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, income, financial-snapshot, statement, hassle, dashboard, skill-tree, values, goals, worth, runway, car, cant-pay, what-if-life, protection, decumulation, tax, career-move, partner, housing, big-purchase, adventure, week, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
 - `cashSavings` — Cash & savings · read by ledger, cash-flow, income, budget, financial-snapshot, statement, dashboard, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
@@ -153,7 +153,7 @@ Fields: 112. Traced: 103. No other room mentions it: **55**.
 
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by rollover, decumulation, career-move, housing, debates
+- `marginalRate` — Marginal tax rate · read by decumulation, career-move, housing, debates
 - `allocationStocks` — Target: stocks · **no other room mentions it**
 - `allocationBonds` — Target: bonds · **no other room mentions it**
 - `allocationCash` — Target: cash · **no other room mentions it**

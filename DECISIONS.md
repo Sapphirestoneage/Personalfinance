@@ -14803,6 +14803,57 @@ already said `## D-NNN`; nothing enforced it.
 **Verified.** `node test/run.js` (31,540), and the index now carries
 D-238 … D-259 with their own line ranges.
 
+## D-260 — The Statement takes the account you left behind
+
+**Why.** The last room held out of the merges with an open question on it.
+The Account You Left Behind sat in Your Numbers and had no situation rule;
+Work, the other candidate, gives every reading "situation != retired" — and
+the people most likely to have left a plan behind are exactly the people
+that rule removes.
+
+**Decision.** It is The Statement's fourth reading, `#left-behind`
+(`rooms/statement.html`, `shared/registry.js`). An old workplace plan is
+something you own that landed somewhere, which is the room's whole subject,
+and The Statement requires nothing of anybody. `rooms/rollover.html`
+redirects. Your Numbers is eight rooms, not nine.
+
+**Replaces or removes.** The rollover room and its entry; twenty references
+in `data/layouts.json`.
+
+**Stored shape.** No change. The reading writes nothing and never did — the
+balance typed there is a what-if held in one closure variable (D-052).
+
+**Verified.** `node test/run.js` (31,526), `node test/forms.js`, and the
+reading A/B'd against the old room in a browser: the four options, the
+trap, the cost rows and the why all read the same, and the console is clean.
+
+## D-261 — A merged page lost its fold, and nobody could see it
+
+**Why.** Found A/B'ing D-260. `Progress.mountFold` (D-166) and the
+URL-follows-you sync (D-170) both read `<main>`'s section children. On a
+merged page those children are the READINGS, and the router hides all but
+one — so `secs.length` is 1, `1 <= FOLD_KEEP` and `1 < 2` are both true,
+and both features silently did nothing. On all thirteen merged pages, since
+the first merge. The Statement was 6,215px on a phone with no "Show the
+rest" anywhere on it.
+
+**Decision.** `sectionHost()` (`shared/progress.js`) returns the element
+whose children are the room's own sections: `<main>` on a plain page, the
+visible reading on a merged one. The fold's class goes there, each reading
+folds on its own terms, and a change of reading tears the old fold down and
+builds the new one. The URL sync re-reads its sections rather than
+capturing them once, because the reading under it can change.
+
+**Replaces or removes.** Nothing. It restores on merged pages what every
+room had before it was merged.
+
+**Stored shape.** No change; this is display only.
+
+**Verified.** `node test/run.js` (31,526), `node test/forms.js`, and in a
+browser: The Statement 6,215px → 4,422px folded, each of its four readings
+folding to its own named sections, "Show the rest" opening the one on
+screen, and the fold rebuilding on every hat.
+
 ---
 
 # The Dungeons & Dividends entries

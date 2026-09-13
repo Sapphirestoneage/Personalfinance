@@ -10,16 +10,15 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **start** — Start Here · 1000 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1570 lines · no engines · DD-028, DD-026, DD-025
 
-## Your Numbers (9)
+## Your Numbers (8)
 
 - **debt-payoff** — Debt · 2644 lines · engines: projection, debt, tier0, studentloans, hourly, foo, cashflow, fire, statement, benchmarks, ratios · owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-249, D-207, D-191
 - **expenses** — Expenses · 1402 lines · engines: projection, tier0, cashflow, fire, income, selfemployed, tax, hourly, subscriptions · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-237, D-207, D-199
 - **cash-flow** — The Month · 896 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-245, D-192, D-163
 - **income** — Income · 1345 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget, variableincome, hourly · owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, incomeType, paySurvives · D-247, D-243, D-207
 - **budget** — The Close · 976 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history · owns: monthsClosed, historyCompareTo · D-246, D-130, D-129
-- **statement** — The Statement · 1736 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, statements · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-248, D-157, D-152
+- **statement** — The Statement · 2442 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, statements, taxroom · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-260, D-248, D-157
 - **cant-pay** — When It Won’t All Get Paid · 529 lines · engines: projection, tier0, cashflow · D-148
-- **rollover** — The Account You Left Behind · 756 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom · D-150
 - **tax** — Tax · 258 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly · owns: otherPreTax, withheld · D-150, D-142, D-129
 
 ## Scorecard (3)
@@ -63,7 +62,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
-## Files in rooms/ not in the registry (57)
+## Files in rooms/ not in the registry (58)
 
 - rooms/accounts.html
 - rooms/between-jobs.html
@@ -107,6 +106,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/refresh.html
 - rooms/rerank.html
 - rooms/reversibility.html
+- rooms/rollover.html
 - rooms/roth-aca.html
 - rooms/savings-rate.html
 - rooms/self-employed.html

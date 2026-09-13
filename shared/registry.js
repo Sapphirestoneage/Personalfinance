@@ -165,27 +165,6 @@
       ]
     },
     {
-      /* "I left my job — what happens to my 401(k)?" Accounts covers Roth
-         vs Traditional, not this (D-150). */
-      id: 'rollover',
-      group: 'numbers', subgroup: 'assets', aliases: ['old 401k', 'rollover', 'left behind'],
-      kind: 'explore',
-      needs: [],
-      order: 26.8,
-      title: 'The Account You Left Behind',
-      blurb: 'A workplace plan at an old job has four possible futures, and one of them is much worse than the others. What each costs you, and the paperwork trap in the middle.',
-      href: 'rooms/rollover.html',
-      tier: 2,
-      tags: ['income'],
-      daite: { reads: [], writes: [] },
-      subsections: [
-        { id: 'out-four',   label: 'The four things you can do' },
-        { id: 'out-trap',   label: 'The trap in the middle' },
-        { id: 'out-cost',   label: 'What cashing out costs' },
-        { id: 'reading',    label: 'Reading from elsewhere' }
-      ]
-    },
-    {
       /* The highest-stress money moment there is, and Between Jobs was the
          nearest thing — which assumes job loss specifically (D-148). */
       id: 'cant-pay',
@@ -285,7 +264,7 @@
     {
       id: 'statement',
       features: ['afterTaxNetWorth', 'incomeFloor', 'equityComp', 'homeDetail'],
-      group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'accounts', 'property', 'what you own', 'where it goes', 'roth', 'traditional', 'allocation', 'rebalance', 'solo 401k', 'statements', 'documents', 'quarterly'],
+      group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'accounts', 'property', 'what you own', 'where it goes', 'roth', 'traditional', 'allocation', 'rebalance', 'solo 401k', 'statements', 'documents', 'quarterly', 'old 401k', 'rollover', 'left behind'],
       kind: 'core',
       needs: ['cashSavings', 'investments', 'totalDebt'],
       order: 5,
@@ -308,7 +287,10 @@
         { id: 'setup', label: 'Where the next dollar lands' },
         { id: 'allocation', label: 'How it is split' },
         { id: 'solo', label: 'A Solo 401k' },
-        { id: 'tabs', label: 'The three documents' }
+        { id: 'tabs', label: 'The three documents' },
+        { id: 'out-four', label: 'The four things you can do' },
+        { id: 'out-trap', label: 'The trap in the middle' },
+        { id: 'out-cost', label: 'What cashing out costs' }
       ]
     },
     {
@@ -1075,7 +1057,7 @@
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
-    numbers: ['debt-payoff', 'cant-pay', 'statement', 'rollover', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
+    numbers: ['debt-payoff', 'cant-pay', 'statement', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire'],
     decisions: ['career-move', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'week'],
