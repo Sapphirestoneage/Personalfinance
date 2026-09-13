@@ -463,40 +463,26 @@
     },
     {
       id: 'goals',
-      group: 'matters', aliases: ['goals', 'targets', 'wedding', 'dream', 'decisions', 'undo', 'reversible', 'one-way door', 'can it be undone', 'weighing'],
+      group: 'matters', aliases: ['goals', 'targets', 'wedding', 'dream', 'decisions', 'undo', 'reversible', 'one-way door', 'can it be undone', 'weighing', 'worth it', 'purchase', 'joy per dollar', 'regret'],
       kind: 'about-you',
-      needs: ['monthlyExpenses'],
+      /* grossAnnualIncome arrived with Behind you (D-262), which prices what
+         a thing turned out to be worth in hours of your life. */
+      needs: ['monthlyExpenses', 'grossAnnualIncome'],
       order: 22,
       title: 'The Decision Room',
       blurb: 'Anything you are weighing, in one place — what it costs, what it costs you, when it lands, whether it fits, and whether it can be undone.',
       href: 'rooms/goals.html',
       tier: 2,
       tags: ['cashflow'],
-      daite: { reads: ['expenses', 'assets.cashCents'], writes: ['plans.goals', 'plans.reversibility'] },
+      daite: { reads: ['expenses', 'assets.cashCents', 'income.grossAnnualCents'], writes: ['plans.goals', 'plans.reversibility', 'plans.worth'] },
       subsections: [
         { id: 'out-together', label: 'All of it together' },
         { id: 'add',          label: 'Start something' },
-        { id: 'decisions', label: 'Start from a decision' }
-      ]
-    },
-    {
-      id: 'worth',
-      group: 'decisions', subgroup: 'home', aliases: ['worth it', 'purchase', 'joy per dollar'],
-      kind: 'about-you',
-      needs: ['grossAnnualIncome'],
-      order: 24,
-      title: 'Worth It',
-      blurb: 'What you thought something would be worth before you bought it, against what it turned out to be worth \u2014 and what that gap says about your own guesses.',
-      href: 'rooms/worth.html',
-      tier: 1,
-      tags: ['cashflow'],
-      daite: { reads: ['income.grossAnnualCents'], writes: ['plans.worth'] },
-      subsections: [
+        { id: 'decisions', label: 'Start from a decision' },
         { id: 'things',      label: 'The things' },
         { id: 'out-each',    label: 'The arithmetic on each' },
         { id: 'out-gap',     label: 'Before against after' },
-        { id: 'out-regrets', label: 'The ones you would take back' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
+        { id: 'out-regrets', label: 'The ones you would take back' }
       ]
     },
     /* The Cushion (D-232): four readings of one number. The Runway, Between

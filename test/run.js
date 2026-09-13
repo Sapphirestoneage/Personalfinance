@@ -8624,7 +8624,7 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
   checkTrue('the chart redraws only when it changes', /if \(html === lastChart\) return;/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
   checkTrue('every write is one labelled undo entry', /Spine\.batch\(c\.label \+ ' → ' \+ shown, fn\)/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
   checkTrue('the chart animates', /@keyframes slaf-grow/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')) && /prefers-reduced-motion/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
-  checkTrue('nobody links to the old anchors', ['rooms/hassle.html', 'rooms/worth.html'].every(f => !/real-hourly-wage', 'out-/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))));
+  checkTrue('nobody links to the old anchors', ['rooms/hassle.html', 'rooms/goals.html'].every(f => !/real-hourly-wage', 'out-/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))));
 
   /* Get Help: where the out-of-scope line points. */
   const help = Registry.byId('get-help');
@@ -10691,7 +10691,12 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
   checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
   checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
-  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 14);
+  /* The rule, not a count: a situation nobody has answered filters nothing.
+     The number churned with every merge and said nothing when it changed. */
+  check('no situation answered: everything applies', Registry.inGroup('decisions', null).length,
+    Registry.all().filter(r => r.group === 'decisions').length);
+  checkTrue('...and a situation that IS answered can filter', Registry.all()
+    .filter(r => r.group === 'decisions').some(r => r.appliesWhen));
   checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
 
   /* The one shared sidebar. */

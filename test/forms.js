@@ -762,7 +762,7 @@ const CASES = [
     /* Worth It. Free-text, money, and a plain number in one card, plus two
        rating selects in the same container — the densest live form in the
        repo after the front page. */
-    room: '/rooms/worth.html',
+    room: '/rooms/goals.html#behind-you',
     container: '#thing-list',
     seed: 'demo',
     prepare: async (page) => { await page.tap('#btn-add'); },
@@ -1438,7 +1438,7 @@ const SELECT_CASES = [
     /* The same purchase carries TWO ratings, which is the only place in the
        app where one item does. Tapping from the first straight to the
        second is exactly the sequence a rebuild would eat. */
-    room: '/rooms/worth.html',
+    room: '/rooms/goals.html#behind-you',
     container: '#thing-list',
     seed: 'demo',
     prepare: async (page) => { await page.tap('#btn-add'); },

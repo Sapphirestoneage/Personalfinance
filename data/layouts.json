@@ -38,7 +38,6 @@
             "values",
             "goals",
             "foo-ladder",
-            "worth",
             "runway",
             "car",
             "cant-pay",
@@ -99,7 +98,6 @@
             "values",
             "goals",
             "foo-ladder",
-            "worth",
             "runway",
             "car",
             "cant-pay",
@@ -186,8 +184,7 @@
             "big-purchase",
             "car",
             "housing",
-            "hassle",
-            "worth"
+            "hassle"
           ]
         },
         {
@@ -310,7 +307,6 @@
         {
           "name": "Decide",
           "rooms": [
-            "worth",
             "goals",
             "week"
           ]
@@ -402,8 +398,7 @@
             "values",
             "week",
             "decumulation",
-            "debates",
-            "worth"
+            "debates"
           ]
         },
         {
@@ -506,7 +501,6 @@
             "values",
             "week",
             "debates",
-            "worth",
             "hassle",
             "skill-tree",
             "career-move",
@@ -596,7 +590,6 @@
           "rooms": [
             "values",
             "week",
-            "worth",
             "data",
             "one-pager",
             "get-help"
@@ -672,7 +665,6 @@
             "adventure",
             "values",
             "cant-pay",
-            "worth",
             "hassle",
             "data",
             "one-pager"
@@ -765,8 +757,7 @@
             "what-if-life",
             "adventure",
             "timeline",
-            "goals",
-            "worth"
+            "goals"
           ],
           "note": "Looking out at what has not happened yet."
         },
@@ -849,8 +840,7 @@
             "wedding",
             "decumulation",
             "week",
-            "debates",
-            "worth"
+            "debates"
           ]
         },
         {
@@ -906,7 +896,6 @@
         {
           "name": "A decision, made",
           "rooms": [
-            "worth",
             "hassle",
             "big-purchase",
             "housing",
@@ -1019,8 +1008,7 @@
           "rooms": [
             "values",
             "week",
-            "debates",
-            "worth"
+            "debates"
           ],
           "note": "The failure nobody insures against, and the one this app is unusually good at."
         },
@@ -1075,7 +1063,6 @@
             "values",
             "week",
             "debates",
-            "worth",
             "skill-tree"
           ]
         },
@@ -1187,7 +1174,6 @@
             "fire",
             "hassle",
             "dashboard",
-            "worth",
             "runway",
             "car",
             "what-if-life",
@@ -1285,8 +1271,7 @@
           "rooms": [
             "values",
             "week",
-            "debates",
-            "worth"
+            "debates"
           ]
         },
         {
@@ -1340,7 +1325,6 @@
           "name": "Five minutes",
           "rooms": [
             "hassle",
-            "worth",
             "car",
             "cant-pay",
             "get-help"
@@ -1448,7 +1432,6 @@
           "name": "A whole idea to hold",
           "rooms": [
             "hassle",
-            "worth",
             "week",
             "values",
             "skill-tree",
@@ -1554,7 +1537,6 @@
             "values",
             "week",
             "debates",
-            "worth",
             "skill-tree"
           ],
           "note": "What any of it is for. Twelve spokes.",
@@ -1610,8 +1592,7 @@
             "tax",
             "protection",
             "dashboard",
-            "hassle",
-            "worth"
+            "hassle"
           ],
           "note": "These lean on data/*.json. Only 4 of the 72 tables are marked sourced; 17 are marked unverified. The rooms here are exactly as good as those files.",
           "warn": true
@@ -1728,8 +1709,7 @@
           "rooms": [
             "values",
             "week",
-            "debates",
-            "worth"
+            "debates"
           ]
         },
         {

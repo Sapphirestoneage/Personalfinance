@@ -14854,6 +14854,34 @@ browser: The Statement 6,215px → 4,422px folded, each of its four readings
 folding to its own named sections, "Show the rest" opening the one on
 screen, and the fold rebuilding on every hat.
 
+## D-262 — The Decision Room gets a second reading: the ones behind you
+
+**Why.** Worth It was held out of the merges on the anti-rule — a different
+emotional register does not merge — and the anti-rule was right about the
+BLOCK and wrong about the room. The five questions are only worth asking if
+your answers are any good, and Worth It is the only thing in the app that
+tells you.
+
+**Decision.** `rooms/goals.html` grows hats: `#ahead-of-you` (the default,
+the shell as it was) and `#behind-you` (Worth It, whole, with its own
+store, its own look and its own reading). It is NOT a block type and the
+room's spec says so where someone would go looking to add one.
+`rooms/worth.html` redirects.
+
+**Replaces or removes.** The Worth It room and its entry, twenty references
+in `data/layouts.json`, and the check that counted the decisions group
+instead of testing its rule — `inGroup('decisions', null).length === 14`
+churned with every merge and said nothing when it changed.
+
+**Stored shape.** No change. `household.worthChecks` keeps its shape, its
+writer (`Spine.upsertWorthCheck`) and its spine-stamped timestamps.
+
+**Verified.** `node test/run.js` (31,564), `node test/forms.js` — both
+readings walked with typed input, the live-form guard holding — and the
+reading A/B'd against the old room in a browser: all five panels
+character-for-character identical, console clean. The xss count moved with
+the reading (worth 2 → goals 3); the repo total is still 58.
+
 ---
 
 # The Dungeons & Dividends entries

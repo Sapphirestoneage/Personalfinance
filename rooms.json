@@ -277,7 +277,8 @@
       "title": "The Decision Room",
       "file": "rooms/goals.html",
       "reads": [
-        "monthlyExpenses"
+        "monthlyExpenses",
+        "grossAnnualIncome"
       ],
       "writes": [
         "reversibilityDecision"
@@ -306,18 +307,6 @@
       "requires": [],
       "dashboardNumber": "fooStep",
       "order": 23
-    },
-    {
-      "id": "worth",
-      "title": "Worth It",
-      "file": "rooms/worth.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 24
     },
     {
       "id": "runway",
