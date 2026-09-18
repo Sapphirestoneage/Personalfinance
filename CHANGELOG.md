@@ -73,3 +73,49 @@ failure — the list of what is broken is the point.
 steps 1, 3, 4, 5, 6, 8, 9, 10 and 11 — which is to say the whole of Tasks 2
 and 3. Steps 8–11 failed by timing out on an input (`#in-expenses`) that did
 not exist yet.
+
+### Tasks 2 and 3 — the first screen, and the two numbers
+
+These are one change and landed in one commit. Task 2 asks where a first-time
+visitor is sent; Task 3 asks what they are asked for when they get there.
+Doing one without the other leaves the app stuck — routing someone into an
+onboarding that still asks for age, ZIP, situation and pay is not the fix.
+
+**What a new visitor sees now.**
+
+1. **Onboarding.** Nothing saved means the two questions and nothing else. No
+   dashboard, no map link, no ☰ rooms menu, no ninety-four-room progress bar.
+   Opening `map.html` directly sends you back to the front door.
+2. **The two questions.** "What does a typical month cost?" and "How much cash
+   do you have?" That is the whole of Phase 1. The walk used to be five
+   questions — age, ZIP, situation, pay, cash — and none of them produced a
+   number you could look at. The other four are not deleted: they sit behind
+   the gate and come back in the same walk the moment it opens.
+3. **The micro-dashboard.** One reading: how long the money lasts. Under it, a
+   progress bar that counts to two (not to a hundred and ten), and one next
+   step. At the bottom, one button: "Open the rest of the app".
+
+**The gate.** Finishing the two questions does **not** open the app. The first
+version of this did, and it was wrong — the reward for finishing onboarding
+would have been the ninety-four rooms onboarding exists to keep out of the
+way. The gate opens when the person presses the button, or on its own for
+anyone whose saved numbers go beyond Phase 1 (a returning visitor, an
+imported file, a share link, the example household). Nobody is ever pushed
+back to the first question.
+
+**Where the numbers go.** No new stored field. The month is written to
+"everything else, a month", which is where `shared/schema.js` already puts a
+month nobody has split up — its own migration says so. Split the month in
+Expenses later and the split takes over. The unlock is a preference, not a
+fact about the household: the saved data is byte-identical either side of it.
+
+**Files.** New `shared/phase1.js` (the gate: 2 numbers, 3 screens, 1 unlock).
+`index.html` (three screens named by `data-slaf-screen` on `<body>`, and the
+new `#micro` card). `map.html` (the redirect). `rooms/ledger.html` (the
+`#q-expenses` question, the walk stepping along an order instead of each
+screen naming its own successor, and the all-at-once form cut to two rows).
+`test/run.js` (the "dashboard is four blocks" guard now knows there are three
+screens). Decision entry **D-234**.
+
+**Tests: 12 of 12 e2e steps pass** (up from 2 of 11 — one step was added, for
+the menu staying shut until unlocked). `node test/run.js`: 31,025 checks pass.

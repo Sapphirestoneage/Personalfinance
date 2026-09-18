@@ -52,6 +52,17 @@
   under a finger, which is D-034.
 -->
 <style>
+  /* PHASE 1 (D-234): while the gate is shut this page IS the onboarding, so
+     it carries none of the ways out of it — no room menu, no "all rooms",
+     no progress strip across ninety-four rooms. `data-slaf-phase1` is set
+     by the router below and is the only switch. */
+  body[data-slaf-phase1="open"] .slaf-hops-host,
+  body[data-slaf-phase1="open"] .slaf-menu-btn,
+  body[data-slaf-phase1="open"] .slaf-menu,
+  body[data-slaf-phase1="open"] .slaf-menu-backdrop,
+  body[data-slaf-phase1="open"] .room-back,
+  body[data-slaf-phase1="open"] #slaf-progress { display: none; }
+
   .target-wrap { position: sticky; top: 0; z-index: 3; background: var(--color-bg); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
   .target { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
   .target svg { width: 150px; height: 150px; flex: none; }
@@ -527,7 +538,7 @@
   #view-route .finished { border-color: var(--color-positive); }
 </style>
 </head>
-<body class="slaf">
+<body class="slaf" data-slaf-phase1="open">
 <main class="slaf-room">
   <a class="room-back" href="../index.html">← Home</a>
   <header class="slaf-room-head">
@@ -589,9 +600,26 @@
 
   <!-- ================= ROUND 1 (was rooms/first-round.html) ============= -->
   <section id="view-round1" hidden>
-  <p class="slaf-lede">Five questions. Under a minute. Then one thing the numbers say.</p>
-  <section class="screen slaf-card" id="q-age">
-    <span class="steps">1 of 5</span>
+  <p class="slaf-lede" id="round1-lede">Two questions. Under a minute. Then one number that means something.</p>
+
+  <!-- PHASE 1 (D-234): the two numbers, and they come first. A runway needs
+       a month and a pile of cash and nothing else, so nothing else is asked
+       until the person has seen one. The four questions below this pair are
+       still here, still written through their owners; they simply sit
+       outside Phase 1 until shared/phase1.js says the gate is open. -->
+  <section class="screen slaf-card" id="q-expenses">
+    <span class="steps" data-step></span>
+    <h2 id="expenses-heading">What does a typical month cost?</h2>
+    <p class="why" id="expenses-why">Rent or mortgage, food, getting about, everything else — one rough figure, all in. You can split it up later; nothing here needs the split.</p>
+    <div class="slaf-field big">
+      <label class="slaf-label" for="in-expenses" id="expenses-label">Everything you spend, a month</label>
+      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-expenses" type="text" inputmode="decimal" placeholder="e.g. 3,200" autocomplete="off"/></span>
+    </div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back hidden>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
+  </section>
+
+  <section class="screen slaf-card" id="q-age" hidden>
+    <span class="steps" data-step></span>
     <h2>How old are you?</h2>
     <p class="why">Every age-based figure starts here: the buffer target, the milestones, the FI date.</p>
     <div class="slaf-field big">
@@ -605,22 +633,22 @@
         <input id="in-year" type="text" inputmode="numeric" placeholder="Year, e.g. 1992" aria-label="Birth year"/>
       </div>
     </details>
-    <div class="nav"><span></span><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-zip">Next →</button></div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back hidden>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
   </section>
 
   <section class="screen slaf-card" id="q-zip" hidden>
-    <span class="steps">2 of 5</span>
+    <span class="steps" data-step></span>
     <h2>Your ZIP code?</h2>
     <p class="why">It suggests your state, which sets state tax and the unemployment cap. Nothing leaves this browser.</p>
     <div class="slaf-field big">
       <label class="slaf-label" for="in-zip">ZIP</label>
       <span class="slaf-input-shell"><input id="in-zip" type="text" inputmode="numeric" placeholder="e.g. 12203" maxlength="5" autocomplete="postal-code"/></span>
     </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-age">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-situation">Next →</button></div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
   </section>
 
   <section class="screen slaf-card" id="q-situation" hidden>
-    <span class="steps">3 of 5</span>
+    <span class="steps" data-step></span>
     <h2>Right now, you are…</h2>
     <p class="why">This decides which rows apply to you at all. Nothing that does not apply is ever asked.</p>
     <div class="choices tall" data-choices="situation" role="group" aria-label="Situation">
@@ -629,29 +657,29 @@
       <button type="button" class="choice" data-situation="selfEmployed" aria-pressed="false">Self-employed<small>Your own work, no employer</small></button>
       <button type="button" class="choice" data-situation="both" aria-pressed="false">A mix<small>A job and your own work</small></button>
     </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-zip">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-pay">Next →</button></div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
   </section>
 
   <section class="screen slaf-card" id="q-pay" hidden>
-    <span class="steps">4 of 5</span>
+    <span class="steps" data-step></span>
     <h2 id="pay-heading">Pay, a year?</h2>
     <p class="why" id="pay-why">Before tax. A rough figure is fine; it can be sharpened later.</p>
     <div class="slaf-field big">
       <label class="slaf-label" for="in-pay" id="pay-label">Gross pay, a year</label>
       <span class="slaf-input-shell"><span class="affix">$</span><input id="in-pay" type="text" inputmode="decimal" placeholder="e.g. 62,000" autocomplete="off"/></span>
     </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-situation">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-cash">Next →</button></div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next →</button></div>
   </section>
 
   <section class="screen slaf-card" id="q-cash" hidden>
-    <span class="steps">5 of 5</span>
+    <span class="steps" data-step></span>
     <h2>Cash on hand?</h2>
     <p class="why">Checking, savings, anything you could spend this week. Not investments.</p>
     <div class="slaf-field big">
       <label class="slaf-label" for="in-cash">Cash and savings</label>
       <span class="slaf-input-shell"><span class="affix">$</span><input id="in-cash" type="text" inputmode="decimal" placeholder="e.g. 3,000" autocomplete="off"/></span>
     </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-pay">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="insight" id="btn-finish">See what the numbers say →</button></div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next id="btn-finish">See what the numbers say →</button></div>
   </section>
 
   <section class="screen slaf-card insight" id="insight" hidden aria-live="polite">
@@ -664,7 +692,7 @@
       <a class="slaf-btn slaf-btn--primary" id="ins-open" href="ledger.html">Open the door →</a>
       <a class="slaf-btn slaf-btn--quiet" href="#doors-home">Or see every door</a>
     </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-cash">← Back</button><span></span></div>
+    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>← Back</button><span></span></div>
   </section>
   </section>
 
@@ -676,6 +704,8 @@
     <span class="pct">You understand <b id="xpct-pct">…</b> of your financial picture.</span>
     <nav class="jump" id="xjump" aria-label="Jump to a door"></nav>
   </div>
+
+  <p class="switch" id="x-phase1" hidden>Two boxes, because two numbers are all the first reading needs. Everything else is still here — <a href="../index.html">the rest of the app opens from the runway screen</a>.</p>
 
   <div id="xform">
     <details class="xdoor" id="x-D" open><summary><span class="letter">D</span><span class="label">Debt</span><span class="say">what you owe</span><span class="count" data-x-count="D"></span></summary><div class="xbody"></div></details>
@@ -781,6 +811,7 @@
 <script src="../shared/staleness.js"></script>
 <script src="../shared/levers.js"></script>
 <script src="../shared/progress.js"></script>
+<script src="../shared/phase1.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
@@ -1068,6 +1099,28 @@
   ];
   function routeView() {
     var h = location.hash || '';
+    /* PHASE 1 (D-234). Four of the six hats are doors onto every number the
+       app can hold — the doors, since last time, the arrangements, the
+       route. Inside Phase 1 only two exist, and they are the same two
+       questions asked two ways: one a screen, or both on one page. The
+       other four are hidden, never removed; the moment the gate opens they
+       are all back, with every value still in them. */
+    var phase1 = SLAF.Phase1.open(SLAF.Spine.getProfile());
+    document.body.setAttribute('data-slaf-phase1', phase1 ? 'open' : 'past');
+    if (phase1) {
+      var allowed = ['view-round1', 'view-express'];
+      Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+        a.hidden = allowed.indexOf(a.getAttribute('data-view')) === -1;
+      });
+      var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+      var onId = asked && allowed.indexOf(asked.id) !== -1 ? asked.id : 'view-round1';
+      VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== onId; });
+      Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+        a.setAttribute('aria-current', a.getAttribute('data-view') === onId ? 'page' : 'false');
+      });
+      return onId;
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) { a.hidden = false; });
     var on = VIEWS.filter(function (v) { return v.match.test(h); })[0] || VIEWS[VIEWS.length - 1];
     VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
     Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
@@ -1114,6 +1167,11 @@
     if (s) Suggest.confirm(s);
   });
   window.addEventListener('hashchange', routeHash);
+  /* Which view is on, decided SYNCHRONOUSLY, before any table is fetched.
+     The markup opens on the doors and the body opens on "phase1 open", so
+     whichever way this lands the wrong thing is never on screen while the
+     network is thinking. */
+  routeView();
   Spine.registerRoom('ledger');
   Spine.onChange(render);
   Progress.mountHeader('ledger');
@@ -1139,7 +1197,16 @@
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Reference = SLAF.Reference,
       LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Doors = SLAF.Doors;
   var TABLES = null;
-  var ORDER = ['q-age', 'q-zip', 'q-situation', 'q-pay', 'q-cash', 'insight'];
+  var Phase1 = SLAF.Phase1;
+  /* PHASE 1 (D-234): two questions, then the reading. The other four are
+     not deleted and not moved to another room — they sit behind the gate,
+     and the walk picks them up the moment shared/phase1.js says it is open.
+     ORDER is settled ONCE at boot and never recomputed: answering the last
+     Phase 1 question must not lengthen the walk under the person's feet. */
+  var PHASE1_SCREENS = ['q-expenses', 'q-cash'];
+  var BEYOND_SCREENS = ['q-age', 'q-zip', 'q-situation', 'q-pay'];
+  var ALL_SCREENS = PHASE1_SCREENS.concat(BEYOND_SCREENS).concat(['insight']);
+  var ORDER = null;          /* set at boot, below */
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function h() { return Spine.getProfile(); }
@@ -1147,18 +1214,52 @@
 
   /* ---- Screens: one at a time, never rebuilt ------------------------------ */
   function show(id) {
-    ORDER.forEach(function (s) { el(s).hidden = s !== id; });
+    ALL_SCREENS.forEach(function (s) { el(s).hidden = s !== id; });
     if (id === 'insight') paintInsight();
     if (id === 'q-pay') paintPayLabel();
+    if (id === 'q-expenses') paintExpensesLabel();
     /* The hash names the VIEW first and the screen second, because the
        Ledger is one page now and the hash has to say which hat it is
        wearing. Only write it while this view is the one on screen —
        prefilling at boot must not drag a reader off the doors. */
     if (!document.getElementById('view-round1').hidden) {
-      try { history.replaceState(null, '', '#round-1' + (id === 'q-age' ? '' : '-' + id)); } catch (e) { /* fine */ }
+      try { history.replaceState(null, '', '#round-1' + (id === ORDER[0] ? '' : '-' + id)); } catch (e) { /* fine */ }
       window.scrollTo(0, 0);
     }
   }
+  /* One question, two situations. Inside Phase 1 nothing is split, so this
+     box IS the month. Past the gate someone may already have split it in
+     Expenses, and then this box is the remainder it has always been — say
+     so rather than inviting them to type the whole month into a bucket. */
+  function paintExpensesLabel() {
+    var f = Schema.fat(h());
+    var split = ['food', 'accommodation', 'transportation'].some(function (k) {
+      return Money.isOk(f[k]) && f[k].source === 'typed';
+    });
+    el('expenses-heading').textContent = split ? 'What is left after the split?' : 'What does a typical month cost?';
+    el('expenses-label').textContent = split ? 'Everything else, a month' : 'Everything you spend, a month';
+    el('expenses-why').textContent = split
+      ? 'Food, rent and getting about are already split out in Expenses. This box is everything that is not one of those three.'
+      : 'Rent or mortgage, food, getting about, everything else \u2014 one rough figure, all in. You can split it up later; nothing here needs the split.';
+  }
+
+  /* "3 of 5" was painted into the markup, so the count was a lie the moment
+     the walk got shorter. It is written from ORDER now. */
+  function paintSteps() {
+    var asked = ORDER.slice(0, -1);
+    asked.forEach(function (id, i) {
+      var n = el(id).querySelector('[data-step]');
+      if (n) n.textContent = (i + 1) + ' of ' + asked.length;
+      var back = el(id).querySelector('[data-back]');
+      if (back) back.hidden = i === 0;
+      var next = el(id).querySelector('[data-next]');
+      if (next) next.textContent = i === asked.length - 1 ? 'See what the numbers say \u2192' : 'Next \u2192';
+    });
+    el('round1-lede').textContent = asked.length === 2
+      ? 'Two questions. Under a minute. Then one number that means something.'
+      : asked.length + ' questions. Under a minute. Then one thing the numbers say.';
+  }
+
   function paintPayLabel() {
     var between = situation() === 'unemployed';
     el('pay-heading').textContent = between ? 'Your last pay, a year?' : 'Pay, a year?';
@@ -1199,6 +1300,19 @@
     if (cents === null) return;
     Ownership.write(between ? 'lastPay' : 'grossAnnualIncome', cents);
   }
+  /* THE MONTH, WRITTEN AS A BUCKET. A month is four buckets (D-172, D-197)
+     and a beginner has one figure. shared/schema.js already names that case:
+     an unsplit month is stored as "everything else", which is exactly what
+     an unsplit month is. So this writes `wantsMonthly` through the Expenses
+     room's own write path — no second copy of the number, and the moment
+     anyone splits the month in Expenses the split takes over. */
+  function writeExpenses() {
+    var cents = Money.parseMoney(el('in-expenses').value);
+    if (cents === null) return;
+    var cur = Schema.fat(h()).wants;
+    if (Money.isOk(cur) && cur.value === cents) return;
+    Ownership.write('wantsMonthly', cents);
+  }
   function writeCash() {
     var cents = Money.parseMoney(el('in-cash').value);
     if (cents === null) return;
@@ -1206,7 +1320,7 @@
     if (Money.isOk(cur) && cur.value === cents) return;
     Ownership.write('cashSavings', cents);
   }
-  var SAVE = { 'q-age': writeAge, 'q-zip': writeZip, 'q-pay': writePay, 'q-cash': writeCash };
+  var SAVE = { 'q-expenses': writeExpenses, 'q-age': writeAge, 'q-zip': writeZip, 'q-pay': writePay, 'q-cash': writeCash };
 
   /* ---- The insight ---------------------------------------------------------- */
   function paintInsight() {
@@ -1223,6 +1337,17 @@
       el('ins-rough').hidden = !ins.rough;
       el('ins-rough').textContent = ins.rough ? 'Rough: it leans on ' + ins.usedSuggestions.length + (ins.usedSuggestions.length === 1 ? ' guess' : ' guesses') + ' you can confirm or change behind the doors.' : '';
     }
+    /* Where this card sends you next. Inside Phase 1 the doors do not exist
+       yet, so pointing at one would be a door onto a hidden view; the way on
+       is the runway screen, which is where the rest of the app opens from. */
+    if (Phase1.open(h())) {
+      el('ins-door').textContent = 'That is the whole of Phase 1. Two numbers, one reading.';
+      el('ins-open').textContent = 'See how long the money lasts →';
+      el('ins-open').href = '../index.html';
+      el('ins-open').nextElementSibling.hidden = true;
+      return;
+    }
+    el('ins-open').nextElementSibling.hidden = false;
     el('ins-door').textContent = ins.door.reason;
     el('ins-open').textContent = 'Open ' + (door ? door.label : 'the door') + ' →';
     el('ins-open').href = '#door-' + ins.door.door;
@@ -1231,6 +1356,8 @@
   /* ---- Boot: prefill once, wire once ------------------------------------------ */
   function prefill() {
     var hh = h(), p = Schema.primaryPerson(hh);
+    var wants = Schema.fat(hh).wants;
+    if (Money.isOk(wants)) el('in-expenses').value = Money.formatCents(wants.value).replace(/^\$/, '');
     var age = Schema.primaryAge(hh);
     if (Money.isEntered(age)) el('in-age').value = String(age);
     if (p && p.dob && /^\d{4}-\d{2}/.test(p.dob)) { el('in-month').value = p.dob.slice(5, 7); el('in-year').value = p.dob.slice(0, 4); }
@@ -1243,24 +1370,36 @@
     if (Money.isOk(cash)) el('in-cash').value = Money.formatCents(cash.value).replace(/^\$/, '');
     paintPayLabel();
   }
+  /* Next and Back are STEPS ALONG ORDER, not links to a named screen. The
+     markup used to name its own successor, which meant the walk could only
+     ever be the one walk it was written as. */
+  function stepFrom(id, dir) {
+    var i = ORDER.indexOf(id);
+    if (i === -1) return ORDER[0];
+    return ORDER[Math.max(0, Math.min(ORDER.length - 1, i + dir))];
+  }
   document.addEventListener('click', function (ev) {
     var t = ev.target.closest ? ev.target.closest('[data-next],[data-back],[data-situation]') : null;
     if (!t) return;
     if (t.hasAttribute('data-situation')) { writeSituation(t.getAttribute('data-situation')); return; }
     var from = t.closest('.screen');
-    if (t.hasAttribute('data-next') && from && SAVE[from.id]) SAVE[from.id]();
-    show(t.getAttribute('data-next') || t.getAttribute('data-back'));
+    if (!from) return;
+    var forward = t.hasAttribute('data-next');
+    if (forward && SAVE[from.id]) SAVE[from.id]();
+    show(stepFrom(from.id, forward ? 1 : -1));
   });
-  ['in-age', 'in-zip', 'in-pay', 'in-cash', 'in-year', 'in-month'].forEach(function (id) {
+  ['in-expenses', 'in-age', 'in-zip', 'in-pay', 'in-cash', 'in-year', 'in-month'].forEach(function (id) {
     el(id).addEventListener('change', function () { var s = el(id).closest('.screen'); if (s && SAVE[s.id]) SAVE[s.id](); });
   });
+  ORDER = (Phase1.open(h()) ? PHASE1_SCREENS : PHASE1_SCREENS.concat(BEYOND_SCREENS)).concat(['insight']);
   prefill();
-  var start = (/^#round-1-(.+)$/.exec(location.hash || '') || [])[1] || 'q-age';
-  show(ORDER.indexOf(start) !== -1 ? start : 'q-age');
+  paintSteps();
+  var start = (/^#round-1-(.+)$/.exec(location.hash || '') || [])[1] || ORDER[0];
+  show(ORDER.indexOf(start) !== -1 ? start : ORDER[0]);
   window.addEventListener('hashchange', function () {
     var m = /^#round-1(?:-(.+))?$/.exec(location.hash || '');
     if (!m) return;
-    var want = m[1] || 'q-age';
+    var want = m[1] || ORDER[0];
     if (ORDER.indexOf(want) !== -1 && el(want).hidden) show(want);
   });
   Reference.load(Suggest.TABLES.concat(['effectiveTaxRates', 'staleness'])).then(function (t) {
@@ -1276,7 +1415,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Reference = SLAF.Reference,
-      LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Ask = SLAF.Ask, Doors = SLAF.Doors;
+      LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Ask = SLAF.Ask, Doors = SLAF.Doors, Phase1 = SLAF.Phase1;
   var TABLES = null;
   var NODES = {};        /* rowId or rowId:itemId → { row, el, input, sug, saved } */
   var LISTS = { debts: { kind: 'debt', rows: ['debtBalance', 'debtRate', 'debtMinPayment'], label: 'Debts', level: 2, door: 'D' },
@@ -1382,6 +1521,18 @@
   function build() {
     var hh = h();
     var all = LedgerRows.all().filter(function (r) { return !/^prefs\./.test(r.path); });
+    /* PHASE 1 (D-234): the whole form, cut to the whole of Phase 1. Eighty
+       rows become two — the month and the cash — and the doors that hold
+       nothing collapse to a line saying so. Nothing is deleted: this is a
+       filter over the same row library, and one tap on "Show me everything"
+       below rebuilds the form in full. */
+    var phase1 = Phase1.open(hh);
+    if (phase1) {
+      var keep = {}; Phase1.ASKS.forEach(function (a) { keep[a.writeField] = a; });
+      all = all.filter(function (r) { return keep[r.id]; });
+      all = all.map(function (r) { return Object.assign({}, r, { label: keep[r.id].label }); });
+    }
+    el('x-phase1').hidden = !phase1;
     Doors.DOORS.forEach(function (d) {
       var mine = all.filter(function (r) { return r.door === d.id; });
       var out = '';
@@ -1407,6 +1558,7 @@
         out += '</details>';
       });
       document.querySelector('#x-' + d.id + ' .xbody').innerHTML = out;
+      document.getElementById('x-' + d.id).hidden = !out;
     });
     el('xjump').innerHTML = Doors.DOORS.map(function (d) { return '<a href="#x-' + esc(d.id) + '">' + esc(d.letter) + '</a>'; }).join('');
     index();

@@ -253,9 +253,45 @@
   .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+
+  /* ---- Phase 1: the first screen, and the one after it --------------------
+     Three screens live on this page and `data-slaf-screen` on <body> says
+     which. The attribute starts at "onboarding" in the markup so a browser
+     that has never been here cannot flash the room menu or the panel before
+     the router has read the household. D-234. */
+  /* THE LOCK is not the same thing as the SCREEN. The room menu, the way to
+     the map and the ninety-four-room progress strip are shut for as long as
+     Phase 1 is shut — which includes the micro-dashboard, where the person
+     has finished onboarding but has not asked for the rest of the app. A
+     menu that offers the map while map.html bounces you back is worse than
+     no menu. `data-slaf-phase1` says locked; `data-slaf-screen` says which
+     of the three screens is on. */
+  body[data-slaf-phase1="open"] .slaf-hops-host,
+  body[data-slaf-phase1="open"] .slaf-menu-btn,
+  body[data-slaf-phase1="open"] .slaf-menu,
+  body[data-slaf-phase1="open"] .slaf-menu-backdrop,
+  body[data-slaf-phase1="open"] .room-back,
+  body[data-slaf-phase1="open"] #slaf-progress { display: none; }
+  body[data-slaf-screen="onboarding"] #full-panel,
+  body[data-slaf-screen="onboarding"] #micro { display: none; }
+  body[data-slaf-screen="micro"] #landing,
+  body[data-slaf-screen="dashboard"] #micro { display: none; }
+
+  .micro { margin-top: var(--space-4); }
+  .micro-figure { font-family: var(--font-display); font-size: var(--text-3xl, 2.6rem); line-height: 1.1; margin: var(--space-2) 0 0; }
+  .micro-figure.is-incomplete { color: var(--color-text-muted); }
+  .micro-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .micro-progress { margin-top: var(--space-4); }
+  .micro-count { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .micro-next { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+  .micro-next .say { font-size: var(--text-md); margin: var(--space-2) 0 0; }
+  .micro-next .go { display: inline-block; margin-top: var(--space-2); color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); }
+  .micro-next .go:hover { text-decoration: underline; }
+  .micro-more { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+  .micro-more .slaf-hint { margin-top: var(--space-2); }
 </style>
 </head>
-<body class="slaf">
+<body class="slaf" data-slaf-screen="onboarding" data-slaf-phase1="open">
 
 <header class="room-head">
   <a class="room-back" href="map.html">← All rooms</a>
@@ -288,6 +324,34 @@
     <div class="data-actions">
       <button type="button" class="slaf-btn slaf-btn--primary" id="btn-share-load">Load it (replaces yours)</button>
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-share-dismiss">Keep mine</button>
+    </div>
+  </section>
+
+  <!-- ==================== THE MICRO-DASHBOARD (D-234) ====================
+       Phase 1's whole output: one reading, one next step, one way on. It
+       needs exactly the two numbers onboarding asks for, and nothing here
+       waits on anything else. Shown when those two are in but the full
+       panel still has needs outstanding; `#micro` is hidden by the screen
+       rules above on the other two screens, never by a stale `hidden`. -->
+  <section class="slaf-card micro" id="micro" hidden>
+    <span class="slaf-eyebrow">How long the money lasts</span>
+    <p class="micro-figure" id="micro-runway">—</p>
+    <p class="micro-say" id="micro-runway-say"></p>
+
+    <div class="micro-progress" id="micro-progress" data-phase1-complete="0">
+      <div class="slaf-done-bar"><span id="micro-bar" style="width:0"></span></div>
+      <p class="micro-count" id="micro-count"></p>
+    </div>
+
+    <div class="micro-next" id="micro-next" hidden>
+      <span class="slaf-eyebrow">The next thing to do</span>
+      <p class="say" id="micro-next-say"></p>
+      <a class="go" id="micro-next-go" href="#"></a>
+    </div>
+
+    <div class="micro-more">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-unlock">Open the rest of the app →</button>
+      <p class="slaf-hint">Ninety-odd rooms sit behind this. Not one of them is needed for the number above.</p>
     </div>
   </section>
 
@@ -482,6 +546,7 @@
 <script src="shared/prefs.js"></script>
 <script src="shared/features.js"></script>
 <script src="shared/progress.js"></script>
+<script src="shared/phase1.js"></script>
 <script src="shared/roomexport.js"></script>
 <script src="shared/undo.js"></script>
 <script src="shared/demo-persona.js"></script>
@@ -1084,32 +1149,142 @@
       window.location.replace('rooms/ledger.html?comeback=1#since-last-time');
       return false;
     }
+    /* THREE SCREENS, ONE ATTRIBUTE (D-234). Onboarding until the two Phase 1
+       numbers are in; the micro-dashboard once they are; the full panel when
+       it has what it needs. `data-slaf-screen` is what the CSS above reads
+       to shut the room menu, the progress strip and the panel, so there is
+       one answer to "what is on screen" rather than five `hidden` flags
+       drifting apart. Anyone whose household already holds numbers Phase 1
+       never asks for is past it: Phase1.unlocked says so, and no returning
+       visitor is ever sent back to the first question. */
     var ready = panelReady(h);
-    el('landing').hidden = ready;
+    var screen = SLAF.Phase1.screen(h, ready);
+    document.body.setAttribute('data-slaf-screen', screen);
+    document.body.setAttribute('data-slaf-phase1', SLAF.Phase1.open(h) ? 'open' : 'past');
+
+    el('landing').hidden = screen !== 'onboarding';
+    el('micro').hidden = screen !== 'micro';
     Array.prototype.forEach.call(document.querySelectorAll('.dash'), function (n) { n.hidden = !ready; });
     var strip = document.getElementById('slaf-progress');
     if (strip) strip.hidden = !ready;
-    el('page-title').textContent = ready ? 'The Dashboard' : 'SPARKS';
+    el('page-title').textContent = ready ? 'The Dashboard' : (screen === 'micro' ? 'Your runway' : 'SPARKS');
     el('page-lede').textContent = ready
       ? 'Where you are, the next thing money should do, the next thing to learn, and the date it all points to. Every number opens the room it came from.'
-      : 'Small, sharp money tools that share one set of numbers.';
+      : screen === 'micro'
+        ? 'Two numbers in, and one reading off them. The rest of the app is behind the button at the bottom, whenever you want it.'
+        : 'Two questions. Then one number that means something.';
     if (ready) return true;
+    if (screen === 'micro') { renderMicro(h); return false; }
 
-    /* Part-way through: say how far, and where the next answer is. */
-    var o = SLAF.Progress.overall(h);
+    /* Onboarding, part-way through: say how far, and where the next answer
+       is. Phase 1 is two questions, so "part-way" means exactly one in. */
+    var p1 = SLAF.Phase1.answered(h);
     var resume = el('resume');
-    if (o.fieldsFilled > 0 && o.missing.length) {
-      var next = o.missing[0];
+    if (p1.filled > 0 && p1.missing.length) {
+      var f = SLAF.Ownership.describe(p1.missing[0], h);
       resume.hidden = false;
-      resume.innerHTML = o.fieldsFilled + ' of ' + o.fieldsTotal + ' answers in. Pick up at '
-        + '<a href="' + next.href + '">' + esc(next.label) + '</a> in ' + esc(next.ownerTitle) + ' →';
-      el('btn-start').textContent = 'Continue →';
-      el('btn-start').href = next.href;
+      resume.innerHTML = p1.filled + ' of ' + p1.total + ' in. One left: '
+        + '<a href="rooms/ledger.html#round-1-q-' + (p1.missing[0] === 'cashSavings' ? 'cash' : 'expenses') + '">'
+        + esc(f ? f.label.toLowerCase() : p1.missing[0]) + '</a> →';
+      el('btn-start').textContent = 'Carry on →';
     } else {
       resume.hidden = true;
     }
     return false;
   }
+
+  /* ---- The micro-dashboard (D-234) -------------------------------------------
+     Everything Phase 1 can say, and not a word more: how long the money
+     lasts, how many of the two numbers are in, and one thing to do next.
+     The runway comes from engines/runway.js — the same engine The Cushion
+     uses — so there is no second copy of the arithmetic. The band it is
+     read against comes from data/liquidity_benchmarks.json, never inline. */
+  function renderMicro(h) {
+    var r = SLAF.Runway.project(h, TABLES, { preset: 'quit' });
+    var fig = el('micro-runway');
+    var ok = Money.isOk(r);
+    fig.className = 'micro-figure' + (ok ? '' : ' is-incomplete');
+    fig.textContent = ok
+      ? (r.sustainable ? 'Longer than five years' : r.value + (r.value === 1 ? ' month' : ' months'))
+      : Money.EM_DASH;
+    var band = ok && !r.sustainable && TABLES
+      ? Reference.lookupLiquidityBand(TABLES.liquidityBenchmarks, r.value) : null;
+    el('micro-runway-say').textContent = ok
+      ? Money.formatCents(r.cushionCents) + ' in cash against ' + Money.formatCents(r.monthlyExpensesCents)
+        + ' a month, with nothing coming in.'
+        + (band && Money.isOk(band) ? ' ' + band.label + '. ' + band.blurb : '')
+      : r.reason;
+
+    /* The progress bar. Phase 1's denominator is two, not the whole app:
+       a bar that reads 2 of 110 on the day you finish is a punishment. */
+    var p1 = SLAF.Phase1.answered(h);
+    var box = el('micro-progress');
+    box.setAttribute('data-phase1-complete', String(p1.filled));
+    el('micro-bar').style.width = Math.round(p1.filled / p1.total * 100) + '%';
+    el('micro-count').textContent = p1.filled + ' of ' + p1.total + ' Phase 1 numbers in'
+      + (p1.missing.length ? ' — still to come: ' + p1.missing.map(function (id) {
+        var d = SLAF.Ownership.describe(id, h);
+        return d ? d.label.toLowerCase() : id;
+      }).join(', ') : '. That is the whole of Phase 1.');
+
+    renderMicroNext(h, r);
+  }
+
+  /* One next step, chosen from what the two numbers actually say. A thin
+     runway makes the cushion the next thing; anything else hands over the
+     next unanswered number and the room that owns it. */
+  function renderMicroNext(h, r) {
+    var box = el('micro-next'), say = el('micro-next-say'), go = el('micro-next-go');
+    box.hidden = false;
+    var thin = Money.isOk(r) && !r.sustainable && r.value < 3;
+
+    /* Inside Phase 1 the suggestion stays inside Phase 1. Sending someone to
+       a room full of questions is exactly what the gate exists to stop, so
+       while it is shut the next step is either the reading itself or the one
+       room that splits the month it already has. */
+    if (SLAF.Phase1.open(h)) {
+      if (thin) {
+        say.innerHTML = 'Under three months of runway. The next thing money should do is make that number bigger — before anything is paid down or invested.';
+        go.textContent = 'Open The Cushion →';
+        go.href = Ownership.linkTo('runway', null);
+      } else if (!Money.isOk(r)) {
+        say.innerHTML = 'One of the two numbers is still missing.';
+        go.textContent = 'Finish the two questions →';
+        go.href = 'rooms/ledger.html#round-1';
+      } else {
+        say.innerHTML = 'Nothing is on fire. The next thing worth knowing is <strong>where the month actually goes</strong> — split it into food, rent and getting about.';
+        go.textContent = 'Open Expenses →';
+        go.href = Ownership.linkTo('expenses', 'spending');
+      }
+      return;
+    }
+
+    if (thin) {
+      say.innerHTML = 'Under three months of runway. The next thing money should do is make that number bigger — before anything is paid down or invested.';
+      go.textContent = 'Open The Cushion →';
+      go.href = Ownership.linkTo('runway', null);
+      return;
+    }
+    var next = SLAF.Progress.overall(h).missing[0];
+    if (!next) {
+      say.innerHTML = 'Every number the panel needs is in. The full dashboard is ready.';
+      go.textContent = 'See the dashboard →';
+      go.href = 'index.html';
+      return;
+    }
+    say.innerHTML = 'The next number worth having is <strong>' + esc(next.label.toLowerCase()) + '</strong>.';
+    go.textContent = 'Answer it in ' + esc(next.ownerTitle) + ' →';
+    go.href = next.href;
+  }
+
+  /* The one door out of Phase 1, and it is the person's to open. A
+     preference, never a stored fact: the household is byte-identical
+     either side of it. */
+  el('btn-unlock').addEventListener('click', function () {
+    SLAF.Phase1.unlock();
+    renderNow();
+    window.scrollTo(0, 0);
+  });
 
   /* ---- Your data: export, import, share. D-059. ------------------------------ */
 

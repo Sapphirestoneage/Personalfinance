@@ -1,15 +1,15 @@
 {
   "name": "phase1",
-  "total": 11,
-  "pass": 2,
-  "fail": 9,
+  "total": 12,
+  "pass": 12,
+  "fail": 0,
   "steps": [
     {
       "title": "fresh visit with nothing saved opens onboarding",
-      "status": "fail",
+      "status": "pass",
       "notes": [
         "stored keys on arrival: slaf.prefs.v1, slaf.household.v2",
-        "body data-slaf-screen is \"null\", expected \"onboarding\""
+        "onboarding is the first screen"
       ],
       "shots": [
         "01-fresh-visit.png"
@@ -27,9 +27,9 @@
     },
     {
       "title": "nothing of the dashboard or the map shows before onboarding",
-      "status": "fail",
+      "status": "pass",
       "notes": [
-        "visible before onboarding: the rooms menu (slaf-menu-btn)"
+        "onboarding only"
       ],
       "shots": [
         "03-no-map-before-onboarding.png"
@@ -37,9 +37,9 @@
     },
     {
       "title": "opening the map with nothing saved returns to onboarding",
-      "status": "fail",
+      "status": "pass",
       "notes": [
-        "still on the map: http://127.0.0.1:40605/map.html"
+        "sent to /index.html"
       ],
       "shots": [
         "04-map-redirect.png"
@@ -47,10 +47,10 @@
     },
     {
       "title": "path 1 (walk me through it) asks what a month costs",
-      "status": "fail",
+      "status": "pass",
       "notes": [
-        "first screen: {\"id\":\"q-age\",\"text\":\"1 OF 5 How old are you? Every age-based figure starts here: the buffer target, the milestones, the FI date. AGE Know the month and year? Use those instead. Next\"}",
-        "first question is \"q-age\", expected \"q-expenses\""
+        "first screen: {\"id\":\"q-expenses\",\"text\":\"1 OF 2 What does a typical month cost? Rent or mortgage, food, getting about, everything else — one rough figure, all in. You can split it up later; nothing her\"}",
+        "1 OF 2 What does a typical month cost? Rent or mortgage, food, getting about, everything else — one rough figure, all in. You can split it up later; nothing her"
       ],
       "shots": [
         "05-path1-walk-through.png"
@@ -58,10 +58,10 @@
     },
     {
       "title": "path 2 (the whole form) shows only the two Phase 1 rows",
-      "status": "fail",
+      "status": "pass",
       "notes": [
-        "visible inputs: 93 — checkbox, Name, Last four digits, Kind of debt, Name, Last four digits, Kind of debt, Cash and savings, checkbox, Investments and retirement, checkbox, Name",
-        "rows beyond expenses and cash are still showing: checkbox, Name, Last four digits, Kind of debt, Name, Last four digits, Kind of debt, Cash and savings, checkbox, Investments and retirement"
+        "visible inputs: 5 — cashSavings, wantsMonthly",
+        "expenses and cash, and nothing else"
       ],
       "shots": [
         "06-path2-whole-form.png"
@@ -71,8 +71,8 @@
       "title": "path 3 (example numbers) fills the household and moves on",
       "status": "pass",
       "notes": [
-        "screen after example numbers: null; stored: slaf.prefs.v1, slaf.household.v2",
-        "example household loaded, screen is \"null\""
+        "screen after example numbers: dashboard; stored: slaf.prefs.v1, slaf.household.v2",
+        "example household loaded, screen is \"dashboard\""
       ],
       "shots": [
         "07-path3-example-numbers.png"
@@ -80,37 +80,61 @@
     },
     {
       "title": "expenses + cash alone produce a runway on the last onboarding screen",
-      "status": "fail",
+      "status": "pass",
       "notes": [
-        "threw: page.fill: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#in-expenses')\u001b[22m\n"
+        "insight text: HOME The Ledger Every number the app can hold. Six ways in; they all write the same rows. Round 1 All at once Two questions. Under a minute. Then one number that means something. THE FIRST THING THE NUMBERS SAY About 3 m",
+        "3 months of runway from $9600 against $3200 a month"
       ],
-      "shots": []
+      "shots": [
+        "08-entered-expenses.png",
+        "09-runway-shown.png"
+      ]
     },
     {
       "title": "the micro-dashboard shows the runway and a next step",
-      "status": "fail",
+      "status": "pass",
       "notes": [
-        "threw: page.fill: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#in-expenses')\u001b[22m\n"
+        "screen: micro; runway: 3 months; next: THE NEXT THING TO DO Nothing is on fire. The next thing worth knowing is where the month actually goes — split it into food, rent and getting about. Open Expenses →",
+        "3 months — THE NEXT THING TO DO Nothing is on fire. The next thing worth knowing is where the month actually goes — split it into food, rent and getting about. Open Expenses →"
       ],
-      "shots": []
+      "shots": [
+        "10-micro-dashboard.png"
+      ]
+    },
+    {
+      "title": "the micro-dashboard keeps the rooms menu shut until unlocked",
+      "status": "pass",
+      "notes": [
+        "menu before unlock: shut; after: open",
+        "shut until asked for, open once asked"
+      ],
+      "shots": [
+        "11-unlocked.png"
+      ]
     },
     {
       "title": "The Cushion reads a real runway from the two numbers alone",
-      "status": "fail",
+      "status": "pass",
       "notes": [
-        "threw: page.fill: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#in-expenses')\u001b[22m\n"
+        "The Cushion figure: 3 months",
+        "3 months"
       ],
-      "shots": []
+      "shots": [
+        "12-cushion-room.png"
+      ]
     },
     {
       "title": "the progress bar reports progress from the two numbers",
-      "status": "fail",
+      "status": "pass",
       "notes": [
-        "threw: page.fill: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#in-expenses')\u001b[22m\n"
+        "progress: {\"value\":\"2\",\"text\":\"2 of 2 Phase 1 numbers in. That is the whole of Phase 1.\"}",
+        "2 of 2 Phase 1 numbers in. That is the whole of Phase 1."
       ],
-      "shots": []
+      "shots": [
+        "13-progress-bar.png"
+      ]
     }
   ],
-  "ranAt": "2026-09-18T01:31:08.890Z",
+  "ranAt": "2026-09-18T01:44:40.290Z",
   "playwrightFrom": "/opt/node22/lib/node_modules/playwright"
 }

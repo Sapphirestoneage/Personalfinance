@@ -115,6 +115,23 @@
 <script src="shared/guide.js"></script>
 <script src="shared/prefs.js"></script>
 <script src="shared/progress.js"></script>
+<script src="shared/phase1.js"></script>
+<script>
+(function () {
+  'use strict';
+  /* PHASE 1 (D-234). The map is a door past onboarding: ninety-four rooms,
+     none of which a person with nothing saved can fill in. A browser still
+     inside Phase 1 goes back to the two questions. Anyone who has answered
+     them, imported a file, loaded the example household or asked for the
+     rest of the app is past the gate and never sees this. */
+  try {
+    if (SLAF.Phase1.open(SLAF.Spine.getProfile())) {
+      document.documentElement.style.visibility = 'hidden';
+      window.location.replace('index.html');
+    }
+  } catch (e) { /* a gate that cannot run must not cost anyone the map */ }
+})();
+</script>
 <script src="shared/roomexport.js"></script>
 <script src="shared/undo.js"></script>
 <script>

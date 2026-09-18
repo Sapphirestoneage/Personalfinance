@@ -8412,11 +8412,19 @@ section('The dashboard (D-096): four blocks, the leads, the translator');
      undo pair, every instrument opening a room. */
   const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   ['where', 'next', 'learn', 'date'].forEach(id => checkTrue(`block #${id} is on the page`, new RegExp('id="' + id + '"').test(page)));
+  /* THREE SCREENS, AND ONLY ONE OF THEM IS THE DASHBOARD (D-234). The
+     four-block guard is about the DASHBOARD screen; onboarding (#landing)
+     and the micro-dashboard (#micro) are the other two, and each is one
+     card. `data-slaf-screen` on <body> decides which is on, so the guard
+     is: the four blocks, plus exactly those two screens and the share
+     offer, and nothing else outside the drawers. */
   checkTrue('the blocks are the only sections outside the drawers', (function () {
     const main = page.slice(page.indexOf('<main'), page.indexOf('<details class="drawer dash" id="full-panel">'));
     const ids = (main.match(/<section class="slaf-card[^"]*" id="([a-z-]+)"/g) || []).map(m => m.replace(/.*id="/, '').replace('"', ''));
-    return ids.join(',') === 'landing,share-offer,where,next,learn,date';
+    return ids.join(',') === 'landing,share-offer,micro,where,next,learn,date';
   })());
+  checkTrue('the page names its three screens on <body>', /<body class="slaf" data-slaf-screen="onboarding" data-slaf-phase1="open">/.test(page));
+  checkTrue('the page loads the Phase 1 gate', page.indexOf('<script src="shared/phase1.js">') !== -1);
   checkTrue('the full panel and the data controls are folded', /<details class="drawer dash" id="full-panel">/.test(page) && /<details class="drawer" id="your-data-drawer">/.test(page));
   checkTrue('the page loads the gate, the lens, the translator and the undo pair', ['shared/gate.js', 'shared/lens.js', 'engines/advice.js', 'shared/undo.js'].every(f => page.indexOf('<script src="' + f + '">') !== -1));
   checkTrue('every instrument opens a room', InstrumentsMain.INSTRUMENTS.every(i => new RegExp("\\b" + i.id + ": \\['[a-z-]+'").test(page)));

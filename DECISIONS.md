@@ -13961,6 +13961,37 @@ checks), `node tools/context/build.js --check`. All six readings, the five
 redirects and the deep links `#draftt`, `#out-rate`, `#out-wealth`, `#habit`
 and `#guess` loaded at 390px with a clean console.
 
+## D-234 — Phase 1: two numbers, one reading, and a gate in front of the rest
+
+**Why.** A first-time visitor met the dashboard, then the map, then
+ninety-four rooms, before typing a figure. The first screen asked for age,
+ZIP, situation and pay — four answers before anything was read back.
+
+**Decision.** `shared/phase1.js` is the gate. Phase 1 is `monthlyExpenses`
+and `cashSavings` and nothing else; the reading is the runway. `index.html`
+shows one of three screens, named by `data-slaf-screen` on `<body>`:
+onboarding, the micro-dashboard (`#micro` — runway, a progress bar over two,
+one next step), the dashboard. `map.html` sends a locked browser back to
+`index.html`. In `rooms/ledger.html` Round 1 becomes two questions
+(`#q-expenses`, `#q-cash`), the walk steps along ORDER instead of hard-wired
+successors, and all-at-once shows the two rows. The gate opens when the
+person presses "Open the rest of the app", or when the household already
+holds a number Phase 1 never asks for.
+
+**Replaces or removes.** Removes the four-question intake ahead of any
+reading, and the room menu, "all rooms" link and progress strip from the
+onboarding screens. No room, field or screen is deleted — four Round 1
+questions and five Ledger hats sit behind the gate and return intact.
+
+**Stored shape.** No change. The month is written to `wantsMonthly` through
+the Expenses room's own path, which is where `shared/schema.js` already puts
+an unsplit month; the unlock is a pref (`phase1.unlocked`), never a fact, so
+the household is byte-identical either side of it.
+
+**Verified.** `node test/run.js` (30,993 checks); `npm test` in `tests/`;
+`npm run e2e` — `tests/e2e/phase1.test.js`, 11 of 11 steps, screenshots in
+`tests/e2e/screenshots/`.
+
 
 ---
 

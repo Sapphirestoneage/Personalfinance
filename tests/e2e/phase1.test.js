@@ -213,11 +213,18 @@ async function main() {
         return r.width > 0 && r.height > 0;
       };
       return Array.prototype.filter.call(document.querySelectorAll('#view-express input, #view-express select, #view-express textarea'), shown)
-        .map((n) => n.getAttribute('data-row') || n.getAttribute('id') || n.getAttribute('aria-label') || n.type);
+        .map((n) => {
+          const row = n.closest('[data-x-row]');
+          if (row) return row.getAttribute('data-x-row');
+          return n.getAttribute('id') || n.getAttribute('aria-label') || n.type;
+        });
     });
-    run.note('visible inputs: ' + inputs.length + (inputs.length ? ' — ' + inputs.slice(0, 12).join(', ') : ''));
-    const wanted = ['monthlyExpenses', 'cashSavings'];
-    const extra = inputs.filter((i) => wanted.indexOf(i) === -1);
+    run.note('visible inputs: ' + inputs.length + (inputs.length ? ' — ' + [...new Set(inputs)].slice(0, 12).join(', ') : ''));
+    /* The month is READ as monthlyExpenses and WRITTEN as wantsMonthly —
+       an unsplit month is "everything else" (shared/schema.js). The form
+       shows the row you type into. */
+    const wanted = ['wantsMonthly', 'cashSavings'];
+    const extra = [...new Set(inputs.filter((i) => wanted.indexOf(i) === -1))];
     if (inputs.length === 0) run.fail('the whole-form view shows no inputs at all');
     else if (extra.length) run.fail('rows beyond expenses and cash are still showing: ' + extra.slice(0, 10).join(', '));
     else run.ok('expenses and cash, and nothing else');
@@ -305,6 +312,36 @@ async function main() {
     if (!next) problems.push('no next-step suggestion in #micro-next');
     if (problems.length) run.fail(problems.join('; '));
     else run.ok(runway + ' — ' + next);
+    await ctx.close();
+  });
+
+  /* ---- 9b. …and the rest of the app is still shut until asked for ------- */
+  await step('the micro-dashboard keeps the rooms menu shut until unlocked', async () => {
+    const { ctx, page } = await fresh();
+    await page.goto(site.base + '/index.html');
+    await H.slafReady(page);
+    await page.click('#btn-start');
+    await page.waitForLoadState('load');
+    await H.slafReady(page);
+    await page.waitForTimeout(400);
+    await page.fill('#in-expenses', DEMO.expenses);
+    await page.locator('#q-expenses [data-next]').click();
+    await page.fill('#in-cash', DEMO.cash);
+    await page.locator('#q-cash [data-next]').click();
+    await page.waitForTimeout(600);
+    await page.goto(site.base + '/index.html');
+    await H.slafReady(page);
+    await page.waitForTimeout(700);
+
+    const shutBefore = !(await visible(page, '.slaf-menu-btn'));
+    await page.click('#btn-unlock');
+    await page.waitForTimeout(600);
+    await capture(page, 'unlocked');
+    const openAfter = await visible(page, '.slaf-menu-btn');
+    run.note('menu before unlock: ' + (shutBefore ? 'shut' : 'open') + '; after: ' + (openAfter ? 'open' : 'shut'));
+    if (!shutBefore) run.fail('the rooms menu is on screen while Phase 1 is still locked');
+    else if (!openAfter) run.fail('the rooms menu did not appear after "Open the rest of the app"');
+    else run.ok('shut until asked for, open once asked');
     await ctx.close();
   });
 
