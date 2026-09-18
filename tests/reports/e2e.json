@@ -1,7 +1,7 @@
 {
   "name": "phase1",
-  "total": 12,
-  "pass": 12,
+  "total": 13,
+  "pass": 13,
   "fail": 0,
   "steps": [
     {
@@ -133,8 +133,19 @@
       "shots": [
         "13-progress-bar.png"
       ]
+    },
+    {
+      "title": "the tradeoff cards mark every metric the same way, with a legend",
+      "status": "pass",
+      "notes": [
+        "legend visible: true; cards: [{\"label\":\"Drift — the baseline\",\"baseline\":true,\"better\":0,\"worse\":0},{\"label\":\"House Hack\",\"baseline\":false,\"better\":2,\"worse\":1},{\"label\":\"Both, Smaller\",\"baseline\":false,\"better\":2,\"worse\":1},{\"label\":\"Change Jobs\",\"baseline\":false,\"better\":2,\"worse\":0},{\"label\":\"Side Hustle\",\"baseline\":false,\"better\":2,\"worse\":1},{\"label\":\"Steady\",\"baseline\":false,\"better\":2,\"worse\":0}]",
+        "6 cards, one direction each, legend on screen"
+      ],
+      "shots": [
+        "14-tradeoff-legend.png"
+      ]
     }
   ],
-  "ranAt": "2026-09-18T01:44:40.290Z",
+  "ranAt": "2026-09-18T02:02:31.372Z",
   "playwrightFrom": "/opt/node22/lib/node_modules/playwright"
 }

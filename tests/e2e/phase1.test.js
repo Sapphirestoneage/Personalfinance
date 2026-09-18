@@ -405,6 +405,47 @@ async function main() {
     await ctx.close();
   });
 
+  /* ---- 13. The tradeoff cards: one direction, and a legend saying which -- */
+  await step('the tradeoff cards mark every metric the same way, with a legend', async () => {
+    const { ctx, page } = await fresh();
+    await page.goto(site.base + '/index.html');
+    await H.slafReady(page);
+    /* The Long Way Round needs a whole household, so take the example one
+       and open the gate — this step is about the cards, not the gate. */
+    await page.evaluate(() => {
+      const d = window.SLAF.DemoPersona.build();
+      window.SLAF.Spine.updateProfile({ people: d.people, filingStatus: d.filingStatus, state: d.state,
+        assets: d.assets, debts: d.debts, expenses: d.expenses, capturingFullMatch: d.capturingFullMatch,
+        retirement: d.retirement, insurance: d.insurance });
+      window.SLAF.Phase1.unlock();
+    });
+    await page.goto(site.base + '/rooms/adventure.html');
+    await H.slafReady(page);
+    await page.waitForTimeout(2500);
+    await capture(page, 'tradeoff-legend');
+
+    const legend = await visible(page, '#legend');
+    const cards = await page.evaluate(() => [...document.querySelectorAll('.pathcard')].map((n) => ({
+      label: (n.querySelector('b') || {}).innerText || '',
+      baseline: n.classList.contains('is-baseline'),
+      better: n.querySelectorAll('.dir.is-better').length,
+      worse: n.querySelectorAll('.dir.is-worse').length
+    })));
+    run.note('legend visible: ' + legend + '; cards: ' + JSON.stringify(cards));
+    const problems = [];
+    if (!legend) problems.push('no legend on screen');
+    if (!cards.length) problems.push('no cards rendered');
+    if (cards.some((c) => c.baseline && (c.better || c.worse))) problems.push('the baseline is marked better or worse than itself');
+    /* The whole point: one card that costs hours reads WORSE on hours while
+       reading BETTER on money. Before this, both were plain numbers. */
+    if (!cards.some((c) => !c.baseline && c.better > 0 && c.worse > 0)) {
+      problems.push('no card shows a better and a worse metric together, so the convention is not being exercised');
+    }
+    if (problems.length) run.fail(problems.join('; '));
+    else run.ok(cards.length + ' cards, one direction each, legend on screen');
+    await ctx.close();
+  });
+
   await browser.close();
   await site.close();
 

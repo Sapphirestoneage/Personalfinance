@@ -54,6 +54,18 @@
   .pathcard .delta { display: block; margin-top: var(--space-2); font-size: var(--text-sm); color: var(--color-accent-hover); }
   .pathcard .tag { display: inline-block; margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-faint); border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 1px 8px; }
 
+  /* ONE DIRECTION FOR EVERY METRIC (D-236). The marker says what the figure
+     means FOR YOU against Drift, never which way the number moved: more
+     money and a sooner date are both up, more hours a week is down. */
+  .dir { font-style: normal; font-size: var(--text-xs); margin-right: 4px; }
+  .dir.is-better { color: var(--color-positive); }
+  .dir.is-worse { color: var(--color-critical); }
+  .dir.is-same { color: var(--color-text-faint); }
+  .legend { font-size: var(--text-xs); color: var(--color-text-muted); line-height: var(--leading-loose);
+    border: 1px dashed var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); }
+  .legend .k { display: block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); margin-bottom: 4px; }
+  .legend .est { border-bottom: 1px dotted var(--color-border-strong); }
+
   .delta-line { font-size: var(--text-md); margin: var(--space-2) 0 var(--space-3); }
   .winds { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
   .winds .k { display: block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); margin-bottom: var(--space-2); }
@@ -114,6 +126,20 @@
         <button type="button" class="slaf-lens-btn" data-sort="hours">hours</button>
         <button type="button" class="slaf-lens-btn" data-sort="dollars">dollars</button>
       </span></div>
+    <p class="legend" id="legend">
+      <span class="k">How to read the cards</span>
+      Every figure is marked for <strong>you</strong>, not for the number:
+      <i class="dir is-better">▲</i> better than Drift,
+      <i class="dir is-worse">▼</i> worse than Drift,
+      <i class="dir is-same">=</i> no different. So more money after five
+      years and an earlier FI date are both ▲, and more hours a week is
+      ▼ — even though one number went up and the other went down.
+      Drift itself carries no marks: it is what everything is measured
+      against, and a figure with no mark is one Drift has nothing to compare
+      against. The <span class="est">flexibility</span> tag is an
+      <strong>estimate</strong>, a description of the way rather than a
+      measurement of it, so it is never marked better or worse.
+    </p>
     <div class="paths" id="pathlist"></div>
     <div id="one-bands"></div>
     <div id="one-lens"></div>
@@ -302,6 +328,17 @@
     if (oneStrip) oneStrip.repaint();
     el('pathlist').innerHTML = cards.map(function (c) {
       var fi = c.yearsToFI === null ? 'not at this rate' : 'in ' + plural(c.yearsToFI, 'year');
+      /* ONE DIRECTION FOR EVERY METRIC (D-236). The word comes from
+         engines/adventure.js, which is where the convention lives; this
+         only draws it. Drift carries no marks — it is the measuring stick,
+         not a competitor — so the baseline card asks for none. */
+      var MARK = { better: '\u25b2', worse: '\u25bc', same: '=' };
+      var WORD = { better: 'better for you than Drift', worse: 'worse for you than Drift', same: 'no different from Drift' };
+      function dir(id) {
+        var d = c.baseline ? null : (c.compare || {})[id];
+        if (!d) return '';
+        return '<i class="dir is-' + d + '" title="' + WORD[d] + '" aria-label="' + WORD[d] + '">' + MARK[d] + '</i>';
+      }
       var delta = '';
       if (c.delta) {
         var bits = [];
@@ -314,12 +351,12 @@
         + '<b>' + esc(c.label) + (c.baseline ? ' — the baseline' : '') + '</b>'
         + '<span class="line">' + esc(c.line) + '</span>'
         + '<span class="facts">'
-        + '<span>After 5 years<b>' + esc(fmt(fut(c.potCents, 5))) + '</b></span>'
-        + '<span>FI<b>' + esc(fi) + '</b></span>'
-        + '<span>Costs<b>' + (c.hoursPerWeek > 0 ? esc(c.hoursPerWeek + ' h a week') : 'no extra hours') + '</b></span>'
-        + '<span>The extra, an hour<b>' + (c.impliedHourlyCents !== null ? esc(Money.formatCents(c.impliedHourlyCents, { decimals: 2 })) : (c.monthlyGainCents > 0 ? esc(fmt(c.monthlyGainCents)) + ' a month, no hours' : '—')) + '</b></span>'
+        + '<span>After 5 years<b>' + dir('potCents') + esc(fmt(fut(c.potCents, 5))) + '</b></span>'
+        + '<span>FI<b>' + dir('yearsToFI') + esc(fi) + '</b></span>'
+        + '<span>Costs<b>' + dir('hoursPerWeek') + (c.hoursPerWeek > 0 ? esc(c.hoursPerWeek + ' h a week') : 'no extra hours') + '</b></span>'
+        + '<span>The extra, an hour<b>' + dir('impliedHourlyCents') + (c.impliedHourlyCents !== null ? esc(Money.formatCents(c.impliedHourlyCents, { decimals: 2 })) : (c.monthlyGainCents > 0 ? esc(fmt(c.monthlyGainCents)) + ' a month, no hours' : '—')) + '</b></span>'
         + '</span>' + delta
-        + '<span class="tag">' + esc(c.flex) + '</span></button>';
+        + '<span class="tag" title="An estimate, not a measurement">Estimate · ' + esc(c.flex) + '</span></button>';
     }).join('');
   }
   el('pathlist').addEventListener('click', function (e) {
@@ -584,8 +621,15 @@
         ? 'Worth about <strong>' + esc(Money.formatCents(hourly.value, { decimals: 2 })) + ' an hour</strong> for you, at ' + hourly.hoursPerWeek + ' hours a week'
         : Money.isOk(gain) ? 'Worth about <strong>' + esc(Money.formatCents(gain.value)) + ' a month</strong> for you, no extra hours'
         : esc(hourly.reason || gain.reason || '');
+      /* The same convention as the cards (D-236): what each reading means
+         FOR YOU, said in those words, and the flexibility tag marked as the
+         estimate it is rather than sitting beside the arithmetic as though
+         it were measured. */
       return '<li><strong>' + esc(lv.label) + '.</strong> ' + esc(Adventure.leverSentence(lv, 1, ov)) + ' '
-        + worth + '. ' + (lv.survivesJobLoss ? 'Keeps paying if the job goes' : 'Stops with the job') + '; ' + esc(lv.flex) + '.'
+        + worth + '. '
+        + '<i class="dir is-' + (lv.survivesJobLoss ? 'better' : 'worse') + '">' + (lv.survivesJobLoss ? '\u25b2' : '\u25bc') + '</i>'
+        + (lv.survivesJobLoss ? 'Keeps paying if the job goes' : 'Stops with the job')
+        + '; flexibility, an estimate: ' + esc(lv.flex) + '.'
         + (SLAF.Levers.applies(lv.id, h()) ? '' : ' <em>Not offered to you yet: ' + esc(lv.appliesWhen) + '.</em>') + '</li>';
     }).join('');
     return '<p class="slaf-hint"><strong>The levers.</strong> ' + esc(L.source) + ' data/levers.json v' + esc(L.version) + ' (' + esc(L.confidence) + ').</p>'

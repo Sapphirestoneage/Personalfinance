@@ -70,7 +70,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **property** — The Deal · 403 lines · engines: projection, ownership · D-227, D-066
 - **big-purchase** — Big Purchase · 263 lines · engines: projection, tier0, hourly, quickmath, purchase · owns: purchasePrice, purchaseMonths, purchaseRate · D-129, D-112
 - **first-car** — The First Car Check · 147 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-219
-- **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
+- **adventure** — The Long Way Round · 686 lines · engines: projection, tier0, foo, hourly, adventure · D-236, D-176, D-167
 
 ## What Matters (11)
 

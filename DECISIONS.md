@@ -14025,6 +14025,32 @@ label instead.
 in a browser reads $43,087 on $100,000 of profit, which is the elective limit
 plus 20% of profit after half the SE tax, under the annual-additions cap.
 
+## D-236 — One direction for every metric, and a legend that says which
+
+**Why.** The Long Way Round's cards compared five things and the five do not
+move the same way. "15 h a week" sat beside "$253,107 after five years" in the
+same grey type, so a cost read like an offer. A reader had to know, per
+metric, which way was good.
+
+**Decision.** `engines/adventure.js` declares `METRICS`: each one says
+`better: 'higher' | 'lower'`, or `qualitative: true` and no direction at all.
+`Adventure.direction(metricId, mine, theirs)` answers `better`, `worse`,
+`same` or `null`, always from the person's side; `cards()` carries one word
+per metric under `compare`, measured against Drift. `rooms/adventure.html`
+draws ▲ ▼ = from those words and decides nothing itself, prints the legend
+that explains them (`#legend`), and labels the flexibility tag and the lever
+lines as estimates. Drift carries no marks; an unmarked figure is one Drift
+has nothing to compare against, and the legend says so.
+
+**Replaces or removes.** Removes the reader's job of knowing which way each
+metric ran. No metric, card or path is removed.
+
+**Stored shape.** No change; the room writes nothing but a saved scenario.
+
+**Verified.** `node test/run.js` (31,340 checks, including the new section);
+`npm run e2e` in `tests/`, which loads the room and fails unless some card
+shows a better and a worse metric together.
+
 
 ---
 

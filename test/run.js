@@ -14353,6 +14353,81 @@ section('One index for every tax limit, and no limit written anywhere else (D-23
     !!irmaa && /DOES count/.test(irmaa.why));
 })();
 
+section('One direction for every metric, and a legend that says which (D-236)');
+
+(function () {
+  const Adventure = require(path.join(ROOT, 'engines/adventure.js'));
+
+  /* Every metric declares which way is better for the PERSON, or declares
+     itself qualitative. Nothing may be silent about it. */
+  checkTrue('the engine names its metrics', Array.isArray(Adventure.METRICS) && Adventure.METRICS.length >= 4);
+  Adventure.METRICS.forEach(function (m) {
+    checkTrue(`${m.id}: says which way is better, or says it is an estimate`,
+      (m.better === 'higher' || m.better === 'lower') !== (m.qualitative === true));
+    checkTrue(`${m.id}: has a label`, typeof m.label === 'string' && m.label.length > 0);
+  });
+
+  /* The four words, and no fifth. */
+  check('more money is better', Adventure.direction('potCents', 200, 100), 'better');
+  check('less money is worse', Adventure.direction('potCents', 100, 200), 'worse');
+  check('a sooner FI year is better even though the number is smaller', Adventure.direction('yearsToFI', 10, 14), 'better');
+  check('a later FI year is worse even though the number is bigger', Adventure.direction('yearsToFI', 14, 10), 'worse');
+  check('MORE HOURS A WEEK IS WORSE, not better, though the number went up', Adventure.direction('hoursPerWeek', 15, 0), 'worse');
+  check('no extra hours against no extra hours is the same', Adventure.direction('hoursPerWeek', 0, 0), 'same');
+  check('a better hourly rate is better', Adventure.direction('impliedHourlyCents', 3000, 2000), 'better');
+  check('a qualitative reading never gets a direction', Adventure.direction('flex', 'portable', 'tied to a property'), null);
+  check('nothing to compare against gives nothing', Adventure.direction('potCents', 100, null), null);
+  check('an unknown metric gives nothing', Adventure.direction('nope', 1, 2), null);
+
+  /* And the cards carry the word, one a metric, measured against Drift. */
+  const demoH = Demo.build();
+  const T = Object.assign({}, TABLES, {
+    adventurePaths: require(path.join(ROOT, 'data/adventure_paths.json')),
+    levers: require(path.join(ROOT, 'data/levers.json')),
+    returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    bands: require(path.join(ROOT, 'data/bands.json'))
+  });
+  const cards = Adventure.cards(demoH, T, {});
+  checkTrue('the demo household gets cards to compare', cards.length >= 3);
+  const base = cards.filter(c => c.baseline)[0];
+  checkTrue('one of them is the baseline', !!base);
+  cards.forEach(function (c) {
+    checkTrue(`${c.pathId}: carries a direction for every metric it has`, !!c.compare);
+    Object.keys(c.compare).forEach(function (k) {
+      checkTrue(`${c.pathId}.${k}: is one of the four words`,
+        ['better', 'worse', 'same', null].indexOf(c.compare[k]) !== -1, String(c.compare[k]));
+    });
+  });
+  checkTrue('the baseline is never better or worse than itself',
+    Object.keys(base.compare).every(k => base.compare[k] === 'same' || base.compare[k] === null));
+  /* The one that would have been read backwards: a way that costs hours is
+     marked worse on hours while being better on money. */
+  const costly = cards.filter(c => !c.baseline && c.hoursPerWeek > base.hoursPerWeek)[0];
+  if (costly) {
+    check(`${costly.pathId} costs more hours, so hours read worse`, costly.compare.hoursPerWeek, 'worse');
+    checkTrue(`… while its pot can still read better, which is the point`,
+      ['better', 'worse', 'same'].indexOf(costly.compare.potCents) !== -1);
+  }
+
+  /* The room draws the words, and prints the legend that explains them. */
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8');
+  checkTrue('the room has a legend on screen, not in a comment', /<p class="legend" id="legend">/.test(room));
+  ['better than Drift', 'worse than Drift', 'no different'].forEach(function (phrase) {
+    checkTrue(`the legend says "${phrase}"`, room.indexOf(phrase) !== -1);
+  });
+  checkTrue('the legend explains that the two directions are about you, not the number',
+    /more hours a week is/.test(room) && /even though one number went up and the other went down/.test(room));
+  checkTrue('the room reads the direction off the engine and never decides one itself',
+    /\(c\.compare \|\| \{\}\)\[id\]/.test(room));
+  checkTrue('every fact cell on a card carries its marker',
+    ['potCents', 'yearsToFI', 'hoursPerWeek', 'impliedHourlyCents'].every(id => room.indexOf("dir('" + id + "')") !== -1));
+  checkTrue('the qualitative tag is labelled an estimate', /Estimate \\u00b7|Estimate \u00b7/.test(room));
+  checkTrue('… and so is the flexibility line under the levers', /flexibility, an estimate:/.test(room));
+  const theme = room;
+  checkTrue('the marker has a rule for each of its three states',
+    /\.dir\.is-better \{/.test(theme) && /\.dir\.is-worse \{/.test(theme) && /\.dir\.is-same \{/.test(theme));
+})();
+
 /* ==========================================================================
    Report
    ========================================================================== */

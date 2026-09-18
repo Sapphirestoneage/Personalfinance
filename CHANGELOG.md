@@ -175,3 +175,42 @@ Eli's verification**, with file and line.
 
 `node test/run.js`: 31,268 checks pass. `npm test` in `tests/`: unchanged
 (the same 7 known property findings as before this branch).
+
+### Task 5 — one direction for every metric, with a legend
+
+The tradeoff matrix in this app is **The Long Way Round**
+(`rooms/adventure.html`): one card per way through the next five years —
+Drift, Steady, Side Hustle, House Hack, Both Smaller, **Move Somewhere
+Cheaper**, Change Jobs — each carrying four figures and a flexibility tag.
+
+The problem was real and exactly as described: the four figures did not move
+the same way, and all four were printed in the same grey type. "Costs 15 h a
+week" read like an offer, the same as "$253,107 after five years". You had to
+already know which way each number was good.
+
+**The convention now:** every figure is marked for **you**, never for the
+number. ▲ better than Drift, ▼ worse than Drift, = no different. So more money
+after five years and an earlier FI date are both ▲, and more hours a week is
+▼ — even though one number went up and the other went down. A card now reads,
+for House Hack: ▲$253,107 · ▲in 14 years · ▼5 h a week. Drift carries no
+marks; it is the measuring stick.
+
+**Where the rule lives.** In `engines/adventure.js`, not in the page. Each
+metric declares `better: 'higher'` or `better: 'lower'`, or declares itself
+`qualitative` and gets no direction at all. One function turns any two values
+into one of four words, and the page only draws them. A new metric cannot be
+added without saying which way it runs — the test enforces it.
+
+**Estimates are labelled.** The flexibility tag now reads "Estimate ·
+portable" rather than "portable", and the lever lines say "flexibility, an
+estimate:". Nothing qualitative is ever marked better or worse: there is no
+arithmetic that makes "portable" beat "tied to a property".
+
+**The legend is on screen**, above the cards, and says all of the above in
+four lines — including that an unmarked figure is one Drift has nothing to
+compare against.
+
+`node test/run.js`: 31,367 checks pass, including a new section that pins each
+metric's direction (notably: more hours a week is *worse*, though the number
+went up). The e2e suite loads the room and fails unless some card shows a
+better and a worse metric together.

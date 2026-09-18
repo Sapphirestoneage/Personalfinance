@@ -515,11 +515,59 @@
     });
   }
 
+  /* ---- ONE DIRECTION FOR EVERY METRIC (D-236) ------------------------------
+     The cards compare five things and the five do not move the same way. A
+     bigger pot is good; more hours a week is not. Shown as plain numbers
+     side by side, "15 h a week" read exactly like "$42,000 after five
+     years" — as something the card was offering you.
+
+     So every metric declares which way is better for the person, once,
+     here, and `direction()` turns any two values into one of four words:
+     'better', 'worse', 'same', or null where there is nothing to compare
+     against (the baseline itself, or a figure one side does not have).
+     Every screen reads those words; none of them decides for itself.
+
+     `qualitative: true` marks a reading that is a description or a guess
+     rather than a measurement. Those are labelled as estimates on screen
+     and never get a direction: there is no arithmetic that makes "portable"
+     better than "tied to a property". */
+  var METRICS = [
+    { id: 'potCents',           label: 'After 5 years',      better: 'higher', qualitative: false },
+    { id: 'yearsToFI',          label: 'FI',                 better: 'lower',  qualitative: false },
+    { id: 'hoursPerWeek',       label: 'Costs',              better: 'lower',  qualitative: false },
+    { id: 'impliedHourlyCents', label: 'The extra, an hour', better: 'higher', qualitative: false },
+    { id: 'flex',               label: 'Flexibility',        better: null,     qualitative: true }
+  ];
+  function metric(id) {
+    for (var i = 0; i < METRICS.length; i++) if (METRICS[i].id === id) return METRICS[i];
+    return null;
+  }
+  /**
+   * direction(metricId, mine, theirs) -> 'better' | 'worse' | 'same' | null
+   * ALWAYS from the person's point of view, never the number's. A metric
+   * with no `better` (a qualitative one) answers null, always.
+   *
+   * NOT called compare(): that name already belongs to the side-by-side run
+   * of every path, four lines down, and two things called compare in one
+   * engine is how the wrong one gets exported.
+   */
+  function direction(metricId, mine, theirs) {
+    var m = metric(metricId);
+    if (!m || !m.better) return null;
+    if (mine === null || mine === undefined || theirs === null || theirs === undefined) return null;
+    if (typeof mine !== 'number' || typeof theirs !== 'number') return null;
+    if (mine === theirs) return 'same';
+    var higherIsBetter = m.better === 'higher';
+    return (mine > theirs) === higherIsBetter ? 'better' : 'worse';
+  }
+
   /**
    * Screen one: one card a way, every card already carrying the pot after
    * five years, the years to FI after that, the hours a week it costs, what
    * an hour of the extra earns, one flexibility tag, and its delta against
-   * Drift. No winner. Sorted by opts.sort: 'fi' (default) | 'hours' | 'dollars'.
+   * Drift. Each figure also carries `compare[metricId]`: better, worse or
+   * the same for the person, against Drift. No winner. Sorted by opts.sort:
+   * 'fi' (default) | 'hours' | 'dollars'.
    */
   function cards(household, tables, opts) {
     var o = opts || {};
@@ -543,6 +591,16 @@
         delta: !d || c.baseline ? null : {
           potCents: v.portfolioCents - d.portfolioCents,
           years: mine === null || theirs === null ? null : theirs - mine      /* positive = sooner */
+        },
+        /* One word a metric, from the person's side, against Drift. The
+           baseline compares against itself and so is 'same' throughout,
+           which the screens render as no marker at all. */
+        compare: !d ? {} : {
+          potCents: direction('potCents', v.portfolioCents, d.portfolioCents),
+          yearsToFI: direction('yearsToFI', mine, theirs),
+          hoursPerWeek: direction('hoursPerWeek', v.hoursPerWeek, d.hoursPerWeek),
+          impliedHourlyCents: direction('impliedHourlyCents', v.impliedHourlyCents, d.impliedHourlyCents),
+          flex: null
         }
       };
     });
@@ -557,6 +615,9 @@
   }
 
   return {
+    METRICS: METRICS,
+    metric: metric,
+    direction: direction,
     baseline: baseline,
     paths: paths,
     pathById: pathById,
