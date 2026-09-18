@@ -1,0 +1,116 @@
+{
+  "name": "phase1",
+  "total": 11,
+  "pass": 2,
+  "fail": 9,
+  "steps": [
+    {
+      "title": "fresh visit with nothing saved opens onboarding",
+      "status": "fail",
+      "notes": [
+        "stored keys on arrival: slaf.prefs.v1, slaf.household.v2",
+        "body data-slaf-screen is \"null\", expected \"onboarding\""
+      ],
+      "shots": [
+        "01-fresh-visit.png"
+      ]
+    },
+    {
+      "title": "onboarding offers all three paths",
+      "status": "pass",
+      "notes": [
+        "walked through, whole form, example numbers"
+      ],
+      "shots": [
+        "02-three-paths.png"
+      ]
+    },
+    {
+      "title": "nothing of the dashboard or the map shows before onboarding",
+      "status": "fail",
+      "notes": [
+        "visible before onboarding: the rooms menu (slaf-menu-btn)"
+      ],
+      "shots": [
+        "03-no-map-before-onboarding.png"
+      ]
+    },
+    {
+      "title": "opening the map with nothing saved returns to onboarding",
+      "status": "fail",
+      "notes": [
+        "still on the map: http://127.0.0.1:40605/map.html"
+      ],
+      "shots": [
+        "04-map-redirect.png"
+      ]
+    },
+    {
+      "title": "path 1 (walk me through it) asks what a month costs",
+      "status": "fail",
+      "notes": [
+        "first screen: {\"id\":\"q-age\",\"text\":\"1 OF 5 How old are you? Every age-based figure starts here: the buffer target, the milestones, the FI date. AGE Know the month and year? Use those instead. Next\"}",
+        "first question is \"q-age\", expected \"q-expenses\""
+      ],
+      "shots": [
+        "05-path1-walk-through.png"
+      ]
+    },
+    {
+      "title": "path 2 (the whole form) shows only the two Phase 1 rows",
+      "status": "fail",
+      "notes": [
+        "visible inputs: 93 — checkbox, Name, Last four digits, Kind of debt, Name, Last four digits, Kind of debt, Cash and savings, checkbox, Investments and retirement, checkbox, Name",
+        "rows beyond expenses and cash are still showing: checkbox, Name, Last four digits, Kind of debt, Name, Last four digits, Kind of debt, Cash and savings, checkbox, Investments and retirement"
+      ],
+      "shots": [
+        "06-path2-whole-form.png"
+      ]
+    },
+    {
+      "title": "path 3 (example numbers) fills the household and moves on",
+      "status": "pass",
+      "notes": [
+        "screen after example numbers: null; stored: slaf.prefs.v1, slaf.household.v2",
+        "example household loaded, screen is \"null\""
+      ],
+      "shots": [
+        "07-path3-example-numbers.png"
+      ]
+    },
+    {
+      "title": "expenses + cash alone produce a runway on the last onboarding screen",
+      "status": "fail",
+      "notes": [
+        "threw: page.fill: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#in-expenses')\u001b[22m\n"
+      ],
+      "shots": []
+    },
+    {
+      "title": "the micro-dashboard shows the runway and a next step",
+      "status": "fail",
+      "notes": [
+        "threw: page.fill: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#in-expenses')\u001b[22m\n"
+      ],
+      "shots": []
+    },
+    {
+      "title": "The Cushion reads a real runway from the two numbers alone",
+      "status": "fail",
+      "notes": [
+        "threw: page.fill: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#in-expenses')\u001b[22m\n"
+      ],
+      "shots": []
+    },
+    {
+      "title": "the progress bar reports progress from the two numbers",
+      "status": "fail",
+      "notes": [
+        "threw: page.fill: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#in-expenses')\u001b[22m\n"
+      ],
+      "shots": []
+    }
+  ],
+  "ranAt": "2026-09-18T01:31:08.890Z",
+  "playwrightFrom": "/opt/node22/lib/node_modules/playwright"
+}

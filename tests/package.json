@@ -15,7 +15,9 @@
     "migration": "node migration.test.js",
     "build-exports": "node tools/build-exports.js",
     "a11y": "NODE_PATH=/opt/node22/lib/node_modules node a11y-audit.js",
-    "qr": "node qr.test.js"
+    "qr": "node qr.test.js",
+    "e2e": "node e2e/phase1.test.js",
+    "test:all": "npm test && npm run e2e"
   },
   "license": "ISC",
   "dependencies": {

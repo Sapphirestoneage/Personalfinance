@@ -43,3 +43,33 @@ any of it:
 ## What changed, per task
 
 *(filled in as each task lands — see the sections below)*
+
+### Task 1 — Playwright tests for the Phase 1 flow
+
+New: `tests/e2e/phase1.test.js`, with `tests/e2e/harness.js` beside it (a
+small static web server and a screenshot recorder, no test framework). Run it
+with `npm run e2e` from `tests/`, or `node tests/e2e/phase1.test.js`.
+
+It walks a browser that has never been here before, eleven steps:
+
+1. a fresh visit with nothing saved opens onboarding
+2. onboarding offers all three ways in
+3. nothing of the dashboard, the map or the rooms menu shows first
+4. opening the map with nothing saved sends you back to onboarding
+5. path 1 (walk me through it) asks what a month costs
+6. path 2 (the whole form) shows only the two Phase 1 rows
+7. path 3 (example numbers) fills the household and moves on
+8. expenses + cash alone produce a runway
+9. the micro-dashboard shows the runway and a next step
+10. The Cushion reads a real runway from those two numbers alone
+11. the progress bar reports progress from those two numbers
+
+Every step writes a screenshot to `tests/e2e/screenshots/` and a machine
+record to `tests/reports/e2e.json`. The run does not stop at the first
+failure — the list of what is broken is the point.
+
+**Baseline before any other change: 2 of 11 passed.** Passing were step 2
+(all three paths are offered) and step 7 (example numbers load). Failing were
+steps 1, 3, 4, 5, 6, 8, 9, 10 and 11 — which is to say the whole of Tasks 2
+and 3. Steps 8–11 failed by timing out on an input (`#in-expenses`) that did
+not exist yet.
