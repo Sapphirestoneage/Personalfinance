@@ -124,7 +124,11 @@
     careerMomentum: 'career_momentum.json',
     debates: 'debates.json',
     weddingDefaults: 'wedding_defaults.json',
-    stateBrackets: 'state_brackets_2026.json'
+    stateBrackets: 'state_brackets_2026.json',
+    /* THE INDEX of every tax limit and dollar threshold (D-235). Not a
+       source of figures: it names each one, its tax year, and which of the
+       tables above actually holds it. Reference.taxLimit() resolves it. */
+    taxConfig: 'tax_config.json'
   };
 
   var cache = {};
@@ -171,7 +175,12 @@
   }
 
   function load(names, basePath) {
-    var wanted = names && names.length ? names : Object.keys(TABLE_FILES);
+    /* The tax index rides along with every load, always (D-235). It is a few
+       kilobytes and it is how any engine finds out which table holds a limit
+       and which year that limit belongs to; a room that asked for `irsLimits`
+       and got no index would quietly lose its limits. */
+    var wanted = names && names.length ? names.slice() : Object.keys(TABLE_FILES);
+    if (wanted.indexOf('taxConfig') === -1) wanted.push('taxConfig');
     var base = basePath === undefined ? defaultBase() : basePath;
     return Promise.all(wanted.map(function (name) {
       if (cache[name]) return Promise.resolve([name, cache[name]]);
@@ -465,6 +474,70 @@
     });
     return out;
   }
+  /* ---- The one tax index (D-235) ------------------------------------------
+     Every tax limit, rate and dollar threshold has an entry in
+     data/tax_config.json saying which year it belongs to and which table
+     holds it. Nothing outside data/ may inline one, and nothing outside
+     this function needs to know which file a limit lives in.
+
+     Resolution is deliberately dumb: walk `path` through `table`. A missing
+     table is an incomplete Result naming what to load, never a zero — the
+     same contract every other lookup here keeps.                          */
+
+  function taxEntry(tables, id) {
+    var cfg = (tables && tables.taxConfig) || cache.taxConfig;
+    if (!cfg) return null;
+    return (cfg.limits && cfg.limits[id]) || (cfg.tables && cfg.tables[id]) || null;
+  }
+
+  function taxLimit(tables, id) {
+    var cfg = (tables && tables.taxConfig) || cache.taxConfig;
+    if (!cfg) return Money.incomplete('The tax index is not loaded.', ['taxConfig']);
+    var entry = taxEntry(tables, id);
+    if (!entry) return Money.incomplete('No tax figure is named "' + id + '" in data/tax_config.json.', ['taxConfig']);
+    var table = (tables && tables[entry.table]) || cache[entry.table];
+    if (!table) return Money.incomplete('The table holding ' + entry.label + ' is not loaded.', [entry.table]);
+    var v = table;
+    for (var i = 0; i < (entry.path || []).length; i++) {
+      if (v === null || v === undefined) break;
+      v = v[entry.path[i]];
+    }
+    if (v === null || v === undefined) {
+      return Money.incomplete(entry.label + ' is not in ' + entry.table + ' at ' + (entry.path || []).join('.') + '.', [entry.table]);
+    }
+    return Money.ok(v, {
+      id: id, label: entry.label, unit: entry.unit || null,
+      taxYear: entry.taxYear === undefined ? yearOf(table) : entry.taxYear,
+      confidence: entry.confidence || (table && table.confidence) || null,
+      table: entry.table, path: (entry.path || []).slice(),
+      referenceVersion: table && table.version,
+      dispute: entry.dispute ? disputeOf(tables, entry.dispute) : null,
+      note: entry.note || null
+    });
+  }
+
+  function disputeOf(tables, id) {
+    var cfg = (tables && tables.taxConfig) || cache.taxConfig;
+    var list = (cfg && cfg.disputes) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+
+  /** Every tax year the index names, low to high. More than one means the
+      app is mixing years, which a page may want to say out loud. */
+  function taxYears(tables) {
+    var cfg = (tables && tables.taxConfig) || cache.taxConfig;
+    if (!cfg) return [];
+    var seen = {};
+    [cfg.limits || {}, cfg.tables || {}].forEach(function (group) {
+      Object.keys(group).forEach(function (k) {
+        var y = group[k].taxYear;
+        if (typeof y === 'number') seen[y] = true;
+      });
+    });
+    return Object.keys(seen).map(Number).sort(function (a, b) { return a - b; });
+  }
+
   function versionsOf(tables) {
     var out = {};
     Object.keys(tables || {}).forEach(function (k) {
@@ -480,6 +553,7 @@
     lookupRetirementMultiple: lookupRetirementMultiple,
     lookupNetWorthPercentile: lookupNetWorthPercentile,
     lookupLiquidityBand: lookupLiquidityBand,
+    taxLimit: taxLimit, taxEntry: taxEntry, taxYears: taxYears, disputeOf: disputeOf,
     CONFIDENCE_LEVELS: CONFIDENCE_LEVELS,
     marginalBracket: marginalBracket,
     /* A table already loaded this session, or null — for a reader that

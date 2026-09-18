@@ -7,7 +7,7 @@ module.exports = function (t) {
   const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
   section('Presets (D-129): Rule of Five, Max IRA, Max 401(k), stacked into the estimate');
 
-  const T = { irsLimits: TABLES.irsLimits, savingsPresets: TABLES.savingsPresets, effectiveTaxRates: TABLES.effectiveTaxRates, seTax: TABLES.seTax, expenseCategories: TABLES.expenseCategories };
+  const T = { taxConfig: TABLES.taxConfig, irsLimits: TABLES.irsLimits, savingsPresets: TABLES.savingsPresets, effectiveTaxRates: TABLES.effectiveTaxRates, seTax: TABLES.seTax, expenseCategories: TABLES.expenseCategories };
   const L = TABLES.irsLimits.limits;
   const NOW = Date.parse('2026-09-15T12:00:00');
   const hh = (extra) => Schema.createHousehold(Object.assign({ filingStatus: 'single', state: 'NC',

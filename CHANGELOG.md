@@ -119,3 +119,59 @@ screens). Decision entry **D-234**.
 
 **Tests: 12 of 12 e2e steps pass** (up from 2 of 11 — one step was added, for
 the menu staying shut until unlocked). `node test/run.js`: 31,025 checks pass.
+
+### Task 4 — tax accuracy, and one place that says what year a number is from
+
+**(a) One config file.** New `data/tax_config.json`. It is the index of every
+tax limit, rate and dollar threshold the app uses — 34 entries — and each one
+carries its **tax year**, its label, its unit, how confident anyone is of it,
+and which table actually holds the value.
+
+It deliberately does **not** copy the numbers. Copying them would make a
+second copy of each, and a second copy is precisely what caused the problem
+in the first place: `data/irs_limits_2026.json` says the 415(c) annual
+additions limit is $70,000 and `data/lane2/contribution_limits.json` says
+$72,000, and nothing reconciled them. So each entry points at the one copy,
+and `Reference.taxLimit('elective401k')` fetches it along with its year.
+
+- `foo-ladder.js` had six IRS limits written into it as "fallbacks". They are
+  gone. If the table has not loaded, the ladder says it is waiting for it
+  rather than showing a number it made up.
+- `engines/presets.js` and `engines/accounts.js` now ask for limits **by
+  name**; neither knows which file holds one any more.
+- `node test/run.js` fails if any distinctive limit value turns up written
+  into a page, a room or an engine. That is the "no hardcoded limits outside
+  the config file" check, and it runs on every test run from now on.
+
+**(b) The four named errors.**
+
+1. **Roth conversions and MAGI.** Nothing in the app claimed they do not
+   count. `engines/rothaca.js` already adds conversions to MAGI before
+   measuring the ACA cliff, and the room's own opening line says conversion
+   is reported income. **Nothing to remove.** What *was* missing: the app
+   holds no IRMAA table at all, and a silence reads as a calculation. The
+   Roth/ACA room now says, in its assumptions and its small print, that a
+   conversion counts towards IRMAA too, two years in arrears, and that this
+   app does not price it.
+2. **Mega backdoor Roth.** No "non-ERISA" claim existed anywhere — searched
+   the whole repo. The Skill Tree's entry did say "Plan must allow", which is
+   too vague, and hardcoded "$70K/yr". It now reads: *needs a plan that allows
+   after-tax contributions AND either in-plan Roth conversion or in-service
+   withdrawals*, and refers to the annual additions limit instead of a figure.
+3. **Solo 401(k) and $300k.** No $300,000 figure existed. `engines/accounts.js`
+   already capped the total at the annual additions limit, and gets the
+   sole-proprietor employer share right at 20% (not the 25% everyone reaches
+   for). A test now pins both, and the index note spells out that any figure
+   above the annual additions limit is wrong.
+4. **Mixed years.** True, and now visible. Everything is 2026 except the three
+   health-cover figures, which are 2024 KFF survey averages. The index labels
+   those 2024 and lists them under `mixedYears.olderThanCurrent`; a test fails
+   if an entry's year differs from the current one without being listed.
+   **No figure was changed and none was guessed at**, per the brief.
+
+**(c) Not rewritten, listed instead.** Two live disagreements between data
+files, and everything else I could not verify, are in REVIEW.md under **Needs
+Eli's verification**, with file and line.
+
+`node test/run.js`: 31,268 checks pass. `npm test` in `tests/`: unchanged
+(the same 7 known property findings as before this branch).

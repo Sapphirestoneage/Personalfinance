@@ -55,7 +55,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **micro-retirement** — Micro-Retirement Planner · 166 lines · engines: projection, tier0, hourly, countdown, microretirement · D-219
 - **protection** — Protection · 267 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-103, D-098, D-094
 - **decumulation** — Drawing It Down · 273 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-228, D-104, D-098
-- **roth-aca** — Roth Conversions Before 65 · 206 lines · engines: selfemployed, tax, rothaca · D-228, D-216
+- **roth-aca** — Roth Conversions Before 65 · 213 lines · engines: selfemployed, tax, rothaca · D-228, D-216
 - **middle-class-trap** — The Middle Class Trap Test · 201 lines · engines: selfemployed, tax, projection, tier0, trap · D-228, D-218
 - **estate** — Estate Basics · 217 lines · engines: projection, tier0, hourly, estate · owns: beneficiariesSet, willExists, poaExists · D-106, D-098, D-094
 - **giving** — Giving · 260 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget · D-107, D-098, D-094

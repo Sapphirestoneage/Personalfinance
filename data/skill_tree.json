@@ -549,8 +549,8 @@
       "level": 16,
       "tier": "A",
       "what": "After-tax 401k converted in-plan to Roth",
-      "does": "Roth space toward $70K/yr",
-      "fits": "Plan must allow; after L10",
+      "does": "More Roth space, up to the 415(c) annual additions limit for that plan",
+      "fits": "Needs a plan that allows after-tax contributions AND either in-plan Roth conversion or in-service withdrawals; after L10",
       "proof": "One after-tax conversion completed",
       "prereqs": [
         "main-path-open-a-solo-401-k"
@@ -7284,7 +7284,7 @@
       "band": "advanced",
       "level": 13,
       "tier": "B",
-      "what": "$130K exclusion; bona-fide vs physical presence",
+      "what": "The foreign earned income exclusion, and bona-fide vs physical presence",
       "does": "Working abroad without double tax",
       "fits": "With TX; tests understood",
       "proof": "Your qualifying test identified and tracked",

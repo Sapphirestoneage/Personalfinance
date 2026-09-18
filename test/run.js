@@ -62,6 +62,9 @@ const IncomeEngine = require(path.join(ROOT, 'engines/income.js'));
 const Progress = require(path.join(ROOT, 'shared/progress.js'));
 
 const TABLES = {
+  /* The tax index rides along with every load in the browser (D-235), so it
+     rides along here too, or an engine that asks it for a limit gets none. */
+  taxConfig: require(path.join(ROOT, 'data/tax_config.json')),
   effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
   retirementMilestones: require(path.join(ROOT, 'data/retirement_milestones.json')),
   netWorthPercentiles: require(path.join(ROOT, 'data/net_worth_percentiles_scf_2022.json')),
@@ -1808,7 +1811,7 @@ section('Accounts');
 (function () {
   const limits = TABLES.irsLimits, seT = TABLES.seTax;
   const r = Accounts.solo401k({ netProfitCents: 10000000, age: 40,
-    filingStatus: 'single', limits: limits, seTaxTable: seT });
+    filingStatus: 'single', tables: TABLES });
 
   check('employee deferral is the elective limit',
     r.employeeCents, Math.round(limits.limits.elective401k * 100));
@@ -1824,7 +1827,7 @@ section('Accounts');
 
   /* At 50 the catch-up lifts the elective limit and sits outside the cap. */
   const older = Accounts.solo401k({ netProfitCents: 10000000, age: 55,
-    filingStatus: 'single', limits: limits, seTaxTable: seT });
+    filingStatus: 'single', tables: TABLES });
   check('the catch-up raises the elective limit', older.employeeCents,
     Math.round((limits.limits.elective401k + limits.limits.elective401kCatchup50Plus) * 100));
   check('and is flagged', older.overFifty, true);
@@ -1832,20 +1835,20 @@ section('Accounts');
 
   /* A very large profit runs into the annual-additions cap. */
   const big = Accounts.solo401k({ netProfitCents: 50000000, age: 40,
-    filingStatus: 'single', limits: limits, seTaxTable: seT });
+    filingStatus: 'single', tables: TABLES });
   check('a big profit hits the annual-additions cap', big.hitCap, true);
   check('and is held to it', big.totalCents, Math.round(limits.limits.annualAdditions * 100));
 
   /* Planning to defer less leaves the employer half untouched. */
   const partial = Accounts.solo401k({ netProfitCents: 10000000, age: 40,
-    plannedEmployeeCents: 500000, filingStatus: 'single', limits: limits, seTaxTable: seT });
+    plannedEmployeeCents: 500000, filingStatus: 'single', tables: TABLES });
   check('a smaller deferral is respected', partial.employeeCents, 500000);
   check('and the employer half is unchanged', partial.employerCents, r.employerCents);
 
   check('no profit means no room', Accounts.solo401k({ netProfitCents: 0,
-    limits: limits, seTaxTable: seT }).value, 0);
+    tables: TABLES }).value, 0);
   check('no profit entered is incomplete',
-    Accounts.solo401k({ limits: limits, seTaxTable: seT }).status, 'incomplete');
+    Accounts.solo401k({ tables: TABLES }).status, 'incomplete');
 })();
 
 /* ==========================================================================
@@ -14212,6 +14215,142 @@ section('Every class a page names has a rule somewhere (D-226)');
   const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
   checkTrue('the page body, its header and its lede have a rule under both names they are given', /\.slaf-room\s*\{/.test(theme) && /\.slaf-room-head\s*\{/.test(theme) && /\.slaf-lede/.test(theme));
   checkTrue('the small print under a room is defined once, in the theme, not copied into every room', /^\.disclaimer \{/m.test(theme) && fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).every(f => !/^\s*\.disclaimer \{/m.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+})();
+
+section('One index for every tax limit, and no limit written anywhere else (D-235)');
+
+(function () {
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const Money = require(path.join(ROOT, 'shared/money.js'));
+  const TaxConfig = require(path.join(ROOT, 'data/tax_config.json'));
+
+  /* The index is loadable like any other table. */
+  check('shared/reference.js registers the index', Reference.TABLE_FILES.taxConfig, 'tax_config.json');
+
+  /* Load every table any entry points at, exactly once, and resolve
+     each entry through Reference.taxLimit — the same call a room makes. */
+  const tables = { taxConfig: TaxConfig };
+  const entries = Object.assign({}, TaxConfig.limits, TaxConfig.tables);
+  delete entries.note;
+  Object.keys(entries).forEach(function (id) {
+    const key = entries[id].table;
+    if (key && !tables[key]) tables[key] = require(path.join(ROOT, 'data', Reference.TABLE_FILES[key]));
+  });
+
+  const ids = Object.keys(entries);
+  checkTrue('the index names something', ids.length > 20);
+  ids.forEach(function (id) {
+    const e = entries[id];
+    checkTrue(`${id}: names a table shared/reference.js can load`, !!Reference.TABLE_FILES[e.table]);
+    checkTrue(`${id}: carries a tax year`, typeof e.taxYear === 'number');
+    checkTrue(`${id}: carries a label`, typeof e.label === 'string' && e.label.length > 0);
+    const r = Reference.taxLimit(tables, id);
+    checkTrue(`${id}: resolves to a value`, Money.isOk(r), r.reason || '');
+    if (Money.isOk(r)) check(`${id}: reports its own year`, r.taxYear, e.taxYear);
+  });
+
+  /* A figure two files disagree about is NAMED, never silently picked. */
+  (TaxConfig.disputes || []).forEach(function (d) {
+    checkTrue(`dispute ${d.id}: names both sides`, Array.isArray(d.sides) && d.sides.length === 2);
+    checkTrue(`dispute ${d.id}: says what has to be decided`, typeof d.decide === 'string' && d.decide.length > 0);
+    checkTrue(`dispute ${d.id}: says which one the engine reads today`, typeof d.reads === 'string');
+  });
+  const disputed = ids.filter(id => entries[id].dispute);
+  disputed.forEach(function (id) {
+    checkTrue(`${id}: its dispute is in the list`, (TaxConfig.disputes || []).some(d => d.id === entries[id].dispute));
+  });
+
+  /* More than one tax year is in play, and the index says which entries
+     are the old ones rather than leaving it to be discovered. */
+  const years = Reference.taxYears(tables);
+  checkTrue('the index knows which years are in play: ' + years.join(', '), years.length >= 1);
+  const older = (TaxConfig.mixedYears || {}).olderThanCurrent || [];
+  const current = (TaxConfig.mixedYears || {}).current;
+  ids.filter(id => entries[id].taxYear !== current).forEach(function (id) {
+    checkTrue(`${id}: is ${entries[id].taxYear}, not ${current}, so mixedYears lists it`, older.indexOf(id) !== -1);
+  });
+  older.forEach(function (id) {
+    checkTrue(`mixedYears names ${id}, which is a real entry`, !!entries[id]);
+  });
+
+  /* THE ONE THAT MATTERS. No limit from the index may be written into a
+     page, a room or an engine. A second copy is how data/irs_limits_2026.json
+     and data/lane2/contribution_limits.json came to disagree about 415(c).
+     Only the distinctive values are scanned — a limit that happens to be a
+     round number a placeholder might also use would give a false alarm and
+     teach everyone to ignore this check. */
+  const DISTINCTIVE = [];
+  ids.forEach(function (id) {
+    const r = Reference.taxLimit(tables, id);
+    if (!Money.isOk(r)) return;
+    const v = r.value;
+    if (typeof v !== 'number') return;
+    /* Only figures distinctive enough that finding one in a page means
+       somebody wrote it there. A small integer (4, 5, 55, 60) is arithmetic;
+       a round thousand under fifty ("20,000") is a placeholder; a two or
+       three digit rate (0.1, 0.085) is ordinary maths. None of those can
+       carry a useful signal, and a check that cries wolf gets ignored. */
+    if (Number.isInteger(v)) {
+      if (v < 1000) return;
+      if (v < 50000 && v % 1000 === 0) return;
+    } else {
+      if (!(v > 0 && v < 1) || String(v).replace('0.', '').length < 4) return;
+    }
+    DISTINCTIVE.push({ id: id, value: v });
+  });
+  checkTrue('there are distinctive values to scan for: ' + DISTINCTIVE.length, DISTINCTIVE.length >= 5);
+
+  const scanned = ['index.html', 'map.html', 'foo-ladder.js']
+    .concat(fs.readdirSync(path.join(ROOT, 'engines')).filter(f => /\.js$/.test(f)).map(f => 'engines/' + f))
+    .concat(fs.readdirSync(path.join(ROOT, 'shared')).filter(f => /\.js$/.test(f)).map(f => 'shared/' + f))
+    .concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
+  const inlined = [];
+  scanned.forEach(function (rel) {
+    const lines = fs.readFileSync(path.join(ROOT, rel), 'utf8').split('\n');
+    lines.forEach(function (line, i) {
+      /* A placeholder is someone showing what to type, not a limit. */
+      if (/e\.g\.|placeholder=/.test(line)) return;
+      DISTINCTIVE.forEach(function (d) {
+        const re = new RegExp('(^|[^0-9.,])' + String(d.value).replace('.', '\\.') + '([^0-9]|$)');
+        if (re.test(line)) inlined.push(rel + ':' + (i + 1) + ' has ' + d.value + ' (' + d.id + ')');
+      });
+    });
+  });
+  check('no page, room or engine writes a tax limit into itself', inlined.join('; '), '');
+
+  /* And the room that used to carry six of them carries none. */
+  const foo = fs.readFileSync(path.join(ROOT, 'foo-ladder.js'), 'utf8');
+  checkTrue('the FOO ladder has no fallback limits left', !/FALLBACK_LIMITS/.test(foo));
+  checkTrue('… and reads them through the index', /Reference\.taxLimit\(/.test(foo));
+  checkTrue('… and says what it is waiting for rather than inventing one',
+    /the IRS limits table \(data\/tax_config\.json\)/.test(foo));
+
+  /* The claims the brief named, each held to its source. */
+  const irs = require(path.join(ROOT, 'data/irs_limits_2026.json'));
+  checkTrue('the Solo 401k total is capped by the annual additions limit, nothing larger',
+    irs.limits.annualAdditions <= 100000);
+  const accounts = fs.readFileSync(path.join(ROOT, 'engines/accounts.js'), 'utf8');
+  checkTrue('engines/accounts.js caps the Solo 401k at that limit, read from the table',
+    /limits\.annualAdditions/.test(accounts) && !/300000|300,000/.test(accounts));
+  const rothaca = fs.readFileSync(path.join(ROOT, 'engines/rothaca.js'), 'utf8');
+  checkTrue('a Roth conversion is added to MAGI before the ACA cliff is measured',
+    /magi = p\.otherIncomeCents \+ conv/.test(rothaca));
+  const skills = fs.readFileSync(path.join(ROOT, 'data/skill_tree.json'), 'utf8');
+  checkTrue('nothing claims the mega backdoor Roth needs a non-ERISA plan', !/non-?ERISA/i.test(skills));
+  checkTrue('the mega backdoor names the real requirement',
+    /after-tax contributions AND either in-plan Roth conversion or in-service withdrawals/.test(skills));
+  checkTrue('… and no longer writes the annual additions limit into its own text',
+    !/\$70K\/yr/.test(skills));
+
+  /* What the app does NOT model is written down, so nobody reads a
+     silence as a calculation. IRMAA is the one the brief asked about. */
+  const not = ((TaxConfig.notModelled || {}).items || []).map(x => x.id);
+  ['irmaa', 'niit', 'estateExemption'].forEach(function (id) {
+    checkTrue(`the index says ${id} is not modelled`, not.indexOf(id) !== -1);
+  });
+  const irmaa = ((TaxConfig.notModelled || {}).items || []).filter(x => x.id === 'irmaa')[0];
+  checkTrue('… and says plainly that a Roth conversion does count towards IRMAA',
+    !!irmaa && /DOES count/.test(irmaa.why));
 })();
 
 /* ==========================================================================

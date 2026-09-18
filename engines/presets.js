@@ -51,11 +51,37 @@
       short: 'A twelfth of the year’s elective limit, catch-up from 50', owner: { room: 'budget', label: 'Budget' } }
   };
 
-  function limitsOf(T) { return T && T.irsLimits && T.irsLimits.limits; }
-  /* Past the limits table's year: "using 2026 limits" on the number (G3.15, D-210). */
+  function referenceModule() {
+    return typeof module === 'object' && module.exports ? require('../shared/reference.js') : (typeof self !== 'undefined' && self.SLAF ? self.SLAF.Reference : null);
+  }
+  /* THROUGH THE INDEX (D-235). Which file holds the IRA limit, and which
+     year it is, is data/tax_config.json's business. This engine names the
+     figure it wants and nothing else; a figure that will not resolve gives
+     null, which every caller already turns into an incomplete Result. */
+  var NEEDED = ['ira', 'iraCatchup50Plus', 'elective401k', 'elective401kCatchup50Plus'];
+  function limitsOf(T) {
+    var R = referenceModule();
+    if (!R || typeof R.taxLimit !== 'function') return null;
+    var out = {}, ok = true;
+    NEEDED.forEach(function (id) {
+      var r = R.taxLimit(T, id);
+      if (Money.isOk(r)) out[id] = r.value; else ok = false;
+    });
+    return ok ? out : null;
+  }
+  /* Past the limits table's year: "using 2026 limits" on the number (G3.15,
+     D-210). The year comes off whichever table the index sent us to. */
   function yearNoteOf(T) {
-    var R = typeof module === 'object' && module.exports ? require('../shared/reference.js') : (typeof self !== 'undefined' && self.SLAF ? self.SLAF.Reference : null);
-    return R && R.yearNote ? R.yearNote(T.irsLimits) : null;
+    var R = referenceModule();
+    if (!R || !R.yearNote) return null;
+    var e = R.taxEntry ? R.taxEntry(T, 'ira') : null;
+    return R.yearNote(T && e ? T[e.table] : (T && T.irsLimits));
+  }
+  function versionOf(T) {
+    var R = referenceModule();
+    var e = R && R.taxEntry ? R.taxEntry(T, 'ira') : null;
+    var t = T && e ? T[e.table] : (T && T.irsLimits);
+    return t ? t.version : null;
   }
   function dollars(d) { return Math.round(d * 100); }
 
@@ -100,22 +126,22 @@
   }
   function maxIra(h, T, now) {
     var L = limitsOf(T);
-    if (!L) return Money.incomplete('The IRS limits table is not loaded.', ['irsLimits']);
+    if (!L) return Money.incomplete('The IRS limits table is not loaded.', ['taxConfig', 'irsLimits']);
     var c = catchUp(h, now);
     var annual = dollars(L.ira + (c.applies ? L.iraCatchup50Plus : 0));
     return Money.ok(Math.round(annual / MONTHS), { annualCents: annual, limitCents: dollars(L.ira), catchUpCents: c.applies ? dollars(L.iraCatchup50Plus) : 0, age: c.age, catchUp: c.applies, ageUnknown: c.unknown,
-      referenceVersion: T.irsLimits.version, yearNote: yearNoteOf(T),
+      referenceVersion: versionOf(T), yearNote: yearNoteOf(T),
       why: Money.formatCents(annual) + ' a year' + (c.applies ? ' with the catch-up from ' + CATCH_UP_AGE : c.unknown ? '; add a date of birth in Start Here and the catch-up from ' + CATCH_UP_AGE + ' applies when it should' : '') + ', a twelfth each month.' });
   }
   function max401k(h, T, now) {
     var has = (h && h.retirement || {}).has401k;
     if (has !== true) return Money.incomplete(has === false ? 'No employer 401(k), so this preset is not offered.' : 'Say whether you have an employer 401(k) and this appears.', ['retirement.has401k']);
     var L = limitsOf(T);
-    if (!L) return Money.incomplete('The IRS limits table is not loaded.', ['irsLimits']);
+    if (!L) return Money.incomplete('The IRS limits table is not loaded.', ['taxConfig', 'irsLimits']);
     var c = catchUp(h, now);
     var annual = dollars(L.elective401k + (c.applies ? L.elective401kCatchup50Plus : 0));
     return Money.ok(Math.round(annual / MONTHS), { annualCents: annual, limitCents: dollars(L.elective401k), catchUpCents: c.applies ? dollars(L.elective401kCatchup50Plus) : 0, age: c.age, catchUp: c.applies, ageUnknown: c.unknown,
-      referenceVersion: T.irsLimits.version, yearNote: yearNoteOf(T),
+      referenceVersion: versionOf(T), yearNote: yearNoteOf(T),
       why: Money.formatCents(annual) + ' a year of your own deferral' + (c.applies ? ' with the catch-up from ' + CATCH_UP_AGE : '') + ', a twelfth each month; the employer match is on top.' });
   }
   var COMPUTE = { ruleOfFive: ruleOfFive, emergencyFund: emergencyFund, maxIra: maxIra, max401k: max401k };

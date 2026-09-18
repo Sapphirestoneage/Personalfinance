@@ -19,9 +19,10 @@
   3. CALLS   engines/accounts.js, which uses engines/selfemployed.js for SE
              tax — still one tax calculation in the codebase.
   4. EMPTY   Each tool independently states what it needs.
-  5. CONFIG  data/irs_limits_2026.json (elective limit, catch-up, annual
-             additions, the 20% sole-proprietor share),
-             data/se_tax_2026.json.
+  5. CONFIG  data/tax_config.json is the index: it names the elective limit,
+             the catch-up, the annual additions cap and the sole-proprietor
+             employer share, each with its tax year, and says which table
+             holds it. Also data/se_tax_2026.json.
 -->
 <style>
   .room-back:hover { text-decoration: underline; }
@@ -328,8 +329,7 @@
       plannedEmployeeCents: v['s-employee'],
       age: age,
       filingStatus: h.filingStatus,
-      limits: TABLES.irsLimits,
-      seTaxTable: TABLES.seTax
+      tables: TABLES
     });
     var verdict = el('s-verdict');
     if (!Money.isOk(r)) {

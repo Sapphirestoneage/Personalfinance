@@ -126,15 +126,38 @@
      The classic error here is using 25%. That is the figure for a
      corporation contributing on W2 wages. A sole proprietor's base is net
      earnings AFTER the employer contribution itself, and 25/(1+0.25) = 20%.
-     The rate lives in data/irs_limits_2026.json so it is stated, not buried. */
+     The rate is a named figure in data/tax_config.json, which says which
+     table holds it and which tax year it is, so it is stated rather than
+     buried — and it is never written into this file (D-235). */
 
+  function referenceModule() {
+    return typeof module === 'object' && module.exports ? require('../shared/reference.js') : (typeof self !== 'undefined' && self.SLAF ? self.SLAF.Reference : null);
+  }
+  var SOLO_LIMITS = ['elective401k', 'elective401kCatchup50Plus', 'annualAdditions', 'soloEmployerShareSoleProprietor'];
+
+  /**
+   * opts.tables   the loaded reference tables, including the tax index. The
+   *               four figures below are looked up by NAME; which file holds
+   *               them is the index's business, not this engine's.
+   */
   function solo401k(opts) {
     var o = opts || {};
-    var limits = o.limits;
-    var seTable = o.seTaxTable;
-    if (!limits || !seTable) {
-      return Money.incomplete('Contribution limit tables are not loaded.', ['irsLimits']);
+    var R = referenceModule();
+    var T = o.tables || {};
+    var seTable = o.seTaxTable || T.seTax;
+    var L = null;
+    if (R && typeof R.taxLimit === 'function') {
+      L = {}; 
+      for (var i = 0; i < SOLO_LIMITS.length; i++) {
+        var got = R.taxLimit(T, SOLO_LIMITS[i]);
+        if (!Money.isOk(got)) { L = null; break; }
+        L[SOLO_LIMITS[i]] = got.value;
+      }
     }
+    if (!L || !seTable) {
+      return Money.incomplete('Contribution limit tables are not loaded.', ['taxConfig', 'irsLimits', 'seTax']);
+    }
+    var limits = { limits: L, version: versionOfLimits(R, T) };
     if (!Money.isEntered(o.netProfitCents)) {
       return Money.incomplete('Add your self-employment profit to see this.', ['netProfit']);
     }
@@ -189,6 +212,12 @@
       shareOfProfit: o.netProfitCents > 0 ? (employee + employer) / o.netProfitCents : null,
       referenceVersion: limits.version
     });
+  }
+
+  function versionOfLimits(R, T) {
+    var e = R && R.taxEntry ? R.taxEntry(T, 'annualAdditions') : null;
+    var t = e && T ? T[e.table] : null;
+    return t ? t.version : null;
   }
 
   return {

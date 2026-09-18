@@ -13992,6 +13992,39 @@ the household is byte-identical either side of it.
 `npm run e2e` — `tests/e2e/phase1.test.js`, 11 of 11 steps, screenshots in
 `tests/e2e/screenshots/`.
 
+## D-235 — One index for every tax limit, and no limit written anywhere else
+
+**Why.** `foo-ladder.js` carried six IRS figures as fallbacks, a second copy
+of `data/irs_limits_2026.json`. A second copy is how two files come to
+disagree: `data/lane2/contribution_limits.json` says the 415(c) limit is
+72,000 and `data/irs_limits_2026.json` says 70,000, and nothing said which
+year any figure belonged to without opening its file.
+
+**Decision.** `data/tax_config.json` is the index of every tax limit, rate
+and dollar threshold: id, label, unit, tax year, confidence, and which table
+in `shared/reference.js` holds the value. It holds no figures of its own.
+`Reference.taxLimit(tables, id)` resolves one; `Reference.taxYears()` lists
+the years in play; `Reference.load()` always fetches the index. `foo-ladder.js`,
+`engines/presets.js` and `engines/accounts.js` read limits by name through it.
+Where two files disagree the index says so in `disputes` and neither wins.
+`test/run.js` resolves every entry and fails if any distinctive limit value is
+written into a page, room or engine.
+
+**Replaces or removes.** Removes `FALLBACK_LIMITS` from `foo-ladder.js` (six
+figures), the `$70K/yr` in the Skill Tree's mega backdoor entry and the
+`$130K` in its FEIE entry. Removes `engines/accounts.js`'s and
+`engines/presets.js`'s knowledge of which file a limit lives in.
+
+**Stored shape.** No change. Nothing here is stored; `data/cobra_aca_2024.json`
+deliberately keeps no `taxYear` field, because a survey average is not a limit
+that expires (test/jan1.js holds that line), and the index carries its 2024
+label instead.
+
+**Verified.** `node test/run.js` (31,234 checks, including the new section);
+`npm test` in `tests/` unchanged at 7 known property findings; the Solo 401(k)
+in a browser reads $43,087 on $100,000 of profit, which is the elective limit
+plus 20% of profit after half the SE tax, under the annual-additions cap.
+
 
 ---
 

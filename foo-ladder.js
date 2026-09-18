@@ -36,10 +36,17 @@
      each one is visible and editable below. */
   var ASSUMPTIONS = { efMonths: 3, growthRate: 7 };
 
-  /* Fallback IRS limits, replaced by data/irs_limits_2026.json once it
-     loads. Kept only so the page renders before the fetch resolves. */
-  var FALLBACK_LIMITS = { k401: 24500, k401Catchup: 8000, ira: 7500,
-                          iraCatchup: 1100, hsaSelf: 4400, hsaFamily: 8750 };
+  /* NO FALLBACK LIMITS (D-235). Six IRS figures used to be written here, as
+     a copy of data/irs_limits_2026.json "kept only so the page renders
+     before the fetch resolves". A second copy of a limit is how a limit
+     goes stale in one place and not the other, and rendering a made-up
+     number for a moment is the same sin as rendering one for good. The
+     limits are null until the table lands, and the ladder says it is
+     waiting for them — empty is not zero, here as everywhere.
+     Reference.taxLimit() reads them through data/tax_config.json. */
+  var LIMIT_IDS = { k401: 'elective401k', k401Catchup: 'elective401kCatchup50Plus',
+                    ira: 'ira', iraCatchup: 'iraCatchup50Plus',
+                    hsaSelf: 'hsaSelfOnly', hsaFamily: 'hsaFamily' };
 
   var START = { m: 6, y: 2026 };
   var MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -94,7 +101,7 @@
     windfallAmt: null,
     /* Assumption-class. Defaults are legitimate here, and visible. */
     efMonths: ASSUMPTIONS.efMonths, growthRate: ASSUMPTIONS.growthRate,
-    limits: Object.assign({}, FALLBACK_LIMITS),
+    limits: null,         /* the IRS figures, once data/tax_config.json resolves them */
     tables: null,         /* reference tables, once loaded; the gap waits for them */
     /* View */
     hdhp: false, hsaFamilyPlan: false, growthOn: false, windfallOn: false,
@@ -179,9 +186,11 @@
        hold the whole timeline hostage. A goal WITH a target still needs its
        balance. BRIEF §1.1 item 2. */
     d.prepaidSet = entered(state.prepaidTarget);
-    d.iraLimit = state.limits.ira + (entered(d.age) && d.age >= 50 ? state.limits.iraCatchup : 0);
-    d.k401Limit = state.limits.k401 + (entered(d.age) && d.age >= 50 ? state.limits.k401Catchup : 0);
-    d.hsaLimit = state.hsaFamilyPlan ? state.limits.hsaFamily : state.limits.hsaSelf;
+    var L = state.limits;
+    d.limitsIn = !!L;
+    d.iraLimit = L ? L.ira + (entered(d.age) && d.age >= 50 ? L.iraCatchup : 0) : null;
+    d.k401Limit = L ? L.k401 + (entered(d.age) && d.age >= 50 ? L.k401Catchup : 0) : null;
+    d.hsaLimit = L ? (state.hsaFamilyPlan ? L.hsaFamily : L.hsaSelf) : null;
     return d;
   }
 
@@ -199,7 +208,8 @@
       ['your contribution %', entered(state.contribPct)],
       ['your match cap %', entered(d.matchCapPct)],
       ['emergency fund balance', entered(d.efBalance)],
-      ['Roth contributed so far', entered(state.rothCur)]
+      ['Roth contributed so far', entered(state.rothCur)],
+      ['the IRS limits table (data/tax_config.json)', d.limitsIn]
     ];
     if (d.prepaidSet) needs.push(['prepaid balance', entered(state.prepaidBal)]);
     if (state.hdhp) needs.push(['HSA contributed so far', entered(state.hsaCur)]);
@@ -689,13 +699,13 @@
     /* --- assumptions --- */
     var limitField = function (label, key) {
       return field({ label: label, prefix: '$',
-        read: function () { return state.limits[key]; },
-        onChange: function (v) { state.limits[key] = v; } });
+        read: function () { return state.limits ? state.limits[key] : null; },
+        onChange: function (v) { if (state.limits) state.limits[key] = v; } });
     };
     var assumeBody = h('div', { style: { padding: '0 var(--space-4) var(--space-4)' } }, [
       h('p', { class: 'needs', style: { marginTop: '0' } }, [
-        "These carry system defaults because they're assumptions, not facts about you. Limits load from ",
-        h('code', { text: 'data/irs_limits_2026.json' }), '.'
+        "These carry system defaults because they're assumptions, not facts about you. Every limit is named in ",
+        h('code', { text: 'data/tax_config.json' }), ', with its tax year, and held in the year-stamped table that file points at. None is written into this page.'
       ]),
       h('div', { class: 'grid2' }, [
         field({ label: 'Emergency fund target', suffix: 'mo',
@@ -917,14 +927,18 @@
      file is one of its three readings, not the room. */
   Spine.onChange(function (h0) { state.household = h0; paint(); });
 
-  Reference.load(['irsLimits', 'effectiveTaxRates']).then(function (t) {
+  Reference.load(['taxConfig', 'irsLimits', 'effectiveTaxRates']).then(function (t) {
     state.tables = t;
-    var L = t.irsLimits.limits;
-    state.limits = {
-      k401: L.elective401k, k401Catchup: L.elective401kCatchup50Plus,
-      ira: L.ira, iraCatchup: L.iraCatchup50Plus,
-      hsaSelf: L.hsaSelfOnly, hsaFamily: L.hsaFamily
-    };
+    /* Through the index, never straight at the file: which table holds the
+       401(k) deferral limit is data/tax_config.json's business, not this
+       room's. A figure the index cannot resolve stays null and the ladder
+       says what it is waiting for. */
+    var out = {}, all = true;
+    Object.keys(LIMIT_IDS).forEach(function (key) {
+      var r = Reference.taxLimit(t, LIMIT_IDS[key]);
+      if (Money.isOk(r)) out[key] = r.value; else all = false;
+    });
+    state.limits = all ? out : null;
     paint();
-  }).catch(function () { /* the fallback limits already render */ });
+  }).catch(function () { paint(); });
 })();

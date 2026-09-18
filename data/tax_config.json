@@ -1,0 +1,295 @@
+{
+  "id": "tax_config",
+  "version": "1.0",
+  "asOf": "2026-09-18",
+  "confidence": "unverified",
+  "source": "Not a source of figures. This is the INDEX of every tax limit, rate and dollar threshold the app uses: what each one is called, which tax year it belongs to, where the value actually lives, and how sure anyone is of it. It exists so that 'what year is this number from?' has one answer in one place.",
+  "confidenceNote": "This file holds no figures of its own, so it claims the weakest of the three levels and cannot over-claim for anything. What matters is the confidence on each ENTRY, which is the confidence of the file that entry points at, copied here so the index can be read on its own. Where two files disagree, the entry says so in `dispute` and neither is silently preferred.",
+  "note": "WHY THIS IS AN INDEX AND NOT A PILE OF NUMBERS. The rule in this repo is one copy of every figure, in a year-versioned file under data/ (CLAUDE.md, SPEC.md §7). Copying the values here would make a second copy of each — which is exactly how data/irs_limits_2026.json and data/lane2/contribution_limits.json came to disagree about the 415(c) annual-additions limit. So every entry names `table` (the key in shared/reference.js) and `path` (the keys to walk inside it), and `Reference.taxLimit(tables, id)` resolves it. No room, engine or page may name a raw file and key for a tax figure again, and none may inline one: test/run.js checks both.",
+  "howToUse": "Reference.taxLimit(tables, '<id>') returns { value, taxYear, label, unit, confidence, table, path, source }, or a Money.incomplete naming the table that is not loaded. Reference.taxYears(tables) lists the years in play, which is what the mixed-year warning on a page is drawn from.",
+  "mixedYears": {
+    "note": "Every entry below carries its own tax year, and they are NOT all the same year. Anything reading more than one of these is mixing years; that is stated rather than hidden.",
+    "current": 2026,
+    "olderThanCurrent": ["cobraSingleMonthly", "cobraFamilyMonthly", "acaSilverBenchmark40Monthly"]
+  },
+  "disputes": [
+    {
+      "id": "annualAdditions",
+      "what": "The 415(c) overall annual-additions limit for 2026.",
+      "sides": [
+        { "value": 70000, "table": "irsLimits", "path": ["limits", "annualAdditions"], "says": "carried from the FOO room, never re-checked against the IRS notice" },
+        { "value": 72000, "table": null, "file": "data/lane2/contribution_limits.json", "says": "IRS Notice 2025-67, as read by the lane 2 data build" }
+      ],
+      "reads": "irsLimits",
+      "decide": "Which the engine reads. Needs a human with the IRS notice in front of them; nothing here guesses."
+    },
+    {
+      "id": "acaTopApplicablePercentage",
+      "what": "The top applicable percentage for 2026 (the share of MAGI at 400% of the poverty level).",
+      "sides": [
+        { "value": 0.0866, "table": "aca", "path": ["applicablePercentage"], "says": "data/aca_2026.json, marked unverified" },
+        { "value": 0.0996, "table": null, "file": "data/lane2/aca.json", "says": "Rev. Proc. 2025-25, as read by the lane 2 data build" }
+      ],
+      "reads": "aca",
+      "decide": "Which the engine reads. Same treatment: a human, and the revenue procedure."
+    }
+  ],
+  "limits": {
+    "elective401k": {
+      "label": "401(k) elective deferral",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "irsLimits",
+      "path": ["limits", "elective401k"],
+      "confidence": "unverified"
+    },
+    "elective401kCatchup50Plus": {
+      "label": "401(k) catch-up, 50 and over",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "irsLimits",
+      "path": ["limits", "elective401kCatchup50Plus"],
+      "confidence": "unverified"
+    },
+    "ira": {
+      "label": "IRA contribution limit",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "irsLimits",
+      "path": ["limits", "ira"],
+      "confidence": "unverified"
+    },
+    "iraCatchup50Plus": {
+      "label": "IRA catch-up, 50 and over",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "irsLimits",
+      "path": ["limits", "iraCatchup50Plus"],
+      "confidence": "unverified"
+    },
+    "hsaSelfOnly": {
+      "label": "HSA contribution limit, self-only cover",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "irsLimits",
+      "path": ["limits", "hsaSelfOnly"],
+      "confidence": "unverified"
+    },
+    "hsaFamily": {
+      "label": "HSA contribution limit, family cover",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "irsLimits",
+      "path": ["limits", "hsaFamily"],
+      "confidence": "unverified"
+    },
+    "annualAdditions": {
+      "label": "415(c) annual additions, all sources into one plan",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "irsLimits",
+      "path": ["limits", "annualAdditions"],
+      "confidence": "unverified",
+      "dispute": "annualAdditions",
+      "note": "The ceiling on a Solo 401(k)'s employee deferral plus employer contribution, and on the after-tax money a mega backdoor Roth can move. There is no separate, larger cap: any figure above this one is wrong."
+    },
+    "soloEmployerShareSoleProprietor": {
+      "label": "Solo 401(k) employer share, sole proprietor",
+      "unit": "share of net earnings",
+      "taxYear": 2026,
+      "table": "irsLimits",
+      "path": ["limits", "soloEmployerShareSoleProprietor"],
+      "confidence": "unverified",
+      "note": "20%, not 25%. The 25% figure is of a corporation's W-2 wages; a sole proprietor's base is net earnings AFTER the employer contribution, and 25/(1+25) is 20%."
+    },
+
+    "accessAge": {
+      "label": "Penalty-free age for pre-tax retirement money",
+      "unit": "years",
+      "taxYear": 2026,
+      "table": "accessRules",
+      "path": ["byTaxCharacter", "pretax", "accessAge"],
+      "confidence": "convention",
+      "note": "59 and a half. data/early_access_rules_2026.json carries the same number at `accessAge`; this is the copy every reader should take."
+    },
+    "earlyWithdrawalPenalty": {
+      "label": "Early withdrawal penalty",
+      "unit": "share of the withdrawal",
+      "taxYear": 2026,
+      "table": "earlyAccessRules",
+      "path": ["penaltyRate"],
+      "confidence": "unverified"
+    },
+    "conversionSeasoningYears": {
+      "label": "Roth conversion seasoning",
+      "unit": "years",
+      "taxYear": 2026,
+      "table": "earlyAccessRules",
+      "path": ["conversionSeasoningYears"],
+      "confidence": "unverified"
+    },
+    "ruleOf55SeparationAge": {
+      "label": "Rule of 55: age you must turn in the year you leave",
+      "unit": "years",
+      "taxYear": 2026,
+      "table": "earlyAccessRules",
+      "path": ["ruleOf55", "separationAge"],
+      "confidence": "unverified"
+    },
+    "seppMaxRate": {
+      "label": "SEPP (72(t)) ceiling rate",
+      "unit": "annual rate",
+      "taxYear": 2026,
+      "table": "earlyAccessRules",
+      "path": ["sepp", "maxRate"],
+      "confidence": "unverified"
+    },
+    "indirectRolloverDays": {
+      "label": "Indirect rollover window",
+      "unit": "days",
+      "taxYear": 2026,
+      "table": "rolloverOptions",
+      "path": ["rates", "indirectRolloverDays"],
+      "confidence": "convention"
+    },
+    "rolloverMandatoryWithholding": {
+      "label": "Mandatory withholding on an indirect rollover",
+      "unit": "share of the distribution",
+      "taxYear": 2026,
+      "table": "rolloverOptions",
+      "path": ["rates", "mandatoryWithholding"],
+      "confidence": "convention"
+    },
+
+    "seSocialSecurityWageBase": {
+      "label": "Social Security wage base",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "seTax",
+      "path": ["socialSecurityWageBase"],
+      "confidence": "sourced"
+    },
+    "seSocialSecurityRate": {
+      "label": "Self-employment Social Security rate",
+      "unit": "rate",
+      "taxYear": 2026,
+      "table": "seTax",
+      "path": ["socialSecurityRate"],
+      "confidence": "sourced"
+    },
+    "seMedicareRate": {
+      "label": "Self-employment Medicare rate",
+      "unit": "rate",
+      "taxYear": 2026,
+      "table": "seTax",
+      "path": ["medicareRate"],
+      "confidence": "sourced"
+    },
+    "additionalMedicareRate": {
+      "label": "Additional Medicare rate",
+      "unit": "rate",
+      "taxYear": 2026,
+      "table": "seTax",
+      "path": ["additionalMedicare", "rate"],
+      "confidence": "sourced"
+    },
+    "additionalMedicareThresholds": {
+      "label": "Additional Medicare thresholds, by filing status",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "seTax",
+      "path": ["additionalMedicare", "thresholds"],
+      "confidence": "sourced"
+    },
+    "estimatedTaxHighIncomeAgiThreshold": {
+      "label": "Safe harbour high-income AGI threshold",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "seTax",
+      "path": ["safeHarbor", "highIncomeAgiThreshold"],
+      "confidence": "sourced"
+    },
+
+    "fplBase": {
+      "label": "Federal poverty level, one person",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "aca",
+      "path": ["fpl", "base"],
+      "confidence": "unverified"
+    },
+    "fplPerAdditionalPerson": {
+      "label": "Federal poverty level, each further person",
+      "unit": "dollars a year",
+      "taxYear": 2026,
+      "table": "aca",
+      "path": ["fpl", "perAdditionalPerson"],
+      "confidence": "unverified"
+    },
+    "acaCliffMultiple": {
+      "label": "ACA subsidy cliff, as a multiple of the poverty level",
+      "unit": "multiple",
+      "taxYear": 2026,
+      "table": "aca",
+      "path": ["cliffMultiple"],
+      "confidence": "unverified",
+      "note": "A Roth conversion is reported income and counts towards the MAGI measured against this. engines/rothaca.js adds conversions to MAGI before the comparison; nothing in the app says otherwise."
+    },
+    "acaNoCliffCapPercent": {
+      "label": "Expected contribution cap if the enhanced subsidies continue",
+      "unit": "share of MAGI",
+      "taxYear": 2026,
+      "table": "aca",
+      "path": ["ifNoCliff", "capPercent"],
+      "confidence": "unverified"
+    },
+
+    "cobraSingleMonthly": {
+      "label": "COBRA, single cover, a month",
+      "unit": "cents a month",
+      "taxYear": 2024,
+      "table": "cobraAca",
+      "path": ["monthly", "cobraSingleCents"],
+      "confidence": "unverified",
+      "note": "TWO YEARS OLDER than everything else in this index. KFF 2024 averages, rounded from memory."
+    },
+    "cobraFamilyMonthly": {
+      "label": "COBRA, family cover, a month",
+      "unit": "cents a month",
+      "taxYear": 2024,
+      "table": "cobraAca",
+      "path": ["monthly", "cobraFamilyCents"],
+      "confidence": "unverified",
+      "note": "TWO YEARS OLDER than everything else in this index."
+    },
+    "acaSilverBenchmark40Monthly": {
+      "label": "ACA benchmark silver premium, age 40, a month",
+      "unit": "cents a month",
+      "taxYear": 2024,
+      "table": "cobraAca",
+      "path": ["monthly", "acaSilver40Cents"],
+      "confidence": "unverified",
+      "note": "TWO YEARS OLDER than everything else in this index."
+    }
+  },
+  "tables": {
+    "note": "The whole tables, for the things that are a ladder rather than a single figure. Same rule: named here, held there, one copy.",
+    "federalBrackets": { "label": "Federal ordinary brackets and the standard deduction", "taxYear": 2026, "table": "federalBrackets", "confidence": "unverified" },
+    "capitalGains": { "label": "Long-term capital gains brackets", "taxYear": 2026, "table": "federalBrackets", "path": ["capitalGains"], "confidence": "unverified" },
+    "stateBrackets": { "label": "State income tax brackets", "taxYear": 2026, "table": "stateBrackets", "confidence": "unverified" },
+    "effectiveTaxRates": { "label": "Effective federal rate by gross income band", "taxYear": 2026, "table": "effectiveTaxRates", "confidence": "unverified" },
+    "socialSecurityBendPoints": { "label": "Social Security bend points and claiming adjustments", "taxYear": 2026, "table": "ssBendPoints", "confidence": "unverified" },
+    "acaApplicablePercentage": { "label": "ACA applicable percentage ladder", "taxYear": 2026, "table": "aca", "path": ["applicablePercentage"], "confidence": "unverified", "dispute": "acaTopApplicablePercentage" }
+  },
+  "notModelled": {
+    "note": "Named here so nobody goes looking for a limit the app does not hold, and so nobody adds one without a source. engines/tax.js already lists these as what it leaves out.",
+    "items": [
+      { "id": "irmaa", "what": "Medicare IRMAA surcharges and their income brackets", "why": "Nothing in the app prices Medicare premiums. A Roth conversion DOES count towards the MAGI that sets IRMAA, two years in arrears — but there is no IRMAA table here, so the app must not imply it has priced one." },
+      { "id": "niit", "what": "The 3.8% net investment income tax", "why": "Named as an exclusion in engines/tax.js. No table, no threshold held." },
+      { "id": "estateExemption", "what": "The federal estate and gift tax exemption", "why": "data/estate_basics.json is about how property passes — beneficiary, title, will — and carries no dollar figure at all. The Estate room does not price an estate tax." },
+      { "id": "amt", "what": "The alternative minimum tax", "why": "Named as an exclusion in engines/tax.js." },
+      { "id": "qbi", "what": "The qualified business income deduction", "why": "Named as an exclusion in engines/tax.js." },
+      { "id": "feie", "what": "The foreign earned income exclusion", "why": "It appears in the Skill Tree as something to learn, never as a figure the app computes with." }
+    ]
+  }
+}
