@@ -214,3 +214,83 @@ compare against.
 metric's direction (notably: more hours a week is *worse*, though the number
 went up). The e2e suite loads the room and fails unless some card shows a
 better and a worse metric together.
+
+---
+
+## The full test suite, run one last time
+
+All three suites, on the final commit of this branch.
+
+### 1. `node test/run.js` — the main suite
+
+```
+✓ 31367 checks passed
+```
+
+(31,032 before this branch; the 335 new ones are the Phase 1 flow, the tax
+index and the direction convention.)
+
+### 2. `npm test` in `tests/` — the lane 2 suite
+
+```
+corpus: 24 archetypes + 6 edge cases; 262 functions x 30 households = 7860 calls
+8189 checks passed
+91 files for 88 engines; 404 properties, 7 failing; 20.8s
+3957 checks passed        (property tests)
+3069 checks passed        (data tables)
+905 checks passed         (glossary, migration)
+✓ 207 checks passed       (QR)
+exit 0
+```
+
+The 7 failing properties (adventure, blocks, fire, projection, ratios, skills,
+tier0) are **pre-existing** — the same 7 that failed before this branch. They
+are recorded findings for the master build, not regressions; the suite is
+designed to report rather than fail on them.
+
+### 3. `npm run e2e` in `tests/` — the Phase 1 browser walk
+
+```
+  ✓ fresh visit with nothing saved opens onboarding
+  ✓ onboarding offers all three paths
+  ✓ nothing of the dashboard or the map shows before onboarding
+  ✓ opening the map with nothing saved returns to onboarding
+  ✓ path 1 (walk me through it) asks what a month costs
+  ✓ path 2 (the whole form) shows only the two Phase 1 rows
+  ✓ path 3 (example numbers) fills the household and moves on
+  ✓ expenses + cash alone produce a runway on the last onboarding screen
+  ✓ the micro-dashboard shows the runway and a next step
+  ✓ the micro-dashboard keeps the rooms menu shut until unlocked
+  ✓ The Cushion reads a real runway from the two numbers alone
+  ✓ the progress bar reports progress from the two numbers
+  ✓ the tradeoff cards mark every metric the same way, with a legend
+
+13 of 13 steps pass.
+```
+
+**Baseline at the start of the night: 2 of 11.** Two steps were added along the
+way (the menu staying shut after onboarding, and the tradeoff legend).
+
+Screenshots of every step: `tests/e2e/screenshots/`, fourteen PNGs, in the
+branch. They are the fastest way to see what changed without running anything.
+
+### Also run
+
+`node tools/context/build.js --check` — context files current.
+A browser pass over the rooms this branch touches (the Ledger, The Cushion,
+the Dashboard, Accounts, the FOO ladder, The Long Way Round, Budget): no
+console errors, and the Solo 401(k) reads $43,087 on $100,000 of profit, which
+is the elective limit plus 20% of profit after half the SE tax, under the
+annual additions cap.
+
+---
+
+## Decisions logged
+
+- **D-234** — Phase 1: two numbers, one reading, and a gate in front of the rest
+- **D-235** — One index for every tax limit, and no limit written anywhere else
+- **D-236** — One direction for every metric, and a legend that says which
+
+## Not done, on purpose
+
+The branch is not merged. `main` is untouched.

@@ -1714,6 +1714,12 @@
           "seed": 20260910
         },
         {
+          "name": "a house hack carries the building’s reserves too, and letting more units never makes you pay more",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
           "name": "a missing price, an impossible down payment or a negative rate is refused with a reason, never a number",
           "ok": true,
           "numRuns": 100,
@@ -3164,6 +3170,6 @@
       ]
     }
   ],
-  "totalProperties": 403,
+  "totalProperties": 404,
   "failedProperties": 7
 }
