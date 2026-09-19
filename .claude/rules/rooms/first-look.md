@@ -10,5 +10,5 @@ Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, retur
 Owns: takeHomeMonthly
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), employmentStatus (start), employerMatch (start), capturingFullMatch (start), hasDebt (start), accommodationMonthly (expenses), wantsMonthly (expenses)
 Latest decisions:
-  (none linked)
+  - D-234 — First Look: the front door, four to seven questions and one picture
 Full context: node tools/context/pack.js first-look

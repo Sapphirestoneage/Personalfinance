@@ -14393,6 +14393,27 @@ section('First Look: four to seven questions, one picture, one next step (D-234)
   checkTrue('nothing writes a default in to fill a gap: an unanswered finish line stores no rate',
     /v === 'undecided' \? null : line\.rate/.test(html));
 
+  /* ---- The handoff into the rest of the suite ----------------------------
+     The point of writing normal facts rather than keeping private ones:
+     the Ledger opens with its first level part-cleared instead of at zero,
+     without a line of code anywhere saying so. */
+  {
+    const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+    LR.use(T.ledgerRows);
+    const Doors = require(path.join(ROOT, 'shared/doors.js'));
+    const done = JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/households/first-look-card.json'), 'utf8'));
+    const nothing = Schema.createHousehold({});
+    ['A', 'E', 'I', 'you'].forEach(function (d) {
+      checkTrue(`the ${d} door starts at zero`, Doors.counts(nothing, T, d).known === 0);
+      checkTrue(`...and First Look has moved it`, Doors.counts(done, T, d).known > 0,
+        d + ' is still ' + Doors.counts(done, T, d).known);
+    });
+    check('the Expenses door has its whole first level', (function () { const l = Doors.counts(done, T, 'E').byLevel[1]; return l.known + '/' + l.total; })(), '1/1');
+    const income = Doors.headline(done, T, 'I');
+    check('the Income door leads on what actually lands, not a figure worked back from a salary', income.result.basis, 'entered');
+    check('...and shows it', income.display, '$3,200 a month');
+  }
+
   /* An empty household is the state this room exists for, and it says so
      rather than drawing a picture of nothing. */
   const empty = FL.result(Schema.createHousehold({}), T);

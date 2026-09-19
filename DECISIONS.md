@@ -13962,6 +13962,53 @@ redirects and the deep links `#draftt`, `#out-rate`, `#out-wealth`, `#habit`
 and `#guess` loaded at 390px with a clean console.
 
 
+## D-234 — First Look: the front door, four to seven questions and one picture
+
+**Why.** A stranger arriving met a dashboard of em dashes, a map of sixty-seven
+doors and no question. Boldin and ProjectionLab open by asking when you want to
+retire and how long you expect to live, which is unanswerable for the people
+this suite is for: between jobs, studying, twenty-something couples. The panel
+note at the bottom of STATUS.md has been asking for one screen in front of the
+library since D-229.
+
+**Decision.** `rooms/first-look.html`, `engines/firstlook.js`. Four to seven
+questions, one to a screen, `#/first-look/<step>` and `#/first-look/result`.
+Screen one is the situation gate and it decides which questions EXIST: a
+question this situation does not ask is detached from the document, not hidden
+and not disabled. Every answer is written through its field's OWNER; an
+estimate (take-home at 75% of a salary, everything-else at 45% of take-home
+with a $600 floor) is written at confidence `roughly` carrying the field it
+came from. The result screen leads on the runway between jobs, on the monthly
+gap when the month is short, and on the savings rate otherwise, and gives ONE
+next step with its reason — never a list, never a verdict, never a colour.
+`shared/charts.js` drops a band's label when the band is too thin to hold it.
+
+**Replaces or removes.** Not a room: the arrival. `docs/room-map.json` carries
+it as the thirty-first with that reasoning written down, and the drift alarm in
+`test/run.js` moved with the map entry rather than around it. What it finally
+retires — Start Here's intake, most likely — is the owner's call, and the open
+question at the top of STATUS.md has to be answered first.
+
+**Stored shape.** One new field: `household.income.takeHomeMonthlyCents`, what
+actually lands in the account, owned by First Look. The app could only work
+that back from gross through the effective-rate table, so somebody who reads
+their bank app but not their offer letter had nowhere to put the number they do
+know. `Schema.takeHomeMonthlyCents` prefers it and derives as before when it is
+absent, which every saved household is, so nothing else moves;
+`shared/doors.js` now reads through that one function instead of re-deriving
+from the DAITE view. `household.income` is filled by `Schema.createHousehold`
+on read, so there is no migration step and no version bump.
+`meta.fields[id].derivedFrom` is new and optional: the field a figure was
+worked out from, absent until something writes one. Ledger row
+`takeHomeMonthly` (door I, level 1, sphere 2).
+
+**Verified.** `node test/run.js` (31,190 checks), `node test/forms.js` (633,
+including the whole flow walked on a Pixel 7), `node tests/corpus.test.js` (0
+findings), `node tests/properties/run.js`, `node test/render.js` (every room),
+`node test/responsive.js`, `tests/a11y-audit.js` (0 rules, 9 tab stops, none
+without a focus ring). The five households in the brief are fixtures and their
+headline and next step are asserted on every commit.
+
 ---
 
 # The Dungeons & Dividends entries
