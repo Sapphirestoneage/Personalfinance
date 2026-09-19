@@ -8,5 +8,5 @@ files it lists; nothing else.
 Say in two lines: what the room owns, what it reads from other owners, and the
 plan for the change asked for.
 
-If the plan would add a screen, a field, a room, a lens or a framework, stop
-and ask what it replaces before building anything (the freeze in CLAUDE.md).
+If the plan adds a room, put it on docs/room-map.json too if it absorbs one;
+otherwise just build it (D-268: no gate on growth).

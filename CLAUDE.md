@@ -36,19 +36,17 @@ Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wra
 - Reference data lives in `data/`, versioned by year. Never inline.
 - Changing a stored shape needs a compatibility note in the decision entry.
 
-## The freeze (lifted by the owner, 2026-09-19; D-267)
-
-- New rooms, frameworks, lenses and vocabularies are allowed again.
-- What stays: every room has a place on `docs/room-map.json` (D-229), so a
-  new room is added there too, and `test/run.js` says so if it is not.
-- Still ask "what does this replace?" It is a good question, not a gate.
-
 ## Stop and ask instead of guessing
 
 - The change would give a room a private copy of a household number, or let a
   second room edit a field it does not own.
 - A decision it depends on is marked `[PENDING]` in SPEC.md section 12.
-- You cannot say what the change replaces or simplifies.
+
+## No gate on growth (D-268)
+
+The freeze and the room cap are gone: new rooms, frameworks, lenses and
+vocabularies are welcome. `docs/room-map.json` records the merges already
+made so old links keep redirecting; it is a record, not a limit.
 
 ## Decisions log
 

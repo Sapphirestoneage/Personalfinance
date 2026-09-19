@@ -2,7 +2,7 @@
   "version": 1,
   "decision": "D-229",
   "asOf": "2026-09-12",
-  "what": "The thirty rooms the suite is merging down to, and what each one absorbs. Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app.",
+  "what": "The thirty rooms the suite was merging down to, and what each one absorbs. Hand-authored, not generated. Since D-268 it is a record, not a cap: test/run.js still checks that a merged room is a redirect and that nothing is absorbed twice, but a room may exist without a place here.",
   "howToRead": {
     "survivors": "One entry per surviving room. 'id' is its registry id and stays its id; 'title' is what it is called after the merge (the registry may still carry the old title until that merge ships).",
     "absorbs": "Registry ids that become a view, a toggle, a block type or a card inside the survivor. Every one of them ends as a redirect file, never a deleted file: the links are out in the world.",

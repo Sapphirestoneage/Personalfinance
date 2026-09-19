@@ -3,9 +3,9 @@
 Updated: 2026-09-19
 
 ## Where it stands
-- **93 → 30 is the programme** (D-228, D-229, `docs/room-map.json`, checked by
-  `test/run.js` every run). Four of six merges done (D-230 to D-233); every
-  old URL redirects. Registry: 78 rooms.
+- **No freeze, no room cap (D-267, D-268).** The owner lifted both. The room
+  map (D-229) stays as the record of the merges made (D-230 to D-233), so
+  every old URL redirects; it no longer limits what is built. 78 rooms.
 - **Fill Mode, this session (D-264, D-265, D-266), the owner's brief.** Every
   Ledger row has one state (known, rough, unknown, na, computed, empty), read
   from the facts it already carried; `shared/fill.js`. The Dashboard opens
@@ -20,9 +20,6 @@ Updated: 2026-09-19
   each debt and account row twice and only the last copy saves (the deep
   link lands on it). `test/settings.js`'s heading check fails on the Backup
   card (D-202), which sits under the four headings.
-
-## Freeze
-- OFF, lifted by the owner 2026-09-19 (D-267). A new room still goes on the map.
 
 ## Next (top item first; one per session)
 1. **Turn the Pages switch on.** OWNER, one click: Settings → Pages → Deploy

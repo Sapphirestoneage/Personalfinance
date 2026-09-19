@@ -14979,6 +14979,30 @@ longer a gate.
 
 ---
 
+## D-268 — No gate on growth: the room cap and the replace question go with the freeze
+
+**Why.** The owner, after D-267: "remove all the restrictions."
+
+**Decision.** Every rule that could stop something being built is out.
+`CLAUDE.md` loses the freeze section and the "cannot say what it replaces"
+stop; the decision template no longer asks for a reason when nothing is
+removed; `test/run.js` no longer holds the registry to thirty rooms, to a
+count, or to a place on `docs/room-map.json`. The map stays as the record
+of the merges made, and the suite still checks that a merged room is a
+redirect (the links are out in the world) and that no room is absorbed
+twice. What is kept is not a restriction but the ground the numbers stand
+on: no real data, empty is not zero, integer cents, one owner per field,
+one formula per function, the live-form guard, reference data in `data/`.
+
+**Replaces or removes.** The room cap, the replace gate, the freeze's
+wording in the template.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node tools/context/build.js --check`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

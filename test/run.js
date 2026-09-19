@@ -14669,9 +14669,10 @@ section('The thirty (docs/room-map.json)');
   const live = {};
   Registry.all().forEach(r => { live[r.id] = r; });
 
-  check('the map lands on thirty rooms', MAP.rooms.length, 30);
-  check('numbered 1 to 30', MAP.rooms.map(r => r.n).join(','),
-    Array.from({ length: 30 }, (_, i) => i + 1).join(','));
+  /* The cap on the count and the rule that every live room be on the map
+     were the freeze's teeth. The owner took them out (D-268): the map is a
+     record of the merges made, kept so old links redirect, not a limit on
+     what can be built. */
 
   /* Every survivor is a room that exists now and keeps its id through the
      merge: the id is what ownership.js, the registry and every deep link
@@ -14701,10 +14702,6 @@ section('The thirty (docs/room-map.json)');
      (merged). Both directions, or the map drifts silently in one of them. */
   const survivors = {};
   MAP.rooms.forEach(r => { survivors[r.id] = true; });
-  Object.keys(live).forEach(function (id) {
-    checkTrue(`live room ${id} is on the map`, survivors[id] || claimedBy[id],
-      'a room the map does not name is a room nobody decided to keep — CLAUDE.md: what does it replace?');
-  });
 
   MAP.rooms.forEach(function (r) {
     const done = r.done || [];
@@ -14730,20 +14727,6 @@ section('The thirty (docs/room-map.json)');
       checkTrue(`a held room is never also marked done`, done.indexOf(id) === -1);
     });
   });
-
-  /* The count the whole exercise is named after. */
-  const merged = MAP.rooms.reduce((n, r) => n + (r.done || []).length, 0);
-  const toGo = MAP.rooms.reduce((n, r) => n + r.absorbs.length, 0) - merged;
-  /* 93 when the map was written. The Deal (D-227) landed on main while the
-     merge was running and is named under Housing, so the ledger is 94 now.
-     The literal stays a literal on purpose: a room added without a place on
-     the map still fails here, which is the whole point of the alarm. */
-  /* 95 with Loose Ends (D-265), held under the Ledger: a door into its rows
-     with a sidebar badge, not a room with a number of its own. */
-  check('every room is accounted for: thirty, plus what they absorb, plus the Net Worth redirect',
-    MAP.rooms.length + merged + toGo + 1, 95);
-  check('and the registry holds exactly the survivors plus what has not merged yet',
-    Object.keys(live).length, MAP.rooms.length + toGo);
 
   /* The five rules and the anti-rule are written down where the next session
      reads them, not only in a chat log. */
