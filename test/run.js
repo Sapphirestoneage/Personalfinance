@@ -842,7 +842,7 @@ const RULES = TABLES.debtRules;
   check('one line under each of F, A and T says what its lines add up to', (page.match(/<span class="bucket-lines" data-bucket-hint="/g) || []).length, 3);
   checkTrue('...offering to make the number match on a tap, never silently', /data-use-bucket=/.test(page) && /Spine\.setFat\(patch\)/.test(page));
   checkTrue('the per aid and the form share one formula', /Schema\.monthlyFromEvery\(cents, per\)/.test(page));
-  check('the registry names the steps (D-199)', Registry.byId('expenses').subsections.map(x => x.id).join(','), 'picture,spending,lines,month,more');
+  check('the registry names the steps (D-199) and the readings that came after (D-267, D-306)', Registry.byId('expenses').subsections.map(x => x.id).join(','), 'picture,spending,lines,month,more,statements,merchants,slope');
   checkTrue('...the readings sit inside one More fold that a deep link opens', /<details class="slaf-card more-card" id="more"/.test(page) && /if \(p\.tagName === 'DETAILS'\) p\.open = true/.test(page));
 })();
 
@@ -14496,7 +14496,7 @@ section('J4, J5: bank CSV import on-device, the subscription finder (D-215)');
   BankCsv.apply(BankCsv.entries(parsed[2], maps[2], Spine.getProfile(), T), Spine);
   check('nor does the third', JSON.stringify(Spine.getProfile().expenses.entries) === before, true);
   const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
-  checkTrue('Your Data previews before anything saves and remembers the map per bank', /bankPreview\(\)/.test(dataHtml) && /bankcsv\.maps/.test(dataHtml) && /Import the new lines/.test(dataHtml));
+  checkTrue('Your Data previews before anything saves and remembers the map per bank (through the one widget since D-306)', /BankIntake\.mount\(/.test(dataHtml) && (function () { const w = fs.readFileSync(path.join(ROOT, 'shared/bankintake.js'), 'utf8'); return /function preview\(\)/.test(w) && /'bankcsv\.maps'/.test(w) && /Import the new lines/.test(w); })());
   checkTrue('nothing is sent: the import never fetches or posts', !/fetch\(|XMLHttpRequest|sendBeacon/.test(fs.readFileSync(path.join(ROOT, 'engines/bankcsv.js'), 'utf8')));
 
   /* -- J5: the finder ----------------------------------------------------------------- */
@@ -14523,6 +14523,87 @@ section('J4, J5: bank CSV import on-device, the subscription finder (D-215)');
   checkTrue('Money Wrapped gains the leak line only when something was found', Wrapped.year(Spine.getProfile(), [], T, {}).lines.some(l => l.id === 'leak') && !Wrapped.year(Demo.build(), [], T, {}).lines.some(l => l.id === 'leak'));
   /* The finder is a reading of Expenses since D-267. */
   checkTrue('the reading never cancels anything: it writes a decision and says so', (function () { const e = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8'); return /a reminder, never an action|a note to\n?\s*yourself/.test(e) && !/cancelSubscription|fetch\(/.test(e); })());
+})();
+
+/* ==========================================================================
+   D-306: a statement in, every place money went, and the slope
+   ========================================================================== */
+section('A statement in, the merchants, the slope (D-306)');
+(function () {
+  const BankCsv = require(path.join(ROOT, 'engines/bankcsv.js'));
+  const Merchants = require(path.join(ROOT, 'engines/merchants.js'));
+  const Subs = require(path.join(ROOT, 'engines/subscriptions.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+
+  /* -- a card statement: charges positive, a payment negative -- */
+  const card = 'Transaction Date,Description,Amount\n2026-09-03,NETFLIX.COM,15.49\n2026-09-05,TRADER JOES MARKET #512,84.12\n2026-09-10,AMTRAK 44 NYP-BOS,200.00\n2026-09-12,PAYMENT THANK YOU,-300.00\n2026-09-14,CON EDISON,60.00\n';
+  const parsed = BankCsv.parse(card);
+  const map = BankCsv.guessMap(parsed.headers);
+  checkTrue('a file where charges outnumber payments reads as a card statement, and a bank file does not', BankCsv.looksLikeCard(parsed, map) && !BankCsv.looksLikeCard(BankCsv.parse(fs.readFileSync(path.join(ROOT, 'test/fixtures/bank-a.csv'), 'utf8')), map));
+  const asBank = BankCsv.entries(parsed, map, Spine.getProfile(), T);
+  check('read as a bank file, every charge would be money in and left out', asBank.filter(l => l.kind === 'deposit').length, 4);
+  const flipped = BankCsv.entries(parsed, Object.assign({}, map, { flip: true }), Spine.getProfile(), T);
+  check('flipped, four charges are spending and the payment is the one left out', flipped.filter(l => l.kind === 'expense').length + ':' + flipped.filter(l => l.kind === 'deposit')[0].why, '4:a payment or a credit; the log holds spending');
+  check('and a charge keeps its size', flipped.filter(l => /AMTRAK/.test(l.description))[0].cents, 20000);
+  BankCsv.apply(flipped, Spine);
+  check('the four land in the log', Spine.getProfile().expenses.entries.length, 4);
+
+  /* -- the merchants -- */
+  let list = Merchants.list(Spine.getProfile(), T);
+  check('one line a place, largest first', list.map(m => m.key).join(','), 'amtrak nyp bos,trader joes market,con edison,netflix com');
+  check('a merchant keys the way the finder keys, so both agree on who is who', Merchants.key('NETFLIX.COM 1234'), Subs.key('NETFLIX.COM 1234'));
+  const tj = list.filter(m => m.key === 'trader joes market')[0];
+  checkTrue('a merchant carries its count, total, dates and the category its lines file under', tj.count === 1 && tj.totalCents === 8412 && tj.firstDate === '2026-09-05' && tj.categoryId === 'groceries' && !tj.ruled);
+  /* -- a rule -- */
+  const h0 = Spine.getProfile();
+  const rules = Merchants.setRule(h0.expenses.rules, 'amtrak nyp bos', 'travel', 'AMTRAK 44 NYP-BOS');
+  Spine.set('expenses.rules', rules);
+  check('a rule is stored on the household, normalised by the constructor', Schema.createHousehold(Spine.getProfile()).expenses.rules.map(r => r.key + '=' + r.categoryId).join(','), 'amtrak nyp bos=travel');
+  const moves = Merchants.refile(Spine.getProfile());
+  check('and names every line it would move', moves.map(m => m.categoryId).join(','), 'travel');
+  moves.forEach(c => Spine.upsertExpenseEntry({ id: c.id, categoryId: c.categoryId, categorizedBy: 'rule' }));
+  list = Merchants.list(Spine.getProfile(), T);
+  checkTrue('the merchant now files by its rule', list.filter(m => m.key === 'amtrak nyp bos')[0].ruled && list.filter(m => m.key === 'amtrak nyp bos')[0].categoryId === 'travel');
+  const next = BankCsv.entries(BankCsv.parse('Date,Description,Amount\n2026-10-11,AMTRAK 45 NYP-BOS,-180.00\n'), { date: 0, description: 1, amount: 2, debit: -1, credit: -1 }, Spine.getProfile(), T);
+  check('the next statement files that merchant by the rule, before any keyword (digits never tell merchants apart)', next[0].categoryId + ':' + next[0].categorizedBy, 'travel:rule');
+  check('removing the rule leaves the lines where they are', Merchants.setRule(Spine.getProfile().expenses.rules, 'amtrak nyp bos', null).length + ':' + Merchants.refile(Object.assign({}, Spine.getProfile(), { expenses: Object.assign({}, Spine.getProfile().expenses, { rules: [] }) })).length, '0:0');
+
+  /* -- the day it was for, and the slope -- */
+  const amtrak = Spine.getProfile().expenses.entries.filter(e => /AMTRAK/.test(e.descriptor))[0];
+  const con = Spine.getProfile().expenses.entries.filter(e => /CON EDISON/.test(e.descriptor))[0];
+  Spine.upsertExpenseEntry({ id: amtrak.id, forDate: '2026-09-25' });
+  Spine.upsertExpenseEntry({ id: con.id, forDate: '2026-08-31' });
+  check('forDate survives the constructor; a bad one reads as null', Spine.getProfile().expenses.entries.filter(e => e.id === amtrak.id)[0].forDate + ':' + Schema.createExpenseEntry({ forDate: 'next week' }).forDate, '2026-09-25:null');
+  const s = Merchants.slope(Spine.getProfile(), { month: '2026-09', today: '2026-09-19' });
+  check('the window runs from the 1st to today in the current month', s.from + '..' + s.to + ':' + s.days.length, '2026-09-01..2026-09-19:19');
+  check('what left the account is every line by its date', s.paidCents, 1549 + 8412 + 20000 + 6000);
+  check('what these days were for leaves out the ticket for the 25th and the bill for August', s.forCents, 1549 + 8412);
+  check('bought ahead and paid late are each named and counted', s.aheadCents + ':' + s.aheadCount + ':' + s.behindCents + ':' + s.behindCount, '20000:1:6000:1');
+  checkTrue('both lines cumulate and never fall', s.days.every((d, i) => i === 0 || (d.cumPaidCents >= s.days[i - 1].cumPaidCents && d.cumForCents >= s.days[i - 1].cumForCents)));
+  check('a past month runs to its last day', Merchants.slope(Spine.getProfile(), { month: '2026-08', today: '2026-09-19' }).days.length, 31);
+  checkTrue('a month total still counts the day it left: the cash flow log is untouched by forDate', (function () { const CF = require(path.join(ROOT, 'engines/cashflow.js')); return CF.logInMonth(Spine.getProfile(), T.expenseCategories, '2026-09').rows.some(r => r.entryId === con.id); })());
+  checkTrue('the two fields are documented', !!Schema.FIELDS['expenses.entries[].forDate'] && !!Schema.FIELDS['expenses.rules[].key'] && !!Schema.FIELDS['expenses.rules[].categoryId']);
+
+  /* -- the pages -- */
+  const exp = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  const data = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
+  const widget = fs.readFileSync(path.join(ROOT, 'shared/bankintake.js'), 'utf8');
+  checkTrue('Expenses has the third reading, with a hat, the intake, the merchants and the slope', /data-view="view-statements"/.test(exp) && /id="bring"/.test(exp) && /id="merchants"/.test(exp) && /id="slope"/.test(exp) && /BankIntake\.mount\('#bank-host'/.test(exp));
+  checkTrue('the one intake is shared: Your Data mounts the same widget and no longer builds its own map', /BankIntake\.mount\('#bank-host'/.test(data) && !/bank-date|bankPreview\(\)/.test(data));
+  checkTrue('the widget offers the card switch and says why it ticked it', /A card statement: a charge is a positive number/.test(widget) && /looksLikeCard/.test(widget));
+  checkTrue('a category chosen for a merchant is a rule that re-files its lines in one undo', /Spine\.set\('expenses\.rules', Merchants\.setRule/.test(exp) && /Merchants\.refile\(Spine\.getProfile\(\)\)\.forEach/.test(exp) && /Spine\.batch\(/.test(exp));
+  checkTrue('a line can say the day it was for, through the spine', /upsertExpenseEntry\(\{ id: id, forDate: v \}\)/.test(exp));
+  checkTrue('the slope draws two series through the one chart module and never a hex of its own', /Charts\.area\(\{/.test(exp) && /As it left the account/.test(exp) && /On the day it was for/.test(exp));
+  checkTrue('the finder’s empty text still reaches the statement door, and Your Data lands it', /data\.html#bank/.test(exp) && /if \(id === 'bank'\) id = 'in'/.test(data));
+  checkTrue('nothing is sent: the widget never fetches or posts', !/fetch\(|XMLHttpRequest|sendBeacon/.test(widget));
+  checkTrue('the room says a rule moves no money', /A rule files lines; it moves no money/.test(exp));
 })();
 
 /* ==========================================================================

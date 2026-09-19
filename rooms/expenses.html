@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 17:18Z"/>
+<meta name="slaf-build" content="2026-09-19 19:19Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Expenses · SPARKS</title>
@@ -15,20 +15,30 @@
   ROOM SPEC — SPEC.md §11. DECISIONS.md D-172, D-197, D-198, D-215,
   D-267 (the merge).
 
-  TWO READINGS OF WHAT GOES OUT.
+  THREE READINGS OF WHAT GOES OUT.
 
     #the-month       F, A, T, the lean month, and the lines you name
     #subscriptions   the charges that come back on a rhythm
+    #statements      a bank or card statement in, every place money went
+                     with a category that becomes a rule, and the slope of
+                     a month: what left the account against what it was
+                     for (D-306)
 
   The Subscription Finder never held a figure of its own: it read the expense
   log and pointed at the rows that repeat. Rule 3 of D-229 — a finder over a
   log this room already owns is a reading of it, not a room beside it.
 
   1. READS   the expense log and the month this room owns.
-  2. WRITES  the eight expense fields, as before. The finder writes nothing.
-  3. CALLS   engines/expenses.js and engines/subscriptions.js.
-  4. EMPTY   the finder says it needs a log rather than showing an empty list.
-  5. CONFIG  data/expense_categories.json and the rhythm rules.
+  2. WRITES  the eight expense fields, as before; the log's dated lines from
+             a statement (through engines/bankcsv.js), a merchant's rule and
+             a line's forDate (D-306). The finder writes nothing.
+  3. CALLS   engines/expenses.js, engines/subscriptions.js,
+             engines/merchants.js, engines/bankcsv.js; shared/bankintake.js
+             is the one intake, the same as in Your Data.
+  4. EMPTY   the finder and the merchant list say they need a statement or
+             a log rather than showing an empty list; the slope says so too.
+  5. CONFIG  data/expense_categories.json, data/import_keywords.json and
+             the rhythm rules.
 
   LIVE-FORM: guarded. The month's boxes are the room's own and are guarded as
   they always were; the finder holds no input at all.
@@ -292,6 +302,8 @@
   #view-subscriptions ul.subs li.is-cancel .lab::after { content: ' · reminder: cancel this'; color: var(--color-warning, #d97706); font-weight: 400; font-size: var(--text-xs); }
   
   #view-subscriptions .empty { font-size: var(--text-sm); color: var(--color-text-faint); }
+  #view-statements .empty { font-size: var(--text-sm); color: var(--color-text-faint); margin: var(--space-3) 0 0; }
+  #view-statements .slaf-slope-month b { min-width: 9em; text-align: center; }
   
   #view-subscriptions .leak { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-2) 0 0; }
 </style>
@@ -308,6 +320,7 @@
   <nav class="slaf-hats" id="hats" aria-label="Two readings of what goes out">
     <a href="#the-month" data-view="view-the-month">The month</a>
     <a href="#subscriptions" data-view="view-subscriptions">What repeats</a>
+    <a href="#statements" data-view="view-statements">From the bank</a>
   </nav>
 
   <div class="notice" id="load-notice" hidden></div>
@@ -496,7 +509,43 @@
   </section>
   </section>
 
-  <p class="disclaimer">Educational tool, not financial advice. "Cancel this" is a note to yourself; nothing here cancels anything. Everything stays in this browser.</p>
+  <!-- ===== From the bank (D-306): the intake, the merchants, the slope ===== -->
+  <section id="view-statements" hidden>
+  <p class="slaf-lede" id="statements">A statement, sorted by where the money went. Bring a bank or card CSV in; every place money went becomes one line with a category you choose once; and the month draws as a slope, what left the account against what it was for.</p>
+  <section class="slaf-card" id="bring">
+    <span class="slaf-eyebrow">Bring a statement in</span>
+    <h2 style="margin:var(--space-2) 0 0">A bank or card CSV</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Download the CSV from your bank or card site (it sits beside PDF). The columns are matched once and remembered; a line already in the log is skipped, so the same file twice changes nothing. Every line is read here and nothing is uploaded.</p>
+    <div id="bank-host"></div>
+  </section>
+  <section class="slaf-card" id="merchants" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Every place money went</span>
+    <h2 style="margin:var(--space-2) 0 0" id="merch-title">Nothing from a statement yet</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">One line a place, however many times it charged you. Choose where a place files and every line from it, past and future, follows: that is a rule, and the next statement uses it. Open a place to see its lines and to say what day a line was <em>for</em>, when that is not the day it was paid.</p>
+    <ul class="slaf-merch" id="merch-list"></ul>
+    <p class="empty" id="merch-empty">No statement lines yet. Bring one in above, or log spending by date in <a href="cash-flow.html#log">Cash Flow</a>.</p>
+  </section>
+  <section class="slaf-card" id="slope" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The slope</span>
+    <h2 style="margin:var(--space-2) 0 0">A month, day by day, two ways</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The filled line is money as it left the account. The thin line is the same money on the day it was for. Where they part, something was bought ahead or paid late; the figures under the chart say how much.</p>
+    <div class="slaf-slope-month">
+      <button type="button" class="slaf-btn slaf-btn--quiet" data-slope="prev" aria-label="Earlier month">‹</button>
+      <b id="slope-month"></b>
+      <button type="button" class="slaf-btn slaf-btn--quiet" data-slope="next" aria-label="Later month">›</button>
+    </div>
+    <div id="slope-chart" style="margin-top:var(--space-3)"></div>
+    <div class="slaf-slope-figs">
+      <div class="fig"><b id="sl-paid">—</b><span>left the account</span></div>
+      <div class="fig"><b id="sl-for">—</b><span>was for these days</span></div>
+      <div class="fig"><b id="sl-ahead">—</b><span id="sl-ahead-say">bought ahead, for later</span></div>
+      <div class="fig"><b id="sl-behind">—</b><span id="sl-behind-say">paid late, for earlier</span></div>
+    </div>
+    <p class="slaf-hint" id="slope-note" style="margin:var(--space-3) 0 0"></p>
+  </section>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. "Cancel this" is a note to yourself; nothing here cancels anything. A rule files lines; it moves no money. Everything stays in this browser.</p>
 </main>
 
 <script src="../shared/money.js"></script>
@@ -525,6 +574,11 @@
 <script src="../engines/tax.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../engines/subscriptions.js"></script>
+<script src="../engines/merchants.js"></script>
+<script src="../shared/csv.js"></script>
+<script src="../shared/importer.js"></script>
+<script src="../engines/bankcsv.js"></script>
+<script src="../shared/bankintake.js"></script>
 <script>
 /* ---- The month, and what repeats in it (D-267) ----
    Which reading is on screen is read off the hash and nothing else, so every
@@ -536,6 +590,7 @@
   function el(id) { return document.getElementById(id); }
   var VIEWS = [
     { id: 'view-subscriptions', match: /^#(subscriptions|found|leak|list|empty)/ },
+    { id: 'view-statements', match: /^#(statements|bring|merchants|merch-|slope|bank-host)/ },
     { id: 'view-the-month', match: /.*/ }
   ];
   function route() {
@@ -1403,6 +1458,145 @@
   });
   Spine.onChange(render);
   Reference.load(['effectiveTaxRates', 'federalBrackets', 'seTax']).then(function (t) { TABLES = t; render(); }).catch(function () { TABLES = {}; render(); });
+})();
+</script>
+
+<script>
+/* ---- From the bank (D-306) ----
+   The intake is the shared widget; the merchant list and the slope are
+   readings of the log this room owns. The list holds a select a merchant
+   and a date box a line, so it is BUILT ONCE per set of merchants and
+   lines and patched in place afterwards; only a statement coming in, or a
+   line leaving, rebuilds it, and that is the response to a gesture rather
+   than a rebuild under a finger. LIVE-FORM: built once. */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Merchants = SLAF.Merchants, Charts = SLAF.Charts, BankIntake = SLAF.BankIntake;
+  var TABLES = null;
+  var MONTH = Schema.localDay().slice(0, 7);
+  var BUILT = '';            /* the merchant set the list was built for */
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function cats() { return ((TABLES && TABLES.expenseCategories) || {}).categories || []; }
+  function catLabel(id) { var c = cats().filter(function (x) { return x.id === id; })[0]; return c ? c.label : (id || 'not filed'); }
+  function dayDiff(a, b) { return Math.round((Date.parse(b) - Date.parse(a)) / 86400000); }
+  function forSay(e) {
+    if (!e.forDate || e.forDate === e.date) return '';
+    var n = dayDiff(e.date, e.forDate);
+    return n > 0 ? 'bought ' + n + ' day' + (n === 1 ? '' : 's') + ' ahead' : 'paid ' + (-n) + ' day' + (n === -1 ? '' : 's') + ' late';
+  }
+  function catOptions(current) {
+    var groups = {};
+    cats().forEach(function (c) { (groups[c.bucket || 'other'] = groups[c.bucket || 'other'] || []).push(c); });
+    var out = '<option value=""' + (current ? '' : ' selected') + '>Choose where it files…</option>';
+    Object.keys(groups).forEach(function (b) {
+      out += '<optgroup label="' + esc(b === 'needs' ? 'Needs' : b === 'wants' ? 'Wants' : b) + '">' + groups[b].map(function (c) {
+        return '<option value="' + esc(c.id) + '"' + (c.id === current ? ' selected' : '') + '>' + esc(c.label) + '</option>';
+      }).join('') + '</optgroup>';
+    });
+    if (current && !cats().some(function (c) { return c.id === current; })) out += '<option value="' + esc(current) + '" selected>' + esc(current) + '</option>';
+    return out;
+  }
+  function lineHtml(e) {
+    var say = forSay(e);
+    return '<li data-line="' + esc(e.id) + '"><span>' + esc(e.date) + '</span><span>' + esc(catLabel(e.categoryId)) + (e.categorizedBy === 'rule' ? ' <small>· your rule</small>' : '') + '</span>'
+      + '<span class="amt">' + esc(Money.formatCents(e.amountCents)) + '</span>'
+      + '<span class="ln-for' + (say ? ' is-set' : '') + '"><label>for <input type="date" data-for="' + esc(e.id) + '" value="' + esc(e.forDate || '') + '" aria-label="The day this was for"/></label><span data-for-say="' + esc(e.id) + '">' + esc(say || 'the same day, unless you say otherwise') + '</span></span></li>';
+  }
+  function merchantHtml(m) {
+    return '<li data-merch="' + esc(m.key) + '">'
+      + '<span class="mc-lab" data-m="lab">' + esc(m.label) + '<small data-m="meta"></small></span>'
+      + '<span class="mc-amt" data-m="amt"></span>'
+      + '<span class="mc-cat"><label class="slaf-hint" style="margin:0">Files under <select data-rule="' + esc(m.key) + '" aria-label="Where ' + esc(m.label) + ' files">' + catOptions(m.categoryId) + '</select></label><span data-m="tag"></span></span>'
+      + '<details><summary data-m="sum"></summary><ul class="mc-lines">' + m.entries.map(lineHtml).join('') + '</ul></details>'
+      + '</li>';
+  }
+  function patchMerchant(li, m) {
+    li.querySelector('[data-m="meta"]').textContent = m.count + (m.count === 1 ? ' line' : ' lines') + ', ' + m.firstDate + (m.count > 1 ? ' to ' + m.lastDate : '') + (m.rhythmLabel ? ' · ' + m.rhythmLabel : '');
+    li.querySelector('[data-m="amt"]').innerHTML = esc(Money.formatCents(m.totalCents)) + '<small>' + (m.count > 1 ? 'typically ' + esc(Money.formatCents(m.typicalCents)) : 'once') + '</small>';
+    var sel = li.querySelector('select[data-rule]');
+    if (sel.value !== (m.categoryId || '')) sel.value = m.categoryId || '';
+    li.querySelector('[data-m="tag"]').innerHTML = m.ruled ? '<span class="mc-rule">your rule</span>' : m.mixed ? '<span class="mc-mixed">its lines file in more than one place; choose one to settle it</span>' : '';
+    li.querySelector('[data-m="sum"]').textContent = 'The ' + m.count + (m.count === 1 ? ' line' : ' lines') + ', and what day each was for';
+    m.entries.forEach(function (e) {
+      var row = li.querySelector('[data-line="' + e.id + '"]'); if (!row) return;
+      var inp = row.querySelector('input[data-for]'); if (inp.value !== (e.forDate || '')) inp.value = e.forDate || '';
+      var say = forSay(e);
+      row.querySelector('.ln-for').classList.toggle('is-set', !!say);
+      row.querySelector('[data-for-say]').textContent = say || 'the same day, unless you say otherwise';
+      row.children[1].innerHTML = esc(catLabel(e.categoryId)) + (e.categorizedBy === 'rule' ? ' <small>· your rule</small>' : '');
+    });
+  }
+  function renderMerchants(h) {
+    var list = Merchants.list(h, TABLES);
+    var sig = list.map(function (m) { return m.key + ':' + m.entries.map(function (e) { return e.id; }).join('.'); }).join('|');
+    el('merch-empty').hidden = list.length > 0;
+    el('merch-title').textContent = list.length
+      ? list.length + (list.length === 1 ? ' place, ' : ' places, ') + list.reduce(function (s, m) { return s + m.count; }, 0) + ' lines'
+      : 'Nothing from a statement yet';
+    if (sig !== BUILT) { el('merch-list').innerHTML = list.map(merchantHtml).join(''); BUILT = sig; }
+    list.forEach(function (m) { var li = el('merch-list').querySelector('[data-merch="' + m.key + '"]'); if (li) patchMerchant(li, m); });
+  }
+  function shiftMonth(ym, n) { var d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1); var m = d.getMonth() + 1; return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m; }
+  function renderSlope(h) {
+    var s = Merchants.slope(h, { month: MONTH });
+    el('slope-month').textContent = Schema.monthLabel ? Schema.monthLabel(MONTH) : MONTH;
+    el('slope-chart').innerHTML = Charts.area({
+      title: 'Spending, cumulated through the month',
+      series: [
+        { id: 'paid', label: 'As it left the account', points: s.days.map(function (d, i) { return [i + 1, d.cumPaidCents]; }) },
+        { id: 'for', label: 'On the day it was for', points: s.days.map(function (d, i) { return [i + 1, d.cumForCents]; }), fill: false }
+      ],
+      x: { label: 'day of the month', format: function (v) { return String(Math.round(v)); } },
+      empty: 'Nothing dated in this month yet. Bring a statement in, or log spending by date in Cash Flow.'
+    });
+    var none = !s.count && !s.forCents;
+    el('sl-paid').textContent = none ? '—' : Money.formatCents(s.paidCents);
+    el('sl-for').textContent = none ? '—' : Money.formatCents(s.forCents);
+    el('sl-ahead').textContent = s.aheadCount ? Money.formatCents(s.aheadCents) : '—';
+    el('sl-ahead-say').textContent = s.aheadCount ? 'bought ahead, ' + s.aheadCount + (s.aheadCount === 1 ? ' line' : ' lines') + ' for later days' : 'bought ahead, for later';
+    el('sl-behind').textContent = s.behindCount ? Money.formatCents(s.behindCents) : '—';
+    el('sl-behind-say').textContent = s.behindCount ? 'paid late, ' + s.behindCount + (s.behindCount === 1 ? ' line' : ' lines') + ' for earlier days' : 'paid late, for earlier';
+    el('slope-note').textContent = none ? ''
+      : s.aheadCount || s.behindCount
+        ? 'The two lines part by ' + Money.formatCents(Math.abs(s.paidCents - s.forCents)) + ' at the end of the window: ' + (s.paidCents > s.forCents ? 'more left the account than these days used' : 'these days used more than left the account') + '. That gap is the accounting a cash log alone hides.'
+        : 'The two lines sit together: nothing here was bought ahead or paid late. Open a place above and set the day a line was for to see them part.';
+  }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderMerchants(h);
+    renderSlope(h);
+  }
+  /* A category chosen for a merchant is a rule, and the rule re-files every
+     line from that merchant now; the next statement in uses it too. One
+     undo takes the rule and every re-filed line back together. */
+  el('merch-list').addEventListener('change', function (ev) {
+    var t = ev.target;
+    if (t.matches('select[data-rule]')) {
+      var k = t.getAttribute('data-rule'), cat = t.value || null;
+      var h = Spine.getProfile();
+      var m = Merchants.list(h, TABLES).filter(function (x) { return x.key === k; })[0];
+      Spine.batch(cat ? 'Filed ' + (m ? m.label : k) + ' under ' + catLabel(cat) : 'Rule removed: ' + (m ? m.label : k), function () {
+        Spine.set('expenses.rules', Merchants.setRule(h.expenses.rules, k, cat, m ? m.label : k));
+        Merchants.refile(Spine.getProfile()).forEach(function (c) { Spine.upsertExpenseEntry({ id: c.id, categoryId: c.categoryId, categorizedBy: 'rule' }); });
+      });
+      return;
+    }
+    if (t.matches('input[data-for]')) {
+      var id = t.getAttribute('data-for'), v = /^\d{4}-\d{2}-\d{2}$/.test(t.value) ? t.value : null;
+      Spine.upsertExpenseEntry({ id: id, forDate: v });
+    }
+  });
+  el('slope').addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('[data-slope]') : null; if (!b) return;
+    MONTH = shiftMonth(MONTH, b.getAttribute('data-slope') === 'prev' ? -1 : 1);
+    renderSlope(Spine.getProfile());
+  });
+  BankIntake.mount('#bank-host', { room: 'expenses' });
+  Spine.onChange(render);
+  Reference.load(['importKeywords', 'expenseCategories', 'effectiveTaxRates', 'federalBrackets', 'seTax']).then(function (t) { TABLES = t; render(); }).catch(function () { TABLES = {}; render(); });
 })();
 </script>
 </body>

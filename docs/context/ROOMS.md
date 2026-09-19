@@ -13,7 +13,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Your Numbers (8)
 
 - **income** — Income · 2275 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget, variableincome, hourly, hassle, timeline · owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, futureIncome, incomeType, paySurvives · D-295, D-294, D-277
-- **expenses** — Expenses · 1410 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed, tax, hourly, subscriptions · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-267, D-263, D-207
+- **expenses** — Expenses · 1604 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed, tax, hourly, subscriptions, merchants, bankcsv · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-306, D-267, D-263
 - **cash-flow** — The Month · 844 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-275, D-260, D-253
 - **budget** — The Close · 1045 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history · owns: monthsClosed, historyCompareTo · D-276, D-257, D-130
 - **statement** — The Statement · 2582 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, debt, gap, statements, taxroom · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType · D-290, D-278, D-261
@@ -53,7 +53,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Upkeep (4)
 
 - **get-help** — Get Help (utility) · 120 lines · no engines · D-097
-- **data** — Your Data (utility) · 869 lines · engines: tax, bankcsv · D-305, D-221, D-220
+- **data** — Your Data (utility) · 822 lines · engines: tax, subscriptions, merchants, bankcsv · D-306, D-305, D-221
 - **one-pager** — The Card · 449 lines · engines: projection, tier0, tax, income, ledger, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-303, D-264, D-219
 - **settings** — Settings (utility) · 225 lines · no engines · D-303, D-180
 

@@ -16261,6 +16261,41 @@ protected save with its fingerprint, the sealed file chosen back and refused
 on the wrong passphrase, then opened; every sample file dropped through the
 one intake landing in its own panel.
 
+## D-306 — A statement in, every place money went, and the slope of a month
+
+**Why.** The owner: a spot to import bank and credit card statements, the
+unique entries isolated and categorised the way Rocket Money does, and a
+"this was bought in advance for day X" so the slope of spending shows the
+accounting a cash log hides. The import existed (D-215) but only inside Your
+Data, read a card statement's charges as deposits, and filed by keyword alone.
+
+**Decision.** `rooms/expenses.html` gains a third reading, `#statements`: the
+intake, `#merchants` (one line a place: count, total, dates, rhythm, and a
+category that becomes a rule), and `#slope` (a month cumulated by the day
+money left and by the day it was for). `shared/bankintake.js` is the one
+intake, mounted there and in Your Data, with a card switch that
+`engines/bankcsv.js` reads as `map.flip` and pre-ticks when charges outnumber
+payments. `engines/merchants.js` keys a merchant the way the finder does,
+applies rules, and draws the slope; a rule re-files every line of that
+merchant in one undo and the next statement files by it before any keyword.
+
+**Replaces or removes.** Your Data's inline bank code (the widget replaces
+it); the `data.html#bank` deep link now lands. No screen added: a reading.
+
+**Stored shape.** `expenses.entries[].forDate` (ISO or null; absent reads as
+null, and every month total still counts the day it left) and
+`expenses.rules[]` `{ key, categoryId, label, at }`, normalised by
+`createExpenses`; a household without them is unchanged. Prefs `bankcsv.maps`
+now carry `flip`. A merchant is its first three words with digits dropped, so
+"AMTRAK 44 NYP-BOS" and "AMTRAK 45 NYP-BOS" are one place and a differently
+worded line from the same company is not; that is the finder's rule too.
+
+**Verified.** `node test/run.js` (33,654), `dnd/test/run.js`, export, xlsx,
+the eight browser gates, and at 390px: a card CSV recognised and flipped,
+five lines in, four merchants, a rule filing Amtrak under travel, a for-date
+of the 25th reading "bought 15 days ahead" and the slope parting by $200, the
+same file through Your Data's one door with every line already in the log.
+
 ---
 
 # The Dungeons & Dividends entries
