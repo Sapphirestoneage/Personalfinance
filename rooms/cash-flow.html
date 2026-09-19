@@ -462,7 +462,7 @@
       Money.isOk(flow) ? dl([
         ['<a href="' + Ownership.linkTo('income', 'sources', 'cash-flow') + '">Take-home pay</a>', Money.formatCents(flow.netMonthlyIncomeCents)],
         ['<a href="' + Ownership.linkTo('expenses', 'spending', 'cash-flow') + '">Spending</a>', Money.formatCents(flow.spendMonthlyCents)],
-        ['<a href="' + Ownership.linkTo('statement', 'setup', 'cash-flow') + '">Into savings</a>', Money.formatCents(flow.savingsMonthlyCents)],
+        ['<a href="' + Ownership.linkTo('ledger', 'x-A', 'cash-flow') + '">Into savings</a>', Money.formatCents(flow.savingsMonthlyCents)],
         ['Unassigned', Money.formatCents(flow.unassignedCents)]
       ]) + '<p class="slaf-reason">Spending is the month typed in <a href="expenses.html#spending">Expenses</a>; the log below is what actually left.</p>' : '');
     renderLog(h);

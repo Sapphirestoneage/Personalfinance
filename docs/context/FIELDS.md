@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 115. Traced: 106. No other room mentions it: **56**.
+Fields: 121. Traced: 112. No other room mentions it: **58**.
 
 
 ## big-purchase (4)
@@ -45,8 +45,8 @@ Fields: 115. Traced: 106. No other room mentions it: **56**.
 - `loanExtra` — Extra to the loans, a month · **no other room mentions it**
 - `idrShare` — Income-driven share · **no other room mentions it**
 - `forgivenessYears` — Forgiveness after · **no other room mentions it**
-- `totalDebt` — Total debt · read by ledger, start, budget, statement, dashboard, financial-snapshot, what-if-life, one-pager
-- `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, statement, financial-snapshot, values, cant-pay
+- `totalDebt` — Total debt · read by ledger, start, budget, statement, the-documents, dashboard, financial-snapshot, what-if-life, one-pager
+- `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, the-documents, financial-snapshot, values, cant-pay
 - `debtBalance` — Balance · read by ledger, start
 - `debtRate` — Interest rate · read by ledger, foo-ladder, debates
 - `debtMinPayment` — Minimum payment, a month · read by ledger
@@ -60,18 +60,18 @@ Fields: 115. Traced: 106. No other room mentions it: **56**.
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by cash-flow, financial-snapshot, housing, debates
-- `monthlyExpenses` — Monthly expenses · read by ledger, start, income, cash-flow, budget, statement, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
-- `foodMonthly` — Food, a month · read by ledger, statement
-- `accommodationMonthly` — Rent or mortgage, a month · read by ledger, statement
-- `transportationMonthly` — Getting around, a month · read by ledger, statement
-- `wantsMonthly` — Everything else, a month · read by ledger, statement
+- `monthlyExpenses` — Monthly expenses · read by ledger, start, income, cash-flow, statement, bridge, which-account, the-documents, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
+- `foodMonthly` — Food, a month · read by ledger, the-documents
+- `accommodationMonthly` — Rent or mortgage, a month · read by ledger, the-documents
+- `transportationMonthly` — Getting around, a month · read by ledger, the-documents
+- `wantsMonthly` — Everything else, a month · read by ledger, the-documents
 - `therapyMonthly` — Therapy, a month · read by ledger
 - `annualLine` — Once-a-year costs · read by ledger
 
 ## fire (3)
 
 - `enoughMonthly` — Enough, a month · **no other room mentions it**
-- `retireAge` — Stop working at · read by ledger, statement, dashboard, skill-tree, what-if-life, decumulation, career-move, week, debates, one-pager
+- `retireAge` — Stop working at · read by dashboard, left-behind, skill-tree, what-if-life, decumulation, career-move, week, debates, one-pager
 - `coastAge` — Coast: arrive by · read by ledger
 
 ## goals (1)
@@ -91,14 +91,34 @@ Fields: 115. Traced: 106. No other room mentions it: **56**.
 - `incomeHigh` — A high month · **no other room mentions it**
 - `bufferMonths` — Buffer, months · **no other room mentions it**
 - `variableWindow` — Rolling window · **no other room mentions it**
-- `ledgerIncome` — Income logged, a month · read by statement
-- `futureIncome` — Money that is coming · read by statement
+- `ledgerIncome` — Income logged, a month · read by the-documents
+- `futureIncome` — Money that is coming · read by bridge
 - `incomeType` — What kind of pay · read by ledger
 - `paySurvives` — Keeps paying if the job goes · read by ledger, start
 
-## ledger (1)
+## ledger (21)
 
-- `takeHomeMonthly` — Take-home pay, a month · read by cash-flow, financial-snapshot, values, goals, runway, career-move, partner, big-purchase, debates
+- `takeHomeMonthly` — Take-home pay, a month · read by cash-flow, statement, financial-snapshot, values, goals, runway, career-move, partner, big-purchase, debates
+- `rothContributed` — Roth so far this year · read by which-account
+- `hsaContributed` — HSA so far this year · read by which-account
+- `onHdhp` — On a high-deductible health plan · read by bridge, which-account
+- `hsaFamilyPlan` — Family coverage on that plan · read by which-account
+- `marginalRate` — Marginal tax rate · read by which-account, the-documents, debt-payoff, tax, left-behind, decumulation, career-move, housing, debates
+- `allocationStocks` — Target: stocks · read by the-mix
+- `allocationBonds` — Target: bonds · read by the-mix
+- `allocationCash` — Target: cash · read by the-mix
+- `rebalanceBand` — Rebalance band · read by the-mix
+- `otherAssets` — Property & other assets · read by statement, the-documents, protection, one-pager
+- `assetValue` — What each account or thing is worth · **no other room mentions it**
+- `assetCharacter` — How it is taxed on the way out · **no other room mentions it**
+- `assetTier` — Which pile it sits in · **no other room mentions it**
+- `assetCostBasis` — Cost basis, or Roth contributions · **no other room mentions it**
+- `assetInstitution` — Where it is held · **no other room mentions it**
+- `assetAccountType` — Account type · **no other room mentions it**
+- `assetConfidence` — How sure you are it is worth that · **no other room mentions it**
+- `assetCashFlow` — Cash it throws off, a month · **no other room mentions it**
+- `assetHassle` — Hassle to hold · **no other room mentions it**
+- `assetAccessAge` — Reachable from age, if the usual rule is wrong · **no other room mentions it**
 
 ## partner (7)
 
@@ -120,7 +140,7 @@ Fields: 115. Traced: 106. No other room mentions it: **56**.
 
 ## runway (7)
 
-- `oopMax` — Out-of-pocket maximum · read by statement, protection
+- `oopMax` — Out-of-pocket maximum · read by protection
 - `termLife` — Term life in force · read by protection
 - `disabilityMonthly` — Disability benefit · read by protection
 - `umbrella` — Umbrella policy · too generic to trace
@@ -140,38 +160,24 @@ Fields: 115. Traced: 106. No other room mentions it: **56**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by income, expenses, statement, debt-payoff, tax, dashboard, financial-snapshot, fire, cant-pay, decumulation, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, statement, debt-payoff, tax, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
+- `filingStatus` — Filing status · read by income, expenses, which-account, debt-payoff, tax, dashboard, financial-snapshot, fire, left-behind, cant-pay, decumulation, career-move, partner, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, which-account, the-documents, debt-payoff, tax, dashboard, financial-snapshot, fire, left-behind, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · **no other room mentions it**
-- `cashSavings` — Cash & savings · read by ledger, income, cash-flow, budget, statement, dashboard, financial-snapshot, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
+- `cashSavings` — Cash & savings · read by ledger, income, cash-flow, budget, statement, bridge, the-documents, dashboard, financial-snapshot, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
-- `employmentStatus` — Working situation · read by ledger, debt-payoff, tax, runway, career-move, debates
-- `employerMatch` — Employer match · read by statement, financial-snapshot, foo-ladder, career-move, debates
+- `employmentStatus` — Working situation · read by ledger, which-account, debt-payoff, tax, runway, career-move, debates
+- `employerMatch` — Employer match · read by the-documents, financial-snapshot, foo-ladder, career-move, debates
 - `capturingFullMatch` — Capturing the full match · read by expenses, dashboard, financial-snapshot, skill-tree, one-pager
 - `hasDebt` — Any debt · read by ledger, debt-payoff, dashboard, debates
-- `contributionPercent` — Workplace contribution · read by ledger, statement, tax, what-if-life
-- `highestDeductible` — Highest deductible · read by statement, runway, protection
+- `contributionPercent` — Workplace contribution · read by ledger, which-account, the-documents, tax, what-if-life
+- `highestDeductible` — Highest deductible · read by runway, protection
 - `dependents` — Anyone depending on your income · too generic to trace
 
-## statement (16)
+## statement (2)
 
-- `rothContributed` — Roth so far this year · **no other room mentions it**
-- `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by debt-payoff, tax, decumulation, career-move, housing, debates
-- `allocationStocks` — Target: stocks · **no other room mentions it**
-- `allocationBonds` — Target: bonds · **no other room mentions it**
-- `allocationCash` — Target: cash · **no other room mentions it**
-- `rebalanceBand` — Rebalance band · **no other room mentions it**
-- `otherAssets` — Property & other assets · read by ledger, protection, one-pager
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
-- `netWorth` — Net worth · read by ledger, budget, dashboard, financial-snapshot, fire, what-if-life, one-pager
-- `assetValue` — What each account or thing is worth · read by ledger
-- `assetCharacter` — How it is taxed on the way out · read by ledger
-- `assetTier` — Which pile it sits in · read by ledger
-- `assetCostBasis` — Cost basis · read by ledger
-- `assetInstitution` — Where it is held · **no other room mentions it**
-- `assetAccountType` — Account type · **no other room mentions it**
+- `netWorth` — Net worth · read by ledger, budget, the-documents, dashboard, financial-snapshot, fire, what-if-life, one-pager
 
 ## tax (2)
 

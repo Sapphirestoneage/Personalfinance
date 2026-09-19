@@ -16312,6 +16312,127 @@ box, undo and redo on an input); `test/forms.js` on the Ledger; render,
 features, sidebar, onefact, xss, comeback; the corpus and the property
 suite with `opening.test.js`.
 
+## D-307 — The Statement is four sections; the facts it asked for are the Ledger's
+
+**Why.** The owner's build prompt, Part 2: facts are entered in the Ledger
+only and rooms are views. The Statement held four readings, fifteen cards
+and every per-account box (value, kind, pile, confidence, basis, where it
+is held), plus the Roth and HSA contributions, the marginal rate and the
+target mix. Someone in their twenties met a balance sheet before a story.
+
+**Decision.** `rooms/statement.html` keeps its filename and holds four
+sections, nothing to type: net worth in plain words ("counting only what
+you are sure of" on screen, "confidence-weighted" in the drawer), the pay
+still to come beside it and never added (D-309), the liquidity ladder with
+property as a slow rung and a Roth with no basis as a look-it-up row citing
+Form 5498, and the order-of-operations step the next dollar lands on. Every
+per-account fact is a row in the Ledger's A door (`assetValue`,
+`assetAccountType`, `assetCharacter`, `assetTier`, `assetCostBasis` now
+"Cost basis, or Roth contributions", and four new rows: `assetConfidence`,
+`assetCashFlow`, `assetHassle`, `assetAccessAge`); so are `rothContributed`,
+`hsaContributed`, the new `onHdhp` and `hsaFamilyPlan`, the target mix, and
+`marginalRate` on the T door. Their owner in `shared/ownership.js` is
+`ledger`; the Ledger offers the N/A mark on the plan and HSA rows. Four
+readings are rooms again, each reading the Ledger and writing nothing:
+`rooms/bridge.html`, `rooms/which-account.html` (every box a what-if,
+prefilled from the facts), `rooms/the-mix.html`, `rooms/the-documents.html`,
+and `rooms/left-behind.html`. `engines/statement.js` liquidityLadder gains a
+`slow` band (property and other things: months, through a sale or a loan)
+and keeps `never` for money behind an age gate. A head script on the
+Statement forwards every old anchor before the page paints; the four
+redirect stubs follow their readings. `test/statement.js` walks the anchors,
+measures two phone screens, types into the what-if rooms and proves the
+household byte-identical, and reads a pre-split household back whole.
+
+**Replaces or removes.** The Statement's asset editor, "Add something you
+own", "Add an investment or retirement account", "Remove everything added
+here", the setup card, the allocation boxes, and the inline asks the twelve
+rows carried (`askIn: statement`, now null). Five rooms are added under the
+freeze because each replaces a reading or a card the Statement loses: the
+count of screens is unchanged and every one of them now has one owner. The
+room map counts thirty-six.
+
+**Stored shape.** No change to any field. Six rows read fields the schema
+already carried (`confidence`, `cashFlowMonthlyCents`, `hassle`,
+`accessAgeOverride`, `retirement.onHdhp`, `retirement.hsaFamilyPlan`). One
+new account type, `old_401k` (D-310). A household saved before this reads
+back whole; `fixtures/snapshots/pre-d307.household.json` is the proof.
+
+**Verified.** `node test/run.js` (33,987); `node test/statement.js`;
+`node test/forms.js` (the Ledger's A door, Left Behind); render, features,
+sidebar, onefact, xss, comeback, alignment, opening; the corpus and the
+property suite.
+
+## D-308 — The worst plausible year is the Cushion's
+
+**Why.** The Statement priced a bad year beside the balance sheet; the
+question it answers, what cash has to cover, is the one the Cushion's
+at-3am reading asks, and the cover facts it needs are asked on that
+reading's coverage card.
+
+**Decision.** `rooms/runway.html` carries a `#worst-year` card on the
+at-3am reading, rendered from `engines/statement.js` worstPlausibleYear,
+the same sum, with the deductible, the out-of-pocket maximum and the state
+as chips. The router matches `worst-`; `data/exercises.json` points there;
+the Statement forwards `#worst-year`.
+
+**Replaces or removes.** The Statement's worst-year card and the copy on
+the Cushion that sent people to it.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`; `node test/statement.js` (the card prices
+a saved household); the features gate on the Cushion.
+
+## D-309 — The pay still to come, beside net worth, on a switch that defaults by age
+
+**Why.** At twenty-five the biggest thing most people own is the pay still
+ahead of them, and a balance sheet that omits it says the opposite of the
+truth. Adding it to net worth would be a second kind of lie.
+
+**Decision.** `engines/benchmarks.js` humanCapital takes `opts`: `basis`
+'take-home' reads `Schema.takeHomeAnnualCents`; `stopAge` is the opening's
+likely FI age when it has one, else `data/opening.json` coastTargetAge;
+`discountRate` is the likely real return and `raiseRate` the declared real
+raise rate, both from that file; the ratios keep the old call unchanged.
+The Statement shows it in its own cell, labelled rough, with one line of
+copy and links to Income and Protection. `data/features.json` gains
+`humanCapital`, user scope, default on, with `defaultWhen: "primary adult is
+under 40"`; `shared/features.js` reads that one phrase when no preference
+is stored. Off means the cell is absent, not hidden.
+
+**Replaces or removes.** Nothing on screen; the switch is the eighteenth.
+A default that depends on the household is new to the switch table and is
+the one phrase so far.
+
+**Stored shape.** No change; a preference under `prefs.features.humanCapital`
+when the person toggles it.
+
+**Verified.** `node test/run.js` (the switch on at 32 and off at 45; the
+engine with and without `opts`); `node test/statement.js`.
+
+## D-310 — A plan at a former employer is an account type, and Left Behind reads it
+
+**Why.** The brief asks Left Behind to surface when an account is tagged as
+a former employer's plan. `Schema.ACCOUNT_TYPES` had no such tag, so the
+room could only ever ask for a balance it had no way to see.
+
+**Decision.** `shared/schema.js` (and the byte-identical `dnd/shared/schema.js`)
+gain the account type `old_401k`, "A plan at a former employer", pre-tax,
+retirement; `data/ledger-rows.json` lists it. `rooms/left-behind.html`
+proposes that account's value in its balance box (read, never written;
+typing over it wins) and the Statement's ladder names the account with a
+link to the room. The Bridge lists the Rule of 55 only when such a plan, a
+401(k), 403(b) or TSP is held.
+
+**Replaces or removes.** Nothing; a value in an enum.
+
+**Stored shape.** `assets[].accountType` may be `old_401k`. An older build
+reading it would show the id as the label and derive nothing from it.
+
+**Verified.** `node test/run.js`; `node test/statement.js` (the tagged
+plan's balance is proposed and priced).
+
 ---
 
 # The Dungeons & Dividends entries

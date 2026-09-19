@@ -9,7 +9,7 @@ File: rooms/protection.html · 470 lines
 Engines: projection, tier0, income, selfemployed, ledger, protection, hourly, estate
 Reference data: effective_tax_rates_2026.json, estate_basics.json, protection_conventions.json, se_tax_2026.json
 Owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists
-Reads from other owners: grossAnnualIncome (start), cashSavings (start), highestDeductible (start), oopMax (runway), termLife (runway), disabilityMonthly (runway), otherAssets (statement), monthlyExpenses (expenses)
+Reads from other owners: grossAnnualIncome (start), cashSavings (start), highestDeductible (start), oopMax (runway), termLife (runway), disabilityMonthly (runway), otherAssets (ledger), monthlyExpenses (expenses)
 Latest decisions:
   - D-266 — Protection: cover, and where it goes
   - D-103 — Protection: each need against what is held

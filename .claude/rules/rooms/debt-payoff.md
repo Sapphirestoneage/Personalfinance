@@ -8,7 +8,7 @@ File: rooms/debt-payoff.html · 2889 lines
 Engines: projection, debt, tier0, income, selfemployed, ledger, studentloans, hourly, foo, cashflow, fire, statement, benchmarks, ratios
 Reference data: confidence_weights.json, credit_factors.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +8 more
 Owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment
-Reads from other owners: filingStatus (start), grossAnnualIncome (start), employmentStatus (start), hasDebt (start), marginalRate (statement)
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), employmentStatus (start), hasDebt (start), marginalRate (ledger)
 Latest decisions:
   - D-279 — Debt: the order, the loans, the file
   - D-252 — Debt Payoff: the order is a preference, and the plan says when it is in effect
