@@ -209,6 +209,7 @@
 <script src="../engines/accounts.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
 <script src="../engines/income.js"></script>
 <script src="../engines/ledger.js"></script>
 <script src="../engines/hourly.js"></script>
@@ -564,6 +565,13 @@
         annualReturn: Money.isEntered(v['a-return']) ? v['a-return'] : a.expectedReturnRate, years: v['a-years'], capitalGainsRate: v['a-cg'] });
       var rows = [];
       if (Money.isEntered(v['a-amount'])) rows.push({ label: 'Put in, pre-tax', cents: v['a-amount'] });
+      else {
+        /* Nothing typed yet: the lens reads what goes into the plan this
+           year at the contribution rate, the one line engines/cashflow
+           computes, so a projection room always has a figure to read (D-256). */
+        var c = SLAF.CashFlow ? SLAF.CashFlow.savingsRateContributed(h, TABLES) : null;
+        if (c && Money.isOk(c) && c.parts && c.parts[0] && Money.isEntered(c.parts[0].annualCents)) rows.push({ label: 'Into the plan this year, at your contribution rate', cents: c.parts[0].annualCents });
+      }
       if (Money.isOk(r)) rows.push({ label: r.byKey[r.bestKey].label + ' after tax', cents: r.byKey[r.bestKey].afterTaxCents });
       return rows;
     }, function () { return TABLES; });
