@@ -348,7 +348,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": "matchNotApplicable",
-      "askIn": "accounts",
+      "askIn": "statement",
       "moves": false,
       "unlocks": "the free money on the table and the first rung of the order of operations"
     },
@@ -431,7 +431,7 @@
       "level": 2,
       "round": null,
       "suggestFrom": null,
-      "askIn": "timeline",
+      "askIn": "income",
       "moves": true,
       "unlocks": "the timeline: what stacks and where the gaps are"
     },
@@ -450,7 +450,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "calendar",
+      "askIn": "cash-flow",
       "moves": false,
       "unlocks": "the calendar on your real pay rhythm, two- and three-paycheck months labelled"
     },
@@ -469,7 +469,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "calendar",
+      "askIn": "cash-flow",
       "moves": false,
       "unlocks": "the days until money arrives, on the calendar"
     },
@@ -488,7 +488,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "variable-income",
+      "askIn": "income",
       "moves": true,
       "unlocks": "the planning base for variable income: the low month"
     },
@@ -507,7 +507,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "variable-income",
+      "askIn": "income",
       "moves": true,
       "unlocks": "how much a high month can send to the next step"
     },
@@ -526,7 +526,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": "bufferFromAge",
-      "askIn": "variable-income",
+      "askIn": "income",
       "moves": false,
       "unlocks": "the buffer target, and how far the cash is from it",
       "note": "A buffer target applies to anyone; Variable Income reads it, the Rule of 5 suggests it (D-205)."
@@ -546,7 +546,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "variable-income",
+      "askIn": "income",
       "moves": false,
       "unlocks": "the rolling average the variable-income view reads"
     },
@@ -850,7 +850,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": "contributionNotApplicable",
-      "askIn": "accounts",
+      "askIn": "statement",
       "moves": false,
       "unlocks": "the savings rate as contributed, and whether the match is captured"
     },
@@ -871,7 +871,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": null,
-      "askIn": "accounts",
+      "askIn": "statement",
       "moves": true,
       "unlocks": "room left this year under the Roth limit"
     },
@@ -892,7 +892,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": null,
-      "askIn": "accounts",
+      "askIn": "statement",
       "moves": true,
       "unlocks": "room left this year under the HSA limit"
     },
@@ -913,7 +913,7 @@
       "level": 2,
       "round": null,
       "suggestFrom": null,
-      "askIn": "kids",
+      "askIn": "partner",
       "moves": true,
       "unlocks": "the tuition gap and the monthly to close it"
     },
@@ -1275,7 +1275,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "student-loans",
+      "askIn": "debt-payoff",
       "moves": false,
       "unlocks": "the student loan trajectory under the plan chosen"
     },
@@ -1294,7 +1294,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "student-loans",
+      "askIn": "debt-payoff",
       "moves": true,
       "unlocks": "how much sooner the loans end"
     },
@@ -1313,7 +1313,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "student-loans",
+      "askIn": "debt-payoff",
       "moves": false,
       "unlocks": "the income-driven payment"
     },
@@ -1332,7 +1332,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "student-loans",
+      "askIn": "debt-payoff",
       "moves": false,
       "unlocks": "the forgiveness horizon on the student loan path"
     },
@@ -1353,7 +1353,7 @@
       "level": 1,
       "round": null,
       "suggestFrom": "marginalRateFromBrackets",
-      "askIn": "accounts",
+      "askIn": "statement",
       "moves": false,
       "unlocks": "the value of every pre-tax dollar: the Roth versus traditional answer"
     },
@@ -1750,7 +1750,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "giving",
+      "askIn": "values",
       "moves": false,
       "unlocks": "the giving rate beside the savings rate"
     },
@@ -1769,7 +1769,7 @@
       "level": 3,
       "round": null,
       "suggestFrom": null,
-      "askIn": "giving",
+      "askIn": "values",
       "moves": true,
       "unlocks": "the giving line a year"
     },
@@ -1914,7 +1914,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": null,
-      "askIn": "estate",
+      "askIn": "protection",
       "moves": false,
       "unlocks": "the estate checklist: who gets the accounts"
     },
@@ -1933,7 +1933,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": null,
-      "askIn": "estate",
+      "askIn": "protection",
       "moves": false,
       "unlocks": "the estate checklist: whether there is a will"
     },
@@ -1952,7 +1952,7 @@
       "level": 4,
       "round": null,
       "suggestFrom": null,
-      "askIn": "estate",
+      "askIn": "protection",
       "moves": false,
       "unlocks": "the estate checklist: who acts if you cannot"
     }

@@ -2,14 +2,18 @@
 paths:
   - "rooms/skill-tree.html"
   - "engines/skilltree.js"
+  - "engines/ss.js"
+  - "engines/decumulation.js"
+  - "engines/exercises.js"
 ---
 # The Skill Tree (`skill-tree`)
-File: rooms/skill-tree.html · 612 lines
-Engines: projection, tier0, income, selfemployed, ledger, foo, skilltree
-Reference data: effective_tax_rates_2026.json, exercises.json, foo_rules.json, irs_limits_2026.json, se_tax_2026.json, skill_links.json, +1 more
-Owns: skillsDone
-Reads from other owners: grossAnnualIncome (start), monthsClosed (budget), monthlyExpenses (expenses), exercisesDone (exercises), practiceLedger (stacker)
+File: rooms/skill-tree.html · 1531 lines
+Engines: projection, tier0, income, selfemployed, ledger, foo, skilltree, cashflow, statement, swan, benchmarks, rerank, hourly, tax, debt, quickmath, vpw, ss, events, skills, fire, decumulation, exercises
+Reference data: car_costs.json, debt_rules.json, effective_tax_rates_2026.json, exercises.json, expense_categories.json, fire_variants.json, +11 more
+Owns: skillsDone, exercisesDone, practiceLedger
+Reads from other owners: grossAnnualIncome (start), cashSavings (start), capturingFullMatch (start), stockShare (decumulation), plannedAnnualDraw (decumulation), socialSecurityAt (decumulation), monthsClosed (budget), rerankCut (values), +2 more
 Latest decisions:
+  - D-274 — The Skill Tree takes the Stacker and the Exercises
   - D-141 — The card says what the curriculum says
   - D-140 — The board, redrawn as a tech tree
   - D-139 — The Skill Tree gets its real curriculum: 625 skills, 25 trees, 312 lanes

@@ -17,18 +17,18 @@
   working: #out-net-worth and #ledger land on #portfolios, #assets stays.
   LIVE-FORM: built once. No inputs.
 -->
-<meta http-equiv="refresh" content="0; url=statement.html"/>
+<meta http-equiv="refresh" content="0; url=statement.html#what-you-own"/>
 </head>
 <body class="slaf">
 <main class="slaf-wrap">
   <p style="color:var(--color-text-muted)">Net Worth is The Statement now.
-    <a href="statement.html" id="go">Open it →</a></p>
+    <a href="statement.html#what-you-own" id="go">Open it →</a></p>
 </main>
 <script>
   (function () {
     var map = { '#out-net-worth': '#portfolios', '#ledger': '#portfolios', '#from-elsewhere': '#reading' };
     var hash = location.hash || '';
-    var target = 'statement.html' + (map[hash] || hash);
+    var target = 'statement.html' + (map[hash] || hash || '#what-you-own');
     document.getElementById('go').setAttribute('href', target);
     location.replace(target);
   })();

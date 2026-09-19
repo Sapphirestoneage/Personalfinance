@@ -59,9 +59,16 @@
       "id": "income",
       "title": "Income",
       "file": "rooms/income.html",
-      "reads": [],
+      "reads": [
+        "dob"
+      ],
       "writes": [
+        "incomeLow",
+        "incomeHigh",
+        "bufferMonths",
+        "variableWindow",
         "ledgerIncome",
+        "futureIncome",
         "incomeType",
         "paySurvives"
       ],
@@ -92,21 +99,27 @@
     },
     {
       "id": "cash-flow",
-      "title": "Cash Flow",
+      "title": "The Month",
       "file": "rooms/cash-flow.html",
       "reads": [],
-      "writes": [],
+      "writes": [
+        "payCadence",
+        "nextPayday",
+        "billsMonthly",
+        "payLaterDue"
+      ],
       "requires": [],
       "dashboardNumber": null,
       "order": 1.5
     },
     {
       "id": "budget",
-      "title": "Budget",
+      "title": "The Close",
       "file": "rooms/budget.html",
       "reads": [],
       "writes": [
-        "monthsClosed"
+        "monthsClosed",
+        "historyCompareTo"
       ],
       "requires": [],
       "dashboardNumber": null,
@@ -122,6 +135,13 @@
         "totalDebt"
       ],
       "writes": [
+        "rothContributed",
+        "hsaContributed",
+        "marginalRate",
+        "allocationStocks",
+        "allocationBonds",
+        "allocationCash",
+        "rebalanceBand",
         "otherAssets",
         "confidenceWeightedNetWorth",
         "netWorth",
@@ -137,37 +157,18 @@
       "order": 1.8
     },
     {
-      "id": "accounts",
-      "title": "Where It Goes & how it’s split",
-      "file": "rooms/accounts.html",
-      "reads": [
-        "grossAnnualIncome",
-        "filingStatus"
-      ],
-      "writes": [
-        "rothContributed",
-        "hsaContributed",
-        "marginalRate",
-        "allocationStocks",
-        "allocationBonds",
-        "allocationCash",
-        "rebalanceBand"
-      ],
-      "requires": [
-        "retirement"
-      ],
-      "dashboardNumber": null,
-      "order": 1.9
-    },
-    {
       "id": "debt-payoff",
-      "title": "Debt Payoff",
+      "title": "Debt",
       "file": "rooms/debt-payoff.html",
       "reads": [
         "totalDebt",
         "monthlyDebtPayments"
       ],
       "writes": [
+        "loanPlan",
+        "loanExtra",
+        "idrShare",
+        "forgivenessYears",
         "totalDebt",
         "monthlyDebtPayments",
         "debtBalance",
@@ -177,38 +178,6 @@
       "requires": [],
       "dashboardNumber": "debtToIncome",
       "order": 2
-    },
-    {
-      "id": "student-loans",
-      "title": "Student Loan Decision",
-      "file": "rooms/student-loans.html",
-      "reads": [
-        "totalDebt",
-        "grossAnnualIncome"
-      ],
-      "writes": [
-        "loanPlan",
-        "loanExtra",
-        "idrShare",
-        "forgivenessYears"
-      ],
-      "requires": [
-        "debt"
-      ],
-      "dashboardNumber": "loanTrajectory",
-      "order": 2.1
-    },
-    {
-      "id": "credit",
-      "title": "Your Credit File",
-      "file": "rooms/credit.html",
-      "reads": [
-        "totalDebt"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 2.2
     },
     {
       "id": "tax",
@@ -228,56 +197,6 @@
       ],
       "dashboardNumber": null,
       "order": 2.4
-    },
-    {
-      "id": "variable-income",
-      "title": "Variable Income",
-      "file": "rooms/variable-income.html",
-      "reads": [
-        "grossAnnualIncome",
-        "monthlyExpenses"
-      ],
-      "writes": [
-        "incomeLow",
-        "incomeHigh",
-        "bufferMonths",
-        "variableWindow"
-      ],
-      "requires": [
-        "variableIncome"
-      ],
-      "dashboardNumber": null,
-      "order": 2.5
-    },
-    {
-      "id": "calendar",
-      "title": "Money Calendar & Pay-Later",
-      "file": "rooms/calendar.html",
-      "reads": [
-        "monthlyExpenses",
-        "cashSavings"
-      ],
-      "writes": [
-        "payCadence",
-        "nextPayday",
-        "billsMonthly",
-        "payLaterDue"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 2.6
-    },
-    {
-      "id": "variance",
-      "title": "Estimated vs Actual",
-      "file": "rooms/variance.html",
-      "reads": [
-        "monthsClosed"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 2.7
     },
     {
       "id": "dashboard",
@@ -336,7 +255,7 @@
     },
     {
       "id": "fire",
-      "title": "FIRE Number",
+      "title": "The Number",
       "file": "rooms/fire.html",
       "reads": [
         "monthlyExpenses",
@@ -344,6 +263,7 @@
         "dob"
       ],
       "writes": [
+        "enoughMonthly",
         "retireAge",
         "coastAge"
       ],
@@ -354,220 +274,18 @@
       "order": 4.4
     },
     {
-      "id": "fire-lab",
-      "title": "FIRE Lab",
-      "file": "rooms/fire-lab.html",
-      "reads": [
-        "monthlyExpenses",
-        "investments"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 4.5
-    },
-    {
-      "id": "coast-date",
-      "title": "Your Coast Date",
-      "file": "rooms/coast-date.html",
-      "reads": [
-        "dob",
-        "investments",
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 4.6
-    },
-    {
-      "id": "race",
-      "title": "The Race to $100K",
-      "file": "rooms/race.html",
-      "reads": [
-        "cashSavings",
-        "monthlyExpenses",
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 4.7
-    },
-    {
-      "id": "statements",
-      "title": "Your Statements",
-      "file": "rooms/statements.html",
-      "reads": [
-        "grossAnnualIncome",
-        "monthlyExpenses",
-        "cashSavings",
-        "investments",
-        "totalDebt"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 4.8
-    },
-    {
-      "id": "real-hourly-wage",
-      "title": "Real Hourly Wage",
-      "file": "rooms/real-hourly-wage.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [
-        "hours"
-      ],
-      "dashboardNumber": null,
-      "order": 4.9
-    },
-    {
-      "id": "hassle",
-      "title": "Worth the Hassle",
-      "file": "rooms/hassle.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [
-        "hours"
-      ],
-      "dashboardNumber": null,
-      "order": 10
-    },
-    {
-      "id": "self-employed",
-      "title": "Going Self-Employed",
-      "file": "rooms/self-employed.html",
-      "reads": [
-        "grossAnnualIncome",
-        "filingStatus",
-        "state"
-      ],
-      "writes": [],
-      "requires": [
-        "ownWork"
-      ],
-      "dashboardNumber": "ownersPay",
-      "order": 12
-    },
-    {
-      "id": "reachable",
-      "title": "Reachable Money",
-      "file": "rooms/reachable.html",
-      "reads": [
-        "cashSavings"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 12.5
-    },
-    {
-      "id": "subscriptions",
-      "title": "Subscription Finder",
-      "file": "rooms/subscriptions.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 12.7
-    },
-    {
-      "id": "side-hustle",
-      "title": "Side Hustle",
-      "file": "rooms/side-hustle.html",
-      "reads": [
-        "grossAnnualIncome",
-        "filingStatus"
-      ],
-      "writes": [],
-      "requires": [
-        "career"
-      ],
-      "dashboardNumber": null,
-      "order": 13
-    },
-    {
-      "id": "credential",
-      "title": "Worth Learning",
-      "file": "rooms/credential.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [
-        "career"
-      ],
-      "dashboardNumber": null,
-      "order": 16
-    },
-    {
-      "id": "fulfillment",
-      "title": "The Joy Curve",
-      "file": "rooms/fulfillment.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 18
-    },
-    {
-      "id": "rerank",
-      "title": "The Rerank",
-      "file": "rooms/rerank.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [
-        "rerankCut"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 19
-    },
-    {
-      "id": "stacker",
-      "title": "The Skill Stacker",
-      "file": "rooms/stacker.html",
-      "reads": [],
-      "writes": [
-        "practiceLedger"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 20
-    },
-    {
       "id": "skill-tree",
       "title": "The Skill Tree",
       "file": "rooms/skill-tree.html",
       "reads": [],
       "writes": [
-        "skillsDone"
+        "skillsDone",
+        "exercisesDone",
+        "practiceLedger"
       ],
       "requires": [],
       "dashboardNumber": null,
       "order": 20.2
-    },
-    {
-      "id": "exercises",
-      "title": "Exercises",
-      "file": "rooms/exercises.html",
-      "reads": [],
-      "writes": [
-        "exercisesDone"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 20.4
     },
     {
       "id": "values",
@@ -576,34 +294,29 @@
       "reads": [
         "monthlyExpenses"
       ],
-      "writes": [],
+      "writes": [
+        "givingPct",
+        "givingTarget",
+        "rerankCut"
+      ],
       "requires": [],
       "dashboardNumber": null,
       "order": 21
     },
     {
       "id": "goals",
-      "title": "Goals",
+      "title": "The Decision Room",
       "file": "rooms/goals.html",
       "reads": [
-        "monthlyExpenses"
+        "monthlyExpenses",
+        "grossAnnualIncome"
       ],
-      "writes": [],
+      "writes": [
+        "reversibilityDecision"
+      ],
       "requires": [],
       "dashboardNumber": null,
       "order": 22
-    },
-    {
-      "id": "worth",
-      "title": "Worth It",
-      "file": "rooms/worth.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 24
     },
     {
       "id": "runway",
@@ -628,7 +341,7 @@
     },
     {
       "id": "car",
-      "title": "What A Car Costs",
+      "title": "Wheels",
       "file": "rooms/car.html",
       "reads": [
         "grossAnnualIncome"
@@ -649,18 +362,8 @@
       "order": 26.6
     },
     {
-      "id": "rollover",
-      "title": "The Account You Left Behind",
-      "file": "rooms/rollover.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 26.8
-    },
-    {
       "id": "what-if-life",
-      "title": "What If, Life",
+      "title": "What If",
       "file": "rooms/what-if-life.html",
       "reads": [
         "grossAnnualIncome",
@@ -674,20 +377,6 @@
       "order": 28
     },
     {
-      "id": "timeline",
-      "title": "What Comes Next",
-      "file": "rooms/timeline.html",
-      "reads": [
-        "dob"
-      ],
-      "writes": [
-        "futureIncome"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 28.5
-    },
-    {
       "id": "get-help",
       "title": "Get Help",
       "file": "rooms/get-help.html",
@@ -696,18 +385,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 29
-    },
-    {
-      "id": "micro-retirement",
-      "title": "Micro-Retirement Planner",
-      "file": "rooms/micro-retirement.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 31.7
     },
     {
       "id": "protection",
@@ -720,7 +397,10 @@
       ],
       "writes": [
         "healthCover",
-        "healthMonthly"
+        "healthMonthly",
+        "beneficiariesSet",
+        "willExists",
+        "poaExists"
       ],
       "requires": [
         "protection"
@@ -730,7 +410,7 @@
     },
     {
       "id": "decumulation",
-      "title": "Drawing It Down",
+      "title": "The Back Half",
       "file": "rooms/decumulation.html",
       "reads": [
         "investments",
@@ -742,70 +422,13 @@
         "plannedAnnualDraw",
         "socialSecurityAt"
       ],
-      "requires": [
-        "decumulation"
-      ],
+      "requires": [],
       "dashboardNumber": "withdrawalRate",
       "order": 33
     },
     {
-      "id": "roth-aca",
-      "title": "Roth Conversions Before 65",
-      "file": "rooms/roth-aca.html",
-      "reads": [
-        "dob",
-        "filingStatus"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 33.5
-    },
-    {
-      "id": "middle-class-trap",
-      "title": "The Middle Class Trap Test",
-      "file": "rooms/middle-class-trap.html",
-      "reads": [
-        "dob",
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 33.7
-    },
-    {
-      "id": "estate",
-      "title": "Estate Basics",
-      "file": "rooms/estate.html",
-      "reads": [],
-      "writes": [
-        "beneficiariesSet",
-        "willExists",
-        "poaExists"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 35
-    },
-    {
-      "id": "giving",
-      "title": "Giving",
-      "file": "rooms/giving.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [
-        "givingPct",
-        "givingTarget"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 36
-    },
-    {
       "id": "career-move",
-      "title": "Career Move",
+      "title": "Work",
       "file": "rooms/career-move.html",
       "reads": [
         "grossAnnualIncome"
@@ -817,37 +440,13 @@
         "offerCosts",
         "offerSignOn"
       ],
-      "requires": [
-        "career"
-      ],
+      "requires": [],
       "dashboardNumber": null,
       "order": 37
     },
     {
-      "id": "offer-compare",
-      "title": "Offer Compare",
-      "file": "rooms/offer-compare.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 37.5
-    },
-    {
-      "id": "degree",
-      "title": "The Degree Decision",
-      "file": "rooms/degree.html",
-      "reads": [
-        "dob"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 37.7
-    },
-    {
       "id": "partner",
-      "title": "Partner",
+      "title": "Family",
       "file": "rooms/partner.html",
       "reads": [
         "grossAnnualIncome",
@@ -857,45 +456,23 @@
         "partnerName",
         "partnerDob",
         "splitMode",
-        "sharedMonthly"
-      ],
-      "requires": [
-        "partner"
-      ],
-      "dashboardNumber": null,
-      "order": 38
-    },
-    {
-      "id": "wedding",
-      "title": "Wedding Countdown",
-      "file": "rooms/wedding.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 38.5
-    },
-    {
-      "id": "kids",
-      "title": "Kids and Tuition",
-      "file": "rooms/kids.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
-      "writes": [
+        "sharedMonthly",
         "tuitionTarget",
         "tuitionSaved",
         "tuitionMonthly"
       ],
       "requires": [
-        "dependents"
+        [
+          "partner",
+          "dependents"
+        ]
       ],
       "dashboardNumber": null,
-      "order": 39
+      "order": 38
     },
     {
       "id": "housing",
-      "title": "Housing Decision",
+      "title": "Housing",
       "file": "rooms/housing.html",
       "reads": [
         "monthlyExpenses",
@@ -913,26 +490,6 @@
       "order": 40
     },
     {
-      "id": "down-payment",
-      "title": "Down Payment Countdown",
-      "file": "rooms/down-payment.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 40.5
-    },
-    {
-      "id": "property",
-      "title": "The Deal",
-      "file": "rooms/property.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 40.7
-    },
-    {
       "id": "big-purchase",
       "title": "Big Purchase",
       "file": "rooms/big-purchase.html",
@@ -943,166 +500,39 @@
       "writes": [
         "purchasePrice",
         "purchaseMonths",
-        "purchaseRate"
+        "purchaseRate",
+        "dreamsMonthly"
       ],
       "requires": [],
       "dashboardNumber": null,
       "order": 41
     },
     {
-      "id": "first-car",
-      "title": "The First Car Check",
-      "file": "rooms/first-car.html",
-      "reads": [
-        "grossAnnualIncome"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 41.5
-    },
-    {
-      "id": "enough",
-      "title": "Enough",
-      "file": "rooms/enough.html",
-      "reads": [
-        "monthlyExpenses",
-        "investments"
-      ],
-      "writes": [
-        "enoughMonthly"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 43
-    },
-    {
-      "id": "adventure",
-      "title": "The Long Way Round",
-      "file": "rooms/adventure.html",
-      "reads": [
-        "grossAnnualIncome",
-        "monthlyExpenses",
-        "investments"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 43.5
-    },
-    {
       "id": "week",
-      "title": "Designed Week",
+      "title": "The Life",
       "file": "rooms/week.html",
       "reads": [
         "monthlyExpenses"
       ],
       "writes": [
-        "designedHours"
+        "designedHours",
+        "bucketsPlanned"
       ],
       "requires": [],
       "dashboardNumber": null,
       "order": 44
     },
     {
-      "id": "buckets",
-      "title": "Time Buckets",
-      "file": "rooms/buckets.html",
-      "reads": [
-        "investments",
-        "monthlyExpenses"
-      ],
-      "writes": [
-        "bucketsPlanned"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 45
-    },
-    {
-      "id": "dreamline",
-      "title": "Price the Dream",
-      "file": "rooms/dreamline.html",
-      "reads": [
-        "monthlyExpenses",
-        "grossAnnualIncome"
-      ],
-      "writes": [
-        "dreamsMonthly"
-      ],
-      "requires": [
-        "hours"
-      ],
-      "dashboardNumber": null,
-      "order": 46
-    },
-    {
-      "id": "reversibility",
-      "title": "Can It Be Undone",
-      "file": "rooms/reversibility.html",
-      "reads": [
-        "cashSavings",
-        "monthlyExpenses"
-      ],
-      "writes": [
-        "reversibilityDecision"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 47
-    },
-    {
-      "id": "unlearning",
-      "title": "Unlearning",
-      "file": "rooms/unlearning.html",
-      "reads": [
-        "monthlyExpenses"
-      ],
+      "id": "debates",
+      "title": "The Referee",
+      "file": "rooms/debates.html",
+      "reads": [],
       "writes": [
         "unlearningDropped"
       ],
       "requires": [],
       "dashboardNumber": null,
-      "order": 48
-    },
-    {
-      "id": "debates",
-      "title": "The Referee",
-      "file": "rooms/debates.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
       "order": 48.5
-    },
-    {
-      "id": "history",
-      "title": "History",
-      "file": "rooms/history.html",
-      "reads": [
-        "cashSavings",
-        "investments",
-        "totalDebt"
-      ],
-      "writes": [
-        "historyCompareTo"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 51
-    },
-    {
-      "id": "wrapped",
-      "title": "Money Wrapped",
-      "file": "rooms/wrapped.html",
-      "reads": [
-        "investments",
-        "monthlyExpenses"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 51.5
     },
     {
       "id": "data",
@@ -1116,7 +546,7 @@
     },
     {
       "id": "one-pager",
-      "title": "The One-Pager",
+      "title": "The Card",
       "file": "rooms/one-pager.html",
       "reads": [
         "grossAnnualIncome"
@@ -1135,16 +565,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 98.5
-    },
-    {
-      "id": "progress-card",
-      "title": "Progress Card",
-      "file": "rooms/progress-card.html",
-      "reads": [],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 98.7
     }
   ]
 }

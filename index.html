@@ -1124,7 +1124,7 @@
     var frozen = last
       ? snaps.length + (snaps.length === 1 ? ' snapshot' : ' snapshots') + ', last '
         + (justFroze ? 'just now' : shortDate(last.timestamp))
-        + ' · <a href="' + Ownership.linkTo('history') + '">History →</a>'
+        + ' · <a href="' + Ownership.linkTo('budget', 'over-time') + '">History →</a>'
       : 'Not frozen yet. Freeze once and the panel can say what moved.';
     el('age-line').innerHTML = '<span>' + left + '</span>'
       + '<span class="' + (justFroze ? 'froze' : '') + '" id="freeze-say">' + frozen + '</span>'
@@ -1318,7 +1318,7 @@
     var first = j[0], last = j[j.length - 1];
     node.innerHTML = 'Level ' + first.level + ' thought <b>' + esc(signedMoney(first.cents)) + '</b>; level ' + last.level + ' says <b>' + esc(signedMoney(last.cents)) + '</b>'
       + (last.cents !== first.cents ? ' (' + (last.cents > first.cents ? 'up' : 'down') + ' ' + esc(Money.formatCents(Math.abs(last.cents - first.cents))) + ' a month)' : ' (the same)')
-      + '. <a href="' + Ownership.linkTo('history', 'journey', ROOM_ID) + '">The whole journey →</a>';
+      + '. <a href="' + Ownership.linkTo('budget', 'journey', ROOM_ID) + '">The whole journey →</a>';
   }
   function renderUpNext(h) {
     var strip = el('up-next');

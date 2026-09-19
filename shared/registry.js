@@ -51,7 +51,7 @@
     {
       id: 'financial-snapshot',
       features: ['afterTaxNetWorth', 'homeDetail', 'agingParents'],
-      group: 'scorecard', aliases: ['snapshot', 'draftt', 'lenses', 'scorecard', 'nine numbers'],
+      group: 'scorecard', aliases: ['snapshot', 'draftt', 'lenses', 'scorecard', 'nine numbers', 'glossary', 'ratio glossary', 'ratios', 'every ratio', 'dti', 'debt to income', 'front-end ratio', 'back-end ratio', '28/36', 'credit utilization', 'liquidity ratio', 'solvency', 'rule of 72', 'retirement multiple', 'fi ratio', 'safe withdrawal rate', 'swr', 'loan to value', 'ltv', 'burn rate', 'savings multiple'],
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'dob', 'filingStatus'],
       order: 4,
@@ -92,129 +92,86 @@
     },
     {
       id: 'income',
-      features: ['equityComp', 'matchVesting', 'askDeeper'],
-      group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources'],
+      features: ['equityComp', 'matchVesting', 'showMilestones', 'askDeeper'],
+      group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources', 'variable income', 'irregular', 'uneven', 'real hourly wage', 'what it pays', 'per hour', 'hassle', 'diy', 'chores', 'cheaper option', 'timeline', 'what comes next', 'future income', 'periods', 'gaps'],
       kind: 'about-you',
-      needs: [],
+      /* dob arrived with What is coming (D-295), which turns "from age 67"
+         into a month. */
+      needs: ['dob'],
       order: 1.2,
       title: 'Income',
-      blurb: 'Everything you earn, logged as it arrives: a paycheck, a gig, a gift, a dividend, rent. Each one is taxed the way it really is.',
+      blurb: 'Everything you earn, logged as it arrives: a paycheck, a gig, a gift, a dividend, rent, each taxed the way it really is. The salary to pay yourself when it is uneven, and what the job really pays an hour once every hour and cost is counted.',
       href: 'rooms/income.html',
       tier: 1,
       tags: ['income'],
-      daite: { reads: [], writes: ['income.costs', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss'] },
+      daite: { reads: ['you.hours', 'you.dob'], writes: ['income.costs', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss', 'income.variable', 'income.future'] },
       subsections: [
         { id: 'month', label: 'This month' },
         { id: 'log',   label: 'Every entry' },
         { id: 'add',   label: 'Add an entry' },
-        { id: 'costs', label: 'The costs of earning it' }
+        { id: 'costs', label: 'The costs of earning it' },
+        { id: 'vi-number', label: 'The salary to pay yourself' },
+        { id: 'vi-inputs', label: 'A low month, a high month' },
+        { id: 'rhw-number', label: 'What an hour really pays' },
+        { id: 'rhw-inputs', label: 'The hours and the costs' },
+        { id: 'chore',     label: 'The chore' },
+        { id: 'out-rate',  label: 'What it pays an hour' },
+        { id: 'out-wage',  label: 'Against an hour of your life' },
+        { id: 'out-months',  label: 'The months ahead' },
+        { id: 'out-periods', label: 'What you have listed' },
+        { id: 'out-gaps',    label: 'The gaps and the overlaps' }
       ]
     },
     {
       id: 'budget',
       features: ['annualLines'],
-      group: 'numbers', subgroup: 'expenses', aliases: ['budget', 'buckets', 'estimate', 'plan the month'],
+      group: 'numbers', subgroup: 'expenses', aliases: ['budget', 'buckets', 'estimate', 'plan the month', 'variance', 'estimated vs actual', 'history', 'changes', 'log', 'snapshots'],
       kind: 'about-you',
       needs: [],
       order: 1.6,
-      title: 'Budget',
-      blurb: 'One month at a time: what you expected to earn and spend, what actually landed, and what is left. Five buckets, read from what Income and Cash Flow logged, never typed here, and closed at the end of the month.',
+      title: 'The Close',
+      blurb: 'One month at a time: what you expected to earn and spend, what actually landed, and what is left. Five buckets, read from what Income and Cash Flow logged, never typed here, and closed at the end of the month. Then every closed month read back, and every snapshot you froze over time.',
       href: 'rooms/budget.html',
       tier: 1,
       tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: [], writes: ['expenses.budget', 'expenses.months'] },
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['expenses.budget', 'expenses.months', 'prefs.history'] },
       subsections: [
         { id: 'sheet',  label: 'The sheet' },
         { id: 'close',  label: 'Month-end' },
-        { id: 'months', label: 'Closed months' }
-      ]
-    },
-    {
-      id: 'variance',
-      group: 'numbers', subgroup: 'expenses', aliases: ['estimated', 'actual', 'over', 'under'],
-      kind: 'read',
-      needs: ['monthsClosed'],
-      order: 2.7,
-      title: 'Estimated vs Actual',
-      blurb: 'Every closed month, read back: what you expected against what happened, bucket by bucket, and whether your guesses are getting better.',
-      href: 'rooms/variance.html',
-      tier: 1,
-      tags: ['income', 'cashflow'],
-      daite: { reads: ['expenses.months'], writes: [] },
-      subsections: [
-        { id: 'month',   label: 'One month' },
-        { id: 'trend',   label: 'Month over month' },
-        { id: 'buckets', label: 'Bucket by bucket' }
+        { id: 'months', label: 'Closed months' },
+        { id: 'single', label: 'One closed month' },
+        { id: 'trend', label: 'Are the guesses improving?' },
+        { id: 'hi-number', label: 'Since the first snapshot' },
+        { id: 'hi-chart', label: 'Net worth over time' },
+        { id: 'hi-inputs', label: 'Compare and freeze' },
+        { id: 'journey', label: 'The journey' }
       ]
     },
     {
       /* For most households the second-largest purchase and the most
          frequent large one, and Big Purchase is generic (D-149). */
       id: 'car',
-      group: 'decisions', subgroup: 'home', aliases: ['car', 'vehicle', 'auto', 'lease', '20/3/8'],
+      group: 'decisions', subgroup: 'home',
+      aliases: ['car', 'vehicle', 'auto', 'lease', '20/3/8', 'first car', 'car check', 'car loan', 'new or used'],
       kind: 'explore',
       needs: ['grossAnnualIncome'],
       order: 26.2,
-      title: 'What A Car Costs',
-      blurb: 'The sticker price is the smallest part. Depreciation, the running costs, and whether the loan fits \u2014 against the one test that says if the car fits your life.',
+      title: 'Wheels',
+      blurb: 'Does the car fit \u2014 twenty percent down, three years, under eight percent of what you earn \u2014 and underneath the payment, what it loses, what it costs to run, and whether the loan fits.',
       href: 'rooms/car.html',
-      tier: 2,
+      tier: 1,
       tags: ['cashflow', 'debt'],
-      daite: { reads: ['income.grossAnnualCents'], writes: [] },
+      daite: { reads: ['income.grossAnnualCents', 'expenses', 'assets.invested', 'taxes.filingStatus'], writes: [] },
       subsections: [
+        { id: 'check',      label: '20 / 3 / 8' },
+        { id: 'check-inputs', label: 'The car' },
+        { id: 'newused',    label: 'New against used' },
         { id: 'out-drop',   label: 'What it loses' },
         { id: 'out-run',    label: 'What it costs to run' },
         { id: 'out-loan',   label: 'Whether the loan fits' },
         { id: 'out-allin',  label: 'All in, a month' },
         { id: 'out-ways',   label: 'Lease, new, or a year old' },
         { id: 'reading',    label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      /* "I left my job — what happens to my 401(k)?" Accounts covers Roth
-         vs Traditional, not this (D-150). */
-      id: 'rollover',
-      group: 'numbers', subgroup: 'assets', aliases: ['old 401k', 'rollover', 'left behind'],
-      kind: 'explore',
-      needs: [],
-      order: 26.8,
-      title: 'The Account You Left Behind',
-      blurb: 'A workplace plan at an old job has four possible futures, and one of them is much worse than the others. What each costs you, and the paperwork trap in the middle.',
-      href: 'rooms/rollover.html',
-      tier: 2,
-      tags: ['income'],
-      daite: { reads: [], writes: [] },
-      subsections: [
-        { id: 'out-four',   label: 'The four things you can do' },
-        { id: 'out-trap',   label: 'The trap in the middle' },
-        { id: 'out-cost',   label: 'What cashing out costs' },
-        { id: 'reading',    label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      /* The most-asked consumer money question, and the app had no room for
-         it (D-147). It computes NO score — it cannot see the file — so it
-         shows what it can see, says what moves one, and stops. */
-      id: 'credit',
-      group: 'numbers', subgroup: 'debt', aliases: ['credit score', 'report', 'file'],
-      kind: 'read',
-      /* It reads the itemised debts, which is where a card's balance and its
-         limit live — the two figures the utilisation and credit-mix rows are
-         made of. It writes nothing and owns nothing. */
-      needs: ['totalDebt'],
-      order: 2.2,
-      title: 'Your Credit File',
-      blurb: 'What a credit score is made of, which parts this app can see, and the one that moves fastest.',
-      href: 'rooms/credit.html',
-      tier: 1,
-      tags: ['debt'],
-      daite: { reads: ['debt.items'], writes: [] },
-      subsections: [
-        { id: 'out-what',     label: 'What it is made of' },
-        { id: 'out-yours',    label: 'What this app can see' },
-        { id: 'out-stays',    label: 'How long things stay' },
-        { id: 'out-rights',   label: 'What you are entitled to' },
-        { id: 'reading',      label: 'Reading from elsewhere' }
       ]
     },
     {
@@ -268,59 +225,67 @@
          Expenses and never types it. */
       id: 'cash-flow',
       features: [],
-      group: 'numbers', subgroup: 'expenses', aliases: ['log', 'receipts', 'this month', 'flow', 'sankey', 'what is left'],
+      group: 'numbers', subgroup: 'expenses', aliases: ['log', 'receipts', 'this month', 'flow', 'sankey', 'what is left', 'calendar', 'bills', 'due', 'pay later', 'dates'],
       kind: 'about-you',
       needs: [],
       order: 1.5,
-      title: 'Cash Flow',
-      blurb: 'When money moves. This month at a glance, every receipt on its date, what hits your account and when, and where it all goes.',
+      title: 'The Month',
+      blurb: 'When money moves. This month at a glance, every receipt on its date, what hits your account and when, where it all goes, and paydays against bills across the month: the low point, and the day it lands.',
       href: 'rooms/cash-flow.html',
       tier: 1,
       tags: ['cashflow', 'income'],
-      daite: { reads: ['expenses', 'income'], writes: ['expenses.log'] },
+      daite: { reads: ['expenses', 'income', 'assets.cashCents'], writes: ['expenses.log', 'income.cadence'] },
       subsections: [
         { id: 'glance',          label: 'At a glance' },
         { id: 'log',             label: 'The expense log' },
         { id: 'day-by-day',      label: 'What hits your account, and when' },
         { id: 'flow',            label: 'Where it flows' },
-        { id: 'out-net-flow',    label: 'What’s left' }
+        { id: 'out-net-flow',    label: 'What’s left' },
+        { id: 'cal-number', label: 'The low point this month' },
+        { id: 'cal-chart', label: 'Cash across the month' },
+        { id: 'cal-inputs', label: 'Paydays, bills, pay-later' }
       ]
     },
     {
       id: 'debt-payoff',
       features: ['studentLoanPaths'],
-      group: 'numbers', subgroup: 'debt', aliases: ['loans', 'credit card', 'avalanche', 'snowball', 'minimums'],
+      group: 'numbers', subgroup: 'debt', aliases: ['loans', 'credit card', 'avalanche', 'snowball', 'minimums', 'student loans', 'college', 'loan forgiveness', 'idr', 'credit', 'credit score', 'credit file'],
       kind: 'core',
       needs: ['totalDebt', 'monthlyDebtPayments'],
       order: 2,
-      title: 'Debt Payoff',
-      blurb: 'Every debt, in the order you will clear them: when each one is gone, what it frees, and what a different order would cost or save.',
+      title: 'Debt',
+      blurb: 'Every debt, in the order you will clear them: when each one is gone, what it frees, and what a different order would cost or save. The three student-loan plans side by side, and what a credit file is made of.',
       href: 'rooms/debt-payoff.html',
       tier: 1,
       tags: ['debt'],
-      daite: { reads: ['debt.items', 'debt.items[].minimumCents'], writes: ['debt.items', 'debt.items[].minimumCents', 'debt.items[].balanceCents', 'debt.items[].rate'] },
+      daite: { reads: ['debt.items', 'debt.items[].minimumCents', 'income.grossAnnualCents'], writes: ['debt.items', 'debt.items[].minimumCents', 'debt.items[].balanceCents', 'debt.items[].rate', 'debt.items[].plan'] },
       subsections: [
         { id: 'debts',           label: 'What you owe' },
         { id: 'extra',           label: 'Beyond the minimums' },
         { id: 'out-plan',        label: 'Debt-free in' },
         { id: 'out-strategies',  label: 'Which order' },
         { id: 'out-rewards',     label: 'Rewards vs. carrying' },
-        { id: 'out-timeline',    label: 'The order they fall, and what each frees' }
+        { id: 'out-timeline',    label: 'The order they fall, and what each frees' },
+        { id: 'sl-number', label: 'The plan that clears them' },
+        { id: 'sl-inputs', label: 'The plan' },
+        { id: 'sl-real-cost', label: 'What the loans really cost' },
+        { id: 'cr-number', label: 'What a score is made of' },
+        { id: 'lever', label: 'The one that moves fastest' }
       ]
     },
     {
       id: 'statement',
       features: ['afterTaxNetWorth', 'incomeFloor', 'equityComp', 'homeDetail'],
-      group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'accounts', 'property', 'what you own'],
+      group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'accounts', 'property', 'what you own', 'where it goes', 'roth', 'traditional', 'allocation', 'rebalance', 'solo 401k', 'statements', 'documents', 'quarterly', 'old 401k', 'rollover', 'left behind'],
       kind: 'core',
       needs: ['cashSavings', 'investments', 'totalDebt'],
       order: 1.8,
       title: 'The Statement',
-      blurb: 'Everything you own, in three groups: how sure you are of each, how fast you could get to it, and the one number underneath, your net worth.',
+      blurb: 'Everything you own, in three groups: how sure you are of each, how fast you could get to it, and the one number underneath, your net worth. Where the next dollar lands and how it is split, and the same period written out as the three documents a company files.',
       href: 'rooms/statement.html',
       tier: 1,
       tags: ['debt'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets', 'assets.property', 'assets.items[].valueCents', 'assets.items[].taxCharacter', 'assets.items[].tier', 'assets.items[].costBasisCents', 'assets.items[].institution', 'assets.items[].accountType'] },
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets', 'assets.property', 'assets.items[].valueCents', 'assets.items[].taxCharacter', 'assets.items[].tier', 'assets.items[].costBasisCents', 'assets.items[].institution', 'assets.items[].accountType', 'assets.contributions.roth', 'assets.contributions.hsa', 'taxes.marginalRate', 'assets.allocation', 'assets.rebalanceBand'] },
       /* Replaces Net Worth (D-069); rooms/net-worth.html redirects here. */
       subsections: [
         { id: 'portfolios', label: 'Three portfolios' },
@@ -330,134 +295,40 @@
         { id: 'brackets',   label: 'Your bracket' },
         { id: 'worst-year', label: 'The worst plausible year' },
         { id: 'future',     label: 'Money that is coming' },
-        { id: 'reading',    label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'fire-lab',
-      features: ['showNominal', 'sequenceRisk'],
-      group: 'scorecard', aliases: ['lab', 'variants', 'lean', 'fat', 'coast', 'barista'],
-      kind: 'read',
-      needs: ['monthlyExpenses', 'investments'],
-      order: 4.5,
-      title: 'FIRE Lab',
-      blurb: 'Every FIRE calculation on one screen, drawn rather than listed. Nothing is stored. Move the withdrawal rate and watch everything move.',
-      href: 'rooms/fire-lab.html',
-      tier: 1,
-      tags: ['income', 'cashflow'],
-      daite: { reads: ['assets.invested', 'expenses'], writes: [] },
-      subsections: [
-        { id: 'number',      label: 'The number' },
-        { id: 'swr',         label: 'Withdrawal rate' },
-        { id: 'flavours',    label: 'The flavours' },
-        { id: 'split',       label: 'Where it comes from' },
-        { id: 'milestones',  label: 'Milestones' },
-        { id: 'path',        label: 'The path' },
-        { id: 'sensitivity', label: 'If the assumptions are wrong' }
+        { id: 'reading',    label: 'Reading from elsewhere' },
+        { id: 'setup', label: 'Where the next dollar lands' },
+        { id: 'allocation', label: 'How it is split' },
+        { id: 'solo', label: 'A Solo 401k' },
+        { id: 'tabs', label: 'The three documents' },
+        { id: 'out-four', label: 'The four things you can do' },
+        { id: 'out-trap', label: 'The trap in the middle' },
+        { id: 'out-cost', label: 'What cashing out costs' }
       ]
     },
     {
       id: 'fire',
       features: ['afterTaxNetWorth', 'showNominal', 'preMedicare', 'incomeFloor'],
-      group: 'scorecard', aliases: ['fire', 'financial independence', 'retire early', 'number'],
+      group: 'scorecard', aliases: ['fire', 'financial independence', 'retire early', 'number', 'fire lab', 'lab', 'coast', 'coast date', 'coasting', 'enough', 'by choice', 'race', '100k', 'rungs', 'first hundred thousand'],
       kind: 'read',
       needs: ['monthlyExpenses', 'investments', 'dob'],
       order: 4.4,
-      title: 'FIRE Number',
-      blurb: 'How much you would need before work became optional. Six versions of that number, and a map of where you are on the way there.',
+      title: 'The Number',
+      blurb: 'How much you would need before work became optional: six versions of that number, the figure you would live on by choice, the date you could stop saving, the rungs on the way, every FIRE calculation on one screen, and a map of where you are on the way there.',
       href: 'rooms/fire.html',
       tier: 1,
       tags: ['income', 'cashflow'],
-      daite: { reads: ['assets.invested', 'expenses', 'you.dob'], writes: ['plans.targets'] },
+      daite: { reads: ['assets.invested', 'expenses', 'you.dob'], writes: ['plans.targets', 'plans.enough'] },
       subsections: [
         { id: 'reading',    label: 'What this reads' },
         { id: 'map',        label: 'The map' },
         { id: 'out-target', label: 'Your number' },
         { id: 'variants',   label: 'Six ways to ask it' },
         { id: 'targets',    label: 'Your targets' },
-        { id: 'params',     label: 'Try different assumptions' }
-      ]
-    },
-    {
-      id: 'real-hourly-wage',
-      group: 'numbers', subgroup: 'income', aliases: ['hourly', 'wage', 'commute', 'hours', 'ymoyl'],
-      kind: 'about-you',
-      needs: ['grossAnnualIncome'],
-      order: 4.9,
-      title: 'Real Hourly Wage',
-      blurb: 'What the job really pays per hour, once every hour it takes and every cost of doing it are counted.',
-      href: 'rooms/real-hourly-wage.html',
-      tier: 1,
-      tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents'], writes: [] },
-      /* The template room (D-097): the same six ids every room on the
-         template has, so a deep link means the same thing everywhere. */
-      subsections: [
-        { id: 'number',      label: 'Your real rate' },
-        { id: 'chart',       label: 'Where the week goes' },
-        { id: 'inputs',      label: 'The hours it takes' },
-        { id: 'amounts',     label: 'Priced in life' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-    },
-    {
-      id: 'hassle',
-      group: 'decisions', subgroup: 'home', aliases: ['hassle', 'diy', 'chores', 'cheaper option'],
-      kind: 'about-you',
-      needs: ['grossAnnualIncome'],
-      order: 10,
-      title: 'Worth the Hassle',
-      blurb: 'What a money-saving chore actually pays per hour \u2014 against what an hour of your life already earns, and how much you hate doing it.',
-      href: 'rooms/hassle.html',
-      tier: 1,
-      tags: ['income', 'cashflow'],
-      daite: { reads: ['income.grossAnnualCents'], writes: [] },
-      subsections: [
-        { id: 'chore',     label: 'The chore' },
-        { id: 'out-rate',  label: 'What it pays an hour' },
-        { id: 'out-wage',  label: 'Against an hour of your life' },
-        { id: 'presets',   label: 'Common ones' },
-        { id: 'reading',   label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'self-employed',
-      group: 'decisions', subgroup: 'work', aliases: ['self-employed', 'freelance', '1099', 'own business'], appliesWhen: 'situation != retired',
-      kind: 'explore',
-      needs: ['grossAnnualIncome', 'filingStatus', 'state'],
-      order: 12,
-      title: 'Going Self-Employed',
-      blurb: 'What a contract rate has to be to match a salary, where the 15.3% actually lands, and what to send in each quarter.',
-      href: 'rooms/self-employed.html',
-      tier: 1,
-      tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state'], writes: [] },
-      subsections: [
-        { id: 'compare',   label: 'Salary vs. contract' },
-        { id: 'setax',     label: 'Self-employment tax' },
-        { id: 'quarterly', label: 'Quarterly estimates' },
-        { id: 'reading',   label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'side-hustle',
-      group: 'decisions', subgroup: 'work', aliases: ['hustle', 'side income', 'gig'], appliesWhen: 'situation != retired',
-      kind: 'explore',
-      needs: ['grossAnnualIncome', 'filingStatus'],
-      order: 13,
-      title: 'Side Hustle',
-      blurb: 'What the second job actually pays after tax, costs and the hours it eats \u2014 and what a week looks like with it in.',
-      href: 'rooms/side-hustle.html',
-      tier: 2,
-      tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus'], writes: [] },
-      subsections: [
-        { id: 'hustle',      label: 'The hustle' },
-        { id: 'out-net',     label: 'What you keep' },
-        { id: 'out-vs-job',  label: 'Against the day job' },
-        { id: 'out-week',    label: 'What a week becomes' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
+        { id: 'params',     label: 'Try different assumptions' },
+        { id: 'en-number', label: 'Enough, by choice' },
+        { id: 'date', label: 'The coast date' },
+        { id: 'rungs', label: 'The rungs' },
+        { id: 'swr', label: 'The lab' }
       ]
     },
     {
@@ -535,31 +406,8 @@
       ]
     },
     {
-      id: 'accounts',
-      group: 'numbers', subgroup: 'assets', aliases: ['401k', 'ira', 'roth', 'hsa', 'allocation', 'contributions', 'match'],
-      /* Not a what-if: it holds facts about your retirement setup that other
-         rooms read. An explore room owns nothing anybody waits on, and this
-         one owns four things. DECISIONS.md D-052. */
-      kind: 'about-you',
-      needs: ['grossAnnualIncome', 'filingStatus'],
-      order: 1.9,
-      title: 'Where It Goes & how it\u2019s split',
-      blurb: 'Which account to fill first: Roth, traditional or taxable. And how much a solo 401(k) really lets you put away.',
-      href: 'rooms/accounts.html',
-      tier: 2,
-      tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus'], writes: ['assets.allocation', 'assets.contributions.hsa', 'assets.contributions.roth', 'taxes.marginalRate'] },
-      subsections: [
-        { id: 'setup',   label: 'Your retirement setup' },
-        { id: 'compare', label: 'Roth vs. Traditional vs. taxable' },
-        { id: 'solo',       label: 'Solo 401(k)' },
-        { id: 'allocation', label: 'How it\u2019s split' },
-        { id: 'reading',    label: 'Reading from elsewhere' }
-      ]
-    },
-    {
       id: 'values',
-      group: 'matters', aliases: ['values', 'what matters', 'priorities'],
+      group: 'matters', aliases: ['values', 'what matters', 'priorities', 'joy curve', 'fulfillment', 'worth it', 'rerank', 'reorder', 'giving', 'charity', 'tithe', 'donate'],
       kind: 'about-you',
       needs: ['monthlyExpenses'],
       order: 21,
@@ -568,105 +416,24 @@
       href: 'rooms/values.html',
       tier: 2,
       tags: ['cashflow'],
-      daite: { reads: ['expenses'], writes: ['plans.values'] },
+      daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['plans.values', 'plans.rerank', 'plans.giving', 'expenses.giving'] },
       subsections: [
         { id: 'stated',      label: 'What matters to you' },
         { id: 'spending',    label: 'What the money serves' },
         { id: 'out-compare', label: 'The two lists' },
         { id: 'out-unclaimed', label: 'Serving nothing you named' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
+        { id: 'reading',     label: 'Reading from elsewhere' },
+        { id: 'out-curve', label: 'The joy curve' },
+        { id: 'gap', label: 'Where the orders disagree' },
+        { id: 'gv-number', label: 'A share given' },
+        { id: 'gv-inputs', label: 'What you give' }
       ]
     },
-    {
-      id: 'credential',
-      group: 'decisions', subgroup: 'work', aliases: ['degree', 'course', 'certification', 'learning', 'school'], appliesWhen: 'situation != retired',
-      kind: 'explore',
-      needs: ['grossAnnualIncome'],
-      order: 16,
-      title: 'Worth Learning',
-      blurb: 'A degree, a bootcamp or a weekend course \u2014 what it costs including the time, what the raise is worth after tax, and when it pays back.',
-      href: 'rooms/credential.html',
-      tier: 2,
-      tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents'], writes: [] },
-      subsections: [
-        { id: 'what',        label: 'What you are weighing' },
-        { id: 'out-payback', label: 'When it pays back' },
-        { id: 'out-value',   label: 'What it is worth today' },
-        { id: 'out-hours',   label: 'Priced in hours' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
-      ]
-    },
-        {
-      id: 'fulfillment',
-      group: 'matters', aliases: ['joy', 'fulfillment curve', 'satisfaction'],
-      kind: 'about-you',
-      needs: ['monthlyExpenses'],
-      order: 18,
-      /* Was also called "Enough", which the room at order 43 is actually about
-         — the monthly figure you would live on by choice. Two rooms under one
-         name in the menu, the map and all twenty Front Doors layouts is a
-         coin toss every time. "The Joy Curve" is not invented here: it is what
-         the Enough room's own copy already calls this one's output. D-164. */
-      title: 'The Joy Curve',
-      blurb: 'What each thing costs a month, against what it is actually worth to you \u2014 and the four places that lands.',
-      href: 'rooms/fulfillment.html',
-      tier: 1,
-      tags: ['cashflow'],
-      daite: { reads: ['expenses'], writes: ['plans.ratings'] },
-      subsections: [
-        { id: 'rate',        label: 'Rate what you spend on' },
-        { id: 'out-curve',   label: 'Where it all falls' },
-        { id: 'out-quadrants', label: 'The four corners' },
-        { id: 'out-ranked',  label: 'Joy per dollar' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'rerank',
-      group: 'matters', aliases: ['rerank', 'cut', 'keep', 'value rank'],
-      kind: 'about-you',
-      needs: ['monthlyExpenses'],
-      order: 19,
-      title: 'The Rerank',
-      blurb: 'Your costs in order of size, then in order of what they give you \u2014 and the lines where the two orders disagree.',
-      href: 'rooms/rerank.html',
-      tier: 1,
-      tags: ['cashflow'],
-      daite: { reads: ['expenses'], writes: ['expenses.log', 'plans.rerank'] },
-      subsections: [
-        { id: 'costs',   label: '1 \u00b7 What it costs' },
-        { id: 'rate',    label: '2 \u00b7 What it gives you' },
-        { id: 'rerank',  label: '3 \u00b7 Put them in your order' },
-        { id: 'gap',     label: '4 \u00b7 The gap' },
-        { id: 'reading', label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'stacker',
-      group: 'levelup', aliases: ['skills', 'stack', 'earn more'],
-      kind: 'about-you',
-      needs: [],
-      order: 20,
-      title: 'The Skill Stacker',
-      blurb: 'Three money skills at a time: did it or didn\u2019t, what today was worth, and what the ledger becomes by 65.',
-      href: 'rooms/stacker.html',
-      tier: 2,
-      tags: ['cashflow'],
-      daite: { reads: [], writes: ['progress.learning'] },
-      subsections: [
-        { id: 'today',   label: 'Today' },
-        { id: 'browse',  label: 'Every skill' },
-        { id: 'stacks',  label: 'The stacks' },
-        { id: 'curves',  label: 'Three curves' },
-        { id: 'reading', label: 'Reading from elsewhere' }
-      ]
-    },
-    /* The Skill Tree and the Exercise Library (D-131): what the next hour
+        /* The Skill Tree and the Exercise Library (D-131): what the next hour
        does, beside the ladder's what the next dollar does. */
     {
       id: 'skill-tree',
-      group: 'levelup', aliases: ['skill tree', 'tech tree', 'curriculum'],
+      group: 'levelup', aliases: ['skill tree', 'tech tree', 'curriculum', 'stacker', 'skill stacker', 'practice', 'exercises', 'drills', 'fifteen minutes'],
       kind: 'about-you',
       needs: [],
       order: 20.2,
@@ -681,62 +448,35 @@
         { id: 'ladder',  label: 'The fortress line' },
         { id: 'board',   label: 'The board' },
         { id: 'warps',   label: 'Warps' },
-        { id: 'reading', label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'exercises',
-      group: 'levelup', aliases: ['exercises', 'practice', 'drills'],
-      kind: 'about-you',
-      needs: [],
-      order: 20.4,
-      title: 'Exercises',
-      blurb: 'Every doable thing in one place, fifteen minutes or less by default: the first fifteen minutes of a skill, a named exercise from the canon credited to its author, or a calculation run on your own numbers. Completing one opens the skill it belongs to.',
-      href: 'rooms/exercises.html',
-      tier: 2,
-      tags: ['cashflow'],
-      daite: { reads: [], writes: ['progress.learning'] },
-      subsections: [
-        { id: 'list',    label: 'What applies to you' },
-        { id: 'runs',    label: 'What the runs found' },
-        { id: 'reading', label: 'Reading from elsewhere' }
+        { id: 'reading', label: 'Reading from elsewhere' },
+        { id: 'today', label: 'What today was worth' },
+        { id: 'stacks', label: 'Three at a time' },
+        { id: 'list', label: 'Every exercise' },
+        { id: 'pick-time', label: 'How long you have' }
       ]
     },
     {
       id: 'goals',
-      group: 'matters', aliases: ['goals', 'targets', 'wedding', 'dream'],
+      group: 'matters', aliases: ['goals', 'targets', 'wedding', 'dream', 'decisions', 'undo', 'reversible', 'one-way door', 'can it be undone', 'weighing', 'worth it', 'purchase', 'joy per dollar', 'regret', 'wedding countdown', 'engagement', 'ring', 'guests', 'per guest', 'one more table'],
       kind: 'about-you',
-      needs: ['monthlyExpenses'],
+      /* grossAnnualIncome arrived with Behind you (D-292), which prices what
+         a thing turned out to be worth in hours of your life. */
+      needs: ['monthlyExpenses', 'grossAnnualIncome'],
       order: 22,
-      title: 'Goals',
-      blurb: 'A wedding, a deposit, a big trip. What it costs, what it needs a month, and whether that actually fits alongside everything else.',
+      title: 'The Decision Room',
+      blurb: 'Anything you are weighing, in one place — what it costs, what it costs you, when it lands, whether it fits, and whether it can be undone.',
       href: 'rooms/goals.html',
       tier: 2,
       tags: ['cashflow'],
-      daite: { reads: ['expenses'], writes: ['plans.goals'] },
+      daite: { reads: ['expenses', 'assets.cashCents', 'income.grossAnnualCents'], writes: ['plans.goals', 'plans.reversibility', 'plans.worth'] },
       subsections: [
         { id: 'out-together', label: 'All of it together' },
-        { id: 'add',          label: 'Start something' }
-      ]
-    },
-    {
-      id: 'worth',
-      group: 'decisions', subgroup: 'home', aliases: ['worth it', 'purchase', 'joy per dollar'],
-      kind: 'about-you',
-      needs: ['grossAnnualIncome'],
-      order: 24,
-      title: 'Worth It',
-      blurb: 'What you thought something would be worth before you bought it, against what it turned out to be worth \u2014 and what that gap says about your own guesses.',
-      href: 'rooms/worth.html',
-      tier: 1,
-      tags: ['cashflow'],
-      daite: { reads: ['income.grossAnnualCents'], writes: ['plans.worth'] },
-      subsections: [
+        { id: 'add',          label: 'Start something' },
+        { id: 'decisions', label: 'Start from a decision' },
         { id: 'things',      label: 'The things' },
         { id: 'out-each',    label: 'The arithmetic on each' },
         { id: 'out-gap',     label: 'Before against after' },
-        { id: 'out-regrets', label: 'The ones you would take back' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
+        { id: 'out-regrets', label: 'The ones you would take back' }
       ]
     },
     /* The Cushion (D-232): four readings of one number. The Runway, Between
@@ -820,23 +560,26 @@
     },
     {
       id: 'what-if-life',
-      features: ['showNominal'],
-      group: 'decisions', subgroup: 'years', aliases: ['what if', 'sabbatical', 'life event', 'triple d'],
+      features: ['showNominal', 'showMilestones', 'sequenceRisk', 'jobLossCushions', 'timeBudget'],
+      group: 'decisions', subgroup: 'years', aliases: ['what if', 'sabbatical', 'life event', 'triple d', 'five years', 'long way', 'paths', 'scenario', 'shocks'],
       kind: 'explore',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
       order: 28,
-      title: 'What If, Life',
-      blurb: 'A sabbatical, a move, a second income \u2014 one event at a time, three ways: dream, default, disaster.',
+      title: 'What If',
+      blurb: 'A sabbatical, a move, a second income \u2014 one event at a time, three ways: dream, default, disaster. Or the whole of the next five years, every way through it, measured against drifting.',
       href: 'rooms/what-if-life.html',
       tier: 2,
       tags: ['cashflow', 'income'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'expenses', 'income.grossAnnualCents'], writes: ['scenarios'] },
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'expenses', 'income.grossAnnualCents', 'debt.items'], writes: ['scenarios'] },
       subsections: [
         { id: 'pick',     label: 'Pick an event' },
         { id: 'answers',  label: 'Its questions' },
         { id: 'three',    label: 'Dream, default, disaster' },
         { id: 'saved',    label: 'Saved scenarios' },
-        { id: 'reading',  label: 'Reading from elsewhere' }
+        { id: 'reading',  label: 'Reading from elsewhere' },
+        { id: 's-stand',  label: 'Where you stand' },
+        { id: 's-ways',   label: 'Every way through' },
+        { id: 's-way',    label: 'One way, in full' }
       ]
     }
   ];
@@ -858,90 +601,6 @@
      A person who does not know which kind they are looking at cannot tell
      what is required from what is optional, which is most of why a suite
      this size feels like homework. See DECISIONS.md D-051.
-
-  /* The First Car Check (K10, D-219): 20/3/8 as a lens, the price that fits,
-     the gap in FI days, new against used at the same budget. */
-  ROOMS.push({
-    id: 'first-car',
-    group: 'decisions', subgroup: 'moves', aliases: ['first car', '20/3/8', 'car check', 'car loan', 'new or used'],
-    kind: 'explore',
-    needs: ['grossAnnualIncome'],
-    order: 41.5,
-    title: 'The First Car Check',
-    blurb: 'The 20/3/8 rule as a lens on the car you are weighing: each part inside or outside, the highest price that fits all three, what the gap costs in days of financial independence, and new against used at the same budget.',
-    href: 'rooms/first-car.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['income.grossAnnualCents', 'expenses', 'assets.invested', 'taxes.filingStatus'], writes: [] },
-    subsections: [{ id: 'check', label: '20 / 3 / 8' }, { id: 'inputs', label: 'The car' }, { id: 'newused', label: 'New against used' }]
-  });
-
-  /* The Degree Decision (K9, D-219): a degree as a sum, the break-even age
-     and the lifetime difference as ranges, the FI date with and without. */
-  ROOMS.push({
-    id: 'degree',
-    group: 'decisions', subgroup: 'work', aliases: ['degree', 'masters', 'mba', 'go back to school', 'tuition', 'break-even'],
-    appliesWhen: 'situation != retired',
-    kind: 'explore',
-    needs: ['dob'],
-    order: 37.7,
-    title: 'The Degree Decision',
-    blurb: 'A degree as a sum: tuition, the pay given up, the loan and employer help against the pay with it and without it, each a range. The break-even age, the lifetime difference by 65, and the FI date with and without.',
-    href: 'rooms/degree.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['income.grossAnnualCents', 'you.dob', 'expenses', 'taxes.filingStatus', 'assets.invested'], writes: [] },
-    subsections: [{ id: 'answer', label: 'Break-even' }, { id: 'inputs', label: 'The degree' }, { id: 'sum', label: 'The sum' }]
-  });
-
-  /* The Timeline — jobs and benefits as dated periods that stack, and the
-     months they add up to (D-152). It OWNS futureIncome[], which used to be
-     edited on The Statement: a dated period belongs in the room that draws
-     it on a grid. Placed after the numbered path because it is a planning
-     room, not a fact-gathering one — you need to know what today is before
-     laying out what comes after it. */
-  ROOMS.push({
-    id: 'timeline',
-    features: ['showMilestones'],
-    group: 'decisions', subgroup: 'years', aliases: ['timeline', 'jobs', 'what comes next', 'life'],
-    kind: 'about-you',
-    needs: ['dob'],
-    order: 28.5,
-    title: 'What Comes Next',
-    blurb: 'Jobs, benefits and anything else that pays, each as a period with a start and an end — laid end to end so you can see where they overlap, where the gaps are, and what any month between now and then actually adds up to.',
-    href: 'rooms/timeline.html',
-    tier: 0,
-    tags: ['income', 'cashflow'],
-    daite: { reads: ['you.dob'], writes: ['income.future', 'you.periods'] },
-    subsections: [
-      { id: 'out-months',  label: 'The months ahead' },
-      { id: 'out-periods', label: 'What you have listed' },
-      { id: 'out-gaps',    label: 'Gaps and overlaps' },
-      { id: 'reading',     label: 'Reading from elsewhere' }
-    ]
-  });
-
-  /* Your Statements — the three documents a company files, for a household,
-     plus the period in words (D-156). A `read` room: it owns nothing, writes
-     nothing, and every figure on it belongs to another room. */
-  ROOMS.push({
-    id: 'statements',
-    group: 'scorecard', aliases: ['statements', 'history of net worth', 'monthly statement'],
-    kind: 'read',
-    needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
-    order: 4.8,
-    title: 'Your Statements',
-    blurb: 'An income statement, a cash flow statement, a balance sheet and a FIRE statement: the documents a company produces every quarter, for a household, plus the one FIRE people read. Every line opens to how it is worked out, and the same period is written out in sentences.',
-    href: 'rooms/statements.html',
-    tier: 0,
-    tags: ['income', 'cashflow', 'debt'],
-    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents'], writes: [] },
-    subsections: [
-      { id: 'out-basis', label: 'What these are built from' },
-      { id: 'out-doc',   label: 'The statements' },
-      { id: 'out-how',   label: 'How each line is worked out' }
-    ]
-  });
 
   /* Settings — every user-scope feature switch on one screen (D-180). */
   ROOMS.push({
@@ -970,22 +629,30 @@
   ROOMS.push({
     id: 'protection',
     features: ['agingParents'],
-    group: 'decisions', subgroup: 'family', aliases: ['insurance', 'life insurance', 'disability', 'coverage'],
+    /* Two readings since D-266: what stands behind you if a year goes
+       wrong, and where it all goes if the worst does. */
+    group: 'decisions', subgroup: 'family',
+    aliases: ['insurance', 'life insurance', 'disability', 'coverage',
+              'estate', 'will', 'beneficiary', 'power of attorney', 'what happens if'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'cashSavings', 'grossAnnualIncome'],
     order: 32,
     title: 'Protection',
-    blurb: 'What a bad year would cost and what stands behind you: health, disability, life, the cushion — each need against what is held.',
+    blurb: 'What a bad year would cost and what stands behind you — health, disability, life, the cushion — and the three estate facts that decide where it all goes if the worst happens.',
     href: 'rooms/protection.html',
     tier: 2,
     tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses', 'income.grossAnnualCents'], writes: ['expenses.insurance', 'you.cover'] },
+    daite: { reads: ['assets.cashCents', 'assets', 'expenses', 'income.grossAnnualCents', 'you.dependents'], writes: ['expenses.insurance', 'you.cover', 'you.estate'] },
       subsections: [
+        { id: 'view-cover',         label: 'Cover' },
+        { id: 'view-where-it-goes', label: 'Where it goes' },
         { id: 'number',      label: 'The biggest gap' },
         { id: 'chart',       label: 'Need against held' },
         { id: 'inputs',      label: 'Health cover' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
+        { id: 'es-number',   label: 'What would pass without them' },
+        { id: 'es-inputs',   label: 'The three facts' },
         { id: 'reading',     label: 'What this reads' }
       ]
   });
@@ -994,107 +661,49 @@
   ROOMS.push({
     id: 'decumulation',
     features: ['showNominal', 'showMilestones', 'sequenceRisk', 'preMedicare', 'incomeFloor', 'inheritanceRules'],
-    group: 'decisions', subgroup: 'moves', aliases: ['retirement withdrawals', 'draw down', '4%', 'vpw', 'social security'], appliesWhen: 'situation != student',
+    group: 'decisions', subgroup: 'moves', aliases: ['retirement withdrawals', 'draw down', '4%', 'vpw', 'social security', 'roth conversion', 'aca', 'marketplace', 'middle class trap', '59 and a half', 'reachable', 'what can i reach', 'penalty'], appliesWhen: 'situation != student',
     kind: 'about-you',
     needs: ['investments', 'monthlyExpenses', 'grossAnnualIncome'],
     order: 33,
-    title: 'Drawing It Down',
-    blurb: 'How a retiree draws: the withdrawal rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to.',
+    title: 'The Back Half',
+    blurb: 'How the money comes down: what you draw and how long it lasts, what you could actually reach today, what sits behind the 59½ wall, and what health cover costs before Medicare.',
     href: 'rooms/decumulation.html',
     tier: 2,
     tags: ['income'],
-    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents'], writes: ['assets.allocation', 'plans.decumulation'] },
+    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents', 'assets.items', 'you.dob'], writes: ['assets.allocation', 'plans.decumulation'] },
       subsections: [
         { id: 'number',      label: 'The age the money lasts to' },
         { id: 'chart',       label: 'The balance, year by year' },
         { id: 'inputs',      label: 'How you draw' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'reach', label: 'What you can reach' },
+        { id: 'paths', label: 'Through the wall' },
+        { id: 'ra-number', label: 'The price of cover' }
       ]
   });
 
-  /* Roth Conversions Before 65 (J8, D-216): conversions are reported
-     income and reported income sets the marketplace premium; the two priced
-     together to Medicare, as a range across the cliff-on and cliff-off
-     rules. Behind the preMedicare switch. */
-  ROOMS.push({
-    id: 'roth-aca',
-    features: ['preMedicare'],
-    group: 'decisions', subgroup: 'moves', aliases: ['roth conversion', 'aca', 'marketplace', 'obamacare', 'subsidy cliff', 'premium tax credit', 'before 65'],
-    appliesWhen: 'situation != student',
-    kind: 'explore',
-    needs: ['dob', 'filingStatus'],
-    order: 33.5,
-    title: 'Roth Conversions Before 65',
-    blurb: 'Converting pre-tax money to Roth is reported income, and reported income sets what the marketplace charges for health cover until Medicare. Year by year to 65, tax and premiums together, as a range.',
-    href: 'rooms/roth-aca.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['assets.invested', 'taxes.filingStatus', 'you.dob'], writes: [] },
-    subsections: [
-      { id: 'number',      label: 'Tax and premiums, together, to 65' },
-      { id: 'inputs',      label: 'The what-if' },
-      { id: 'years',       label: 'Year by year' },
-      { id: 'assumptions', label: 'Assumptions' }
-    ]
-  });
-
-  /* Micro-Retirement Planner (K5, D-219): a planned break of 1 to 12 months,
-     what it costs and what it buys on one screen. */
-  ROOMS.push({
-    id: 'micro-retirement',
-    group: 'decisions', subgroup: 'work', aliases: ['micro-retirement', 'mini retirement', 'sabbatical', 'break', 'gap year', 'time off'],
-    appliesWhen: 'situation != retired',
-    kind: 'explore',
-    needs: ['monthlyExpenses'],
-    order: 31.7,
-    title: 'Micro-Retirement Planner',
-    blurb: 'A planned break from work of one to twelve months: the fund it needs with health cover and a re-entry cushion, the date you would be ready, how far the FI date moves, the career-momentum cost as a range, and what the break buys in weeks.',
-    href: 'rooms/micro-retirement.html',
-    tier: 2,
-    tags: ['cashflow', 'income'],
-    daite: { reads: ['expenses', 'assets.cashCents', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob', 'assets.invested'], writes: [] },
-    subsections: [{ id: 'fund', label: 'The fund' }, { id: 'sides', label: 'Both sides' }]
-  });
-  /* The Middle Class Trap Test (K1, D-218): both sides of the debate on
-     the household's numbers, four paths to the pre-tax money, each with a
-     verdict and its range. */
-  ROOMS.push({
-    id: 'middle-class-trap',
-    group: 'decisions', subgroup: 'moves', aliases: ['middle class trap', 'trap', 'bridge', 'roth ladder', '72t', 'rule of 55', 'early retirement'],
-    appliesWhen: 'situation != student',
-    kind: 'explore',
-    needs: ['dob', 'monthlyExpenses'],
-    order: 33.7,
-    title: 'The Middle Class Trap Test',
-    blurb: 'Is a net worth that is mostly the house and the 401(k) a trap before 59 and a half, or a planning problem? Both sides on your numbers: bridge accounts, the Roth conversion ladder, 72(t) payments and the Rule of 55, year by year, each with a verdict and its range.',
-    href: 'rooms/middle-class-trap.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['assets', 'assets.invested', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob', 'plans.targets'], writes: [] },
-    subsections: [{ id: 'verdict', label: 'What the numbers say' }, { id: 'debate', label: 'The debate' }, { id: 'paths', label: 'Four paths' }, { id: 'years', label: 'Year by year' }, { id: 'assumptions', label: 'Assumptions' }]
-  });
   /* The Referee (K3, D-218): debates as buttons, both sides on your numbers. */
   ROOMS.push({
     id: 'debates',
-    group: 'matters', aliases: ['referee', 'debate', 'debates', 'both sides', 'flip point', 'mortgage or invest', 'roth or traditional', 'rent or buy'],
+    group: 'matters', aliases: ['referee', 'debate', 'debates', 'both sides', 'flip point', 'mortgage or invest', 'roth or traditional', 'rent or buy', 'unlearn', 'myths', 'advice'],
     kind: 'explore',
     needs: [],
     order: 48.5,
     title: 'The Referee',
-    blurb: 'Money debates people already have, both sides stated fairly with their sources, run on your numbers: the answer as a range, the flip point where it changes, and how close you sit to it.',
+    blurb: 'Money debates people already have, both sides stated fairly with their sources and run on your numbers — and the advice everyone hears, sorted by whether it still applies to you.',
     href: 'rooms/debates.html',
     tier: 2,
     tags: ['income', 'debt'],
-    daite: { reads: ['assets.invested', 'debt.items', 'expenses', 'expenses.needs.accommodation', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
-    subsections: [{ id: 'pick', label: 'Pick a debate' }, { id: 'answer', label: 'The answer' }, { id: 'sides', label: 'Both sides' }]
+    daite: { reads: ['assets.invested', 'debt.items', 'expenses', 'expenses.needs.accommodation', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: ['plans.unlearning'] },
+    subsections: [{ id: 'pick', label: 'Pick a debate' }, { id: 'answer', label: 'The answer' }, { id: 'sides', label: 'Both sides' }, { id: 'number', label: 'Rules that no longer apply' }, { id: 'rules', label: 'Does it apply to you now?' }, { id: 'quiz', label: 'The Unlearning Quiz' }, { id: 'inputs', label: 'Let go' }]
   });
   /* Tax — the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'tax',
     features: ['equityComp', 'inheritanceRules', 'givingVehicles'],
-    group: 'numbers', subgroup: 'taxes', aliases: ['taxes', 'bracket', 'marginal', 'effective', 'refund', 'withholding'],
+    group: 'numbers', subgroup: 'taxes', aliases: ['taxes', 'bracket', 'marginal', 'effective', 'refund', 'withholding', 'benefits cliff', 'cliff', 'snap', 'medicaid', 'poverty line', 'subsidy', 'a raise'],
     kind: 'about-you',
     needs: ['grossAnnualIncome', 'filingStatus', 'state'],
     order: 2.4,
@@ -1110,54 +719,9 @@
         { id: 'inputs',      label: 'Pre-tax and withheld' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Estate Basics — the tranche rooms on the template (D-098). */
-  ROOMS.push({
-    id: 'estate',
-    group: 'decisions', subgroup: 'family', aliases: ['will', 'estate', 'beneficiary', 'power of attorney'],
-    kind: 'about-you',
-    needs: [],
-    order: 35,
-    title: 'Estate Basics',
-    blurb: 'Three facts — beneficiaries named, a will, a power of attorney — and what would pass without them.',
-    href: 'rooms/estate.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: [], writes: ['you.estate'] },
-      subsections: [
-        { id: 'number',      label: 'In place' },
-        { id: 'chart',       label: 'What passes how' },
-        { id: 'inputs',      label: 'The three facts' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Giving — the tranche rooms on the template (D-098). */
-  ROOMS.push({
-    id: 'giving',
-    features: ['givingVehicles'],
-    group: 'decisions', subgroup: 'family', aliases: ['giving', 'charity', 'donate', 'tithe', 'daf'],
-    kind: 'about-you',
-    needs: ['grossAnnualIncome'],
-    order: 36,
-    title: 'Giving',
-    blurb: 'A share of income given, what it is in dollars and in months of FI, and where it sits against the conventions.',
-    href: 'rooms/giving.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['income.grossAnnualCents'], writes: ['expenses.giving'] },
-      subsections: [
-        { id: 'number',      label: 'Given, a year' },
-        { id: 'chart',       label: 'Three shares of income' },
-        { id: 'inputs',      label: 'How much' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'cl-inputs',   label: 'A raise you name' },
+        { id: 'cl-lines',    label: 'Where the lines are' }
       ]
   });
 
@@ -1165,57 +729,45 @@
   ROOMS.push({
     id: 'career-move',
     features: ['matchVesting', 'studentLoanPaths'],
-    group: 'decisions', subgroup: 'work', aliases: ['job offer', 'new job', 'raise', 'offer'], appliesWhen: 'situation != retired',
+    group: 'decisions', subgroup: 'work', aliases: ['job offer', 'new job', 'raise', 'offer', 'offers', 'offer compare', 'side hustle', 'self-employed', '1099', 'contract', 'credential', 'bootcamp', 'degree', 'sabbatical', 'micro-retirement', 'break'], appliesWhen: 'situation != retired',
     kind: 'about-you',
     needs: ['grossAnnualIncome'],
     order: 37,
-    title: 'Career Move',
-    blurb: 'An offer against the job you have: the real hourly wage of each, the take-home difference, and how far the FI date moves.',
+    title: 'Work',
+    blurb: 'Every question about a job in one place: this offer against the one you have, offers side by side, a second job, going out on your own, whether a course pays, a degree, and a planned break.',
     href: 'rooms/career-move.html',
     tier: 2,
     tags: ['income'],
-    daite: { reads: ['income.grossAnnualCents'], writes: ['plans.careerMove'] },
+    daite: { reads: ['income.grossAnnualCents', 'expenses', 'taxes.filingStatus', 'assets.invested'], writes: ['plans.careerMove'] },
       subsections: [
         { id: 'number',      label: 'The real difference an hour' },
         { id: 'chart',       label: 'Now against the offer' },
         { id: 'inputs',      label: 'The offer' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'offers', label: 'Offers side by side' },
+        { id: 'hustle', label: 'A second job' },
+        { id: 'equivalent', label: 'The contract rate' },
+        { id: 'what', label: 'Worth learning?' },
+        { id: 'sum', label: 'A degree as a sum' },
+        { id: 'sides', label: 'A planned break' }
       ]
-  });
-
-  /* Offer Compare (K8, D-219): two to four offers priced as what they are
-     worth in a year and per real hour, with the FI date under each. */
-  ROOMS.push({
-    id: 'offer-compare',
-    group: 'decisions', subgroup: 'work', aliases: ['offer', 'offers', 'job offer', 'compare offers', 'match', 'equity', 'negotiate'],
-    appliesWhen: 'situation != retired',
-    kind: 'explore',
-    needs: [],
-    order: 37.5,
-    title: 'Offer Compare',
-    blurb: 'Two to four job offers side by side: each one’s real yearly value after the match, health premiums and the commute, its value per real hour, the FI date under each, and the one line that decides it.',
-    href: 'rooms/offer-compare.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state', 'assets.invested'], writes: ['income.grossAnnualCents', 'income.sources[].employerMatch', 'taxes.state'] },
-    subsections: [{ id: 'decider', label: 'What decides it' }, { id: 'offers', label: 'The offers' }, { id: 'results', label: 'Side by side' }]
   });
 
   /* Partner — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'partner',
-    group: 'decisions', subgroup: 'family', aliases: ['partner', 'marriage', 'combine', 'spouse'],
+    group: 'decisions', subgroup: 'family', aliases: ['partner', 'marriage', 'combine', 'spouse', 'kids', 'children', 'childcare', 'tuition', '529', 'family'],
     kind: 'about-you',
     needs: ['grossAnnualIncome', 'monthlyExpenses'],
     order: 38,
-    title: 'Partner',
-    blurb: 'Two incomes, one household: how the shared month is split, what each of you keeps, and how much rides on one paycheque.',
+    title: 'Family',
+    blurb: 'Two incomes and how the shared month is split, and what each child costs a year with the tuition they will need — the other people in your household, and what the arrangement costs.',
     href: 'rooms/partner.html',
     tier: 2,
     tags: ['income', 'cashflow'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents', 'you.partner'], writes: ['expenses.shared', 'you.partner'] },
+    daite: { reads: ['expenses', 'income.grossAnnualCents', 'you.partner', 'you.dependents'], writes: ['expenses.shared', 'you.partner', 'plans.kids', 'assets.invested'] },
       subsections: [
         { id: 'view',        label: 'Which view' },
         { id: 'track',       label: 'Are we on track?' },
@@ -1225,86 +777,23 @@
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'tags',        label: 'Yours, mine, ours' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'kid-number', label: 'What the kids cost a year' },
+        { id: 'kid-chart', label: 'By child, a month' },
+        { id: 'kid-inputs', label: 'Tuition' }
       ]
-  });
-
-  /* Wedding Countdown (K11, D-217): a total or a build-up, dated through the
-     one countdown; each extra table in dollars and FI days. */
-  ROOMS.push({
-    id: 'wedding',
-    group: 'decisions', subgroup: 'family', aliases: ['wedding', 'engagement', 'ring', 'guests', 'marry'],
-    kind: 'explore',
-    needs: [],
-    order: 38.5,
-    title: 'Wedding Countdown',
-    blurb: 'The date the wedding is paid for with no debt, from a total or from guests, fixed costs and the ring, and what every extra table costs in dollars and in days of financial independence.',
-    href: 'rooms/wedding.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents', 'assets.invested'], writes: [] },
-    subsections: [{ id: 'date', label: 'Affordable, with no debt' }, { id: 'inputs', label: 'The wedding, and the fund' }, { id: 'tables', label: 'Every extra table' }]
-  });
-  /* Kids and Tuition — the second wave of tranche rooms (D-099). */
-  ROOMS.push({
-    id: 'kids',
-    group: 'decisions', subgroup: 'family', aliases: ['kids', 'children', 'childcare', 'tuition', '529'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses'],
-    order: 39,
-    title: 'Kids and Tuition',
-    blurb: 'What each child costs a year at their age, childcare while they are small, and what tuition needs a month to land on time.',
-    href: 'rooms/kids.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['expenses'], writes: ['assets.invested', 'plans.kids'] },
-      subsections: [
-        { id: 'number',      label: 'What the kids cost a year' },
-        { id: 'chart',       label: 'By child, a month' },
-        { id: 'inputs',      label: 'Tuition' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* The Deal — Tier 17 (D-227). Housing Decision asks whether to buy where
-     you live; this asks whether a building pays, and what living in one
-     unit of it would cost. Both sit on engines/ownership.js. */
-  ROOMS.push({
-    id: 'property',
-    group: 'decisions', subgroup: 'home',
-    aliases: ['rental', 'landlord', 'house hack', 'investment property', 'deal', 'cap rate', 'real estate'],
-    kind: 'about-you',
-    needs: [],
-    order: 40.7,
-    title: 'The Deal',
-    blurb: 'A property priced the way it actually runs: the reserves a listing leaves out, the four ways it pays, what breaks it, and what living in one unit would cost against renting.',
-    href: 'rooms/property.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: [], writes: ['assets.property'] },
-    subsections: [
-      { id: 'deal',        label: 'The deal' },
-      { id: 'month',       label: 'What it costs a month' },
-      { id: 'letting',     label: 'Let it out' },
-      { id: 'return',      label: 'The four ways it pays' },
-      { id: 'stress',      label: 'What breaks it' },
-      { id: 'hack',        label: 'Live in one, let the rest' },
-      { id: 'assumptions', label: 'Where the rates come from' }
-    ]
   });
 
   /* Housing Decision — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'housing',
     features: ['homeDetail'],
-    group: 'decisions', subgroup: 'home', aliases: ['house', 'buy', 'rent', 'mortgage', 'home'],
+    group: 'decisions', subgroup: 'home', aliases: ['house', 'buy', 'rent', 'mortgage', 'home', 'down payment', 'deposit', 'fha', 'the deal', 'rental', 'house hack', 'cap rate'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'grossAnnualIncome', 'cashSavings'],
     order: 40,
-    title: 'Housing Decision',
-    blurb: 'Rent against buying, this place, this rate: the monthly cost of each, the price-to-rent ratio, and the years to a down payment.',
+    title: 'Housing',
+    blurb: 'Rent against buying at this price and this rate, the four ways into a deposit with the date on each, and a property priced the way it actually runs.',
     href: 'rooms/housing.html',
     tier: 2,
     tags: ['cashflow'],
@@ -1315,308 +804,66 @@
         { id: 'inputs',      label: 'The place' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'dp-inputs', label: 'The deposit' },
+        { id: 'options', label: 'Four ways in' },
+        { id: 'deal', label: 'The deal' },
+        { id: 'hack', label: 'The house hack' },
+        { id: 'stress', label: 'What breaks it' }
       ]
-  });
-
-  /* Down Payment Countdown (K6, D-217): what each way in needs in cash, the
-     date at the pace, and the payment at each. */
-  ROOMS.push({
-    id: 'down-payment',
-    group: 'decisions', subgroup: 'moves', aliases: ['down payment', 'save for a house', 'fha', 'pmi', 'closing costs', 'first home'],
-    kind: 'explore',
-    needs: [],
-    order: 40.5,
-    title: 'Down Payment Countdown',
-    blurb: 'For a home price, the date you could buy at 3.5%, 5%, 10% and 20% down, each with closing costs and the lender’s reserves counted, and the monthly payment at each with tax, insurance and mortgage insurance where it applies.',
-    href: 'rooms/down-payment.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['taxes.state'], writes: [] },
-    subsections: [{ id: 'inputs', label: 'The home, and the fund' }, { id: 'options', label: 'Four ways in' }]
   });
 
   /* Big Purchase — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'big-purchase',
-    group: 'decisions', subgroup: 'home', aliases: ['purchase', 'buy something', 'save up'],
+    group: 'decisions', subgroup: 'home', aliases: ['purchase', 'buy something', 'save up', 'dream', 'price the dream', 'dreamline'],
     kind: 'about-you',
     needs: ['cashSavings', 'monthlyExpenses'],
     order: 41,
     title: 'Big Purchase',
-    blurb: 'One thing you are eyeing: hours of your life, months of FI, what the cash looks like after, and what financing it costs.',
+    blurb: 'One thing you are eyeing, priced in hours of your life and months of FI — and the same arithmetic over everything you want, for the monthly income the whole list would take.',
     href: 'rooms/big-purchase.html',
     tier: 2,
     tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses'], writes: ['plans.purchase'] },
+    daite: { reads: ['assets.cashCents', 'expenses', 'income.grossAnnualCents'], writes: ['plans.purchase', 'plans.dreams'] },
       subsections: [
         { id: 'number',      label: 'What it costs in life' },
         { id: 'chart',       label: 'Cash before and after' },
         { id: 'inputs',      label: 'The purchase' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'dl-number', label: 'Target monthly income' },
+        { id: 'dl-chart', label: 'Dreams against the month' },
+        { id: 'dl-inputs', label: 'The dreams' }
       ]
-  });
-
-  /* Variable Income — the second wave of tranche rooms (D-099). */
-  ROOMS.push({
-    id: 'variable-income',
-    group: 'numbers', subgroup: 'income', aliases: ['freelance', 'commission', 'irregular', 'rolling average'],
-    kind: 'about-you',
-    needs: ['grossAnnualIncome', 'monthlyExpenses'],
-    order: 2.5,
-    title: 'Variable Income',
-    blurb: 'A low month, a high month, an average. The salary to pay yourself, the buffer that smooths the gap, and how many low months it covers.',
-    href: 'rooms/variable-income.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['income.variable'] },
-      subsections: [
-        { id: 'number',      label: 'The salary to pay yourself' },
-        { id: 'chart',       label: 'Low, average, high' },
-        { id: 'inputs',      label: 'The months' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Enough — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'enough',
-    group: 'matters', aliases: ['enough', 'contentment', 'fi two'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses', 'investments'],
-    order: 43,
-    title: 'Enough',
-    blurb: 'The monthly figure you would live on by choice — typed, or proposed from the joy curve — and the second FI number it makes, against the first.',
-    href: 'rooms/enough.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'expenses'], writes: ['plans.enough'] },
-      subsections: [
-        { id: 'number',      label: 'Enough, a month' },
-        { id: 'chart',       label: 'Two FI numbers' },
-        { id: 'inputs',      label: 'What enough is' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* The Long Way Round — four strategies over five years (D-167). Sits beside
-     Enough because both ask what the money is for, not just how much. */
-  ROOMS.push({
-    id: 'adventure',
-    features: ['showNominal', 'showMilestones', 'sequenceRisk', 'jobLossCushions', 'timeBudget'],
-    group: 'decisions', subgroup: 'years', aliases: ['five years', 'long way', 'paths', 'scenario', 'shocks'],
-    kind: 'explore',
-    needs: ['grossAnnualIncome', 'monthlyExpenses', 'investments'],
-    order: 43.5,
-    title: 'The Long Way Round',
-    blurb: 'Every way through the next five years on one card each, measured against drifting \u2014 then one chart, the headwinds and tailwinds, and a link you can keep.',
-    href: 'rooms/adventure.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'assets.cashCents', 'expenses', 'income.grossAnnualCents', 'debt.items'], writes: [] },
-    utility: false,
-    subsections: [
-      { id: 's-stand', label: 'Where you stand' },
-      { id: 's-ways',  label: 'The ways through' },
-      { id: 's-way',   label: 'The chosen way' }
-    ]
   });
 
   /* Designed Week — the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'week',
     features: ['timeBudget'],
-    group: 'matters', aliases: ['week', 'hours', 'designed week', 'time'],
+    group: 'matters',
+    aliases: ['week', 'hours', 'designed week', 'time', 'time buckets', 'decades', 'experiences', 'die with zero'],
     kind: 'about-you',
     needs: ['monthlyExpenses'],
     order: 44,
-    title: 'Designed Week',
-    blurb: 'The week you would design: 168 hours in blocks, what each block costs and buys, and the month that week adds up to against the one you have.',
+    title: 'The Life',
+    blurb: 'The week you would design, priced, and the decades you plan to spend \u2014 whether the life you want and the money for it line up in time.',
     href: 'rooms/week.html',
     tier: 2,
     tags: ['cashflow'],
-    daite: { reads: ['expenses'], writes: ['plans.week'] },
+    daite: { reads: ['expenses', 'assets.invested'], writes: ['plans.week', 'plans.buckets'] },
       subsections: [
         { id: 'number',      label: 'The designed week, a month' },
         { id: 'chart',       label: 'Where the hours go' },
         { id: 'inputs',      label: 'The blocks' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Time Buckets — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'buckets',
-    features: ['timeBudget'],
-    group: 'matters', aliases: ['time buckets', 'decades', 'experiences', 'die with zero'],
-    kind: 'about-you',
-    needs: ['investments', 'monthlyExpenses'],
-    order: 45,
-    title: 'Time Buckets',
-    blurb: 'What you plan to do in each decade, priced, and whether the plan and the money line up in time.',
-    href: 'rooms/buckets.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'expenses'], writes: ['plans.buckets'] },
-      subsections: [
-        { id: 'number',      label: 'Planned, all decades' },
-        { id: 'chart',       label: 'By decade' },
-        { id: 'inputs',      label: 'Each decade' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Dreamline — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'dreamline',
-    group: 'matters', aliases: ['dream', 'price the dream', 'dreamline'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses', 'grossAnnualIncome'],
-    order: 46,
-    title: 'Price the Dream',
-    blurb: 'Price the dreams a month, add the cost of living, pad it: the target monthly income, and the hours a week at your real rate it takes.',
-    href: 'rooms/dreamline.html',
-    tier: 2,
-    tags: ['income'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['plans.dreams'] },
-      subsections: [
-        { id: 'number',      label: 'Target monthly income' },
-        { id: 'chart',       label: 'Dreams against the month' },
-        { id: 'inputs',      label: 'The dreams' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Reversibility — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'reversibility',
-    group: 'matters', aliases: ['undo', 'reversible', 'one-way door'],
-    kind: 'about-you',
-    needs: ['cashSavings', 'monthlyExpenses'],
-    order: 47,
-    title: 'Can It Be Undone',
-    blurb: 'A decision you are weighing: what it would cost to undo, and how long — a door, or a one-way street.',
-    href: 'rooms/reversibility.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses'], writes: ['plans.reversibility'] },
-      subsections: [
-        { id: 'number',      label: 'What undoing costs' },
-        { id: 'chart',       label: 'Cost and months to undo' },
-        { id: 'inputs',      label: 'The decision' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Unlearning — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'unlearning',
-    group: 'matters', aliases: ['unlearn', 'myths', 'advice'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses'],
-    order: 48,
-    title: 'Unlearning',
-    blurb: 'The advice everyone hears, sorted by whether it still applies to you — and the rules you have let go of.',
-    href: 'rooms/unlearning.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['expenses'], writes: ['plans.unlearning'] },
-      subsections: [
-        { id: 'number',      label: 'Rules that no longer apply' },
-        { id: 'chart',       label: 'Applies, past it, not yet' },
-        { id: 'inputs',      label: 'Let go' },
-        { id: 'rules',       label: 'Does it apply to you now?' },
-        { id: 'quiz',        label: 'The Unlearning Quiz' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Student Loan Decision — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'student-loans',
-    features: ['studentLoanPaths'],
-    group: 'numbers', subgroup: 'debt', aliases: ['college', 'loan forgiveness', 'idr'],
-    kind: 'about-you',
-    needs: ['totalDebt', 'grossAnnualIncome'],
-    order: 2.1,
-    title: 'Student Loan Decision',
-    blurb: 'Your student loans on three plans: standard, income-driven or aggressive. What each pays a month, when each ends, and what each costs in interest.',
-    href: 'rooms/student-loans.html',
-    tier: 2,
-    tags: ['debt'],
-    daite: { reads: ['debt.items', 'income.grossAnnualCents'], writes: ['debt.items[].plan'] },
-      subsections: [
-        { id: 'number',      label: 'The plan that clears them' },
-        { id: 'chart',       label: 'Three plans, side by side' },
-        { id: 'real-cost',   label: 'What the loans really cost' },
-        { id: 'inputs',      label: 'The plan' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* Money Calendar & Pay-Later — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'calendar',
-    features: ['annualLines'],
-    group: 'numbers', subgroup: 'expenses', aliases: ['calendar', 'bills', 'due', 'pay later', 'dates'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses', 'cashSavings'],
-    order: 2.6,
-    title: 'Money Calendar & Pay-Later',
-    blurb: 'Paydays and bills across the month, with pay-later instalments counted. The low point, and the day it lands.',
-    href: 'rooms/calendar.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses'], writes: ['expenses.log', 'income.cadence'] },
-      subsections: [
-        { id: 'number',      label: 'The low point this month' },
-        { id: 'chart',       label: 'Cash across the month' },
-        { id: 'inputs',      label: 'Paydays, bills, pay-later' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
-  });
-
-  /* History — the LATER.md rooms (D-101). */
-  ROOMS.push({
-    id: 'history',
-    group: 'upkeep', aliases: ['history', 'changes', 'log'],
-    kind: 'read',
-    needs: ['cashSavings', 'investments', 'totalDebt'],
-    order: 51,
-    title: 'History',
-    blurb: 'Every snapshot you froze, and what moved between them: net worth over time, and the log of what you changed.',
-    href: 'rooms/history.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['prefs.history'] },
-      subsections: [
-        { id: 'journey',    label: 'The journey' },
-        { id: 'number',      label: 'Since the first snapshot' },
-        { id: 'chart',       label: 'Net worth over time' },
-        { id: 'inputs',      label: 'Compare and freeze' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'bk-number',   label: 'Planned, all decades' },
+        { id: 'bk-chart',    label: 'By decade' },
+        { id: 'bk-inputs',   label: 'Each decade' }
       ]
   });
 
@@ -1651,17 +898,28 @@
      conversation; Private with full numbers, Public with ratios and time. */
   ROOMS.push({
     id: 'one-pager',
-    group: 'upkeep', aliases: ['one pager', 'one-pager', 'snapshot page', 'print', 'share with a coach', 'lender', 'planner'],
+    /* Three things to hand over since D-264: the progress card, the year in
+       four lines, and the whole page. The aliases carry all three. */
+    group: 'upkeep', aliases: ['one pager', 'one-pager', 'snapshot page', 'print', 'share with a coach', 'lender', 'planner',
+                               'card', 'progress card', 'share progress', 'shape not size',
+                               'wrapped', 'money wrapped', 'my year', 'year in review'],
     kind: 'read',
     needs: ['grossAnnualIncome'],
     order: 98.3,
-    title: 'The One-Pager',
-    blurb: 'One page of your money for any conversation: a partner, a coach, a lender, a planner, a podcast. Private with full numbers, or Public with ratios, percentages and time only. Print it, or hand over the file.',
+    title: 'The Card',
+    blurb: 'Everything you would hand someone else, three ways: a progress card that carries the shape and never the size, your year in four lines, and the whole page for a lender or a planner.',
     href: 'rooms/one-pager.html',
     tier: 1,
     tags: ['income', 'cashflow', 'debt'],
     daite: { reads: ['assets', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state', 'you.dob', 'you.situation', 'plans.targets'], writes: [] },
-    subsections: [{ id: 'audience', label: 'Who is it for' }, { id: 'page', label: 'The page' }]
+    subsections: [
+      { id: 'view-the-card', label: 'The card' },
+      { id: 'view-the-year', label: 'The year' },
+      { id: 'view-the-page', label: 'The whole page' },
+      { id: 'the-card',      label: 'Share the shape' },
+      { id: 'audience',      label: 'Who is it for' },
+      { id: 'page',          label: 'The page' }
+    ]
   });
 
   /* Where every room's out-of-scope line points (D-097). Reads the gate for
@@ -1683,116 +941,6 @@
       { id: 'not-here', label: 'What these rooms do not do' },
       { id: 'who',      label: 'Who answers them' },
       { id: 'stage',    label: 'At your stage' }
-    ]
-  });
-
-  /* Reachable Money (H4, D-212): an amount and a by-when; the order to pull
-     it and what each dollar costs on the way out. Reads only. */
-  ROOMS.push({
-    id: 'reachable',
-    group: 'decisions', subgroup: 'moves', aliases: ['reachable', 'waterfall', 'emergency money', 'pull money', 'liquid'],
-    kind: 'explore',
-    needs: ['cashSavings'],
-    order: 12.5,
-    title: 'Reachable Money',
-    blurb: 'If you needed money, where would it come from and what would each dollar cost on the way out? Cash and Roth contributions free, taxable on the gains, pre-tax with the penalty. Home equity shown, never counted.',
-    href: 'rooms/reachable.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'assets.items', 'debt.items', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
-    subsections: [
-      { id: 'headline', label: 'In an emergency' },
-      { id: 'pull',     label: 'A specific amount' }
-    ]
-  });
-
-  /* The progress card (H8, D-212): a share that carries ratios, percentages
-     and time only, never a balance. Reached from the doors home. */
-  ROOMS.push({
-    id: 'progress-card',
-    group: 'upkeep', aliases: ['share', 'card', 'progress card', 'brag'],
-    kind: 'core',
-    utility: true,
-    needs: [],
-    order: 98.7,
-    title: 'Progress Card',
-    blurb: 'A card to share: how far the FI date moved, the savings rate, the debt-free month. Ratios, percentages and time only, never a dollar amount.',
-    href: 'rooms/progress-card.html',
-    tier: 0,
-    tags: ['cashflow'],
-    daite: { reads: [], writes: [] },
-    subsections: [
-      { id: 'card',  label: 'The card' },
-      { id: 'make',  label: 'Make one' }
-    ]
-  });
-
-  /* Money Wrapped (I1, D-213): the year in four lines from the year's
-     snapshots, days, hours, a percent and a count. Every December and
-     on demand. Reads only. */
-  ROOMS.push({
-    id: 'wrapped',
-    group: 'upkeep', aliases: ['wrapped', 'year in review', 'money wrapped', 'december'],
-    kind: 'read',
-    needs: ['investments', 'monthlyExpenses'],
-    order: 51.5,
-    title: 'Money Wrapped',
-    blurb: 'Your year in four lines: days of freedom bought, the priciest recurring cost in hours of work, the biggest earned change, and how many numbers you learned. No amounts, so it is safe to share.',
-    href: 'rooms/wrapped.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents'], writes: [] },
-    subsections: [{ id: 'card', label: 'The year' }]
-  });
-  /* Your Coast Date (I4, D-213): its own formula, not a FIRE variant. */
-  ROOMS.push({
-    id: 'coast-date',
-    group: 'scorecard', aliases: ['coast', 'coast date', 'stop saving', 'coast fire date'],
-    kind: 'read',
-    needs: ['dob', 'investments', 'monthlyExpenses'],
-    order: 4.6,
-    title: 'Your Coast Date',
-    blurb: 'The earliest date you could stop saving for retirement and still reach the FI number by your target age, in today’s dollars; and what today’s money grows to with nothing more added.',
-    href: 'rooms/coast-date.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.invested', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
-    subsections: [{ id: 'date', label: 'Coast date' }, { id: 'reverse', label: 'The reverse view' }]
-  });
-  /* The Race to $100K (K4, D-217): the next rung and every rung to $1M, dated
-     through the one countdown, with saving and growth split at each. */
-  ROOMS.push({
-    id: 'race',
-    group: 'scorecard', aliases: ['race', '100k', 'first 100k', 'rungs', 'million'],
-    kind: 'read',
-    needs: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'],
-    order: 4.7,
-    title: 'The Race to $100K',
-    blurb: 'The date your net worth reaches its next $100,000 rung, then every rung to $1 million, with what came from saving and what came from growth at each. The first $100K is the hardest; this shows why.',
-    href: 'rooms/race.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['assets', 'assets.cashCents', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus'], writes: [] },
-    subsections: [{ id: 'next', label: 'The next rung' }, { id: 'rungs', label: 'Every rung to $1 million' }]
-  });
-  /* The Subscription Finder (J5, D-215): repeating charges from the dated
-     log, each priced a year and in hours; confirm, dismiss, or a reminder
-     to cancel. Owns household.subscriptions. */
-  ROOMS.push({
-    id: 'subscriptions',
-    group: 'decisions', subgroup: 'moves', aliases: ['subscriptions', 'recurring', 'repeating charges', 'leak', 'cancel'],
-    kind: 'about-you',
-    needs: ['monthlyExpenses'],
-    order: 12.7,
-    title: 'Subscription Finder',
-    blurb: 'Charges that repeat on a rhythm at about the same amount, from your logged or imported spending, each with its yearly cost and its cost in hours of work. Confirm, dismiss, or set a reminder to cancel.',
-    href: 'rooms/subscriptions.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: ['plans.subscriptions'] },
-    subsections: [
-      { id: 'leak',  label: 'The leak line' },
-      { id: 'found', label: 'Found' }
     ]
   });
 
@@ -1819,18 +967,21 @@
     { id: 'matters',   label: 'What Matters' },
     { id: 'levelup',   label: 'Level Up' },
     { id: 'upkeep',    label: 'Upkeep',
-      links: [{ after: 'history', title: 'Every room, on one page', href: 'map.html', aliases: ['map', 'all rooms', 'every room'] }] }
+      /* The map link hung off History, which became The Close's over-time
+         reading in D-276. It hangs off Your Data now, which is the room
+         this group leads with and is not going anywhere. */
+      links: [{ after: 'data', title: 'Every room, on one page', href: 'map.html', aliases: ['map', 'all rooms', 'every room'] }] }
   ];
   /* The order the brief lists rooms within a group, where it differs from
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
-    numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
-    scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
-    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
-    matters: ['values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
-    levelup: ['skill-tree', 'stacker', 'exercises'],
-    upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
+    numbers: ['debt-payoff', 'cant-pay', 'statement', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
+    scorecard: ['financial-snapshot', 'foo-ladder', 'fire'],
+    decisions: ['career-move', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
+    matters: ['values', 'goals', 'week'],
+    levelup: ['skill-tree'],
+    upkeep: ['data', 'ledger', 'settings', 'get-help']
   };
   function groups() { return GROUPS.slice(); }
   function groupById(id) { return GROUPS.filter(function (g) { return g.id === id; })[0] || null; }
@@ -1878,25 +1029,53 @@
      (D-094). Rooms with none are for everyone. The check is Gate.exists,
      reached lazily because the gate loads after the registry. */
   var REQUIRES = {
-    accounts: ['retirement'],
-    credential: ['career'],
-    'self-employed': ['ownWork'],
-    'side-hustle': ['career'],
-    'real-hourly-wage': ['hours'],
-    hassle: ['hours'],
+    /* Where It Goes became The Statement's where-it-lands reading (D-278).
+       The Statement requires nothing — what you own is a question for
+       everybody — and that READING keeps the retirement branch, declared on
+       the router, so its hat is absent when there is no employer plan. */
+    /* Worth the hassle became Income's fourth reading (D-294) and kept the
+       hours branch on the router, the way What it pays does. Income itself
+       requires nothing: what comes in is a question for everybody. */
     fire: ['savingsRate'],
     /* Between Jobs became the Cushion's while-job-hunting reading (D-232),
        which anyone may open: it reads as if the pay stopped today and says
        so. The Cushion itself requires nothing. */
     protection: ['protection'],
-    decumulation: ['decumulation'],
+    /* The Back Half holds four readings (D-284), and only ONE of them is
+       about money already being drawn. What you can reach, Through the wall
+       and The price of cover are questions a person asks while still
+       working — the trap test is only interesting to someone employed with
+       the money behind the wall. They required nothing as rooms and they
+       require nothing now, so the ROOM requires nothing; the draw carries
+       the decumulation branch on the router, and its hat is absent until
+       the work stops. D-286.
+
+       This is what D-284 got wrong: it left the room's gate where it was
+       and hid three pre-retirement readings from everybody pre-retirement. */
     tax: ['income'],
-    'career-move': ['career'],
-    partner: ['partner'],
-    kids: ['dependents'],
-    'variable-income': ['variableIncome'],
-    dreamline: ['hours'],
-    'student-loans': ['debt']
+    /* Work holds seven readings (D-281). The room keeps the situation rule
+       every one of them had — appliesWhen "situation != retired" — but not
+       the career branch: Offers side by side, A degree and A break never
+       required it. Each READING that did carries it on the router. */
+    /* Family holds both readings (D-271), so it exists when EITHER does: a
+       household with children and no partner is a household, and so is the
+       reverse. The nested array is the gate's any-of form. Each READING
+       keeps the branch its room had, declared on the router, so its hat is
+       absent when its own branch is not there — the merge does not widen
+       who sees what. */
+    partner: [['partner', 'dependents']],
+    /* Variable Income and the Real Hourly Wage became readings of Income
+       (D-277). Income requires nothing — what comes in is a question for
+       everybody — and each READING keeps the branch its room had, declared
+       on the router, so its hat is absent when the branch is not there. */
+    /* Price the Dream became Big Purchase's whole-list reading (D-270). The
+       hours branch was its requirement, not the room's: the one-thing
+       reading applies to anyone, and the dream reading says it has no wage
+       rather than vanishing. Same call as Between Jobs above. */
+    /* The Student Loan Decision became Debt's loans reading (D-279). Debt
+       requires nothing and has not since D-061 — someone who answered "no
+       debt" is skipped past it, not shut out of it — and the READING keeps
+       the debt branch on the router. */
   };
   function gate() {
     if (typeof module === 'object' && module.exports) return require('./gate.js');
@@ -1915,10 +1094,38 @@
   function writersOf(path) {
     return ROOMS.filter(function (r) { return r.daite && r.daite.writes.indexOf(path) !== -1; }).map(function (r) { return r.id; });
   }
+  /* Why a room is absent, in a sentence. Two things can take a room away
+     (see `applies`), so two kinds of answer: the gate's sentence for a
+     branch that is not there, and the room's own for a situation it says
+     it is not for. A room that vanishes without being able to say why is
+     the thing this app is not allowed to do (D-142). */
+  function whyAbsent(room, household) {
+    var G = gate();
+    if (!G || !household || !room) return null;
+    var sit = G.situationOf ? G.situationOf(household) : null;
+    if (!appliesToSituation(room, sit)) {
+      var s = sit && G.byId ? G.byId(sit) : null;
+      return 'This one is not for where you are right now' + (s ? ' \u2014 ' + s.label.toLowerCase() + '.' : '.');
+    }
+    return G.why(household, requires(room.id));
+  }
+
   function applies(room, household) {
     var G = gate();
     if (!G || !household) return true;
-    return requires(room.id).every(function (k) { return G.exists(household, k); });
+    /* Two things can make a room absent, and they have to agree: the
+       branches it requires, and the situations it declares it is not for.
+       They always did agree while every room carried both — Career Move
+       required `career` AND said "not retired" — and D-281 pulled them
+       apart: Work requires nothing, because Offers side by side is for a
+       person between jobs, and still is not for a retired one. So this
+       reads both, as inGroup already did. */
+    if (!appliesToSituation(room, G.situationOf ? G.situationOf(household) : null)) return false;
+    /* A requirement is a branch key, or an array of keys meaning any one
+       will do — a merged room exists when any of its readings does (D-271). */
+    return requires(room.id).every(function (k) {
+      return Array.isArray(k) ? k.some(function (x) { return G.exists(household, x); }) : G.exists(household, k);
+    });
   }
   /** The rooms that exist for this household, in path order. */
   function forHousehold(household) {
@@ -1972,6 +1179,7 @@
     REQUIRES: REQUIRES,
     requires: requires,
     applies: applies,
+    whyAbsent: whyAbsent,
     forHousehold: forHousehold,
     nextAfter: nextAfter,
     byId: byId,

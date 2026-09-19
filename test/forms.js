@@ -287,7 +287,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/accounts.html',
+    room: '/rooms/statement.html#where-it-lands',
     container: '#allocation',
     seed: 'demo',
     fields: [
@@ -310,7 +310,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/rerank.html',
+    room: '/rooms/values.html#the-rerank',
     container: '#cost-list',
     seed: 'demo',
     /* Stage 1: a proposed line and a custom one, typed. The lists appear
@@ -338,21 +338,21 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/rerank.html',
-    container: '#rate-list',
+    room: '/rooms/values.html#the-rerank',
+    container: '#rr-rate-list',
     seed: 'spending',
     /* Stages 2-4 on the demo month: the rating and the two selects survive
        the tap; then an arrow on stage 3, and stage 4 shows a figure. */
-    prepare: async (page) => { await page.waitForSelector('#rate-list .rate-row'); },
+    prepare: async (page) => { await page.waitForSelector('#rr-rate-list .rate-row'); },
     fields: [
-      { sel: '#rate-list select[data-rating-item="housing"]', type: '' },
-      { sel: '#rate-list select[data-row="housing"][data-field="miss"]', type: '' },
-      { sel: '#rate-list select[data-row="housing"][data-field="who"]', type: '' }
+      { sel: '#rr-rate-list select[data-rating-item="housing"]', type: '' },
+      { sel: '#rr-rate-list select[data-row="housing"][data-field="miss"]', type: '' },
+      { sel: '#rr-rate-list select[data-row="housing"][data-field="who"]', type: '' }
     ],
     expect: async (page) => {
-      await page.selectOption('#rate-list select[data-rating-item="housing"]', '7');
+      await page.selectOption('#rr-rate-list select[data-rating-item="housing"]', '7');
       await page.waitForTimeout(500);
-      await page.selectOption('#rate-list select[data-row="housing"][data-field="miss"]', 'some');
+      await page.selectOption('#rr-rate-list select[data-row="housing"][data-field="miss"]', 'some');
       await page.waitForTimeout(500);
       await page.tap('#rank-list [data-move="down"]:not([disabled])');
       await page.waitForTimeout(500);
@@ -390,7 +390,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/stacker.html',
+    room: '/rooms/skill-tree.html#the-three',
     container: '#today-list',
     seed: 'spending',
     /* Take the suggestion on, then log a day: the tap lands, the row is
@@ -494,15 +494,15 @@ const CASES = [
   {
     /* The template room (D-097): inputs built once from the spec; typing
        into two of them lands in person.work, each as its own undo entry. */
-    room: '/rooms/real-hourly-wage.html',
-    container: '#room-inputs',
+    room: '/rooms/income.html#what-it-pays',
+    container: '#rhw-room-inputs',
     seed: 'demo',
     fields: [
       { sel: '[data-ctl="contractedHoursPerWeek"]', type: '35' },
       { sel: '[data-ctl="workCostsMonthlyCents"]', type: '650' }
     ],
     expect: async (page) => {
-      const r = await page.evaluate(() => { const S = SLAF; const w = S.Schema.workProfile(S.Schema.primaryPerson(S.Spine.getProfile())); return { hours: w.contractedHoursPerWeek, costs: w.workCostsMonthlyCents, label: S.Spine.peekUndo().label, number: document.getElementById('room-number').innerText }; });
+      const r = await page.evaluate(() => { const S = SLAF; const w = S.Schema.workProfile(S.Schema.primaryPerson(S.Spine.getProfile())); return { hours: w.contractedHoursPerWeek, costs: w.workCostsMonthlyCents, label: S.Spine.peekUndo().label, number: document.getElementById('rhw-room-number').innerText }; });
       return [
         ['the paid hours landed', r.hours, 35],
         ['the costs landed, in cents', r.costs, 65000],
@@ -513,15 +513,15 @@ const CASES = [
   },
   {
     /* Giving (D-098): two boxes, both owned; the target wins over the share. */
-    room: '/rooms/giving.html',
-    container: '#room-inputs',
+    room: '/rooms/values.html#what-you-give',
+    container: '#gv-room-inputs',
     seed: 'demo',
     fields: [
       { sel: '[data-ctl="pctOfIncome"]', type: '5' },
       { sel: '[data-ctl="annualTargetCents"]', type: '1200' }
     ],
     expect: async (page) => {
-      const r = await page.evaluate(() => { const S = SLAF; const g = S.Spine.getProfile().giving; return { pct: g.pctOfIncome, target: g.annualTargetCents, number: document.getElementById('room-number').innerText }; });
+      const r = await page.evaluate(() => { const S = SLAF; const g = S.Spine.getProfile().giving; return { pct: g.pctOfIncome, target: g.annualTargetCents, number: document.getElementById('gv-room-number').innerText }; });
       return [
         ['the share landed as a ratio', r.pct, 0.05],
         ['the target landed, in cents', r.target, 120000],
@@ -670,7 +670,7 @@ const CASES = [
        and every write changes the data the list is drawn from — so if the
        LiveForm guard were not doing its job the keyboard would close between
        every field. D-034, D-152. */
-    room: '/rooms/timeline.html',
+    room: '/rooms/income.html#what-is-coming',
     container: '#period-list',
     seed: 'demo',
     prepare: async (page) => { await page.tap('#btn-add'); await page.waitForTimeout(200); },
@@ -773,7 +773,7 @@ const CASES = [
     /* Worth It. Free-text, money, and a plain number in one card, plus two
        rating selects in the same container — the densest live form in the
        repo after the front page. */
-    room: '/rooms/worth.html',
+    room: '/rooms/goals.html#behind-you',
     container: '#thing-list',
     seed: 'demo',
     prepare: async (page) => { await page.tap('#btn-add'); },
@@ -799,7 +799,7 @@ const CASES = [
        them (D-052). So the check is that what was typed is still in the box
        after the room has recomputed around it, and that the household is
        untouched. */
-    room: '/rooms/car.html',
+    room: '/rooms/car.html#what-it-costs',
     container: '#room-inputs',
     seed: 'demo',
     fields: [
@@ -1151,8 +1151,8 @@ const CASES = [
        every other case here — that nothing reached the household (D-052).
        The pinned $14,500 is the demo persona's cash-out cost: $8,800 federal
        at 22%, $1,700 North Carolina at 4.25%, $4,000 penalty on $40,000. */
-    room: '/rooms/rollover.html',
-    container: '#room-inputs',
+    room: '/rooms/statement.html#left-behind',
+    container: '#ro-room-inputs',
     seed: 'demo',
     fields: [
       { sel: '[data-ctl="balance"]', type: '40000' },
@@ -1160,7 +1160,7 @@ const CASES = [
     ],
     expect: async (page) => {
       const r = await page.evaluate(() => ({
-        number: document.getElementById('room-number').innerText,
+        number: document.getElementById('ro-room-number').innerText,
         rows: document.getElementById('cost-rows').innerText,
         blob: localStorage.getItem('slaf.household.v2') || ''
       }));
@@ -1250,8 +1250,8 @@ const CASES = [
   {
     /* ROTH CONVERSIONS BEFORE 65 (J8, D-216): four what-if boxes in the
        HTML, re-rendered on every keystroke into siblings, never rebuilt. */
-    room: '/rooms/roth-aca.html',
-    container: '#inputs',
+    room: '/rooms/decumulation.html#the-price-of-cover',
+    container: '#ra-inputs',
     seed: 'demo',
     fields: [
       { sel: '#in-premium', type: '800' },
@@ -1270,8 +1270,8 @@ const CASES = [
   {
     /* DOWN PAYMENT COUNTDOWN (K6, D-217): five boxes, re-rendered into a
        sibling list on every keystroke. */
-    room: '/rooms/down-payment.html',
-    container: '#inputs',
+    room: '/rooms/housing.html#the-deposit',
+    container: '#dp-inputs',
     seed: 'demo',
     fields: [
       { sel: '#in-price', type: '400000' },
@@ -1288,28 +1288,117 @@ const CASES = [
     }
   },
   {
-    /* WEDDING COUNTDOWN (K11, D-217): nine boxes and a slider. */
-    room: '/rooms/wedding.html',
-    container: '#inputs',
+    /* THE WEDDING, as a block with a per-unit line (D-293). The room is
+       gone; what it did is a property of any block now, so the walk starts
+       one from the template and types into the two boxes that make the
+       per-guest line — the count and the price each, which must survive a
+       tap and land as a count and as cents, not both as money. */
+    room: '/rooms/goals.html',
+    container: '#goal-list',
     seed: 'demo',
+    prepare: async (page) => { await page.tap('[data-template="wedding"]'); },
     fields: [
-      { sel: '#in-guests', type: '80' },
-      { sel: '#in-saved', type: '5000' },
-      { sel: '#in-monthly', type: '800' }
+      { sel: '[data-field="units"]', type: '80' },
+      { sel: '[data-field="perUnitCents"]', type: '150' }
     ],
     expect: async (page) => {
-      const num = await page.evaluate(() => document.getElementById('w-num').textContent);
-      const sub = await page.evaluate(() => document.getElementById('w-sub').textContent);
+      const r = await page.evaluate(() => {
+        const g = (SLAF.Spine.getProfile().goals || [])[0] || {};
+        const line = (g.lineItems || []).filter(l => l.unitLabel)[0] || {};
+        return { units: line.units, per: line.perUnitCents,
+          sum: (document.querySelector('.unit-sum') || {}).textContent || '',
+          margin: (document.querySelector('.margin-line') || {}).innerText || '' };
+      });
       return [
-        ['a date is shown', /^[A-Z][a-z]+ \d{4}\.$/.test(num), true],
-        ['built from 80 guests', /80 guests/.test(sub), true]
+        ['the guest count landed as a count, not as money', r.units, 80],
+        ['the price each landed as cents', r.per, 15000],
+        ['and the line adds up', r.sum, '$12,000'],
+        ['one more table is priced', /One more table of 8 guests/.test(r.margin), true],
+        ['...in dollars and in a life', /\$1,200/.test(r.margin) && /of your life/.test(r.margin), true]
       ];
+    }
+  },
+  {
+    /* A BLOCK THAT PAYS (D-299). The lodger template's first line pays;
+       typing the monthly rent and the month count must land as a count and
+       as cents on a line still marked pays, and the headline must read as
+       money coming in, not a cost. Tapping the toggle then flips it. */
+    room: '/rooms/goals.html',
+    container: '#goal-list',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('[data-template="lodger"]'); },
+    fields: [
+      { sel: '[data-field="units"]', type: '12' },
+      { sel: '[data-field="perUnitCents"]', type: '800' }
+    ],
+    expect: async (page) => {
+      const before = await page.evaluate(() => {
+        const g = (SLAF.Spine.getProfile().goals || [])[0] || {};
+        const line = (g.lineItems || []).filter(l => l.unitLabel)[0] || {};
+        return { units: line.units, per: line.perUnitCents, pays: line.pays,
+          pressed: (document.querySelector('button[data-field="pays"]') || {}).getAttribute('aria-pressed'),
+          signed: SLAF.Goals.itemAmountCents(line) };
+      });
+      await page.tap('button[data-field="pays"]');
+      const after = await page.evaluate(() => {
+        const g = (SLAF.Spine.getProfile().goals || [])[0] || {};
+        const line = (g.lineItems || []).filter(l => l.unitLabel)[0] || {};
+        return { pays: line.pays, pressed: (document.querySelector('button[data-field="pays"]') || {}).getAttribute('aria-pressed') };
+      });
+      return [
+        ['the month count landed as a count', before.units, 12],
+        ['the rent landed as cents', before.per, 80000],
+        ['the template line pays', before.pays, true],
+        ['the toggle shows it', before.pressed, 'true'],
+        ['and the line counts as money in', before.signed, -960000],
+        ['a tap flips the line to a cost', after.pays, false],
+        ['and the toggle follows', after.pressed, 'false']
+      ];
+    }
+  },
+  {
+    /* THE CLIFF (D-301): a raise and a household size typed into the tax
+       room's second reading. The size must land as a count in the reading
+       only — it is never written to the household. */
+    room: '/rooms/tax.html#the-cliff',
+    container: '#view-the-cliff',
+    seed: 'demo',
+    fields: [{ sel: '#cl-in-raise', type: '5000' }, { sel: '#cl-in-size', type: '3' }],
+    expect: async (page) => {
+      const r = await page.evaluate(() => ({
+        head: document.getElementById('cl-head').textContent,
+        sub: document.getElementById('cl-sub').textContent,
+        rows: document.querySelectorAll('#cl-lines-list li').length,
+        blob: JSON.stringify(SLAF.Spine.getProfile())
+      }));
+      return [
+        ['the raise is read', /\$5,000 raise/.test(r.head), true],
+        ['the size is read', /^For 3 people/.test(r.sub), true],
+        ['three programs have a line', r.rows, 3],
+        ['the size stays in the reading', r.blob.indexOf('householdSize') === -1, true]
+      ];
+    }
+  },
+  {
+    /* THE REFEREE, new or used (D-300): the one price box is relabelled
+       for the car and the debate still answers. */
+    room: '/rooms/debates.html',
+    container: '#answer',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('[data-debate="newVsUsed"]'); },
+    fields: [{ sel: '#in-price', type: '25000' }],
+    expect: async (page) => {
+      const r = await page.evaluate(() => ({
+        a: document.getElementById('d-num').getAttribute('data-answer'),
+        label: document.querySelector('#d-ask label').textContent
+      }));
+      return [['a used car wins at this price', r.a, 'b'], ['the box asks about the car', /car/.test(r.label), true]];
     }
   },
   {
     /* THE MIDDLE CLASS TRAP TEST (K1, D-218): one age box, four paths
        re-rendered into siblings. */
-    room: '/rooms/middle-class-trap.html',
+    room: '/rooms/decumulation.html#before-59',
     container: '#verdict',
     seed: 'demo',
     fields: [{ sel: '#in-age', type: '50' }],
@@ -1333,10 +1422,10 @@ const CASES = [
   },
   {
     /* MICRO-RETIREMENT PLANNER (K5, D-219): six boxes. */
-    room: '/rooms/micro-retirement.html',
+    room: '/rooms/career-move.html#a-break',
     container: '#fund',
     seed: 'demo',
-    fields: [{ sel: '#in-months', type: '6' }, { sel: '#in-income', type: '500' }],
+    fields: [{ sel: '#mr-in-months', type: '6' }, { sel: '#in-income', type: '500' }],
     expect: async (page) => {
       const fund = await page.evaluate(() => Number(document.getElementById('m-sub').getAttribute('data-fund')));
       return [['a fund is priced', fund > 0, true]];
@@ -1344,7 +1433,7 @@ const CASES = [
   },
   {
     /* OFFER COMPARE (K8, D-219): four columns built once, two shown. */
-    room: '/rooms/offer-compare.html',
+    room: '/rooms/career-move.html#side-by-side',
     container: '#offers',
     seed: 'demo',
     fields: [{ sel: '#o0-base', type: '95000' }, { sel: '#o1-base', type: '100000' }, { sel: '#o1-commute', type: '200' }],
@@ -1355,19 +1444,20 @@ const CASES = [
   },
   {
     /* THE DEGREE DECISION (K9, D-219): ten boxes. */
-    room: '/rooms/degree.html',
-    container: '#inputs',
+    room: '/rooms/career-move.html#a-degree',
+    container: '#dg-inputs',
     seed: 'demo',
-    fields: [{ sel: '#in-tuition', type: '60000' }, { sel: '#in-years', type: '2' }, { sel: '#in-with-low', type: '95000' }],
+    fields: [{ sel: '#in-tuition', type: '60000' }, { sel: '#dg-in-years', type: '2' }, { sel: '#in-with-low', type: '95000' }],
     expect: async (page) => {
       const be = await page.evaluate(() => document.getElementById('g-num').getAttribute('data-breakeven'));
       return [['a break-even age', /^\d+(\.\d)?$/.test(be), true]];
     }
   },
   {
-    /* THE FIRST CAR CHECK (K10, D-219): seven boxes. */
-    room: '/rooms/first-car.html',
-    container: '#inputs',
+    /* THE FIRST CAR CHECK (K10, D-219), now the first reading of Wheels
+       (D-268): seven boxes, in the default view, so no hash is needed. */
+    room: '/rooms/car.html',
+    container: '#check-inputs',
     seed: 'demo',
     fields: [{ sel: '#in-price', type: '30000' }, { sel: '#in-down', type: '6000' }, { sel: '#in-term', type: '36' }],
     expect: async (page) => {
@@ -1380,13 +1470,13 @@ const CASES = [
        property record. The figures below are the hand-checked ones from
        test/run.js, so a tap that goes astray shows up as a wrong reading
        rather than only as a lost keystroke. */
-    room: '/rooms/property.html',
+    room: '/rooms/housing.html#the-deal',
     container: '#deal',
     seed: 'empty',
     fields: [
-      { sel: '#in-price', type: '320000' },
+      { sel: '#pr-in-price', type: '320000' },
       { sel: '#in-down', type: '20' },
-      { sel: '#in-rate', type: '6.9' }
+      { sel: '#pr-in-rate', type: '6.9' }
     ],
     expect: async (page) => {
       await page.tap('#in-rent'); await page.waitForTimeout(200);
@@ -1434,7 +1524,7 @@ const SELECT_CASES = [
     read: () => JSON.parse(localStorage.getItem('slaf.household.v2')).valuesProfile.assignments
   },
   {
-    room: '/rooms/fulfillment.html',
+    room: '/rooms/values.html#the-joy-curve',
     container: '#rate-list',
     seed: 'spending',
     picks: [
@@ -1448,7 +1538,7 @@ const SELECT_CASES = [
     /* The same purchase carries TWO ratings, which is the only place in the
        app where one item does. Tapping from the first straight to the
        second is exactly the sequence a rebuild would eat. */
-    room: '/rooms/worth.html',
+    room: '/rooms/goals.html#behind-you',
     container: '#thing-list',
     seed: 'demo',
     prepare: async (page) => { await page.tap('#btn-add'); },
@@ -1538,7 +1628,7 @@ const SELECT_CASES = [
     /* What A Car Costs. The term select has no default on purpose (the term
        is the leg of 20/3/8 a monthly payment hides), so this also checks that
        choosing one lands and the room notices. */
-    room: '/rooms/car.html',
+    room: '/rooms/car.html#what-it-costs',
     container: '#room-inputs',
     seed: 'demo',
     picks: [
@@ -1552,7 +1642,7 @@ const SELECT_CASES = [
       stored.verdict.indexOf('Pick how long') === -1, true]]
   },
   {
-    room: '/rooms/hassle.html',
+    room: '/rooms/income.html#worth-the-hassle',
     container: '#preset-list',
     seed: 'demo',
     picks: [

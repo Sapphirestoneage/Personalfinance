@@ -2019,7 +2019,18 @@
       monthlyContributionCents: f.monthlyContributionCents === undefined ? null : f.monthlyContributionCents,
       /* Either itemise it or name one lump figure — never both silently. */
       lineItems: f.lineItems || [],
-      lumpTargetCents: f.lumpTargetCents === undefined ? null : f.lumpTargetCents
+      lumpTargetCents: f.lumpTargetCents === undefined ? null : f.lumpTargetCents,
+      /* Can it be undone (D-283). Reversibility was a room that asked this
+         of ONE decision; it is two fields on every block now. Both default
+         to null, which is "not asked", never "free" or "instant" — a block
+         with no answer says the question is open rather than that the door
+         swings. `decisionId` records that the figures were started from a
+         named decision in data/reversibility_decisions.json, so the room
+         can say where they came from; typing over them keeps the id and
+         marks the figure as the person's own. */
+      decisionId: f.decisionId === undefined ? null : f.decisionId,
+      undoCostCents: f.undoCostCents === undefined ? null : f.undoCostCents,
+      undoMonths: f.undoMonths === undefined ? null : f.undoMonths
     };
   }
 
@@ -2028,7 +2039,24 @@
     return {
       id: f.id || newId('gli'),
       label: f.label === undefined ? null : f.label,
-      amountCents: f.amountCents === undefined ? null : f.amountCents
+      amountCents: f.amountCents === undefined ? null : f.amountCents,
+      /* A line that is priced PER UNIT rather than as one figure: so many
+         guests at so much each, so many nights at so much a night. The
+         amount is still the only thing that is summed — the two fields
+         below MAKE it (engines/goals.js itemAmountCents), they do not sit
+         beside it. `unitLabel` is what one of them is called, and
+         `unitsPerGroup` how many come at a time, because nobody invites
+         one more guest: they add a table. D-293. */
+      perUnitCents: f.perUnitCents === undefined ? null : f.perUnitCents,
+      units: f.units === undefined ? null : f.units,
+      unitLabel: f.unitLabel === undefined ? null : f.unitLabel,
+      unitsPerGroup: f.unitsPerGroup === undefined ? null : f.unitsPerGroup,
+      /* A line that PAYS you — rent a lodger pays, the thing you sell — is
+         typed as a positive figure and carries this flag; the sign is applied
+         where the line is summed (engines/goals.js itemAmountCents), never
+         in a box. A block whose lines net negative pays, and answers the five
+         questions the other way round. D-299. */
+      pays: f.pays === true
     };
   }
 

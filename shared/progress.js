@@ -317,6 +317,9 @@
     if (nb.next) {
       out.push('<a class="slaf-progress-btn is-next" href="' + escapeHtml(href(nb.next.href, roomId))
         + '">Next: ' + escapeHtml(nb.next.title) + ' →</a>');
+    } else if (nb.onChain) {
+      /* The last room on the path: the way forward is the map. */
+      out.push('<a class="slaf-progress-btn is-next" href="' + escapeHtml(href('map.html', roomId)) + '">Next: The map →</a>');
     } else {
       out.push('<span></span>');
     }
@@ -397,7 +400,9 @@
 
   /* Upkeep, kept as a named list for the pages that ask for it directly
      (the map, the tests): the rooms a person reaches for from anywhere. */
-  var UPKEEP = ['data', 'ledger', 'history', 'start', 'get-help'];
+  /* History became The Close's over-time reading (D-276); the upkeep
+     strip lists rooms, and it is no longer one. */
+  var UPKEEP = ['data', 'ledger', 'start', 'get-help'];
 
   function globals() { return (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null; }
   function prefs() { var g = globals(); return g && g.SLAF && g.SLAF.Prefs ? g.SLAF.Prefs : null; }
@@ -1056,7 +1061,23 @@
      and on every hashchange. Rooms that fold on their own terms (Start
      Here's cards, the dashboard's panel) say so with data-fold="own". */
   var FOLD_KEEP = 4;
+  /* On a MERGED page <main>'s children are the readings, and only the one
+     on screen is not hidden. The room's own sections are that reading's
+     children, not main's. Without this, main has exactly one visible
+     section child, so `secs.length <= FOLD_KEEP` and `secs.length < 2` are
+     both true and the fold (D-166) and the URL-follows-you sync (D-170)
+     silently do nothing — which is what all thirteen merged pages have
+     done since the merges. The Statement was 6,200px on a phone with no
+     "Show the rest" on it. D-291. */
+  function sectionHost(host) {
+    var views = Array.prototype.filter.call(host.children, function (n) {
+      return n.tagName === 'SECTION' && /^view-/.test(n.id || '');
+    });
+    if (!views.length) return host;
+    return views.filter(function (v) { return !v.hidden; })[0] || host;
+  }
   function roomSections(host) {
+    host = sectionHost(host);
     /* The situation notice folds the whole room (D-142) with a class on the
        host; lift it for the measurement so the room's own sections are seen
        as they will be once "show it anyway" is tapped. Synchronous, so no
@@ -1083,14 +1104,37 @@
   }
   function mountFold(roomId) {
     if (typeof document === 'undefined') return null;
-    var host = document.querySelector('main') || document.querySelector('.wrap');
-    if (!host || host.getAttribute('data-fold') === 'own') return null;
+    var page = document.querySelector('main') || document.querySelector('.wrap');
+    if (!page || page.getAttribute('data-fold') === 'own') return null;
+    /* A merged page swaps readings under this. Each reading folds on its
+       own terms, so a change of reading tears the old fold down and builds
+       the new one. D-291. */
+    var host = sectionHost(page);
+    if (host !== page && !mountFold.watching) {
+      mountFold.watching = true;
+      window.addEventListener('hashchange', function () {
+        setTimeout(function () {
+          var now = sectionHost(page);
+          if (now === mountFold.on) return;
+          var old = document.getElementById('showrest');
+          if (old && old.parentNode) old.parentNode.removeChild(old);
+          if (mountFold.on) {
+            mountFold.on.classList.remove('slaf-tail-folded');
+            Array.prototype.forEach.call(mountFold.on.querySelectorAll('.slaf-tail'),
+              function (n) { n.classList.remove('slaf-tail'); });
+          }
+          mountFold.on = null;
+          mountFold(roomId);
+        }, 0);
+      });
+    }
     if (document.getElementById('showrest')) return null;
-    var secs = roomSections(host);
+    var secs = roomSections(page);
     if (secs.length <= FOLD_KEEP) return null;
     var folded = secs.slice(FOLD_KEEP);
     folded.forEach(function (sec) { sec.classList.add('slaf-tail'); });
     host.classList.add('slaf-tail-folded');
+    mountFold.on = host;
 
     var btn = document.createElement('button');
     btn.type = 'button';
@@ -1102,6 +1146,7 @@
 
     function unfold() {
       host.classList.remove('slaf-tail-folded');
+      mountFold.on = null;
       if (btn.parentNode) btn.parentNode.removeChild(btn);
       window.removeEventListener('hashchange', check);
     }
@@ -1129,15 +1174,15 @@
     if (typeof document === 'undefined' || typeof window === 'undefined') return null;
     var host = document.querySelector('main') || document.querySelector('.wrap');
     if (!host) return null;
-    var secs = roomSections(host);
-    if (secs.length < 2) return null;
+    if (roomSections(host).length < 2) return null;
     var queued = false;
     function current() {
       /* The last section whose top has passed the upper third of the
          screen; at the very bottom, the last section on the page. */
       var line = window.innerHeight * 0.35, hit = null;
       var atEnd = window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 2;
-      secs.forEach(function (sec) {
+      /* Re-read: on a merged page the reading under this changes. D-291. */
+      roomSections(host).forEach(function (sec) {
         if (sec.hidden || getComputedStyle(sec).display === 'none') return;
         var top = sec.getBoundingClientRect().top;
         if (top <= line || (atEnd && top < window.innerHeight)) hit = sec;
@@ -1265,12 +1310,15 @@
     var box = document.createElement('section');
     box.className = 'slaf-progress-host';
     box.id = 'slaf-progress';
-    /* Before the disclaimer if there is one, so the small print stays last.
-       It has to be a CHILD of the host: a `.disclaimer` nested inside a
-       room's own section is a descendant, and insertBefore throws on it. */
-    var tail = host.querySelector('.disclaimer');
-    if (tail && tail.parentNode === host) host.insertBefore(box, tail);
-    else host.appendChild(box);
+    /* Before the page's small print if there is one, so it stays last. The
+       page's is a DIRECT child: a merged room carries a reading's own
+       provenance line, also .disclaimer, nested inside a section, and
+       insertBefore against that throws (D-282). */
+    var tail = null;
+    for (var k = 0; k < host.children.length; k++) {
+      if (host.children[k].classList && host.children[k].classList.contains('disclaimer')) { tail = host.children[k]; break; }
+    }
+    if (tail) host.insertBefore(box, tail); else host.appendChild(box);
 
     /* The version, printed in every room's footer (D-131): version.json
        carries the same string, and the test holds the two together. */

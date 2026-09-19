@@ -59,7 +59,15 @@
   }
   function table(type) { return tables()[TABLE_KEYS[type]] || null; }
   function types() { return Object.keys(TABLE_KEYS); }
-  function questions(type) { var t = table(type); return t ? (t.questions || []).slice() : []; }
+  function questions(type) {
+    var t = table(type);
+    if (!t) return [];
+    /* A choice read from a table (a city, D-297) is filled in from the
+       loaded tables, through the loader's one resolver. */
+    var R = (typeof module === 'object' && module.exports) ? require('./reference.js') : ((typeof self !== 'undefined' && self.SLAF) ? self.SLAF.Reference : null);
+    if (R && R.resolveChoices) R.resolveChoices({ questions: t.questions }, tables());
+    return (t.questions || []).slice();
+  }
 
   /* ---- The household figures an expansion may read ($name) --------------- */
   function context(household) {

@@ -108,7 +108,7 @@ module.exports = function (t) {
   Spine.reset();
 
   /* N/A in an owner room, and the chip everywhere else (D-130). */
-  const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
+  const acc = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
   checkTrue('Where It Goes offers N/A for the workplace plan and the HSA, through the spine', /naButton\('contributionPercent'/.test(acc) && /naButton\('hsaContributed'/.test(acc) && /Spine\.setNotApplicable\(/.test(acc));
   const naHtml = Ownership.naButton('hsaContributed', hh({ notApplicable: { hsaContributed: true } }));
   checkTrue('the button reads its state from the household', /aria-pressed="true"/.test(naHtml) && /data-na-field="hsaContributed"/.test(naHtml) && /aria-pressed="false"/.test(Ownership.naButton('hsaContributed', hh())));

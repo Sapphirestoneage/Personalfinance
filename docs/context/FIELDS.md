@@ -5,39 +5,20 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 114. Traced: 105. No other room mentions it: **53**.
+Fields: 114. Traced: 105. No other room mentions it: **56**.
 
 
-## accounts (7)
-
-- `rothContributed` — Roth so far this year · **no other room mentions it**
-- `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by statement, debt-payoff, student-loans, statements, side-hustle, credential, rollover, roth-aca, property, debates
-- `allocationStocks` — Target: stocks · **no other room mentions it**
-- `allocationBonds` — Target: bonds · **no other room mentions it**
-- `allocationCash` — Target: cash · **no other room mentions it**
-- `rebalanceBand` — Rebalance band · **no other room mentions it**
-
-## big-purchase (3)
+## big-purchase (4)
 
 - `purchasePrice` — The purchase · **no other room mentions it**
 - `purchaseMonths` — Months until the purchase · **no other room mentions it**
 - `purchaseRate` — Financing rate · **no other room mentions it**
+- `dreamsMonthly` — Dreams, a month · **no other room mentions it**
 
-## buckets (1)
+## budget (2)
 
-- `bucketsPlanned` — Time buckets, planned · **no other room mentions it**
-
-## budget (1)
-
-- `monthsClosed` — Months closed · read by skill-tree, exercises
-
-## calendar (4)
-
-- `payCadence` — Paid · **no other room mentions it**
-- `nextPayday` — Next payday, day of month · **no other room mentions it**
-- `billsMonthly` — Bills on a date, a month · **no other room mentions it**
-- `payLaterDue` — Pay-later due this month · **no other room mentions it**
+- `monthsClosed` — Months closed · read by skill-tree
+- `historyCompareTo` — Comparing against · **no other room mentions it**
 
 ## career-move (5)
 
@@ -47,101 +28,91 @@ Fields: 114. Traced: 105. No other room mentions it: **53**.
 - `offerCosts` — The offer’s costs of working, a month · **no other room mentions it**
 - `offerSignOn` — Sign-on · **no other room mentions it**
 
-## debt-payoff (5)
+## cash-flow (4)
 
-- `totalDebt` — Total debt · read by ledger, start, statement, student-loans, credit, dashboard, financial-snapshot, statements, what-if-life, history, wrapped
-- `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, student-loans, calendar, financial-snapshot, statements, rerank, cant-pay
+- `payCadence` — Paid · **no other room mentions it**
+- `nextPayday` — Next payday, day of month · **no other room mentions it**
+- `billsMonthly` — Bills on a date, a month · **no other room mentions it**
+- `payLaterDue` — Pay-later due this month · **no other room mentions it**
+
+## debates (1)
+
+- `unlearningDropped` — Rules let go of · **no other room mentions it**
+
+## debt-payoff (9)
+
+- `loanPlan` — Student loan plan · **no other room mentions it**
+- `loanExtra` — Extra to the loans, a month · **no other room mentions it**
+- `idrShare` — Income-driven share · **no other room mentions it**
+- `forgivenessYears` — Forgiveness after · **no other room mentions it**
+- `totalDebt` — Total debt · read by ledger, start, budget, statement, dashboard, financial-snapshot, what-if-life, one-pager
+- `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, statement, financial-snapshot, values, cant-pay
 - `debtBalance` — Balance · read by ledger, start
 - `debtRate` — Interest rate · read by ledger, foo-ladder, debates
 - `debtMinPayment` — Minimum payment, a month · read by ledger
 
 ## decumulation (3)
 
-- `stockShare` — Share in stocks · read by exercises
-- `plannedAnnualDraw` — Planned draw, a year · read by exercises
-- `socialSecurityAt` — Social Security from · read by exercises
-
-## dreamline (1)
-
-- `dreamsMonthly` — Dreams, a month · **no other room mentions it**
-
-## enough (1)
-
-- `enoughMonthly` — Enough, a month · **no other room mentions it**
-
-## estate (3)
-
-- `beneficiariesSet` — Beneficiaries named · **no other room mentions it**
-- `willExists` — A will · **no other room mentions it**
-- `poaExists` — A power of attorney · **no other room mentions it**
-
-## exercises (1)
-
-- `exercisesDone` — Exercises done · read by skill-tree
+- `stockShare` — Share in stocks · read by skill-tree
+- `plannedAnnualDraw` — Planned draw, a year · read by skill-tree
+- `socialSecurityAt` — Social Security from · read by skill-tree
 
 ## expenses (8)
 
-- `rentMonthly` — Rent or mortgage, a month · read by cash-flow, calendar, housing, property, debates
-- `monthlyExpenses` — Monthly expenses · read by start, cash-flow, budget, statement, variable-income, calendar, dashboard, financial-snapshot, fire, fire-lab, statements, real-hourly-wage, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, enough, adventure, week, buckets, dreamline, reversibility, unlearning, debates, one-pager
-- `foodMonthly` — Food, a month · read by ledger, statements
-- `accommodationMonthly` — Rent or mortgage, a month · read by ledger, statements
-- `transportationMonthly` — Getting around, a month · read by ledger, statements
-- `wantsMonthly` — Everything else, a month · read by ledger, statements
+- `rentMonthly` — Rent or mortgage, a month · read by cash-flow, financial-snapshot, housing, debates
+- `monthlyExpenses` — Monthly expenses · read by start, income, cash-flow, budget, statement, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
+- `foodMonthly` — Food, a month · read by ledger, statement
+- `accommodationMonthly` — Rent or mortgage, a month · read by ledger, statement
+- `transportationMonthly` — Getting around, a month · read by ledger, statement
+- `wantsMonthly` — Everything else, a month · read by ledger, statement
 - `therapyMonthly` — Therapy, a month · read by ledger
 - `annualLine` — Once-a-year costs · read by ledger
 
-## fire (2)
+## fire (3)
 
-- `retireAge` — Stop working at · read by dashboard, coast-date, stacker, exercises, rollover, what-if-life, micro-retirement, decumulation, middle-class-trap, buckets, one-pager
-- `coastAge` — Coast: arrive by · read by coast-date
+- `enoughMonthly` — Enough, a month · **no other room mentions it**
+- `retireAge` — Stop working at · read by statement, dashboard, skill-tree, what-if-life, decumulation, career-move, week, debates, one-pager
+- `coastAge` — Coast: arrive by · **no other room mentions it**
 
-## giving (2)
+## goals (1)
 
-- `givingPct` — Giving, share of income · **no other room mentions it**
-- `givingTarget` — Giving, a year · **no other room mentions it**
-
-## history (1)
-
-- `historyCompareTo` — Comparing against · **no other room mentions it**
+- `reversibilityDecision` — Weighed for undoing · **no other room mentions it**
 
 ## housing (4)
 
 - `rentAlternative` — A place you would rent instead, a month · **no other room mentions it**
 - `homePrice` — The place, its price · **no other room mentions it**
-- `downPct` — Down payment, share of price · read by property
-- `mortgageRate` — Mortgage rate · read by unlearning
+- `downPct` — Down payment, share of price · read by financial-snapshot
+- `mortgageRate` — Mortgage rate · read by debates
 
-## income (3)
+## income (8)
 
-- `ledgerIncome` — Income logged, a month · read by variable-income, statements
+- `incomeLow` — A low month · **no other room mentions it**
+- `incomeHigh` — A high month · **no other room mentions it**
+- `bufferMonths` — Buffer, months · **no other room mentions it**
+- `variableWindow` — Rolling window · **no other room mentions it**
+- `ledgerIncome` — Income logged, a month · read by statement
+- `futureIncome` — Money that is coming · read by statement
 - `incomeType` — What kind of pay · read by ledger
 - `paySurvives` — Keeps paying if the job goes · read by ledger, start
 
-## kids (3)
-
-- `tuitionTarget` — Tuition target, per child · **no other room mentions it**
-- `tuitionSaved` — Saved for tuition so far · **no other room mentions it**
-- `tuitionMonthly` — Going to tuition, a month · **no other room mentions it**
-
-## partner (4)
+## partner (7)
 
 - `partnerName` — The other of you · **no other room mentions it**
 - `partnerDob` — Their birth year · read by ledger
 - `splitMode` — How shared costs are split · **no other room mentions it**
 - `sharedMonthly` — Shared costs, a month · **no other room mentions it**
+- `tuitionTarget` — Tuition target, per child · **no other room mentions it**
+- `tuitionSaved` — Saved for tuition so far · **no other room mentions it**
+- `tuitionMonthly` — Going to tuition, a month · **no other room mentions it**
 
-## protection (2)
+## protection (5)
 
 - `healthCover` — Health cover · read by runway
-- `healthMonthly` — Health cover, a month · read by runway, offer-compare
-
-## rerank (1)
-
-- `rerankCut` — What The Rerank would cut · read by stacker
-
-## reversibility (1)
-
-- `reversibilityDecision` — The decision being weighed · **no other room mentions it**
+- `healthMonthly` — Health cover, a month · read by runway, career-move
+- `beneficiariesSet` — Beneficiaries named · **no other room mentions it**
+- `willExists` — A will · **no other room mentions it**
+- `poaExists` — A power of attorney · **no other room mentions it**
 
 ## runway (7)
 
@@ -153,13 +124,11 @@ Fields: 114. Traced: 105. No other room mentions it: **53**.
 - `floorMonthly` — The floor, a month · **no other room mentions it**
 - `swanTarget` — Your sleep-at-night number · read by financial-snapshot
 
-## skill-tree (1)
+## skill-tree (3)
 
 - `skillsDone` — Skills done · **no other room mentions it**
-
-## stacker (1)
-
-- `practiceLedger` — Practice ledger · read by skill-tree
+- `exercisesDone` — Exercises done · **no other room mentions it**
+- `practiceLedger` — Practice ledger · **no other room mentions it**
 
 ## start (17)
 
@@ -167,25 +136,32 @@ Fields: 114. Traced: 105. No other room mentions it: **53**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by income, expenses, cash-flow, statement, accounts, debt-payoff, student-loans, tax, dashboard, financial-snapshot, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, credential, cant-pay, rollover, roth-aca, middle-class-trap, career-move, partner, wrapped, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, expenses, cash-flow, statement, accounts, debt-payoff, student-loans, tax, variable-income, calendar, dashboard, financial-snapshot, fire, statements, real-hourly-wage, hassle, self-employed, side-hustle, credential, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, adventure, week, buckets, dreamline, reversibility, unlearning, one-pager
+- `filingStatus` — Filing status · read by income, expenses, statement, debt-payoff, tax, dashboard, financial-snapshot, fire, cant-pay, decumulation, career-move, partner, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, statement, debt-payoff, tax, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
-- `cashSavings` — Cash & savings · read by ledger, cash-flow, budget, statement, variable-income, calendar, dashboard, financial-snapshot, statements, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, reversibility, unlearning, history, wrapped, one-pager
+- `cashSavings` — Cash & savings · read by ledger, income, cash-flow, budget, statement, dashboard, financial-snapshot, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
-- `employmentStatus` — Working situation · read by ledger, student-loans, tax, runway, offer-compare, unlearning
-- `employerMatch` — Employer match · read by financial-snapshot, foo-ladder, statements, offer-compare, unlearning
-- `capturingFullMatch` — Capturing the full match · read by expenses, dashboard, financial-snapshot, stacker, wrapped
-- `hasDebt` — Any debt · read by student-loans, dashboard, unlearning
-- `contributionPercent` — Workplace contribution · read by ledger, accounts, tax, statements, what-if-life
+- `employmentStatus` — Working situation · read by ledger, debt-payoff, tax, runway, career-move, debates
+- `employerMatch` — Employer match · read by statement, financial-snapshot, foo-ladder, career-move, debates
+- `capturingFullMatch` — Capturing the full match · read by expenses, dashboard, financial-snapshot, skill-tree, one-pager
+- `hasDebt` — Any debt · read by debt-payoff, dashboard, debates
+- `contributionPercent` — Workplace contribution · read by ledger, statement, tax, what-if-life
 - `highestDeductible` — Highest deductible · read by statement, runway, protection
 - `dependents` — Anyone depending on your income · too generic to trace
 
-## statement (9)
+## statement (16)
 
-- `otherAssets` — Property & other assets · read by ledger, statements, estate, wrapped
+- `rothContributed` — Roth so far this year · **no other room mentions it**
+- `hsaContributed` — HSA so far this year · **no other room mentions it**
+- `marginalRate` — Marginal tax rate · read by debt-payoff, tax, decumulation, career-move, housing, debates
+- `allocationStocks` — Target: stocks · **no other room mentions it**
+- `allocationBonds` — Target: bonds · **no other room mentions it**
+- `allocationCash` — Target: cash · **no other room mentions it**
+- `rebalanceBand` — Rebalance band · **no other room mentions it**
+- `otherAssets` — Property & other assets · read by ledger, protection, one-pager
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
-- `netWorth` — Net worth · read by ledger, dashboard, financial-snapshot, race, statements, what-if-life, history, wrapped, one-pager
+- `netWorth` — Net worth · read by ledger, budget, dashboard, financial-snapshot, fire, what-if-life, one-pager
 - `assetValue` — What each account or thing is worth · read by ledger
 - `assetCharacter` — How it is taxed on the way out · read by ledger
 - `assetTier` — Which pile it sits in · read by ledger
@@ -193,33 +169,18 @@ Fields: 114. Traced: 105. No other room mentions it: **53**.
 - `assetInstitution` — Where it is held · **no other room mentions it**
 - `assetAccountType` — Account type · **no other room mentions it**
 
-## student-loans (4)
-
-- `loanPlan` — Student loan plan · **no other room mentions it**
-- `loanExtra` — Extra to the loans, a month · **no other room mentions it**
-- `idrShare` — Income-driven share · **no other room mentions it**
-- `forgivenessYears` — Forgiveness after · **no other room mentions it**
-
 ## tax (2)
 
 - `otherPreTax` — Other pre-tax, a year · **no other room mentions it**
 - `withheld` — Withheld so far · too generic to trace
 
-## timeline (1)
+## values (3)
 
-- `futureIncome` — Money that is coming · read by statement
+- `givingPct` — Giving, share of income · **no other room mentions it**
+- `givingTarget` — Giving, a year · **no other room mentions it**
+- `rerankCut` — What The Rerank would cut · read by skill-tree
 
-## unlearning (1)
-
-- `unlearningDropped` — Rules let go of · **no other room mentions it**
-
-## variable-income (4)
-
-- `incomeLow` — A low month · **no other room mentions it**
-- `incomeHigh` — A high month · **no other room mentions it**
-- `bufferMonths` — Buffer, months · **no other room mentions it**
-- `variableWindow` — Rolling window · **no other room mentions it**
-
-## week (1)
+## week (2)
 
 - `designedHours` — The designed week, hours placed · **no other room mentions it**
+- `bucketsPlanned` — Time buckets, planned · **no other room mentions it**
