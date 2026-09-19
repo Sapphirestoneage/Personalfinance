@@ -8765,6 +8765,22 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
 })();
 
+section('Plain words on the path: the ledes name the thing, the number and the unit (D-258)');
+
+(function () {
+  const rooms = ['start', 'income', 'expenses', 'cash-flow', 'budget', 'statement', 'accounts', 'debt-payoff', 'student-loans', 'credit', 'tax', 'calendar', 'fire', 'fire-lab', 'coast-date', 'statements', 'real-hourly-wage', 'variance', 'variable-income'];
+  rooms.forEach(id => {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms/' + id + '.html'), 'utf8');
+    const m = /<p class="room-lede">([\s\S]*?)<\/p>/.exec(src);
+    const lede = m ? m[1].replace(/<[^>]+>/g, '') : '';
+    checkTrue(id + ': the lede has no dash and no sentence over thirty words', lede.length > 0 && lede.indexOf('\u2014') === -1 && lede.split(/[.!?]\s+/).every(sn => sn.split(/\s+/).length <= 30), lede.slice(0, 80));
+    const room = Registry.byId(id);
+    checkTrue(id + ': the registry blurb carries no dash either', !!room && room.blurb.indexOf('\u2014') === -1, room && room.blurb.slice(0, 80));
+  });
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  checkTrue('the month\'s four figures on Cash Flow link to the rooms they come from', /Ownership\.linkTo\('income', 'sources', 'cash-flow'\)/.test(cf) && /Ownership\.linkTo\('expenses', 'spending', 'cash-flow'\)/.test(cf));
+})();
+
 section('Budget: the month said plainly (D-257)');
 
 (function () {

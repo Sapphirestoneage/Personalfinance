@@ -53,9 +53,13 @@ Updated: 2026-09-19
   The lens toggle says what it does and hides where nothing changes
   (D-256); Budget leads each month with what is left, in a sentence
   (D-257).
+  The path rooms' ledes and blurbs say what they measure in plain
+  words, and Cash Flow's figures link to their rooms (D-258).
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
-  readable by a third grader and a FIRE person alike. Queued, in order:
-  a plain-language lede pass.
+  readable by a third grader and a FIRE person alike. The queue from
+  that brief is done (D-250 to D-258); what stays open is the same pass
+  on the rooms off the path, and every figure a link in the rooms that
+  still print one bare.
 - **Boxes line up now (D-249).** Reported from a phone, third time asked:
   side-by-side controls sat 16px apart on 17 pages. Labels in a row reserve
   the same number of lines, so the boxes start level whatever a label does.

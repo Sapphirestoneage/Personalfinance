@@ -85,7 +85,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Cash Flow</h1>
-  <p class="room-lede">When the money moves. This month at a glance, every receipt on its date, and where it all flows. What a typical month costs is typed once, in <a href="expenses.html#spending">Expenses</a>.</p>
+  <p class="room-lede">When money moves. This month at a glance, every receipt on its date, what hits your account and when, and where it all goes. What a typical month costs is typed once, in <a href="expenses.html#spending">Expenses</a>.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -286,9 +286,9 @@
     renderGlance(h, summary, flow);
     setCard('out-net-flow', flow, function (v) { return Money.formatCents(v); },
       Money.isOk(flow) ? dl([
-        ['Take-home pay', Money.formatCents(flow.netMonthlyIncomeCents)],
-        ['Spending', Money.formatCents(flow.spendMonthlyCents)],
-        ['Into savings', Money.formatCents(flow.savingsMonthlyCents)],
+        ['<a href="' + Ownership.linkTo('income', 'sources', 'cash-flow') + '">Take-home pay</a>', Money.formatCents(flow.netMonthlyIncomeCents)],
+        ['<a href="' + Ownership.linkTo('expenses', 'spending', 'cash-flow') + '">Spending</a>', Money.formatCents(flow.spendMonthlyCents)],
+        ['<a href="' + Ownership.linkTo('accounts', 'setup', 'cash-flow') + '">Into savings</a>', Money.formatCents(flow.savingsMonthlyCents)],
         ['Unassigned', Money.formatCents(flow.unassignedCents)]
       ]) + '<p class="slaf-reason">Spending is the month typed in <a href="expenses.html#spending">Expenses</a>; the log below is what actually left.</p>' : '');
     renderLog(h);

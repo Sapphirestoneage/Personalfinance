@@ -14660,6 +14660,29 @@ out and names it; within, fast and over; the sentences), lane 2,
 `node tools/context/build.js --check`; Budget at 390px with the demo,
 clean console.
 
+## D-258 — Plain words on the path: the ledes name the thing, the number and the unit
+
+**Why.** The owner: "all the words feel sing-songy; even I'm having a
+difficult time understanding what it is, what the purpose is and what
+it's measuring"; and "treat this like financial planning software,
+meant to be understood by third graders and FIRE people alike."
+
+**Decision.** The ledes of the sixteen rooms on the path (Start Here
+through Variable Income) and their registry blurbs are rewritten in
+short sentences that name the thing, the number and the unit, with no
+dashes and no flourish; the room says what it measures before anything
+else. `test/run.js` holds the line: no dash and no sentence over thirty
+words in a path room's lede or blurb. On Cash Flow, the month's four
+figures link to the rooms they come from, so a number is a door.
+
+**Replaces or removes.** The old ledes and blurbs on those rooms.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node test/forms.js`,
+`node tools/context/build.js --check`; the path rooms at 390px, clean
+console.
+
 ---
 
 # The Dungeons & Dividends entries
