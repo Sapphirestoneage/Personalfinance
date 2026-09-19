@@ -83,7 +83,7 @@
   /* "Rough", "not sure yet", a figure leaning on a guess. It was written as
      var(--color-warning, #d97706) in a dozen places and the token was never
      declared, so every one of them fell back to a raw orange that is not in
-     this palette and misses AA on the ground. Declared here, once. D-259. */
+     this palette and misses AA on the ground. Declared here, once. D-303. */
   --color-warning: var(--color-caution);
 
   /* ---- Typography ------------------------------------------------------
@@ -191,7 +191,7 @@ body.slaf {
    every sentence and every input hard against both edges of the glass, and it
    is why "← Every door" sat half off the screen. Same gutter as .slaf-wrap,
    plus the safe-area inset so a notched phone in landscape keeps it. A room
-   that wants a wider column says so as `main.slaf-room`. D-259. */
+   that wants a wider column says so as `main.slaf-room`. D-303. */
 .slaf-room {
   max-width: var(--measure);
   margin: 0 auto;
@@ -356,7 +356,7 @@ h3 { font-size: var(--text-md); }
 .slaf-seed-btn[aria-pressed="true"], .slaf-seed-btn[aria-checked="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
 .slaf-seed-note { flex-basis: 100%; font-size: var(--text-xs); color: var(--color-text-faint); }
 
-/* ---- A switch that looks like a switch (D-259) ---------------------------
+/* ---- A switch that looks like a switch (D-303) ---------------------------
    Settings drew every switch as a grey pill reading "On" or "Off" and styled
    the on state off [aria-pressed], which a role="switch" never carries — so
    an on switch and an off switch were the same grey pill and the only
@@ -464,7 +464,7 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 /* The quiet variant had no border, no fill and no padding, so beside a real
    button it read as a link dropped into the row. Quiet should mean "second",
    not "not a button": a faint outline and its own padding, so the eye still
-   ranks it below the primary but the finger can see where to land. D-259. */
+   ranks it below the primary but the finger can see where to land. D-303. */
 .slaf-btn--quiet {
   background: transparent;
   border-color: var(--color-border);
@@ -865,7 +865,7 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
    container (the One-Pager's section switches sit in `.row-controls`) fell
    all the way back to the browser's default button: a grey slab with no on
    state at all, which is most of what made that card look broken. The look
-   now belongs to the button; `.choices` is only the row that holds it. D-259. */
+   now belongs to the button; `.choices` is only the row that holds it. D-303. */
 .choices { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .choice { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); color: var(--color-text); padding: var(--space-2) var(--space-3); font: inherit; font-size: var(--text-sm); cursor: pointer; text-align: left; min-height: 44px; }
 .choices .choice { flex: 1 1 auto; }
@@ -886,7 +886,7 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
    here from the ⓘ widget's first shape and nothing has emitted them since.
    They were not merely dead: `.slaf-math` is now the name of the sheet at
    the foot of this file, so this block was quietly adding a stray accent
-   border to it. Removed. D-259. */
+   border to it. Removed. D-303. */
 
 /* ---- Manage sources: hide, set aside, restore (shared/manage.js) ---------- */
 .slaf-manage-toggle { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; }
@@ -1277,7 +1277,7 @@ a:hover { color: var(--sapphire-100); }
 /* `display: block` on a <summary> throws away the disclosure triangle the
    browser draws for `list-item`, so this fold rendered as a dead grey
    heading with nothing to say it opened, and nobody opened it. A caret of
-   its own, a tap target, and a colour that says it is a control. D-259. */
+   its own, a tap target, and a colour that says it is a control. D-303. */
 .slaf-export-h { display: flex; align-items: center; gap: var(--space-2); cursor: pointer;
   min-height: 44px; font-size: var(--text-xs); text-transform: uppercase;
   letter-spacing: var(--tracking-eyebrow); color: var(--color-text-muted); }
@@ -1301,11 +1301,11 @@ a:hover { color: var(--sapphire-100); }
 .slaf-backup-acts > * { min-width: 0; }
 /* The restore file and the two readable saves are different kinds of thing,
    so they sit apart with a rule between them rather than in one row of
-   identical buttons where the wrong one is the easiest to press. D-259. */
+   identical buttons where the wrong one is the easiest to press. D-303. */
 .slaf-backup-acts--quiet { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
 .slaf-backup-note { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); }
 a.slaf-btn[data-backup="pdf"] { display: inline-flex; align-items: center; }
-/* The passphrase row of a protected backup (D-261): two boxes, a hint, two
+/* The passphrase row of a protected backup (D-305): two boxes, a hint, two
    buttons, in the markup from the start and only ever shown or hidden. */
 .slaf-backup-pass { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--color-border-active); border-radius: var(--radius-md); background: var(--color-surface); }
 .slaf-backup-field { display: block; margin-top: var(--space-2); }
@@ -1418,7 +1418,7 @@ a.slaf-btn[data-backup="pdf"] { display: inline-flex; align-items: center; }
 /* OPAQUE, and over a backdrop. It used to paint on --color-surface-raised,
    a 10% tint, with nothing behind it: the room's own text showed straight
    through the sheet and you read two screens at once. That is the exact
-   thing D-157 forbids for anything that floats OVER the page. D-259. */
+   thing D-157 forbids for anything that floats OVER the page. D-303. */
 .slaf-math-backdrop { position: fixed; inset: 0; background: rgba(2, 8, 23, .62); z-index: 59; }
 .slaf-math { position: fixed; left: 0; right: 0; bottom: 0; max-height: 80vh; overflow: auto; overscroll-behavior: contain; z-index: 60; padding: var(--space-3) max(var(--space-4), env(safe-area-inset-left)) max(var(--space-5), env(safe-area-inset-bottom)); background: var(--color-panel); color: var(--color-text); border-top: 1px solid var(--color-border-strong); border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,.45); font-size: var(--text-sm); }
 /* The close button was floated right, which let the title run under it and

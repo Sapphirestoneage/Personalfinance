@@ -30,7 +30,7 @@
                                page first, then the restore file (protected
                                with a passphrase, or plain) and its load;
                                a fingerprint after either, so two devices
-                               can be compared by eye (D-261)
+                               can be compared by eye (D-305)
 
    WHAT A FILE HOLDS. Each key's stored string, as JSON where it parses
    ({ json: … }) and as text where it does not ({ text: … }), so a file is
@@ -154,7 +154,7 @@
     catch (e) { return no('That file is not readable. It may be cut off, or not finished downloading. Nothing was changed.'); }
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return no('That is a JSON file, but not a Money Rooms backup. Nothing was changed.');
 
-    /* A protected backup (shared/vault.js, D-261): the caller opens it with
+    /* A protected backup (shared/vault.js, D-305): the caller opens it with
        the passphrase and inspects the plaintext. Named here so the page can
        ask for the passphrase instead of saying "not a backup". */
     if (obj.format === 'money-rooms-sealed') {
@@ -328,7 +328,7 @@
     var el = typeof host === 'string' ? doc.querySelector(host) : host;
     if (!el) return null;
     var o = opts || {};
-    /* TWO KINDS OF SAVE, and they were not told apart (D-259).
+    /* TWO KINDS OF SAVE, and they were not told apart (D-303).
        "Save a copy" wrote the .json backup, which is the only file that can
        restore a device, and which opens, when you tap it on a phone, as a
        screenful of code. Somebody looking for their numbers found braces.
@@ -336,7 +336,7 @@
        read and a page you can hand over come first, and the backup file is
        the quiet one that says, in words, that it is not meant to be read.
 
-       AND THE BACKUP IS PROTECTED (D-261). The restore file carries every
+       AND THE BACKUP IS PROTECTED (D-305). The restore file carries every
        balance in plain text; anyone who found it in Downloads could read it.
        With a passphrase it is sealed with the browser's own crypto (shared/
        vault.js) and nobody, this app included, can open it without the
@@ -348,7 +348,7 @@
     var canSeal = !!(V && V.available && V.available());
     /* Your Data frames the widget with its own heading and has its own door
        in, so there it mounts headless (no eyebrow, no lede) and without the
-       load row: one place to load, one place to save. D-261. */
+       load row: one place to load, one place to save. D-305. */
     var headless = o.headless === true, withLoad = o.load !== false;
     el.className = (el.className ? el.className + ' ' : '') + 'slaf-backup';
     el.innerHTML = (headless ? '' : '<span class="slaf-eyebrow">Save your numbers</span>'

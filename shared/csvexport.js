@@ -47,7 +47,7 @@
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.CsvExport = api; }
 })(typeof self !== 'undefined' ? self : null, function (Money, Schema, LedgerRows, Doors, Csv, Xlsx, Zipfile, Ownership) {
   'use strict';
-  /* `institution` joins the descriptive columns (D-260): who holds the
+  /* `institution` joins the descriptive columns (D-304): who holds the
      account, who the card is with, who pays the wage. It is written out so a
      spreadsheet can group and subtotal by bank the way the app now does, and
      like door, level, label, unit, state, as_of and source it is a column

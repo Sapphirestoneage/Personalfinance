@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 16:34Z"/>
+<meta name="slaf-build" content="2026-09-19 17:18Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Tax · SPARKS</title>
@@ -13,6 +13,18 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-098.
+
+  TWO READINGS SINCE D-301.
+
+    #what-it-takes   the bracket picture, as before
+    #the-cliff       the lines where the state stops helping, and what a
+                     raise you name would cross
+
+  THE CLIFF READS engines/cliff.js, which reads the poverty guideline and the
+  marketplace schedule from data/aca_2026.json through Tax.acaCliff (the one
+  place that schedule is walked) and the program lines from
+  data/benefit_cliffs_2026.json. It writes nothing: the raise is a what-if.
+
 
   1. READS   Gross annual income, filing status and state (Start Here); the
              workplace contribution percent (Start Here); the working
@@ -46,6 +58,23 @@
 <style>
   section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  /* ---- The cliff (D-301) ---- */
+  #view-the-cliff .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
+  #view-the-cliff .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
+  #view-the-cliff .cl-ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
+  #view-the-cliff .cl-ask label { display: block; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-1); }
+  #view-the-cliff .cl-rows { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  #view-the-cliff .cl-rows > li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  #view-the-cliff .cl-rows > li:first-child { border-top: none; }
+  #view-the-cliff .cl-top { display: flex; justify-content: space-between; gap: var(--space-3); align-items: baseline; }
+  #view-the-cliff .cl-name { font-weight: 600; }
+  #view-the-cliff .cl-line { font-variant-numeric: tabular-nums; color: var(--color-text-muted); white-space: nowrap; }
+  #view-the-cliff .cl-say { margin-top: var(--space-1); }
+  #view-the-cliff li.is-crossed .cl-say { color: var(--color-negative, #b3261e); }
+  #view-the-cliff .cl-na { color: var(--color-text-muted); }
+  #view-the-cliff small { display: block; margin-top: var(--space-1); color: var(--color-text-muted); font-size: var(--text-xs); line-height: var(--leading-loose); }
+  @media (max-width: 480px) { #view-the-cliff .cl-ask { grid-template-columns: 1fr; } }
+
 </style>
 </head>
 <body class="slaf">
@@ -57,7 +86,15 @@
 </header>
 
 <main class="slaf-wrap">
+  <nav class="slaf-hats" id="hats" aria-label="Two readings of the state: what it takes, and where it stops helping">
+    <a href="#what-it-takes" data-view="view-what-it-takes">What it takes</a>
+    <a href="#the-cliff" data-view="view-the-cliff">The cliff</a>
+  </nav>
+
   <div class="notice" id="load-notice" hidden></div>
+
+  <!-- ===== WHAT IT TAKES (this room's own reading) ===== -->
+  <section id="view-what-it-takes">
   <div class="room-standalone" id="room-standalone" hidden></div>
 
   <section class="slaf-card" id="number">
@@ -97,6 +134,42 @@
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
   </section>
+  </section>
+
+  <!-- ===== THE CLIFF (this room's own reading, D-301) ===== -->
+  <section id="view-the-cliff" hidden>
+  <p class="slaf-lede">A raise that crosses a line can cost more than it pays. Where the lines are for a household your size, in your state, and what a raise you name would cross.</p>
+
+  <section class="slaf-card" id="cl-number">
+    <span class="slaf-eyebrow">Against the poverty line</span>
+    <p class="head-num" id="cl-head"></p>
+    <p class="head-sub" id="cl-sub"></p>
+  </section>
+
+  <!-- LIVE-FORM: built once. Two boxes in the HTML; only .value is read. -->
+  <section class="slaf-card" id="cl-inputs" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">A raise you name</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Nothing here is saved. Your income and state are read from the rooms that own them; the raise is a what-if.</p>
+    <div class="cl-ask">
+      <div><label for="cl-in-raise">A raise, a year</label>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="cl-in-raise" placeholder="e.g. 5,000" aria-label="A raise, a year"/></span></div>
+      <div><label for="cl-in-size">People counted</label>
+        <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="cl-in-size" placeholder="" aria-label="People counted"/></span></div>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="cl-lines" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Where the lines are</span>
+    <ul class="cl-rows" id="cl-lines-list"></ul>
+    <p class="slaf-hint" id="cl-caveat" style="margin:var(--space-3) 0 0">Children’s Medicaid and CHIP run far above these lines and vary by state; they are not modelled here, on purpose, rather than modelled wrong. The state lists were recalled, not fetched, and change by session.</p>
+  </section>
+
+  <section class="slaf-card" id="cl-reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What this is reading</span>
+    <div id="cl-reading-list" style="margin-top:var(--space-3)"></div>
+    <p class="slaf-hint" id="cl-provenance" style="margin:var(--space-3) 0 0"></p>
+  </section>
+  </section>
 
   <p class="disclaimer">
     Educational tool, not financial advice. An estimate from bracket tables
@@ -129,6 +202,8 @@
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
+<script src="../engines/rothaca.js"></script>
+<script src="../engines/cliff.js"></script>
 <script>
 (function () {
   'use strict';
@@ -149,6 +224,11 @@
 
   Room.mount({
     id: 'tax',
+    /* One of two readings since D-301: a part mount with a root, so the
+       document-level listeners answer only this reading (D-282); the router
+       registers the room. */
+    part: true,
+    root: 'view-what-it-takes',
     tables: ['federalBrackets', 'stateBrackets', 'seTax', 'aca', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
     reads: ['grossAnnualIncome', 'filingStatus', 'state', 'contributionPercent', 'employmentStatus'],
 
@@ -169,7 +249,7 @@
           + ' against ' + Money.formatCents(p.withheldCents) + ' withheld' + (p.stateIncluded ? '' : ' (federal only)');
       }
       if (p.mixedWithoutOwnWork) sub += '. No own-work income entered yet, so all of it is treated as wages';
-      if (p.selfEmploymentTaxCents > 0 || p.employment === 'selfEmployed' || p.employment === 'both') sub += '. <a href="' + Ownership.linkTo('self-employed', 'quarterly') + '">The quarterly estimates for this →</a>';
+      if (p.selfEmploymentTaxCents > 0 || p.employment === 'selfEmployed' || p.employment === 'both') sub += '. <a href="' + Ownership.linkTo('career-move', 'quarterly') + '">The quarterly estimates for this →</a>';
       return { label: 'Tax, as a share of pay', value: pct(p.value), sub: sub, zone: null, result: p };
     },
 
@@ -253,5 +333,130 @@
 
 })();
 </script>
+
+<script>
+/* ---- what the state takes, and the lines where it stops helping (D-301) ----
+   Which reading is on screen is read off the hash and nothing else, so every
+   old deep link lands. Switching hides and shows and rebuilds nothing: a view
+   that rebuilt its inputs would close the soft keyboard under a finger, which
+   is D-034. The simplest reading is first and is the default.
+
+   A reading may name a gate branch. Merging rooms must not widen who sees
+   what: a reading that was a room the gate hid is a reading the gate hides,
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271). */
+(function () {
+  'use strict';
+  function el(id) { return document.getElementById(id); }
+  var VIEWS = [
+    { id: 'view-the-cliff', match: /^#(the-cliff|cl-)/ },
+    { id: 'view-what-it-takes', match: /.*/ }
+  ];
+  function open(v) {
+    if (!v.branch) return true;
+    var G = SLAF.Gate, S = SLAF.Spine;
+    return !G || !S ? true : G.exists(S.getProfile(), v.branch);
+  }
+  function route() {
+    var h = location.hash || '';
+    var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    /* The default reading is the last row and matches everything, so there
+       is always one. When the hash asks for a reading the gate has taken
+       away, fall back to the DEFAULT — the room's plainest reading, and the
+       one the person would have got with no hash at all — not to whichever
+       gated reading happens to sit first in this list. */
+    var fallback = VIEWS[VIEWS.length - 1];
+    var on = open(asked) ? asked
+           : open(fallback) ? fallback
+           : VIEWS.filter(open)[0] || fallback;
+    VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
+      var v = VIEWS.filter(function (x) { return x.id === a.getAttribute('data-view'); })[0];
+      a.hidden = !!v && !open(v) && v.id !== on.id;
+      a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
+    });
+    var t = h && h.length > 1 ? el(h.slice(1)) : null;
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+  /* A reading can appear or go when the household changes under it. */
+  if (SLAF.Spine && SLAF.Spine.onChange) SLAF.Spine.onChange(route);
+  /* The ROOM registers itself and mounts the sidebar once, here. Every
+     reading below is a reading, not a room: two registerRoom calls on one
+     page mark the same room visited twice and mount a second sidebar. */
+  SLAF.Spine.registerRoom('tax');
+  if (SLAF.Progress) SLAF.Progress.mount('tax');
+})();
+</script>
+
+
+<script>
+/* ---- READING view-the-cliff, this room's own (D-301) ---- */
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Cliff = SLAF.Cliff, Ownership = SLAF.Ownership;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var TABLES = null;
+  function typedCents(id) { return Money.parseMoney(el(id).value); }
+  function typedCount(id) { var n = String(el(id).value).replace(/[^0-9]/g, ''); return n === '' ? null : Number(n); }
+  function money(c) { return esc(Money.formatCents(c)); }
+  function rowHtml(p, r) {
+    var say;
+    if (!p.applies) {
+      say = '<span class="cl-na">' + esc(p.whyNot) + '</span>';
+    } else if (p.kind === 'slope') {
+      if (Money.isEntered(p.lostCents)) {
+        say = 'Help now: about ' + money(p.helpBeforeCents) + ' a year off ' + esc(p.benchmarkNote) + '.'
+          + (r.raiseCents > 0 ? ' After the raise: ' + money(p.helpAfterCents) + '.'
+              + (p.lostCents > 0 ? ' <strong>' + money(p.lostCents) + ' a year lost.</strong>' : ' Nothing lost.') : '');
+      } else {
+        say = esc(p.lostWhy || 'Cannot be priced yet.');
+      }
+      if (p.crossed) say += ' The raise crosses the line where the help stops altogether.';
+    } else if (p.above) {
+      say = money(r.magiCents - p.lineCents) + ' above it already.';
+    } else {
+      say = money(p.distanceCents) + ' below it' + (p.crossed ? ' — <strong>the raise crosses it, and all of it goes.</strong>' : '.');
+    }
+    return '<li class="cl-row' + (p.applies && p.crossed ? ' is-crossed' : '') + '">'
+      + '<div class="cl-top"><span class="cl-name">' + esc(p.label) + '</span>'
+      + '<span class="cl-line">' + (p.applies && Money.isEntered(p.lineCents) ? 'line at ' + money(p.lineCents) : '') + '</span></div>'
+      + '<div class="cl-say">' + say + '</div>'
+      + '<small>' + esc(p.note) + '</small></li>';
+  }
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var size = typedCount('cl-in-size');
+    var r = Cliff.where(h, TABLES, { raiseCents: typedCents('cl-in-raise'), householdSize: size === null ? undefined : size });
+    var head = el('cl-head'), sub = el('cl-sub'), list = el('cl-lines-list');
+    if (!Money.isOk(r)) { head.textContent = Money.EM_DASH; sub.textContent = r.reason; list.innerHTML = ''; return; }
+    /* The household's own count is proposed in the box, never written to it (D-060). */
+    if (document.activeElement !== el('cl-in-size')) el('cl-in-size').placeholder = String(r.householdSize);
+    head.textContent = r.raiseCents > 0
+      ? 'A ' + Money.formatCents(r.raiseCents) + ' raise crosses ' + (r.value === 0 ? 'no line' : r.value + (r.value === 1 ? ' line' : ' lines'))
+      : 'Your income is ' + r.fplMultiple + '× the poverty line';
+    sub.textContent = 'For ' + r.householdSize + (r.householdSize === 1 ? ' person' : ' people') + ' the line is ' + Money.formatCents(r.fplCents) + ' a year' + (r.state ? ', in ' + r.state : '') + '. Income counted: ' + Money.formatCents(r.magiCents) + '.'
+      + (r.raiseCents > 0 && r.lostCents > 0 ? ' The raise takes ' + Money.formatCents(r.lostCents) + ' a year of help with it.' : '');
+    list.innerHTML = r.programs.map(function (p) { return rowHtml(p, r); }).join('');
+    el('cl-reading-list').innerHTML = ['grossAnnualIncome', 'state'].map(function (f) { return Ownership.chip(f, h, 'tax'); }).join('');
+    el('cl-provenance').innerHTML = Reference.provenance(TABLES, ['benefitCliffs', 'aca']).map(function (p) {
+      return '<strong>' + esc(p.id) + '</strong> v' + esc(p.version) + ' — ' + esc(p.label) + '. ' + esc(p.note);
+    }).join('<br/>');
+  }
+  ['cl-in-raise', 'cl-in-size'].forEach(function (id) { el(id).addEventListener('input', render); });
+  Spine.onChange(render);
+  Reference.load(['benefitCliffs', 'aca', 'states']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.textContent = 'Couldn’t load the reference tables: ' + err.message;
+  });
+})();
+</script>
+
 </body>
 </html>

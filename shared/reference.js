@@ -92,6 +92,7 @@
     priceToRent: 'price_to_rent.json',
     mortgageRates: 'mortgage_rates.json',
     colIndex: 'col_index.json',
+    benefitCliffs: 'benefit_cliffs_2026.json',
     movingCost: 'moving_cost.json',
     vpwTable: 'vpw_table.json',
     ssBendPoints: 'ss_bend_points_2026.json',
@@ -124,7 +125,6 @@
     earlyAccessRules: 'early_access_rules_2026.json',
     careerMomentum: 'career_momentum.json',
     debates: 'debates.json',
-    weddingDefaults: 'wedding_defaults.json',
     stateBrackets: 'state_brackets_2026.json'
   };
 
@@ -474,9 +474,31 @@
     return out;
   }
 
+  /* A question (an event template's, a block type's) may say `choicesFrom`
+     — {table, path, label, first} — instead of carrying `choices`. The list
+     is read from the named table here, once, so a template never keeps a
+     private copy of the forty cities data/col_index.json owns. A table that
+     is not loaded leaves the question as it was. D-297. */
+  function resolveChoices(obj, tables) {
+    if (!obj || !obj.questions) return obj;
+    obj.questions.forEach(function (q) {
+      var from = q.choicesFrom;
+      if (!from || q.choices) return;
+      var node = tables && tables[from.table];
+      (from.path || []).forEach(function (k) { node = node && node[k]; });
+      if (!node || typeof node !== 'object') return;
+      q.choices = (from.first || []).concat(Object.keys(node).map(function (id) {
+        var row = node[id];
+        return { id: id, label: row && from.label && row[from.label] !== undefined ? String(row[from.label]) : id };
+      }));
+    });
+    return obj;
+  }
+
   return {
     TABLE_FILES: TABLE_FILES,
     load: load,
+    resolveChoices: resolveChoices,
     lookupEffectiveTaxRate: lookupEffectiveTaxRate,
     lookupRetirementMultiple: lookupRetirementMultiple,
     lookupNetWorthPercentile: lookupNetWorthPercentile,

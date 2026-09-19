@@ -1,6 +1,6 @@
 /* ==========================================================================
    shared/vault.js — a backup file nobody else can open.
-   DECISIONS.md D-261.
+   DECISIONS.md D-305.
    --------------------------------------------------------------------------
    Every figure in the app leaves the device only as a file the person
    makes. Until now that file was plain JSON: anyone who found it in a

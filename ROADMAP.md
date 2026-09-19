@@ -144,37 +144,38 @@ weighting `[PENDING]` with an instruction not to guess. That decision is now
 resolved as **tunable by age cohort** (D-043), the weights live in
 `data/health_score.json`, and §12 has no pending decisions left at all.
 
-### Not built in Tier 2 (9)
+### Not built in Tier 2 (6)
 
-Kids · House Hack · Whole Life Insurance · Prenup/Estate · Personal
-Inflation · HCOL/MCOL/LCOL modifier · Second Mouse Framework · Trust
-Framework · Advice Translator
+House Hack · Whole Life Insurance · Prenup/Estate · Personal Inflation ·
+Second Mouse Framework · Trust Framework
 
-Each is blocked on something specific, and none of them on effort:
+Three came off this list in the D-297 reconciliation, two of them long
+shipped and miscounted here: **Kids** reads `data/childcare_by_state.json`
+through `engines/kids.js` (Family's children reading); the **Advice
+Translator** is `data/advice_translator.json` + `engines/advice.js`, rules
+not an LLM, read by The Referee; and the **HCOL/MCOL/LCOL modifier** is
+declined on purpose — this app measures a person against their own month,
+so cost of living is already inside every number, and the city index is
+read where it belongs, by the move event and the move block (D-297).
+
+Each of the six is blocked on something specific, and none of them on
+effort:
 
 - **House Hack** — `SPEC.md` says to build it "as an extension of the Tier 17
   ownership-cost engine … **not standalone**". That engine does not exist and
   Tier 17 is outside this repo's scope. Building it standalone would be
   building it against the instruction.
-- **Kids** — regional childcare cost data, plus a tuition-inflation
-  assumption.
 - **Whole Life Insurance** — the spec says accurate modelling "needs actual
   policy illustration data". Cash value is back-loaded and non-linear; a
   straight-line guess would be wrong in the direction that flatters the
   policy.
 - **Personal Inflation** — a maintained BLS category-level inflation
   dataset, weighted against 12+ months of tracked spend.
-- **HCOL/MCOL/LCOL modifier** — a COL index, which is the same dataset
-  problem as its Tier 1 standalone twin.
 - **Prenup/Estate** — the spec calls it "a document-generation problem, not
   a calculation problem". The inputs are the Net Worth inventory, re-presented.
 - **Second Mouse Framework** — "not a calculator; contextual guidance text
   attached to Bank Bonus calc and Sports Arb calc". Both of those are
   unbuilt or out of scope, so there is nothing for the text to attach to.
-- **Advice Translator** — the spec flags it as "plausibly needs an
-  LLM-backed classification step, not pure rules logic", and §10 puts
-  free-text/LLM-backed tools on a separate build track, out of scope for
-  Tier 0–2 unless explicitly requested.
 - **Trust Framework** — the odd one out, and the only unbuilt Tier 2 item
   that is **not blocked by anything**. The spec describes it as a "static
   3-question vetting checklist", which is shippable as it stands. It is not
@@ -215,11 +216,13 @@ exactly what D-036 exists to stop.
    cross-references rather than duplicates. Confirmed against the code: one
    calculation each, in `engines/tier0.js`.
 
-5. **The Ratio Glossary (Tier 18) has no room**, though six of its eighteen
-   ratios already compute somewhere — DTI, savings rate, emergency fund
-   coverage, net-worth-to-income, retirement multiple and FI ratio. A
-   glossary room would mostly be assembling existing engine outputs and
-   naming them, which makes it unusually cheap for its length.
+5. **The Ratio Glossary (Tier 18) is Every Ratio**, The Scorecard's
+   reading since D-044, and it is complete: all eighteen Tier 18 ratios
+   and twenty-seven of Tier 19's compute, and every one of the forty-five
+   carries an explainer — what it is, why it matters, what moves it, what
+   it looks at — from `data/ratio_explainers.json`, checked 45 for 45 on
+   every run. What was missing was the names people search by, which The
+   Scorecard now answers to (D-298).
 
 ---
 

@@ -22,6 +22,7 @@ These take an argument the sweep has no real value for (a skill, a goal, a templ
 |---|---|---|
 | careermove.offerHousehold | household, offer | offer |
 | careermove.offerWork | household, offer | offer |
+| goals.plan | household, goal, tables, opts | goal |
 | skills.due | household, skill, today | skill |
 | skills.isActive | household, skill | skill |
 | skills.returnOnEffort | household, skill, tables, ctx | skill, ctx |
@@ -42,7 +43,7 @@ These take an argument the sweep has no real value for (a skill, a goal, a templ
 
 ## Section 2: property tests
 
-Seed 20260910, 100 cases per property, 93 files for 90 engines, 417 properties, 7 failing. Source: `tests/properties/run.js`. A failing row carries the shrunk spec (dollars) that breaks it; `tests/properties/_harness.js` `build()` turns it back into a household.
+Seed 20260910, 100 cases per property, 93 files for 90 engines, 416 properties, 7 failing. Source: `tests/properties/run.js`. A failing row carries the shrunk spec (dollars) that breaks it; `tests/properties/_harness.js` `build()` turns it back into a household.
 
 ### Failing properties
 
@@ -109,6 +110,7 @@ Seed 20260910, 100 cases per property, 93 files for 90 engines, 417 properties, 
 | calendar | no throw, no NaN or Infinity, on any valid household (2 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | careermove | no throw, no NaN or Infinity, on any valid household (2 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | cashflow | no throw, no NaN or Infinity, on any valid household (10 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
+| cliff | no throw, no NaN or Infinity, on any valid household (1 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | coast | no throw, no NaN or Infinity, on any valid household (1 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction; growing for no months is the identity, and more months never shrink a pot at a non-negative rate; with every input handed in, the walk answers: a whole-cent pot at the coast date, or a named reason |
 | countdown | already there reads reached now; nothing in and nothing growing reads never; else whole months forward; a bigger monthly contribution never lands later, and the bands order the range; the honest monthly figure lands within the months it was asked for |
 | credential | credentialROI on random inputs: no throw, no NaN, whole cents, the same answer twice |
@@ -184,7 +186,6 @@ Seed 20260910, 100 cases per property, 93 files for 90 engines, 417 properties, 
 | variableincome | no throw, no NaN or Infinity, on any valid household (4 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | variance | no throw, no NaN or Infinity, on any valid household (3 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | vpw | the withdrawal percentage sits in (0, 1] and never falls with age; a plan never throws, never returns NaN, and is the same twice |
-| wedding | no throw, no NaN or Infinity, on any valid household (1 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction; guests × per guest + fixed + ring is the total; a typed total wins; family help never lands later |
 | week | no throw, no NaN or Infinity, on any valid household (8 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | windfall | investing at once beats spreading it out whenever the market rate is at least the cash rate; the same input gives the same run twice, and every path cell is whole cents |
 | worth | no throw, no NaN or Infinity, on any valid household (4 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |

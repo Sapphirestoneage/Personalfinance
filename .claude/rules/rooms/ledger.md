@@ -14,7 +14,7 @@ Reference data: access_rules.json, confidence_weights.json, debt_rules.json, eff
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), lastPay (start), cashSavings (start), employmentStatus (start), contributionPercent (start), partnerDob (partner), totalDebt (debt-payoff), otherAssets (statement), +16 more
 Latest decisions:
-  - D-259 — The screens a person actually meets: what floats, what toggles, what a Save gives you, and an intake that asks one family at a time
+  - D-303 — The screens a person actually meets: what floats, what toggles, what a Save gives you, and an intake that asks one family at a time
   - D-241 — Nothing counts a person's failures before they have typed anything
   - D-230 — The Ledger swallows navigation: six pages become six hats
   - D-226 — The Ledger's doors, and the gutter three rooms never had

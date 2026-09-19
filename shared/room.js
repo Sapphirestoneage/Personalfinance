@@ -35,6 +35,17 @@
                                the registration, the sidebar and the hash,
                                and a reading that claimed any of them would
                                claim them twice. Everything else is the same.
+       prefix: 'kids-'         (optional) TWO readings on one page, each
+       root: 'view-kids'       built from this template (D-265). The skeleton
+                               ids below are fixed names, so a second copy on
+                               the same page would write into the first one's
+                               nodes. `prefix` puts every id behind a name of
+                               this reading's own (kids-room-number), which
+                               also keeps them unique for deep links; `root`
+                               is the id of the section the reading lives in,
+                               so its document listeners ignore controls that
+                               belong to the reading next door. Pass both or
+                               neither.
      })
 
    LIVE-FORM: built once. Inputs are built from the spec on mount and only
@@ -54,14 +65,15 @@
   var IDS = ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'];
 
   function el(id) { return document.getElementById(id); }
+  function elIn(prefix, id) { return document.getElementById((prefix || '') + id); }
   function esc(s) {
     return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
 
-  function control(spec) {
-    var id = 'ctl-' + spec.ctl;
+  function control(spec, prefix) {
+    var id = (prefix || '') + 'ctl-' + spec.ctl;
     var label = '<span class="slaf-label">' + esc(spec.label) + '</span>';
     var affix = spec.kind === 'money' ? '<span class="slaf-affix">$</span>' : '';
     var suffix = spec.kind === 'pct' ? '<span class="slaf-affix">%</span>' : spec.affix ? '<span class="slaf-affix">' + esc(spec.affix) + '</span>' : '';
@@ -101,6 +113,13 @@
     var ROOM_ID = spec.id;
     var TABLES = null;
     var lastChart = null;
+    /* Two readings from this template on one page: each names its own nodes
+       and ignores the other's controls (D-265). With neither set this is the
+       same lookup it always was. */
+    var PREFIX = spec.prefix || '';
+    var el = function (id) { return elIn(PREFIX, id); };
+    var ROOT = spec.root ? document.getElementById(spec.root) : null;
+    function mine(node) { return !ROOT || ROOT.contains(node); }
     var all = (spec.inputs || []).concat(spec.more || []);
     if (spec.inputs && (spec.inputs.length < 2 || spec.inputs.length > 5)) throw new Error('A room has two to five inputs; ' + ROOM_ID + ' has ' + spec.inputs.length);
 
@@ -113,11 +132,12 @@
          needs three says `labelLines: 3` in its spec rather than letting
          that one label shove its own box below its neighbour's.
          test/alignment.js fails the build if any pair is still crooked. */
+      var ctl = function (c) { return control(c, PREFIX); };
       var gridOpen = spec.labelLines
         ? '<div class="room-grid" style="--slaf-label-lines:' + (+spec.labelLines) + '">'
         : '<div class="room-grid">';
-      inputsHost.innerHTML = gridOpen + (spec.inputs || []).map(control).join('') + '</div>'
-        + (spec.more && spec.more.length ? '<details class="room-more"><summary>' + esc(spec.moreLabel || 'Fine-tune') + '</summary>' + gridOpen + spec.more.map(control).join('') + '</div></details>' : '');
+      inputsHost.innerHTML = gridOpen + (spec.inputs || []).map(ctl).join('') + '</div>'
+        + (spec.more && spec.more.length ? '<details class="room-more"><summary>' + esc(spec.moreLabel || 'Fine-tune') + '</summary>' + gridOpen + spec.more.map(ctl).join('') + '</div></details>' : '');
     }
     var byCtl = {};
     all.forEach(function (c) { byCtl[c.ctl] = c; });
@@ -293,6 +313,14 @@
       if (!TABLES) return;
       var real = Spine.getProfile();
       var h = household();
+      /* Display rounding (D-181) is a page-global, and since the merges a
+         page holds several readings. A PART mount rounds its own figures
+         and then puts the unit back, so the reading beside it — which
+         computes from its own typed boxes, all of them sure — is not
+         rounded to a precision that belongs to someone else's fields. The
+         Deal showed a $714 cash flow as $1,000 and a $481 monthly loss as
+         $0 that way, the moment it became a reading of Housing. D-288. */
+      var outer = spec.part ? Money.displayRounding() : null;
       paintInputs(h);
       paintHorizon();
       paintApproximate(h);
@@ -305,6 +333,7 @@
       paintReads(h, real);
       paintStandalone(h);
       if (typeof spec.after === 'function') spec.after(h, TABLES);
+      if (outer !== null) Money.setDisplayRounding(outer);
     }
     function render() { if (queued) return; queued = true; setTimeout(function () { queued = false; paint(); }, 0); }
 
@@ -318,7 +347,7 @@
     document.addEventListener('focusin', function (evt) {
       var node = evt.target;
       var c = node.getAttribute && byCtl[node.getAttribute('data-ctl')];
-      if (!c || node.tagName !== 'INPUT') return;
+      if (!c || node.tagName !== 'INPUT' || !mine(node)) return;
       if (Suggest && Suggest.isSuggested(node)) return;   /* Suggest clears it on focus */
       var raw = c.read(household());
       if (Money.isEntered(raw)) node.value = c.kind === 'money' ? String(raw / 100) : c.kind === 'pct' ? String(Math.round(raw * 1000) / 10) : String(raw);
@@ -327,7 +356,7 @@
     document.addEventListener('focusout', function (evt) {
       var node = evt.target;
       var c = node.getAttribute && byCtl[node.getAttribute('data-ctl')];
-      if (!c || node.tagName !== 'INPUT') return;
+      if (!c || node.tagName !== 'INPUT' || !mine(node)) return;
       var text = Suggest ? Suggest.entered(node) : node.value;
       if (Suggest && Suggest.isSuggested(node) && String(text).trim() === '') return;
       var raw = parse(c, text);
@@ -337,19 +366,20 @@
     document.addEventListener('change', function (evt) {
       var node = evt.target;
       var c = node.getAttribute && byCtl[node.getAttribute('data-ctl')];
-      if (!c || node.tagName !== 'SELECT') return;
+      if (!c || node.tagName !== 'SELECT' || !mine(node)) return;
       var v = node.value === '' ? null : node.value;
       labelled(c, v, function () { c.write(v); });
       render();
     });
     document.addEventListener('click', function (evt) {
       var b = evt.target.closest('[data-choices] .choice');
-      if (b) { var c = byCtl[b.closest('[data-choices]').getAttribute('data-choices')]; if (c) { var v = b.getAttribute('data-value'); labelled(c, v, function () { c.write(v); }); render(); } return; }
+      if (b && mine(b)) { var c = byCtl[b.closest('[data-choices]').getAttribute('data-choices')]; if (c) { var v = b.getAttribute('data-value'); labelled(c, v, function () { c.write(v); }); render(); } return; }
+      if (b) return;
       var l = evt.target.closest('.slaf-lens-btn');
-      if (l && Lens) { Lens.setMode(l.getAttribute('data-lens')); render(); }
+      if (l && mine(l) && Lens) { Lens.setMode(l.getAttribute('data-lens')); render(); }
     });
     document.addEventListener('keydown', function (evt) {
-      if (evt.key === 'Enter' && evt.target.tagName === 'INPUT' && evt.target.getAttribute('data-ctl')) { evt.preventDefault(); evt.target.blur(); }
+      if (evt.key === 'Enter' && evt.target.tagName === 'INPUT' && evt.target.getAttribute('data-ctl') && mine(evt.target)) { evt.preventDefault(); evt.target.blur(); }
     });
 
     function jumpToHash() {

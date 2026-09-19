@@ -2,16 +2,18 @@
 paths:
   - "rooms/decumulation.html"
   - "engines/decumulation.js"
+  - "engines/rothaca.js"
 ---
-# Drawing It Down (`decumulation`)
-File: rooms/decumulation.html · 276 lines
-Engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation
-Reference data: confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, irs_limits_2026.json, +4 more
+# The Back Half (`decumulation`)
+File: rooms/decumulation.html · 796 lines
+Engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation, tax, reachable, trap, rothaca
+Reference data: aca_2026.json, access_rules.json, confidence_weights.json, debates.json, early_access_rules_2026.json, effective_tax_rates_2026.json, +11 more
 Owns: stockShare, plannedAnnualDraw, socialSecurityAt
-Reads from other owners: grossAnnualIncome (start), retireAge (fire), monthlyExpenses (expenses)
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), marginalRate (statement), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:
+  - D-286 — A gate on a room is not a gate on its readings
+  - D-284 — The Back Half, four readings of coming down
   - D-228 — You cannot size the mountain until you know how you come down it
   - D-104 — Decumulation: the age the money lasts to
   - D-098 — The first six tranche rooms: what each owns, before it is built
-  - D-094 — One pager in, one pager out: the core
 Full context: node tools/context/pack.js decumulation

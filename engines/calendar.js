@@ -207,9 +207,18 @@
       if (l.monthDue === null) return;
       months.forEach(function (ym) {
         if (parseInt(ym.slice(5, 7), 10) !== l.monthDue) return;
-        var date = ym + '-01';
+        /* On its day when the bill has one, the 1st when it does not (D-263).
+           A day past the end of a short month falls on the last day of it,
+           the same rule a monthly log occurrence already uses. The date stays
+           ESTIMATED either way: a renewal you expect on the 28th is still
+           expected, and `exact` is what the budget counts as having happened.
+           This changes which day it is drawn on, and nothing about counting. */
+        var y = +ym.slice(0, 4), mi = +ym.slice(5, 7) - 1;
+        var dim = new Date(y, mi + 1, 0).getDate();
+        var dom = Money.isEntered(l.dayDue) ? Math.min(l.dayDue, dim) : 1;
+        var date = ym + '-' + (dom < 10 ? '0' : '') + dom;
         if (indexOfDate[date] === undefined) return;
-        annualHits.push({ id: l.id, label: l.label || 'A yearly cost', cents: l.amountCents, index: indexOfDate[date], date: date, dom: 1, kind: 'annual', dateKind: 'estimated', potential: false });
+        annualHits.push({ id: l.id, label: l.label || 'A yearly cost', cents: l.amountCents, index: indexOfDate[date], date: date, dom: dom, kind: 'annual', dateKind: 'estimated', potential: false });
       });
     });
     var annualAt = {};

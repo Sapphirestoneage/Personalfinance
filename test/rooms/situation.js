@@ -40,7 +40,7 @@ module.exports = function (t) {
      fold, silently. */
   var known = {}; Gate.BRANCHES.forEach(function (k) { known[k] = true; });
   checkTrue('every branch a room requires is a branch the gate has',
-    Registry.all().every(function (r) { return Registry.requires(r.id).every(function (k) { return known[k]; }); }));
+    Registry.all().every(function (r) { return [].concat.apply([], Registry.requires(r.id)).every(function (k) { return known[k]; }); }));
 
   /* Before the intake, a room is absent only when it needs a FACT nobody
      has given yet — a partner, a dependent, a status. The exact list is
@@ -49,25 +49,48 @@ module.exports = function (t) {
      What belongs here is that whatever IS absent can still say why. */
   var offAtStart = Registry.inOrder().filter(function (r) { return !Registry.applies(r, {}); });
   checkTrue('before you say anything, a room that is absent still says why',
-    offAtStart.length > 0 && offAtStart.every(function (r) { return !!Gate.why({}, Registry.requires(r.id)); }));
+    offAtStart.length > 0 && offAtStart.every(function (r) { return !!Registry.whyAbsent(r, {}); }));
 
   /* The six situations, and what each turns off. Written out rather than
      computed, so a change to the gate has to be agreed to here too.
      Between Jobs left this list in D-232: it is a reading of The Cushion
      now, and The Cushion applies to everyone — the question "how long while
-     job hunting" is one an employed person is entitled to ask. */
+     job hunting" is one an employed person is entitled to ask.
+     Price the Dream left it in D-270 for the same reason: it is a reading
+     of Big Purchase, and what one thing costs is a question anyone may ask.
+     The dream reading still needs a wage to price the list in hours, and
+     says so rather than disappearing.
+     Kids and Tuition left it in D-271 by merging INTO a room that is still
+     gated: Family requires a partner OR a dependent, and each reading keeps
+     the branch its room had, so the hat is absent when the branch is. What
+     changed is that one entry covers both — a household with children and
+     no partner now has the room, and only the children's hat in it.
+     Variable Income and the Real Hourly Wage left it in D-277, readings of
+     Income, which requires nothing: what comes in is a question for
+     everybody, and each of those two readings keeps its own branch, so its
+     hat is absent exactly where its room used to be. Where It Goes left it
+     in D-278 the same way — a reading of The Statement, which everybody
+     has, keeping the retirement branch on its own hat.
+     Six work rooms left it in D-281 as readings of Work, which keeps the
+     appliesWhen every one of them carried. The Account You Left Behind is
+     NOT among them: it never had that rule, and folding it in would have
+     taken it from exactly the people it is for. It is held, with the
+     reason, in docs/room-map.json.
+     The Back Half left it in D-286. D-284 merged three what-ifs into it —
+     what you can reach, through the 59½ wall, the price of cover — and
+     left the room's decumulation branch where it was, which hid all three
+     from everybody still working. They are FOR people still working: the
+     trap test only means anything to someone employed with the money
+     behind the wall. So the room requires nothing and the DRAW carries the
+     branch on its own hat. The student rule is a different mechanism and
+     stays: appliesWhen keeps the whole room away, hats and all. */
   var EXPECTED = {
-    employed:     ['self-employed', 'decumulation', 'partner', 'kids', 'variable-income'],
-    selfEmployed: ['accounts', 'decumulation', 'partner', 'kids'],
-    unemployed:   ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner', 'kids',
-                   'variable-income', 'dreamline'],
-    student:      ['self-employed', 'accounts', 'protection', 'decumulation', 'partner',
-                   'kids', 'variable-income'],
-    retired:      ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'career-move', 'partner', 'kids',
-                   'variable-income', 'dreamline'],
-    both:         ['decumulation', 'partner', 'kids']
+    employed:     ['partner'],
+    selfEmployed: ['partner'],
+    unemployed:   ['fire', 'tax', 'partner'],
+    student:      ['protection', 'decumulation', 'partner'],
+    retired:      ['fire', 'career-move', 'partner'],
+    both:         ['partner']
   };
   Object.keys(EXPECTED).forEach(function (status) {
     var h = household(status);
@@ -75,9 +98,12 @@ module.exports = function (t) {
     /* Membership, not order: which rooms fold is the gate's fact; where they
        sit on the path is the registry's (D-244). */
     check(status + ': the rooms that do not apply', off.slice().sort().join(','), EXPECTED[status].slice().sort().join(','));
-    /* And every one of them can say why, in words. */
+    /* And every one of them can say why, in words. Two things can take a
+       room away since D-281 — a branch it needs, or a situation it says it
+       is not for — so this asks the registry, which knows both, rather
+       than the gate, which knows one. */
     checkTrue(status + ': … and each says why in a sentence',
-      off.every(function (id) { return !!Gate.why(h, Registry.requires(id)); }));
+      off.every(function (id) { return !!Registry.whyAbsent(Registry.byId(id), h); }));
   });
 
   /* A room that applies must never produce a reason — that is what would

@@ -20,6 +20,11 @@
       "needs": "offer"
     },
     {
+      "fn": "goals.plan",
+      "params": "household, goal, tables, opts",
+      "needs": "goal"
+    },
+    {
       "fn": "skills.due",
       "params": "household, skill, today",
       "needs": "skill"

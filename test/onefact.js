@@ -33,7 +33,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
 
   /* Answer every askable, non-repeat row in Express, through the owner. */
   await page.goto(BASE + '/rooms/ledger.html#all-at-once', { waitUntil: 'networkidle' });
-  /* An empty household arrives in the walk, one family at a time (D-259).
+  /* An empty household arrives in the walk, one family at a time (D-303).
      The writes below go through the owner, not the screen, so the full view
      is switched on first: every row on the page at once, none behind a step. */
   await page.waitForSelector('.xmode-btn[data-mode="all"]', { state: 'attached' });

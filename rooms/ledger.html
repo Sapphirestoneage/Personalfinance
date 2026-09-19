@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 16:34Z"/>
+<meta name="slaf-build" content="2026-09-19 17:18Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>The Ledger · SPARKS</title>
@@ -198,7 +198,7 @@
   
   #view-round1 .insight .needs { color: var(--color-text-muted); }
 
-  /* ---- All at once, from rooms/express.html as it stood at D-259/D-260: the
+  /* ---- All at once, from rooms/express.html as it stood at D-303/D-304: the
      walk, the levels as folds with a Done badge, lines named and grouped by
      their institution. Scoped under #view-express, one rule each. ---- */
   #view-express .xbar { position: sticky; top: 0; z-index: 4; background: var(--color-bg); border-bottom: 1px solid var(--color-border); padding: var(--space-2) 0; display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
@@ -1339,9 +1339,9 @@
     var s = situation();
     if (s) Array.prototype.forEach.call(document.querySelectorAll('[data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === s ? 'true' : 'false'); });
     var pay = s === 'unemployed' ? Schema.unemploymentOf(hh).lastGrossAnnualCents : (Money.isOk(Schema.grossAnnualIncomeCents(hh)) ? Schema.grossAnnualIncomeCents(hh).value : null);
-    if (Money.isEntered(pay)) el('in-pay').value = Money.formatCents(pay).replace(/^\$/, '');
+    if (Money.isEntered(pay)) el('in-pay').value = Money.forInput(pay).replace(/^\$/, '');
     var cash = Schema.cashCents(hh);
-    if (Money.isOk(cash)) el('in-cash').value = Money.formatCents(cash.value).replace(/^\$/, '');
+    if (Money.isOk(cash)) el('in-cash').value = Money.forInput(cash.value).replace(/^\$/, '');
     paintPayLabel();
   }
   document.addEventListener('click', function (ev) {
@@ -1376,7 +1376,7 @@
 <script>
 (function () {
   'use strict';
-  /* The all-at-once door: rooms/express.html as it stood at D-259/D-260, carried
+  /* The all-at-once door: rooms/express.html as it stood at D-303/D-304, carried
      here when Express retired into the Ledger (D-230). Same rows, same owners;
      the room-only lines (registering the room, the progress strip, the math
      sheet mount) are the Ledger's own. */

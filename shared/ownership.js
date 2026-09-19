@@ -40,6 +40,8 @@
   }
   var api = factory(deps.Money, deps.Schema, deps.Registry, deps.Spine);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
+  /* SLAF.Ownership is THIS module: who owns which field. engines/ownership.js
+     is the property engine and publishes as SLAF.Owning (D-280). */
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Ownership = api; }
 })(typeof self !== 'undefined' ? self : null, function (Money, Schema, Registry, Spine) {
   'use strict';
@@ -110,7 +112,7 @@
 
   function allocationRow(slice, label) {
     return {
-      label: label, owner: 'accounts', anchor: 'allocation',
+      label: label, owner: 'statement', anchor: 'allocation',
       read: function (h) {
         var v = (h.allocation || {})[slice];
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not set.', ['allocation.' + slice]);
@@ -262,7 +264,7 @@
       notApplicableBecause: 'You said there is no employer.'
     },
     rothContributed: {
-      label: 'Roth so far this year', owner: 'accounts', anchor: 'setup',
+      label: 'Roth so far this year', owner: 'statement', anchor: 'setup',
       read: function (h) {
         var v = (h.retirement || {}).rothContributedCents;
         return Money.isEntered(v) ? Money.ok(v)
@@ -271,7 +273,7 @@
       format: money
     },
     hsaContributed: {
-      label: 'HSA so far this year', owner: 'accounts', anchor: 'setup',
+      label: 'HSA so far this year', owner: 'statement', anchor: 'setup',
       read: function (h) {
         var v = (h.retirement || {}).hsaContributedCents;
         return Money.isEntered(v) ? Money.ok(v)
@@ -284,7 +286,7 @@
       notApplicableBecause: 'No HSA without a high-deductible plan.'
     },
     marginalRate: {
-      label: 'Marginal tax rate', owner: 'accounts', anchor: 'setup',
+      label: 'Marginal tax rate', owner: 'statement', anchor: 'setup',
       read: function (h) {
         var a = Schema.resolveAssumptions(h);
         return Money.isEntered(a.marginalRate) ? Money.ok(a.marginalRate)
@@ -407,27 +409,27 @@
       format: money
     },
     beneficiariesSet: {
-      label: 'Beneficiaries named', owner: 'estate', anchor: 'inputs',
+      label: 'Beneficiaries named', owner: 'protection', anchor: 'es-inputs',
       read: function (h) { var v = (h.estate || {}).beneficiariesSet; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['beneficiariesSet']); },
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
     willExists: {
-      label: 'A will', owner: 'estate', anchor: 'inputs',
+      label: 'A will', owner: 'protection', anchor: 'es-inputs',
       read: function (h) { var v = (h.estate || {}).willExists; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['willExists']); },
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
     poaExists: {
-      label: 'A power of attorney', owner: 'estate', anchor: 'inputs',
+      label: 'A power of attorney', owner: 'protection', anchor: 'es-inputs',
       read: function (h) { var v = (h.estate || {}).poaExists; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['poaExists']); },
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
     givingPct: {
-      label: 'Giving, share of income', owner: 'giving', anchor: 'inputs',
+      label: 'Giving, share of income', owner: 'values', anchor: 'gv-inputs',
       read: function (h) { var v = (h.giving || {}).pctOfIncome; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['pctOfIncome']); },
       format: function (v) { return Money.formatRate(v, { decimals: 1 }); }
     },
     givingTarget: {
-      label: 'Giving, a year', owner: 'giving', anchor: 'inputs',
+      label: 'Giving, a year', owner: 'values', anchor: 'gv-inputs',
       read: function (h) { var v = (h.giving || {}).annualTargetCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['annualTargetCents']); },
       format: function (v) { return money(v) + '/yr'; }
     },
@@ -485,17 +487,17 @@
       format: function (v) { return money(v) + '/mo'; }
     },
     tuitionTarget: {
-      label: 'Tuition target, per child', owner: 'kids', anchor: 'inputs',
+      label: 'Tuition target, per child', owner: 'partner', anchor: 'kid-inputs',
       read: function (h) { var v = (h.kids || {}).tuitionTargetCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionTargetCents']); },
       format: money
     },
     tuitionSaved: {
-      label: 'Saved for tuition so far', owner: 'kids', anchor: 'inputs',
+      label: 'Saved for tuition so far', owner: 'partner', anchor: 'kid-inputs',
       read: function (h) { var v = (h.kids || {}).tuitionSavedCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionSavedCents']); },
       format: money
     },
     tuitionMonthly: {
-      label: 'Going to tuition, a month', owner: 'kids', anchor: 'inputs',
+      label: 'Going to tuition, a month', owner: 'partner', anchor: 'kid-inputs',
       read: function (h) { var v = (h.kids || {}).tuitionMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['tuitionMonthlyCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
@@ -542,29 +544,29 @@
       format: function (v) { return Money.formatRate(v, { decimals: 1 }); }
     },
     incomeLow: {
-      label: 'A low month', owner: 'variable-income', anchor: 'inputs',
+      label: 'A low month', owner: 'income', anchor: 'vi-inputs',
       read: function (h) { var s = variableSource(h); return s && Money.isEntered(s.variableLowCents) ? Money.ok(s.variableLowCents) : Money.incomplete('Not entered yet.', ['variableLowCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
     incomeHigh: {
-      label: 'A high month', owner: 'variable-income', anchor: 'inputs',
+      label: 'A high month', owner: 'income', anchor: 'vi-inputs',
       read: function (h) { var s = variableSource(h); return s && Money.isEntered(s.variableHighCents) ? Money.ok(s.variableHighCents) : Money.incomplete('Not entered yet.', ['variableHighCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
     bufferMonths: {
-      label: 'Buffer, months', owner: 'variable-income', anchor: 'inputs',
+      label: 'Buffer, months', owner: 'income', anchor: 'vi-inputs',
       read: function (h) { var v = (h.variableIncome || {}).bufferMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['bufferMonths']); },
       format: function (v) { return v + ' mo'; }
     },
     variableWindow: {
-      label: 'Rolling window', owner: 'variable-income', anchor: 'inputs',
+      label: 'Rolling window', owner: 'income', anchor: 'vi-inputs',
       read: function (h) { var v = (h.variableIncome || {}).windowMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Three months until chosen.', ['windowMonths']); },
       format: function (v) { return v + ' months'; }
     },
 
     /* ---- The third wave: the LATER.md rooms (D-101). ---- */
     enoughMonthly: {
-      label: 'Enough, a month', owner: 'enough', anchor: 'inputs',
+      label: 'Enough, a month', owner: 'fire', anchor: 'en-inputs',
       read: function (h) { var v = (h.enough || {}).monthlyCents; return Money.isEntered(v) ? Money.ok(v, { source: h.enough.source }) : Money.incomplete('Not decided yet.', ['enough']); },
       format: function (v) { return money(v) + '/mo'; }
     },
@@ -574,62 +576,75 @@
       format: function (v) { return v + ' h'; }
     },
     bucketsPlanned: {
-      label: 'Time buckets, planned', owner: 'buckets', anchor: 'inputs',
+      label: 'Time buckets, planned', owner: 'week', anchor: 'bk-inputs',
       read: function (h) { var xs = []; (h.timeBuckets || []).forEach(function (b) { (b.experiences || []).forEach(function (x) { if (Money.isEntered(x.costCents)) xs.push(x.costCents); }); }); return xs.length ? Money.ok(xs.reduce(function (t, c) { return t + c; }, 0), { count: xs.length }) : Money.incomplete('Nothing planned yet.', ['timeBuckets']); },
       format: money
     },
     dreamsMonthly: {
-      label: 'Dreams, a month', owner: 'dreamline', anchor: 'inputs',
+      label: 'Dreams, a month', owner: 'big-purchase', anchor: 'dl-inputs',
       read: function (h) { var ds = (h.dreams || []).filter(function (d) { return Money.isEntered(d.monthlyCents); }); return ds.length ? Money.ok(ds.reduce(function (t, d) { return t + d.monthlyCents; }, 0), { count: ds.length }) : Money.incomplete('No dream priced yet.', ['dreams']); },
       format: function (v) { return money(v) + '/mo'; }
     },
+    /* Can It Be Undone asked this of ONE decision. It is a field on every
+       block of the Decision Room now (D-283), so the row reads across them:
+       how many of the things you are weighing you have asked it of. The
+       stored `reversibility.decisionId` is still read, for a household
+       written before the merge. */
     reversibilityDecision: {
-      label: 'The decision being weighed', owner: 'reversibility', anchor: 'inputs',
-      read: function (h) { var v = (h.reversibility || {}).decisionId; return v ? Money.ok(v) : Money.incomplete('None picked yet.', ['reversibility']); },
-      format: function (v) { return String(v).replace(/[-_]/g, ' '); }
+      label: 'Weighed for undoing', owner: 'goals', anchor: 'goal-list',
+      read: function (h) {
+        var asked = (h.goals || []).filter(function (g) {
+          return Money.isEntered(g.undoCostCents) || Money.isEntered(g.undoMonths) || g.decisionId;
+        });
+        if (asked.length) return Money.ok(asked.length, { ids: asked.map(function (g) { return g.id; }) });
+        var old = (h.reversibility || {}).decisionId;
+        if (old) return Money.ok(1, { ids: [old], legacy: true });
+        return Money.incomplete('Nothing weighed for undoing yet.', ['goals']);
+      },
+      format: function (v) { return v + (v === 1 ? ' block' : ' blocks'); }
     },
     unlearningDropped: {
-      label: 'Rules let go of', owner: 'unlearning', anchor: 'inputs',
+      label: 'Rules let go of', owner: 'debates', anchor: 'inputs',
       read: function (h) { var d = ((h.unlearning || {}).dropped || []); return d.length ? Money.ok(d.length, { ids: d }) : Money.incomplete('None let go of yet.', ['unlearning']); },
       format: function (v) { return v === 0 ? 'none yet' : v + (v === 1 ? ' rule' : ' rules'); }
     },
     loanPlan: {
-      label: 'Student loan plan', owner: 'student-loans', anchor: 'inputs',
+      label: 'Student loan plan', owner: 'debt-payoff', anchor: 'sl-inputs',
       read: function (h) { var v = (h.studentLoans || {}).plan; return v ? Money.ok(v) : Money.incomplete('Not chosen yet.', ['plan']); },
       format: function (v) { return { standard: 'Standard', income_driven: 'Income-driven', aggressive: 'Aggressive' }[v] || v; }
     },
     loanExtra: {
-      label: 'Extra to the loans, a month', owner: 'student-loans', anchor: 'inputs',
+      label: 'Extra to the loans, a month', owner: 'debt-payoff', anchor: 'sl-inputs',
       read: function (h) { var v = (h.studentLoans || {}).extraMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['extraMonthlyCents']); },
       format: function (v) { return money(v) + '/mo'; }
     },
     idrShare: {
-      label: 'Income-driven share', owner: 'student-loans', anchor: 'inputs',
+      label: 'Income-driven share', owner: 'debt-payoff', anchor: 'sl-inputs',
       read: function (h) { var v = (h.studentLoans || {}).idrShare; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['idrShare']); },
       format: function (v) { return Math.round(v * 100) + '% of discretionary income'; }
     },
     forgivenessYears: {
-      label: 'Forgiveness after', owner: 'student-loans', anchor: 'inputs',
+      label: 'Forgiveness after', owner: 'debt-payoff', anchor: 'sl-inputs',
       read: function (h) { var v = (h.studentLoans || {}).forgivenessYears; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['forgivenessYears']); },
       format: function (v) { return v + ' years'; }
     },
     payCadence: {
-      label: 'Paid', owner: 'calendar', anchor: 'inputs',
+      label: 'Paid', owner: 'cash-flow', anchor: 'cal-inputs',
       read: function (h) { var v = (h.calendar || {}).cadence; return v ? Money.ok(v) : Money.incomplete('Not entered yet.', ['cadence']); },
       format: function (v) { return { weekly: 'every week', fortnightly: 'every two weeks', semimonthly: 'twice a month', monthly: 'monthly' }[v] || v; }
     },
     nextPayday: {
-      label: 'Next payday, day of month', owner: 'calendar', anchor: 'inputs',
+      label: 'Next payday, day of month', owner: 'cash-flow', anchor: 'cal-inputs',
       read: function (h) { var v = (h.calendar || {}).nextPaydayDay; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['nextPaydayDay']); },
       format: function (v) { return 'the ' + v + (v === 1 || v === 21 || v === 31 ? 'st' : v === 2 || v === 22 ? 'nd' : v === 3 || v === 23 ? 'rd' : 'th'); }
     },
     billsMonthly: {
-      label: 'Bills on a date, a month', owner: 'calendar', anchor: 'inputs',
+      label: 'Bills on a date, a month', owner: 'cash-flow', anchor: 'cal-inputs',
       read: function (h) { var bs = ((h.calendar || {}).bills || []).filter(function (b) { return Money.isEntered(b.cents); }); return bs.length ? Money.ok(bs.reduce(function (t, b) { return t + b.cents; }, 0), { count: bs.length }) : Money.incomplete('No bills listed yet.', ['bills']); },
       format: function (v) { return money(v) + '/mo'; }
     },
     payLaterDue: {
-      label: 'Pay-later due this month', owner: 'calendar', anchor: 'inputs',
+      label: 'Pay-later due this month', owner: 'cash-flow', anchor: 'cal-inputs',
       read: function (h) { var ps = ((h.calendar || {}).payLater || []).filter(function (b) { return Money.isEntered(b.cents); }); return ps.length ? Money.ok(ps.reduce(function (t, b) { return t + b.cents; }, 0), { count: ps.length }) : Money.incomplete('None listed.', ['payLater']); },
       format: money
     },
@@ -657,7 +672,7 @@
       notApplicableBecause: 'No month closed yet — close one on the Budget.'
     },
     historyCompareTo: {
-      label: 'Comparing against', owner: 'history', anchor: 'inputs',
+      label: 'Comparing against', owner: 'budget', anchor: 'hi-inputs',
       read: function (h) { var v = (h.history || {}).compareTo; return v ? Money.ok(v) : Money.incomplete('The first snapshot, until you pick one.', ['compareTo']); },
       format: function (v) { return 'snapshot ' + String(v).slice(-4); }
     },
@@ -665,7 +680,7 @@
     /* What The Rerank would cut (D-085): the flagged lines, a year's worth.
        Derived, owned by the room that asks the questions. */
     rerankCut: {
-      label: 'What The Rerank would cut', owner: 'rerank', anchor: 'gap',
+      label: 'What The Rerank would cut', owner: 'values', anchor: 'gap',
       read: function (h) {
         var R = (typeof module === 'object' && module.exports)
           ? require('../engines/rerank.js')
@@ -689,7 +704,7 @@
     allocationBonds: allocationRow('bonds', 'Target: bonds'),
     allocationCash: allocationRow('cash', 'Target: cash'),
     rebalanceBand: {
-      label: 'Rebalance band', owner: 'accounts', anchor: 'allocation',
+      label: 'Rebalance band', owner: 'statement', anchor: 'allocation',
       read: function (h) {
         var v = (h.allocation || {}).rebalanceBand;
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not set.', ['rebalanceBand']);
@@ -745,7 +760,7 @@
        period is edited in the room that draws it on a grid, and nowhere
        else. One owner per shared number (D-017). */
     futureIncome: {
-      label: 'Money that is coming', owner: 'timeline', anchor: 'out-periods',
+      label: 'Money that is coming', owner: 'income', anchor: 'out-periods',
       read: function (h) {
         var rows = (h.futureIncome || []).filter(function (f) { return Money.isEntered(f.monthlyCents); });
         if (!rows.length) return Money.incomplete('Nothing listed.', ['futureIncome']);
@@ -844,7 +859,7 @@
       format: function (v) { return v + (v === 1 ? ' skill' : ' skills'); }
     },
     exercisesDone: {
-      label: 'Exercises done', owner: 'exercises', anchor: 'list',
+      label: 'Exercises done', owner: 'skill-tree', anchor: 'list',
       read: function (h) {
         var n = Object.keys((h.exercises && h.exercises.done) || {}).length;
         return n ? Money.ok(n) : Money.incomplete('No exercise completed yet.', ['exercises']);
@@ -854,7 +869,7 @@
     /* The practice ledger: every logged day's worth, summed. Written one
        row at a time by the Skill Stacker and by nothing else. D-090. */
     practiceLedger: {
-      label: 'Practice ledger', owner: 'stacker', anchor: 'today',
+      label: 'Practice ledger', owner: 'skill-tree', anchor: 'today',
       read: function (h) {
         var rows = h.practiceLedger || [];
         if (!rows.length) return Money.incomplete('No days logged yet.', ['practiceLedger']);
@@ -1161,7 +1176,7 @@
     if (writers.length && writers.indexOf(L.owner) === -1) throw new Error('The registry does not list ' + L.owner + ' as a writer of ' + L.path);
     return L.add(fields);
   }
-  /* RENAMING A LINE, through its owner (D-260). Express could add a line and
+  /* RENAMING A LINE, through its owner (D-304). Express could add a line and
      delete a line but never correct one: a card typed as "Amex" with the
      wrong last four had to be removed and retyped, losing its balance and
      its rate with it. These are the line's IDENTITY fields only - what it is

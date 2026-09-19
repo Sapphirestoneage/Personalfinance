@@ -2,13 +2,14 @@
 paths:
   - "rooms/week.html"
   - "engines/week.js"
+  - "engines/buckets.js"
 ---
-# Designed Week (`week`)
-File: rooms/week.html · 280 lines
-Engines: projection, tier0, income, selfemployed, ledger, hourly, cashflow, week
-Reference data: effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json, week_blocks.json
-Owns: designedHours
-Reads from other owners: grossAnnualIncome (start), monthlyExpenses (expenses)
+# The Life (`week`)
+File: rooms/week.html · 525 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly, cashflow, week, ratios, buckets
+Reference data: bucket_ideas.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, ratio_benchmarks.json, ratio_explainers.json, +2 more
+Owns: designedHours, bucketsPlanned
+Reads from other owners: grossAnnualIncome (start), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:
-  - D-115 — Designed Week: 168 hours, priced
+  - D-269 — The Life: the week, and the decades
 Full context: node tools/context/pack.js week

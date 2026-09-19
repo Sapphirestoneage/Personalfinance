@@ -17,359 +17,44 @@
     {
       "id": "fromCity",
       "ask": "Where you are (nearest listed city)",
-      "choices": [
-        {
-          "id": "national",
-          "label": "Not listed — national average"
-        },
-        {
-          "id": "new_york",
-          "label": "New York, NY"
-        },
-        {
-          "id": "san_francisco",
-          "label": "San Francisco, CA"
-        },
-        {
-          "id": "san_jose",
-          "label": "San Jose, CA"
-        },
-        {
-          "id": "honolulu",
-          "label": "Honolulu, HI"
-        },
-        {
-          "id": "boston",
-          "label": "Boston, MA"
-        },
-        {
-          "id": "washington_dc",
-          "label": "Washington, DC"
-        },
-        {
-          "id": "los_angeles",
-          "label": "Los Angeles, CA"
-        },
-        {
-          "id": "seattle",
-          "label": "Seattle, WA"
-        },
-        {
-          "id": "san_diego",
-          "label": "San Diego, CA"
-        },
-        {
-          "id": "oakland",
-          "label": "Oakland, CA"
-        },
-        {
-          "id": "miami",
-          "label": "Miami, FL"
-        },
-        {
-          "id": "portland",
-          "label": "Portland, OR"
-        },
-        {
-          "id": "denver",
-          "label": "Denver, CO"
-        },
-        {
-          "id": "chicago",
-          "label": "Chicago, IL"
-        },
-        {
-          "id": "sacramento",
-          "label": "Sacramento, CA"
-        },
-        {
-          "id": "philadelphia",
-          "label": "Philadelphia, PA"
-        },
-        {
-          "id": "austin",
-          "label": "Austin, TX"
-        },
-        {
-          "id": "minneapolis",
-          "label": "Minneapolis, MN"
-        },
-        {
-          "id": "baltimore",
-          "label": "Baltimore, MD"
-        },
-        {
-          "id": "las_vegas",
-          "label": "Las Vegas, NV"
-        },
-        {
-          "id": "nashville",
-          "label": "Nashville, TN"
-        },
-        {
-          "id": "phoenix",
-          "label": "Phoenix, AZ"
-        },
-        {
-          "id": "raleigh",
-          "label": "Raleigh, NC"
-        },
-        {
-          "id": "charlotte",
-          "label": "Charlotte, NC"
-        },
-        {
-          "id": "atlanta",
-          "label": "Atlanta, GA"
-        },
-        {
-          "id": "salt_lake_city",
-          "label": "Salt Lake City, UT"
-        },
-        {
-          "id": "dallas",
-          "label": "Dallas, TX"
-        },
-        {
-          "id": "tampa",
-          "label": "Tampa, FL"
-        },
-        {
-          "id": "pittsburgh",
-          "label": "Pittsburgh, PA"
-        },
-        {
-          "id": "columbus",
-          "label": "Columbus, OH"
-        },
-        {
-          "id": "houston",
-          "label": "Houston, TX"
-        },
-        {
-          "id": "kansas_city",
-          "label": "Kansas City, MO"
-        },
-        {
-          "id": "detroit",
-          "label": "Detroit, MI"
-        },
-        {
-          "id": "st_louis",
-          "label": "St. Louis, MO"
-        },
-        {
-          "id": "indianapolis",
-          "label": "Indianapolis, IN"
-        },
-        {
-          "id": "cincinnati",
-          "label": "Cincinnati, OH"
-        },
-        {
-          "id": "cleveland",
-          "label": "Cleveland, OH"
-        },
-        {
-          "id": "memphis",
-          "label": "Memphis, TN"
-        },
-        {
-          "id": "oklahoma_city",
-          "label": "Oklahoma City, OK"
-        },
-        {
-          "id": "el_paso",
-          "label": "El Paso, TX"
-        }
-      ],
-      "default": "national"
+      "default": "national",
+      "choicesFrom": {
+        "table": "colIndex",
+        "path": [
+          "cities"
+        ],
+        "label": "label",
+        "first": [
+          {
+            "id": "national",
+            "label": "Not listed — national average"
+          }
+        ]
+      }
     },
     {
       "id": "toCity",
       "ask": "Where you would go",
-      "choices": [
-        {
-          "id": "new_york",
-          "label": "New York, NY"
-        },
-        {
-          "id": "san_francisco",
-          "label": "San Francisco, CA"
-        },
-        {
-          "id": "san_jose",
-          "label": "San Jose, CA"
-        },
-        {
-          "id": "honolulu",
-          "label": "Honolulu, HI"
-        },
-        {
-          "id": "boston",
-          "label": "Boston, MA"
-        },
-        {
-          "id": "washington_dc",
-          "label": "Washington, DC"
-        },
-        {
-          "id": "los_angeles",
-          "label": "Los Angeles, CA"
-        },
-        {
-          "id": "seattle",
-          "label": "Seattle, WA"
-        },
-        {
-          "id": "san_diego",
-          "label": "San Diego, CA"
-        },
-        {
-          "id": "oakland",
-          "label": "Oakland, CA"
-        },
-        {
-          "id": "miami",
-          "label": "Miami, FL"
-        },
-        {
-          "id": "portland",
-          "label": "Portland, OR"
-        },
-        {
-          "id": "denver",
-          "label": "Denver, CO"
-        },
-        {
-          "id": "chicago",
-          "label": "Chicago, IL"
-        },
-        {
-          "id": "sacramento",
-          "label": "Sacramento, CA"
-        },
-        {
-          "id": "philadelphia",
-          "label": "Philadelphia, PA"
-        },
-        {
-          "id": "austin",
-          "label": "Austin, TX"
-        },
-        {
-          "id": "minneapolis",
-          "label": "Minneapolis, MN"
-        },
-        {
-          "id": "baltimore",
-          "label": "Baltimore, MD"
-        },
-        {
-          "id": "las_vegas",
-          "label": "Las Vegas, NV"
-        },
-        {
-          "id": "nashville",
-          "label": "Nashville, TN"
-        },
-        {
-          "id": "phoenix",
-          "label": "Phoenix, AZ"
-        },
-        {
-          "id": "raleigh",
-          "label": "Raleigh, NC"
-        },
-        {
-          "id": "charlotte",
-          "label": "Charlotte, NC"
-        },
-        {
-          "id": "atlanta",
-          "label": "Atlanta, GA"
-        },
-        {
-          "id": "salt_lake_city",
-          "label": "Salt Lake City, UT"
-        },
-        {
-          "id": "dallas",
-          "label": "Dallas, TX"
-        },
-        {
-          "id": "tampa",
-          "label": "Tampa, FL"
-        },
-        {
-          "id": "pittsburgh",
-          "label": "Pittsburgh, PA"
-        },
-        {
-          "id": "columbus",
-          "label": "Columbus, OH"
-        },
-        {
-          "id": "houston",
-          "label": "Houston, TX"
-        },
-        {
-          "id": "kansas_city",
-          "label": "Kansas City, MO"
-        },
-        {
-          "id": "detroit",
-          "label": "Detroit, MI"
-        },
-        {
-          "id": "st_louis",
-          "label": "St. Louis, MO"
-        },
-        {
-          "id": "indianapolis",
-          "label": "Indianapolis, IN"
-        },
-        {
-          "id": "cincinnati",
-          "label": "Cincinnati, OH"
-        },
-        {
-          "id": "cleveland",
-          "label": "Cleveland, OH"
-        },
-        {
-          "id": "memphis",
-          "label": "Memphis, TN"
-        },
-        {
-          "id": "oklahoma_city",
-          "label": "Oklahoma City, OK"
-        },
-        {
-          "id": "el_paso",
-          "label": "El Paso, TX"
-        }
-      ],
-      "default": "raleigh"
+      "default": "raleigh",
+      "choicesFrom": {
+        "table": "colIndex",
+        "path": [
+          "cities"
+        ],
+        "label": "label"
+      }
     },
     {
       "id": "band",
       "ask": "How far",
-      "choices": [
-        {
-          "id": "local",
-          "label": "Across town"
-        },
-        {
-          "id": "regional",
-          "label": "Within the region"
-        },
-        {
-          "id": "crossCountry",
-          "label": "Across the country"
-        }
-      ],
-      "default": "regional"
+      "default": "regional",
+      "choicesFrom": {
+        "table": "movingCost",
+        "path": [
+          "bands"
+        ],
+        "label": "label"
+      }
     },
     {
       "id": "startsOn",
@@ -597,5 +282,6 @@
     "data/federal_brackets_2026.json",
     "data/triple_d.json",
     "data/return_bands.json"
-  ]
+  ],
+  "note": "A question may say choicesFrom instead of choices: {table, path, label, first}. The choices are read from that reference table when the template loads (Events.resolveChoices), so the template keeps no copy of forty cities that data/col_index.json owns. D-297."
 }

@@ -19,6 +19,38 @@
    The output that matters is not the total. It is whether the required
    monthly figure fits in the money you actually have spare — which is why
    this reads Cash Flow's surplus rather than asking again.
+
+   FIVE OUTPUTS ON EVERY BLOCK (D-283). The Decision Room asks the same five
+   questions of anything you are weighing, and `plan` answers all five:
+
+       what it costs      totalCents
+       what it costs you  hours of your life at your real hourly wage, and
+                          the months of FI it pushes back — both through
+                          shared/lens.js, never a second conversion here
+       when it lands      monthsUntil, and monthsAtCurrentContribution when
+                          the two differ
+       whether it fits    affordability, against Cash Flow's surplus
+       can it be undone   undo: the cost and the months to reverse it, and
+                          the verdict those two make — engines/reversibility
+                          .js verdict(), which was a room and is a field
+
+   None of the five is a new formula. That is the point of the shell: a
+   block type adds a way to FILL these, never a sixth answer.
+
+   A LINE CAN PAY YOU (D-299): rent a lodger pays, the thing you sell, the
+   rent you would not pay for a year at home. Typed positive, flagged
+   `pays`, counted negative in itemAmountCents. A block whose lines net
+   negative answers the same five questions the other way round — what it
+   pays, the hours it buys back, when it starts, what it adds — through
+   the same Lens, opposite direction. Not a sixth answer either.
+
+   A LINE CAN BE PRICED PER UNIT (D-293): so many guests at so much each,
+   so many nights at so much a night. `itemAmountCents` makes the line's
+   figure from the two, and `marginalOf` asks what ONE MORE costs — in
+   money, in hours, and in FI days, through the same Lens. That is not a
+   sixth answer. It is the first two asked of the smallest decision inside
+   the block, which for a wedding is the only question anybody actually
+   argues about.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -26,19 +58,23 @@
     deps = {
       Money: require('../shared/money.js'),
       Schema: require('../shared/schema.js'),
-      CashFlow: require('./cashflow.js')
+      CashFlow: require('./cashflow.js'),
+      Lens: require('../shared/lens.js'),
+      Reversibility: require('./reversibility.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Schema: root.SLAF && root.SLAF.Schema,
-      CashFlow: root.SLAF && root.SLAF.CashFlow
+      CashFlow: root.SLAF && root.SLAF.CashFlow,
+      Lens: root.SLAF && root.SLAF.Lens,
+      Reversibility: root.SLAF && root.SLAF.Reversibility
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.CashFlow);
+  var api = factory(deps.Money, deps.Schema, deps.CashFlow, deps.Lens, deps.Reversibility);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Goals = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, CashFlow) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, CashFlow, Lens, Reversibility) {
   'use strict';
 
   function templateById(table, id) {
@@ -51,13 +87,29 @@
      Itemised wins when there are items with amounts; otherwise the lump
      figure. A goal with neither is incomplete, not zero.                  */
 
+  /* What ONE line is worth. A typed figure wins; otherwise a per-unit line
+     makes its own (D-293). One function, because the total, the marginal
+     cost and the room's own read-out must never disagree about it. */
+  function itemAmountCents(item) {
+    if (!item) return null;
+    var v = null;
+    if (Money.isEntered(item.amountCents)) v = item.amountCents;
+    else if (Money.isEntered(item.perUnitCents) && Money.isEntered(item.units)) v = Math.round(item.perUnitCents * item.units);
+    if (v === null) return null;
+    /* A line that pays is typed positive and counted negative (D-299). */
+    return item.pays === true ? -Math.abs(v) : v;
+  }
   function goalTotalCents(goal) {
     var items = (goal && goal.lineItems) || [];
-    var summed = Money.sumCents(items.map(function (i) { return i.amountCents; }));
+    var amounts = items.map(itemAmountCents);
+    var summed = Money.sumCents(amounts);
     if (summed.counted > 0) {
+      var paysCents = 0, costsCents = 0;
+      amounts.forEach(function (x) { if (!Money.isEntered(x)) return; if (x < 0) paysCents -= x; else costsCents += x; });
       return Money.ok(summed.total, {
         basis: 'itemised', itemsCounted: summed.counted, itemsTotal: items.length,
-        itemsBlank: items.length - summed.counted
+        itemsBlank: items.length - summed.counted,
+        paysCents: paysCents, costsCents: costsCents
       });
     }
     if (Money.isEntered(goal && goal.lumpTargetCents)) {
@@ -86,29 +138,167 @@
    * Every part is independently incomplete-able: a goal with a total but no
    * date still reports its total and what is left to find.
    */
+  /**
+   * Can it be undone — the fifth output, on every block (D-283).
+   *
+   * Reversibility was a room that priced ONE named decision from a table of
+   * questions. The table is still how a block can be STARTED, but the two
+   * figures live on the block, so this is the pure part: two numbers and the
+   * verdict they make. `verdict()` is the room's own, not a second rule.
+   */
+  function undoOf(goal, spendingCents, tables) {
+    var cost = Money.isEntered(goal.undoCostCents) ? goal.undoCostCents : null;
+    var months = Money.isEntered(goal.undoMonths) ? goal.undoMonths : null;
+    /* A block started from a named decision keeps what the table knows that
+       two figures cannot say: that some things do not come undone at any
+       price. "Have a child" has no honest cost and is still answered. */
+    var reversible = null, unpriced = false;
+    if (goal.decisionId && Reversibility && tables) {
+      var d = Reversibility.byId(tables, goal.decisionId);
+      if (d) {
+        reversible = d.reversible;
+        /* The room's own rule: a decision the table gives no figure for is
+           answered, and the answer is that it does not come undone. The
+           child, the marriage. Not "not asked". */
+        unpriced = d.undoCents === null;
+      }
+    }
+    var asked = cost !== null || months !== null || reversible === false || unpriced;
+    if (unpriced && cost === null) {
+      return { asked: true, reversible: reversible, unpriced: true, costCents: null, months: months,
+        fromDecisionId: goal.decisionId, monthsOfSpending: null,
+        verdict: Reversibility ? Reversibility.VERDICTS.oneWay : null };
+    }
+    return {
+      asked: asked,
+      reversible: reversible,
+      unpriced: unpriced,
+      costCents: cost,
+      months: months,
+      fromDecisionId: goal.decisionId || null,
+      monthsOfSpending: cost !== null && Money.isEntered(spendingCents) && spendingCents > 0
+        ? cost / spendingCents : null,
+      /* No answer is an open question, not an easy door. */
+      verdict: asked && Reversibility ? Reversibility.verdict(cost, months, spendingCents, reversible) : null
+    };
+  }
+
+  /* One more of them. NOT a sixth answer: it is "what it costs" and "what
+     it costs you" asked of the smallest decision the block contains — one
+     more guest, one more night — through the same Lens, with no second
+     conversion. A block with no per-unit line has no margin and says null.
+     D-293. */
+  function marginalOf(goal, household, tables) {
+    var line = ((goal && goal.lineItems) || []).filter(function (i) {
+      return Money.isEntered(i.perUnitCents) && i.perUnitCents > 0;
+    })[0];
+    if (!line) return null;
+    var group = Money.isEntered(line.unitsPerGroup) && line.unitsPerGroup > 0
+      ? Math.round(line.unitsPerGroup) : 1;
+    var groupCents = Math.round(line.perUnitCents * group);
+    var hours = Lens ? Lens.apply(groupCents, 'hours', household, tables) : null;
+    var fi = Lens ? Lens.apply(groupCents, 'pushed', household, tables) : null;
+    return {
+      label: line.unitLabel || 'one more',
+      pays: line.pays === true,
+      perUnitCents: line.perUnitCents,
+      units: Money.isEntered(line.units) ? line.units : null,
+      groupOf: group,
+      groupCents: groupCents,
+      hoursDisplay: hours && Money.isOk(hours) ? hours.display : null,
+      fiPushedDisplay: fi && Money.isOk(fi) ? fi.display : null,
+      reason: hours && !Money.isOk(hours) ? hours.reason : null
+    };
+  }
+
   function plan(household, goal, tables, opts) {
     var o = opts || {};
+    var spendNow = Schema.monthlyExpensesCents(household);
+    var undoNow = undoOf(goal, Money.isOk(spendNow) ? spendNow.value : null, tables);
     var total = goalTotalCents(goal);
-    if (!Money.isOk(total)) return total;
+    /* A block with no price is not a block with no answers. A decision —
+       change jobs, have a child — may never carry a figure, and the undo
+       question is answered for it either way, so the incomplete result
+       carries what IS known rather than nothing (D-283). */
+    if (!Money.isOk(total)) {
+      return Object.assign(Money.incomplete(total.reason, total.missing),
+        { goalId: goal.id, name: goal.name, undo: undoNow, priced: false });
+    }
 
     var saved = Money.isEntered(goal.savedCents) ? goal.savedCents : 0;
     var remaining = Math.max(0, total.value - saved);
     var months = monthsUntil(goal.targetDate, o.asOf);
 
+    /* ---- A block that PAYS (D-299) ----------------------------------------
+       Its lines net negative: a lodger's rent, the thing you sell, the year
+       at home. Nothing is to be found, so the first four answers turn
+       around — what it pays, the hours it buys back and the FI it brings
+       forward, when it starts, what it adds to what is spare — and the
+       fifth is asked exactly as before. Same Lens, opposite direction. */
+    if (total.value < 0) {
+      var gain = -total.value;
+      var hoursBack = Lens ? Lens.apply(gain, 'hours', household, tables) : null;
+      var fiSooner = Lens ? Lens.apply(gain, 'bought', household, tables) : null;
+      return Money.ok(0, {
+        goalId: goal.id, name: goal.name, pays: true, priced: true,
+        totalCents: total.value, paysCents: gain, costsCents: total.costsCents || 0,
+        basis: total.basis, itemsBlank: total.itemsBlank,
+        savedCents: saved, remainingCents: 0, requiredMonthlyCents: 0,
+        alreadyThere: false, monthsUntil: months,
+        inLife: {
+          hours: hoursBack && Money.isOk(hoursBack) ? hoursBack.value : null,
+          hoursDisplay: hoursBack && Money.isOk(hoursBack) ? hoursBack.display : null,
+          fiPushedDisplay: fiSooner && Money.isOk(fiSooner) ? fiSooner.display : null,
+          fiPushedMonths: fiSooner && Money.isOk(fiSooner) ? fiSooner.value : null,
+          reason: hoursBack && !Money.isOk(hoursBack) ? hoursBack.reason : null
+        },
+        affordability: { fitsInSurplus: true, addsCents: gain, shareOfSurplus: null, shortPerMonthCents: 0 },
+        undo: undoNow, perUnit: marginalOf(goal, household, tables)
+      });
+    }
+
+    /* ---- The two outputs that are about you rather than the money ------
+       Both ride on every return path below, including the already-there and
+       the incomplete ones: what a thing costs in hours of your life does
+       not depend on whether you have saved for it yet. */
+    var lensHours = Lens ? Lens.apply(total.value, 'hours', household, tables) : null;
+    var lensFi = Lens ? Lens.apply(total.value, 'pushed', household, tables) : null;
     var shared = {
       goalId: goal.id, name: goal.name,
       totalCents: total.value, basis: total.basis,
       itemsBlank: total.itemsBlank,
       savedCents: saved, remainingCents: remaining,
       alreadyThere: remaining === 0,
-      monthsUntil: months
+      monthsUntil: months,
+      /* what it costs you, not what it costs */
+      inLife: {
+        hours: lensHours && Money.isOk(lensHours) ? lensHours.value : null,
+        hoursDisplay: lensHours && Money.isOk(lensHours) ? lensHours.display : null,
+        fiPushedDisplay: lensFi && Money.isOk(lensFi) ? lensFi.display : null,
+        fiPushedMonths: lensFi && Money.isOk(lensFi) ? lensFi.value : null,
+        /* One reason, not two: they fail for the same missing wage. */
+        reason: lensHours && !Money.isOk(lensHours) ? lensHours.reason : null
+      },
+      /* can it be undone: the two figures the block carries, and what they
+         make of each other. Not asked is not the same as reversible, so a
+         block with neither figure gets a null verdict and says so. */
+      undo: undoNow,
+      priced: true
     };
+
+    shared.perUnit = marginalOf(goal, household, tables);
 
     if (remaining === 0) {
       return Money.ok(0, Object.assign({ onTrack: true, fundedBy: 'already saved' }, shared));
     }
+    /* No date is not no answers. The block has a price, so what it costs,
+       what it costs you and what one more of them costs are all known —
+       only "when it lands" and "whether it fits" wait on a date. Throwing
+       the rest away made a fully priced wedding read "Add a price" on
+       every row, which is the same mistake D-283 fixed for the unpriced
+       block, in the other direction. D-293. */
     if (!Money.isOk(months)) {
-      return Money.incomplete(months.reason, months.missing);
+      return Object.assign(Money.incomplete(months.reason, months.missing), shared);
     }
 
     var required = Math.ceil(remaining / months.value);
@@ -124,9 +314,13 @@
 
     /* Does the required figure fit in the money actually spare? Reads Cash
        Flow rather than asking for a surplus a second time. */
-    var affordability = null;
+    var affordability = null, affordabilityReason = null;
     if (tables && tables.expenseCategories) {
       var flow = CashFlow.netCashFlow(household, tables.expenseCategories, tables);
+      /* When there is no surplus to compare against, say what Cash Flow
+         says — it names the thing to go and do. A room guessing its own
+         reason here would send people to the wrong place (D-283). */
+      if (!Money.isOk(flow)) affordabilityReason = flow.reason;
       if (Money.isOk(flow)) {
         affordability = {
           surplusCents: flow.value,
@@ -146,7 +340,8 @@
       onTrack: Money.isEntered(contributing) ? contributing >= required : null,
       shortfallPerMonthCents: Money.isEntered(contributing)
         ? Math.max(0, required - contributing) : null,
-      affordability: affordability
+      affordability: affordability,
+      affordabilityReason: affordabilityReason
     }, shared));
   }
 
@@ -168,9 +363,13 @@
       }
     });
 
-    var affordability = null;
+    var affordability = null, affordabilityReason = null;
     if (tables && tables.expenseCategories) {
       var flow = CashFlow.netCashFlow(household, tables.expenseCategories, tables);
+      /* When there is no surplus to compare against, say what Cash Flow
+         says — it names the thing to go and do. A room guessing its own
+         reason here would send people to the wrong place (D-283). */
+      if (!Money.isOk(flow)) affordabilityReason = flow.reason;
       if (Money.isOk(flow)) {
         affordability = {
           surplusCents: flow.value,
@@ -187,21 +386,34 @@
   }
 
   /** Build a goal from a template — line-item labels, no amounts. */
+  /* A template's line is a LABEL, or an object when the line is priced per
+     unit: { label, unitLabel, unitsPerGroup }. Still no amounts — the
+     templates say what a thing is made of and never what it costs. D-293. */
   function fromTemplate(table, templateId, name) {
     var t = templateById(table, templateId);
     if (!t) return null;
     return Schema.createGoal({
       name: name || t.label,
       templateId: t.id,
-      lineItems: (t.lineItems || []).map(function (label) {
-        return Schema.createGoalLineItem({ label: label, amountCents: null });
+      lineItems: (t.lineItems || []).map(function (line) {
+        if (typeof line === 'string') {
+          return Schema.createGoalLineItem({ label: line, amountCents: null });
+        }
+        return Schema.createGoalLineItem({
+          label: line.label,
+          unitLabel: line.unitLabel || null,
+          unitsPerGroup: Money.isEntered(line.unitsPerGroup) ? line.unitsPerGroup : null,
+          pays: line.pays === true
+        });
       })
     });
   }
 
   return {
     templateById: templateById,
+    itemAmountCents: itemAmountCents,
     goalTotalCents: goalTotalCents,
+    marginalOf: marginalOf,
     monthsUntil: monthsUntil,
     plan: plan,
     planAll: planAll,

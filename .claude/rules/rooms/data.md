@@ -10,7 +10,7 @@ Reference data: confidence_weights.json, effective_tax_rates_2026.json, expense_
 Owns: nothing
 Reads from other owners: nothing traced
 Latest decisions:
-  - D-261 — One door in, one door out, and a backup nobody else can open
+  - D-305 — One door in, one door out, and a backup nobody else can open
   - D-221 — The CSV round trip, made to survive a real spreadsheet
   - D-220 — One CSV out, and the same CSV back in
   - D-125 — Your Data: a file added or replacing, and a pasted statement sorted

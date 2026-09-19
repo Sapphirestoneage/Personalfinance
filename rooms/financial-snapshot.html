@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 16:34Z"/>
+<meta name="slaf-build" content="2026-09-19 17:18Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>The Scorecard · SPARKS</title>
@@ -808,6 +808,7 @@
     <span class="slaf-eyebrow">Reading from elsewhere</span>
     <div id="sr-reading-list" style="margin-top:var(--space-3)"></div>
   </section>
+  
   </section>
 
   <!-- ================ EVERY RATIO (was rooms/ratios.html) ================ -->
@@ -874,6 +875,7 @@
     <div id="ra-reading-list" style="margin-top:var(--space-3)"></div>
     <p class="slaf-hint" id="ra-provenance" style="margin-top:var(--space-3)"></p>
   </section>
+  
   </section>
 
   <!-- ============== QUICK MATH (was rooms/quick-math.html) =============== -->
@@ -1082,7 +1084,12 @@
       a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');
     });
     var t = h && h.length > 1 ? el(h.slice(1)) : null;
-    if (t && !t.hidden) { var d = t.closest('details'); if (d) d.open = true; t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    if (t && !t.hidden) {
+      /* Open every fold above the target, not just the nearest: a deep link
+         into a card inside a More fold has to reach it. */
+      for (var p = t; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
   window.addEventListener('hashchange', route);
   route();
@@ -1119,7 +1126,7 @@
       band.hidden = true;
       reason.innerHTML = esc(s.reason)
         + (s.missing.indexOf('dob') !== -1
-          ? ' <a href="' + Ownership.linkTo('start', 'q-dob') + '">Add your date of birth →</a>'
+          ? ' <a href="' + Ownership.linkTo('start', 'q-about') + '">Add your date of birth →</a>'
           : '');
       el('score-note').hidden = true;
       return;
@@ -2396,7 +2403,7 @@
       return [{ node: el('h-balance'),
         value: Money.isOk(cash) ? cash.value : null, display: Money.isOk(cash) ? Money.formatCents(cash.value) : '',
         source: 'your cash & savings, from Start Here',
-        apply: function (c) { v['h-balance'] = c; el('h-balance').value = Money.formatCents(c); render(); } }];
+        apply: function (c) { v['h-balance'] = c; el('h-balance').value = Money.forInput(c); render(); } }];
     }
   });
   Spine.onChange(function () { seed.refresh(); });
