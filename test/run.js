@@ -12949,7 +12949,14 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
   const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   checkTrue('the Ledger home asks which door, shows six, one recommended with its reason', /Which one do you want to go into now\?/.test(led) && /id="door-you"/.test(led) && /is-recommended/.test(led) && /rec\.reason/.test(led));
   checkTrue('a door shows the level, the next level’s unlocks, Confirm these, Add these, N more unlock', /Confirm these/.test(led) && /Add these/.test(led) && /more unlock as you use the app/.test(led) && /Level ' \+ v\.level \+ ' of 4/.test(led));
-  checkTrue('the understanding line reads the weights file, and only its number is written', /Doors\.understanding\(h, TABLES, SUGLIST, TABLES\.confidenceWeights\)/.test(led) && /You understand <b id="understand-pct">/.test(led) && /el\('understand-pct'\)\.textContent/.test(led));
+  /* D-241: the line says what the APP holds, not what the person understands
+     — the figure counts boxes, and someone avoiding their money understands
+     it perfectly well. At zero it says nothing at all, because there it is
+     not a measure of progress, only a verdict on someone who has typed
+     nothing yet. */
+  checkTrue('the understanding line reads the weights file, and only its number is written', /Doors\.understanding\(h, TABLES, SUGLIST, TABLES\.confidenceWeights\)/.test(led) && /This app holds <b id="understand-pct">/.test(led) && /el\('understand-pct'\)\.textContent/.test(led));
+  checkTrue('… and it does not greet an empty household with a zero', /el\('understand'\)\.hidden = u\.percent === 0/.test(led));
+  checkTrue('… nor does a room that has nothing in it yet open with a count and a list', /Nothing entered here yet\. /.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
   checkTrue('the spheres are kept, under a fold, not deleted', /id="spheres-fold"/.test(led) && /Spheres\.state\(/.test(led) && fs.existsSync(path.join(ROOT, 'data/spheres.json')));
   checkTrue('search still finds any row', /LedgerRows\.rows\(Spine\.getProfile\(\), TABLES, \{ filter: 'all', query: query \}\)/.test(led));
 })();
@@ -14434,6 +14441,136 @@ section('Every class a page names has a rule somewhere (D-226)');
   const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
   checkTrue('the page body, its header and its lede have a rule under both names they are given', /\.slaf-room\s*\{/.test(theme) && /\.slaf-room-head\s*\{/.test(theme) && /\.slaf-lede/.test(theme));
   checkTrue('the small print under a room is defined once, in the theme, not copied into every room', /^\.disclaimer \{/m.test(theme) && fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).every(f => !/^\s*\.disclaimer \{/m.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+})();
+
+/* ==========================================================================
+   The ladder past step 4, and the order the flags come out in (D-239, D-242)
+   ========================================================================== */
+section('The ladder past step 4, and the order the flags come out in (D-239, D-242)');
+(function () {
+  /* The order. Flags used to come out in the order data/foo_rules.json listed
+     them, and the Dashboard renders flags[0] — so the front door said "point
+     the excess at the debt" (a step 3 problem) while What The Next Dollar
+     Does said "capture the employer match" (step 2), on this same household. */
+  const foo = Foo.evaluate(h, TABLES);
+  check('the top flag is the earliest rung, not the first line of the file',
+    foo.flags[0].key, 'match_left_on_table');
+  check('… and it carries the rung it belongs to', foo.flags[0].step, 2);
+  check('… with the step 3 flag behind it', foo.flags[1].key, 'ef_alongside_high_interest_debt');
+  checkTrue('every flag in the rules file declares its rung',
+    TABLES.fooRules.outOfBoundsFlags.every(f => Number.isInteger(f.step)));
+  checkTrue('a critical flag always outranks a warning, whatever its rung', (function () {
+    const RANK = { critical: 0, warning: 1 };
+    return foo.flags.every((f, i) => i === 0 || RANK[foo.flags[i - 1].severity] <= RANK[f.severity]);
+  })());
+
+  /* Housing: the guideline sat in the rules file with nothing reading it. */
+  const roofed = Demo.build();
+  roofed.expenses.needs.accommodation.monthlyCents = 250000;   /* $2,500 on $72,000 gross */
+  const roofFlags = Foo.evaluate(roofed, TABLES).flags.filter(f => f.key === 'housing_above_guideline');
+  check('a roof over the 28% guideline is a flag now', roofFlags.length, 1);
+  check('… as a warning, never a critical', roofFlags[0].severity, 'warning');
+  check('… measured against the threshold that was already in the file',
+    roofFlags[0].detail.guideline, TABLES.fooRules.thresholds.dtiHousingGuideline);
+  check('the demo\u2019s own roof is under it and stays silent',
+    Foo.evaluate(h, TABLES).flags.filter(f => f.key === 'housing_above_guideline').length, 0);
+
+  /* Past step 4 the ladder used to hand back placement: null and the untrue
+     sentence "which this room doesn't ask for yet" — untrue of the workplace
+     contribution, which the app holds. */
+  const saver = Demo.build();
+  saver.retirement = saver.retirement || {};
+  saver.retirement.contributionPercent = 10;
+  (saver.debts || []).forEach(d => { d.rate = 0.04; });
+  saver.assets.forEach(a => { if (a.category === 'cash') a.valueCents = 3000000; });
+  const past = Foo.evaluate(saver, TABLES);
+  check('steps 0 to 4 are met', past.steps.filter(s => s.status === 'met').length, 5);
+  const fifth = past.steps[past.steps.length - 1];
+  check('step 5 is still honestly unknown — an HSA or a Roth is not guessed at', fifth.status, 'unknown');
+  check('… but the workplace contribution it does hold is read', fifth.known.percent, 10);
+  check('… against the limit in data/irs_limits_2026.json',
+    fifth.known.limitCents, Math.round(TABLES.irsLimits.limits.elective401k * 100));
+  check('… and the unused space is named', fifth.known.roomCents, 2450000 - 720000);
+  checkTrue('… so the sentence no longer says the app does not ask for it',
+    !/doesn\u2019t ask for it yet|does not ask for it yet/.test(fifth.detail) && /workplace plan/.test(fifth.detail));
+
+  /* The ladder's length is data, not a 9 typed into a room. */
+  const ladderRoom = fs.readFileSync(path.join(ROOT, 'rooms/foo-ladder.html'), 'utf8');
+  checkTrue('the room reads the rung count off the rules file', /TABLES\.fooRules\.ladder/.test(ladderRoom) && !/' of 9'/.test(ladderRoom));
+  check('which is nine, from the file', TABLES.fooRules.ladder[TABLES.fooRules.ladder.length - 1].step, 9);
+})();
+
+/* ==========================================================================
+   Three numbers that read wrong (D-243)
+   ========================================================================== */
+section('Three numbers that read wrong (D-243)');
+(function () {
+  /* A marginal rate of "the lowest bracket" for someone with nothing taxable.
+     With the standard deduction covering the whole of a $12,000 income, no
+     slice is cut and the fallback used to report ladder[0].rate — 10% — so
+     the Tax room sized the room before the next bracket off a floor that is
+     not there. The next dollar is taxed at nothing until the deduction is
+     used up. */
+  const brackets = require(path.join(ROOT, 'data/federal_brackets_2026.json'));
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const small = Tax.ordinaryTax(brackets, 1200000, 'single');
+  check('nothing taxable, so nothing is cut', small.taxableIncomeCents, 0);
+  check('… and the next dollar is taxed at nothing, not at the bottom rate', small.marginalRate, 0);
+  checkTrue('… while an ordinary income still reports its real bracket',
+    Tax.ordinaryTax(brackets, 10000000, 'single').marginalRate > 0.1);
+
+  /* A label that named a different ratio than the code computed. */
+  const rows = RatiosEngine.all(h, TABLES).rows;
+  const rev = rows.filter(r => r.id === 'revolvingShare')[0];
+  check('the revolving ratio is named for what it computes', rev.label, 'Revolving share of debt');
+  check('… which is card balances over TOTAL debt, the basis its band is cut for',
+    Math.round(rev.result.value * 1000) / 1000, 0.148);
+
+  /* A formula string that parsed as housing + (utilities ÷ income). */
+  const housing = rows.filter(r => r.id === 'housingRatio')[0];
+  checkTrue('the housing formula brackets its numerator', /\(housing \+ utilities\) ÷/.test(housing.formula), housing.formula);
+
+  /* Named rather than silently switched: the withdrawal rate subtracts GROSS
+     income from after-tax spending, which reads the draw a little low. The
+     definition is specified with a worked example below and reused by the
+     Dashboard, so the note says what the basis is instead. */
+  const wd = rows.filter(r => r.id === 'withdrawalRate')[0];
+  checkTrue('the withdrawal rate says which income it subtracts',
+    /gross income/.test(wd.formula) && /before tax/.test(wd.note), wd.formula + ' | ' + wd.note);
+})();
+
+/* ==========================================================================
+   Every id a page writes to exists in that page (D-238)
+   ========================================================================== */
+section('Every id a page writes to exists in that page (D-238)');
+(function () {
+  /* The Scorecard wrote to el('provenance') and el('ra-provenance'), both of
+     which were lost when the rooms merged (D-233). `el` returned null, the
+     throw aborted the render three numbers early, and the catch around it
+     blamed data/ — so a room that had every input showed "—" for its
+     emergency fund, its debt-to-income and its FIRE number under a red
+     banner about a file that had loaded perfectly. Nothing failed loudly.
+     A write to an id the page does not carry is always that bug. */
+  const pages = ['index.html', 'map.html']
+    .concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
+  const misses = [];
+  pages.forEach(rel => {
+    const raw = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const ids = new Set();
+    let m;
+    const idRe = /\bid\s*=\s*["']([^"']+)["']/g;
+    while ((m = idRe.exec(raw))) ids.add(m[1]);
+    /* el('x'). — a read followed by a property is a use that will throw on
+       null. A bare el('x') that the page then null-checks is its own business. */
+    const useRe = /\bel\(\s*'([^']+)'\s*\)\s*\./g;
+    const seen = new Set();
+    while ((m = useRe.exec(raw))) {
+      if (ids.has(m[1]) || seen.has(m[1])) continue;
+      seen.add(m[1]);
+      misses.push(rel + " writes to #" + m[1] + ", which is not in its markup");
+    }
+  });
+  check('no page writes to an id its own markup does not carry', misses.join('; '), '');
 })();
 
 /* ==========================================================================
