@@ -8908,7 +8908,9 @@ section('What a debt really costs (D-247): after the deduction, after inflation,
   checkTrue('a 22.9% card gets no deduction and reads: pay fast', card.deductionApplies === false && card.taxSavedCents === 0 && card.verdict === 'fast');
   const family = Debt.realCost(Schema.createDebt({ label: 'Family', balanceCents: 150000, rate: 0, type: 'family' }), o);
   checkTrue('a 0% loan costs less than nothing after inflation: pay slowly', family.realRate < 0 && family.verdict === 'slowly');
-  const half = Debt.realCost(loan, Object.assign({}, o, { grossAnnualCents: 8750000 }));
+  /* The band is read from the table (D-311 moved it to the 2025 figures), so the midpoint is worked out, never typed. */
+  const band = o.conventions.interestDeduction.phaseOut.single;
+  const half = Debt.realCost(loan, Object.assign({}, o, { grossAnnualCents: Math.round((band.fromDollars + band.toDollars) / 2 * 100) }));
   check('halfway through the phase-out band, half the deduction', half.phaseOutShare, 0.5);
   const gone = Debt.realCost(loan, Object.assign({}, o, { grossAnnualCents: 10000000 }));
   checkTrue('past it, none, and the rate stands', gone.phaseOutShare === 0 && gone.taxSavedCents === 0 && gone.afterTaxRate === gone.nominalRate);
@@ -8964,6 +8966,27 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('The Close shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('budget').subsections.some(x => x.id === 'journey'));
 })();
 
+section('Loose ends closed: the deduction says its year, and the front-page figure is a door (D-311)');
+
+(function () {
+  const t = require(path.join(ROOT, 'data/student_loan_conventions.json')).interestDeduction;
+  checkTrue('the deduction names its tax year and says it is unconfirmed', t.taxYear === 2025 && /Verify before relying/.test(t.note) && t.phaseOut.single.fromDollars === 85000 && t.phaseOut.married_joint.toDollars === 200000 && t.phaseOut.married_separate.toDollars === 0);
+  const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the front page\'s monthly figure links to the statement it is made of', /Left each month: <a href="rooms\/statements\.html"/.test(home));
+})();
+
+section('Plain words off the path, and the questions asked in rooms (D-310)');
+
+(function () {
+  const rows = require(path.join(ROOT, 'data/ledger-rows.json')).rows.filter(r => r.askIn && r.kind !== 'computed');
+  checkTrue('every asked row\'s label is a sentence a person can answer: no dash, under fourteen words', rows.every(r => r.label.indexOf('\u2014') === -1 && r.label.split(/\s+/).length <= 14), rows.filter(r => r.label.split(/\s+/).length > 14).map(r => r.id).join(','));
+  check('the question that started this reads as a question', rows.filter(r => r.id === 'paySurvives')[0].label, 'Would this pay keep coming if the job ended?');
+  checkTrue('the ownership label follows the row', Ownership.FIELDS.paySurvives.label === 'Would this pay keep coming if the job ended?');
+  /* Read as text, not required: requiring the CSV module here would bind
+     Ownership to a spine the round-trip section later replaces. */
+  checkTrue('a renamed row remembers its old words, so an old sheet still lands', rows.filter(r => r.id === 'paySurvives')[0].wasLabels[0] === 'Keeps paying if the job goes' && /wasLabels/.test(fs.readFileSync(path.join(ROOT, 'shared/csvexport.js'), 'utf8')));
+})();
+
 section('The Calendar comes back, with your own dates on it (D-308)');
 
 (function () {
@@ -9002,10 +9025,11 @@ section('The Calendar comes back, with your own dates on it (D-308)');
 section('Plain words on the path: the ledes name the thing, the number and the unit (D-258)');
 
 (function () {
-  /* The path's rooms; the ones the merges retired read through the room that holds them now. */
-  const rooms = ['start', 'income', 'expenses', 'cash-flow', 'budget', 'statement', 'debt-payoff', 'tax', 'fire'];
+  /* Every live room since D-310: the pass reached the rooms off the path. */
+  const rooms = Registry.all().map(r => r.id).filter(id => fs.existsSync(path.join(ROOT, 'rooms/' + id + '.html')));
   rooms.forEach(id => {
     const src = fs.readFileSync(path.join(ROOT, 'rooms/' + id + '.html'), 'utf8');
+    if (!/<p class="room-lede">/.test(src)) return;
     const m = /<p class="room-lede">([\s\S]*?)<\/p>/.exec(src);
     const lede = m ? m[1].replace(/<[^>]+>/g, '') : '';
     checkTrue(id + ': the lede has no dash and no sentence over thirty words', lede.length > 0 && lede.indexOf('\u2014') === -1 && lede.split(/[.!?]\s+/).every(sn => sn.split(/\s+/).length <= 30), lede.slice(0, 80));

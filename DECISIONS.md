@@ -16346,6 +16346,59 @@ Ledger with this as the reason, so the map and the app agree.
 
 **Verified.** `node test/run.js` (the map's held rule), the three doors
 open at 390px.
+## D-310 — Plain words off the path, and the questions asked in rooms
+
+**Why.** D-258 rewrote the sixteen path rooms; the owner asked for the
+rest, and for the inline questions: "Keeps paying if the job goes: what
+does this even mean?"
+
+**Decision.** The ledes and registry blurbs of the seventeen rooms off
+the path are rewritten in short sentences that name the thing, the
+number and the unit, and the test that held the line for the path now
+covers every live room. Twenty-eight asked rows in
+`data/ledger-rows.json` get labels a person can answer ("Would this pay
+keep coming if the job ended?", "What you paid in (the cost basis)");
+the four ownership labels that mirror them follow. A renamed row keeps
+its old words in `wasLabels`, and `shared/csvexport.js` indexes them,
+so a sheet exported or typed under the old label still lands on the
+row (D-222's round trip holds).
+
+**Replaces or removes.** The old ledes, blurbs and labels.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (every live room's lede and blurb: no
+dash, no sentence over thirty words; every asked label under fourteen
+words; the hand-typed sheet with the old label still imports),
+`node test/forms.js`, `node tools/context/build.js --check`; four
+off-path rooms and the Income ask at 390px, clean console.
+
+## D-311 — Loose ends closed: the deduction says its year, and the front-page figure is a door
+
+**Why.** Left over from the owner's brief: the student-loan interest
+deduction figures were marked "to verify"; the front page's monthly
+figure was not a link; a typo audit was promised; the Cash Flow month
+card reads incomplete with the example numbers.
+
+**Decision.** `data/student_loan_conventions.json` carries the tax-year
+2025 band as recalled from IRS Topic 456 ($85,000 to $100,000 single,
+$170,000 to $200,000 joint, none filing separately) and says the IRS
+site could not be reached to confirm it; the phase-out test reads the
+band from the table. The front page's "Left each month" figure links
+to Your Statements, where it is made of lines. A scan of every live
+room's visible text for doubled words, doubled punctuation, spaces
+before punctuation and common misspellings found nothing real. The
+month card with the example numbers is by design: the household demo
+leaves the expense log empty on purpose, and The Month's own example
+button fills it.
+
+**Replaces or removes.** The "to verify" note with no year.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node tools/context/build.js --check`;
+the front page at 390px with the demo, the figure a link, clean console.
+
 ---
 
 # The Dungeons & Dividends entries
