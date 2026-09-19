@@ -1011,7 +1011,15 @@
     variableWindow: setAt('variableIncome.windowMonths', 'Rolling window'),
     assetValue: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { valueCents: Money.isEntered(v) ? Math.round(v) : null }); },
     assetCharacter: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { taxCharacter: v || null }); },
-    assetTier: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { tier: v || null }); },
+    /* 15.8: the pile. Blank = derived from the kind; `liquid` follows the
+       pile so every reader of the flag agrees (D-181), here since the Ledger
+       is the one place the pile is chosen (D-313). */
+    assetTier: function (v, ctx) {
+      var a = (Spine.getProfile().assets || []).filter(function (x) { return ctx && x.id === ctx.itemId; })[0] || {};
+      var tier = Schema.TIERS.indexOf(v) >= 0 ? v : null;
+      var eff = Schema.tierOf(Object.assign({}, a, { tier: tier })).tier;
+      return itemPatch(Spine.upsertAsset, ctx, { tier: tier, liquid: eff === 'cash' || eff === 'taxable' });
+    },
     assetCostBasis: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { costBasisCents: Money.isEntered(v) ? Math.round(v) : null }); },
     assetInstitution: function (v, ctx) { var t = String(v === null || v === undefined ? '' : v).trim(); return itemPatch(Spine.upsertAsset, ctx, { institution: t === '' ? null : t }); },
     assetAccountType: function (v, ctx) {

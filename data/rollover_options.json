@@ -42,13 +42,13 @@
       "bad": [
         "Loses the age-55 rule if you are near it.",
         "Creditor protection under state law rather than federal, and states differ.",
-        "A pre-tax balance in an IRA makes the pro-rata rule apply to any backdoor Roth contribution — if you do those, this can be the deciding factor."
+        "A pre-tax balance in an IRA makes the pro-rata rule apply to any backdoor Roth contribution; if you do those, this can be the deciding factor."
       ]
     },
     {
       "id": "rollToNew",
       "label": "Roll it into the new employer's plan",
-      "allowedWhen": "If the new plan accepts incoming rollovers — most do.",
+      "allowedWhen": "If the new plan accepts incoming rollovers: most do.",
       "good": [
         "One account, and it keeps the federal creditor protection.",
         "Keeps pre-tax money out of an IRA, so a backdoor Roth stays clean.",
@@ -62,7 +62,7 @@
     {
       "id": "cashOut",
       "label": "Cash it out",
-      "allowedWhen": "Always — and it is the one to be slowest about.",
+      "allowedWhen": "Always, and it is the one to be slowest about.",
       "good": [
         "Money now, when money now is the actual problem."
       ],
@@ -77,7 +77,7 @@
   "theTrap": {
     "id": "indirect60Day",
     "what": "Ask for a cheque instead of a direct transfer",
-    "why": "The plan must withhold 20%, and you then have 60 days to deposit the FULL original amount — including the fifth they kept — or the shortfall is a taxable distribution with a penalty. You get the withheld part back at tax time, if you found the cash to cover it in the meantime.",
+    "why": "The plan must withhold 20%, and you then have 60 days to deposit the FULL original amount, including the fifth they kept, or the shortfall is a taxable distribution with a penalty. You get the withheld part back at tax time, if you found the cash to cover it in the meantime.",
     "instead": "Ask for a direct, trustee-to-trustee rollover, in those words. Nothing is withheld and no clock starts."
   }
 }

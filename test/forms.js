@@ -637,12 +637,18 @@ const CASES = [
     fields: [
       { sel: '[data-x-add="assets"] [data-x-add-name]', type: 'The car' },
       { sel: '[data-x-add="assets"] [data-x-add-inst]', type: 'The driveway' },
-      { sel: '[data-x-add="assets"] [data-x-add-btn]', tap: true },
-      { sel: '.xitem[data-x-list="assets"]:last-of-type [data-x-row="assetValue"] [data-x-input]', type: '5000', fresh: true }
+      { sel: '[data-x-add="assets"] [data-x-add-btn]', tap: true }
     ],
     expect: async (page) => {
+      /* The new line is found by its id, not its position: lines group under
+         their institution (D-223), so "last" is the last of a group. */
+      const id = await page.evaluate(() => ((JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets.filter(x => x.label === 'The car')[0] || {}).id);
+      const valueSel = '.xitem[data-x-itemid="' + id + '"] [data-x-row="assetValue"] [data-x-input]';
+      await page.waitForSelector(valueSel);
+      await page.fill(valueSel, '5000');
+      await page.dispatchEvent(valueSel, 'change'); await page.dispatchEvent(valueSel, 'blur');
+      await page.waitForTimeout(300);
       /* The pile, the type and the confidence are selects on the same line. */
-      const id = await page.evaluate(() => document.querySelector('.xitem[data-x-list="assets"]:last-of-type').getAttribute('data-x-itemid'));
       await page.selectOption('.xitem[data-x-itemid="' + id + '"] [data-x-row="assetTier"] select[data-x-input]', 'taxable');
       await page.waitForTimeout(300);
       await page.selectOption('.xitem[data-x-itemid="' + id + '"] [data-x-row="assetConfidence"] select[data-x-input]', '2');
