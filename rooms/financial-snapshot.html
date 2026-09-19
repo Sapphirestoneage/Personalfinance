@@ -511,8 +511,8 @@
 
 <main class="slaf-wrap">
   <nav class="slaf-hats" id="hats" aria-label="Six readings of the same numbers">
-    <a href="#the-score"      data-view="view-the-score">The score</a>
     <a href="#the-nine"       data-view="view-the-nine">The nine numbers</a>
+    <a href="#the-score"      data-view="view-the-score">The score</a>
     <a href="#savings-rate"   data-view="view-savings-rate">Savings rate</a>
     <a href="#every-ratio"    data-view="view-every-ratio">Every ratio</a>
     <a href="#quick-math"     data-view="view-quick-math">Quick math</a>
@@ -522,7 +522,7 @@
   <div class="notice" id="load-notice" hidden></div>
 
   <!-- ================= THE SCORE (was rooms/health.html) ================= -->
-  <section id="view-the-score">
+  <section id="view-the-score" hidden>
   <p class="slaf-lede">One number for the whole picture, weighted for the decade you’re in — and every part of how it was arrived at.</p>
   <section class="slaf-card" id="out-score">
     <span class="slaf-eyebrow">Everything, at once</span>
@@ -581,7 +581,7 @@
   </section>
 
   <!-- ======== THE NINE NUMBERS (was rooms/financial-snapshot.html) ======= -->
-  <section id="view-the-nine" hidden>
+  <section id="view-the-nine">
   <p class="slaf-lede">The payoff: nine numbers read off everything you’ve entered. Net worth, savings rate, runway, FIRE number, and which rung you’re on.</p>
   <a class="handoff-cold" id="cold-start" href="start.html" hidden>
     <span class="slaf-eyebrow">Nothing entered yet</span>
@@ -727,6 +727,12 @@
     <button type="button" class="slaf-btn slaf-btn--primary" id="btn-snapshot">Save a snapshot</button>
     <span class="slaf-hint" id="snapshot-note" style="align-self:center"></span>
   </div>
+
+  <!-- Where the tables behind these nine numbers come from. Lost when the
+       rooms merged (D-233); the render still wrote to it, which aborted the
+       render three numbers early. Restored, and test/run.js now fails if a
+       room writes to an id its own markup does not carry. -->
+  <p class="slaf-hint" id="provenance" style="margin-top:var(--space-4)"></p>
   </section>
 
   <!-- ============== SAVINGS RATE (was rooms/savings-rate.html) =========== -->
@@ -859,6 +865,7 @@
       Nothing is typed on this page. Every figure comes from a room that owns it.
     </p>
     <div id="ra-reading-list" style="margin-top:var(--space-3)"></div>
+    <p class="slaf-hint" id="ra-provenance" style="margin-top:var(--space-3)"></p>
   </section>
   </section>
 
@@ -1037,8 +1044,8 @@
    old deep link lands: #out-score came from The Score, #out-net-worth and
    #draftt from the Snapshot, #out-rate from Savings Rate, #out-wealth from
    Every Ratio, #habit from Quick Math, #guess from the rank question.
-   Switching hides and shows and rebuilds nothing. The simplest reading is
-   first and is the default: one number, not nine. */
+   Switching hides and shows and rebuilds nothing. The default is the nine
+   plain readings; the composite score is a tap away (D-241). */
 (function () {
   'use strict';
   function el(id) { return document.getElementById(id); }
@@ -1048,11 +1055,21 @@
     { id: 'view-every-ratio',    match: /^#(every-ratio|out-wealth|out-safety|out-lending|out-blocked|summary|tally|zone|bars-|list-|ra-)/ },
     { id: 'view-quick-math',     match: /^#(quick-math|habit|car|five|hysa|peruse|use-|u-|c-|f-|h-|qm-|seed-host)/ },
     { id: 'view-where-you-rank', match: /^#(where-you-rank|guess|reveal|in-guess|btn-reveal|g-word)/ },
-    { id: 'view-the-score',      match: /.*/ }
+    { id: 'view-the-score',      match: /^#(the-score|out-score|out-pillars|out-headroom|out-cohorts|out-missing|pillars|headroom|cohorts|missing-body|score-|h-reading)/ }
   ];
+  /* The room opens on the nine plain readings, not on the composite score.
+     data/health_score.json says of the weights behind that score: "the most
+     invented numbers in this repository … a considered opinion about
+     emphasis by decade, not a finding". A room called The Scorecard that
+     opens on 75 / 100 with a verdict word and a red pillar leads with its
+     own weakest number and grades the reader on the way in. The score is one
+     tap away and unchanged; the sourced readings come first, which is what
+     D-233 said this room would do ("opens on the plainest"). D-241. */
+  var DEFAULT_VIEW = 'view-the-nine';
   function route() {
     var h = location.hash || '';
-    var on = VIEWS.filter(function (v) { return v.match.test(h); })[0];
+    var on = VIEWS.filter(function (v) { return v.match.test(h); })[0]
+      || VIEWS.filter(function (v) { return v.id === DEFAULT_VIEW; })[0];
     VIEWS.forEach(function (v) { el(v.id).hidden = v.id !== on.id; });
     Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
       a.setAttribute('aria-current', a.getAttribute('data-view') === on.id ? 'page' : 'false');

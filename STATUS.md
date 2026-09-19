@@ -17,8 +17,16 @@ Updated: 2026-09-19
   and opens on the plainest. Every old URL redirects, hash and all.
   `.slaf-hats` is the one reading strip; `part: true` in `shared/room.js`
   lets a template room become a reading.
-- Ledger rework brief: built through Phase K; H6, I6, I7, I8 wait. On the
-  owner: the Pages switch, the domain (G1.1), a LICENSE (G3.14).
+- Ledger rework brief: built through Phase K; H6, I6, I7, I8 wait.
+- **The panel round (D-238 to D-243).** Three rounds, seven lenses, in
+  `PANEL_REVIEW.md`; fixes and what is left in `PROGRESS.md`. Six of seven
+  lenses finished at 8+, Donegan at 7. The Scorecard had been dropping three
+  of its nine numbers behind a banner blaming `data/`; every per-hour figure
+  rendered `$0.00`; the front door and the ladder gave one household two
+  different next steps; the home room told a first-time visitor they
+  understand 0% of their life. All fixed, and `test/run.js` now fails if a
+  page writes to an id its own markup does not carry. Four panel claims
+  struck as wrong on checking; four items left to the owner.
 - **Up next and the map (D-234, D-235).** The front page leads with what is
   open, which reading is the fewest answers away and the fields that open it
   (`shared/upnext.js`), and which FIRE tier the pot has reached. The FIRE
@@ -30,7 +38,7 @@ Updated: 2026-09-19
   Shows: … Needs: …. The owner finds the house voice hard to read; new copy
   names the thing, the number and the unit. A room-by-room lede pass is
   open and the order is the owner's.
-- **The path (D-238)** is the numbers, then the dashboard, then the readings;
+- **The path (D-244)** is the numbers, then the dashboard, then the readings;
   a decision room has no prev/next of its own. The owner's brief, 2026-09-19:
   treat it as financial planning software, readable by a third grader and a
   FIRE person alike; fewer words on the page, the rest behind an ⓘ; every
@@ -42,18 +50,25 @@ Updated: 2026-09-19
 - ON, and the merge is how it is honoured: every session leaves fewer screens.
 
 ## Next (top item first; one per session)
-1. **Who owns Start Here's 17 fields once it retires into the Ledger?**
-   OWNER DECISION NEEDED. The only thing blocking the last room of step 1.
-2. Step 5: the Decision Room shell — one shell, five outputs on every block,
+1. **Turn the Pages switch on.** OWNER, one click, and nothing anyone has
+   built is usable until it happens: Settings → Pages → Deploy from a branch
+   → `main` / root. Also on the owner: the domain (G1.1), a LICENSE (G3.14).
+2. **Which income figure is authoritative?** OWNER DECISION. Tested: $500 a
+   month into `ledger.income[]` moves neither gross income nor the FI date —
+   the headline numbers read only `people[].incomeSources[]` and no room
+   writes one, so income growth can be modelled and not recorded. Root of
+   ARCHITECTURE problem #1, of `engines/taxroom.js:140`, and of the one lens
+   below 8. Details in `PROGRESS.md`.
+3. **Who owns Start Here's 17 fields once it retires into the Ledger?**
+   OWNER DECISION. Blocks the last room of step 1; tangled with 2.
+4. Step 5: the Decision Room shell — one shell, five outputs on every block,
    then goals, wedding and big purchase before any deep module.
-3. Step 6: the Back Half, once the shell has stopped moving. The biggest
-   engine change in the programme; D-228 is its brief.
-4. Older and still open: logged income does not reach the headline numbers;
-   the first journey end to end; a monthly close that prompts a backup.
+5. Step 6: the Back Half, once the shell has stopped moving. D-228 is its brief.
+6. The room-by-room lede pass (D-237); the first journey end to end; a
+   monthly close that prompts a backup.
 
 ## Panel notes not yet answered
-- Galloway: model the means-tested floor, or the Back Half sells comfort.
-- Donegan: the merged Work room will hold eight rooms about having a job and
-  none about building something that pays you.
-- Hormozi: thirty is still a library. One screen in front of it. D-234 and
-  D-235 are the first answer; whether the thirty need less is still open.
+- The doors: five ways in where `index.html:19` says two. Tangled with 3.
+- Galloway: model the means-tested floor. Can't Pay (D-240) is the interim.
+- Donegan: no room is about building something that pays you.
+- Hormozi: thirty is still a library. D-234 and D-235 are the first answer.

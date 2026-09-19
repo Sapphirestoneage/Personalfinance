@@ -362,6 +362,7 @@
     <div class="next" id="next-action" hidden>
       <p class="say" id="next-say"></p>
       <a class="go" id="next-go" href="#"></a>
+      <p class="why" id="next-step" hidden></p>
     </div>
   </section>
 
@@ -563,6 +564,7 @@
 <script src="shared/journeymap.js"></script>
 <script src="engines/skilltree.js"></script>
 <script src="shared/lens.js"></script>
+<script src="shared/bands.js"></script>
 <script src="engines/advice.js"></script>
 <script src="shared/instruments.js"></script>
 <script src="shared/aftertax.js"></script>
@@ -796,6 +798,10 @@
      room that owns the fix. No flags: the step you are on. No placement:
      the first thing Start Here still needs. */
 
+  /* What the next-action block settled on this render, so the block under it
+     can avoid saying the same thing again. */
+  var LAST_ACTION = null;
+
   var ACTION = {
     ef_alongside_high_interest_debt: function (d) {
       return { say: '<strong>' + Money.formatCents(d.excessCashCents) + '</strong> of cash sits beyond a starter fund while <strong>'
@@ -815,6 +821,12 @@
       return { say: 'You are saving <strong>' + Money.formatRate(d.rate, { decimals: 1 }) + '</strong> of gross; the benchmark floor is '
           + Money.formatRate(d.floor, { decimals: 0 }) + '.',
         room: 'expenses', anchor: 'spending', go: 'Find the gap in Expenses →' };
+    },
+    housing_above_guideline: function (d) {
+      return { say: 'The roof takes <strong>' + Money.formatRate(d.share, { decimals: 0 }) + '</strong> of gross pay — '
+          + Money.formatCents(d.monthlyCents) + ' a month against a '
+          + Money.formatRate(d.guideline, { decimals: 0 }) + ' guideline. It is the largest line in most budgets and the slowest to change, so it is worth knowing before the smaller ones.',
+        room: 'housing', anchor: null, go: 'Weigh the place in Housing Decision →' };
     },
     high_utilisation_vs_debt_load: function (d) {
       return { say: '<strong>' + Money.formatRate(d.revolvingShare, { decimals: 0 }) + '</strong> of what you owe is revolving credit ('
@@ -865,6 +877,22 @@
     return new Date(+m[1], +m[2] - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
 
+  /* Take-home against what a month costs. Negative is not a ratio problem
+     and not a ladder step: it is the month not closing. Returns the action
+     or null, so the caller reads as one question. */
+  function doesNotClose(h) {
+    var take = Schema.takeHomeAnnualCents(h, TABLES);
+    var spend = Schema.monthlyExpensesCents(h);
+    if (!Money.isOk(take) || !Money.isOk(spend)) return null;
+    var gap = Math.round(take.value / 12) - spend.value;
+    if (gap >= 0) return null;
+    return { say: 'What comes in is <strong>' + Money.formatCents(Math.abs(gap))
+        + ' short</strong> of what the month costs — ' + Money.formatCents(Math.round(take.value / 12))
+        + ' against ' + Money.formatCents(spend.value)
+        + '. No step of the ladder answers that, and nothing here will tell you to save harder. What it can do is put the bills in the order that does least damage.',
+      room: 'cant-pay', anchor: null, go: 'Work out what gets paid →', noStep: true };
+  }
+
   function renderNextAction(h, c) {
     var box = el('next-action');
     var foo = c.byId.fooStep.result;
@@ -876,6 +904,15 @@
     } else if (Gate.situationOf(h) === 'retired' && c.byId.withdrawalRate.ok) {
       action = retiredDraw(c.byId.withdrawalRate);
       box.className = 'next' + (action.critical ? ' is-critical' : '');
+    } else if (doesNotClose(h)) {
+      /* The floor. Before this branch the five flags were the only answers,
+         and every one of them is a category error for a household whose
+         month does not close — "raise your contribution to the cap" to
+         someone choosing which bill to skip. With no flag firing it said
+         "Nothing is out of bounds." rooms/cant-pay.html was written for
+         exactly this and was reachable from no screen a person starts on. */
+      action = doesNotClose(h);
+      box.className = 'next is-critical';
     } else if (flag && ACTION[flag.key]) {
       action = ACTION[flag.key](flag.detail || {});
       box.className = 'next' + (flag.severity === 'critical' ? ' is-critical' : '');
@@ -892,14 +929,48 @@
       box.className = 'next';
     }
     box.hidden = false;
+    LAST_ACTION = action;
     el('next-say').innerHTML = action.say;
     el('next-go').textContent = action.go;
     el('next-go').href = action.href || Ownership.linkTo(action.room, action.anchor);
+    /* Say which rung this is. A flag is a step being skipped, and without the
+       step named this block and What The Next Dollar Does described the same
+       household in two different places on the same ladder. */
+    var step = el('next-step');
+    if (step) {
+      var n = flag && flag.step !== null && flag.step !== undefined ? flag.step
+        : (Money.isOk(foo) ? foo.value : null);
+      if (n === null || n === undefined || action.href || action.noStep) { step.hidden = true; step.textContent = ''; }
+      else {
+        step.hidden = false;
+        step.textContent = 'Step ' + n + ' of the order of operations. ';
+        var link = document.createElement('a');
+        link.href = Ownership.linkTo('foo-ladder', null);
+        link.textContent = 'See the whole ladder →';
+        step.appendChild(link);
+      }
+    }
   }
 
   /* ---- Block 3: the next thing to learn, or unlearn --------------------------- */
-  function renderLearn(h) {
+  function renderLearn(h, action) {
+    /* The thing to LEARN should not be the thing to DO, said twice. Once the
+       next action is ordered by the ladder, the top flag and the top advice
+       item often point at the same place — the demo's dashboard showed
+       "raise your contribution to the cap" over "Always take the whole
+       match", one above the other. If the advice lands on exactly the room
+       and anchor the action already links to, take the next one instead;
+       with nothing else to say, the block falls back to the first. */
     var p = Advice.pick(h, TABLES);
+    if (Money.isOk(p) && action && action.room && Advice.list) {
+      var l = Advice.list(h, TABLES);
+      if (Money.isOk(l) && l.items.length > 1) {
+        var other = l.items.filter(function (it) {
+          return !(it.room === action.room && (it.anchor || null) === (action.anchor || null));
+        })[0];
+        if (other && other.id !== p.item.id) p = Money.ok(other.id, { item: other, count: l.items.length });
+      }
+    }
     var box = document.querySelector('#learn .learn');
     if (!Money.isOk(p)) {
       el('learn-cap').textContent = 'The next thing to learn';
@@ -957,8 +1028,25 @@
     if (!fi.exists) return { cap: 'The date it points to', big: null, reason: 'No savings rate in this situation, so no FI date.', say: '', room: 'start', anchor: null, go: 'Start Here →' };
     if (!fi.ok) return { cap: 'The FI date', big: null, reason: fi.result.reason, say: '', room: 'fire', anchor: 'targets', go: 'Open FIRE →' };
     var years = fi.result.years;
+    /* The date carries the range the app already computes, and says what the
+       pace assumes. FIRE Number shows this household as 29 / 22 / 18 years
+       from the one band table; the headline used to print the middle one on
+       its own, in the largest type on the page, as though a single return
+       were a fact. And the pace is the RESIDUAL — everything not spent, which
+       D-080 defines as how much COULD be saved, not how much was. Both belong
+       in the line under the date, not two rooms away. */
+    var span = '';
+    if (SLAF.Bands) {
+      var band = SLAF.Bands.threeWays(TABLES, function (rate) {
+        var y = Tier0.yearsToFire(h, TABLES, { expectedReturnRate: rate });
+        return Money.isOk(y) ? Math.round(y.value) : y;
+      });
+      if (band && typeof band.low === 'number' && typeof band.high === 'number' && band.low !== band.high) {
+        span = ' — ' + band.high + ' if returns run high, ' + band.low + ' if they run low';
+      }
+    }
     return { cap: 'The FI date', big: fi.result.alreadyThere ? 'Now' : String(fi.result.value),
-      say: fi.result.alreadyThere ? 'Your investments already cover your spending at the assumed withdrawal rate.' : (Math.round(years * 10) / 10) + ' years at this pace. Every dollar below moves it.',
+      say: fi.result.alreadyThere ? 'Your investments already cover your spending at the assumed withdrawal rate.' : (Math.round(years * 10) / 10) + ' years at this pace' + span + '. The pace assumes every dollar you do not spend goes in; every dollar below moves it.',
       room: 'fire', anchor: 'targets', go: 'Move the date in FIRE →' };
   }
   function renderDate(h, c) {
@@ -1327,7 +1415,14 @@
     }
   } catch (e) { /* fine */ }
   el('btn-example').addEventListener('click', function () {
-    if (!window.confirm('Fill every answer with the example household, Robin Sparks? This replaces anything you have entered.')) return;
+    /* Only warn about losing something when there is something to lose. A
+       first-time visitor has entered nothing, and telling them this "replaces
+       anything you have entered" is a scare dialog in front of the one path
+       that shows the whole app for no typing at all. */
+    var hasSomething = SLAF.Progress && SLAF.Progress.forRoom
+      ? (SLAF.Progress.forRoom('start', Spine.getProfile()) || { filled: [] }).filled.length > 0
+      : true;
+    if (hasSomething && !window.confirm('Fill every answer with the example household, Robin Sparks? This replaces anything you have entered.')) return;
     var d = SLAF.DemoPersona.build();
     Spine.updateProfile({
       people: d.people, filingStatus: d.filingStatus, state: d.state,
@@ -1403,7 +1498,7 @@
     renderDaite(h);
     var c = renderInstruments(h);
     renderNextAction(h, c);
-    renderLearn(h);
+    renderLearn(h, LAST_ACTION);
     renderDate(h, c);
     renderDisplayUnit(h);
     renderAgeLine(h);

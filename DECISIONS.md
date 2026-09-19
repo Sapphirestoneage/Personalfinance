@@ -14021,6 +14021,7 @@ vocabulary the owner asked for by name; they are data, not rooms.
 `node tools/context/build.js --check`. The FIRE room and the flight plan
 at 390px and 1100px with a clean console, empty and with the demo.
 
+<<<<<<< HEAD
 ## D-236 — Debt Payoff: where the payment goes, and what each fall frees
 
 **Why.** The owner, from the phone: a sankey of the debt money, and a
@@ -14083,8 +14084,155 @@ which is the owner's call on order (STATUS).
 **Verified.** `node test/run.js` (31,222 checks), `node test/forms.js`,
 `node tools/context/build.js --check`. Debt Payoff at 390px with nine
 example debts, clean console.
+=======
+## D-238 — A page may not write to an id it does not carry
 
-## D-238 — The path is the numbers, then the dashboard, then the readings; a decision room is not "next"
+**Why.** The Scorecard wrote to `el('provenance')` and `el('ra-provenance')`;
+both elements were lost in the D-233 merge. `el` returned null, the throw
+aborted the render three cards early, and the catch around it announced
+"Couldn't load the reference tables in data/" over tables that had loaded.
+Emergency fund coverage, debt-to-income and the FIRE number all read "—" on a
+household holding every input for them.
+
+**Decision.** Both elements restored in `rooms/financial-snapshot.html`, as
+`.slaf-hint` not `.disclaimer`: `Progress.mount` inserts its box before the
+first `.disclaimer` in the page, and one nested inside a room's own section is
+a descendant of `<main>`, not a child, so `insertBefore` throws. That anchor in
+`shared/progress.js` now checks `parentNode` too. `test/run.js` fails the build
+if any page writes to an id its own markup does not carry.
+
+**Replaces or removes.** Nothing. It restores two elements the merge dropped
+and adds a guard against the same class of loss.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,018 checks). The nine numbers at 390px:
+3 months, 5.1%, $945,000, no banner, clean console.
+
+## D-239 — Flags come out in the ladder's order, and the roof is read
+
+**Why.** The Dashboard renders `foo.flags[0]`, and flags fired in the order
+`data/foo_rules.json` listed them. The file put cash-versus-high-interest-debt
+(step 3) above an uncaptured employer match (step 2), so the front door said
+"point the excess at the debt" while What The Next Dollar Does said "capture
+the employer match, 50% guaranteed", on the same household. Separately,
+`engines/ratios.js` made the housing ratio wait on a categorised month while
+`Schema.rentMonthlyCents` had the figure typed.
+
+**Decision.** Every flag in `data/foo_rules.json` carries the ladder `step` it
+belongs to; `engines/foo.js` sorts critical-before-warning, then earliest step,
+so every consumer inherits one order. `index.html` names the rung under the
+action and links to the ladder. `housingRatio` and `backEndRatio` fall back to
+the typed accommodation figure and report which basis they read.
+`housing_above_guideline` fires off `thresholds.dtiHousingGuideline`, which no
+code had ever read; warning severity, never critical.
+
+**Replaces or removes.** Nothing added to a screen: the housing flag competes
+for the one next-action slot rather than adding a box.
+
+**Stored shape.** No change. `data/ratio_benchmarks.json` bands `debtToIncome`
+at 0.36/0.43 to agree with its own note, with `dtiComfortCeiling` and with
+`backEndRatio`; a snapshot taken before this compares a zone cut at 0.28.
+
+**Verified.** `node test/run.js` (31,018 checks). Demo dashboard and ladder
+room both read step 2 at 390px.
+
+## D-240 — The FI date carries its range and says what it assumes
+
+**Why.** `index.html` printed "22 years at this pace" from one assumed return,
+in the largest type on the page, while `rooms/fire.html` showed the same
+household as 29 / 22 / 18. And `yearsToFire` compounds D-080's *residual* rate
+— how much could have been saved — with nothing saying so.
+
+**Decision.** The line under the date carries the band from `shared/bands.js`
+through the same rate override `rooms/fire.html` uses, and says the pace
+assumes everything not spent goes in. `renderNextAction` gains one branch,
+ahead of the flags, for take-home under what the month costs: it routes to
+`rooms/cant-pay.html` and says no step of the ladder answers that. `index.html`
+loads `shared/bands.js`.
+
+**Replaces or removes.** Nothing. `rooms/cant-pay.html` already existed and was
+reachable from no screen a person starts on.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,018 checks). Demo dashboard at 390px;
+a household with a $4,500 roof routes to Can't Pay with the step line hidden.
+
+## D-241 — Nothing counts a person's failures before they have typed anything
+
+**Why.** `rooms/ledger.html` is home, and its default view's second line read
+"You understand 0% of your financial picture", over six doors counting out 59
+empty boxes. `shared/progress.js` greeted an untouched room with "13 still
+needed to finish this room" and thirteen links ending on "Any debt". The
+Scorecard opened on a composite score `data/health_score.json` calls "the most
+invented numbers in this repository".
+
+**Decision.** The Ledger's line says what the app holds, not what the person
+understands, and is hidden at 0%. A door shows its ring and count once it has
+one row in it. `shared/progress.js` at zero state shows one line and the first
+door instead of a count and a list; the counter is unchanged from the first
+entry onward. `rooms/financial-snapshot.html` opens on `view-the-nine`; the
+score is hat two and every deep link still lands. The demo confirm on
+`index.html` fires only when something has been entered.
+
+**Replaces or removes.** Removes a percentage, six counters and a thirteen-item
+list from the zero state — the freeze's direction, by state rather than by
+deletion.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,018 checks). Blank Ledger, blank Start
+Here and the seeded Scorecard at 390px; counters return on a seeded household.
+
+## D-242 — The ladder answers past step 4
+
+**Why.** A household that had met steps 0–4 got `placement: null`, and the
+Dashboard fell through to "the panel needs … before it can place you". The
+sentence behind it said steps 5 and up need contributions "which this room
+doesn't ask for yet" — untrue of `retirement.contributionPercent`, which the
+app holds, against a limit already in `data/irs_limits_2026.json`.
+
+**Decision.** `engines/foo.js` keeps step 5 `unknown` — an HSA or a Roth is not
+guessed at — but reports what is known: the percentage, the dollars, the
+elective-deferral limit and the unused space, as fields on the step.
+`rooms/foo-ladder.html` reads the rung count off `data/foo_rules.json` instead
+of the "of 9" that was typed into it.
+
+**Replaces or removes.** Nothing. It reads two figures that were already there.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,018 checks). A 10%-contributing household
+past step 4 reads "$17,300 of that space is unused".
+
+## D-243 — Three numbers that read wrong, and one named rather than changed
+
+**Why.** `engines/tax.js` fell back to the lowest bracket's rate when no slice
+was cut, so a household whose standard deduction covers its income was told its
+next dollar is taxed at 10%. `engines/ratios.js` labelled `cards ÷ total debt`
+"Revolving to installment debt" — a different ratio — and wrote a housing
+formula that parses as `housing + (utilities ÷ income)`.
+
+**Decision.** Marginal rate is 0 when nothing is taxable. `revolvingShare` is
+"Revolving share of debt", the basis its band is cut for. The housing formula
+brackets its numerator. The withdrawal rate keeps subtracting GROSS income from
+after-tax spending — specified with a worked example and sixteen checks in
+`test/run.js`, reused by the Dashboard's loop, so moving it is a decision about
+the number's meaning — and its formula and note now say so.
+
+**Replaces or removes.** Nothing. `PANEL_REVIEW.md` and `PROGRESS.md` are new
+files: the panel's findings, the fixes, and four items left to the owner.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,018 checks), `node test/forms.js`
+(playwright not installed in this container — the phone walk was done instead
+with a scripted Chromium sweep of all 95 pages at 390px with the demo
+household: no page errors, no console errors, no 404s).
+>>>>>>> claude/panel-review-loop-cnb048
+
+## D-244 — The path is the numbers, then the dashboard, then the readings; a decision room is not "next"
 
 **Why.** The owner, tapping Next from the Cushion: a safety room at step
 7, then When It Won't All Get Paid, then The Account You Left Behind,

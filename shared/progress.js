@@ -199,7 +199,7 @@
     return null;
   }
 
-  /* The chain "next" walks (D-238): the rooms that hold or read the
+  /* The chain "next" walks (D-244): the rooms that hold or read the
      household's numbers, in path order, for this household. A decision
      room (a car, a wedding, a rollover) is opened because you have that
      decision, never because it came after the last page, so it has no
@@ -260,7 +260,20 @@
     /* Simplified on the owner's word (D-186): when something is missing,
        one short head and the list, without the room counts; when nothing
        is, nothing at all. Silence is the signal that a room is complete. */
-    if (row.missing.length) {
+    /* Nothing entered yet is not a shortfall, it is a start. The count and
+       the list are a nudge for someone part-way through — at zero they are a
+       thirteen-item indictment of a person who has typed nothing, handed to
+       them before they have done anything wrong, and the last item on Start
+       Here is the word "Any debt". So at zero: one line and the first door,
+       and the counting behaviour returns intact the moment anything is in. */
+    var started = (row.filled || []).length > 0;
+    if (row.missing.length && !started) {
+      var first = row.missing[0];
+      out.push('<p class="slaf-progress-head">Nothing entered here yet. '
+        + 'Start with <a href="' + escapeHtml(href(first.href.replace(/^\.\.\//, ''), roomId)) + '">'
+        + escapeHtml(first.label.toLowerCase()) + '</a>'
+        + (first.ownHere ? ', on this page' : ', in ' + escapeHtml(first.ownerTitle)) + '.</p>');
+    } else if (row.missing.length) {
       out.push('<p class="slaf-progress-head"><strong>' + row.missing.length
         + ' still needed</strong> to finish this room.</p>');
       out.push('<ul class="slaf-progress-list">' + row.missing.map(function (f) {
@@ -334,7 +347,7 @@
     var homeHref = (atRoot(roomId) ? '' : '../') + 'index.html';
 
     function link(room, dir) {
-      /* Off the chain (D-238): a decision room's way back is the dashboard
+      /* Off the chain (D-244): a decision room's way back is the dashboard
          and its way on is the map; it has no neighbours of its own. */
       if (!room && !nb.onChain && dir === 'prev') {
         return '<a class="slaf-hop slaf-hop--prev" href="' + homeHref + '">← The Dashboard</a>';
@@ -1210,9 +1223,12 @@
     var box = document.createElement('section');
     box.className = 'slaf-progress-host';
     box.id = 'slaf-progress';
-    /* Before the disclaimer if there is one, so the small print stays last. */
+    /* Before the disclaimer if there is one, so the small print stays last.
+       It has to be a CHILD of the host: a `.disclaimer` nested inside a
+       room's own section is a descendant, and insertBefore throws on it. */
     var tail = host.querySelector('.disclaimer');
-    if (tail) host.insertBefore(box, tail); else host.appendChild(box);
+    if (tail && tail.parentNode === host) host.insertBefore(box, tail);
+    else host.appendChild(box);
 
     /* The version, printed in every room's footer (D-131): version.json
        carries the same string, and the test holds the two together. */

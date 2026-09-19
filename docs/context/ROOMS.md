@@ -6,9 +6,9 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Home (3)
 
-- **ledger** — The Ledger (utility) · 2248 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-230, D-226, D-207
+- **ledger** — The Ledger (utility) · 2262 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-241, D-230, D-226
 - **start** — Start Here · 1004 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
-- **dashboard** — The Dashboard · 1670 lines · no engines · DD-028, DD-026, DD-025
+- **dashboard** — The Dashboard · 1765 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
 
@@ -26,14 +26,14 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **calendar** — Money Calendar & Pay-Later · 268 lines · engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-130, D-121
 - **variance** — Estimated vs Actual · 232 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
 - **real-hourly-wage** — Real Hourly Wage · 250 lines · engines: projection, tier0, hourly · D-054, D-021, D-001
-- **cant-pay** — When It Won’t All Get Paid · 529 lines · engines: projection, tier0, cashflow · D-148
+- **cant-pay** — When It Won’t All Get Paid · 529 lines · engines: projection, tier0, cashflow · D-240, D-148
 - **rollover** — The Account You Left Behind · 756 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom · D-150
 
 ## Scorecard (7)
 
-- **financial-snapshot** — The Scorecard · 2584 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-233, D-036, D-007
-- **foo-ladder** — What The Next Dollar Does · 695 lines · engines: projection, tier0, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-231, D-058, D-054
-- **fire** — FIRE Number · 562 lines · engines: projection, tier0, fire, foo, journey, selfemployed, tax, hourly · owns: retireAge, coastAge · D-235, D-228, D-162
+- **financial-snapshot** — The Scorecard · 2601 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-241, D-238, D-233
+- **foo-ladder** — What The Next Dollar Does · 701 lines · engines: projection, tier0, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-242, D-231, D-058
+- **fire** — FIRE Number · 562 lines · engines: projection, tier0, fire, foo, journey, selfemployed, tax, hourly · owns: retireAge, coastAge · D-240, D-235, D-228
 - **fire-lab** — FIRE Lab · 462 lines · engines: projection, tier0, cashflow, fire, hourly · D-228, D-138
 - **coast-date** — Your Coast Date · 122 lines · engines: projection, tier0, coast · D-213
 - **race** — The Race to $100K · 155 lines · engines: projection, tier0, countdown, race · D-217
@@ -70,7 +70,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **property** — The Deal · 403 lines · engines: projection, ownership · D-227, D-066
 - **big-purchase** — Big Purchase · 263 lines · engines: projection, tier0, hourly, quickmath, purchase · owns: purchasePrice, purchaseMonths, purchaseRate · D-129, D-112
 - **first-car** — The First Car Check · 147 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-219
-- **adventure** — The Long Way Round · 642 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
+- **adventure** — The Long Way Round · 643 lines · engines: projection, tier0, foo, hourly, adventure · D-176, D-167
 
 ## What Matters (11)
 

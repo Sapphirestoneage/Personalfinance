@@ -372,9 +372,12 @@
     return Money.ok(actual.value, {
       targetMultiple: target.value,
       onTrack: actual.value >= target.value,
-      shortfallCents: actual.value >= target.value
-        ? 0
-        : Math.round((target.value - actual.value) * gross.value),
+      /* Signed, so "ahead" has a figure of its own: negative is ahead of the
+         milestone, positive is short of it. It used to collapse to 0 when on
+         track, and the Snapshot printed that zero under the label "Ahead by",
+         so everyone ahead of their age milestone was told they were ahead by
+         nothing. The room already takes the absolute value for display. */
+      shortfallCents: Math.round((target.value - actual.value) * gross.value),
       age: age,
       referenceVersion: target.referenceVersion
     });

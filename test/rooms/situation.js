@@ -73,7 +73,7 @@ module.exports = function (t) {
     var h = household(status);
     var off = Registry.inOrder().filter(function (r) { return !Registry.applies(r, h); }).map(function (r) { return r.id; });
     /* Membership, not order: which rooms fold is the gate's fact; where they
-       sit on the path is the registry's (D-238). */
+       sit on the path is the registry's (D-244). */
     check(status + ': the rooms that do not apply', off.slice().sort().join(','), EXPECTED[status].slice().sort().join(','));
     /* And every one of them can say why, in words. */
     checkTrue(status + ': … and each says why in a sentence',

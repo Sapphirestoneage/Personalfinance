@@ -5,7 +5,7 @@ module.exports = function (t) {
   const page = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
   const room = Registry.byId('income');
   checkTrue('Income is registered, an about-you room so the four-room core stays four (D-051)', !!room && room.kind === 'about-you' && !room.utility);
-  check('it comes before Cash Flow on the path: the pay, then the month it moves through (D-238)', room.order < Registry.byId('cash-flow').order && room.order < Registry.byId('financial-snapshot').order, true);
+  check('it comes before Cash Flow on the path: the pay, then the month it moves through (D-244)', room.order < Registry.byId('cash-flow').order && room.order < Registry.byId('financial-snapshot').order, true);
   checkTrue('the page builds its kinds from the schema, so all eight are selectable', /Schema\.INCOME_KINDS\.map/.test(page));
   checkTrue('a gift hides the tax row', /kind === 'gift'/.test(page) && /data-for="taxable"/.test(page));
   checkTrue('costs are offered only where the schema allows them', /Schema\.costsAllowed\(/.test(page));
