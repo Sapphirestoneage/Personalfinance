@@ -1237,6 +1237,15 @@
     var view = routeView();
     var m = /^#door-(D|A|I|T|E|you)$/.exec(location.hash || '');
     showDoor(view === 'view-doors' && m ? m[1] : null);
+    /* A deep link into a view the browser could not scroll to while it was
+       hidden: every room links here for a row now (D-307), so the target
+       is opened and brought to the top once its view is on. Only the door
+       hashes (#x-A) are reached this way; a row's own hash is not a link. */
+    var target = /^#x-(D|A|I|T|E|you)$/.test(location.hash || '') ? el(location.hash.slice(1)) : null;
+    if (target) {
+      for (var p = target; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      if (target.scrollIntoView) target.scrollIntoView({ block: 'start' });
+    }
     if (!m && location.hash === '#doors-home') { try { history.replaceState(null, '', location.pathname); } catch (e) { /* fine */ } }
   }
 

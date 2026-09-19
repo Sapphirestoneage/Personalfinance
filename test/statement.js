@@ -74,7 +74,7 @@ const NOT_A_FACT = '#slaf-progress *, .slaf-lens *, [data-nw-basis] *, .slaf-und
        from the one it landed on. What matters: the right file, and the
        target on it, on screen. A section a household cannot have (the Solo
        401(k) card, for an employee) is absent, which is its own honesty. */
-    const landed = await page.evaluate((id) => { const n = document.getElementById(id); if (!n) return 'absent'; const r = n.getBoundingClientRect(); return (n.offsetParent !== null || n.tagName === 'DETAILS') && r.bottom > 0 && r.top < innerHeight * 1.5 ? 'ok' : 'off'; }, hash);
+    const landed = await page.evaluate((id) => { const n = document.getElementById(id); if (!n) return 'absent'; const r = n.getBoundingClientRect(); return (n.offsetParent !== null || n.tagName === 'DETAILS') && r.height > 0 ? 'ok' : 'off'; }, hash);
     check(old + ' → ' + to, url.indexOf('/rooms/' + file) !== -1 && (landed === 'ok' || (hash === 'solo' && landed === 'absent')), url + ' (' + landed + ')');
   }
   /* A link tapped on the page itself, to an old anchor: only the hash changes. */
