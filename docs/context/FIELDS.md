@@ -71,7 +71,7 @@ Fields: 112. Traced: 103. No other room mentions it: **55**.
 ## fire (3)
 
 - `enoughMonthly` — Enough, a month · **no other room mentions it**
-- `retireAge` — Stop working at · read by statement, dashboard, skill-tree, what-if-life, decumulation, career-move, week, one-pager
+- `retireAge` — Stop working at · read by statement, dashboard, skill-tree, what-if-life, decumulation, career-move, week, debates, one-pager
 - `coastAge` — Coast: arrive by · **no other room mentions it**
 
 ## goals (1)
@@ -154,7 +154,7 @@ Fields: 112. Traced: 103. No other room mentions it: **55**.
 
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by decumulation, career-move, housing, debates
+- `marginalRate` — Marginal tax rate · read by decumulation, tax, career-move, housing, debates
 - `allocationStocks` — Target: stocks · **no other room mentions it**
 - `allocationBonds` — Target: bonds · **no other room mentions it**
 - `allocationCash` — Target: cash · **no other room mentions it**

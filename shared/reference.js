@@ -91,6 +91,7 @@
     priceToRent: 'price_to_rent.json',
     mortgageRates: 'mortgage_rates.json',
     colIndex: 'col_index.json',
+    benefitCliffs: 'benefit_cliffs_2026.json',
     movingCost: 'moving_cost.json',
     vpwTable: 'vpw_table.json',
     ssBendPoints: 'ss_bend_points_2026.json',

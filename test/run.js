@@ -1818,7 +1818,7 @@ function weddingHousehold() {
         li && typeof li === 'object' && !Array.isArray(li)
         && typeof li.label === 'string'
         && Object.keys(li).every(k => !MONEY_KEY.test(k))
-        && Object.keys(li).every(k => ['label', 'unitLabel', 'unitsPerGroup'].indexOf(k) !== -1)
+        && Object.keys(li).every(k => ['label', 'unitLabel', 'unitsPerGroup', 'pays'].indexOf(k) !== -1)
       )));
     checkTrue(`template "${t.id}" builds a goal with no figure on any line`,
       (Goals.fromTemplate(TABLES.goalTemplates, t.id).lineItems || [])
@@ -14030,6 +14030,28 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
       !fs.existsSync(path.join(ROOT, 'engines/wedding.js'))
       && !fs.existsSync(path.join(ROOT, 'data/wedding_defaults.json')));
   }
+
+  /* -- D-269: a block that PAYS ----------------------------------------------
+     A lodger's rent is typed positive, flagged, counted negative; the block
+     nets negative and answers the five the other way round through the
+     same Lens, opposite direction. */
+  {
+    const rent = Schema.createGoalLineItem({ label: 'Rent they pay', unitLabel: 'month', unitsPerGroup: 1, perUnitCents: 80000, units: 12, pays: true });
+    const room = Schema.createGoalLineItem({ label: 'Getting the room ready', amountCents: 150000 });
+    check('a paying line is counted negative', Goals.itemAmountCents(rent), -960000);
+    check('...and the flag defaults off', Schema.createGoalLineItem({ amountCents: 100 }).pays, false);
+    const tot = Goals.goalTotalCents(Schema.createGoal({ lineItems: [rent, room] }));
+    check('the total nets the two, and says which is which', [tot.value, tot.paysCents, tot.costsCents].join(','), '-810000,960000,150000');
+    const lp = Goals.plan(Demo.build(), Schema.createGoal({ name: 'Lodger', targetDate: '2027-01-01', lineItems: [rent, room] }), T, { asOf: '2026-09-19' });
+    checkTrue('a net-paying block pays, and nothing is to be found', lp.pays === true && lp.paysCents === 810000 && lp.requiredMonthlyCents === 0 && lp.alreadyThere === false);
+    checkTrue('...it buys hours back and brings FI forward, through the lens', /h$/.test(lp.inLife.hoursDisplay) && /sooner/.test(lp.inLife.fiPushedDisplay));
+    checkTrue('...its margin says one more month pays', lp.perUnit && lp.perUnit.pays === true && lp.perUnit.groupCents === 80000);
+    checkTrue('...and the undo question is asked exactly as before', !!lp.undo && lp.undo.asked === false);
+    const lodger = Goals.fromTemplate(TABLES.goalTemplates, 'lodger');
+    checkTrue('the lodger template carries the flag on its rent line and on nothing else',
+      lodger.lineItems.filter(li => li.pays).map(li => li.label).join(',') === 'Rent they pay');
+    checkTrue('a block that costs still costs', Goals.plan(Demo.build(), Schema.createGoal({ name: 'W', targetDate: '2028-06-01', lineItems: [room] }), T, { asOf: '2026-09-01' }).pays === undefined);
+  }
   checkTrue('the Race is a reading of The Number', !Registry.byId('race')
     && /url=fire\.html#the-rungs/.test(fs.readFileSync(path.join(ROOT, 'rooms/race.html'), 'utf8')));
   checkTrue('the Down Payment Countdown is Housing\'s deposit reading now (D-250)',
@@ -14054,6 +14076,56 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
     })(layouts);
     return bad.length === 0 || bad.join(',');
   })());
+})();
+
+/* ==========================================================================
+   D-270, D-271: the rows the book asked for, and the cliff
+   ========================================================================== */
+section('D-270, D-271: the rows the book asked for, and the cliff');
+(function () {
+  const T = {};
+  const RefD270 = require(path.join(ROOT, 'shared/reference.js'));
+  Object.keys(RefD270.TABLE_FILES).forEach(function (k) { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', RefD270.TABLE_FILES[k]), 'utf8')); } catch (e) {} });
+  const Deb = require(path.join(ROOT, 'engines/debates.js'));
+  const Cliff = require(path.join(ROOT, 'engines/cliff.js'));
+  const h = Demo.build();
+  /* -- decisions people weigh: five more rows, each an honest undo -------- */
+  const dec = T.reversibility.decisions.map(d => d.id);
+  ['go-back-to-school', 'co-sign-a-loan', 'start-a-business', 'take-in-a-lodger', 'move-in-with-parents'].forEach(id =>
+    checkTrue('the decision "' + id + '" is in the table', dec.indexOf(id) !== -1));
+  checkTrue('co-signing is the one that cannot be undone', T.reversibility.decisions.filter(d => d.id === 'co-sign-a-loan')[0].reversible === 'no');
+  /* -- the checklists: six more, still no amounts anywhere ---------------- */
+  ['lodger', 'year_at_home', 'fertility', 'surgery', 'legal', 'funeral', 'a_move', 'business'].forEach(id =>
+    checkTrue('the template "' + id + '" exists', !!Goals.templateById(T.goalTemplates, id)));
+  checkTrue('custom is still last, so the picker ends on the blank one', T.goalTemplates.templates[T.goalTemplates.templates.length - 1].id === 'custom');
+  /* -- two debates on engines that already exist -------------------------- */
+  const soft = Deb.run('softSavingVsFire', h, T, {});
+  check('soft saving needs the age you plan to stop, and says so', soft.status + ':' + (soft.missing || []).join(','), 'incomplete:retireAge');
+  const h2 = Schema.createHousehold(Object.assign({}, h, { targets: Object.assign({}, h.targets || {}, { retireAge: 55 }) }));
+  const soft2 = Deb.run('softSavingVsFire', h2, T, {});
+  checkTrue('with a stop age it answers one side or the other, on the one projection loop', Money.isOk(soft2) && (soft2.value === 'a' || soft2.value === 'b') && /years/.test(soft2.sentence));
+  checkTrue('...and its flip is a rate at or below the household\'s', Money.isOk(soft2) && (soft2.flip.value === null || soft2.flip.value <= soft2.flip.at + 1e-9));
+  const nu = Deb.run('newVsUsed', h, T, { priceCents: 2500000 });
+  checkTrue('new against used reads FirstCar, never its own curve', Money.isOk(nu) && nu.value === 'b' && /three years old/.test(nu.sentence));
+  check('...and without a price it asks for one', Deb.run('newVsUsed', h, T, {}).status, 'incomplete');
+  checkTrue('every debate in the table has an engine function', T.debates.debates.every(d => typeof Deb.FN[d.fn] === 'function'));
+  /* -- the cliff ------------------------------------------------------------- */
+  checkTrue('the cliffs table is registered and tagged', !!T.benefitCliffs && T.benefitCliffs.confidence === 'unverified' && T.benefitCliffs.programs.length === 3);
+  const high = Cliff.where(h, T, { raiseCents: 500000 });
+  checkTrue('the demo at $72k is above every line and a $5k raise crosses none', Money.isOk(high) && high.value === 0 && high.fplMultiple > 4);
+  const low = Schema.createHousehold(Object.assign({}, h, { people: h.people.concat([{ role: 'child' }, { role: 'child' }]) }));
+  /* Three people: the line is $26,650 (2026 guideline); SNAP at 130% is
+     $34,645 and Medicaid at 138% is $36,777, so $30k with a $10k raise
+     crosses both — and that is the whole point of the reading. */
+  const lowR = Cliff.where(low, T, { magiCents: 3000000, raiseCents: 1000000 });
+  check('a family of three at $30k with a $10k raise crosses SNAP and Medicaid', Money.isOk(lowR) ? lowR.crossed.join(',') : lowR.reason, 'medicaidExpansion,snap');
+  checkTrue('...and at $40k it is already above both, so a raise crosses neither', Cliff.where(low, T, { magiCents: 4000000, raiseCents: 1500000 }).value === 0);
+  const fpl3 = Cliff.fplCents(T.aca, 3);
+  check('the poverty line for three is the base plus two more', fpl3, Math.round((T.aca.fpl.base + 2 * T.aca.fpl.perAdditionalPerson) * 100));
+  checkTrue('the marketplace row reads its line from the aca table, not a second copy', lowR.programs.filter(p => p.id === 'acaSubsidy')[0].fplMultiple === T.aca.cliffMultiple);
+  const tx = Schema.createHousehold(Object.assign({}, low, { state: 'TX' }));
+  checkTrue('in a non-expansion state Medicaid says it does not apply, and why', Cliff.where(tx, T, { magiCents: 4000000 }).programs.filter(p => p.id === 'medicaidExpansion')[0].applies === false);
+  check('no income is incomplete, never eligible for everything', Cliff.where(Schema.createHousehold(), T, {}).status, 'incomplete');
 })();
 
 /* ==========================================================================
@@ -14116,7 +14188,8 @@ section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
 
   /* -- K3: every debate has sources for every side and a flip point ------------------ */
   const list = Debates.list(T);
-  check('seven debates in the starter set', list.length, 7);
+  /* Seven in D-218; nine since D-270 brought soft saving and new-against-used. */
+  check('nine debates: seven in the starter set and two from the book', list.length, 9);
   checkTrue('every side has its best case and a source; every debate a flip point and an engine function', list.every(d => d.sides.length >= 2 && d.sides.every(s => s.case && s.source) && d.flip && d.flip.label && typeof Debates.FN[d.fn] === 'function'));
   checkTrue('no side text carries an em-dash or "you should"', list.every(d => d.sides.every(s => s.case.indexOf('—') === -1 && !/you should/i.test(s.case))));
   /* the flip: moving the key input across it changes the answer the expected way */

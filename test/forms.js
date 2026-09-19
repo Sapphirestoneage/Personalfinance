@@ -1308,6 +1308,83 @@ const CASES = [
     }
   },
   {
+    /* A BLOCK THAT PAYS (D-269). The lodger template's first line pays;
+       typing the monthly rent and the month count must land as a count and
+       as cents on a line still marked pays, and the headline must read as
+       money coming in, not a cost. Tapping the toggle then flips it. */
+    room: '/rooms/goals.html',
+    container: '#goal-list',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('[data-template="lodger"]'); },
+    fields: [
+      { sel: '[data-field="units"]', type: '12' },
+      { sel: '[data-field="perUnitCents"]', type: '800' }
+    ],
+    expect: async (page) => {
+      const before = await page.evaluate(() => {
+        const g = (SLAF.Spine.getProfile().goals || [])[0] || {};
+        const line = (g.lineItems || []).filter(l => l.unitLabel)[0] || {};
+        return { units: line.units, per: line.perUnitCents, pays: line.pays,
+          pressed: (document.querySelector('button[data-field="pays"]') || {}).getAttribute('aria-pressed'),
+          signed: SLAF.Goals.itemAmountCents(line) };
+      });
+      await page.tap('button[data-field="pays"]');
+      const after = await page.evaluate(() => {
+        const g = (SLAF.Spine.getProfile().goals || [])[0] || {};
+        const line = (g.lineItems || []).filter(l => l.unitLabel)[0] || {};
+        return { pays: line.pays, pressed: (document.querySelector('button[data-field="pays"]') || {}).getAttribute('aria-pressed') };
+      });
+      return [
+        ['the month count landed as a count', before.units, 12],
+        ['the rent landed as cents', before.per, 80000],
+        ['the template line pays', before.pays, true],
+        ['the toggle shows it', before.pressed, 'true'],
+        ['and the line counts as money in', before.signed, -960000],
+        ['a tap flips the line to a cost', after.pays, false],
+        ['and the toggle follows', after.pressed, 'false']
+      ];
+    }
+  },
+  {
+    /* THE CLIFF (D-271): a raise and a household size typed into the tax
+       room's second reading. The size must land as a count in the reading
+       only — it is never written to the household. */
+    room: '/rooms/tax.html#the-cliff',
+    container: '#view-the-cliff',
+    seed: 'demo',
+    fields: [{ sel: '#cl-in-raise', type: '5000' }, { sel: '#cl-in-size', type: '3' }],
+    expect: async (page) => {
+      const r = await page.evaluate(() => ({
+        head: document.getElementById('cl-head').textContent,
+        sub: document.getElementById('cl-sub').textContent,
+        rows: document.querySelectorAll('#cl-lines-list li').length,
+        blob: JSON.stringify(SLAF.Spine.getProfile())
+      }));
+      return [
+        ['the raise is read', /\$5,000 raise/.test(r.head), true],
+        ['the size is read', /^For 3 people/.test(r.sub), true],
+        ['three programs have a line', r.rows, 3],
+        ['the size stays in the reading', r.blob.indexOf('householdSize') === -1, true]
+      ];
+    }
+  },
+  {
+    /* THE REFEREE, new or used (D-270): the one price box is relabelled
+       for the car and the debate still answers. */
+    room: '/rooms/debates.html',
+    container: '#answer',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('[data-debate="newVsUsed"]'); },
+    fields: [{ sel: '#in-price', type: '25000' }],
+    expect: async (page) => {
+      const r = await page.evaluate(() => ({
+        a: document.getElementById('d-num').getAttribute('data-answer'),
+        label: document.querySelector('#d-ask label').textContent
+      }));
+      return [['a used car wins at this price', r.a, 'b'], ['the box asks about the car', /car/.test(r.label), true]];
+    }
+  },
+  {
     /* THE MIDDLE CLASS TRAP TEST (K1, D-218): one age box, four paths
        re-rendered into siblings. */
     room: '/rooms/decumulation.html#before-59',

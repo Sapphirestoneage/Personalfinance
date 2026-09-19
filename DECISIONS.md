@@ -15083,6 +15083,119 @@ template carrying no copy; the resolver giving 41 · 40 · 3. In a browser:
 the move event's three lists render from the table, national average
 first, console clean.
 
+## D-268 — The glossary already exists; give it the names people search by
+
+**Why.** The ROADMAP listed the Tier 18 Ratio Glossary as unbuilt. It is
+Every Ratio, The Scorecard's reading since D-044: forty-five ratios in
+`engines/ratios.js`, every one with an explainer in
+`data/ratio_explainers.json`, checked 45 for 45 on every run. What was
+missing was findability — "DTI", "glossary", "safe withdrawal rate" found
+nothing in the finder.
+
+**Decision.** The Scorecard's registry entry (`shared/registry.js`) answers
+to the names the ratios are searched by: glossary, ratios, dti, ltv, swr,
+savings rate, emergency fund, fi ratio, retirement multiple, net worth to
+income. `ROADMAP.md` is corrected: discrepancy 5 says the glossary is
+built; "Not built in Tier 2" drops Kids (shipped in Family) and the Advice
+Translator (shipped as rules in The Referee), and declines the HCOL/MCOL/
+LCOL modifier on purpose (see D-267).
+
+**Replaces or removes.** Three phantom entries on the not-built list and a
+false gap in the discrepancy list. No screen; the room was already there.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (the 45-for-45 explainer check, the
+registry alias check); `node tools/context/build.js --check`.
+
+## D-269 — A block that pays
+
+**Why.** Every line in a Decision Room block was a cost. Taking in a lodger,
+a year at home, a side job, selling the second car: the book's questions
+that pay you had no shape, and the closest thing — a block with a zero — is
+a lie by omission (empty is not zero).
+
+**Decision.** A goal line item may carry `pays: true`
+(`shared/schema.js`, `dnd/shared/schema.js`). One function applies the
+sign: `Goals.itemAmountCents` returns a paying line as negative, and
+`goalTotalCents` reports `paysCents` and `costsCents` beside the total.
+When a block's total is below zero `Goals.plan` returns a paying plan —
+what it pays after costs, the hours it buys back, how much sooner FI
+comes, what it adds to the surplus — and the five answers in
+`rooms/goals.html` flip to that reading. `marginalOf` prices one more unit
+the same way ("One more month pays"). Every line, per-unit or plain, has a
+"pays you" toggle. Templates may mark a line `pays`.
+
+**Replaces or removes.** The workaround of entering a zero cost for
+something that pays. `Goals.plan` gains one branch, not a second planner.
+
+**Stored shape.** `slaf.household.v2` goal line items gain an optional
+boolean `pays`, absent on every line written before this and read as
+false. No room needs updating; every reader goes through `itemAmountCents`.
+
+**Verified.** `node test/run.js` (a lodger block pays after costs, a plain
+block is unchanged, the toggle writes only a boolean); `node test/forms.js`
+on `rooms/goals.html` (the lodger template, the toggle flipping and
+following). In a browser: "Pays $9,600 · Buys back 456 h · FI 5 mo sooner".
+
+## D-270 — Rows by the handful: templates, decisions, debates
+
+**Why.** The book's remaining "tools" were mostly rows: questions the
+shell already answers, given a template, a reversibility entry or a
+debate. Under the freeze a row is the right size — it adds to a table the
+app already reads and no screen.
+
+**Decision.** `data/goal_templates.json` gains eight blocks: lodger and a
+year at home (paying lines, D-269), fertility, surgery, legal, funeral, a
+move, a business; custom stays last. `data/reversibility.json` gains five
+decisions: go back to school, co-sign a loan (not reversible), start a
+business, take in a lodger, move in with parents. `data/debates.json` and
+`engines/debates.js` gain two debates: soft saving against FIRE (the
+half-rate test against `targets.retireAge`, the age the rate can soften
+to) and new against used (reads Wheels' `newVsUsed` reading, one function,
+`engines/firstcar.js`). The Referee relabels its one price box per debate
+and loads `carCosts` for the second.
+
+**Replaces or removes.** Nothing on screen. The "new vs used" debate reads
+the first-car engine rather than carrying a second car-cost formula.
+
+**Stored shape.** No change. Templates and debates are reference data.
+
+**Verified.** `node test/run.js` (nine debates, every template rule-checked,
+every reversibility row shaped, the two new debates answer on the demo
+household); `node test/forms.js` on `rooms/debates.html` (the car price
+box relabelled, answer `b` at $25,000).
+
+## D-271 — The cliff, as a reading of Tax
+
+**Why.** The book's Benefits Cliff calculator: a raise that costs more than
+it pays, because it crosses the income line for Medicaid, SNAP or the ACA
+subsidy. The app had the ACA cliff in Roth & ACA and the poverty line in
+`Tax.acaCliff`, and nothing that named the lines together against a raise.
+
+**Decision.** Tax gets a second reading, "The cliff" (`rooms/tax.html`,
+hats nav, router row for `#the-cliff` and `#cl-`). `engines/cliff.js`
+`where(household, tables, {raiseCents, householdSize})` places counted
+income against each program's line as a multiple of the federal poverty
+level from `data/benefit_cliffs_2026.json` (three programs, confidence
+`unverified`; the Medicaid expansion line applies only in expansion
+states), and prices the ACA help before and after the raise through
+`RothAca.premiumFor`. The household size is proposed from the household
+and may be overridden in the reading only; it is never written.
+
+**Replaces or removes.** Nothing on screen; the freeze allows a reading of
+an existing room. The ACA arithmetic is Roth & ACA's, called, not copied.
+
+**Stored shape.** No change. `benefitCliffs` is a new reference table in
+`shared/reference.js`.
+
+**Verified.** `node test/run.js` (a $30k household of three crossing
+Medicaid expansion and SNAP with a $10k raise; the demo household well
+above every line; table confidence and program shape); `node test/forms.js`
+on `rooms/tax.html#the-cliff` (raise and size read, three rows, size not
+stored). In a browser with the demo household: 4.6× the line, a $5,000
+raise crosses none, the first reading untouched.
+
 ---
 
 # The Dungeons & Dividends entries

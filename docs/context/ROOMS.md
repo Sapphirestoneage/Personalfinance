@@ -19,7 +19,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **budget** — The Close · 976 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history · owns: monthsClosed, historyCompareTo · D-246, D-130, D-129
 - **statement** — The Statement · 2442 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, statements, taxroom · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-260, D-248, D-157
 - **cant-pay** — When It Won’t All Get Paid · 529 lines · engines: projection, tier0, cashflow · D-148
-- **tax** — Tax · 258 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly · owns: otherPreTax, withheld · D-150, D-142, D-129
+- **tax** — Tax · 463 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly, rothaca, cliff · owns: otherPreTax, withheld · D-271, D-150, D-142
 
 ## Scorecard (3)
 
@@ -42,9 +42,9 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## What Matters (4)
 
 - **values** — What Matters · 1675 lines · engines: projection, tier0, cashflow, values, fulfillment, rerank, foo, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget, rerankCut · D-243
-- **goals** — The Decision Room · 1418 lines · engines: projection, tier0, cashflow, hourly, events, reversibility, goals, worth · owns: reversibilityDecision · D-266, D-262, D-253
+- **goals** — The Decision Room · 1465 lines · engines: projection, tier0, cashflow, hourly, events, reversibility, goals, worth · owns: reversibilityDecision · D-269, D-266, D-262
 - **week** — The Life · 522 lines · engines: projection, tier0, hourly, cashflow, week, ratios, buckets · owns: designedHours, bucketsPlanned · D-239
-- **debates** — The Referee · 574 lines · engines: selfemployed, tax, projection, tier0, trap, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-242, D-218
+- **debates** — The Referee · 580 lines · engines: selfemployed, tax, projection, tier0, trap, quickmath, firstcar, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-270, D-242, D-218
 
 ## Level Up (1)
 
