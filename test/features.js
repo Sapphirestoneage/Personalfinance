@@ -84,7 +84,9 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
 
     const seen = await page.evaluate((keep) => {
       const main = document.querySelector('main') || document.querySelector('.wrap') || document.body;
-      const secs = Array.prototype.filter.call(main.children, n => n.tagName === 'SECTION' && n.id && !n.hidden && n.id !== 'slaf-progress' && n.id !== 'slaf-notapply'
+      /* The backup card is never "the rest": the fold leaves it out the way
+         it leaves out the progress host (D-259), so the count does too. */
+      const secs = Array.prototype.filter.call(main.children, n => n.tagName === 'SECTION' && n.id && !n.hidden && n.id !== 'slaf-progress' && n.id !== 'slaf-notapply' && n.id !== 'backup'
         && (getComputedStyle(n).display !== 'none' || n.classList.contains('slaf-tail')));
       const redirect = /refresh|location\s*=/.test(document.head.innerHTML);
       return {
