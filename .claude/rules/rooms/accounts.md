@@ -4,11 +4,11 @@ paths:
   - "engines/accounts.js"
 ---
 # Where It Goes & how it’s split (`accounts`)
-File: rooms/accounts.html · 581 lines
+File: rooms/accounts.html · 641 lines
 Engines: selfemployed, accounts, projection, tier0, hourly
 Reference data: irs_limits_2026.json, se_tax_2026.json
-Owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand
-Reads from other owners: filingStatus (tax), grossAnnualIncome (income), contributionPercent (start)
+Owns: employerMatch, capturingFullMatch, contributionPercent, rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand
+Reads from other owners: filingStatus (tax), grossAnnualIncome (income)
 Latest decisions:
   - D-130 — What was pushed off, built: dates that are only estimated or potential, the calendar from the ledger, one month of spending, one rent, what the log moved, N/A in its owner room, an emergency-fund preset
   - D-071 — The Coverage Checkup lives in Sleep At Night; the target mix lives in Where It Goes

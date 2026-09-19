@@ -55,6 +55,11 @@
   .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
   .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
   @media (max-width: 460px) { .setup-grid { grid-template-columns: 1fr; } }
+  /* The three halves of one question, on one line: they match X of the
+     first Y, and you put in Z. D-234. */
+  .plan-row { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+  @media (max-width: 380px) { .plan-row { grid-template-columns: 1fr; } }
+  #match-say, #plan-na { grid-column: 1 / -1; }
   .setup-toggles { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
   .setup-toggle { display: flex; align-items: flex-start; gap: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
   .setup-toggle input { margin-top: 3px; }
@@ -79,9 +84,28 @@
     <p class="slaf-hint" style="margin:0">
       The FOO ladder used to ask you for all of this separately and keep none
       of it. Now it lives here, and every room that needs it reads this.
+      Whether you are taking the whole match is not a question: it is what
+      the first two boxes say against the third.
     </p>
     <div class="setup-grid">
-      <div class="slaf-field" style="margin:0" id="contribution-chip"></div>
+      <div class="plan-row">
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">They match</span>
+          <span class="slaf-input-shell">
+          <input type="text" inputmode="decimal" data-setup="matchPercent" placeholder="e.g. 50" aria-label="Employer match percent"/>
+          <span class="slaf-affix">%</span></span>
+        </label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">…of the first</span>
+          <span class="slaf-input-shell">
+          <input type="text" inputmode="decimal" data-setup="matchCap" placeholder="e.g. 6" aria-label="Match cap, percent of salary"/>
+          <span class="slaf-affix">%</span></span>
+        </label>
+        <label class="slaf-field" style="margin:0"><span class="slaf-label">You put in</span>
+          <span class="slaf-input-shell">
+          <input type="text" inputmode="decimal" data-setup="contributionPercent" placeholder="e.g. 6" aria-label="Your workplace contribution"/>
+          <span class="slaf-affix">%</span></span>
+        </label>
+      </div>
+      <p class="slaf-hint" style="margin:var(--space-1) 0 0" id="match-say"></p>
       <p class="slaf-hint" style="margin:var(--space-1) 0 0" id="plan-na"></p>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Your marginal tax rate</span>
         <span class="slaf-input-shell">
@@ -409,9 +433,20 @@
 
   var SETUP_MONEY = ['rothContributedCents', 'hsaContributedCents'];
 
+  /* The match is two halves of one stored object, and it lives on the
+     income source rather than in household.retirement. D-234 moved the
+     whole q-plan card here in one piece: splitting the three questions
+     across two rooms would have split one box across two rooms. */
+  function matchOf(h) {
+    var p = Schema.primaryPerson(h) || {};
+    var src = (p.incomeSources || [])[0] || {};
+    return src.employerMatch || {};
+  }
   function readSetup(key) {
     var h = Spine.getProfile();
     if (key === 'marginalRate') return Schema.resolveAssumptions(h).marginalRate;
+    if (key === 'matchPercent') { var a = matchOf(h).matchPercent; return Money.isEntered(a) ? Math.round(a * 1000) / 10 : null; }
+    if (key === 'matchCap') { var b = matchOf(h).matchCapPercentOfSalary; return Money.isEntered(b) ? Math.round(b * 1000) / 10 : null; }
     return (h.retirement || {})[key];
   }
 
@@ -437,10 +472,18 @@
   }
 
   function paintSetup() {
-    /* What you contribute is asked in Start Here now (D-061); this room
-       reads it as a chip that links back to the question. */
-    var chip = el('contribution-chip');
-    if (chip) chip.innerHTML = Ownership.chip('contributionPercent', Spine.getProfile(), ROOM_ID);
+    /* Whether the whole match is captured is derived, never asked (D-061):
+       what you put in against the cap, once both are known. */
+    var say = el('match-say');
+    if (say) {
+      var d = Ownership.describe('capturingFullMatch', Spine.getProfile(), ROOM_ID);
+      var em = matchOf(Spine.getProfile());
+      say.textContent = em.matchPercent === 0
+        ? 'No match: the plan is still yours to fill, there is just nothing free in it.'
+        : !d || !d.isSet ? 'Fill all three and this line says whether you are leaving any of the match behind.'
+        : d.display === 'Yes' ? 'You take the whole match.'
+        : 'You leave match on the table: the cap is ' + Math.round((em.matchCapPercentOfSalary || 0) * 100) + '% and you put in ' + readSetup('contributionPercent') + '%.';
+    }
     /* Structural options the household can mark Not applicable (D-130):
        no workplace plan, no HSA. Out of every live figure until lifted. */
     var hh = Spine.getProfile();
@@ -461,6 +504,8 @@
         node.value = Money.isEntered(v) ? Money.formatCents(v) : '';
       } else if (key === 'marginalRate') {
         node.value = Money.isEntered(v) ? String(Math.round(v * 1000) / 10) : '';
+      } else if (key === 'matchPercent' || key === 'matchCap') {
+        node.value = Money.isEntered(v) ? String(v) : '';
       } else {
         node.value = Money.isEntered(v) ? String(v) : '';
       }
@@ -473,6 +518,21 @@
       return;
     }
     var h = Spine.getProfile();
+    if (key === 'matchPercent' || key === 'matchCap') {
+      var raw = String(node.value).trim();
+      var n = raw === '' ? null : Number(raw.replace(/[^0-9.]/g, ''));
+      var share = (n === null || isNaN(n) || n < 0) ? null : n / 100;
+      var em = Object.assign({}, matchOf(h));
+      em[key === 'matchPercent' ? 'matchPercent' : 'matchCapPercentOfSalary'] = share;
+      Ownership.write('employerMatch', em);
+      return;
+    }
+    if (key === 'contributionPercent') {
+      var t = String(node.value).trim();
+      var c = t === '' ? null : Number(t.replace(/[^0-9.]/g, ''));
+      Ownership.write('contributionPercent', (c === null || isNaN(c) || c < 0) ? null : c);
+      return;
+    }
     var next = Object.assign({}, h.retirement || {});
     if (node.type === 'checkbox') next[key] = node.checked;
     else if (SETUP_MONEY.indexOf(key) !== -1) next[key] = Money.parseMoney(node.value);

@@ -4791,7 +4791,7 @@ section('Whether there is an employer at all');
   {
     const d = Ownership.describe('employerMatch', withStatus('selfEmployed'), 'start');
     checkTrue('describe says the field does not apply', d.applies === false);
-    checkTrue('and still knows who would own it', d.ownerId === 'start');
+    checkTrue('and still knows who would own it', d.ownerId === 'accounts');
     const plain = Ownership.describe('cashSavings', withStatus('selfEmployed'), 'start');
     checkTrue('a field with no applies() always applies', plain.applies === true);
     check('and carries no reason to explain', plain.notApplicableBecause, null);
@@ -5213,8 +5213,12 @@ section('Eleven cards');
     check('three characters are asked', Schema.TAX_CHARACTERS.map(t => t.id).join(','), 'pretax,roth,taxable');
     check('a new household has not answered about debt', Schema.createHousehold({}).meta.hasDebt, null);
     check('the demo answers every intake field', Progress.forRoom('start', Demo.build()).missing.length, 0);
-    ['contributionPercent', 'employerMatch'].forEach(f =>
-      check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
+    /* The 401(k) card went to Where It Goes whole (D-234), which already
+       owned the rest of the retirement setup. */
+    ['contributionPercent', 'employerMatch', 'capturingFullMatch'].forEach(f => {
+      check(`${f} is owned by Where It Goes`, Ownership.field(f).owner, 'accounts');
+      check(`${f} lands on the setup card`, Ownership.field(f).anchor, 'setup');
+    });
     /* The standing annual figure went to the room about what comes in
        (D-234), which is also the room the dated log already lives in. */
     check('grossAnnualIncome is owned by Income', Ownership.field('grossAnnualIncome').owner, 'income');
@@ -5256,10 +5260,17 @@ section('Eleven cards');
     }
     check('Sleep At Night reads the deductible as a chip',
       fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
-    check('Where It Goes reads the contribution as a chip',
-      fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8').indexOf("Ownership.chip('contributionPercent'") !== -1, true);
-    checkTrue('and has no box for it',
-      fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8').indexOf('data-setup="contributionPercent"') === -1);
+    {
+      const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
+      checkTrue('Where It Goes asks all three halves of the question now',
+        /data-setup="matchPercent"/.test(acc) && /data-setup="matchCap"/.test(acc)
+        && /data-setup="contributionPercent"/.test(acc));
+      checkTrue('and writes them through the owner path',
+        (acc.match(/Ownership\.write\('(employerMatch|contributionPercent)'/g) || []).length === 2);
+      checkTrue('capturing the match is still derived, never a box',
+        acc.indexOf('data-setup="capturingFullMatch"') === -1
+        && /Ownership\.describe\('capturingFullMatch'/.test(acc));
+    }
   }
 
   /* -- The two tables -------------------------------------------------- */
@@ -6033,6 +6044,7 @@ section('Facts answered once');
       hsaContributed: 'accounts', marginalRate: 'accounts',
       highestDeductible: 'runway'
     };
+    OWNED.contributionPercent = 'accounts';
     const h = Schema.createHousehold({});
     h.retirement = { contributionPercent: 4, rothContributedCents: 300000,
       hsaContributedCents: 0, onHdhp: true, hsaFamilyPlan: false };

@@ -317,6 +317,39 @@ const CASES = [
     }
   },
   {
+    /* WHERE IT GOES (D-234): the 401(k) card moved here whole. Three boxes
+       on one line, and the derived "are you taking the whole match" line
+       under them, which is never a box. */
+    room: '/rooms/accounts.html',
+    container: '#setup',
+    seed: 'demo',
+    fields: [
+      { sel: '[data-setup="matchPercent"]', type: '50', clearFirst: true },
+      { sel: '[data-setup="matchCap"]', type: '6', clearFirst: true },
+      { sel: '[data-setup="contributionPercent"]', type: '3', clearFirst: true }
+    ],
+    expect: async (page) => {
+      const out = await page.evaluate(() => {
+        const h = JSON.parse(localStorage.getItem('slaf.household.v2'));
+        const you = (h.people || []).filter(p => p.role === 'adult')[0] || {};
+        const em = ((you.incomeSources || [])[0] || {}).employerMatch || {};
+        return {
+          matchPercent: em.matchPercent,
+          cap: em.matchCapPercentOfSalary,
+          contribution: (h.retirement || {}).contributionPercent,
+          say: (document.getElementById('match-say') || {}).textContent || ''
+        };
+      });
+      return [
+        ['the match is stored as a share of one', out.matchPercent, 0.5],
+        ['the cap too', out.cap, 0.06],
+        ['what you put in is stored as a percent', out.contribution, 3],
+        ['and the derived line says the match is being left behind',
+          out.say.indexOf('leave match on the table') !== -1, true]
+      ];
+    }
+  },
+  {
     room: '/rooms/accounts.html',
     container: '#allocation',
     seed: 'demo',

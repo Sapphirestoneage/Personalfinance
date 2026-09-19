@@ -31,7 +31,7 @@
       href: 'rooms/start.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dob', 'you.situation'], writes: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'income.sources[].employerMatch'] },
+      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dob', 'you.situation'], writes: ['assets.cashCents', 'assets.invested'] },
       subsections: [
         { id: 'q-employment',  label: 'Your situation' },
         { id: 'q-about',       label: 'About you' },
@@ -544,7 +544,7 @@
       href: 'rooms/accounts.html',
       tier: 2,
       tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus'], writes: ['assets.allocation', 'assets.contributions.hsa', 'assets.contributions.roth', 'taxes.marginalRate'] },
+      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus'], writes: ['assets.allocation', 'assets.contributions.hsa', 'assets.contributions.pretax', 'assets.contributions.roth', 'income.sources[].employerMatch', 'taxes.marginalRate'] },
       subsections: [
         { id: 'setup',   label: 'Your retirement setup' },
         { id: 'compare', label: 'Roth vs. Traditional vs. taxable' },

@@ -227,8 +227,12 @@
       },
       format: function (v) { return EMPLOYMENT_LABELS[v] || v; }
     },
+    /* The 401(k) card moved whole (D-234): the match, what you put in,
+       and the derived answer to whether the match is captured. Splitting
+       three questions on one box across two rooms would have split the
+       box. Where It Goes already owned the rest of the retirement setup. */
     employerMatch: {
-      label: 'Employer match', owner: 'start', anchor: 'q-plan',
+      label: 'Employer match', owner: 'accounts', anchor: 'setup',
       read: function (h) { return Schema.employerMatchCents(h); },
       format: function (v) { return money(v) + '/yr'; },
       /* No employer, no match to ask about. See applies() below. */
@@ -236,7 +240,7 @@
       notApplicableBecause: 'You said there is no employer.'
     },
     capturingFullMatch: {
-      label: 'Capturing the full match', owner: 'start', anchor: 'q-plan',
+      label: 'Capturing the full match', owner: 'accounts', anchor: 'setup',
       /* Derived from what you contribute against the cap once both are
          known; the stored yes/no is only the fallback. D-061. */
       read: function (h) { return Schema.capturingFullMatchDerived(h); },
@@ -261,7 +265,7 @@
        ladder AND by Where It Goes, and kept by neither — the same question
        twice, forgotten twice. DECISIONS.md D-052. */
     contributionPercent: {
-      label: 'Workplace contribution', owner: 'start', anchor: 'q-plan',
+      label: 'Workplace contribution', owner: 'accounts', anchor: 'setup',
       read: function (h) {
         var v = (h.retirement || {}).contributionPercent;
         return Money.isEntered(v) ? Money.ok(v)

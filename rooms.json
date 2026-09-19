@@ -34,10 +34,7 @@
       ],
       "writes": [
         "cashSavings",
-        "investments",
-        "employerMatch",
-        "capturingFullMatch",
-        "contributionPercent"
+        "investments"
       ],
       "requires": [],
       "dashboardNumber": null,
@@ -343,6 +340,9 @@
         "filingStatus"
       ],
       "writes": [
+        "employerMatch",
+        "capturingFullMatch",
+        "contributionPercent",
         "rothContributed",
         "hsaContributed",
         "marginalRate",

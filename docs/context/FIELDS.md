@@ -8,8 +8,11 @@ does not look used everywhere. Ids that are ordinary words are not traced.
 Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 
-## accounts (7)
+## accounts (10)
 
+- `employerMatch` — Employer match · read by start, financial-snapshot, statements, foo-ladder, offer-compare, unlearning
+- `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, wrapped
+- `contributionPercent` — Workplace contribution · read by ledger, start, statements, what-if-life, tax
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
 - `marginalRate` — Marginal tax rate · read by statement, side-hustle, credential, rollover, roth-aca, property, debates
@@ -173,13 +176,10 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `practiceLedger` — Practice ledger · read by skill-tree
 
-## start (5)
+## start (2)
 
 - `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
 - `investments` — Investments + retirement · too generic to trace
-- `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, unlearning
-- `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, wrapped
-- `contributionPercent` — Workplace contribution · read by ledger, statements, accounts, what-if-life, tax
 
 ## statement (7)
 
