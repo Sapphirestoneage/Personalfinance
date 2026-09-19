@@ -42,7 +42,7 @@ These take an argument the sweep has no real value for (a skill, a goal, a templ
 
 ## Section 2: property tests
 
-Seed 20260910, 100 cases per property, 92 files for 89 engines, 414 properties, 7 failing. Source: `tests/properties/run.js`. A failing row carries the shrunk spec (dollars) that breaks it; `tests/properties/_harness.js` `build()` turns it back into a household.
+Seed 20260910, 100 cases per property, 93 files for 90 engines, 417 properties, 7 failing. Source: `tests/properties/run.js`. A failing row carries the shrunk spec (dollars) that breaks it; `tests/properties/_harness.js` `build()` turns it back into a household.
 
 ### Failing properties
 
@@ -128,6 +128,7 @@ Seed 20260910, 100 cases per property, 92 files for 89 engines, 414 properties, 
 | firstcar | no throw, no NaN or Infinity, on any valid household (1 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction; three parts, inside or outside; the count is the parts inside; the gap is never negative; the curve never rises |
 | foo | no throw, no NaN or Infinity, on any valid household (5 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | fulfillment | no throw, no NaN or Infinity, on any valid household (2 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
+| gap | levels are reached in order: the level you are on is a prefix; the gap at levels 2 and 3 is the debt engine's free-monthly figure; every missing input is a link into a room |
 | giving | no throw, no NaN or Infinity, on any valid household (2 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | goals | no throw, no NaN or Infinity, on any valid household (1 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction |
 | hassle | no throw, no NaN or Infinity, on any valid household (2 functions); the same input gives the same output twice (no hidden state); the household passed in is byte-identical afterwards; cents in, cents out: no *Cents field carries a fraction; returnOnHassle on random inputs: no throw, no NaN, whole cents, the same answer twice |

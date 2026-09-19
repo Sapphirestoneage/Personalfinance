@@ -7,8 +7,8 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Home (3)
 
 - **ledger** — The Ledger (utility) · 2264 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-241, D-230, D-226
-- **start** — Start Here · 1011 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-248, D-166, D-159
-- **dashboard** — The Dashboard · 1767 lines · no engines · DD-028, DD-026, DD-025
+- **start** — Start Here · 1011 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-249, D-166, D-159
+- **dashboard** — The Dashboard · 1830 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
 
@@ -16,7 +16,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **expenses** — Expenses · 1189 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-207, D-199, D-196
 - **cash-flow** — Cash Flow · 564 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget · D-192, D-181, D-163
 - **budget** — Budget · 483 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-130, D-129, D-128
-- **statement** — The Statement · 727 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-248, D-157, D-152
+- **statement** — The Statement · 727 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-249, D-157, D-152
 - **accounts** — Where It Goes & how it’s split · 583 lines · engines: selfemployed, accounts, projection, tier0, income, ledger, hourly · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand · D-130, D-071, D-062
 - **debt-payoff** — Debt Payoff · 1941 lines · engines: projection, debt · owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-236, D-191, D-190
 - **student-loans** — Student Loan Decision · 329 lines · engines: projection, tier0, income, selfemployed, ledger, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-120
@@ -95,7 +95,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Upkeep (7)
 
 - **get-help** — Get Help (utility) · 120 lines · no engines · D-097
-- **history** — History · 233 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, foo, cashflow, fire, statement, benchmarks, ratios, events, skills, history · owns: historyCompareTo · D-122, D-101
+- **history** — History · 262 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, foo, cashflow, fire, statement, benchmarks, ratios, events, skills, history · owns: historyCompareTo · D-122, D-101
 - **wrapped** — Money Wrapped · 131 lines · engines: projection, tier0, income, ledger, selfemployed, tax, hourly, debt, sincelast, wrapped · D-213
 - **data** — Your Data (utility) · 702 lines · engines: tax, bankcsv · D-221, D-220, D-125
 - **one-pager** — The One-Pager · 174 lines · engines: selfemployed, tax, projection, tier0, income, ledger, debt, cashflow, ratios, trap, onepager · D-219

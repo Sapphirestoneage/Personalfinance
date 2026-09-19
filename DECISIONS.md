@@ -14341,8 +14341,43 @@ The deduction figures are recalled and marked to verify.
 tools/context/build.js --check`; both rooms with the demo at 390px, clean
 console; the chain checked by hand (5.5% → 4.29% → 1.25% at 22% and 3%).
 
+## D-248 — Levels: the monthly gap, refined tier by tier; and the journey, what it thought and what was
 
-## D-248 — Boxes side by side line up, and the check that says so looks everywhere
+**Why.** The owner: "the calculator should have an understanding of where
+I am; there should be levels structured so, like, list x to get to the
+gap per month, then make that precise, each tier more specific; and
+record the journey a whole lot more, so I can see here is what you
+thought, here is what was."
+
+**Decision.** `engines/gap.js` reads the monthly gap (take-home less
+spending less the minimums, `Debt.freeMonthlyCents`) at four levels, each
+a list of ownership fields: 1 Rough (pay, one spending number, total
+debt; take-home estimated), 2 Exact pay (a recurring paycheck logged;
+level 1 keeps reading the estimate so the two can differ), 3 Spending
+split (the four lines and every minimum), 4 Actual (a closed month,
+`Debt.realizedFreeMonthlyCents`). The level you are on is the highest
+reached in order. The front-page strip leads with it: the level, the gap
+at that level with its basis, and the exact inputs the next level needs.
+The journey: `household.journal[]` (`Schema.createJournalEntry`), one
+entry the first time each level is reached and one per month closed,
+written only by the dashboard, never recomputed; the strip says "level 1
+thought X; level 3 says Y" and History lists the whole journey.
+
+**Replaces or removes.** The "N of 10 readings open" count on the strip;
+the readings list stays beneath the level.
+
+**Stored shape.** `journal` is a new top-level array on
+`slaf.household.v2`; `createHousehold` defaults it to `[]`, so an older
+save loads with an empty journey and nothing else changes. Entries carry
+`{ id, at, kind, level, cents, basis, month, note }`.
+
+**Verified.** `node test/run.js`, lane 2 with `tests/properties/gap.test.js`,
+`node tools/context/build.js --check`; the front page at 390px through
+empty, demo and logged-pay states, the journal written once per level,
+History's journey listed, clean console.
+
+
+## D-249 — Boxes side by side line up, and the check that says so looks everywhere
 
 **Why.** The owner, on a phone, on the Statement: "Still not even!!!!" The
 two dropdowns under an asset — which pile it sits in, how sure it is worth

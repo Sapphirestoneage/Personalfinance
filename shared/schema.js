@@ -1250,6 +1250,21 @@
     return { cadence: PAY_CADENCES.indexOf(f.cadence) >= 0 ? f.cadence : null, nextPaydayDay: Money.isEntered(f.nextPaydayDay) ? f.nextPaydayDay : null,
       bills: (f.bills || []).map(createBill), payLater: (f.payLater || []).map(createPayLater) };
   }
+  /** One journal entry: when, what kind of reading, at which level, the
+   *  figure, and the basis in words. Never computed on read; a record. */
+  function createJournalEntry(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('jr'),
+      at: typeof f.at === 'string' ? f.at : null,
+      kind: typeof f.kind === 'string' ? f.kind : 'gap',
+      level: Money.isEntered(f.level) ? f.level : null,
+      cents: Money.isEntered(f.cents) ? f.cents : null,
+      basis: typeof f.basis === 'string' ? f.basis : null,
+      month: typeof f.month === 'string' ? f.month : null,
+      note: typeof f.note === 'string' ? f.note : null
+    };
+  }
   function createHistoryPlan(fields) {
     var f = fields || {};
     return { compareTo: typeof f.compareTo === 'string' && f.compareTo ? f.compareTo : null };
@@ -2143,6 +2158,9 @@
       studentLoans: createStudentLoanPlan(f.studentLoans),
       calendar: createCalendar(f.calendar),
       history: createHistoryPlan(f.history),
+      /* The journey (D-248): what the app said at each level and each
+         month close, kept so the later figure can be set beside it. */
+      journal: (f.journal || []).map(createJournalEntry),
       /* The ledger and the budget's hand-set estimates (D-128). */
       ledger: createLedger(f.ledger),
       budget: createBudget(f.budget),
@@ -3081,6 +3099,7 @@
     createPayLater: createPayLater,
     createCalendar: createCalendar,
     createHistoryPlan: createHistoryPlan,
+    createJournalEntry: createJournalEntry,
     LOAN_PLANS: LOAN_PLANS,
     PAY_CADENCES: PAY_CADENCES,
     createGiving: createGiving,

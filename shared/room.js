@@ -108,7 +108,7 @@
     var inputsHost = el('room-inputs');
     if (inputsHost) {
       /* Two boxes side by side start level because every label in the grid
-         reserves the same number of lines (D-248). Two is the default and
+         reserves the same number of lines (D-249). Two is the default and
          covers almost every label; a room whose longest label genuinely
          needs three says `labelLines: 3` in its spec rather than letting
          that one label shove its own box below its neighbour's.
