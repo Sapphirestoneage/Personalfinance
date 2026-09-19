@@ -7,7 +7,7 @@ File: rooms/cant-pay.html · 529 lines
 Engines: projection, tier0, cashflow
 Reference data: bill_triage.json, effective_tax_rates_2026.json, expense_categories.json
 Owns: nothing
-Reads from other owners: filingStatus (tax), grossAnnualIncome (start), cashSavings (start), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
+Reads from other owners: filingStatus (tax), grossAnnualIncome (income), cashSavings (start), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
 Latest decisions:
   - D-148 — When It Won't All Get Paid
 Full context: node tools/context/pack.js cant-pay

@@ -7,7 +7,7 @@ File: rooms/real-hourly-wage.html · 250 lines
 Engines: projection, tier0, hourly
 Reference data: effective_tax_rates_2026.json
 Owns: nothing
-Reads from other owners: filingStatus (tax), grossAnnualIncome (start), monthlyExpenses (expenses)
+Reads from other owners: filingStatus (tax), grossAnnualIncome (income), monthlyExpenses (expenses)
 Latest decisions:
   - D-054 — A back and a next in every room, at the top
   - D-021 — Real Hourly Wage, and where a work profile lives

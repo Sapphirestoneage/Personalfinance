@@ -14,13 +14,14 @@
 <!--
   ROOM SPEC — SPEC.md §11. DECISIONS.md D-128 (the ledger).
 
-  1. READS   filingStatus and the annual gross (Start Here) to place each
-             entry in its tax band; the expense log, for what was logged
-             against an income entry.
+  1. READS   filingStatus (Tax) to place each entry in its tax band; the
+             expense log, for what was logged against an income entry.
   2. WRITES  It OWNS household.ledger.income[] — every dated income entry
-             and the costs of producing it, on the entry. Nothing else
-             edits those; it edits nothing else. Income SOURCES (Start
-             Here's annualised profile) are not touched here.
+             and the costs of producing it, on the entry — and, since
+             D-234, the annual gross itself: the standing figure the
+             savings rate and the FI date read. It was Start Here's, and
+             this is the room about what comes in, so this is where it is
+             asked. Nothing else edits either.
   3. CALLS   engines/ledger.js for every net figure and for the month —
              one tax engine for entries, shared with the Tax room — and
              shared/charts.js for the picture (D-194), twelve months of
@@ -144,7 +145,7 @@
     <details class="month-how" id="month-how" hidden>
       <summary>How this was worked out</summary>
       <ul class="how" id="month-how-list"></ul>
-      <p class="slaf-hint" style="margin:var(--space-2) 0 0">The rate is a blended estimate by income band, federal plus the employee share of payroll tax, from an unverified table. A figure typed off the stub always beats it. The band comes from the income in <a href="start.html#q-income">Start Here</a> when there is one, otherwise from the entries here, annualised.</p>
+      <p class="slaf-hint" style="margin:var(--space-2) 0 0">The rate is a blended estimate by income band, federal plus the employee share of payroll tax, from an unverified table. A figure typed off the stub always beats it. The band comes from the annual figure on the sources card below when there is one, otherwise from the entries here, annualised.</p>
     </details>
   </section>
 
@@ -172,7 +173,13 @@
 
   <section class="slaf-card card-gap" id="sources">
     <span class="slaf-eyebrow">Your pay, source by source</span>
-    <p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Each kind of pay is taxed its own way, and only a job stops when the job goes. Set the kind in <a href="start.html#q-income">Start Here</a>.</p>
+    <p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Each kind of pay is taxed its own way, and only a job stops when the job goes.</p>
+    <label class="slaf-field" id="gross-field" style="margin:0 0 var(--space-3)">
+      <span class="slaf-label">What you earn, a year, gross</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" id="f-gross" placeholder="e.g. 62,000" aria-label="Gross annual income"/></span>
+      <span class="slaf-hint" id="gross-say">Before tax and before anything comes out of it. The savings rate, the FI date and every tax figure in the app read this one number.</span>
+    </label>
     <div id="sources-table"></div>
   </section>
 
@@ -298,7 +305,8 @@
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Ledger = SLAF.Ledger, Manage = SLAF.Manage, Budget = SLAF.Budget;
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Ledger = SLAF.Ledger, Manage = SLAF.Manage, Budget = SLAF.Budget,
+      Ownership = SLAF.Ownership;
   var manageOpen = false, manageState = 'active';
   var ROOM_ID = 'income';
   var TABLES = null;
@@ -732,6 +740,7 @@
      with what survives a job loss. Read-only here; the kind is set in
      Start Here (one owner per shared number). D-181. */
   function paintSources() {
+    paintGross();
     var host = document.getElementById('sources-table');
     if (!host || !TABLES) return;
     var r = SLAF.Tax.takeHomeBySource(Spine.getProfile(), TABLES);
@@ -748,6 +757,32 @@
       + '</tbody><tfoot><tr><td><b>All of it</b></td><td class="num">' + Money.formatCents(r.grossCents) + '</td><td class="num">' + Money.formatCents(r.takeHomeCents) + '</td><td></td></tr></tfoot></table></div>'
       + (notes.length ? '<p class="slaf-hint" style="margin:var(--space-2) 0 0">Assumed: ' + esc(notes.join('; ')) + '.</p>' : '');
   }
+  /* ---- The annual gross (D-234) -------------------------------------------
+     One box, in the HTML, never rebuilt: #sources-table beneath it is
+     replaced on every render and a live input inside it would be destroyed
+     under a finger (D-034). Writes through Ownership.write like every other
+     owned figure, so the badge and the undo entry come for free. */
+  function paintGross() {
+    var node = el('f-gross');
+    if (!node || node === document.activeElement) return;
+    var r = Schema.grossAnnualIncomeCents(Spine.getProfile());
+    node.value = Money.isOk(r) ? Money.formatCents(r.value, { exact: true }) : '';
+  }
+  el('f-gross').addEventListener('focus', function () {
+    var c = Money.parseMoney(el('f-gross').value);
+    el('f-gross').value = Money.isEntered(c) ? String(c / 100) : '';
+    el('f-gross').select();
+  });
+  el('f-gross').addEventListener('blur', function () {
+    var cents = Money.parseMoney(el('f-gross').value);
+    var current = Schema.grossAnnualIncomeCents(Spine.getProfile());
+    if ((Money.isOk(current) ? current.value : null) === cents) { paintGross(); return; }
+    Spine.batch('What you earn, a year → ' + (cents === null ? '—' : Money.formatCents(cents, { exact: true })), function () {
+      Ownership.write('grossAnnualIncome', cents);
+    });
+    render();
+  });
+
   function render() {
     paintSources();
     if (!TABLES) return;

@@ -164,8 +164,10 @@
       },
       format: function (v) { return FILING_LABELS[v] || v; }
     },
+    /* The standing annual figure every headline number reads. Income asks
+       it, above the source table it explains (D-234). */
     grossAnnualIncome: {
-      label: 'Gross annual income', owner: 'start', anchor: 'q-income',
+      label: 'Gross annual income', owner: 'income', anchor: 'sources',
       read: function (h) { return Schema.grossAnnualIncomeCents(h); },
       format: money,
       /* Between jobs with nothing coming in, income is not a question the
@@ -1155,7 +1157,7 @@
   var LISTS = {
     debt: { owner: 'debt-payoff', path: 'debt.items', add: function (f) { Spine.set('meta.hasDebt', true); return Spine.upsertDebt(Schema.createDebt(Object.assign({ label: 'A debt', type: 'other' }, f || {}))); } },
     asset: { owner: 'statement', path: 'assets', add: function (f) { var p = primary(); return Spine.upsertAsset(Schema.createAsset(Object.assign({ label: 'An account', category: 'investment', ownerIds: [p.id] }, f || {}))); } },
-    incomeSource: { owner: 'start', path: 'income.grossAnnualCents', add: function (f) { var p = primary(); return Spine.upsertIncomeSource(p.id, Schema.createIncomeSource(Object.assign({ personId: p.id, source: 'A source', type: 'w2' }, f || {}))); } },
+    incomeSource: { owner: 'income', path: 'income.grossAnnualCents', add: function (f) { var p = primary(); return Spine.upsertIncomeSource(p.id, Schema.createIncomeSource(Object.assign({ personId: p.id, source: 'A source', type: 'w2' }, f || {}))); } },
     annualLine: { owner: 'expenses', path: 'expenses.annual[]', add: function (f) { return Spine.upsertAnnualLine(Object.assign({ label: 'A yearly cost' }, f || {})); } }
   };
   function addItem(kind, fields) {

@@ -7,7 +7,7 @@ File: rooms/cash-flow.html · 564 lines
 Engines: projection, tier0, cashflow, income, selfemployed, ledger, budget
 Reference data: effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: nothing
-Reads from other owners: filingStatus (tax), grossAnnualIncome (start), monthlyDebtPayments (debt-payoff)
+Reads from other owners: filingStatus (tax), grossAnnualIncome (income), monthlyDebtPayments (debt-payoff)
 Latest decisions:
   - D-192 — Expenses is what a month costs; Cash Flow is when the money moves
   - D-181 — Section 15: the ten foundation shapes, one commit a shape

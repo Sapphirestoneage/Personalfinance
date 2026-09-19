@@ -10,7 +10,7 @@ File: rooms/exercises.html · 210 lines
 Engines: projection, tier0, foo, skilltree, income, selfemployed, tax, fire, statement, vpw, decumulation, cashflow, events, exercises
 Reference data: effective_tax_rates_2026.json, exercises.json, expense_categories.json, fire_variants.json, foo_rules.json, ratio_benchmarks.json, +5 more
 Owns: exercisesDone
-Reads from other owners: grossAnnualIncome (start), cashSavings (start), stockShare (decumulation), plannedAnnualDraw (decumulation), socialSecurityAt (decumulation), monthsClosed (budget), retireAge (fire), monthlyExpenses (expenses)
+Reads from other owners: grossAnnualIncome (income), cashSavings (start), stockShare (decumulation), plannedAnnualDraw (decumulation), socialSecurityAt (decumulation), monthsClosed (budget), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:
   - D-141 — The card says what the curriculum says
   - D-139 — The Skill Tree gets its real curriculum: 625 skills, 25 trees, 312 lanes

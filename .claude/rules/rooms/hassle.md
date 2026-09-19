@@ -8,7 +8,7 @@ File: rooms/hassle.html · 498 lines
 Engines: projection, tier0, hourly, hassle
 Reference data: hassle_defaults.json
 Owns: nothing
-Reads from other owners: grossAnnualIncome (start)
+Reads from other owners: grossAnnualIncome (income)
 Latest decisions:
   - D-066 — The 10x Statement's shape: what an asset is, how sure you are, when you can reach it
   - D-032 — Return on Hassle: the weighting is a convention, and it says so

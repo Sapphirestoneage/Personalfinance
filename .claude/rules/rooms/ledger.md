@@ -12,7 +12,7 @@ File: rooms/ledger.html · 2248 lines · utility room
 Engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills
 Reference data: access_rules.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +12 more
 Owns: nothing
-Reads from other owners: grossAnnualIncome (start), lastPay (runway), cashSavings (start), employmentStatus (settings), contributionPercent (start), partnerDob (partner), totalDebt (debt-payoff), otherAssets (statement), +16 more
+Reads from other owners: grossAnnualIncome (income), lastPay (runway), cashSavings (start), employmentStatus (settings), contributionPercent (start), partnerDob (partner), totalDebt (debt-payoff), otherAssets (statement), +16 more
 Latest decisions:
   - D-230 — The Ledger swallows navigation: six pages become six hats
   - D-226 — The Ledger's doors, and the gutter three rooms never had

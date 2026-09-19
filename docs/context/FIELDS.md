@@ -112,8 +112,9 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `downPct` — Down payment, share of price · read by property
 - `mortgageRate` — Mortgage rate · read by unlearning
 
-## income (3)
+## income (4)
 
+- `grossAnnualIncome` — Gross annual income · read by ledger, start, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `ledgerIncome` — Income logged, a month · read by variable-income
 - `incomeType` — What kind of pay · read by ledger
 - `paySurvives` — Keeps paying if the job goes · read by ledger, start
@@ -172,9 +173,8 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `practiceLedger` — Practice ledger · read by skill-tree
 
-## start (6)
+## start (5)
 
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, unlearning

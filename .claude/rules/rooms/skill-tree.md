@@ -8,7 +8,7 @@ File: rooms/skill-tree.html · 609 lines
 Engines: projection, tier0, foo, skilltree
 Reference data: exercises.json, foo_rules.json, skill_links.json, skill_tree.json
 Owns: skillsDone
-Reads from other owners: grossAnnualIncome (start), monthsClosed (budget), monthlyExpenses (expenses), exercisesDone (exercises), practiceLedger (stacker)
+Reads from other owners: grossAnnualIncome (income), monthsClosed (budget), monthlyExpenses (expenses), exercisesDone (exercises), practiceLedger (stacker)
 Latest decisions:
   - D-141 — The card says what the curriculum says
   - D-140 — The board, redrawn as a tech tree

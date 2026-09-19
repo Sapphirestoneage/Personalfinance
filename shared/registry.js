@@ -31,7 +31,7 @@
       href: 'rooms/start.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dob', 'you.situation'], writes: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'income.grossAnnualCents', 'income.sources[].employerMatch'] },
+      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dob', 'you.situation'], writes: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'income.sources[].employerMatch'] },
       subsections: [
         { id: 'q-employment',  label: 'Your situation' },
         { id: 'q-about',       label: 'About you' },
@@ -102,7 +102,7 @@
       href: 'rooms/income.html',
       tier: 1,
       tags: ['income'],
-      daite: { reads: [], writes: ['income.costs', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss'] },
+      daite: { reads: [], writes: ['income.costs', 'income.grossAnnualCents', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss'] },
       subsections: [
         { id: 'month', label: 'This month' },
         { id: 'log',   label: 'Every entry' },

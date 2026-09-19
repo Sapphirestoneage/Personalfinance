@@ -3,10 +3,10 @@ paths:
   - "rooms/income.html"
 ---
 # Income (`income`)
-File: rooms/income.html · 786 lines
+File: rooms/income.html · 821 lines
 Engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget
 Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, se_tax_2026.json
-Owns: ledgerIncome, incomeType, paySurvives
+Owns: grossAnnualIncome, ledgerIncome, incomeType, paySurvives
 Reads from other owners: filingStatus (tax)
 Latest decisions:
   - D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line

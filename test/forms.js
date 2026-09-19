@@ -1140,6 +1140,24 @@ const CASES = [
     }
   },
   {
+    /* INCOME (D-234): the standing annual gross moved here from Start Here
+       and sits above the source table, which is replaced on every render. */
+    room: '/rooms/income.html',
+    container: '#sources',
+    seed: 'demo',
+    fields: [
+      { sel: '#f-gross', type: '71000', clearFirst: true }
+    ],
+    expect: async (page) => {
+      const gross = await page.evaluate(() => {
+        const h = JSON.parse(localStorage.getItem('slaf.household.v2'));
+        const you = (h.people || []).filter(p => p.role === 'adult')[0] || {};
+        return (you.incomeSources || []).reduce((n, srtc) => n + (srtc.grossAnnualIncomeCents || 0), 0);
+      });
+      return [['the annual gross was typed over, not appended to', gross, 7100000]];
+    }
+  },
+  {
     room: '/rooms/expenses.html',
     container: '#buckets',
     seed: 'demo',

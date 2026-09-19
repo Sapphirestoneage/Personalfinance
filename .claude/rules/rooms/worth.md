@@ -8,7 +8,7 @@ File: rooms/worth.html · 606 lines
 Engines: projection, tier0, hourly, worth
 Reference data: none
 Owns: nothing
-Reads from other owners: grossAnnualIncome (start)
+Reads from other owners: grossAnnualIncome (income)
 Latest decisions:
   (none linked)
 Full context: node tools/context/pack.js worth

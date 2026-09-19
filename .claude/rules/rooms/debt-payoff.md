@@ -7,7 +7,7 @@ File: rooms/debt-payoff.html · 1823 lines
 Engines: projection, debt
 Reference data: debt_rules.json, effective_tax_rates_2026.json, foo_rules.json, onepager_defaults.json
 Owns: hasDebt, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment
-Reads from other owners: grossAnnualIncome (start)
+Reads from other owners: grossAnnualIncome (income)
 Latest decisions:
   - D-191 — Debt Payoff: a stop line, and the payment says what it is built from
   - D-190 — Debt Payoff: the extra is always a number, estimated then realized

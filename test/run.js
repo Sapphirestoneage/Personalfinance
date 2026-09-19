@@ -5215,6 +5215,20 @@ section('Eleven cards');
     check('the demo answers every intake field', Progress.forRoom('start', Demo.build()).missing.length, 0);
     ['contributionPercent', 'employerMatch'].forEach(f =>
       check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
+    /* The standing annual figure went to the room about what comes in
+       (D-234), which is also the room the dated log already lives in. */
+    check('grossAnnualIncome is owned by Income', Ownership.field('grossAnnualIncome').owner, 'income');
+    check('… on the sources card', Ownership.field('grossAnnualIncome').anchor, 'sources');
+    check('and adding a source is Income\'s too', Ownership.LISTS.incomeSource.owner, 'income');
+    {
+      const inc = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
+      checkTrue('Income asks it, which is how ownership moves', /id="f-gross"/.test(inc));
+      checkTrue('and writes it through the owner path', /Ownership\.write\('grossAnnualIncome'/.test(inc));
+      checkTrue('the box sits outside the table that rebuilds (D-034)',
+        inc.indexOf('id="f-gross"') < inc.indexOf('id="sources-table"'));
+      checkTrue('and Income no longer sends anyone to Start Here for the kind of pay',
+        inc.indexOf('start.html#q-income') === -1);
+    }
     /* The three facts that only matter once the pay has stopped, or when
        the cushion is being priced, went to the Cushion (D-234). */
     ['highestDeductible', 'unemployment', 'lastPay'].forEach(f =>
