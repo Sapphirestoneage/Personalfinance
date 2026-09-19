@@ -1175,41 +1175,51 @@ const CASES = [
     }
   },
   {
-    /* THE FIRST ROUND (D-206): five screens, one box each, all in the markup
-       from boot; script only toggles [hidden]. Typing on each screen has to
-       survive the Next tap that reveals the next one. */
+    /* THE OPENING (D-306): five inputs on one screen, all in the markup from
+       boot. Typing in every box has to survive the taps between them, the
+       debt rows are drawn on the yes tap and must not redraw under a finger,
+       and every box writes through its owner. */
     room: '/rooms/ledger.html#round-1',
     container: '#view-round1',
     seed: 'empty',
+    prepare: async (page) => { await page.tap('[data-situation="employed"]'); await page.tap('[data-debt="yes"]'); await page.waitForTimeout(200); },
     fields: [
       { sel: '#in-age', type: '27' },
-      { sel: '[data-next="q-zip"]', tap: true },
-      { sel: '#in-zip', type: '12203' },
-      { sel: '[data-next="q-situation"]', tap: true },
-      { sel: '[data-situation="unemployed"]', tap: true },
-      { sel: '[data-next="q-pay"]', tap: true },
-      { sel: '#in-pay', type: '95000' },
-      { sel: '[data-next="q-cash"]', tap: true },
-      { sel: '#in-cash', type: '3000' }
+      { sel: '#in-take', type: '4200' },
+      { sel: '#in-spend', type: '2900' },
+      { sel: '#in-inv', type: '12000' },
+      { sel: '#in-cash', type: '3000' },
+      { sel: '[data-debt-field="balance"]', type: '8000' },
+      { sel: '[data-debt-field="rate"]', type: '22' }
     ],
     expect: async (page) => {
-      await page.tap('#btn-finish');
-      await page.waitForFunction(() => /runway|Nearly there/.test(document.getElementById('ins-headline').textContent), null, { timeout: 5000 });
+      await page.waitForFunction(() => /FI in about/.test(document.getElementById('op-headline').textContent), null, { timeout: 5000 });
       const s = await page.evaluate(() => {
         const h = SLAF.Spine.getProfile();
-        return { age: SLAF.Schema.primaryAge(h), zip: h.zip, status: h.people[0].employmentStatus,
-          lastPay: SLAF.Schema.unemploymentOf(h).lastGrossAnnualCents, cash: SLAF.Schema.cashCents(h).value,
-          headline: document.getElementById('ins-headline').textContent,
-          visible: [...document.querySelectorAll('.screen')].filter(e => !e.hidden).map(e => e.id).join(',') };
+        const d = SLAF.Schema.aggregatableDebts(h)[0] || {};
+        return { age: SLAF.Schema.primaryAge(h), status: h.people[0].employmentStatus,
+          take: h.takeHome && h.takeHome.monthlyCents, spend: SLAF.Schema.monthlyExpensesCents(h).value,
+          inv: SLAF.Schema.investmentsCents(h).value, cash: SLAF.Schema.cashCents(h).value,
+          hasDebt: h.meta.hasDebt, balance: d.balanceCents, rate: d.rate,
+          conf: (h.meta.fields.takeHomeMonthly || {}).confidence,
+          headline: document.getElementById('op-headline').textContent,
+          bands: document.querySelectorAll('#op-band .slaf-band').length,
+          levers: document.querySelectorAll('#op-levers li').length,
+          payFirst: document.getElementById('op-payfirst').textContent };
       });
       return [
         ['the age landed as a birth date', s.age, 27],
-        ['the ZIP landed', s.zip, '12203'],
-        ['the situation landed', s.status, 'unemployed'],
-        ['the last pay landed on the person', s.lastPay, 9500000],
+        ['the situation landed', s.status, 'employed'],
+        ['take-home landed as a month', s.take, 420000],
+        ['spending landed', s.spend, 290000],
+        ['invested landed', s.inv, 1200000],
         ['cash landed', s.cash, 300000],
-        ['one screen showing at the end: the insight', s.visible, 'insight'],
-        ['and it says something', /runway/.test(s.headline), true]
+        ['the debt is a yes with a balance and a rate', s.hasDebt === true && s.balance === 800000 && s.rate === 0.22, true],
+        ['every write is rough until marked exact', s.conf, 'roughly'],
+        ['a date appears', /FI in about/.test(s.headline), true],
+        ['three ways', s.bands, 3],
+        ['three levers', s.levers, 3],
+        ['a 22% card is paid first', /Pay this first/.test(s.payFirst), true]
       ];
     }
   },
