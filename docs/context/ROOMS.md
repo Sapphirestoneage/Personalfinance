@@ -31,7 +31,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 - **runway** — The Cushion · 1726 lines · engines: projection, tier0, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-232, D-130, D-082
 - **car** — Wheels · 847 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-238, D-151
-- **what-if-life** — What If · 1253 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, foo, adventure · D-266, D-146, D-087
+- **what-if-life** — What If · 1255 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, foo, adventure · D-266, D-146, D-087
 - **protection** — Protection · 467 lines · engines: projection, tier0, protection, hourly, estate · owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists · D-236, D-103, D-098
 - **decumulation** — The Back Half · 793 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation, selfemployed, tax, reachable, trap, rothaca · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-256, D-254, D-228
 - **career-move** — Work · 2003 lines · engines: projection, tier0, hourly, careermove, offers, selfemployed, sidehustle, credential, degree, countdown, microretirement · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-251

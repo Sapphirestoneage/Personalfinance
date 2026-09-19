@@ -715,6 +715,8 @@
   Promise.all([Reference.load(), Reference.loadEvents()]).then(function (loaded) {
     TABLES = loaded[0];
     EVENTS = loaded[1];
+    /* A template's choice lists come from the reference tables (D-267). */
+    EVENTS.list.forEach(function (tpl) { Events.resolveChoices(tpl, TABLES); });
     SLAF.Staleness.use(TABLES.staleness);
     if (!state.templateId && EVENTS.list.length) state.templateId = EVENTS.list[0].id;
     renderPick();

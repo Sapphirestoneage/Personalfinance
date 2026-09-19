@@ -5,7 +5,7 @@ paths:
   - "engines/adventure.js"
 ---
 # What If (`what-if-life`)
-File: rooms/what-if-life.html · 1253 lines
+File: rooms/what-if-life.html · 1255 lines
 Engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, foo, adventure
 Reference data: adventure_paths.json, car_costs.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +9 more
 Owns: nothing

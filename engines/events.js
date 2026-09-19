@@ -556,9 +556,17 @@
     return out;
   }
 
+  /* Choice lists read from a reference table — one resolver, in the loader
+     (shared/reference.js), shared with the block library. D-267. */
+  function resolveChoices(template, tables) {
+    var R = (typeof module === 'object' && module.exports) ? require('../shared/reference.js') : ((typeof self !== 'undefined' && self.SLAF) ? self.SLAF.Reference : null);
+    return R && R.resolveChoices ? R.resolveChoices(template, tables) : template;
+  }
+
   return {
     EMPTY: EMPTY,
     DEFAULT_HORIZON: DEFAULT_HORIZON,
+    resolveChoices: resolveChoices,
     RUNWAY_FLOOR_MONTHS: RUNWAY_FLOOR_MONTHS,
     evaluate: evaluate,
     context: context,

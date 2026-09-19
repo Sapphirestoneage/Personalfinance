@@ -7408,6 +7408,23 @@ section('Life events: moving, on the demo');
   /* Raleigh to Austin: 103 → 110, NC's 4.25% flat tax to none. */
   const r = E.run(h, tpl, { startsOn: 0, fromCity: 'raleigh', toCity: 'austin', band: 'crossCountry' }, { tables: T, d: 'default' });
   const by = {}; r.lines.forEach(l => { by[l.id] = l; });
+  /* D-267: the move BLOCK and the move EVENT read the same city index
+     through the same coalesce, so they cannot disagree about Austin. And
+     the event template carries no copy of the forty cities: its choice
+     lists are read from the table when it loads. */
+  const BlocksD267 = require(path.join(ROOT, 'shared/blocks.js'));
+  const geoCity = BlocksD267.build('geo', { toCity: 'austin', state: 'TX', remote: true, when: '2027-09' }, Demo.build()).value;
+  check('the move block reads the city index when a city is named: Austin 110 over the demo\'s NC 96',
+    geoCity.lines[1].delta, Math.round((T.colIndex.cities.austin.index / 96 - 1) * 10000) / 10000);
+  check('...the same table row the move event reads for its destination',
+    Math.round((by.ratio.value + 1) * T.colIndex.cities.raleigh.index), T.colIndex.cities.austin.index);
+  checkTrue('...and the block still asks four answers at most', require(path.join(ROOT, 'data/blocks/geo.json')).questions.length <= 4);
+  checkTrue('the move template carries no copy of the city list',
+    JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/move.json'), 'utf8')).questions.every(q => !q.choices || q.choices.length < 5));
+  const resolved = E.resolveChoices(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/events/move.json'), 'utf8')), T);
+  check('...and reads it from the table when it loads: forty cities plus the national average',
+    resolved.questions.map(q => q.id + ':' + (q.choices || []).length).join(' '), 'fromCity:41 toCity:40 band:3 startsOn:0');
+  checkTrue('...with the national average first, as the row for a city not listed', resolved.questions[0].choices[0].id === 'national');
   check('the ratio: 110 over 103, less one', by.ratio.value, 110 / 103 - 1, 1e-12);
   const ncTax = Tax.estimate(h, T).stateCents;
   check('state tax here from the one tax engine: NC on the demo', by.stateNow.value, ncTax);

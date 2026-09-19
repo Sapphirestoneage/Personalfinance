@@ -15044,6 +15044,45 @@ console. A `pin-toast` that lived outside `<main>` came with it; the merge
 tool only takes `<main>`, so it was rescued by hand. Every stub followed in
 a browser: all seven land on the reading that replaced the room.
 
+## D-267 — The city index, read where it is owned
+
+**Why.** The ROADMAP called the cost-of-living modifier blocked on a COL
+index. `data/col_index.json` has forty cities and the What If move event
+reads it — but the move BLOCK (`data/blocks/geo.json`) used the state index,
+so the event and the block gave two answers for a move to Austin, and the
+event carried its own copy of all forty cities in its `choices`.
+
+**Decision.** A question may say `choicesFrom` — {table, path, label,
+first} — and `Reference.resolveChoices` (one function, in the loader) fills
+`choices` from the table when a template or a block type loads;
+`Events.resolveChoices` and `Blocks.questions` both call it. The move event
+and the geo block keep no city list. The geo block asks the destination
+CITY as a choice and falls back to the state; its origin is your state's
+index, because that is the one thing the household already knows and a
+block asks four answers at most. Both read the destination from the same
+row.
+
+**Replaces or removes.** Eighty-one lines of copied city labels in
+`data/events/move.json`. Nothing on screen: the event rendered the same
+forty cities before, from its copy.
+
+**What is NOT built, on purpose.** The book's HCOL/MCOL/LCOL *modifier* —
+national benchmarks scaled by where you live. This app measures a person
+against their own month, so cost of living is already inside every number
+it shows; the levels of wealth are rate tests, not dollar thresholds, and
+would not scale. The one place a national dollar appears is the $100k
+rungs, and a "$1M in New York money" line there is exactly the kind of
+lens the freeze exists to stop.
+
+**Stored shape.** No change. A geo block written before this has no
+`toCity` and reads as it did.
+
+**Verified.** `node test/run.js` (31,700): the block's Austin-over-NC ratio,
+the event's Austin-over-Raleigh ratio, both from the same table row; the
+template carrying no copy; the resolver giving 41 · 40 · 3. In a browser:
+the move event's three lists render from the table, national average
+first, console clean.
+
 ---
 
 # The Dungeons & Dividends entries

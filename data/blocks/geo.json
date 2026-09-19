@@ -10,6 +10,19 @@
   "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room. 15.6 (D-181): the state figures come from data/states.json through the statesByCode view; the block keeps no copy.",
   "questions": [
     {
+      "id": "toCity",
+      "ask": "Destination city (nearest listed)",
+      "kind": "choice",
+      "optional": true,
+      "choicesFrom": {
+        "table": "colIndex",
+        "path": [
+          "cities"
+        ],
+        "label": "label"
+      }
+    },
+    {
       "id": "state",
       "ask": "Destination state",
       "kind": "state"
@@ -51,6 +64,14 @@
               {
                 "coalesce": [
                   {
+                    "table": "colIndex",
+                    "path": [
+                      "cities",
+                      "@toCity",
+                      "index"
+                    ]
+                  },
+                  {
                     "table": "statesByCode",
                     "path": [
                       "@state",
@@ -91,7 +112,7 @@
       },
       "source": "national",
       "confidence": "unverified",
-      "note": "Destination index over your state's, less one: a share on each needs line.",
+      "note": "Destination over origin, less one: a share on each needs line. The destination is a city index (data/col_index.json) when one is named, else the state index; the origin is YOUR state’s index, because that is the one thing the household already knows and a block asks four answers at most. The move event in What If asks your city too; both read the destination from the same table row. D-267.",
       "stateSource": {
         "table": "statesByCode",
         "path": [
