@@ -153,11 +153,23 @@
     return mode();
   }
   /** The toggle's markup: one button a mode, the current one pressed. */
+  /* The toggle says what it does (D-256): a caption before it, and under it
+     one line on the mode in use, so "bought" and "pushed" are never a
+     guess. The buttons themselves are unchanged. */
   function toggleHtml(household, tables, id) {
     var cur = mode();
-    return '<div class="slaf-lens" id="' + (id || 'lens') + '" role="group" aria-label="Read these numbers as">' + available(household, tables).map(function (m) {
+    var modes = available(household, tables);
+    var now = modes.filter(function (m) { return m.id === cur; })[0] || modes[0];
+    return '<div class="slaf-lens-wrap"><span class="slaf-lens-cap">Read these numbers as</span>'
+      + '<div class="slaf-lens" id="' + (id || 'lens') + '" role="group" aria-label="Read these numbers as">' + modes.map(function (m) {
       return '<button type="button" class="slaf-lens-btn" data-lens="' + m.id + '" aria-pressed="' + (m.id === cur) + '" title="' + m.long + '">' + m.label + '</button>';
-    }).join('') + '</div>';
+    }).join('') + '</div>'
+      + (now ? '<span class="slaf-lens-say">' + now.label + ': ' + now.long + '.</span>' : '') + '</div>';
+  }
+  /* Whether a lens has anything to read (D-256): the amounts that carry a
+     figure. With none, the toggle would change nothing, so it is not shown. */
+  function hasAmounts(rows) {
+    return (rows || []).some(function (r) { return r && Money.isEntered(r.cents); });
   }
 
   /* ---- The strip: toggle plus the amounts it reads, for rooms not on the
@@ -175,6 +187,8 @@
       var tables = typeof getTables === 'function' ? getTables() : getTables;
       var cur = mode();
       var rows = (amountsFn && amountsFn(h, tables)) || [];
+      /* Nothing to read: no toggle (D-256). */
+      if (!hasAmounts(rows)) { host.innerHTML = ''; return; }
       host.innerHTML = '<div class="slaf-lens-strip">' + toggleHtml(h, tables, hostId + '-lens')
         + '<ul class="slaf-lens-amounts">' + rows.map(function (r) {
             if (!Money.isEntered(r.cents)) return '';
@@ -194,5 +208,5 @@
     return { repaint: paint };
   }
 
-  return { MODES: MODES, mountStrip: mountStrip, STORE_KEY: STORE_KEY, wage: wage, available: available, fiInputs: fiInputs, apply: apply, format: format, formatMonths: formatMonths, mode: mode, setMode: setMode, setDefault: setDefault, defaultMode: defaultMode, toggleHtml: toggleHtml, paydaysPerMonth: paydaysPerMonth, cadenceOf: cadenceOf };
+  return { MODES: MODES, mountStrip: mountStrip, hasAmounts: hasAmounts, STORE_KEY: STORE_KEY, wage: wage, available: available, fiInputs: fiInputs, apply: apply, format: format, formatMonths: formatMonths, mode: mode, setMode: setMode, setDefault: setDefault, defaultMode: defaultMode, toggleHtml: toggleHtml, paydaysPerMonth: paydaysPerMonth, cadenceOf: cadenceOf };
 });

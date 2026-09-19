@@ -4,9 +4,9 @@ paths:
   - "engines/coast.js"
 ---
 # Your Coast Date (`coast-date`)
-File: rooms/coast-date.html · 123 lines
-Engines: projection, tier0, coast
-Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json
+File: rooms/coast-date.html · 125 lines
+Engines: projection, tier0, income, selfemployed, ledger, coast
+Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: retireAge (fire), coastAge (fire)
 Latest decisions:

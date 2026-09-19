@@ -1,17 +1,18 @@
 ---
 paths:
   - "rooms/fire.html"
+  - "engines/journey.js"
 ---
 # FIRE Number (`fire`)
-File: rooms/fire.html · 532 lines
-Engines: projection, tier0, fire, selfemployed, tax, hourly
-Reference data: effective_tax_rates_2026.json, fire_variants.json, se_tax_2026.json
+File: rooms/fire.html · 564 lines
+Engines: projection, tier0, income, ledger, fire, foo, journey, selfemployed, tax, hourly
+Reference data: effective_tax_rates_2026.json, fire_variants.json, foo_rules.json, irs_limits_2026.json, journey_routes.json, se_tax_2026.json
 Owns: retireAge, coastAge
-Reads from other owners: filingStatus (start), monthlyExpenses (expenses)
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:
+  - D-240 — The FI date carries its range and says what it assumes
+  - D-235 — The map: one road, you are here, and the routes from here
+  - D-228 — You cannot size the mountain until you know how you come down it
   - D-162 — The ledger, everywhere, without building a second one
   - D-161 — The way back
-  - D-142 — A room does not ask a question your situation has no answer to
-  - D-138 — The FIRE Lab: every calculation on one screen, drawn
-  - D-070 — The ages you plan around are stored, and FIRE Number owns them
 Full context: node tools/context/pack.js fire

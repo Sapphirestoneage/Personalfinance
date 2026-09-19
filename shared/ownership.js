@@ -305,10 +305,12 @@
       format: money
     },
 
-    /* The Coverage Checkup (D-071): four facts about your cover, asked in
-       Sleep At Night, read by the Statement's worst plausible year. */
+    /* The Coverage Checkup (D-071): four facts about your cover, asked on
+       the Cushion's at-3am reading since D-232, read by the Statement's
+       worst plausible year. Sleep At Night became that reading; the owner
+       moved with the boxes, which is the only way ownership ever moves. */
     oopMax: {
-      label: 'Out-of-pocket maximum', owner: 'sleep-at-night', anchor: 'coverage',
+      label: 'Out-of-pocket maximum', owner: 'runway', anchor: 'coverage',
       read: function (h) {
         var v = (h.insurance || {}).oopMaxCents;
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['oopMaxCents']);
@@ -316,7 +318,7 @@
       format: money
     },
     termLife: {
-      label: 'Term life in force', owner: 'sleep-at-night', anchor: 'coverage',
+      label: 'Term life in force', owner: 'runway', anchor: 'coverage',
       read: function (h) {
         var v = (h.insurance || {}).termLifeCents;
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['termLifeCents']);
@@ -337,7 +339,7 @@
       format: function (v) { return v === 0 ? 'No' : v + (v === 1 ? ' person' : ' people'); }
     },
     disabilityMonthly: {
-      label: 'Disability benefit', owner: 'sleep-at-night', anchor: 'coverage',
+      label: 'Disability benefit', owner: 'runway', anchor: 'coverage',
       read: function (h) {
         var v = (h.insurance || {}).disabilityMonthlyCents;
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['disabilityMonthlyCents']);
@@ -345,7 +347,7 @@
       format: function (v) { return money(v) + '/mo'; }
     },
     umbrella: {
-      label: 'Umbrella policy', owner: 'sleep-at-night', anchor: 'coverage',
+      label: 'Umbrella policy', owner: 'runway', anchor: 'coverage',
       read: function (h) {
         var v = (h.insurance || {}).umbrella;
         return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['umbrella']);
@@ -353,18 +355,21 @@
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
 
-    /* ---- The tranche rooms (D-098): each owns the facts it asks. ---- */
+    /* ---- The tranche rooms (D-098): each owns the facts it asks. ----
+       Between Jobs became the Cushion's while-job-hunting reading (D-232),
+       so these two moved with the two boxes that ask them. They no longer
+       stop applying when you are employed: the reading runs as if the pay
+       stopped today, and the two numbers it needs are much easier to think
+       about before the job ends than on the day it does. */
     expectedSearchMonths: {
-      label: 'Expected search, months', owner: 'between-jobs', anchor: 'inputs',
+      label: 'Expected search, months', owner: 'runway', anchor: 'inputs',
       read: function (h) { var v = Schema.unemploymentOf(h).expectedSearchMonths; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['expectedSearchMonths']); },
-      format: function (v) { return v + ' mo'; },
-      applies: function (h) { return Schema.isUnemployed(h); }, notApplicableBecause: 'Not between jobs.'
+      format: function (v) { return v + ' mo'; }
     },
     floorMonthly: {
-      label: 'The floor, a month', owner: 'between-jobs', anchor: 'inputs',
+      label: 'The floor, a month', owner: 'runway', anchor: 'inputs',
       read: function (h) { var v = Schema.unemploymentOf(h).floorMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['floorMonthlyCents']); },
-      format: function (v) { return money(v) + '/mo'; },
-      applies: function (h) { return Schema.isUnemployed(h); }, notApplicableBecause: 'Not between jobs.'
+      format: function (v) { return money(v) + '/mo'; }
     },
     healthCover: {
       label: 'Health cover', owner: 'protection', anchor: 'inputs',
@@ -768,7 +773,7 @@
        Snapshot, which shows computed Emergency Fund Coverage beside it,
        links here rather than offering a second place to type it. */
     swanTarget: {
-      label: 'Your sleep-at-night number', owner: 'sleep-at-night', anchor: 'number',
+      label: 'Your sleep-at-night number', owner: 'runway', anchor: 'am-number',
       read: function (h) {
         var Swan = (typeof module === 'object' && module.exports)
           ? require('../engines/swan.js')
@@ -910,6 +915,8 @@
     assetCharacter: { label: 'How it is taxed on the way out', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
     assetTier: { label: 'Which pile it sits in', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
     assetCostBasis: { label: 'Cost basis', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetInstitution: { label: 'Where it is held', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetAccountType: { label: 'Account type', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
     incomeType: { label: 'What kind of pay', owner: 'income', anchor: 'sources', read: function (h) { var p = Schema.primaryPerson(h); return countOf(p ? (p.incomeSources || []) : [], 'incomeSources'); }, format: function (v) { return v + ' listed'; } },
     paySurvives: { label: 'Keeps paying if the job goes', owner: 'income', anchor: 'sources', read: function (h) { var p = Schema.primaryPerson(h); return countOf(p ? (p.incomeSources || []) : [], 'incomeSources'); }, format: function (v) { return v + ' listed'; } },
     annualLine: { label: 'Once-a-year costs', owner: 'expenses', anchor: 'more', read: function (h) { return countOf(((h.expenses || {}).annual || []), 'annualLines'); }, format: function (v) { return v + ' listed'; } }
@@ -950,6 +957,11 @@
     assetCharacter: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { taxCharacter: v || null }); },
     assetTier: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { tier: v || null }); },
     assetCostBasis: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { costBasisCents: Money.isEntered(v) ? Math.round(v) : null }); },
+    assetInstitution: function (v, ctx) { var t = String(v === null || v === undefined ? '' : v).trim(); return itemPatch(Spine.upsertAsset, ctx, { institution: t === '' ? null : t }); },
+    assetAccountType: function (v, ctx) {
+      var a = (Spine.getProfile().assets || []).filter(function (x) { return ctx && x.id === ctx.itemId; })[0];
+      return itemPatch(Spine.upsertAsset, ctx, Schema.applyAccountType(a, v || null));
+    },
     contributionPercent: setAt('retirement.contributionPercent', 'Contribution'),
     rothContributed: centsAt('retirement.rothContributedCents', 'Roth so far'),
     hsaContributed: centsAt('retirement.hsaContributedCents', 'HSA so far'),
@@ -1149,7 +1161,7 @@
     if (writers.length && writers.indexOf(L.owner) === -1) throw new Error('The registry does not list ' + L.owner + ' as a writer of ' + L.path);
     return L.add(fields);
   }
-  /* RENAMING A LINE, through its owner (D-223). Express could add a line and
+  /* RENAMING A LINE, through its owner (D-260). Express could add a line and
      delete a line but never correct one: a card typed as "Amex" with the
      wrong last four had to be removed and retyped, losing its balance and
      its rate with it. These are the line's IDENTITY fields only - what it is

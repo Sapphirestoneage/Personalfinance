@@ -4,9 +4,9 @@ paths:
   - "engines/partner.js"
 ---
 # Partner (`partner`)
-File: rooms/partner.html · 381 lines
-Engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner
-Reference data: confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, partner_conventions.json, +2 more
+File: rooms/partner.html · 383 lines
+Engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, partner
+Reference data: confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, irs_limits_2026.json, +4 more
 Owns: partnerName, partnerDob, splitMode, sharedMonthly
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:

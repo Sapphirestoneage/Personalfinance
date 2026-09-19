@@ -3,74 +3,111 @@
 Updated: 2026-09-19
 
 ## Where it stands
-- The Ledger rework brief (owner, 2026-09-11) is being built in order: G1, A, B, C/C2, D, E, F, G2, G3 with J1, H1 to H5, H7, H8 shipped (D-204 to D-212); H6 waits on sourced 1871-on returns data (egress blocked); I1 to I5 shipped (D-213, D-214); J2 to J8 shipped (D-214 to D-216; J7 without gift privacy, which waits on the owner); K4, K6, K7, K11 shipped on the one countdown (D-217); K1 and K3 shipped (D-218); K2, K5, K8, K9, K10 shipped (D-219): Phase K is built; one CSV out and back in (D-220), made to survive a real spreadsheet (D-221: one reader for every CSV, any way a number, date, yes or choice is written, a preview naming what each line would do, one undo for the lot); I6 (Eli's taxonomy), I7 (needs H6), I8 (needs the §11 tree) wait. Still waiting on the owner: the Pages switch, the domain (G1.1), a LICENSE (G3.14). The owner's brief overrides the freeze for those phases; each adds a VIEW of existing rows (First Round, doors, Express), no second store.
-- ~70 rooms live on GitHub Pages. Each room works on its own; the connections
-  between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
-- Context system added. Sessions should no longer read the archives.
-- **This session (D-224): one door in, one door out, and a backup nobody
-  else can open.** Your Data was six cards, twelve buttons and three file
-  pickers, and every backup was plain text. Now: three cards, one verb each.
-  Save (spreadsheet, printable page, a backup protected with a passphrase or
-  plain, send, link, QR, and a receipt saying nothing left the device). Bring
-  in (one Choose a file and a drop zone; `shared/intake.js` names what was
-  dropped and the matching panel opens; every path previews, one button, one
-  undo). Start over. `shared/vault.js` seals a backup with PBKDF2 and
-  AES-GCM on the browser's own crypto; a wrong passphrase is a refusal, never
-  garbage; there is no recovery and the page says so. A fingerprint is shown
-  after a save and a load so two devices can be compared by eye.
-- **Also this session (D-223): Express, made short.** The owner: too long, too
-  much extra, levels were a good separation. It was also drawing every account
-  and card twice, because a list's rows span levels and the build put all of a
-  list's fields into every level holding any of them; the second copy won the
-  index and the first went dead. Each level now renders only its own fields, is
-  a named fold with a badge that reads Done or a count, and arrives shut unless
-  it still has work. The walk steps one family-and-level a screen. The per-row
-  furniture and the row's `unlocks` line appear only for the row being
-  answered; an enum of four or more is a select. A line (account, card, source,
-  yearly cost) now has a name, an institution and a last four as three fields
-  rather than one mangled string, can be renamed in place, and the lines group
-  under their institution with a subtotal. The spreadsheet carries the
-  institution column so it can pivot by bank.
-- **This session (D-222): the screens as a person on a phone meets them.** The
-  owner walked the live app and sent ten screenshots. Fixed: the math sheet was
-  translucent with no backdrop, so the room behind it read through it (now
-  opaque, dims the page, closes on Escape or a tap outside, hides the undo pair
-  while open); the Ledger, Express and the First Round had no side gutter, so
-  every line sat against both edges of the glass; a door card's parts were
-  inline spans that collided into one run of text; a Settings switch looked the
-  same on and off, and a situation row's sentence squeezed its own label to one
-  word a line; `--color-warning` was used a dozen times and never declared.
-  Saving now gives you something you can read: a spreadsheet and a printable
-  page first, the JSON named as the restore file, the One-Pager saving a CSV
-  instead of a file of code, and the save card no longer folded away. Express
-  gained the guided DAITE walk: one family a screen, then a sharpening pass over
-  the families that got an answer. No new room, no new store, no new vocabulary.
+- **93 → 30 is the programme.** The reframe (D-228): you cannot size the
+  mountain until you know how you come down it, so the Back Half defines the
+  target and The Number becomes a read-out of it. The room test and the
+  thirty are D-229 and `docs/room-map.json`, which `test/run.js` checks
+  against the registry every run. That map is the cut list: `absorbs` minus
+  `done` is what is left, `held` says what is not moving yet, and why.
+- **Four of the six merges are done; 92 registry rooms → 76.** D-230, the
+  Ledger swallowed navigation. D-232, The Cushion is four readings of one
+  number, seven field owners moved with their boxes. D-231, What The Next
+  Dollar Does is one question at three amounts, the FOO step above all
+  three. D-233, The Scorecard is six readings of the same entered numbers
+  and opens on the plainest. Every old URL redirects, hash and all.
+  `.slaf-hats` is the one reading strip; `part: true` in `shared/room.js`
+  lets a template room become a reading.
+- Ledger rework brief: built through Phase K; H6, I6, I7, I8 wait.
+- **The panel round (D-238 to D-243).** Three rounds, seven lenses, in
+  `PANEL_REVIEW.md`; fixes and what is left in `PROGRESS.md`. Six of seven
+  lenses finished at 8+, Donegan at 7. The Scorecard had been dropping three
+  of its nine numbers behind a banner blaming `data/`; every per-hour figure
+  rendered `$0.00`; the front door and the ladder gave one household two
+  different next steps; the home room told a first-time visitor they
+  understand 0% of their life. All fixed, and `test/run.js` now fails if a
+  page writes to an id its own markup does not carry. Four panel claims
+  struck as wrong on checking; four items left to the owner.
+- **This session (D-234, D-235, D-236, D-237, D-244, D-245).** The front
+  page leads with what is open and what one answer opens; the FIRE room
+  opens with the map and four paced routes; Debt Payoff draws where the
+  payment goes and what each fall frees; every title carries Shows/Needs;
+  the path is the numbers, the dashboard, then the readings; long hints
+  fold behind an ⓘ; every score pillar says what is good, why, what to do;
+  logged pay reaches every reading (D-246); every debt says what it really
+  costs after the deduction and inflation, and the pace to pay it (D-247);
+  the front page leads with the level of the monthly gap and the journey
+  records what it thought at each level and what was (D-248).
+  A room asks only a question at the level its door has reached; the
+  askDeeper switch lifts it (D-250).
+  Every asset says where it is held and what kind of account it is, and
+  the type sets the tax character (D-251).
+  Debt Payoff keeps the chosen order and says, stretch by stretch, when
+  it is in effect and when nothing goes beyond the minimums (D-252).
+  Cash Flow and the Calendar draw the month as turns: what hits the
+  account, when, and what is left, one shared picture (D-253).
+  Your Statements: every line opens to how it is worked out and where
+  to change it, tax comes off before living, and a FIRE statement sits
+  beside the balance sheet (D-254).
+  The Car room takes new or used with the age, the running costs and
+  repairs, and prices the car all in a month against the 8% cap (D-255).
+  The lens toggle says what it does and hides where nothing changes
+  (D-256); Budget leads each month with what is left, in a sentence
+  (D-257).
+  The path rooms' ledes and blurbs say what they measure in plain
+  words, and Cash Flow's figures link to their rooms (D-258).
+- **The owner's brief, 2026-09-19:** treat it as financial planning software,
+  readable by a third grader and a FIRE person alike. The queue from
+  that brief is done (D-250 to D-258); what stays open is the same pass
+  on the rooms off the path, and every figure a link in the rooms that
+  still print one bare.
+- **Three merged sessions from the phone walk (D-259, D-260, D-261).** The
+  screens as a person on a phone meets them: the math sheet opaque over a
+  dimmed page, a gutter on the intake rooms, switches that look on or off, a
+  Save that gives a spreadsheet or a page and names the JSON as the restore
+  file (D-259). Express made short: each level renders only its own fields
+  (it was drawing every account twice), a level badges Done or a count, the
+  walk steps one level a screen, a line has a name, an institution and a
+  last four, and lines group under their bank; Express is the Ledger's
+  all-at-once door now, so this lives there (D-260). Your Data is three cards
+  with one door in, and a backup can be sealed with a passphrase on the
+  browser's own crypto, with a fingerprint after a save and a load (D-261).
+- **Boxes line up now (D-249).** Reported from a phone, third time asked:
+  side-by-side controls sat 16px apart on 17 pages. Labels in a row reserve
+  the same number of lines, so the boxes start level whatever a label does.
+  The reason it kept coming back was the check: `test/alignment.js` ran in
+  CI and named the very page and grid that was broken, but recognised a
+  control only by three classes — the boxes in question are bare `<select>`s
+  — and skipped, rather than failed, when it could not find one. It now
+  walks every page found on disk, finds containers by shape not by name, and
+  fails on a cell whose control it cannot see.
 
 ## Freeze
-- ON. No new rooms, frameworks, or vocabularies until the first journey
-  below works end to end.
+- ON, and the merge is how it is honoured: every session leaves fewer screens.
 
 ## Next (top item first; one per session)
-1. Decide who owns income sources once Start Here retires (Ledger or Income).
-   OWNER DECISION NEEDED.
-2. Walk the other rooms at 390px the way D-222 walked six. Its four faults (a
-   floating panel that is not opaque, a wrapper with no gutter, a run of inline
-   spans where lines were meant, a control with no on state) are patterns, not
-   one-offs; a test that catches them beats a walk that finds them.
-3. Make logged income reconcile with typical income (known problem 1).
-4. First journey works end to end: about 8 questions in, a FOO step and an FI
-   date range out. Add a node test for it.
-5. Monthly close prompts a backup export: the spreadsheet (D-222) and the
-   protected backup (D-224).
+1. **Turn the Pages switch on.** OWNER, one click, and nothing anyone has
+   built is usable until it happens: Settings → Pages → Deploy from a branch
+   → `main` / root. Also on the owner: the domain (G1.1), a LICENSE (G3.14).
+2. **Which income figure is authoritative?** OWNER DECISION. Tested: $500 a
+   month into `ledger.income[]` moves neither gross income nor the FI date —
+   the headline numbers read only `people[].incomeSources[]` and no room
+   writes one, so income growth can be modelled and not recorded. Root of
+   ARCHITECTURE problem #1, of `engines/taxroom.js:140`, and of the one lens
+   below 8. Details in `PROGRESS.md`.
+3. **Who owns Start Here's 17 fields once it retires into the Ledger?**
+   OWNER DECISION. Blocks the last room of step 1; tangled with 2.
+4. Step 5: the Decision Room shell — one shell, five outputs on every block,
+   then goals, wedding and big purchase before any deep module.
+5. Step 6: the Back Half, once the shell has stopped moving. D-228 is its brief.
+6. The room-by-room lede pass (D-237); the first journey end to end; a
+   monthly close that prompts a backup.
+7. Walk the rooms off the path at 390px the way D-259 walked six: a floating
+   panel that is not opaque, a wrapper with no gutter, inline spans where
+   lines were meant, a control with no on state. A test that catches them
+   beats a walk that finds them.
 
-## Cut list (for /simplify, one per session, owner approves each)
-- Retire Start Here, Front Doors, Walk-Through into the Ledger (decided).
-- Merge candidates, not yet decided: Financial Snapshot / Savings Rate /
-  Every Ratio / The Score into the DRAFTT scorecard; FIRE Number + FIRE Lab;
-  Worth It / Worth the Hassle / Price the Dream; Designed Week + Time Buckets;
-  Budget + Estimated vs Actual into a monthly close.
-- rooms/net-worth.html is a redirect to statement.html, not in the registry.
-
-## Proposed in chat, not decided
-- Four layers: Ledger (facts), Log (actuals, one + button), Blocks, Readings.
-- Round 1 uses only answer-from-your-head rows; lookups move to round 2.
+## Panel notes not yet answered
+- The doors: five ways in where `index.html:19` says two. Tangled with 3.
+- Galloway: model the means-tested floor. Can't Pay (D-240) is the interim.
+- Donegan: no room is about building something that pays you.
+- Hormozi: thirty is still a library. D-234 and D-235 are the first answer.

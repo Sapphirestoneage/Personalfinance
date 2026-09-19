@@ -29,6 +29,12 @@
        scope: string           the out-of-scope line (→ Get Help)
        guessAs: 'retired'      (optional) the situation to guess on an empty
                                spine, for a room that exists for one
+       part: true              (optional) this is ONE READING inside a room
+                               that registers itself, not the room. Added by
+                               the 93-to-30 merge (D-229): a merged room owns
+                               the registration, the sidebar and the hash,
+                               and a reading that claimed any of them would
+                               claim them twice. Everything else is the same.
      })
 
    LIVE-FORM: built once. Inputs are built from the spec on mount and only
@@ -101,8 +107,17 @@
     /* ---- Build once ------------------------------------------------------- */
     var inputsHost = el('room-inputs');
     if (inputsHost) {
-      inputsHost.innerHTML = '<div class="room-grid">' + (spec.inputs || []).map(control).join('') + '</div>'
-        + (spec.more && spec.more.length ? '<details class="room-more"><summary>' + esc(spec.moreLabel || 'Fine-tune') + '</summary><div class="room-grid">' + spec.more.map(control).join('') + '</div></details>' : '');
+      /* Two boxes side by side start level because every label in the grid
+         reserves the same number of lines (D-249). Two is the default and
+         covers almost every label; a room whose longest label genuinely
+         needs three says `labelLines: 3` in its spec rather than letting
+         that one label shove its own box below its neighbour's.
+         test/alignment.js fails the build if any pair is still crooked. */
+      var gridOpen = spec.labelLines
+        ? '<div class="room-grid" style="--slaf-label-lines:' + (+spec.labelLines) + '">'
+        : '<div class="room-grid">';
+      inputsHost.innerHTML = gridOpen + (spec.inputs || []).map(control).join('') + '</div>'
+        + (spec.more && spec.more.length ? '<details class="room-more"><summary>' + esc(spec.moreLabel || 'Fine-tune') + '</summary>' + gridOpen + spec.more.map(control).join('') + '</div></details>' : '');
     }
     var byCtl = {};
     all.forEach(function (c) { byCtl[c.ctl] = c; });
@@ -221,10 +236,13 @@
     function paintLens(h) {
       var host = el('room-lens'), list = el('room-amounts');
       if (!host || !Lens) return;
+      var rows = spec.amounts ? (spec.amounts(h, TABLES) || []) : [];
+      /* The lens reads the amounts list; with nothing in it the toggle
+         would change nothing on the page, so it is not shown (D-256). */
+      if (!Lens.hasAmounts(rows)) { host.innerHTML = ''; if (list) list.innerHTML = ''; return; }
       host.innerHTML = Lens.toggleHtml(h, TABLES, 'lens');
-      if (!list || !spec.amounts) return;
+      if (!list) return;
       var mode = Lens.mode();
-      var rows = spec.amounts(h, TABLES) || [];
       list.innerHTML = rows.map(function (r) {
         if (!Money.isEntered(r.cents)) return '';
         var shown = mode === '$' ? Money.formatCents(r.cents) : Lens.format(r.cents, mode, h, TABLES);
@@ -341,17 +359,22 @@
       var d = t.closest('details'); if (d) d.open = true;
       t.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    window.addEventListener('hashchange', jumpToHash);
+    if (!spec.part) window.addEventListener('hashchange', jumpToHash);
 
-    Spine.registerRoom(ROOM_ID);
-    if (S.Progress) S.Progress.mount(ROOM_ID);
+    /* A reading inside a merged room leaves registration, the sidebar and
+       the hash to the room it sits in (D-232). Two registerRoom calls on one
+       page mark the same room visited twice and mount a second sidebar. */
+    if (!spec.part) {
+      Spine.registerRoom(ROOM_ID);
+      if (S.Progress) S.Progress.mount(ROOM_ID);
+    }
     Spine.onChange(render);
 
     Reference.load(spec.tables || undefined).then(function (t) {
       TABLES = t;
       if (typeof spec.ready === 'function') spec.ready(t);
       paint();
-      jumpToHash();
+      if (!spec.part) jumpToHash();
     }).catch(function (err) {
       var notice = el('load-notice');
       if (!notice) return;

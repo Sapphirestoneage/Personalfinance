@@ -31,6 +31,9 @@
     var u = Spine.peekUndo(), r = Spine.peekRedo();
     undoBtn.disabled = !u;
     redoBtn.disabled = !r;
+    /* With nothing to undo the bar is a floating shape on top of whatever it
+       covers, and it covered a figure. It appears with the first change. */
+    box.hidden = !u && !r;
     undoBtn.title = u ? 'Undo: ' + u.label : 'Nothing to undo yet — every change you make lands here.';
     redoBtn.title = r ? 'Redo: ' + r.label : 'Nothing to redo — undo something first.';
     undoBtn.setAttribute('aria-label', undoBtn.title);
@@ -107,6 +110,8 @@
 
   Spine.onChange(function () { paint(); announce(); });
   function mount() { document.body.appendChild(box); document.body.appendChild(toast);
+    /* The room keeps the space the bar will use, whether or not it shows yet,
+       so the page never shifts under a finger when the first change lands. */
     document.documentElement.classList.add('has-undo'); paint(); }
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
 })();

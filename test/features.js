@@ -97,7 +97,14 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
         toast: !!document.querySelector('.slaf-toast'),
         lens: !!document.querySelector('.slaf-lens [data-lens]'),
         bands: !!document.querySelector('.slaf-bands, [data-bands]'),
-        bandsThree: document.querySelectorAll('.slaf-bands .slaf-band').length,
+        /* Every three-way line carries three: a page may hold several
+           readings, each with its own line (the Scorecard since D-233,
+           the FI date's range since D-240), so the count is per line. */
+        bandsThree: (function () {
+          var lines = document.querySelectorAll('.slaf-bands');
+          if (!lines.length) return 0;
+          return Array.prototype.every.call(lines, function (l) { return l.querySelectorAll('.slaf-band').length === 3; }) ? 3 : -1;
+        })(),
         ledger: !!document.querySelector('.ledger, #spheres .row'),
         header: !!document.querySelector('.slaf-hops, .slaf-menu-btn')
       };

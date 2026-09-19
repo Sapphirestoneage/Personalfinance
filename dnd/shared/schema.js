@@ -43,7 +43,7 @@
      beside the version in every footer and in every backup, so a phone
      showing an old page can be told apart from a bug. version.json carries
      the same string; `node tools/stamp-build.js` sets both to today. D-202. */
-  var BUILD = '2026-09-19 15:05Z';
+  var BUILD = '2026-09-19 16:34Z';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -182,6 +182,8 @@
     'asset.hassle':                              { class: 'raw',        unit: 'enum',    values: [1, 2, 3], note: '1 easy · 2 moderate · 3 annoying — for anything income-producing' },
     'asset.cashFlowMonthlyCents':                { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'net monthly cash the asset throws off; null for one that does not' },
     'asset.accessAgeOverride':                   { class: 'raw',        unit: 'years',   note: 'overrides the access age derived from access_rules (e.g. a rule-of-55 plan). null = derived' },
+    'asset.institution':                         { class: 'raw',        unit: 'text',    note: 'the bank, broker or plan that holds it, as the person names it. null = not typed. D-251' },
+    'asset.accountType':                         { class: 'raw',        unit: 'enum',    values: ['checking', 'savings', 'hysa', 'money_market', 'cd', 'brokerage', 'stock_plan', 'crypto', '401k', 'roth_401k', '403b', '457b', 'tsp', 'pension', 'traditional_ira', 'roth_ira', 'sep_ira', 'simple_ira', 'hsa', '529', 'daf', 'mixed', 'other'], note: 'the account type on its statement (Schema.ACCOUNT_TYPES). Choosing one sets taxCharacter and, where the category is still other, the category, through Schema.applyAccountType; the character stays editable. null = not asked. D-251' },
     'futureIncome.monthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'a pension, Social Security, an annuity, an inheritance you would rather not count. Owned by the Statement' },
     'futureIncome.confidence':                   { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4] },
     'property.rentMonthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'gross rent. The value itself lives on the linked real_estate asset — one number, one owner' },
@@ -358,7 +360,7 @@
       source: f.source || null,                    // free text, e.g. "Day job"
       /* Who pays it: the employer, the platform, the tenant. Its own field
          so pay can be grouped by payer the way accounts group by bank, and
-         so "Day job" and "Acme Inc" stop being one string. D-223. */
+         so "Day job" and "Acme Inc" stop being one string. D-260. */
       institution: f.institution || null,
       grossAnnualIncomeCents: f.grossAnnualIncomeCents === undefined ? null : f.grossAnnualIncomeCents,
       /* How this person is ACTUALLY paid. engines/income.js turns the pair
@@ -672,7 +674,7 @@
 
   /* The last four of an account or card: digits only, exactly four, or null.
      Anything else a person types (a whole card number, three digits, a word)
-     is not four digits and so is not a last four. D-223. */
+     is not four digits and so is not a last four. D-260. */
   function last4Of(v) {
     if (v === null || v === undefined || v === '') return null;
     var d = String(v).replace(/\D/g, '');
@@ -684,7 +686,8 @@
     return {
       id: f.id || newId('a'),
       label: f.label || null,
-      /* WHO HOLDS IT, and the last four (D-223). These used to be smuggled
+      /* THE LAST FOUR (D-260; who holds it is the D-251 `institution` below).
+         These used to be smuggled
          into `label` as one string ("Amex ••1003"), which meant the app could
          show the name but could never group by the institution, could never
          correct one without retyping the other, and lost the four digits to
@@ -692,7 +695,6 @@
          both nullable: null is "not said", never "none", and a household
          saved before this simply has null in both and reads exactly as it
          did. `last4` is stored as the digits only, no bullets. */
-      institution: f.institution || null,
       last4: last4Of(f.last4),
       category: f.category || 'other',
       valueCents: f.valueCents === undefined ? null : f.valueCents,
@@ -702,6 +704,11 @@
          Start Here (pre-tax / Roth / taxable); a lump typed as one total is
          'unknown', which is an answer — null is "never asked". D-061. */
       taxCharacter: f.taxCharacter === undefined ? null : f.taxCharacter,
+      /* Where it sits (D-251): the bank or broker, and the account type on
+         its statement. Both null until typed; the type is one of
+         ACCOUNT_TYPES and, when chosen, set the tax character. */
+      institution: f.institution === undefined ? null : f.institution,
+      accountType: f.accountType === undefined ? null : f.accountType,
       /* The 10x Statement's per-asset facts (D-066). Every one starts null:
          liquidity and confidence are rated, not guessed — the access_rules
          default is proposed in the box, never written. */
@@ -1016,7 +1023,22 @@
       opexMonthlyCents: f.opexMonthlyCents === undefined ? null : f.opexMonthlyCents,
       vacancyRate: f.vacancyRate === undefined ? null : f.vacancyRate,
       hassle: f.hassle === undefined ? null : f.hassle,
-      prospects: f.prospects === undefined ? null : f.prospects
+      prospects: f.prospects === undefined ? null : f.prospects,
+      /* The terms of the deal, for a place being weighed rather than one
+         already owned (D-227). A record written before this has them all
+         null and reads exactly as it did. */
+      label: typeof f.label === 'string' && f.label.trim() ? f.label.trim() : null,
+      priceCents: Money.isEntered(f.priceCents) ? f.priceCents : null,
+      downPct: Money.isEntered(f.downPct) ? f.downPct : null,
+      rate: Money.isEntered(f.rate) ? f.rate : null,
+      hoaMonthlyCents: Money.isEntered(f.hoaMonthlyCents) ? f.hoaMonthlyCents : null,
+      yourRentMonthlyCents: Money.isEntered(f.yourRentMonthlyCents) ? f.yourRentMonthlyCents : null,
+      unitRentsCents: Array.isArray(f.unitRentsCents)
+        ? f.unitRentsCents.filter(function (v) { return Money.isEntered(v); }).map(function (v) { return Math.round(v); })
+        : [],
+      yearsHeld: Money.isEntered(f.yearsHeld) ? f.yearsHeld : null,
+      marginalRate: Money.isEntered(f.marginalRate) ? f.marginalRate : null,
+      appreciationRate: Money.isEntered(f.appreciationRate) ? f.appreciationRate : null
     };
   }
 
@@ -1258,6 +1280,21 @@
     return { cadence: PAY_CADENCES.indexOf(f.cadence) >= 0 ? f.cadence : null, nextPaydayDay: Money.isEntered(f.nextPaydayDay) ? f.nextPaydayDay : null,
       bills: (f.bills || []).map(createBill), payLater: (f.payLater || []).map(createPayLater) };
   }
+  /** One journal entry: when, what kind of reading, at which level, the
+   *  figure, and the basis in words. Never computed on read; a record. */
+  function createJournalEntry(fields) {
+    var f = fields || {};
+    return {
+      id: f.id || newId('jr'),
+      at: typeof f.at === 'string' ? f.at : null,
+      kind: typeof f.kind === 'string' ? f.kind : 'gap',
+      level: Money.isEntered(f.level) ? f.level : null,
+      cents: Money.isEntered(f.cents) ? f.cents : null,
+      basis: typeof f.basis === 'string' ? f.basis : null,
+      month: typeof f.month === 'string' ? f.month : null,
+      note: typeof f.note === 'string' ? f.note : null
+    };
+  }
   function createHistoryPlan(fields) {
     var f = fields || {};
     return { compareTo: typeof f.compareTo === 'string' && f.compareTo ? f.compareTo : null };
@@ -1316,6 +1353,64 @@
     { id: 'taxable', label: 'Taxable',  hint: 'brokerage, anything with no tax wrapper' }
   ];
 
+  /* ---- Where an asset sits (D-251) ------------------------------------------
+     The account type is the name on the statement the bank or broker sends
+     (401(k), Roth IRA, brokerage, savings). Each one implies the tax
+     character and the category, so choosing it fills both; the character
+     stays editable afterwards. `mixed` is one total across several
+     accounts, which is the honest answer for a lump typed in Start Here.
+     Rooms read this list through Schema; nothing else holds a copy. */
+  var ACCOUNT_TYPES = [
+    { id: 'checking',        label: 'Checking',              taxCharacter: 'cash',    category: 'cash',       group: 'Bank' },
+    { id: 'savings',         label: 'Savings',               taxCharacter: 'cash',    category: 'cash',       group: 'Bank' },
+    { id: 'hysa',            label: 'High-yield savings',    taxCharacter: 'cash',    category: 'cash',       group: 'Bank' },
+    { id: 'money_market',    label: 'Money market',          taxCharacter: 'cash',    category: 'cash',       group: 'Bank' },
+    { id: 'cd',              label: 'CD',                    taxCharacter: 'cash',    category: 'cash',       group: 'Bank' },
+    { id: 'brokerage',       label: 'Brokerage (taxable)',   taxCharacter: 'taxable', category: 'investment', group: 'Investing' },
+    { id: 'stock_plan',      label: 'Company stock / ESPP',  taxCharacter: 'taxable', category: 'investment', group: 'Investing' },
+    { id: 'crypto',          label: 'Crypto',                taxCharacter: 'taxable', category: 'investment', group: 'Investing' },
+    { id: '401k',            label: '401(k)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    { id: 'roth_401k',       label: 'Roth 401(k)',           taxCharacter: 'roth',    category: 'retirement', group: 'Work retirement' },
+    { id: '403b',            label: '403(b)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    { id: '457b',            label: '457(b)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    { id: 'tsp',             label: 'TSP',                   taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    { id: 'pension',         label: 'Pension',               taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    { id: 'traditional_ira', label: 'Traditional IRA',       taxCharacter: 'pretax',  category: 'retirement', group: 'IRA' },
+    { id: 'roth_ira',        label: 'Roth IRA',              taxCharacter: 'roth',    category: 'retirement', group: 'IRA' },
+    { id: 'sep_ira',         label: 'SEP IRA',               taxCharacter: 'pretax',  category: 'retirement', group: 'IRA' },
+    { id: 'simple_ira',      label: 'SIMPLE IRA',            taxCharacter: 'pretax',  category: 'retirement', group: 'IRA' },
+    { id: 'hsa',             label: 'HSA',                   taxCharacter: 'hsa',     category: 'investment', group: 'Tax-advantaged' },
+    { id: '529',             label: '529 plan',              taxCharacter: '529',     category: 'other',      group: 'Tax-advantaged' },
+    { id: 'daf',             label: 'Donor-advised fund',    taxCharacter: 'daf',     category: 'other',      group: 'Tax-advantaged' },
+    { id: 'mixed',           label: 'Several accounts, one total', taxCharacter: null,      category: null,         group: 'Other' },
+    { id: 'other',           label: 'Something else',        taxCharacter: null,      category: null,         group: 'Other' }
+  ];
+  var ACCOUNT_TYPE_LABELS = {};
+  ACCOUNT_TYPES.forEach(function (t) { ACCOUNT_TYPE_LABELS[t.id] = t.label; });
+  function accountType(id) {
+    for (var i = 0; i < ACCOUNT_TYPES.length; i++) if (ACCOUNT_TYPES[i].id === id) return ACCOUNT_TYPES[i];
+    return null;
+  }
+  /* The one function that turns a chosen account type into what it says
+     about the asset: the type itself, the tax character it implies, and
+     the category only where none was chosen yet ('other'): Start Here's
+     cash and investments keep the category their owner reads. A blank
+     clears the type and leaves the rest as it was. */
+  function applyAccountType(asset, id) {
+    var t = accountType(id);
+    if (!t) return { accountType: null };
+    var patch = { accountType: t.id };
+    if (t.taxCharacter) patch.taxCharacter = t.taxCharacter;
+    var a = asset || {};
+    if (t.category && (!a.category || a.category === 'other')) patch.category = t.category;
+    return patch;
+  }
+  /** "Example Bank · 401(k)", or either half alone, or ''. */
+  function whereItSits(asset) {
+    var a = asset || {}, t = accountType(a.accountType);
+    return [a.institution, t && t.id !== 'other' ? t.label : null].filter(Boolean).join(' \u00b7 ');
+  }
+
   /* The ids data/debt_rules.json defines; the constructor keeps the list
      honest without reading the table, which loads later than the schema. */
   var KEEP_REASONS = ['low_rate', 'tax_favoured', 'appreciating', 'building_credit', 'subsidised'];
@@ -1331,7 +1426,7 @@
     return {
       id: f.id || newId('d'),
       label: f.label || null,
-      /* Who it is with, and the last four. See createAsset. D-223. */
+      /* Who it is with, and the last four. See createAsset. D-260. */
       institution: f.institution || null,
       last4: last4Of(f.last4),
       balanceCents: f.balanceCents === undefined ? null : f.balanceCents,
@@ -1457,7 +1552,7 @@
     return {
       id: f.id || newId('yr'),
       label: typeof f.label === 'string' && f.label ? f.label : null,
-      /* Who it is paid to: the insurer, the council, the club. D-223. */
+      /* Who it is paid to: the insurer, the council, the club. D-260. */
       institution: f.institution || null,
       bucket: ANNUAL_BUCKETS.indexOf(f.bucket) >= 0 ? f.bucket : 'wants',
       amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
@@ -2156,6 +2251,9 @@
       studentLoans: createStudentLoanPlan(f.studentLoans),
       calendar: createCalendar(f.calendar),
       history: createHistoryPlan(f.history),
+      /* The journey (D-248): what the app said at each level and each
+         month close, kept so the later figure can be set beside it. */
+      journal: (f.journal || []).map(createJournalEntry),
       /* The ledger and the budget's hand-set estimates (D-128). */
       ledger: createLedger(f.ledger),
       budget: createBudget(f.budget),
@@ -2585,13 +2683,54 @@
       effectiveRate: rate.value, referenceVersion: rate.referenceVersion, precision: rate.precision, grossAnnualIncomeCents: gross.value
     });
   }
+  /* The income log, reached lazily the way the reference module is: the
+     engine depends on this file, so this file cannot depend on it at load. */
+  function ledgerModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('../engines/ledger.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Ledger ? g.SLAF.Ledger : null;
+  }
+  /** What the logged pay actually nets a month (D-246): the recurring
+   *  entries in the income log, this month, gross less tax, the way the
+   *  Income room shows them. Incomplete when nothing recurring is logged,
+   *  when an entry cannot be netted, or when the engine is not loaded, so
+   *  the estimate stands in and says so. One-time entries (a gift, a
+   *  bonus) never count: they are not what next month brings. */
+  function loggedTakeHomeMonthlyCents(household, tables, monthId) {
+    var L = ledgerModule();
+    if (!L || typeof L.month !== 'function') return Money.incomplete('The income log is not loaded on this page.', ['ledgerIncome']);
+    if (!L.hasRecurring(household)) return Money.incomplete('No recurring pay is logged yet.', ['ledgerIncome']);
+    var m = L.month(household, tables, monthId);
+    if (!Money.isOk(m)) return m;
+    var rows = (m.rows || []).filter(function (r) { return r.entry && r.entry.frequency !== 'once'; });
+    if (!rows.length) return Money.incomplete('No recurring pay lands this month.', ['ledgerIncome']);
+    if (rows.some(function (r) { return r.netCents === null; })) return Money.incomplete('A logged entry could not be netted yet.', ['ledgerIncome']);
+    var takeHome = rows.reduce(function (t, r) { return t + r.takeHomeCents; }, 0);
+    var gross = rows.reduce(function (t, r) { return t + r.grossCents; }, 0);
+    return Money.ok(takeHome, { grossCents: gross, taxCents: gross - takeHome, month: m.month, count: rows.length });
+  }
   function takeHomeAnnualCents(household, tables) {
+    /* Logged pay beats the estimate (D-246): when the income log holds the
+       recurring paychecks, this month's net is what the household actually
+       keeps, and every reading downstream should say so. */
+    var logged = loggedTakeHomeMonthlyCents(household, tables);
+    if (Money.isOk(logged)) {
+      /* The logged gross is the base, never Start Here's salary: a net
+         read off one and a gross read off the other is a made-up tax rate. */
+      var g = logged.grossCents * 12;
+      var net = logged.value * 12;
+      var taxCents = Math.max(0, g - net);
+      return Money.ok(net, {
+        source: 'logged', loggedMonthlyCents: logged.value, loggedMonth: logged.month,
+        grossAnnualIncomeCents: g, estimatedTaxCents: taxCents, effectiveRate: g > 0 ? taxCents / g : 0, referenceVersion: null
+      });
+    }
     var gross = grossAnnualIncomeCents(household);
     if (!Money.isOk(gross)) return gross;
     var tax = estimatedAnnualTaxCents(household, tables);
     if (!Money.isOk(tax)) return tax;
     return Money.ok(gross.value - tax.value, {
-      grossAnnualIncomeCents: gross.value, estimatedTaxCents: tax.value, effectiveRate: tax.effectiveRate, referenceVersion: tax.referenceVersion
+      source: 'estimate', grossAnnualIncomeCents: gross.value, estimatedTaxCents: tax.value, effectiveRate: tax.effectiveRate, referenceVersion: tax.referenceVersion
     });
   }
   function takeHomeMonthlyCents(household, tables) {
@@ -2977,6 +3116,7 @@
     hasDebtAnswered: hasDebtAnswered,
     saidNoDebt: saidNoDebt,
     TAX_CHARACTERS: TAX_CHARACTERS,
+    ACCOUNT_TYPES: ACCOUNT_TYPES, ACCOUNT_TYPE_LABELS: ACCOUNT_TYPE_LABELS, accountType: accountType, applyAccountType: applyAccountType, whereItSits: whereItSits,
     createWorkProfile: createWorkProfile,
     WORK_DEFAULTS: WORK_DEFAULTS,
     createAsset: createAsset,
@@ -3054,6 +3194,7 @@
     createPayLater: createPayLater,
     createCalendar: createCalendar,
     createHistoryPlan: createHistoryPlan,
+    createJournalEntry: createJournalEntry,
     LOAN_PLANS: LOAN_PLANS,
     PAY_CADENCES: PAY_CADENCES,
     createGiving: createGiving,
@@ -3130,6 +3271,7 @@
     estimatedAnnualTaxCents: estimatedAnnualTaxCents,
     takeHomeAnnualCents: takeHomeAnnualCents,
     takeHomeMonthlyCents: takeHomeMonthlyCents,
+    loggedTakeHomeMonthlyCents: loggedTakeHomeMonthlyCents,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
     FAT_NEEDS: FAT_NEEDS,

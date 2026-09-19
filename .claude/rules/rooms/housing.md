@@ -3,9 +3,9 @@ paths:
   - "rooms/housing.html"
 ---
 # Housing Decision (`housing`)
-File: rooms/housing.html · 330 lines
-Engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing
-Reference data: confidence_weights.json, expense_categories.json, fire_variants.json, foo_rules.json, housing_conventions.json, levers.json, +5 more
+File: rooms/housing.html · 332 lines
+Engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, housing
+Reference data: confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, housing_conventions.json, +8 more
 Owns: rentAlternative, homePrice, downPct, mortgageRate
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), rentMonthly (expenses), monthlyExpenses (expenses)
 Latest decisions:

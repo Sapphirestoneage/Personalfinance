@@ -3,7 +3,7 @@ paths:
   - "rooms/self-employed.html"
 ---
 # Going Self-Employed (`self-employed`)
-File: rooms/self-employed.html · 381 lines
+File: rooms/self-employed.html · 380 lines
 Engines: selfemployed
 Reference data: effective_tax_rates_2026.json, se_tax_2026.json
 Owns: nothing

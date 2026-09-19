@@ -245,7 +245,7 @@ const CASES = [
     /* The Refresh page: every box opens holding the current figure, and
        typing over it must replace it, not append to it — a phone selects
        nothing on tap, so the case types with clearFirst. */
-    room: '/rooms/refresh.html',
+    room: '/rooms/ledger.html#since-last-time',
     container: '#fields',
     seed: 'demo',
     fields: [
@@ -267,7 +267,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/sleep-at-night.html',
+    room: '/rooms/runway.html#at-3am',
     container: '#coverage',
     seed: 'demo',
     fields: [
@@ -531,7 +531,7 @@ const CASES = [
   },
   {
     /* Between Jobs (D-098): the two owned boxes land on person.unemployment. */
-    room: '/rooms/between-jobs.html',
+    room: '/rooms/runway.html#job-hunting',
     container: '#room-inputs',
     seed: 'demo',
     prepare: async (page) => {
@@ -597,20 +597,31 @@ const CASES = [
       /* The first cards are Start Here's cash and investments, whose names
          and values are read-only here; the tap on #btn-add appends ours. */
       { sel: '#asset-list .asset:last-child input[data-field="label"]', type: 'The car' },
-      { sel: '#asset-list .asset:last-child input[data-field="valueCents"]', type: '5000' }
+      { sel: '#asset-list .asset:last-child input[data-field="valueCents"]', type: '5000' },
+      /* D-251: where it is held is typed on any card, Start Here's included. */
+      { sel: '#asset-list .asset:nth-child(2) input[data-field="institution"]', type: 'Example Broker' }
     ],
     expect: async (page) => {
       /* 15.8: the pile select stores the override and moves the flag. */
       await page.selectOption('#asset-list .asset:last-child select[data-field="tier"]', 'taxable');
       await page.waitForTimeout(400);
+      /* D-251: the account type sets the tax character; the lump from
+         Start Here keeps its category. */
+      await page.selectOption('#asset-list .asset:nth-child(2) select[data-field="accountType"]', '401k');
+      await page.waitForTimeout(400);
       const a = await page.evaluate(() =>
         (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets
           .filter(x => x.category === 'real_estate' || x.category === 'vehicle').pop());
+      const lump = await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets[1]);
       return [
         ['the name was kept', a.label, 'The car'],
         ['the value was kept', a.valueCents, 500000],
         ['the pile was stored', a.tier, 'taxable'],
-        ['and the liquid flag follows it', a.liquid, true]
+        ['and the liquid flag follows it', a.liquid, true],
+        ['where it is held was stored', lump.institution, 'Example Broker'],
+        ['the account type was stored', lump.accountType, '401k'],
+        ['and set the tax character', lump.taxCharacter, 'pretax'],
+        ['without moving the lump out of its category', lump.category, 'investment']
       ];
     }
   },
@@ -619,10 +630,11 @@ const CASES = [
        place a careless rebuild would close the keyboard mid-word. The results
        under it are rewritten on every keystroke, so if the box itself were
        ever regenerated this case would catch it. D-034, D-153. */
-    room: '/rooms/doors.html',
+    room: '/rooms/ledger.html#arrangements',
     container: '#search-host',
     seed: 'demo',
     prepare: async (page) => {
+      await page.waitForSelector('[data-layout="search"]');
       await page.tap('[data-layout="search"]');
       await page.waitForTimeout(250);
       /* Stamp the node. If any keystroke rebuilt the box, the stamp goes with
@@ -630,16 +642,16 @@ const CASES = [
          D-034 property here — focus cannot be asserted after the fact,
          because the harness deliberately blurs before expect() runs so that
          every other room's focusout commit fires (see the blur below). */
-      await page.evaluate(() => { document.getElementById('q').__stamp = 'before-typing'; });
+      await page.evaluate(() => { document.getElementById('lay-q').__stamp = 'before-typing'; });
     },
     fields: [
-      { sel: '#q', type: 'rent' }
+      { sel: '#lay-q', type: 'rent' }
     ],
     expect: async (page) => {
       const r = await page.evaluate(() => ({
-        value: document.getElementById('q').value,
-        stamp: document.getElementById('q').__stamp || '(node was replaced)',
-        hits: document.querySelectorAll('.door').length,
+        value: document.getElementById('lay-q').value,
+        stamp: document.getElementById('lay-q').__stamp || '(node was replaced)',
+        hits: document.querySelectorAll('#lay-body .door').length,
         all: document.querySelectorAll('#search-host input').length,
         wrote: (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).meta.frontDoor
       }));
@@ -705,8 +717,8 @@ const CASES = [
     /* The front page. It is the most input-heavy page in the repo and it is
        hand-built vanilla — the exact place the keyboard bug would come back
        if the build-once rule slipped. */
-    room: '/rooms/foo-ladder.html',
-    container: '.wrap',
+    room: '/rooms/foo-ladder.html#every-month',
+    container: '#view-ladder .wrap',
     seed: 'demo',
     prepare: async (page) => {
       /* The deductible is a stored fact now, owned by Sleep At Night. Give
@@ -742,8 +754,11 @@ const CASES = [
       const step1 = await page.evaluate(() =>
         document.body.innerText.includes('in cash & savings covers your')
         || document.body.innerText.includes('in cash & savings.'));
+      /* Count inside the ladder reading only: the lump-sum reading next door
+         has its own "what the waiting cash earns" box, which is a different
+         question and not a second place to enter the balance (D-231). */
       const oneCashRow = await page.evaluate(() =>
-        Array.from(document.querySelectorAll('.slaf-label'))
+        Array.from(document.querySelectorAll('#view-ladder .slaf-label'))
           .filter(l => /cash/i.test(l.textContent)).length);
       return [
         ['the prepaid goal was kept', v.goal, '20000'],
@@ -815,7 +830,7 @@ const CASES = [
     /* The Windfall stores nothing — every input is page-local. So the check
        is that what you typed is still in the box after the page has
        recomputed around it, which is the failure the guard exists for. */
-    room: '/rooms/windfall.html',
+    room: '/rooms/foo-ladder.html#a-lump-sum',
     container: '#the-money',
     seed: 'demo',
     fields: [
@@ -1163,8 +1178,8 @@ const CASES = [
     /* THE FIRST ROUND (D-206): five screens, one box each, all in the markup
        from boot; script only toggles [hidden]. Typing on each screen has to
        survive the Next tap that reveals the next one. */
-    room: '/rooms/first-round.html',
-    container: 'main',
+    room: '/rooms/ledger.html#round-1',
+    container: '#view-round1',
     seed: 'empty',
     fields: [
       { sel: '#in-age', type: '27' },
@@ -1203,22 +1218,22 @@ const CASES = [
        boxes across doors, a situation tap that hides and shows rows around
        them, and adding a card block: the keyboard must stay open through
        all of it. */
-    room: '/rooms/express.html',
+    room: '/rooms/ledger.html#all-at-once',
     container: '#xform',
     seed: 'empty',
-    /* A person who has answered nothing now lands in the guided walk (D-222),
+    /* A person who has answered nothing now lands in the guided walk (D-259),
        which shows one family at a time. This case is about the flat form, so
        it asks for the flat form first. */
     prepare: async (page) => {
       await page.waitForSelector('[data-mode="all"]');
       await page.tap('[data-mode="all"]');
-      /* D-223: every level is a fold now, and only the first unfinished one
+      /* D-260: every level is a fold now, and only the first unfinished one
          in each family is open. Open them all, because this case is about
          typing into boxes across the whole form. */
       await page.waitForSelector('details.xlvl');
       await page.$$eval('details.xlvl', ns => ns.forEach(n => { n.open = true; }));
       /* The situation is six choices, which is a select now, not six buttons
-         (D-223): five choices as five buttons was two rows of chrome for one
+         (D-260): five choices as five buttons was two rows of chrome for one
          answer. Set through the select, the way a person does. */
       await page.waitForSelector('[data-x-row="employmentStatus"] select[data-x-input]');
       await page.selectOption('[data-x-row="employmentStatus"] select[data-x-input]', 'unemployed');
@@ -1229,7 +1244,7 @@ const CASES = [
       { sel: '[data-x-row="zip"] [data-x-input]', type: '12203' },
       { sel: '[data-x-row="lastPay"] [data-x-input]', type: '95000' },
       { sel: '[data-x-row="cashSavings"] [data-x-input]', type: '3000' },
-      /* D-223: a card is a name, a lender and a last four, three fields, so
+      /* D-260: a card is a name, a lender and a last four, three fields, so
          the name stays a name instead of becoming "Amex ••1003". */
       { sel: '[data-x-add="debts"] [data-x-add-name]', type: 'Everyday card' },
       { sel: '[data-x-add="debts"] [data-x-add-inst]', type: 'Amex' },
@@ -1261,12 +1276,13 @@ const CASES = [
     }
   },
   {
-    /* EXPRESS, THE GUIDED WALK (D-222): the same rows, one DAITE family a
+    /* EXPRESS, THE GUIDED WALK (D-259): the same rows, one DAITE family a
        screen, and it is what a person who has answered nothing meets first.
        The walk only sets [hidden] on the doors and levels it is not asking
        about, so nothing is rebuilt; this proves the keyboard survives inside
-       the walk and that a box keeps its value across a Next. */
-    room: '/rooms/express.html',
+       the walk and that a box keeps its value across a Next. Express is the
+       Ledger's all-at-once door now (D-230), so the case opens that. */
+    room: '/rooms/ledger.html#all-at-once',
     container: '#xform',
     seed: 'empty',
     prepare: async (page) => {
@@ -1438,6 +1454,42 @@ const CASES = [
     expect: async (page) => {
       const n = await page.evaluate(() => document.querySelectorAll('#c-parts li').length);
       return [['three parts', n, 3]];
+    }
+  },
+  {
+    /* The Deal (D-227): eleven boxes, all built once, all writing to one
+       property record. The figures below are the hand-checked ones from
+       test/run.js, so a tap that goes astray shows up as a wrong reading
+       rather than only as a lost keystroke. */
+    room: '/rooms/property.html',
+    container: '#deal',
+    seed: 'empty',
+    fields: [
+      { sel: '#in-price', type: '320000' },
+      { sel: '#in-down', type: '20' },
+      { sel: '#in-rate', type: '6.9' }
+    ],
+    expect: async (page) => {
+      await page.tap('#in-rent'); await page.waitForTimeout(200);
+      await page.keyboard.type('2400', { delay: 15 });
+      await page.evaluate(() => document.activeElement.blur());
+      await page.waitForTimeout(400);
+      const s = await page.evaluate(() => {
+        const p = (SLAF.Spine.getProfile().property || [])[0] || {};
+        return { price: p.priceCents, down: p.downPct, rate: p.rate, rent: p.rentMonthlyCents,
+          adv: document.getElementById('adv').textContent,
+          real: document.getElementById('real').textContent,
+          monthShown: !document.getElementById('month').hidden };
+      });
+      return [
+        ['the price landed as cents', s.price, 32000000],
+        ['the down payment landed as a share', s.down, 0.2],
+        ['the rate landed as a decimal', s.rate, 0.069],
+        ['the rent landed', s.rent, 240000],
+        ['the month appeared', s.monthShown, true],
+        ['the listing figure reads $714', /714/.test(s.adv), true],
+        ['and the real one reads a loss of $481', /481/.test(s.real), true]
+      ];
     }
   }
 ];

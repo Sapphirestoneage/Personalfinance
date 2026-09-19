@@ -4,9 +4,9 @@ paths:
   - "engines/values.js"
 ---
 # What Matters (`values`)
-File: rooms/values.html · 429 lines
-Engines: projection, tier0, cashflow, values
-Reference data: expense_categories.json, values.json
+File: rooms/values.html · 431 lines
+Engines: projection, tier0, income, selfemployed, ledger, cashflow, values
+Reference data: effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json, values.json
 Owns: nothing
 Reads from other owners: monthlyExpenses (expenses)
 Latest decisions:

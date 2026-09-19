@@ -178,6 +178,16 @@
       c.giftsMonthly = 0;
       c.spend.categories.forEach(function (row) { if (row.categoryId === 'gifts') c.giftsMonthly += row.monthlyCents; });
     }
+    /* Without a categorised month the roof is still a typed field: the "A" in
+       FAT, which Schema.rentMonthlyCents reads with no log required. Housing
+       is the biggest line in most budgets and the ratio against it is the one
+       decision-relevant number a renter can act on, so it is not made to wait
+       on a month of transactions. Accommodation only — utilities are not
+       split out of it, and the Result says so. */
+    if (!c.spend) {
+      var roof = Schema.rentMonthlyCents(household);
+      c.housingTypedCents = roof && Money.isEntered(roof.cents) ? roof.cents : null;
+    }
     return c;
   }
 
@@ -210,6 +220,12 @@
   function over(numerator, denominator, opts) {
     return Money.safeDivide(numerator, denominator, opts || {});
   }
+  /* safeDivide returns a bare ok(); a ratio that can be read off two
+     different sources has to say which one it read. */
+  function withBasis(result, basis, note) {
+    if (!Money.isOk(result)) return result;
+    return Money.ok(result.value, { basis: basis, basisNote: note || null });
+  }
 
   /* ---- The registry ------------------------------------------------------ */
 
@@ -222,12 +238,19 @@
       compute: function (c) { return Tier0.debtToIncome(c.household); } },
 
     { id: 'housingRatio', label: 'Housing ratio (front-end)', tier: 18,
-      formula: 'housing + utilities ÷ gross monthly income',
+      formula: '(housing + utilities) ÷ gross monthly income',
       unit: 'rate', needs: 'a categorised month and your income',
       note: 'The 28% rule. Counts housing and utilities, which is how underwriters read it.',
       compute: function (c) {
-        if (!c.spend) return Money.incomplete('Split a month by category in Expenses to split housing out.', ['expenseEntries']);
-        return over(c.housingMonthly, c.monthlyGross, { denominatorName: 'grossAnnualIncome' });
+        if (!c.spend) {
+          if (!Money.isEntered(c.housingTypedCents)) {
+            return Money.incomplete('Add what the roof costs in Expenses to see this.', ['expenseEntries']);
+          }
+          return withBasis(over(c.housingTypedCents, c.monthlyGross, { denominatorName: 'grossAnnualIncome' }),
+            'accommodation', 'Accommodation only — utilities are not split out of it. Categorise a month in Expenses to include them.');
+        }
+        return withBasis(over(c.housingMonthly, c.monthlyGross, { denominatorName: 'grossAnnualIncome' }),
+          'categorised', null);
       } },
 
     { id: 'backEndRatio', label: 'Back-end ratio', tier: 18,
@@ -235,11 +258,14 @@
       unit: 'rate', needs: 'a categorised month, your debts and your income',
       note: 'The 36% rule. Housing plus all other debt service.',
       compute: function (c) {
-        if (!c.spend) return Money.incomplete('Split a month by category in Expenses to split housing out.', ['expenseEntries']);
+        var housing = c.spend ? c.housingMonthly : c.housingTypedCents;
+        if (!Money.isEntered(housing)) return Money.incomplete('Add what the roof costs in Expenses to see this.', ['expenseEntries']);
         if (!Money.isEntered(c.monthlyDebtPayments)) return Money.incomplete('Add your debts to see this.', ['debts']);
         /* A mortgage payment sits in both halves; count it once. */
         var nonMortgage = c.monthlyDebtPayments - (Money.isEntered(c.mortgagePayment) ? c.mortgagePayment : 0);
-        return over(c.housingMonthly + nonMortgage, c.monthlyGross, { denominatorName: 'grossAnnualIncome' });
+        return withBasis(over(housing + nonMortgage, c.monthlyGross, { denominatorName: 'grossAnnualIncome' }),
+          c.spend ? 'categorised' : 'accommodation',
+          c.spend ? null : 'Accommodation only — utilities are not split out of it. Categorise a month in Expenses to include them.');
       } },
 
     { id: 'savingsRate', gate: 'savingsRate', label: 'Savings rate', tier: 18,
@@ -449,7 +475,12 @@
       note: 'Whether this is too high depends entirely on why the cash is there — see Sleep At Night.',
       compute: function (c) { return over(c.cash, c.totalAssets, { denominatorName: 'totalAssets' }); } },
 
-    { id: 'revolvingShare', label: 'Revolving to installment debt', tier: 19,
+    /* The name said revolving ÷ installment; the code computes revolving ÷
+       TOTAL, and the band (good 0.1 / warn 0.3) is calibrated to the share
+       reading. On the demo those are 0.148 and 0.174 — a different number
+       under the same label. The code and the band were right; the label was
+       not. */
+    { id: 'revolvingShare', label: 'Revolving share of debt', tier: 19,
       formula: 'card balances ÷ total debt',
       unit: 'rate', needs: 'your itemised debts',
       compute: function (c) {
@@ -652,13 +683,22 @@
        part-time wage). Nothing drawn is a zero, not a blank. The 4%/5%
        band is the convention the Decumulation room reads too. D-096. */
     { id: 'withdrawalRate', gate: 'decumulation', label: 'Withdrawal rate', tier: 21,
-      formula: '(spending × 12 − income) ÷ investments',
+      formula: '(spending × 12 − gross income) ÷ investments',
       unit: 'rate', needs: 'your spending, income and investments',
-      note: 'The share of investments drawn each year to cover what income does not.',
+      note: 'The share of investments drawn each year to cover what income does not. Income counts before tax while spending is after it, so the draw reads a little low for anyone with a pension or a wage.',
       compute: function (c) {
         if (!decumulates(c.household)) return Money.incomplete('Not drawing down \u2014 a number for a retiree.', []);
         if (!Money.isEntered(c.monthlyExpenses)) return Money.incomplete('Add your monthly spending to see this.', ['monthlyExpenses']);
         if (!Money.isEntered(c.investments)) return Money.incomplete('Add your investments to see this.', ['investments']);
+        /* GROSS income, deliberately, and the label now says so. Spending is
+           money actually spent, so subtracting gross credits a retiree with
+           a pension or a part-time wage for dollars the IRS takes first, and
+           understates the draw — the panel raised it and it is a fair
+           reading. It is not fixed here: the definition is specified with a
+           worked example in test/run.js ($3,100 × 12 − $24,000 over
+           $420,000 = 3.14%) and reused by the Dashboard's own loop, so
+           changing it is a decision about what the number means, not a
+           defect to patch. Named rather than silently switched. */
         var income = Money.isEntered(c.grossAnnual) ? c.grossAnnual : 0;
         var draw = c.monthlyExpenses * MONTHS - income;
         if (draw <= 0) return Money.ok(0, { annualDrawCents: 0, covered: true });

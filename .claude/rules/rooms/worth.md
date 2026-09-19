@@ -4,9 +4,9 @@ paths:
   - "engines/worth.js"
 ---
 # Worth It (`worth`)
-File: rooms/worth.html · 607 lines
-Engines: projection, tier0, hourly, worth
-Reference data: none
+File: rooms/worth.html · 609 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly, worth
+Reference data: effective_tax_rates_2026.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start)
 Latest decisions:

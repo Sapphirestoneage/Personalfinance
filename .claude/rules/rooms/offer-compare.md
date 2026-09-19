@@ -4,9 +4,9 @@ paths:
   - "engines/offers.js"
 ---
 # Offer Compare (`offer-compare`)
-File: rooms/offer-compare.html · 189 lines
-Engines: projection, tier0, offers
-Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json, state_brackets_2026.json
+File: rooms/offer-compare.html · 191 lines
+Engines: projection, tier0, income, selfemployed, ledger, offers
+Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json, se_tax_2026.json, state_brackets_2026.json
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), employmentStatus (start), employerMatch (start), healthMonthly (protection)
 Latest decisions:

@@ -167,7 +167,7 @@
     /* A backdrop, because the sheet floats over the room. Without one the
        page behind stayed live, stayed lit, and on a phone the two sets of
        words landed on top of each other. Tapping it closes, the way every
-       sheet on a phone does. D-222. */
+       sheet on a phone does. D-259. */
     var back = doc.createElement('div');
     back.className = 'slaf-math-backdrop';
     back.hidden = true;

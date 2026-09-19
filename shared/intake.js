@@ -1,6 +1,6 @@
 /* ==========================================================================
    shared/intake.js — one look at a file says what it is.
-   DECISIONS.md D-224.
+   DECISIONS.md D-261.
    --------------------------------------------------------------------------
    Your Data had three file pickers and the person had to know which door
    their file went through: the backup here, the household file there, the
@@ -10,6 +10,8 @@
 
      sniff(text, filename) -> { kind, why }
        kind    'sealed'     a protected backup (shared/vault.js)
+               'workbook'   an Excel file, by its name and its zip bytes; the page
+                            turns it into sheet text (CsvExport.fromFile) first
                'backup'     every key this browser holds (shared/backup.js)
                'household'  the household and its snapshots (spine exportJSON),
                             or a bare household object
@@ -43,7 +45,8 @@
     var name = String(filename || '').toLowerCase();
     if (typeof text !== 'string' || !text.trim()) return out('empty', 'That file is empty.');
     if (Csv && Csv.looksBinary && Csv.looksBinary(text)) {
-      return out('binary', /\.xlsx?$/.test(name) ? 'That is an Excel workbook. Save it as CSV first (File, Save as, CSV) and choose that.' : /\.pdf$/.test(name) ? 'That is a PDF. This app reads CSV files; most bank sites offer CSV beside PDF.' : 'That is not a text file. This app reads its own .json files and .csv files.');
+      if (/\.xlsx?$/.test(name)) return out('workbook', 'An Excel workbook: read as the Money Rooms sheet, a tab a door.');
+      return out('binary', /\.pdf$/.test(name) ? 'That is a PDF. This app reads CSV files; most bank sites offer CSV beside PDF.' : 'That is not a text file. This app reads its own .json files, .xlsx and .csv files.');
     }
     var t = text.trim();
 

@@ -28,20 +28,22 @@
       Money: require('../shared/money.js'),
       Schema: require('../shared/schema.js'),
       Tier0: require('./tier0.js'),
-      Fire: require('./fire.js')
+      Fire: require('./fire.js'),
+      Ownership: require('./ownership.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Schema: root.SLAF && root.SLAF.Schema,
       Tier0: root.SLAF && root.SLAF.Tier0,
-      Fire: root.SLAF && root.SLAF.Fire
+      Fire: root.SLAF && root.SLAF.Fire,
+      Ownership: root.SLAF && root.SLAF.Ownership
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Fire);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Fire, deps.Ownership);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Statement = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Fire) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Fire, Ownership) {
   'use strict';
 
   var ACCESS_AGE_DEFAULT = 59.5;
@@ -326,9 +328,15 @@
     var balance = mortgage && Money.isEntered(mortgage.balanceCents) ? mortgage.balanceCents : 0;
     var equity = asset.valueCents - balance;
     var debtService = Money.isEntered(p.pitiMonthlyCents) ? p.pitiMonthlyCents * 12 : 0;
-    var capRate = Money.safeDivide(noi, asset.valueCents, { denominatorName: 'value' });
-    var dscr = debtService > 0 ? Money.safeDivide(noi, debtService, { denominatorName: 'debtService' }) : null;
-    var coc = Money.safeDivide(noi - debtService, equity, { denominatorName: 'equity', zeroReason: 'No equity yet.' });
+    /* The ratios come from engines/ownership.js, so a rental you own and a
+       deal you are weighing are measured the same way (D-224). What this
+       record can divide by is today's equity, not the cash that was put in
+       years ago, so the honest name for it is the return on equity; the
+       cash-on-cash needs a figure this record does not hold. */
+    var ratios = Ownership.metrics({
+      noiAnnualCents: noi, debtServiceAnnualCents: debtService,
+      valueCents: asset.valueCents, equityCents: equity
+    });
     return Money.ok(noi, {
       noiCents: noi,
       vacancyRate: vacancy, vacancyAssumed: !Money.isEntered(p.vacancyRate),
@@ -336,9 +344,13 @@
       debtServiceAnnualCents: debtService,
       equityCents: equity,
       valueCents: asset.valueCents,
-      capRate: Money.isOk(capRate) ? capRate.value : null,
-      dscr: dscr && Money.isOk(dscr) ? dscr.value : null,
-      cashOnCash: Money.isOk(coc) ? coc.value : null,
+      capRate: ratios.capRate,
+      dscr: ratios.dscr,
+      returnOnEquity: ratios.returnOnEquity,
+      /* Named, not computed: dividing by equity and calling it cash-on-cash
+         flatters a place that has gone up in value. */
+      cashOnCash: null,
+      cashOnCashReason: 'Cash-on-cash is the cash flow over the cash you actually put in. This record holds what the place is worth today, not what you paid to get into it, so what is shown is the return on today’s equity.',
       cashFlowMonthlyCents: Math.round((noi - debtService) / 12)
     });
   }

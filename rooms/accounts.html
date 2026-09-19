@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 15:05Z"/>
+<meta name="slaf-build" content="2026-09-19 16:34Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Where It Goes &amp; how it’s split · SPARKS</title>
@@ -59,7 +59,6 @@
   .setup-toggle { display: flex; align-items: flex-start; gap: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
   .setup-toggle input { margin-top: 3px; }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -67,7 +66,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Where It Goes &amp; how it’s split</h1>
-  <p class="room-lede">Roth, Traditional or taxable — and how much a Solo 401k actually lets you put away.</p>
+  <p class="room-lede">Which account to fill first: Roth, traditional or taxable. And how much a solo 401(k) really lets you put away.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -210,6 +209,9 @@
 <script src="../engines/accounts.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
@@ -563,6 +565,13 @@
         annualReturn: Money.isEntered(v['a-return']) ? v['a-return'] : a.expectedReturnRate, years: v['a-years'], capitalGainsRate: v['a-cg'] });
       var rows = [];
       if (Money.isEntered(v['a-amount'])) rows.push({ label: 'Put in, pre-tax', cents: v['a-amount'] });
+      else {
+        /* Nothing typed yet: the lens reads what goes into the plan this
+           year at the contribution rate, the one line engines/cashflow
+           computes, so a projection room always has a figure to read (D-256). */
+        var c = SLAF.CashFlow ? SLAF.CashFlow.savingsRateContributed(h, TABLES) : null;
+        if (c && Money.isOk(c) && c.parts && c.parts[0] && Money.isEntered(c.parts[0].annualCents)) rows.push({ label: 'Into the plan this year, at your contribution rate', cents: c.parts[0].annualCents });
+      }
       if (Money.isOk(r)) rows.push({ label: r.byKey[r.bestKey].label + ' after tax', cents: r.byKey[r.bestKey].afterTaxCents });
       return rows;
     }, function () { return TABLES; });

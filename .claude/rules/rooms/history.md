@@ -4,9 +4,9 @@ paths:
   - "engines/history.js"
 ---
 # History (`history`)
-File: rooms/history.html · 231 lines
-Engines: projection, tier0, hourly, foo, cashflow, fire, statement, benchmarks, ratios, events, skills, history
-Reference data: confidence_weights.json, expense_categories.json, fire_variants.json, foo_rules.json, ratio_benchmarks.json, ratio_explainers.json, +2 more
+File: rooms/history.html · 262 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly, foo, cashflow, fire, statement, benchmarks, ratios, events, skills, history
+Reference data: confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, irs_limits_2026.json, +5 more
 Owns: historyCompareTo
 Reads from other owners: cashSavings (start), totalDebt (debt-payoff), netWorth (statement)
 Latest decisions:

@@ -4,9 +4,9 @@ paths:
   - "engines/fulfillment.js"
 ---
 # The Joy Curve (`fulfillment`)
-File: rooms/fulfillment.html · 378 lines
-Engines: projection, tier0, cashflow, fulfillment
-Reference data: expense_categories.json
+File: rooms/fulfillment.html · 380 lines
+Engines: projection, tier0, income, selfemployed, ledger, cashflow, fulfillment
+Reference data: effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: monthlyExpenses (expenses)
 Latest decisions:

@@ -52,24 +52,29 @@ module.exports = function (t) {
     offAtStart.length > 0 && offAtStart.every(function (r) { return !!Gate.why({}, Registry.requires(r.id)); }));
 
   /* The six situations, and what each turns off. Written out rather than
-     computed, so a change to the gate has to be agreed to here too. */
+     computed, so a change to the gate has to be agreed to here too.
+     Between Jobs left this list in D-232: it is a reading of The Cushion
+     now, and The Cushion applies to everyone — the question "how long while
+     job hunting" is one an employed person is entitled to ask. */
   var EXPECTED = {
-    employed:     ['self-employed', 'between-jobs', 'decumulation', 'partner', 'kids', 'variable-income'],
-    selfEmployed: ['accounts', 'between-jobs', 'decumulation', 'partner', 'kids'],
-    unemployed:   ['savings-rate', 'fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
+    employed:     ['self-employed', 'decumulation', 'partner', 'kids', 'variable-income'],
+    selfEmployed: ['accounts', 'decumulation', 'partner', 'kids'],
+    unemployed:   ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
                    'credential', 'accounts', 'decumulation', 'tax', 'career-move', 'partner', 'kids',
                    'variable-income', 'dreamline'],
-    student:      ['self-employed', 'accounts', 'between-jobs', 'protection', 'decumulation', 'partner',
+    student:      ['self-employed', 'accounts', 'protection', 'decumulation', 'partner',
                    'kids', 'variable-income'],
-    retired:      ['savings-rate', 'fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
-                   'credential', 'accounts', 'between-jobs', 'career-move', 'partner', 'kids',
+    retired:      ['fire', 'real-hourly-wage', 'hassle', 'self-employed', 'side-hustle',
+                   'credential', 'accounts', 'career-move', 'partner', 'kids',
                    'variable-income', 'dreamline'],
-    both:         ['between-jobs', 'decumulation', 'partner', 'kids']
+    both:         ['decumulation', 'partner', 'kids']
   };
   Object.keys(EXPECTED).forEach(function (status) {
     var h = household(status);
     var off = Registry.inOrder().filter(function (r) { return !Registry.applies(r, h); }).map(function (r) { return r.id; });
-    check(status + ': the rooms that do not apply', off.join(','), EXPECTED[status].join(','));
+    /* Membership, not order: which rooms fold is the gate's fact; where they
+       sit on the path is the registry's (D-244). */
+    check(status + ': the rooms that do not apply', off.slice().sort().join(','), EXPECTED[status].slice().sort().join(','));
     /* And every one of them can say why, in words. */
     checkTrue(status + ': … and each says why in a sentence',
       off.every(function (id) { return !!Gate.why(h, Registry.requires(id)); }));

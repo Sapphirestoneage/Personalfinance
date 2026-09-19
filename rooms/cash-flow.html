@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 15:05Z"/>
+<meta name="slaf-build" content="2026-09-19 16:34Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Cash Flow · SPARKS</title>
@@ -78,7 +78,6 @@
   .out-detail dt { color: var(--color-text-faint); }
   .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -86,7 +85,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Cash Flow</h1>
-  <p class="room-lede">When the money moves. This month at a glance, every receipt on its date, and where it all flows. What a typical month costs is typed once, in <a href="expenses.html#spending">Expenses</a>.</p>
+  <p class="room-lede">When money moves. This month at a glance, every receipt on its date, what hits your account and when, and where it all goes. What a typical month costs is typed once, in <a href="expenses.html#spending">Expenses</a>.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -154,6 +153,17 @@
     <p class="slaf-hint" id="flow-why" style="margin:var(--space-2) 0 0"></p>
   </section>
 
+  <!-- D-253: what hits the account and when, from the one month the
+       calendar engine runs: paydays from Income, bills and receipts on
+       their dates, the balance line with every turn marked. -->
+  <section class="slaf-card" id="day-by-day" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What hits your account, and when</span>
+    <h2 style="margin:var(--space-2) 0 0" id="dbd-title">The next 31 days</h2>
+    <p class="slaf-hint" id="dbd-sum" style="margin:var(--space-1) 0 0"></p>
+    <div id="dbd-body"></div>
+    <p class="slaf-reason" style="margin-top:var(--space-2)">Paydays come from Income, bills and receipts land on their dates, and everything else is spread evenly. The pay rhythm is set in <a href="calendar.html#inputs">The Calendar</a>. Log a receipt above and this recalculates.</p>
+  </section>
+
   <section class="slaf-card" id="out-net-flow">
     <span class="slaf-eyebrow">Left at the end of the month</span>
     <div class="slaf-figure" data-figure>—</div>
@@ -190,6 +200,8 @@
 <script src="../engines/budget.js"></script>
 <script src="../shared/manage.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../engines/calendar.js"></script>
+<script src="../shared/daybyday.js"></script>
 <script>
 (function () {
   'use strict';
@@ -274,14 +286,29 @@
     renderGlance(h, summary, flow);
     setCard('out-net-flow', flow, function (v) { return Money.formatCents(v); },
       Money.isOk(flow) ? dl([
-        ['Take-home pay', Money.formatCents(flow.netMonthlyIncomeCents)],
-        ['Spending', Money.formatCents(flow.spendMonthlyCents)],
-        ['Into savings', Money.formatCents(flow.savingsMonthlyCents)],
+        ['<a href="' + Ownership.linkTo('income', 'sources', 'cash-flow') + '">Take-home pay</a>', Money.formatCents(flow.netMonthlyIncomeCents)],
+        ['<a href="' + Ownership.linkTo('expenses', 'spending', 'cash-flow') + '">Spending</a>', Money.formatCents(flow.spendMonthlyCents)],
+        ['<a href="' + Ownership.linkTo('accounts', 'setup', 'cash-flow') + '">Into savings</a>', Money.formatCents(flow.savingsMonthlyCents)],
         ['Unassigned', Money.formatCents(flow.unassignedCents)]
       ]) + '<p class="slaf-reason">Spending is the month typed in <a href="expenses.html#spending">Expenses</a>; the log below is what actually left.</p>' : '');
     renderLog(h);
     renderManageLog(h);
     renderFlow(h);
+    renderDayByDay(h);
+  }
+
+  /* The month, day by day (D-253): the one function the Calendar room
+     draws; here it recalculates with every receipt logged. */
+  function renderDayByDay(h) {
+    var Cal = SLAF.Calendar, DayByDay = SLAF.DayByDay;
+    if (!Cal || !DayByDay) return;
+    var r = Cal.month(h, TABLES, {});
+    el('dbd-body').innerHTML = DayByDay.html(r);
+    var ord = function (n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+    el('dbd-sum').textContent = Money.isOk(r)
+      ? 'Low point ' + Money.formatCents(r.lowCents) + ' on the ' + ord(r.lowDom) + (r.belowZero ? ' · under zero from the ' + ord(r.firstBelowDom) : r.tight ? ' · tightest the ' + ord(r.tight.fromDom) + '–' + ord(r.tight.toDom) : ' · never under a week of spending')
+        + ' · ' + Cal.turns(r).length + ' things land'
+      : '';
   }
 
   /* ---------- the expense log (D-128) ----------------------------------------

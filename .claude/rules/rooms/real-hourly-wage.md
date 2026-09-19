@@ -3,9 +3,9 @@ paths:
   - "rooms/real-hourly-wage.html"
 ---
 # Real Hourly Wage (`real-hourly-wage`)
-File: rooms/real-hourly-wage.html · 251 lines
-Engines: projection, tier0, hourly
-Reference data: effective_tax_rates_2026.json
+File: rooms/real-hourly-wage.html · 253 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly
+Reference data: effective_tax_rates_2026.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:

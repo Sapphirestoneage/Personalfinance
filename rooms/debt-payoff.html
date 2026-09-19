@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 15:05Z"/>
+<meta name="slaf-build" content="2026-09-19 16:34Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Debt Payoff · SPARKS</title>
@@ -23,8 +23,10 @@
              into real per-debt entries, which is what the Debt Calculator
              needs (SPEC.md §9 item 2).
   3. CALLS   engines/debt.js for every figure — simulate(),
-             compareStrategies(), minimumPaymentCents(). No amortisation is
-             written in this file.
+             compareStrategies(), minimumPaymentCents(), and for the
+             fall-and-free view (D-236) monthFlow() and cascade(), read
+             off the one simulation. No amortisation is written in this
+             file.
   4. EMPTY   No debts: the plan says so. A debt missing a rate or a minimum
              names itself rather than being silently dropped or zeroed.
   5. CONFIG  data/debt_rules.json — strategies, minimum-payment conventions,
@@ -151,15 +153,18 @@
   .strategy[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
   /* Name, interest, time to clear — three columns on fixed rails, so the
      four orderings read down as a table and not as four ragged cards. */
-  .strategy-head { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); align-items: baseline; }
+  .strategy-head { display: grid; grid-template-columns: minmax(0, 1fr) 9ch 10ch; gap: var(--space-3); align-items: baseline; }
   .strategy-name { font-weight: 600; min-width: 0; }
   .strategy-figure, .strategy-when { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
   .strategy-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; min-width: 0; }
-  .strategy-cols { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); padding: 0 var(--space-3) 2px; font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); white-space: nowrap; }
+  /* The caption row shares the cards' rails. Its letters are spaced less
+     than an eyebrow's so "interest" and "clear in" each fit their rail;
+     spaced wider they ran into one word on a phone. */
+  .strategy-cols { display: grid; grid-template-columns: minmax(0, 1fr) 9ch 10ch; gap: var(--space-3); padding: 0 var(--space-3) 2px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); white-space: nowrap; }
   .strategy-cols span + span { text-align: right; }
   .strategy-first { color: var(--color-text-faint); }
   @media (max-width: 420px) {
-    .strategy-head, .strategy-cols { grid-template-columns: minmax(0, 1fr) 7.5ch 7ch; gap: var(--space-2); }
+    .strategy-head, .strategy-cols { grid-template-columns: minmax(0, 1fr) 8ch 9.5ch; gap: var(--space-2); }
     .strategy-cols { padding: 0 var(--space-3); }
     .strategy-blurb { font-size: var(--text-xs); }
   }
@@ -188,6 +193,22 @@
   ol.timeline li > span:first-child { flex: 1 1 140px; min-width: 0; }
   ol.timeline li > .tl-when { flex: 0 1 auto; margin-left: auto; }
   ol.timeline li:first-child { border-top: none; }
+  ol.timeline li.is-free { border-top: 2px solid var(--color-positive); }
+  ol.timeline li .tl-step { display: inline-flex; width: 22px; height: 22px; border-radius: var(--radius-pill); border: 1px solid var(--color-border-strong); align-items: center; justify-content: center; font-size: var(--text-xs); margin-right: 6px; vertical-align: middle; color: var(--color-text-muted); font-style: normal; }
+  ol.timeline li .tl-then { display: block; color: var(--color-text-muted); margin-top: 2px; }
+  ol.timeline li .tl-then b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .effect { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  .effect li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); align-items: baseline; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .effect li:first-child { border-top: none; }
+  .effect .fx-state { display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--color-border-strong); color: var(--color-text-muted); margin-right: var(--space-2); white-space: nowrap; }
+  .effect .is-on .fx-state { border-color: var(--color-border-active); color: var(--color-text); }
+  .effect .fx-when { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text-muted); }
+  .effect b { font-variant-numeric: tabular-nums; }
+  .story { margin-top: var(--space-3); font-size: var(--text-base); line-height: var(--leading-loose); }
+  .story p { margin: 0 0 var(--space-3); }
+  .story b { font-variant-numeric: tabular-nums; }
+  .why.how { color: var(--color-text-faint); font-size: var(--text-xs); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   .tl-when { color: var(--color-text-subtle); font-variant-numeric: tabular-nums; text-align: right; }
 
   /* Every figure on one rail, with what it means beside it. The value
@@ -236,7 +257,6 @@
   .interest-say { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-snug, 1.35); }
   @media (max-width: 420px) { .igrid.is-promo { grid-template-columns: 1fr 1fr; } .igrid.is-promo .ifield[data-ipart="rate"] { grid-column: 1 / -1; } }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -244,7 +264,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Debt Payoff</h1>
-  <p class="room-lede">Every debt, in the order you'll clear them — and what a different order would cost or save.</p>
+  <p class="room-lede">Every debt, in the order you will clear them: when each one is gone, what it frees, and what a different order would cost or save.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -308,9 +328,35 @@
   </details>
 
   <details class="slaf-card fold-card" id="out-timeline">
-    <summary><span class="slaf-eyebrow">The order they fall</span></summary>
-    <div id="timeline-chart"></div>
+    <summary><span class="slaf-eyebrow">The order they fall, and what each one frees</span><span class="fold-card-sum" id="timeline-sum"></span></summary>
+    <!-- D-236. Three pictures of one simulation: where this month's payment
+         goes (the flow: minimums and extra in, each debt, interest and
+         balance out), where it goes as each debt falls (one column a
+         phase: a fallen debt's minimum rolls onto the next), and what is
+         still owed month by month. Then the list: the month each falls,
+         what it frees, and where that money goes. -->
+    <!-- Words first (owner, D-236 follow-up): the story of the plan in
+         plain sentences, then the steps in order, then the three pictures,
+         each with a line on how to read it. -->
+    <div class="story" id="story"></div>
+    <!-- D-252: when the chosen order is in effect. The order only decides
+         where money beyond the minimums goes; with none to place it
+         changes nothing, and past the stop line it is off. -->
+    <p class="slaf-hint" style="margin:var(--space-4) 0 0" id="effect-cap">When the order is in effect</p>
+    <ol class="effect" id="effect"></ol>
+    <p class="slaf-hint" style="margin:var(--space-4) 0 0" id="steps-cap">Payoff order</p>
     <ol class="timeline" id="timeline"></ol>
+    <p class="slaf-hint" style="margin:var(--space-5) 0 0" id="flow-cap">Where this month's payment goes</p>
+    <p class="why how" id="flow-how">Left: where the money comes from (minimums, extra). Middle: each debt. Right: what the money does. Red = interest. Green = balance reduced. Band width = amount. Tap a band to see its amount.</p>
+    <div id="flow-chart"></div>
+    <p class="why" id="flow-why"></p>
+    <p class="slaf-hint" style="margin:var(--space-5) 0 0" id="cascade-cap">Where it goes as each one falls</p>
+    <p class="why how" id="cascade-how">One column per stretch between payoffs, labelled by its start month. Column height = the monthly payment, which stays the same. Colours = which debt receives it. When a debt is paid off its colour is removed and the next debt's share grows. Green column = the month all debts are paid.</p>
+    <div id="cascade-chart"></div>
+    <p class="why" id="cascade-why"></p>
+    <p class="slaf-hint" style="margin:var(--space-5) 0 0" id="balance-cap">What is still owed</p>
+    <p class="why how" id="balance-how">Total balance owed, by month. Thin lines = individual debts; a line at zero = paid off. Dashed lines = the other payoff orders with the same payment.</p>
+    <div id="timeline-chart"></div>
     <p class="slaf-reason" id="timeline-reason"></p>
   </details>
 
@@ -362,12 +408,15 @@
   var RULES = null;
   var FOO = null;   /* data/foo_rules.json, for the high-interest line (D-188) */
   var TABLES = null;
+  /* The order is a preference (D-252): chosen once, kept across visits.
+     How this person reads the plan, not a household fact. */
   var strategyId = 'avalanche';
   /* Where the extra stops (D-191): '' runs it to the end; 'cards' or
      'highInterest' drops to minimums once that class is gone. A
      preference, not household data: it is how this person reads the plan. */
   var Prefs = SLAF.Prefs;
   var stopAfter = Prefs ? (Prefs.get('debt.stopAfter', '') || '') : '';
+  if (Prefs && Prefs.get('debt.strategy', null)) strategyId = Prefs.get('debt.strategy', null);
   function highRate() { return FOO && FOO.thresholds && Money.isEntered(FOO.thresholds.highInterestDebtRate) ? FOO.thresholds.highInterestDebtRate : null; }
   /* One set of options for every simulation the room runs, so the plan,
      the comparison, the timeline and the held-back check all agree. */
@@ -637,7 +686,31 @@
       rate.placeholder = mode === 'promo' ? '0' : 'e.g. 22.9';
     }
     var say = scope.querySelector('[data-interest-say]');
-    if (say) say.textContent = interestSentence(d, mode);
+    if (say) say.textContent = interestSentence(d, mode) + ' ' + realCostSentence(d);
+  }
+
+  /* What this debt really costs (D-247): the rate, after the deduction a
+     student loan gets, after inflation, and the pace that follows. The
+     rate a deduction saves at is the household's estimated effective rate
+     (the marginal rate needs the bracket tables this room does not load),
+     and the sentence says so. */
+  function realCostOpts(h) {
+    var a = Schema.resolveAssumptions(h, null, TABLES);
+    var tax = Schema.estimatedAnnualTaxCents(h, TABLES);
+    var gross = Schema.grossAnnualIncomeCents(h);
+    return { marginalRate: Money.isOk(tax) ? tax.effectiveRate : null, inflation: a.inflation, returnReal: a.returnReal,
+      grossAnnualCents: Money.isOk(gross) ? gross.value : null, filingStatus: h.filingStatus, conventions: TABLES ? TABLES.studentLoanConventions : null, rules: RULES };
+  }
+  function pct1(r) { return (Math.round(r * 1000) / 10) + '%'; }
+  function realCostSentence(d) {
+    if (!TABLES) return '';
+    var rc = Debt.realCost(d, realCostOpts(Spine.getProfile()));
+    if (!Money.isOk(rc)) return '';
+    var chain = 'Really costs ' + pct1(rc.realRate) + ' a year: ' + pct1(rc.nominalRate);
+    if (rc.deductionApplies && rc.taxSavedCents > 0) chain += ' → ' + pct1(rc.afterTaxRate) + ' after the interest deduction (saves ' + Money.formatCents(rc.taxSavedCents) + ' a year at an estimated ' + pct1(rc.marginalRate) + ')';
+    else if (rc.deductionApplies) chain += ' (the interest deduction is phased out at your income)';
+    chain += ' → ' + pct1(rc.realRate) + ' after ' + pct1(rc.inflation) + ' inflation. ' + rc.label + '.';
+    return chain;
   }
 
   /** An ISO day as a month a person reads, without a timezone shifting it. */
@@ -1468,7 +1541,8 @@
         + '<span class="strategy-when">' + (ok ? monthsLabel(r.value) : Money.EM_DASH) + '</span>'
         + '</span>'
         + '<p class="strategy-blurb">' + s.blurb
-        + (ok ? ' <span class="strategy-first">First debt gone in ' + monthsLabel(r.payoffs[0].month) + '.</span>' : '')
+        + (ok ? ' <span class="strategy-first">First debt gone in ' + monthsLabel(r.payoffs[0].month) + '.</span>'
+              : ' <span class="strategy-first">Not run in this order: ' + esc((r && r.reason) || 'it could not be worked out') + '</span>')
         + '</p>'
         + '</button>';
     }).join('');
@@ -1513,6 +1587,7 @@
     var btn = evt.target.closest('[data-strategy]');
     if (!btn) return;
     strategyId = btn.getAttribute('data-strategy');
+    if (Prefs) Prefs.set('debt.strategy', strategyId);
     render();
   });
 
@@ -1524,14 +1599,19 @@
 
   function renderTimeline(plan, cmp) {
     var list = el('timeline'), reason = el('timeline-reason'), chart = el('timeline-chart');
+    var caps = ['steps-cap', 'flow-cap', 'flow-how', 'cascade-cap', 'cascade-how', 'balance-cap', 'balance-how'];
     if (!Money.isOk(plan)) {
       list.innerHTML = '';
       chart.innerHTML = '';
+      el('flow-chart').innerHTML = ''; el('cascade-chart').innerHTML = ''; el('story').innerHTML = '';
+      el('flow-why').textContent = ''; el('cascade-why').textContent = ''; el('timeline-sum').textContent = '';
+      caps.forEach(function (id) { el(id).hidden = true; });
       reason.textContent = plan.reason || '';
       reason.hidden = false;
       return;
     }
     reason.hidden = true;
+    caps.forEach(function (id) { el(id).hidden = false; });
     /* What is still owed, month by month, for the chosen order — filled —
        with the other orders as thin dashed lines behind it, and a mark
        where each debt falls. Month 0 is today's balance. */
@@ -1544,7 +1624,10 @@
        strategies — the bars above compare those. */
     var ids = Object.keys(plan.startingBalances || {});
     var colourOf = {};
-    ids.forEach(function (id, i) { colourOf[id] = Charts.COLORS.series[i % Charts.COLORS.series.length]; });
+    /* The target green is kept for money that is yours again (D-236), so no
+       debt is drawn in it. */
+    var palette = Charts.COLORS.series.filter(function (c) { return c !== Charts.COLORS.target; });
+    ids.forEach(function (id, i) { colourOf[id] = palette[i % palette.length]; });
     var perDebt = ids.map(function (id) {
       var pts = [[0, plan.startingBalances[id]]];
       for (var i = 0; i < plan.schedule.length; i++) {
@@ -1570,6 +1653,56 @@
       var d = new Date(start.getFullYear(), start.getMonth() + Math.round(m), 1);
       return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     };
+
+    /* Where this month's payment goes (D-236): the minimums and the extra
+       in, each debt in the middle, interest and balance paid down out. */
+    var flow = Debt.monthFlow(plan, 1);
+    if (Money.isOk(flow)) {
+      var C = Charts.COLORS;
+      var nodes = [{ id: 'min', label: 'Minimums', column: 0, color: C.muted }, { id: 'extra', label: 'Extra', column: 0, color: C.contributed || C.series[2] },
+        { id: 'int', label: 'Interest', column: 2, color: C.debt }, { id: 'prin', label: 'Balance paid down', column: 2, color: C.target }];
+      var links = [];
+      flow.debts.forEach(function (d) {
+        nodes.push({ id: 'd_' + d.id, label: d.label, column: 1, color: colourOf[d.id] || C.target });
+        if (d.fromMinimumCents > 0) links.push({ from: 'min', to: 'd_' + d.id, value: d.fromMinimumCents, color: colourOf[d.id] });
+        if (d.fromExtraCents > 0) links.push({ from: 'extra', to: 'd_' + d.id, value: d.fromExtraCents, color: colourOf[d.id] });
+        if (d.interestCents > 0) links.push({ from: 'd_' + d.id, to: 'int', value: d.interestCents, color: C.debt });
+        if (d.principalCents > 0) links.push({ from: 'd_' + d.id, to: 'prin', value: d.principalCents, color: colourOf[d.id] });
+      });
+      el('flow-chart').innerHTML = Charts.sankey({ title: 'Where this month\u2019s debt payment goes', nodes: nodes, links: links, height: Math.max(180, 40 + flow.debts.length * 34) });
+      var dearest = flow.debts.slice().sort(function (a, b) { return b.interestCents - a.interestCents; })[0];
+      el('flow-why').textContent = 'This month: ' + Money.formatCents(flow.value) + ' paid. Interest: ' + Money.formatCents(flow.interestCents) + '. Balance reduced: '
+        + Money.formatCents(flow.principalCents) + '. Extra above the minimums: ' + Money.formatCents(flow.extraCents) + '.'
+        + (dearest && dearest.interestCents > 0 ? ' Highest interest this month: ' + dearest.label + ', ' + Money.formatCents(dearest.interestCents) + '.' : '');
+    } else {
+      el('flow-chart').innerHTML = ''; el('flow-why').textContent = '';
+    }
+
+    /* Where it goes as each one falls (D-236): one column a phase, the
+       payment split by debt. A fallen debt's segment vanishes and its
+       minimum widens the next target's, at the same total, until the
+       last column is the month it is all free. */
+    var cas = Debt.cascade(plan);
+    if (Money.isOk(cas) && cas.phases.length) {
+      var cols = cas.phases.map(function (ph, i) {
+        return { label: i === 0 ? 'now' : monthLabel(ph.fromMonth - 1), mark: i === 0,
+          parts: ids.filter(function (id) { return ph.perDebtCents[id] > 0; }).map(function (id) { return { label: plan.debtLabels[id] || 'Debt', value: ph.perDebtCents[id], color: colourOf[id] }; }) };
+      });
+      cols.push({ label: monthLabel(cas.doneMonth), mark: true, parts: [{ label: 'Yours again', value: cas.freeCents, color: Charts.COLORS.target }] });
+      el('cascade-chart').innerHTML = Charts.columns({ title: 'Where the payment goes as each debt falls', columns: cols, divider: cas.phases.length, captions: ['paying it down', 'free'] });
+      var first = cas.phases[0];
+      el('cascade-why').textContent = first.rollsOntoLabel
+        ? 'First payoff: ' + first.fallsLabel + ', ' + longMonth(first.toMonth) + '. Its ' + Money.formatCents(first.freedCents) + ' a month then goes to ' + first.rollsOntoLabel + '. The monthly total stays ' + Money.formatCents(plan.monthlyBudgetCents) + ' until ' + longMonth(cas.doneMonth) + ', when all debts are paid.'
+        : 'First payoff: ' + first.fallsLabel + ', ' + longMonth(first.toMonth) + ', freeing ' + Money.formatCents(first.freedCents) + ' a month. All debts paid: ' + longMonth(cas.doneMonth) + '.';
+      el('timeline-sum').textContent = 'all paid ' + monthLabel(cas.doneMonth) + ' · ' + Money.formatCents(cas.freeCents) + ' a month freed';
+    } else {
+      el('cascade-chart').innerHTML = ''; el('cascade-why').textContent = ''; el('timeline-sum').textContent = '';
+    }
+
+    /* In plain words (D-236): the whole plan as four sentences, before any
+       picture. Every figure is the cascade's or the flow's. */
+    el('story').innerHTML = storyHtml(plan, cas, Money.isOk(flow) ? flow : null, longMonth);
+    el('effect').innerHTML = effectHtml(plan, monthLabel);
     chart.innerHTML = Charts.area({
       title: 'Balance remaining, month by month, one line per debt',
       series: [{ label: 'All debts (' + plan.strategy.label.toLowerCase() + ' order)', color: Charts.COLORS.debt, points: remaining(plan), fill: true, width: 1 }]
@@ -1586,12 +1719,79 @@
          actually holds a debt back, said as such (D-132). */
       var tags = Debt.keepReasonLabels(d, RULES).map(function (t) { return '<i title="' + esc(t.hint || '') + '">' + esc(t.label) + '</i>'; });
       if (Debt.isExcluded(d)) tags.unshift('<i class="is-held" title="You are keeping this one on purpose: it is ordered last and gets only its minimum">held back on purpose</i>');
-      return '<li><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;background:' + (colourOf[p.debtId] || Charts.COLORS.target) + '"></i>' + esc(p.label || 'Debt')
+      /* What falling frees, and where it goes (D-236): onto the next
+         target while the plan pushes, back to you once it stops. */
+      /* What falling frees, and where it goes (D-236): onto the next
+         target while the plan pushes, back to you once it stops. The next
+         target's new monthly figure is read off the next phase. */
+      var idx = Money.isOk(cas) ? cas.phases.map(function (x) { return x.fallsId; }).indexOf(p.debtId) : -1;
+      var ph = idx >= 0 ? cas.phases[idx] : null, nextPh = idx >= 0 ? cas.phases[idx + 1] : null;
+      var then = '';
+      if (ph && Money.isEntered(ph.freedCents) && ph.freedCents > 0) {
+        if (ph.rollsOntoLabel) {
+          var was = ph.perDebtCents[ph.rollsOntoId] || 0, now = nextPh ? (nextPh.perDebtCents[ph.rollsOntoId] || 0) : null;
+          then = '<span class="tl-then">Frees <b>' + Money.formatCents(ph.freedCents) + ' a month</b>. It goes to ' + esc(ph.rollsOntoLabel)
+            + (now !== null && now > was ? ' (' + Money.formatCents(was) + ' → about <b>' + Money.formatCents(now) + ' a month</b>)' : '') + '.</span>';
+        } else {
+          then = '<span class="tl-then">Frees <b>' + Money.formatCents(ph.freedCents) + ' a month</b>. It no longer goes to debt.</span>';
+        }
+      }
+      var after = ph ? (idx === 0 ? monthsLabel(p.month) + ' from now' : ph.months + (ph.months === 1 ? ' month' : ' months') + ' after the previous payoff') : monthsLabel(p.month);
+      return '<li><span><i class="tl-step">' + (idx + 1) + '</i><i style="display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;background:' + (colourOf[p.debtId] || Charts.COLORS.target) + '"></i><b>' + esc(p.label || 'Debt') + '</b> paid off'
         + (tags.length ? '<span class="tagline">' + tags.join('') + '</span>' : '')
-        + '<small style="display:block;color:var(--color-text-faint)">from ' + Money.formatCents(plan.startingBalances[p.debtId]) + '</small></span>'
-        + '<span class="tl-when">' + longMonth(p.month) + ' · ' + monthsLabel(p.month) + ' · '
-        + Money.formatCents(p.interestPaidCents) + ' interest</span></li>';
+        + '<small style="display:block;color:var(--color-text-faint)">Balance today ' + Money.formatCents(plan.startingBalances[p.debtId]) + ' · interest paid until then ' + Money.formatCents(p.interestPaidCents) + '</small>' + then + '</span>'
+        + '<span class="tl-when">' + longMonth(p.month) + '<small style="display:block">' + after + '</small></span></li>';
+    }).join('') + (Money.isOk(cas) ? '<li class="is-free"><span><b>All debts paid.</b><span class="tl-then"><b>' + Money.formatCents(cas.freeCents) + ' a month</b> no longer goes to debt' + (cas.extraMonthlyCents > 0 ? ' (' + Money.formatCents(cas.minimumsCents) + ' minimums + ' + Money.formatCents(cas.extraMonthlyCents) + ' extra)' : '') + '.</span></span>'
+        + '<span class="tl-when">' + longMonth(cas.doneMonth) + '<small style="display:block">' + monthsLabel(cas.doneMonth) + ' from now</small></span></li>' : '');
+  }
+
+  /* When the order is in effect (D-252): one line per stretch of the
+     plan, on or off, with the debt the money beyond the minimums goes at
+     and how much. Read off Debt.pushPhases; nothing simulated here. */
+  function effectHtml(plan, monthLabel) {
+    var ph = Debt.pushPhases ? Debt.pushPhases(plan) : null;
+    if (!ph || !Money.isOk(ph)) return '';
+    var name = plan.strategy.label;
+    var span = function (p) { return p.fromMonth === p.toMonth ? monthLabel(p.fromMonth) : monthLabel(p.fromMonth) + ' – ' + monthLabel(p.toMonth); };
+    if (!ph.everInEffect) {
+      return '<li><span><span class="fx-state">off</span>' + esc(name) + ' is not in effect: nothing goes beyond the minimums, so the order changes nothing. Each debt runs its own schedule; a freed minimum rolls on only once you add an extra.</span><span class="fx-when">' + span(ph.phases[0]) + '</span></li>';
+    }
+    return ph.phases.map(function (p) {
+      if (p.inEffect) {
+        return '<li class="is-on"><span><span class="fx-state">on</span>' + esc(name) + ' puts <b>' + Money.formatCents(p.pushCents) + ' a month</b> beyond the minimums at <b>' + esc(p.targetLabel) + '</b>.</span><span class="fx-when">' + span(p) + '</span></li>';
+      }
+      var why = plan.stopMonth !== null && p.fromMonth >= plan.stopMonth ? 'the stop line has passed: minimums only from here' : 'nothing beyond the minimums this stretch';
+      return '<li><span><span class="fx-state">off</span>' + esc(name) + ' is not in effect: ' + why + '.</span><span class="fx-when">' + span(p) + '</span></li>';
     }).join('');
+  }
+
+  /* The plan in plain words (D-236, flattened D-237): what this measures,
+     this month's split, the first payoff and what it frees, the end. */
+  function storyHtml(plan, cas, flow, longMonth) {
+    if (!Money.isOk(cas) || !cas.phases.length) return '';
+    var n = cas.phases.length;
+    var first = cas.phases[0], second = cas.phases[1] || null;
+    var p0 = '<b>What this shows:</b> the month each debt is paid off, in the ' + esc(plan.strategy.label.toLowerCase()) + ' order, and how much monthly payment each payoff frees.';
+    var p1 = '<b>Monthly payment:</b> ' + Money.formatCents(plan.monthlyBudgetCents) + ' across ' + n + (n === 1 ? ' debt' : ' debts') + '.';
+    if (flow) p1 += ' Of that, ' + Money.formatCents(flow.interestCents) + ' is interest and ' + Money.formatCents(flow.principalCents) + ' reduces balances.';
+    p1 += ' Extra above the minimums: ' + Money.formatCents(plan.extraMonthlyCents) + '.';
+    var p2 = '<b>First payoff:</b> ' + esc(first.fallsLabel) + ', ' + longMonth(first.toMonth) + ' (' + monthsLabel(first.toMonth) + ' from now).';
+    if (first.rollsOntoLabel) {
+      var was = first.perDebtCents[first.rollsOntoId] || 0, now = second ? (second.perDebtCents[first.rollsOntoId] || 0) : 0;
+      p2 += ' Its ' + Money.formatCents(first.freedCents) + ' a month then goes to ' + esc(first.rollsOntoLabel)
+        + (now > was ? ' (' + Money.formatCents(was) + ' → about ' + Money.formatCents(now) + ' a month)' : '')
+        + (second ? ', which is paid off ' + second.months + (second.months === 1 ? ' month' : ' months') + ' later' : '') + '.';
+      if (n >= 3) {
+        var lastThree = cas.phases.slice(-3);
+        var span = lastThree[lastThree.length - 1].toMonth - lastThree[0].fromMonth + 1;
+        p2 += ' Each payoff adds its payment to the next debt, so later payoffs come faster: the first takes ' + monthsLabel(first.months) + '; the last three happen within ' + monthsLabel(span) + '.';
+      }
+    } else {
+      p2 += ' Its ' + Money.formatCents(first.freedCents) + ' a month no longer goes to debt.';
+    }
+    var p3 = '<b>All debts paid:</b> ' + longMonth(cas.doneMonth) + ' (' + monthsLabel(cas.doneMonth) + ' from now). From then on ' + Money.formatCents(cas.freeCents) + ' a month no longer goes to debt.'
+      + (plan.totalInterestCents > 0 ? ' Total interest paid over the plan: ' + Money.formatCents(plan.totalInterestCents) + '. A larger extra shortens the plan and lowers that total.' : '');
+    return '<p>' + p0 + '</p><p>' + p1 + '</p><p>' + p2 + '</p><p>' + p3 + '</p>';
   }
 
   /* The list of debts is the one part of this page that holds live inputs,
@@ -1750,7 +1950,7 @@
 
   SLAF.Progress.mount(ROOM_ID);
 
-  Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults']).then(function (tables) {
+  Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults', 'studentLoanConventions', 'returnBands']).then(function (tables) {
     TABLES = tables;
     RULES = tables.debtRules;
     FOO = tables.fooRules || null;

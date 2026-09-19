@@ -122,6 +122,29 @@ const props = [
       return true;
     } catch (e) { return 'threw: ' + e.message; }
   }),
+  prop('a workbook of any household opens as a zip, and its rows read back as the text the sheet shows', arbSpec, (spec) => {
+    const h = build(spec);
+    let book;
+    try { book = Csv.workbook(h, TABLES); } catch (e) { return 'workbook threw: ' + e.message; }
+    const Zipfile = require(H.ROOT + '/shared/zipfile.js');
+    if (!Zipfile.isZip(book)) return 'not a zip';
+    /* Reading is a promise, so the round trip itself is checked in
+       test/xlsx.js; here the shape and the sheet names, which are pure. */
+    const text = Zipfile.text(book);
+    if (text.indexOf('xl/workbook.xml') < 0) return 'no workbook part';
+    if (text.indexOf('xl/styles.xml') < 0) return 'no styles part';
+    return true;
+  }),
+  prop('a workbook read into rows plans exactly as the same rows in a CSV would', fc.constant(null), () => {
+    const h = build({ people: [{ year: 1990, status: 'employed', income: [{ gross: 60000, type: 'w2' }] }], filingStatus: 'single', state: 'NC', assets: [{ category: 'cash', value: 5000 }], debts: [], fat: { food: 400, accommodation: 1200, transportation: 200, wants: 300 } });
+    const lines = Csv.rows(h, TABLES);
+    const sheets = [{ name: 'Assets', rows: [['What it is', 'Which one', 'Your number', 'row id', 'item id']].concat(
+      lines.filter((l) => l.door === 'A').map((l) => [l.label, l.item, l.value, l.row, l.item_id])) }];
+    const viaBook = Csv.plan(Csv.fromWorkbook(sheets), h, TABLES);
+    const viaCsv = Csv.plan(Csv.csv(lines.filter((l) => l.door === 'A')), h, TABLES);
+    const sig = (p) => p.entries.map((e) => e.row + ':' + e.item + ':' + e.status).join('|');
+    return sig(viaBook) === sig(viaCsv) || ('workbook ' + sig(viaBook) + ' vs csv ' + sig(viaCsv));
+  }),
   prop('the bank importer and the sheet importer read one file the same way, through the one reader', fc.constantFrom('bank-a.csv', 'bank-b.csv', 'bank-c.csv'), (name) => {
     const text = fs.readFileSync(path.join(H.ROOT, 'test/fixtures', name), 'utf8');
     const B = H.engine('bankcsv');

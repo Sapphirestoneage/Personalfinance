@@ -83,7 +83,7 @@
   /* "Rough", "not sure yet", a figure leaning on a guess. It was written as
      var(--color-warning, #d97706) in a dozen places and the token was never
      declared, so every one of them fell back to a raw orange that is not in
-     this palette and misses AA on the ground. Declared here, once. D-222. */
+     this palette and misses AA on the ground. Declared here, once. D-259. */
   --color-warning: var(--color-caution);
 
   /* ---- Typography ------------------------------------------------------
@@ -175,6 +175,15 @@ body.slaf {
   margin: 0 auto;
   padding: 0 var(--space-4) var(--space-7);
 }
+/* The same page body, under the name three rooms give it. Its header sits
+   inside it, so the header adds only the space above and below. */
+.slaf-room {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-7);
+}
+.slaf-room-head { margin: 0 0 var(--space-4); }
+.slaf-room-head h1 { margin: var(--space-1) 0 0; }
 
 /* THE GUTTER. `.slaf-room` is the wrapper the three rooms of the intake path
    use (the Ledger, Express, the First Round) and it had no rule in this file
@@ -182,7 +191,7 @@ body.slaf {
    every sentence and every input hard against both edges of the glass, and it
    is why "← Every door" sat half off the screen. Same gutter as .slaf-wrap,
    plus the safe-area inset so a notched phone in landscape keeps it. A room
-   that wants a wider column says so as `main.slaf-room`. D-222. */
+   that wants a wider column says so as `main.slaf-room`. D-259. */
 .slaf-room {
   max-width: var(--measure);
   margin: 0 auto;
@@ -256,7 +265,10 @@ h3 { font-size: var(--text-md); }
 .slaf-field {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  /* Top-aligned (D-246): two boxes side by side start their labels on
+     the same line, and a long hint under one of them hangs below rather
+     than pushing the other box down to meet it. */
+  justify-content: flex-start;
   margin-bottom: var(--space-3);
 }
 
@@ -267,6 +279,24 @@ h3 { font-size: var(--text-md); }
   letter-spacing: var(--tracking-eyebrow);
   color: var(--color-text-subtle);
   margin-bottom: var(--space-1);
+}
+
+/* Two boxes side by side must START LEVEL (D-249).
+   A control's top is its field's top plus the label above it and nothing
+   else — hints and sources come after the control, so they never move it.
+   So the labels are what has to match: one that wraps to two lines used to
+   shove its own box 16px below its neighbour's, which is what "still not
+   even" meant. Every label in a row of fields therefore reserves two lines
+   whether it needs them or not, and the boxes line up on every card.
+   --slaf-label-lines lets a row whose longest label genuinely needs three
+   say so; test/alignment.js walks every page at 320 and 390 and fails the
+   build on any pair still out of line, so a label that outgrows its
+   reservation cannot ship. */
+.slaf-field > .slaf-label {
+  /* 1lh is exactly one line box; the em value is the same number for
+     browsers that predate the unit, and a guess by any other name. */
+  min-height: calc(var(--slaf-label-lines, 2) * 1.45em);
+  min-height: calc(var(--slaf-label-lines, 2) * 1lh);
 }
 
 .slaf-input-shell {
@@ -326,7 +356,7 @@ h3 { font-size: var(--text-md); }
 .slaf-seed-btn[aria-pressed="true"], .slaf-seed-btn[aria-checked="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
 .slaf-seed-note { flex-basis: 100%; font-size: var(--text-xs); color: var(--color-text-faint); }
 
-/* ---- A switch that looks like a switch (D-222) ---------------------------
+/* ---- A switch that looks like a switch (D-259) ---------------------------
    Settings drew every switch as a grey pill reading "On" or "Off" and styled
    the on state off [aria-pressed], which a role="switch" never carries — so
    an on switch and an off switch were the same grey pill and the only
@@ -434,7 +464,7 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 /* The quiet variant had no border, no fill and no padding, so beside a real
    button it read as a link dropped into the row. Quiet should mean "second",
    not "not a button": a faint outline and its own padding, so the eye still
-   ranks it below the primary but the finger can see where to land. D-222. */
+   ranks it below the primary but the finger can see where to land. D-259. */
 .slaf-btn--quiet {
   background: transparent;
   border-color: var(--color-border);
@@ -756,31 +786,20 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .slaf-owned--guess .slaf-owned-value { color: var(--color-caution); }
 
 /* ---- Undo / redo, top right on every page (shared/undo.js). D-094. ---- */
-.slaf-undo { position: fixed; top: 10px; right: 10px; z-index: 40; display: flex; gap: 6px; }
-/* SOLID. It was a 10% tint with a blur behind it, which on a phone reads as
-   a smudge sitting on top of whatever it happens to be over — the one-pager's
-   Print button, in the report. A floating control is over the page, so it
-   takes the panel colour, the same rule the drawer and the math sheet follow
-   (D-157). D-222. */
-.slaf-undo-btn { border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-panel); color: var(--color-text); font-size: var(--text-sm); min-height: 34px; padding: 0 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 10px rgba(0,0,0,.35); }
-.slaf-undo-btn:disabled { opacity: .35; cursor: default; }
+.slaf-undo { position: fixed; top: 10px; right: 10px; z-index: 40; display: flex; gap: 2px; padding: 3px; background: var(--color-surface-raised); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); box-shadow: 0 4px 16px rgba(0, 0, 0, .28); }
+.slaf-undo-btn { border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text); font-size: var(--text-sm); min-height: 32px; padding: 0 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.slaf-undo-btn:hover:not(:disabled), .slaf-undo-btn:focus-visible { background: var(--color-surface); }
+.slaf-undo-btn:disabled { opacity: .3; cursor: default; }
 .slaf-undo-btn span { font-size: var(--text-xs); }
 /* On a phone the top-right corner is the room nav's; the pair sits
    bottom right, above the soft keyboard's usual reach, as a thumb reaches. */
-/* On a phone the words are dropped and the glyph is all that is left, so the
-   glyph has to be big enough to read and the button solid enough to look like
-   a button rather than a smudge over whatever it is floating on. The pair
-   also sits in one tray with a border, so two circles do not read as two
-   unrelated blobs. D-222. */
-@media (max-width: 640px) {
-  .slaf-undo { top: auto; bottom: 14px; right: 12px; gap: 0; padding: 4px; background: var(--color-panel); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); box-shadow: 0 4px 16px rgba(0,0,0,.5); }
-  html.has-undo body { padding-bottom: 80px; }
-  .slaf-undo-btn span { display: none; }
-  .slaf-undo-btn { padding: 0; width: 44px; min-height: 44px; justify-content: center; font-size: var(--text-lg); border-color: transparent; background: transparent; box-shadow: none; }
-  .slaf-undo-btn:not(:disabled) { color: var(--color-text); }
-}
+@media (max-width: 640px) { .slaf-undo { top: auto; bottom: 14px; right: 12px; } html.has-undo body { padding-bottom: 76px; } .slaf-undo-btn span { display: none; } .slaf-undo-btn { padding: 0 12px; min-height: 38px; font-size: var(--text-md); } }
 
 /* ---- The lens toggle (shared/lens.js). D-094. ---- */
+/* The lens says what it does (D-256): a caption, the buttons, one line on the mode in use. */
+.slaf-lens-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.slaf-lens-cap { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); white-space: nowrap; }
+.slaf-lens-say { flex-basis: 100%; font-size: var(--text-xs); color: var(--color-text-muted); }
 .slaf-lens { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
 .slaf-lens-btn { border: none; background: transparent; color: var(--color-text-muted); font-size: var(--text-xs); min-height: 32px; padding: 0 12px; cursor: pointer; }
 .slaf-lens-btn[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
@@ -846,7 +865,7 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
    container (the One-Pager's section switches sit in `.row-controls`) fell
    all the way back to the browser's default button: a grey slab with no on
    state at all, which is most of what made that card look broken. The look
-   now belongs to the button; `.choices` is only the row that holds it. D-222. */
+   now belongs to the button; `.choices` is only the row that holds it. D-259. */
 .choices { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .choice { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); color: var(--color-text); padding: var(--space-2) var(--space-3); font: inherit; font-size: var(--text-sm); cursor: pointer; text-align: left; min-height: 44px; }
 .choices .choice { flex: 1 1 auto; }
@@ -867,7 +886,7 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
    here from the ⓘ widget's first shape and nothing has emitted them since.
    They were not merely dead: `.slaf-math` is now the name of the sheet at
    the foot of this file, so this block was quietly adding a stray accent
-   border to it. Removed. D-222. */
+   border to it. Removed. D-259. */
 
 /* ---- Manage sources: hide, set aside, restore (shared/manage.js) ---------- */
 .slaf-manage-toggle { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; }
@@ -908,6 +927,10 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
    ========================================================================== */
 .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
 .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+.slaf-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+/* The small print under a room. Eighty rooms carried their own identical
+   copy of this and seven carried none, so it showed at full size there. */
+.disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
 .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
 
@@ -1254,7 +1277,7 @@ a:hover { color: var(--sapphire-100); }
 /* `display: block` on a <summary> throws away the disclosure triangle the
    browser draws for `list-item`, so this fold rendered as a dead grey
    heading with nothing to say it opened, and nobody opened it. A caret of
-   its own, a tap target, and a colour that says it is a control. D-222. */
+   its own, a tap target, and a colour that says it is a control. D-259. */
 .slaf-export-h { display: flex; align-items: center; gap: var(--space-2); cursor: pointer;
   min-height: 44px; font-size: var(--text-xs); text-transform: uppercase;
   letter-spacing: var(--tracking-eyebrow); color: var(--color-text-muted); }
@@ -1278,11 +1301,11 @@ a:hover { color: var(--sapphire-100); }
 .slaf-backup-acts > * { min-width: 0; }
 /* The restore file and the two readable saves are different kinds of thing,
    so they sit apart with a rule between them rather than in one row of
-   identical buttons where the wrong one is the easiest to press. D-222. */
+   identical buttons where the wrong one is the easiest to press. D-259. */
 .slaf-backup-acts--quiet { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
 .slaf-backup-note { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); }
 a.slaf-btn[data-backup="pdf"] { display: inline-flex; align-items: center; }
-/* The passphrase row of a protected backup (D-224): two boxes, a hint, two
+/* The passphrase row of a protected backup (D-261): two boxes, a hint, two
    buttons, in the markup from the start and only ever shown or hidden. */
 .slaf-backup-pass { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--color-border-active); border-radius: var(--radius-md); background: var(--color-surface); }
 .slaf-backup-field { display: block; margin-top: var(--space-2); }
@@ -1395,7 +1418,7 @@ a.slaf-btn[data-backup="pdf"] { display: inline-flex; align-items: center; }
 /* OPAQUE, and over a backdrop. It used to paint on --color-surface-raised,
    a 10% tint, with nothing behind it: the room's own text showed straight
    through the sheet and you read two screens at once. That is the exact
-   thing D-157 forbids for anything that floats OVER the page. D-222. */
+   thing D-157 forbids for anything that floats OVER the page. D-259. */
 .slaf-math-backdrop { position: fixed; inset: 0; background: rgba(2, 8, 23, .62); z-index: 59; }
 .slaf-math { position: fixed; left: 0; right: 0; bottom: 0; max-height: 80vh; overflow: auto; overscroll-behavior: contain; z-index: 60; padding: var(--space-3) max(var(--space-4), env(safe-area-inset-left)) max(var(--space-5), env(safe-area-inset-bottom)); background: var(--color-panel); color: var(--color-text); border-top: 1px solid var(--color-border-strong); border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,.45); font-size: var(--text-sm); }
 /* The close button was floated right, which let the title run under it and
@@ -1415,3 +1438,69 @@ html.has-math, html.has-math body { overflow: hidden; }
 .slaf-math li { margin: 2px 0; }
 .slaf-math .ex-fn { margin-top: var(--space-3); }
 @media (min-width: 720px) { .slaf-math { left: auto; right: var(--space-4); bottom: var(--space-4); width: 30rem; border-radius: var(--radius-lg, 16px); border: 1px solid var(--color-border-strong); } }
+
+/* ---- The hats: one room, several readings of the same rows (D-228) --------
+   A merged room keeps every reading its old rooms held and puts them on one
+   strip, so the choice between them is visible instead of being a choice
+   between pages. One place, because the 93-to-30 merge (D-227) gives every
+   surviving room the same strip, and a second copy of it would drift.
+   The first hat is always the simplest reading, and it is the default. */
+.slaf-hats { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-3) 0 var(--space-4); }
+.slaf-hats a { font-family: var(--font-display); font-size: var(--text-sm); text-decoration: none;
+  border: 1px solid var(--color-border); border-radius: var(--radius-pill);
+  padding: 4px 12px; color: var(--color-text-muted); min-height: 32px; }
+.slaf-hats a:hover { color: var(--color-text); border-color: var(--color-border-active); }
+.slaf-hats a[aria-current="page"] { background: var(--color-accent); border-color: var(--color-accent);
+  color: var(--color-accent-contrast); }
+
+/* The plain line under a room title (D-237): what it shows, what it needs. */
+.slaf-purpose { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-loose); }
+.slaf-purpose b { color: var(--color-text); font-weight: 600; }
+.slaf-purpose span { display: inline-block; margin-right: var(--space-3); }
+
+/* A long hint folds behind an ⓘ (D-245): the button is the whole line
+   until it is opened. */
+.slaf-hint.is-folded { margin-top: var(--space-2); }
+.slaf-hint-toggle { font: inherit; font-size: var(--text-xs); color: var(--color-accent-hover); background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px 10px; cursor: pointer; }
+.slaf-hint-toggle[aria-expanded="true"] { color: var(--color-text-muted); }
+.slaf-hint-body { display: block; margin-top: var(--space-2); }
+
+/* ---- The month, day by day (D-253; the grid was the Calendar room's, now shared) ---- */
+.cal-grid { margin-top: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+.cal-head, .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-head span { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); text-align: center; padding: var(--space-1) 0; border-bottom: 1px solid var(--color-border); }
+.cal-cell { min-height: 58px; padding: 4px 3px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); font-size: 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cal-cell:last-child { border-right: none; }
+.cal-row:last-child .cal-cell { border-bottom: none; }
+.cal-cell.is-blank { background: transparent; }
+.cal-cell b { font-weight: 600; color: var(--color-text-muted); font-size: 11px; white-space: nowrap; }
+.cal-cell.is-today b { color: var(--color-accent-hover); }
+.cal-cell small { margin-top: auto; font-variant-numeric: tabular-nums; color: var(--color-text); }
+.cal-cell.is-tight { background: rgba(232,184,75,.08); }
+.cal-cell.is-under { background: rgba(229,72,77,.12); }
+.cal-cell.is-under small { color: var(--color-critical); }
+.cal-cell.is-low { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.cal-in, .cal-out { font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 3px; padding: 0 2px; }
+.cal-in { color: var(--color-positive); background: rgba(48,164,108,.14); }
+.cal-out { color: var(--color-critical); background: rgba(229,72,77,.12); }
+.cal-out.is-pl { color: var(--color-caution); background: rgba(232,184,75,.14); }
+.cal-out.is-annual { color: var(--color-caution); background: rgba(232,184,75,.14); font-weight: 600; }
+.cal-in.is-estimated, .cal-out.is-estimated { outline: 1px dashed currentColor; outline-offset: -1px; }
+.cal-in.is-potential, .cal-out.is-potential { opacity: .5; text-decoration: underline dotted; }
+.cal-key { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+.cal-key .k-low { outline: 2px solid var(--color-accent); outline-offset: 1px; border-radius: 2px; padding: 0 3px; }
+.cal-key .k-under { background: rgba(229,72,77,.12); color: var(--color-critical); border-radius: 2px; padding: 0 3px; }
+.turns { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+.turns li { display: grid; grid-template-columns: 5.5ch minmax(0, 1fr) auto auto; gap: var(--space-2); align-items: baseline; padding: var(--space-1) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+.turns li:first-child { border-top: none; }
+.turns .tn-when { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+.turns .tn-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.turns .tn-amt, .turns .tn-bal { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.turns .tn-amt.is-in { color: var(--color-positive); }
+.turns .tn-amt.is-out { color: var(--color-critical); }
+.turns .tn-bal { color: var(--color-text-muted); font-size: var(--text-xs); }
+.turns .tn-bal.is-under { color: var(--color-critical); }
+.turns li.is-potential { opacity: .6; }
+.turns li.is-low .tn-bal { color: var(--color-accent-hover); font-weight: 600; }
+.turns-more { margin-top: var(--space-2); }
+.turns-more summary { cursor: pointer; font-size: var(--text-xs); color: var(--color-text-faint); }
