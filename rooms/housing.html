@@ -245,7 +245,7 @@
     },
 
     inputs: [
-      { ctl: 'rent', label: 'A place you would rent instead, a month', kind: 'money', placeholder: 'e.g. 1,900', hint: 'The rent you pay is the housing line in Expenses, read here on its own. Type a figure only to weigh the place against a different rent. Blank with a "no rent" answer in Start Here means no rent.',
+      { ctl: 'rent', label: 'Rent instead, a month', kind: 'money', placeholder: 'e.g. 1,900', hint: 'The rent you pay is the housing line in Expenses, read here on its own. Type a figure only to weigh the place against a different rent. Blank with a "no rent" answer in Start Here means no rent.',
         read: function (h) { return plan(h).rentMonthlyCents; },
         write: function (v) { Spine.set('housing.rentMonthlyCents', v); },
         propose: function (h) { var r = Schema.rentMonthlyCents(h); return r.source === 'expenses' ? { value: r.cents, source: 'the housing line in Expenses (what you pay now)' } : rentGuess(h); } },

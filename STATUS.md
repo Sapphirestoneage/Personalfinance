@@ -40,6 +40,16 @@ Updated: 2026-09-19
   the Budget month view made obvious; statements in detail, each line
   expandable; the readings FIRE people expect; a plain-language lede pass.
 
+- **Boxes line up now (D-247).** Reported from a phone, third time asked:
+  side-by-side controls sat 16px apart on 17 pages. Labels in a row reserve
+  the same number of lines, so the boxes start level whatever a label does.
+  The reason it kept coming back was the check: `test/alignment.js` ran in
+  CI and named the very page and grid that was broken, but recognised a
+  control only by three classes — the boxes in question are bare `<select>`s
+  — and skipped, rather than failed, when it could not find one. It now
+  walks every page found on disk, finds containers by shape not by name, and
+  fails on a cell whose control it cannot see.
+
 ## Freeze
 - ON, and the merge is how it is honoured: every session leaves fewer screens.
 

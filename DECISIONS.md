@@ -14316,6 +14316,51 @@ is logged; STATUS's structural problem 1.
 wage is logged, clean console.
 
 
+## D-247 — Boxes side by side line up, and the check that says so looks everywhere
+
+**Why.** The owner, on a phone, on the Statement: "Still not even!!!!" The
+two dropdowns under an asset — which pile it sits in, how sure it is worth
+that — sat 16px apart, and did on 17 pages. D-246 had just top-aligned
+`.slaf-field` so labels start level, which un-did the bottom-alignment that
+had been keeping the boxes level: each fix broke the other one.
+
+**Decision.** A control's top is its field's top plus the label above it and
+nothing else — hints and sources come after the control and never move it.
+So the labels are what must match. `shared/theme.css`: every `.slaf-label`
+reserves `--slaf-label-lines` (default 2) line boxes, in `1lh` with an `em`
+fallback. A row whose longest label genuinely needs three says so —
+`shared/room.js` takes `labelLines` on a room spec, `rooms/start.html`'s
+`.row` sets 3 because a label there can carry a provenance chip. The
+Statement's `.asset-grid` drops to one column under 380px, the rule
+`.room-grid` has always had. Housing's longest label is now "Rent instead,
+a month".
+
+**Replaces or removes.** Removes the top-versus-bottom alignment argument:
+neither wins, the labels are equalised instead. Removes `test/alignment.js`'s
+list of rooms and selectors.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/alignment.js` — every page in the app, every
+container holding two or more field cells, at 320 and 390, plus the card
+passes at four widths: green. `node test/run.js` (31,537). A sweep of all 95
+pages at 320/390/414/1100, seeded and blank, finds no crooked pair and no
+overlapping or spilling child.
+
+**Why it came back.** `test/alignment.js` already ran in CI, and
+`rooms/statement.html` with `.asset-grid` was already in its TARGETS list.
+It passed anyway, three ways: it recognised a control only by
+`.slaf-input-shell`, `.slaf-owned` and `.slaf-owned-inline`, and the boxes in
+question are bare `<select>`s; with fewer than two recognised boxes it
+`return`ed instead of failing; and any container class nobody had added to
+the list was invisible regardless. A list you must remember to extend, plus a
+silent skip for anything unrecognised, is two ways to pass a page that is
+visibly crooked. The pass now walks every page found on disk, finds
+containers by structure rather than by name, counts `select`, `input`,
+`textarea` and `button` as controls, and treats a cell whose control it
+cannot find as a failure rather than a skip. It found three more crooked
+pairs in Start Here on its first run, which is the point.
+
 ---
 
 # The Dungeons & Dividends entries

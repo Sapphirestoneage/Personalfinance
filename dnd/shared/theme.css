@@ -261,6 +261,24 @@ h3 { font-size: var(--text-md); }
   margin-bottom: var(--space-1);
 }
 
+/* Two boxes side by side must START LEVEL (D-247).
+   A control's top is its field's top plus the label above it and nothing
+   else — hints and sources come after the control, so they never move it.
+   So the labels are what has to match: one that wraps to two lines used to
+   shove its own box 16px below its neighbour's, which is what "still not
+   even" meant. Every label in a row of fields therefore reserves two lines
+   whether it needs them or not, and the boxes line up on every card.
+   --slaf-label-lines lets a row whose longest label genuinely needs three
+   say so; test/alignment.js walks every page at 320 and 390 and fails the
+   build on any pair still out of line, so a label that outgrows its
+   reservation cannot ship. */
+.slaf-field > .slaf-label {
+  /* 1lh is exactly one line box; the em value is the same number for
+     browsers that predate the unit, and a guess by any other name. */
+  min-height: calc(var(--slaf-label-lines, 2) * 1.45em);
+  min-height: calc(var(--slaf-label-lines, 2) * 1lh);
+}
+
 .slaf-input-shell {
   display: flex;
   align-items: center;
