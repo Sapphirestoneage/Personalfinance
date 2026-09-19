@@ -6039,8 +6039,15 @@ section('Facts answered once');
     check('demo take-home is $4,860 a month', th.value, 486000);
     check('at the table rate', th.effectiveRate, 0.19);
     check('so the gap is $1,710, not the pre-tax $2,850', th.value - 315000, 171000);
-    const noFiling = Demo.build(); noFiling.filingStatus = null;
+    checkTrue('...and the demo says what lands, which is the same figure (D-234)',
+      Schema.enteredTakeHomeMonthlyCents(h) === 486000 && th.entered === true);
+    /* The derivation still has to fail loudly when it cannot be done. The
+       entered figure is taken off first, because that is the question: can
+       the app work the month out from a salary alone. */
+    const noFiling = Demo.build(); noFiling.filingStatus = null; noFiling.income = { takeHomeMonthlyCents: null };
     check('no filing status, no take-home', Tier0.takeHomeMonthlyCents(noFiling, TABLES).status, 'incomplete');
+    const entered = Demo.build(); entered.filingStatus = null;
+    check('...but an entered figure needs no table at all', Tier0.takeHomeMonthlyCents(entered, TABLES).value, 486000);
     const foo = fs.readFileSync(path.join(ROOT, 'foo-ladder.js'), 'utf8');
     checkTrue('the ladder reads take-home from Tier0', foo.indexOf('Tier0.takeHomeMonthlyCents') !== -1);
     checkTrue('and no longer subtracts expenses from gross',
@@ -14365,6 +14372,13 @@ section('First Look: four to seven questions, one picture, one next step (D-234)
   }
 
   /* ---- Never a list, never a verdict -------------------------------------- */
+  checkTrue('the furniture asks no second question over a room that is all questions',
+    Registry.byId('first-look').asksOwnQuestions === true
+    && /asksOwnQuestions\(roomId\)/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+  checkTrue('...and prints no list of links to elsewhere while the flow is running',
+    /row\.missing\.length && !ownFlow/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+  check('a room that asks its own questions is the only one declaring it',
+    Registry.all().filter(r => r.asksOwnQuestions).map(r => r.id).join(','), 'first-look');
   checkTrue('the next step is one thing with its reason, never a list',
     /id="fl-next-title"/.test(html) && !/fl-next-list|<ol|recommendations/i.test(html));
   checkTrue('and it opens exactly one room', (html.match(/id="fl-onward"/g) || []).length === 1);

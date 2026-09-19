@@ -2608,7 +2608,18 @@
   }
   function takeHomeMonthlyCents(household, tables) {
     var entered = enteredTakeHomeMonthlyCents(household);
-    if (entered !== null) return Money.ok(entered, { entered: true, source: 'entered' });
+    if (entered !== null) {
+      /* The entered figure is the VALUE, but the derivation's working is
+         still handed on: a caller that wants the effective rate or the
+         gross behind the month should not lose it just because the person
+         happened to know what actually lands. D-234. */
+      var d = takeHomeAnnualCents(household, tables);
+      return Money.ok(entered, Money.isOk(d)
+        ? { entered: true, source: 'entered', derivedMonthlyCents: Math.round(d.value / 12),
+            grossAnnualIncomeCents: d.grossAnnualIncomeCents, estimatedTaxCents: d.estimatedTaxCents,
+            effectiveRate: d.effectiveRate, referenceVersion: d.referenceVersion }
+        : { entered: true, source: 'entered' });
+    }
     var t = takeHomeAnnualCents(household, tables);
     if (!Money.isOk(t)) return t;
     return Money.ok(Math.round(t.value / 12), {

@@ -112,6 +112,13 @@
   };
 
   /* Convenience roll-ups for rooms whose Tier 0 form takes lump sums. */
+  /* What lands in Robin's account, which Robin knows because Robin reads
+     the bank app (D-234). It is deliberately the same figure the effective
+     rate table works back from the $72,000 gross -- $58,320 a year, $4,860
+     a month -- so the demo answers First Look's question without quietly
+     moving any other room's numbers. test/run.js holds the two together. */
+  VALUES.takeHomeMonthly = 486000;
+
   VALUES.totalDebtBalance = VALUES.debts.reduce(function (s, d) { return s + d.balance; }, 0);
   VALUES.totalMonthlyDebtPayments = VALUES.debts.reduce(function (s, d) { return s + d.minPayment; }, 0);
 
@@ -178,6 +185,7 @@
            which is the state a first-time visitor is actually in. */
         entries: []
       },
+      income: { takeHomeMonthlyCents: VALUES.takeHomeMonthly },
       capturingFullMatch: VALUES.capturingFullMatch,
       /* Robin lives alone: nobody depends on this income, so term life is
          not a gap on the checkup. D-092. */

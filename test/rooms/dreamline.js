@@ -110,6 +110,10 @@ module.exports = function (t) {
   check('no take-home → no zone', D.zone(591500, null), null);
   const rich = robin(two);
   rich.people[0].incomeSources[0].grossAnnualIncomeCents = 12000000;
+  /* A raise has to land in the account too. Since D-234 an entered
+     take-home wins over the figure worked back from the salary, so moving
+     the salary alone would leave the month exactly where it was. */
+  rich.income = { takeHomeMonthlyCents: null };
   /* $120,000 at the table's rate for that band; whatever it is, take-home
      a month is well over $5,915, so the gap is negative and the zone good. */
   const rg = D.gap(rich, TABLES);

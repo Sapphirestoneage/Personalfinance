@@ -234,10 +234,18 @@
    * back / skip-forward controls. Returns '' for a room that needs nothing
    * and has nowhere useful to point.
    */
+  /* A room that asks its own questions, one to a screen (First Look,
+     D-234). The strip's list of links and the inline ask are both a second
+     way to answer what this room is asking right now, so neither appears. */
+  function asksOwnQuestions(roomId) {
+    var room = Registry && Registry.byId ? Registry.byId(roomId) : null;
+    return !!(room && room.asksOwnQuestions);
+  }
   function stripHtml(roomId, household) {
     var row = forRoom(roomId, household);
     if (!row) return '';
     var nb = neighbours(roomId);
+    var ownFlow = asksOwnQuestions(roomId);
 
     var out = [];
     out.push('<div class="slaf-progress">');
@@ -245,7 +253,7 @@
     /* Simplified on the owner's word (D-186): when something is missing,
        one short head and the list, without the room counts; when nothing
        is, nothing at all. Silence is the signal that a room is complete. */
-    if (row.missing.length) {
+    if (row.missing.length && !ownFlow) {
       out.push('<p class="slaf-progress-head"><strong>' + row.missing.length
         + ' still needed</strong> to finish this room.</p>');
       out.push('<ul class="slaf-progress-list">' + row.missing.map(function (f) {
@@ -1213,7 +1221,7 @@
         document.head.appendChild(sc);
       });
     }
-    if (['ledger', 'start'].indexOf(roomId) === -1 && !document.getElementById('slaf-ask')) {
+    if (['ledger', 'start'].indexOf(roomId) === -1 && !asksOwnQuestions(roomId) && !document.getElementById('slaf-ask')) {
       withAsk(function () { if (g.SLAF.Ask) g.SLAF.Ask.mount(roomId, host); });
     }
 
@@ -1267,6 +1275,7 @@
     menuHtml: menuHtml,
     menuBodyHtml: menuBodyHtml,
     roomStatus: roomStatus,
+    asksOwnQuestions: asksOwnQuestions,
     UPKEEP: UPKEEP,
     headerNavHtml: headerNavHtml,
     forRoom: forRoom,

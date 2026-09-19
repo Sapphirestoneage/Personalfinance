@@ -8,7 +8,7 @@
       "file": "rooms/first-look.html",
       "reads": [
         "employmentStatus",
-        "grossAnnualIncome",
+        "takeHomeMonthly",
         "accommodationMonthly",
         "wantsMonthly",
         "cashSavings"

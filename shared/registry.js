@@ -30,14 +30,20 @@
       group: 'home', aliases: ['first look', 'start', 'begin', 'new here', 'two minutes',
                                'front door', 'quick', 'first time', 'try it'],
       kind: 'about-you',
-      /* Money in is either figure: what lands (this room's own field) or
-         the salary it can be worked back from. `needs` cannot say "either",
-         and gross is the one every other room reads, so gross is what is
-         listed; the Ledger's own I-door row asks for the take-home. */
-      needs: ['employmentStatus', 'grossAnnualIncome', 'accommodationMonthly', 'wantsMonthly', 'cashSavings'],
+      /* The five it asks for, which are the five it needs. Money in is
+         listed as the field THIS room owns, not as the salary Start Here
+         owns: a front door that ends by sending a stranger somewhere else
+         for a number it never asked them for is not a front door. */
+      needs: ['employmentStatus', 'takeHomeMonthly', 'accommodationMonthly', 'wantsMonthly', 'cashSavings'],
       /* 0.25, not 0: Registry.inOrder() reads `a.order || 99`, so a zero
          would sort this room last. It sits ahead of the Ledger (0.5). */
       order: 0.25,
+      /* This room IS a set of questions, asked one to a screen. So the
+         furniture must not ask a second one on top of the flow, and must
+         not print a list of links to other rooms while a stranger is
+         halfway through answering the same fields here. shared/progress.js
+         reads this. D-234. */
+      asksOwnQuestions: true,
       title: 'First Look',
       blurb: 'Four to seven questions, one to a screen, rough numbers welcome. It ends on your own money flowing and one thing to do next \u2014 in today\'s dollars, in under two minutes, with no account.',
       href: 'rooms/first-look.html',
