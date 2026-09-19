@@ -37,10 +37,11 @@ Updated: 2026-09-19
   costs after the deduction and inflation, and the pace to pay it (D-247);
   the front page leads with the level of the monthly gap and the journey
   records what it thought at each level and what was (D-248).
+  A room asks only a question at the level its door has reached; the
+  askDeeper switch lifts it (D-250).
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
-  deeper questions behind an advanced level; a typed take-home pay; the
-  car's used/new and running costs; a running-balance chart on the month;
+  the car's used/new and running costs; a running-balance chart on the month;
   the Budget month view made obvious; statements in detail, each line
   expandable; the readings FIRE people expect; a plain-language lede pass.
 - **Boxes line up now (D-249).** Reported from a phone, third time asked:

@@ -8765,6 +8765,34 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
 })();
 
+section('Deeper questions wait for their level (D-250)');
+
+(function () {
+  const Ask = require(path.join(ROOT, 'shared/ask.js'));
+  const LedgerRows = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const T = Object.assign({}, TABLES, { ledgerRows: require(path.join(ROOT, 'data/ledger-rows.json')), features: require(path.join(ROOT, 'data/features.json')) });
+  LedgerRows.use(T.ledgerRows); Features.use(T.features);
+  const f = T.features.features.askDeeper;
+  checkTrue('the switch exists, off by default, in Advanced', f && f.default === 'off' && f.group === 'advanced');
+  /* A household with a job but no pay entered: the Income room must not
+     open with a level-3 question. */
+  const bare = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })] });
+  const rows = LedgerRows.rows(bare, T, { filter: 'all' });
+  const incomeAsks = rows.filter(r => r.askIn === 'income' && r.kind !== 'computed');
+  checkTrue('the Income room has a deeper row it could ask', incomeAsks.some(r => r.level >= 3));
+  const pick = Ask.pick(bare, 'income', T, []);
+  checkTrue('… but with nothing entered it asks nothing above level 1', !pick || pick.row.level <= 1, pick ? pick.row.id + ' level ' + pick.row.level : 'nothing');
+  const Doors = require(path.join(ROOT, 'shared/doors.js'));
+  check('the Income door is at level 1 for that household', Doors.levelOf(rows.filter(r => r.door === 'I'), bare), 1);
+  /* The demo has its level-1 and level-2 income rows in: a level-3 ask is allowed there only if the door has reached 3. */
+  const demoRows = LedgerRows.rows(Demo.build(), T, { filter: 'all' });
+  const demoLevel = Doors.levelOf(demoRows.filter(r => r.door === 'I'), Demo.build());
+  const demoPick = Ask.pick(Demo.build(), 'income', T, []);
+  checkTrue('the demo is asked nothing above its door\'s level (' + demoLevel + ')', !demoPick || demoPick.row.level <= demoLevel, demoPick ? demoPick.row.id + ' level ' + demoPick.row.level : 'nothing');
+  checkTrue('the ask module exports the gate\'s parts', typeof Doors.levelOf === 'function' && typeof Doors.isBlank === 'function');
+})();
+
 section('The room template (D-097): one shape, proven on Real Hourly Wage');
 
 (function () {
@@ -10885,7 +10913,7 @@ section('Feature switches: rendering and engines, never stored facts (D-180)');
   const ids = Object.keys(table.features);
   Prefs.reset();
 
-  check('sixteen switches: the ten shapes\' four and the twelve phenomena', ids.length, 16);
+  check('seventeen switches: the ten shapes\' four, the twelve phenomena, and the deeper-questions gate (D-250)', ids.length, 17);
   checkTrue('every switch has a default, a scope, a group, a label and a gloss', ids.every(id => { const f = table.features[id]; return ['on', 'off'].indexOf(f.default) > -1 && ['user', 'situation'].indexOf(f.scope) > -1 && table.groups.some(g => g.id === f.group) && f.label && f.gloss; }));
   checkTrue('a situation switch names what sets it', ids.filter(id => table.features[id].scope === 'situation').every(id => typeof table.features[id].situationWhen === 'string'));
   check('the four groups, in the prompt\'s order', table.groups.map(g => g.id).join(','), 'accuracy,household,horizon,advanced');
@@ -13042,8 +13070,16 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
     const p = Ask.pick(h, 'debt-payoff', T, sug);
     checkTrue('Debt Payoff asks the card’s real minimum, and only that card', p && p.row.id === 'debtMinPayment' && p.item.id === 'visa', p && p.row.id + ':' + (p.item && p.item.id));
     checkTrue('with the suggestion beside it', p.suggestion && p.suggestion.value === 6400);
-    checkTrue('the estate room asks a will, POA or beneficiaries', ['willExists', 'poaExists', 'beneficiariesSet'].indexOf(Ask.pick(h, 'estate', T, sug).row.id) !== -1);
-    checkTrue('the FI room asks allocation', /^allocation/.test(Ask.pick(h, 'fire', T, sug).row.id));
+    /* D-250: those two rooms want level-3 and level-4 rows, and this
+       household has its doors at level 1, so by default they ask nothing;
+       the askDeeper switch lets them. */
+    const Features = require(path.join(ROOT, 'shared/features.js'));
+    Features.use(require(path.join(ROOT, 'data/features.json')));
+    check('the estate room asks nothing while the you door is at level 1', Ask.pick(h, 'estate', T, sug), null);
+    Features.set('askDeeper', true);
+    checkTrue('with the deeper switch on, the estate room asks a will, POA or beneficiaries', ['willExists', 'poaExists', 'beneficiariesSet'].indexOf(Ask.pick(h, 'estate', T, sug).row.id) !== -1);
+    checkTrue('and the FI room asks allocation', /^allocation/.test(Ask.pick(h, 'fire', T, sug).row.id));
+    Features.set('askDeeper', null);
     check('parses money', Ask.parse({ unit: 'cents' }, '1,200'), 120000);
     check('parses a rate typed as a percent', Ask.parse({ unit: 'rate' }, '24.99'), 0.2499);
     check('and a rate typed as a fraction', Ask.parse({ unit: 'rate' }, '0.06'), 0.06);

@@ -159,6 +159,14 @@
       "section": "16.12",
       "label": "Time and energy as a budget",
       "gloss": "Hours are the other thing you spend. Every plan that needs your time should show the bill."
+    },
+    "askDeeper": {
+      "default": "off",
+      "scope": "user",
+      "group": "advanced",
+      "section": "18.9",
+      "label": "Ask the deeper questions in rooms",
+      "gloss": "Off, a room asks only for a fact at the level you have reached in that part of the ledger (how much, then where it sits, then what it is made of). On, it asks the deepest blank row it wants, whatever level you are at."
     }
   },
   "paths": {

@@ -14427,6 +14427,32 @@ containers by structure rather than by name, counts `select`, `input`,
 cannot find as a failure rather than a skip. It found three more crooked
 pairs in Start Here on its first run, which is the point.
 
+## D-250 — Deeper questions wait for their level
+
+**Why.** The owner, in Income: "Keeps paying if the job goes: what does
+this even mean? Have this be for a more advanced tier." A room's one
+question was the deepest blank row it wanted, asked before the basics.
+
+**Decision.** `shared/ask.js` asks a row only at or below the level its
+door has reached, the Ledger's own rule (`Doors.levelOf`: the lowest
+level with a blank row). A room whose rows are all deeper asks nothing.
+A user switch in Settings, `askDeeper` (Advanced, off), lifts the gate.
+`paySurvives` moves to level 4 in `data/ledger-rows.json`: a finer point,
+not a "where it sits" fact. The ask loads prefs, features and doors
+itself, so no room needs wiring.
+
+**Replaces or removes.** The level-2 "keeps paying" question on the
+Income room for anyone whose pay is not yet at level 4; Estate and FI
+ask nothing until their doors reach the rows they want.
+
+**Stored shape.** No change. The switch lives in `slaf.prefs.v1` like
+every other feature.
+
+**Verified.** `node test/run.js` (estate and FI asks re-pinned behind the
+switch), lane 2, `node tools/context/build.js --check`; Income at 390px
+with the demo: no ask off, the question back on; Settings lists the
+switch; clean console.
+
 ---
 
 # The Dungeons & Dividends entries
