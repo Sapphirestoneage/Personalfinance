@@ -51,7 +51,7 @@
     {
       id: 'financial-snapshot',
       features: ['afterTaxNetWorth', 'homeDetail', 'agingParents'],
-      group: 'scorecard', aliases: ['snapshot', 'draftt', 'lenses', 'scorecard', 'nine numbers'],
+      group: 'scorecard', aliases: ['snapshot', 'draftt', 'lenses', 'scorecard', 'nine numbers', 'glossary', 'ratio glossary', 'ratios', 'every ratio', 'dti', 'debt to income', 'front-end ratio', 'back-end ratio', '28/36', 'credit utilization', 'liquidity ratio', 'solvency', 'rule of 72', 'retirement multiple', 'fi ratio', 'safe withdrawal rate', 'swr', 'loan to value', 'ltv', 'burn rate', 'savings multiple'],
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'dob', 'filingStatus'],
       order: 4,
@@ -697,7 +697,7 @@
   ROOMS.push({
     id: 'tax',
     features: ['equityComp', 'inheritanceRules', 'givingVehicles'],
-    group: 'numbers', subgroup: 'taxes', aliases: ['taxes', 'bracket', 'marginal', 'effective', 'refund', 'withholding'],
+    group: 'numbers', subgroup: 'taxes', aliases: ['taxes', 'bracket', 'marginal', 'effective', 'refund', 'withholding', 'benefits cliff', 'cliff', 'snap', 'medicaid', 'poverty line', 'subsidy', 'a raise'],
     kind: 'about-you',
     needs: ['grossAnnualIncome', 'filingStatus', 'state'],
     order: 34,
@@ -713,7 +713,9 @@
         { id: 'inputs',      label: 'Pre-tax and withheld' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
+        { id: 'reading',     label: 'What this reads' },
+        { id: 'cl-inputs',   label: 'A raise you name' },
+        { id: 'cl-lines',    label: 'Where the lines are' }
       ]
   });
 
