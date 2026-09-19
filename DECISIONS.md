@@ -14052,6 +14052,38 @@ field is added, and the summary line now says the one figure people want.
 `node tools/context/build.js --check`. The room at 390px with three
 example debts: the flow, the columns, the list and a clean console.
 
+## D-237 — Plain words: what a page shows, what it needs, and the debt fold said flat
+
+**Why.** The owner, on the phone with nine debts: the fold "doesn't feel
+helpful, there needs to be more explanation", and then, of the app at
+large, "all the words feel sing-songy; even I have a difficult time
+understanding what it is, what the purpose is and what it's measuring."
+The house voice writes a lede as a line of prose and never says the
+three plain things.
+
+**Decision.** `shared/progress.js` `purposeHtml(roomId)` generates one
+flat line under every room title, mounted with the header: **Shows:** the
+room's registry subsections (those whose id starts with `out-`, else all
+but reading, inputs and assumptions), **Needs:** its `needs` by field
+label. Generated, so it cannot drift from what the room does. The Debt
+Payoff fold opens with four flat sentences (What this shows, Monthly
+payment, First payoff, All debts paid), then the payoff order with what
+each frees and where it goes, then the three charts, each with one line
+saying what its axes and colours are. `shared/charts.js`: sankey labels
+get a halo and a middle column's name is cut to its gap; narrow columns
+label every k-th month. The rule for new copy from here: name the thing,
+the number and the unit; no metaphor in a caption.
+
+**Replaces or removes.** Nothing; the line is generated from data every
+room already carries. The lede stays until a room-by-room copy pass,
+which is the owner's call on order (STATUS).
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,222 checks), `node test/forms.js`,
+`node tools/context/build.js --check`. Debt Payoff at 390px with nine
+example debts, clean console.
+
 
 ---
 

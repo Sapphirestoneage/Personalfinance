@@ -1345,3 +1345,8 @@ a:hover { color: var(--sapphire-100); }
 .slaf-hats a:hover { color: var(--color-text); border-color: var(--color-border-active); }
 .slaf-hats a[aria-current="page"] { background: var(--color-accent); border-color: var(--color-accent);
   color: var(--color-accent-contrast); }
+
+/* The plain line under a room title (D-237): what it shows, what it needs. */
+.slaf-purpose { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-loose); }
+.slaf-purpose b { color: var(--color-text); font-weight: 600; }
+.slaf-purpose span { display: inline-block; margin-right: var(--space-3); }

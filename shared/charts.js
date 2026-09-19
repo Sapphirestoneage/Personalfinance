@@ -315,6 +315,9 @@
     var slot = plotW / cols.length, cw = Math.max(4, slot * 0.62);
     var y = function (v) { return PT + plotH - v / top * plotH; };
     var GAP = 1.5, seen = {};
+    /* Narrow columns cannot each carry a month: label every k-th, and every
+       marked one, so the axis reads instead of overprinting (D-236). */
+    var every = slot < 36 ? Math.ceil(36 / slot) : 1;
     var grid = yt.map(function (t) {
       return '<line class="grid" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '"/>'
         + '<text class="tick" x="' + (PL - 4) + '" y="' + (y(t) + 3).toFixed(1) + '" text-anchor="end">' + esc(format(t)) + '</text>';
@@ -334,7 +337,9 @@
       });
       var show = totals[i] > 0 && (i === 0 || totals[i] !== totals[i - 1] || (o.divider !== undefined && i === o.divider) || c.mark);
       var val = show ? '<text class="tick" style="font-size:7.5px" x="' + (x + cw / 2).toFixed(1) + '" y="' + (y(totals[i]) - 3).toFixed(1) + '" text-anchor="middle">' + esc(format(totals[i])) + '</text>' : '';
-      var lab = '<text class="tick" x="' + (x + cw / 2).toFixed(1) + '" y="' + (H - PB + 12) + '" text-anchor="middle"' + (c.mark ? ' font-weight="600"' : '') + '>' + esc(c.label) + '</text>';
+      var lab = (c.mark || i % every === 0)
+        ? '<text class="tick" x="' + (x + cw / 2).toFixed(1) + '" y="' + (H - PB + 12) + '" text-anchor="middle"' + (c.mark ? ' font-weight="600"' : '') + '>' + esc(c.label) + '</text>'
+        : '';
       return '<g>' + segs + val + lab + '</g>';
     }).join('');
     var divider = '';
@@ -401,15 +406,25 @@
         + ' L' + x1 + ',' + (y1 + h) + ' C' + cx + ',' + (y1 + h) + ' ' + cx + ',' + (y0 + h) + ' ' + x0 + ',' + (y0 + h) + ' Z';
       parts.push('<path class="flow" d="' + d + '" fill="' + (l.color || b.color || a.color || COLORS.muted) + '"><title>' + esc(a.label + ' → ' + b.label + ': ' + format(l.value)) + '</title></path>');
     });
+    /* Labels: a halo in the panel colour so a name stays legible over the
+       bands behind it; a middle column's name is cut to the room before
+       the next column's labels, which read right-to-left into the same gap
+       (D-236, nine debts on a phone); a node too short for a name gets its
+       figure in the title only. */
+    var HALO = ' style="paint-order:stroke;stroke:var(--ink-900);stroke-width:3px;stroke-linejoin:round"';
+    var CHAR_PX = 5.6;
     nodes.forEach(function (n) {
       if (!(n.v > 0)) return;
-      var last = n.column === colIds[colIds.length - 1];
+      var ci = colIds.indexOf(n.column), last = ci === colIds.length - 1;
       parts.push('<rect class="node" x="' + n.x + '" y="' + n.y + '" width="' + NW + '" height="' + n.h + '" rx="2" fill="' + (n.color || COLORS.contributed) + '"><title>' + esc(n.label + ': ' + format(n.v)) + '</title></rect>');
+      if (n.h < 7) return;
       var tx = last ? n.x - 4 : n.x + NW + 4, anchor = last ? 'end' : 'start';
       var ty = n.y + Math.min(n.h / 2, 8) + 3;
-      var label = String(n.label || ''); if (label.length > 18) label = label.slice(0, 17) + '…';
-      parts.push('<text class="tick" x="' + tx + '" y="' + ty + '" text-anchor="' + anchor + '">' + esc(label) + '</text>');
-      if (n.h > 22) parts.push('<text class="tick small" x="' + tx + '" y="' + (ty + 11) + '" text-anchor="' + anchor + '">' + esc(shortMoney(n.v)) + '</text>');
+      var room = last ? n.x - 4 - PAD : (ci === colIds.length - 2 ? xs(colIds[ci + 1]) - 4 - 88 - tx : xs(colIds[ci + 1]) - 4 - tx);
+      var max = Math.max(6, Math.floor(room / CHAR_PX));
+      var label = String(n.label || ''); if (label.length > max) label = label.slice(0, max - 1) + '…';
+      parts.push('<text class="tick"' + HALO + ' x="' + tx + '" y="' + ty + '" text-anchor="' + anchor + '">' + esc(label) + '</text>');
+      if (n.h > 22) parts.push('<text class="tick small"' + HALO + ' x="' + tx + '" y="' + (ty + 11) + '" text-anchor="' + anchor + '">' + esc(shortMoney(n.v)) + '</text>');
     });
     return '<div class="slaf-chart slaf-sankey"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.title || 'where the money flows') + '">' + parts.join('') + '</svg></div>';
   }

@@ -918,6 +918,36 @@
     new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
   }
 
+  /* ---- The plain line under the title (D-237) ----------------------------
+     Every room's lede is written in the house voice, and the owner could
+     not tell from it what a page is for, what it shows or what it needs.
+     This line is generated, not written: the outputs are the room's
+     registry subsections (the ones whose id starts with out-, or all of
+     them when none does) and the inputs are its `needs`, by field label.
+     Flat words, no verbs of feeling. */
+  function purposeHtml(roomId) {
+    var room = Registry.byId(roomId);
+    if (!room) return '';
+    var subs = room.subsections || [];
+    var outs = subs.filter(function (x) { return /^out-/.test(x.id); });
+    if (!outs.length) outs = subs.filter(function (x) { return x.id !== 'reading' && x.id !== 'inputs' && x.id !== 'assumptions'; });
+    var shows = outs.slice(0, 4).map(function (x) { return escapeHtml(x.label); });
+    var more = outs.length > 4 ? ' and ' + (outs.length - 4) + ' more' : '';
+    var needs = (room.needs || []).map(function (id) { var f = Ownership.field ? Ownership.field(id) : null; return f ? escapeHtml(f.label.toLowerCase()) : null; }).filter(Boolean);
+    var parts = [];
+    if (shows.length) parts.push('<span><b>Shows:</b> ' + shows.join(', ') + more + '.</span>');
+    parts.push('<span><b>Needs:</b> ' + (needs.length ? needs.join(', ') : 'nothing entered elsewhere') + '.</span>');
+    return '<p class="slaf-purpose" id="slaf-purpose">' + parts.join(' ') + '</p>';
+  }
+  function mountPurpose(roomId) {
+    if (typeof document === 'undefined' || document.getElementById('slaf-purpose')) return;
+    var html = purposeHtml(roomId);
+    if (!html) return;
+    var lede = document.querySelector('.room-head .room-lede') || document.querySelector('.room-head h1, .room-head .room-title');
+    if (!lede) return;
+    lede.insertAdjacentHTML('afterend', html);
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
     /* Mounted once. The header goes up at DOMContentLoaded (see the listener
@@ -932,6 +962,7 @@
     nav.innerHTML = returnHtml(roomId) + headerNavHtml(roomId);
     back.parentNode.replaceChild(nav, back);
     mountMenu(roomId, nav);
+    mountPurpose(roomId);
     mountSituation(roomId);
     mountWalk(roomId, nav);
     mountDoors(roomId);
@@ -1255,6 +1286,7 @@
 
   return {
     mount: mount,
+    purposeHtml: purposeHtml,
     mountHeader: mountHeader, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
     mountFold: mountFold,
     mountSectionSync: mountSectionSync,
