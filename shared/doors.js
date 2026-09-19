@@ -206,6 +206,8 @@
     assetCharacter: function (a) { return !a.taxCharacter; },
     assetTier: function (a) { return !a.tier; },
     assetCostBasis: function (a) { return !Money.isEntered(a.costBasisCents); },
+    assetInstitution: function (a) { return !a.institution; },
+    assetAccountType: function (a) { return !a.accountType; },
     incomeType: function (s) { return !s.type; },
     paySurvives: function (s) { return s.survivesJobLoss === null || s.survivesJobLoss === undefined; }
   };

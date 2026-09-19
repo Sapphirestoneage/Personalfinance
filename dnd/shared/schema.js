@@ -182,6 +182,8 @@
     'asset.hassle':                              { class: 'raw',        unit: 'enum',    values: [1, 2, 3], note: '1 easy · 2 moderate · 3 annoying — for anything income-producing' },
     'asset.cashFlowMonthlyCents':                { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'net monthly cash the asset throws off; null for one that does not' },
     'asset.accessAgeOverride':                   { class: 'raw',        unit: 'years',   note: 'overrides the access age derived from access_rules (e.g. a rule-of-55 plan). null = derived' },
+    'asset.institution':                         { class: 'raw',        unit: 'text',    note: 'the bank, broker or plan that holds it, as the person names it. null = not typed. D-251' },
+    'asset.accountType':                         { class: 'raw',        unit: 'enum',    values: ['checking', 'savings', 'hysa', 'money_market', 'cd', 'brokerage', 'stock_plan', 'crypto', '401k', 'roth_401k', '403b', '457b', 'tsp', 'pension', 'traditional_ira', 'roth_ira', 'sep_ira', 'simple_ira', 'hsa', '529', 'daf', 'mixed', 'other'], note: 'the account type on its statement (Schema.ACCOUNT_TYPES). Choosing one sets taxCharacter and, where the category is still other, the category, through Schema.applyAccountType; the character stays editable. null = not asked. D-251' },
     'futureIncome.monthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'a pension, Social Security, an annuity, an inheritance you would rather not count. Owned by the Statement' },
     'futureIncome.confidence':                   { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4] },
     'property.rentMonthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'gross rent. The value itself lives on the linked real_estate asset — one number, one owner' },
@@ -679,6 +681,11 @@
          Start Here (pre-tax / Roth / taxable); a lump typed as one total is
          'unknown', which is an answer — null is "never asked". D-061. */
       taxCharacter: f.taxCharacter === undefined ? null : f.taxCharacter,
+      /* Where it sits (D-251): the bank or broker, and the account type on
+         its statement. Both null until typed; the type is one of
+         ACCOUNT_TYPES and, when chosen, set the tax character. */
+      institution: f.institution === undefined ? null : f.institution,
+      accountType: f.accountType === undefined ? null : f.accountType,
       /* The 10x Statement's per-asset facts (D-066). Every one starts null:
          liquidity and confidence are rated, not guessed — the access_rules
          default is proposed in the box, never written. */
@@ -1322,6 +1329,64 @@
     { id: 'roth',    label: 'Roth',     hint: 'Roth IRA, Roth 401(k)' },
     { id: 'taxable', label: 'Taxable',  hint: 'brokerage, anything with no tax wrapper' }
   ];
+
+  /* ---- Where an asset sits (D-251) ------------------------------------------
+     The account type is the name on the statement the bank or broker sends
+     (401(k), Roth IRA, brokerage, savings). Each one implies the tax
+     character and the category, so choosing it fills both; the character
+     stays editable afterwards. `mixed` is one total across several
+     accounts, which is the honest answer for a lump typed in Start Here.
+     Rooms read this list through Schema; nothing else holds a copy. */
+  var ACCOUNT_TYPES = [
+    { id: 'checking',        label: 'Checking',              taxCharacter: 'cash',    category: 'cash',       group: 'Bank' },
+    { id: 'savings',         label: 'Savings',               taxCharacter: 'cash',    category: 'cash',       group: 'Bank' },
+    { id: 'hysa',            label: 'High-yield savings',    taxCharacter: 'cash',    category: 'cash',       group: 'Bank' },
+    { id: 'money_market',    label: 'Money market',          taxCharacter: 'cash',    category: 'cash',       group: 'Bank' },
+    { id: 'cd',              label: 'CD',                    taxCharacter: 'cash',    category: 'cash',       group: 'Bank' },
+    { id: 'brokerage',       label: 'Brokerage (taxable)',   taxCharacter: 'taxable', category: 'investment', group: 'Investing' },
+    { id: 'stock_plan',      label: 'Company stock / ESPP',  taxCharacter: 'taxable', category: 'investment', group: 'Investing' },
+    { id: 'crypto',          label: 'Crypto',                taxCharacter: 'taxable', category: 'investment', group: 'Investing' },
+    { id: '401k',            label: '401(k)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    { id: 'roth_401k',       label: 'Roth 401(k)',           taxCharacter: 'roth',    category: 'retirement', group: 'Work retirement' },
+    { id: '403b',            label: '403(b)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    { id: '457b',            label: '457(b)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    { id: 'tsp',             label: 'TSP',                   taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    { id: 'pension',         label: 'Pension',               taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    { id: 'traditional_ira', label: 'Traditional IRA',       taxCharacter: 'pretax',  category: 'retirement', group: 'IRA' },
+    { id: 'roth_ira',        label: 'Roth IRA',              taxCharacter: 'roth',    category: 'retirement', group: 'IRA' },
+    { id: 'sep_ira',         label: 'SEP IRA',               taxCharacter: 'pretax',  category: 'retirement', group: 'IRA' },
+    { id: 'simple_ira',      label: 'SIMPLE IRA',            taxCharacter: 'pretax',  category: 'retirement', group: 'IRA' },
+    { id: 'hsa',             label: 'HSA',                   taxCharacter: 'hsa',     category: 'investment', group: 'Tax-advantaged' },
+    { id: '529',             label: '529 plan',              taxCharacter: '529',     category: 'other',      group: 'Tax-advantaged' },
+    { id: 'daf',             label: 'Donor-advised fund',    taxCharacter: 'daf',     category: 'other',      group: 'Tax-advantaged' },
+    { id: 'mixed',           label: 'Several accounts, one total', taxCharacter: null,      category: null,         group: 'Other' },
+    { id: 'other',           label: 'Something else',        taxCharacter: null,      category: null,         group: 'Other' }
+  ];
+  var ACCOUNT_TYPE_LABELS = {};
+  ACCOUNT_TYPES.forEach(function (t) { ACCOUNT_TYPE_LABELS[t.id] = t.label; });
+  function accountType(id) {
+    for (var i = 0; i < ACCOUNT_TYPES.length; i++) if (ACCOUNT_TYPES[i].id === id) return ACCOUNT_TYPES[i];
+    return null;
+  }
+  /* The one function that turns a chosen account type into what it says
+     about the asset: the type itself, the tax character it implies, and
+     the category only where none was chosen yet ('other'): Start Here's
+     cash and investments keep the category their owner reads. A blank
+     clears the type and leaves the rest as it was. */
+  function applyAccountType(asset, id) {
+    var t = accountType(id);
+    if (!t) return { accountType: null };
+    var patch = { accountType: t.id };
+    if (t.taxCharacter) patch.taxCharacter = t.taxCharacter;
+    var a = asset || {};
+    if (t.category && (!a.category || a.category === 'other')) patch.category = t.category;
+    return patch;
+  }
+  /** "Example Bank · 401(k)", or either half alone, or ''. */
+  function whereItSits(asset) {
+    var a = asset || {}, t = accountType(a.accountType);
+    return [a.institution, t && t.id !== 'other' ? t.label : null].filter(Boolean).join(' \u00b7 ');
+  }
 
   /* The ids data/debt_rules.json defines; the constructor keeps the list
      honest without reading the table, which loads later than the schema. */
@@ -3022,6 +3087,7 @@
     hasDebtAnswered: hasDebtAnswered,
     saidNoDebt: saidNoDebt,
     TAX_CHARACTERS: TAX_CHARACTERS,
+    ACCOUNT_TYPES: ACCOUNT_TYPES, ACCOUNT_TYPE_LABELS: ACCOUNT_TYPE_LABELS, accountType: accountType, applyAccountType: applyAccountType, whereItSits: whereItSits,
     createWorkProfile: createWorkProfile,
     WORK_DEFAULTS: WORK_DEFAULTS,
     createAsset: createAsset,

@@ -39,6 +39,8 @@ Updated: 2026-09-19
   records what it thought at each level and what was (D-248).
   A room asks only a question at the level its door has reached; the
   askDeeper switch lifts it (D-250).
+  Every asset says where it is held and what kind of account it is, and
+  the type sets the tax character (D-251).
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
   the car's used/new and running costs; a running-balance chart on the month;

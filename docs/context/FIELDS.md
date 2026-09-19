@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 112. Traced: 103. No other room mentions it: **51**.
+Fields: 114. Traced: 105. No other room mentions it: **53**.
 
 
 ## accounts (7)
@@ -181,7 +181,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `highestDeductible` — Highest deductible · read by statement, runway, protection
 - `dependents` — Anyone depending on your income · too generic to trace
 
-## statement (7)
+## statement (9)
 
 - `otherAssets` — Property & other assets · read by ledger, statements, estate, wrapped
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
@@ -190,6 +190,8 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `assetCharacter` — How it is taxed on the way out · read by ledger
 - `assetTier` — Which pile it sits in · read by ledger
 - `assetCostBasis` — Cost basis · read by ledger
+- `assetInstitution` — Where it is held · **no other room mentions it**
+- `assetAccountType` — Account type · **no other room mentions it**
 
 ## student-loans (4)
 

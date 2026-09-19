@@ -127,7 +127,7 @@
     if (u === 'bool') return '<div class="choices" data-ask-bool><button type="button" class="choice" data-ask-val="true">Yes</button><button type="button" class="choice" data-ask-val="false">No</button></div>';
     if (u === 'enum') {
       var vals = row.values || Object.keys(ENUM_LABELS[row.id] || {});
-      var labels = ENUM_LABELS[row.id] || {};
+      var labels = ENUM_LABELS[row.id] || (row.id === 'assetAccountType' && D.Schema.ACCOUNT_TYPE_LABELS) || {};
       return '<div class="choices" data-ask-enum>' + vals.map(function (v) { return '<button type="button" class="choice" data-ask-val="' + esc(v) + '">' + esc(labels[v] || v) + '</button>'; }).join('') + '</div>';
     }
     var affix = u === 'cents' ? '$' : (u === 'percent' || u === 'rate') ? '%' : '';

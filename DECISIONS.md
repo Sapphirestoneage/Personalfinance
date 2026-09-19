@@ -14453,6 +14453,36 @@ switch), lane 2, `node tools/context/build.js --check`; Income at 390px
 with the demo: no ask off, the question back on; Settings lists the
 switch; clean console.
 
+## D-251 — Where each asset sits: the institution and the account type
+
+**Why.** The owner, on the Statement: "make it so that I can show which
+type of account it's in and at what institution, and whether it's a
+401k, IRA, Roth, HSA, taxable." A card held only a name and a kind.
+
+**Decision.** Every asset carries `institution` (typed) and `accountType`
+(one of `Schema.ACCOUNT_TYPES`: bank, brokerage, 401(k), Roth 401(k),
+403(b), 457(b), TSP, pension, the IRAs, HSA, 529, DAF, several-in-one,
+other). Choosing a type runs `Schema.applyAccountType`: it sets the tax
+character the type implies, and the category only while it is still
+'other'; the Kind box stays editable. `rooms/statement.html` shows both
+boxes at the top of each card and reads "bank · type" on the sub-line
+and the portfolio list. Two Ledger rows on the A door
+(`assetAccountType` level 2, `assetInstitution` level 4), asked by the
+Statement. The demo savings account sits at Example Bank, high-yield.
+
+**Replaces or removes.** Nothing on screen; the freeze allows it because
+the two boxes replace the name-only guessing of what "Investments +
+retirement" contains.
+
+**Stored shape.** `asset.institution` (text|null) and `asset.accountType`
+(enum|null) are new on every asset in `slaf.household.v2`; an older save
+loads with both null and reads as before. `createAsset` defaults them.
+
+**Verified.** `node test/run.js`, `node test/forms.js` (the Statement
+case types an institution and picks 401(k)), lane 2,
+`node tools/context/build.js --check`; the Statement at 390px with the
+demo: boxes level, no overflow, clean console.
+
 ---
 
 # The Dungeons & Dividends entries

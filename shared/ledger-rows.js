@@ -201,7 +201,7 @@
   }
   /* The one map from a repeat row to the field on its item (Express, the
      ask and the refresh all read it here). */
-  var ITEM_VALUE = { debtBalance: 'balanceCents', debtRate: 'rate', debtMinPayment: 'minPaymentCents', assetValue: 'valueCents', assetCharacter: 'taxCharacter', assetTier: 'tier', assetCostBasis: 'costBasisCents',
+  var ITEM_VALUE = { debtBalance: 'balanceCents', debtRate: 'rate', debtMinPayment: 'minPaymentCents', assetValue: 'valueCents', assetCharacter: 'taxCharacter', assetTier: 'tier', assetCostBasis: 'costBasisCents', assetInstitution: 'institution', assetAccountType: 'accountType',
     grossAnnualIncome: 'grossAnnualIncomeCents', incomeType: 'type', paySurvives: 'survivesJobLoss', annualLine: 'amountCents', futureIncome: 'amountCents' };
   function itemValue(row, item) {
     var k = ITEM_VALUE[row.id];
