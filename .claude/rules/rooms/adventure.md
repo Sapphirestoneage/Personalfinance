@@ -4,9 +4,9 @@ paths:
   - "engines/adventure.js"
 ---
 # The Long Way Round (`adventure`)
-File: rooms/adventure.html · 643 lines
-Engines: projection, tier0, foo, hourly, adventure
-Reference data: adventure_paths.json, effective_tax_rates_2026.json, foo_rules.json, irs_limits_2026.json, lenses.json, levers.json, +3 more
+File: rooms/adventure.html · 646 lines
+Engines: projection, tier0, income, selfemployed, ledger, foo, hourly, adventure
+Reference data: adventure_paths.json, effective_tax_rates_2026.json, foo_rules.json, irs_limits_2026.json, lenses.json, levers.json, +4 more
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:

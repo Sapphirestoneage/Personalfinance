@@ -5,9 +5,9 @@ paths:
   - "engines/windfall.js"
 ---
 # What The Next Dollar Does (`foo-ladder`)
-File: rooms/foo-ladder.html · 701 lines
-Engines: projection, tier0, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax
-Reference data: confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, +5 more
+File: rooms/foo-ladder.html · 704 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax
+Reference data: confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, +6 more
 Owns: nothing
 Reads from other owners: employerMatch (start), debtRate (debt-payoff)
 Latest decisions:

@@ -14288,6 +14288,33 @@ literary blurb on the Scorecard (still in the table for the menu).
 (619), `node tools/context/build.js --check`; the Scorecard and the
 Cushion at 390px with the demo, clean console.
 
+## D-246 — Logged pay reaches every reading, and paired boxes start level
+
+**Why.** The owner: "where is that $3,285 coming from? I'm getting $3,400
+or so." The Income room already held the answer ($3,436 net, logged) and
+no other room read it: STATUS's known structural problem 1.
+
+**Decision.** `shared/schema.js` `loggedTakeHomeMonthlyCents(h, T)`: this
+month's recurring entries in the income log, gross less tax, one-time
+entries never. `takeHomeAnnualCents` uses twelve of it when it exists
+(`source: 'logged'`), on the log's own gross, and the estimate otherwise
+(`source: 'estimate'`). `engines/tier0.js` divides the savings rate by
+the same gross. Every page that loads Tier 0 now loads the log engine, so
+the figure is the same on every screen. Also: `.slaf-field` is
+top-aligned, so two boxes side by side start their labels on the same
+line and a long hint under one hangs below instead of pushing the other
+box down.
+
+**Replaces or removes.** The estimate as the take-home wherever a paycheck
+is logged; STATUS's structural problem 1.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,509 checks), `node test/forms.js`,
+`node tools/context/build.js --check`; the dashboard's income tile at
+390px moves from the estimate to the logged figure once a fortnightly
+wage is logged, clean console.
+
 
 ---
 

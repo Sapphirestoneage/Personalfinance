@@ -4,9 +4,9 @@ paths:
   - "engines/hassle.js"
 ---
 # Worth the Hassle (`hassle`)
-File: rooms/hassle.html · 498 lines
-Engines: projection, tier0, hourly, hassle
-Reference data: hassle_defaults.json
+File: rooms/hassle.html · 501 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly, hassle
+Reference data: effective_tax_rates_2026.json, hassle_defaults.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start)
 Latest decisions:

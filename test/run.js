@@ -8669,6 +8669,29 @@ section('Fewer words, plain words (D-245): hints fold, pillars explain');
   checkTrue('… and mounts with every room header', /mountSectionSync\(roomId\);\s*mountHintFolds\(\);/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
 })();
 
+section('Logged pay reaches every reading (D-246)');
+
+(function () {
+  const T = Object.assign({}, TABLES, { seTax: require(path.join(ROOT, 'data/se_tax_2026.json')) });
+  const plain = Demo.build();
+  check('without a log the take-home is the estimate', Schema.takeHomeAnnualCents(plain, T).source, 'estimate');
+  const logged = Demo.build();
+  logged.ledger = { income: [Schema.createIncomeEntry({ label: 'Pay', kind: 'w2', amountCents: 300000, frequency: 'fortnightly', receivedOn: '2026-09-04', taxMethod: 'w2' })] };
+  const t = Schema.takeHomeAnnualCents(logged, T);
+  check('with a recurring paycheck logged, the take-home is the log\'s', t.source, 'logged');
+  const m = Schema.loggedTakeHomeMonthlyCents(logged, T);
+  checkTrue('… twelve of this month\'s net', Money.isOk(m) && t.value === m.value * 12);
+  checkTrue('… on the log\'s own gross, never Start Here\'s salary', t.grossAnnualIncomeCents === m.grossCents * 12 && t.effectiveRate > 0 && t.effectiveRate < 0.4);
+  const sr = Tier0.savingsRate(logged, T).excludingMatch;
+  checkTrue('the savings rate divides by the same gross', Money.isOk(sr) && sr.grossAnnualIncomeCents === t.grossAnnualIncomeCents);
+  logged.ledger.income.push(Schema.createIncomeEntry({ label: 'Gift', kind: 'gift', amountCents: 100000, frequency: 'once', receivedOn: '2026-09-10' }));
+  check('a one-time gift does not change next month\'s take-home', Schema.takeHomeAnnualCents(logged, T).value, t.value);
+  const once = Demo.build(); once.ledger = { income: [Schema.createIncomeEntry({ label: 'Bonus', kind: 'bonus', amountCents: 500000, frequency: 'once', receivedOn: '2026-09-10' })] };
+  check('a log of only one-time entries leaves the estimate in place', Schema.takeHomeAnnualCents(once, T).source, 'estimate');
+  checkTrue('every page that reads Tier 0 loads the income log', ['index.html'].concat(fs.readdirSync(path.join(ROOT, 'rooms')).map(f => 'rooms/' + f)).every(f => { const t2 = fs.readFileSync(path.join(ROOT, f), 'utf8'); return t2.indexOf('engines/tier0.js') === -1 || t2.indexOf('engines/ledger.js') !== -1; }));
+  checkTrue('paired fields start their labels on the same line', /\.slaf-field \{[^}]*justify-content: flex-start/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+})();
+
 section('The room template (D-097): one shape, proven on Real Hourly Wage');
 
 (function () {

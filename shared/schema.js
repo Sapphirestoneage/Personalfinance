@@ -2572,13 +2572,54 @@
       effectiveRate: rate.value, referenceVersion: rate.referenceVersion, precision: rate.precision, grossAnnualIncomeCents: gross.value
     });
   }
+  /* The income log, reached lazily the way the reference module is: the
+     engine depends on this file, so this file cannot depend on it at load. */
+  function ledgerModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('../engines/ledger.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Ledger ? g.SLAF.Ledger : null;
+  }
+  /** What the logged pay actually nets a month (D-246): the recurring
+   *  entries in the income log, this month, gross less tax, the way the
+   *  Income room shows them. Incomplete when nothing recurring is logged,
+   *  when an entry cannot be netted, or when the engine is not loaded, so
+   *  the estimate stands in and says so. One-time entries (a gift, a
+   *  bonus) never count: they are not what next month brings. */
+  function loggedTakeHomeMonthlyCents(household, tables, monthId) {
+    var L = ledgerModule();
+    if (!L || typeof L.month !== 'function') return Money.incomplete('The income log is not loaded on this page.', ['ledgerIncome']);
+    if (!L.hasRecurring(household)) return Money.incomplete('No recurring pay is logged yet.', ['ledgerIncome']);
+    var m = L.month(household, tables, monthId);
+    if (!Money.isOk(m)) return m;
+    var rows = (m.rows || []).filter(function (r) { return r.entry && r.entry.frequency !== 'once'; });
+    if (!rows.length) return Money.incomplete('No recurring pay lands this month.', ['ledgerIncome']);
+    if (rows.some(function (r) { return r.netCents === null; })) return Money.incomplete('A logged entry could not be netted yet.', ['ledgerIncome']);
+    var takeHome = rows.reduce(function (t, r) { return t + r.takeHomeCents; }, 0);
+    var gross = rows.reduce(function (t, r) { return t + r.grossCents; }, 0);
+    return Money.ok(takeHome, { grossCents: gross, taxCents: gross - takeHome, month: m.month, count: rows.length });
+  }
   function takeHomeAnnualCents(household, tables) {
+    /* Logged pay beats the estimate (D-246): when the income log holds the
+       recurring paychecks, this month's net is what the household actually
+       keeps, and every reading downstream should say so. */
+    var logged = loggedTakeHomeMonthlyCents(household, tables);
+    if (Money.isOk(logged)) {
+      /* The logged gross is the base, never Start Here's salary: a net
+         read off one and a gross read off the other is a made-up tax rate. */
+      var g = logged.grossCents * 12;
+      var net = logged.value * 12;
+      var taxCents = Math.max(0, g - net);
+      return Money.ok(net, {
+        source: 'logged', loggedMonthlyCents: logged.value, loggedMonth: logged.month,
+        grossAnnualIncomeCents: g, estimatedTaxCents: taxCents, effectiveRate: g > 0 ? taxCents / g : 0, referenceVersion: null
+      });
+    }
     var gross = grossAnnualIncomeCents(household);
     if (!Money.isOk(gross)) return gross;
     var tax = estimatedAnnualTaxCents(household, tables);
     if (!Money.isOk(tax)) return tax;
     return Money.ok(gross.value - tax.value, {
-      grossAnnualIncomeCents: gross.value, estimatedTaxCents: tax.value, effectiveRate: tax.effectiveRate, referenceVersion: tax.referenceVersion
+      source: 'estimate', grossAnnualIncomeCents: gross.value, estimatedTaxCents: tax.value, effectiveRate: tax.effectiveRate, referenceVersion: tax.referenceVersion
     });
   }
   function takeHomeMonthlyCents(household, tables) {
@@ -3116,6 +3157,7 @@
     estimatedAnnualTaxCents: estimatedAnnualTaxCents,
     takeHomeAnnualCents: takeHomeAnnualCents,
     takeHomeMonthlyCents: takeHomeMonthlyCents,
+    loggedTakeHomeMonthlyCents: loggedTakeHomeMonthlyCents,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
     FAT_NEEDS: FAT_NEEDS,

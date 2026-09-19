@@ -4,8 +4,8 @@ paths:
   - "engines/subscriptions.js"
 ---
 # Subscription Finder (`subscriptions`)
-File: rooms/subscriptions.html · 125 lines
-Engines: projection, tier0, selfemployed, tax, hourly, subscriptions
+File: rooms/subscriptions.html · 127 lines
+Engines: projection, tier0, income, ledger, selfemployed, tax, hourly, subscriptions
 Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: nothing traced

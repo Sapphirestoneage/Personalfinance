@@ -3,9 +3,9 @@ paths:
   - "rooms/cant-pay.html"
 ---
 # When It Won’t All Get Paid (`cant-pay`)
-File: rooms/cant-pay.html · 529 lines
-Engines: projection, tier0, cashflow
-Reference data: bill_triage.json, effective_tax_rates_2026.json, expense_categories.json
+File: rooms/cant-pay.html · 532 lines
+Engines: projection, tier0, income, selfemployed, ledger, cashflow
+Reference data: bill_triage.json, effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
 Latest decisions:
