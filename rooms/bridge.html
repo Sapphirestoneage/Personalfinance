@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-19 17:18Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>The Bridge · SPARKS</title>
+<meta name="description" content="If work becomes optional before the retirement accounts open, the years in between need money you can reach. How many years, how short, and every source that reaches before 59½: some counted now, the rest explained."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC: SPEC.md §11. DECISIONS.md D-307 (carved from the Statement).
+  Registry: bridge.
+
+    #bridge      years between the FI date at the current pace and 59½,
+                 what those years cost, what reaches, and the gap
+    #sources     every source that reaches before 59½. Taxable, cash,
+                 Roth contributions and the HSA are COUNTED from the
+                 Ledger; the conversion ladder, 72(t), the Rule of 55 and
+                 a 457(b) are EXPLAINED, not computed, and say so; a source
+                 that cannot apply to this household is absent, not greyed
+    #future      a pension, Social Security, an annuity: listed, never
+                 counted, edited in What Comes Next
+    #reading     the figures this page reads, each a link to its owner
+
+  1. READS   the assets and their basis, the spending, the date of birth,
+             the future income periods.
+  2. WRITES  nothing. A Roth with no contributions figure is a link to the
+             Ledger row, never a box here.
+  3. CALLS   engines/statement.js bridgeGap (the one bridge sum, also read
+             by the ratios); engines/trap.js is NOT run here: the Back
+             Half runs the four paths year by year, and this room links
+             to it rather than draw a second table.
+  4. EMPTY   no date of birth or no spending: the hero says which, and
+             links. Nothing is guessed.
+  5. CONFIG  data/access_rules.json, data/early_access_rules_2026.json (the
+             rules the explained sources cite), data/fire_variants.json.
+
+  LIVE-FORM: built once. No inputs on this page.
+  THEMING: none this pass.
+-->
+<style>
+  section[id] { scroll-margin-top: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
+  @media (max-width: 340px) { .pair { grid-template-columns: 1fr; } }
+  .figure-cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; min-width: 0; }
+  .figure-cell .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .figure-cell .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); overflow-wrap: anywhere; }
+  .figure-cell .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text-faint); }
+  .figure-cell .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .why a, .src a, .figure-cell a, .future-read a { color: var(--color-accent-hover); }
+  .src { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .src li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: baseline; }
+  .src li:first-child { border-top: none; }
+  .src .amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .src .amt.is-word { font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .06em; }
+  .src .say { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-muted); line-height: var(--leading-normal); }
+  .src .tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; padding: 1px 6px; border-radius: var(--radius-pill); border: 1px solid var(--color-border-strong); color: var(--color-text-faint); margin-left: var(--space-1); vertical-align: middle; }
+  .src li.is-explained .tag { border-style: dashed; }
+  .future-read { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .future-read li { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .future-read .fr-name { font-weight: 600; min-width: 0; }
+  .future-read .fr-when { color: var(--color-text-muted); min-width: 0; }
+  .future-read .fr-amt { margin-left: auto; white-space: nowrap; }
+  .room-drawer ul { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; padding-left: 1.2em; line-height: var(--leading-loose); }
+  .room-badge { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Bridge</h1>
+  <p class="room-lede">If work becomes optional before the retirement accounts open, the years in between need money you can reach. How many years, how short, and every source that reaches.</p>
+  <p class="room-badge" id="room-badge"></p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="bridge">
+    <span class="slaf-eyebrow">The bridge to 59½</span>
+    <div class="pair" style="margin-top:var(--space-3)">
+      <div class="figure-cell"><span class="cap">Years to bridge</span><span class="big" id="bridge-years">—</span><span class="sub" id="bridge-years-sub"></span></div>
+      <div class="figure-cell"><span class="cap">Short by</span><span class="big" id="bridge-short">—</span><span class="sub" id="bridge-short-sub"></span></div>
+    </div>
+    <p class="why" id="bridge-why"></p>
+    <div id="bridge-lens" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <section class="slaf-card" id="sources" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What reaches before 59½</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Four of these are counted from the Ledger today. The rest are doors with rules on them: explained here, and run year by year in the Back Half. A door that cannot apply to you is not listed.</p>
+    <ul class="src" id="source-list"></ul>
+  </section>
+
+  <section class="slaf-card" id="future" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Money that is coming</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A pension, Social Security, an annuity. Not net worth, not income yet, and not counted in the bridge. Listed so you can see what lands after it. Edited in <a href="timeline.html#out-periods">What Comes Next</a>, which draws them on a grid.</p>
+    <div id="future-list"></div>
+  </section>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Read here, entered in the Ledger. This room writes none of them.</p>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <details class="room-drawer" id="assumptions" style="margin-top:var(--space-4)">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <ul id="assumptions-body"></ul>
+  </details>
+
+  <p class="disclaimer">Educational tool, not financial advice. The rules named here are described, not applied to your return; a plan's own documents and a tax professional decide what applies. Everything stays in this browser.</p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/statement.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Statement = SLAF.Statement;
+  var ROOM_ID = 'bridge';
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function fmt(c) { return Money.formatCents(c); }
+  function setFig(id, subId, ok, text, subHtml) { var n = el(id); n.className = 'big' + (ok ? '' : ' is-incomplete'); n.textContent = text; el(subId).innerHTML = subHtml || ''; }
+  function fixLink(result) {
+    var names = (result && result.missing) || [];
+    for (var i = 0; i < names.length; i++) {
+      if (!Ownership.FIELDS[names[i]]) continue;
+      var d = Ownership.describe(names[i], Spine.getProfile(), ROOM_ID);
+      if (d && d.href) return '<a href="' + esc(d.href) + '">Enter ' + esc(d.label.toLowerCase()) + ' in the Ledger →</a>';
+    }
+    return '';
+  }
+  function ledgerLink(anchor, text) { return '<a href="' + esc(Ownership.linkTo('ledger', anchor, ROOM_ID)) + '">' + esc(text) + ' →</a>'; }
+  /* The badge: which sphere of the Ledger this room reads most, and how
+     long it takes to read (D-307). Both from the registry; the sphere's
+     name from data/spheres.json. */
+  function badge() {
+    var r = SLAF.Registry.byId(ROOM_ID);
+    var s = (TABLES.spheres && TABLES.spheres.spheres || []).filter(function (x) { return x.id === r.sphere; })[0];
+    el('room-badge').textContent = (s ? 'Sphere ' + s.order + ', ' + s.sphere + ' · ' : '') + 'about ' + r.minutes + ' minutes to read';
+  }
+
+  /* ---- The bridge --------------------------------------------------------- */
+  function renderBridge(h) {
+    var b = Statement.bridgeGap(h, TABLES);
+    if (!Money.isOk(b)) {
+      setFig('bridge-years', 'bridge-years-sub', false, b.reason, fixLink(b));
+      setFig('bridge-short', 'bridge-short-sub', false, Money.EM_DASH, '');
+      el('bridge-why').textContent = '';
+      return b;
+    }
+    if (b.noBridgeNeeded) {
+      setFig('bridge-years', 'bridge-years-sub', true, 'None', esc(b.alreadyThere ? 'already at your FI number' : 'FI lands at ' + b.fiAge + ', after 59½'));
+      setFig('bridge-short', 'bridge-short-sub', true, '$0', 'nothing to bridge');
+      el('bridge-why').textContent = 'At the current pace the accounts open before you stop, so nothing has to be reachable early. If the date moves earlier, this page changes with it.';
+      return b;
+    }
+    setFig('bridge-years', 'bridge-years-sub', true, b.gapYears + ' yrs', esc('FI at ' + b.fiAge + ' at this pace; 59½ is ' + b.gapYears + ' years later'));
+    setFig('bridge-short', 'bridge-short-sub', true, b.value === 0 ? 'Covered' : fmt(b.value), esc(fmt(b.availableCents) + ' reachable of ' + fmt(b.needCents) + ' needed'));
+    el('bridge-why').textContent = 'Those years cost ' + fmt(b.annualSpendCents) + ' each at today’s spending. What reaches before 59½ covers ' + b.coveredYears + ' of them. Every source is below, counted or explained.';
+    return b;
+  }
+
+  /* ---- The sources -------------------------------------------------------- */
+  function sources(h, b) {
+    var R = TABLES.earlyAccessRules || {};
+    var assets = (h.assets || []).filter(function (a) { return Money.isEntered(a.valueCents); });
+    var has = function (types) { return assets.some(function (a) { return types.indexOf(a.accountType) >= 0; }); };
+    var rothBlank = assets.filter(function (a) { var r = Schema.assetRule(a, TABLES.accessRules); return r && r.key === 'roth' && !Money.isEntered(a.costBasisCents); });
+    var rothAny = assets.some(function (a) { var r = Schema.assetRule(a, TABLES.accessRules); return r && r.key === 'roth'; });
+    var pretaxAny = assets.some(function (a) { var r = Schema.assetRule(a, TABLES.accessRules); return r && r.key === 'pretax'; });
+    var hsaAny = assets.some(function (a) { var r = Schema.assetRule(a, TABLES.accessRules); return r && r.key === 'hsa'; }) || !!((h.retirement || {}).onHdhp);
+    var parts = Money.isOk(b) ? b.parts : null;
+    var counted = function (label, cents, say) { return { label: label, cents: cents, say: say, kind: 'counted' }; };
+    var explained = function (label, say, href, hrefText) { return { label: label, say: say, kind: 'explained', href: href, hrefText: hrefText }; };
+    var out = [];
+    out.push(counted('Taxable accounts', parts ? parts.taxable : null, 'A brokerage account has no age on it. Selling costs the capital gains tax on what has grown, nothing else. Counted at its full value here; the tax on the gain is the basis question in the Ledger.'));
+    out.push(counted('Cash', parts ? parts.cash : null, 'Reachable today. It is also the cushion, so a bridge that leans on it is leaning on the same dollars twice.'));
+    out.push(counted('Roth contributions', parts ? parts.rothBasis : null,
+      'What you put in comes out any time, tax and penalty free; only the growth waits for 59½. '
+      + (rothBlank.length ? 'Not counted yet for ' + rothBlank.map(function (a) { return a.label || 'a Roth'; }).join(', ') + ': the contributions figure is blank. Look it up on Form 5498 for each year, or the custodian’s contribution records; roughly for now is fine. ' + ledgerLink('x-A', 'Enter it in the Ledger') : (rothAny ? 'Counted from the basis you entered.' : 'No Roth account is listed.'))));
+    if (hsaAny) out.push(counted('The HSA, against receipts you kept', parts ? parts.hsa : null, 'Medical costs you paid out of pocket in any year since the account opened can be reimbursed from it whenever you like, tax free, if you kept the receipts. Counted at its full value; only the receipts you actually hold are reachable this way.'));
+    out.push(explained('A Roth conversion ladder', 'Convert a year of spending from pre-tax to Roth each year and pay income tax on it then. Each converted amount can be taken ' + esc(String(R.conversionSeasoningYears || 5)) + ' years later without the penalty, one clock per conversion. The first ' + esc(String(R.conversionSeasoningYears || 5)) + ' years have to be carried by the sources above.' + (pretaxAny ? '' : ' There is no pre-tax money listed to convert, so this is a door for later.'), 'decumulation.html#before-59', 'Run it year by year in the Back Half'));
+    if (pretaxAny) out.push(explained('72(t) payments', 'A fixed yearly payment from a pre-tax account by one of three approved methods, taxed as income, no penalty, and it must run the longer of five years or until 59½. The amount is set by the rules, not by you.', 'decumulation.html#before-59', 'The Back Half works the payment out'));
+    if (has(['401k', 'roth_401k', '403b', 'tsp', 'old_401k'])) out.push(explained('The Rule of 55', 'Leave the employer whose plan it is in or after the calendar year you turn ' + esc(String((R.ruleOf55 || {}).separationAge || 55)) + ' and that plan is spendable, taxed as income, no penalty. Roll it to an IRA and the door shuts.', 'decumulation.html#before-59', 'See it beside the other paths'));
+    if (has(['457b'])) out.push(explained('The 457(b)', 'A governmental 457(b) has no early-withdrawal penalty at all once you leave the employer: income tax only, at any age. That makes it the first retirement account a bridge draws on.', null, null));
+    return out;
+  }
+  function renderSources(h, b) {
+    var rows = sources(h, b);
+    el('source-list').innerHTML = rows.map(function (r) {
+      var amt = r.kind === 'counted'
+        ? '<span class="amt">' + (Money.isEntered(r.cents) ? esc(fmt(r.cents)) : Money.EM_DASH) + '</span>'
+        : '<span class="amt is-word">explained</span>';
+      return '<li class="is-' + r.kind + '"><span>' + esc(r.label) + '<span class="tag">' + (r.kind === 'counted' ? 'counted now' : 'not computed') + '</span></span>' + amt
+        + '<span class="say">' + r.say + (r.href ? ' <a href="' + esc(r.href) + '">' + esc(r.hrefText) + ' →</a>' : '') + '</span></li>';
+    }).join('');
+  }
+
+  /* ---- Money that is coming (read-only; edited in What Comes Next) -------- */
+  function renderFuture(h) {
+    var list = el('future-list');
+    var rows = h.futureIncome || [];
+    if (!rows.length) { list.innerHTML = '<p class="slaf-reason">Nothing listed. That is fine; most people under 55 have nothing here yet.</p>'; return; }
+    var priced = rows.filter(function (f) { return Money.isEntered(f.monthlyCents); });
+    var total = priced.reduce(function (s, f) { return s + f.monthlyCents; }, 0);
+    list.innerHTML = '<ul class="future-read">' + rows.map(function (f) {
+      var when = f.startsOn ? f.startsOn : (Money.isEntered(f.startsAtAge) ? 'from age ' + f.startsAtAge : 'no start date yet');
+      return '<li><span class="fr-name">' + esc(f.label || 'Unnamed') + '</span><span class="fr-when">' + esc(when) + '</span><span class="fr-amt">' + (Money.isEntered(f.monthlyCents) ? esc(fmt(f.monthlyCents)) + '/mo' : 'no amount yet') + '</span></li>';
+    }).join('') + '</ul>'
+      + '<p class="slaf-hint" style="margin:var(--space-3) 0 0">' + (priced.length
+          ? '<strong>' + esc(fmt(total)) + '</strong> a month once every priced one is running' + (priced.length < rows.length ? '; ' + (rows.length - priced.length) + ' of these ' + (rows.length - priced.length === 1 ? 'has' : 'have') + ' no amount yet and ' + (rows.length - priced.length === 1 ? 'is' : 'are') + ' not counted.' : '.')
+          : 'None of these has an amount yet, so there is nothing to add up.') + '</p>';
+  }
+
+  function renderAssumptions(h, b) {
+    var T = TABLES, R = T.earlyAccessRules, rows = [];
+    rows.push('<li><strong>The access age</strong>, 59½, and which kinds of account it gates: data/access_rules.json v' + esc(T.accessRules.version) + ' (' + esc(T.accessRules.confidence) + '). One copy in the app.</li>');
+    rows.push('<li><strong>The FI date at the current pace</strong> is the standard FIRE variant from data/fire_variants.json v' + esc(T.fireVariants.version) + ' (' + esc(T.fireVariants.confidence) + '), through engines/fire.js; the bridge is the years from that date to 59½, times a year of today’s spending. engines/statement.js bridgeGap, the same sum the ratios read.</li>');
+    if (R) rows.push('<li><strong>The doors on the explained sources</strong> (the conversion clock of ' + esc(String(R.conversionSeasoningYears)) + ' years, the 72(t) method and its rate ceiling, the Rule of 55 age) are data/early_access_rules_2026.json v' + esc(R.version) + ' (' + esc(R.confidence) + '). Described here; run year by year by engines/trap.js in the Back Half, never twice.</li>');
+    rows.push('<li><strong>Money that is coming</strong> is listed and never counted: a pension or Social Security that starts after the bridge cannot carry it.</li>');
+    rows.push('<li><strong>This room stores nothing.</strong> A Roth with no contributions figure is a link to the Ledger row, not a box here.</li>');
+    el('assumptions-body').innerHTML = rows.join('');
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    var b = renderBridge(h);
+    renderSources(h, b);
+    renderFuture(h);
+    renderAssumptions(h, b);
+    el('reading-list').innerHTML = ['dob', 'monthlyExpenses', 'cashSavings', 'investments', 'futureIncome']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+  var queued = false;
+  function render() { if (queued) return; queued = true; setTimeout(function () { queued = false; renderNow(); }, 0); }
+
+  Spine.onChange(render);
+  Spine.registerRoom(ROOM_ID);
+  if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
+
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    badge();
+    SLAF.Lens.mountStrip('bridge-lens', function (h) {
+      var b = Statement.bridgeGap(h, TABLES);
+      if (!Money.isOk(b) || b.noBridgeNeeded) return [];
+      return [{ label: 'The bridge, all told', cents: b.needCents, href: '#bridge' }, { label: 'Reachable before 59½', cents: b.availableCents, href: '#sources' }];
+    }, function () { return TABLES; });
+    renderNow();
+  }).catch(function (err) {
+    var notice = el('load-notice');
+    notice.hidden = false; notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>
