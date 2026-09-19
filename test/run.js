@@ -838,6 +838,59 @@ const RULES = TABLES.debtRules;
 
 /* -- The stop line (D-191) ------------------------------------------------- */
 (function () {
+  section('Debt: where the payment goes, and what each fall frees (D-236)');
+  (function () {
+    const three = Schema.createHousehold({ meta: { hasDebt: true }, debts: [
+      Schema.createDebt({ id: 'car', label: 'Car', balanceCents: 200000, rate: 0, minPaymentCents: 50000, type: 'auto' }),
+      Schema.createDebt({ id: 'card', label: 'Card', balanceCents: 600000, rate: 0.229, minPaymentCents: 15000, type: 'credit_card' }),
+      Schema.createDebt({ id: 'loan', label: 'Loan', balanceCents: 1800000, rate: 0.055, minPaymentCents: 21000, type: 'student_loan' })] });
+    const plan = Debt.simulate(three, TABLES.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+    checkTrue('three debts on minimums alone still clear', Money.isOk(plan));
+    /* The schedule now says what each debt was paid and charged. */
+    checkTrue('every month splits its payment by debt, and the split adds up', plan.schedule.every(m => Object.keys(m.paid).reduce((t, id) => t + m.paid[id], 0) === m.paidCents));
+    checkTrue('… and its interest by debt, adding up too', plan.schedule.every(m => Object.keys(m.interest).reduce((t, id) => t + m.interest[id], 0) === m.interestCents));
+    check('the car at 0% and $500 a month falls in month 4', plan.payoffs[0].debtId + '@' + plan.payoffs[0].month, 'car@4');
+    check('… and the payoff says what it frees', plan.payoffs[0].minPaymentCents, 50000);
+    check('the plan carries every minimum by id', plan.minimums.car + plan.minimums.card + plan.minimums.loan, 86000);
+
+    /* The cascade: the freed minimum rolls onto the next target, the total holds, then it is all free. */
+    const cas = Debt.cascade(plan);
+    check('one phase per fall', cas.phases.length, plan.payoffs.length);
+    check('phase 1 is minimums to all three', JSON.stringify(cas.phases[0].perDebtCents), JSON.stringify({ car: 50000, card: 15000, loan: 21000 }));
+    check('… and the car\'s $500 rolls onto the card', cas.phases[0].fallsId + '->' + cas.phases[0].rollsOntoId, 'car->card');
+    checkTrue('phase 2 pays the card its minimum plus the car\'s, on average', Math.abs(cas.phases[1].perDebtCents.card - 65000) < 1000 && cas.phases[1].perDebtCents.car === undefined);
+    checkTrue('the monthly total holds through the push', cas.phases.slice(0, -1).every(ph => ph.monthlyCents === plan.monthlyBudgetCents));
+    check('the last fall rolls onto nothing', cas.phases[2].rollsOntoId, null);
+    check('and then the whole budget is free, from the month it is all gone', cas.freeCents + '@' + cas.doneMonth, plan.monthlyBudgetCents + '@' + plan.months);
+    /* With a stop line, a fall after the line frees money for the household, not the next debt. */
+    const stopped = Debt.simulate(three, TABLES.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 20000, stopAfter: 'cards' });
+    const sc = Debt.cascade(stopped);
+    checkTrue('past the stop line the freed minimum is yours, not the next debt\'s', Money.isOk(sc) && sc.phases.filter(p => p.fallsId === 'card')[0].rollsOntoId === null);
+    checkTrue('before it, the car still rolls onto the card', sc.phases.filter(p => p.fallsId === 'car')[0].rollsOntoId === 'card');
+    checkTrue('an incomplete plan passes through', !Money.isOk(Debt.cascade(Money.incomplete('no', []))));
+
+    /* The flow of one month: in equals out, per debt and in total. */
+    const flow = Debt.monthFlow(plan, 1);
+    checkTrue('month 1 flows', Money.isOk(flow));
+    check('three debts in the middle', flow.debts.length, 3);
+    checkTrue('minimum plus extra is what each debt was paid', flow.debts.every(d => d.fromMinimumCents + d.fromExtraCents === d.paidCents));
+    checkTrue('interest plus balance paid down is what each debt was paid', flow.debts.every(d => d.interestCents + d.principalCents === d.paidCents));
+    check('the car at 0% pays no interest', flow.debts.filter(d => d.id === 'car')[0].interestCents, 0);
+    check('the card\'s interest is 22.9% of $6,000 over twelve', flow.debts.filter(d => d.id === 'card')[0].interestCents, Math.round(600000 * 0.229 / 12));
+    check('nothing on top of the minimums in month 1', flow.extraCents, 0);
+    const withExtra = Debt.monthFlow(Debt.simulate(three, TABLES.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 30000 }), 1);
+    check('with $300 extra it goes to the card, the dearest', withExtra.debts.filter(d => d.id === 'card')[0].fromExtraCents, 30000);
+    const later = Debt.monthFlow(plan, 6);
+    checkTrue('in month 6 the card is paid from its minimum and the car\'s freed one', later.debts.filter(d => d.id === 'card')[0].fromExtraCents > 0 && !later.debts.some(d => d.id === 'car'));
+    checkTrue('a month past the plan is named, not invented', !Money.isOk(Debt.monthFlow(plan, 999)));
+
+    /* The room draws the three from the one simulation. */
+    const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+    checkTrue('the fold draws the flow, the cascade and the balances', ['flow-chart', 'cascade-chart', 'timeline-chart'].every(id => page.indexOf('id="' + id + '"') !== -1));
+    checkTrue('… from the engine, not arithmetic of its own', /Debt\.monthFlow\(plan, 1\)/.test(page) && /Debt\.cascade\(plan\)/.test(page) && /Charts\.sankey\(/.test(page) && /Charts\.columns\(/.test(page));
+    checkTrue('the list says what each fall frees and where it goes', /frees <b>/.test(page) && /which rolls onto/.test(page) && /yours from then on/.test(page) && /Everything gone\./.test(page));
+  })();
+
   section('Debt: the extra stops once the dear debt is gone (D-191)');
   const RULES = TABLES.debtRules;
   const hh = Demo.build();
