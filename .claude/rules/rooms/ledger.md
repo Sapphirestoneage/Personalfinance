@@ -6,7 +6,7 @@ paths:
   - "engines/notknowing.js"
 ---
 # The Ledger (`ledger`)
-File: rooms/ledger.html · 514 lines · utility room
+File: rooms/ledger.html · 515 lines · utility room
 Engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing
 Reference data: access_rules.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, ledger-rows.json, liquidity_benchmarks.json, +4 more
 Owns: nothing

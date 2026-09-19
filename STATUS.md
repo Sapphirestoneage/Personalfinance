@@ -1,12 +1,23 @@
 # STATUS (keep under 40 lines; /wrap rewrites it)
 
-Updated: 2026-09-12
+Updated: 2026-09-19
 
 ## Where it stands
 - The Ledger rework brief (owner, 2026-09-11) is being built in order: G1, A, B, C/C2, D, E, F, G2, G3 with J1, H1 to H5, H7, H8 shipped (D-204 to D-212); H6 waits on sourced 1871-on returns data (egress blocked); I1 to I5 shipped (D-213, D-214); J2 to J8 shipped (D-214 to D-216; J7 without gift privacy, which waits on the owner); K4, K6, K7, K11 shipped on the one countdown (D-217); K1 and K3 shipped (D-218); K2, K5, K8, K9, K10 shipped (D-219): Phase K is built; one CSV out and back in (D-220), made to survive a real spreadsheet (D-221: one reader for every CSV, any way a number, date, yes or choice is written, a preview naming what each line would do, one undo for the lot); I6 (Eli's taxonomy), I7 (needs H6), I8 (needs the §11 tree) wait. Still waiting on the owner: the Pages switch, the domain (G1.1), a LICENSE (G3.14). The owner's brief overrides the freeze for those phases; each adds a VIEW of existing rows (First Round, doors, Express), no second store.
 - ~70 rooms live on GitHub Pages. Each room works on its own; the connections
   between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
 - Context system added. Sessions should no longer read the archives.
+- **This session (D-224): one door in, one door out, and a backup nobody
+  else can open.** Your Data was six cards, twelve buttons and three file
+  pickers, and every backup was plain text. Now: three cards, one verb each.
+  Save (spreadsheet, printable page, a backup protected with a passphrase or
+  plain, send, link, QR, and a receipt saying nothing left the device). Bring
+  in (one Choose a file and a drop zone; `shared/intake.js` names what was
+  dropped and the matching panel opens; every path previews, one button, one
+  undo). Start over. `shared/vault.js` seals a backup with PBKDF2 and
+  AES-GCM on the browser's own crypto; a wrong passphrase is a refusal, never
+  garbage; there is no recovery and the page says so. A fingerprint is shown
+  after a save and a load so two devices can be compared by eye.
 - **Also this session (D-223): Express, made short.** The owner: too long, too
   much extra, levels were a good separation. It was also drawing every account
   and card twice, because a list's rows span levels and the build put all of a
@@ -49,7 +60,8 @@ Updated: 2026-09-12
 3. Make logged income reconcile with typical income (known problem 1).
 4. First journey works end to end: about 8 questions in, a FOO step and an FI
    date range out. Add a node test for it.
-5. Monthly close prompts a backup export, and offers the spreadsheet (D-222).
+5. Monthly close prompts a backup export: the spreadsheet (D-222) and the
+   protected backup (D-224).
 
 ## Cut list (for /simplify, one per session, owner approves each)
 - Retire Start Here, Front Doors, Walk-Through into the Ledger (decided).

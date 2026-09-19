@@ -13611,6 +13611,57 @@ test/export.js`, `node dnd/test/run.js`, and a phone walk at 390px: levels
 badged and shut, three accounts added at two banks, an institution renamed
 and the line moving group, the emptied group going away.
 
+## D-224 — One door in, one door out, and a backup nobody else can open
+
+**Why.** The owner: make export and import easier, less janky, and make it
+feel secure. Your Data was six cards, twelve buttons and three file pickers;
+two JSON formats that looked alike loaded through different doors, and the
+page told you to go and find the right one. Every backup was plain text:
+anyone who found it in Downloads or a mail attachment could read every
+balance. Nothing said what had or had not left the device.
+
+**Decision.**
+- `shared/vault.js`: a protected backup. PBKDF2-SHA256 (310,000 rounds, a
+  fresh salt) derives a key from a passphrase; AES-256-GCM seals the file
+  (a fresh nonce). A wrong passphrase, a cut-off file or a changed byte is a
+  refusal, never garbage. No recovery: the passphrase is never stored, and
+  the UI says so before the first sealed save. `fingerprint(text)` is the
+  first 32 bits of SHA-256 as "A7F3-9C21", shown after a save and a load so
+  two devices can be compared by eye. Web Crypto only; where it is missing
+  (a file:// page) the plain file is offered and the reason is said.
+- `shared/intake.js`: `sniff(text, name)` names a file: sealed, backup,
+  household, sheet, bank, link, empty, binary, unknown, each with a sentence.
+- `shared/backup.js`: `inspect()` flags a sealed file instead of calling it
+  "not a backup"; the widget saves protected (asks twice, checks strength)
+  with the plain file one tap away, unlocks a sealed file inline, and shows
+  the fingerprint; it mounts headless and without its load row on Your Data.
+- `rooms/data.html`: three cards, one verb each. Save (spreadsheet, page,
+  protected or plain backup, send, link, QR, a receipt of what left the
+  device: nothing). Bring in (one Choose a file and a drop zone; the sniff
+  opens the matching panel; every path previews, has one button, one undo;
+  the link and paste boxes fold under it). Start over. `index.html` sends a
+  sealed or full backup to Your Data rather than refusing it.
+
+**Replaces or removes.** Three file pickers and three cards (Load a file,
+Bank CSV, A spreadsheet and the app) become one door; the front door's
+"Download a file" moves under Your Data's saves. No new room, no new store.
+
+**Stored shape.** `slaf.household.v2` unchanged. A NEW FILE FORMAT:
+`money-rooms-sealed` (sealedVersion 1: kdf, iterations, salt, cipher, iv,
+data, hint, savedAt, appVersion), wrapping the bytes of a backup or a
+household file. Every reader that takes those files still takes them plain;
+a sealed file from a newer sealedVersion is refused with "update this
+device". Nothing migrates.
+
+**Verified.** `node test/run.js` (the vault round trip, the wrong passphrase,
+a changed byte, a newer version, the fingerprint, the sniff on one line of
+each kind, `Backup.inspect` on a sealed file with and without the vault, the
+page and front-door pins), `node test/forms.js`, `node test/export.js`,
+`node dnd/test/run.js`, a 95-page sweep at 390px, and a phone walk: a
+protected save with its fingerprint, the sealed file chosen back and refused
+on the wrong passphrase, then opened; every sample file dropped through the
+one intake landing in its own panel.
+
 ---
 
 # The Dungeons & Dividends entries

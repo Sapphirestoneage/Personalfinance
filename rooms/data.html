@@ -42,15 +42,34 @@
   section[id] { scroll-margin-top: var(--space-4); }
   .card-gap { margin-top: var(--space-4); }
   .data-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
-  .data-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .data-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; line-height: var(--leading-normal); }
   .data-note.is-error { color: var(--color-critical); }
-  .data-note.is-good { color: var(--color-positive); }
+  .data-note.is-good { color: var(--color-text); }
   .data-note.is-warn, .is-warn { color: var(--color-caution); }
   tr.is-problem td { background: color-mix(in srgb, var(--color-caution) 10%, transparent); }
+  /* THREE CARDS, ONE VERB EACH (D-224). Save, Bring in, Start over. The
+     card body says the one thing to do; the specialised panels (a bank's
+     columns, a sheet's preview, a household's add-or-replace, a paste's
+     placements) appear only once a file has been read and turn out to need
+     them. */
+  .card-h { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-1) 0 0; }
+  .receipt { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .receipt .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-positive); flex: 0 0 auto; }
+  .receipt.is-bad .dot { background: var(--color-critical); }
+  /* The drop zone: the one door. Big, dashed, and it says what it takes. */
+  .drop { margin-top: var(--space-3); padding: var(--space-5) var(--space-4); border: 2px dashed var(--color-border-strong); border-radius: var(--radius-md); text-align: center; background: var(--color-surface); transition: border-color 150ms ease, background 150ms ease; }
+  .drop.is-over { border-color: var(--color-accent); background: var(--color-surface-active); }
+  .drop .drop-t { font-family: var(--font-display); font-size: var(--text-md); }
+  .drop .drop-s { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 var(--space-3); line-height: var(--leading-normal); }
+  .drop .slaf-btn { min-height: 48px; }
+  .panel { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+  .panel-h { font-family: var(--font-display); font-size: var(--text-md); margin: 0; }
+  .panel-s { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-1) 0 0; line-height: var(--leading-normal); }
+  .kind { display: inline-block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-accent-hover); border: 1px solid var(--color-border-active); border-radius: var(--radius-pill); padding: 2px var(--space-2); margin-bottom: var(--space-1); }
   .qr-out { margin-top: var(--space-3); max-width: 360px; }
   .qr-out svg { width: 100%; height: auto; display: block; border-radius: var(--radius-sm); }
   .share-out { width: 100%; margin-top: var(--space-3); font-family: var(--font-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); resize: vertical; box-sizing: border-box; }
-  textarea.paste { width: 100%; min-height: 120px; font: inherit; font-size: var(--text-sm); padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); box-sizing: border-box; margin-top: var(--space-3); }
+  textarea.paste { width: 100%; min-height: 110px; font: inherit; font-size: var(--text-sm); padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); box-sizing: border-box; margin-top: var(--space-2); }
   .file-say { font-size: var(--text-sm); margin-top: var(--space-3); }
   .file-say b { display: block; font-family: var(--font-display); font-size: var(--text-md); }
   ul.preview { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
@@ -63,6 +82,9 @@
   ul.preview li.is-skip .pl-line, ul.preview li.is-skip .pl-amt { color: var(--color-text-faint); }
   .tally { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); }
   .danger { border-color: var(--color-critical); }
+  .link-row { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+  .link-row input { flex: 1 1 auto; min-width: 0; font: inherit; font-size: var(--text-sm); min-height: 44px; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
+  details.fold > summary { cursor: pointer; font-size: var(--text-sm); color: var(--color-accent-hover); min-height: 40px; display: flex; align-items: center; }
   .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
@@ -71,124 +93,154 @@
 <header class="room-head">
   <a class="room-back" href="../index.html">← Home</a>
   <h1>Your Data</h1>
-  <p class="room-lede">It lives in this browser. This is every way it comes in or goes out: a file, a link, or a pasted statement sorted into the right places.</p>
+  <p class="room-lede">Your numbers live in this browser and nowhere else. Save them out, bring them in, or start over. Every file is read here; nothing is sent anywhere.</p>
 </header>
 
-<main class="slaf-wrap">
+<main class="slaf-wrap" data-fold="own" id="data-main">
   <div class="notice" id="load-notice" hidden></div>
 
+  <!-- SAVE -->
   <section class="slaf-card" id="out">
-    <span class="slaf-eyebrow">Take it with you</span>
-    <h2 style="margin:var(--space-2) 0 0">A file, or a link</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">There is no account and no server. On a phone, <strong>Send</strong> opens the share sheet with your numbers as a small file: mail it to yourself, message it, drop it in a drive, then load it on the other device. A share link works too, though it is long, and most chat apps cut it off.</p>
+    <span class="slaf-eyebrow">Save</span>
+    <h2 class="card-h">Get your numbers out</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A spreadsheet to read, a page to hand over, or a backup that restores a device. The backup can be protected with a passphrase; then nobody can open it without one, this app included.</p>
+    <div id="backup" aria-label="Backup"></div>
     <div class="data-actions">
-      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-send" hidden>Send to another device…</button>
-      <button type="button" class="slaf-btn" id="btn-export">Download a file</button>
-      <button type="button" class="slaf-btn" id="btn-share">Copy a share link</button>
-      <button type="button" class="slaf-btn" id="btn-qr" hidden>Show a QR code</button>
+      <button type="button" class="slaf-btn" id="btn-send" hidden>Send to another device…</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-share">Copy a share link</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-qr" hidden>Show a QR code</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-export" hidden>Download a file</button>
     </div>
     <p class="slaf-hint" id="qr-why" hidden></p>
     <p class="data-note" id="out-note" hidden></p>
     <textarea id="share-out" class="share-out" rows="3" readonly hidden aria-label="Share link"></textarea>
     <div class="qr-out" id="qr-out" hidden></div>
     <p class="slaf-hint" id="qr-note" hidden></p>
+    <p class="receipt" id="receipt"><span class="dot"></span><span id="receipt-line">Nothing has left this device.</span></p>
+    <details class="fold" style="margin-top:var(--space-3)"><summary>More ways out: a spreadsheet a door, the app itself</summary>
+      <div class="data-actions">
+        <button type="button" class="slaf-btn" id="btn-csv">Download one CSV</button>
+        <button type="button" class="slaf-btn" id="btn-sheet">Download the spreadsheet zip</button>
+        <a class="slaf-btn" id="btn-app" href="https://github.com/sapphirestoneage/Personalfinance/archive/refs/heads/main.zip" download>Download the whole app</a>
+      </div>
+      <p class="data-note" id="sheet-note" hidden></p>
+      <p class="slaf-hint" style="margin:var(--space-2) 0 0">The zip holds one CSV a door and a readme naming every column. The app zip is the source from GitHub: unzip it and open <code>index.html</code> through a small local server (on a computer, <code>python3 -m http.server</code> in that folder, then <code>localhost:8000</code>). Your numbers are not in the zip; they stay in this browser and in your backup file.</p>
+    </details>
   </section>
 
-  <section class="slaf-card card-gap" id="bank">
-    <span class="slaf-eyebrow">Bank CSV, on-device</span>
-    <h2 style="margin:var(--space-2) 0 0">Drop in a statement download</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A CSV from your bank or card site is read here, in this browser; nothing is sent. Columns are matched once per bank and remembered. Every line is shown before anything saves; spending lands in the log with its date from the file; a line already in the log is skipped, so the same file twice changes nothing.</p>
-    <div class="data-actions">
-      <label class="slaf-btn" for="bank-file" style="cursor:pointer">Choose a CSV…</label>
-      <input type="file" id="bank-file" accept=".csv,text/csv" hidden/>
-    </div>
-    <div id="bank-map" hidden style="margin-top:var(--space-3);display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:var(--space-2)">
-      <label class="slaf-hint" style="margin:0">Date <select id="bank-date" aria-label="Date column"></select></label>
-      <label class="slaf-hint" style="margin:0">Description <select id="bank-desc" aria-label="Description column"></select></label>
-      <label class="slaf-hint" style="margin:0">Amount <select id="bank-amount" aria-label="Amount column"></select></label>
-      <label class="slaf-hint" style="margin:0">Money out <select id="bank-debit" aria-label="Debit column"></select></label>
-      <label class="slaf-hint" style="margin:0">Money in <select id="bank-credit" aria-label="Credit column"></select></label>
-    </div>
-    <p class="tally" id="bank-tally" hidden></p>
-    <div id="bank-preview" style="overflow-x:auto"></div>
-    <div class="data-actions" id="bank-actions" hidden>
-      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-bank-import">Import the new lines</button>
-      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-bank-cancel">Clear</button>
-    </div>
-    <p class="data-note" id="bank-note" hidden></p>
-  </section>
-
-  <section class="slaf-card card-gap" id="sheet">
-    <span class="slaf-eyebrow">Mint-proof</span>
-    <h2 style="margin:var(--space-2) 0 0">A spreadsheet, and the app itself</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Nothing here can be taken away. Every row the Ledger holds as one CSV per door (D, A, I, T, E, you) with a readme naming every column and its unit, in one zip; a blank stays blank and "not sure yet" is words, never a zero. The code is public too: the whole app comes down as a folder.</p>
-    <div class="data-actions">
-      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-csv">Download one CSV</button>
-      <button type="button" class="slaf-btn" id="btn-sheet">Download the spreadsheet zip</button>
-      <a class="slaf-btn" id="btn-app" href="https://github.com/sapphirestoneage/Personalfinance/archive/refs/heads/main.zip" download>Download the whole app</a>
-    </div>
-    <p class="data-note" id="sheet-note" hidden></p>
-    <h3 style="margin:var(--space-4) 0 0">Bring a CSV back in</h3>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The same CSV, edited in any spreadsheet, comes back here: each line goes to the row it names (by the row column, or by its label) and, for an account, a debt or a source of pay, to the item with that name. Sort it, add lines, write numbers any way you like ($1,234.56, 24.99%, 6/3/2026, yes): every line is shown, with what it would do, before anything saves. A blank cell leaves the row as it is; nothing becomes a zero. One undo takes the whole lot back.</p>
-    <div class="data-actions">
-      <label class="slaf-btn" for="csv-file" style="cursor:pointer">Choose a CSV…</label>
+  <!-- BRING IN -->
+  <section class="slaf-card card-gap" id="in">
+    <span class="slaf-eyebrow">Bring in</span>
+    <h2 class="card-h">Load a file, a link or a statement</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">One door for all of them. A backup, protected or plain; a household file; a Money Rooms spreadsheet you edited; a CSV from your bank. The page works out which it is and shows you what it would do before anything saves. One undo takes it all back.</p>
+    <div class="drop" id="drop">
+      <div class="drop-t">Drop a file here</div>
+      <p class="drop-s">or</p>
+      <label class="slaf-btn slaf-btn--primary" for="file-import" style="cursor:pointer">Choose a file…</label>
+      <input type="file" id="file-import" accept=".json,.csv,.txt,application/json,text/csv,text/plain" hidden/>
       <input type="file" id="csv-file" accept=".csv,text/csv" hidden/>
+      <input type="file" id="bank-file" accept=".csv,text/csv" hidden/>
+      <p class="drop-s" style="margin-top:var(--space-3)">Reads: .json (a backup or a household), .csv (a Money Rooms sheet, or a bank statement). Nothing is uploaded.</p>
     </div>
-    <p class="tally" id="csv-tally" hidden></p>
-    <div id="csv-preview" style="overflow-x:auto"></div>
-    <div class="data-actions" id="csv-actions" hidden>
-      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-csv-apply">Apply the changes</button>
-      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-csv-cancel">Clear</button>
+    <p class="data-note" id="in-note" hidden></p>
+
+    <!-- a protected backup: the passphrase -->
+    <div class="panel" id="p-sealed" hidden>
+      <span class="kind">Protected backup</span>
+      <h3 class="panel-h">Type its passphrase</h3>
+      <p class="panel-s" id="sealed-say"></p>
+      <div class="link-row"><input type="password" id="sealed-pass" autocomplete="off" spellcheck="false" placeholder="passphrase" aria-label="Passphrase"/><button type="button" class="slaf-btn slaf-btn--primary" id="btn-sealed-open">Open it</button></div>
+      <p class="data-note" id="sealed-note" hidden></p>
     </div>
-    <p class="data-note" id="csv-note" hidden></p>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The app zip is the source from GitHub. Unzip it and open <code>index.html</code> through a small local server (on a computer: <code>python3 -m http.server</code> in that folder, then <code>localhost:8000</code>). Opened straight from the folder, browsers refuse to read the data files, so the rooms would show without their tables. Your numbers are not in the zip; they stay in this browser and in your backup file.</p>
+
+    <!-- a backup: everything this browser holds -->
+    <div class="panel" id="p-backup" hidden>
+      <span class="kind">Backup</span>
+      <h3 class="panel-h">Make this browser match the file</h3>
+      <p class="panel-s" id="backup-say"></p>
+      <div class="data-actions">
+        <button type="button" class="slaf-btn slaf-btn--primary" id="btn-backup-load">Load it</button>
+        <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-backup-cancel">Never mind</button>
+      </div>
+      <p class="data-note" id="backup-note" hidden></p>
+    </div>
+
+    <!-- a household file: add, or replace -->
+    <div class="panel" id="p-household" hidden>
+      <span class="kind">Household file</span>
+      <h3 class="panel-h">Add it to what is here, or replace everything</h3>
+      <p class="panel-s"><strong>Add</strong> keeps everything entered here and brings in what the file has that this does not: new accounts, debts, lines, people, without overwriting a number. <strong>Replace</strong> makes the file the household.</p>
+      <div class="file-say" id="file-say" hidden></div>
+      <div class="data-actions" id="file-actions" hidden>
+        <button type="button" class="slaf-btn slaf-btn--primary" id="btn-merge">Add it to what is here</button>
+        <button type="button" class="slaf-btn" id="btn-replace">Replace everything</button>
+        <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-file-cancel">Never mind</button>
+      </div>
+      <p class="data-note" id="file-note" hidden></p>
+    </div>
+
+    <!-- the Money Rooms sheet, edited and back -->
+    <div class="panel" id="p-sheet" hidden>
+      <span class="kind">Money Rooms spreadsheet</span>
+      <h3 class="panel-h">Each line goes back to the row it names</h3>
+      <p class="panel-s">Numbers written any way ($1,234.56, 24.99%, 6/3/2026, yes) are read. A blank cell leaves the row as it is; nothing becomes a zero.</p>
+      <p class="tally" id="csv-tally" hidden></p>
+      <div id="csv-preview" style="overflow-x:auto"></div>
+      <div class="data-actions" id="csv-actions" hidden>
+        <button type="button" class="slaf-btn slaf-btn--primary" id="btn-csv-apply">Apply the changes</button>
+        <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-csv-cancel">Clear</button>
+      </div>
+      <p class="data-note" id="csv-note" hidden></p>
+    </div>
+
+    <!-- a bank CSV -->
+    <div class="panel" id="p-bank" hidden>
+      <span class="kind">Bank statement</span>
+      <h3 class="panel-h">Spending lines, dated from the file</h3>
+      <p class="panel-s">Columns are matched once per bank and remembered. A line already in the log is skipped, so the same file twice changes nothing.</p>
+      <div id="bank-map" hidden style="margin-top:var(--space-3);display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:var(--space-2)">
+        <label class="slaf-hint" style="margin:0">Date <select id="bank-date" aria-label="Date column"></select></label>
+        <label class="slaf-hint" style="margin:0">Description <select id="bank-desc" aria-label="Description column"></select></label>
+        <label class="slaf-hint" style="margin:0">Amount <select id="bank-amount" aria-label="Amount column"></select></label>
+        <label class="slaf-hint" style="margin:0">Money out <select id="bank-debit" aria-label="Debit column"></select></label>
+        <label class="slaf-hint" style="margin:0">Money in <select id="bank-credit" aria-label="Credit column"></select></label>
+      </div>
+      <p class="tally" id="bank-tally" hidden></p>
+      <div id="bank-preview" style="overflow-x:auto"></div>
+      <div class="data-actions" id="bank-actions" hidden>
+        <button type="button" class="slaf-btn slaf-btn--primary" id="btn-bank-import">Import the new lines</button>
+        <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-bank-cancel">Clear</button>
+      </div>
+      <p class="data-note" id="bank-note" hidden></p>
+    </div>
+
+    <details class="fold panel" id="p-link"><summary>Paste a share link instead</summary>
+      <div class="link-row"><input type="text" id="link-in" placeholder="https://…/#h=…" aria-label="A share link to load" autocomplete="off"/><button type="button" class="slaf-btn" id="btn-link">Read the link</button></div>
+    </details>
+
+    <details class="fold panel" id="paste"><summary>Paste lines of numbers instead</summary>
+      <p class="panel-s">A statement, a note to yourself. Each line with an amount is placed as a debt, an account, a monthly expense, or pay; change any placement before it is taken.</p>
+      <textarea id="paste-text" class="paste" aria-label="Numbers to import, one a line" placeholder="Chase Visa 2,300&#10;checking 4,120&#10;401k 31k&#10;rent 1,500/mo&#10;car loan 12,400&#10;owe mom 2,000&#10;salary 62,000"></textarea>
+      <div class="data-actions">
+        <button type="button" class="slaf-btn slaf-btn--primary" id="btn-sort">Sort it out</button>
+        <label class="slaf-btn" for="paste-photo" id="photo-label">Read a screenshot</label>
+        <input type="file" id="paste-photo" accept="image/*" hidden/>
+      </div>
+      <p class="tally" id="paste-tally" hidden></p>
+      <ul class="preview" id="preview"></ul>
+      <div class="data-actions" id="paste-actions" hidden>
+        <button type="button" class="slaf-btn slaf-btn--primary" id="btn-take">Add them</button>
+        <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-paste-cancel">Clear the list</button>
+      </div>
+      <p class="data-note" id="paste-note" hidden></p>
+    </details>
   </section>
 
-  <section class="slaf-card card-gap" id="file">
-    <span class="slaf-eyebrow">Load a file</span>
-    <h2 style="margin:var(--space-2) 0 0">Replace what is here, or add to it</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A file this app downloaded, from this browser or another. <strong>Replace</strong> makes it the household. <strong>Add</strong> keeps everything entered here and brings in what the file has that this does not — new accounts, debts, lines, people — without overwriting a number.</p>
-    <div class="data-actions">
-      <label class="slaf-btn" for="file-import" style="cursor:pointer">Choose a file…</label>
-      <input type="file" id="file-import" accept="application/json,.json" hidden/>
-    </div>
-    <div class="form-grid" style="margin-top:var(--space-3)">
-      <label class="slaf-field wide"><span class="slaf-label">Or paste a share link</span>
-        <span class="slaf-input-shell"><input type="text" id="link-in" placeholder="https://…/#h=…" aria-label="A share link to load" autocomplete="off"/></span></label>
-      <div class="slaf-field wide"><button type="button" class="slaf-btn" id="btn-link">Read the link</button></div>
-    </div>
-    <div class="file-say" id="file-say" hidden></div>
-    <div class="data-actions" id="file-actions" hidden>
-      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-merge">Add it to what is here</button>
-      <button type="button" class="slaf-btn" id="btn-replace">Replace everything</button>
-      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-file-cancel">Never mind</button>
-    </div>
-    <p class="data-note" id="file-note" hidden></p>
-  </section>
-
-  <section class="slaf-card card-gap" id="paste">
-    <span class="slaf-eyebrow">Paste in new numbers</span>
-    <h2 style="margin:var(--space-2) 0 0">A line each, sorted into where it belongs</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A statement, a note to yourself, a CSV. Each line with an amount is placed as a debt, an account, a monthly expense, or pay — and you can change any placement before it is taken. One undo takes the whole lot back.</p>
-    <textarea id="paste-text" class="paste" aria-label="Numbers to import, one a line" placeholder="Chase Visa 2,300&#10;checking 4,120&#10;401k 31k&#10;rent 1,500/mo&#10;car loan 12,400&#10;owe mom 2,000&#10;salary 62,000"></textarea>
-    <div class="data-actions">
-      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-sort">Sort it out</button>
-      <label class="slaf-btn" for="paste-photo" id="photo-label">Read a screenshot</label>
-      <input type="file" id="paste-photo" accept="image/*" hidden/>
-    </div>
-    <p class="tally" id="paste-tally" hidden></p>
-    <ul class="preview" id="preview"></ul>
-    <div class="data-actions" id="paste-actions" hidden>
-      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-take">Add them</button>
-      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-paste-cancel">Clear the list</button>
-    </div>
-    <p class="data-note" id="paste-note" hidden></p>
-  </section>
-
+  <!-- START OVER -->
   <section class="slaf-card card-gap" id="reset">
     <span class="slaf-eyebrow">Start over</span>
-    <h2 style="margin:var(--space-2) 0 0">Clear this browser</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Removes the household from this browser. Download a file first if you might want it back; snapshots stay unless you clear them too.</p>
+    <h2 class="card-h">Clear this browser</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Removes the household from this browser. Save a backup first if you might want it back; snapshots stay unless you clear them too.</p>
     <div class="data-actions">
       <button type="button" class="slaf-btn danger" id="btn-reset">Clear the household</button>
       <label class="slaf-hint" style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="reset-snaps"/> and the snapshots</label>
@@ -224,6 +276,9 @@
 <script src="../shared/csv.js"></script>
 <script src="../shared/csvexport.js"></script>
 <script src="../engines/bankcsv.js"></script>
+<script src="../shared/vault.js"></script>
+<script src="../shared/intake.js"></script>
+<script src="../shared/backup.js"></script>
 <script>
 (function () {
   'use strict';
@@ -299,28 +354,22 @@
       el('btn-bank-import').textContent = 'Import ' + fresh.length + ' new line' + (fresh.length === 1 ? '' : 's');
     });
   }
-  el('bank-file').addEventListener('change', function () {
-    var f = this.files && this.files[0]; if (!f) return;
-    var reader = new FileReader();
-    reader.onerror = function () { note('bank-note', 'The file could not be read from disk. Try choosing it again.', 'is-error'); };
-    reader.onload = function () {
-      var text = String(reader.result || '');
-      if (SLAF.Csv.looksBinary(text)) { note('bank-note', 'That is not a CSV. Most bank sites offer CSV beside PDF and Excel; choose CSV.', 'is-error'); return; }
-      BANK.parsed = SLAF.BankCsv.parse(text);
-      if (!BANK.parsed.headers.length) { note('bank-note', 'That file has no rows I can read.', 'is-error'); return; }
-      var keys = BANK.parsed.headers.map(SLAF.Csv.headerKey);
-      if (keys.indexOf('row') > -1 && keys.indexOf('value') > -1 && keys.indexOf('unit') > -1) { note('bank-note', 'That is a Money Rooms sheet, not a bank statement. Bring it in below, under "Bring a CSV back in".', 'is-error'); return; }
-      var sig = SLAF.BankCsv.signature(BANK.parsed.headers);
-      var remembered = (SLAF.Prefs.get('bankcsv.maps', {}) || {})[sig];
-      BANK.map = remembered || SLAF.BankCsv.guessMap(BANK.parsed.headers);
-      el('bank-map').hidden = false;
-      bankSelects();
-      note('bank-note', remembered ? 'Columns remembered from the last file with these headings.' : 'Columns guessed from the headings; change any that are wrong.', 'is-good');
-      bankPreview();
-    };
-    reader.readAsText(f);
-    this.value = '';
-  });
+  /* A bank CSV, already read as text (the one intake below hands it over). */
+  function takeBank(text) {
+    show('p-bank');
+    if (SLAF.Csv.looksBinary(text)) { note('bank-note', 'That is not a CSV. Most bank sites offer CSV beside PDF and Excel; choose CSV.', 'is-error'); return; }
+    BANK.parsed = SLAF.BankCsv.parse(text);
+    if (!BANK.parsed.headers.length) { note('bank-note', 'That file has no rows I can read.', 'is-error'); return; }
+    var keys = BANK.parsed.headers.map(SLAF.Csv.headerKey);
+    if (keys.indexOf('row') > -1 && keys.indexOf('value') > -1 && keys.indexOf('unit') > -1) { note('bank-note', 'That is a Money Rooms sheet, not a bank statement.', 'is-error'); takeSheet(text); return; }
+    var sig = SLAF.BankCsv.signature(BANK.parsed.headers);
+    var remembered = (SLAF.Prefs.get('bankcsv.maps', {}) || {})[sig];
+    BANK.map = remembered || SLAF.BankCsv.guessMap(BANK.parsed.headers);
+    el('bank-map').hidden = false;
+    bankSelects();
+    note('bank-note', remembered ? 'Columns remembered from the last file with these headings.' : 'Columns guessed from the headings; change any that are wrong.', 'is-good');
+    bankPreview();
+  }
   MAP_KEYS.forEach(function (k) { el('bank-' + k).addEventListener('change', bankPreview); });
   el('btn-bank-import').addEventListener('click', function () {
     if (!BANK.parsed) return;
@@ -329,7 +378,7 @@
     note('bank-note', 'Imported ' + n + ' line' + (n === 1 ? '' : 's') + ' into the log, each dated from the file. The Subscription Finder reads them.', 'is-good');
     bankPreview();
   });
-  el('btn-bank-cancel').addEventListener('click', function () { BANK = { parsed: null, map: null, lines: [] }; el('bank-map').hidden = true; el('bank-preview').innerHTML = ''; el('bank-tally').hidden = true; el('bank-actions').hidden = true; note('bank-note', ''); });
+  el('btn-bank-cancel').addEventListener('click', function () { BANK = { parsed: null, map: null, lines: [] }; el('bank-map').hidden = true; el('bank-preview').innerHTML = ''; el('bank-tally').hidden = true; el('bank-actions').hidden = true; note('bank-note', ''); show(null); });
 
   /* One CSV out and the same CSV back in (D-220), through shared/csvexport.js. */
   el('btn-csv').addEventListener('click', function () {
@@ -388,24 +437,19 @@
     if (p.problem === 'noHeader') return 'That file has no header I can use. The first line needs a row or label column and a value column; the CSV this page downloads has both. Its columns were: ' + p.headers.slice(0, 8).join(', ') + (p.headers.length > 8 ? ', ...' : '') + '.';
     return 'That file has no lines I can read below the header.';
   }
-  el('csv-file').addEventListener('change', function () {
-    var f = this.files && this.files[0]; this.value = ''; if (!f) return;
-    if (f.size > 8 * 1024 * 1024) { note('csv-note', 'That file is ' + Math.round(f.size / 1048576) + ' MB; a Money Rooms sheet is a few hundred lines. Is it the right file?', 'is-error'); return; }
-    var reader = new FileReader();
-    reader.onerror = function () { note('csv-note', 'The file could not be read from disk. Try choosing it again.', 'is-error'); };
-    reader.onload = function () {
-      var text = String(reader.result || '');
-      if (SLAF.Csv.looksBinary(text)) { note('csv-note', /^PK/.test(text) ? 'That is a zip or an Excel workbook, not a CSV. From the zip, unzip it and choose one of the .csv files; from Excel, use File, Save As, CSV UTF-8.' : 'That file is not text. Save it as CSV first.', 'is-error'); return; }
-      csvClear();
-      csvPlan(text).then(function (p) {
-        if (p.problem) { note('csv-note', csvProblemNote(p), 'is-error'); return; }
-        CSV.plan = p; CSV.text = text;
-        note('csv-note', p.problems ? plural(p.problems, 'line') + ' could not be placed; each says why. Everything else is ready.' : '');
-        csvPreview();
-      }).catch(function (err) { note('csv-note', 'Could not read the CSV: ' + err.message, 'is-error'); });
-    };
-    reader.readAsText(f);
-  });
+  /* The Money Rooms sheet, already read as text. */
+  function takeSheet(text) {
+    show('p-sheet');
+    if (SLAF.Csv.looksBinary(text)) { note('csv-note', /^PK/.test(text) ? 'That is a zip or an Excel workbook, not a CSV. From the zip, unzip it and choose one of the .csv files; from Excel, use File, Save As, CSV UTF-8.' : 'That file is not text. Save it as CSV first.', 'is-error'); return; }
+    csvClear();
+    csvPlan(text).then(function (p) {
+      if (p.problem === 'bank') { takeBank(text); return; }
+      if (p.problem) { note('csv-note', csvProblemNote(p), 'is-error'); return; }
+      CSV.plan = p; CSV.text = text;
+      note('csv-note', p.problems ? plural(p.problems, 'line') + ' could not be placed; each says why. Everything else is ready.' : '');
+      csvPreview();
+    }).catch(function (err) { note('csv-note', 'Could not read the CSV: ' + err.message, 'is-error'); });
+  }
   el('btn-csv-apply').addEventListener('click', function () {
     if (!CSV.plan || CSV.busy) return;
     CSV.busy = true; el('btn-csv-apply').disabled = true;
@@ -430,7 +474,7 @@
       });
     }).catch(function (err) { CSV.busy = false; el('btn-csv-apply').disabled = false; note('csv-note', 'Could not apply: ' + err.message, 'is-error'); });
   });
-  el('btn-csv-cancel').addEventListener('click', function () { csvClear(); note('csv-note', ''); });
+  el('btn-csv-cancel').addEventListener('click', function () { csvClear(); note('csv-note', ''); show(null); });
 
   /* The spreadsheet zip (J1, D-210): one CSV a door and a readme, from the
      same rows the Ledger shows, through shared/csvexport.js. */
@@ -503,6 +547,7 @@
       var check = Spine.inspectImport(text);
       if (!check.ok) { note('file-note', check.reason, 'is-error'); return; }
       pendingFile = { name: 'the link', text: text, check: check };
+      show('p-household');
       el('file-say').hidden = false;
       el('file-say').innerHTML = describeFile(check) + '<span class="slaf-hint">From the link. Which way?</span>';
       el('file-actions').hidden = false;
@@ -524,21 +569,17 @@
     if (n(check.snapshots)) bits.push(n(check.snapshots) + (n(check.snapshots) === 1 ? ' snapshot' : ' snapshots'));
     return '<b>' + esc(who) + (check.exportedAt ? ', saved ' + esc(shortDate(check.exportedAt)) : '') + '</b>' + (bits.length ? esc(bits.join(' · ')) : 'Nothing much in it.');
   }
-  el('file-import').addEventListener('change', function () {
-    var file = el('file-import').files && el('file-import').files[0];
-    if (!file) return;
-    file.text().then(function (text) {
-      var check = Spine.inspectImport(text);
-      if (!check.ok) { note('file-note', check.reason, 'is-error'); el('file-say').hidden = true; el('file-actions').hidden = true; pendingFile = null; return; }
-      pendingFile = { name: file.name, text: text, check: check };
-      el('file-say').hidden = false;
-      el('file-say').innerHTML = describeFile(check) + '<span class="slaf-hint">From ' + esc(file.name) + '. Which way?</span>';
-      el('file-actions').hidden = false;
-      note('file-note', '');
-      el('file-import').value = '';
-    });
-  });
-  el('btn-file-cancel').addEventListener('click', function () { pendingFile = null; el('file-say').hidden = true; el('file-actions').hidden = true; });
+  function takeHousehold(name, text) {
+    show('p-household');
+    var check = Spine.inspectImport(text);
+    if (!check.ok) { note('file-note', check.reason, 'is-error'); el('file-say').hidden = true; el('file-actions').hidden = true; pendingFile = null; return; }
+    pendingFile = { name: name, text: text, check: check };
+    el('file-say').hidden = false;
+    el('file-say').innerHTML = describeFile(check) + '<span class="slaf-hint">From ' + esc(name) + '. Which way?</span>';
+    el('file-actions').hidden = false;
+    note('file-note', '');
+  }
+  el('btn-file-cancel').addEventListener('click', function () { pendingFile = null; el('file-say').hidden = true; el('file-actions').hidden = true; show(null); });
   el('btn-merge').addEventListener('click', function () {
     if (!pendingFile) return;
     var r = Spine.mergeImport(pendingFile.text, Importer);
@@ -660,6 +701,122 @@
     this.value = '';
   });
   if (typeof window.TextDetector !== 'function') el('photo-label').title = 'Needs a browser that can read text in pictures; otherwise paste the text.';
+
+  /* ==========================================================================
+     ONE DOOR IN (D-224)
+     --------------------------------------------------------------------------
+     There were three file pickers and the person had to know which one
+     their file went through. Now there is one: whatever is chosen or
+     dropped is read as text once, shared/intake.js says what it is, and
+     the matching panel opens. A protected backup asks for its passphrase
+     first and then goes the same way as a plain one.
+     ========================================================================== */
+  var PANELS = ['p-sealed', 'p-backup', 'p-household', 'p-sheet', 'p-bank'];
+  function show(id) { PANELS.forEach(function (x) { el(x).hidden = x !== id; }); if (id) el(id).scrollIntoView({ block: 'nearest' }); }
+  var SEALED = null;   /* { name, text } waiting for a passphrase */
+  var BACKUP_PENDING = null;
+  function fingerprintLine(text, then) {
+    if (!(SLAF.Vault && SLAF.Vault.fingerprint)) { then(''); return; }
+    SLAF.Vault.fingerprint(text).then(function (f) { then(f ? ' Fingerprint ' + f + '.' : ''); }, function () { then(''); });
+  }
+  function takeBackup(name, text, wasSealed) {
+    var check = SLAF.Backup.inspect(text);
+    if (!check.ok) { note('in-note', check.reason, 'is-error'); return; }
+    if (check.kind === 'household') { takeHousehold(name, check.text); return; }
+    BACKUP_PENDING = { name: name, check: check, text: text };
+    show('p-backup');
+    var when = check.savedAt ? ', saved ' + shortDate(check.savedAt) : '';
+    var ver = check.appVersion ? ' by Money Rooms ' + check.appVersion : '';
+    fingerprintLine(text, function (fp) {
+      el('backup-say').textContent = name + when + ver + (wasSealed ? ', unlocked' : '') + '.' + fp + ' ' + SLAF.Backup.countsSentence(check.counts) + ' Loading makes this browser match the file; undo is one click afterwards.';
+    });
+    note('backup-note', '');
+  }
+  el('btn-backup-load').addEventListener('click', function () {
+    if (!BACKUP_PENDING) return;
+    var r = SLAF.Backup.apply(BACKUP_PENDING.check);
+    if (!r.ok) { note('backup-note', r.reason, 'is-error'); return; }
+    note('backup-note', 'Loaded ' + BACKUP_PENDING.name + '. ' + SLAF.Backup.countsSentence(r.counts) + ' Reloading so every room reads it.', 'is-good');
+    BACKUP_PENDING = null;
+    setTimeout(function () { location.reload(); }, 600);
+  });
+  el('btn-backup-cancel').addEventListener('click', function () { BACKUP_PENDING = null; show(null); note('in-note', ''); });
+  function takeSealed(name, text) {
+    if (!(SLAF.Vault && SLAF.Vault.available())) { note('in-note', 'That backup is protected, and this page cannot open protected files here: it needs https, or localhost. Nothing was changed.', 'is-error'); return; }
+    var i = SLAF.Vault.inspect(text);
+    if (!i.ok) { note('in-note', i.reason, 'is-error'); return; }
+    SEALED = { name: name, text: text };
+    show('p-sealed');
+    el('sealed-say').textContent = name + (i.savedAt ? ', saved ' + shortDate(i.savedAt) : '') + (i.hint ? '. Hint: ' + i.hint : '') + '. Nothing is read until it opens.';
+    el('sealed-pass').value = '';
+    note('sealed-note', '');
+    try { el('sealed-pass').focus(); } catch (e) { /* fine */ }
+  }
+  el('btn-sealed-open').addEventListener('click', function () {
+    if (!SEALED) return;
+    var btn = el('btn-sealed-open'); btn.disabled = true;
+    SLAF.Vault.open(SEALED.text, el('sealed-pass').value).then(function (plain) {
+      btn.disabled = false;
+      var was = SEALED; SEALED = null; el('sealed-pass').value = '';
+      takeAny(was.name, plain, true);
+    }).catch(function (err) { btn.disabled = false; note('sealed-note', err.message, 'is-error'); });
+  });
+  el('sealed-pass').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); el('btn-sealed-open').click(); } });
+
+  function takeAny(name, text, wasSealed) {
+    var r = SLAF.Intake.sniff(text, name);
+    note('in-note', '');
+    if (r.kind === 'sealed') { takeSealed(name, text); return; }
+    if (r.kind === 'backup') { takeBackup(name, text, wasSealed); return; }
+    if (r.kind === 'household') { takeHousehold(name, text); return; }
+    if (r.kind === 'sheet') { takeSheet(text); return; }
+    if (r.kind === 'bank') { takeBank(text); return; }
+    if (r.kind === 'link') {
+      var m = /(?:^|[#&])h=[^&\s]+/.exec(text);
+      el('p-link').open = true; el('link-in').value = m ? (m[0].charAt(0) === '#' ? m[0] : '#' + m[0].replace(/^&/, '')) : text.trim();
+      el('btn-link').click();
+      return;
+    }
+    show(null);
+    note('in-note', r.why, 'is-error');
+  }
+  function readFileInto(f) {
+    if (!f) return;
+    if (f.size > 16 * 1024 * 1024) { note('in-note', 'That file is ' + Math.round(f.size / 1048576) + ' MB; a file from this app is a few hundred lines. Is it the right file?', 'is-error'); return; }
+    var reader = new FileReader();
+    reader.onerror = function () { note('in-note', 'The file could not be read from disk. Try choosing it again.', 'is-error'); };
+    reader.onload = function () { takeAny(f.name, String(reader.result || ''), false); };
+    reader.readAsText(f);
+  }
+  ['file-import', 'csv-file', 'bank-file'].forEach(function (id) {
+    el(id).addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; readFileInto(f); });
+  });
+  /* Drag and drop, anywhere on the page: the zone lights up, the file is
+     read the same way as a chosen one. Text dropped from another window
+     (a share link, a pasted statement) is read too. */
+  (function () {
+    var zone = el('drop'), depth = 0;
+    document.addEventListener('dragenter', function (ev) { ev.preventDefault(); depth++; zone.classList.add('is-over'); });
+    document.addEventListener('dragover', function (ev) { ev.preventDefault(); });
+    document.addEventListener('dragleave', function () { depth = Math.max(0, depth - 1); if (!depth) zone.classList.remove('is-over'); });
+    document.addEventListener('drop', function (ev) {
+      ev.preventDefault(); depth = 0; zone.classList.remove('is-over');
+      var dt = ev.dataTransfer;
+      if (dt && dt.files && dt.files[0]) { readFileInto(dt.files[0]); return; }
+      var text = dt ? dt.getData('text/plain') : '';
+      if (text) takeAny('dropped text', text, false);
+    });
+  })();
+  /* The receipt: what this page has sent, which is nothing. Read from the
+     browser's own resource timing, the same line the footer prints. */
+  (function () {
+    var P = SLAF.Progress;
+    if (!(P && P.privacyReceipt)) return;
+    var r = P.privacyReceipt(typeof performance !== 'undefined' && performance.getEntriesByType ? performance.getEntriesByType('resource') : [], location.origin);
+    el('receipt-line').textContent = r.count === 0 ? 'Nothing has left this device: 0 bytes sent this session, no request to any other site.' : r.line;
+    el('receipt').classList.toggle('is-bad', r.count !== 0);
+  })();
+  SLAF.Backup.mount('#backup', { headless: true, load: false });
 
   /* ---- Start over ------------------------------------------------------- */
   el('btn-reset').addEventListener('click', function () {

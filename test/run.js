@@ -11753,6 +11753,114 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
    Backup: everything this browser holds, as one file (D-202)
    ========================================================================== */
 
+section('Export and import, made one door and made secure (D-224)');
+
+(function () {
+  const Vault = require(path.join(ROOT, 'shared/vault.js'));
+  const Intake = require(path.join(ROOT, 'shared/intake.js'));
+  const vaultSrc = fs.readFileSync(path.join(ROOT, 'shared/vault.js'), 'utf8');
+  const intakeSrc = fs.readFileSync(path.join(ROOT, 'shared/intake.js'), 'utf8');
+  checkTrue('the vault is dependency-free and UMD, on the browser\'s own crypto', !/require\(['"][^.]/.test(vaultSrc) && /root\.SLAF\.Vault = api/.test(vaultSrc) && /PBKDF2/.test(vaultSrc) && /AES-GCM/.test(vaultSrc));
+  checkTrue('...with a real work factor and a fresh salt and nonce every time', Vault.ITERATIONS >= 300000 && /random\(16\)/.test(vaultSrc) && /random\(12\)/.test(vaultSrc));
+  checkTrue('a passphrase has to be one: eight characters, not one repeated', !Vault.strength('').ok && !Vault.strength('short').ok && !Vault.strength('aaaaaaaaaa').ok && Vault.strength('correct horse battery').ok);
+  checkTrue('the sniff is pure and needs only the CSV reader', /require\('\.\/csv\.js'\)/.test(intakeSrc) && !/localStorage|Spine|document/.test(intakeSrc));
+
+  /* ---- The sniff: one line of each kind, and the ones it must refuse ---- */
+  const kinds = [
+    [JSON.stringify({ format: 'money-rooms-sealed', sealedVersion: 1, data: 'x' }), 'sealed'],
+    [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1, keys: {} }), 'backup'],
+    [JSON.stringify({ format: 'slaf-export', household: { schemaVersion: 2, people: [] }, snapshots: [] }), 'household'],
+    [JSON.stringify({ schemaVersion: 2, people: [], assets: [] }), 'household'],
+    ['﻿door,level,row,label,item,institution,value,unit,state\nyou,1,dob,Born,,,1994-04,date,roughly\n', 'sheet'],
+    ['Date,Description,Amount\n09/01/2026,COFFEE,-4.50\n', 'bank'],
+    ['When,Payee,Money out\n2026-09-01,Rent,1500\n', 'bank'],
+    ['https://example.test/Personalfinance/#h=zabc123_-XYZ', 'link'],
+    ['#h=jAAAA', 'link'],
+    ['   ', 'empty'],
+    ['{"weather":"fine"}', 'unknown'],
+    ['{"format": "money-rooms-backup", "keys": {', 'unknown'],
+    ['hello there\nthis is a note', 'unknown'],
+    ['%PDF-1.4\u0000\u0001 junk', 'binary']
+  ];
+  kinds.forEach(([text, kind]) => { const r = Intake.sniff(text, ''); checkTrue('sniff: ' + kind + ' from ' + JSON.stringify(text.slice(0, 28)), r.kind === kind && typeof r.why === 'string' && r.why.length > 10, r.kind + ': ' + r.why); });
+  checkTrue('a workbook is named as one, with what to do', /Excel workbook/.test(Intake.sniff('PK\u0003\u0004\u0000', 'book.xlsx').why) && /Save it as CSV/.test(Intake.sniff('PK\u0003\u0004\u0000', 'book.xlsx').why));
+
+  /* ---- The round trip, on Node's own crypto.subtle -----------------------
+     The runner is synchronous and Web Crypto is not, so the round trip runs
+     in a child Node that prints one JSON line, and the checks read it. */
+  const plain = JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1, keys: { 'slaf.prefs.v1': { json: { a: 1 } } } });
+  const script = `
+    const path = require('path');
+    const V = require(${JSON.stringify(path.join(ROOT, 'shared/vault.js'))});
+    const plain = ${JSON.stringify(plain)};
+    (async () => {
+      const out = { available: V.available() };
+      if (!out.available) { console.log(JSON.stringify(out)); return; }
+      const sealed = await V.seal(plain, 'correct horse battery', { appVersion: 'test' });
+      out.looksSealed = V.looksSealed(sealed); out.plainLooksSealed = V.looksSealed(plain);
+      out.format = JSON.parse(sealed).format; out.leaks = sealed.indexOf('slaf.prefs.v1') !== -1;
+      const i = V.inspect(sealed); out.inspectOk = i.ok; out.inspectVersion = i.appVersion; out.inspectSavedAt = !!i.savedAt;
+      out.roundTrip = (await V.open(sealed, 'correct horse battery')) === plain;
+      try { await V.open(sealed, 'wrong passphrase'); out.wrong = 'ACCEPTED'; } catch (e) { out.wrong = e.message; }
+      const tampered = sealed.replace(/"data": "(.)/, (m, c) => '"data": "' + (c === 'A' ? 'B' : 'A'));
+      try { await V.open(tampered, 'correct horse battery'); out.tamper = 'ACCEPTED'; } catch (e) { out.tamper = e.message; }
+      out.freshSalt = (await V.seal(plain, 'correct horse battery')) !== sealed;
+      out.f1 = await V.fingerprint(sealed); out.f2 = await V.fingerprint(sealed); out.f3 = await V.fingerprint(plain);
+      try { await V.open(sealed.replace('"sealedVersion": 1', '"sealedVersion": 9'), 'correct horse battery'); out.newer = 'ACCEPTED'; } catch (e) { out.newer = e.message; }
+      const store = {};
+      global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; }, key: (i) => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+      global.SLAF = { Schema: require(${JSON.stringify(path.join(ROOT, 'shared/schema.js'))}) };
+      global.SLAF.Spine = require(${JSON.stringify(path.join(ROOT, 'shared/spine-v2.js'))});
+      const B0 = require(${JSON.stringify(path.join(ROOT, 'shared/backup.js'))});
+      const r0 = B0.inspect(sealed); out.b0 = { ok: r0.ok, sealed: r0.sealed, reason: r0.reason, applyOk: B0.apply(sealed).ok };
+      global.SLAF.Vault = V;
+      delete require.cache[require.resolve(${JSON.stringify(path.join(ROOT, 'shared/backup.js'))})];
+      const B1 = require(${JSON.stringify(path.join(ROOT, 'shared/backup.js'))});
+      const r1 = B1.inspect(sealed); out.b1 = { ok: r1.ok, sealed: r1.sealed, savedAt: !!r1.savedAt, appVersion: r1.appVersion };
+      const p1 = B1.inspect(plain); out.plainKind = p1.ok ? p1.kind : null;
+      console.log(JSON.stringify(out));
+    })().catch(e => { console.log(JSON.stringify({ error: String(e && e.stack || e) })); });
+  `;
+  let rt = null;
+  try { rt = JSON.parse(require('child_process').execFileSync(process.execPath, ['-e', script], { encoding: 'utf8', timeout: 60000 }).trim().split('\n').pop()); }
+  catch (e) { rt = { error: String(e && e.message || e) }; }
+  checkTrue('Web Crypto is available to test the vault (Node 20+), and the round trip ran', !!rt && !rt.error && rt.available === true, rt && rt.error);
+  if (rt && !rt.error && rt.available) {
+    checkTrue('a sealed file is JSON that names itself and carries no plaintext', rt.looksSealed && rt.format === 'money-rooms-sealed' && !rt.leaks);
+    checkTrue('and the plain file does not look sealed', !rt.plainLooksSealed);
+    checkTrue('inspect says when and by what, without a passphrase', rt.inspectOk && rt.inspectVersion === 'test' && rt.inspectSavedAt);
+    checkTrue('the right passphrase gives the bytes back exactly', rt.roundTrip);
+    checkTrue('the wrong passphrase is refused with a sentence, never garbage', /does not open this file/.test(rt.wrong) && /Nothing was changed/.test(rt.wrong), rt.wrong);
+    checkTrue('a changed byte is refused the same way (GCM authenticates)', /does not open this file/.test(rt.tamper), rt.tamper);
+    checkTrue('a fresh salt and nonce each time: two seals of one text differ', rt.freshSalt);
+    checkTrue('the fingerprint is four hex, a dash, four hex; stable; and differs between files', /^[0-9A-F]{4}-[0-9A-F]{4}$/.test(rt.f1) && rt.f1 === rt.f2 && rt.f1 !== rt.f3, rt.f1);
+    checkTrue('a file from a newer build is refused, and says to update', /newer build/.test(rt.newer), rt.newer);
+    checkTrue('Backup.inspect flags a sealed file, and touches nothing', !rt.b0.ok && rt.b0.sealed === true && /protected/.test(rt.b0.reason) && /Nothing was changed/.test(rt.b0.reason) && rt.b0.applyOk === false);
+    checkTrue('...and with the vault present says when it was saved', !rt.b1.ok && rt.b1.sealed === true && rt.b1.savedAt && rt.b1.appVersion === 'test');
+    check('the plaintext then inspects as the backup it is', rt.plainKind, 'backup');
+  }
+
+  /* ---- The pages ---------------------------------------------------------- */
+  const data = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
+  const front = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const backupSrc = fs.readFileSync(path.join(ROOT, 'shared/backup.js'), 'utf8');
+  checkTrue('Your Data is three cards: Save, Bring in, Start over', /id="out"/.test(data) && /id="in"/.test(data) && /id="reset"/.test(data) && !/id="file"/.test(data) && !/id="bank">/.test(data) && !/id="sheet">/.test(data));
+  checkTrue('...with one door in: one visible chooser, a drop zone, and every file read by the one sniff', (data.match(/<label class="slaf-btn[^>]*for="(file-import|csv-file|bank-file)"/g) || []).length === 1 && /id="drop"/.test(data) && /SLAF\.Intake\.sniff\(text, name\)/.test(data) && /addEventListener\('drop'/.test(data));
+  checkTrue('...and the sniff routes to a panel a kind: sealed, backup, household, sheet, bank, link', ['takeSealed', 'takeBackup', 'takeHousehold', 'takeSheet', 'takeBank'].every(f => new RegExp('function ' + f + '\\(').test(data)) && /r\.kind === 'link'/.test(data));
+  checkTrue('a protected backup asks for its passphrase on the page, then goes the same way as a plain one', /id="sealed-pass"/.test(data) && /SLAF\.Vault\.open\(SEALED\.text/.test(data) && /takeAny\(was\.name, plain, true\)/.test(data));
+  checkTrue('a loaded backup is previewed with its counts and fingerprint before anything changes', /SLAF\.Backup\.inspect\(text\)/.test(data) && /countsSentence\(check\.counts\)/.test(data) && /fingerprintLine\(text/.test(data) && /id="btn-backup-load"/.test(data));
+  checkTrue('the receipt says what left the device, from the browser\'s own timing', /privacyReceipt\(/.test(data) && /id="receipt-line"/.test(data) && /Nothing has left this device/.test(data));
+  checkTrue('the widget mounts headless there, without a second door in', /SLAF\.Backup\.mount\('#backup', \{ headless: true, load: false \}\)/.test(data) && /o\.headless === true/.test(backupSrc) && /o\.load !== false/.test(backupSrc));
+  checkTrue('the widget offers a protected backup and hides it where crypto is missing, with the plain file one tap away', /data-backup="seal"/.test(backupSrc) && /canSeal \? '' : ' hidden'/.test(backupSrc) && /Backup file \(\.json\)/.test(backupSrc));
+  checkTrue('...asks twice, checks strength, and says there is no recovery', /data-backup="pass2"/.test(backupSrc) && /V\.strength\(pass1\.value\)/.test(backupSrc) && /The two do not match/.test(backupSrc) && /no way to recover it/.test(backupSrc));
+  checkTrue('...and shows a fingerprint after a save and after a load', /withPrint\(sealed/.test(backupSrc) && /withPrint\(text, function \(fp\)/.test(backupSrc));
+  checkTrue('a sealed file chosen on the widget asks for its passphrase inline, and a wrong one is said back', /check\.sealed/.test(backupSrc) && /showPass\('open'/.test(backupSrc) && /passHint\.textContent = err && err\.message/.test(backupSrc));
+  checkTrue('the front door sends a protected or full backup to Your Data rather than refusing it', /money-rooms-sealed/.test(front) && /money-rooms-backup/.test(front) && /Open Your Data to unlock/.test(front));
+  checkTrue('the vault and the sniff load before the pages that use them', data.indexOf('shared/vault.js') < data.indexOf('shared/backup.js') && data.indexOf('shared/intake.js') < data.indexOf('<script>\n(function') && ['rooms/ledger.html', 'rooms/settings.html'].every(f => { const h = fs.readFileSync(path.join(ROOT, f), 'utf8'); return h.indexOf('shared/vault.js') > -1 && h.indexOf('shared/vault.js') < h.indexOf('shared/backup.js'); }));
+  const reg = require(path.join(ROOT, 'shared/registry.js'));
+  check('the registry\'s doors into Your Data are the three cards and the paste fold', (reg.byId('data').subsections || []).map(x => x.id).join(','), 'out,in,paste,reset');
+})();
+
 section('Backup: one file for every key (D-202)');
 
 (function () {
@@ -12039,7 +12147,9 @@ section('Backup: one file for every key (D-202)');
   {
     const rooms = fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html'));
     const mounted = rooms.filter(f => /SLAF\.Backup\.mount\(/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8')));
-    check('the widget is on the Ledger and in Settings, nowhere else', mounted.sort().join(','), 'ledger.html,settings.html');
+    /* D-224: Your Data's Save card hosts the same widget, so the protected
+       backup is offered where a person goes to get their numbers out. */
+    check('the widget is on the Ledger, in Settings and on Your Data, nowhere else', mounted.sort().join(','), 'data.html,ledger.html,settings.html');
     mounted.forEach(f => {
       const html = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
       checkTrue(f + ' loads backup.js after the spine', html.indexOf('shared/backup.js') > html.indexOf('shared/spine-v2.js'));

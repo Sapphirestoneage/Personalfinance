@@ -27,7 +27,10 @@
      drift()                   stored keys outside the prefixes (dev guard)
      driftGuard()              console.warn those, on a dev host only
      mount(host)               the widget: the spreadsheet and the printable
-                               page first, then the restore file and its load
+                               page first, then the restore file (protected
+                               with a passphrase, or plain) and its load;
+                               a fingerprint after either, so two devices
+                               can be compared by eye (D-224)
 
    WHAT A FILE HOLDS. Each key's stored string, as JSON where it parses
    ({ json: … }) and as text where it does not ({ text: … }), so a file is
@@ -150,6 +153,16 @@
     try { obj = JSON.parse(text); }
     catch (e) { return no('That file is not readable. It may be cut off, or not finished downloading. Nothing was changed.'); }
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return no('That is a JSON file, but not a Money Rooms backup. Nothing was changed.');
+
+    /* A protected backup (shared/vault.js, D-224): the caller opens it with
+       the passphrase and inspects the plaintext. Named here so the page can
+       ask for the passphrase instead of saying "not a backup". */
+    if (obj.format === 'money-rooms-sealed') {
+      var r = { ok: false, sealed: true, reason: 'That backup is protected. Type its passphrase to open it. Nothing was changed.' };
+      var V = slaf().Vault;
+      if (V && V.inspect) { var vi = V.inspect(text); if (!vi.ok) r.reason = vi.reason; else { r.savedAt = vi.savedAt; r.appVersion = vi.appVersion; r.hint = vi.hint; } }
+      return r;
+    }
 
     /* Your Data's household file: hand it to the spine, which knows how to
        check and migrate one. It carries the household and the snapshots. */
@@ -321,26 +334,86 @@
        screenful of code. Somebody looking for their numbers found braces.
        So the two are now named for what they are FOR: a spreadsheet you can
        read and a page you can hand over come first, and the backup file is
-       the quiet one that says, in words, that it is not meant to be read. */
+       the quiet one that says, in words, that it is not meant to be read.
+
+       AND THE BACKUP IS PROTECTED (D-224). The restore file carries every
+       balance in plain text; anyone who found it in Downloads could read it.
+       With a passphrase it is sealed with the browser's own crypto (shared/
+       vault.js) and nobody, this app included, can open it without the
+       passphrase. The plain file stays one tap away for a person who wants
+       it, and says what it is. After a save or a load the file's fingerprint
+       is shown, so the same code can be read on both devices. */
     var sheetable = !!(slaf().CsvExport && slaf().Reference && slaf().LedgerRows);
+    var V = slaf().Vault;
+    var canSeal = !!(V && V.available && V.available());
+    /* Your Data frames the widget with its own heading and has its own door
+       in, so there it mounts headless (no eyebrow, no lede) and without the
+       load row: one place to load, one place to save. D-224. */
+    var headless = o.headless === true, withLoad = o.load !== false;
     el.className = (el.className ? el.className + ' ' : '') + 'slaf-backup';
-    el.innerHTML = '<span class="slaf-eyebrow">Save your numbers</span>'
-      + '<p class="slaf-backup-lede">A spreadsheet to read, a page to hand over, or a backup file to move this browser to another device.</p>'
+    el.innerHTML = (headless ? '' : '<span class="slaf-eyebrow">Save your numbers</span>'
+      + '<p class="slaf-backup-lede">A spreadsheet to read, a page to hand over, or a backup file to move this browser to another device.</p>')
       + '<div class="slaf-backup-acts">'
       + (sheetable ? '<button type="button" class="slaf-btn slaf-btn--primary" data-backup="sheet">Spreadsheet (.csv)</button>' : '')
       + '<a class="slaf-btn" data-backup="pdf" href="' + (o.roomsPath || '') + 'one-pager.html">Printable page (PDF)</a>'
       + '</div>'
       + (sheetable ? '<p class="slaf-backup-note">The spreadsheet opens in Google Sheets, Excel or Numbers. Every row the app holds, one to a line.</p>' : '')
       + '<div class="slaf-backup-acts slaf-backup-acts--quiet">'
+      + '<button type="button" class="slaf-btn" data-backup="seal"' + (canSeal ? '' : ' hidden') + '>Protected backup</button>'
       + '<button type="button" class="slaf-btn slaf-btn--quiet" data-backup="save">Backup file (.json)</button>'
-      + '<button type="button" class="slaf-btn slaf-btn--quiet" data-backup="load">Load a backup file</button>'
+      + '<button type="button" class="slaf-btn slaf-btn--quiet" data-backup="load"' + (withLoad ? '' : ' hidden') + '>Load a backup file</button>'
       + '<button type="button" class="slaf-btn slaf-btn--quiet" data-backup="undo" hidden>Undo last load</button>'
       + '<input type="file" data-backup="file" accept="application/json,.json" hidden aria-label="Choose a backup file"/>'
       + '</div>'
-      + '<p class="slaf-backup-note">The backup file is the only one that can restore a device. It is written for the app, not for a person, so it looks like code. That is fine.</p>'
+      /* The passphrase row: in the markup from the start, shown for a
+         protected save or a sealed load, never rebuilt. LIVE-FORM: built once. */
+      + '<div class="slaf-backup-pass" data-backup="pass" hidden>'
+      + '<p class="slaf-backup-note" data-backup="pass-say"></p>'
+      + '<label class="slaf-backup-field"><span>Passphrase</span><input type="password" data-backup="pass1" autocomplete="off" spellcheck="false" placeholder="a few plain words"/></label>'
+      + '<label class="slaf-backup-field" data-backup="pass2-wrap"><span>Again, to be sure</span><input type="password" data-backup="pass2" autocomplete="off" spellcheck="false"/></label>'
+      + '<p class="slaf-backup-note" data-backup="pass-hint"></p>'
+      + '<div class="slaf-backup-acts"><button type="button" class="slaf-btn slaf-btn--primary" data-backup="pass-go">Save it protected</button>'
+      + '<button type="button" class="slaf-btn slaf-btn--quiet" data-backup="pass-cancel">Never mind</button></div>'
+      + '</div>'
+      + '<p class="slaf-backup-note">' + (canSeal
+          ? 'A protected backup is sealed with a passphrase you choose. Nobody can open it without that passphrase, this app included; if you forget it, the file is gone for good. The plain file is the same thing with no lock, and looks like code. Either one is the only file that can restore a device.'
+          : 'The backup file is the only one that can restore a device. It is written for the app, not for a person, so it looks like code. That is fine. A protected backup needs this page opened over https.') + '</p>'
       + '<p class="slaf-backup-status" data-backup="status" role="status" aria-live="polite"></p>';
     var q = function (name) { return el.querySelector('[data-backup="' + name + '"]'); };
     var status = q('status'), undoBtn = q('undo'), file = q('file');
+    var pass = q('pass'), pass1 = q('pass1'), pass2 = q('pass2'), pass2Wrap = q('pass2-wrap'), passSay = q('pass-say'), passHint = q('pass-hint'), passGo = q('pass-go');
+    var passMode = null;       /* 'seal' | 'open' */
+    var sealedPending = null;  /* { name, text } while a sealed file waits for its passphrase */
+    function say(text, cls) { status.textContent = text || ''; status.className = 'slaf-backup-status' + (cls ? ' ' + cls : ''); }
+    function reload() { if (o.reload === false) return; try { g().location.reload(); } catch (e) { /* fine */ } }
+    function download(text, name, mime) {
+      var blob = new Blob([text], { type: mime || 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = doc.createElement('a');
+      a.href = url; a.download = name;
+      doc.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+    function withPrint(text, then) {
+      if (!(V && V.fingerprint)) { then(''); return; }
+      V.fingerprint(text).then(function (f) { then(f ? ' Fingerprint ' + f + '.' : ''); }, function () { then(''); });
+    }
+    function showPass(mode, sayText) {
+      passMode = mode;
+      pass.hidden = false;
+      passSay.textContent = sayText;
+      pass2Wrap.hidden = mode !== 'seal';
+      passGo.textContent = mode === 'seal' ? 'Save it protected' : 'Open it';
+      pass1.value = ''; pass2.value = ''; passHint.textContent = '';
+      try { pass1.focus(); } catch (e) { /* fine */ }
+    }
+    function hidePass() { pass.hidden = true; passMode = null; pass1.value = ''; pass2.value = ''; passHint.textContent = ''; }
+    function paintUndo() {
+      var u = undoAvailable();
+      undoBtn.hidden = !u || !withLoad;
+      if (u && !status.textContent) say('Loaded a copy' + (u.at ? ' on ' + shortDate(u.at) : '') + '. Undo is here until the next load.');
+      else if (!status.textContent) say(exportAgeLine());
+    }
 
     /* The spreadsheet. Same text shared/csvexport.js writes for Your Data,
        so one reader brings it back in (D-220, D-221) and the two saves can
@@ -354,63 +427,107 @@
         S.LedgerRows.use(t.ledgerRows);
         var text = S.CsvExport.single(S.Spine.getProfile(), t);
         var name = S.CsvExport.filename(S.Schema.localDay());
-        var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
-        var url = URL.createObjectURL(blob);
-        var a = doc.createElement('a');
-        a.href = url; a.download = name;
-        doc.body.appendChild(a); a.click(); a.remove();
-        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        download(text, name, 'text/csv;charset=utf-8');
         noteExport();
         say('Saved ' + name + '. Open it in Google Sheets, Excel or Numbers.', 'is-good');
       }).catch(function (err) { say('Could not build the sheet: ' + (err && err.message ? err.message : err), 'is-error'); });
     });
-    function say(text, cls) { status.textContent = text || ''; status.className = 'slaf-backup-status' + (cls ? ' ' + cls : ''); }
-    function reload() { if (o.reload === false) return; try { g().location.reload(); } catch (e) { /* fine */ } }
-    function paintUndo() {
-      var u = undoAvailable();
-      undoBtn.hidden = !u;
-      if (u && !status.textContent) say('Loaded a copy' + (u.at ? ' on ' + shortDate(u.at) : '') + '. Undo is here until the next load.');
-      else if (!status.textContent) say(exportAgeLine());
-    }
 
+    /* The plain backup. */
     q('save').addEventListener('click', function () {
       var n = keys().length;
       if (!n) { say('Nothing to save yet: this browser holds no figures.', 'is-error'); return; }
+      hidePass();
       var text = toJSON();
       var name = filename();
       try {
-        var blob = new Blob([text], { type: 'application/json' });
-        var url = URL.createObjectURL(blob);
-        var a = doc.createElement('a');
-        a.href = url; a.download = name;
-        doc.body.appendChild(a); a.click(); a.remove();
-        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        download(text, name);
         noteExport();
-        say('Saved ' + name + ' (' + things(n) + '). It is the restore file, not a readable one. Keep it where you keep a bank statement.', 'is-good');
+        withPrint(text, function (fp) { say('Saved ' + name + ' (' + things(n) + '), not protected.' + fp + ' It is the restore file, not a readable one. Keep it where you keep a bank statement.', 'is-good'); });
       } catch (e) { say('This browser would not hand over the file: ' + (e && e.message ? e.message : e), 'is-error'); }
     });
+    /* The protected backup: ask, then seal. */
+    q('seal').addEventListener('click', function () {
+      if (!keys().length) { say('Nothing to save yet: this browser holds no figures.', 'is-error'); return; }
+      say('');
+      showPass('seal', 'Choose a passphrase for this file. A few plain words is easiest to remember and hardest to guess. There is no way to recover it.');
+    });
+    pass1.addEventListener('input', function () {
+      if (passMode !== 'seal' || !V) return;
+      var st = V.strength(pass1.value);
+      passHint.textContent = pass1.value ? st.why : '';
+      passHint.className = 'slaf-backup-note' + (st.ok ? '' : ' is-warn');
+    });
+    q('pass-cancel').addEventListener('click', function () { hidePass(); sealedPending = null; say(''); });
+    passGo.addEventListener('click', function () {
+      if (passMode === 'seal') {
+        var st = V.strength(pass1.value);
+        if (!st.ok) { passHint.textContent = st.why; passHint.className = 'slaf-backup-note is-warn'; return; }
+        if (pass1.value !== pass2.value) { passHint.textContent = 'The two do not match. Type it again in both boxes.'; passHint.className = 'slaf-backup-note is-warn'; return; }
+        var n = keys().length, plain = toJSON(), name = filename().replace(/\.json$/, '.protected.json');
+        passGo.disabled = true;
+        V.seal(plain, pass1.value, { appVersion: appVersion() }).then(function (sealed) {
+          passGo.disabled = false;
+          download(sealed, name);
+          noteExport();
+          hidePass();
+          withPrint(sealed, function (fp) { say('Saved ' + name + ' (' + things(n) + '), protected.' + fp + ' Only that passphrase opens it.', 'is-good'); });
+        }).catch(function (err) { passGo.disabled = false; say('Could not protect the file: ' + (err && err.message ? err.message : err), 'is-error'); });
+        return;
+      }
+      if (passMode === 'open' && sealedPending) {
+        var pending = sealedPending;
+        passGo.disabled = true;
+        V.open(pending.text, pass1.value).then(function (plain) {
+          passGo.disabled = false;
+          hidePass();
+          sealedPending = null;
+          takeFile(pending.name, plain, true);
+        }).catch(function (err) {
+          passGo.disabled = false;
+          passHint.textContent = err && err.message ? err.message : String(err);
+          passHint.className = 'slaf-backup-note is-warn';
+        });
+      }
+    });
+    pass1.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); (passMode === 'seal' ? pass2 : passGo).focus(); if (passMode === 'open') passGo.click(); } });
+    pass2.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); passGo.click(); } });
+
+    /* Loading: a sealed file asks for its passphrase first, then goes the
+       same way as a plain one. */
+    function takeFile(name, text, wasSealed) {
+      var check = inspect(text);
+      if (!check.ok && check.sealed) {
+        if (!(V && V.available && V.available())) { say('That backup is protected, and this page cannot open protected files (it needs https). Nothing was changed.', 'is-error'); return; }
+        sealedPending = { name: name, text: text };
+        say('');
+        showPass('open', 'That file is protected' + (check.hint ? ' (hint: ' + check.hint + ')' : '') + '. Type the passphrase it was saved with.');
+        return;
+      }
+      if (!check.ok) { say(check.reason, 'is-error'); return; }
+      var from = check.kind === 'household' ? 'a household file from Your Data' : 'a backup';
+      var when = check.savedAt ? ', saved ' + shortDate(check.savedAt) : '';
+      var ver = check.appVersion ? ' by Money Rooms ' + check.appVersion : '';
+      var msg = 'Load ' + name + '? It is ' + from + when + ver + (wasSealed ? ', unlocked' : '') + '. ' + countsSentence(check.counts)
+        + (check.kind === 'household' ? ' Only the household and the snapshots change.' : '')
+        + ' Undo is one click afterwards.';
+      var ask = o.confirm || function (m) { return g().confirm ? g().confirm(m) : true; };
+      if (!ask(msg)) { say('Not loaded. Nothing was changed.'); return; }
+      var r = apply(check);
+      if (!r.ok) { say(r.reason, 'is-error'); return; }
+      withPrint(text, function (fp) {
+        say('Loaded ' + name + '.' + fp + ' ' + countsSentence(r.counts) + ' Reloading so every room reads it.', 'is-good');
+        paintUndo();
+        if (o.onApplied) o.onApplied(r);
+        reload();
+      });
+    }
     q('load').addEventListener('click', function () { file.value = ''; file.click(); });
     file.addEventListener('change', function () {
       var f = file.files && file.files[0];
       if (!f) return;
-      f.text().then(function (text) {
-        var check = inspect(text);
-        if (!check.ok) { say(check.reason, 'is-error'); return; }
-        var from = check.kind === 'household' ? 'a household file from Your Data' : 'a backup';
-        var when = check.savedAt ? ', saved ' + shortDate(check.savedAt) : '';
-        var ver = check.appVersion ? ' by Money Rooms ' + check.appVersion : '';
-        var msg = 'Load ' + f.name + '? It is ' + from + when + ver + '. ' + countsSentence(check.counts)
-          + (check.kind === 'household' ? ' Only the household and the snapshots change.' : '')
-          + ' Undo is one click afterwards.';
-        var ask = o.confirm || function (m) { return g().confirm ? g().confirm(m) : true; };
-        if (!ask(msg)) { say('Not loaded. Nothing was changed.'); return; }
-        var r = apply(check);
-        if (!r.ok) { say(r.reason, 'is-error'); return; }
-        say('Loaded ' + f.name + '. ' + countsSentence(r.counts) + ' Reloading so every room reads it.', 'is-good');
-        paintUndo();
-        if (o.onApplied) o.onApplied(r);
-        reload();
-      }).catch(function (e) { say('That file could not be read: ' + (e && e.message ? e.message : e), 'is-error'); });
+      f.text().then(function (text) { takeFile(f.name, text, false); })
+        .catch(function (e) { say('That file could not be read: ' + (e && e.message ? e.message : e), 'is-error'); });
     });
     undoBtn.addEventListener('click', function () {
       var r = undo();
@@ -423,7 +540,7 @@
 
     paintUndo();
     driftGuard();
-    return { element: el, say: say };
+    return { element: el, say: say, takeFile: takeFile };
   }
 
   return {

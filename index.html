@@ -1167,6 +1167,12 @@
     var file = el('file-import').files && el('file-import').files[0];
     if (!file) return;
     file.text().then(function (text) {
+      /* A protected backup or a full backup goes through Your Data, which
+         has the passphrase box and the preview; this door takes the plain
+         household file only, as it always has. D-224. */
+      var head = text.slice(0, 200);
+      if (head.indexOf('"money-rooms-sealed"') !== -1) { note('That file is protected with a passphrase. Open Your Data to unlock and load it.', true); el('file-import').value = ''; return; }
+      if (head.indexOf('"money-rooms-backup"') !== -1) { note('That is a full backup. Open Your Data to load it, with a preview of what it changes.', true); el('file-import').value = ''; return; }
       var check = Spine.inspectImport(text);
       if (!check.ok) { note(check.reason, true); return; }
       var who = (Schema.primaryPerson(check.household) || {}).label || 'a household';

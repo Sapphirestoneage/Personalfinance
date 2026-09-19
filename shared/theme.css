@@ -1282,6 +1282,14 @@ a:hover { color: var(--sapphire-100); }
 .slaf-backup-acts--quiet { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
 .slaf-backup-note { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); }
 a.slaf-btn[data-backup="pdf"] { display: inline-flex; align-items: center; }
+/* The passphrase row of a protected backup (D-224): two boxes, a hint, two
+   buttons, in the markup from the start and only ever shown or hidden. */
+.slaf-backup-pass { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--color-border-active); border-radius: var(--radius-md); background: var(--color-surface); }
+.slaf-backup-field { display: block; margin-top: var(--space-2); }
+.slaf-backup-field > span { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: 2px; }
+.slaf-backup-field input { width: 100%; box-sizing: border-box; font: inherit; font-size: var(--text-md); min-height: 44px; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); letter-spacing: .08em; }
+.slaf-backup-note.is-warn { color: var(--color-caution); }
+.slaf-backup-pass .slaf-backup-acts { margin-top: var(--space-3); }
 .slaf-backup-status { font-size: var(--text-xs); color: var(--color-text-faint);
   margin: var(--space-2) 0 0; line-height: var(--leading-loose); min-height: 1em; }
 .slaf-backup-status.is-good { color: var(--color-text-muted); }

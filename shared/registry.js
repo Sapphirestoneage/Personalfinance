@@ -1779,17 +1779,17 @@
     needs: [],
     order: 98,
     title: 'Your Data',
-    blurb: 'Download a file, copy a share link, load one — replacing or adding to what is here — or paste in a statement and have every line sorted into the debt, account, expense or income it is.',
+    blurb: 'Save your numbers out as a spreadsheet, a page or a backup protected with a passphrase; bring any file from this app or a bank CSV in through one door, with a preview before anything saves; or start over.',
     href: 'rooms/data.html',
     tier: 0,
     tags: ['income', 'cashflow', 'debt'],
     daite: { reads: [], writes: ['assets', 'debt', 'expenses', 'income', 'plans', 'taxes', 'you'] },
+    /* Three cards, one verb each (D-224): Save, Bring in, Start over. The
+       old #file, #bank and #sheet doors are one door now, #in. */
     subsections: [
-      { id: 'out',   label: 'Take it with you' },
-      { id: 'file',  label: 'Load a file' },
-      { id: 'paste', label: 'Paste in new numbers' },
-      { id: 'bank',  label: 'Bank CSV' },
-      { id: 'sheet', label: 'A spreadsheet, and the app' },
+      { id: 'out',   label: 'Save' },
+      { id: 'in',    label: 'Bring in' },
+      { id: 'paste', label: 'Paste lines of numbers' },
       { id: 'reset', label: 'Start over' }
     ]
   });
