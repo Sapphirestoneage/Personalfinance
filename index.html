@@ -748,6 +748,10 @@
      room that owns the fix. No flags: the step you are on. No placement:
      the first thing Start Here still needs. */
 
+  /* What the next-action block settled on this render, so the block under it
+     can avoid saying the same thing again. */
+  var LAST_ACTION = null;
+
   var ACTION = {
     ef_alongside_high_interest_debt: function (d) {
       return { say: '<strong>' + Money.formatCents(d.excessCashCents) + '</strong> of cash sits beyond a starter fund while <strong>'
@@ -875,6 +879,7 @@
       box.className = 'next';
     }
     box.hidden = false;
+    LAST_ACTION = action;
     el('next-say').innerHTML = action.say;
     el('next-go').textContent = action.go;
     el('next-go').href = action.href || Ownership.linkTo(action.room, action.anchor);
@@ -898,8 +903,24 @@
   }
 
   /* ---- Block 3: the next thing to learn, or unlearn --------------------------- */
-  function renderLearn(h) {
+  function renderLearn(h, action) {
+    /* The thing to LEARN should not be the thing to DO, said twice. Once the
+       next action is ordered by the ladder, the top flag and the top advice
+       item often point at the same place — the demo's dashboard showed
+       "raise your contribution to the cap" over "Always take the whole
+       match", one above the other. If the advice lands on exactly the room
+       and anchor the action already links to, take the next one instead;
+       with nothing else to say, the block falls back to the first. */
     var p = Advice.pick(h, TABLES);
+    if (Money.isOk(p) && action && action.room && Advice.list) {
+      var l = Advice.list(h, TABLES);
+      if (Money.isOk(l) && l.items.length > 1) {
+        var other = l.items.filter(function (it) {
+          return !(it.room === action.room && (it.anchor || null) === (action.anchor || null));
+        })[0];
+        if (other && other.id !== p.item.id) p = Money.ok(other.id, { item: other, count: l.items.length });
+      }
+    }
     var box = document.querySelector('#learn .learn');
     if (!Money.isOk(p)) {
       el('learn-cap').textContent = 'The next thing to learn';
@@ -1365,7 +1386,7 @@
     renderDaite(h);
     var c = renderInstruments(h);
     renderNextAction(h, c);
-    renderLearn(h);
+    renderLearn(h, LAST_ACTION);
     renderDate(h, c);
     renderDisplayUnit(h);
     renderAgeLine(h);
