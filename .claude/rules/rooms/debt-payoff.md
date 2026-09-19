@@ -9,7 +9,7 @@ Reference data: debt_rules.json, effective_tax_rates_2026.json, foo_rules.json, 
 Owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), marginalRate (accounts)
 Latest decisions:
-  - D-248 — A number that does not say how old it is, or whose it is, is half a number
+  - D-251 — A number that does not say how old it is, or whose it is, is half a number
   - D-236 — Debt Payoff: where the payment goes, and what each fall frees
   - D-191 — Debt Payoff: a stop line, and the payment says what it is built from
   - D-190 — Debt Payoff: the extra is always a number, estimated then realized

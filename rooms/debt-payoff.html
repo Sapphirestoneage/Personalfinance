@@ -1869,7 +1869,7 @@
     if ((h.debts || []).length
         && !window.confirm('This replaces the debts you’ve entered with the example. Continue?')) return;
     var demo = Demo.build();
-    Spine.markDemo(true);                    /* D-248 */
+    Spine.markDemo(true);                    /* D-251 */
     Spine.updateProfile({ debts: demo.debts });
     if (!Schema.primaryPerson(Spine.getProfile())) Spine.updateProfile({ people: demo.people });
     extraCents = 20000;

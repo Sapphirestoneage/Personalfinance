@@ -8730,6 +8730,69 @@ section('What a debt really costs (D-247): after the deduction, after inflation,
   checkTrue('… and the registry deep-links it', Registry.byId('student-loans').subsections.some(x => x.id === 'real-cost'));
 })();
 
+section('The monthly gap by level, and the journey (D-249)');
+
+(function () {
+  const Gap = require(path.join(ROOT, 'engines/gap.js'));
+  const T = Object.assign({}, TABLES, { seTax: require(path.join(ROOT, 'data/se_tax_2026.json')) });
+  const empty = Gap.levels(Schema.createHousehold({}), T);
+  check('four levels', empty.total, 4);
+  check('an empty household is at level 0', empty.reachedCount, 0);
+  checkTrue('… and level 1 names its three inputs, each a link', empty.levels[0].missing.length === 3 && empty.levels[0].missing.every(m => /^rooms\//.test(m.href)));
+  const demo = Gap.levels(Demo.build(), T);
+  check('the demo is at level 1: pay, spending and debt entered, no paycheck logged', demo.reachedCount, 1);
+  check('… the gap is take-home less spending less minimums', demo.gapCents, Debt.freeMonthlyCents(Demo.build(), T).value);
+  check('… and next is level 2, a logged paycheck', demo.next.n + ':' + demo.next.missing.map(m => m.fieldId).join(','), '2:ledgerIncome');
+  checkTrue('level 3 is already satisfied by the demo\'s split, but does not count until level 2 is', demo.levels[2].reached && demo.reachedCount === 1);
+  const logged = Demo.build();
+  logged.ledger = { income: [Schema.createIncomeEntry({ label: 'Pay', kind: 'w2', amountCents: 320000, frequency: 'fortnightly', receivedOn: '2026-09-04', taxMethod: 'w2' })] };
+  const l = Gap.levels(logged, T);
+  check('with a paycheck logged the household is at level 3', l.reachedCount, 3);
+  checkTrue('level 1 still reports the estimate, level 2 the logged figure, and they differ', l.levels[0].gapCents !== l.levels[1].gapCents && l.levels[1].deltaCents === l.levels[1].gapCents - l.levels[0].gapCents);
+  check('… level 1 is the estimate the log set aside', l.levels[0].gapCents, Debt.freeMonthlyCents(Demo.build(), T).value);
+  logged.ledger.months = [{ id: '2026-08', actual: { income: 590000, expenses: 340000 } }];
+  const a = Gap.levels(logged, T);
+  check('a closed month makes level 4', a.reachedCount, 4);
+  check('… and the gap is the realized one', a.gapCents, Debt.realizedFreeMonthlyCents(logged).value);
+  checkTrue('… with the month named for the journal', a.levels[3].gap.months.join(',') === '2026-08');
+  const j = Schema.createHousehold({ journal: [{ kind: 'gap', level: 1, cents: -29000, at: '2026-09-19T00:00:00Z', basis: 'x' }] });
+  checkTrue('the journal survives the constructor with its shape', j.journal.length === 1 && j.journal[0].level === 1 && j.journal[0].cents === -29000 && typeof j.journal[0].id === 'string');
+  check('a fresh household has an empty journal', Schema.createHousehold({}).journal.length, 0);
+  const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the front page leads with the level and writes the journey', /SLAF\.Gap\.levels\(h, TABLES, ROOM_ID\)/.test(page) && /recordJourney\(h, g\)/.test(page) && /Spine\.updateProfile\(\{ journal: journal\.concat\(add\) \}\)/.test(page));
+  checkTrue('… and never writes twice for one level, nor above the level reached', /journal\.some\(function \(e\) \{ return e\.kind === 'gap' && e\.level === l\.n; \}\)/.test(page) && /l\.n > g\.reachedCount\) return;/.test(page));
+  const hist = fs.readFileSync(path.join(ROOT, 'rooms/history.html'), 'utf8');
+  checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
+})();
+
+section('Deeper questions wait for their level (D-250)');
+
+(function () {
+  const Ask = require(path.join(ROOT, 'shared/ask.js'));
+  const LedgerRows = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const T = Object.assign({}, TABLES, { ledgerRows: require(path.join(ROOT, 'data/ledger-rows.json')), features: require(path.join(ROOT, 'data/features.json')) });
+  LedgerRows.use(T.ledgerRows); Features.use(T.features);
+  const f = T.features.features.askDeeper;
+  checkTrue('the switch exists, off by default, in Advanced', f && f.default === 'off' && f.group === 'advanced');
+  /* A household with a job but no pay entered: the Income room must not
+     open with a level-3 question. */
+  const bare = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })] });
+  const rows = LedgerRows.rows(bare, T, { filter: 'all' });
+  const incomeAsks = rows.filter(r => r.askIn === 'income' && r.kind !== 'computed');
+  checkTrue('the Income room has a deeper row it could ask', incomeAsks.some(r => r.level >= 3));
+  const pick = Ask.pick(bare, 'income', T, []);
+  checkTrue('… but with nothing entered it asks nothing above level 1', !pick || pick.row.level <= 1, pick ? pick.row.id + ' level ' + pick.row.level : 'nothing');
+  const Doors = require(path.join(ROOT, 'shared/doors.js'));
+  check('the Income door is at level 1 for that household', Doors.levelOf(rows.filter(r => r.door === 'I'), bare), 1);
+  /* The demo has its level-1 and level-2 income rows in: a level-3 ask is allowed there only if the door has reached 3. */
+  const demoRows = LedgerRows.rows(Demo.build(), T, { filter: 'all' });
+  const demoLevel = Doors.levelOf(demoRows.filter(r => r.door === 'I'), Demo.build());
+  const demoPick = Ask.pick(Demo.build(), 'income', T, []);
+  checkTrue('the demo is asked nothing above its door\'s level (' + demoLevel + ')', !demoPick || demoPick.row.level <= demoLevel, demoPick ? demoPick.row.id + ' level ' + demoPick.row.level : 'nothing');
+  checkTrue('the ask module exports the gate\'s parts', typeof Doors.levelOf === 'function' && typeof Doors.isBlank === 'function');
+})();
+
 section('The room template (D-097): one shape, proven on Real Hourly Wage');
 
 (function () {
@@ -10850,7 +10913,7 @@ section('Feature switches: rendering and engines, never stored facts (D-180)');
   const ids = Object.keys(table.features);
   Prefs.reset();
 
-  check('sixteen switches: the ten shapes\' four and the twelve phenomena', ids.length, 16);
+  check('seventeen switches: the ten shapes\' four, the twelve phenomena, and the deeper-questions gate (D-250)', ids.length, 17);
   checkTrue('every switch has a default, a scope, a group, a label and a gloss', ids.every(id => { const f = table.features[id]; return ['on', 'off'].indexOf(f.default) > -1 && ['user', 'situation'].indexOf(f.scope) > -1 && table.groups.some(g => g.id === f.group) && f.label && f.gloss; }));
   checkTrue('a situation switch names what sets it', ids.filter(id => table.features[id].scope === 'situation').every(id => typeof table.features[id].situationWhen === 'string'));
   check('the four groups, in the prompt\'s order', table.groups.map(g => g.id).join(','), 'accuracy,household,horizon,advanced');
@@ -13007,8 +13070,16 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
     const p = Ask.pick(h, 'debt-payoff', T, sug);
     checkTrue('Debt Payoff asks the card’s real minimum, and only that card', p && p.row.id === 'debtMinPayment' && p.item.id === 'visa', p && p.row.id + ':' + (p.item && p.item.id));
     checkTrue('with the suggestion beside it', p.suggestion && p.suggestion.value === 6400);
-    checkTrue('the estate room asks a will, POA or beneficiaries', ['willExists', 'poaExists', 'beneficiariesSet'].indexOf(Ask.pick(h, 'estate', T, sug).row.id) !== -1);
-    checkTrue('the FI room asks allocation', /^allocation/.test(Ask.pick(h, 'fire', T, sug).row.id));
+    /* D-250: those two rooms want level-3 and level-4 rows, and this
+       household has its doors at level 1, so by default they ask nothing;
+       the askDeeper switch lets them. */
+    const Features = require(path.join(ROOT, 'shared/features.js'));
+    Features.use(require(path.join(ROOT, 'data/features.json')));
+    check('the estate room asks nothing while the you door is at level 1', Ask.pick(h, 'estate', T, sug), null);
+    Features.set('askDeeper', true);
+    checkTrue('with the deeper switch on, the estate room asks a will, POA or beneficiaries', ['willExists', 'poaExists', 'beneficiariesSet'].indexOf(Ask.pick(h, 'estate', T, sug).row.id) !== -1);
+    checkTrue('and the FI room asks allocation', /^allocation/.test(Ask.pick(h, 'fire', T, sug).row.id));
+    Features.set('askDeeper', null);
     check('parses money', Ask.parse({ unit: 'cents' }, '1,200'), 120000);
     check('parses a rate typed as a percent', Ask.parse({ unit: 'rate' }, '24.99'), 0.2499);
     check('and a rate typed as a fraction', Ask.parse({ unit: 'rate' }, '0.06'), 0.06);
@@ -13052,9 +13123,9 @@ section('All at once: a second view of the same rows (D-208, a Ledger view since
   checkTrue('built once, declared', /LIVE-FORM: built once/.test(html) && /Nothing is rebuilt while a finger is in a box/.test(html));
   checkTrue('no submit button; each field saves on change', !/type="submit"/.test(html) && /form\.addEventListener\('change'/.test(html));
   checkTrue('six door shells with the registry’s ids, each level a fold', ['D', 'A', 'I', 'T', 'E', 'you'].every(d => new RegExp('<details class="xdoor" id="x-' + d + '" open>').test(html)) && /details class="xlvl" id="x-' \+ esc\(d\.id\) \+ '-' \+ L \+ '"' \+ \(open \? ' open' : ''\)/.test(html));
-  /* D-249: level 1 opens; a deeper level opens only when started, linked to, or the switch is on. */
+  /* D-252: level 1 opens; a deeper level opens only when started, linked to, or the switch is on. */
   checkTrue('level 1 is open; a deeper level opens when started, when the link points into it, or when the switch is on', /var open = L === 1 \|\| everything \|\| levelStarted\(hh, rows\) \|\| levelTargeted\(d\.id, L\)/.test(html));
-  checkTrue('the depth switch is one button, remembered in Prefs, and flips <details> rather than rebuilding', /id="x-depth"/.test(html) && /ALL_LEVELS_PREF = 'ledger\.allLevels'/.test(html) && /lv\.open = /.test(html) && !/\.xbody'\)\.innerHTML = out/.test(html.split('function wireDepth')[1].split('function paintDepth')[0] || 'x'));
+  checkTrue('the depth switch is the Advanced setting (askDeeper, D-250), one button that flips <details> rather than rebuilding', /id="x-depth"/.test(html) && /ALL_LEVELS_PREF = 'features\.askDeeper'/.test(html) && require(path.join(ROOT, 'shared/features.js')).prefKey('askDeeper') === 'features.askDeeper' && /lv\.open = /.test(html) && !/\.xbody'\)\.innerHTML = out/.test(html.split('function wireDepth')[1].split('function paintDepth')[0] || 'x'));
   checkTrue('a link into one level (#x-E-3) opens that level and its door', /\^#x-\(D\|A\|I\|T\|E\|you\)-\(\[1-4\]\)\$/.test(html) && /if \(dr\) dr\.open = true;/.test(html));
   checkTrue('a closed level says what opening it gets you, and how far along it is', /class="xgloss"/.test(html) && /data-x-lvlcount=/.test(html) && /c\.byLevel\[L\]\.known \+ ' of ' \+ c\.byLevel\[L\]\.total/.test(html));
   checkTrue('rows that stop applying are hidden, never rebuilt or cleared', /n\.el\.hidden = !applies/.test(html) && !/innerHTML = ''/.test(html.split('function paintApplies')[1].split('function paintSuggestions')[0]));
@@ -14650,6 +14721,36 @@ section('Every id a page writes to exists in that page (D-238)');
     }
   });
   check('no page writes to an id its own markup does not carry', misses.join('; '), '');
+})();
+
+/* ==========================================================================
+   No file carries an unresolved merge conflict (D-249)
+   ========================================================================== */
+section('No file carries an unresolved merge conflict (D-249)');
+(function () {
+  /* DECISIONS.md was committed with "<<<<<<< HEAD", "=======" and
+     ">>>>>>> <branch>" still in it, and the whole suite went green: the
+     decisions checks read headings and numbers, and a marker line is
+     neither. Two sessions merging in parallel is now routine here, so the
+     cheapest possible guard is worth having. */
+  const skip = new Set(['.git', 'node_modules', 'vendor']);
+  const exts = /\.(md|js|css|html|json)$/;
+  const hits = [];
+  (function walk(dir, rel) {
+    for (const name of fs.readdirSync(dir)) {
+      if (skip.has(name)) continue;
+      const full = path.join(dir, name);
+      const here = rel ? rel + '/' + name : name;
+      const st = fs.statSync(full);
+      if (st.isDirectory()) { walk(full, here); continue; }
+      if (!exts.test(name)) continue;
+      const src = fs.readFileSync(full, 'utf8');
+      /* Anchored to the line start, which is what git writes; a string
+         mentioning the characters in prose or in code does not match. */
+      if (/^<{7} |^={7}$|^>{7} /m.test(src)) hits.push(here);
+    }
+  })(ROOT, '');
+  check('no tracked file is left mid-merge', hits.join(', '), '');
 })();
 
 /* ==========================================================================

@@ -28,7 +28,7 @@
 /* Playwright may be installed here or globally (the dev container puts it in
    /opt/node22/lib/node_modules). Look in both rather than printing SKIPPED
    next to a browser that is sitting right there — a check that passes by not
-   running is not a check. D-248. */
+   running is not a check. D-251. */
 let chromium = null, devices = null;
 for (const where of ['playwright', '/opt/node22/lib/node_modules/playwright']) {
   try {
@@ -1232,7 +1232,7 @@ const CASES = [
     room: '/rooms/ledger.html#all-at-once',
     container: '#xform',
     seed: 'empty',
-    /* D-249: only level 1 of each door is open at first; the debts list is
+    /* D-252: only level 1 of each door is open at first; the debts list is
        level 2. This walk types into every box, which is the expert's path,
        so it flips the depth switch first — and in doing so checks that a
        folded box opens and takes typing without being rebuilt. */
@@ -1259,7 +1259,7 @@ const CASES = [
           debt: (h.debts[0] || {}).label + ':' + (h.debts[0] || {}).balanceCents, rows: document.querySelectorAll('[data-x-row]').length };
       });
       return [
-        ['level 2 of Debt was folded before the switch (D-249)', page.__depthBefore, false],
+        ['level 2 of Debt was folded before the switch (D-252)', page.__depthBefore, false],
         ['the ZIP landed', s.zip, '12203'],
         ['the situation landed', s.status, 'unemployed'],
         ['the last pay landed', s.lastPay, 9500000],

@@ -233,7 +233,7 @@
   #view-express details.xlvl > summary { cursor: pointer; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: var(--space-1) 0; }
   /* The level's gloss says what opening it gets you; the count says how far
      along it is. Both plain text on the summary line, so a closed level is a
-     sentence rather than a mystery (D-249). */
+     sentence rather than a mystery (D-252). */
   #view-express details.xlvl > summary .xgloss { display: block; text-transform: none; letter-spacing: 0; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
   #view-express details.xlvl > summary .xlcount { float: right; text-transform: none; letter-spacing: 0; font-variant-numeric: tabular-nums; color: var(--color-text-faint); }
   #view-express details.xlvl:not([open]) > summary { padding-bottom: var(--space-2); }
@@ -682,9 +682,10 @@
   <p class="switch">Rather be walked through it? <a href="#round-1">Five questions, one a screen.</a></p>
   <div class="xbar" id="xbar">
     <span class="pct">This app holds <b id="xpct-pct">…</b> of your numbers so far.</span>
-    <!-- The depth switch (D-249): one tap and every level is open, and it
-         stays that way on this device. The person who wants all 90 boxes
-         gets them; the person who does not is never shown them first. -->
+    <!-- The depth switch (D-252): one tap and every level is open, and it
+         stays that way on this device. It is the Advanced switch from
+         Settings (askDeeper, D-250), so one preference governs the folds
+         here and the questions rooms ask. -->
     <button type="button" class="xdepth" id="x-depth" aria-pressed="false">Show every level</button>
     <nav class="jump" id="xjump" aria-label="Jump to a door"></nav>
   </div>
@@ -1104,7 +1105,7 @@
   }
   function routeHash() {
     var view = routeView();
-    /* #x-D-3: a link into one level of one door opens that level (D-249). */
+    /* #x-D-3: a link into one level of one door opens that level (D-252). */
     var lm = /^#x-(D|A|I|T|E|you)-([1-4])$/.exec(location.hash || '');
     if (lm) {
       var lv = document.getElementById('x-' + lm[1] + '-' + lm[2]), dr = document.getElementById('x-' + lm[1]);
@@ -1412,7 +1413,7 @@
   }
 
   /* ---- The whole form, built once ---------------------------------------------- */
-  /* Which levels open at build (D-249). The all-at-once view used to open
+  /* Which levels open at build (D-252). The all-at-once view used to open
      every level of every door: 93 boxes on a phone, 21 sections, eleven
      thousand pixels tall before a single number was typed — the black
      diamond with no grooming. Level 1 is the totals and is always open.
@@ -1420,8 +1421,14 @@
      (their work is never folded away from them), when the link points into
      it, or when the depth switch is on. Toggling <details> shows and hides;
      it never rebuilds, so every box keeps its node (D-034). */
-  var ALL_LEVELS_PREF = 'ledger.allLevels';
-  function allLevelsOn() { try { return SLAF.Prefs && SLAF.Prefs.get ? SLAF.Prefs.get(ALL_LEVELS_PREF, false) === true : false; } catch (e) { return false; } }
+  /* The switch is the same Advanced setting D-250 gave the inline ask (the
+     `askDeeper` switch, stored under Prefs as features.askDeeper): one
+     preference says "show me the deeper questions", here and in every room
+     that asks one, and Settings lists it once. Read by key rather than
+     through shared/features.js so this page does not load a table for one
+     boolean; Features.prefKey is 'features.' + id and the test pins it. */
+  var ALL_LEVELS_PREF = 'features.askDeeper';
+  function allLevelsOn() { try { return SLAF.Prefs && SLAF.Prefs.get ? SLAF.Prefs.get(ALL_LEVELS_PREF, null) === true : false; } catch (e) { return false; } }
   function levelStarted(hh, rows) {
     var st = {};
     LedgerRows.rows(hh, TABLES, { filter: 'all' }).forEach(function (r) { st[r.id] = r.status; });
@@ -1558,6 +1565,7 @@
     if (!b) return;
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
     b.textContent = on ? 'Level 1 first' : 'Show every level';
+    b.title = on ? 'Advanced is on: every level open, and rooms ask the deeper questions (Settings).' : 'Turns on Advanced: every level open here, and rooms ask the deeper questions (Settings).';
   }
   function wireDepth() {
     var b = el('x-depth');

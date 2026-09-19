@@ -8,6 +8,18 @@
 <script src="shared/errlog.js"></script>
 <title>Dungeons &amp; Dividends — roll up your finances</title>
 <meta name="description" content="Five questions, a character sheet for your actual money, and a game where every choice is one people really face. Nothing you type leaves your browser."/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Dungeons &amp; Dividends"/>
+<meta property="og:title" content="Dungeons &amp; Dividends — roll up your finances"/>
+<meta property="og:description" content="Five questions, a character sheet built from your real life, then a game of situations people actually face."/>
+<meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/dnd/campaign.html"/>
+<meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Dungeons &amp; Dividends — roll up your finances"/>
+<meta name="twitter:description" content="Five questions, a character sheet built from your real life, then a game of situations people actually face."/>
+<meta name="twitter:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
@@ -332,7 +344,7 @@
     <!-- Optional. LIVE-FORM: built once at boot, only shown and hidden. -->
     <div class="panel" id="res-finish" hidden>
       <h3>Finish the three your money measures</h3>
-      <p class="note">Each answer completes one named sub-stat and nothing else — the page says which. None of
+      <p class="note">Each answer fills in exactly one thing under one ability — the page says which. None of
          it is required to play, and you can come back at any point.</p>
       <div id="finish-fields"></div>
     </div>
@@ -342,8 +354,8 @@
     </div>
     <div class="actions">
       <button type="button" class="btn" id="btn-result-next">How do I get better? →</button>
+      <a class="btn ghost" href="card.html">Share my character sheet</a>
       <a class="btn ghost" href="profile.html">Read my full profile →</a>
-      <a class="btn ghost" href="card.html">Make a card to share</a>
       <button type="button" class="btn ghost" id="btn-result-back">Change how I built this</button>
     </div>
   </section>
@@ -482,10 +494,12 @@
       <div id="rev-stacking"></div>
     </div>
     <div class="actions">
-      <button type="button" class="btn" id="btn-next-chapter">Begin the next chapter</button>
+      <a class="btn" href="card.html">Share your character sheet →</a>
+      <button type="button" class="btn ghost" id="btn-next-chapter">Begin the next chapter</button>
       <button type="button" class="btn ghost" id="btn-rev-train">Train something else</button>
-      <a class="btn ghost" href="sheet.html">Your real sheet</a>
     </div>
+    <p class="note faint" style="margin-top:var(--space-2)">The sheet carries your class, your six, your runway
+       in weeks and what hunts you — never a figure you typed. It is the bit that travels.</p>
   </section>
 
   <p class="foot"><a href="sheet.html">Your sheet</a> &nbsp;·&nbsp; <a href="encounter.html">Weakness map</a>
@@ -1533,7 +1547,7 @@
     html('out-could', rec.couldHave.map(function (c) {
       var mk = Object.keys(c.money).filter(function (k) { return c.money[k]; });
       return '<div class="row"><span class="mark">' + (c.wasBest ? '★' : '·') + '</span><b>' + esc(c.label) + '</b>'
-        + (c.wasBest ? ' <span class="badge on">the ladder’s pick</span>' : '')
+        + (c.wasBest ? ' <span class="badge on">the strongest move</span>' : '')
         + '<br/><span class="faint">' + esc(c.outcome) + '</span>'
         + (mk.length ? '<br/><span class="delta">' + mk.map(function (k) {
             return esc(FIELD[k] || k) + ' ' + signed(c.money[k]); }).join(' · ') + '</span>' : '')
@@ -1583,7 +1597,7 @@
        the empty-state only shows when there is genuinely nothing to report. */
     var nothing = !shifts && !became
       ? '<p class="note faint">No ability moved this chapter. Ten rounds is not always long enough — a '
-        + 'sub-stat is built from your numbers, not from intentions.</p>'
+        + 'score here is built from your numbers, not from intentions.</p>'
       : '';
     html('rev-shifts', shifts + nothing + became);
 
@@ -1593,7 +1607,7 @@
             + '<br/><span class="faint">Stronger: ' + esc(punct(m.shouldHave.label)) + ' '
             + esc(m.shouldHave.why) + '</span></div>';
         }).join('')
-      : '<div class="ok-box">Every choice this chapter was the one the ladder would have made. That is rarer '
+      : '<div class="ok-box">Every choice this chapter was the strongest move on the board. That is rarer '
         + 'than it sounds — the whole difficulty of the order is that each individual step looks optional.</div>');
 
     var st = r.stacking;

@@ -70,6 +70,11 @@
   .asset-name[readonly] { border-bottom-style: dotted; color: var(--color-text-muted); }
   .asset-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
   .asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; }
+  /* One column on a narrow phone, the same rule .room-grid has had all
+     along (D-249). At 320px two columns leave 145px for a label like
+     "how sure it is worth that", which wraps to four lines beside a
+     neighbour's two and drops its box 32px below. */
+  @media (max-width: 380px) { .asset-grid { grid-template-columns: 1fr; } }
   .asset-grid .slaf-label { display: block; margin-bottom: var(--space-1); }
   .asset-more { margin-top: var(--space-2); }
   .asset-sub { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; min-height: 1.3em; }

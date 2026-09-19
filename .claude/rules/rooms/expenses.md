@@ -9,7 +9,7 @@ Reference data: budget_templates.json, effective_tax_rates_2026.json, expense_ca
 Owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), capturingFullMatch (start), monthlyDebtPayments (debt-payoff)
 Latest decisions:
-  - D-248 — A number that does not say how old it is, or whose it is, is half a number
+  - D-251 — A number that does not say how old it is, or whose it is, is half a number
   - D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line
   - D-199 — Expenses in three steps and one fold
   - D-196 — Expenses: the picture first, then the four numbers, then the lines you name

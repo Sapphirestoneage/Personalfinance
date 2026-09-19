@@ -14021,7 +14021,6 @@ vocabulary the owner asked for by name; they are data, not rooms.
 `node tools/context/build.js --check`. The FIRE room and the flight plan
 at 390px and 1100px with a clean console, empty and with the demo.
 
-<<<<<<< HEAD
 ## D-236 — Debt Payoff: where the payment goes, and what each fall frees
 
 **Why.** The owner, from the phone: a sankey of the debt money, and a
@@ -14084,7 +14083,6 @@ which is the owner's call on order (STATUS).
 **Verified.** `node test/run.js` (31,222 checks), `node test/forms.js`,
 `node tools/context/build.js --check`. Debt Payoff at 390px with nine
 example debts, clean console.
-=======
 ## D-238 — A page may not write to an id it does not carry
 
 **Why.** The Scorecard wrote to `el('provenance')` and `el('ra-provenance')`;
@@ -14230,7 +14228,6 @@ files: the panel's findings, the fixes, and four items left to the owner.
 (playwright not installed in this container — the phone walk was done instead
 with a scripted Chromium sweep of all 95 pages at 390px with the demo
 household: no page errors, no console errors, no 404s).
->>>>>>> claude/panel-review-loop-cnb048
 
 ## D-244 — The path is the numbers, then the dashboard, then the readings; a decision room is not "next"
 
@@ -14344,8 +14341,119 @@ The deduction figures are recalled and marked to verify.
 tools/context/build.js --check`; both rooms with the demo at 390px, clean
 console; the chain checked by hand (5.5% → 4.29% → 1.25% at 22% and 3%).
 
+## D-248 — Levels: the monthly gap, refined tier by tier; and the journey, what it thought and what was
 
-## D-248 — A number that does not say how old it is, or whose it is, is half a number
+**Why.** The owner: "the calculator should have an understanding of where
+I am; there should be levels structured so, like, list x to get to the
+gap per month, then make that precise, each tier more specific; and
+record the journey a whole lot more, so I can see here is what you
+thought, here is what was."
+
+**Decision.** `engines/gap.js` reads the monthly gap (take-home less
+spending less the minimums, `Debt.freeMonthlyCents`) at four levels, each
+a list of ownership fields: 1 Rough (pay, one spending number, total
+debt; take-home estimated), 2 Exact pay (a recurring paycheck logged;
+level 1 keeps reading the estimate so the two can differ), 3 Spending
+split (the four lines and every minimum), 4 Actual (a closed month,
+`Debt.realizedFreeMonthlyCents`). The level you are on is the highest
+reached in order. The front-page strip leads with it: the level, the gap
+at that level with its basis, and the exact inputs the next level needs.
+The journey: `household.journal[]` (`Schema.createJournalEntry`), one
+entry the first time each level is reached and one per month closed,
+written only by the dashboard, never recomputed; the strip says "level 1
+thought X; level 3 says Y" and History lists the whole journey.
+
+**Replaces or removes.** The "N of 10 readings open" count on the strip;
+the readings list stays beneath the level.
+
+**Stored shape.** `journal` is a new top-level array on
+`slaf.household.v2`; `createHousehold` defaults it to `[]`, so an older
+save loads with an empty journey and nothing else changes. Entries carry
+`{ id, at, kind, level, cents, basis, month, note }`.
+
+**Verified.** `node test/run.js`, lane 2 with `tests/properties/gap.test.js`,
+`node tools/context/build.js --check`; the front page at 390px through
+empty, demo and logged-pay states, the journal written once per level,
+History's journey listed, clean console.
+
+
+## D-249 — Boxes side by side line up, and the check that says so looks everywhere
+
+**Why.** The owner, on a phone, on the Statement: "Still not even!!!!" The
+two dropdowns under an asset — which pile it sits in, how sure it is worth
+that — sat 16px apart, and did on 17 pages. D-246 had just top-aligned
+`.slaf-field` so labels start level, which un-did the bottom-alignment that
+had been keeping the boxes level: each fix broke the other one.
+
+**Decision.** A control's top is its field's top plus the label above it and
+nothing else — hints and sources come after the control and never move it.
+So the labels are what must match. `shared/theme.css`: every `.slaf-label`
+reserves `--slaf-label-lines` (default 2) line boxes, in `1lh` with an `em`
+fallback. A row whose longest label genuinely needs three says so —
+`shared/room.js` takes `labelLines` on a room spec, `rooms/start.html`'s
+`.row` sets 3 because a label there can carry a provenance chip. The
+Statement's `.asset-grid` drops to one column under 380px, the rule
+`.room-grid` has always had. Housing's longest label is now "Rent instead,
+a month".
+
+**Replaces or removes.** Removes the top-versus-bottom alignment argument:
+neither wins, the labels are equalised instead. Removes `test/alignment.js`'s
+list of rooms and selectors.
+
+**Stored shape.** No change.
+
+**Also.** `test/run.js` now fails if any tracked file still carries a
+`<<<<<<<`, `=======` or `>>>>>>>` line: DECISIONS.md was committed
+mid-merge and the whole suite went green, because the decisions checks
+read headings and numbers and a marker line is neither.
+
+**Verified.** `node test/alignment.js` — every page in the app, every
+container holding two or more field cells, at 320 and 390, plus the card
+passes at four widths: green. `node test/run.js` (31,537). A sweep of all 95
+pages at 320/390/414/1100, seeded and blank, finds no crooked pair and no
+overlapping or spilling child.
+
+**Why it came back.** `test/alignment.js` already ran in CI, and
+`rooms/statement.html` with `.asset-grid` was already in its TARGETS list.
+It passed anyway, three ways: it recognised a control only by
+`.slaf-input-shell`, `.slaf-owned` and `.slaf-owned-inline`, and the boxes in
+question are bare `<select>`s; with fewer than two recognised boxes it
+`return`ed instead of failing; and any container class nobody had added to
+the list was invisible regardless. A list you must remember to extend, plus a
+silent skip for anything unrecognised, is two ways to pass a page that is
+visibly crooked. The pass now walks every page found on disk, finds
+containers by structure rather than by name, counts `select`, `input`,
+`textarea` and `button` as controls, and treats a cell whose control it
+cannot find as a failure rather than a skip. It found three more crooked
+pairs in Start Here on its first run, which is the point.
+
+## D-250 — Deeper questions wait for their level
+
+**Why.** The owner, in Income: "Keeps paying if the job goes: what does
+this even mean? Have this be for a more advanced tier." A room's one
+question was the deepest blank row it wanted, asked before the basics.
+
+**Decision.** `shared/ask.js` asks a row only at or below the level its
+door has reached, the Ledger's own rule (`Doors.levelOf`: the lowest
+level with a blank row). A room whose rows are all deeper asks nothing.
+A user switch in Settings, `askDeeper` (Advanced, off), lifts the gate.
+`paySurvives` moves to level 4 in `data/ledger-rows.json`: a finer point,
+not a "where it sits" fact. The ask loads prefs, features and doors
+itself, so no room needs wiring.
+
+**Replaces or removes.** The level-2 "keeps paying" question on the
+Income room for anyone whose pay is not yet at level 4; Estate and FI
+ask nothing until their doors reach the rows they want.
+
+**Stored shape.** No change. The switch lives in `slaf.prefs.v1` like
+every other feature.
+
+**Verified.** `node test/run.js` (estate and FI asks re-pinned behind the
+switch), lane 2, `node tools/context/build.js --check`; Income at 390px
+with the demo: no ask off, the question back on; Settings lists the
+switch; clean console.
+
+## D-251 — A number that does not say how old it is, or whose it is, is half a number
 
 **Why.** An end-to-end walk of the live app as a beginner and as an expert
 (docs/END-TO-END-AUDIT.md, 2026-09-12): the age of a figure reached 2 of 92
@@ -14391,7 +14499,7 @@ itself was skipping silently in this container — it looked for Chromium at a
 path that had moved and for playwright only in the local tree — and now finds
 both, because a check that passes by not running is not a check.
 
-## D-249 — The all-at-once view opens at level 1; every deeper level is one tap away
+## D-252 — The all-at-once view opens at level 1; every deeper level is one tap away
 
 **Why.** Measured on a phone (docs/END-TO-END-AUDIT.md F7): the all-at-once
 view of the Ledger opened with 93 boxes across 21 levels, every one expanded,
@@ -14403,19 +14511,21 @@ loaded. The expert path was real, and ungroomed. The owner's brief of
 opens by default. A deeper level opens when the person has already put a
 number in it (their work is never folded away), when the link points into it
 (`#x-E-3` opens level 3 of Expenses and its door), or when the depth switch
-is on. The switch is one button in the sticky bar, remembered in Prefs
-(`ledger.allLevels`) so an expert flips it once per device. A closed level's
+is on. The switch is one button in the sticky bar and is the Advanced
+setting D-250 gave the inline ask (`askDeeper`, stored at
+`features.askDeeper`): one preference, set here or in Settings, says "show
+me the deeper questions" everywhere. A closed level's
 summary carries the level's gloss from `Doors.LEVELS` and its known-of-total
 count from `Doors.counts().byLevel`, so a fold reads as a sentence. Toggling
 `<details>` shows and hides; nothing is rebuilt (D-034). Also, from the same
-audit: the room age line (D-248) now says how many of the figures on screen
+audit: the room age line (D-251) now says how many of the figures on screen
 are guesses the app filled in (`Progress.forRoom` already carried the flag).
 
 **Replaces or removes.** The default that every level is open. No new room,
 control type or vocabulary: the levels, the gloss and the counts all existed.
 
-**Stored shape.** No change to `slaf.household.v2`. One Prefs key,
-`ledger.allLevels`, a boolean; absent reads as off.
+**Stored shape.** No change to `slaf.household.v2`; no new Prefs key — the
+switch reads and writes `features.askDeeper` (D-250).
 
 **Verified.** `node test/run.js` (31,639), `node test/forms.js`, the a11y suite
 (77 rooms, 0 rules failed), and the phone walk re-measured: 6 levels open of
@@ -16924,3 +17034,98 @@ the whole lesson, would have read as four years. The vendored
 `dnd/shared/schema.js` is the byte-identical copy that carries the piles.
 `liquidAssetsCents` (the DEX pool and the Anchor pool) reads the same two
 piles, so nothing else moved.
+
+## DD-030 — A sheet that looks like one, and a link that previews
+
+The ask was for something that can go online and travel: a person comes away
+with a character sheet that looks like D&D, shares it, and the person they
+share it with understands it without a guide. Three things were built and one
+rule was tightened.
+
+### The silhouette is the share asset
+
+`dnd/card.html` was a tidy table of stats. It now draws the 5e sheet shape
+people already recognise: a column of six ability boxes with the modifier in
+a circle on the bottom edge, a shield for Armour Class, a hit-point box, a
+Level box, a saving-throw list with proficiency dots, and a features panel —
+all in canvas, in both skins, sized to its content.
+
+Each box keeps its finance meaning on its face so the sheet explains itself:
+STR is *Earning power*, DEX is *Resilience / mobility*, and hit points are
+captioned **weeks of runway**, which is the one number on the sheet that
+lands hardest with someone who has never seen the tool. The features panel
+carries the class headline in the voice of the profile (*"You would rather
+your money did the work."*), the lever, any active condition in red, and
+which creatures are hunting the two thinnest saves.
+
+Nothing on the sheet is retyped. Saving throws come from
+`Character.savingThrows()`, the ability labels from `dnd_rules.json`, the
+sign, alignment and headline from `dnd_profile.json`. The sheet reads the
+same engines as every other page, so it cannot drift from them.
+
+### The sheet never carries a typed figure
+
+This is the rule that matters, because the sheet is the one artefact that
+leaves the browser. It carries a class, six scores, a Level, runway in
+weeks, saving throws and creature names — all derived, all coarse. It never
+carries income, a balance, a debt, or spending. The test slices the card's
+data function and asserts it does not reach for any money field on the
+household. The share moments on the campaign say the same thing in one
+line under the button, so a person knows what they are sending before
+they send it.
+
+**Bought scores stay marked.** A score that came from point buy or the dice
+draws with a dashed border, and the sheet says so in a footnote. Otherwise a
+sheet of rolled 18s would travel as if it were measured.
+
+### Empty slots are captioned, never dashed
+
+The old card only pushed a vital when it had a value. The sheet shape draws
+a box per vital whether or not it scored, which is exactly the situation
+the empty≠zero rule (SPEC §4, §5) is about: an unmeasured slot must not
+read as a score, and a dash reads as one. So an unmeasured slot is left
+empty and captioned — *not measured*, *not scored*, *needs numbers*, *needs
+a class* — and a test asserts no score slot ever prints a dash as its value.
+The captions double as the call to action: the sheet tells the reader what
+to go and enter.
+
+### The link previews
+
+Six pages carry Open Graph and Twitter card tags with absolute URLs, so a
+pasted link unfurls in a chat as a picture rather than a bare address. The
+picture is `dnd/og.png` — the parchment sheet of one ready-made character,
+tilted, next to the line *A D&D character sheet for your actual money.* It
+is generated from the real card renderer, not drawn separately, so it can
+be regenerated when the sheet changes and never shows a sheet the tool
+does not produce. It is a pregen by construction: no real household is
+ever rendered into a committed file.
+
+### Words a player never sees
+
+The campaign's review still said *the ladder's pick* and *the one the ladder
+would have made*; the ladder is an internal name. It now says *the strongest
+move*. Two on-screen uses of *sub-stat* went the same way. The rule from
+DD-026 stands: acronyms and engine names stay in code, comments and tests.
+
+### What was not done
+
+The Fellowship party link is still waiting on the disclosure decision in
+DD-028 — the sheet's *never a typed figure* rule is the same question in
+another shape, and the answer should be the same person's. Table Mode is
+still unbuilt.
+
+### Compatibility note
+
+**Stored shape:** unchanged. Nothing new is written to `dndProfile` or the
+household; the sheet and the previews read only.
+
+**Rooms updated:** `dnd/card.html` (the sheet), `dnd/campaign.html` (share
+moments, jargon), `dnd/index.html`, `dnd/profile.html`, `dnd/descent.html`,
+`dnd/menagerie.html` (preview tags only), `dnd/og.png` (new),
+`dnd/test/run.js`.
+
+**Before touching the sheet from a new room:** anything you add to the
+card's data function must be derived and coarse — if it is a figure someone
+typed, it does not go on the sheet. The test on the data slice will catch
+the obvious fields; the rule is wider than the regex. And regenerate
+`og.png` from the renderer when the layout changes, from a pregen only.

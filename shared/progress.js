@@ -900,7 +900,7 @@
       + '\u21A9 Back to ' + escapeHtml(room.title) + '</a>';
   }
 
-  /* ---- How old is what I am looking at? (D-248) ---------------------------
+  /* ---- How old is what I am looking at? (D-251) ---------------------------
      Every owned number has carried its own as-of date since D-056/D-181 and
      the spine stamps one on every write. Until now that date reached exactly
      two screens: the dashboard's "Last confirmed" line, folded inside "The
@@ -952,7 +952,7 @@
       + escapeHtml(l.text + guessText) + link + '</p>';
   }
 
-  /* ---- "These are not your numbers" (D-248) -------------------------------
+  /* ---- "These are not your numbers" (D-251) -------------------------------
      The example household is the path most people take first, and until now
      it left no mark: two screens in, Robin Sparks's runway read exactly like
      your own, and a week later there was nothing on any screen to say whose
@@ -1297,7 +1297,7 @@
      due mark is cleared by the Comeback's Done, or by a visit to it. */
   var COMEBACK_DAYS = 21;
   function noteVisit(g, roomId) {
-    /* Two records, two jobs. The household's own visit log (D-248) is the
+    /* Two records, two jobs. The household's own visit log (D-251) is the
        person's history and travels with an export; the Prefs stamp below is
        one number the Comeback reads and nothing else. */
     try { if (g.SLAF && g.SLAF.Spine && g.SLAF.Spine.noteVisit) g.SLAF.Spine.noteVisit(); } catch (e) { /* storage refused */ }

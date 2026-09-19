@@ -324,7 +324,7 @@
       "repeat": "incomeSources",
       "family": "income",
       "door": "I",
-      "level": 2,
+      "level": 4,
       "round": null,
       "suggestFrom": null,
       "askIn": "income",

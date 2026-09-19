@@ -4,7 +4,7 @@
 browser on 2026-09-12, every step timestamped, with the console recording.
 The harness and its output are in the session scratchpad; the findings below
 name the screen, the number and the line of code. Facts read off the code and
-the walk on 2026-09-12 (D-001 … D-248).*
+the walk on 2026-09-12 (D-001 … D-251).*
 
 The ask this audit was written against: **be the ski lift, the lodge and the
 mountain — for the beginner on the green run and the expert on the black
@@ -183,7 +183,7 @@ This is a decision, not a bug: closing a door moves 17 owned fields. It sits
 above the fix line deliberately. **It is the single biggest remaining cost to
 the beginner** — the lift has four queues and no sign saying which is shortest.
 
-### F7 — Express was a cliff, not a black diamond ▲ fixed (D-249)
+### F7 — Express was a cliff, not a black diamond ▲ fixed (D-252)
 
 Measured on a phone: the all-at-once view (Express became a hat of the Ledger
 under D-230) opened with **93 boxes across 21 levels, all expanded, 11,720px
@@ -193,7 +193,7 @@ diamond is steep *and groomed*.
 
 **Fix** — level 1 of each door (the totals) opens; a deeper level opens only
 when you have put a number in it, when a link points into it, or when the
-"Show every level" switch is on — one tap, remembered per device. A closed
+"Show every level" switch is on — one tap, remembered per device, and the same Advanced setting Settings offers (D-250). A closed
 level's summary says what opening it gets you and how far along it is. After
 the First Round: **6 folds open of 21, 5,229px**. The switch opens all 21 and
 survives a reload. Nothing is rebuilt; every box keeps its node (D-034).

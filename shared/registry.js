@@ -92,7 +92,7 @@
     },
     {
       id: 'income',
-      features: ['equityComp', 'matchVesting'],
+      features: ['equityComp', 'matchVesting', 'askDeeper'],
       group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources'],
       kind: 'about-you',
       needs: [],
@@ -504,6 +504,9 @@
       kind: 'about-you',
       utility: true,
       needs: [],
+      /* The all-at-once view folds its deeper levels behind the Advanced
+         switch (D-252), the same one the inline ask honours (D-250). */
+      features: ['askDeeper'],
       order: 0.5,
       title: 'The Ledger',
       blurb: 'Every number the app can hold, one line each. Six ways in and they all write the same rows: the six doors, five questions to start, the whole form at once, what has moved since last time, twenty arrangements, and the short route through.',
@@ -1608,6 +1611,7 @@
     tags: ['cashflow'],
     daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['prefs.history'] },
       subsections: [
+        { id: 'journey',    label: 'The journey' },
         { id: 'number',      label: 'Since the first snapshot' },
         { id: 'chart',       label: 'Net worth over time' },
         { id: 'inputs',      label: 'Compare and freeze' },

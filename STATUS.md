@@ -34,18 +34,30 @@ Updated: 2026-09-19
   the path is the numbers, the dashboard, then the readings; long hints
   fold behind an ⓘ; every score pillar says what is good, why, what to do;
   logged pay reaches every reading (D-246); every debt says what it really
-  costs after the deduction and inflation, and the pace to pay it (D-247).
-- **The audit (D-248, D-249; `docs/END-TO-END-AUDIT.md`).** Every room says
+  costs after the deduction and inflation, and the pace to pay it (D-247);
+  the front page leads with the level of the monthly gap and the journey
+  records what it thought at each level and what was (D-248).
+  A room asks only a question at the level its door has reached; the
+  askDeeper switch lifts it (D-250).
+- **The audit (D-251, D-252; `docs/END-TO-END-AUDIT.md`).** Every room says
   how old its numbers are and which are guesses; the example household says
   so everywhere; home opens on what you earned; one meter; the all-at-once
-  view opens at level 1 (21 → 6 folds, 11,720 → 5,229px on a phone) with a
-  remembered "show every level" switch. forms.js and a11y run again.
+  view opens at level 1 (21 → 6 folds, 11,720 → 5,229px on a phone) behind
+  the same Advanced switch D-250 uses. forms.js and a11y run again.
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
-  ~~deeper questions behind an advanced level~~ (D-249); a typed take-home pay; the
-  car's used/new and running costs; a running-balance chart on the month;
+  the car's used/new and running costs; a running-balance chart on the month;
   the Budget month view made obvious; statements in detail, each line
   expandable; the readings FIRE people expect; a plain-language lede pass.
+- **Boxes line up now (D-249).** Reported from a phone, third time asked:
+  side-by-side controls sat 16px apart on 17 pages. Labels in a row reserve
+  the same number of lines, so the boxes start level whatever a label does.
+  The reason it kept coming back was the check: `test/alignment.js` ran in
+  CI and named the very page and grid that was broken, but recognised a
+  control only by three classes — the boxes in question are bare `<select>`s
+  — and skipped, rather than failed, when it could not find one. It now
+  walks every page found on disk, finds containers by shape not by name, and
+  fails on a cell whose control it cannot see.
 
 ## Freeze
 - ON, and the merge is how it is honoured: every session leaves fewer screens.
