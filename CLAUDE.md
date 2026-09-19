@@ -36,12 +36,12 @@ Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wra
 - Reference data lives in `data/`, versioned by year. Never inline.
 - Changing a stored shape needs a compatibility note in the decision entry.
 
-## The freeze (until STATUS.md lifts it)
+## The freeze (lifted by the owner, 2026-09-19; D-267)
 
-- No new rooms, frameworks, lenses, or vocabularies.
-- If a request would add one, ask "what does this replace?" before building.
-- Prefer deleting, merging, and wiring existing rooms together.
-- Every session should leave the app with the same or fewer screens and fields.
+- New rooms, frameworks, lenses and vocabularies are allowed again.
+- What stays: every room has a place on `docs/room-map.json` (D-229), so a
+  new room is added there too, and `test/run.js` says so if it is not.
+- Still ask "what does this replace?" It is a good question, not a gate.
 
 ## Stop and ask instead of guessing
 

@@ -22,7 +22,7 @@ Updated: 2026-09-19
   card (D-202), which sits under the four headings.
 
 ## Freeze
-- ON. Loose Ends was added on the owner's brief, held under the Ledger.
+- OFF, lifted by the owner 2026-09-19 (D-267). A new room still goes on the map.
 
 ## Next (top item first; one per session)
 1. **Turn the Pages switch on.** OWNER, one click: Settings → Pages → Deploy

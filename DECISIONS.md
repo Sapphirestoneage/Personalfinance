@@ -14960,6 +14960,25 @@ where the rule says, no horizontal scroll, a clean console.
 
 ---
 
+## D-267 — The freeze is lifted
+
+**Why.** The owner, 2026-09-19: "Unfreeze the freeze."
+
+**Decision.** The freeze in `CLAUDE.md` (no new rooms, frameworks, lenses or
+vocabularies; every session leaves fewer screens) is off, and `STATUS.md`
+says so. What stays is the contract underneath it: `docs/room-map.json`
+(D-229) names every room, `test/run.js` fails on a room that is not on it,
+and "what does this replace?" remains a question worth asking. It is no
+longer a gate.
+
+**Replaces or removes.** The freeze itself. Nothing on screen.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node tools/context/build.js --check`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have
