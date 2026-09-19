@@ -161,13 +161,10 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `practiceLedger` — Practice ledger · read by skill-tree
 
-## start (17)
+## start (14)
 
 - `dob` — Date of birth · too generic to trace
 - `age` — Age · too generic to trace
-- `state` — State · too generic to trace
-- `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, wrapped, one-pager
 - `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
@@ -198,8 +195,11 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `idrShare` — Income-driven share · **no other room mentions it**
 - `forgivenessYears` — Forgiveness after · **no other room mentions it**
 
-## tax (2)
+## tax (5)
 
+- `state` — State · too generic to trace
+- `zip` — ZIP · too generic to trace
+- `filingStatus` — Filing status · read by start, expenses, cash-flow, income, financial-snapshot, statement, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, career-move, partner, wrapped, one-pager
 - `otherPreTax` — Other pre-tax, a year · **no other room mentions it**
 - `withheld` — Withheld so far · too generic to trace
 

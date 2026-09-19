@@ -140,18 +140,21 @@
       },
       format: function (v) { return v + ''; }
     },
+    /* Filing status, state and ZIP are taxes.* rows, and Tax is where they
+       change an answer, so Tax asks them and owns them. They were Start
+       Here's until it retired into the Ledger. */
     state: {
-      label: 'State', owner: 'start', anchor: 'q-about',
+      label: 'State', owner: 'tax', anchor: 'inputs',
       read: function (h) { return h.state ? Money.ok(h.state) : Money.incomplete('Not set yet.', ['state']); },
       format: function (v) { return v; }
     },
     zip: {
-      label: 'ZIP', owner: 'start', anchor: 'q-about',
+      label: 'ZIP', owner: 'tax', anchor: 'inputs',
       read: function (h) { return h.zip ? Money.ok(h.zip) : Money.incomplete('Not set: optional.', ['zip']); },
       format: function (v) { return v; }
     },
     filingStatus: {
-      label: 'Filing status', owner: 'start', anchor: 'q-about',
+      label: 'Filing status', owner: 'tax', anchor: 'inputs',
       read: function (h) {
         return h.filingStatus ? Money.ok(h.filingStatus) : Money.incomplete('Not set yet.', ['filingStatus']);
       },

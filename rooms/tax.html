@@ -14,13 +14,17 @@
 <!--
   ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-098.
 
-  1. READS   Gross annual income, filing status and state (Start Here); the
-             workplace contribution percent (Start Here); the working
-             situation, which decides whether the payroll tax is the
-             employee's FICA or both halves as self-employment tax.
+  1. READS   Gross annual income (Income); the workplace contribution
+             percent (Start Here); the working situation, which decides
+             whether the payroll tax is the employee's FICA or both halves
+             as self-employment tax.
   2. WRITES  It OWNS household.tax — otherPreTaxAnnualCents (HSA, a
              traditional IRA: pre-tax money beyond the workplace plan) and
              withheldAnnualCents (withheld or paid in estimates this year).
+             It also OWNS the three facts the tax families are keyed on:
+             filing status, state and ZIP. They were Start Here's; they are
+             taxes.* in data/ledger-rows.json and they are asked here now,
+             which is the only way ownership ever moves (D-230).
              Nothing else edits those. It does not touch income.
   3. CALLS   engines/taxroom.js — which reads the ledger's year by method
              (engines/ledger.js, D-128) when dated income entries recur,
@@ -74,8 +78,8 @@
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Pre-tax and withheld</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Your pay, filing status, state and workplace contribution come from Start Here. Leave a box blank if it does not apply — blank is none, not unanswered.</p>
+    <span class="slaf-eyebrow">Filing, state, and what is pre-tax</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Your pay and workplace contribution come from elsewhere; how you file and where you live are entered here, because this is the room they change. Leave a money box blank if it does not apply: blank is none, not unanswered.</p>
     <div id="room-inputs"></div>
   </section>
 
@@ -145,12 +149,17 @@
   function pctExact(rate) { return (Math.round(rate * 10000) / 100) + '%'; }
   var strong = function (s) { return '<strong>' + s + '</strong>'; };
 
+  /* The four the tax tables are written for; the same four the ownership
+     map formats with. */
+  var FILING = [['', 'Not said'], ['single', 'Single'], ['married_joint', 'Married, filing jointly'],
+                ['married_separate', 'Married, filing separately'], ['head_of_household', 'Head of household']];
+
   var COLOURS = { takeHome: Charts.COLORS.growth, federal: Charts.COLORS.series[0], state: Charts.COLORS.series[4], fica: Charts.COLORS.series[3], preTax: Charts.COLORS.series[1] };
 
   Room.mount({
     id: 'tax',
     tables: ['federalBrackets', 'stateBrackets', 'seTax', 'aca', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
-    reads: ['grossAnnualIncome', 'filingStatus', 'state', 'contributionPercent', 'employmentStatus'],
+    reads: ['grossAnnualIncome', 'contributionPercent', 'employmentStatus'],
 
     number: function (h, T) {
       var p = TaxRoom.picture(h, T);
@@ -159,7 +168,7 @@
         ? Money.formatCents(p.selfEmploymentTaxCents) + ' self-employment tax' + (p.ficaCents > 0 ? ' and ' + Money.formatCents(p.ficaCents) + ' FICA' : '')
         : Money.formatCents(p.ficaCents) + ' FICA';
       var sub = strong(Money.formatCents(p.federalCents)) + ' federal · '
-        + (p.stateIncluded ? strong(Money.formatCents(p.stateCents)) + ' state' : strong('state not in') + ' — ' + (p.state && p.state.reason ? p.state.reason.replace(/\.$/, '') : 'add your state in Start Here'))
+        + (p.stateIncluded ? strong(Money.formatCents(p.stateCents)) + ' state' : strong('state not in') + ' — ' + (p.state && p.state.reason ? p.state.reason.replace(/\.$/, '') : 'add your state below'))
         + ' · ' + strong(payroll) + ' on ' + Money.formatCents(p.grossCents)
         + '; marginal bracket ' + strong(pct0(p.bracket.rate))
         + (p.bracket.roomCents === null ? ', the top one' : ' with ' + strong(Money.formatCents(p.bracket.roomCents)) + ' of room before ' + pct0(p.bracket.nextRate));
@@ -193,12 +202,33 @@
     },
 
     inputs: [
+      /* The two facts the whole tax picture is keyed on. They moved here
+         from Start Here with the boxes that ask them (D-230): every room
+         that needs them reads this one, and the read-only links point at
+         #inputs. */
+      { ctl: 'filingStatus', label: 'How you file', kind: 'select', options: FILING,
+        read: function (h) { return h.filingStatus || ''; },
+        write: function (v) { Ownership.write('filingStatus', v || null); } },
+      { ctl: 'state', label: 'State', kind: 'select', options: [['', 'Not said']],
+        read: function (h) { return h.state || ''; },
+        write: function (v) { Ownership.write('state', v || null); } },
       { ctl: 'otherPreTaxAnnualCents', label: 'Other pre-tax, a year', kind: 'money', placeholder: 'e.g. 3000',
         hint: 'Beyond the workplace plan: an HSA, a traditional IRA, pre-tax premiums. Blank is none.',
         read: function (h) { return readTax(h, 'otherPreTaxAnnualCents'); }, write: function (v) { writeTax('otherPreTaxAnnualCents', v); } },
       { ctl: 'withheldAnnualCents', label: 'Withheld this year', kind: 'money', placeholder: 'e.g. 9000',
         hint: 'Federal and state income tax withheld or paid in estimates, for the whole year. Leave blank to skip the refund line.',
         read: function (h) { return readTax(h, 'withheldAnnualCents'); }, write: function (v) { writeTax('withheldAnnualCents', v); } }
+    ],
+
+    /* ZIP is optional and changes nothing in this room's arithmetic; it is
+       here because it is a taxes.* fact and this is the taxes room. Under
+       the fold so it never sits in front of the two that matter. */
+    moreLabel: 'Where exactly',
+    more: [
+      { ctl: 'zip', label: 'ZIP', kind: 'text', placeholder: 'e.g. 02139',
+        hint: 'Optional, and not used by this estimate. Rooms that price cover or childcare by area read it.',
+        read: function (h) { return h.zip || ''; },
+        write: function (v) { Ownership.write('zip', v || null); } }
     ],
 
     amounts: function (h, T) {
@@ -248,7 +278,21 @@
       }[situation] || 'The rate on the whole is the effective rate; the rate on the next dollar is the marginal one. Most decisions turn on the second.';
     },
 
-    scope: 'This room estimates; it does not file, itemise, or handle credits, capital gains from a sale, or a state’s special cases.'
+    scope: 'This room estimates; it does not file, itemise, or handle credits, capital gains from a sale, or a state’s special cases.',
+
+    after: function (h, T) {
+      /* The state list is a reference table, so it is not loaded when the
+         template builds the controls. Fill it once, then only ever set
+         .value, which is the LIVE-FORM contract (D-034). */
+      var node = document.querySelector('[data-ctl="state"]');
+      if (!node || node.options.length > 1 || !T || !T.states) return;
+      T.states.states.forEach(function (r) {
+        var o = document.createElement('option');
+        o.value = r.code; o.textContent = r.name;
+        node.appendChild(o);
+      });
+      node.value = h.state || '';
+    }
   });
 
 })();

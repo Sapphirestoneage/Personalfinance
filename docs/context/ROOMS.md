@@ -7,7 +7,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Home (3)
 
 - **ledger** — The Ledger (utility) · 2248 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-230, D-226, D-207
-- **start** — Start Here · 1000 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
+- **start** — Start Here · 1000 lines · engines: income · owns: dob, age, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1570 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
@@ -24,7 +24,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **credit** — Your Credit File · 475 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-147
 - **cant-pay** — When It Won’t All Get Paid · 529 lines · engines: projection, tier0, cashflow · D-148
 - **rollover** — The Account You Left Behind · 756 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom · D-150
-- **tax** — Tax · 258 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly · owns: otherPreTax, withheld · D-150, D-142, D-129
+- **tax** — Tax · 302 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly · owns: state, zip, filingStatus, otherPreTax, withheld · D-150, D-142, D-129
 - **variable-income** — Variable Income · 291 lines · engines: projection, tier0, selfemployed, income, ledger, variableincome · owns: incomeLow, incomeHigh, bufferMonths, variableWindow · D-128, D-113
 - **student-loans** — Student Loan Decision · 267 lines · engines: projection, tier0, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-120
 - **calendar** — Money Calendar & Pay-Later · 268 lines · engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-130, D-121

@@ -3,11 +3,11 @@ paths:
   - "rooms/tax.html"
 ---
 # Tax (`tax`)
-File: rooms/tax.html · 258 lines
+File: rooms/tax.html · 302 lines
 Engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly
-Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, se_tax_2026.json, state_brackets_2026.json
-Owns: otherPreTax, withheld
-Reads from other owners: filingStatus (start), grossAnnualIncome (start), employmentStatus (start), contributionPercent (start)
+Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, ledger-rows.json, se_tax_2026.json, state_brackets_2026.json
+Owns: state, zip, filingStatus, otherPreTax, withheld
+Reads from other owners: grossAnnualIncome (start), employmentStatus (start), contributionPercent (start)
 Latest decisions:
   - D-150 — The Account You Left Behind: four futures, one trap, one sum
   - D-142 — A room does not ask a question your situation has no answer to

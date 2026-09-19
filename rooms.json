@@ -35,9 +35,6 @@
       "writes": [
         "dob",
         "age",
-        "state",
-        "zip",
-        "filingStatus",
         "grossAnnualIncome",
         "unemployment",
         "lastPay",
@@ -700,11 +697,12 @@
       "title": "Tax",
       "file": "rooms/tax.html",
       "reads": [
-        "grossAnnualIncome",
-        "filingStatus",
-        "state"
+        "grossAnnualIncome"
       ],
       "writes": [
+        "state",
+        "zip",
+        "filingStatus",
         "otherPreTax",
         "withheld"
       ],

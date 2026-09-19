@@ -5204,8 +5204,22 @@ section('Eleven cards');
     check('three characters are asked', Schema.TAX_CHARACTERS.map(t => t.id).join(','), 'pretax,roth,taxable');
     check('a new household has not answered about debt', Schema.createHousehold({}).meta.hasDebt, null);
     check('the demo answers every intake field', Progress.forRoom('start', Demo.build()).missing.length, 0);
-    ['contributionPercent', 'highestDeductible', 'hasDebt', 'dob', 'state', 'employerMatch'].forEach(f =>
+    ['contributionPercent', 'highestDeductible', 'hasDebt', 'dob', 'employerMatch'].forEach(f =>
       check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
+    /* The taxes.* facts left Start Here for the room they change: D-234. */
+    ['state', 'zip', 'filingStatus'].forEach(f =>
+      check(`${f} is owned by Tax`, Ownership.field(f).owner, 'tax'));
+    ['state', 'zip', 'filingStatus'].forEach(f =>
+      check(`${f} lands on Tax's inputs card`, Ownership.field(f).anchor, 'inputs'));
+    {
+      const tax = fs.readFileSync(path.join(ROOT, 'rooms/tax.html'), 'utf8');
+      checkTrue('Tax asks all three, which is how ownership moves',
+        /ctl: 'filingStatus'/.test(tax) && /ctl: 'state'/.test(tax) && /ctl: 'zip'/.test(tax));
+      checkTrue('and writes them through the owner path',
+        (tax.match(/Ownership\.write\('(filingStatus|state|zip)'/g) || []).length === 3);
+      checkTrue('Start Here no longer claims them',
+        !/taxes\.filingStatus/.test(JSON.stringify(Registry.byId('start').daite.writes)));
+    }
     check('Sleep At Night reads the deductible as a chip',
       fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
     check('Where It Goes reads the contribution as a chip',

@@ -13962,6 +13962,44 @@ redirects and the deep links `#draftt`, `#out-rate`, `#out-wealth`, `#habit`
 and `#guess` loaded at 390px with a clean console.
 
 
+## D-234 — Where Start Here's 17 field owners go
+
+**Why.** Start Here retires into the Ledger (D-229), and it owns 17 shared
+fields, more than any other room. STATUS.md has carried "who owns them" as
+the owner decision blocking the last room of step 1 since the merge began.
+
+**Decision.** `data/ledger-rows.json` already answers it: every row declares
+its DAITE family, and six name a room in `askIn`. Family decides, `askIn`
+breaks the tie, and the "you" facts go to Settings rather than the Ledger so
+the Ledger stays a reading of money rows. `age` and `capturingFullMatch` are
+computed (from `dob`, and from `contributionPercent` against `employerMatch`)
+so they anchor to their inputs and own nothing: 17 owners, 15 placements.
+
+    tax          state, zip, filingStatus              taxes.*
+    income       grossAnnualIncome                     income.*
+    accounts     employerMatch, contributionPercent    the q-plan card, whole
+    statement    cashSavings, investments              assets.*
+    runway       unemployment, lastPay,                askIn: runway
+                 highestDeductible
+    debt-payoff  hasDebt                               askIn: debt-payoff
+    settings     dob, employmentStatus, dependents     you.*
+
+Each row ships in its own commit, and only ever with the box that asks the
+question (D-230). `shared/ownership.js` and `shared/registry.js` move in the
+same commit as the box, never the next one.
+
+**Replaces or removes.** Start Here, once every row has left: one registry
+room (77 → 76) and one redirect carrying its deep links. Nothing gains a
+second editor; the Ledger's doors keep writing through `Ownership.write`,
+which routes to the owner's write path wherever it is called from.
+
+**Stored shape.** No change. Not one path in `slaf.household.v2` moves; only
+which room may edit it does.
+
+**Verified.** Per commit: `node test/run.js`, `node test/forms.js`, and the
+phone walk of the room that gained the box.
+
+
 ---
 
 # The Dungeons & Dividends entries

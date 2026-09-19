@@ -1237,6 +1237,29 @@ const CASES = [
     }
   },
   {
+    /* The same room's ZIP, which is typed rather than picked. */
+    room: '/rooms/tax.html',
+    container: '#inputs',
+    seed: 'demo',
+    prepare: async (page) => {
+      /* The ZIP sits under the fine-tune fold, closed by default. Open it
+         the way a finger would; the box itself is never rebuilt. */
+      await page.evaluate(() => {
+        const d = document.querySelector('#inputs details.room-more');
+        if (d) d.open = true;
+      });
+      await page.waitForTimeout(200);
+    },
+    fields: [
+      { sel: '[data-ctl="zip"]', type: '02139' }
+    ],
+    expect: async (page) => {
+      const zip = await page.evaluate(() =>
+        (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).zip);
+      return [['the ZIP is stored as five digits', zip, '02139']];
+    }
+  },
+  {
     /* ROTH CONVERSIONS BEFORE 65 (J8, D-216): four what-if boxes in the
        HTML, re-rendered on every keystroke into siblings, never rebuilt. */
     room: '/rooms/roth-aca.html',
@@ -1406,6 +1429,31 @@ const CASES = [
    select loses the tap the same way; there is nothing to type, so the check
    is that the node survives and the choice sticks. */
 const SELECT_CASES = [
+  {
+    /* TAX (D-234): filing status and state moved here from Start Here, and
+       the state list is filled from a reference table AFTER the template
+       builds the control. Filling options is not rebuilding the node, and
+       this is the check that keeps it that way. */
+    room: '/rooms/tax.html',
+    container: '#inputs',
+    seed: 'demo',
+    prepare: async (page) => {
+      /* Wait for the state list to arrive; before it does there is one
+         option and nothing to pick. */
+      await page.waitForFunction(() => {
+        const n = document.querySelector('[data-ctl="state"]');
+        return n && n.options.length > 50;
+      }, null, { timeout: 5000 });
+    },
+    picks: [
+      ['[data-ctl="filingStatus"]', 'married_joint'],
+      ['[data-ctl="state"]', 'NC']
+    ],
+    read: () => {
+      const h = JSON.parse(localStorage.getItem('slaf.household.v2'));
+      return { filingStatus: h.filingStatus, state: h.state };
+    }
+  },
   {
     room: '/rooms/values.html',
     container: '#assign-list',
