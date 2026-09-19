@@ -109,7 +109,7 @@ module.exports = function (t) {
 
   /* N/A in an owner room, and the chip everywhere else (D-130). */
   const acc = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
-  checkTrue('the Ledger offers N/A on the workplace plan and the HSA rows, through the spine (D-307)', /NA_ROWS = \['contributionPercent', 'hsaContributed'\]/.test(acc) && /Ownership\.naButton\(row\.id/.test(acc) && /Spine\.setNotApplicable\(/.test(acc));
+  checkTrue('the Ledger offers N/A on the workplace plan and the HSA rows, through the spine (D-313)', /NA_ROWS = \['contributionPercent', 'hsaContributed'\]/.test(acc) && /Ownership\.naButton\(row\.id/.test(acc) && /Spine\.setNotApplicable\(/.test(acc));
   const naHtml = Ownership.naButton('hsaContributed', hh({ notApplicable: { hsaContributed: true } }));
   checkTrue('the button reads its state from the household', /aria-pressed="true"/.test(naHtml) && /data-na-field="hsaContributed"/.test(naHtml) && /aria-pressed="false"/.test(Ownership.naButton('hsaContributed', hh())));
   checkTrue('a chip for a field marked N/A says so instead of asking for it', /slaf-owned--na/.test(Ownership.chip('hsaContributed', hh({ notApplicable: { hsaContributed: true } }), 'foo-ladder')) && /You marked this not applicable/.test(Ownership.chip('hsaContributed', hh({ notApplicable: { hsaContributed: true } }), 'foo-ladder')));

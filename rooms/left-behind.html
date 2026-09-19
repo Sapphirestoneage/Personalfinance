@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC: SPEC.md §11. On the frozen template (D-097). DECISIONS.md
-  D-290 (the Statement took the account you left behind), D-307 (a room
+  D-290 (the Statement took the account you left behind), D-313 (a room
   again, carved from it). Registry: left-behind.
 
     #no-write      nothing typed here is saved, said first
@@ -223,7 +223,7 @@
 <script src="../shared/room.js"></script>
 
 <script>
-/* ---- Left Behind: was Rollover, then the Statement's plan-you-left-behind reading (D-290), a room again since D-307. ---- */
+/* ---- Left Behind: was Rollover, then the Statement's plan-you-left-behind reading (D-290), a room again since D-313. ---- */
 (function () {
   'use strict';
   /* No SLAF.Spine handle here on purpose: this room reads the household
@@ -271,7 +271,7 @@
      is no Spine.set anywhere in this file, deliberately. */
   var whatIf = { balanceCents: null, leftAtAge: null };
   /* A plan tagged in the Ledger as sitting at a former employer (the
-     old_401k account type, D-307) proposes its value in the box: read from
+     old_401k account type, D-313) proposes its value in the box: read from
      the household, never written back, and typing over it wins. */
   function taggedBalance() {
     var S = SLAF.Spine ? SLAF.Spine.getProfile() : null;

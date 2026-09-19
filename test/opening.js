@@ -1,5 +1,5 @@
 /* ==========================================================================
-   test/opening.js — the five-input opening, walked (D-306).
+   test/opening.js — the five-input opening, walked (D-312).
    --------------------------------------------------------------------------
    The brief's quality gates, measured rather than promised: for each of the
    four synthetic households, a fresh browser at 360px types the five inputs

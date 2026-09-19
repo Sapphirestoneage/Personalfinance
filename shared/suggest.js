@@ -339,7 +339,7 @@
         how: Math.round(rule.percentOfBalance * 100) + '% of the balance or $' + rule.floorDollars + ', whichever is more: a common issuer convention, until the statement minimum is entered.',
         sources: ['data/debt_rules.json'] };
     },
-    /* Take-home from the gross (D-306): the one estimate the app already
+    /* Take-home from the gross (D-312): the one estimate the app already
        makes, offered as a guess in the opening's box until what actually
        lands is typed. Nothing to suggest once it is typed or logged. */
     takeHomeFromGross: function (c) {

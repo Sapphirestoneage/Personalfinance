@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/opening.js — the five-input opening. DECISIONS.md D-306.
+   engines/opening.js — the five-input opening. DECISIONS.md D-312.
    --------------------------------------------------------------------------
    One question first: "When can I stop needing a paycheck, and what moves
    that date?" Five facts answer it — age, take-home, spending, what is

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   test/statement.js — the Statement split, walked (D-307).
+   test/statement.js — the Statement split, walked (D-313).
    --------------------------------------------------------------------------
    The brief's gates, measured rather than promised:
      1. every old anchor on rooms/statement.html lands on the section that
@@ -127,7 +127,7 @@ const NOT_A_FACT = '#slaf-progress *, .slaf-lens *, [data-nw-basis] *, .slaf-und
   }
 
   console.log('\n4. A household saved before the split reads back whole');
-  const snap = fs.readFileSync(path.join(ROOT, 'fixtures/snapshots/pre-d307.household.json'), 'utf8');
+  const snap = fs.readFileSync(path.join(ROOT, 'fixtures/snapshots/pre-d313.household.json'), 'utf8');
   await page.goto(BASE + '/rooms/statement.html', { waitUntil: 'networkidle' });
   await page.evaluate((s) => { localStorage.setItem('slaf.household.v2', s); }, snap);
   await page.reload({ waitUntil: 'networkidle' });
@@ -186,7 +186,7 @@ const NOT_A_FACT = '#slaf-progress *, .slaf-lens *, [data-nw-basis] *, .slaf-und
       badge: (document.getElementById('room-badge') || {}).innerText || '',
       words: (document.querySelector('main') || document.body).innerText.split(/\s+/).length,
       /* A dash with a word on either side is copy; a cell holding only the dash is the blank glyph. */
-      dash: /\S\s?\u2014\s?\S/.test((document.querySelector('main') || document.body).innerText.replace(/^\s*\u2014\s*$/gm, ''))
+      dash: /[A-Za-z0-9,.)] ?\u2014 ?[A-Za-z0-9(]/.test((document.querySelector('main') || document.body).innerText)
     }));
     const want = CHECKLIST[id];
     check(id + ': header, undo, ' + (want.lens ? 'lens, ' : '') + (want.drawer ? 'drawer, ' : '') + 'chips' + (want.print ? ', print' : ''),

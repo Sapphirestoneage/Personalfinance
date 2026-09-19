@@ -10,5 +10,5 @@ Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), employmentStatus (start), contributionPercent (start), rothContributed (ledger), hsaContributed (ledger), onHdhp (ledger), hsaFamilyPlan (ledger), +2 more
 Latest decisions:
-  - D-307 — The Statement is four sections; the facts it asked for are the Ledger's
+  - D-313 — The Statement is four sections; the facts it asked for are the Ledger's
 Full context: node tools/context/pack.js which-account

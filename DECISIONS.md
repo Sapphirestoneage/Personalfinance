@@ -16261,7 +16261,7 @@ protected save with its fingerprint, the sealed file chosen back and refused
 on the wrong passphrase, then opened; every sample file dropped through the
 one intake landing in its own panel.
 
-## D-306 — The five-input opening: take-home, a band, a coast date, the levers
+## D-312 — The five-input opening: take-home, a band, a coast date, the levers
 
 **Why.** The owner's build prompt: the product answers one question first,
 "when can I stop needing a paycheck, and what moves that date?", for people
@@ -16312,7 +16312,7 @@ box, undo and redo on an input); `test/forms.js` on the Ledger; render,
 features, sidebar, onefact, xss, comeback; the corpus and the property
 suite with `opening.test.js`.
 
-## D-307 — The Statement is four sections; the facts it asked for are the Ledger's
+## D-313 — The Statement is four sections; the facts it asked for are the Ledger's
 
 **Why.** The owner's build prompt, Part 2: facts are entered in the Ledger
 only and rooms are views. The Statement held four readings, fifteen cards
@@ -16323,7 +16323,7 @@ target mix. Someone in their twenties met a balance sheet before a story.
 **Decision.** `rooms/statement.html` keeps its filename and holds four
 sections, nothing to type: net worth in plain words ("counting only what
 you are sure of" on screen, "confidence-weighted" in the drawer), the pay
-still to come beside it and never added (D-309), the liquidity ladder with
+still to come beside it and never added (D-315), the liquidity ladder with
 property as a slow rung and a Roth with no basis as a look-it-up row citing
 Form 5498, and the order-of-operations step the next dollar lands on. Every
 per-account fact is a row in the Ledger's A door (`assetValue`,
@@ -16355,15 +16355,15 @@ room map counts thirty-six.
 **Stored shape.** No change to any field. Six rows read fields the schema
 already carried (`confidence`, `cashFlowMonthlyCents`, `hassle`,
 `accessAgeOverride`, `retirement.onHdhp`, `retirement.hsaFamilyPlan`). One
-new account type, `old_401k` (D-310). A household saved before this reads
-back whole; `fixtures/snapshots/pre-d307.household.json` is the proof.
+new account type, `old_401k` (D-316). A household saved before this reads
+back whole; `fixtures/snapshots/pre-d313.household.json` is the proof.
 
 **Verified.** `node test/run.js` (33,987); `node test/statement.js`;
 `node test/forms.js` (the Ledger's A door, Left Behind); render, features,
 sidebar, onefact, xss, comeback, alignment, opening; the corpus and the
 property suite.
 
-## D-308 — The worst plausible year is the Cushion's
+## D-314 — The worst plausible year is the Cushion's
 
 **Why.** The Statement priced a bad year beside the balance sheet; the
 question it answers, what cash has to cover, is the one the Cushion's
@@ -16384,7 +16384,7 @@ the Cushion that sent people to it.
 **Verified.** `node test/run.js`; `node test/statement.js` (the card prices
 a saved household); the features gate on the Cushion.
 
-## D-309 — The pay still to come, beside net worth, on a switch that defaults by age
+## D-315 — The pay still to come, beside net worth, on a switch that defaults by age
 
 **Why.** At twenty-five the biggest thing most people own is the pay still
 ahead of them, and a balance sheet that omits it says the opposite of the
@@ -16411,7 +16411,7 @@ when the person toggles it.
 **Verified.** `node test/run.js` (the switch on at 32 and off at 45; the
 engine with and without `opts`); `node test/statement.js`.
 
-## D-310 — A plan at a former employer is an account type, and Left Behind reads it
+## D-316 — A plan at a former employer is an account type, and Left Behind reads it
 
 **Why.** The brief asks Left Behind to surface when an account is tagged as
 a former employer's plan. `Schema.ACCOUNT_TYPES` had no such tag, so the

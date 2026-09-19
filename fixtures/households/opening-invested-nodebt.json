@@ -312,7 +312,7 @@
     "name": "Opening: 28, $150k invested, no debt",
     "story": "28, $6,000 take-home a month, spends $3,500, $150,000 invested, $20,000 cash, no debt.",
     "sphere": 1,
-    "lane": "the five-input opening (D-306)",
+    "lane": "the five-input opening (D-312)",
     "known": {
       "asOf": "2026-09-19",
       "tolerance": 0.01,

@@ -287,7 +287,7 @@ const CASES = [
     }
   },
   {
-    /* The target mix is entered in the Ledger's A door since D-307; The Mix
+    /* The target mix is entered in the Ledger's A door since D-313; The Mix
        reads it. The four rows sit at level 3, so every level is opened. */
     room: '/rooms/ledger.html#all-at-once',
     container: '#x-A',
@@ -600,7 +600,7 @@ const CASES = [
     }
   },
   {
-    /* THE ACCOUNT LAYER (D-307): an account is named, valued, typed and
+    /* THE ACCOUNT LAYER (D-313): an account is named, valued, typed and
        rated in the Ledger's A door and nowhere else. The Statement reads it. */
     room: '/rooms/ledger.html#all-at-once',
     container: '#x-A',
@@ -1197,7 +1197,7 @@ const CASES = [
     }
   },
   {
-    /* THE OPENING (D-306): five inputs on one screen, all in the markup from
+    /* THE OPENING (D-312): five inputs on one screen, all in the markup from
        boot. Typing in every box has to survive the taps between them, the
        debt rows are drawn on the yes tap and must not redraw under a finger,
        and every box writes through its owner. */

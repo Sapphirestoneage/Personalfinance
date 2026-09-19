@@ -130,7 +130,7 @@
    * age you have not reached goes to "never". With no age the gate cannot
    * be applied and the result says so rather than pretending.
    */
-  /* Property and other things are SLOW, not never (D-307): a house or a
+  /* Property and other things are SLOW, not never (D-313): a house or a
      business turns into money in months, through a sale or by borrowing
      against it. Only money behind an age gate is "never" (not without a
      penalty or a birthday), and even that is named as locked. */

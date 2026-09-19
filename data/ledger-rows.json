@@ -282,7 +282,7 @@
       "askIn": null,
       "moves": true,
       "unlocks": "the savings rate from take-home, the FI date range and the coast date, before any tax figure is known",
-      "note": "The opening asks take-home rather than gross (D-306): the audience knows what lands, not what is withheld. Stored as a month; the per-paycheck figure and its cadence are kept beside it so the box refills as typed. Logged paychecks beat it; it beats the estimate from gross."
+      "note": "The opening asks take-home rather than gross (D-312): the audience knows what lands, not what is withheld. Stored as a month; the per-paycheck figure and its cadence are kept beside it so the box refills as typed. Logged paychecks beat it; it beats the estimate from gross."
     },
     {
       "id": "lastPay",
@@ -683,7 +683,7 @@
       "minutes": 0.5,
       "repeat": "assets",
       "family": "assets",
-      "note": "Where the asset sits (D-251); entered in the Ledger’s A door, the one place an account is edited (D-307).",
+      "note": "Where the asset sits (D-251); entered in the Ledger’s A door, the one place an account is edited (D-313).",
       "door": "A",
       "level": 4,
       "round": null,
@@ -730,7 +730,7 @@
         "other"
       ],
       "family": "assets",
-      "note": "Where the asset sits (D-251); entered in the Ledger’s A door, the one place an account is edited (D-307).",
+      "note": "Where the asset sits (D-251); entered in the Ledger’s A door, the one place an account is edited (D-313).",
       "door": "A",
       "level": 2,
       "round": null,
@@ -764,7 +764,7 @@
         "unknown"
       ],
       "family": "assets",
-      "note": "The orientation 15.3 and the pile 15.8 read; entered in the Ledger’s A door (D-307).",
+      "note": "The orientation 15.3 and the pile 15.8 read; entered in the Ledger’s A door (D-313).",
       "door": "A",
       "level": 2,
       "round": null,
@@ -847,7 +847,7 @@
         4
       ],
       "level": 2,
-      "note": "The confidence scale in data/access_rules.json; the Statement counts only what you are sure of (D-066, D-307).",
+      "note": "The confidence scale in data/access_rules.json; the Statement counts only what you are sure of (D-066, D-313).",
       "unlocks": "a net worth that counts only what you are sure of"
     },
     {
@@ -1016,7 +1016,7 @@
       "path": "you.cover.hdhp",
       "label": "On a high-deductible health plan",
       "appliesWhen": "always",
-      "note": "HSA-eligible or not (stored at retirement.onHdhp); asked here since the Statement stopped asking (D-307).",
+      "note": "HSA-eligible or not (stored at retirement.onHdhp); asked here since the Statement stopped asking (D-313).",
       "unlocks": "whether an HSA is open to you at all"
     },
     {
@@ -1036,7 +1036,7 @@
       "path": "you.cover.hsaFamily",
       "label": "Family coverage on that plan",
       "appliesWhen": "cover.hdhp",
-      "note": "Family coverage roughly doubles the HSA limit (stored at retirement.hsaFamilyPlan). D-307.",
+      "note": "Family coverage roughly doubles the HSA limit (stored at retirement.hsaFamilyPlan). D-313.",
       "unlocks": "the HSA limit that applies to you"
     },
     {

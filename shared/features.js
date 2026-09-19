@@ -91,7 +91,7 @@
     if (f.scope === 'situation') return !!situationSays(id, household);
     var stored = Prefs ? Prefs.get(prefKey(id), null) : null;
     if (stored === true || stored === false) return stored;
-    /* A default that depends on the household (D-307): the one fixed phrase
+    /* A default that depends on the household (D-313): the one fixed phrase
        so far. Once the person toggles the switch, their choice wins. */
     if (f.defaultWhen === 'primary adult is under 40') {
       var age = Schema && Schema.primaryAge ? Schema.primaryAge(household || {}) : null;

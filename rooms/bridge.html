@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC: SPEC.md §11. DECISIONS.md D-307 (carved from the Statement).
+  ROOM SPEC: SPEC.md §11. DECISIONS.md D-313 (carved from the Statement).
   Registry: bridge.
 
     #bridge      years between the FI date at the current pace and 59½,
@@ -166,7 +166,7 @@
   }
   function ledgerLink(anchor, text) { return '<a href="' + esc(Ownership.linkTo('ledger', anchor, ROOM_ID)) + '">' + esc(text) + ' →</a>'; }
   /* The badge: which sphere of the Ledger this room reads most, and how
-     long it takes to read (D-307). Both from the registry; the sphere's
+     long it takes to read (D-313). Both from the registry; the sphere's
      name from data/spheres.json. */
   function badge() {
     var r = SLAF.Registry.byId(ROOM_ID);

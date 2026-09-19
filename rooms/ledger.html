@@ -149,7 +149,7 @@
   #view-since .moved.is-down { color: var(--color-caution); }
   #view-shelves section[id] { scroll-margin-top: var(--space-4); }
 
-  /* ---- The opening, in place of Round 1 (D-306) ---------------------------
+  /* ---- The opening, in place of Round 1 (D-312) ---------------------------
      Five inputs on one screen, the answer under them, live. The card of
      inputs is drawn once (D-034); the debt rows are the one list, and they
      redraw only when a row comes or goes. Everything reads at 360px: a
@@ -671,7 +671,7 @@
   <section id="view-round1" hidden>
   <p class="slaf-lede" id="round-1">Five numbers, one screen. Then the date work becomes optional, and what moves it.</p>
 
-  <!-- THE FIVE INPUTS (D-306). Drawn once and never redrawn, like the rest
+  <!-- THE FIVE INPUTS (D-312). Drawn once and never redrawn, like the rest
        of this page: the debt rows below are the one list, and they are
        redrawn only when a row is added or removed, on that gesture, never
        while a finger is in one (D-034). Every box writes through its owner
@@ -1238,7 +1238,7 @@
     var m = /^#door-(D|A|I|T|E|you)$/.exec(location.hash || '');
     showDoor(view === 'view-doors' && m ? m[1] : null);
     /* A deep link into a view the browser could not scroll to while it was
-       hidden: every room links here for a row now (D-307), so the target
+       hidden: every room links here for a row now (D-313), so the target
        is opened and brought to the top once its view is on. Only the door
        hashes (#x-A) are reached this way; a row's own hash is not a link. */
     var target = /^#x-(D|A|I|T|E|you)$/.test(location.hash || '') ? el(location.hash.slice(1)) : null;
@@ -1302,7 +1302,7 @@
 <script>
 (function () {
   'use strict';
-  /* ---- The opening (D-306): five inputs on one screen, the answer under them.
+  /* ---- The opening (D-312): five inputs on one screen, the answer under them.
      Writes go through Ownership.write, each to its owner; nothing here is a
      second store. The answer is engines/opening.js's, repainted on every
      change of the household. */
@@ -1561,7 +1561,7 @@
     if (ca) ca.addEventListener('change', function () { var n = Number(ca.value); SESSION.coastTargetAge = isFinite(n) && n > 0 ? n : null; render(); });
   }
   /* The band, kept: one journal line a day when it moves, so a later
-     month can say whether the range is tightening (D-306). The journal is
+     month can say whether the range is tightening (D-312). The journal is
      a record of a reading, never an input. */
   function recordBand(r) {
     if (!r.band.hasDate || r.band.alreadyThere) return;
@@ -1694,7 +1694,7 @@
   var TABLES = null;
   var NODES = {};        /* rowId or rowId:itemId → { row, el, input, sug, saved } */
   var LISTS = { debts: { kind: 'debt', rows: ['debtBalance', 'debtRate', 'debtMinPayment'], label: 'Debts', level: 2, door: 'D' },
-                /* The account layer (D-307): every per-account fact the Statement used to edit, entered here and nowhere else. */
+                /* The account layer (D-313): every per-account fact the Statement used to edit, entered here and nowhere else. */
                 assets: { kind: 'asset', rows: ['assetValue', 'assetAccountType', 'assetCharacter', 'assetTier', 'assetConfidence', 'assetCostBasis', 'assetCashFlow', 'assetHassle', 'assetAccessAge'], label: 'Accounts and things owned', level: 2, door: 'A' },
                 incomeSources: { kind: 'incomeSource', rows: ['grossAnnualIncome', 'incomeType', 'paySurvives'], label: 'Sources of pay', level: 1, door: 'I' },
                 annualLines: { kind: 'annualLine', rows: ['annualLine'], label: 'Once-a-year costs', level: 3, door: 'E' } };
@@ -1770,7 +1770,7 @@
      person types, never on a computed one. */
   /* The rows a household may mark Not applicable (D-130): no workplace plan
      at all, no HSA whatever the plan. The mark lives on the row here since
-     the Statement stopped asking (D-307); every room reads it as a chip. */
+     the Statement stopped asking (D-313); every room reads it as a chip. */
   var NA_ROWS = ['contributionPercent', 'hsaContributed'];
   function statesHtml(row) {
     if (row.kind === 'computed') return '';

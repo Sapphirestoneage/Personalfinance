@@ -7,7 +7,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script>
-/* ---- OLD ANCHORS GO WHERE THEIR SECTION WENT (D-307) -----------------------
+/* ---- OLD ANCHORS GO WHERE THEIR SECTION WENT (D-313) -----------------------
    The Statement used to hold four readings and fifteen cards; it holds four
    sections now, and the rest moved to rooms of their own. Every deep link
    that is out in the world still lands: this runs in the head, before a
@@ -55,7 +55,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC: SPEC.md §11. DECISIONS.md D-101, D-228, D-278, D-307 (the split).
+  ROOM SPEC: SPEC.md §11. DECISIONS.md D-101, D-228, D-278, D-313 (the split).
   Registry: statement.
 
   FOUR SECTIONS, TWO PHONE SCREENS, NOTHING TO TYPE.
@@ -73,7 +73,7 @@
   Everything that used to be typed here (each account's value, kind, pile,
   confidence, basis; the Roth and HSA contributions; the marginal rate; the
   target mix) is entered in the Ledger's A and T doors now and nowhere else
-  (D-307). The bridge, the bracket comparison, the target mix, the three
+  (D-313). The bridge, the bracket comparison, the target mix, the three
   documents and the plan you left behind are rooms of their own; the worst
   plausible year is the Cushion's. The head script above forwards every old
   anchor.
@@ -165,7 +165,7 @@
         <span class="big" id="nw-plain">—</span>
         <span class="sub" id="nw-plain-sub"></span>
       </div>
-      <!-- 2. HUMAN CAPITAL: behind the humanCapital switch (D-307). The script
+      <!-- 2. HUMAN CAPITAL: behind the humanCapital switch (D-313). The script
            removes this cell, not hides it, when the switch is off. -->
       <section class="figure-cell" id="human-capital">
         <span class="cap">Pay still to come</span>
@@ -426,7 +426,7 @@
     var T = TABLES, rows = [];
     var hc = Features.on('humanCapital', h) ? humanCapital(h) : null;
     rows.push('<li><strong>Counting only what you are sure of</strong> is the confidence-weighted net worth: each account times the weight for how sure you are of it (guaranteed in full, 85% or better at 0.85, real but not to count on at half, probably zero at nothing). data/confidence_weights.json v' + esc(T.confidenceWeights.version) + ' (' + esc(T.confidenceWeights.confidence) + '). Shown beside the plain figure, never instead of it.</li>');
-    rows.push('<li><strong>How fast you could reach each pile</strong> follows data/access_rules.json v' + esc(T.accessRules.version) + ' (' + esc(T.accessRules.confidence) + '): the tier each kind sits in, and the access age behind retirement money. Property and other things are slow, not never (D-307).</li>');
+    rows.push('<li><strong>How fast you could reach each pile</strong> follows data/access_rules.json v' + esc(T.accessRules.version) + ' (' + esc(T.accessRules.confidence) + '): the tier each kind sits in, and the access age behind retirement money. Property and other things are slow, not never (D-313).</li>');
     rows.push('<li><strong>Where the next dollar lands</strong> is the order of operations in data/foo_rules.json v' + esc(T.fooRules.version) + ' (' + esc(T.fooRules.confidence) + '), walked by engines/foo.js.</li>');
     if (hc) {
       rows.push('<li><strong>Pay still to come</strong> is your take-home a year, growing ' + esc(Money.formatRate(T.opening.raiseRateReal, { decimals: 0 })) + ' a year in real terms, discounted at the likely real return of ' + esc(Money.formatRate(T.opening.realReturns.likely, { decimals: 0 }))

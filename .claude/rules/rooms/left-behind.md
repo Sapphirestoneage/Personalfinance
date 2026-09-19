@@ -9,7 +9,7 @@ Reference data: access_rules.json, effective_tax_rates_2026.json, expense_catego
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), marginalRate (ledger), retireAge (fire)
 Latest decisions:
-  - D-310 — A plan at a former employer is an account type, and Left Behind reads it
-  - D-307 — The Statement is four sections; the facts it asked for are the Ledger's
+  - D-316 — A plan at a former employer is an account type, and Left Behind reads it
+  - D-313 — The Statement is four sections; the facts it asked for are the Ledger's
   - D-150 — The Account You Left Behind: four futures, one trap, one sum
 Full context: node tools/context/pack.js left-behind

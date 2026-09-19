@@ -285,7 +285,7 @@
       href: 'rooms/statement.html',
       tier: 1,
       tags: ['debt'],
-      /* Four sections since D-307; it writes nothing. The account layer it
+      /* Four sections since D-313; it writes nothing. The account layer it
          used to edit is the Ledger's; the bridge, the account comparison,
          the target mix, the documents and the plan left behind are rooms of
          their own, and the worst plausible year is the Cushion's. */
@@ -293,7 +293,7 @@
                /* 'assets' here is the two computed readings it owns, net
                   worth and net worth counting only what you are sure of
                   (shared/ownership.js). It enters nothing: the account
-                  layer is the Ledger's (D-307). */
+                  layer is the Ledger's (D-313). */
                writes: ['assets'] },
       /* Replaces Net Worth (D-069); rooms/net-worth.html redirects here. */
       subsections: [
@@ -305,7 +305,7 @@
         { id: 'assumptions',   label: 'Assumptions' }
       ]
     },
-    /* ---- Carved out of the Statement (D-307). Each replaces a reading or a
+    /* ---- Carved out of the Statement (D-313). Each replaces a reading or a
        card the Statement had, so the count of screens is the same; each
        reads the Ledger and writes nothing. `sphere` is the sphere whose rows
        it reads most; `minutes` is how long it takes to read, not to fill. ---- */
@@ -494,7 +494,7 @@
       daite: { reads: ["assets","assets.allocation","assets.cashCents","assets.contributions.hsa","assets.contributions.pretax","assets.contributions.roth","assets.invested","assets.property","debt.items","debt.items[].minimumCents","debt.items[].plan","debt.none","expenses","expenses.floor","expenses.giving","expenses.insurance","expenses.log","expenses.months","expenses.needs.accommodation","expenses.needs.food","expenses.needs.transportation","expenses.shared","expenses.wants","expenses.wants.therapy","income.cadence","income.future","income.grossAnnualCents","income.ledger","income.sources[].benefit","income.sources[].employerMatch","income.variable","taxes.filingStatus","taxes.marginalRate","taxes.otherPreTax","taxes.state","taxes.withheld","taxes.zip","you.cover","you.dependents","you.dob","you.estate","you.partner","you.situation"],
                /* The opening, all at once and since last time each write
                   through Ownership.write, which is the owner's own path: one
-                  record, never a second copy (D-230). Since D-307 the Ledger
+                  record, never a second copy (D-230). Since D-313 the Ledger
                   is also the owner of the account layer the Statement used to
                   edit: each account's value, type, character, pile, confidence,
                   basis, cash flow, hassle and access age; the Roth and HSA
@@ -1144,7 +1144,7 @@
      reached lazily because the gate loads after the registry. */
   var REQUIRES = {
     /* Where It Goes became The Statement's where-it-lands reading (D-278)
-       and then Which Account, a room again (D-307). It requires nothing:
+       and then Which Account, a room again (D-313). It requires nothing:
        Roth against Traditional is a question for anyone with earned income,
        and the Solo 401(k) card is for the self-employed, whom the retirement
        branch would have hidden it from. The Statement requires nothing

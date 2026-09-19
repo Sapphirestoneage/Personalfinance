@@ -336,7 +336,7 @@
     "name": "Opening: 23, nothing invested, student debt",
     "story": "23, $3,800 take-home a month typed in the opening, spends $3,000, $2,000 in cash, nothing invested, $28,000 of student loans at 6.5%, saving $800 a month.",
     "sphere": 1,
-    "lane": "the five-input opening (D-306)",
+    "lane": "the five-input opening (D-312)",
     "known": {
       "asOf": "2026-09-19",
       "tolerance": 0.01,

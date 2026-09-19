@@ -9,5 +9,5 @@ Reference data: effective_tax_rates_2026.json
 Owns: nothing
 Reads from other owners: allocationStocks (ledger), allocationBonds (ledger), allocationCash (ledger), rebalanceBand (ledger)
 Latest decisions:
-  - D-307 — The Statement is four sections; the facts it asked for are the Ledger's
+  - D-313 — The Statement is four sections; the facts it asked for are the Ledger's
 Full context: node tools/context/pack.js the-mix

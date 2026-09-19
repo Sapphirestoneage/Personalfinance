@@ -170,7 +170,7 @@
       applies: function (h) { return !(Schema.isUnemployed(h) && !Money.isOk(Schema.grossAnnualIncomeCents(h))); },
       notApplicableBecause: 'Between jobs — the runway is the number that matters now.'
     },
-    /* Take-home a month, typed as such in the opening (D-306). The Ledger
+    /* Take-home a month, typed as such in the opening (D-312). The Ledger
        owns it: it is the one room facts are entered in, and the opening is
        its first view. The write takes the month; ctx.per and ctx.typedCents
        keep the figure as it was typed so the box refills the same way. */
@@ -260,7 +260,7 @@
         return Money.incomplete('Not answered yet.', ['hasDebt']);
       },
       format: function (v) { return v ? 'Yes' : 'None'; },
-      /* Yes or no, through the owner (D-306): a no clears nothing listed;
+      /* Yes or no, through the owner (D-312): a no clears nothing listed;
          a listed debt is a yes by implication either way. */
       write: function (v) { return Spine.set('meta.hasDebt', v === null || v === undefined ? null : !!v, 'Any debt'); }
     },
@@ -768,7 +768,7 @@
     },
 
     /* Everything owned that the opening does not ask about, a house, a car,
-       anything else, is a line in the Ledger's A door since D-307: the
+       anything else, is a line in the Ledger's A door since D-313: the
        Statement reads the list and never edits it. */
     otherAssets: {
       label: 'Property & other assets', owner: 'ledger', anchor: 'x-A',
@@ -1019,7 +1019,7 @@
       return itemPatch(Spine.upsertAsset, ctx, Schema.applyAccountType(a, v || null));
     },
     /* The rated and looked-up per-account facts the Statement used to edit
-       (D-066), entered in the Ledger's A door since D-307. A rating arrives
+       (D-066), entered in the Ledger's A door since D-313. A rating arrives
        from a select as text; it is stored as the number the scale names. */
     assetConfidence: function (v, ctx) { var n = v === null || v === undefined || v === '' ? null : Number(v); return itemPatch(Spine.upsertAsset, ctx, { confidence: n !== null && [1, 2, 3, 4].indexOf(n) >= 0 ? n : null }); },
     assetCashFlow: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { cashFlowMonthlyCents: Money.isEntered(v) ? Math.round(v) : null }); },

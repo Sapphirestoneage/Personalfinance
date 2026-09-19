@@ -301,11 +301,11 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-303 — The screens a person actually meets: what floats, what toggles, what a Save gives you, and an intake that asks one family at a time [16117-16164] {ledger, one-pager, settings}
 - D-304 — Express, made short: a level is the separation, and a line has a name and a place [16166-16211]
 - D-305 — One door in, one door out, and a backup nobody else can open [16213-16262] {dashboard, data}
-- D-306 — The five-input opening: take-home, a band, a coast date, the levers [16264-16313]
-- D-307 — The Statement is four sections; the facts it asked for are the Ledger's [16315-16364] {many rooms}
-- D-308 — The worst plausible year is the Cushion's [16366-16385] {runway}
-- D-309 — The pay still to come, beside net worth, on a switch that defaults by age [16387-16412]
-- D-310 — A plan at a former employer is an account type, and Left Behind reads it [16414-16436] {left-behind}
+- D-312 — The five-input opening: take-home, a band, a coast date, the levers [16264-16313]
+- D-313 — The Statement is four sections; the facts it asked for are the Ledger's [16315-16364] {many rooms}
+- D-314 — The worst plausible year is the Cushion's [16366-16385] {runway}
+- D-315 — The pay still to come, beside net worth, on a switch that defaults by age [16387-16412]
+- D-316 — A plan at a former employer is an account type, and Left Behind reads it [16414-16436] {left-behind}
 
 ## Dungeons & Dividends (DD-) (30)
 

@@ -422,6 +422,6 @@
     },
     "frontDoor": null,
     "isDemo": true,
-    "note": "fixtures/snapshots/pre-d307.household.json: a demo household as the Statement stored it before D-307. Demo values only."
+    "note": "fixtures/snapshots/pre-d313.household.json: a demo household as the Statement stored it before D-313. Demo values only."
   }
 }

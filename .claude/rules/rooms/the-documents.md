@@ -11,5 +11,5 @@ Reference data: car_costs.json, debt_rules.json, effective_tax_rates_2026.json, 
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), employerMatch (start), contributionPercent (start), marginalRate (ledger), ledgerIncome (income), totalDebt (debt-payoff), monthlyDebtPayments (debt-payoff), +7 more
 Latest decisions:
-  - D-307 — The Statement is four sections; the facts it asked for are the Ledger's
+  - D-313 — The Statement is four sections; the facts it asked for are the Ledger's
 Full context: node tools/context/pack.js the-documents

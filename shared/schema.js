@@ -156,9 +156,9 @@
     'incomeSource.hoursPerWeek':                 { class: 'raw',        unit: 'hours',   period: 'weekly', note: 'hourly pay only' },
     'incomeSource.monthsWorked':                 { class: 'raw',        unit: 'months',  note: 'how much of the last 12 months this job covered; absent means all of it' },
     'incomeSource.ongoing':                      { class: 'raw',        unit: 'bool',    note: 'still the job \u2014 drives the run-rate figure beside the earned one' },
-    'household.takeHome.monthlyCents':           { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'take-home pay a month, typed as such in the opening. Logged paychecks beat it; it beats the estimate from gross. Owned by the Ledger. D-306' },
-    'household.takeHome.typedCents':             { class: 'raw',        unit: 'cents',   note: 'the figure as typed, per the cadence in `per`, so the box refills as it was filled. D-306' },
-    'household.takeHome.per':                    { class: 'raw',        unit: 'enum',    values: ['month', 'week', 'fortnight', 'halfMonth'], note: 'what typedCents is per. D-306' },
+    'household.takeHome.monthlyCents':           { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'take-home pay a month, typed as such in the opening. Logged paychecks beat it; it beats the estimate from gross. Owned by the Ledger. D-312' },
+    'household.takeHome.typedCents':             { class: 'raw',        unit: 'cents',   note: 'the figure as typed, per the cadence in `per`, so the box refills as it was filled. D-312' },
+    'household.takeHome.per':                    { class: 'raw',        unit: 'enum',    values: ['month', 'week', 'fortnight', 'halfMonth'], note: 'what typedCents is per. D-312' },
     'household.incomeBasis':                     { class: 'raw',        unit: 'enum',    values: ['earned', 'runRate'], note: 'which of the two annual figures feeds the model. DECISIONS.md D-047' },
     'retirement.contributionPercent':            { class: 'raw',        unit: 'percent', note: 'what you put into the workplace plan, as a % of salary. Owned by Where It Goes' },
     'retirement.rothContributedCents':           { class: 'raw',        unit: 'cents',   period: 'annual', note: 'into a Roth IRA so far this year' },
@@ -1347,7 +1347,7 @@
       basis: typeof f.basis === 'string' ? f.basis : null,
       month: typeof f.month === 'string' ? f.month : null,
       note: typeof f.note === 'string' ? f.note : null,
-      /* The opening's FI date band on the day it was read (D-306): months
+      /* The opening's FI date band on the day it was read (D-312): months
          to the number at the worst, likely and best return. Absent on
          every entry written before this, and on every other kind. */
       band: f.band && typeof f.band === 'object'
@@ -1434,7 +1434,7 @@
     { id: '403b',            label: '403(b)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
     { id: '457b',            label: '457(b)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
     { id: 'tsp',             label: 'TSP',                   taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
-    /* A plan left at a former employer (D-307): the same pre-tax money, tagged
+    /* A plan left at a former employer (D-313): the same pre-tax money, tagged
        so Left Behind can find it and the Statement can point at it. */
     { id: 'old_401k',        label: 'A plan at a former employer', taxCharacter: 'pretax', category: 'retirement', group: 'Work retirement' },
     { id: 'pension',         label: 'Pension',               taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
@@ -2207,7 +2207,7 @@
   /* Every field here is null-when-unanswered, never zero. A contribution of
      0% is a real answer ("I contribute nothing") and must stay separable
      from "I have not said". */
-  /* Take-home pay as typed (D-306): the opening asks what lands, not what
+  /* Take-home pay as typed (D-312): the opening asks what lands, not what
      is withheld, because that is the number this audience knows. A month
      is stored; the typed figure and its cadence sit beside it so the box
      refills as it was filled. */
@@ -2848,7 +2848,7 @@
       });
     }
     var gross = grossAnnualIncomeCents(household);
-    /* Typed take-home beats the estimate (D-306): what the opening was
+    /* Typed take-home beats the estimate (D-312): what the opening was
        told lands is a fact; gross minus a table's rate is a guess at it.
        The gross, when known, still rides along for anything that reads
        the tax; when it is not, the tax is honestly unknown, not zero. */

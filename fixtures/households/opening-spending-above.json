@@ -312,7 +312,7 @@
     "name": "Opening: 25, spending above take-home",
     "story": "25, $3,000 take-home a month, spends $3,400, $1,000 invested, $500 cash, no debt. No date: the first job is one dollar on the right side of zero.",
     "sphere": 1,
-    "lane": "the five-input opening (D-306)",
+    "lane": "the five-input opening (D-312)",
     "known": {
       "asOf": "2026-09-19",
       "tolerance": 0.01,

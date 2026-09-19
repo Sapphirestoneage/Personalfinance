@@ -103,7 +103,7 @@
     var monthlyExpenses = Schema.monthlyExpensesCents(household);
     /* Take-home minus spending - never gross minus spending. The one
        take-home figure is shared/schema.js's (D-171). Typed take-home
-       (D-306) stands without a gross: the rate is then "from take-home",
+       (D-312) stands without a gross: the rate is then "from take-home",
        and says so, until a gross arrives. */
     var takeHome = Schema.takeHomeAnnualCents(household, tables);
     var typedOnly = Money.isOk(takeHome) && takeHome.source === 'typed' && !Money.isOk(gross);
@@ -126,7 +126,7 @@
       : Money.isOk(gross) ? gross.value : takeHome.value;
 
     var shared = {
-      /* 'gross' or 'take-home': what the rate divides by (D-306). */
+      /* 'gross' or 'take-home': what the rate divides by (D-312). */
       basis: Money.isOk(gross) || takeHome.source === 'logged' ? 'gross' : 'take-home',
       grossAnnualIncomeCents: grossBase,
       takeHomeAnnualCents: takeHome.value,

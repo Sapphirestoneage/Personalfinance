@@ -9,5 +9,5 @@ Reference data: access_rules.json, early_access_rules_2026.json, effective_tax_r
 Owns: nothing
 Reads from other owners: cashSavings (start), onHdhp (ledger), futureIncome (income), monthlyExpenses (expenses)
 Latest decisions:
-  - D-307 — The Statement is four sections; the facts it asked for are the Ledger's
+  - D-313 — The Statement is four sections; the facts it asked for are the Ledger's
 Full context: node tools/context/pack.js bridge

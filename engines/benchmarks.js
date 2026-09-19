@@ -299,7 +299,7 @@
    * The present value of the pay still to come. One loop, two callers:
    *   - the ratios read it as before: gross pay, the stop age set in FIRE
    *     Number, the humanCapitalDiscountRate assumption, no raises;
-   *   - the Statement (D-307) names each of those: opts.basis 'take-home'
+   *   - the Statement (D-313) names each of those: opts.basis 'take-home'
    *     reads Schema.takeHomeAnnualCents; opts.stopAge is the age work
    *     becomes optional (the opening's likely FI age, else its fallback);
    *     opts.discountRate is the likely real return; opts.raiseRate is the
