@@ -493,6 +493,61 @@
   }
 
   /**
+   * realCost(debt, opts) — what a debt really costs a year (D-247): its
+   * rate, then after the tax deduction (student loans: the federal
+   * deduction up to a cap, phased out by income; nothing else here), then
+   * after inflation, in one chain, with a pace verdict against the real
+   * return the rest of the app assumes.
+   *   opts.marginalRate    the rate a deduction saves at (the room passes
+   *                        its best figure and says which)
+   *   opts.inflation       from Schema.resolveAssumptions
+   *   opts.returnReal      the same
+   *   opts.grossAnnualCents, opts.filingStatus   for the phase-out
+   *   opts.conventions     data/student_loan_conventions.json
+   *   opts.rules           data/debt_rules.json (the pace words)
+   */
+  function realCost(debt, opts) {
+    var o = opts || {};
+    var rate = rateInMonth(debt, 1, o.asOf);
+    if (!Money.isEntered(rate)) rate = effectiveRate(debt);
+    if (!Money.isEntered(rate)) return Money.incomplete('Add the rate to see what this debt really costs.', ['debtRate']);
+    if (!Money.isEntered(o.inflation) || !Money.isEntered(o.returnReal)) return Money.incomplete('The assumptions are not loaded.', ['assumptions']);
+    var balance = Money.isEntered(debt.balanceCents) ? debt.balanceCents : 0;
+    var interest = Math.round(balance * rate);
+    var deductible = 0, phaseShare = 0, taxSaved = 0, deductionApplies = false;
+    var ded = o.conventions && o.conventions.interestDeduction;
+    if (debt.type === 'student_loan' && ded && Money.isEntered(o.marginalRate)) {
+      deductionApplies = true;
+      var band = (ded.phaseOut || {})[o.filingStatus] || (ded.phaseOut || {}).single;
+      var g = Money.isEntered(o.grossAnnualCents) ? o.grossAnnualCents / 100 : null;
+      if (!band || band.toDollars <= band.fromDollars) phaseShare = 0;
+      else if (g === null || g <= band.fromDollars) phaseShare = 1;
+      else if (g >= band.toDollars) phaseShare = 0;
+      else phaseShare = (band.toDollars - g) / (band.toDollars - band.fromDollars);
+      deductible = Math.round(Math.min(interest, ded.capDollars * 100) * phaseShare);
+      taxSaved = Math.round(deductible * o.marginalRate);
+    }
+    var afterTax = interest > 0 ? rate * (1 - taxSaved / interest) : rate;
+    var real = (1 + afterTax) / (1 + o.inflation) - 1;
+    var pace = (o.rules && o.rules.pace) || null;
+    var floor = pace && Money.isEntered(pace.slowlyAtOrBelowReal) ? pace.slowlyAtOrBelowReal : 0;
+    var verdict = real <= floor ? 'slowly' : real < o.returnReal ? 'schedule' : 'fast';
+    var words = pace && pace.verdicts && pace.verdicts[verdict] ? pace.verdicts[verdict] : { label: verdict, why: '' };
+    return Money.ok(real, {
+      nominalRate: rate, afterTaxRate: afterTax, realRate: real,
+      annualInterestCents: interest, deductionApplies: deductionApplies, deductibleCents: deductible, phaseOutShare: phaseShare, taxSavedCents: taxSaved,
+      marginalRate: Money.isEntered(o.marginalRate) ? o.marginalRate : null, inflation: o.inflation, returnReal: o.returnReal,
+      verdict: verdict, label: words.label, why: words.why
+    });
+  }
+
+  /** A future amount in today's money: cents ÷ (1 + inflation)^years. One
+   *  place, so a chart in today's dollars and a sentence agree. */
+  function deflate(cents, months, inflation) {
+    return Math.round(cents / Math.pow(1 + inflation, months / 12));
+  }
+
+  /**
    * cascade(plan) — the plan read as phases (D-236): between one payoff and
    * the next, what goes to each debt a month on average, which debt the
    * push is on, and at the end of the phase what the fallen debt frees and
@@ -766,6 +821,8 @@
   }
 
   return {
+    realCost: realCost,
+    deflate: deflate,
     cascade: cascade,
     monthFlow: monthFlow,
     promoStatus: promoStatus,

@@ -261,7 +261,7 @@ h3 { font-size: var(--text-md); }
   margin-bottom: var(--space-1);
 }
 
-/* Two boxes side by side must START LEVEL (D-247).
+/* Two boxes side by side must START LEVEL (D-248).
    A control's top is its field's top plus the label above it and nothing
    else — hints and sources come after the control, so they never move it.
    So the labels are what has to match: one that wraps to two lines used to

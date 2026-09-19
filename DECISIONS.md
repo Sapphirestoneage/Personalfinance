@@ -14021,7 +14021,6 @@ vocabulary the owner asked for by name; they are data, not rooms.
 `node tools/context/build.js --check`. The FIRE room and the flight plan
 at 390px and 1100px with a clean console, empty and with the demo.
 
-<<<<<<< HEAD
 ## D-236 — Debt Payoff: where the payment goes, and what each fall frees
 
 **Why.** The owner, from the phone: a sankey of the debt money, and a
@@ -14084,7 +14083,6 @@ which is the owner's call on order (STATUS).
 **Verified.** `node test/run.js` (31,222 checks), `node test/forms.js`,
 `node tools/context/build.js --check`. Debt Payoff at 390px with nine
 example debts, clean console.
-=======
 ## D-238 — A page may not write to an id it does not carry
 
 **Why.** The Scorecard wrote to `el('provenance')` and `el('ra-provenance')`;
@@ -14230,7 +14228,6 @@ files: the panel's findings, the fixes, and four items left to the owner.
 (playwright not installed in this container — the phone walk was done instead
 with a scripted Chromium sweep of all 95 pages at 390px with the demo
 household: no page errors, no console errors, no 404s).
->>>>>>> claude/panel-review-loop-cnb048
 
 ## D-244 — The path is the numbers, then the dashboard, then the readings; a decision room is not "next"
 
@@ -14315,8 +14312,37 @@ is logged; STATUS's structural problem 1.
 390px moves from the estimate to the logged figure once a fortnightly
 wage is logged, clean console.
 
+## D-247 — What a debt really costs: after the deduction, after inflation, and the pace that follows
 
-## D-247 — Boxes side by side line up, and the check that says so looks everywhere
+**Why.** The owner: "do the tax calc since student loan interest is tax
+deductible; show how much it's worth after inflation and why it makes
+sense to pay this slowly but others faster because it outpaced
+inflation."
+
+**Decision.** `engines/debt.js` `realCost(debt, opts)`: the rate, then
+after the federal student loan interest deduction (the cap and the
+income phase-out by filing status from `data/student_loan_conventions.json`,
+student loans only, at the rate the room passes and names), then after
+inflation, against the real return the app assumes; the verdict is one
+of three words from `data/debt_rules.json` `pace` (pay slowly at or below
+zero real, on schedule below the real return, fast above it), each with
+its why. `deflate(cents, months, inflation)` is the one place a future
+amount becomes today's money. Debt Payoff says it on every debt's
+interest line; Student Loans gets a card with the chain per loan, the
+verdict, and the standard plan's balance drawn in the statement's dollars
+and in today's money, with what the whole plan costs each way.
+
+**Replaces or removes.** Nothing; the card sits where the plan is chosen.
+The deduction figures are recalled and marked to verify.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node test/forms.js`, `node
+tools/context/build.js --check`; both rooms with the demo at 390px, clean
+console; the chain checked by hand (5.5% → 4.29% → 1.25% at 22% and 3%).
+
+
+## D-248 — Boxes side by side line up, and the check that says so looks everywhere
 
 **Why.** The owner, on a phone, on the Statement: "Still not even!!!!" The
 two dropdowns under an asset — which pile it sits in, how sure it is worth
@@ -14340,6 +14366,11 @@ neither wins, the labels are equalised instead. Removes `test/alignment.js`'s
 list of rooms and selectors.
 
 **Stored shape.** No change.
+
+**Also.** `test/run.js` now fails if any tracked file still carries a
+`<<<<<<<`, `=======` or `>>>>>>>` line: DECISIONS.md was committed
+mid-merge and the whole suite went green, because the decisions checks
+read headings and numbers and a marker line is neither.
 
 **Verified.** `node test/alignment.js` — every page in the app, every
 container holding two or more field cells, at 320 and 390, plus the card

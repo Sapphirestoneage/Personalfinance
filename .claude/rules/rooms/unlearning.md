@@ -8,7 +8,7 @@ paths:
 # Unlearning (`unlearning`)
 File: rooms/unlearning.html · 382 lines
 Engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules
-Reference data: advice.json, advice_translator.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, +7 more
+Reference data: advice.json, advice_translator.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, +8 more
 Owns: unlearningDropped
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), employmentStatus (start), employerMatch (start), hasDebt (start), mortgageRate (housing), monthlyExpenses (expenses)
 Latest decisions:

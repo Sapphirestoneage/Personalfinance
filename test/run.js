@@ -739,7 +739,7 @@ const RULES = TABLES.debtRules;
   checkTrue('...the estimate leans on the intake guesses, so a pay is enough for a figure', /SLAF\.Gate\.fillGuesses\(h, TABLES, null\)/.test(page));
   checkTrue('...and the two figures show under the box, each saying what it came from', /id="extra-basis"/.test(page) && /row\('Estimate'/.test(page) && /row\('Realized'/.test(page) && /closed month/.test(page) && /guessed, fix it in Start Here/.test(page));
   checkTrue('...a stale engine falls back to the typed figure, never a crash', /typeof Debt\.extraCapacity !== 'function'/.test(page));
-  checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults'\]\)/.test(page));
+  checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults'(, '[a-zA-Z]+')*\]\)/.test(page));
   checkTrue('a second ring: interest over the whole plan, by debt, from the payoffs (D-190)', /Interest over the plan, by debt/.test(page) && /p\.interestPaidCents/.test(page) && /plan\.totalInterestCents\), small: 'until it is all gone'/.test(page));
 })();
 
@@ -8692,6 +8692,44 @@ section('Logged pay reaches every reading (D-246)');
   checkTrue('paired fields start their labels on the same line', /\.slaf-field \{[^}]*justify-content: flex-start/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
 })();
 
+section('What a debt really costs (D-247): after the deduction, after inflation, a pace');
+
+(function () {
+  const conv = require(path.join(ROOT, 'data/student_loan_conventions.json'));
+  const o = { marginalRate: 0.22, inflation: 0.03, returnReal: 0.05, grossAnnualCents: 7200000, filingStatus: 'single', conventions: conv, rules: TABLES.debtRules };
+  const loan = Schema.createDebt({ label: 'Loan', balanceCents: 1840000, rate: 0.055, type: 'student_loan' });
+  const rc = Debt.realCost(loan, o);
+  checkTrue('a 5.5% student loan on $18,400 at 22%: the year\'s interest is $1,012', Money.isOk(rc) && rc.annualInterestCents === Math.round(1840000 * 0.055));
+  check('… all of it deductible under the cap', rc.deductibleCents, rc.annualInterestCents);
+  check('… saving 22% of it', rc.taxSavedCents, Math.round(rc.annualInterestCents * 0.22));
+  check('… so 4.29% after tax', Math.round(rc.afterTaxRate * 10000), 429);
+  check('… and 1.25% after 3% inflation', Math.round(rc.realRate * 10000), 125);
+  check('… which is: pay on schedule', rc.verdict, 'schedule');
+  checkTrue('… with the words from the rules table', rc.label === TABLES.debtRules.pace.verdicts.schedule.label && rc.why.length > 20);
+  const card = Debt.realCost(Schema.createDebt({ label: 'Card', balanceCents: 320000, rate: 0.229, type: 'credit_card' }), o);
+  checkTrue('a 22.9% card gets no deduction and reads: pay fast', card.deductionApplies === false && card.taxSavedCents === 0 && card.verdict === 'fast');
+  const family = Debt.realCost(Schema.createDebt({ label: 'Family', balanceCents: 150000, rate: 0, type: 'family' }), o);
+  checkTrue('a 0% loan costs less than nothing after inflation: pay slowly', family.realRate < 0 && family.verdict === 'slowly');
+  const half = Debt.realCost(loan, Object.assign({}, o, { grossAnnualCents: 8750000 }));
+  check('halfway through the phase-out band, half the deduction', half.phaseOutShare, 0.5);
+  const gone = Debt.realCost(loan, Object.assign({}, o, { grossAnnualCents: 10000000 }));
+  checkTrue('past it, none, and the rate stands', gone.phaseOutShare === 0 && gone.taxSavedCents === 0 && gone.afterTaxRate === gone.nominalRate);
+  const joint = Debt.realCost(loan, Object.assign({}, o, { grossAnnualCents: 10000000, filingStatus: 'married_joint' }));
+  check('filing jointly the band is higher, so the deduction is whole', joint.phaseOutShare, 1);
+  const sep = Debt.realCost(loan, Object.assign({}, o, { filingStatus: 'married_separate' }));
+  check('filing separately it is not allowed', sep.phaseOutShare, 0);
+  const capped = Debt.realCost(Schema.createDebt({ label: 'Big', balanceCents: 10000000, rate: 0.06, type: 'student_loan' }), o);
+  check('the cap holds: $6,000 of interest, $2,500 deductible', capped.deductibleCents, 250000);
+  checkTrue('no rate: incomplete, naming it', !Money.isOk(Debt.realCost(Schema.createDebt({ label: 'x', balanceCents: 1000, type: 'other' }), o)));
+  check('$19,000 in ten years at 3% is $14,138 today', Debt.deflate(1900000, 120, 0.03), 1413778);
+  checkTrue('the conventions carry the deduction with its note', typeof conv.interestDeduction.capDollars === 'number' && /verify/i.test(conv.interestDeduction.note));
+  const dp = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('Debt Payoff says what each debt really costs, on the interest line', /realCostSentence\(d\)/.test(dp) && /Really costs /.test(dp) && /studentLoanConventions/.test(dp));
+  const sl = fs.readFileSync(path.join(ROOT, 'rooms/student-loans.html'), 'utf8');
+  checkTrue('Student Loans draws the chain, the verdict and the balance in today\'s money', /id="real-cost"/.test(sl) && /SLAF\.Debt\.realCost/.test(sl) && /SLAF\.Debt\.deflate/.test(sl) && /in today\\u2019s money/.test(sl));
+  checkTrue('… and the registry deep-links it', Registry.byId('student-loans').subsections.some(x => x.id === 'real-cost'));
+})();
+
 section('The room template (D-097): one shape, proven on Real Hourly Wage');
 
 (function () {
@@ -14607,6 +14645,36 @@ section('Every id a page writes to exists in that page (D-238)');
     }
   });
   check('no page writes to an id its own markup does not carry', misses.join('; '), '');
+})();
+
+/* ==========================================================================
+   No file carries an unresolved merge conflict (D-248)
+   ========================================================================== */
+section('No file carries an unresolved merge conflict (D-248)');
+(function () {
+  /* DECISIONS.md was committed with "<<<<<<< HEAD", "=======" and
+     ">>>>>>> <branch>" still in it, and the whole suite went green: the
+     decisions checks read headings and numbers, and a marker line is
+     neither. Two sessions merging in parallel is now routine here, so the
+     cheapest possible guard is worth having. */
+  const skip = new Set(['.git', 'node_modules', 'vendor']);
+  const exts = /\.(md|js|css|html|json)$/;
+  const hits = [];
+  (function walk(dir, rel) {
+    for (const name of fs.readdirSync(dir)) {
+      if (skip.has(name)) continue;
+      const full = path.join(dir, name);
+      const here = rel ? rel + '/' + name : name;
+      const st = fs.statSync(full);
+      if (st.isDirectory()) { walk(full, here); continue; }
+      if (!exts.test(name)) continue;
+      const src = fs.readFileSync(full, 'utf8');
+      /* Anchored to the line start, which is what git writes; a string
+         mentioning the characters in prose or in code does not match. */
+      if (/^<{7} |^={7}$|^>{7} /m.test(src)) hits.push(here);
+    }
+  })(ROOT, '');
+  check('no tracked file is left mid-merge', hits.join(', '), '');
 })();
 
 /* ==========================================================================
