@@ -14846,6 +14846,50 @@ the alignment guard is clean on the room that gained a box.
 
 ---
 
+## D-264 — Fill Mode: one state per row, and the Next card that asks for the most useful one
+
+**Why.** The owner, 2026-09-19: everything feels half filled; you hunt through
+rooms for empty boxes, re-evaluate numbers you already entered, and cannot
+tell what to do next. The Up Next strip (D-234) said what a reading needed;
+nothing said which single number to fill NOW, or let you say "roughly" and
+be left alone.
+
+**Decision.** Every Ledger row has one state: known, rough, unknown, na,
+computed or empty, read from the three facts it already carries (D-181),
+the "not sure yet" mark (D-209) and the household's N/A flag (D-130) by
+`shared/fill.js`; stale is a flag beside the state, never a state. The
+Dashboard (`index.html`) opens with the Next card (`shared/fillcard.js`):
+a finish line ("4 of 7 to a working plan"), the one row most worth filling,
+two after it, and four buttons: Save (known), Roughly (rough, with a
+ballpark helper), Don't know yet (unknown), Not for me (na). Rough is a
+finished answer and never returns to the queue; unknown returns when the
+working plan is complete or after fourteen days (prefs
+`fill.unknownReturnDays`). Rank is rooms unlocked × plan impact ÷ minutes,
+the ladder and weights in `data/next-weights.json`; the situation gate goes
+first, between jobs puts the runway rows first and drops the match, a
+student's loans move up, high-interest debt sits above what is invested. A
+one-line-per-item row opens in the Ledger at its own box (`#x-row-<id>`),
+which offers the way back. Every button is one write through the owner or
+one mark in the spine; nothing on the card keeps a number.
+
+**Replaces or removes.** Nothing on screen yet: the landing's three buttons
+stay under the card. The Ledger lands on the wired copy of a row: an item
+row is drawn under two levels and only the last copy saves, which this found
+and did not fix.
+
+**Stored shape.** `meta.notApplicableAt[fieldId]` (ISO date) beside the flag
+in `notApplicable`; older households read as undated. `Spine.setFieldMeta`
+records its change in the undo log, so Roughly on a number that stays is
+undoable. Nothing migrates.
+
+**Verified.** `node test/run.js` (32,570; a new section holds every rule
+above), `node test/forms.js` (the hero's box survives its repaint),
+`test/alignment.js`, `test/render.js`. In a browser at 380px: the four
+buttons, the ballpark chips, the slide to the next row, undo of each, the
+deep link into the Ledger and back, with a clean console.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

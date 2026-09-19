@@ -1,0 +1,29 @@
+{
+  "id": "next_weights",
+  "version": "1.0",
+  "asOf": "2026-09-19",
+  "source": "The owner's brief of 2026-09-19 (Money Rooms: Fill Mode). The ladder is the order the brief lists, highest plan impact first; the weights are its rungs counted from the bottom.",
+  "confidence": "convention",
+  "confidenceNote": "A ranking convention, not a measurement. Nothing financial is computed from these numbers: they only decide which empty row the Next card asks for first (score = rooms unlocked x plan impact / minutes to find).",
+  "note": "ladder[].fields are ownership field ids (shared/ownership.js), which are also the row ids in data/ledger-rows.json. Rungs 1 to workingPlanRungs are the working plan the finish line counts. A row not on the ladder gets restWeight. The app holds pay gross and works take-home out from it, so the pay row sits on rung 2 and filing status on rung 8, where the brief puts gross income and filing status. Rungs up to gateRung are the situation gate and go ahead of any score, since they decide what else applies. unknownReturnDays is the default; Settings can change it (prefs fill.unknownReturnDays). highInterestRate is read from data/foo_rules.json highInterestDebtRate when that table is loaded; this is the fallback.",
+  "gateRung": 1,
+  "workingPlanRungs": 7,
+  "restWeight": 0.5,
+  "unknownReturnDays": 14,
+  "highInterestRate": 0.075,
+  "ladder": [
+    { "rung": 1, "label": "your situation", "weight": 8, "fields": ["employmentStatus", "dob", "state", "partnerName"] },
+    { "rung": 2, "label": "your pay", "weight": 7, "fields": ["grossAnnualIncome", "lastPay"] },
+    { "rung": 3, "label": "the month", "weight": 6, "fields": ["foodMonthly", "accommodationMonthly", "transportationMonthly", "wantsMonthly"] },
+    { "rung": 4, "label": "cash in the bank", "weight": 5, "fields": ["cashSavings"] },
+    { "rung": 5, "label": "each debt", "weight": 4, "fields": ["hasDebt", "debtBalance", "debtRate", "debtMinPayment"] },
+    { "rung": 6, "label": "the match", "weight": 3, "fields": ["employerMatch", "contributionPercent"] },
+    { "rung": 7, "label": "what is invested", "weight": 2, "fields": ["investments", "assetCharacter"] },
+    { "rung": 8, "label": "the tax side", "weight": 1, "fields": ["filingStatus"] }
+  ],
+  "overrides": {
+    "highInterestDebt": { "note": "Any debt at or above the threshold: the debt rows rank at least one step above the invested rows.", "fields": ["debtBalance", "debtRate", "debtMinPayment"], "atLeastAbove": "investments" },
+    "betweenJobs": { "note": "Between jobs: the match rows leave the queue and the runway rows (cash, the month) go first.", "drop": ["employerMatch", "contributionPercent"], "first": ["cashSavings", "foodMonthly", "accommodationMonthly", "transportationMonthly"], "firstWeight": 9 },
+    "student": { "note": "A student: the loan rows move up to the pay rung.", "lift": ["debtBalance", "debtRate", "debtMinPayment", "loanPlan"], "liftWeight": 7.5 }
+  }
+}

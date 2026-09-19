@@ -2338,6 +2338,10 @@
            a number in the understanding line. Cleared the moment the row
            gets a value. D-209. */
         notSure: {},
+        /* { fieldId: ISO date } — when the household marked a row "Not for
+           me" (Fill Mode, D-264). The flag itself is household.notApplicable
+           (D-130); this is only its date, for Loose Ends' Hidden filter. */
+        notApplicableAt: {},
         /* The life change waiting for its short sheet (G2.6, D-209):
            { field, from, to, at, dismissed } when the situation changed
            and the rows that change meaning have not been walked yet;

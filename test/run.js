@@ -14945,6 +14945,182 @@ section('Every id a page writes to exists in that page (D-238)');
 })();
 
 /* ==========================================================================
+   Fill Mode: one state per row, the Next queue, the finish line, the loose
+   ends (D-264, D-265). The owner's brief of 2026-09-19, held to in node.
+   ========================================================================== */
+section('Fill Mode: field states, the Next queue, the finish line, loose ends (D-264, D-265)');
+
+(function () {
+  const Spine = SpineMain;
+  const Fill = require(path.join(ROOT, 'shared/fill.js'));
+  const LedgerRows = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Staleness = require(path.join(ROOT, 'shared/staleness.js'));
+  const W = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/next-weights.json'), 'utf8'));
+  const T = { ledgerRows: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')), staleness: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/staleness.json'), 'utf8')) };
+  Staleness.use(T.staleness);
+  LedgerRows.use(T.ledgerRows);
+  Fill.use(W, null);
+  /* Earlier sections re-required the spine under a fake localStorage, so
+     fill.js bound to that copy; point it back at the original the field
+     map registered with, the one Ownership writes through. */
+  Fill.bind({ Spine: SpineMain, Ownership: Ownership, Staleness: Staleness, Prefs: null });
+  const row = id => LedgerRows.byId(id);
+  const st = id => Fill.stateOf(Spine.getProfile(), row(id), T).state;
+  const inQueue = id => Fill.queue(Spine.getProfile(), T).some(r => r.id === id);
+
+  /* The table is sound: every ladder field is a Ledger row and an ownership field. */
+  checkTrue('next-weights.json carries the stamp every table carries', W.id && W.version && W.asOf && W.source && W.confidence);
+  W.ladder.forEach(r => r.fields.forEach(f => {
+    checkTrue(`ladder rung ${r.rung} field ${f} is a Ledger row`, !!row(f));
+    checkTrue(`...and an ownership field`, !!Ownership.FIELDS[f]);
+  }));
+  check('eight rungs, highest impact first', W.ladder.map(r => r.weight).join(','), '8,7,6,5,4,3,2,1');
+  check('the working plan is rungs 1 to 7', W.workingPlanRungs, 7);
+
+  /* States. */
+  Spine.reset();
+  Spine.registerRoom('dashboard');
+  check('never touched is empty', st('cashSavings'), 'empty');
+  check('a computed row is computed', st('netWorth'), 'computed');
+  Spine.tagWrite({ source: 'typed', confidence: 'sure' });
+  Ownership.write('cashSavings', 950000);
+  check('typed and sure is known', st('cashSavings'), 'known');
+  Fill.act('roughly', row('cashSavings'), null, { tables: T });
+  check('Roughly on a number that stays keeps it and marks it rough', st('cashSavings'), 'rough');
+  check('...the number itself did not move', Schema.get(Spine.getProfile(), 'cashSavings'), 950000);
+  check('...and it is one undo entry', Spine.peekUndo().label, 'Marked roughly: Cash and savings');
+  Spine.undo();
+  check('undo takes the mark off again', st('cashSavings'), 'known');
+  Spine.redo();
+  check('redo puts it back', st('cashSavings'), 'rough');
+  Fill.act('roughly', row('investments'), 4800000, { tables: T });
+  check('Roughly with a number saves it rough', st('investments'), 'rough');
+  check('...as one undo entry', Spine.peekUndo().label, 'Roughly: Investments and retirement');
+  Fill.act('save', row('investments'), 5000000, { tables: T });
+  check('Save makes it known', st('investments'), 'known');
+  check('Save with nothing is refused', Fill.act('save', row('foodMonthly'), null, { tables: T }).ok, false);
+  Fill.act('unknown', row('foodMonthly'), null, { tables: T });
+  check('Don\'t know yet is unknown', st('foodMonthly'), 'unknown');
+  check('...and holds no number, never zero', Schema.get(Spine.getProfile(), 'foodMonthly'), null);
+  Fill.act('unknown', row('investments'), null, { tables: T });
+  check('Don\'t know on a number clears it', Schema.get(Spine.getProfile(), 'investments'), null);
+  check('...and marks it unknown', st('investments'), 'unknown');
+  check('...in one undo entry', Spine.peekUndo().label, 'Don’t know yet: Investments and retirement');
+  Spine.undo();
+  check('undo brings the number back', Schema.get(Spine.getProfile(), 'investments'), 5000000);
+  check('...known again', st('investments'), 'known');
+  Fill.act('na', row('employerMatch'), null, { tables: T });
+  check('Not for me is na', st('employerMatch'), 'na');
+  checkTrue('...dated', !!Spine.getProfile().meta.notApplicableAt.employerMatch);
+  Spine.undo();
+  check('undo takes Not for me off', st('employerMatch'), 'empty');
+  Spine.redo();
+  Fill.act('applies', row('employerMatch'), null, { tables: T });
+  check('Applies after all takes it off too', st('employerMatch'), 'empty');
+  check('...and the date with it', Spine.getProfile().meta.notApplicableAt.employerMatch, undefined);
+
+  /* The queue: empty rows only; rough never returns; unknown waits. */
+  checkTrue('an empty row is in the Next queue', inQueue('accommodationMonthly'));
+  checkTrue('a known row is not', !inQueue('investments'));
+  checkTrue('a rough row is not: rough is a finished answer', !inQueue('cashSavings'));
+  checkTrue('an unknown row leaves the queue', !inQueue('foodMonthly'));
+  Fill.act('na', row('cashSavings'), null, { tables: T });
+  checkTrue('a row marked Not for me leaves the queue', !inQueue('cashSavings'));
+  checkTrue('...and the finish line', Fill.finishLine(Spine.getProfile(), T).rungs.every(r => r.label !== 'cash in the bank'));
+  Spine.undo();
+  const soon = new Date(Date.now() + 15 * 86400000).toISOString();
+  checkTrue('an unknown row returns after the delay', Fill.queue(Spine.getProfile(), T, { now: soon }).some(r => r.id === 'foodMonthly'));
+  check('the delay is fourteen days by default', Fill.unknownReturnDays(), 14);
+
+  /* The situation gate goes first, and the score ranks the rest. */
+  Spine.reset();
+  const first = Fill.queue(Spine.getProfile(), T).slice(0, 3).map(r => r.id);
+  checkTrue('an empty household is asked its situation first: ' + first.join(','), first.every(id => ['dob', 'state', 'employmentStatus', 'partnerName'].includes(id)));
+  const sc = Fill.score(Spine.getProfile(), row('grossAnnualIncome'), T);
+  check('score = rooms unlocked x impact / minutes', sc.score, Math.round((sc.roomsUnlocked * sc.impact / sc.minutes) * 100) / 100);
+  checkTrue('pay unlocks more than one reading', sc.roomsUnlocked > 1);
+  check('a row off the ladder gets the rest weight', Fill.score(Spine.getProfile(), row('zip'), T).impact, W.restWeight);
+
+  /* The finish line counts known + rough across the working plan, excluding na. */
+  Spine.reset();
+  Spine.registerRoom('dashboard');
+  const f0 = Fill.finishLine(Spine.getProfile(), T);
+  check('nothing entered: no rung done', f0.rungsDone, 0);
+  checkTrue('the sentence names the rungs', /^0 of \d+ to a working plan\.$/.test(f0.sentence));
+  Ownership.write('cashSavings', 100000);
+  check('one known field counts', Fill.finishLine(Spine.getProfile(), T).fieldsDone, 1);
+  check('...and its rung is done', Fill.finishLine(Spine.getProfile(), T).rungsDone, 1);
+  Fill.act('roughly', row('cashSavings'), null, { tables: T });
+  check('rough counts too', Fill.finishLine(Spine.getProfile(), T).fieldsDone, 1);
+  Fill.act('unknown', row('foodMonthly'), null, { tables: T });
+  check('unknown does not', Fill.finishLine(Spine.getProfile(), T).fieldsDone, 1);
+  const before = Fill.finishLine(Spine.getProfile(), T).fieldsTotal;
+  Fill.act('na', row('cashSavings'), null, { tables: T });
+  check('na leaves the total', Fill.finishLine(Spine.getProfile(), T).fieldsTotal, before - 1);
+
+  /* Between jobs and a student reorder the queue. */
+  Spine.reset();
+  Spine.registerRoom('dashboard');
+  Ownership.write('dob', '1990-05-01'); Ownership.write('state', 'NY'); Ownership.write('employmentStatus', 'unemployed');
+  let q = Fill.queue(Spine.getProfile(), T).map(r => r.id);
+  checkTrue('between jobs: the match is out of the queue', !q.includes('employerMatch') && !q.includes('contributionPercent'));
+  checkTrue('between jobs: cash or the month goes first, got ' + q[0], ['cashSavings', 'foodMonthly', 'accommodationMonthly', 'transportationMonthly'].includes(q[0]));
+  checkTrue('between jobs: the match rung leaves the finish line', Fill.finishLine(Spine.getProfile(), T).rungs.every(r => r.label !== 'the match'));
+  Ownership.write('employmentStatus', 'student');
+  Ownership.write('hasDebt', true);
+  Ownership.addItem('debt', { label: 'A loan', type: 'student_loan' });
+  q = Fill.queue(Spine.getProfile(), T);
+  const loanRank = q.findIndex(r => r.id === 'debtBalance'), investRank = q.findIndex(r => r.id === 'investments');
+  checkTrue('a student: the loan rows move above what is invested', loanRank !== -1 && (investRank === -1 || loanRank < investRank));
+  check('...lifted to the pay rung', Fill.impactOf(Spine.getProfile(), 'debtBalance'), W.overrides.student.liftWeight);
+  Ownership.write('employmentStatus', 'employed');
+  Ownership.write('cashSavings', 100000); Ownership.write('foodMonthly', 40000); Ownership.write('accommodationMonthly', 120000); Ownership.write('transportationMonthly', 20000); Ownership.write('wantsMonthly', 30000);
+  Spine.upsertDebt(Schema.createDebt({ id: 'hi', label: 'Card', balanceCents: 300000, rate: 0.24, minPaymentCents: 9000 }));
+  checkTrue('a high-interest debt is seen', Fill.hasHighInterestDebt(Spine.getProfile()));
+  checkTrue('...and the debt rows rank above the invested rows', Fill.impactOf(Spine.getProfile(), 'debtRate') > Fill.impactOf(Spine.getProfile(), 'investments'));
+
+  /* Loose ends = rough + unknown + stale, live. */
+  Spine.reset();
+  Spine.registerRoom('dashboard');
+  check('nothing entered: no loose ends', Fill.looseCount(Spine.getProfile(), T), 0);
+  Fill.act('roughly', row('cashSavings'), 100000, { tables: T });
+  Fill.act('unknown', row('foodMonthly'), null, { tables: T });
+  Ownership.write('investments', 200000);
+  let le = Fill.looseEnds(Spine.getProfile(), T, 'all');
+  check('one rough and one unknown', le.counts.loose, 2);
+  check('unknown sorts first', (le.rows[0] || {}).id, 'foodMonthly');
+  check('the filters split them', Fill.looseEnds(Spine.getProfile(), T, 'unknown').rows.length + ':' + Fill.looseEnds(Spine.getProfile(), T, 'rough').rows.length, '1:1');
+  Spine.setFieldMeta('investments', { asOf: '2020-01-01T00:00:00Z' });
+  le = Fill.looseEnds(Spine.getProfile(), T, 'all');
+  check('a known number past its window is stale, and counts', le.counts.stale + ':' + le.counts.loose, '1:3');
+  check('the stale filter finds it', Fill.looseEnds(Spine.getProfile(), T, 'stale').rows.map(r => r.id).join(','), 'investments');
+  check('stale is a flag, not a state: the number is still known', st('investments'), 'known');
+  Fill.act('na', row('employerMatch'), null, { tables: T });
+  check('Hidden lists what was marked Not for me', Fill.looseEnds(Spine.getProfile(), T, 'hidden').rows.map(r => r.id).join(','), 'employerMatch');
+  check('...and it does not count as a loose end', Fill.looseEnds(Spine.getProfile(), T, 'all').counts.loose, 3);
+  Fill.act('save', row('cashSavings'), 120000, { tables: T });
+  check('sharpening a rough number takes it off the list', Fill.looseCount(Spine.getProfile(), T), 2);
+
+  /* The before/after sentence. */
+  const snapA = { open: {}, finish: { fieldsDone: 1 } };
+  const snapB = { open: { runway: { label: 'runway', display: '2.1 months' } }, finish: { fieldsDone: 2 } };
+  check('a reading that opened is named', Fill.whatChanged(snapA, snapB), 'Runway now shows 2.1 months.');
+  check('a reading that moved says from and to', Fill.whatChanged(snapB, { open: { runway: { label: 'runway', display: '3 months' } }, finish: { fieldsDone: 2 } }), 'Runway moved from 2.1 months to 3 months.');
+
+  /* The copy: no em dashes in Fill Mode's words. */
+  ['shared/fill.js', 'shared/fillcard.js'].forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const strings = (src.match(/'[^'\n]*'/g) || []).filter(x => /[A-Za-z]{3}/.test(x)).join(' ');
+    checkTrue(`${f} copy carries no em dash`, !/—|\\u2014/.test(strings), 'the Next card and Loose Ends are read on a phone');
+  });
+  /* The deep link lands on the Ledger's own box for the row. */
+  const ledger = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the Ledger lands on #x-row-<id>', /#x-row-\(\[A-Za-z0-9\]\+\)\$/.test(ledger));
+  checkTrue('...and offers the way back to the room that sent you', /Back to ' \+ esc\(from\.title\)/.test(ledger));
+  Spine.reset();
+})();
+
+/* ==========================================================================
    No file carries an unresolved merge conflict (D-249)
    ========================================================================== */
 section('No file carries an unresolved merge conflict (D-249)');

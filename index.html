@@ -297,6 +297,13 @@
 <main class="slaf-wrap" data-fold="own">
   <div class="notice" id="load-notice" hidden></div>
 
+  <!-- THE NEXT CARD (Fill Mode, D-264). Above everything, on the landing and
+       on the panel alike: the one row most worth filling now, two after it,
+       the finish line to a working plan. shared/fillcard.js mounts it into
+       this host; the four buttons write through the owners and nothing on
+       it keeps a number. -->
+  <div id="fill-host"></div>
+
   <section class="slaf-card landing" id="landing" hidden>
     <span class="slaf-eyebrow">SPARKS · Money rooms</span>
     <h2>One set of numbers. Every tool reads it.</h2>
@@ -569,6 +576,11 @@
 <script src="shared/explain.js"></script>
 <script src="shared/gate.js"></script>
 <script src="shared/upnext.js"></script>
+<script src="shared/levers.js"></script>
+<script src="shared/ledger-rows.js"></script>
+<script src="shared/ask.js"></script>
+<script src="shared/fill.js"></script>
+<script src="shared/fillcard.js"></script>
 <script src="engines/journey.js"></script>
 <script src="engines/gap.js"></script>
 <script src="shared/journeymap.js"></script>
@@ -1808,7 +1820,11 @@
   Reference.load().then(function (tables) {
     TABLES = tables;
     Staleness.use(tables.staleness);
+    SLAF.LedgerRows.use(tables.ledgerRows);
+    SLAF.Fill.use(tables.nextWeights, tables.fooRules);
     renderNow();
+    /* The Next card (D-264): mounted once, keeps itself live. */
+    SLAF.FillCard.mount(el('fill-host'), { roomId: ROOM_ID, tables: tables, scope: 'queue' });
     jumpToHash();
   }).catch(function (err) {
     /* This used to report every failure as "couldn't load the reference

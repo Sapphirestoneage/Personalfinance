@@ -1214,6 +1214,29 @@ const CASES = [
     }
   },
   {
+    /* THE NEXT CARD (Fill Mode, D-264): the hero holds a live box and the
+       whole card repaints on every spine change. The box must survive the
+       repaint while a finger is in it; Save then writes through the owner. */
+    room: '/index.html',
+    container: '#fill-next',
+    seed: 'empty',
+    prepare: async (page) => { await page.waitForSelector('#fill-next [data-fc-year]'); },
+    fields: [
+      { sel: '#fill-next [data-fc-year]', type: '1990' }
+    ],
+    expect: async (page) => {
+      await page.selectOption('#fill-next [data-fc-month]', '05');
+      await page.tap('#fill-next [data-fc-act="save"]');
+      await page.waitForTimeout(500);
+      const r = await page.evaluate(() => ({ dob: SLAF.Schema.primaryPerson(SLAF.Spine.getProfile()).dob, hero: document.querySelector('#fill-next .fc-name').textContent, changed: document.querySelector('#fill-next [data-fc-changed]').textContent }));
+      return [
+        ['the birth date landed on the person', r.dob, '1990-05-01'],
+        ['the next row slid into the hero', r.hero !== 'Month and year you were born', true],
+        ['and the card said what changed', /Saved month and year you were born/.test(r.changed), true]
+      ];
+    }
+  },
+  {
     /* EXPRESS (D-208): the whole form on one page, built once. Typing into
        boxes across doors, a situation tap that hides and shows rows around
        them, and adding a card block: the keyboard must stay open through

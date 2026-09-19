@@ -270,6 +270,8 @@
   #view-express .xrow .sug .how { color: var(--color-text-faint); display: block; margin-top: 2px; }
   
   #view-express .xrow .saved { grid-column: 2; font-size: var(--text-xs); color: var(--color-positive); min-height: 1em; }
+  #view-express .xrow .saved .x-return { margin-left: var(--space-2); font-weight: 600; }
+  #view-express .xrow.is-landed { background: var(--color-surface-raised); outline: 2px solid var(--color-accent); outline-offset: 4px; border-radius: var(--radius-md); }
   
   #view-express .xitem { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-sm); }
   
@@ -1526,7 +1528,11 @@
   }
 
   /* ---- Writes: each through the owner ---------------------------------------------- */
-  function said(n, text) { n.saved.textContent = text; setTimeout(function () { if (n.saved.textContent === text) n.saved.textContent = ''; }, 1600); }
+  function said(n, text) {
+    var back = returnLink(n);
+    if (back) { n.saved.innerHTML = esc(text) + back; return; }        /* the way back stays until they take it */
+    n.saved.textContent = text; setTimeout(function () { if (n.saved.textContent === text) n.saved.textContent = ''; }, 1600);
+  }
   function write(n, value, how, note) {
     var ctx = n.itemId ? { itemId: n.itemId } : null;
     var mem = n.el.querySelector('[data-x-memory]');
@@ -1643,10 +1649,44 @@
     });
   }
 
+  /* Landing on one row (Fill Mode, D-264): #x-row-<id> opens the whole
+     form scrolled to that row with its box focused, and a ?from= room gets
+     a way back beside the row once it has been saved. The Next card and
+     Loose Ends send list rows here; the row is the same box either way. */
+  var LANDED = null;
+  function fromRoom() {
+    var m = /[?&]from=([a-z0-9-]+)/.exec(location.search || '');
+    return m && SLAF.Registry.byId(m[1]) ? SLAF.Registry.byId(m[1]) : null;
+  }
+  function landOnRow() {
+    var m = /^#x-row-([A-Za-z0-9]+)$/.exec(location.hash || '');
+    if (!m) return;
+    /* The LAST node with this row: an item row is drawn under each level it
+       belongs to, and index() keeps the last copy as the one that writes. */
+    var nodes = document.querySelectorAll('[data-x-row="' + m[1] + '"]');
+    if (!nodes.length) return;
+    var same = document.querySelectorAll('[data-x-key="' + nodes[0].getAttribute('data-x-key') + '"]');
+    var node = same[same.length - 1];
+    LANDED = m[1];
+    Array.prototype.forEach.call(document.querySelectorAll('.xrow.is-landed'), function (n) { n.classList.remove('is-landed'); });
+    node.classList.add('is-landed');
+    var lvl = node.closest('details'); if (lvl) lvl.open = true;
+    node.scrollIntoView({ block: 'center' });
+    var box = node.querySelector('input, select');
+    if (box) { try { box.focus({ preventScroll: true }); } catch (e) { box.focus(); } }
+  }
+  function returnLink(n) {
+    var from = fromRoom();
+    if (!from || !LANDED || n.row.id !== LANDED) return '';
+    var href = (from.id === 'dashboard' ? '../index.html' : '../' + from.href);
+    return ' <a class="x-return" href="' + esc(href) + '">Back to ' + esc(from.title) + ' \u2192</a>';
+  }
   Reference.load(Suggest.TABLES.concat(['states', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates'])).then(function (t) {
     TABLES = t;
     LedgerRows.use(t.ledgerRows);
     build();
+    landOnRow();
+    window.addEventListener('hashchange', landOnRow);
     /* A change anywhere (another tab, undo, a chip) repaints values and
        what applies, never rebuilding a control, never under a finger. */
     Spine.onChange(function () { paintValues(); paintApplies(); paintSuggestions(); paintBar(); });

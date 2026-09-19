@@ -426,6 +426,7 @@
   function setFieldMeta(fieldId, patch) {
     var h = load();
     h.meta.fields = h.meta.fields || {};
+    var stored = h.meta.fields[fieldId] ? clone(h.meta.fields[fieldId]) : undefined;
     var prev = h.meta.fields[fieldId] || Schema.meta(h, fieldId);
     var p = patch || {};
     h.meta.fields[fieldId] = {
@@ -435,6 +436,10 @@
       room: p.room || prev.room || null
     };
     if (h.meta.fields[fieldId].asOf) { h.meta.confirmedAt = h.meta.confirmedAt || {}; h.meta.confirmedAt[fieldId] = h.meta.fields[fieldId].asOf; }
+    /* meta.fields is outside the command log (a stamp rides every write),
+       so a change to the facts ALONE is recorded here by hand: "Roughly"
+       on a number that stays the same has to be undoable (D-264). */
+    if (!same(stored, h.meta.fields[fieldId])) record([{ path: 'meta.fields.' + fieldId, before: stored, after: clone(h.meta.fields[fieldId]) }], p.label || ('Marked ' + h.meta.fields[fieldId].confidence + ': ' + fieldId));
     save(); notify();
     return h.meta.fields[fieldId];
   }
@@ -1147,6 +1152,10 @@
     var next = Object.assign({}, h.notApplicable || {});
     if (on === false) delete next[key]; else next[key] = true;
     h.notApplicable = Schema.createNotApplicable(next);
+    /* When it was marked (Fill Mode, D-264): the date Loose Ends' Hidden
+       filter shows. A map beside the flag, never a second copy of it. */
+    h.meta.notApplicableAt = h.meta.notApplicableAt || {};
+    if (on === false) delete h.meta.notApplicableAt[key]; else h.meta.notApplicableAt[key] = new Date().toISOString();
     pendingLabel = label || ((on === false ? 'Applies again: ' : 'Not applicable: ') + key);
     save(); notify();
     return h.notApplicable[key] === true;
