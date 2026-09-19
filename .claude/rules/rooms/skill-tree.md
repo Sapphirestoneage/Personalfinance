@@ -6,7 +6,7 @@ paths:
 # The Skill Tree (`skill-tree`)
 File: rooms/skill-tree.html · 609 lines
 Engines: projection, tier0, foo, skilltree
-Reference data: exercises.json, foo_rules.json, skill_links.json, skill_tree.json
+Reference data: exercises.json, foo_rules.json, irs_limits_2026.json, skill_links.json, skill_tree.json
 Owns: skillsDone
 Reads from other owners: grossAnnualIncome (start), monthsClosed (budget), monthlyExpenses (expenses), exercisesDone (exercises), practiceLedger (stacker)
 Latest decisions:

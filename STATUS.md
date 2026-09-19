@@ -1,40 +1,43 @@
 # STATUS (keep under 40 lines; /wrap rewrites it)
 
-Updated: 2026-09-12
+Updated: 2026-09-19
 
 ## Where it stands
-- **93 → 30 is the programme.** The reframe (D-228): you cannot size the
-  mountain until you know how you come down it, so the Back Half defines the
-  target and The Number becomes a read-out of it. The room test and the
-  thirty are D-229 and `docs/room-map.json`, which `test/run.js` checks
-  against the registry every run. That map is the cut list: `absorbs` minus
-  `done` is what is left, `held` says what is not moving yet, and why.
-- **Four of the six merges are done; 92 registry rooms → 76.** D-230, the
-  Ledger swallowed navigation. D-232, The Cushion is four readings of one
-  number, seven field owners moved with their boxes. D-231, What The Next
-  Dollar Does is one question at three amounts, the FOO step above all
-  three. D-233, The Scorecard is six readings of the same entered numbers
-  and opens on the plainest. Every old URL redirects, hash and all.
-  `.slaf-hats` is the one reading strip; `part: true` in `shared/room.js`
-  lets a template room become a reading.
-- Ledger rework brief: built through Phase K; H6, I6, I7, I8 wait. On the
-  owner: the Pages switch, the domain (G1.1), a LICENSE (G3.14).
+- **The panel round is done.** `PANEL_REVIEW.md` holds three rounds through
+  seven lenses; `PROGRESS.md` holds the fixes and what is left. Six of seven
+  lenses finished at 8+, Donegan at 7. Nineteen defects fixed (D-234 to
+  D-239), four panel claims struck as wrong on checking, four left to the
+  owner. `node test/run.js` 31,170 checks; all 95 pages swept at 390px with
+  no console error.
+- **What mattered most.** The Scorecard dropped three of its nine numbers
+  behind a banner blaming `data/`; every per-hour figure rendered `$0.00`;
+  the front door and the ladder gave one household two different next steps;
+  the home room told a first-time visitor they understand 0% of their life.
+- **93 → 30 is still the programme.** Four of six merges done; 92 registry
+  rooms → 76. D-228 is the reframe, `docs/room-map.json` the cut list.
+  Nothing this session added a room, field, lens or lever.
 
 ## Freeze
-- ON, and the merge is how it is honoured: every session leaves fewer screens.
+- ON, and honoured: a percentage, six counters and a thirteen-item list all
+  gone from the zero state; the one new flag competes for an existing slot.
 
 ## Next (top item first; one per session)
-1. **Who owns Start Here's 17 fields once it retires into the Ledger?**
-   OWNER DECISION NEEDED. The only thing blocking the last room of step 1.
-2. Step 5: the Decision Room shell — one shell, five outputs on every block,
+1. **Which income figure is authoritative?** OWNER DECISION NEEDED, and the
+   biggest left. Tested: $500/month into `ledger.income[]` moves neither
+   gross income nor the FI date — the headline numbers read only
+   `people[].incomeSources[]`, and no room writes one. Income growth can be
+   modelled, not recorded. Root of ARCHITECTURE problem #1, of the Tax
+   room's effective rate (`engines/taxroom.js:140`) and of the Donegan
+   score. Details in `PROGRESS.md`.
+2. **Who owns Start Here's 17 fields when it retires into the Ledger?**
+   OWNER DECISION NEEDED. Blocks the last room of step 1; tangled with 1.
+3. Step 5: the Decision Room shell — one shell, five outputs on every block,
    then goals, wedding and big purchase before any deep module.
-3. Step 6: the Back Half, once the shell has stopped moving. The biggest
-   engine change in the programme; D-228 is its brief.
-4. Older and still open: logged income does not reach the headline numbers;
-   the first journey end to end; a monthly close that prompts a backup.
+4. Step 6: the Back Half, once the shell has stopped moving. D-228 is its brief.
 
 ## Panel notes not yet answered
-- Galloway: model the means-tested floor, or the Back Half sells comfort.
-- Donegan: the merged Work room will hold eight rooms about having a job and
-  none about building something that pays you.
-- Hormozi: thirty is still a library. One screen in front of it.
+- The doors: five ways in where `index.html:19` says two. A product call,
+  tangled with 2.
+- Galloway: model the means-tested floor. Can't Pay (D-236) is the interim.
+- What the FI date compounds and what the withdrawal rate subtracts: both
+  say their basis on screen now (D-236, D-239); both are still decisions.

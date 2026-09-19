@@ -80,6 +80,32 @@ are not built.
 
 ---
 
+## Round 2 — worked
+
+- [x] **P15 · The thing to learn was the thing to do, said twice.** Ordering
+      the flags put the match in both blocks of the Dashboard, one above the
+      other. The learn block skips an item pointing at the room and anchor
+      the action already links to.
+- [x] **P16 · One page in the app had no favicon link**, so every visit
+      404'd on `/favicon.ico`. Found by sweeping all 95 pages.
+
+## Round 3 — worked
+
+- [x] **P17 · A marginal rate of 10% at zero taxable income.** (CPA, also
+      logged) `engines/tax.js` fell back to the lowest bracket when no slice
+      was cut, and the Tax room sized "room before the next bracket" off it.
+- [x] **P18 · "Revolving to installment debt" over `cards ÷ total debt`.**
+      Two different numbers under one name; the band is cut for the one the
+      code computes, so the name changed.
+- [x] **P19 · `housing + utilities ÷ income`** parses as
+      `housing + (utilities ÷ income)`. Bracketed.
+- [x] **P20 · The withdrawal rate's basis is now said out loud.** It
+      subtracts gross income from after-tax spending. Not changed — see
+      below — but the formula and note name the basis so nobody reads it as
+      the net figure.
+
+---
+
 ## Owner decisions needed (not built — the freeze holds)
 
 - **The doors.** Five ways in on the front page where `index.html:19` says
@@ -87,13 +113,34 @@ are not built.
   known problem. Which two survive is a product decision, and Start Here's
   retirement is already blocked on the field-ownership question in
   STATUS.md. Not touched.
-- **A "charge more" lever.** `data/levers.json` has six levers and no way to
-  raise your own price. Adding a seventh changes a documented six
-  (`docs/ARCHITECTURE.md`), which the freeze puts to the owner.
-- **Income rooms that write nothing.** Six income-growth rooms declare
-  `writes: []`, so a real raise or a real side hustle cannot move the FI
-  date. The clean fix is a handoff to Income's own add-source flow, keeping
-  ownership where it is — but it is new wiring across two rooms and belongs
-  in the Step 5 shell work STATUS.md already has queued.
+- **A "charge more" lever.** `data/levers.json` has six levers. Three of
+  them do move income — `hustle` ($500/mo and editable from the room),
+  `careermove` (+20%), `steady` (+3% kept rather than spent) — plus a 15%
+  raise as a tailwind, so the app is not silent on earning more. What is
+  missing is raising your own price as someone self-employed. Adding a
+  seventh changes a documented six (`docs/ARCHITECTURE.md`), which the
+  freeze puts to the owner.
+- **Which income figure is authoritative.** THE BIG ONE, and the thing
+  holding two lenses down. Tested, not argued: appending $500/month to
+  `ledger.income[]` leaves `Schema.grossAnnualIncomeCents` at $72,000 and
+  `Tier0.yearsToFire` at 22 years, both unchanged — the headline numbers
+  read only `people[].incomeSources[]`, and no room in the app writes one.
+  So income growth can be modelled (The Long Way Round prices a side hustle
+  and its hours against drifting, three ways) and cannot be recorded. A
+  handoff into the income log would write to something the headline numbers
+  ignore: it would look like a fix and be theatre. This is known structural
+  problem #1 in `docs/ARCHITECTURE.md` and item 4 on STATUS.md's Next list.
+  It is also the root of the Tax room's headline effective rate dividing a
+  ledger-derived tax by a Start-Here gross (`engines/taxroom.js:140`), which
+  on a stale profile can be wrong by a factor of three.
+- **What the withdrawal rate subtracts.** Gross income from after-tax
+  spending, so the draw reads low for a retiree with a pension or a wage.
+  The definition is specified with a hand-worked example and sixteen checks
+  in `test/run.js` and reused by the Dashboard's projection loop, so moving
+  it is a decision about what the number means. Named on screen instead.
+- **What the FI date compounds.** `yearsToFire` projects the residual rate —
+  D-080's "how much could have been saved" — as though it all lands in a
+  brokerage. The Dashboard now says so out loud. Projecting the contributed
+  rate beside it would change what the date means in eight engines.
 - **The DAITE letter chips** on the Dashboard, above five words that already
   carry the meaning. A deletion, but of a taught vocabulary (D-171).

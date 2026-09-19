@@ -9,5 +9,6 @@ Reference data: bill_triage.json, effective_tax_rates_2026.json, expense_categor
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
 Latest decisions:
+  - D-236 — The FI date carries its range and says what it assumes
   - D-148 — When It Won't All Get Paid
 Full context: node tools/context/pack.js cant-pay

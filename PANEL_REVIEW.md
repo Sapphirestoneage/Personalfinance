@@ -386,3 +386,79 @@ no room writes an income source and the headline numbers read nothing else.
 That is the owner's decision about which income figure is authoritative.
 
 Round 3 follows, for the CPA's remaining one-liners.
+
+
+---
+
+## Round 3 — 2026-09-19, the CPA's remaining one-liners
+
+`node test/run.js` → 31018 checks passed.
+
+| Lens | R1 | R2 | R3 |
+|---|---|---|---|
+| The Money Guy Show | 6 | 9 | **9** |
+| Scott Trench | 6 | 8 | **8** |
+| Alan Donegan | 5 | 7 | **7** |
+| Alex Hormozi | 5 | 7 | **8** |
+| Scott Galloway | 7 | 9 | **9** |
+| Alexis Gillmore, the avoider | 4 | 8 | **8** |
+| Tom Hutchinson, the CPA | 6 | 8 | **9** |
+
+### Tom Hutchinson — 9/10 *(was 8)*
+Three fixed. A household whose standard deduction covers its whole income is
+no longer told its next dollar is taxed at 10% — it is taxed at nothing, and
+the Tax room's "room before the next bracket" was sized off that missing
+floor. "Revolving to installment debt" is named for what it computes, which
+is the basis its band was cut for. The housing formula brackets its
+numerator instead of reading as housing + (utilities ÷ income).
+
+One deliberately left: the withdrawal rate subtracts gross income from
+after-tax spending. The panel is right that this reads the draw low for a
+retiree with a pension. It is specified with a hand-worked example and
+sixteen checks in `test/run.js` and reused by the Dashboard's projection, so
+changing it is a decision about what the number means, not a defect. The
+formula and note now say "gross income" and that spending is after tax.
+Written up for the owner.
+
+Not fixed, and still the one thing between this and a 10:
+`engines/taxroom.js:140` divides a ledger-derived tax by a Start-Here gross.
+Same root as Donegan's: which income figure is authoritative.
+
+### Alex Hormozi — 8/10 *(was 7)*
+Not from new work — from correcting round 2's own reading. The Long Way
+Round lets someone price a side hustle and its hours with steppers and see
+five years three ways, in two taps from the room list. That is the "would
+they pay for it" surface, and round 1 scored the app without having opened
+it. The five doors at the threshold remain the live complaint, and remain
+the owner's.
+
+### Unchanged this round
+Money Guy 9, Trench 8, Galloway 9, the avoider 8 — nothing in round 3
+touched their surfaces. Donegan stays at 7 on the one verified gap: income
+growth can be modelled and cannot be recorded.
+
+---
+
+## Where the loop stopped, and why
+
+Three rounds, which is the limit set for it. Six of seven lenses finished at
+8 or above; Alan Donegan finished at 7.
+
+That last point is not an oversight and not a thing a fourth round would
+move. It is one structural decision — **which income figure is
+authoritative** — and it is the same decision sitting under the CPA's last
+open item. Both were tested rather than argued:
+
+- Appending $500/month to `ledger.income[]` leaves gross income at $72,000
+  and the FI date at 22 years. Nothing reads it.
+- No room in the app writes `people[].incomeSources[]`, which is the only
+  thing the headline numbers do read.
+
+`docs/ARCHITECTURE.md` lists it as known structural problem #1 and STATUS.md
+carries it as open item 4. Building a handoff into a log the headline
+numbers ignore would look like a fix and be theatre. It is written up in
+PROGRESS.md under owner decisions, with the other three, and left there.
+
+**Round 1 → Round 3, by the numbers:** 39 → 58 across the seven lenses.
+Fifteen defects fixed, four found and struck as wrong on checking, four
+parked as owner decisions with the evidence attached.
