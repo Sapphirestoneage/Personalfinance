@@ -5979,13 +5979,13 @@ section('What is finished');
     checkTrue('the strip says how many are left', /2 still needed/.test(strip));
     /* Tolerant of the ?from= return trip (D-161): the property is that it points
        at the owner's page and anchor, not the exact character sequence. */
-    checkTrue('it links to the owning room', /start\.html(\?[^#"']*)?#q-investments/.test(strip));
+    checkTrue('it links to the owning room', /statement\.html(\?[^#"']*)?#assets/.test(strip));
     checkTrue('it offers a way back', /← /.test(strip));
     checkTrue('and a way forward, in plain path order', /Next: /.test(strip) && !/Next unfinished/.test(strip));
 
     /* From a room, links climb out of rooms/; from the root they must not. */
     checkTrue('links from a room are relative to rooms/',
-      /\.\.\/rooms\/start\.html/.test(strip), strip.slice(0, 400));
+      /\.\.\/rooms\/statement\.html/.test(strip), strip.slice(0, 400));
     const fromRoot = Progress.stripHtml('dashboard', h);
     checkTrue('links from the front page are not',
       !/\.\.\//.test(fromRoot), fromRoot.slice(0, 400));
@@ -6530,7 +6530,9 @@ section('The Statement room');
     'two editors for one field is the thing D-017 exists to prevent');
   checkTrue('...but The Statement still shows it, and links to its owner',
     /futureIncome/.test(html) && /timeline\.html/.test(html));
-  checkTrue('cash is still asked in Start Here', Ownership.field('cashSavings').owner === 'start');
+  /* D-234: cash and investments are rows of this room's own list now. */
+  checkTrue('cash is asked here', Ownership.field('cashSavings').owner === 'statement');
+  checkTrue('and so are the investments', Ownership.field('investments').owner === 'statement');
   /* Check each anchor in its OWNER's file, not in this one. The four used to
      share a room, so reading them all out of statement.html was the same
      thing; futureIncome moving to the Timeline in D-152 is what made the
@@ -8335,19 +8337,22 @@ section('The one-pager (D-095): import, confidence, the drawer');
   check('a negative amount imports as its size', Gate.parseImport('debt -1,200').rows[0].cents, 120000);
 
   /* The badge: guessed, you entered, or from the room that wrote it. */
+  /* D-234 swapped the two rooms round: the Statement owns the cash now
+     and Start Here is the one writing from outside. The property under
+     test is the same one, read from the other side. */
   Spine.reset();
-  Spine.registerRoom('start');
-  Spine.upsertAsset(Schema.createAsset({ id: 'a_cash', category: 'cash', valueCents: 950000 }));
-  check('a number typed in Start Here reads as entered', Ownership.describe('cashSavings', Spine.getProfile(), 'start').confidence, 'entered');
-  check('… and the spine says which room wrote it', Spine.getProfile().meta.source.cashSavings, 'start');
   Spine.registerRoom('statement');
+  Spine.upsertAsset(Schema.createAsset({ id: 'a_cash', category: 'cash', valueCents: 950000 }));
+  check('a number typed in its owner reads as entered', Ownership.describe('cashSavings', Spine.getProfile(), 'statement').confidence, 'entered');
+  check('… and the spine says which room wrote it', Spine.getProfile().meta.source.cashSavings, 'statement');
+  Spine.registerRoom('start');
   Spine.upsertAsset({ id: 'a_cash', valueCents: 1200000 });
-  const d = Ownership.describe('cashSavings', Spine.getProfile(), 'start');
-  check('a number changed in The Statement reads as from a room, on the one-pager', d.confidence, 'room');
-  check('… naming it', d.sourceId, 'statement');
-  check('… relative to the owner, whichever room is asking', Ownership.describe('cashSavings', Spine.getProfile(), 'statement').confidence, 'room');
+  const d = Ownership.describe('cashSavings', Spine.getProfile(), 'statement');
+  check('a number changed in another room reads as from a room', d.confidence, 'room');
+  check('… naming it', d.sourceId, 'start');
+  check('… relative to the owner, whichever room is asking', Ownership.describe('cashSavings', Spine.getProfile(), 'start').confidence, 'room');
   Spine.set('meta.guessed.cashSavings', true);
-  check('a flagged guess reads as one whoever wrote it', Ownership.describe('cashSavings', Spine.getProfile(), 'start').confidence, 'guess');
+  check('a flagged guess reads as one whoever wrote it', Ownership.describe('cashSavings', Spine.getProfile(), 'statement').confidence, 'guess');
   checkTrue('the source stamp is not history: undo does not touch it', (function () {
     Spine.reset(); Spine.registerRoom('start'); Spine.set('state', 'NC', 'State');
     const stamped = Spine.getProfile().meta.source.state;

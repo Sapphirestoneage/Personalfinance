@@ -6,8 +6,8 @@ paths:
 File: rooms/start.html · 1000 lines
 Engines: income
 Reference data: match_defaults.json, onepager_defaults.json, retirement_milestones.json, states.json, ui_benefits.json
-Owns: cashSavings, investments
-Reads from other owners: filingStatus (tax), grossAnnualIncome (income), lastPay (runway), employmentStatus (settings), employerMatch (accounts), hasDebt (debt-payoff), contributionPercent (accounts), highestDeductible (runway), +6 more
+Owns: nothing
+Reads from other owners: filingStatus (tax), grossAnnualIncome (income), lastPay (runway), cashSavings (statement), employmentStatus (settings), employerMatch (accounts), hasDebt (debt-payoff), contributionPercent (accounts), +7 more
 Latest decisions:
   - D-166 — The other five questions, folded
   - D-159 — Two boxes buy a number, and the other seven wait

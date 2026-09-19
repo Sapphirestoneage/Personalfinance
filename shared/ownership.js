@@ -204,14 +204,17 @@
       applies: function (h) { return Schema.isUnemployed(h); },
       notApplicableBecause: 'You are working.'
     },
+    /* The two balances are rows of the Statement's own list now (D-234).
+       They were Start Here's; the Statement was already the room that
+       rates, tiers and ladders them. */
     cashSavings: {
-      label: 'Cash & savings', owner: 'start', anchor: 'q-cash',
+      label: 'Cash & savings', owner: 'statement', anchor: 'assets',
       read: function (h) { return Schema.cashCents(h); },
       format: money,
       write: function (cents) { return writeAsset(['cash'], 'cash', true, 'Cash & savings', cents); }
     },
     investments: {
-      label: 'Investments + retirement', owner: 'start', anchor: 'q-investments',
+      label: 'Investments + retirement', owner: 'statement', anchor: 'assets',
       read: function (h) { return Schema.investmentsCents(h); },
       format: money,
       write: function (cents) {

@@ -10,7 +10,7 @@ File: rooms/unlearning.html · 379 lines
 Engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules
 Reference data: advice.json, advice_translator.json, confidence_weights.json, debt_rules.json, expense_categories.json, fire_variants.json, +4 more
 Owns: unlearningDropped
-Reads from other owners: grossAnnualIncome (income), cashSavings (start), employmentStatus (settings), employerMatch (accounts), hasDebt (debt-payoff), mortgageRate (housing), monthlyExpenses (expenses)
+Reads from other owners: grossAnnualIncome (income), cashSavings (statement), employmentStatus (settings), employerMatch (accounts), hasDebt (debt-payoff), mortgageRate (housing), monthlyExpenses (expenses)
 Latest decisions:
   - D-213 — I1, I3, I4, I5: Money Wrapped, the rank guess, the coast date, the Unlearning Quiz
   - D-212 — H4, H5, H7, H8: reachable money, the popular rules, privacy proved, share the shape

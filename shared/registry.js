@@ -31,7 +31,7 @@
       href: 'rooms/start.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dob', 'you.situation'], writes: ['assets.cashCents', 'assets.invested'] },
+      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dob', 'you.situation'], writes: [] },
       subsections: [
         { id: 'q-employment',  label: 'Your situation' },
         { id: 'q-about',       label: 'About you' },
@@ -318,7 +318,7 @@
       href: 'rooms/statement.html',
       tier: 1,
       tags: ['debt'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets', 'assets.property', 'assets.items[].valueCents', 'assets.items[].taxCharacter', 'assets.items[].tier', 'assets.items[].costBasisCents'] },
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets', 'assets.cashCents', 'assets.invested', 'assets.property', 'assets.items[].valueCents', 'assets.items[].taxCharacter', 'assets.items[].tier', 'assets.items[].costBasisCents'] },
       /* Replaces Net Worth (D-069); rooms/net-worth.html redirects here. */
       subsections: [
         { id: 'portfolios', label: 'Three portfolios' },
@@ -1093,14 +1093,14 @@
     features: ['equityComp', 'inheritanceRules', 'givingVehicles'],
     group: 'numbers', subgroup: 'taxes', aliases: ['taxes', 'bracket', 'marginal', 'effective', 'refund', 'withholding'],
     kind: 'about-you',
-    needs: ['grossAnnualIncome'],
+    needs: ['grossAnnualIncome', 'filingStatus', 'state'],
     order: 34,
     title: 'Tax',
     blurb: 'Federal, state and payroll tax on your income: the effective rate, the marginal bracket and the room left in it, and whether a refund or a bill is coming.',
     href: 'rooms/tax.html',
     tier: 2,
     tags: ['income'],
-    daite: { reads: ['income.grossAnnualCents'], writes: ['taxes.filingStatus', 'taxes.otherPreTax', 'taxes.state', 'taxes.withheld', 'taxes.zip'] },
+    daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state'], writes: ['taxes.filingStatus', 'taxes.otherPreTax', 'taxes.state', 'taxes.withheld', 'taxes.zip'] },
       subsections: [
         { id: 'number',      label: 'Your effective rate' },
         { id: 'chart',       label: 'Where a dollar of pay goes' },

@@ -8,7 +8,7 @@ File: rooms/estate.html · 217 lines
 Engines: projection, tier0, hourly, estate
 Reference data: estate_basics.json
 Owns: beneficiariesSet, willExists, poaExists
-Reads from other owners: cashSavings (start), otherAssets (statement)
+Reads from other owners: cashSavings (statement), otherAssets (statement)
 Latest decisions:
   - D-106 — Estate Basics: three facts, and what would pass by the state's rules
   - D-098 — The first six tranche rooms: what each owns, before it is built

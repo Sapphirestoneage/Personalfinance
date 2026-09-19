@@ -15,7 +15,8 @@
   ROOM SPEC — SPEC.md §11. BRIEF §3.3 "The 10x Statement". DECISIONS.md D-069.
   Replaces rooms/net-worth.html, which now redirects here.
 
-  1. READS   every asset and debt, cash and investments (Start Here), the
+  1. READS   every asset and debt — and OWNS the cash and investment
+             balances too since D-234, which were Start Here's — the
              monthly spend, the deductible and out-of-pocket max (Sleep At
              Night), income, date of birth, state and filing status.
   2. WRITES  It OWNS the itemised assets (property, vehicle, other) — name,
@@ -155,8 +156,9 @@
     <p class="slaf-hint" style="margin:0 0 var(--space-3)">
       Every asset, with two questions the value alone cannot answer: how
       sure are you it is worth that, and how fast could you reach it. A
-      house, a car, anything else with resale value is added here; cash and
-      investments come from Start Here and link back.
+      house, a car, anything else with resale value is added here, and so
+      are the cash and the investments: every balance you hold is one row
+      of this list.
     </p>
     <div id="asset-list"></div>
     <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add something you own</button>
@@ -262,7 +264,12 @@
 
   var ROOM_ID = 'statement';
   var TABLES = null;
-  var OWNED = Schema.ITEMISED_ASSET_CATEGORIES;
+  /* D-234: cash and investments are asked here now, not in Start Here, so
+     their rows carry a real box like every other asset rather than a
+     read-only link away. The list rebuilds, which is safe because the
+     Statement's asset rows have always been live boxes inside a rebuilt
+     list guarded by shared/liveform.js. */
+  var OWNED = Schema.ITEMISED_ASSET_CATEGORIES.concat(['cash', 'investment']);
   var CATEGORIES = [['real_estate', 'Property'], ['vehicle', 'Vehicle'], ['other', 'Something else']];
 
   function el(id) { return document.getElementById(id); }
@@ -324,7 +331,7 @@
     var list = el('asset-list');
     var rules = TABLES && TABLES.accessRules;
     var assets = Schema.aggregatableAssets(h);
-    if (!assets.length) { list.innerHTML = '<p class="slaf-reason">Nothing owned yet. Cash and investments are asked in Start Here.</p>'; return; }
+    if (!assets.length) { list.innerHTML = '<p class="slaf-reason">Nothing owned yet. Add the cash, the investments, and anything else with resale value.</p>'; return; }
     var scaleC = rules ? rules.confidenceScale : [];
     list.innerHTML = assets.map(function (a) {
       var mine = OWNED.indexOf(a.category) !== -1;
@@ -335,7 +342,8 @@
         ? '<label class="slaf-field" style="margin:0"><span class="slaf-label">What it\'s worth</span>'
           + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
           + '<input type="text" inputmode="decimal" data-asset="' + a.id + '" data-field="valueCents" value="'
-          + (Money.isEntered(a.valueCents) ? fmt(a.valueCents) : '') + '" placeholder="e.g. 320000" aria-label="Value"/></span></label>'
+          + (Money.isEntered(a.valueCents) ? fmt(a.valueCents) : '') + '" placeholder="e.g. 320000" aria-label="Value"/></span>'
+          + (a.category === 'cash' ? cashMovedHint(h) : '') + '</label>'
         : '<div class="slaf-field" style="margin:0"><span class="slaf-label">What it\'s worth</span>'
           + '<a class="slaf-owned slaf-owned--field" href="' + Ownership.linkTo('start', a.category === 'cash' ? 'q-cash' : 'q-investments') + '">'
           + '<span class="slaf-owned-value">' + (Money.isEntered(a.valueCents) ? fmt(a.valueCents) : Money.EM_DASH) + '</span>'
@@ -459,7 +467,7 @@
     if (names.length) names[names.length - 1].focus();
   });
   el('btn-clear').addEventListener('click', function () {
-    if (!window.confirm('Remove everything added here? Cash and investments are not affected.')) return;
+    if (!window.confirm('Remove the property, vehicles and anything else added here? The cash and investment balances are not affected.')) return;
     Schema.aggregatableAssets(Spine.getProfile()).filter(function (a) { return OWNED.indexOf(a.category) !== -1; })
       .forEach(function (a) { Spine.removeById('assets', a.id); });
     assetForm.force(); render();

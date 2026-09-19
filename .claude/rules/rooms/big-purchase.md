@@ -8,7 +8,7 @@ File: rooms/big-purchase.html · 263 lines
 Engines: projection, tier0, hourly, quickmath, purchase
 Reference data: car_costs.json, liquidity_benchmarks.json
 Owns: purchasePrice, purchaseMonths, purchaseRate
-Reads from other owners: grossAnnualIncome (income), cashSavings (start), monthlyExpenses (expenses)
+Reads from other owners: grossAnnualIncome (income), cashSavings (statement), monthlyExpenses (expenses)
 Latest decisions:
   - D-129 — The ledger, revised: four ways to be taxed, three things an expense can produce, a budget of cards with presets, N/A and the what-if
   - D-112 — Big Purchase: one thing, priced in hours, months of FI and cash

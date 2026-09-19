@@ -7,7 +7,7 @@ File: rooms/housing.html · 329 lines
 Engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing
 Reference data: confidence_weights.json, expense_categories.json, fire_variants.json, foo_rules.json, housing_conventions.json, levers.json, +5 more
 Owns: rentAlternative, homePrice, downPct, mortgageRate
-Reads from other owners: grossAnnualIncome (income), cashSavings (start), rentMonthly (expenses), monthlyExpenses (expenses)
+Reads from other owners: grossAnnualIncome (income), cashSavings (statement), rentMonthly (expenses), monthlyExpenses (expenses)
 Latest decisions:
   - D-130 — What was pushed off, built: dates that are only estimated or potential, the calendar from the ledger, one month of spending, one rent, what the log moved, N/A in its owner room, an emergency-fund preset
   - D-111 — Housing Decision: own against rent, this place, this rate

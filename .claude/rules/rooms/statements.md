@@ -8,7 +8,7 @@ File: rooms/statements.html · 385 lines
 Engines: projection, tier0, cashflow, statements
 Reference data: expense_categories.json
 Owns: nothing
-Reads from other owners: grossAnnualIncome (income), cashSavings (start), employerMatch (accounts), contributionPercent (accounts), totalDebt (debt-payoff), monthlyDebtPayments (debt-payoff), otherAssets (statement), netWorth (statement), +1 more
+Reads from other owners: grossAnnualIncome (income), cashSavings (statement), employerMatch (accounts), contributionPercent (accounts), totalDebt (debt-payoff), monthlyDebtPayments (debt-payoff), otherAssets (statement), netWorth (statement), +1 more
 Latest decisions:
   - D-156 — Your Statements: the three documents, and the basis printed on them
 Full context: node tools/context/pack.js statements

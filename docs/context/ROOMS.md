@@ -7,7 +7,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Home (3)
 
 - **ledger** — The Ledger (utility) · 2248 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-230, D-226, D-207
-- **start** — Start Here · 1000 lines · engines: income · owns: cashSavings, investments · D-166, D-159, D-146
+- **start** — Start Here · 1000 lines · engines: income · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1570 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
@@ -18,7 +18,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **income** — Income · 821 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: grossAnnualIncome, ledgerIncome, incomeType, paySurvives · D-207, D-198, D-195
 - **budget** — Budget · 483 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-130, D-129, D-128
 - **variance** — Estimated vs Actual · 232 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
-- **statement** — The Statement · 722 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
+- **statement** — The Statement · 730 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: cashSavings, investments, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
 - **real-hourly-wage** — Real Hourly Wage · 250 lines · engines: projection, tier0, hourly · D-054, D-021, D-001
 - **accounts** — Where It Goes & how it’s split · 641 lines · engines: selfemployed, accounts, projection, tier0, hourly · owns: employerMatch, capturingFullMatch, contributionPercent, rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand · D-130, D-071, D-062
 - **credit** — Your Credit File · 475 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-147

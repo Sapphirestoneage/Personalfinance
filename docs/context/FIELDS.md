@@ -176,13 +176,10 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `practiceLedger` — Practice ledger · read by skill-tree
 
-## start (2)
+## statement (9)
 
-- `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
+- `cashSavings` — Cash & savings · read by ledger, start, budget, financial-snapshot, statements, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
 - `investments` — Investments + retirement · too generic to trace
-
-## statement (7)
-
 - `otherAssets` — Property & other assets · read by ledger, statements, estate, wrapped
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
 - `netWorth` — Net worth · read by ledger, financial-snapshot, statements, dashboard, race, what-if-life, history, wrapped, one-pager

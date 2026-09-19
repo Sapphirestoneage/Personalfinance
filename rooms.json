@@ -32,10 +32,7 @@
         "highestDeductible",
         "hasDebt"
       ],
-      "writes": [
-        "cashSavings",
-        "investments"
-      ],
+      "writes": [],
       "requires": [],
       "dashboardNumber": null,
       "order": 1
@@ -174,6 +171,8 @@
         "totalDebt"
       ],
       "writes": [
+        "cashSavings",
+        "investments",
         "otherAssets",
         "confidenceWeightedNetWorth",
         "netWorth",
@@ -693,7 +692,9 @@
       "title": "Tax",
       "file": "rooms/tax.html",
       "reads": [
-        "grossAnnualIncome"
+        "grossAnnualIncome",
+        "filingStatus",
+        "state"
       ],
       "writes": [
         "state",
