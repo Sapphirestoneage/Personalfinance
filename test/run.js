@@ -8765,6 +8765,51 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
 })();
 
+section('Statements that open, and the FIRE statement (D-254)');
+
+(function () {
+  const St = require(path.join(ROOT, 'engines/statements.js'));
+  const Fire = require(path.join(ROOT, 'engines/fire.js'));
+  const Tier0 = require(path.join(ROOT, 'engines/tier0.js'));
+  const demo = Demo.build();
+  const inc = St.incomeStatement(demo, TABLES);
+  checkTrue('the income statement builds on the demo', Money.isOk(inc), inc.reason);
+  const s = inc.value;
+  checkTrue('it now takes tax off before living costs', Array.isArray(s.taxes) && s.taxes.length === 1 && s.taxes[0].kind === 'out' && s.taxes[0].entered);
+  check('what the government took is the one take-home estimate every reading uses', s.taxes[0].cents, Schema.takeHomeAnnualCents(demo, TABLES).estimatedTaxCents);
+  check('take-home is earned less tax', s.takeHomeTotal.cents, s.revenueTotal.cents + s.taxesTotal.cents);
+  check('what was left is take-home less what went out', s.leftOver, s.takeHomeTotal.cents + s.costsTotal.cents);
+  const living = s.costs[0];
+  checkTrue('the living-cost line opens to its four parts', living.parts && living.parts.length >= 4 && living.parts.every(x => typeof x.label === 'string'));
+  checkTrue('… and the parts add up to the line where all are entered', living.parts.every(x => x.entered) ? living.parts.reduce((t, x) => t + x.cents, 0) === living.cents : true);
+  checkTrue('every line says how it is worked out and where its number lives', s.revenue.concat(s.taxes, s.costs).every(l => l.how && (l.field || l.room)));
+  const cf = St.cashFlowStatement(demo, TABLES);
+  check('the cash flow starts at take-home, not gross: the match never landed', cf.value.operating[0].cents, s.takeHomeTotal.cents);
+  checkTrue('… and says so', /match/.test(cf.value.operating[0].how));
+  const bal = St.balanceSheet(demo, TABLES);
+  checkTrue('balance sheet lines carry their field', bal.value.current.concat(bal.value.nonCurrent, bal.value.liabilities).every(l => l.field));
+  /* The FIRE statement reads the engines that own each figure. */
+  const fs_ = St.fireStatement(demo, TABLES);
+  checkTrue('the FIRE statement builds on the demo', Money.isOk(fs_), fs_.reason);
+  const f = fs_.value;
+  const byLabel = (list, label) => list.filter(l => l.label === label)[0];
+  check('a year of spending is the month times twelve', byLabel(f.target, 'A year of spending').cents, Schema.monthlyExpensesCents(demo).value * 12);
+  check('the FI number is engines/fire\'s', byLabel(f.target, 'Your FI number').cents, Fire.calculateFIRE(demo, TABLES, { variantId: 'standard' }).value);
+  check('the FI ratio is engines/fire\'s progress', byLabel(f.standing, 'FI ratio').cents, Fire.progressToward(demo, TABLES, { variantId: 'standard' }).value);
+  checkTrue('… as a rate, not money', byLabel(f.standing, 'FI ratio').unit === 'rate');
+  const sr = Tier0.savingsRate(demo, TABLES);
+  check('the savings rate is engines/tier0\'s', byLabel(f.pace, 'Savings rate').cents, (Money.isOk(sr.includingMatch) ? sr.includingMatch : sr.excludingMatch).value);
+  checkTrue('years to FI is a number of years', byLabel(f.pace, 'Years to FI').unit === 'years' && byLabel(f.pace, 'Years to FI').entered);
+  checkTrue('every FIRE line links somewhere and says how', f.target.concat(f.standing, f.pace, f.assumptions).every(l => l.how && (l.field || l.room)));
+  check('with nothing entered it refuses rather than showing zeros', St.fireStatement(Schema.createHousehold({}), TABLES).status, 'incomplete');
+  const onlySpend = Schema.createHousehold({ expenses: { wants: { totalCents: 300000 }, entries: [] } });
+  const partial = St.fireStatement(onlySpend, TABLES);
+  checkTrue('with spending but nothing invested, invested today is a dash, never zero', Money.isOk(partial) && !byLabel(partial.value.standing, 'Invested today').entered);
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/statements.html'), 'utf8');
+  checkTrue('the room has the fourth tab, loads the engines, and opens every line through one row function', /id: 'fire',\s+label: 'FIRE statement'/.test(room) && /engines\/fire\.js/.test(room) && /engines\/gap\.js/.test(room) && /<details class="ln">/.test(room) && /Ownership\.linkTo\(f\.owner, f\.anchor, 'statements'\)/.test(room));
+  checkTrue('the export carries the tax lines and the FIRE statement', /inc\.value\.taxes/.test(room) && /section: 'FIRE statement'/.test(room));
+})();
+
 section('What hits your account, and when: the month as turns, in Cash Flow and the Calendar (D-253)');
 
 (function () {
