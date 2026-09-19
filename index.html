@@ -269,9 +269,10 @@
   <section class="slaf-card landing" id="landing" hidden>
     <span class="slaf-eyebrow">SPARKS · Money rooms</span>
     <h2>One set of numbers. Every tool reads it.</h2>
-    <p>Answer a short set of questions once — what you earn, spend, hold and owe — and every room opens already filled in, from your runway to your FI year. Nothing leaves this browser.</p>
+    <p>Start with a few questions and rough answers — First Look shows you your own money moving, and one thing to do next, in about two minutes. Everything you say there fills every other room in, from your runway to your FI year. Nothing leaves this browser.</p>
     <div class="cta">
-      <a class="slaf-btn slaf-btn--primary" id="btn-start" href="rooms/ledger.html#round-1">Walk me through it →</a>
+      <a class="slaf-btn slaf-btn--primary" id="btn-first-look" href="rooms/first-look.html">Show me where I stand →</a>
+      <a class="slaf-btn" id="btn-start" href="rooms/ledger.html#round-1">Walk me through it</a>
       <a class="slaf-btn" id="btn-express" href="rooms/ledger.html#all-at-once">Give me the whole form</a>
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-example">See it with example numbers</button>
     </div>
@@ -1103,8 +1104,13 @@
       resume.hidden = false;
       resume.innerHTML = o.fieldsFilled + ' of ' + o.fieldsTotal + ' answers in. Pick up at '
         + '<a href="' + next.href + '">' + esc(next.label) + '</a> in ' + esc(next.ownerTitle) + ' →';
+      /* Part-way through, continuing leads. First Look is the door for
+         somebody with nothing on file, not a way to start over. D-234. */
       el('btn-start').textContent = 'Continue →';
       el('btn-start').href = next.href;
+      el('btn-start').classList.add('slaf-btn--primary');
+      el('btn-first-look').classList.remove('slaf-btn--primary');
+      el('btn-first-look').textContent = 'Or see where you stand so far';
     } else {
       resume.hidden = true;
     }
@@ -1208,11 +1214,14 @@
     });
   })();
 
-  /* prefs.path = fi defaults to Express (D-208): the whole form leads. */
+  /* prefs.path = fi defaults to Express (D-208): the whole form leads.
+     Somebody who has already said they are here for the numbers does not
+     need four questions and a picture first. */
   try {
     if (SLAF.Prefs && SLAF.Prefs.get('door', null) === 'fi') {
       el('btn-express').classList.add('slaf-btn--primary');
       el('btn-start').classList.remove('slaf-btn--primary');
+      el('btn-first-look').classList.remove('slaf-btn--primary');
     }
   } catch (e) { /* fine */ }
   el('btn-example').addEventListener('click', function () {
@@ -1221,6 +1230,9 @@
     Spine.updateProfile({
       people: d.people, filingStatus: d.filingStatus, state: d.state,
       assets: d.assets, debts: d.debts, expenses: d.expenses,
+      /* What lands in Robin's account, so the example household answers
+         First Look's question too rather than opening it half empty. D-234. */
+      income: d.income,
       capturingFullMatch: d.capturingFullMatch, retirement: d.retirement, insurance: d.insurance
     });
   });

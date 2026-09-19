@@ -14372,6 +14372,19 @@ section('First Look: four to seven questions, one picture, one next step (D-234)
   }
 
   /* ---- Never a list, never a verdict -------------------------------------- */
+  /* The door a session with nothing on file is offered first. */
+  {
+    const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    checkTrue('the landing leads with First Look',
+      /id="btn-first-look" href="rooms\/first-look\.html"/.test(idx)
+      && /slaf-btn--primary" id="btn-first-look"/.test(idx));
+    checkTrue('...and the two Ledger doors are still there, one step behind it',
+      /id="btn-start" href="rooms\/ledger\.html#round-1"/.test(idx) && /id="btn-express"/.test(idx));
+    checkTrue('part-way through, continuing leads instead: this is a door, not a way to start over',
+      /el\('btn-start'\)\.classList\.add\('slaf-btn--primary'\)/.test(idx));
+    checkTrue('the example household answers its question too',
+      /income: d\.income/.test(idx));
+  }
   checkTrue('the furniture asks no second question over a room that is all questions',
     Registry.byId('first-look').asksOwnQuestions === true
     && /asksOwnQuestions\(roomId\)/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
