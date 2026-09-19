@@ -1480,3 +1480,5 @@ a:hover { color: var(--sapphire-100); }
 .slaf-reads-item.is-na { opacity: .6; }
 .slaf-reads-item .g { font-weight: 700; }
 a.slaf-reads-item:hover { color: var(--color-text); border-color: var(--color-border-active); }
+/* Screen readers only: the state word behind a strip glyph. */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

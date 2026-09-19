@@ -459,6 +459,78 @@
     var chain = g.SLAF.FillCard ? Promise.resolve() : load(base + 'shared/fillcard.js');
     chain.then(function () { return g.SLAF.FillCard.ensure(); }).then(function (tables) { fn(g.SLAF.Fill, tables); }).catch(function () { /* no badge is fine */ });
   }
+  /* ---- The reads-from strip (D-266) ---------------------------------------
+     One line at the top of every view room (kind: read): the fields the
+     room reads, each with its state glyph. ✓ known, ~ rough (links to Loose
+     Ends), ? unknown and ✗ empty (link to the row's Ledger box). A computed
+     row shows its inputs instead. A view room owns nothing and types
+     nothing: this strip is where its facts are reached. */
+  var READ_GLYPH = { known: '\u2713', rough: '~', unknown: '?', empty: '\u2717', na: '\u2014', computed: '=' };
+  var READ_WORD = { known: 'known', rough: 'roughly', unknown: 'don\u2019t know yet', empty: 'not entered', na: 'not for you', computed: 'worked out' };
+  function readsHtml(roomId, Fill, tables) {
+    var room = Registry.byId(roomId);
+    var S = spine();
+    if (!room || !S || !(room.needs || []).length) return '';
+    var g = globals();
+    var LR = g && g.SLAF && g.SLAF.LedgerRows;
+    var h = S.getProfile();
+    var seen = {};
+    var items = [];
+    function push(fieldId) {
+      if (seen[fieldId]) return;
+      seen[fieldId] = true;
+      var row = LR && LR.byId ? LR.byId(fieldId) : null;
+      if (row && row.kind === 'computed' && (row.inputs || []).length) { row.inputs.forEach(push); return; }
+      var d = Ownership.describe(fieldId, h, roomId);
+      if (!d || d.applies === false) return;
+      var state, href = null;
+      if (row) {
+        var st = Fill.stateOf(h, row, tables);
+        state = st.state;
+        if (state === 'na') return;
+        if (state === 'rough') href = Fill.looseEndsHref(roomId);
+        else if (state === 'empty' || state === 'unknown') href = Fill.ledgerHref(row, roomId);
+        else if (state === 'known' && st.stale) href = Fill.looseEndsHref(roomId);
+      } else {
+        state = d.isSet ? 'known' : 'empty';
+        if (!d.isSet) href = d.href;
+      }
+      /* One line per debt or account: say so, since "Balance" alone reads
+         as anything. */
+      var LIST_WORD = { debts: 'Each debt: ', assets: 'Each account: ' };
+      var label = escapeHtml(row ? (LIST_WORD[row.repeat] || '') + row.label : d.label);
+      var title = READ_WORD[state] || state;
+      var inner = '<span class="g" aria-hidden="true">' + READ_GLYPH[state] + '</span><span>' + label + '</span>';
+      items.push(href
+        ? '<a class="slaf-reads-item is-' + state + '" href="' + escapeHtml(href) + '" title="' + escapeHtml(title) + ': tap to fill it in">' + inner + '<span class="sr-only"> (' + escapeHtml(title) + ')</span></a>'
+        : '<span class="slaf-reads-item is-' + state + '" title="' + escapeHtml(title) + '">' + inner + '</span>');
+    }
+    (room.needs || []).forEach(push);
+    if (!items.length) return '';
+    return '<span class="slaf-reads-lead">Reads from</span>' + items.join('');
+  }
+  function mountReads(roomId, host) {
+    var room = Registry.byId(roomId);
+    if (!room || room.kind !== 'read' || roomId === 'dashboard' || !host) return;
+    if (typeof document === 'undefined' || document.getElementById('slaf-reads')) return;
+    withFill(function (Fill, tables) {
+      var strip = document.createElement('div');
+      strip.className = 'slaf-reads';
+      strip.id = 'slaf-reads';
+      strip.setAttribute('role', 'navigation');
+      strip.setAttribute('aria-label', 'What this room reads');
+      var first = host.querySelector('.slaf-room-head, .room-head, header');
+      if (first && first.parentNode === host) host.insertBefore(strip, first.nextSibling); else host.insertBefore(strip, host.firstChild);
+      function paint() {
+        var html = readsHtml(roomId, Fill, tables);
+        strip.hidden = !html;
+        if (strip.innerHTML !== html) strip.innerHTML = html;
+      }
+      paint();
+      var S = spine();
+      if (S && S.onChange) S.onChange(paint);
+    });
+  }
   function mountBadge(roomId) {
     withFill(function (Fill, tables) {
       var S = spine();
@@ -1367,6 +1439,9 @@
     if (['ledger', 'start'].indexOf(roomId) === -1 && !document.getElementById('slaf-ask')) {
       withAsk(function () { if (g.SLAF.Ask) g.SLAF.Ask.mount(roomId, host); });
     }
+    /* The reads-from strip on a view room (D-266): what it reads, in what
+       state, each a link to where it is filled in. */
+    mountReads(roomId, host);
 
     /* A write during a tap (blur → save → change) used to repaint this
        strip synchronously. When an item drops off the list the document

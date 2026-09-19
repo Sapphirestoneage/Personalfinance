@@ -29,9 +29,10 @@ render; engines never write. Undo snapshots sit under `slaf.snapshots.v1`.
 - `shared/registry.js` — every room: id, title, href, group, aliases, blurb, needs.
 - `shared/daite.js` — the five families; field id → declared path; `view()`.
 - `shared/blocks.js`, `shared/scenarios.js` — hypotheticals beside the facts.
+- `shared/fill.js`, `shared/fillcard.js` — Fill Mode (D-264): one state per Ledger row, the Next queue, the loose ends, the one editor the Next card and Loose Ends share.
 - `shared/liveform.js` — guard for containers of live inputs (D-034).
 - `shared/backup.js` — export/import of everything this browser holds (D-204).
-- `data/` — 80 reference files, year-versioned; `ledger-rows.json` (every
+- `data/` — 81 reference files, year-versioned; `ledger-rows.json` (every
   number the app can hold, 81 rows), `spheres.json`, `levers.json`,
   `lenses.json`, `blocks/<type>.json`; keys map to files in `shared/reference.js`.
 - `test/run.js` — 28k unit checks, node only; `test/forms.js` — phone form walk.

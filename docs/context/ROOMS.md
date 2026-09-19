@@ -4,11 +4,12 @@
 One line per room: id, title, lines, engines, owned fields, latest decisions.
 Full context for one: `node tools/context/pack.js <id>`.
 
-## Home (3)
+## Home (4)
 
-- **ledger** — The Ledger (utility) · 2264 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-241, D-230, D-226
+- **ledger** — The Ledger (utility) · 2304 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-241, D-230, D-226
 - **start** — Start Here · 1189 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-262, D-259, D-249
-- **dashboard** — The Dashboard · 1830 lines · no engines · DD-030, DD-028, DD-026
+- **loose-ends** — Loose Ends (utility) · 291 lines · engines: tax, projection, tier0, income, ledger, foo, fire · D-265
+- **dashboard** — The Dashboard · 1846 lines · no engines · DD-030, DD-028, DD-026
 
 ## Your Numbers (16)
 
@@ -99,7 +100,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **wrapped** — Money Wrapped · 131 lines · engines: projection, tier0, income, ledger, selfemployed, tax, hourly, debt, sincelast, wrapped · D-213
 - **data** — Your Data (utility) · 702 lines · engines: tax, bankcsv · D-221, D-220, D-125
 - **one-pager** — The One-Pager · 174 lines · engines: selfemployed, tax, projection, tier0, income, ledger, debt, cashflow, ratios, trap, onepager · D-219
-- **settings** — Settings (utility) · 181 lines · no engines · D-180
+- **settings** — Settings (utility) · 233 lines · no engines · D-180
 - **progress-card** — Progress Card (utility) · 142 lines · engines: projection, tier0, income, selfemployed, ledger, tax, debt · D-212
 
 ## Files in rooms/ not in the registry (18)

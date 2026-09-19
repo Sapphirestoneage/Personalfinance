@@ -14930,6 +14930,36 @@ change too: the Backup card (D-202) sits under the four headings.
 
 ---
 
+## D-266 — Every view room opens with what it reads, and the state each is in
+
+**Why.** A view room said what it needed (the Needs line, D-237) but not
+what state those numbers were in, and a rough or missing one was reached by
+guessing which room owned it. The owner's brief of 2026-09-19, part 4.
+
+**Decision.** `Progress.mount` puts one strip at the top of every view room
+(`kind: 'read'`, the Dashboard aside, which opens with the Next card): the
+fields its registry `needs` name, each with its state glyph. ✓ known, ~
+rough (links to Loose Ends), ? unknown and ✗ empty (link to the row's own
+Ledger box), stale known links to Loose Ends too, a computed row shows its
+inputs instead, a row marked Not for me is absent. `shared/progress.js`
+`mountReads`, painted again on every spine change; the styles in
+`shared/theme.css` (`.slaf-reads`). No room is wired by hand, so none can
+be missed. Audited: no view room types a Ledger fact of its own (every box
+on one is a plan or a what-if), and `test/run.js` now holds that.
+
+**Replaces or removes.** Nothing on screen: the strip is the link the Needs
+line lacked. The Ledger's item rows drawn twice (found in D-264) and the
+settings gate's heading check (found in D-265) are left for the owner.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (32,742), `test/render.js`, `test/sidebar.js`,
+`node test/forms.js`. In a browser at 380px: FIRE Number, the Scorecard,
+Coast Date and Credit, empty and with the demo persona; every chip links
+where the rule says, no horizontal scroll, a clean console.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

@@ -15116,6 +15116,23 @@ section('Fill Mode: field states, the Next queue, the finish line, loose ends (D
     const strings = (src.match(/'[^'\n]*'/g) || []).filter(x => /[A-Za-z]{3}/.test(x)).join(' ');
     checkTrue(`${f} copy carries no em dash`, !/—|\\u2014/.test(strings), 'the Next card and Loose Ends are read on a phone');
   });
+  /* The reads-from strip (D-266): every view room, from the one mount
+     point, with the four glyphs the brief names and the links it names. */
+  const progress = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('the reads-from strip mounts from Progress.mount, for view rooms only', /mountReads\(roomId, host\)/.test(progress) && /room\.kind !== 'read'/.test(progress));
+  checkTrue('...with the four glyphs: known, rough, unknown, empty', /known: '\\u2713', rough: '~', unknown: '\?', empty: '\\u2717'/.test(progress));
+  checkTrue('...a rough field links to Loose Ends', /state === 'rough'\) href = Fill\.looseEndsHref/.test(progress));
+  checkTrue('...an empty or unknown field links to its Ledger box', /state === 'empty' \|\| state === 'unknown'\) href = Fill\.ledgerHref/.test(progress));
+  const viewRooms = Registry.all().filter(r => r.kind === 'read' && r.id !== 'dashboard');
+  checkTrue('there are view rooms to carry it: ' + viewRooms.map(r => r.id).join(','), viewRooms.length >= 10);
+  /* No view room types a Ledger fact of its own: every write path on a view
+     room is a plan or a what-if, never a row of data/ledger-rows.json. */
+  viewRooms.forEach(r => {
+    const html = fs.readFileSync(path.join(ROOT, r.href), 'utf8');
+    const rowIds = new Set(LedgerRows.all().map(x => x.id));
+    const writes = (html.match(/Ownership\.write\('([A-Za-z]+)'/g) || []).map(m => m.replace(/Ownership\.write\('/, '').replace(/'$/, ''));
+    checkTrue(`${r.id} types no Ledger fact of its own`, writes.every(id => !rowIds.has(id)), writes.filter(id => rowIds.has(id)).join(','));
+  });
   /* The deep link lands on the Ledger's own box for the row. */
   const ledger = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   checkTrue('the Ledger lands on #x-row-<id>', /#x-row-\(\[A-Za-z0-9\]\+\)\$/.test(ledger));
