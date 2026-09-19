@@ -30,9 +30,13 @@ module.exports = function (t) {
      step 2, capture the match (test/run.js, "foo placement step number").
      Its banded ratios (engines/ratios.js against ratio_benchmarks v1.3):
        debtToIncome  1,220 owed a month ÷ 6,000 gross a month... the engine
-                     reads 0.051 → good (≤ 0.28)
+                     reads 0.051 → good (≤ 0.36, D-235: the 28% figure is the
+                     housing front-end rule, not this one)
        savingsRate   0.285 → good (≥ 0.15)
-       housingRatio  no verdict: the demo enters no housing payment
+       housingRatio  1,500 accommodation ÷ 6,000 gross = 0.25 → good (≤ 0.28).
+                     It used to have no verdict, because the ratio waited on a
+                     categorised month; the demo's roof was typed all along
+                     (D-235)
        emergencyFund 9,500 ÷ 3,150 = 3.02 months → watch
      Against step 2 and those zones, rule by rule:
        starter-fund-first        steps [0,1]   2 > 1                → stop
@@ -41,7 +45,7 @@ module.exports = function (t) {
        six-months-of-expenses    steps [4,4]   2 < 4                → not yet
        cut-the-lattes            savingsRate in [out]; it is good  → stop
        max-the-roth              steps [6,9]   2 < 6                → not yet
-       buy-dont-rent             steps [4,9] + housingRatio [good]: 2 < 4 → not yet (housing has no verdict, but the step decides)
+       buy-dont-rent             steps [4,9] + housingRatio [good]: 2 < 4 → not yet (housing is good, and the step decides first anyway)
        invest-in-index-funds     steps [2,9]   2 inside             → applies
        hustle-harder             savingsRate in [out]; it is good  → stop
        hyper-accumulate          steps [7,9]   2 < 7                → not yet
@@ -61,7 +65,7 @@ module.exports = function (t) {
   check('… debtToIncome good', st.zones.debtToIncome, 'good');
   check('… savingsRate good', st.zones.savingsRate, 'good');
   check('… emergencyFundMonths watch', st.zones.emergencyFundMonths, 'watch');
-  checkTrue('… housingRatio has no verdict', st.zones.housingRatio === undefined);
+  check('… housingRatio good, read off the typed roof (D-235)', st.zones.housingRatio, 'good');
 
   const c = Unlearning.classify(demo, T, {});
   checkTrue('the demo classifies', Money.isOk(c), c.reason);

@@ -323,6 +323,7 @@
     <div class="next" id="next-action" hidden>
       <p class="say" id="next-say"></p>
       <a class="go" id="next-go" href="#"></a>
+      <p class="why" id="next-step" hidden></p>
     </div>
   </section>
 
@@ -766,6 +767,12 @@
           + Money.formatRate(d.floor, { decimals: 0 }) + '.',
         room: 'expenses', anchor: 'spending', go: 'Find the gap in Expenses →' };
     },
+    housing_above_guideline: function (d) {
+      return { say: 'The roof takes <strong>' + Money.formatRate(d.share, { decimals: 0 }) + '</strong> of gross pay — '
+          + Money.formatCents(d.monthlyCents) + ' a month against a '
+          + Money.formatRate(d.guideline, { decimals: 0 }) + ' guideline. It is the largest line in most budgets and the slowest to change, so it is worth knowing before the smaller ones.',
+        room: 'housing', anchor: null, go: 'Weigh the place in Housing Decision →' };
+    },
     high_utilisation_vs_debt_load: function (d) {
       return { say: '<strong>' + Money.formatRate(d.revolvingShare, { decimals: 0 }) + '</strong> of what you owe is revolving credit ('
           + Money.formatCents(d.revolvingBalanceCents) + ').',
@@ -845,6 +852,23 @@
     el('next-say').innerHTML = action.say;
     el('next-go').textContent = action.go;
     el('next-go').href = action.href || Ownership.linkTo(action.room, action.anchor);
+    /* Say which rung this is. A flag is a step being skipped, and without the
+       step named this block and What The Next Dollar Does described the same
+       household in two different places on the same ladder. */
+    var step = el('next-step');
+    if (step) {
+      var n = flag && flag.step !== null && flag.step !== undefined ? flag.step
+        : (Money.isOk(foo) ? foo.value : null);
+      if (n === null || n === undefined || action.href) { step.hidden = true; step.textContent = ''; }
+      else {
+        step.hidden = false;
+        step.textContent = 'Step ' + n + ' of the order of operations. ';
+        var link = document.createElement('a');
+        link.href = Ownership.linkTo('foo-ladder', null);
+        link.textContent = 'See the whole ladder →';
+        step.appendChild(link);
+      }
+    }
   }
 
   /* ---- Block 3: the next thing to learn, or unlearn --------------------------- */

@@ -218,6 +218,7 @@
       if (!def) return;
       fired.push({
         key: key, label: def.label, severity: def.severity,
+        step: def.step === undefined ? null : def.step,
         guidance: def.guidance, detail: detail || null
       });
     }
@@ -283,6 +284,38 @@
       });
     }
 
+    /* 6. The roof above the front-end guideline. The largest line in most
+          budgets, the hardest to change in a hurry, and the one underwriters
+          read on its own — t.dtiHousingGuideline has been in the rules file
+          all along with nothing reading it. Accommodation as typed; this
+          does not wait on a categorised month, for the same reason
+          engines/ratios.js no longer does. */
+    var roof = Schema.rentMonthlyCents(household);
+    var grossForRoof = Schema.grossAnnualIncomeCents(household);
+    if (roof && Money.isEntered(roof.cents) && Money.isOk(grossForRoof) && grossForRoof.value > 0) {
+      var roofShare = roof.cents / (grossForRoof.value / 12);
+      if (roofShare > t.dtiHousingGuideline) {
+        fire('housing_above_guideline', {
+          share: roofShare, guideline: t.dtiHousingGuideline,
+          monthlyCents: roof.cents, basis: 'accommodation'
+        });
+      }
+    }
+
+    /* Flags come out in the ladder's order, not the file's. A flag is a step
+       being skipped, so the one belonging to the earliest step is the one to
+       answer first — and the Dashboard shows flags[0]. Before this, the file
+       happened to list the cash-versus-debt flag (step 3) above the
+       uncaptured match (step 2), so the front door said "point the excess at
+       the debt" while the ladder room said "capture the employer match", on
+       the same household, two taps apart. Critical before warning, then the
+       earlier step. */
+    var RANK = { critical: 0, warning: 1 };
+    fired.sort(function (a, b) {
+      var sev = (RANK[a.severity] === undefined ? 9 : RANK[a.severity]) - (RANK[b.severity] === undefined ? 9 : RANK[b.severity]);
+      if (sev !== 0) return sev;
+      return (a.step === null ? 99 : a.step) - (b.step === null ? 99 : b.step);
+    });
     return fired;
   }
 

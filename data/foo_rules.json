@@ -75,31 +75,43 @@
       "key": "ef_alongside_high_interest_debt",
       "severity": "critical",
       "label": "Emergency fund sitting alongside high-interest debt",
-      "guidance": "Cash earning near nothing while a balance compounds above 7.5% is a losing trade. Keep the starter fund; send the rest at the debt."
+      "guidance": "Cash earning near nothing while a balance compounds above 7.5% is a losing trade. Keep the starter fund; send the rest at the debt.",
+      "step": 3
     },
     {
       "key": "match_left_on_table",
       "severity": "critical",
       "label": "Not capturing the full employer match",
-      "guidance": "This is the only guaranteed return in the whole ladder. Contributing up to the cap comes before almost everything else."
+      "guidance": "This is the only guaranteed return in the whole ladder. Contributing up to the cap comes before almost everything else.",
+      "step": 2
     },
     {
       "key": "dti_above_ceiling",
       "severity": "warning",
       "label": "Debt-to-income above 36%",
-      "guidance": "Above the range most lenders treat as comfortable. It does not mean anything is wrong today — it does narrow your options."
+      "guidance": "Above the range most lenders treat as comfortable. It does not mean anything is wrong today — it does narrow your options.",
+      "step": 3
     },
     {
       "key": "savings_rate_below_benchmark",
       "severity": "warning",
       "label": "Savings rate below the 10–15% benchmark",
-      "guidance": "Below the range typically used as a floor. Worth checking against your expenses before treating it as a fact."
+      "guidance": "Below the range typically used as a floor. Worth checking against your expenses before treating it as a fact.",
+      "step": 4
     },
     {
       "key": "high_utilisation_vs_debt_load",
       "severity": "warning",
       "label": "High revolving balance relative to total debt",
-      "guidance": "A large share of your debt is revolving credit, which usually carries the highest rate and the most volatile minimum payment."
+      "guidance": "A large share of your debt is revolving credit, which usually carries the highest rate and the most volatile minimum payment.",
+      "step": 3
+    },
+    {
+      "key": "housing_above_guideline",
+      "severity": "warning",
+      "step": 0,
+      "label": "Housing above the 28% guideline",
+      "guidance": "The roof is the largest line in most budgets and the hardest to change in a hurry, which is why underwriters read it on its own. Above 28% of gross it crowds every step of the ladder below it — the ladder still runs, it just runs on less."
     }
   ]
 }
