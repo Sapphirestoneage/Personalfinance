@@ -26,6 +26,12 @@ Updated: 2026-09-19
   three cards with one door in, and a backup can be sealed with a
   passphrase on the browser's own crypto, with a fingerprint after a save
   and a load (D-305).
+- **A statement in, sorted by where the money went (D-306).** Expenses has a
+  third reading: bring a bank or card CSV in (the one intake, shared with
+  Your Data; a card's positive charges are recognised), every place money
+  went as one line with a category that becomes a rule for the next
+  statement, and the slope of a month by the day money left against the day
+  it was for, so what was bought ahead or paid late shows as the gap.
 - **The reframe D-228 asks for has NOT shipped**; the FI target is still
   spending ÷ the withdrawal rate, and both rooms say so in their spec.
 - **The Calendar is back (D-306)**, at the owner's call: the month picture

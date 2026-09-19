@@ -11,20 +11,25 @@
      BankCsv.parse(text)                 → { delimiter, headers, rows }
      BankCsv.signature(headers)          the key a bank is remembered by
      BankCsv.guessMap(headers)           → { date, description, amount, debit, credit } column indexes
-     BankCsv.entries(parsed, map, h, T)  → preview lines, duplicates marked
+     BankCsv.entries(parsed, map, h, T)  → preview lines, duplicates marked;
+                                           map.flip = true reads a card
+                                           statement, where a charge is
+                                           positive (D-306); a merchant rule
+                                           on the household beats the keywords
+     BankCsv.looksLikeCard(parsed, map)  charges outnumber payments: a card
      BankCsv.apply(lines, Spine)         writes the new ones, one batch
    ========================================================================== */
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Importer: require('../shared/importer.js'), Csv: require('../shared/csv.js') };
+    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Importer: require('../shared/importer.js'), Csv: require('../shared/csv.js'), Merchants: require('./merchants.js') };
   } else {
-    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema, Importer: root.SLAF && root.SLAF.Importer, Csv: root.SLAF && root.SLAF.Csv };
+    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema, Importer: root.SLAF && root.SLAF.Importer, Csv: root.SLAF && root.SLAF.Csv, Merchants: root.SLAF && root.SLAF.Merchants };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Importer, deps.Csv);
+  var api = factory(deps.Money, deps.Schema, deps.Importer, deps.Csv, deps.Merchants);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.BankCsv = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Importer, Csv) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Importer, Csv, Merchants) {
   'use strict';
   /* One reader for every CSV (shared/csv.js, D-221): the delimiter, the
      byte-order mark, quotes across lines and ragged rows are its job. */
@@ -54,6 +59,16 @@
   function cents(s) { var c = Csv.amount(s); return c === undefined ? null : c; }
   function descKey(s) { return norm(s).replace(/\b\d+\b/g, '').replace(/\s+/g, ' ').trim(); }
   function key(e) { return e.date + '|' + e.cents + '|' + descKey(e.description); }
+  /* A card statement lists a charge as a positive number and a payment as
+     a negative one, the mirror of a bank's. Spending is most of any
+     statement, so a one-column file where the amounts above zero outnumber
+     the ones below is probably a card (D-306). The person can untick it. */
+  function looksLikeCard(parsed, map) {
+    if (!parsed || !map || map.amount < 0) return false;
+    var pos = 0, neg = 0;
+    (parsed.rows || []).forEach(function (r) { var c = cents(r[map.amount]); if (c === null || c === 0) return; if (c < 0) neg++; else pos++; });
+    return pos > neg;
+  }
   function categoryOf(description, amountCents, tables) {
     if (!Importer || !tables) return 'other';
     var r = Importer.classify(description + ' ' + (Math.abs(amountCents) / 100).toFixed(2), tables).rows[0];
@@ -70,17 +85,18 @@
       var date = map.date >= 0 ? parseDate(r[map.date]) : null;
       var desc = map.description >= 0 ? r[map.description] : '';
       var amt = null;
-      if (map.amount >= 0) amt = cents(r[map.amount]);
+      if (map.amount >= 0) { amt = cents(r[map.amount]); if (amt !== null && map.flip) amt = -amt; }
       else {
         var d = map.debit >= 0 ? cents(r[map.debit]) : null, c = map.credit >= 0 ? cents(r[map.credit]) : null;
         if (d !== null && d !== 0) amt = -Math.abs(d); else if (c !== null && c !== 0) amt = Math.abs(c);
       }
       var kind = amt === null ? 'skip' : amt < 0 ? 'expense' : 'deposit';
       var spend = kind === 'expense' ? Math.abs(amt) : null;
-      var line = { i: i, date: date, description: desc, cents: spend, signed: amt, kind: kind, categoryId: kind === 'expense' ? categoryOf(desc, spend, tables) : null, duplicate: false, why: null };
+      var ruled = kind === 'expense' && Merchants ? Merchants.categoryFor(desc, h) : null;
+      var line = { i: i, date: date, description: desc, cents: spend, signed: amt, kind: kind, categoryId: kind === 'expense' ? (ruled || categoryOf(desc, spend, tables)) : null, categorizedBy: ruled ? 'rule' : 'bank-csv', duplicate: false, why: null };
       if (!date) { line.kind = 'skip'; line.why = 'no date I can read'; }
       else if (amt === null) line.why = 'no amount';
-      else if (kind === 'deposit') line.why = 'money in; the log holds spending';
+      else if (kind === 'deposit') line.why = map.flip ? 'a payment or a credit; the log holds spending' : 'money in; the log holds spending';
       if (line.kind === 'expense') {
         var k = key({ date: date, cents: spend, description: desc });
         if (existing[k] || seen[k]) { line.duplicate = true; line.why = existing[k] ? 'already in the log' : 'listed twice in the file'; }
@@ -94,10 +110,10 @@
     if (!Spine) throw new Error('BankCsv.apply needs the spine');
     Spine.batch('Imported ' + take.length + ' bank line' + (take.length === 1 ? '' : 's'), function () {
       take.forEach(function (l) {
-        Spine.upsertExpenseEntry(Schema.createExpenseEntry({ categoryId: l.categoryId || 'other', amountCents: l.cents, period: 'once', date: l.date, dateKind: 'exact', descriptor: l.description, source: 'log', categorizedBy: 'bank-csv' }));
+        Spine.upsertExpenseEntry(Schema.createExpenseEntry({ categoryId: l.categoryId || 'other', amountCents: l.cents, period: 'once', date: l.date, dateKind: 'exact', descriptor: l.description, source: 'log', categorizedBy: l.categorizedBy || 'bank-csv' }));
       });
     });
     return take.length;
   }
-  return { parse: parse, signature: signature, guessMap: guessMap, parseDate: parseDate, cents: cents, entries: entries, apply: apply, key: key, descKey: descKey };
+  return { parse: parse, signature: signature, guessMap: guessMap, looksLikeCard: looksLikeCard, parseDate: parseDate, cents: cents, entries: entries, apply: apply, key: key, descKey: descKey };
 });

@@ -43,7 +43,7 @@
      beside the version in every footer and in every backup, so a phone
      showing an old page can be told apart from a bug. version.json carries
      the same string; `node tools/stamp-build.js` sets both to today. D-202. */
-  var BUILD = '2026-09-19 17:18Z';
+  var BUILD = '2026-09-19 19:19Z';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -232,6 +232,9 @@
     'expenses.entries[].deductible':             { class: 'raw',        unit: 'bool',    note: 'true only when linkedIncomeId is set — enforced by createExpenseEntry, so a personal expense can never reduce taxable income. D-128' },
     'expenses.entries[].hidden':                 { class: 'raw',        unit: 'bool',    note: 'off the default list, still counted. D-128' },
     'expenses.entries[].active':                 { class: 'raw',        unit: 'bool',    note: 'false = archived: stops counting toward new estimates and actuals; closed months are untouched. D-128' },
+    'expenses.entries[].forDate':                { class: 'raw',        unit: 'iso-date', note: 'the day the money was FOR when that is not the day it left: bought ahead, or paid late. Null = the same day. Read by the slope in Expenses only; every month total keeps counting the day it left. D-306' },
+    'expenses.rules[].key':                      { class: 'raw',        unit: 'text',    note: 'a merchant, as engines/merchants.js keys it (the finder’s key): which lines the rule files. Owned by Expenses. D-306' },
+    'expenses.rules[].categoryId':               { class: 'raw',        unit: 'enum',    note: 'an id from data/expense_categories.json: where every line from that merchant files, past and future. D-306' },
     'household.ledger.income[].kind':            { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'other'], note: 'a dated income entry: amountCents, frequency (once, weekly, fortnightly, monthly, annual), receivedOn, taxable, taxMethod (w2, se, none), costs[] for se/side/rental, hidden, active. Owned by Income. D-128' },
     'household.ledger.income[].dateKind':        { class: 'raw',        unit: 'enum',    values: ['exact', 'estimated', 'potential'], note: 'how sure the date is — the same three as an expense: potential income (a bonus that may not come) is drawn, never counted. D-130' },
     'household.ledger.income[].taxMethod':       { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'unemployment', 'none'], note: 'taxed how: withheld at the source; owed with self-employment tax on the net of costs; owed as ordinary income with no SE tax (unemployment); or not taxable. Four, no catch-all. D-128, D-129' },
@@ -1692,7 +1695,13 @@
          transaction-shaped (SPEC.md §12.5). See createExpenseEntry(). */
       entries: entries,
       /* Named yearly lines (15.5). See createAnnualLine(). */
-      annual: (f.annual || []).map(createAnnualLine)
+      annual: (f.annual || []).map(createAnnualLine),
+      /* Where a merchant's lines file (D-306): { key, categoryId, label, at }.
+         A rule re-files every line from that merchant, past and future;
+         absent reads as none. */
+      rules: (f.rules || []).filter(function (r) { return r && typeof r.key === 'string' && r.key && typeof r.categoryId === 'string' && r.categoryId; }).map(function (r) {
+        return { key: r.key, categoryId: r.categoryId, label: typeof r.label === 'string' ? r.label : r.key, at: typeof r.at === 'string' ? r.at : null };
+      })
     };
     /* Migration (D-172): a household saved before the four buckets existed
        carried one monthly figure - tracked over estimated - and maybe a
@@ -1888,7 +1897,11 @@
       dateReceived: reimb && status === 'received' && typeof f.dateReceived === 'string' && f.dateReceived ? f.dateReceived : null,
       receivedAmountCents: reimb && status === 'received' && Money.isEntered(f.receivedAmountCents) ? f.receivedAmountCents : null,
       hidden: f.hidden === true,
-      active: f.active === undefined ? true : f.active !== false
+      active: f.active === undefined ? true : f.active !== false,
+      /* The day the money was FOR, when that is not the day it left: a
+         ticket bought ahead, a bill paid late. Null = the same day. The
+         slope in Expenses reads it; nothing that counts a month does. D-306. */
+      forDate: typeof f.forDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f.forDate) ? f.forDate : null
     };
   }
 

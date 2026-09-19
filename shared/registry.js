@@ -201,12 +201,12 @@
          numbers, the yearly costs and the split have one plain home. */
       id: 'expenses',
       features: ['annualLines', 'agingParents'],
-      group: 'numbers', subgroup: 'expenses', aliases: ['spending', 'expenses', 'rent', 'food', 'FAT', 'wants', 'month', 'typical month', 'split', 'categories'],
+      group: 'numbers', subgroup: 'expenses', aliases: ['spending', 'expenses', 'rent', 'food', 'FAT', 'wants', 'month', 'typical month', 'split', 'categories', 'bank statement', 'card statement', 'import', 'merchants', 'categorize', 'rules', 'slope', 'prepaid', 'bought ahead'],
       kind: 'core',
       needs: ['monthlyExpenses'],
       order: 1.4,
       title: 'Expenses',
-      blurb: 'What a month costs. Food, housing and getting around are the lean month. Everything else is a line you name. Every other room reads this month.',
+      blurb: 'What a month costs. Food, housing and getting around are the lean month. Everything else is a line you name. Every other room reads this month. Bring a bank or card statement in, file each place money went, and see the slope of a month.',
       href: 'rooms/expenses.html',
       tier: 1,
       tags: ['cashflow'],
@@ -216,7 +216,10 @@
         { id: 'spending',        label: '1 · The essentials' },
         { id: 'lines',           label: '2 · Everything else' },
         { id: 'month',           label: '3 · Your month' },
-        { id: 'more',            label: 'More' }
+        { id: 'more',            label: 'More' },
+        { id: 'statements',      label: 'From the bank' },
+        { id: 'merchants',       label: 'Every place money went' },
+        { id: 'slope',           label: 'The slope' }
       ]
     },
     {
