@@ -1,0 +1,67 @@
+{
+  "id": "plausible_ranges",
+  "version": "1.0",
+  "asOf": "2026-09-11",
+  "source": "A low and a high for each row a household commonly leaves blank, wide enough to hold most US households: spending lines from the BLS Consumer Expenditure Survey 2023 tables (food at home plus away, shelter, transportation) read as roughly the 10th and 90th percentile of household spending; balances from the Federal Reserve Survey of Consumer Finances 2022 (transaction accounts, retirement accounts) at the 25th and 90th percentile for households under 55; pay from the Census Current Population Survey 2024 (household income, 20th to 90th percentile); card rates from the Federal Reserve G.19 release 2025 (assessed interest 20% to 30%) with a floor for promotional rates.",
+  "confidence": "unverified",
+  "confidenceNote": "The bounds are typed from memory of those tables, not copied from them; verify against the published releases before they are presented as figures. They are used only to size a swing (the insight at the low end against the high end), never as a value, so a bound being off by a fifth changes the size of a caution, not a number in any room.",
+  "verify": true,
+  "note": "Keyed by row id (data/ledger-rows.json). low and high in the row's unit (cents for money, a fraction for a rate). feeds names the insight the swing is measured on: fiMonths (months to FI), runwayMonths, netWorthCents, takeHomeMonthlyCents, reachableCents, interestMonthlyCents. engines/notknowing.js sets the row to each bound on a copy of the household and reads the insight at both. I2, D-214.",
+  "rows": {
+    "cashSavings": {
+      "low": 50000,
+      "high": 3000000,
+      "feeds": "runwayMonths"
+    },
+    "investments": {
+      "low": 0,
+      "high": 20000000,
+      "feeds": "fiMonths"
+    },
+    "grossAnnualIncome": {
+      "low": 2500000,
+      "high": 15000000,
+      "feeds": "fiMonths"
+    },
+    "foodMonthly": {
+      "low": 25000,
+      "high": 120000,
+      "feeds": "fiMonths"
+    },
+    "accommodationMonthly": {
+      "low": 60000,
+      "high": 350000,
+      "feeds": "fiMonths"
+    },
+    "transportationMonthly": {
+      "low": 5000,
+      "high": 90000,
+      "feeds": "fiMonths"
+    },
+    "wantsMonthly": {
+      "low": 10000,
+      "high": 200000,
+      "feeds": "fiMonths"
+    },
+    "therapyMonthly": {
+      "low": 0,
+      "high": 60000,
+      "feeds": "fiMonths"
+    },
+    "unemployment": {
+      "low": 0,
+      "high": 100000,
+      "feeds": "runwayMonths"
+    },
+    "debtRate": {
+      "low": 0.03,
+      "high": 0.29,
+      "feeds": "interestMonthlyCents"
+    },
+    "assetCostBasis": {
+      "low": 0,
+      "high": null,
+      "feeds": "reachableCents"
+    }
+  }
+}

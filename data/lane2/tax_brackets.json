@@ -1,0 +1,564 @@
+{
+  "id": "tax_brackets",
+  "version": "1.0",
+  "asOf": "2026-09-10",
+  "source": "Federal ordinary income brackets, standard deductions, long-term capital gains thresholds, and the FICA and self-employment tax rates and wage bases, current and prior year. Lane 2, section 3 (L-3).",
+  "confidence": "sourced",
+  "confidenceNote": "2026 brackets, deductions and capital gains thresholds read from search results quoting Rev. Proc. 2025-32; the 2026 wage base from the SSA release; 2025 rows from memory of Rev. Proc. 2024-40 and the 2025 SSA release, with the standard deduction as raised by Pub. L. 119-21 (verify: true). Married filing separately rows are the single rows except the top threshold.",
+  "note": "data/federal_brackets_2026.json (brackets, standard deduction) and data/se_tax_2026.json (FICA and SE) are what engines/tax.js reads today. DECIDE: point the engine here and retire those two; tests/data.test.js asserts the shared 2026 figures agree. Brackets are the TOP of taxable income taxed at that rate (null = no ceiling). Taxable income = gross minus the standard deduction, nothing else.",
+  "unit": "US dollars; rates as decimal fractions",
+  "refresh": {
+    "month": "October (inflation Rev. Proc. for the next tax year), October (SSA wage base with the COLA release)",
+    "against": "the IRS annual inflation adjustment revenue procedure; ssa.gov/oact/cola/cbb.html."
+  },
+  "years": {
+    "2025": {
+      "standardDeduction": {
+        "single": {
+          "value": 15750,
+          "asOf": "2025-07-04",
+          "source": "https://www.congress.gov/bill/119th-congress/house-bill/1",
+          "confidence": "recalled",
+          "verify": true,
+          "note": "Raised by Pub. L. 119-21 from the $15,000 in Rev. Proc. 2024-40.",
+          "historical": true
+        },
+        "married_joint": {
+          "value": 31500,
+          "asOf": "2025-07-04",
+          "source": "https://www.congress.gov/bill/119th-congress/house-bill/1",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "married_separate": {
+          "value": 15750,
+          "asOf": "2025-07-04",
+          "source": "https://www.congress.gov/bill/119th-congress/house-bill/1",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "head_of_household": {
+          "value": 23625,
+          "asOf": "2025-07-04",
+          "source": "https://www.congress.gov/bill/119th-congress/house-bill/1",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        }
+      },
+      "brackets": {
+        "single": {
+          "value": [
+            {
+              "rate": 0.1,
+              "upTo": 11925
+            },
+            {
+              "rate": 0.12,
+              "upTo": 48475
+            },
+            {
+              "rate": 0.22,
+              "upTo": 103350
+            },
+            {
+              "rate": 0.24,
+              "upTo": 197300
+            },
+            {
+              "rate": 0.32,
+              "upTo": 250525
+            },
+            {
+              "rate": 0.35,
+              "upTo": 626350
+            },
+            {
+              "rate": 0.37,
+              "upTo": null
+            }
+          ],
+          "asOf": "2024-10-22",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "married_joint": {
+          "value": [
+            {
+              "rate": 0.1,
+              "upTo": 23850
+            },
+            {
+              "rate": 0.12,
+              "upTo": 96950
+            },
+            {
+              "rate": 0.22,
+              "upTo": 206700
+            },
+            {
+              "rate": 0.24,
+              "upTo": 394600
+            },
+            {
+              "rate": 0.32,
+              "upTo": 501050
+            },
+            {
+              "rate": 0.35,
+              "upTo": 751600
+            },
+            {
+              "rate": 0.37,
+              "upTo": null
+            }
+          ],
+          "asOf": "2024-10-22",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "married_separate": {
+          "value": [
+            {
+              "rate": 0.1,
+              "upTo": 11925
+            },
+            {
+              "rate": 0.12,
+              "upTo": 48475
+            },
+            {
+              "rate": 0.22,
+              "upTo": 103350
+            },
+            {
+              "rate": 0.24,
+              "upTo": 197300
+            },
+            {
+              "rate": 0.32,
+              "upTo": 250525
+            },
+            {
+              "rate": 0.35,
+              "upTo": 375800
+            },
+            {
+              "rate": 0.37,
+              "upTo": null
+            }
+          ],
+          "asOf": "2024-10-22",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "head_of_household": {
+          "value": [
+            {
+              "rate": 0.1,
+              "upTo": 17000
+            },
+            {
+              "rate": 0.12,
+              "upTo": 64850
+            },
+            {
+              "rate": 0.22,
+              "upTo": 103350
+            },
+            {
+              "rate": 0.24,
+              "upTo": 197300
+            },
+            {
+              "rate": 0.32,
+              "upTo": 250500
+            },
+            {
+              "rate": 0.35,
+              "upTo": 626350
+            },
+            {
+              "rate": 0.37,
+              "upTo": null
+            }
+          ],
+          "asOf": "2024-10-22",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        }
+      },
+      "capitalGains": {
+        "single": {
+          "value": {
+            "zeroUpTo": 48350,
+            "fifteenUpTo": 533400
+          },
+          "asOf": "2024-10-22",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "married_joint": {
+          "value": {
+            "zeroUpTo": 96700,
+            "fifteenUpTo": 600050
+          },
+          "asOf": "2024-10-22",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "married_separate": {
+          "value": {
+            "zeroUpTo": 48350,
+            "fifteenUpTo": 300000
+          },
+          "asOf": "2024-10-22",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "head_of_household": {
+          "value": {
+            "zeroUpTo": 64750,
+            "fifteenUpTo": 566700
+          },
+          "asOf": "2024-10-22",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "niit": {
+          "value": {
+            "rate": 0.038,
+            "thresholdSingle": 200000,
+            "thresholdJoint": 250000
+          },
+          "asOf": "2025-01-01",
+          "source": "https://www.irs.gov/individuals/net-investment-income-tax",
+          "confidence": "sourced",
+          "historical": true
+        }
+      },
+      "fica": {
+        "socialSecurityRate": {
+          "value": 0.062,
+          "asOf": "2024-10-10",
+          "source": "https://www.ssa.gov/oact/cola/cbb.html",
+          "confidence": "sourced",
+          "historical": true
+        },
+        "socialSecurityWageBase": {
+          "value": 176100,
+          "asOf": "2024-10-10",
+          "source": "https://www.ssa.gov/oact/cola/cbb.html",
+          "confidence": "sourced",
+          "historical": true
+        },
+        "medicareRate": {
+          "value": 0.0145,
+          "asOf": "2025-01-01",
+          "source": "https://www.ssa.gov/oact/cola/cbb.html",
+          "confidence": "sourced",
+          "historical": true
+        },
+        "additionalMedicareRate": {
+          "value": 0.009,
+          "asOf": "2025-01-01",
+          "source": "https://www.irs.gov/businesses/small-businesses-self-employed/questions-and-answers-for-the-additional-medicare-tax",
+          "confidence": "sourced",
+          "historical": true
+        },
+        "selfEmploymentRate": {
+          "value": 0.153,
+          "asOf": "2025-01-01",
+          "source": "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
+          "confidence": "sourced",
+          "historical": true
+        },
+        "selfEmploymentNetEarningsFactor": {
+          "value": 0.9235,
+          "asOf": "2025-01-01",
+          "source": "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
+          "confidence": "sourced",
+          "historical": true
+        }
+      }
+    },
+    "2026": {
+      "standardDeduction": {
+        "single": {
+          "value": 16100,
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        },
+        "married_joint": {
+          "value": 32200,
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        },
+        "married_separate": {
+          "value": 16100,
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        },
+        "head_of_household": {
+          "value": 24150,
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        }
+      },
+      "brackets": {
+        "single": {
+          "value": [
+            {
+              "rate": 0.1,
+              "upTo": 12400
+            },
+            {
+              "rate": 0.12,
+              "upTo": 50400
+            },
+            {
+              "rate": 0.22,
+              "upTo": 105700
+            },
+            {
+              "rate": 0.24,
+              "upTo": 201775
+            },
+            {
+              "rate": 0.32,
+              "upTo": 256225
+            },
+            {
+              "rate": 0.35,
+              "upTo": 640600
+            },
+            {
+              "rate": 0.37,
+              "upTo": null
+            }
+          ],
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        },
+        "married_joint": {
+          "value": [
+            {
+              "rate": 0.1,
+              "upTo": 24800
+            },
+            {
+              "rate": 0.12,
+              "upTo": 100800
+            },
+            {
+              "rate": 0.22,
+              "upTo": 211400
+            },
+            {
+              "rate": 0.24,
+              "upTo": 403550
+            },
+            {
+              "rate": 0.32,
+              "upTo": 512450
+            },
+            {
+              "rate": 0.35,
+              "upTo": 768700
+            },
+            {
+              "rate": 0.37,
+              "upTo": null
+            }
+          ],
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        },
+        "married_separate": {
+          "value": [
+            {
+              "rate": 0.1,
+              "upTo": 12400
+            },
+            {
+              "rate": 0.12,
+              "upTo": 50400
+            },
+            {
+              "rate": 0.22,
+              "upTo": 105700
+            },
+            {
+              "rate": 0.24,
+              "upTo": 201775
+            },
+            {
+              "rate": 0.32,
+              "upTo": 256225
+            },
+            {
+              "rate": 0.35,
+              "upTo": 384350
+            },
+            {
+              "rate": 0.37,
+              "upTo": null
+            }
+          ],
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        },
+        "head_of_household": {
+          "value": [
+            {
+              "rate": 0.1,
+              "upTo": 17700
+            },
+            {
+              "rate": 0.12,
+              "upTo": 67450
+            },
+            {
+              "rate": 0.22,
+              "upTo": 105700
+            },
+            {
+              "rate": 0.24,
+              "upTo": 201775
+            },
+            {
+              "rate": 0.32,
+              "upTo": 256200
+            },
+            {
+              "rate": 0.35,
+              "upTo": 640600
+            },
+            {
+              "rate": 0.37,
+              "upTo": null
+            }
+          ],
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        }
+      },
+      "capitalGains": {
+        "note": "Long-term gains and qualified dividends: 0% up to the first threshold of TAXABLE income, 15% up to the second, 20% above. The 3.8% net investment income tax applies above $200,000 (single) / $250,000 (joint) of MAGI, unindexed.",
+        "single": {
+          "value": {
+            "zeroUpTo": 49450,
+            "fifteenUpTo": 545500
+          },
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        },
+        "married_joint": {
+          "value": {
+            "zeroUpTo": 98900,
+            "fifteenUpTo": 613700
+          },
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        },
+        "married_separate": {
+          "value": {
+            "zeroUpTo": 49450,
+            "fifteenUpTo": 306850
+          },
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        },
+        "head_of_household": {
+          "value": {
+            "zeroUpTo": 66200,
+            "fifteenUpTo": 579600
+          },
+          "asOf": "2025-10-09",
+          "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+          "confidence": "sourced"
+        },
+        "niit": {
+          "value": {
+            "rate": 0.038,
+            "thresholdSingle": 200000,
+            "thresholdJoint": 250000
+          },
+          "asOf": "2026-01-01",
+          "source": "https://www.irs.gov/individuals/net-investment-income-tax",
+          "confidence": "sourced"
+        }
+      },
+      "fica": {
+        "socialSecurityRate": {
+          "value": 0.062,
+          "asOf": "2025-10-24",
+          "source": "https://www.ssa.gov/oact/cola/cbb.html",
+          "confidence": "sourced",
+          "note": "Employee share; the employer pays the same."
+        },
+        "socialSecurityWageBase": {
+          "value": 184500,
+          "asOf": "2025-10-24",
+          "source": "https://www.ssa.gov/oact/cola/cbb.html",
+          "confidence": "sourced"
+        },
+        "medicareRate": {
+          "value": 0.0145,
+          "asOf": "2026-01-01",
+          "source": "https://www.ssa.gov/oact/cola/cbb.html",
+          "confidence": "sourced"
+        },
+        "additionalMedicareRate": {
+          "value": 0.009,
+          "asOf": "2026-01-01",
+          "source": "https://www.irs.gov/businesses/small-businesses-self-employed/questions-and-answers-for-the-additional-medicare-tax",
+          "confidence": "sourced",
+          "note": "On wages and SE income above $200,000 (single), $250,000 (joint), $125,000 (separate); thresholds unindexed."
+        },
+        "selfEmploymentRate": {
+          "value": 0.153,
+          "asOf": "2026-01-01",
+          "source": "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
+          "confidence": "sourced",
+          "note": "12.4% Social Security to the wage base plus 2.9% Medicare, on 92.35% of net earnings; half is deductible."
+        },
+        "selfEmploymentNetEarningsFactor": {
+          "value": 0.9235,
+          "asOf": "2026-01-01",
+          "source": "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
+          "confidence": "sourced"
+        }
+      }
+    }
+  }
+}

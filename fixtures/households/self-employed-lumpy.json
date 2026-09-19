@@ -1,0 +1,323 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_se",
+      "label": "Morgan",
+      "role": "adult",
+      "dob": "1985-06-30",
+      "employmentStatus": "selfEmployed",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [
+        {
+          "id": "p_se_inc0",
+          "personId": "p_se",
+          "source": "Consulting",
+          "grossAnnualIncomeCents": 8400000,
+          "frequency": "monthly",
+          "rateCents": 700000,
+          "hoursPerWeek": null,
+          "monthsWorked": null,
+          "ongoing": true,
+          "variableLowCents": 300000,
+          "variableHighCents": 1400000,
+          "type": "1099",
+          "hassle": null,
+          "employerMatch": {
+            "matchPercent": null,
+            "matchCapPercentOfSalary": null
+          }
+        }
+      ],
+      "work": {
+        "contractedHoursPerWeek": null,
+        "unpaidOvertimeHoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "prepHoursPerWeek": null,
+        "decompressHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "weeksPerYear": 48
+      }
+    }
+  ],
+  "filingStatus": "single",
+  "state": "CO",
+  "capturingFullMatch": null,
+  "dependents": null,
+  "community": {
+    "daySchool": null
+  },
+  "assets": [
+    {
+      "id": "a_0",
+      "label": "Business + personal cash",
+      "category": "cash",
+      "valueCents": 3000000,
+      "liquid": true,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_1",
+      "label": "SEP IRA",
+      "category": "retirement",
+      "valueCents": 9500000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": "pretax",
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    }
+  ],
+  "debts": [],
+  "expenses": {
+    "needs": {
+      "food": {
+        "monthlyCents": 60000
+      },
+      "accommodation": {
+        "monthlyCents": 160000
+      },
+      "transportation": {
+        "monthlyCents": 30000
+      }
+    },
+    "wants": {
+      "totalCents": 120000,
+      "therapy": null
+    },
+    "entries": []
+  },
+  "incomeBasis": "earned",
+  "retirement": {
+    "contributionPercent": null,
+    "rothContributedCents": null,
+    "hsaContributedCents": null,
+    "onHdhp": null,
+    "hsaFamilyPlan": null,
+    "has401k": null
+  },
+  "insurance": {
+    "highestDeductibleCents": null,
+    "oopMaxCents": null,
+    "termLifeCents": null,
+    "disabilityMonthlyCents": null,
+    "umbrella": null,
+    "health": {
+      "type": null,
+      "monthlyCents": null
+    }
+  },
+  "worthChecks": [],
+  "ratings": {},
+  "valuesProfile": {
+    "stated": [],
+    "assignments": {}
+  },
+  "swan": {
+    "basis": null,
+    "targetCents": null,
+    "targetMonths": null,
+    "note": null,
+    "setAt": null
+  },
+  "goals": [],
+  "futureIncome": [],
+  "property": [],
+  "allocation": {
+    "stocks": null,
+    "bonds": null,
+    "cash": null,
+    "rebalanceBand": null
+  },
+  "rerank": {
+    "rows": []
+  },
+  "targets": {
+    "retireAge": null,
+    "coastAge": null
+  },
+  "scenarios": [],
+  "oneOffs": [],
+  "estate": {
+    "beneficiariesSet": null,
+    "willExists": null,
+    "poaExists": null
+  },
+  "giving": {
+    "pctOfIncome": null,
+    "annualTargetCents": null
+  },
+  "decumulation": {
+    "stockShare": null,
+    "plannedAnnualDrawCents": null,
+    "socialSecurityAt": null
+  },
+  "tax": {
+    "otherPreTaxAnnualCents": null,
+    "withheldAnnualCents": null
+  },
+  "career": {
+    "offer": {
+      "grossAnnualCents": null,
+      "hoursPerWeek": null,
+      "commuteHoursPerWeek": null,
+      "workCostsMonthlyCents": null,
+      "signOnCents": null
+    }
+  },
+  "partner": {
+    "splitMode": null,
+    "sharedMonthlyCents": null
+  },
+  "kids": {
+    "tuitionTargetCents": null,
+    "tuitionSavedCents": null,
+    "tuitionMonthlyCents": null
+  },
+  "housing": {
+    "rentMonthlyCents": null,
+    "priceCents": null,
+    "downPct": null,
+    "rate": null
+  },
+  "purchase": {
+    "priceCents": null,
+    "monthsAway": null,
+    "financeRate": null,
+    "label": null
+  },
+  "variableIncome": {
+    "bufferMonths": 3,
+    "windowMonths": 6
+  },
+  "enough": {
+    "monthlyCents": null,
+    "source": null
+  },
+  "designedWeek": {
+    "blocks": []
+  },
+  "timeBuckets": [],
+  "dreams": [],
+  "reversibility": {
+    "decisionId": null,
+    "given": {}
+  },
+  "unlearning": {
+    "dropped": []
+  },
+  "studentLoans": {
+    "plan": null,
+    "extraMonthlyCents": null,
+    "idrShare": null,
+    "forgivenessYears": null
+  },
+  "calendar": {
+    "cadence": null,
+    "nextPaydayDay": null,
+    "bills": [],
+    "payLater": []
+  },
+  "history": {
+    "compareTo": null
+  },
+  "ledger": {
+    "income": [],
+    "months": [],
+    "dismissed": []
+  },
+  "budget": {
+    "estimated": {},
+    "presets": {}
+  },
+  "notApplicable": {},
+  "skills": {},
+  "skillTree": {
+    "state": {}
+  },
+  "exercises": {
+    "done": {},
+    "results": {}
+  },
+  "practiceLedger": [],
+  "assumptions": {
+    "returnReal": 0.05,
+    "inflation": 0.03,
+    "expectedReturnRate": 0.07,
+    "swrRate": 0.04,
+    "humanCapitalDiscountRate": 0.02,
+    "homeEquityHaircut": 0.8,
+    "marginalRate": null
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": null,
+    "confirmedAt": {},
+    "hasDebt": false,
+    "undoStack": [],
+    "redoStack": [],
+    "guessed": {},
+    "source": {},
+    "displayUnit": null,
+    "noRent": null,
+    "walk": {
+      "startedAt": null,
+      "finishedAt": null,
+      "done": {},
+      "skipped": {}
+    },
+    "frontDoor": null,
+    "isDemo": true,
+    "name": "Self-employed, lumpy months",
+    "story": "41, 1099 income that swings from $3k to $14k a month, quarterly estimates, a SEP IRA.",
+    "sphere": 4,
+    "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+    "lane": "lane2 section 1 (L-1)",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 370000,
+      "fiTargetCents": 111000000,
+      "grossAnnualCents": 8400000,
+      "effectiveRate": 0.21,
+      "estimatedTaxCents": 1764000,
+      "takeHomeAnnualCents": 6636000,
+      "takeHomeMonthlyCents": 553000,
+      "savingsRate": 0.26142857142857145,
+      "runwayMonths": 8.108108108108109,
+      "runwayWholeMonths": 8,
+      "netWorthCents": 12500000,
+      "working": [
+        "monthly spending = food $600 + accommodation $1,600 + transportation $300 + everything else $1,200 = $3,700",
+        "FI target = $3,700 x 12 / 0.04 = $44,400 / 0.04 = $1,110,000",
+        "gross $84,000 single: band single up to $100,000 -> effective rate 0.21",
+        "estimated tax = $84,000 x 0.21 = $17,640; take-home = $84,000 - $17,640 = $66,360 a year, $5,530 a month",
+        "savings rate (excluding match) = ($66,360 - $44,400) / $84,000 = $21,960 / $84,000 = 0.2614",
+        "runway = cash $30,000 / $3,700 a month = 8.1081 months (8 whole months; Runway.project stops at 60)",
+        "net worth = $30,000 + $95,000 - $0 = $125,000"
+      ]
+    }
+  }
+}

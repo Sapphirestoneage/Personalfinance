@@ -1,0 +1,14 @@
+﻿door;level;row;label;item;value;unit;state;as_of;source;item_id
+A;2;assetValue;What each account or thing is worth;Savings account;"9.750,00";cents;roughly;;;demo_asset_cash
+D;3;debtRate;Interest rate;Car loan;6,25;rate;;;;
+D;3;debtRate;Interest rate;Credit card;22,90%;rate;roughly;;;demo_debt_1
+D;2;debtBalance;Balance;Car loan;"12.000,00";cents;;;;
+
+door;level;row;label;item;value;unit;state;as_of;source;item_id
+E;2;foodMonthly;"Food, a month";;800;cents;roughly
+I;3;nextPayday;Next payday;;15.;date
+you;1;dob;Month and year you were born;;12.04.1994;date;roughly;;;;;
+I;3;payCadence;How often you are paid;;every two weeks;enum
+T;1;zip;ZIP;;2134;text
+A;4;contributionPercent;"Workplace contribution, share of pay";;0,06;percent
+D;2;debtBalance;Balance;Credit card;"3.200,00";cents;roughly;;;demo_debt_1

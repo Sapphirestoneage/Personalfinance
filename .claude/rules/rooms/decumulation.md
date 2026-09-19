@@ -1,0 +1,17 @@
+---
+paths:
+  - "rooms/decumulation.html"
+  - "engines/decumulation.js"
+---
+# Drawing It Down (`decumulation`)
+File: rooms/decumulation.html · 276 lines
+Engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation
+Reference data: confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, irs_limits_2026.json, +4 more
+Owns: stockShare, plannedAnnualDraw, socialSecurityAt
+Reads from other owners: grossAnnualIncome (start), retireAge (fire), monthlyExpenses (expenses)
+Latest decisions:
+  - D-228 — You cannot size the mountain until you know how you come down it
+  - D-104 — Decumulation: the age the money lasts to
+  - D-098 — The first six tranche rooms: what each owns, before it is built
+  - D-094 — One pager in, one pager out: the core
+Full context: node tools/context/pack.js decumulation

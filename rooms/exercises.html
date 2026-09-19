@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>Exercises · SPARKS</title>
 <meta name="description" content="Every doable thing in one place, fifteen minutes or less by default: the first fifteen minutes of a skill, a named exercise from the FI canon, or a calculation the app runs on your own numbers. Completing one opens the skill it belongs to."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -27,9 +30,6 @@
   holds no input.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
   .card-gap { margin-top: var(--space-4); }
   .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
@@ -57,7 +57,6 @@
   ul.ex li.is-locked .t { color: var(--color-text-faint); }
   ul.ex .r { display: block; margin-top: 4px; color: var(--color-text-muted); }
   ul.ex .acts { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -113,11 +112,13 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/foo.js"></script>
 <script src="../engines/skilltree.js"></script>
 <script src="../engines/income.js"></script>
@@ -128,6 +129,7 @@
 <script src="../engines/vpw.js"></script>
 <script src="../engines/decumulation.js"></script>
 <script src="../engines/cashflow.js"></script>
+<script src="../shared/expr.js"></script>
 <script src="../engines/events.js"></script>
 <script src="../engines/exercises.js"></script>
 <script>
@@ -191,7 +193,7 @@
       var id = r.getAttribute('data-run');
       var res = Exercises.compute(Spine.getProfile(), TABLES, id);
       if (!Money.isOk(res)) { r.textContent = res.reason; return; }
-      Spine.markExercise(id, undefined, { summary: res.summary, figures: res.figures, value: res.value, on: new Date().toISOString().slice(0, 10) }, 'Ran: ' + id);
+      Spine.markExercise(id, undefined, { summary: res.summary, figures: res.figures, value: res.value, on: Schema.localDay() }, 'Ran: ' + id);
     }
   });
 

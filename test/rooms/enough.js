@@ -57,7 +57,7 @@ module.exports = function (t) {
         incomeSources: [Schema.createIncomeSource({ id: 'pay', personId: 'you', type: 'w2', grossAnnualIncomeCents: 7200000,
           employerMatch: { matchPercent: 0.5, matchCapPercentOfSalary: 0.06, capturingFullMatch: false }, contributionPercent: 4 })] })],
       assets: o.investments === null ? [] : [Schema.createAsset({ id: 'inv', category: 'investment', valueCents: o.investments === undefined ? 4800000 : o.investments })] });
-    h.expenses.monthlyEssential.estimatedValueCents = o.spend === undefined ? 315000 : o.spend;
+    h.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; h.expenses.wants = { totalCents: o.spend === undefined ? 315000 : o.spend, therapy: null };
     if (o.enough !== undefined) h.enough = { monthlyCents: o.enough, source: o.source || 'entered' };
     return h;
   }
@@ -134,7 +134,7 @@ module.exports = function (t) {
     check('85% of 3,150 = 2,677.50', p.value, 267750);
     check('and is named a convention', p.basis, 'convention');
     checkTrue('the source says so', /convention/.test(p.source));
-    checkTrue('and carries the curve’s reason', /Categorise a month/.test(p.curveReason));
+    checkTrue('and carries the curve’s reason', /Split a month by category/.test(p.curveReason));
     const cur = Enough.current(h, TABLES);
     check('so enough is the proposal', cur.value, 267750);
     check('with the convention as its source', cur.source, 'convention');

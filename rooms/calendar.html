@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>Money Calendar & Pay-Later · SPARKS</title>
 <meta name="description" content="Paydays and bills across a month, pay-later instalments counted: the low point, and the day it lands."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -40,13 +43,8 @@
   shared/theme.css.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
-  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
   /* The month as a grid, under the line. A cell a day; what lands on it, and the cash at its end. */
   .cal-grid { margin-top: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
   .cal-head, .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
@@ -66,6 +64,7 @@
   .cal-in { color: var(--color-positive); background: rgba(48,164,108,.14); }
   .cal-out { color: var(--color-critical); background: rgba(229,72,77,.12); }
   .cal-out.is-pl { color: var(--color-caution); background: rgba(232,184,75,.14); }
+  .cal-out.is-annual { color: var(--color-caution); background: rgba(232,184,75,.14); font-weight: 600; }
   /* How sure the date is (D-130): estimated dashed, potential faded and
      dotted — drawn, never counted. */
   .cal-in.is-estimated, .cal-out.is-estimated { outline: 1px dashed currentColor; outline-offset: -1px; }
@@ -138,6 +137,7 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/suggest.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
@@ -176,9 +176,10 @@
       var logged = (r.logHits || []).filter(function (x) { return !x.potential; });
       var sub = (r.paydaySource === 'ledger'
           ? counted.length + (counted.length === 1 ? ' landing' : ' landings') + ' from Income, ' + Money.formatCents(counted.reduce(function (t, x) { return t + x.cents; }, 0)) + ' in all'
-          : 'Paid ' + r.cadenceLabel.toLowerCase() + ', ' + Money.formatCents(r.perPaydayCents) + ' a payday' + (r.paydays.length ? ' on the ' + r.paydays.map(function (p) { return ordinal(p.dom); }).join(' and the ') : ''))
+          : 'Paid ' + r.cadenceLabel.toLowerCase() + ', ' + Money.formatCents(r.perPaydayCents) + ' a payday' + (r.paydays.length ? ' on the ' + r.paydays.map(function (p) { return ordinal(p.dom); }).join(' and the ') : '') + (r.paycheckMonth ? '. This is ' + r.paycheckMonth.label : ''))
         + (logged.length ? ' · ' + logged.length + ' logged ' + (logged.length === 1 ? 'bill' : 'bills') + ' from Cash Flow, ' + Money.formatCents(logged.reduce(function (t, x) { return t + x.cents; }, 0)) : '')
         + r.bills.map(function (b) { return ' · ' + b.label + ' ' + Money.formatCents(b.cents) + ' on the ' + ordinal(b.day); }).join('')
+        + ((r.annualHits || []).length ? ' · ' + r.annualHits.length + (r.annualHits.length === 1 ? ' yearly cost lands' : ' yearly costs land') + ' in this window, drawn on the 1st of their month, not spread' : '')
         + r.payLater.map(function (b) { return ' · pay-later ' + Money.formatCents(b.cents) + ' on the ' + ordinal(b.day); }).join('')
         + (r.potentialInCents || r.potentialOutCents ? ' · potential, drawn but not counted: ' + (r.potentialInCents ? Money.formatCents(r.potentialInCents) + ' in' : '') + (r.potentialInCents && r.potentialOutCents ? ', ' : '') + (r.potentialOutCents ? Money.formatCents(r.potentialOutCents) + ' out' : '') : '')
         + (r.belowZero ? ' · <strong>below zero from the ' + ordinal(r.firstBelowDom) + '</strong>' : r.tight ? ' · the tightest stretch is the ' + ordinal(r.tight.fromDom) + '–' + ordinal(r.tight.toDom) : ' · never under a week of spending')
@@ -209,7 +210,7 @@
             var cls = 'cal-cell' + (d.today ? ' is-today' : '') + (d.isLow ? ' is-low' : '') + (d.belowZero ? ' is-under' : '') + (d.tight ? ' is-tight' : '');
             var marks = '';
             (d.ins || []).forEach(function (x) { marks += '<i class="cal-in' + (x.potential ? ' is-potential' : x.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(x.label) + (x.potential ? ' (potential, not counted)' : x.dateKind === 'estimated' ? ' (date estimated)' : '') + '">+' + short(x.cents) + '</i>'; });
-            d.bills.forEach(function (b) { marks += '<i class="cal-out' + (b.kind === 'payLater' ? ' is-pl' : '') + (b.potential ? ' is-potential' : b.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(b.label) + (b.potential ? ' (potential, not counted)' : b.dateKind === 'estimated' ? ' (date estimated)' : '') + '">−' + short(b.cents) + '</i>'; });
+            d.bills.forEach(function (b) { marks += '<i class="cal-out' + (b.kind === 'payLater' ? ' is-pl' : b.kind === 'annual' ? ' is-annual' : '') + (b.potential ? ' is-potential' : b.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(b.label) + (b.potential ? ' (potential, not counted)' : b.dateKind === 'estimated' ? ' (date estimated)' : '') + '">−' + short(b.cents) + '</i>'; });
             return '<span class="' + cls + '"><b>' + (d.firstOfMonth || d.today ? d.month + ' ' : '') + d.dom + '</b>' + marks + '<small>' + short(d.balanceCents) + '</small></span>';
           }).join('') + '</div>';
         }).join('')

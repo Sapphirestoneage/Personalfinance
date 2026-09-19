@@ -4,6 +4,7 @@
   "blurb": "A city's cost of living against where you are, the state-tax line each side, and what the move itself costs.",
   "version": "1.0",
   "asOf": "2026-01-01",
+  "source": "An invented what-if template (D-086): its questions and defaults are conventions chosen for this app, not measurements; every reference figure it draws on names its own data/ file and source.",
   "confidence": "unverified",
   "drawsOn": [
     "monthlyExpenses",

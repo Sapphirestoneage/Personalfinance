@@ -61,6 +61,22 @@
    * `complete: true` with `needs: 0`. It is not "done", it is never
    * blocked, and `standalone` says which.
    */
+  /* How many of the rooms name each field in their own `needs`. It turns the
+     missing list into a priority order: the number that unblocks twenty-seven
+     rooms is a different proposition from the one that unblocks one. Counted
+     from the registry, so it cannot drift from what the rooms actually ask
+     for. D-162. */
+  var WAITING = null;
+  function waitingOn(fieldId) {
+    if (!WAITING) {
+      WAITING = {};
+      Registry.all().forEach(function (r) {
+        (r.needs || []).forEach(function (f) { WAITING[f] = (WAITING[f] || 0) + 1; });
+      });
+    }
+    return WAITING[fieldId] || 0;
+  }
+
   function forRoom(roomId, household) {
     var room = Registry.byId(roomId);
     if (!room) return null;
@@ -85,11 +101,17 @@
         ownerId: d.ownerId,
         ownerTitle: d.ownerTitle,
         ownHere: d.isOwnHere,
-        display: d.display
+        display: d.display,
+        /* A guess is filled but not answered. It counts towards the room being
+           able to compute, and it is still something you might want to fix, so
+           it is named rather than folded silently into "done". D-162. */
+        guessed: !!d.guessed,
+        waits: waitingOn(fieldId)
       };
       (d.isSet ? filled : missing).push(entry);
     });
 
+    missing.sort(function (a, b) { return b.waits - a.waits; });
     var total = filled.length + missing.length;
     return {
       roomId: room.id,
@@ -177,16 +199,31 @@
     return null;
   }
 
-  /** Plain path neighbours, regardless of whether they are finished. */
-  function neighbours(roomId) {
-    var path = Registry.inOrder();
+  /* The chain "next" walks (D-244): the rooms that hold or read the
+     household's numbers, in path order, for this household. A decision
+     room (a car, a wedding, a rollover) is opened because you have that
+     decision, never because it came after the last page, so it has no
+     prev and next of its own; it points at the map and the dashboard. */
+  var CHAIN_GROUPS = ['home', 'numbers', 'scorecard'];
+  function chain(household) {
+    return Registry.inOrder().filter(function (r) {
+      if (CHAIN_GROUPS.indexOf(r.group) === -1 || r.kind === 'explore') return false;
+      return household ? Registry.applies(r, household) : true;
+    });
+  }
+  /** Path neighbours on the chain, regardless of whether they are finished. */
+  function neighbours(roomId, household) {
+    var h = household;
+    if (h === undefined) { var S = spine(); h = S && S.getProfile ? S.getProfile() : null; }
+    var path = chain(h);
     var idx = -1;
     path.forEach(function (r, i) { if (r.id === roomId) idx = i; });
     return {
       prev: idx > 0 ? path[idx - 1] : null,
       next: idx >= 0 && idx < path.length - 1 ? path[idx + 1] : null,
       index: idx,
-      total: path.length
+      total: path.length,
+      onChain: idx !== -1
     };
   }
 
@@ -216,28 +253,46 @@
     var row = forRoom(roomId, household);
     if (!row) return '';
     var nb = neighbours(roomId);
-    var next = nextUnfinished(household, roomId);
 
     var out = [];
     out.push('<div class="slaf-progress">');
 
-    if (row.missing.length) {
+    /* Simplified on the owner's word (D-186): when something is missing,
+       one short head and the list, without the room counts; when nothing
+       is, nothing at all. Silence is the signal that a room is complete. */
+    /* Nothing entered yet is not a shortfall, it is a start. The count and
+       the list are a nudge for someone part-way through — at zero they are a
+       thirteen-item indictment of a person who has typed nothing, handed to
+       them before they have done anything wrong, and the last item on Start
+       Here is the word "Any debt". So at zero: one line and the first door,
+       and the counting behaviour returns intact the moment anything is in. */
+    var started = (row.filled || []).length > 0;
+    if (row.missing.length && !started) {
+      var first = row.missing[0];
+      out.push('<p class="slaf-progress-head">Nothing entered here yet. '
+        + 'Start with <a href="' + escapeHtml(href(first.href.replace(/^\.\.\//, ''), roomId)) + '">'
+        + escapeHtml(first.label.toLowerCase()) + '</a>'
+        + (first.ownHere ? ', on this page' : ', in ' + escapeHtml(first.ownerTitle)) + '.</p>');
+    } else if (row.missing.length) {
       out.push('<p class="slaf-progress-head"><strong>' + row.missing.length
-        + ' thing' + (row.missing.length === 1 ? '' : 's') + ' left</strong> before this room '
-        + 'can show you everything — each one links straight to the question.</p>');
+        + ' still needed</strong> to finish this room.</p>');
       out.push('<ul class="slaf-progress-list">' + row.missing.map(function (f) {
         return '<li><a href="' + escapeHtml(href(f.href.replace(/^\.\.\//, ''), roomId)) + '">'
           + escapeHtml(f.label) + '</a>'
           + '<span class="slaf-progress-where">'
           + (f.ownHere ? 'on this page' : 'in ' + escapeHtml(f.ownerTitle)) + '</span></li>';
       }).join('') + '</ul>');
-    } else if (!row.standalone) {
-      out.push('<p class="slaf-progress-head"><strong>This room has everything it needs.</strong> '
-        + 'All ' + row.total + ' figure' + (row.total === 1 ? '' : 's')
-        + ' it reads are filled in.</p>');
-    } else {
-      out.push('<p class="slaf-progress-head"><strong>This room stands on its own.</strong> '
-        + 'It works from the numbers you type here, so there is nothing to fill in first.</p>');
+    }
+
+    /* Filled with a guess is not the same as answered. A room can compute from
+       guesses and still be resting on numbers nobody confirmed, so they are
+       named here rather than counted quietly as done. D-162. */
+    var guesses = (row.filled || []).filter(function (f) { return f.guessed; });
+    if (guesses.length) {
+      out.push('<p class="slaf-progress-note"><strong>' + guesses.length + ' of these '
+        + (guesses.length === 1 ? 'is' : 'are') + ' still a guess</strong> \u2014 '
+        + guesses.map(function (f) { return escapeHtml(f.label); }).join(', ')
+        + '. Good enough to compute with, worth fixing when you know.</p>');
     }
 
     /* Questions that stopped applying are said out loud once, so a room that
@@ -249,6 +304,9 @@
         + '. ' + escapeHtml(row.notApplicable[0].because || '') + '</p>');
     }
 
+    /* Plain path order at both ends (D-186): a next that jumped to a
+       different room each time you looked was one of the ways people got
+       lost. The Walk-Through keeps the smart "next unfinished". */
     out.push('<div class="slaf-progress-nav">');
     if (nb.prev) {
       out.push('<a class="slaf-progress-btn" href="' + escapeHtml(href(nb.prev.href, roomId))
@@ -256,12 +314,9 @@
     } else {
       out.push('<span></span>');
     }
-    if (next && next.roomId !== roomId) {
-      out.push('<a class="slaf-progress-btn is-next" href="' + escapeHtml(href(next.href, roomId))
-        + '">Next unfinished: ' + escapeHtml(next.title) + ' →</a>');
-    } else if (nb.next) {
+    if (nb.next) {
       out.push('<a class="slaf-progress-btn is-next" href="' + escapeHtml(href(nb.next.href, roomId))
-        + '">' + escapeHtml(nb.next.title) + ' →</a>');
+        + '">Next: ' + escapeHtml(nb.next.title) + ' →</a>');
     } else {
       out.push('<span></span>');
     }
@@ -281,10 +336,22 @@
    * every room really does have a back and a next. DECISIONS.md D-054.
    */
   function headerNavHtml(roomId) {
+    /* The front door has no "previous room". Walking the path one room at a
+       time makes sense from inside it; on the dashboard "<- Every Ratio" and
+       "Worth Learning ->" are two arbitrary neighbours of a page that is not
+       on the path at all, and they read as instructions. The menu and the
+       walk-through are the ways in from here. D-169. */
+    if (roomId === 'dashboard') return '';
     var nb = neighbours(roomId);
     var mapHref = (atRoot(roomId) ? '' : '../') + 'map.html';
+    var homeHref = (atRoot(roomId) ? '' : '../') + 'index.html';
 
     function link(room, dir) {
+      /* Off the chain (D-244): a decision room's way back is the dashboard
+         and its way on is the map; it has no neighbours of its own. */
+      if (!room && !nb.onChain && dir === 'prev') {
+        return '<a class="slaf-hop slaf-hop--prev" href="' + homeHref + '">← The Dashboard</a>';
+      }
       if (!room) {
         return '<a class="slaf-hop slaf-hop--' + dir + '" href="' + mapHref + '">'
           + (dir === 'prev' ? '← All rooms' : 'All rooms →') + '</a>';
@@ -317,52 +384,148 @@
      every page already loads this file and already has the one element it
      hangs off. */
 
-  /* Upkeep first, because that is what a menu is reached for. Each is a
-     registry id, so a room that is renamed or moved is followed, and one
-     that does not exist is simply skipped rather than becoming a dead link. */
-  var UPKEEP = ['data', 'refresh', 'history', 'start', 'get-help'];
+  /* ---- The sidebar (D-177) ----------------------------------------------
+     Grouped by purpose, not by kind: Home, Your Numbers, Scorecard,
+     Decisions, What Matters, Level Up, Upkeep — the groups and every room's
+     place in them are data in shared/registry.js, rendered here once for
+     every page. Groups collapse; only the current room's group opens on
+     load, and what a person opens or closes is remembered in prefs. A search
+     box filters by title and alias. A Recent strip sits under Home. A status
+     dot marks each Your Numbers room filled, partly or empty from the
+     field ledger; read-only rooms and calculators carry none. A room whose
+     appliesWhen fails for this situation is absent, not greyed. */
 
-  var GROUPS = [
-    ['core', 'The path'],
-    ['about-you', 'About you'],
-    ['read', 'What it means'],
-    ['explore', 'Explore']
-  ];
+  /* Upkeep, kept as a named list for the pages that ask for it directly
+     (the map, the tests): the rooms a person reaches for from anywhere. */
+  var UPKEEP = ['data', 'ledger', 'history', 'start', 'get-help'];
 
-  function menuLink(room, roomId, current) {
+  function globals() { return (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null; }
+  function prefs() { var g = globals(); return g && g.SLAF && g.SLAF.Prefs ? g.SLAF.Prefs : null; }
+  function spine() { var g = globals(); return g && g.SLAF && g.SLAF.Spine ? g.SLAF.Spine : null; }
+  function gateOf() { var g = globals(); return g && g.SLAF && g.SLAF.Gate ? g.SLAF.Gate : null; }
+
+  function situationNow() {
+    var S = spine(), G = gateOf();
+    if (!S || !G) return null;
+    try { return G.situationOf(S.getProfile()); } catch (e) { return null; }
+  }
+
+  /** filled · partly · empty for a Your Numbers room, from the fields it owns. */
+  function roomStatus(roomId, readings) {
+    if (!Ownership || !Ownership.ownedBy || !readings) return null;
+    var fields = Ownership.ownedBy(roomId);
+    if (!fields.length) return null;
+    var filled = fields.filter(function (f) { return readings[f] !== null && readings[f] !== undefined; }).length;
+    return filled === 0 ? 'empty' : filled === fields.length ? 'filled' : 'partly';
+  }
+  function readingsNow() {
+    var S = spine();
+    if (!S || !Ownership || !Ownership.readings) return null;
+    try { return Ownership.readings(S.getProfile()); } catch (e) { return null; }
+  }
+
+  function menuLink(room, roomId, current, status) {
     var here = room.id === current;
+    var search = (room.title + ' ' + (room.aliases || []).join(' ')).toLowerCase();
     return '<a class="slaf-menu-link' + (here ? ' is-here' : '') + '" href="'
-      + escapeHtml(href(room.href, roomId)) + '"' + (here ? ' aria-current="page"' : '') + '>'
-      + escapeHtml(room.title) + '</a>';
+      + escapeHtml(href(room.href, roomId)) + '"' + (here ? ' aria-current="page"' : '')
+      + ' data-room="' + escapeHtml(room.id) + '" data-search="' + escapeHtml(search) + '">'
+      + escapeHtml(room.title)
+      + (status ? '<i class="slaf-dot is-' + status + '" title="' + status + '" aria-label="' + status + '"></i>' : '')
+      + '</a>';
+  }
+  function extraLink(l, roomId) {
+    var search = (l.title + ' ' + (l.aliases || []).join(' ')).toLowerCase();
+    var to = l.href.indexOf('http') === 0 ? l.href : href(l.href, roomId);
+    return '<a class="slaf-menu-link is-extra" href="' + escapeHtml(to) + '" data-search="' + escapeHtml(search) + '">' + escapeHtml(l.title) + '</a>';
+  }
+
+  function recentIds(roomId) {
+    var P = prefs();
+    var list = P ? P.get('recent', []) : [];
+    if (!Array.isArray(list)) list = [];
+    return list.filter(function (id) { return id !== roomId && Registry.byId(id); }).slice(0, 3);
+  }
+  function rememberVisit(roomId) {
+    var P = prefs();
+    if (!P || !roomId || !Registry.byId(roomId)) return;
+    var list = P.get('recent', []);
+    if (!Array.isArray(list)) list = [];
+    list = [roomId].concat(list.filter(function (id) { return id !== roomId; })).slice(0, 6);
+    P.set('recent', list);
+  }
+
+  function groupOpen(groupId, currentGroup) {
+    var P = prefs();
+    var stored = P ? P.get('sidebar.open', {}) : {};
+    if (groupId === currentGroup) return true;
+    return !!(stored && stored[groupId]);
+  }
+
+  /** The nav body only: rebuilt when the household's situation changes.
+      The search box lives above it and is built once. */
+  function menuBodyHtml(roomId) {
+    var current = Registry.byId(roomId);
+    var currentGroup = current ? current.group : null;
+    var sit = situationNow();
+    var readings = readingsNow();
+    return Registry.groups().map(function (g) {
+      var rooms = Registry.inGroup(g.id, sit);
+      var links = (g.links || []);
+      var byAfter = {};
+      links.forEach(function (l) { byAfter[l.after || '__end'] = (byAfter[l.after || '__end'] || []).concat([l]); });
+      var out = [];
+      var lastSub = null;
+      rooms.forEach(function (r) {
+        if (g.subgroups && r.subgroup && r.subgroup !== lastSub) {
+          var sg = g.subgroups.filter(function (x) { return x.id === r.subgroup; })[0];
+          out.push('<p class="slaf-menu-sub" data-subgroup="' + escapeHtml(r.subgroup) + '">' + escapeHtml(sg ? sg.label : r.subgroup) + '</p>');
+          lastSub = r.subgroup;
+        }
+        out.push(menuLink(r, roomId, roomId, g.id === 'numbers' ? roomStatus(r.id, readings) : null));
+        (byAfter[r.id] || []).forEach(function (l) { out.push(extraLink(l, roomId)); });
+      });
+      (byAfter.__end || []).forEach(function (l) { out.push(extraLink(l, roomId)); });
+      if (g.id === 'home') {
+        var recent = recentIds(roomId).map(function (id) { return Registry.byId(id); }).filter(Boolean);
+        if (recent.length) {
+          out.push('<p class="slaf-menu-sub">Recent</p>');
+          recent.forEach(function (r) { out.push(menuLink(r, roomId, roomId, null).replace('slaf-menu-link', 'slaf-menu-link is-recent')); });
+        }
+      }
+      if (!out.length) return '';
+      return '<details class="slaf-menu-group" data-group="' + escapeHtml(g.id) + '"' + (groupOpen(g.id, currentGroup) ? ' open' : '') + '>'
+        + '<summary><span>' + escapeHtml(g.label) + '</span>' + (g.note ? '<small>' + escapeHtml(g.note) + '</small>' : '') + '</summary>'
+        + '<div class="slaf-menu-groupbody">' + out.join('') + '</div></details>';
+    }).join('');
   }
 
   function menuHtml(roomId) {
-    var all = Registry.inOrder();
-    var byId = {};
-    all.forEach(function (r) { byId[r.id] = r; });
-
-    var upkeep = UPKEEP.map(function (id) { return byId[id]; })
-      .filter(Boolean)
-      .map(function (r) { return menuLink(r, roomId, roomId); }).join('');
-
-    var seen = {};
-    UPKEEP.forEach(function (id) { seen[id] = true; });
-    var groups = GROUPS.map(function (g) {
-      var rooms = all.filter(function (r) { return r.kind === g[0] && !seen[r.id]; });
-      if (!rooms.length) return '';
-      return '<p class="slaf-menu-cap">' + escapeHtml(g[1]) + '</p>'
-        + rooms.map(function (r) { return menuLink(r, roomId, roomId); }).join('');
-    }).join('');
-
     return '<div class="slaf-menu-head">'
       + '<span class="slaf-menu-title">Money Rooms</span>'
-      + '<button type="button" class="slaf-menu-x" data-menu-close aria-label="Close the menu">\u2715</button>'
+      + '<button type="button" class="slaf-menu-x" data-menu-close aria-label="Close the menu">✕</button>'
       + '</div>'
-      + '<nav class="slaf-menu-body" aria-label="All rooms">'
-      + '<p class="slaf-menu-cap">Your data &amp; upkeep</p>' + upkeep
-      + '<a class="slaf-menu-link" href="' + ((atRoot(roomId) ? '' : '../')) + 'map.html">Every room, on one page</a>'
-      + groups
-      + '</nav>';
+      + '<div class="slaf-menu-search"><input type="search" id="slaf-menu-q" placeholder="Find a room" aria-label="Find a room" autocomplete="off"></div>'
+      + '<nav class="slaf-menu-body" aria-label="All rooms">' + menuBodyHtml(roomId) + '</nav>';
+  }
+
+  /** The search: hide links that do not match, then groups with nothing
+      left; while a query is in, matching groups open without being saved. */
+  function applySearch(panel, query) {
+    var q = String(query || '').trim().toLowerCase();
+    panel.querySelectorAll('.slaf-menu-group').forEach(function (d) {
+      var any = false, lastSub = null;
+      d.querySelectorAll('.slaf-menu-link, .slaf-menu-sub').forEach(function (n) {
+        if (n.classList.contains('slaf-menu-sub')) { n.hidden = !!q; lastSub = n; return; }
+        var hit = !q || (n.getAttribute('data-search') || '').indexOf(q) !== -1;
+        n.hidden = !hit;
+        if (hit) { any = true; if (q === '' && lastSub) lastSub.hidden = false; }
+      });
+      if (!q) { d.querySelectorAll('.slaf-menu-sub').forEach(function (n) { n.hidden = false; }); }
+      d.hidden = !any;
+      if (q && any) d.open = true;
+      else if (!q) d.open = d.getAttribute('data-was-open') === 'true';
+    });
   }
 
   /**
@@ -391,10 +554,45 @@
     panel.id = 'slaf-menu';
     panel.className = 'slaf-menu';
     panel.hidden = true;
+    rememberVisit(roomId);
     panel.innerHTML = menuHtml(roomId);
 
     document.body.appendChild(back);
     document.body.appendChild(panel);
+
+    /* Groups: remember what was opened or closed, per person, in prefs. */
+    function noteOpen() {
+      panel.querySelectorAll('.slaf-menu-group').forEach(function (d) { d.setAttribute('data-was-open', String(d.open)); });
+    }
+    noteOpen();
+    panel.addEventListener('toggle', function (e) {
+      var d = e.target;
+      if (!d.classList || !d.classList.contains('slaf-menu-group')) return;
+      var q = panel.querySelector('#slaf-menu-q');
+      if (q && q.value.trim()) return;               /* a search opening a group is not a preference */
+      d.setAttribute('data-was-open', String(d.open));
+      var P = prefs();
+      if (!P) return;
+      var stored = P.get('sidebar.open', {});
+      if (!stored || typeof stored !== 'object') stored = {};
+      stored[d.getAttribute('data-group')] = d.open;
+      P.set('sidebar.open', stored);
+    }, true);
+    var q = panel.querySelector('#slaf-menu-q');
+    if (q) q.addEventListener('input', function () { applySearch(panel, q.value); });
+
+    /* The situation and the dots can change under the page: rebuild the
+       body only, never the search box (a live input, D-034). */
+    var S = spine();
+    if (S && S.onChange) {
+      S.onChange(function () {
+        var body = panel.querySelector('.slaf-menu-body');
+        if (!body) return;
+        body.innerHTML = menuBodyHtml(roomId);
+        noteOpen();
+        if (q && q.value.trim()) applySearch(panel, q.value);
+      });
+    }
     if (host && host.parentNode) host.parentNode.insertBefore(btn, host);
     else document.body.appendChild(btn);
 
@@ -597,7 +795,7 @@
     if (!at) return null;
 
     var p = Guide.progress(h, tables);
-    var hub = (atRoot(roomId) ? 'rooms/' : '') + 'walk.html';
+    var hub = (atRoot(roomId) ? 'rooms/' : '') + 'ledger.html#route';
     var dealt = at.state !== 'open';
     var out = [];
 
@@ -682,18 +880,361 @@
     return null;
   }
 
+  /* The way back. A cross-room link carries ?from=<roomId> (D-161); if this
+     page was reached by one, the first thing in the header is the way back to
+     the room that sent you. Read from the URL rather than history.back(),
+     because the browser's back button and this are different promises: back
+     retraces steps, this returns to the room whose number you left to fill in,
+     however many taps ago that was. Unknown or malformed ids resolve to
+     nothing and the pill simply does not appear. */
+  function returnHtml(roomId) {
+    if (typeof location === 'undefined') return '';
+    var m = /[?&]from=([^&#]+)/.exec(location.search);
+    if (!m) return '';
+    var fromId;
+    try { fromId = decodeURIComponent(m[1]); } catch (e) { return ''; }
+    if (fromId === roomId) return '';
+    var room = Registry.byId(fromId);
+    if (!room) return '';
+    return '<a class="slaf-return" href="' + escapeHtml(href(room.href, roomId)) + '">'
+      + '\u21A9 Back to ' + escapeHtml(room.title) + '</a>';
+  }
+
+  /* ---- The dead spot is the door (D-163) ----------------------------------
+     Thirty-four places in the app print "Add your debts to see this" exactly
+     where a number should be. The sentence names what is missing and the app
+     knows which room owns it, so the words should also be the way there.
+
+     Done at the DOM rather than in each of the twenty-one rooms that render
+     their own `.slaf-reason`: they repaint on every change, so a one-shot pass
+     at mount would be undone the first time anything moved. The observer is
+     idempotent (a door is stamped `data-door`) and only ever APPENDS to a
+     reason that has no link of its own - it never rewrites a room's words and
+     never touches a control, so it stays clear of LIVE-FORM (D-034).
+
+     The field named is the one the most rooms are waiting on, taken from the
+     stored profile rather than the room's guess-filled copy: a guess makes a
+     room able to compute, which is not the same as the number being known. */
+  function doorHtml(roomId) {
+    var row = forRoom(roomId, Spine() ? Spine().getProfile() : null);
+    if (!row || !row.missing.length) return '';
+    var f = row.missing[0];
+    if (f.ownHere) return '';
+    return '<a class="slaf-go" data-door href="' + escapeHtml(href(f.href.replace(/^\.\.\//, ''), roomId))
+      + '">' + escapeHtml(f.label) + ' is in ' + escapeHtml(f.ownerTitle) + ' \u2192</a>';
+  }
+
+  function Spine() {
+    var S = (typeof self !== 'undefined' ? self : this).SLAF;
+    return S && S.Spine;
+  }
+
+  function mountDoors(roomId) {
+    if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return;
+    if (!Spine()) return;
+    var queued = false;
+    function pass() {
+      queued = false;
+      var html = doorHtml(roomId);
+      if (!html) return;
+      var list = document.querySelectorAll('.slaf-reason');
+      for (var i = 0; i < list.length; i++) {
+        var el = list[i];
+        if (el.querySelector('a')) continue;            /* the room already links out */
+        if (el.nextElementSibling && el.nextElementSibling.hasAttribute
+            && el.nextElementSibling.hasAttribute('data-door')) continue;
+        el.insertAdjacentHTML('afterend', html);
+      }
+    }
+    function schedule() { if (queued) return; queued = true;
+      (window.requestAnimationFrame || setTimeout)(pass, 0); }
+    schedule();
+    new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ---- The plain line under the title (D-237) ----------------------------
+     Every room's lede is written in the house voice, and the owner could
+     not tell from it what a page is for, what it shows or what it needs.
+     This line is generated, not written: the outputs are the room's
+     registry subsections (the ones whose id starts with out-, or all of
+     them when none does) and the inputs are its `needs`, by field label.
+     Flat words, no verbs of feeling. */
+  function purposeHtml(roomId) {
+    var room = Registry.byId(roomId);
+    if (!room) return '';
+    var subs = room.subsections || [];
+    var outs = subs.filter(function (x) { return /^out-/.test(x.id); });
+    if (!outs.length) outs = subs.filter(function (x) { return x.id !== 'reading' && x.id !== 'inputs' && x.id !== 'assumptions'; });
+    var shows = outs.slice(0, 4).map(function (x) { return escapeHtml(x.label); });
+    var more = outs.length > 4 ? ' and ' + (outs.length - 4) + ' more' : '';
+    var needs = (room.needs || []).map(function (id) { var f = Ownership.field ? Ownership.field(id) : null; return f ? escapeHtml(f.label.toLowerCase()) : null; }).filter(Boolean);
+    var parts = [];
+    if (shows.length) parts.push('<span><b>Shows:</b> ' + shows.join(', ') + more + '.</span>');
+    parts.push('<span><b>Needs:</b> ' + (needs.length ? needs.join(', ') : 'nothing entered elsewhere') + '.</span>');
+    return '<p class="slaf-purpose" id="slaf-purpose">' + parts.join(' ') + '</p>';
+  }
+  function mountPurpose(roomId) {
+    if (typeof document === 'undefined' || document.getElementById('slaf-purpose')) return;
+    var html = purposeHtml(roomId);
+    if (!html) return;
+    var lede = document.querySelector('.room-head .room-lede') || document.querySelector('.room-head h1, .room-head .room-title');
+    if (!lede) return;
+    lede.insertAdjacentHTML('afterend', html);
+  }
+
+  /* ---- Fewer words on the page (D-245) ------------------------------------
+     The owner: most of the words should be hidden and summoned by an ⓘ.
+     Every hint paragraph longer than a line folds to one small button
+     that names what it is; the text is still there, one tap away. The
+     paragraph is changed in place, never rebuilt, and a paragraph a room
+     later writes into by id simply overwrites the fold. Short hints and
+     the ones that carry a figure or a link the room set stay open. */
+  var HINT_FOLD_CHARS = 110;
+  function mountHintFolds(scope) {
+    if (typeof document === 'undefined') return 0;
+    var host = scope || document.querySelector('main') || document.body;
+    if (!host) return 0;
+    var n = 0;
+    Array.prototype.forEach.call(host.querySelectorAll('p.slaf-hint'), function (para) {
+      if (para.getAttribute('data-fold') === 'never' || para.querySelector('.slaf-hint-toggle')) return;
+      var text = (para.textContent || '').replace(/\s+/g, ' ').trim();
+      if (text.length <= HINT_FOLD_CHARS) return;
+      if (para.querySelector('input, select, button')) return;
+      var body = document.createElement('span');
+      body.className = 'slaf-hint-body';
+      while (para.firstChild) body.appendChild(para.firstChild);
+      body.hidden = true;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slaf-hint-toggle';
+      btn.setAttribute('aria-expanded', 'false');
+      btn.textContent = '\u24D8 What this is';
+      btn.addEventListener('click', function () {
+        var open = body.hidden;
+        body.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        btn.textContent = open ? '\u24D8 Hide' : '\u24D8 What this is';
+      });
+      para.classList.add('is-folded');
+      para.appendChild(btn);
+      para.appendChild(body);
+      n++;
+    });
+    return n;
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
+    /* Mounted once. The header goes up at DOMContentLoaded (see the listener
+       at the bottom of this file) so it is on screen before any table has
+       loaded; the room's own later call is then a no-op. D-170. */
+    var have = document.querySelector('.slaf-hops-host');
+    if (have) return have;
     var back = document.querySelector('.room-back, .back');
     if (!back) return null;
     var nav = document.createElement('div');
     nav.className = 'slaf-hops-host';
-    nav.innerHTML = headerNavHtml(roomId);
+    nav.innerHTML = returnHtml(roomId) + headerNavHtml(roomId);
     back.parentNode.replaceChild(nav, back);
     mountMenu(roomId, nav);
+    mountPurpose(roomId);
     mountSituation(roomId);
     mountWalk(roomId, nav);
+    mountDoors(roomId);
+    mountFold(roomId);
+    mountSectionSync(roomId);
+    mountHintFolds();
     return nav;
+  }
+
+  /* ---- Progressive disclosure: the tail of a long room folds (D-170) -----
+     A room is its first few sections; the rest sit behind one button that
+     names what it holds. Folding is a class on <main> plus a class on each
+     folded section — nothing is detached and no input is rebuilt, so the
+     live-form rule (D-034) holds and a deep link into a folded section still
+     resolves: the fold opens itself when the hash points inside it, at load
+     and on every hashchange. Rooms that fold on their own terms (Start
+     Here's cards, the dashboard's panel) say so with data-fold="own". */
+  var FOLD_KEEP = 4;
+  function roomSections(host) {
+    /* The situation notice folds the whole room (D-142) with a class on the
+       host; lift it for the measurement so the room's own sections are seen
+       as they will be once "show it anyway" is tapped. Synchronous, so no
+       frame is painted in between. */
+    var lifted = host.classList.contains('slaf-folded');
+    if (lifted) host.classList.remove('slaf-folded');
+    var out = Array.prototype.filter.call(host.children, function (n) {
+      /* A section that is not displayed at mount - a wizard stage, a
+         hidden branch - is not part of the room yet, so it neither folds
+         nor writes itself to the URL. */
+      return n.tagName === 'SECTION' && n.id && !n.hidden
+        && n.id !== 'slaf-progress' && n.id !== 'slaf-notapply' && n.id !== 'slaf-ask' && n.id !== 'slaf-reopen'
+        && (typeof getComputedStyle !== 'function' || getComputedStyle(n).display !== 'none');
+    });
+    if (lifted) host.classList.add('slaf-folded');
+    return out;
+  }
+  function sectionName(roomId, sec) {
+    var room = Registry.byId(roomId);
+    var sub = room && (room.subsections || []).filter(function (x) { return x.id === sec.id; })[0];
+    if (sub) return sub.label;
+    var h = sec.querySelector('h2, .slaf-eyebrow, h3');
+    return h ? (h.textContent || '').trim().replace(/\s+/g, ' ') : sec.id;
+  }
+  function mountFold(roomId) {
+    if (typeof document === 'undefined') return null;
+    var host = document.querySelector('main') || document.querySelector('.wrap');
+    if (!host || host.getAttribute('data-fold') === 'own') return null;
+    if (document.getElementById('showrest')) return null;
+    var secs = roomSections(host);
+    if (secs.length <= FOLD_KEEP) return null;
+    var folded = secs.slice(FOLD_KEEP);
+    folded.forEach(function (sec) { sec.classList.add('slaf-tail'); });
+    host.classList.add('slaf-tail-folded');
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'showrest';
+    btn.className = 'slaf-showrest';
+    var names = folded.map(function (sec) { return sectionName(roomId, sec); });
+    btn.innerHTML = '<b>Show the rest</b> <small>' + escapeHtml(names.join(' · ')) + '</small>';
+    secs[FOLD_KEEP - 1].parentNode.insertBefore(btn, secs[FOLD_KEEP - 1].nextSibling);
+
+    function unfold() {
+      host.classList.remove('slaf-tail-folded');
+      if (btn.parentNode) btn.parentNode.removeChild(btn);
+      window.removeEventListener('hashchange', check);
+    }
+    btn.addEventListener('click', unfold);
+    function check() {
+      var id = (location.hash || '').slice(1);
+      if (!id) return;
+      var target = document.getElementById(id);
+      if (!target) return;
+      var inside = folded.some(function (sec) { return sec === target || sec.contains(target); });
+      if (!inside) return;
+      unfold();
+      target.scrollIntoView({ block: 'start' });
+    }
+    window.addEventListener('hashchange', check);
+    check();
+    return btn;
+  }
+
+  /* ---- The URL follows you (D-170) -------------------------------------
+     As a section reaches the top of the screen its id becomes the hash,
+     written with replaceState so nothing is added to history and nothing
+     re-scrolls. Copy the address at any moment and it lands here. */
+  function mountSectionSync(roomId) {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return null;
+    var host = document.querySelector('main') || document.querySelector('.wrap');
+    if (!host) return null;
+    var secs = roomSections(host);
+    if (secs.length < 2) return null;
+    var queued = false;
+    function current() {
+      /* The last section whose top has passed the upper third of the
+         screen; at the very bottom, the last section on the page. */
+      var line = window.innerHeight * 0.35, hit = null;
+      var atEnd = window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 2;
+      secs.forEach(function (sec) {
+        if (sec.hidden || getComputedStyle(sec).display === 'none') return;
+        var top = sec.getBoundingClientRect().top;
+        if (top <= line || (atEnd && top < window.innerHeight)) hit = sec;
+      });
+      return hit;
+    }
+    function sync() {
+      queued = false;
+      var sec = current();
+      if (!sec || location.hash === '#' + sec.id) return;
+      try { history.replaceState(history.state, '', location.pathname + location.search + '#' + sec.id); } catch (err) { /* fine */ }
+    }
+    window.addEventListener('scroll', function () {
+      if (queued) return;
+      queued = true;
+      (window.requestAnimationFrame || setTimeout)(sync);
+    }, { passive: true });
+    return { sync: sync };
+  }
+
+  /** The room this page is, from its path — for the header-first mount. */
+  function roomIdFromLocation() {
+    if (typeof location === 'undefined') return null;
+    var file = (location.pathname.split('/').pop() || 'index.html');
+    var hit = Registry.all().filter(function (r) { return r.href.split('/').pop() === file; })[0];
+    return hit ? hit.id : null;
+  }
+
+  /* ---- Two guards every room carries (D-204) ------------------------------
+     1. The page and the shared core are different builds: the spine has
+        already refused to write; this says so at the top of the page, once,
+        with a reload button. Nothing else on the page changes.
+     2. iPhone Safari drops a site's storage after seven days away unless
+        the site is on the Home Screen. One quiet line, once, dismissable,
+        never a popup; installed web apps never see it. */
+  /** The receipt (H7): every resource entry whose origin is not ours, with
+      the bytes moved; the line says 0 or lists the hosts. Pure, for tests. */
+  function privacyReceipt(entries, origin) {
+    var hosts = {}, count = 0, bytes = 0;
+    (entries || []).forEach(function (e) {
+      var name = String(e && e.name || '');
+      var m = /^(https?:\/\/[^\/]+)/.exec(name);
+      if (!m || m[1] === origin) return;
+      count++;
+      bytes += Number(e.transferSize || e.encodedBodySize || 0) || 0;
+      hosts[m[1]] = (hosts[m[1]] || 0) + 1;
+    });
+    var list = Object.keys(hosts);
+    return { count: count, bytes: bytes, hosts: list,
+      line: count === 0 ? 'Sent anywhere this session: 0 bytes. No request left this origin.' : 'Sent anywhere this session: ' + bytes + ' bytes in ' + count + ' request' + (count === 1 ? '' : 's') + ' to ' + list.join(', ') + '.' };
+  }
+  /* The Comeback (J2, D-214): after 21 days away the first screen is
+     "Welcome back", once per return. The last visit is a preference; the
+     due mark is cleared by the Comeback's Done, or by a visit to it. */
+  var COMEBACK_DAYS = 21;
+  function noteVisit(g, roomId) {
+    var Prefs = g.SLAF && g.SLAF.Prefs;
+    if (!Prefs || !Prefs.get) return;
+    try {
+      var now = Date.now();
+      var last = Prefs.get('visit.last', null);
+      if (typeof last === 'number' && now - last >= COMEBACK_DAYS * 86400000 && roomId !== 'ledger') Prefs.set('comeback.due', last);
+      Prefs.set('visit.last', now);
+    } catch (e) { /* storage refused: no comeback, no harm */ }
+  }
+  function comebackDue(g) {
+    var Prefs = g && g.SLAF && g.SLAF.Prefs;
+    var due = Prefs && Prefs.get ? Prefs.get('comeback.due', null) : null;
+    return typeof due === 'number' ? due : null;
+  }
+  function mountGuards(g, Spine) {
+    var Prefs = g.SLAF && g.SLAF.Prefs;
+    var state = Spine.storageState ? Spine.storageState() : null;
+    var main = document.querySelector('main') || document.querySelector('.wrap') || document.body;
+    if (state && state.status === 'stale-page' && !document.getElementById('slaf-stale')) {
+      var box = document.createElement('div');
+      box.id = 'slaf-stale';
+      box.className = 'slaf-stale';
+      box.setAttribute('role', 'status');
+      box.innerHTML = '<b>Updating, reload in a moment.</b> This page is one build and the app underneath it is another (page ' + escapeHtml(state.pageBuild) + ', app ' + escapeHtml(state.coreBuild) + '). Nothing is saved until they match. '
+        + '<button type="button" class="slaf-btn" id="slaf-stale-reload">Reload</button>';
+      main.insertBefore(box, main.firstChild);
+      box.querySelector('#slaf-stale-reload').addEventListener('click', function () { try { g.location.reload(); } catch (e) { /* fine */ } });
+    }
+    var ua = g.navigator && g.navigator.userAgent ? g.navigator.userAgent : '';
+    var iphoneSafari = /iPhone|iPad|iPod/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+    var installed = g.navigator && g.navigator.standalone === true;
+    var seen = Prefs && Prefs.get ? Prefs.get('a2hs.seen', false) : true;
+    if (iphoneSafari && !installed && !seen && !document.getElementById('slaf-a2hs')) {
+      var line = document.createElement('p');
+      line.id = 'slaf-a2hs';
+      line.className = 'slaf-a2hs';
+      line.innerHTML = 'On an iPhone, Safari clears a site\u2019s saved numbers after seven days away, unless the site is on your Home Screen. Tap Share, then <b>Add to Home Screen</b>, and it keeps them. '
+        + '<button type="button" class="slaf-btn slaf-btn--quiet" id="slaf-a2hs-ok">Got it</button>';
+      main.insertBefore(line, main.firstChild);
+      line.querySelector('#slaf-a2hs-ok').addEventListener('click', function () { if (Prefs && Prefs.set) Prefs.set('a2hs.seen', true); line.remove(); });
+    }
   }
 
   /**
@@ -711,6 +1252,8 @@
     var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
     var Spine = g && g.SLAF && g.SLAF.Spine;
     if (!Spine) return null;
+    mountGuards(g, Spine);
+    noteVisit(g, roomId);
 
     /* Rooms use <main>; the FOO ladder builds into #root > .wrap. Try the
        shapes this app actually has rather than assuming one. */
@@ -722,15 +1265,32 @@
     var box = document.createElement('section');
     box.className = 'slaf-progress-host';
     box.id = 'slaf-progress';
-    /* Before the disclaimer if there is one, so the small print stays last. */
+    /* Before the disclaimer if there is one, so the small print stays last.
+       It has to be a CHILD of the host: a `.disclaimer` nested inside a
+       room's own section is a descendant, and insertBefore throws on it. */
     var tail = host.querySelector('.disclaimer');
-    if (tail) host.insertBefore(box, tail); else host.appendChild(box);
+    if (tail && tail.parentNode === host) host.insertBefore(box, tail);
+    else host.appendChild(box);
 
     /* The version, printed in every room's footer (D-131): version.json
        carries the same string, and the test holds the two together. */
-    var version = g.SLAF.Schema && g.SLAF.Schema.APP_VERSION ? '<p class="slaf-version">Money Rooms v' + g.SLAF.Schema.APP_VERSION + '</p>' : '';
+    var version = g.SLAF.Schema && g.SLAF.Schema.APP_VERSION
+      ? '<p class="slaf-version">Money Rooms v' + g.SLAF.Schema.APP_VERSION + (g.SLAF.Schema.BUILD ? ' · build ' + g.SLAF.Schema.BUILD : '') + '</p>'
+      : '';
+    /* Privacy you can prove (H7, D-212): requests to any other origin this
+       session, counted from the browser's own resource timing. Zero is
+       the promise kept; anything else is listed, never hidden. */
+    function privacyLine() {
+      var r = privacyReceipt(typeof performance !== 'undefined' && performance.getEntriesByType ? performance.getEntriesByType('resource') : [], typeof location !== 'undefined' ? location.origin : '');
+      return '<p class="slaf-version" id="slaf-privacy">' + escapeHtml(r.line) + '</p>';
+    }
+    function yearLine() {
+      var R = g.SLAF.Reference;
+      var notes = R && R.yearNotes ? R.yearNotes(R._cache || {}) : [];
+      return notes.length ? '<p class="slaf-version">Tax and limit figures: ' + notes.map(escapeHtml).join(', ') + '. Newer tables are not in this build yet.</p>' : '';
+    }
     function paint() {
-      box.innerHTML = stripHtml(roomId, Spine.getProfile()) + version;
+      box.innerHTML = stripHtml(roomId, Spine.getProfile()) + version + yearLine() + privacyLine();
       /* Every room gets its own export, from the one mount point every room
          already reaches — the same lever the walk strip and the situation
          notice use (D-142, D-149). No per-room wiring, so no room can be
@@ -738,6 +1298,34 @@
       if (g.SLAF.RoomExport) g.SLAF.RoomExport.mount(roomId, box);
     }
     paint();
+    /* The one inline question a room needs (D-207, Phase D): loaded and
+       mounted from here so no room needs wiring. ask.js pulls in what the
+       room does not carry. Never on the Ledger or the First Round, which
+       ask their own way, and never twice. */
+    var base = (typeof location !== 'undefined' && location.pathname.indexOf('/rooms/') !== -1 ? '../' : '');
+    function withAsk(fn) {
+      if (g.SLAF.Ask) { fn(); return; }
+      var sc = document.createElement('script');
+      sc.src = base + 'shared/ask.js';
+      sc.onload = fn;
+      document.head.appendChild(sc);
+    }
+    /* A life change waiting for its sheet (G2.6, D-209): shown on the next
+       page opened, before the room's own question. Not on the First Round or
+       Express, which show every row live already. */
+    var pendingChange = Spine && Spine.reopenPending ? Spine.reopenPending() : null;
+    if (pendingChange && !pendingChange.dismissed && roomId !== 'ledger' && !document.getElementById('slaf-reopen')) {
+      withAsk(function () {
+        if (g.SLAF.Reopen) { g.SLAF.Reopen.mountLater(host); return; }
+        var sc = document.createElement('script');
+        sc.src = base + 'shared/reopen.js';
+        sc.onload = function () { if (g.SLAF.Reopen) g.SLAF.Reopen.mountLater(host); };
+        document.head.appendChild(sc);
+      });
+    }
+    if (['ledger', 'start'].indexOf(roomId) === -1 && !document.getElementById('slaf-ask')) {
+      withAsk(function () { if (g.SLAF.Ask) g.SLAF.Ask.mount(roomId, host); });
+    }
 
     /* A write during a tap (blur → save → change) used to repaint this
        strip synchronously. When an item drops off the list the document
@@ -766,15 +1354,32 @@
     return { repaint: paint, el: box };
   }
 
+  /* Header first: before any table loads, before the room's init can throw.
+     A room that dies halfway still has its menu and its way out. D-170. */
+  if (typeof document !== 'undefined' && typeof location !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function () {
+      var id = roomIdFromLocation();
+      if (id && !document.querySelector('.slaf-hops-host')) mountHeader(id);
+    });
+  }
+
   return {
     mount: mount,
-    mountHeader: mountHeader,
+    chain: chain,
+    mountHintFolds: mountHintFolds, HINT_FOLD_CHARS: HINT_FOLD_CHARS,
+    purposeHtml: purposeHtml,
+    mountHeader: mountHeader, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
+    mountFold: mountFold,
+    mountSectionSync: mountSectionSync,
+    roomIdFromLocation: roomIdFromLocation,
     mountSituation: mountSituation,
     situationNoticeHtml: situationNoticeHtml,
     mountWalk: mountWalk,
     walkBarHtml: walkBarHtml,
     mountMenu: mountMenu,
     menuHtml: menuHtml,
+    menuBodyHtml: menuBodyHtml,
+    roomStatus: roomStatus,
     UPKEEP: UPKEEP,
     headerNavHtml: headerNavHtml,
     forRoom: forRoom,

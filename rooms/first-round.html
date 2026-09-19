@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>The First Round · SPARKS</title>
+<meta name="description" content="The First Round is Round 1 of The Ledger now."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  REDIRECT — The First Round is Round 1 inside The Ledger (rooms/ledger.html#round-1, DECISIONS.md D-230).
+  Navigation is not a room: this page was a way IN, never a number, so it
+  became a view of the page that holds every number. The file stays so that
+  every link already out in the world keeps landing, hash included.
+  LIVE-FORM: built once. No inputs.
+-->
+<meta http-equiv="refresh" content="0; url=ledger.html#round-1"/>
+</head>
+<body class="slaf">
+<main class="slaf-wrap">
+  <p style="color:var(--color-text-muted)">The First Round is Round 1 of The Ledger now.
+    <a href="ledger.html#round-1" id="go">Open it →</a></p>
+</main>
+<script>
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#q-age': '#round-1', '#q-zip': '#round-1-q-zip', '#q-situation': '#round-1-q-situation', '#q-pay': '#round-1-q-pay', '#q-cash': '#round-1-q-cash', '#insight': '#round-1-insight' };
+    var hash = location.hash || '';
+    var target = 'ledger.html' + (map[hash] || '#round-1');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,405 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_pmi_a",
+      "label": "Blake",
+      "role": "adult",
+      "dob": "1994-01-27",
+      "employmentStatus": "employed",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [
+        {
+          "id": "p_pmi_a_inc0",
+          "personId": "p_pmi_a",
+          "source": "IT support",
+          "grossAnnualIncomeCents": 7600000,
+          "frequency": "annual",
+          "rateCents": null,
+          "hoursPerWeek": null,
+          "monthsWorked": null,
+          "ongoing": true,
+          "variableLowCents": null,
+          "variableHighCents": null,
+          "type": "w2",
+          "hassle": null,
+          "employerMatch": {
+            "matchPercent": 1,
+            "matchCapPercentOfSalary": 0.03
+          }
+        }
+      ],
+      "work": {
+        "contractedHoursPerWeek": null,
+        "unpaidOvertimeHoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "prepHoursPerWeek": null,
+        "decompressHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "weeksPerYear": 48
+      }
+    },
+    {
+      "id": "p_pmi_b",
+      "label": "Remy",
+      "role": "adult",
+      "dob": "1994-11-15",
+      "employmentStatus": "employed",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [
+        {
+          "id": "p_pmi_b_inc0",
+          "personId": "p_pmi_b",
+          "source": "Dental hygienist",
+          "grossAnnualIncomeCents": 4200000,
+          "frequency": "annual",
+          "rateCents": null,
+          "hoursPerWeek": null,
+          "monthsWorked": null,
+          "ongoing": true,
+          "variableLowCents": null,
+          "variableHighCents": null,
+          "type": "w2",
+          "hassle": null,
+          "employerMatch": {
+            "matchPercent": null,
+            "matchCapPercentOfSalary": null
+          }
+        }
+      ],
+      "work": {
+        "contractedHoursPerWeek": null,
+        "unpaidOvertimeHoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "prepHoursPerWeek": null,
+        "decompressHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "weeksPerYear": 48
+      }
+    }
+  ],
+  "filingStatus": "married_joint",
+  "state": "NC",
+  "capturingFullMatch": true,
+  "dependents": [],
+  "community": {
+    "daySchool": null
+  },
+  "assets": [
+    {
+      "id": "a_0",
+      "label": "Savings",
+      "category": "cash",
+      "valueCents": 1100000,
+      "liquid": true,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_1",
+      "label": "401(k)",
+      "category": "retirement",
+      "valueCents": 6400000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": "pretax",
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_house",
+      "label": "House",
+      "category": "real_estate",
+      "valueCents": 38000000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    }
+  ],
+  "debts": [
+    {
+      "id": "d_house",
+      "label": "Mortgage (92% loan to value)",
+      "balanceCents": 34960000,
+      "rate": 0.064,
+      "minPaymentCents": 218700,
+      "type": "mortgage",
+      "creditLimitCents": null,
+      "promoEndsOn": null,
+      "postPromoRate": null,
+      "emotionalTag": null,
+      "keepReasons": [],
+      "excludeFromAggressive": false,
+      "interestFree": null,
+      "archived": false,
+      "borrowedOn": null,
+      "dueOn": null,
+      "ownerIds": []
+    }
+  ],
+  "expenses": {
+    "needs": {
+      "food": {
+        "monthlyCents": 85000
+      },
+      "accommodation": {
+        "monthlyCents": 307200
+      },
+      "transportation": {
+        "monthlyCents": 50000
+      }
+    },
+    "wants": {
+      "totalCents": 130000,
+      "therapy": null
+    },
+    "entries": []
+  },
+  "incomeBasis": "earned",
+  "retirement": {
+    "contributionPercent": null,
+    "rothContributedCents": null,
+    "hsaContributedCents": null,
+    "onHdhp": null,
+    "hsaFamilyPlan": null,
+    "has401k": null
+  },
+  "insurance": {
+    "highestDeductibleCents": null,
+    "oopMaxCents": null,
+    "termLifeCents": null,
+    "disabilityMonthlyCents": null,
+    "umbrella": null,
+    "health": {
+      "type": null,
+      "monthlyCents": null
+    }
+  },
+  "worthChecks": [],
+  "ratings": {},
+  "valuesProfile": {
+    "stated": [],
+    "assignments": {}
+  },
+  "swan": {
+    "basis": null,
+    "targetCents": null,
+    "targetMonths": null,
+    "note": null,
+    "setAt": null
+  },
+  "goals": [],
+  "futureIncome": [],
+  "property": [],
+  "allocation": {
+    "stocks": null,
+    "bonds": null,
+    "cash": null,
+    "rebalanceBand": null
+  },
+  "rerank": {
+    "rows": []
+  },
+  "targets": {
+    "retireAge": null,
+    "coastAge": null
+  },
+  "scenarios": [],
+  "oneOffs": [],
+  "estate": {
+    "beneficiariesSet": null,
+    "willExists": null,
+    "poaExists": null
+  },
+  "giving": {
+    "pctOfIncome": null,
+    "annualTargetCents": null
+  },
+  "decumulation": {
+    "stockShare": null,
+    "plannedAnnualDrawCents": null,
+    "socialSecurityAt": null
+  },
+  "tax": {
+    "otherPreTaxAnnualCents": null,
+    "withheldAnnualCents": null
+  },
+  "career": {
+    "offer": {
+      "grossAnnualCents": null,
+      "hoursPerWeek": null,
+      "commuteHoursPerWeek": null,
+      "workCostsMonthlyCents": null,
+      "signOnCents": null
+    }
+  },
+  "partner": {
+    "splitMode": null,
+    "sharedMonthlyCents": null
+  },
+  "kids": {
+    "tuitionTargetCents": null,
+    "tuitionSavedCents": null,
+    "tuitionMonthlyCents": null
+  },
+  "housing": {
+    "rentMonthlyCents": null,
+    "priceCents": 38000000,
+    "downPct": 0.08,
+    "rate": 0.064
+  },
+  "purchase": {
+    "priceCents": null,
+    "monthsAway": null,
+    "financeRate": null,
+    "label": null
+  },
+  "variableIncome": {
+    "bufferMonths": null,
+    "windowMonths": null
+  },
+  "enough": {
+    "monthlyCents": null,
+    "source": null
+  },
+  "designedWeek": {
+    "blocks": []
+  },
+  "timeBuckets": [],
+  "dreams": [],
+  "reversibility": {
+    "decisionId": null,
+    "given": {}
+  },
+  "unlearning": {
+    "dropped": []
+  },
+  "studentLoans": {
+    "plan": null,
+    "extraMonthlyCents": null,
+    "idrShare": null,
+    "forgivenessYears": null
+  },
+  "calendar": {
+    "cadence": null,
+    "nextPaydayDay": null,
+    "bills": [],
+    "payLater": []
+  },
+  "history": {
+    "compareTo": null
+  },
+  "ledger": {
+    "income": [],
+    "months": [],
+    "dismissed": []
+  },
+  "budget": {
+    "estimated": {},
+    "presets": {}
+  },
+  "notApplicable": {},
+  "skills": {},
+  "skillTree": {
+    "state": {}
+  },
+  "exercises": {
+    "done": {},
+    "results": {}
+  },
+  "practiceLedger": [],
+  "assumptions": {
+    "returnReal": 0.05,
+    "inflation": 0.03,
+    "expectedReturnRate": 0.07,
+    "swrRate": 0.04,
+    "humanCapitalDiscountRate": 0.02,
+    "homeEquityHaircut": 0.8,
+    "marginalRate": null
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": null,
+    "confirmedAt": {},
+    "hasDebt": true,
+    "undoStack": [],
+    "redoStack": [],
+    "guessed": {},
+    "source": {},
+    "displayUnit": null,
+    "noRent": null,
+    "walk": {
+      "startedAt": null,
+      "finishedAt": null,
+      "done": {},
+      "skipped": {}
+    },
+    "frontDoor": null,
+    "isDemo": true,
+    "name": "Homeowner with PMI",
+    "story": "32, bought with 8% down, so PMI, plus an HOA; accommodation is principal, interest, tax, insurance, PMI and HOA in one line.",
+    "sphere": 7,
+    "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+    "lane": "lane2 section 1 (L-1)",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 572200,
+      "fiTargetCents": 171660000,
+      "grossAnnualCents": 11800000,
+      "effectiveRate": 0.17,
+      "estimatedTaxCents": 2006000,
+      "takeHomeAnnualCents": 9794000,
+      "takeHomeMonthlyCents": 816167,
+      "savingsRate": 0.24810169491525425,
+      "runwayMonths": 1.9224047535826634,
+      "runwayWholeMonths": 1,
+      "netWorthCents": 10540000,
+      "working": [
+        "monthly spending = food $850 + accommodation $3,072 + transportation $500 + everything else $1,300 = $5,722",
+        "FI target = $5,722 x 12 / 0.04 = $68,664 / 0.04 = $1,716,600",
+        "gross $118,000 married_joint: band married_joint up to $130,000 -> effective rate 0.17",
+        "estimated tax = $118,000 x 0.17 = $20,060; take-home = $118,000 - $20,060 = $97,940 a year, $8,161.67 a month",
+        "savings rate (excluding match) = ($97,940 - $68,664) / $118,000 = $29,276 / $118,000 = 0.2481",
+        "runway = cash $11,000 / $5,722 a month = 1.9224 months (1 whole months; Runway.project stops at 60)",
+        "net worth = $11,000 + $64,000 + $380,000 - $349,600 = $105,400"
+      ]
+    }
+  }
+}

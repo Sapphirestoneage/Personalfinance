@@ -76,8 +76,8 @@ module.exports = function (t) {
   Spine.reset();
 
   /* Once months close, "a month of spending" is their average (D-130, Q10). */
-  const hc = Schema.createHousehold({ expenses: { monthlyEssential: { estimatedValueCents: 300000, trackedValueCents: 280000 } } });
-  check('with no closed month the tracked figure still rules', Schema.monthlyExpensesCents(hc).value + '/' + Schema.monthlyExpensesCents(hc).source, '280000/tracked');
+  const hc = Schema.createHousehold({ expenses: { wants: { totalCents: 280000 } } });
+  check('with no closed month the typed month still rules', Schema.monthlyExpensesCents(hc).value + '/' + Schema.monthlyExpensesCents(hc).source, '280000/fat');
   hc.ledger.months = [
     Schema.createMonthRecord({ month: '2026-05', estimated: {}, actual: { expenses: 250000 } }),
     Schema.createMonthRecord({ month: '2026-06', estimated: {}, actual: { expenses: 260000 } }),
@@ -87,7 +87,7 @@ module.exports = function (t) {
   const mc = Schema.monthlyExpensesCents(hc);
   check('closed months: the average of the last three wins over tracked', mc.value + '/' + mc.source + '/' + mc.months.join(','), Math.round((260000 + 270000 + 320000) / 3) + '/closed/2026-06,2026-07,2026-08');
   hc.ledger.months = [Schema.createMonthRecord({ month: '2026-08', estimated: {}, actual: { expenses: 0 } })];
-  check('a closed month with nothing logged does not count as a month of spending', Schema.monthlyExpensesCents(hc).source, 'tracked');
+  check('a closed month with nothing logged does not count as a month of spending', Schema.monthlyExpensesCents(hc).source, 'fat');
 
   /* What the log moved since cash was confirmed (D-130, Q8): read, never applied. */
   const hm = Schema.createHousehold({ filingStatus: 'single', state: 'NC', people: [Schema.createPerson({ id: 'P', role: 'adult', employmentStatus: 'employed', incomeSources: [Schema.createIncomeSource({ id: 'i', personId: 'P', grossAnnualIncomeCents: 7200000 })] })] });

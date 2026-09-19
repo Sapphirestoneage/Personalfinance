@@ -3,7 +3,8 @@
    --------------------------------------------------------------------------
    Every chart in the suite is drawn here, as an SVG string, from figures an
    engine already produced: an area chart for anything over time, a donut
-   for anything that is a share of a whole, bars for anything compared.
+   for anything that is a share of a whole, bars for anything compared,
+   columns for a count of months walking left to right (D-198).
    Nothing is computed here beyond scales and ticks; a room that wants a
    line hands over the points and gets markup back.
 
@@ -91,7 +92,9 @@
    *                 dash: bool, width }]  — the first filled series is the
    *                 one the chart is about.
    * opts.x: { label, format }   opts.y: { format, min, max }
-   * opts.hLines: [{ y, label, color }]   opts.vLines: [{ x, label }]
+   * opts.hLines: [{ y, label, color }]   opts.vLines: [{ x, label, faint?, title? }]
+   * opts.bands: [{ points: [[x, low, high], …], color }] — a shaded range
+   *              drawn BEHIND the lines (the Triple D band, D-176).
    * opts.width/height: the viewBox (default 360 × 220).
    * Returns HTML: a .slaf-chart with the svg and a legend.
    */
@@ -106,6 +109,8 @@
     if (!series.length) return '<div class="slaf-chart is-empty"><p class="slaf-reason">' + esc(o.empty || 'Nothing to draw yet.') + '</p></div>';
     var xs = [], ys = [];
     series.forEach(function (s) { s.points.forEach(function (p) { xs.push(p[0]); ys.push(p[1]); }); });
+    var bands = (o.bands || []).filter(function (b) { return b.points && b.points.length; });
+    bands.forEach(function (b) { b.points.forEach(function (p) { xs.push(p[0]); ys.push(p[1]); ys.push(p[2]); }); });
     (o.hLines || []).forEach(function (l) { if (num(l.y)) ys.push(l.y); });
     var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
     var yLo = Math.min.apply(null, ys), yHi = Math.max.apply(null, ys);
@@ -136,8 +141,21 @@
     parts.push('<line class="axis" x1="' + PL + '" y1="' + zero.toFixed(1) + '" x2="' + (W - PR) + '" y2="' + zero.toFixed(1) + '"/>');
     if (o.x && o.x.label) parts.push('<text class="tick axis-label" x="' + (W - PR) + '" y="' + (H - 4) + '" text-anchor="end">' + esc(o.x.label) + '</text>');
 
+    bands.forEach(function (b) {
+      var fwd = b.points.map(function (p, i) { return (i ? 'L' : 'M') + sx(p[0]).toFixed(1) + ',' + sy(p[1]).toFixed(1); }).join('');
+      var back = b.points.slice().reverse().map(function (p) { return 'L' + sx(p[0]).toFixed(1) + ',' + sy(p[2]).toFixed(1); }).join('');
+      parts.push('<path class="band" d="' + fwd + back + 'Z" fill="' + (b.color || COLORS.series[0]) + '" fill-opacity="0.16" stroke="none"/>');
+    });
     (o.vLines || []).forEach(function (l) {
       var px = sx(l.x).toFixed(1);
+      /* 15.9: a faint mark (an age milestone) sits behind the event marks,
+         its label at the foot and the rule on hover. D-181. */
+      if (l.faint) {
+        parts.push('<g class="milestone">' + (l.title ? '<title>' + esc(l.title) + '</title>' : '')
+          + '<line class="mark is-faint" x1="' + px + '" y1="' + PT + '" x2="' + px + '" y2="' + (H - PB) + '"/>'
+          + (l.label ? '<text class="tick mark-label is-faint" x="' + (+px + 2) + '" y="' + (H - PB - 3) + '">' + esc(l.label) + '</text>' : '') + '</g>');
+        return;
+      }
       parts.push('<line class="mark" x1="' + px + '" y1="' + PT + '" x2="' + px + '" y2="' + (H - PB) + '"/>');
       if (l.label) parts.push('<text class="tick mark-label" x="' + (+px + 3) + '" y="' + (PT + 9) + '">' + esc(l.label) + '</text>');
     });
@@ -272,6 +290,71 @@
     return '<div class="slaf-chart slaf-bars">' + html + '<ul class="slaf-legend">' + legend + '</ul></div>';
   }
 
+  /**
+   * Vertical columns over time, each stacked from parts (D-198). A column
+   * may be `faded` (assumed, not yet received) and the chart draws a dashed
+   * divider before opts.divider with a caption either side. Values sit on
+   * the columns where they change, never on every one.
+   * columns: [{ label, parts: [{ label, value, color }], faded, note }]
+   * opts.divider: index of the first column after the line  opts.captions: [left, right]
+   * opts.format: value → text for the column tops (default shortMoney)
+   */
+  function columns(opts) {
+    var o = opts || {};
+    var cols = (o.columns || []);
+    var totals = cols.map(function (c) { return (c.parts || []).reduce(function (t, p) { return t + Math.max(0, num(p.value) ? p.value : 0); }, 0); });
+    if (!cols.length || !totals.some(function (t) { return t > 0; })) return '<div class="slaf-chart is-empty"><p class="slaf-reason">' + esc(o.empty || 'Nothing to draw yet.') + '</p></div>';
+    var format = o.format || shortMoney;
+    var W = o.width || 360, H = o.height || 200;
+    var PL = 40, PR = 8, PT = o.captions ? 22 : 12, PB = 22;
+    var plotW = W - PL - PR, plotH = H - PT - PB;
+    var yMax = Math.max.apply(null, totals);
+    var yt = ticks(0, yMax, 4);
+    if (yt[yt.length - 1] < yMax) yt.push(yt[yt.length - 1] + (yt[1] - yt[0]));
+    var top = yt[yt.length - 1] || 1;
+    var slot = plotW / cols.length, cw = Math.max(4, slot * 0.62);
+    var y = function (v) { return PT + plotH - v / top * plotH; };
+    var GAP = 1.5, seen = {};
+    /* Narrow columns cannot each carry a month: label every k-th, and every
+       marked one, so the axis reads instead of overprinting (D-236). */
+    var every = slot < 36 ? Math.ceil(36 / slot) : 1;
+    var grid = yt.map(function (t) {
+      return '<line class="grid" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '"/>'
+        + '<text class="tick" x="' + (PL - 4) + '" y="' + (y(t) + 3).toFixed(1) + '" text-anchor="end">' + esc(format(t)) + '</text>';
+    }).join('');
+    var body = cols.map(function (c, i) {
+      var x = PL + i * slot + (slot - cw) / 2;
+      var acc = 0, segs = '';
+      (c.parts || []).forEach(function (p, j) {
+        var v = Math.max(0, num(p.value) ? p.value : 0);
+        if (!v) return;
+        var color = p.color || COLORS.series[j % COLORS.series.length];
+        seen[p.label] = color;
+        var y1 = y(acc + v), y0 = y(acc);
+        var h = Math.max(0, y0 - y1 - (acc ? GAP : 0));
+        segs += '<rect x="' + x.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + cw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="1.5" fill="' + color + '"' + (c.faded ? ' opacity="0.42"' : '') + '><title>' + esc(c.label + ' · ' + p.label + ' ' + money(p.value)) + '</title></rect>';
+        acc += v;
+      });
+      var show = totals[i] > 0 && (i === 0 || totals[i] !== totals[i - 1] || (o.divider !== undefined && i === o.divider) || c.mark);
+      var val = show ? '<text class="tick" style="font-size:7.5px" x="' + (x + cw / 2).toFixed(1) + '" y="' + (y(totals[i]) - 3).toFixed(1) + '" text-anchor="middle">' + esc(format(totals[i])) + '</text>' : '';
+      var lab = (c.mark || i % every === 0)
+        ? '<text class="tick" x="' + (x + cw / 2).toFixed(1) + '" y="' + (H - PB + 12) + '" text-anchor="middle"' + (c.mark ? ' font-weight="600"' : '') + '>' + esc(c.label) + '</text>'
+        : '';
+      return '<g>' + segs + val + lab + '</g>';
+    }).join('');
+    var divider = '';
+    if (num(o.divider) && o.divider > 0 && o.divider < cols.length) {
+      var dx = PL + o.divider * slot;
+      divider = '<line x1="' + dx.toFixed(1) + '" x2="' + dx.toFixed(1) + '" y1="' + PT + '" y2="' + (PT + plotH) + '" stroke="' + COLORS.axis + '" stroke-width="0.8" stroke-dasharray="3 3"/>';
+      if (o.captions) divider += '<text class="tick axis-label" x="' + (dx - 4).toFixed(1) + '" y="' + (PT - 8) + '" text-anchor="end">' + esc(o.captions[0]) + '</text>'
+        + '<text class="tick axis-label" x="' + (dx + 4).toFixed(1) + '" y="' + (PT - 8) + '">' + esc(o.captions[1]) + '</text>';
+    }
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.title || 'columns over time') + '">'
+      + grid + '<line class="axis" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + (PT + plotH).toFixed(1) + '" y2="' + (PT + plotH).toFixed(1) + '"/>' + body + divider + '</svg>';
+    var legend = Object.keys(seen).map(function (k) { return '<li><i style="background:' + seen[k] + '"></i>' + esc(k) + '</li>'; }).join('');
+    return '<div class="slaf-chart slaf-columns">' + svg + (legend ? '<ul class="slaf-legend">' + legend + '</ul>' : '') + '</div>';
+  }
+
   /* ---- 4. Series helpers a room may need ------------------------------------------ */
 
   /** Yearly points from a monthly list: every 12th row, and the last. */
@@ -323,15 +406,25 @@
         + ' L' + x1 + ',' + (y1 + h) + ' C' + cx + ',' + (y1 + h) + ' ' + cx + ',' + (y0 + h) + ' ' + x0 + ',' + (y0 + h) + ' Z';
       parts.push('<path class="flow" d="' + d + '" fill="' + (l.color || b.color || a.color || COLORS.muted) + '"><title>' + esc(a.label + ' → ' + b.label + ': ' + format(l.value)) + '</title></path>');
     });
+    /* Labels: a halo in the panel colour so a name stays legible over the
+       bands behind it; a middle column's name is cut to the room before
+       the next column's labels, which read right-to-left into the same gap
+       (D-236, nine debts on a phone); a node too short for a name gets its
+       figure in the title only. */
+    var HALO = ' style="paint-order:stroke;stroke:var(--ink-900);stroke-width:3px;stroke-linejoin:round"';
+    var CHAR_PX = 5.6;
     nodes.forEach(function (n) {
       if (!(n.v > 0)) return;
-      var last = n.column === colIds[colIds.length - 1];
+      var ci = colIds.indexOf(n.column), last = ci === colIds.length - 1;
       parts.push('<rect class="node" x="' + n.x + '" y="' + n.y + '" width="' + NW + '" height="' + n.h + '" rx="2" fill="' + (n.color || COLORS.contributed) + '"><title>' + esc(n.label + ': ' + format(n.v)) + '</title></rect>');
+      if (n.h < 7) return;
       var tx = last ? n.x - 4 : n.x + NW + 4, anchor = last ? 'end' : 'start';
       var ty = n.y + Math.min(n.h / 2, 8) + 3;
-      var label = String(n.label || ''); if (label.length > 18) label = label.slice(0, 17) + '…';
-      parts.push('<text class="tick" x="' + tx + '" y="' + ty + '" text-anchor="' + anchor + '">' + esc(label) + '</text>');
-      if (n.h > 22) parts.push('<text class="tick small" x="' + tx + '" y="' + (ty + 11) + '" text-anchor="' + anchor + '">' + esc(shortMoney(n.v)) + '</text>');
+      var room = last ? n.x - 4 - PAD : (ci === colIds.length - 2 ? xs(colIds[ci + 1]) - 4 - 88 - tx : xs(colIds[ci + 1]) - 4 - tx);
+      var max = Math.max(6, Math.floor(room / CHAR_PX));
+      var label = String(n.label || ''); if (label.length > max) label = label.slice(0, max - 1) + '…';
+      parts.push('<text class="tick"' + HALO + ' x="' + tx + '" y="' + ty + '" text-anchor="' + anchor + '">' + esc(label) + '</text>');
+      if (n.h > 22) parts.push('<text class="tick small"' + HALO + ' x="' + tx + '" y="' + (ty + 11) + '" text-anchor="' + anchor + '">' + esc(shortMoney(n.v)) + '</text>');
     });
     return '<div class="slaf-chart slaf-sankey"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.title || 'where the money flows') + '">' + parts.join('') + '</svg></div>';
   }
@@ -347,6 +440,7 @@
     donut: donut,
     bars: bars,
     stacked: stacked,
+    columns: columns,
     yearly: yearly
   };
 });

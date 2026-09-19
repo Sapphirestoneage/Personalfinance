@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Decumulation · SPARKS</title>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Drawing It Down · SPARKS</title>
 <meta name="description" content="How a retiree draws: the withdrawal rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
@@ -39,20 +42,15 @@
   shared/theme.css.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
-  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
 
 <header class="room-head">
   <a class="room-back" href="../index.html">← Home</a>
-  <h1>Decumulation</h1>
+  <h1>Drawing It Down</h1>
   <p class="room-lede">How you draw on what you saved: the rate against the convention, what the variable-percentage table allows at your age, and the age the money lasts to.</p>
 </header>
 
@@ -112,12 +110,18 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/suggest.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/horizon.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/foo.js"></script>
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/fire.js"></script>
@@ -154,6 +158,7 @@
 
   Room.mount({
     id: 'decumulation',
+    horizon: true,   /* 15.2: today's money, once per screen (D-181) */
     guessAs: 'retired',
     reads: ['investments', 'monthlyExpenses', 'grossAnnualIncome', 'dob'],
 
@@ -173,6 +178,13 @@
       else { value = Math.round(p.yearsUntilEmpty) + ' years'; tail = ' <a href="' + Ownership.linkTo('start', 'q-about') + '">Add your birth date for the age →</a>'; }
       if (!p.never) sub += '. ' + (Math.round(p.yearsUntilEmpty * 10) / 10) + ' years at a ' + Money.formatRate(p.returnReal, { decimals: 0 }) + ' real return';
       else sub += '. At a ' + Money.formatRate(p.returnReal, { decimals: 0 }) + ' real return the draw never empties the investments';
+      /* 15.9: the phases the draw crosses, one sentence; only the ages
+         that change what a draw can do, in plain words. D-181. */
+      var PHASE_WORDS = { penaltyFree: 'the penalty ends at 59 and a half', ssEarly: 'Social Security can start at 62', medicare: 'Medicare at 65', fullRetirementAge: 'full Social Security', rmd: 'required withdrawals begin' };
+      var crossed = (p.phases || []).slice(1).filter(function (ph) { return PHASE_WORDS[p.phases[p.phases.indexOf(ph) - 1].endsAt]; });
+      if (crossed.length) {
+        tail += ' On the way: ' + crossed.map(function (ph) { var id = p.phases[p.phases.indexOf(ph) - 1].endsAt; return PHASE_WORDS[id] + (id === 'fullRetirementAge' || id === 'rmd' ? ' at ' + ph.fromAge : '') + ' (year ' + ph.fromYear + ')'; }).join(', ') + '.';
+      }
       return { label: label, value: value, sub: sub + tail, zone: p.zone === 'none' ? null : p.zone, result: p };
     },
 
@@ -182,12 +194,14 @@
       var byAge = p.age !== null;
       var x0 = byAge ? p.age : 0;
       var series = [{ id: 'planned', label: 'Drawing ' + Money.formatCents(p.drawCents) + ' a year', color: Charts.COLORS.growth,
-        points: p.path.map(function (r) { return [x0 + r.year, r.balanceCents]; }) }];
+        points: p.path.map(function (r) { return [x0 + r.year, SLAF.Horizon.display(h, r.balanceCents, r.year)]; }) }];
       if (p.vpwPath) series.push({ id: 'vpw', label: 'VPW: the table’s share each year', color: Charts.COLORS.contributed, fill: false, dash: true,
-        points: p.vpwPath.map(function (r) { return [x0 + r.year, r.balanceCents]; }) });
+        points: p.vpwPath.map(function (r) { return [x0 + r.year, SLAF.Horizon.display(h, r.balanceCents, r.year)]; }) });
       var dots = [];
       if (!p.never && p.yearsUntilEmpty <= p.horizonYears) dots.push({ x: x0 + p.yearsUntilEmpty, y: 0, color: Charts.COLORS.debt });
-      var vLines = [];
+      /* 15.9: the age milestones as faint marks; the plan's phase
+         boundaries are the same ages (Decumulation.plan meta.phases). */
+      var vLines = Schema.milestoneMarks(h, T.milestones, { axis: byAge ? 'age' : 'years', from: x0, to: x0 + p.horizonYears });
       if (byAge && p.socialSecurityInYears !== null && p.socialSecurityAt <= x0 + p.horizonYears) vLines.push({ x: p.socialSecurityAt, label: 'Social Security' });
       return Charts.area({
         title: 'Investments, year by year, drawing as planned and as the VPW table allows',

@@ -74,7 +74,7 @@
     return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
   }
   function dayNumber(iso) { return Math.round(Date.parse(iso + 'T00:00:00Z') / MS_PER_DAY); }
-  function addDays(iso, n) { return new Date((dayNumber(iso) + n) * MS_PER_DAY).toISOString().slice(0, 10); }
+  function addDays(iso, n) { return Schema.isoDayUTC(new Date((dayNumber(iso) + n) * MS_PER_DAY)); }
   function daysBetween(fromISO, toISO) { return dayNumber(toISO) - dayNumber(fromISO); }
 
   /* ---- 1. The catalogue ---------------------------------------------------- */

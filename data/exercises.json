@@ -606,7 +606,7 @@
       "advances": [
         "enter-the-facts"
       ],
-      "room": "cash-flow.html",
+      "room": "expenses.html",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when the household shows it: grossAnnualIncome",
@@ -669,7 +669,7 @@
       "advances": [
         "name-your-debt"
       ],
-      "room": "cash-flow.html",
+      "room": "debt-payoff.html",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when the household shows it: totalDebt",
@@ -723,7 +723,7 @@
       "advances": [
         "track-a-month"
       ],
-      "room": "cash-flow.html",
+      "room": "cash-flow.html#log",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when the household shows it: monthlyExpenses",
@@ -741,7 +741,7 @@
       "advances": [
         "rerank-your-costs"
       ],
-      "room": "cash-flow.html",
+      "room": "expenses.html",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when the household shows it: rerankCut",
@@ -849,7 +849,7 @@
       "advances": [
         "cook-dinner"
       ],
-      "room": "cash-flow.html",
+      "room": "expenses.html",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when you have done it once and can say what it changed",
@@ -867,7 +867,7 @@
       "advances": [
         "weekly-shop"
       ],
-      "room": "cash-flow.html",
+      "room": "expenses.html",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when you have done it once and can say what it changed",
@@ -885,7 +885,7 @@
       "advances": [
         "no-spend-day"
       ],
-      "room": "cash-flow.html",
+      "room": "expenses.html",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when you have done it once and can say what it changed",
@@ -903,7 +903,7 @@
       "advances": [
         "pack-lunch"
       ],
-      "room": "cash-flow.html",
+      "room": "expenses.html",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when you have done it once and can say what it changed",
@@ -921,7 +921,7 @@
       "advances": [
         "cut-one-line"
       ],
-      "room": "cash-flow.html",
+      "room": "expenses.html",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when you have done it once and can say what it changed",
@@ -939,7 +939,7 @@
       "advances": [
         "track-daily"
       ],
-      "room": "cash-flow.html",
+      "room": "cash-flow.html#log",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when you have done it once and can say what it changed",
@@ -1128,7 +1128,7 @@
       "advances": [
         "log-thirty"
       ],
-      "room": "cash-flow.html",
+      "room": "cash-flow.html#log",
       "requires": [],
       "appliesWhen": [],
       "proof": "leveled when thirty receipts are in the log on their dates",

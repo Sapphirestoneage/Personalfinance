@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>Your Data · SPARKS</title>
 <meta name="description" content="Every way numbers get in or out of this browser: a file, a share link, or a pasted statement sorted into the debt, account, expense or income it is."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -36,15 +39,16 @@
   THEMING: none this pass.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
   .card-gap { margin-top: var(--space-4); }
   .data-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
   .data-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
   .data-note.is-error { color: var(--color-critical); }
   .data-note.is-good { color: var(--color-positive); }
+  .data-note.is-warn, .is-warn { color: var(--color-caution); }
+  tr.is-problem td { background: color-mix(in srgb, var(--color-caution) 10%, transparent); }
+  .qr-out { margin-top: var(--space-3); max-width: 360px; }
+  .qr-out svg { width: 100%; height: auto; display: block; border-radius: var(--radius-sm); }
   .share-out { width: 100%; margin-top: var(--space-3); font-family: var(--font-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); resize: vertical; box-sizing: border-box; }
   textarea.paste { width: 100%; min-height: 120px; font: inherit; font-size: var(--text-sm); padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); box-sizing: border-box; margin-top: var(--space-3); }
   .file-say { font-size: var(--text-sm); margin-top: var(--space-3); }
@@ -59,7 +63,6 @@
   ul.preview li.is-skip .pl-line, ul.preview li.is-skip .pl-amt { color: var(--color-text-faint); }
   .tally { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); }
   .danger { border-color: var(--color-critical); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -76,13 +79,68 @@
   <section class="slaf-card" id="out">
     <span class="slaf-eyebrow">Take it with you</span>
     <h2 style="margin:var(--space-2) 0 0">A file, or a link</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">There is no account and no server. A share link keeps everything after the <code>#</code>, which a browser never sends to any site.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">There is no account and no server. On a phone, <strong>Send</strong> opens the share sheet with your numbers as a small file: mail it to yourself, message it, drop it in a drive, then load it on the other device. A share link works too, though it is long, and most chat apps cut it off. This file is the whole backup, written for the app to read back, not for you: the one made to be read is the spreadsheet below.</p>
     <div class="data-actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-send" hidden>Send to another device…</button>
       <button type="button" class="slaf-btn" id="btn-export">Download a file</button>
       <button type="button" class="slaf-btn" id="btn-share">Copy a share link</button>
+      <button type="button" class="slaf-btn" id="btn-qr" hidden>Show a QR code</button>
     </div>
+    <p class="slaf-hint" id="qr-why" hidden></p>
     <p class="data-note" id="out-note" hidden></p>
     <textarea id="share-out" class="share-out" rows="3" readonly hidden aria-label="Share link"></textarea>
+    <div class="qr-out" id="qr-out" hidden></div>
+    <p class="slaf-hint" id="qr-note" hidden></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="bank">
+    <span class="slaf-eyebrow">Bank CSV, on-device</span>
+    <h2 style="margin:var(--space-2) 0 0">Drop in a statement download</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A CSV from your bank or card site is read here, in this browser; nothing is sent. Columns are matched once per bank and remembered. Every line is shown before anything saves; spending lands in the log with its date from the file; a line already in the log is skipped, so the same file twice changes nothing.</p>
+    <div class="data-actions">
+      <label class="slaf-btn" for="bank-file" style="cursor:pointer">Choose a CSV…</label>
+      <input type="file" id="bank-file" accept=".csv,text/csv" hidden/>
+    </div>
+    <div id="bank-map" hidden style="margin-top:var(--space-3);display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:var(--space-2)">
+      <label class="slaf-hint" style="margin:0">Date <select id="bank-date" aria-label="Date column"></select></label>
+      <label class="slaf-hint" style="margin:0">Description <select id="bank-desc" aria-label="Description column"></select></label>
+      <label class="slaf-hint" style="margin:0">Amount <select id="bank-amount" aria-label="Amount column"></select></label>
+      <label class="slaf-hint" style="margin:0">Money out <select id="bank-debit" aria-label="Debit column"></select></label>
+      <label class="slaf-hint" style="margin:0">Money in <select id="bank-credit" aria-label="Credit column"></select></label>
+    </div>
+    <p class="tally" id="bank-tally" hidden></p>
+    <div id="bank-preview" style="overflow-x:auto"></div>
+    <div class="data-actions" id="bank-actions" hidden>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-bank-import">Import the new lines</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-bank-cancel">Clear</button>
+    </div>
+    <p class="data-note" id="bank-note" hidden></p>
+  </section>
+
+  <section class="slaf-card card-gap" id="sheet">
+    <span class="slaf-eyebrow">Mint-proof</span>
+    <h2 style="margin:var(--space-2) 0 0">A spreadsheet, and the app itself</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Nothing here can be taken away. <strong>Download the spreadsheet</strong> gives an Excel file that opens as a sheet in Excel, Numbers or Google Sheets: a tab a door (Debt, Assets, Income, Taxes, Expenses, You), money in money cells, a percent as a percent, a date as a date, headings in words. A blank stays blank and "not sure yet" is words, never a zero. The code is public too: the whole app comes down as a folder.</p>
+    <div class="data-actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-xlsx">Download the spreadsheet</button>
+      <button type="button" class="slaf-btn" id="btn-csv">Plain text instead (CSV)</button>
+      <a class="slaf-btn" id="btn-app" href="https://github.com/sapphirestoneage/Personalfinance/archive/refs/heads/main.zip" download>Download the whole app</a>
+    </div>
+    <p class="data-note" id="sheet-note" hidden></p>
+    <h3 style="margin:var(--space-4) 0 0">Bring the sheet back in</h3>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The same file, edited anywhere, comes back here: an Excel file or a CSV, either way. Each line goes to the row it names and, for an account, a debt or a source of pay, to the one with that name. Sort it, add lines, write numbers any way you like ($1,234.56, 24.99%, 6/3/2026, yes): every line is shown, with what it would do, before anything saves. A blank cell leaves the row as it is; nothing becomes a zero. One undo takes the whole lot back.</p>
+    <div class="data-actions">
+      <label class="slaf-btn" for="csv-file" style="cursor:pointer">Choose a file…</label>
+      <input type="file" id="csv-file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden/>
+    </div>
+    <p class="tally" id="csv-tally" hidden></p>
+    <div id="csv-preview" style="overflow-x:auto"></div>
+    <div class="data-actions" id="csv-actions" hidden>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-csv-apply">Apply the changes</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-csv-cancel">Clear</button>
+    </div>
+    <p class="data-note" id="csv-note" hidden></p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The app zip is the source from GitHub. Unzip it and open <code>index.html</code> through a small local server (on a computer: <code>python3 -m http.server</code> in that folder, then <code>localhost:8000</code>). Opened straight from the folder, browsers refuse to read the data files, so the rooms would show without their tables. Your numbers are not in the zip; they stay in this browser and in your backup file.</p>
   </section>
 
   <section class="slaf-card card-gap" id="file">
@@ -92,6 +150,11 @@
     <div class="data-actions">
       <label class="slaf-btn" for="file-import" style="cursor:pointer">Choose a file…</label>
       <input type="file" id="file-import" accept="application/json,.json" hidden/>
+    </div>
+    <div class="form-grid" style="margin-top:var(--space-3)">
+      <label class="slaf-field wide"><span class="slaf-label">Or paste a share link</span>
+        <span class="slaf-input-shell"><input type="text" id="link-in" placeholder="https://…/#h=…" aria-label="A share link to load" autocomplete="off"/></span></label>
+      <div class="slaf-field wide"><button type="button" class="slaf-btn" id="btn-link">Read the link</button></div>
     </div>
     <div class="file-say" id="file-say" hidden></div>
     <div class="data-actions" id="file-actions" hidden>
@@ -142,13 +205,26 @@
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
+<script src="../shared/qr.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../shared/importer.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/daite.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ledger-rows.js"></script>
+<script src="../shared/doors.js"></script>
+<script src="../shared/csv.js"></script>
+<script src="../shared/zipfile.js"></script>
+<script src="../shared/xlsx.js"></script>
+<script src="../shared/csvexport.js"></script>
+<script src="../engines/bankcsv.js"></script>
 <script>
 (function () {
   'use strict';
@@ -165,26 +241,282 @@
   function shortDate(iso) { var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
 
   /* ---- Out: a file, a link (the dashboard's own code, D-059) ------------ */
-  el('btn-export').addEventListener('click', function () {
+  function noteExport() { try { SLAF.Prefs.set('backup.lastExportAt', new Date().toISOString()); } catch (e) { /* fine */ } }
+  function downloadFile() {
+    noteExport();
     var blob = new Blob([Spine.exportJSON()], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = Spine.exportFilename();
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  el('btn-export').addEventListener('click', function () {
+    downloadFile();
     note('out-note', 'Downloaded ' + Spine.exportFilename() + '. Keep it somewhere you would keep a bank statement.', 'is-good');
   });
+  /* The share sheet (D-200): only where the browser has one, which is
+     every phone; a desktop gets the file and the link. */
+  if (typeof navigator.share === 'function') el('btn-send').hidden = false;
+  el('btn-send').addEventListener('click', function () {
+    Spine.sendToDevice().then(function (r) {
+      noteExport();
+      note('out-note', r.how === 'file' ? 'Sent as a file. On the other device, open Your Data and choose it under Load a file.' : 'Sent as a link. Open it on the other device and choose Load.', 'is-good');
+    }).catch(function (err) {
+      if (err && err.name === 'AbortError') return;
+      if (err && err.blocked) {
+        /* Refused, so the file goes the other way that always works. */
+        downloadFile();
+        note('out-note', 'This browser would not open the share sheet, so the file was downloaded instead: ' + Spine.exportFilename() + '. Find it in Downloads and mail or message it from there. On a phone, a page opened inside another app usually refuses the sheet; opening it in Chrome or Safari brings it back.', 'is-good');
+        return;
+      }
+      note('out-note', err.message, 'is-error');
+    });
+  });
+  /* Bank CSV (J4, D-215): parse here, map once per bank, preview, dedupe. */
+  var BANK = { parsed: null, map: null, lines: [] };
+  var MAP_KEYS = ['date', 'desc', 'amount', 'debit', 'credit'];
+  var MAP_FIELD = { date: 'date', desc: 'description', amount: 'amount', debit: 'debit', credit: 'credit' };
+  function bankSelects() {
+    var opts = '<option value="-1">none</option>' + BANK.parsed.headers.map(function (h, i) { return '<option value="' + i + '">' + esc(h) + '</option>'; }).join('');
+    MAP_KEYS.forEach(function (k) { var sel = el('bank-' + k); sel.innerHTML = opts; sel.value = String(BANK.map[MAP_FIELD[k]]); });
+  }
+  function bankReadMap() { var m = {}; MAP_KEYS.forEach(function (k) { m[MAP_FIELD[k]] = Number(el('bank-' + k).value); }); return m; }
+  function bankPreview() {
+    if (!BANK.parsed) return;
+    BANK.map = bankReadMap();
+    SLAF.Reference.load(['importKeywords', 'expenseCategories']).then(function (t) {
+      BANK.lines = SLAF.BankCsv.entries(BANK.parsed, BANK.map, Spine.getProfile(), t);
+      var fresh = BANK.lines.filter(function (l) { return l.kind === 'expense' && !l.duplicate; });
+      var dup = BANK.lines.filter(function (l) { return l.duplicate; }).length;
+      var skip = BANK.lines.filter(function (l) { return l.kind !== 'expense'; }).length;
+      el('bank-tally').hidden = false;
+      el('bank-tally').textContent = fresh.length + ' new spending line' + (fresh.length === 1 ? '' : 's') + (dup ? ', ' + dup + ' already in the log' : '') + (skip ? ', ' + skip + ' left out (deposits or no date)' : '') + '.';
+      el('bank-preview').innerHTML = '<table class="slaf-table"><thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Files under</th><th></th></tr></thead><tbody>' + BANK.lines.slice(0, 200).map(function (l) {
+        return '<tr' + (l.kind !== 'expense' || l.duplicate ? ' style="opacity:.55"' : '') + '><td>' + esc(l.date || '?') + '</td><td>' + esc(l.description) + '</td><td>' + (l.cents !== null ? esc(Money.formatCents(l.cents)) : l.signed !== null ? esc(Money.formatCents(l.signed)) : '') + '</td><td>' + esc(l.categoryId || '') + '</td><td class="slaf-hint">' + esc(l.why || '') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+      el('bank-actions').hidden = false;
+      el('btn-bank-import').disabled = fresh.length === 0;
+      el('btn-bank-import').textContent = 'Import ' + fresh.length + ' new line' + (fresh.length === 1 ? '' : 's');
+    });
+  }
+  el('bank-file').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var reader = new FileReader();
+    reader.onerror = function () { note('bank-note', 'The file could not be read from disk. Try choosing it again.', 'is-error'); };
+    reader.onload = function () {
+      var text = String(reader.result || '');
+      if (SLAF.Csv.looksBinary(text)) { note('bank-note', 'That is not a CSV. Most bank sites offer CSV beside PDF and Excel; choose CSV.', 'is-error'); return; }
+      BANK.parsed = SLAF.BankCsv.parse(text);
+      if (!BANK.parsed.headers.length) { note('bank-note', 'That file has no rows I can read.', 'is-error'); return; }
+      var keys = BANK.parsed.headers.map(SLAF.Csv.headerKey);
+      if (keys.indexOf('row') > -1 && keys.indexOf('value') > -1 && keys.indexOf('unit') > -1) { note('bank-note', 'That is a Money Rooms sheet, not a bank statement. Bring it in below, under "Bring a CSV back in".', 'is-error'); return; }
+      var sig = SLAF.BankCsv.signature(BANK.parsed.headers);
+      var remembered = (SLAF.Prefs.get('bankcsv.maps', {}) || {})[sig];
+      BANK.map = remembered || SLAF.BankCsv.guessMap(BANK.parsed.headers);
+      el('bank-map').hidden = false;
+      bankSelects();
+      note('bank-note', remembered ? 'Columns remembered from the last file with these headings.' : 'Columns guessed from the headings; change any that are wrong.', 'is-good');
+      bankPreview();
+    };
+    reader.readAsText(f);
+    this.value = '';
+  });
+  MAP_KEYS.forEach(function (k) { el('bank-' + k).addEventListener('change', bankPreview); });
+  el('btn-bank-import').addEventListener('click', function () {
+    if (!BANK.parsed) return;
+    var n = SLAF.BankCsv.apply(BANK.lines, Spine);
+    var maps = SLAF.Prefs.get('bankcsv.maps', {}) || {}; maps[SLAF.BankCsv.signature(BANK.parsed.headers)] = BANK.map; SLAF.Prefs.set('bankcsv.maps', maps);
+    note('bank-note', 'Imported ' + n + ' line' + (n === 1 ? '' : 's') + ' into the log, each dated from the file. The Subscription Finder reads them.', 'is-good');
+    bankPreview();
+  });
+  el('btn-bank-cancel').addEventListener('click', function () { BANK = { parsed: null, map: null, lines: [] }; el('bank-map').hidden = true; el('bank-preview').innerHTML = ''; el('bank-tally').hidden = true; el('bank-actions').hidden = true; note('bank-note', ''); });
+
+  /* A real spreadsheet out, and one back in (D-222). */
+  function save(bytes, name, type) {
+    var blob = new Blob([bytes], { type: type });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  el('btn-xlsx').addEventListener('click', function () {
+    SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights']).then(function (t) {
+      SLAF.LedgerRows.use(t.ledgerRows);
+      var name = SLAF.CsvExport.workbookName(Schema.localDay());
+      save(SLAF.CsvExport.workbook(Spine.getProfile(), t), name, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      note('sheet-note', 'Downloaded ' + name + '. It opens as a spreadsheet: a tab a door, money in money cells. Edit the "Your number" column and bring it back below.', 'is-good');
+    }).catch(function (err) { note('sheet-note', 'Could not build the spreadsheet: ' + err.message, 'is-error'); });
+  });
+  /* One CSV out and the same CSV back in (D-220), through shared/csvexport.js. */
+  el('btn-csv').addEventListener('click', function () {
+    SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights']).then(function (t) {
+      SLAF.LedgerRows.use(t.ledgerRows);
+      var name = SLAF.CsvExport.filename(Schema.localDay());
+      save(SLAF.CsvExport.single(Spine.getProfile(), t), name, 'text/csv;charset=utf-8');
+      note('sheet-note', 'Downloaded ' + name + ': every row on one sheet, as plain text. It opens in a spreadsheet, and in anything else as lines of text.', 'is-good');
+    }).catch(function (err) { note('sheet-note', 'Could not build the CSV: ' + err.message, 'is-error'); });
+  });
+  var CSV = { plan: null, text: '', busy: false, problemsOnly: false };
+  var STATUS_WORDS = { change: 'will change', add: 'new, will be added', same: 'already so', covered: 'a total the account lines set', skip: 'blank, left as is', computed: 'worked out, not typed', pref: 'a setting', unknown: 'no such row', noItem: 'no such item', ambiguous: 'two items with that name', duplicate: 'listed twice', noWrite: 'enter it in its room', bad: 'could not read' };
+  var PROBLEM = { unknown: true, noItem: true, ambiguous: true, bad: true, noWrite: true };
+  function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
+  function roomLink(id) { var r = id && SLAF.Registry && SLAF.Registry.byId ? SLAF.Registry.byId(id) : null; return r ? '<a href="' + esc(id) + '.html">' + esc(r.label || id) + '</a>' : ''; }
+  function csvPreview() {
+    if (!CSV.plan) return;
+    var c = CSV.plan.counts, ch = (c.change || 0) + (c.add || 0), left = CSV.plan.problems;
+    var quiet = (c.same || 0) + (c.skip || 0) + (c.covered || 0) + (c.computed || 0) + (c.pref || 0) + (c.duplicate || 0);
+    var parts = [plural(ch, 'line') + ' will change'];
+    if (c.add) parts.push(plural(c.add, 'new item line'));
+    if (c.same) parts.push(c.same + ' already so');
+    if (c.skip) parts.push(c.skip + ' blank');
+    if (CSV.plan.conflicts) parts.push(plural(CSV.plan.conflicts, 'total') + ' left to the account lines that make it');
+    if (left) parts.push(left + ' cannot be read (shown below)');
+    el('csv-tally').hidden = false;
+    el('csv-tally').textContent = parts.join(', ') + '.' + (quiet && !left ? ' The rest is as it is.' : '');
+    var shown = CSV.plan.entries.filter(function (e) { return !CSV.problemsOnly || PROBLEM[e.status] || e.warn; });
+    var head = '<table class="slaf-table"><thead><tr><th>Line</th><th>Row</th><th>Item</th><th>Now</th><th>In the file</th><th>Will be</th><th></th></tr></thead><tbody>';
+    var filter = left || CSV.plan.entries.some(function (e) { return e.warn; }) ? '<label class="slaf-hint" style="display:block;margin:var(--space-2) 0"><input type="checkbox" id="csv-problems"' + (CSV.problemsOnly ? ' checked' : '') + '> Show only the lines that need a look</label>' : '';
+    el('csv-preview').innerHTML = filter + head + shown.slice(0, 400).map(function (e) {
+      var live = e.status === 'change' || e.status === 'add';
+      var why = esc(STATUS_WORDS[e.status] || e.status) + (e.why && e.status !== 'same' && e.status !== 'change' ? ': ' + esc(e.why) : '') + (e.status === 'noWrite' && e.room ? ' (' + roomLink(e.room) + ')' : '') + (e.warn ? '<br><span class="is-warn">' + esc(e.warn) + '</span>' : '');
+      return '<tr' + (!live ? ' style="opacity:.6"' : '') + (PROBLEM[e.status] ? ' class="is-problem"' : '') + '><td class="slaf-hint">' + esc(e.line) + '</td><td>' + esc(e.label) + '</td><td>' + esc(e.item) + '</td><td>' + esc(e.before) + '</td><td>' + esc(e.text) + '</td><td>' + (live ? esc(e.after) : '') + '</td><td class="slaf-hint">' + why + '</td></tr>';
+    }).join('') + '</tbody></table>' + (shown.length > 400 ? '<p class="slaf-hint">And ' + (shown.length - 400) + ' more lines, read the same way.</p>' : '');
+    var box = document.getElementById('csv-problems');
+    if (box) box.addEventListener('change', function () { CSV.problemsOnly = box.checked; csvPreview(); });
+    el('csv-actions').hidden = false;
+    el('btn-csv-apply').disabled = ch === 0 || CSV.busy;
+    el('btn-csv-apply').textContent = 'Apply ' + plural(ch, 'change');
+  }
+  function csvClear() { CSV.plan = null; CSV.text = ''; CSV.problemsOnly = false; el('csv-preview').innerHTML = ''; el('csv-tally').hidden = true; el('csv-actions').hidden = true; }
+  /* The same file, read against the household as it is now. */
+  function csvPlan(text) {
+    return SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights', 'importKeywords', 'states']).then(function (t) {
+      SLAF.LedgerRows.use(t.ledgerRows);
+      return SLAF.CsvExport.plan(text, Spine.getProfile(), t);
+    });
+  }
+  function csvProblemNote(p) {
+    if (p.problem === 'bank') return 'That looks like a bank statement (dates, descriptions, amounts). Bring it in through Bank CSV, above.';
+    if (p.problem === 'noHeader') return 'That file has no header I can use. The first line needs a row or label column and a value column; the CSV this page downloads has both. Its columns were: ' + p.headers.slice(0, 8).join(', ') + (p.headers.length > 8 ? ', ...' : '') + '.';
+    return 'That file has no lines I can read below the header.';
+  }
+  el('csv-file').addEventListener('change', function () {
+    var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+    if (f.size > 12 * 1024 * 1024) { note('csv-note', 'That file is ' + Math.round(f.size / 1048576) + ' MB; a Money Rooms sheet is a few hundred lines. Is it the right file?', 'is-error'); return; }
+    var reader = new FileReader();
+    reader.onerror = function () { note('csv-note', 'The file could not be read from disk. Try choosing it again.', 'is-error'); };
+    reader.onload = function () {
+      var bytes = new Uint8Array(reader.result || new ArrayBuffer(0));
+      /* A workbook is a zip; anything else is read as text. Some other zip,
+         or a PDF, is neither. */
+      if (SLAF.Zipfile.isZip(bytes) && !/\.xlsx?$/i.test(f.name)) { note('csv-note', 'That is a zip, not a spreadsheet. Unzip it and choose the .xlsx or .csv inside.', 'is-error'); return; }
+      if (!SLAF.Zipfile.isZip(bytes) && SLAF.Csv.looksBinary(SLAF.Zipfile.text(bytes.subarray(0, 4096)))) { note('csv-note', 'That file is not a spreadsheet. In Excel or Numbers, use File, Save As, and choose Excel (.xlsx) or CSV.', 'is-error'); return; }
+      csvClear();
+      SLAF.CsvExport.fromFile(bytes).then(function (text) {
+        return csvPlan(text).then(function (p) {
+          if (p.problem) { note('csv-note', csvProblemNote(p), 'is-error'); return; }
+          CSV.plan = p; CSV.text = text;
+          var said = [];
+          if (p.problems) said.push(plural(p.problems, 'line') + ' could not be placed; each says why');
+          if (p.conflicts) said.push(plural(p.conflicts, 'total') + ' the app works out from the accounts below it: change the account line instead, and the total follows');
+          note('csv-note', said.length ? said.join('. ') + '. Everything else is ready.' : '', p.conflicts ? 'is-warn' : '');
+          csvPreview();
+        });
+      }).catch(function (err) { note('csv-note', 'Could not read that file: ' + err.message, 'is-error'); });
+    };
+    reader.readAsArrayBuffer(f);
+  });
+  el('btn-csv-apply').addEventListener('click', function () {
+    if (!CSV.plan || CSV.busy) return;
+    CSV.busy = true; el('btn-csv-apply').disabled = true;
+    var wanted = SLAF.CsvExport.signature(CSV.plan);
+    /* Read the file again against the household as it is now: a number that
+       moved in another tab since the preview is shown, not written over. */
+    csvPlan(CSV.text).then(function (fresh) {
+      if (SLAF.CsvExport.signature(fresh) !== wanted) {
+        CSV.plan = fresh; CSV.busy = false; csvPreview();
+        note('csv-note', 'Something changed in the app since this preview. It has been read again: check it, then apply.', 'is-warn');
+        return;
+      }
+      var r = SLAF.CsvExport.apply(fresh, Spine);
+      return csvPlan(CSV.text).then(function (after) {
+        CSV.plan = after; CSV.busy = false; CSV.problemsOnly = false; csvPreview();
+        var kept = r.applied - r.notKept.length;
+        var msg = 'Applied ' + plural(kept, 'line') + (r.added ? ', ' + plural(r.added, 'new item') : '') + ', each through the room that owns it. Undo takes them all back at once.';
+        if (r.failed.length) msg += ' ' + plural(r.failed.length, 'line') + ' could not be written: ' + r.failed.slice(0, 3).map(function (x) { return x.line + ' (' + x.label + (x.item ? ', ' + x.item : '') + '): ' + x.why; }).join('; ') + (r.failed.length > 3 ? '; ...' : '');
+        if (r.notKept.length) msg += ' ' + plural(r.notKept.length, 'line') + ' was not kept: ' + r.notKept.slice(0, 3).map(function (x) { return x.label + (x.item ? ' (' + x.item + ')' : '') + ', ' + x.why; }).join('; ') + (r.notKept.length > 3 ? '; ...' : '') + '.';
+        var stray = after.entries.filter(function (e) { return e.status === 'change' || e.status === 'add'; }).length;
+        if (stray) msg += (stray === 1 ? ' 1 line still reads' : ' ' + stray + ' lines still read') + ' as a change: the file may have changed something (your working situation, say) that makes those rows apply differently. The preview below is read against your numbers as they are now.';
+        if (!r.failed.length && !r.notKept.length && !stray && r.applied) msg += ' Read back: every line landed.';
+        note('csv-note', msg, r.failed.length || r.notKept.length || stray ? 'is-warn' : 'is-good');
+      });
+    }).catch(function (err) { CSV.busy = false; el('btn-csv-apply').disabled = false; note('csv-note', 'Could not apply: ' + err.message, 'is-error'); });
+  });
+  el('btn-csv-cancel').addEventListener('click', function () { csvClear(); note('csv-note', ''); });
+
   el('btn-share').addEventListener('click', function () {
     Spine.shareFragment().then(function (frag) {
-      var link = location.origin + location.pathname.replace(/rooms\/[^/]*$/, '') + frag;
+      var link = Spine.siteRoot() + frag;
       var out = el('share-out');
       out.hidden = false; out.value = link;
       var copied = navigator.clipboard && navigator.clipboard.writeText
         ? navigator.clipboard.writeText(link).then(function () { return true; }, function () { return false; })
         : Promise.resolve(false);
-      copied.then(function (yes) { note('out-note', (yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it — ' + link.length + ' characters, nothing sent anywhere.', 'is-good'); });
+      copied.then(function (yes) {
+        var long = link.length > 1900 ? ' That is too long for most chat apps; an email or a note carries it, or use Send for the file.' : '';
+        note('out-note', (yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it: ' + link.length + ' characters, nothing sent anywhere.' + long, long ? '' : 'is-good');
+      });
     }).catch(function (err) { note('out-note', err.message, 'is-error'); });
   });
+  /* A QR code of the share link (D-201): a phone's camera opens it and
+     the front door offers to load. One code holds 2,953 bytes, which is
+     a small household; the button shows only when this one fits, and
+     otherwise one line says why not. Drawn here, no library. */
+  function offerQr() {
+    if (!(SLAF.QR && typeof SLAF.QR.svg === 'function')) return;
+    Spine.shareFragment().then(function (frag) {
+      var n = Spine.siteRoot().length + frag.length;
+      var fits = n <= SLAF.QR.MAX_BYTES;
+      el('btn-qr').hidden = !fits;
+      el('qr-why').hidden = fits;
+      if (!fits) el('qr-why').textContent = 'No QR code for this one: as a link it is ' + n + ' characters and one code holds ' + SLAF.QR.MAX_BYTES + '. Send carries it as a file.';
+    }).catch(function () { el('btn-qr').hidden = true; });
+  }
+  offerQr();
+  Spine.onChange(offerQr);
+  el('btn-qr').addEventListener('click', function () {
+    Spine.shareFragment().then(function (frag) {
+      var link = Spine.siteRoot() + frag;
+      var out = el('qr-out'), noteEl = el('qr-note');
+      if (!(SLAF.QR && typeof SLAF.QR.svg === 'function')) { note('out-note', 'Reload the page to draw the code.', 'is-error'); return; }
+      try {
+        out.innerHTML = SLAF.QR.svg(link, { label: 'A QR code of your share link' });
+        out.hidden = false; noteEl.hidden = false;
+        noteEl.textContent = 'Point the other device\u2019s camera at it. It opens this site with your numbers, and the front door asks before loading them. ' + link.length + ' characters in the code; nothing sent anywhere.';
+      } catch (err) {
+        out.hidden = true; noteEl.hidden = false;
+        noteEl.textContent = 'Too much for one QR code: this link is ' + link.length + ' characters and a code holds about 2,900. Use Send for the file instead.';
+      }
+    }).catch(function (err) { note('out-note', err.message, 'is-error'); });
+  });
+  /* A pasted link reads like a chosen file, then the same two buttons. */
+  el('btn-link').addEventListener('click', function () {
+    var code = Spine.codeFromFragment(el('link-in').value.trim());
+    if (!code) { note('file-note', 'That is not a share link from this app: it should carry #h= followed by the code.', 'is-error'); return; }
+    Spine.fromShareCode(code).then(function (obj) {
+      var text = JSON.stringify(obj);
+      var check = Spine.inspectImport(text);
+      if (!check.ok) { note('file-note', check.reason, 'is-error'); return; }
+      pendingFile = { name: 'the link', text: text, check: check };
+      el('file-say').hidden = false;
+      el('file-say').innerHTML = describeFile(check) + '<span class="slaf-hint">From the link. Which way?</span>';
+      el('file-actions').hidden = false;
+      note('file-note', '');
+    }).catch(function (err) { note('file-note', err.message, 'is-error'); });
+  });
+  el('link-in').addEventListener('keydown', function (evt) { if (evt.key === 'Enter') { evt.preventDefault(); el('btn-link').click(); } });
 
   /* ---- A file: replace, or add ------------------------------------------ */
   function describeFile(check) {
@@ -317,7 +649,7 @@
     var where = [];
     if (p.debts.length) where.push(p.debts.length + (p.debts.length === 1 ? ' debt' : ' debts') + ' → <a href="' + Ownership.linkTo('debt-payoff', 'debts') + '">Debt Payoff</a>');
     if (p.assets.length) where.push(p.assets.length + (p.assets.length === 1 ? ' account' : ' accounts') + ' → <a href="' + Ownership.linkTo('statement') + '">The Statement</a>');
-    if (p.expenses.length) where.push(p.expenses.length + ' expense line' + (p.expenses.length === 1 ? '' : 's') + ' → <a href="' + Ownership.linkTo('cash-flow', 'spending') + '">Cash Flow</a>');
+    if (p.expenses.length) where.push(p.expenses.length + ' expense line' + (p.expenses.length === 1 ? '' : 's') + ' → <a href="' + Ownership.linkTo('expenses', 'spending') + '">Cash Flow</a>');
     if (p.income.length) where.push('pay → <a href="' + Ownership.linkTo('start', 'q-income') + '">Start Here</a>');
     el('paste-note').hidden = false;
     el('paste-note').className = 'data-note is-good';

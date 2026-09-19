@@ -263,9 +263,14 @@
     });
     h.expenses = h.expenses || {}; h.expenses.entries = h.expenses.entries || [];
     added.expenses += addMissing(h.expenses.entries, inc.expenses && inc.expenses.entries);
-    var pairMine = h.expenses.monthlyEssential || (h.expenses.monthlyEssential = {});
-    var pairIn = (inc.expenses && inc.expenses.monthlyEssential) || {};
-    ['estimatedValueCents', 'trackedValueCents'].forEach(function (k) { if (!Money.isEntered(pairMine[k]) && Money.isEntered(pairIn[k])) { pairMine[k] = pairIn[k]; added.scalars++; } });
+    /* The four buckets (D-172): a blank here takes the file's figure. A
+       file from before the buckets carries the legacy pair; the schema's
+       own migration turns that into "everything else" on read. */
+    h.expenses = Schema.createExpenses(h.expenses);
+    var fatIn = Schema.createExpenses(inc.expenses);
+    Schema.FAT_NEEDS.forEach(function (k) { if (!Money.isEntered(h.expenses.needs[k].monthlyCents) && Money.isEntered(fatIn.needs[k].monthlyCents)) { h.expenses.needs[k].monthlyCents = fatIn.needs[k].monthlyCents; added.scalars++; } });
+    if (!Money.isEntered(h.expenses.wants.totalCents) && Money.isEntered(fatIn.wants.totalCents)) { h.expenses.wants.totalCents = fatIn.wants.totalCents; added.scalars++; }
+    if (!h.expenses.wants.therapy && fatIn.wants.therapy) { h.expenses.wants.therapy = { monthlyCents: fatIn.wants.therapy.monthlyCents }; added.scalars++; }
     SCALARS.forEach(function (k) { if ((h[k] === null || h[k] === undefined) && inc[k] !== null && inc[k] !== undefined) { h[k] = inc[k]; added.scalars++; } });
     /* A nested branch (retirement, insurance, …): a blank here takes a
        real value from the file. A default false or an empty list is not a

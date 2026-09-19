@@ -138,8 +138,10 @@
       "weeks": 26
     },
     "NY": {
-      "maxWeeklyDollars": 504,
-      "weeks": 26
+      "maxWeeklyDollars": 869,
+      "weeks": 26,
+      "asOf": "2025-10-01",
+      "note": "New York raised its maximum weekly benefit to $869 for claims from October 2025, with further increases indexed to the state average weekly wage."
     },
     "NC": {
       "maxWeeklyDollars": 350,
@@ -213,5 +215,10 @@
       "maxWeeklyDollars": 595,
       "weeks": 26
     }
+  },
+  "estimate": {
+    "method": "high_quarter_over_26",
+    "note": "The weekly benefit most states pay is the highest-earning calendar quarter of the base period divided by 26 (New York's formula for a high quarter above $3,575), capped at the state maximum. With only an annual pay figure, the high quarter is taken as pay \u00f7 4. Read by shared/suggest.js (rule unemploymentWeekly). D-205.",
+    "highQuarterDivisor": 26
   }
 }

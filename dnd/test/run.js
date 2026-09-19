@@ -1873,7 +1873,7 @@ section('Dungeons & Dividends — the campaign (DD-024)');
     /dndScenarios/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
 })();
 
-section('Dungeons & Dividends — a sheet that looks like one, and a link that previews (DD-029)');
+section('Dungeons & Dividends — a sheet that looks like one, and a link that previews (DD-030)');
 
 (function () {
   const card = fs.readFileSync(path.join(ROOT, 'card.html'), 'utf8');

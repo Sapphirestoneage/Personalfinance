@@ -257,7 +257,7 @@
 
   function filename() {
     return 'dungeons-and-dividends-character-'
-      + new Date().toISOString().slice(0, 10) + '.json';
+      + Schema.localDay() + '.json';
   }
 
   /**

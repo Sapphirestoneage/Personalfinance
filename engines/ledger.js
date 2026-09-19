@@ -128,7 +128,8 @@
    *   value              netCents: gross − costs − tax
    *   grossCents, costsCents (deductible), allCostsCents, taxableCents,
    *   taxCents, takeHomeCents (gross − tax), effectiveRate (tax ÷ gross),
-   *   withheldCents (tax taken before the money arrived: w2 only),
+   *   withheldCents (tax taken before the money arrived: w2, or typed
+   *                  off the stub on w2 and unemployment — D-194),
    *   owedCents (tax still to pay: se, unemployment),
    *   cashReceivedCents (what actually landed: gross − withheld),
    *   method, pieces { seTaxCents, incomeTaxCents, rate, basis }
@@ -147,14 +148,22 @@
     var costsCents = Schema.costsAllowed(entry.kind) ? c.deductibleCents : 0;
     var allCosts = Schema.costsAllowed(entry.kind) ? c.allCents : 0;
     var method = entry.taxable === false ? 'none' : entry.taxMethod;
+    /* Typed withholding (D-194): what the stub says came off. For W-2 pay
+       it IS the tax — the blended rate was only ever standing in for the
+       stub. For unemployment it is what was held back at the person's
+       request; the tax stays the estimate and the rest is owed. */
+    var typed = Money.isEntered(entry.withheldCents) && (method === 'w2' || method === 'unemployment') ? entry.withheldCents : null;
     var done = function (tax, taxable, pieces) {
       var t = Math.max(0, Math.round(tax));
-      var withheld = method === 'w2' ? t : 0;
+      if (typed !== null && method === 'w2') t = typed;
+      var withheld = method === 'w2' ? t : (typed !== null ? typed : 0);
+      var p = pieces || {};
+      if (typed !== null) p.typedWithholding = true;
       return Money.ok(gross - allCosts - t, {
         grossCents: gross, costsCents: costsCents, allCostsCents: allCosts, taxableCents: taxable,
         taxCents: t, takeHomeCents: gross - t, effectiveRate: gross > 0 ? t / gross : 0,
-        withheldCents: withheld, owedCents: t - withheld, cashReceivedCents: gross - withheld,
-        method: method, pieces: pieces || {}
+        withheldCents: withheld, owedCents: Math.max(0, t - withheld), cashReceivedCents: gross - withheld,
+        method: method, pieces: p
       });
     };
     if (method === 'none') return done(0, 0, { why: entry.kind === 'gift' ? 'A gift is not income to the one who receives it.' : 'Marked not taxable.' });
@@ -228,6 +237,13 @@
       if (ym(entry.receivedOn) === month) out.push(stamp({ date: entry.receivedOn, cents: entry.amountCents }));
       return out;
     }
+    /* A recurring entry that has ended (D-194) lands nothing after its
+       last date: whole months after it are empty, and the month it ends
+       in keeps only the landings up to that day. */
+    var ends = entry.endsOn && entry.frequency !== 'once' ? new Date(entry.endsOn + 'T00:00:00') : null;
+    if (ends && isNaN(ends.getTime())) ends = null;
+    if (ends && ends < first) return out;
+    var keep = function (list) { return ends ? list.filter(function (o) { return new Date(o.date + 'T00:00:00') <= ends; }) : list; };
     if (!anchor) {
       /* Undated recurring: its average month, on the 1st, marked estimated. */
       var avg = monthlyGrossCents(entry);
@@ -241,11 +257,11 @@
     if (entry.frequency === 'monthly') {
       var d = Math.min(anchor.getDate(), dim);
       out.push(stamp({ date: iso(p.y, p.m, d), cents: entry.amountCents }));
-      return out;
+      return keep(out);
     }
     if (entry.frequency === 'annual') {
       if (anchor.getMonth() === p.m) out.push(stamp({ date: iso(p.y, p.m, Math.min(anchor.getDate(), dim)), cents: entry.amountCents }));
-      return out;
+      return keep(out);
     }
     var step = entry.frequency === 'weekly' ? 7 : 14;
     var a0 = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
@@ -257,20 +273,21 @@
       if (day < first) continue;
       out.push(stamp({ date: iso(day.getFullYear(), day.getMonth(), day.getDate()), cents: entry.amountCents }));
     }
-    return out;
+    return keep(out);
   }
 
   /**
    * month(household, tables, 'YYYY-MM') — every active entry's landings in
-   * the month, each netted: { grossCents, netCents, taxCents, costsCents,
-   * rows: [{ entry, occurrences, grossCents, netCents, taxCents }] }.
+   * the month, each netted: { grossCents, netCents, taxCents, withheldCents,
+   * owedCents, costsCents, rows: [{ entry, occurrences, grossCents,
+   * netCents, taxCents, net }] }.
    * Archived entries never count; hidden ones always do. An entry whose
    * date is only potential (D-130) is never counted: it is listed apart
    * in `potentialRows` with `potentialCents`, so a calendar can draw it.
    */
   function month(household, tables, monthId) {
     var m = monthId || thisMonth();
-    var rows = [], gross = 0, net = 0, tax = 0, costsTotal = 0, takeHome = 0, incomplete = [], potentialRows = [], potential = 0;
+    var rows = [], gross = 0, net = 0, tax = 0, costsTotal = 0, takeHome = 0, incomplete = [], potentialRows = [], potential = 0, withheld = 0, owed = 0;
     activeEntries(household).forEach(function (e) {
       var occ = occurrences(e, m);
       if (!occ.length) return;
@@ -281,18 +298,29 @@
         return;
       }
       var one = netOf(e, household, tables);
-      var count = occ.length;
       var g = occ.reduce(function (t, o) { return t + o.cents; }, 0);
       if (!Money.isOk(one)) { incomplete.push({ id: e.id, label: e.label, reason: one.reason }); rows.push({ entry: e, occurrences: occ, grossCents: g, netCents: null, taxCents: null, costsCents: null, reason: one.reason }); gross += g; return; }
-      /* Costs are per entry, not per landing: they come off once. */
-      var n = one.takeHomeCents * count - one.allCostsCents;
-      var t = one.taxCents * count;
-      rows.push({ entry: e, occurrences: occ, grossCents: g, netCents: n, taxCents: t, takeHomeCents: one.takeHomeCents * count, costsCents: one.allCostsCents, net: one });
-      gross += g; net += n; tax += t; costsTotal += one.allCostsCents; takeHome += one.takeHomeCents * count;
+      /* The tax scales with what landed: netOf is one landing of
+         amountCents, so the month's share is g ÷ amountCents — the count
+         of landings when they are dated, the average's share when the
+         entry is undated and lands as its monthly average (D-198; before
+         this the average was the gross and one landing was the tax, so a
+         weekly entry with no date netted a fraction of itself). Costs are
+         per entry, not per landing: they come off once. */
+      var scale = one.grossCents > 0 ? g / one.grossCents : 0;
+      var t = Math.round(one.taxCents * scale);
+      var th = g - t;
+      var n = th - one.allCostsCents;
+      var w = Math.round(one.withheldCents * scale), o = Math.round(one.owedCents * scale);
+      rows.push({ entry: e, occurrences: occ, grossCents: g, netCents: n, taxCents: t, takeHomeCents: th, withheldCents: w, owedCents: o, costsCents: one.allCostsCents, net: one });
+      gross += g; net += n; tax += t; costsTotal += one.allCostsCents; takeHome += th;
+      withheld += w; owed += o;
     });
     /* takeHomeCents is gross less tax — what the budget's Income bucket
        counts; the costs of earning it are the expense side's business. */
-    return Money.ok(net, { month: m, label: Schema.monthLabel(m), grossCents: gross, netCents: net, takeHomeCents: takeHome, taxCents: tax, costsCents: costsTotal, rows: rows, incomplete: incomplete, count: rows.length,
+    /* The tax split the way it is felt (D-195): taken off before it
+       arrived, and owed at tax time. They sum to taxCents. */
+    return Money.ok(net, { month: m, label: Schema.monthLabel(m), grossCents: gross, netCents: net, takeHomeCents: takeHome, taxCents: tax, withheldCents: withheld, owedCents: owed, costsCents: costsTotal, rows: rows, incomplete: incomplete, count: rows.length,
       potentialRows: potentialRows, potentialCents: potential });
   }
 

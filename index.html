@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="shared/errlog.js"></script>
 <title>SPARKS · Money rooms</title>
 <meta name="description" content="Every threshold ratio as one shape, plus altitude, fuel, engine load and thrust."/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
@@ -42,6 +45,13 @@
   Nothing else on the screen: the radar, the ring and the climb, the
   weather, the flight plan, the goals and the data controls are folded
   under "The full panel" and "Your data".
+
+  UP NEXT (D-234). One strip above the blocks, on the landing and on the
+  panel alike: how many readings are open, which one is the fewest
+  answers away, and the exact fields that open it (shared/upnext.js).
+  Block 4 carries the FIRE tiers as rungs of one ladder (Fire.tiers):
+  the rung reached, the next, and the gap. A strip, not a block; the
+  blocks stay four.
   shared/instruments.js is the list a snapshot freezes, so "since last
   time" always covers exactly what is on screen.
 
@@ -64,6 +74,25 @@
   .walk-strip > * { min-width: 0; }
   .walk-say { flex: 1 1 220px; margin: 0; font-size: var(--text-sm);
     line-height: var(--leading-loose); }
+  /* Up next (D-234): the same strip shape. The count, the one reading
+     that is fewest answers away with its fields as links, and the two
+     after it, smaller. `is-all-open` when nothing is locked. */
+  .up-next { display: block; }
+  .up-next .un-count { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin: 0; }
+  .up-next .un-meter { height: 6px; border-radius: var(--radius-pill); background: rgba(30,58,138,.35); overflow: hidden; margin: var(--space-2) 0; }
+  .up-next .un-meter > span { display: block; height: 100%; background: var(--color-accent); }
+  .up-next .un-say { margin: var(--space-2) 0 0; font-size: var(--text-base); line-height: var(--leading-loose); }
+  .up-next .un-say strong { color: var(--color-text); }
+  .up-next .un-say a { color: var(--color-accent-hover); }
+  .up-next .un-more { margin: var(--space-2) 0 0; padding: 0; list-style: none; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .up-next .un-more li { display: inline; }
+  .up-next .un-more li + li::before { content: ' · '; }
+  .up-next .un-more a { color: var(--color-accent-hover); }
+  .up-next .un-open { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .up-next .un-open a { color: inherit; }
+  .up-next .is-short { color: var(--color-critical); }
+  .up-next .un-journey { display: block; }
+  .up-next .un-journey b { color: var(--color-text); font-variant-numeric: tabular-nums; }
   .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
   .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
   .room-back:hover { text-decoration: underline; }
@@ -118,7 +147,16 @@
   .inst.is-lead { border-color: var(--color-border-active); background: var(--color-surface-active); }
   .inst.is-lead .big { font-size: var(--text-2xl, 2rem); }
 
-  /* The first screen: six instruments in a fixed 3×2 grid, 2×3 on a phone. */
+  /* The first screen: five tiles, one a letter (D-171); the six instruments
+     keep their 3×2 grid inside the panel. */
+  .instruments.daite { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  @media (max-width: 720px) { .instruments.daite { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 420px) { .instruments.daite { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .daite .letter { font-family: var(--font-display); font-size: var(--text-xs); font-weight: 700; color: var(--color-accent-hover); letter-spacing: .1em; }
+  .daite .status { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; margin-top: var(--space-1); color: var(--color-text-faint); }
+  .daite .status.is-entered { color: var(--color-positive); }
+  .daite .status.is-guess { color: var(--color-caution); }
+  .daite .status.is-missing { color: var(--color-critical-text); }
   .instruments { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); align-items: stretch; }
   @media (max-width: 520px) { .instruments { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .inst { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; min-width: 0; background: var(--color-surface); }
@@ -235,6 +273,11 @@
   .steps i.done { background: var(--sapphire-300); border-color: var(--sapphire-300); color: var(--color-accent-contrast); font-weight: 600; }
   .steps i.here { border-color: var(--color-accent-hover); color: var(--color-accent-hover); }
   .steps.levels { margin-top: var(--space-3); }
+  /* The FIRE tiers (D-234): the same chips, wide enough for a word. */
+  .steps.tiers i { width: auto; padding: 0 var(--space-2); }
+  .date .tiers-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .date .tiers-say strong { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .date .tiers-say a { color: var(--color-accent-hover); }
 
   .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
@@ -251,7 +294,7 @@
   <p class="room-lede" id="page-lede">Where you are, the next thing money should do, the next thing to learn, and the date it all points to. Every number opens the room it came from.</p>
 </header>
 
-<main class="slaf-wrap">
+<main class="slaf-wrap" data-fold="own">
   <div class="notice" id="load-notice" hidden></div>
 
   <section class="slaf-card landing" id="landing" hidden>
@@ -259,10 +302,11 @@
     <h2>One set of numbers. Every tool reads it.</h2>
     <p>Answer a short set of questions once — what you earn, spend, hold and owe — and every room opens already filled in, from your runway to your FI year. Nothing leaves this browser.</p>
     <div class="cta">
-      <a class="slaf-btn slaf-btn--primary" id="btn-start" href="rooms/start.html">Start Here →</a>
-      <button type="button" class="slaf-btn" id="btn-example">See it with example numbers</button>
+      <a class="slaf-btn slaf-btn--primary" id="btn-start" href="rooms/ledger.html#round-1">Walk me through it →</a>
+      <a class="slaf-btn" id="btn-express" href="rooms/ledger.html#all-at-once">Give me the whole form</a>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-example">See it with example numbers</button>
     </div>
-    <p class="resume" id="resume" hidden></p>
+    <p class="resume"><a href="rooms/start.html" id="btn-long-form">The older one-pager is still here.</a></p>
     <p class="privacy">Educational tool, not financial advice. Your figures are stored only in this browser — there is no account and no server.
       Have a saved file or a share link? <a href="#your-data">Load it below.</a></p>
   </section>
@@ -290,16 +334,34 @@
        walk strip has inside every room and stays out of the count. -->
   <div class="dash walk-strip" id="walk-card" hidden></div>
 
+  <!-- UP NEXT (D-234). A strip, not a block, for the same reason as the
+       walk strip above. Rendered on the landing and on the panel alike:
+       what the app can already say, what is one answer away, and the
+       fields that open it. The one counter of progress on this page. -->
+  <div class="walk-strip up-next" id="up-next" hidden>
+    <p class="un-count" id="un-count"></p>
+    <div class="un-meter" aria-hidden="true"><span id="un-meter"></span></div>
+    <!-- The level and the gap (D-248): where you are, what the gap is at
+         this level, what makes it more exact, and what it was before. -->
+    <p class="un-say" id="un-level"></p>
+    <p class="un-more un-journey" id="un-journey"></p>
+    <p class="un-say" id="un-say"></p>
+    <ul class="un-more" id="un-more"></ul>
+    <p class="un-open" id="un-open"></p>
+  </div>
+
   <!-- ONE SCREEN, FOUR BLOCKS (D-096). Every number opens the room it came from. -->
   <div class="blocks">
   <section class="slaf-card dash block" id="where">
     <div class="block-head">
       <span class="slaf-eyebrow">Where you are</span>
-      <button type="button" class="info-toggle" id="btn-3d" aria-pressed="false" title="Every instrument three ways: dream, default, disaster">3D</button>
     </div>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Six readings, like a cockpit: how much you keep, what you own, how long you could last, what you owe, when work becomes optional, and which step is next. Tap any one to open the room it comes from.</p>
-    <div class="instruments" id="instruments"></div>
-    <p class="why" id="three-d-why" hidden></p>
+    <!-- Five tiles, one a letter (D-171): debt, assets, income, taxes,
+         expenses. One number and one status word each; every tile opens the
+         room that owns the number. The six cockpit instruments live in the
+         full panel below. -->
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Five numbers that every room reads: what you owe, own, earn, pay in tax and spend. Tap one to change it where it lives.</p>
+    <div class="instruments daite" id="daite"></div>
   </section>
 
   <section class="slaf-card dash block" id="next">
@@ -307,6 +369,7 @@
     <div class="next" id="next-action" hidden>
       <p class="say" id="next-say"></p>
       <a class="go" id="next-go" href="#"></a>
+      <p class="why" id="next-step" hidden></p>
     </div>
   </section>
 
@@ -329,6 +392,11 @@
       <span class="big" id="date-big">—</span>
       <p class="say" id="date-say"></p>
       <ul class="lensed" id="date-lensed"></ul>
+      <!-- The FIRE tiers (D-234): Coast, Lean, FIRE, Chubby, Fat as rungs
+           of one ladder, sorted by size; the rung reached, the next, the
+           gap. Fire.tiers is the one reading; the room draws the same. -->
+      <div class="steps tiers" id="fire-tiers" aria-label="The FIRE tiers"></div>
+      <p class="tiers-say" id="tiers-say"></p>
       <a class="go" id="date-go" href="#"></a>
     </div>
   </section>
@@ -339,6 +407,17 @@
   <details class="drawer dash" id="full-panel">
     <summary>The full panel <small>The radar, the ring and the climb, the weather, the flight plan, the goals.</small></summary>
     <div class="age-line" id="age-line"></div>
+  <section class="slaf-card dash" id="out-instruments">
+    <div class="block-head">
+      <span class="slaf-eyebrow">The six readings</span>
+      <button type="button" class="info-toggle" id="btn-3d" aria-pressed="false" title="Every instrument three ways: dream, default, disaster">3D</button>
+    </div>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Like a cockpit: how much you keep, what you own, how long you could last, what you owe, when work becomes optional, and which step is next. Tap any one to open the room it comes from.</p>
+    <div id="nw-basis" hidden></div>
+    <div class="instruments" id="instruments"></div>
+    <p class="why slaf-deferred" id="nw-deferred"></p>
+    <p class="why" id="three-d-why" hidden></p>
+  </section>
   <section class="slaf-card dash" id="out-radar">
     <span class="slaf-eyebrow">All of it at once</span>
     <h2 style="margin:var(--space-2) 0 0">Am I in the green everywhere?</h2>
@@ -362,7 +441,7 @@
       band, and nothing here adds them together. Adding them up is a different
       question with a different answer — it needs weights, the weights depend on
       your age, and every one of them is a judgement call. That lives in
-      <a href="rooms/health.html">The Score</a>, which shows its weighting rather than
+      <a href="rooms/financial-snapshot.html#the-score">The Score</a>, which shows its weighting rather than
       hiding it. Picking weights here to make a tidier shape would be answering
       that question by accident.
     </div>
@@ -392,10 +471,13 @@
 
   <section class="slaf-card dash" id="out-plan" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Flight plan</span>
-    <h2 style="margin:var(--space-2) 0 0">Where you are on the ladder</h2>
-    <div class="steps" id="foo-steps"></div>
-    <p class="why" id="foo-why"></p>
-    <div class="steps levels" id="wealth-levels" aria-label="The five levels of wealth"></div>
+    <h2 style="margin:var(--space-2) 0 0">Where you are on the road</h2>
+    <!-- The map (D-235): the ladder, the tiers, the back half and the
+         routes from here, drawn by shared/journeymap.js from
+         engines/journey.js. It replaced the bare ladder strip; the
+         five levels of wealth keep their own strip below. -->
+    <div id="journey-map" style="margin-top:var(--space-3)"></div>
+    <div class="steps levels" id="wealth-levels" aria-label="The five levels of wealth" style="margin-top:var(--space-5)"></div>
     <p class="why" id="levels-why"></p>
     <ul class="goals" id="goal-bars"></ul>
     <p class="why" id="goals-why"></p>
@@ -424,6 +506,7 @@
       <code>#</code>, which a browser never sends to any site.
     </p>
     <div class="data-actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-send" hidden>Send to another device…</button>
       <button type="button" class="slaf-btn" id="btn-export">Download a file</button>
       <button type="button" class="slaf-btn" id="btn-share">Copy a share link</button>
       <label class="slaf-btn slaf-btn--quiet" for="file-import" style="cursor:pointer">Load a file…</label>
@@ -444,18 +527,23 @@
 
 <script src="shared/money.js"></script>
 <script src="shared/schema.js"></script>
+<script src="shared/daite.js"></script>
 <script src="shared/registry.js"></script>
 <script src="shared/reference.js"></script>
 <script src="shared/spine-v2.js"></script>
 <script src="shared/staleness.js"></script>
 <script src="shared/ownership.js"></script>
 <script src="shared/guide.js"></script>
+<script src="shared/prefs.js"></script>
+<script src="shared/features.js"></script>
 <script src="shared/progress.js"></script>
 <script src="shared/roomexport.js"></script>
 <script src="shared/undo.js"></script>
 <script src="shared/demo-persona.js"></script>
 <script src="engines/projection.js"></script>
 <script src="engines/tier0.js"></script>
+<script src="engines/income.js"></script>
+<script src="engines/ledger.js"></script>
 <script src="engines/foo.js"></script>
 <script src="engines/cashflow.js"></script>
 <script src="engines/goals.js"></script>
@@ -472,6 +560,7 @@
 <script src="engines/quickmath.js"></script>
 <script src="engines/vpw.js"></script>
 <script src="engines/ss.js"></script>
+<script src="shared/expr.js"></script>
 <script src="engines/events.js"></script>
 <script src="engines/skills.js"></script>
 <script src="engines/runway.js"></script>
@@ -479,10 +568,16 @@
 <script src="shared/charts.js"></script>
 <script src="shared/explain.js"></script>
 <script src="shared/gate.js"></script>
+<script src="shared/upnext.js"></script>
+<script src="engines/journey.js"></script>
+<script src="engines/gap.js"></script>
+<script src="shared/journeymap.js"></script>
 <script src="engines/skilltree.js"></script>
 <script src="shared/lens.js"></script>
+<script src="shared/bands.js"></script>
 <script src="engines/advice.js"></script>
 <script src="shared/instruments.js"></script>
+<script src="shared/aftertax.js"></script>
 <script>
 (function () {
   'use strict';
@@ -494,9 +589,9 @@
 
   /* Every number opens the room it came from: the instrument → room map. */
   var OPENS = {
-    netWorth: ['statement', 'portfolios'], savingsRate: ['savings-rate', 'rate'], emergencyFundMonths: ['runway', 'the-plan'],
+    netWorth: ['statement', 'portfolios'], savingsRate: ['financial-snapshot', 'out-rate'], emergencyFundMonths: ['runway', 'the-plan'],
     debtToIncome: ['debt-payoff', 'debts'], fiEtaYear: ['fire', 'targets'], fooStep: ['foo-ladder', null],
-    ownersPay: ['self-employed', 'quarterly'], runwayDays: ['between-jobs', 'number'], loanTrajectory: ['student-loans', 'number'], withdrawalRate: ['decumulation', 'number']
+    ownersPay: ['self-employed', 'quarterly'], runwayDays: ['runway', 'bj-number'], loanTrajectory: ['student-loans', 'number'], withdrawalRate: ['decumulation', 'number']
   };
   function opens(id) {
     var o = OPENS[id] || ['start', null];
@@ -578,7 +673,7 @@
     el('radar-legend').innerHTML = pts.map(function (p, i) {
       var row = p.row;
       return '<li><span class="n">' + (i + 1) + '</span>'
-        + '<span><a class="rname" href="' + Ownership.linkTo('ratios', 'r-' + p.id) + '">' + esc(p.label) + '</a>' + Explain.button(p.id) + '</span>'
+        + '<span><a class="rname" href="' + Ownership.linkTo('financial-snapshot', 'r-' + p.id) + '">' + esc(p.label) + '</a>' + Explain.button(p.id) + '</span>'
         + '<span class="v is-' + p.zone + '">' + esc(showRatio(p)) + '</span>'
         + (row ? '<span class="xp">' + Explain.panel(row, h, 'dashboard', { band: bandWords(row) }) + '</span>' : '')
         + '</li>';
@@ -603,7 +698,7 @@
      exists), the change since the last snapshot, and one plain sub-line. */
 
   var SUB = {
-    netWorth: function (r) { return Money.formatCents(r.totalAssetsCents) + ' owned · ' + Money.formatCents(r.totalDebtCents) + ' owed'; },
+    netWorth: function (r) { return (r.afterTaxAssetsCents !== undefined ? Money.formatCents(r.afterTaxAssetsCents) + ' after tax of ' + Money.formatCents(r.totalAssetsCents) + ' owned' : Money.formatCents(r.totalAssetsCents) + ' owned') + ' · ' + Money.formatCents(r.totalDebtCents) + ' owed'; },
     savingsRate: function (r, c) {
       var inc = c.savingsRates.includingMatch;
       return Money.isOk(inc) ? 'incl. match ' + Money.formatRate(inc.value, { decimals: 1 }) + ' · yours ' + Money.formatRate(r.value, { decimals: 1 })
@@ -646,6 +741,14 @@
   function renderInstruments(h) {
     var c = Instruments.compute(h, TABLES);
     var deltas = Instruments.deltas(h, TABLES);
+    /* 15.3: the altitude tile shows net worth after deferred tax when the
+       switch is on and the control says so; the snapshot still freezes the
+       listed figure, so the delta compares like with like. D-181. */
+    var pk = SLAF.AfterTax.pick(h, TABLES);
+    if (pk.basis === 'afterTax' && pk.afterTax && Money.isOk(pk.afterTax)) {
+      c.shown.forEach(function (row) { if (row.id === 'netWorth' && row.ok) row.result = pk.afterTax; });
+    }
+    el('nw-deferred').textContent = pk.on ? pk.line : '';
     var snap = Spine.latestSnapshot();
     var since = snap ? ' since ' + shortDate(snap.timestamp) : '';
     var td = null;
@@ -705,6 +808,10 @@
      room that owns the fix. No flags: the step you are on. No placement:
      the first thing Start Here still needs. */
 
+  /* What the next-action block settled on this render, so the block under it
+     can avoid saying the same thing again. */
+  var LAST_ACTION = null;
+
   var ACTION = {
     ef_alongside_high_interest_debt: function (d) {
       return { say: '<strong>' + Money.formatCents(d.excessCashCents) + '</strong> of cash sits beyond a starter fund while <strong>'
@@ -723,7 +830,13 @@
     savings_rate_below_benchmark: function (d) {
       return { say: 'You are saving <strong>' + Money.formatRate(d.rate, { decimals: 1 }) + '</strong> of gross; the benchmark floor is '
           + Money.formatRate(d.floor, { decimals: 0 }) + '.',
-        room: 'cash-flow', anchor: 'spending', go: 'Find the gap in Cash Flow →' };
+        room: 'expenses', anchor: 'spending', go: 'Find the gap in Expenses →' };
+    },
+    housing_above_guideline: function (d) {
+      return { say: 'The roof takes <strong>' + Money.formatRate(d.share, { decimals: 0 }) + '</strong> of gross pay — '
+          + Money.formatCents(d.monthlyCents) + ' a month against a '
+          + Money.formatRate(d.guideline, { decimals: 0 }) + ' guideline. It is the largest line in most budgets and the slowest to change, so it is worth knowing before the smaller ones.',
+        room: 'housing', anchor: null, go: 'Weigh the place in Housing Decision →' };
     },
     high_utilisation_vs_debt_load: function (d) {
       return { say: '<strong>' + Money.formatRate(d.revolvingShare, { decimals: 0 }) + '</strong> of what you owe is revolving credit ('
@@ -756,7 +869,7 @@
         + (bareMonths !== null && bareMonths !== months ? ' (' + bareMonths + ' on cash alone)' : '') + '.';
     if (gap) say += ' A search typically runs <strong>' + gap.medianMonths + ' months</strong>, ' + gap.meanMonths + ' on average (' + gap.confidence + ').';
     if (!Money.isOk(ben)) say += ' ' + esc(ben.reason);
-    return { say: say, room: Registry.byId('between-jobs') ? 'between-jobs' : 'runway', anchor: Registry.byId('between-jobs') ? 'number' : 'the-plan', go: 'See the runway, month by month →',
+    return { say: say, room: 'runway', anchor: 'bj-number', go: 'See the runway, month by month →',
       critical: !sustainable && gap && months < gap.medianMonths };
   }
   /* Retired, the next thing is the draw against the convention. D-096. */
@@ -774,6 +887,22 @@
     return new Date(+m[1], +m[2] - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
 
+  /* Take-home against what a month costs. Negative is not a ratio problem
+     and not a ladder step: it is the month not closing. Returns the action
+     or null, so the caller reads as one question. */
+  function doesNotClose(h) {
+    var take = Schema.takeHomeAnnualCents(h, TABLES);
+    var spend = Schema.monthlyExpensesCents(h);
+    if (!Money.isOk(take) || !Money.isOk(spend)) return null;
+    var gap = Math.round(take.value / 12) - spend.value;
+    if (gap >= 0) return null;
+    return { say: 'What comes in is <strong>' + Money.formatCents(Math.abs(gap))
+        + ' short</strong> of what the month costs — ' + Money.formatCents(Math.round(take.value / 12))
+        + ' against ' + Money.formatCents(spend.value)
+        + '. No step of the ladder answers that, and nothing here will tell you to save harder. What it can do is put the bills in the order that does least damage.',
+      room: 'cant-pay', anchor: null, go: 'Work out what gets paid →', noStep: true };
+  }
+
   function renderNextAction(h, c) {
     var box = el('next-action');
     var foo = c.byId.fooStep.result;
@@ -785,6 +914,15 @@
     } else if (Gate.situationOf(h) === 'retired' && c.byId.withdrawalRate.ok) {
       action = retiredDraw(c.byId.withdrawalRate);
       box.className = 'next' + (action.critical ? ' is-critical' : '');
+    } else if (doesNotClose(h)) {
+      /* The floor. Before this branch the five flags were the only answers,
+         and every one of them is a category error for a household whose
+         month does not close — "raise your contribution to the cap" to
+         someone choosing which bill to skip. With no flag firing it said
+         "Nothing is out of bounds." rooms/cant-pay.html was written for
+         exactly this and was reachable from no screen a person starts on. */
+      action = doesNotClose(h);
+      box.className = 'next is-critical';
     } else if (flag && ACTION[flag.key]) {
       action = ACTION[flag.key](flag.detail || {});
       box.className = 'next' + (flag.severity === 'critical' ? ' is-critical' : '');
@@ -801,14 +939,48 @@
       box.className = 'next';
     }
     box.hidden = false;
+    LAST_ACTION = action;
     el('next-say').innerHTML = action.say;
     el('next-go').textContent = action.go;
     el('next-go').href = action.href || Ownership.linkTo(action.room, action.anchor);
+    /* Say which rung this is. A flag is a step being skipped, and without the
+       step named this block and What The Next Dollar Does described the same
+       household in two different places on the same ladder. */
+    var step = el('next-step');
+    if (step) {
+      var n = flag && flag.step !== null && flag.step !== undefined ? flag.step
+        : (Money.isOk(foo) ? foo.value : null);
+      if (n === null || n === undefined || action.href || action.noStep) { step.hidden = true; step.textContent = ''; }
+      else {
+        step.hidden = false;
+        step.textContent = 'Step ' + n + ' of the order of operations. ';
+        var link = document.createElement('a');
+        link.href = Ownership.linkTo('foo-ladder', null);
+        link.textContent = 'See the whole ladder →';
+        step.appendChild(link);
+      }
+    }
   }
 
   /* ---- Block 3: the next thing to learn, or unlearn --------------------------- */
-  function renderLearn(h) {
+  function renderLearn(h, action) {
+    /* The thing to LEARN should not be the thing to DO, said twice. Once the
+       next action is ordered by the ladder, the top flag and the top advice
+       item often point at the same place — the demo's dashboard showed
+       "raise your contribution to the cap" over "Always take the whole
+       match", one above the other. If the advice lands on exactly the room
+       and anchor the action already links to, take the next one instead;
+       with nothing else to say, the block falls back to the first. */
     var p = Advice.pick(h, TABLES);
+    if (Money.isOk(p) && action && action.room && Advice.list) {
+      var l = Advice.list(h, TABLES);
+      if (Money.isOk(l) && l.items.length > 1) {
+        var other = l.items.filter(function (it) {
+          return !(it.room === action.room && (it.anchor || null) === (action.anchor || null));
+        })[0];
+        if (other && other.id !== p.item.id) p = Money.ok(other.id, { item: other, count: l.items.length });
+      }
+    }
     var box = document.querySelector('#learn .learn');
     if (!Money.isOk(p)) {
       el('learn-cap').textContent = 'The next thing to learn';
@@ -848,16 +1020,16 @@
     var s = Gate.situationOf(h);
     if (s === 'betweenJobs') {
       var r = c.byId.runwayDays;
-      if (!r.ok) return { cap: 'The day the cash runs out', big: null, reason: r.result.reason, say: '', room: 'between-jobs', anchor: 'number', go: 'Open Between Jobs →' };
-      if (r.result.sustainable) return { cap: 'The day the cash runs out', big: 'Not soon', say: 'What comes in covers the month, so the cash is not being drawn down.', room: 'between-jobs', anchor: 'number', go: 'Open Between Jobs →' };
+      if (!r.ok) return { cap: 'The day the cash runs out', big: null, reason: r.result.reason, say: '', room: 'runway', anchor: 'bj-number', go: 'Open the Cushion →' };
+      if (r.result.sustainable) return { cap: 'The day the cash runs out', big: 'Not soon', say: 'What comes in covers the month, so the cash is not being drawn down.', room: 'runway', anchor: 'bj-number', go: 'Open the Cushion →' };
       var when = new Date(Date.now() + r.result.value * 86400000);
-      return { cap: 'The day the cash runs out', big: when.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), say: r.result.value.toLocaleString('en-US') + ' days at this spending, benefit and severance counted.', room: 'between-jobs', anchor: 'number', go: 'Open Between Jobs →' };
+      return { cap: 'The day the cash runs out', big: when.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), say: r.result.value.toLocaleString('en-US') + ' days at this spending, benefit and severance counted.', room: 'runway', anchor: 'bj-number', go: 'Open the Cushion →' };
     }
     if (s === 'retired') {
       var w = c.byId.withdrawalRate, inv = Schema.investmentsCents(h), age = Schema.primaryAge(h), a = Schema.resolveAssumptions(h);
-      if (!w.ok || !Money.isOk(inv)) return { cap: 'The age the money lasts to', big: null, reason: w.ok ? inv.reason : w.result.reason, say: '', room: 'decumulation', anchor: 'number', go: 'Open Decumulation →' };
+      if (!w.ok || !Money.isOk(inv)) return { cap: 'The age the money lasts to', big: null, reason: w.ok ? inv.reason : w.result.reason, say: '', room: 'decumulation', anchor: 'number', go: 'Open Drawing It Down →' };
       var y = SLAF.Projection.yearsUntilEmptyCents({ startCents: inv.value, annualDrawCents: w.result.annualDrawCents, annualRate: a.returnReal });
-      if (!Money.isOk(y)) return { cap: 'The age the money lasts to', big: null, reason: y.reason, say: '', room: 'decumulation', anchor: 'number', go: 'Open Decumulation →' };
+      if (!Money.isOk(y)) return { cap: 'The age the money lasts to', big: null, reason: y.reason, say: '', room: 'decumulation', anchor: 'number', go: 'Open Drawing It Down →' };
       if (y.never) return { cap: 'The age the money lasts to', big: 'Outlasts you', say: 'At a ' + Money.formatRate(a.returnReal, { decimals: 0 }) + ' real return the draw never empties the investments.', room: 'decumulation', anchor: 'chart', go: 'See it year by year →' };
       var at = Money.isEntered(age) ? Math.round(age + y.value) : null;
       return { cap: 'The age the money lasts to', big: at !== null ? String(at) : (Math.round(y.value) + ' years'), say: Math.round(y.value) + ' years of ' + Money.formatCents(w.result.annualDrawCents) + ' a year at a ' + Money.formatRate(a.returnReal, { decimals: 0 }) + ' real return' + (at !== null ? '' : ' (add your birth date for the age)') + '.', room: 'decumulation', anchor: 'chart', go: 'See it year by year →' };
@@ -866,8 +1038,25 @@
     if (!fi.exists) return { cap: 'The date it points to', big: null, reason: 'No savings rate in this situation, so no FI date.', say: '', room: 'start', anchor: null, go: 'Start Here →' };
     if (!fi.ok) return { cap: 'The FI date', big: null, reason: fi.result.reason, say: '', room: 'fire', anchor: 'targets', go: 'Open FIRE →' };
     var years = fi.result.years;
+    /* The date carries the range the app already computes, and says what the
+       pace assumes. FIRE Number shows this household as 29 / 22 / 18 years
+       from the one band table; the headline used to print the middle one on
+       its own, in the largest type on the page, as though a single return
+       were a fact. And the pace is the RESIDUAL — everything not spent, which
+       D-080 defines as how much COULD be saved, not how much was. Both belong
+       in the line under the date, not two rooms away. */
+    var span = '';
+    if (SLAF.Bands) {
+      var band = SLAF.Bands.threeWays(TABLES, function (rate) {
+        var y = Tier0.yearsToFire(h, TABLES, { expectedReturnRate: rate });
+        return Money.isOk(y) ? Math.round(y.value) : y;
+      });
+      if (band && typeof band.low === 'number' && typeof band.high === 'number' && band.low !== band.high) {
+        span = ' — ' + band.high + ' if returns run high, ' + band.low + ' if they run low';
+      }
+    }
     return { cap: 'The FI date', big: fi.result.alreadyThere ? 'Now' : String(fi.result.value),
-      say: fi.result.alreadyThere ? 'Your investments already cover your spending at the assumed withdrawal rate.' : (Math.round(years * 10) / 10) + ' years at this pace. Every dollar below moves it.',
+      say: fi.result.alreadyThere ? 'Your investments already cover your spending at the assumed withdrawal rate.' : (Math.round(years * 10) / 10) + ' years at this pace' + span + '. The pace assumes every dollar you do not spend goes in; every dollar below moves it.',
       room: 'fire', anchor: 'targets', go: 'Move the date in FIRE →' };
   }
   function renderDate(h, c) {
@@ -887,14 +1076,15 @@
     var rates = Tier0.savingsRate(h, TABLES);
     var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
     var rows = [];
-    if (Money.isOk(spend)) rows.push(['A month of spending', spend.value, 'cash-flow', 'spending']);
-    if (Money.isOk(basis) && basis.annualSavingsCents > 0 && Gate.exists(h, 'savingsRate')) rows.push(['A year of saving', basis.annualSavingsCents, 'savings-rate', 'rate']);
+    if (Money.isOk(spend)) rows.push(['A month of spending', spend.value, 'expenses', 'spending']);
+    if (Money.isOk(basis) && basis.annualSavingsCents > 0 && Gate.exists(h, 'savingsRate')) rows.push(['A year of saving', basis.annualSavingsCents, 'financial-snapshot', 'out-rate']);
     var one = Schema.oneOffEntry(h);
     if (one) rows.push([one.direction === 'out' ? 'The one-off going out' : 'The one-off coming in', one.cents, 'start', 'q-fine-tune']);
     el('date-lensed').innerHTML = rows.map(function (r) {
       var shown = mode === '$' ? Money.formatCents(r[1]) : Lens.format(r[1], mode, h, TABLES);
       return '<li><a href="' + Ownership.linkTo(r[2], r[3]) + '">' + esc(r[0]) + '</a><span>' + esc(shown) + '</span></li>';
     }).join('');
+    renderTiers(h);
   }
   document.addEventListener('click', function (evt) {
     var b = evt.target.closest('.slaf-lens-btn');
@@ -938,7 +1128,7 @@
       : 'Not frozen yet. Freeze once and the panel can say what moved.';
     el('age-line').innerHTML = '<span>' + left + '</span>'
       + '<span class="' + (justFroze ? 'froze' : '') + '" id="freeze-say">' + frozen + '</span>'
-      + '<span><a href="' + Ownership.linkTo('refresh') + '">Refresh the three that move →</a> '
+      + '<span><a href="' + Ownership.linkTo('ledger') + '#since-last-time">Refresh what moves →</a> '
       + '<button type="button" id="btn-freeze" title="Take a snapshot so the panel can say what changed">Freeze today\u2019s numbers</button></span>';
     el('btn-freeze').addEventListener('click', function () {
       Instruments.snapshot(Spine.getProfile(), TABLES);
@@ -1032,6 +1222,17 @@
   }
 
   function route(h) {
+    /* J2 (D-214): back after 21 days or more, with numbers to look at:
+       the Comeback is the first screen, once. */
+    var due = SLAF.Progress.comebackDue ? SLAF.Progress.comebackDue(window) : null;
+    if (due !== null && panelReady(h) && !/comeback=seen/.test(location.search)) {
+      /* Clear the mark here so a bounce back to this page does not send you
+         round again, and carry the fact of the return in the URL so the
+         since-last-time view knows to open warmly (D-214, D-230). */
+      try { SLAF.Prefs.set('comeback.due', null); } catch (e) { /* fine */ }
+      window.location.replace('rooms/ledger.html?comeback=1#since-last-time');
+      return false;
+    }
     var ready = panelReady(h);
     el('landing').hidden = ready;
     Array.prototype.forEach.call(document.querySelectorAll('.dash'), function (n) { n.hidden = !ready; });
@@ -1043,21 +1244,136 @@
       : 'Small, sharp money tools that share one set of numbers.';
     if (ready) return true;
 
-    /* Part-way through: say how far, and where the next answer is. */
-    var o = SLAF.Progress.overall(h);
-    var resume = el('resume');
-    if (o.fieldsFilled > 0 && o.missing.length) {
-      var next = o.missing[0];
-      resume.hidden = false;
-      resume.innerHTML = o.fieldsFilled + ' of ' + o.fieldsTotal + ' answers in. Pick up at '
-        + '<a href="' + next.href + '">' + esc(next.label) + '</a> in ' + esc(next.ownerTitle) + ' →';
+    /* Part-way through: the Up Next strip says what is open and what the
+       next answer opens (D-234); the first button carries on there. */
+    var plan = renderUpNext(h);
+    if (plan.open.length && plan.next && plan.next.missing.length) {
       el('btn-start').textContent = 'Continue →';
-      el('btn-start').href = next.href;
-    } else {
-      resume.hidden = true;
+      el('btn-start').href = plan.next.missing[0].href;
     }
     return false;
   }
+
+  /* ---- Up next (D-234) ------------------------------------------------------
+     One strip: N of M readings open, a meter, the reading fewest answers
+     away with its missing fields as links (each saying how many readings
+     it opens), the two after it, and what is already open, each a link
+     to its room. shared/upnext.js decides; this only draws. */
+  function fieldLink(m, plan) {
+    var opens = plan.byField[m.fieldId] ? plan.byField[m.fieldId].opens.length : 0;
+    return '<a href="' + esc(m.href) + '">' + esc(m.label.toLowerCase()) + '</a>'
+      + (opens > 1 ? ' <span class="dim">(opens ' + opens + ')</span>' : '');
+  }
+  function signedMoney(c) { return (c < 0 ? '\u2212' : '') + Money.formatCents(Math.abs(c)); }
+  /* The level line (D-248): "Level 2 of 4. Left each month: $140 (from
+     your logged paychecks). To make it exact: food, a roof, ..." */
+  function renderLevel(h) {
+    var g = SLAF.Gap.levels(h, TABLES, ROOM_ID);
+    var line;
+    if (!g.current) {
+      var l1 = g.levels[0];
+      line = 'Level 0 of ' + g.total + '. To see what is left each month, enter: ' + l1.missing.map(function (m) { return '<a href="' + esc(m.href) + '">' + esc(m.label.toLowerCase()) + '</a>'; }).join(', ') + '.';
+    } else {
+      var c = g.current;
+      line = '<strong>Level ' + c.n + ' of ' + g.total + '.</strong> Left each month: <strong class="' + (c.gapCents < 0 ? 'is-short' : '') + '">' + esc(signedMoney(c.gapCents)) + '</strong>'
+        + (c.gapCents < 0 ? ' short' : '') + ' <span class="dim">(' + esc(c.basis) + ')</span>.';
+      if (g.next) line += ' To make it more exact, enter: ' + g.next.missing.map(function (m) { return '<a href="' + esc(m.href) + '">' + esc(m.label.toLowerCase()) + '</a>'; }).join(', ') + ' <span class="dim">(level ' + g.next.n + ', ' + esc(g.next.say) + ')</span>.';
+      else line += ' Every level is in.';
+    }
+    el('un-level').innerHTML = line;
+    el('un-count').textContent = 'Level ' + g.reachedCount + ' of ' + g.total;
+    el('un-meter').style.width = Math.round(100 * g.reachedCount / g.total) + '%';
+    recordJourney(h, g);
+    renderJourney(h);
+    return g;
+  }
+  /* The journey (D-248): one entry the first time each level is reached,
+     and one per month closed, so the page can say what it thought and
+     what was. The dashboard is the only writer; the entry is a record of
+     a reading, never an input, and nothing recomputes it. */
+  function recordJourney(h, g) {
+    var journal = h.journal || [];
+    var add = [];
+    var now = new Date().toISOString();
+    g.levels.forEach(function (l) {
+      /* Only the levels actually reached in order: a split typed before a
+         paycheck is logged is level 3's input, not level 3. */
+      if (!l.reached || l.n > g.reachedCount) return;
+      if (journal.some(function (e) { return e.kind === 'gap' && e.level === l.n; })) return;
+      add.push(Schema.createJournalEntry({ at: now, kind: 'gap', level: l.n, cents: l.gapCents, basis: l.basis }));
+    });
+    var actual = g.levels[3];
+    if (actual.reached && actual.gap && actual.gap.months) {
+      actual.gap.months.forEach(function (ym) {
+        if (journal.some(function (e) { return e.kind === 'close' && e.month === ym; })) return;
+        add.push(Schema.createJournalEntry({ at: now, kind: 'close', level: 4, month: ym, cents: actual.gapCents, basis: 'closed months to ' + ym }));
+      });
+    }
+    if (add.length) Spine.updateProfile({ journal: journal.concat(add) });
+  }
+  function renderJourney(h) {
+    var j = (h.journal || []).filter(function (e) { return e.kind === 'gap' && Money.isEntered(e.cents); }).sort(function (a, b) { return a.level - b.level; });
+    var node = el('un-journey');
+    if (j.length < 2) { node.innerHTML = ''; return; }
+    var first = j[0], last = j[j.length - 1];
+    node.innerHTML = 'Level ' + first.level + ' thought <b>' + esc(signedMoney(first.cents)) + '</b>; level ' + last.level + ' says <b>' + esc(signedMoney(last.cents)) + '</b>'
+      + (last.cents !== first.cents ? ' (' + (last.cents > first.cents ? 'up' : 'down') + ' ' + esc(Money.formatCents(Math.abs(last.cents - first.cents))) + ' a month)' : ' (the same)')
+      + '. <a href="' + Ownership.linkTo('history', 'journey', ROOM_ID) + '">The whole journey →</a>';
+  }
+  function renderUpNext(h) {
+    var strip = el('up-next');
+    var plan = SLAF.UpNext.plan(h, TABLES, ROOM_ID);
+    strip.hidden = false;
+    strip.className = 'walk-strip up-next' + (plan.next ? '' : ' is-all-open');
+    renderLevel(h);
+    var next = plan.next;
+    if (!next) {
+      el('un-say').innerHTML = 'Every reading is open. The deeper rows refine them: <a href="' + Ownership.linkTo('ledger', 'doors-home', ROOM_ID) + '">open the Ledger →</a>';
+    } else if (next.missing.length) {
+      var n = next.missing.length;
+      el('un-say').innerHTML = 'Up next: <strong>' + esc(next.label) + '</strong>, ' + esc(next.say)
+        + '. <span class="dim">' + n + (n === 1 ? ' answer' : ' answers') + ' away:</span> '
+        + next.missing.map(function (m) { return fieldLink(m, plan); }).join(', ') + '.';
+    } else {
+      el('un-say').innerHTML = 'Up next: <strong>' + esc(next.label) + '</strong>. ' + esc(next.reason || '')
+        + ' <a href="' + esc(next.href) + '">Open ' + esc(next.roomTitle) + ' →</a>';
+    }
+    el('un-more').innerHTML = plan.locked.slice(1, 3).map(function (e) {
+      return '<li>Then ' + esc(e.label) + ', ' + e.cost + (e.cost === 1 ? ' answer' : ' answers') + ' away'
+        + (e.missing.length ? ': ' + e.missing.map(function (m) { return fieldLink(m, plan); }).join(', ') : '') + '</li>';
+    }).join('');
+    el('un-open').innerHTML = plan.open.length
+      ? 'Open: ' + plan.open.map(function (e) { return '<a href="' + esc(e.href) + '">' + esc(e.label) + ' ' + esc(e.display) + '</a>'; }).join(' · ')
+      : '';
+    return plan;
+  }
+
+  /* ---- The FIRE tiers (D-234) --------------------------------------------
+     Rungs of one ladder in the date block: reached, here, ahead. The
+     sentence names the rung reached, the next one, the gap and the years
+     at this pace, and opens the FIRE room's variants. */
+  function renderTiers(h) {
+    var strip = el('fire-tiers'), say = el('tiers-say');
+    var t = SLAF.Fire.tiers(h, TABLES);
+    var rungs = t.rungs || [];
+    if (!rungs.length) {
+      strip.innerHTML = '';
+      say.textContent = Gate.exists(h, 'savingsRate') ? t.reason : '';
+      return;
+    }
+    strip.innerHTML = rungs.map(function (r) {
+      var cls = r.reached === true ? 'done' : (t.next && t.next.id === r.id) ? 'here' : '';
+      return '<i class="' + cls + '" title="' + esc(r.label) + ': ' + esc(Money.formatCents(r.targetCents)) + '">' + esc(r.label.replace(/ FIRE$/, '')) + '</i>';
+    }).join('');
+    if (!Money.isOk(t)) { say.innerHTML = esc(t.reason) + tiersLink(); return; }
+    var head = t.current ? '<strong>' + esc(t.current.label) + '</strong> reached. ' : 'Below the first tier. ';
+    if (!t.next) { say.innerHTML = head + 'Every tier is behind you.' + tiersLink(); return; }
+    var yrs = t.next.yearsAway;
+    var pace = Money.isOk(yrs) ? (yrs.alreadyThere ? '' : ', about ' + Math.round(yrs.value) + (Math.round(yrs.value) === 1 ? ' year' : ' years') + ' at this pace') : '';
+    say.innerHTML = head + 'Next: <strong>' + esc(t.next.label) + '</strong> at ' + esc(Money.formatCents(t.next.targetCents))
+      + ', <strong>' + esc(Money.formatCents(t.next.gapCents)) + '</strong> to go' + pace + '.' + tiersLink();
+  }
+  function tiersLink() { return ' <a href="' + esc(Ownership.linkTo('fire', 'map', ROOM_ID)) + '">The map →</a>'; }
 
   /* ---- Your data: export, import, share. D-059. ------------------------------ */
 
@@ -1068,27 +1384,48 @@
     n.className = 'data-note' + (isError ? ' is-error' : '');
   }
 
-  el('btn-export').addEventListener('click', function () {
+  function noteExport() { try { SLAF.Prefs.set('backup.lastExportAt', new Date().toISOString()); } catch (e) { /* fine */ } }
+  function downloadFile() {
+    noteExport();
     var blob = new Blob([Spine.exportJSON()], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = Spine.exportFilename();
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  el('btn-export').addEventListener('click', function () {
+    downloadFile();
     note('Downloaded ' + Spine.exportFilename() + '. Keep it somewhere you would keep a bank statement.');
   });
 
+  if (typeof navigator.share === 'function') el('btn-send').hidden = false;
+  el('btn-send').addEventListener('click', function () {
+    Spine.sendToDevice().then(function (r) {
+      noteExport();
+      note(r.how === 'file' ? 'Sent as a file. On the other device, open Your Data and choose it under Load a file.' : 'Sent as a link. Open it on the other device and choose Load.');
+    }).catch(function (err) {
+      if (err && err.name === 'AbortError') return;
+      if (err && err.blocked) {
+        downloadFile();
+        note('This browser would not open the share sheet, so the file was downloaded instead: ' + Spine.exportFilename() + '. Find it in Downloads and mail or message it from there. On a phone, a page opened inside another app usually refuses the sheet; opening it in Chrome or Safari brings it back.');
+        return;
+      }
+      note(err.message, true);
+    });
+  });
   el('btn-share').addEventListener('click', function () {
     Spine.shareFragment().then(function (frag) {
-      var link = location.origin + location.pathname.replace(/[^/]*$/, '') + frag;
+      var link = Spine.siteRoot() + frag;
       var out = el('share-out');
       out.hidden = false; out.value = link;
       var copied = navigator.clipboard && navigator.clipboard.writeText
         ? navigator.clipboard.writeText(link).then(function () { return true; }, function () { return false; })
         : Promise.resolve(false);
       copied.then(function (yes) {
-        note((yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it — '
-          + (link.length) + ' characters, nothing sent anywhere.');
+        note((yes ? 'Copied. ' : '') + 'Everything after the # stays on the device that opens it: '
+          + (link.length) + ' characters, nothing sent anywhere.'
+          + (link.length > 1900 ? ' That is too long for most chat apps; an email or a note carries it, or use Send for the file.' : ''));
       });
     }).catch(function (err) { note(err.message, true); });
   });
@@ -1135,8 +1472,22 @@
     });
   })();
 
+  /* prefs.path = fi defaults to Express (D-208): the whole form leads. */
+  try {
+    if (SLAF.Prefs && SLAF.Prefs.get('door', null) === 'fi') {
+      el('btn-express').classList.add('slaf-btn--primary');
+      el('btn-start').classList.remove('slaf-btn--primary');
+    }
+  } catch (e) { /* fine */ }
   el('btn-example').addEventListener('click', function () {
-    if (!window.confirm('Fill every answer with the example household, Robin Sparks? This replaces anything you have entered.')) return;
+    /* Only warn about losing something when there is something to lose. A
+       first-time visitor has entered nothing, and telling them this "replaces
+       anything you have entered" is a scare dialog in front of the one path
+       that shows the whole app for no typing at all. */
+    var hasSomething = SLAF.Progress && SLAF.Progress.forRoom
+      ? (SLAF.Progress.forRoom('start', Spine.getProfile()) || { filled: [] }).filled.length > 0
+      : true;
+    if (hasSomething && !window.confirm('Fill every answer with the example household, Robin Sparks? This replaces anything you have entered.')) return;
     var d = SLAF.DemoPersona.build();
     Spine.updateProfile({
       people: d.people, filingStatus: d.filingStatus, state: d.state,
@@ -1156,23 +1507,49 @@
     if (!p.total) { card.hidden = true; return; }
     card.hidden = false;
     var next = G.nextStep(h, TABLES);
-    if (!G.hasStarted(h)) {
-      card.innerHTML = '<p class="walk-say">A lot of rooms. <strong>The walk-through</strong> is the short way round — '
-        + p.total + ' steps in five sets, only the ones for your situation. Nothing is locked behind it.</p>'
-        + '<a class="slaf-btn slaf-btn--primary" href="rooms/walk.html">Take the walk-through →</a>';
-      return;
-    }
-    if (p.open === 0) {
-      card.innerHTML = '<p class="walk-say">Walk-through: all ' + p.total + ' steps done'
-        + (p.skipped ? ' (' + p.skipped + ' set aside)' : '') + '. '
-        + 'Come back to <a href="rooms/refresh.html">Refresh</a> when the numbers move.</p>'
-        + '<a class="slaf-btn" href="rooms/walk.html">See the list →</a>';
-      return;
-    }
+    /* Not started, or finished: nothing (D-186). The pitch for the walk
+       was one more "next" on a page that already has one; the walk stays
+       one tap away in the menu, and this card only speaks mid-walk. */
+    if (!G.hasStarted(h) || p.open === 0) { card.hidden = true; return; }
     card.innerHTML = '<p class="walk-say">Walk-through: <strong>' + (p.done + p.skipped) + ' of ' + p.total
       + '</strong> behind you. Next is ' + esc(next.title) + '.</p>'
       + '<a class="slaf-btn slaf-btn--primary" href="' + next.href + '">Continue →</a>'
-      + '<a class="slaf-btn" href="rooms/walk.html">All ' + p.total + '</a>';
+      + '<a class="slaf-btn" href="rooms/ledger.html#route">All ' + p.total + '</a>';
+  }
+
+  /* ---- The five tiles (D-171) ----------------------------------------------
+     One number a letter, one status word, and the room that owns it. The
+     status is the ownership map's word for the figure: entered, a guess
+     (the intake's default, not yet confirmed), or missing. */
+  var DAITE_TILES = [
+    { id: 'debt',     field: 'totalDebt',         read: function (h) { return Schema.totalDebtCents(h); },       fmt: Money.formatCents, sub: 'owed' },
+    { id: 'assets',   field: 'investments',       read: function (h) { return Schema.totalAssetsCents(h); },     fmt: Money.formatCents, sub: 'owned', owner: ['statement', 'portfolios'] },
+    { id: 'income',   field: 'grossAnnualIncome', read: function (h) { return Schema.takeHomeAnnualCents(h, TABLES); }, fmt: Money.formatCents, sub: 'take-home a year' },
+    { id: 'taxes',    field: 'filingStatus',      read: function (h) { var t = Schema.estimatedAnnualTaxCents(h, TABLES); return Money.isOk(t) ? Money.ok(t.effectiveRate) : t; }, fmt: function (v) { return Money.formatRate(v, { decimals: 0 }); }, sub: 'of gross, estimated', owner: ['tax', 'number'] },
+    { id: 'expenses', field: 'monthlyExpenses',   read: function (h) { return Schema.monthlyExpensesCents(h); }, fmt: Money.formatCents, sub: 'a month' }
+  ];
+  function renderDaite(h) {
+    var host = el('daite');
+    if (!host) return;
+    host.innerHTML = DAITE_TILES.map(function (t) {
+      var fam = SLAF.Daite.FAMILIES.filter(function (f) { return f.id === t.id; })[0];
+      var d = Ownership.describe(t.field, h, ROOM_ID);
+      var r = t.read(h);
+      var ok = Money.isOk(r);
+      var word, cls;
+      if (t.id === 'debt' && ok && r.none) { word = 'none'; cls = 'is-entered'; }
+      else if (!ok) { word = 'missing'; cls = 'is-missing'; }
+      else if (d && d.confidence === 'guess') { word = 'a guess'; cls = 'is-guess'; }
+      else { word = 'entered'; cls = 'is-entered'; }
+      var href = t.owner ? Ownership.linkTo(t.owner[0], t.owner[1], ROOM_ID) : (d && d.href) || '#';
+      return '<div class="inst" id="daite-' + t.id + '"><a href="' + esc(href) + '" title="Open ' + esc(fam.label) + '">'
+        + '<span class="letter">' + fam.letter + '</span>'
+        + '<span class="cap">' + esc(fam.label) + '</span>'
+        + '<span class="big' + (ok ? '' : ' is-incomplete') + '">' + esc(ok ? t.fmt(r.value) : Money.EM_DASH) + '</span>'
+        + '<span class="status ' + cls + '">' + word + '</span>'
+        + '<span class="sub">' + esc(ok ? t.sub : (r.reason || '')) + '</span>'
+        + '</a></div>';
+    }).join('');
   }
 
   function renderNow() {
@@ -1181,10 +1558,12 @@
     if (!route(h)) return;
     var all = Ratios.all(h, TABLES, { snapshots: Spine.listSnapshots() });
 
-    /* the four blocks */
+    /* the strip above the blocks, then the four blocks */
+    renderUpNext(h);
+    renderDaite(h);
     var c = renderInstruments(h);
     renderNextAction(h, c);
-    renderLearn(h);
+    renderLearn(h, LAST_ACTION);
     renderDate(h, c);
     renderDisplayUnit(h);
     renderAgeLine(h);
@@ -1222,7 +1601,7 @@
       var tail = '';
       if (r.notYet && r.notYet.length) {
         tail = ' <span class="dim">' + r.notYet.length + ' more ' + (r.notYet.length === 1 ? 'has a healthy range but is' : 'have a healthy range but are')
-          + ' waiting on something you have not entered — <a href="rooms/ratios.html">see which →</a></span>';
+          + ' waiting on something you have not entered — <a href="rooms/financial-snapshot.html#every-ratio">see which →</a></span>';
       }
       el('radar-desc').innerHTML = 'Of the <strong>' + drawn + '</strong> that could be worked out from what you have entered, '
         + parts.join('; ') + '.' + tail;
@@ -1233,20 +1612,8 @@
 
     renderAltitude(h);
 
-    /* flight plan */
-    var foo = Foo.evaluate(h, TABLES);
-    var placed = foo.placement && Money.isEntered(foo.placement.step) ? foo.placement.step : null;
-    var cells = [];
-    for (var i = 0; i <= 9; i++) {
-      var cls = placed === null ? '' : i < placed ? 'done' : i === placed ? 'here' : '';
-      cells.push('<i class="' + cls + '">' + i + '</i>');
-    }
-    el('foo-steps').innerHTML = cells.join('');
-    el('foo-why').textContent = placed === null
-      ? (foo.placement && foo.placement.reason) || 'Not enough entered to place you on the ladder yet.'
-      : 'You are on step ' + placed + '. '
-        + (foo.flags.length ? foo.flags.length + ' flag' + (foo.flags.length === 1 ? '' : 's')
-            + ' worth reading in the Snapshot.' : 'No out-of-bounds flags.');
+    /* flight plan: the map (D-235), then the levels and the goals */
+    SLAF.JourneyMap.mount(el('journey-map'), SLAF.Journey.map(h, TABLES), { from: ROOM_ID });
 
     renderLevels(h);
     renderGoals(h);
@@ -1392,7 +1759,7 @@
     el('weather-list').innerHTML = rows.map(function (r) {
       var zone = r.row.verdict.zone;
       var cls = zone === 'good' ? ' is-good' : zone === 'out' ? ' is-out' : '';
-      return '<li><span class="nm"><a class="rname" href="' + Ownership.linkTo('ratios', 'r-' + r.row.id) + '">' + esc(r.row.label) + '</a>' + Explain.button(r.row.id) + '</span>'
+      return '<li><span class="nm"><a class="rname" href="' + Ownership.linkTo('financial-snapshot', 'r-' + r.row.id) + '">' + esc(r.row.label) + '</a>' + Explain.button(r.row.id) + '</span>'
         + '<span class="v' + cls + '">' + showRatio(r.row) + '</span>'
         + '<span class="meta">' + esc(r.blurb)
         + (r.row.ok ? '' : ' · ' + esc(r.row.result.reason)) + '</span>'
@@ -1435,6 +1802,7 @@
   Spine.registerRoom(ROOM_ID);
 
   SLAF.Progress.mount(ROOM_ID);
+  SLAF.AfterTax.mount(el('nw-basis'), { household: function () { return Spine.getProfile(); }, onChange: function () { renderNow(); } });   /* 15.3 (D-181) */
   Spine.onChange(renderNow);
 
   Reference.load().then(function (tables) {

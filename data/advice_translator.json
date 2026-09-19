@@ -16,7 +16,7 @@
       ],
       "headline": "“Never touch your emergency fund.”",
       "body": "This is what it is for. {cash} of cash covers {cashMonths} of your {spending} a month; drawing on it now is the fund working, not failing.",
-      "room": "between-jobs",
+      "room": "runway",
       "anchor": "number"
     },
     {
@@ -67,7 +67,7 @@
       ],
       "headline": "“Pay yourself first.”",
       "body": "Your savings rate is {savingsRate}; the floor most guidance uses is {floor}. For you the gap is {gapMonthly} a month, moved before the month starts rather than found at its end.",
-      "room": "savings-rate",
+      "room": "financial-snapshot",
       "anchor": "rate"
     },
     {
@@ -179,7 +179,7 @@
       "when": [],
       "headline": "“It is never too early, or too late.”",
       "body": "The first number to know is what a month costs you: {spending}. Every other number on this page is measured against it.",
-      "room": "cash-flow",
+      "room": "expenses",
       "anchor": "spending"
     }
   ]

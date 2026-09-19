@@ -1,0 +1,123 @@
+{
+  "id": "block_geo",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "type": "geo",
+  "label": "Move",
+  "source": "A move as the lines it adds: the state changes (so the state tax does), every needs line scales by the cost-of-living index of the destination against where you are, and the move itself leaves cash once (data/moving_cost.json, the regional band). The state index is a reading of MERIC's cost-of-living index by state, national = 100, rounded.",
+  "confidence": "unverified",
+  "confidenceNote": "A state index hides the city inside it; a move from one city to another in the same state can swing more than the state figure. A real rent quote beats the index every time.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room. 15.6 (D-181): the state figures come from data/states.json through the statesByCode view; the block keeps no copy.",
+  "questions": [
+    {
+      "id": "state",
+      "ask": "Destination state",
+      "kind": "state"
+    },
+    {
+      "id": "remote",
+      "ask": "Remote",
+      "kind": "yesno"
+    },
+    {
+      "id": "when",
+      "ask": "When",
+      "kind": "month"
+    }
+  ],
+  "lines": [
+    {
+      "id": "state",
+      "label": "The state changes",
+      "path": "taxes.state",
+      "kind": "oneoff",
+      "delta": null,
+      "source": "user",
+      "confidence": "user",
+      "note": "State income tax follows the new state.",
+      "extra": {
+        "state": "@state"
+      }
+    },
+    {
+      "id": "col",
+      "label": "Every needs line scales",
+      "path": "expenses.needs.*",
+      "kind": "monthly",
+      "delta": {
+        "-": [
+          {
+            "/": [
+              {
+                "coalesce": [
+                  {
+                    "table": "statesByCode",
+                    "path": [
+                      "@state",
+                      "costOfLivingIndex"
+                    ]
+                  },
+                  {
+                    "table": "statesByCode",
+                    "path": [
+                      "national",
+                      "costOfLivingIndex"
+                    ]
+                  }
+                ]
+              },
+              {
+                "coalesce": [
+                  {
+                    "table": "statesByCode",
+                    "path": [
+                      "$state",
+                      "costOfLivingIndex"
+                    ]
+                  },
+                  {
+                    "table": "statesByCode",
+                    "path": [
+                      "national",
+                      "costOfLivingIndex"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          1
+        ]
+      },
+      "source": "national",
+      "confidence": "unverified",
+      "note": "Destination index over your state's, less one: a share on each needs line.",
+      "stateSource": {
+        "table": "statesByCode",
+        "path": [
+          "@state",
+          "costOfLivingIndex"
+        ]
+      }
+    },
+    {
+      "id": "moving",
+      "label": "The move leaves cash",
+      "path": "assets.cashCents",
+      "kind": "oneoff",
+      "delta": {
+        "neg": {
+          "table": "movingCost",
+          "path": [
+            "bands",
+            "regional",
+            "cents"
+          ]
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "A regional move (moving_cost.json)."
+    }
+  ]
+}

@@ -67,22 +67,10 @@
   /* ------------------------------------------------------- Estimated taxes
      Flat effective-rate lookup, never inline math. SPEC.md §10.           */
 
+  /* One place: shared/schema.js (D-171). Kept on Tier0 so every caller
+     still finds it here. */
   function estimatedAnnualTaxCents(household, tables) {
-    var gross = Schema.grossAnnualIncomeCents(household);
-    if (!Money.isOk(gross)) return gross;
-
-    var rate = Reference.lookupEffectiveTaxRate(
-      tables && tables.effectiveTaxRates,
-      gross.value / 100,
-      household && household.filingStatus
-    );
-    if (!Money.isOk(rate)) return rate;
-
-    return Money.ok(Math.round(gross.value * rate.value), {
-      effectiveRate: rate.value,
-      referenceVersion: rate.referenceVersion,
-      precision: rate.precision
-    });
+    return Schema.estimatedAnnualTaxCents(household, tables);
   }
 
   /* ------------------------------------------------------ Take-home pay
@@ -94,20 +82,12 @@
      second lookup.                                                        */
 
   function takeHomeMonthlyCents(household, tables) {
-    var gross = Schema.grossAnnualIncomeCents(household);
-    if (!Money.isOk(gross)) return gross;
-    var tax = estimatedAnnualTaxCents(household, tables);
-    if (!Money.isOk(tax)) return tax;
-    return Money.ok(Math.round((gross.value - tax.value) / MONTHS_PER_YEAR), {
-      grossAnnualIncomeCents: gross.value,
-      estimatedTaxCents: tax.value,
-      effectiveRate: tax.effectiveRate,
-      referenceVersion: tax.referenceVersion
-    });
+    return Schema.takeHomeMonthlyCents(household, tables);
   }
 
   /* ------------------------------------------------------- 2. Savings rate
-     (gross − annual expenses − estimated taxes) / gross.
+     (take-home − annual expenses) / gross, take-home being gross less the
+     estimated tax from the one place it is computed (Schema, D-171).
 
      SPEC.md §12.1 (RESOLVED: build both). One numerator, two variants — the
      including-match figure is the same numerator plus employer match
@@ -128,24 +108,30 @@
     if (!Money.isOk(monthlyExpenses)) {
       return { excludingMatch: monthlyExpenses, includingMatch: monthlyExpenses };
     }
-    var tax = estimatedAnnualTaxCents(household, tables);
-    if (!Money.isOk(tax)) {
-      return { excludingMatch: tax, includingMatch: tax };
+    /* Take-home minus spending - never gross minus spending. The one
+       take-home figure is shared/schema.js's (D-171). */
+    var takeHome = Schema.takeHomeAnnualCents(household, tables);
+    if (!Money.isOk(takeHome)) {
+      return { excludingMatch: takeHome, includingMatch: takeHome };
     }
 
     var annualExpenses = monthlyExpenses.value * MONTHS_PER_YEAR;
-    var savedExcludingMatch = gross.value - annualExpenses - tax.value;
+    var savedExcludingMatch = takeHome.value - annualExpenses;
+    /* The rate's base is the gross the take-home came from (D-246): the
+       logged pay's own gross when the log drives it, Start Here's otherwise. */
+    var grossBase = takeHome.source === 'logged' && Money.isEntered(takeHome.grossAnnualIncomeCents) ? takeHome.grossAnnualIncomeCents : gross.value;
 
     var shared = {
-      grossAnnualIncomeCents: gross.value,
+      grossAnnualIncomeCents: grossBase,
+      takeHomeAnnualCents: takeHome.value,
       annualExpensesCents: annualExpenses,
-      estimatedTaxCents: tax.value,
-      effectiveRate: tax.effectiveRate,
-      referenceVersion: tax.referenceVersion,
+      estimatedTaxCents: takeHome.estimatedTaxCents,
+      effectiveRate: takeHome.effectiveRate,
+      referenceVersion: takeHome.referenceVersion,
       expenseSource: monthlyExpenses.source
     };
 
-    var excluding = Money.safeDivide(savedExcludingMatch, gross.value, {
+    var excluding = Money.safeDivide(savedExcludingMatch, grossBase, {
       denominatorName: 'grossAnnualIncome',
       zeroReason: 'A gross income of zero can’t produce a savings rate.'
     });
@@ -162,7 +148,7 @@
         ['employerMatch']);
     } else {
       var savedIncludingMatch = savedExcludingMatch + match.value;
-      including = Money.safeDivide(savedIncludingMatch, gross.value, {
+      including = Money.safeDivide(savedIncludingMatch, grossBase, {
         denominatorName: 'grossAnnualIncome',
         zeroReason: 'A gross income of zero can’t produce a savings rate.'
       });
@@ -299,7 +285,7 @@
    * when the contribution is zero or negative, and it is the same shape the
    * Debt Calculator's amortisation loop will need (SPEC.md §10).
    */
-  function yearsToFire(household, tables, localOverrides) {
+  function yearsToFire(household, tables, localOverrides, opts) {
     var target = fireNumber(household, localOverrides);
     var investments = Schema.investmentsCents(household);
     if (!Money.isOk(target) || !Money.isOk(investments)) {
@@ -325,7 +311,10 @@
       startCents: investments.value,
       targetCents: target.value,
       annualRate: assumptions.expectedReturnRate,
-      annualContributionCents: basis.annualSavingsCents
+      annualContributionCents: basis.annualSavingsCents,
+      /* Whole years by default; a caller that prices the move in days
+         (Money Wrapped, D-213) asks for the fraction within the year. */
+      fractional: !!(opts && opts.fractional)
     });
     if (!Money.isOk(projected)) return projected;
     return Money.ok(projected.value, {
@@ -386,9 +375,12 @@
     return Money.ok(actual.value, {
       targetMultiple: target.value,
       onTrack: actual.value >= target.value,
-      shortfallCents: actual.value >= target.value
-        ? 0
-        : Math.round((target.value - actual.value) * gross.value),
+      /* Signed, so "ahead" has a figure of its own: negative is ahead of the
+         milestone, positive is short of it. It used to collapse to 0 when on
+         track, and the Snapshot printed that zero under the label "Ahead by",
+         so everyone ahead of their age milestone was told they were ahead by
+         nothing. The room already takes the absolute value for display. */
+      shortfallCents: Math.round((target.value - actual.value) * gross.value),
       age: age,
       referenceVersion: target.referenceVersion
     });

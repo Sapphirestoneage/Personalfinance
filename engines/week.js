@@ -114,7 +114,7 @@
   function fiNumber(household, tables) {
     var p = priced(household, tables);
     if (!Money.isOk(p)) return p;
-    var shadow = Object.assign({}, household || {}, { expenses: { monthlyEssential: { estimatedValueCents: p.monthlyCents, trackedValueCents: null } } });
+    var shadow = Schema.withMonthlySpend(household, p.monthlyCents);
     var r = Tier0.fireNumber(shadow);
     if (!Money.isOk(r)) return r;
     return Money.ok(r.value, { monthlyCents: p.monthlyCents, annualExpensesCents: r.annualExpensesCents, swrRate: r.swrRate });

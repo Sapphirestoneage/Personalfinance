@@ -100,19 +100,17 @@
     return Money.isOk(a) ? Money.ok(a.value / WEEKS_PER_YEAR) : a;
   }
 
-  /** Assets flagged liquid — the ones HP is actually made of. */
+  /* 15.8 (SPARKS D-181): the money HP is made of is the cash and taxable
+     piles, read through the one runway function. A lump entered as
+     "investments + retirement" is one total, not split, so it sits in the
+     retirement pile and stays out of HP; a lump the Statement has split as
+     taxable counts. Never property. */
+  var HP_DRAW_ORDER = ['cash', 'taxable'];
   function liquidAssetsCents(household) {
     var cash = Schema.cashCents(household);
-    var assets = Schema.aggregatableAssets ? Schema.aggregatableAssets(household) : [];
-    var extra = 0, sawAny = Money.isOk(cash);
-    for (var i = 0; i < assets.length; i++) {
-      var a = assets[i];
-      if (a.liquid && a.category !== 'cash' && Money.isEntered(a.valueCents)) {
-        extra += a.valueCents; sawAny = true;
-      }
-    }
-    if (!sawAny) return Money.incomplete('Add your cash and savings to see this.', ['cashSavings']);
-    return Money.ok((Money.isOk(cash) ? cash.value : 0) + extra);
+    var d = Schema.tierDraws(household, HP_DRAW_ORDER, {});
+    if (!Money.isOk(cash) && !d.count) return Money.incomplete('Add your cash and savings to see this.', ['cashSavings']);
+    return Money.ok(d.grossCents, { steps: d.steps, drawOrder: d.drawOrder });
   }
 
   function assetsByCategory(household, categories) {
@@ -500,8 +498,12 @@
     if (weekly.value <= 0) {
       return Money.incomplete('Monthly expenses need to be above zero to measure runway.', ['monthlyExpenses']);
     }
-    return Money.ok(Math.floor(liquid.value / weekly.value), {
-      liquidCents: liquid.value, weeklyCents: weekly.value
+    /* The same weeks Schema.runwayMonths reports for these piles, before
+       tax: the campaign loads no tax table, and says so. */
+    var run = Schema.runwayMonths(household, HP_DRAW_ORDER, {});
+    if (!Money.isOk(run)) return run;
+    return Money.ok(Math.floor(run.netCents / weekly.value), {
+      liquidCents: run.netCents, weeklyCents: weekly.value, taxApplied: run.taxApplied, drawOrder: run.drawOrder
     });
   }
 

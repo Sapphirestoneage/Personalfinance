@@ -16,8 +16,10 @@
        reads: ['fieldId'],     owned fields shown as chips (read-only links)
        number(h, T)  → { value, label, sub, zone, result }   the headline
        chart(h, T)   → html | ''                             one Charts.* call
+       horizon: true           (optional) a projection room: paints the
+                               today's-money line and the toggle (15.2)
        inputs: [...]           2–5 controls, each
-                                { ctl, label, kind: money|number|pct|select|choice,
+                                { ctl, label, kind: money|number|pct|select|choice|text,
                                   placeholder, hint, options, read(h) → raw,
                                   write(raw), affix }
        more: [...]             the same, folded (optional)
@@ -27,6 +29,12 @@
        scope: string           the out-of-scope line (→ Get Help)
        guessAs: 'retired'      (optional) the situation to guess on an empty
                                spine, for a room that exists for one
+       part: true              (optional) this is ONE READING inside a room
+                               that registers itself, not the room. Added by
+                               the 93-to-30 merge (D-229): a merged room owns
+                               the registration, the sidebar and the hash,
+                               and a reading that claimed any of them would
+                               claim them twice. Everything else is the same.
      })
 
    LIVE-FORM: built once. Inputs are built from the spec on mount and only
@@ -68,14 +76,14 @@
         + (spec.options || []).map(function (o) { return '<button type="button" class="choice" data-value="' + esc(o[0]) + '">' + esc(o[1]) + '</button>'; }).join('') + '</div>'
         + (spec.hint ? '<span class="slaf-hint">' + esc(spec.hint) + '</span>' : '') + '</div>';
     }
-    box = '<input type="text" inputmode="decimal" data-ctl="' + esc(spec.ctl) + '" id="' + id + '" placeholder="' + esc(spec.placeholder || '') + '" autocomplete="off" aria-label="' + esc(spec.label) + '"/>';
+    box = '<input type="text"' + (spec.kind === 'text' ? '' : ' inputmode="decimal"') + ' data-ctl="' + esc(spec.ctl) + '" id="' + id + '" placeholder="' + esc(spec.placeholder || '') + '" autocomplete="off" aria-label="' + esc(spec.label) + '"/>';
     return '<label class="slaf-field">' + label + '<span class="slaf-input-shell">' + affix + box + suffix + '</span>'
       + (spec.hint ? '<span class="slaf-hint">' + esc(spec.hint) + '</span>' : '') + '</label>';
   }
 
   function display(spec, raw) {
     if (!Money.isEntered(raw)) return '';
-    if (spec.kind === 'money') return Money.formatCents(raw);
+    if (spec.kind === 'money') return Money.formatCents(raw, { exact: true });   /* a typed value is shown as typed, never rounded (15.10) */
     if (spec.kind === 'pct') return String(Math.round(raw * 1000) / 10);
     return String(raw);
   }
@@ -83,6 +91,7 @@
     var t = String(text).trim();
     if (t === '') return null;
     if (spec.kind === 'money') return Money.parseMoney(t);
+    if (spec.kind === 'text') return t;   /* 15.7: a name is words, not a number */
     var n = Number(t.replace(/[^0-9.\-]/g, ''));
     if (!Number.isFinite(n)) return null;
     return spec.kind === 'pct' ? n / 100 : n;
@@ -98,8 +107,17 @@
     /* ---- Build once ------------------------------------------------------- */
     var inputsHost = el('room-inputs');
     if (inputsHost) {
-      inputsHost.innerHTML = '<div class="room-grid">' + (spec.inputs || []).map(control).join('') + '</div>'
-        + (spec.more && spec.more.length ? '<details class="room-more"><summary>' + esc(spec.moreLabel || 'Fine-tune') + '</summary><div class="room-grid">' + spec.more.map(control).join('') + '</div></details>' : '');
+      /* Two boxes side by side start level because every label in the grid
+         reserves the same number of lines (D-249). Two is the default and
+         covers almost every label; a room whose longest label genuinely
+         needs three says `labelLines: 3` in its spec rather than letting
+         that one label shove its own box below its neighbour's.
+         test/alignment.js fails the build if any pair is still crooked. */
+      var gridOpen = spec.labelLines
+        ? '<div class="room-grid" style="--slaf-label-lines:' + (+spec.labelLines) + '">'
+        : '<div class="room-grid">';
+      inputsHost.innerHTML = gridOpen + (spec.inputs || []).map(control).join('') + '</div>'
+        + (spec.more && spec.more.length ? '<details class="room-more"><summary>' + esc(spec.moreLabel || 'Fine-tune') + '</summary>' + gridOpen + spec.more.map(control).join('') + '</div></details>' : '');
     }
     var byCtl = {};
     all.forEach(function (c) { byCtl[c.ctl] = c; });
@@ -139,6 +157,62 @@
         node.value = display(c, raw);
       });
     }
+    /* The dead spot is the door. Where the number should be, an incomplete room
+       prints the words "Add your debts to see this" - and the app knows exactly
+       which room owns that number, so the sentence should also take you there.
+       The link carries the way back (D-161), so the trip is a round one.
+       Only the first outstanding field is offered: a stack of links at the
+       point of failure is a menu, not a next step. D-163. */
+    function goHtml(h) {
+      var room = Registry.byId(ROOM_ID);
+      var needs = (room && room.needs) || [];
+      for (var i = 0; i < needs.length; i++) {
+        var d = Ownership.describe(needs[i], h, ROOM_ID);
+        if (!d || !d.applies || d.isSet || d.isOwnHere) continue;
+        return '<a class="slaf-go" href="' + esc(d.href) + '">'
+          + esc(d.label) + ' is in ' + esc(d.ownerTitle) + ' \u2192</a>';
+      }
+      return '';
+    }
+
+    /* 15.10: the room's inputs (the registry's `needs`, plus anything the
+       spec names in `reads`) decide the precision of every figure on the
+       screen. One line at the top names the rough inputs; the money
+       formatter rounds to match. D-181. */
+    /* 15.2: a projection room (spec.horizon) says once, at the top, that
+       every figure is today's money, and carries the future-dollars toggle.
+       Mounted once; the callback repaints the room. D-181. */
+    var horizonMounted = false;
+    function paintHorizon() {
+      if (!spec.horizon || horizonMounted || !root.SLAF.Horizon) return;
+      var anchor = el('room-number');
+      if (!anchor) return;
+      var host = document.createElement('p');
+      host.id = 'room-horizon';
+      host.className = 'slaf-horizon';
+      anchor.parentNode.insertBefore(host, anchor);
+      horizonMounted = true;
+      root.SLAF.Horizon.mount(host, { household: household, onChange: function () { lastChart = null; paint(); } });
+    }
+    function paintApproximate(h) {
+      var room = Registry.byId(ROOM_ID);
+      var ids = ((room && room.needs) || []).concat(spec.reads || []);
+      var p = Schema.precisionOf(h, ids);
+      Money.setDisplayRounding(p.roundToCents);
+      var host = el('room-approx');
+      if (!host) {
+        var anchor = el('room-number');
+        if (!anchor) return;
+        host = document.createElement('p');
+        host.id = 'room-approx';
+        host.className = 'slaf-approx';
+        anchor.parentNode.insertBefore(host, anchor);
+      }
+      if (!p.approximate) { host.hidden = true; host.textContent = ''; return; }
+      var names = p.fieldIds.map(function (id) { var d = Ownership.describe(id, h, ROOM_ID); return d ? '<a href="' + esc(d.href) + '">' + esc(d.label.toLowerCase()) + '</a>' : esc(id); });
+      host.hidden = false;
+      host.innerHTML = 'Approximate: ' + names.join(', ') + (names.length === 1 ? ' is ' : ' are ') + (p.confidence === 'unknown' ? 'not confirmed yet' : 'rough') + ', so figures here are rounded to the nearest ' + (p.roundToCents >= 100000 ? 'thousand' : 'hundred') + ' dollars.';
+    }
     function paintNumber(h) {
       var host = el('room-number');
       if (!host || !spec.number) return;
@@ -146,6 +220,7 @@
       var ok = n.value !== null && n.value !== undefined && n.value !== '';
       host.innerHTML = '<span class="cap">' + esc(n.label || '') + '</span>'
         + '<span class="big' + (ok ? (n.zone ? ' is-' + n.zone : '') : ' is-incomplete') + '">' + esc(ok ? n.value : (n.reason || Money.EM_DASH)) + '</span>'
+        + (ok ? '' : goHtml(h))
         + (n.sub ? '<span class="sub">' + n.sub + '</span>' : '');
     }
     function paintChart(h) {
@@ -216,6 +291,8 @@
       var real = Spine.getProfile();
       var h = household();
       paintInputs(h);
+      paintHorizon();
+      paintApproximate(h);
       paintNumber(h);
       paintChart(h);
       paintLens(h);
@@ -230,7 +307,7 @@
 
     /* One undo entry per box, named for it: "Paid hours a week → 40". */
     function labelled(c, raw, fn) {
-      var shown = raw === null || raw === undefined ? '—' : (c.kind === 'money' ? Money.formatCents(raw) : c.kind === 'pct' ? (Math.round(raw * 1000) / 10) + '%' : String(raw));
+      var shown = raw === null || raw === undefined ? '—' : (c.kind === 'money' ? Money.formatCents(raw, { exact: true }) : c.kind === 'pct' ? (Math.round(raw * 1000) / 10) + '%' : String(raw));
       Spine.batch(c.label + ' → ' + shown, fn);
     }
 
@@ -279,17 +356,22 @@
       var d = t.closest('details'); if (d) d.open = true;
       t.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    window.addEventListener('hashchange', jumpToHash);
+    if (!spec.part) window.addEventListener('hashchange', jumpToHash);
 
-    Spine.registerRoom(ROOM_ID);
-    if (S.Progress) S.Progress.mount(ROOM_ID);
+    /* A reading inside a merged room leaves registration, the sidebar and
+       the hash to the room it sits in (D-232). Two registerRoom calls on one
+       page mark the same room visited twice and mount a second sidebar. */
+    if (!spec.part) {
+      Spine.registerRoom(ROOM_ID);
+      if (S.Progress) S.Progress.mount(ROOM_ID);
+    }
     Spine.onChange(render);
 
     Reference.load(spec.tables || undefined).then(function (t) {
       TABLES = t;
       if (typeof spec.ready === 'function') spec.ready(t);
       paint();
-      jumpToHash();
+      if (!spec.part) jumpToHash();
     }).catch(function (err) {
       var notice = el('load-notice');
       if (!notice) return;

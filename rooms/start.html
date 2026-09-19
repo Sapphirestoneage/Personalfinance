@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>Start Here · SPARKS</title>
 <meta name="description" content="One page. Say what your situation is, fix the guesses that are wrong, and get a dashboard back."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -42,9 +45,32 @@
   second palette in shared/theme.css; nothing here names a colour.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-3); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  /* Folding by CSS rule rather than by moving nodes: placeCards() still owns
+     every child of #cards, nothing is detached, and no input is rebuilt - so
+     the LIVE-FORM contract holds. A hidden card cannot take focus either, so
+     nothing can steal the caret. D-166. */
+  #cards.is-folded > *:nth-child(n+3) { display: none; }
+  .showrest { display: block; width: 100%; margin-top: var(--space-3);
+    background: transparent; border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-md); color: var(--color-text-muted);
+    font-size: var(--text-sm); min-height: 44px; padding: var(--space-2) var(--space-3);
+    cursor: pointer; }
+  .showrest:hover { border-color: var(--color-accent-hover); color: var(--color-text); }
+  .workspace { max-width: var(--measure); margin: 0 auto; }
+  @media (min-width: 1080px) {
+    .workspace { max-width: 1040px; display: grid; grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-5); align-items: start; }
+        overflow-y: auto; }
+  }
+  .runway { max-width: var(--measure); margin: 0 auto var(--space-4); padding: var(--space-4);
+    background: var(--color-surface); border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-lg); }
+  .runway-lab { display: block; font-size: var(--text-xs); text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow); color: var(--color-text-subtle); }
+  .runway-num { display: block; font-family: var(--font-display); font-size: var(--text-3xl);
+    line-height: 1.1; margin-top: var(--space-2); font-variant-numeric: tabular-nums; }
+  .runway-num small { font-size: var(--text-md); color: var(--color-text-muted); margin-left: 6px; }
+  .runway-say { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-size: var(--text-sm); }
   section[id] { scroll-margin-top: var(--space-4); }
 
   .gate { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3); }
@@ -68,7 +94,14 @@
      pushes the whole grid past its container. That is what made this page —
      the first one anyone opens — scroll 142px sideways at 390px, with no
      single element visibly out of place. D-146. */
-  .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); align-items: end; }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); align-items: start; }
+  /* Three lines, not the usual two (D-249). A label in this room can carry
+     a provenance chip — "from The Dashboard", "you entered" — and a
+     label that has one stands a line taller than a label that does not,
+     which drops its own box 16px below its neighbour's. Reserving the
+     chip's line in every label in the row keeps the boxes level whether
+     the chip is there or not. */
+  .row { --slaf-label-lines: 3; }
   .row.three { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
   .row .span { grid-column: 1 / -1; }
   @media (max-width: 380px) { .row.three { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
@@ -78,13 +111,17 @@
   .sub-label { display: block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin: var(--space-3) 0 var(--space-2); }
 
   /* The confidence badge: one per box, after the label. */
-  .slaf-label { display: flex; align-items: baseline; gap: 6px; }
-  /* `white-space: nowrap` on a badge beside a label that already fills the
-     column is how a 358px card ended up 49px wider than a 320px phone. The
-     badge is short; letting it wrap costs nothing and stops the page moving
-     sideways. D-146. */
-  .conf { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; border-radius: var(--radius-pill); padding: 1px 6px; border: 1px solid var(--color-border); color: var(--color-text-faint); overflow-wrap: anywhere; max-width: 100%; }
+  /* The label wraps as a whole line and the badge drops under it intact:
+     a badge that broke inside itself ("YOU / ENTERED") read as a typo.
+     The row wraps, so nowrap on the badge cannot push the card wider
+     (D-146 stands: the badge never widens the column). */
+  .slaf-label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
+  .conf { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; border-radius: var(--radius-pill); padding: 1px 6px; border: 1px solid var(--color-border); color: var(--color-text-faint); overflow-wrap: normal; max-width: 100%; flex: 0 1 auto; }
   .conf:empty { display: none; }
+  /* "You entered" is the normal state of a filled box, so it is not a
+     badge: only a guess, and a figure that lives in another room, are
+     worth marking. */
+  .conf.is-entered { display: none; }
   .conf.is-guess { border-color: var(--color-caution); color: var(--color-caution); }
   .conf.is-entered { border-color: var(--color-positive, #3fa66b); color: var(--color-positive, #3fa66b); }
   .conf.is-room { border-color: var(--color-accent); color: var(--color-accent-hover); }
@@ -102,7 +139,6 @@
   .done-bar .say { flex: 1 1 200px; font-size: var(--text-sm); color: var(--color-text-muted); }
   .notice { border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); font-size: var(--text-sm); }
   .notice.is-error { border-color: #b5544d; }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -113,7 +149,7 @@
   <p class="room-lede">One page. Say what your situation is; only what applies is asked, and every box is already filled with a guess. Fix the ones that are wrong and see your dashboard.</p>
 </header>
 
-<main class="slaf-wrap">
+<main class="slaf-wrap" data-fold="own">
   <div class="notice" id="load-notice" hidden></div>
 
   <section class="slaf-card" id="q-employment">
@@ -123,7 +159,24 @@
     <div class="gate" id="gate" role="group" aria-label="Your situation"></div>
   </section>
 
-  <div id="cards"></div>
+  <!-- Two boxes buy this, and it appears the moment both are in. Not built
+       from Gate.CARDS and holds no input, so it is outside the LIVE-FORM
+       contract: only its text is ever written. D-159. -->
+  <div class="runway" id="runway" hidden aria-live="polite">
+    <span class="runway-lab">If your income stopped today</span>
+    <span class="runway-num" id="runway-num"></span>
+    <p class="runway-say" id="runway-say"></p>
+  </div>
+
+  <div class="workspace">
+    <div id="cards"></div>
+
+    <button type="button" class="showrest" id="showrest" hidden></button>
+
+    <!-- What is answered, what is not, what does not apply, and what a number
+         is waiting on. Holds no input of its own, so it is outside the
+         LIVE-FORM contract. D-160. -->
+  </div>
 
   <details class="drawer" id="q-fine-tune">
     <summary>Fine-tune <small>Optional. Who depends on you, a second job, something big and one-off coming.</small></summary>
@@ -162,6 +215,7 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/suggest.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
@@ -183,7 +237,7 @@
   var CTL_FIELD = { month: 'dob', year: 'dob', state: 'state', filing: 'filingStatus', pay: 'grossAnnualIncome', pay2: 'grossAnnualIncome', secondJob: 'grossAnnualIncome',
     partnerPay: 'grossAnnualIncome', spending: 'monthlyExpenses', cash: 'cashSavings', deductible: 'highestDeductible', investments: 'investments',
     matchPercent: 'employerMatch', matchCap: 'employerMatch', contribution: 'contributionPercent', debtBalance: 'totalDebt', debtMinimum: 'monthlyDebtPayments',
-    weekly: 'unemployment', weeks: 'unemployment', severance: 'unemployment', lastPay: 'unemployment', dependents: 'dependents' };
+    weekly: 'unemployment', weeks: 'unemployment', severance: 'unemployment', lastPay: 'unemployment', dependents: 'dependents', zip: 'zip' };
 
   function el(id) { return document.getElementById(id); }
   function esc(s) {
@@ -234,6 +288,8 @@
       return '<p class="q-help">However you are actually paid. It becomes a year underneath. “Not earning right now” is an answer, and so is “it varies”.</p>'
         + '<div class="row">' + moneyInput('pay', 'You are paid', 'e.g. 62,000', 'What you are paid') + select('basis', 'How often', basisOptions(), 'How often you are paid') + '</div>'
         + '<label class="slaf-field" data-hours hidden><span class="slaf-label">Hours a week</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" data-ctl="hours" placeholder="e.g. 40" aria-label="Hours a week"/></span></label>'
+        + '<div data-paytype style="margin-top:var(--space-2)">' + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?')
+        + choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…') + '</div>'
         + '<p class="field-note" data-note="pay"></p>';
     },
     ownWork: function () {
@@ -243,12 +299,16 @@
     retiredPay: function () {
       return '<p class="q-help">Pension, Social Security, an annuity, what you draw down — all of it, together.</p>'
         + '<div class="row">' + moneyInput('pay', 'Coming in', 'e.g. 3,500', 'What comes in') + select('basis', 'How often', basisOptions(), 'How often') + '</div>'
+        + '<div data-paytype style="margin-top:var(--space-2)">' + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?')
+        + choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…') + '</div>'
         + '<p class="field-note" data-note="pay"></p>';
     },
     studentPay: function () {
       return '<p class="q-help">A part-time job, a stipend, help from family that arrives like pay. Nothing is an answer too.</p>'
         + '<div class="row">' + moneyInput('pay', 'Coming in', 'e.g. 600', 'What comes in') + select('basis', 'How often', basisOptions(), 'How often') + '</div>'
         + '<label class="slaf-field" data-hours hidden><span class="slaf-label">Hours a week</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" data-ctl="hours" placeholder="e.g. 15" aria-label="Hours a week"/></span></label>'
+        + '<div data-paytype style="margin-top:var(--space-2)">' + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?')
+        + choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…') + '</div>'
         + '<p class="field-note" data-note="pay"></p>';
     },
     betweenJobs: function () {
@@ -261,8 +321,8 @@
         + '<div class="row" style="margin-top:var(--space-2)">' + moneyInput('severance', 'Severance still in hand', 'e.g. 4,000') + moneyInput('lastPay', 'The last job paid, a year', 'e.g. 52,000') + '</div>';
     },
     partnerPay: function () {
-      return '<p class="q-help">A name to tell you apart, whether they are working, and what they are paid.</p>'
-        + '<div class="row">' + '<label class="slaf-field"><span class="slaf-label">What to call them</span><span class="slaf-input-shell"><input type="text" data-ctl="partnerLabel" placeholder="e.g. Sam" autocomplete="off" aria-label="The other person’s name"/></span></label>'
+      return '<p class="q-help">Whether they are working, and what they are paid.</p>'
+        + '<div class="row">' + '<p class="field-note" style="margin:0">Name them, and say the year they were born, in <a href="partner.html#inputs">Partner</a> (15.7): one place edits the second of you.</p>'
         + select('partnerStatus', 'Working?', [['', 'Working situation']].concat(Schema.EMPLOYMENT_STATUSES.map(function (s) { return [s.id, s.label]; })), 'Their working situation') + '</div>'
         + '<div class="row">' + moneyInput('partnerPay', 'They are paid', 'e.g. 4,200', 'What the other person is paid') + select('partnerBasis', 'How often', basisOptions(), 'How often they are paid') + '</div>';
     },
@@ -297,6 +357,8 @@
     return choices('dependents', [['0', 'Nobody'], ['1', 'One person'], ['2', 'Two'], ['3', 'Three or more']], 'Anyone depending on your income?')
       + '<label class="slaf-field" data-ages hidden style="margin-top:var(--space-2)"><span class="slaf-label">Their ages' + badge('ages') + '</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" data-ctl="ages" placeholder="e.g. 4, 9" aria-label="Ages of dependents"/></span></label>'
       + '<p class="field-note">Term life, childcare and the like only come up when someone does.</p>'
+      + '<label class="slaf-field" style="margin-top:var(--space-2)"><span class="slaf-label">ZIP, if you like</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" maxlength="5" data-ctl="zip" placeholder="e.g. 27601" aria-label="ZIP code"/></span></label>'
+      + '<p class="field-note">Your state sets the tax, childcare, property tax and insurance figures; a ZIP is kept for when a finer table exists.</p>'
       + '<span class="sub-label">A second job, or other pay</span>'
       + '<div class="row">' + moneyInput('secondJob', 'It pays', 'e.g. 8,000', 'A second job or other pay') + select('secondBasis', 'How often', basisOptions(), 'How often the second job pays') + '</div>'
       + '<span class="sub-label">Anything big and one-off coming?</span>'
@@ -382,12 +444,20 @@
     filing: function (v) { Spine.set('filingStatus', v || null, 'Filing status'); },
     pay: function (v) { writeSource(INCOME_ID, { rateCents: Money.parseMoney(v), frequency: ctl('basis').value || 'annual' }); },
     basis: function (v) { writeSource(INCOME_ID, { frequency: v }); },
+    /* 15.4: the kind of pay, and whether it survives a job loss. The
+       second is derived from the first unless the person says; tapping the
+       derived answer again clears the override. D-181. */
+    payType: function (v) { writeSource(INCOME_ID, { type: v }); },
+    paySurvives: function (v) {
+      var src = sourceById(h(), INCOME_ID) || primarySource(h()) || {};
+      var derived = Schema.survivesJobLoss(Object.assign({}, src, { survivesJobLoss: null }));
+      writeSource(INCOME_ID, { survivesJobLoss: (v === 'yes') === derived ? null : v === 'yes' });
+    },
     hours: function (v) { var n = String(v).trim() === '' ? null : Number(v); writeSource(INCOME_ID, { hoursPerWeek: n === null || isNaN(n) || n <= 0 ? null : n }); },
     pay2: function (v) { writeSource(OWN_WORK_ID, { rateCents: Money.parseMoney(v), frequency: ctl('basis2').value || 'annual' }); },
     basis2: function (v) { writeSource(OWN_WORK_ID, { frequency: v }); },
     secondJob: function (v) { var c = Money.parseMoney(v); if (!Money.isEntered(c)) { dropSource(SECOND_JOB_ID); recompute(); return; } writeSource(SECOND_JOB_ID, { rateCents: c, frequency: ctl('secondBasis').value || 'annual' }); },
     secondBasis: function (v) { if (sourceById(h(), SECOND_JOB_ID)) writeSource(SECOND_JOB_ID, { frequency: v }); },
-    partnerLabel: function (v) { var p = partnerOf(h()); if (p) Spine.upsertPerson({ id: p.id, label: String(v).trim() || 'The other of you' }); },
     partnerStatus: function (v) { var p = partnerOf(h()); if (p) Spine.upsertPerson({ id: p.id, employmentStatus: v || null }); },
     partnerPay: function (v) { var p = partnerOf(h()); if (p) writeSource(PARTNER_INCOME_ID, { rateCents: Money.parseMoney(v), frequency: ctl('partnerBasis').value || 'annual' }, p.id); },
     partnerBasis: function (v) { var p = partnerOf(h()); if (p) writeSource(PARTNER_INCOME_ID, { frequency: v }, p.id); },
@@ -409,7 +479,8 @@
     severance: function (v) { writeUnemployment({ severanceCents: Money.parseMoney(v) }); },
     lastPay: function (v) { writeUnemployment({ lastGrossAnnualCents: Money.parseMoney(v) }); },
     dependents: function (v) { writeDependents(Number(v), null); },
-    ages: function (v) { writeDependents(null, v); }
+    ages: function (v) { writeDependents(null, v); },
+    zip: function (v) { var z = String(v || '').replace(/\D/g, '').slice(0, 5); Spine.set('zip', z.length === 5 ? z : null, 'ZIP'); }
   };
   function pct(v) { var raw = String(v).replace(/[^0-9.]/g, ''); if (raw === '') return null; var n = Number(raw); return isNaN(n) ? null : n; }
   function dobFrom(m, y) { if (!m || !y) return null; return y + '-' + (m.length === 1 ? '0' + m : m) + '-01'; }
@@ -533,6 +604,95 @@
       if (box.children[i] !== node) box.insertBefore(node, box.children[i] || null);
     });
   }
+  /* A row is a way back to its question. Scroll only - never focus the input,
+     because a programmatic focus on a phone opens nothing and steals the
+     caret from whatever the person was already typing in. D-034. */
+  /* A hash can change without a repaint - a deep link followed from another
+     room, or the browser's own back and forward - so the fold listens for it
+     directly rather than waiting for the next paint. D-166. */
+  function roomName(id) {
+    if (!id) return '';
+    var r = Registry.byId(id);
+    return r ? r.title : id;
+  }
+
+  function unfoldForHash() {
+    var box = el('cards');
+    if (!box || !location.hash || location.hash.length < 2) return;
+    var target = document.getElementById(location.hash.slice(1));
+    if (target && box.contains(target)) {
+      box.classList.remove('is-folded');
+      var btn = el('showrest'); if (btn) btn.hidden = true;
+    }
+  }
+  window.addEventListener('hashchange', unfoldForHash);
+
+  el('showrest').addEventListener('click', function () {
+    el('cards').classList.remove('is-folded');
+    this.hidden = true;
+  });
+
+
+  /* Cash over spending. Both must be real figures: a blank is not a zero, and
+     a zero month would divide by nothing, so either one absent means no number
+     rather than a wrong one. D-159. */
+  function paintRunway(x) {
+    var box = el('runway');
+    var cash = Schema.cashCents(x), spend = Schema.monthlyExpensesCents(x);
+    if (!Money.isOk(cash) || !Money.isOk(spend) || spend.value <= 0) { box.hidden = true; return; }
+    var months = cash.value / spend.value;
+    el('runway-num').innerHTML = (months >= 12 ? '12+' : months.toFixed(1))
+      + '<small>' + (months === 1 ? 'month' : 'months') + ' of cover</small>';
+    el('runway-say').textContent = months < 1
+        ? 'A missed payday would land straight on a bill. The first $500 put by is the thing that changes that, not three months.'
+      : months < 3
+        ? 'A few weeks of room. Three months is the usual first marker, and you are inside reach of it.'
+      : months < 6
+        ? 'You could lose your income and still pay the bills for a season. Three to six months is what most guidance aims at.'
+      : months < 12
+        ? 'You could lose your income and take your time about what comes next.'
+        : 'Income stopping would be an inconvenience rather than a crisis.';
+    box.hidden = false;
+  }
+
+  /* Folded for someone arriving with nothing, open for someone coming back to
+     numbers they already gave: hiding a person's own answers to look tidy
+     would be a worse sin than a long page. Decided once per load - re-deciding
+     on every paint would slam the page shut again the moment the second box
+     was filled. D-166. */
+  var foldDecided = false;
+  function paintFold(live) {
+    var box = el('cards'), btn = el('showrest');
+    if (!box || !btn) return;
+    var extra = Math.max(0, live.length - 2);
+    if (!foldDecided && live.length) {
+      foldDecided = true;
+      var x = h();
+      var answeredLater = live.slice(2).some(function (card) {
+        return (card.fields || []).some(function (f) {
+          var d = Ownership.describe(f, x, ROOM_ID);
+          /* A guess is not an answer - it must not hold the page open. */
+          return d && d.applies && d.isSet && !d.guessed;
+        });
+      });
+      if (extra > 0 && !answeredLater) box.classList.add('is-folded');
+    }
+    /* A deep link wins over the fold. The doors added in D-163 and the ledger's
+       own rows point at anchors like #q-cash, and half this room's cards are
+       folded on arrival - so a link that lands on a folded card lands on
+       nothing. Whenever the URL names a card, the page opens. Re-checked every
+       paint rather than once, because the hash changes without a reload. */
+    if (location.hash && location.hash.length > 1) {
+      var target = document.getElementById(location.hash.slice(1));
+      if (target && box.contains(target)) box.classList.remove('is-folded');
+    }
+    var folded = box.classList.contains('is-folded');
+    btn.hidden = !folded || extra === 0;
+    if (folded) {
+      btn.textContent = 'The other ' + extra + ' question' + (extra === 1 ? '' : 's')
+        + ' \u2014 they feed the rooms after this one';
+    }
+  }
 
   var stateBuilt = false;
   function paint() {
@@ -541,9 +701,16 @@
     var g = s && TABLES ? Gate.guesses(s, x, TABLES) : {};
     Array.prototype.forEach.call(el('gate').querySelectorAll('.choice'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-situation') === s)); });
 
+    paintRunway(x);
+
     var live = situationCards();
     placeCards(live);
-    live.forEach(function (c, i) { CARD_NODES[c.key].querySelector('[data-step]').textContent = (i + 2) + ' of ' + (live.length + 1); });
+    paintFold(live);
+    /* Cards count themselves, 1..N. They used to start at 2 of N+1, silently
+       counting the situation question as card one while never numbering it -
+       so the first card you could see said "2 of 7" and looked like you had
+       missed one. D-168. */
+    live.forEach(function (c, i) { CARD_NODES[c.key].querySelector('[data-step]').textContent = (i + 1) + ' of ' + live.length; });
     el('q-fine-tune').hidden = !s;
     el('q-import').hidden = !s;
     if (!s) { paintStatus(0, 0); return; }
@@ -577,6 +744,14 @@
       else if (src && Money.isEntered(src.grossAnnualIncomeCents) && (src.frequency || 'annual') === 'annual') setMoney('pay', src.grossAnnualIncomeCents);
       else { setMoney('pay', null); propose('pay', g.pay, function (c) { WRITE.pay(c / 100); render(); }); }
       var payBox = ctl('pay'); if (payBox) payBox.disabled = !!basis.noPay;
+      /* 15.4: the kind of pay (a guess from the situation until tapped) and
+         whether it keeps paying; the derived answer shows as the guess. */
+      var typeGuess = situation() === 'retired' ? 'pension' : situation() === 'selfEmployed' ? '1099' : 'w2';
+      press('payType', src && src.type ? src.type : null, typeGuess);
+      var srcForSurvive = src || { type: typeGuess };
+      var derived = Schema.survivesJobLoss(Object.assign({}, srcForSurvive, { survivesJobLoss: null }));
+      press('paySurvives', src && (src.survivesJobLoss === true || src.survivesJobLoss === false) ? (src.survivesJobLoss ? 'yes' : 'no') : null, derived ? 'yes' : 'no');
+      var payTypeBox = document.querySelector('#cards [data-paytype]'); if (payTypeBox) payTypeBox.hidden = !!basis.noPay;
       var gross = Schema.grossAnnualIncomeCents(x);
       var payNote = document.querySelector('#cards [data-note="pay"]');
       if (payNote) payNote.textContent = basis.noPay ? 'A deliberate zero — different from leaving it blank.'
@@ -590,7 +765,6 @@
     if (cardOn('partnerPay')) {
       var partner = partnerOf(x) || {};
       var ps = (partner.incomeSources || [])[0];
-      setText('partnerLabel', partner.label === 'The other of you' ? '' : partner.label || '');
       setSelect('partnerStatus', partner.employmentStatus || '');
       setSelect('partnerBasis', ps && ps.frequency ? ps.frequency : 'annual');
       setMoney('partnerPay', ps && Money.isEntered(ps.rateCents) ? ps.rateCents : (ps && Money.isEntered(ps.grossAnnualIncomeCents) ? ps.grossAnnualIncomeCents : null));
@@ -609,8 +783,9 @@
       if (Money.isEntered(u.lastGrossAnnualCents)) setMoney('lastPay', u.lastGrossAnnualCents); else { setMoney('lastPay', null); propose('lastPay', g.lastPay, function (c) { WRITE.lastPay(c / 100); render(); }); }
     }
     /* spending */
-    var ex = x.expenses && x.expenses.monthlyEssential;
-    if (ex && Money.isEntered(ex.estimatedValueCents)) setMoney('spending', ex.estimatedValueCents); else { setMoney('spending', null); propose('spending', g.spending, function (c) { WRITE.spending(c / 100); render(); }); }
+    /* The one box is the month: the four buckets' total (D-172). */
+    var ft = Schema.fat(x).totalCents;
+    if (Money.isOk(ft)) setMoney('spending', ft.value); else { setMoney('spending', null); propose('spending', g.spending, function (c) { WRITE.spending(c / 100); render(); }); }
     press('noRent', x.meta.noRent === true ? 'yes' : x.meta.noRent === false ? 'no' : null, 'no');
     /* cash, deductible, investments */
     var cash = Schema.cashCents(x);
@@ -645,6 +820,7 @@
     press('dependents', deps === null ? null : String(Math.min(deps.length, 3)), '0');
     document.querySelector('[data-ages]').hidden = !(deps && deps.length);
     setText('ages', deps ? deps.map(function (d) { return d.age; }).filter(function (a) { return Money.isEntered(a); }).join(', ') : '');
+    setText('zip', x.zip || '');
     var second = sourceById(x, SECOND_JOB_ID);
     setSelect('secondBasis', second && second.frequency ? second.frequency : 'annual');
     setMoney('secondJob', second && Money.isEntered(second.rateCents) ? second.rateCents : (second ? second.grossAnnualIncomeCents : null));

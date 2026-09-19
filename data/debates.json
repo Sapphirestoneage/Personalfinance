@@ -1,0 +1,95 @@
+{
+  "id": "debates",
+  "version": "1.0",
+  "asOf": "2026-09-11",
+  "source": "Money debates people already argue about, each side stated as its own best case with the place that case is made. The app is the referee: it runs both sides on the person's numbers and names the flip point, the one figure where the answer changes. It never picks a side in general.",
+  "confidence": "convention",
+  "confidenceNote": "The sides are summaries of public arguments, attributed to where they are made; the summaries are this file's, not quotations. Each debate's arithmetic is a named function in engines/debates.js, on shared engines, never a rule of its own.",
+  "note": "Read by engines/debates.js (K3, D-218). `fn` is the engine function; `reads` are the Ledger fields the run needs; `flip` names the one figure the answer turns on.",
+  "debates": [
+    {
+      "id": "middleClassTrap",
+      "name": "The Middle Class Trap",
+      "question": "Is a net worth that is mostly home equity and retirement accounts a trap before 59 and a half, or a planning problem?",
+      "sides": [
+        { "id": "trap", "label": "It is a trap", "case": "A high net worth on paper, mostly the house and the 401(k), leaves too little money to live on before 59 and a half; the bridge years cannot be funded without penalties.", "source": "BiggerPockets Money podcast, the 'middle class trap' episodes (Mindy Jensen and Scott Trench), 2024." },
+        { "id": "solvable", "label": "It is solvable", "case": "The Roth conversion ladder, 72(t) payments and the Rule of 55 reach retirement money early without the penalty, given lead time; the trap is a planning gap, not a wall.", "source": "ChooseFI (Brad Barrett and Jonathan Mendonsa) with Sean Mullaney, the FI Tax Guy, 2024 episodes on the trap." }
+      ],
+      "fn": "middleClassTrap",
+      "reads": ["assets", "expenses", "you.dob", "taxes.filingStatus"],
+      "flip": { "label": "years of bridge money", "unit": "years", "note": "the ladder needs the bridge to cover its seasoning years; with fewer, only 72(t) or the Rule of 55 reach the pre-tax money without the penalty" }
+    },
+    {
+      "id": "mortgageVsInvest",
+      "name": "Pay off the mortgage or invest",
+      "question": "Does an extra dollar go to the mortgage or the market?",
+      "sides": [
+        { "id": "payoff", "label": "Pay it off", "case": "A guaranteed return at the mortgage rate, no market risk, and a paid-for home changes how much you need to retire.", "source": "Dave Ramsey, The Total Money Makeover (Baby Step 6); the case for a guaranteed return." },
+        { "id": "invest", "label": "Invest it", "case": "Over long periods a diversified portfolio has returned more than a mortgage costs, and money in the market stays reachable; a low fixed rate is cheap money to keep.", "source": "JL Collins, The Simple Path to Wealth; the expected-return case." }
+      ],
+      "fn": "mortgageVsInvest",
+      "reads": ["debt.items"],
+      "flip": { "label": "the mortgage rate against the real return", "unit": "rate", "note": "investing wins when the return beats the mortgage rate; the range says whether that holds across a poor decade and a good one" }
+    },
+    {
+      "id": "rothVsTraditional",
+      "name": "Roth or traditional",
+      "question": "Pay the tax now, or later?",
+      "sides": [
+        { "id": "traditional", "label": "Traditional", "case": "Most people pay a lower rate in retirement than while working, so deferring the tax wins; the deduction now is worth more than the tax later.", "source": "The Finance Buff (Harry Sit), 'The case against Roth 401(k)', and the marginal-rate framing in Bogleheads' wiki." },
+        { "id": "roth", "label": "Roth", "case": "Tax paid now at a known rate buys freedom from unknown future rates and required distributions, and a Roth dollar is a whole dollar.", "source": "Ed Slott, The New Retirement Savings Time Bomb; the rate-risk case." }
+      ],
+      "fn": "rothVsTraditional",
+      "reads": ["income.grossAnnualCents", "expenses", "taxes.filingStatus"],
+      "flip": { "label": "your marginal rate now against the rate at withdrawal", "unit": "rate", "note": "traditional wins when the rate now is higher than the rate your spending would be taxed at later" }
+    },
+    {
+      "id": "fourPercent",
+      "name": "4% or lower",
+      "question": "Is 4% a safe withdrawal rate, or should the number be built on less?",
+      "sides": [
+        { "id": "four", "label": "4% holds", "case": "Thirty-year retirements at 4% of the starting pot survived every historical period the Trinity study tested; a lower rate means working years longer for safety that history did not demand.", "source": "Cooley, Hubbard and Walz, 'Retirement Savings: Choosing a Withdrawal Rate That Is Sustainable' (the Trinity study), 1998, and Bill Bengen's 1994 paper." },
+        { "id": "lower", "label": "Lower for long retirements", "case": "Fifty-year retirements at today's valuations fail often enough at 4% that 3.25% to 3.5% is the safe figure; the extra years of saving buy the difference between fine and ruin.", "source": "Karsten Jeske (Early Retirement Now), the Safe Withdrawal Rate Series, part 1 onward." }
+      ],
+      "fn": "fourPercent",
+      "reads": ["expenses", "assets.invested", "income.grossAnnualCents", "taxes.filingStatus"],
+      "flip": { "label": "the withdrawal rate", "unit": "rate", "note": "the two numbers and the years between them; the flip is the rate the pot you will have supports" }
+    },
+    {
+      "id": "oneMoreYear",
+      "name": "One more year",
+      "question": "Does one more year of work buy safety, or just cost a year?",
+      "sides": [
+        { "id": "stay", "label": "One more year", "case": "A last year of saving and growth adds a cushion for the whole retirement, and the sequence risk of the first years is the one that sinks plans.", "source": "Wade Pfau on sequence-of-returns risk; the cushion case." },
+        { "id": "go", "label": "Go now", "case": "One more year becomes another; the pot supports the spending already, and a year of life is the price nobody puts on the spreadsheet.", "source": "Mr. Money Mustache, 'The 4% rule: the easy answer to how much do I need for retirement', and the one-more-year syndrome writing at Can I Retire Yet (Darrow Kirkpatrick)." }
+      ],
+      "fn": "oneMoreYear",
+      "reads": ["expenses", "assets.invested", "income.grossAnnualCents", "taxes.filingStatus"],
+      "flip": { "label": "what the pot supports against what you spend", "unit": "cents", "note": "go now when the pot already supports the spending; one more year when it does not, and this says by how much it would" }
+    },
+    {
+      "id": "rentVsBuy",
+      "name": "Rent or buy",
+      "question": "At these prices and this rent, which is the better use of the money?",
+      "sides": [
+        { "id": "buy", "label": "Buy", "case": "A fixed payment that ends, equity instead of rent receipts, and a place nobody can raise the rent on.", "source": "The case for owning as consumer guides state it; Zillow and Census price-to-rent framing." },
+        { "id": "rent", "label": "Rent", "case": "When the price is high against the rent, the difference invested beats the equity; renting keeps you mobile and out of the costs of owning.", "source": "Ramit Sethi, I Will Teach You to Be Rich, on renting; the price-to-rent rule of thumb in consumer guides." }
+      ],
+      "fn": "rentVsBuy",
+      "reads": ["expenses.needs.accommodation"],
+      "flip": { "label": "the price-to-rent ratio", "unit": "ratio", "note": "buying favoured under the lower band, renting above the upper, neutral between" }
+    },
+    {
+      "id": "studentLoansVsInvest",
+      "name": "Pay off low-rate student loans or invest",
+      "question": "Does the extra go to the loan or the market?",
+      "sides": [
+        { "id": "payoff", "label": "Pay them off", "case": "A guaranteed return at the loan rate, no market risk, and a debt gone for good.", "source": "Dave Ramsey, Baby Step 2; the debt-free case." },
+        { "id": "invest", "label": "Invest", "case": "A low fixed rate is cheap; the expected return on a diversified portfolio is higher, and federal loans carry protections a brokerage account does not need.", "source": "The Money Guy Show, the Financial Order of Operations on low-interest debt; the expected-return case." }
+      ],
+      "fn": "studentLoansVsInvest",
+      "reads": ["debt.items"],
+      "flip": { "label": "the loan rate against the real return", "unit": "rate", "note": "investing wins when the return beats the loan rate; the range says whether that holds across a poor decade and a good one" }
+    }
+  ]
+}

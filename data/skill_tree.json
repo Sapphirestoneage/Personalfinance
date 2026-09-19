@@ -13315,7 +13315,7 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "expenses"
         },
         {
           "number": "monthlyExpenses"
@@ -13413,7 +13413,7 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "debt-payoff"
         },
         {
           "number": "monthlyExpenses"
@@ -13502,7 +13502,8 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "cash-flow",
+          "anchor": "log"
         },
         {
           "number": "monthlyExpenses"
@@ -13530,7 +13531,7 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "expenses"
         },
         {
           "number": "monthlyExpenses"
@@ -13702,7 +13703,7 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "expenses"
         },
         {
           "number": "monthlyExpenses"
@@ -13725,7 +13726,7 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "expenses"
         },
         {
           "number": "monthlyExpenses"
@@ -13748,7 +13749,7 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "expenses"
         },
         {
           "number": "monthlyExpenses"
@@ -13771,7 +13772,7 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "expenses"
         },
         {
           "number": "monthlyExpenses"
@@ -13796,7 +13797,7 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "expenses"
         },
         {
           "number": "monthlyExpenses"
@@ -13819,7 +13820,8 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "cash-flow",
+          "anchor": "log"
         },
         {
           "number": "monthlyExpenses"
@@ -14105,7 +14107,8 @@
       "appliesWhen": [],
       "unlocks": [
         {
-          "room": "cash-flow"
+          "room": "cash-flow",
+          "anchor": "log"
         },
         {
           "room": "calendar"

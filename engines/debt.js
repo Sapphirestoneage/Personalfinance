@@ -235,18 +235,34 @@
    * Ordering is recomputed each month, because a hybrid's "small enough to
    * finish quickly" test depends on the balance as it stands now.
    */
-  function orderDebts(debts, strategy, rules) {
+  /**
+   * The rate a debt will cost you, for ordering (D-188): the rate in force
+   * this month, or the rate a promo reverts to when that is higher and
+   * the promo has not ended yet. Sorting on today's rate alone put a 0%
+   * card that becomes 24.99% last in Avalanche, so Snowball beat it.
+   */
+  function rankRate(debt, month, asOf) {
+    var now = rateInMonth(debt, month || 1, asOf);
+    if (!Money.isEntered(now)) now = Money.isEntered(debt.rate) ? debt.rate : 0;
+    var promo = promoStatus(debt, asOf);
+    if (promo && !promo.expired && promo.knowsAfter && promo.postRate > now) return promo.postRate;
+    return now;
+  }
+
+  function orderDebts(debts, strategy, rules, month, asOf) {
     var live = debts.filter(function (d) { return d.balanceCents > 0; });
     var sorted = live.slice();
+    var rate = {};
+    live.forEach(function (d) { rate[d.id] = rankRate(d, month, asOf); });
 
     if (strategy.orderBy === 'rate') {
-      sorted.sort(function (a, b) { return b.rate - a.rate || a.balanceCents - b.balanceCents; });
+      sorted.sort(function (a, b) { return rate[b.id] - rate[a.id] || a.balanceCents - b.balanceCents; });
     } else if (strategy.orderBy === 'balance') {
-      sorted.sort(function (a, b) { return a.balanceCents - b.balanceCents || b.rate - a.rate; });
+      sorted.sort(function (a, b) { return a.balanceCents - b.balanceCents || rate[b.id] - rate[a.id]; });
     } else if (strategy.orderBy === 'emotionalPriority') {
       sorted.sort(function (a, b) {
         var pa = emotionalPriority(a, rules), pb = emotionalPriority(b, rules);
-        return pb - pa || b.rate - a.rate;
+        return pb - pa || rate[b.id] - rate[a.id];
       });
     } else if (strategy.orderBy === 'hybrid') {
       var threshold = Math.round((strategy.quickWinBelowDollars || 0) * 100);
@@ -256,7 +272,7 @@
         /* Quick wins first, smallest of those first; then highest rate. */
         if (qa !== qb) return qb - qa;
         if (qa === 1) return a.balanceCents - b.balanceCents;
-        return b.rate - a.rate;
+        return rate[b.id] - rate[a.id];
       });
     }
     if (strategy.direction === 'asc' && strategy.orderBy === 'rate') sorted.reverse();
@@ -326,8 +342,15 @@
   }
 
   /**
-   * simulate(household, rules, { strategyId, extraMonthlyCents })
+   * simulate(household, rules, { strategyId, extraMonthlyCents, stopAfter, highInterestRate, asOf })
    * Returns a Result whose value is the number of months to clear everything.
+   * stopAfter (D-191): 'cards' or 'highInterest'. Once nothing of that class
+   * is live, the extra stops and the freed minimums stop rolling: from
+   * that month every remaining debt gets its own minimum and nothing
+   * more. The result carries stopMonth (the first month run that way,
+   * null when the stop never came or none was asked for) and
+   * monthlyBudgetAfterStopCents. A stop whose class was empty from the
+   * start stops in month 1: minimums alone, and the room says so.
    */
   function simulate(household, rules, opts) {
     var o = opts || {};
@@ -340,6 +363,8 @@
     var debts = ready.value.map(function (d) { return Object.assign({}, d); });
     var extra = Money.isEntered(o.extraMonthlyCents) ? o.extraMonthlyCents : 0;
     var maxMonths = (rules.limits && rules.limits.maxMonths) || 600;
+    var stopAfter = STOP_CLASSES.indexOf(o.stopAfter) >= 0 ? o.stopAfter : null;
+    var stopMonth = null, budgetAfterStop = null;
 
     /* The total the household puts at debt each month stays constant: every
        minimum plus the extra. A cleared debt frees its minimum for the next
@@ -359,6 +384,7 @@
 
       /* 1. Interest. */
       var interestThisMonth = 0;
+      var interestBy = {}, paidBy = {};
       live.forEach(function (d) {
         /* Not d.rate: a promotional rate expires partway through the plan,
            and using today's rate for all sixty months is how a 0% card gets
@@ -367,15 +393,23 @@
         d.balanceCents += interest;
         interestThisMonth += interest;
         perDebtInterest[d.id] += interest;
+        interestBy[d.id] = interest; paidBy[d.id] = 0;
       });
       totalInterest += interestThisMonth;
 
+      /* The stop line (D-191): nothing of the named class left, so from
+         here it is each debt's own minimum and no more. */
+      if (stopAfter && stopMonth === null && !live.some(function (d) { return inClass(d, stopAfter, o.highInterestRate); })) {
+        stopMonth = month;
+        budgetAfterStop = live.reduce(function (s, d) { return s + Math.min(d.minPaymentCents, d.balanceCents); }, 0);
+      }
+
       /* 2. Minimums, capped at what is actually owed. */
-      var pot = monthlyBudget;
+      var pot = stopMonth !== null ? live.reduce(function (s, d) { return s + d.minPaymentCents; }, 0) : monthlyBudget;
       var paidThisMonth = 0;
       live.forEach(function (d) {
         var pay = Math.min(d.minPaymentCents, d.balanceCents, pot);
-        d.balanceCents -= pay; pot -= pay; paidThisMonth += pay;
+        d.balanceCents -= pay; pot -= pay; paidThisMonth += pay; paidBy[d.id] += pay;
       });
 
       /* If the minimums alone cannot cover the interest, this never ends. */
@@ -389,12 +423,12 @@
       }
 
       /* 3. Everything left goes at the target, in strategy order. */
-      var ordered = orderDebts(debts, strategy, rules);
+      var ordered = orderDebts(debts, strategy, rules, month, o.asOf);
       for (var i = 0; i < ordered.length && pot > 0; i++) {
         var target = ordered[i];
         if (target.balanceCents <= 0) continue;
         var extraPay = Math.min(pot, target.balanceCents);
-        target.balanceCents -= extraPay; pot -= extraPay; paidThisMonth += extraPay;
+        target.balanceCents -= extraPay; pot -= extraPay; paidThisMonth += extraPay; paidBy[target.id] += extraPay;
       }
 
       totalPaid += paidThisMonth;
@@ -403,7 +437,10 @@
         if (d.balanceCents <= 0 && !payoffs.some(function (p) { return p.debtId === d.id; })) {
           payoffs.push({
             debtId: d.id, label: d.label, month: month,
-            interestPaidCents: perDebtInterest[d.id]
+            interestPaidCents: perDebtInterest[d.id],
+            /* The minimum this payoff frees: the snowball's next push, or
+               money back once the plan stops pushing (D-236). */
+            minPaymentCents: d.minPaymentCents
           });
         }
       });
@@ -417,7 +454,11 @@
         remainingCents: debts.reduce(function (s, d) { return s + Math.max(0, d.balanceCents); }, 0),
         /* Each debt's own balance, so a chart can draw one line per debt
            rather than one line for the lot. */
-        balances: balances
+        balances: balances,
+        /* And what each debt was paid and charged this month, so a page can
+           draw where the payment went (D-236). */
+        paid: paidBy,
+        interest: interestBy
       });
     }
 
@@ -437,6 +478,13 @@
       startingBalances: ready.value.reduce(function (m, d) { m[d.id] = d.balanceCents; return m; }, {}),
       debtLabels: ready.value.reduce(function (m, d) { m[d.id] = d.label; return m; }, {}),
       monthlyBudgetCents: monthlyBudget,
+      stopAfter: stopAfter,
+      stopMonth: stopMonth,
+      monthlyBudgetAfterStopCents: budgetAfterStop,
+      minimumsCents: monthlyBudget - extra,
+      minimums: ready.value.reduce(function (m, d) { m[d.id] = d.minPaymentCents; return m; }, {}),
+      extraMonthlyCents: extra,
+      derivedMinimums: ready.value.filter(function (d) { return d.minimumDerived; }).map(function (d) { return d.id; }),
       extraMonthlyCents: extra,
       payoffs: payoffs.sort(function (a, b) { return a.month - b.month; }),
       schedule: schedule,
@@ -445,16 +493,174 @@
   }
 
   /**
+   * realCost(debt, opts) — what a debt really costs a year (D-247): its
+   * rate, then after the tax deduction (student loans: the federal
+   * deduction up to a cap, phased out by income; nothing else here), then
+   * after inflation, in one chain, with a pace verdict against the real
+   * return the rest of the app assumes.
+   *   opts.marginalRate    the rate a deduction saves at (the room passes
+   *                        its best figure and says which)
+   *   opts.inflation       from Schema.resolveAssumptions
+   *   opts.returnReal      the same
+   *   opts.grossAnnualCents, opts.filingStatus   for the phase-out
+   *   opts.conventions     data/student_loan_conventions.json
+   *   opts.rules           data/debt_rules.json (the pace words)
+   */
+  function realCost(debt, opts) {
+    var o = opts || {};
+    var rate = rateInMonth(debt, 1, o.asOf);
+    if (!Money.isEntered(rate)) rate = effectiveRate(debt);
+    if (!Money.isEntered(rate)) return Money.incomplete('Add the rate to see what this debt really costs.', ['debtRate']);
+    if (!Money.isEntered(o.inflation) || !Money.isEntered(o.returnReal)) return Money.incomplete('The assumptions are not loaded.', ['assumptions']);
+    var balance = Money.isEntered(debt.balanceCents) ? debt.balanceCents : 0;
+    var interest = Math.round(balance * rate);
+    var deductible = 0, phaseShare = 0, taxSaved = 0, deductionApplies = false;
+    var ded = o.conventions && o.conventions.interestDeduction;
+    if (debt.type === 'student_loan' && ded && Money.isEntered(o.marginalRate)) {
+      deductionApplies = true;
+      var band = (ded.phaseOut || {})[o.filingStatus] || (ded.phaseOut || {}).single;
+      var g = Money.isEntered(o.grossAnnualCents) ? o.grossAnnualCents / 100 : null;
+      if (!band || band.toDollars <= band.fromDollars) phaseShare = 0;
+      else if (g === null || g <= band.fromDollars) phaseShare = 1;
+      else if (g >= band.toDollars) phaseShare = 0;
+      else phaseShare = (band.toDollars - g) / (band.toDollars - band.fromDollars);
+      deductible = Math.round(Math.min(interest, ded.capDollars * 100) * phaseShare);
+      taxSaved = Math.round(deductible * o.marginalRate);
+    }
+    var afterTax = interest > 0 ? rate * (1 - taxSaved / interest) : rate;
+    var real = (1 + afterTax) / (1 + o.inflation) - 1;
+    var pace = (o.rules && o.rules.pace) || null;
+    var floor = pace && Money.isEntered(pace.slowlyAtOrBelowReal) ? pace.slowlyAtOrBelowReal : 0;
+    var verdict = real <= floor ? 'slowly' : real < o.returnReal ? 'schedule' : 'fast';
+    var words = pace && pace.verdicts && pace.verdicts[verdict] ? pace.verdicts[verdict] : { label: verdict, why: '' };
+    return Money.ok(real, {
+      nominalRate: rate, afterTaxRate: afterTax, realRate: real,
+      annualInterestCents: interest, deductionApplies: deductionApplies, deductibleCents: deductible, phaseOutShare: phaseShare, taxSavedCents: taxSaved,
+      marginalRate: Money.isEntered(o.marginalRate) ? o.marginalRate : null, inflation: o.inflation, returnReal: o.returnReal,
+      verdict: verdict, label: words.label, why: words.why
+    });
+  }
+
+  /** A future amount in today's money: cents ÷ (1 + inflation)^years. One
+   *  place, so a chart in today's dollars and a sentence agree. */
+  function deflate(cents, months, inflation) {
+    return Math.round(cents / Math.pow(1 + inflation, months / 12));
+  }
+
+  /**
+   * cascade(plan) — the plan read as phases (D-236): between one payoff and
+   * the next, what goes to each debt a month on average, which debt the
+   * push is on, and at the end of the phase what the fallen debt frees and
+   * where that money goes: onto the next target while the plan pushes, or
+   * back to the household once the stop line has passed or nothing is
+   * left. The last entry is the month everything is gone and the whole
+   * budget is free. Read off the schedule; nothing is simulated again.
+   */
+  function cascade(plan) {
+    if (!Money.isOk(plan)) return plan;
+    var phases = [], from = 1;
+    var payoffs = plan.payoffs || [];
+    payoffs.forEach(function (p, i) {
+      var months = plan.schedule.filter(function (m) { return m.month >= from && m.month <= p.month; });
+      var sum = {}, n = months.length || 1;
+      months.forEach(function (m) { Object.keys(m.paid || {}).forEach(function (id) { sum[id] = (sum[id] || 0) + m.paid[id]; }); });
+      var perDebt = {};
+      Object.keys(sum).forEach(function (id) { perDebt[id] = Math.round(sum[id] / n); });
+      var next = payoffs[i + 1] || null;
+      /* The stop line is noticed the month after the last debt of its
+         class falls, so a fall in the month before it is the one that
+         stops the push: its minimum is the household's, not the next
+         debt's. */
+      var pushing = plan.stopMonth === null || p.month + 1 < plan.stopMonth;
+      phases.push({
+        fromMonth: from, toMonth: p.month, months: p.month - from + 1,
+        perDebtCents: perDebt,
+        monthlyCents: Math.round(months.reduce(function (t, m) { return t + m.paidCents; }, 0) / n),
+        fallsId: p.debtId, fallsLabel: p.label,
+        freedCents: p.minPaymentCents,
+        rollsOntoId: next && pushing ? next.debtId : null,
+        rollsOntoLabel: next && pushing ? next.label : null
+      });
+      from = p.month + 1;
+    });
+    return Money.ok(phases.length, { phases: phases, doneMonth: plan.months, freeCents: plan.monthlyBudgetCents,
+      minimumsCents: plan.minimumsCents, extraMonthlyCents: plan.extraMonthlyCents, stopMonth: plan.stopMonth });
+  }
+
+  /**
+   * monthFlow(plan, month) — one month of the plan as a flow (D-236): the
+   * minimums and the extra in, each debt in the middle, interest and
+   * balance paid down out. Every figure is the schedule's; the minimum
+   * share of a payment is the smaller of the debt's minimum and what it
+   * was paid, the rest came from the extra and the minimums freed so far.
+   */
+  function monthFlow(plan, month) {
+    if (!Money.isOk(plan)) return plan;
+    var row = plan.schedule.filter(function (m) { return m.month === (month || 1); })[0];
+    if (!row || !row.paid) return Money.incomplete('No such month in the plan.', ['month']);
+    var debts = Object.keys(row.paid).map(function (id) {
+      var paid = row.paid[id], interest = row.interest[id] || 0;
+      var fromMin = Math.min(plan.minimums[id] || 0, paid);
+      return { id: id, label: plan.debtLabels[id] || 'Debt', paidCents: paid, fromMinimumCents: fromMin, fromExtraCents: paid - fromMin,
+        interestCents: Math.min(interest, paid), principalCents: Math.max(0, paid - interest) };
+    }).filter(function (d) { return d.paidCents > 0; });
+    var tot = function (k) { return debts.reduce(function (t, d) { return t + d[k]; }, 0); };
+    return Money.ok(tot('paidCents'), { month: row.month, debts: debts, minimumsCents: tot('fromMinimumCents'), extraCents: tot('fromExtraCents'),
+      interestCents: tot('interestCents'), principalCents: tot('principalCents') });
+  }
+
+  /**
    * Run every strategy at the same payment and report the trade-off.
    * This is the whole point of having four: avalanche always wins on total
    * interest, and it is not always the one someone will stick to.
    */
+  /**
+   * milestones(plan, household, rules, opts) — three finish lines read off
+   * one simulation (D-188): the credit cards gone, everything above the
+   * high-interest line gone (opts.highInterestRate, the FOO ladder's
+   * figure; null when none is given), everything gone. A class with no
+   * debt in it has count 0 and month null, never a zero month; a class
+   * whose debts the plan never clears has month null too.
+   */
+  /* The two classes a finish line or a stop line can name (D-188, D-191):
+     the cards, and anything at or above the high-interest rate. One
+     predicate, so the line that says "cards gone" and the stop that says
+     "stop when the cards are gone" can never disagree. */
+  var STOP_CLASSES = ['cards', 'highInterest'];
+  function inClass(debt, cls, threshold) {
+    if (cls === 'cards') return debt.type === 'credit_card';
+    if (cls === 'highInterest') {
+      if (!Money.isEntered(threshold)) return false;
+      var r = effectiveRate(debt);
+      return Money.isEntered(r) && r >= threshold;
+    }
+    return false;
+  }
+
+  function milestones(plan, household, rules, opts) {
+    if (!plan || !Money.isOk(plan)) return null;
+    var o = opts || {};
+    var threshold = Money.isEntered(o.highInterestRate) ? o.highInterestRate : null;
+    var debts = ((household && household.debts) || []).filter(function (d) { return d.archived !== true; });
+    function last(pred) {
+      var ids = debts.filter(pred).map(function (d) { return d.id; });
+      if (!ids.length) return { count: 0, month: null };
+      var months = (plan.payoffs || []).filter(function (p) { return ids.indexOf(p.debtId) >= 0; }).map(function (p) { return p.month; });
+      return { count: ids.length, month: months.length === ids.length ? Math.max.apply(null, months) : null };
+    }
+    var cards = last(function (d) { return inClass(d, 'cards'); });
+    var high = threshold === null ? null : last(function (d) { return inClass(d, 'highInterest', threshold); });
+    if (high) high.threshold = threshold;
+    return { cards: cards, highInterest: high, all: { count: debts.length, month: plan.value } };
+  }
+
   function compareStrategies(household, rules, opts) {
     var o = opts || {};
     var results = {}, ok = [];
     (rules.strategies || []).forEach(function (s) {
       var r = simulate(household, rules, {
-        strategyId: s.id, extraMonthlyCents: o.extraMonthlyCents
+        strategyId: s.id, extraMonthlyCents: o.extraMonthlyCents,
+        stopAfter: o.stopAfter, highInterestRate: o.highInterestRate, asOf: o.asOf
       });
       results[s.id] = r;
       if (Money.isOk(r)) ok.push(r);
@@ -526,12 +732,99 @@
     });
   }
 
+  /* ---- What is free a month for the debts (D-190) -------------------------
+     One formula: take-home less spending less every minimum. It is read
+     two ways. The ESTIMATE runs it over what Start Here holds, and over
+     the intake's guesses where a figure is missing (the room hands in
+     that copy as opts.estimateFrom; the engine never guesses on its own).
+     The REALIZED figure runs the same arithmetic over the months closed in
+     Budget: what actually came in less what actually went out, averaged
+     over the last three, less the minimums as they stand today. A typed
+     extra beats both; realized beats the estimate. */
+  var REALIZED_MONTHS = 3;
+
+  function freeMonthlyCents(household, tables) {
+    var take = Schema.takeHomeMonthlyCents(household, tables);
+    if (!Money.isOk(take)) return take;
+    var spend = Schema.monthlyExpensesCents(household);
+    if (!Money.isOk(spend)) return spend;
+    var mins = Schema.monthlyDebtPaymentsCents(household);
+    if (!Money.isOk(mins)) return mins;
+    return Money.ok(take.value - spend.value - mins.value, {
+      takeHomeCents: take.value, spendingCents: spend.value, minimumsCents: mins.value,
+      spendingSource: spend.source || null
+    });
+  }
+
+  function realizedFreeMonthlyCents(household) {
+    var months = (((household || {}).ledger || {}).months || [])
+      .filter(function (m) {
+        return m && m.actual && Money.isEntered(m.actual.income) && m.actual.income > 0 && Money.isEntered(m.actual.expenses);
+      })
+      .sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; })
+      .slice(-REALIZED_MONTHS);
+    if (!months.length) return Money.incomplete('No month with income has been closed yet.', ['closedMonths']);
+    var mins = Schema.monthlyDebtPaymentsCents(household);
+    if (!Money.isOk(mins)) return mins;
+    var inc = Math.round(months.reduce(function (t, m) { return t + m.actual.income; }, 0) / months.length);
+    var out = Math.round(months.reduce(function (t, m) { return t + m.actual.expenses; }, 0) / months.length);
+    return Money.ok(inc - out - mins.value, {
+      incomeCents: inc, spendingCents: out, minimumsCents: mins.value,
+      months: months.map(function (m) { return m.id; })
+    });
+  }
+
+  /**
+   * extraCapacity(household, tables, opts) — the extra the plan can count
+   * on when the box is blank, and where it came from.
+   *   opts.estimateFrom  the household with guesses standing in for what is
+   *                      missing (Gate.fillGuesses); defaults to household
+   *   opts.typedCents    a figure typed in the room, which wins outright
+   * Returns { estimate, realized, typed, basis, cents, shortCents, guessed }:
+   * estimate/realized are the two results above (null when incomplete);
+   * basis is 'typed' | 'realized' | 'estimate' | null; cents is the figure
+   * the plan uses, never below zero; shortCents is how far the chosen
+   * figure fell below zero, else 0; guessed names the fields the estimate
+   * leaned on a guess for.
+   */
+  function extraCapacity(household, tables, opts) {
+    var o = opts || {};
+    var from = o.estimateFrom || household;
+    var est = freeMonthlyCents(from, tables);
+    var real = realizedFreeMonthlyCents(household);
+    var guessed = [];
+    var stand = (from && from.meta && from.meta.standalone) || [];
+    var committed = (household && household.meta && household.meta.guessed) || {};
+    ['grossAnnualIncome', 'monthlyExpenses'].forEach(function (id) {
+      if (stand.indexOf(id) >= 0 || committed[id]) guessed.push(id);
+    });
+    var basis = null, use = null;
+    if (Money.isEntered(o.typedCents)) { basis = 'typed'; use = o.typedCents; }
+    else if (Money.isOk(real)) { basis = 'realized'; use = real.value; }
+    else if (Money.isOk(est)) { basis = 'estimate'; use = est.value; }
+    return {
+      estimate: Money.isOk(est) ? est : null,
+      estimateReason: Money.isOk(est) ? null : est.reason,
+      realized: Money.isOk(real) ? real : null,
+      realizedReason: Money.isOk(real) ? null : real.reason,
+      typed: Money.isEntered(o.typedCents) ? o.typedCents : null,
+      basis: basis,
+      cents: use === null ? null : Math.max(0, use),
+      shortCents: use === null ? 0 : Math.max(0, -use),
+      guessed: guessed
+    };
+  }
+
   /** What the current minimums alone would cost — the do-nothing baseline. */
   function minimumsOnly(household, rules) {
     return simulate(household, rules, { strategyId: 'avalanche', extraMonthlyCents: 0 });
   }
 
   return {
+    realCost: realCost,
+    deflate: deflate,
+    cascade: cascade,
+    monthFlow: monthFlow,
     promoStatus: promoStatus,
     effectiveRate: effectiveRate,
     rateInMonth: rateInMonth,
@@ -549,6 +842,13 @@
     prepare: prepare,
     simulate: simulate,
     compareStrategies: compareStrategies,
+    milestones: milestones,
+    inClass: inClass,
+    STOP_CLASSES: STOP_CLASSES,
+    rankRate: rankRate,
+    freeMonthlyCents: freeMonthlyCents,
+    realizedFreeMonthlyCents: realizedFreeMonthlyCents,
+    extraCapacity: extraCapacity,
     creditCardsOnly: creditCardsOnly,
     rewardsVsCarrying: rewardsVsCarrying,
     minimumsOnly: minimumsOnly

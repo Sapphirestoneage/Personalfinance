@@ -37,19 +37,21 @@
     deps = {
       Money: require('./money.js'),
       Registry: require('./registry.js'),
-      Ownership: require('./ownership.js')
+      Ownership: require('./ownership.js'),
+      Schema: require('./schema.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Registry: root.SLAF && root.SLAF.Registry,
-      Ownership: root.SLAF && root.SLAF.Ownership
+      Ownership: root.SLAF && root.SLAF.Ownership,
+      Schema: root.SLAF && root.SLAF.Schema
     };
   }
-  var api = factory(deps.Money, deps.Registry, deps.Ownership);
+  var api = factory(deps.Money, deps.Registry, deps.Ownership, deps.Schema);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.RoomExport = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Registry, Ownership) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Registry, Ownership, Schema) {
   'use strict';
 
   /* A room may register extra rows of its own — a debt schedule, a set of
@@ -125,7 +127,7 @@
     var room = Registry.byId(roomId) || { title: roomId };
     var m = meta || {};
     var head = ['# ' + room.title,
-                '# exported ' + (m.on || new Date().toISOString().slice(0, 10)),
+                '# exported ' + (m.on || Schema.localDay()),
                 '# ' + (m.version ? 'Money Rooms v' + m.version : 'Money Rooms'),
                 '# A blank value means NOT ENTERED. It does not mean zero.'];
     var cols = ['Section', 'Figure', 'Value', 'Amount (cents)', 'Status', 'Owned by', 'Note'];
@@ -173,26 +175,22 @@
     if (typeof document === 'undefined' || !host) return null;
     var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
     var Spine = g && g.SLAF && g.SLAF.Spine;
-    var Schema = g && g.SLAF && g.SLAF.Schema;
     if (!Spine) return null;
     var room = Registry.byId(roomId);
     if (!room) return null;
 
-    var box = document.createElement('div');
+    /* One folded line (D-186): the three buttons were the same furniture
+       at the foot of every room, and read as something to do. */
+    var box = document.createElement('details');
     box.className = 'slaf-export';
-    box.innerHTML = '<span class="slaf-export-h">Take this room with you</span>'
+    box.innerHTML = '<summary class="slaf-export-h">Save or print this room</summary>'
       + '<div class="slaf-export-acts">'
-      /* The base .slaf-btn, not --quiet: that variant is deliberately
-         borderless (it is the text-link style Undo uses), and three
-         borderless buttons in a row read as a sentence of links rather than
-         as three parallel actions. */
       + '<button type="button" class="slaf-btn" data-x="csv">CSV</button>'
       + '<button type="button" class="slaf-btn" data-x="json">JSON</button>'
       + '<button type="button" class="slaf-btn" data-x="print">Print / PDF</button>'
       + '</div>'
-      + '<p class="slaf-export-note">Just this room, not your whole household — that is in '
-      + '<a href="' + (atRoot(roomId) ? '' : '') + 'data.html">Your Data</a>. '
-      + 'A blank cell means not entered; it never means zero. Nothing is uploaded.</p>';
+      + '<p class="slaf-export-note">This room only; your whole household is in '
+      + '<a href="' + (atRoot(roomId) ? '' : '') + 'data.html">Your Data</a>. Nothing is uploaded.</p>';
     host.appendChild(box);
 
     box.addEventListener('click', function (e) {
@@ -200,7 +198,7 @@
       if (!b) return;
       var what = b.getAttribute('data-x');
       var h = Spine.getProfile();
-      var meta = { version: Schema && Schema.APP_VERSION, on: new Date().toISOString().slice(0, 10) };
+      var meta = { version: Schema && Schema.APP_VERSION, on: Schema.localDay() };
       var base = slug(room.title) + '-' + meta.on;
       if (what === 'csv') download(base + '.csv', csv(roomId, h, meta), 'text/csv');
       else if (what === 'json') download(base + '.json', json(roomId, h, meta), 'application/json');

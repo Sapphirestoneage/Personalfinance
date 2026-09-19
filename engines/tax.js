@@ -33,19 +33,21 @@
     deps = {
       Money: require('../shared/money.js'),
       Schema: require('../shared/schema.js'),
-      SelfEmployed: require('./selfemployed.js')
+      SelfEmployed: require('./selfemployed.js'),
+      Reference: require('../shared/reference.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Schema: root.SLAF && root.SLAF.Schema,
-      SelfEmployed: root.SLAF && root.SLAF.SelfEmployed
+      SelfEmployed: root.SLAF && root.SLAF.SelfEmployed,
+      Reference: root.SLAF && root.SLAF.Reference
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.SelfEmployed);
+  var api = factory(deps.Money, deps.Schema, deps.SelfEmployed, deps.Reference);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Tax = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, SelfEmployed) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, SelfEmployed, Reference) {
   'use strict';
 
   function dollars(cents) { return cents / 100; }
@@ -69,7 +71,13 @@
       }
       prevTop = hi;
     }
-    return { taxDollars: tax, slices: slices, marginalRate: slices.length ? slices[slices.length - 1].rate : (ladder[0] ? ladder[0].rate : 0) };
+    /* With nothing taxable, no slice is cut. The fallback used to report the
+       LOWEST bracket's rate, so a $12,000 earner whose standard deduction
+       wipes out their taxable income was told their next dollar is taxed at
+       10% — and the Tax room then sized the room before the next bracket
+       from that wrong floor. The next dollar there is taxed at nothing until
+       the deduction is used up, so the marginal rate is 0. */
+    return { taxDollars: tax, slices: slices, marginalRate: slices.length ? slices[slices.length - 1].rate : 0 };
   }
 
   /* ---- 1. Ordinary income --------------------------------------------------- */
@@ -247,7 +255,10 @@
     var federal = ord.value + cg.value;
     var total = federal + payroll.value + seTax.value + stateCents;
     var totalGross = ordinaryGross + gains;
+    /* Past the table's year, say so on the number (G3.15, D-210). */
+    var yearNote = Reference && Reference.yearNotes ? Reference.yearNotes({ federalBrackets: t.federalBrackets, seTax: t.seTax, stateBrackets: t.stateBrackets }) : [];
     return Money.ok(total, {
+      yearNote: yearNote.length ? yearNote[0] : null,
       federalOrdinaryCents: ord.value,
       federalCapitalGainsCents: cg.value,
       federalIncomeTaxCents: federal,
@@ -270,7 +281,170 @@
     });
   }
 
+  /* ---- 6. Deferred tax on what is owned (15.3, D-181) ---------------------
+     A pre-tax dollar is not a whole dollar. The rate it will be taxed at is
+     the marginal bracket at PROJECTED FI SPENDING (today's money, 15.2),
+     not today's bracket: in retirement the withdrawals are the income.
+     Capital gains stack on top of that ordinary income, so the gains rate
+     is the one at the first dollar of gains above it. Filing status missing
+     is assumed single and said so, because an assumed rate is still a
+     rate and a blank net worth helps nobody. */
+  function withdrawalRates(household, tables) {
+    var t = tables || {};
+    if (!t.federalBrackets) return Money.incomplete('Federal bracket table is not loaded.', ['federalBrackets']);
+    var spend = Schema.monthlyExpensesCents(household);
+    if (!Money.isOk(spend)) return Money.incomplete('Add your monthly spending to see the tax you will owe later.', ['monthlyExpenses']);
+    var assumed = [];
+    var fs = household && household.filingStatus;
+    if (!fs || !t.federalBrackets.brackets[fs]) { fs = 'single'; assumed.push('filingStatus'); }
+    var annual = spend.value * 12;
+    var ord = ordinaryTax(t.federalBrackets, annual, fs);
+    if (!Money.isOk(ord)) return ord;
+    var cg = capitalGainsTax(t.federalBrackets, 100, ord.taxableIncomeCents, fs);
+    return Money.ok(ord.marginalRate, {
+      withdrawalRate: ord.marginalRate,
+      capitalGainsRate: Money.isOk(cg) ? cg.marginalRate : 0,
+      spendingAnnualCents: annual,
+      taxableIncomeCents: ord.taxableIncomeCents,
+      filingStatus: fs,
+      assumed: assumed,
+      referenceVersion: t.federalBrackets.version
+    });
+  }
+
+  /** Every owned thing after the tax still owed on it, and the net worth
+      that leaves. `rows` carry each asset's own answer. */
+  function afterTaxAssets(household, tables, categories) {
+    var rates = withdrawalRates(household, tables);
+    if (!Money.isOk(rates)) return rates;
+    var assumed = rates.assumed.slice();
+    var listed = 0, after = 0, rows = [], counted = 0;
+    Schema.aggregatableAssets(household).forEach(function (a) {
+      if (!Money.isEntered(a.valueCents)) return;
+      if (categories && categories.indexOf(a.category) === -1) return;
+      var r = Schema.afterTaxValue(a, household, rates);
+      if (!Money.isOk(r)) return;
+      counted++;
+      listed += a.valueCents;
+      after += r.value;
+      r.assumed.forEach(function (k) { if (assumed.indexOf(k) === -1) assumed.push(k); });
+      rows.push({ asset: a, result: r });
+    });
+    if (counted === 0) return Money.incomplete('Add an amount to see this.', ['assets']);
+    return Money.ok(after, {
+      listedCents: listed,
+      afterTaxCents: after,
+      deferredTaxCents: listed - after,
+      rows: rows,
+      rates: rates,
+      assumed: assumed
+    });
+  }
+
+  function afterTaxNetWorth(household, tables) {
+    var assets = afterTaxAssets(household, tables, null);
+    if (!Money.isOk(assets)) return assets;
+    var debt = Schema.totalDebtCents(household);
+    if (!Money.isOk(debt)) return Money.incomplete('Add your total debt to see this. Enter 0 if you have none.', ['debts']);
+    return Money.ok(assets.afterTaxCents - debt.value, {
+      listedNetWorthCents: assets.listedCents - debt.value,
+      totalAssetsCents: assets.listedCents,
+      afterTaxAssetsCents: assets.afterTaxCents,
+      totalDebtCents: debt.value,
+      deferredTaxCents: assets.deferredTaxCents,
+      rows: assets.rows,
+      rates: assets.rates,
+      assumed: assets.assumed
+    });
+  }
+
+  /** The investments the FI target is measured against, after deferred tax. */
+  function afterTaxInvestmentsCents(household, tables) {
+    return afterTaxAssets(household, tables, ['investment', 'retirement']);
+  }
+
+  /* ---- 7. Take-home, source by source (15.4, D-181) -----------------------
+     Each source gets its own rules: a W-2 job pays FICA and ordinary tax;
+     contract work pays self-employment tax and deducts half of it; passive
+     income is ordinary unless marked qualified, which stacks as gains;
+     a benefit and a pension are ordinary with no payroll tax; Social
+     Security is at most 85% taxable (the higher-income rule; taken as the
+     rule for anyone who still has other income, and said so). The
+     ordinary tax is computed ONCE on the pool and shared out in proportion
+     to what each source put in, so the parts sum to the whole. */
+  var SS_TAXABLE_SHARE = 0.85;
+  function takeHomeBySource(household, tables) {
+    var t = tables || {};
+    var sources = Schema.allIncomeSources(household).filter(function (s) { return Money.isEntered(s.grossAnnualIncomeCents); });
+    if (!sources.length) return Money.incomplete('Add your income to see this.', ['grossAnnualIncome']);
+    if (!t.federalBrackets) return Money.incomplete('Federal bracket table is not loaded.', ['federalBrackets']);
+    var assumed = [];
+    var fs = household && household.filingStatus;
+    if (!fs || !t.federalBrackets.brackets[fs]) { fs = 'single'; assumed.push('filingStatus'); }
+    var wages = 0;
+    sources.forEach(function (s) { if (s.type === 'w2' || s.type === 'equity') wages += s.grossAnnualIncomeCents; });
+    var rows = sources.map(function (s) {
+      var type = s.type || 'w2';
+      var g = s.grossAnnualIncomeCents;
+      var row = { id: s.id, source: s.source, personId: s.personId, type: type, grossCents: g, ordinaryCents: 0, qualifiedCents: 0, payrollCents: 0, seCents: 0, method: '', survivesJobLoss: Schema.survivesJobLoss(s) };
+      if (type === 'w2' || type === 'equity') {
+        var f = fica(t.seTax, g, fs);
+        row.payrollCents = Money.isOk(f) ? f.value : 0;
+        row.ordinaryCents = g;
+        row.method = 'payroll tax and withholding';
+      } else if (type === '1099') {
+        var se = SelfEmployed.selfEmploymentTax(g, fs, t.seTax, { priorWagesCents: wages });
+        row.seCents = Money.isOk(se) ? se.value : 0;
+        row.halfSeCents = Money.isOk(se) ? (se.deductibleHalfCents || 0) : 0;
+        row.ordinaryCents = Math.max(0, g - row.halfSeCents);
+        row.method = 'self-employment tax, half of it deducted';
+      } else if (type === 'passive') {
+        if (s.passiveTreatment === 'qualified') { row.qualifiedCents = g; row.method = 'qualified: taxed as gains'; }
+        else { row.ordinaryCents = g; row.method = 'ordinary income, no payroll tax'; }
+      } else if (type === 'socialSecurity') {
+        row.ordinaryCents = Math.round(g * SS_TAXABLE_SHARE);
+        row.method = 'up to 85% taxable, no payroll tax';
+        if (assumed.indexOf('socialSecurityShare') === -1) assumed.push('socialSecurityShare');
+      } else {
+        row.ordinaryCents = g;
+        row.method = type === 'pension' ? 'ordinary income, no payroll tax' : 'taxable, no payroll tax';
+      }
+      return row;
+    });
+    var pool = 0, qualified = 0;
+    rows.forEach(function (r) { pool += r.ordinaryCents; qualified += r.qualifiedCents; });
+    var ord = ordinaryTax(t.federalBrackets, pool, fs);
+    var ordTax = Money.isOk(ord) ? ord.value : 0;
+    var cg = qualified > 0 && Money.isOk(ord) ? capitalGainsTax(t.federalBrackets, qualified, ord.taxableIncomeCents, fs) : null;
+    var cgTax = cg && Money.isOk(cg) ? cg.value : 0;
+    var totalGross = 0, totalTax = 0;
+    rows.forEach(function (r) {
+      var share = pool > 0 ? r.ordinaryCents / pool : 0;
+      var qshare = qualified > 0 ? r.qualifiedCents / qualified : 0;
+      r.incomeTaxCents = Math.round(ordTax * share + cgTax * qshare);
+      r.taxCents = r.incomeTaxCents + r.payrollCents + r.seCents;
+      r.takeHomeCents = r.grossCents - r.taxCents;
+      r.effectiveRate = r.grossCents > 0 ? r.taxCents / r.grossCents : null;
+      totalGross += r.grossCents; totalTax += r.taxCents;
+    });
+    return Money.ok(totalGross - totalTax, {
+      rows: rows,
+      grossCents: totalGross,
+      taxCents: totalTax,
+      takeHomeCents: totalGross - totalTax,
+      effectiveRate: totalGross > 0 ? totalTax / totalGross : null,
+      filingStatus: fs,
+      assumed: assumed,
+      referenceVersion: t.federalBrackets.version
+    });
+  }
+
   return {
+    takeHomeBySource: takeHomeBySource,
+    withdrawalRates: withdrawalRates,
+    afterTaxAssets: afterTaxAssets,
+    afterTaxNetWorth: afterTaxNetWorth,
+    afterTaxInvestmentsCents: afterTaxInvestmentsCents,
     ordinaryTax: ordinaryTax,
     capitalGainsTax: capitalGainsTax,
     fica: fica,

@@ -1,0 +1,480 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_tc_a",
+      "label": "Jesse",
+      "role": "adult",
+      "dob": "1984-03-09",
+      "employmentStatus": "employed",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [
+        {
+          "id": "p_tc_a_inc0",
+          "personId": "p_tc_a",
+          "source": "Project manager",
+          "grossAnnualIncomeCents": 8500000,
+          "frequency": "annual",
+          "rateCents": null,
+          "hoursPerWeek": null,
+          "monthsWorked": null,
+          "ongoing": true,
+          "variableLowCents": null,
+          "variableHighCents": null,
+          "type": "w2",
+          "hassle": null,
+          "employerMatch": {
+            "matchPercent": 0.5,
+            "matchCapPercentOfSalary": 0.06
+          }
+        }
+      ],
+      "work": {
+        "contractedHoursPerWeek": null,
+        "unpaidOvertimeHoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "prepHoursPerWeek": null,
+        "decompressHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "weeksPerYear": 48
+      }
+    },
+    {
+      "id": "p_tc_b",
+      "label": "Harper",
+      "role": "adult",
+      "dob": "1986-08-27",
+      "employmentStatus": "employed",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [
+        {
+          "id": "p_tc_b_inc0",
+          "personId": "p_tc_b",
+          "source": "Teacher",
+          "grossAnnualIncomeCents": 5500000,
+          "frequency": "annual",
+          "rateCents": null,
+          "hoursPerWeek": null,
+          "monthsWorked": null,
+          "ongoing": true,
+          "variableLowCents": null,
+          "variableHighCents": null,
+          "type": "w2",
+          "hassle": null,
+          "employerMatch": {
+            "matchPercent": null,
+            "matchCapPercentOfSalary": null
+          }
+        }
+      ],
+      "work": {
+        "contractedHoursPerWeek": null,
+        "unpaidOvertimeHoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "prepHoursPerWeek": null,
+        "decompressHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "weeksPerYear": 48
+      }
+    }
+  ],
+  "filingStatus": "married_joint",
+  "state": "TX",
+  "capturingFullMatch": true,
+  "dependents": [
+    {
+      "age": 4
+    },
+    {
+      "age": 2
+    }
+  ],
+  "community": {
+    "daySchool": null
+  },
+  "assets": [
+    {
+      "id": "a_0",
+      "label": "Savings",
+      "category": "cash",
+      "valueCents": 1600000,
+      "liquid": true,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_1",
+      "label": "401(k) + 403(b)",
+      "category": "retirement",
+      "valueCents": 15000000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": "pretax",
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_home2",
+      "label": "House",
+      "category": "real_estate",
+      "valueCents": 36000000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_3",
+      "label": "SUV",
+      "category": "vehicle",
+      "valueCents": 2700000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_4",
+      "label": "Sedan",
+      "category": "vehicle",
+      "valueCents": 2100000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    }
+  ],
+  "debts": [
+    {
+      "id": "d_home2",
+      "label": "Mortgage",
+      "balanceCents": 26000000,
+      "rate": 0.055,
+      "minPaymentCents": 190000,
+      "type": "mortgage",
+      "creditLimitCents": null,
+      "promoEndsOn": null,
+      "postPromoRate": null,
+      "emotionalTag": null,
+      "keepReasons": [],
+      "excludeFromAggressive": false,
+      "interestFree": null,
+      "archived": false,
+      "borrowedOn": null,
+      "dueOn": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_1",
+      "label": "SUV loan",
+      "balanceCents": 2400000,
+      "rate": 0.079,
+      "minPaymentCents": 52000,
+      "type": "auto",
+      "creditLimitCents": null,
+      "promoEndsOn": null,
+      "postPromoRate": null,
+      "emotionalTag": null,
+      "keepReasons": [],
+      "excludeFromAggressive": false,
+      "interestFree": null,
+      "archived": false,
+      "borrowedOn": null,
+      "dueOn": null,
+      "ownerIds": []
+    },
+    {
+      "id": "d_2",
+      "label": "Sedan loan",
+      "balanceCents": 1900000,
+      "rate": 0.065,
+      "minPaymentCents": 41000,
+      "type": "auto",
+      "creditLimitCents": null,
+      "promoEndsOn": null,
+      "postPromoRate": null,
+      "emotionalTag": null,
+      "keepReasons": [],
+      "excludeFromAggressive": false,
+      "interestFree": null,
+      "archived": false,
+      "borrowedOn": null,
+      "dueOn": null,
+      "ownerIds": []
+    }
+  ],
+  "expenses": {
+    "needs": {
+      "food": {
+        "monthlyCents": 130000
+      },
+      "accommodation": {
+        "monthlyCents": 235000
+      },
+      "transportation": {
+        "monthlyCents": 70000
+      }
+    },
+    "wants": {
+      "totalCents": 340000,
+      "therapy": null
+    },
+    "entries": []
+  },
+  "incomeBasis": "earned",
+  "retirement": {
+    "contributionPercent": null,
+    "rothContributedCents": null,
+    "hsaContributedCents": null,
+    "onHdhp": null,
+    "hsaFamilyPlan": null,
+    "has401k": null
+  },
+  "insurance": {
+    "highestDeductibleCents": null,
+    "oopMaxCents": null,
+    "termLifeCents": null,
+    "disabilityMonthlyCents": null,
+    "umbrella": null,
+    "health": {
+      "type": null,
+      "monthlyCents": null
+    }
+  },
+  "worthChecks": [],
+  "ratings": {},
+  "valuesProfile": {
+    "stated": [],
+    "assignments": {}
+  },
+  "swan": {
+    "basis": null,
+    "targetCents": null,
+    "targetMonths": null,
+    "note": null,
+    "setAt": null
+  },
+  "goals": [],
+  "futureIncome": [],
+  "property": [],
+  "allocation": {
+    "stocks": null,
+    "bonds": null,
+    "cash": null,
+    "rebalanceBand": null
+  },
+  "rerank": {
+    "rows": []
+  },
+  "targets": {
+    "retireAge": null,
+    "coastAge": null
+  },
+  "scenarios": [],
+  "oneOffs": [],
+  "estate": {
+    "beneficiariesSet": null,
+    "willExists": null,
+    "poaExists": null
+  },
+  "giving": {
+    "pctOfIncome": null,
+    "annualTargetCents": null
+  },
+  "decumulation": {
+    "stockShare": null,
+    "plannedAnnualDrawCents": null,
+    "socialSecurityAt": null
+  },
+  "tax": {
+    "otherPreTaxAnnualCents": null,
+    "withheldAnnualCents": null
+  },
+  "career": {
+    "offer": {
+      "grossAnnualCents": null,
+      "hoursPerWeek": null,
+      "commuteHoursPerWeek": null,
+      "workCostsMonthlyCents": null,
+      "signOnCents": null
+    }
+  },
+  "partner": {
+    "splitMode": null,
+    "sharedMonthlyCents": null
+  },
+  "kids": {
+    "tuitionTargetCents": null,
+    "tuitionSavedCents": null,
+    "tuitionMonthlyCents": null
+  },
+  "housing": {
+    "rentMonthlyCents": null,
+    "priceCents": null,
+    "downPct": null,
+    "rate": null
+  },
+  "purchase": {
+    "priceCents": null,
+    "monthsAway": null,
+    "financeRate": null,
+    "label": null
+  },
+  "variableIncome": {
+    "bufferMonths": null,
+    "windowMonths": null
+  },
+  "enough": {
+    "monthlyCents": null,
+    "source": null
+  },
+  "designedWeek": {
+    "blocks": []
+  },
+  "timeBuckets": [],
+  "dreams": [],
+  "reversibility": {
+    "decisionId": null,
+    "given": {}
+  },
+  "unlearning": {
+    "dropped": []
+  },
+  "studentLoans": {
+    "plan": null,
+    "extraMonthlyCents": null,
+    "idrShare": null,
+    "forgivenessYears": null
+  },
+  "calendar": {
+    "cadence": null,
+    "nextPaydayDay": null,
+    "bills": [],
+    "payLater": []
+  },
+  "history": {
+    "compareTo": null
+  },
+  "ledger": {
+    "income": [],
+    "months": [],
+    "dismissed": []
+  },
+  "budget": {
+    "estimated": {},
+    "presets": {}
+  },
+  "notApplicable": {},
+  "skills": {},
+  "skillTree": {
+    "state": {}
+  },
+  "exercises": {
+    "done": {},
+    "results": {}
+  },
+  "practiceLedger": [],
+  "assumptions": {
+    "returnReal": 0.05,
+    "inflation": 0.03,
+    "expectedReturnRate": 0.07,
+    "swrRate": 0.04,
+    "humanCapitalDiscountRate": 0.02,
+    "homeEquityHaircut": 0.8,
+    "marginalRate": null
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": null,
+    "confirmedAt": {},
+    "hasDebt": true,
+    "undoStack": [],
+    "redoStack": [],
+    "guessed": {},
+    "source": {},
+    "displayUnit": null,
+    "noRent": null,
+    "walk": {
+      "startedAt": null,
+      "finishedAt": null,
+      "done": {},
+      "skipped": {}
+    },
+    "frontDoor": null,
+    "isDemo": true,
+    "name": "Two cars, two kids",
+    "story": "42 and 40, $140k combined, two car loans, childcare at $2,200 a month inside everything else.",
+    "sphere": 4,
+    "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+    "lane": "lane2 section 1 (L-1)",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 775000,
+      "fiTargetCents": 232500000,
+      "grossAnnualCents": 14000000,
+      "effectiveRate": 0.2,
+      "estimatedTaxCents": 2800000,
+      "takeHomeAnnualCents": 11200000,
+      "takeHomeMonthlyCents": 933333,
+      "savingsRate": 0.1357142857142857,
+      "runwayMonths": 2.064516129032258,
+      "runwayWholeMonths": 2,
+      "netWorthCents": 27100000,
+      "working": [
+        "monthly spending = food $1,300 + accommodation $2,350 + transportation $700 + everything else $3,400 = $7,750",
+        "FI target = $7,750 x 12 / 0.04 = $93,000 / 0.04 = $2,325,000",
+        "gross $140,000 married_joint: band married_joint up to $200,000 -> effective rate 0.2",
+        "estimated tax = $140,000 x 0.2 = $28,000; take-home = $140,000 - $28,000 = $112,000 a year, $9,333.33 a month",
+        "savings rate (excluding match) = ($112,000 - $93,000) / $140,000 = $19,000 / $140,000 = 0.1357",
+        "runway = cash $16,000 / $7,750 a month = 2.0645 months (2 whole months; Runway.project stops at 60)",
+        "net worth = $16,000 + $150,000 + $360,000 + $27,000 + $21,000 - ($260,000 + $24,000 + $19,000) = $574,000 - $303,000 = $271,000"
+      ]
+    }
+  }
+}

@@ -93,6 +93,46 @@ function loadDemo() {
   ok('and is null when absent', Spine.codeFromFragment('#out-weather') === null);
   const back = await Spine.fromShareCode(code);
   eq('the share code round-trips the export', back, exp);
+  /* D-200: the share sheet, where there is one. */
+  ok('the share sheet helper exists and refuses politely where there is no sheet', typeof Spine.sendToDevice === 'function');
+  let noSheet = null; try { await Spine.sendToDevice(); } catch (e) { noSheet = e.message; }
+  ok('...saying to use the file or the link', /Download the file or copy the link/.test(noSheet || ''));
+  /* D-203: a browser that has a sheet and refuses it (an in-app browser). */
+  const denied = () => { const e = new Error('Permission denied'); e.name = 'NotAllowedError'; return Promise.reject(e); };
+  const setNav = (v) => Object.defineProperty(global, 'navigator', { value: v, configurable: true, writable: true });
+  const origNav = Object.getOwnPropertyDescriptor(global, 'navigator');
+  setNav({ share: denied, canShare: () => true });
+  global.File = function (parts, name) { this.name = name; };
+  let blocked = null; try { await Spine.sendToDevice(); } catch (e) { blocked = e; }
+  ok('a sheet that refuses twice gives one plain, marked error', !!blocked && blocked.blocked === true && /would not open the share sheet/.test(blocked.message) && /Chrome or Safari/.test(blocked.message), blocked && blocked.message);
+  let calls = 0;
+  setNav({ share: (d) => { calls++; return d.files ? denied() : Promise.resolve(); }, canShare: () => true });
+  const viaLink = await Spine.sendToDevice();
+  ok('a sheet that refuses the file gets the link instead', viaLink.how === 'link' && calls === 2);
+  setNav({ share: () => { const e = new Error('cancel'); e.name = 'AbortError'; return Promise.reject(e); }, canShare: () => true });
+  let cancel = null; try { await Spine.sendToDevice(); } catch (e) { cancel = e; }
+  ok('a cancel is still a cancel, not a refusal', !!cancel && cancel.name === 'AbortError' && !cancel.blocked);
+  if (origNav) Object.defineProperty(global, 'navigator', origNav); else delete global.navigator;
+  delete global.File;
+  /* D-204: the browser is asked to keep the data on the first write, and the answer is remembered. */
+  {
+    let asked = 0;
+    setNav({ storage: { persist: () => { asked++; return Promise.resolve(true); } } });
+    const recorded = {};
+    global.SLAF = { Prefs: { set: (k, v) => { recorded[k] = v; }, get: (k, d) => (k in recorded ? recorded[k] : d) } };
+    global.localStorage = { _s: {}, getItem(k) { return k in this._s ? this._s[k] : null; }, setItem(k, v) { this._s[k] = String(v); }, removeItem(k) { delete this._s[k]; } };
+    const spinePath = require('path').join(__dirname, '..', 'shared', 'spine-v2.js');
+    delete require.cache[require.resolve(spinePath)];
+    const Sp = require(spinePath);
+    Sp.ensurePrimaryPerson('You');
+    Sp.set('people.0.age', 40, 'age');
+    await new Promise(r => setTimeout(r, 0));
+    ok('persist() was asked once on the first write', asked === 1);
+    ok('and the answer is remembered in Prefs', recorded['storage.persisted'] === true);
+    ok('and readable from the spine', Sp.storageState().persisted === true);
+    delete require.cache[require.resolve(spinePath)]; delete global.localStorage; delete global.SLAF;
+    if (origNav) Object.defineProperty(global, 'navigator', origNav); else delete global.navigator;
+  }
   const sizeBytes = Buffer.byteLength(frag);
   ok('a full household with a snapshot fits well under 8 KB (' + sizeBytes + ' bytes)', sizeBytes < 8192);
 

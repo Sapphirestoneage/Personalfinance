@@ -172,11 +172,11 @@ check('fireProgress', prog.value, 48000 / 945000, 1e-12);
 
 /* -- Years to FIRE: recomputed here with an independent loop ------------- */
 (function () {
-  const target = 94500000, r = 0.07, contribution = 2268000;
+  const target = 94500000, r = 0.05, contribution = 2268000;   /* 15.2: the return is real, the median band */
   let balance = 4800000, years = 0;
   while (balance < target && years < 200) { balance = balance * (1 + r) + contribution; years++; }
   check('yearsToFire (independent loop)', prog.timeToFire.value, years);
-  check('yearsToFire is 19 at these assumptions', prog.timeToFire.value, 19);
+  check('yearsToFire is 22 at these assumptions (5% real)', prog.timeToFire.value, 22);
   check('yearsToFire contribution basis', prog.timeToFire.contributionBasis, 'includingMatch');
 })();
 
@@ -285,7 +285,7 @@ section('Zero denominators and negative values');
   /* Expenses affirmatively zero: emergency fund coverage must not be
      Infinity, and the FIRE number must not be $0. */
   const z = Demo.build();
-  z.expenses.monthlyEssential.estimatedValueCents = 0;
+  z.expenses = Schema.withMonthlySpend(z, 0).expenses;
 
   const efz = Tier0.emergencyFundMonths(z);
   checkTrue('EF coverage with zero expenses is not Infinity',
@@ -356,7 +356,7 @@ section('Household aggregation — joint items and children');
 section('Assumptions');
 
 (function () {
-  check('default return rate', Schema.ASSUMPTION_DEFAULTS.expectedReturnRate, 0.07);
+  check('default return rate is real, the median band (15.2)', Schema.ASSUMPTION_DEFAULTS.expectedReturnRate, 0.05);
   check('default SWR', Schema.ASSUMPTION_DEFAULTS.swrRate, 0.04);
 
   /* A local override changes this view only. */
@@ -374,19 +374,20 @@ section('Assumptions');
 section('Estimated vs tracked');
 
 (function () {
+  /* D-172: the month is the four numbers; the lines are a split of it. */
   const t = Demo.build();
-  t.expenses.monthlyEssential.trackedValueCents = 340000; // $3,400 actually spent
+  t.expenses.wants.totalCents += 25000;                     // $250 more of everything else
   const current = Schema.monthlyExpensesCents(t);
-  check('tracked wins as the current figure', current.value, 340000);
-  check('current figure is labelled tracked', current.source, 'tracked');
-  check('the original estimate survives',
-    t.expenses.monthlyEssential.estimatedValueCents, 315000);
-  /* divergence = tracked - estimated = 3,400 - 3,150 = $250 over */
-  check('divergence cents', Schema.expenseDivergenceCents(t).value, 25000);
+  check('the four numbers are the current figure', current.value, 340000);
+  check('current figure is labelled fat', current.source, 'fat');
+  check('...four of four filled in', current.entered + '/' + current.of, '4/4');
+  /* the lines add to $2,895 of spending against $3,400 typed: -$505 */
+  t.expenses.entries = Demo.buildSpending();
+  check('divergence cents: the needs’ lines equal the three typed, and everything else IS the lines (D-197)', Schema.expenseDivergenceCents(t).value, 0);
 
-  const estOnly = Demo.build();
-  check('divergence is incomplete with no tracked figure',
-    Schema.expenseDivergenceCents(estOnly).status, 'incomplete');
+  const noLines = Demo.build();
+  check('divergence is incomplete with no lines',
+    Schema.expenseDivergenceCents(noLines).status, 'incomplete');
 })();
 
 /* ==========================================================================
@@ -591,15 +592,21 @@ const SPEND = Demo.VALUES.monthlySpending;
 
   const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
   Spine.reset();
-  Spine.setMonthlyExpenses(315000, 'estimated');   // Robin guessed $3,150
-  Spine.setMonthlyExpenses(tracked.value, 'tracked'); // reality was $2,805
+  Spine.setMonthlyExpenses(315000);                 // Robin's one number: $3,150
+  check('one number lands in everything else', Spine.getProfile().expenses.wants.totalCents, 315000);
+  Spine.updateProfile({ expenses: { entries: hh.expenses.entries } });
+  /* the lines add to $2,895 of spending: -$255 against the one number */
+  check('divergence cents', Schema.expenseDivergenceCents(Spine.getProfile()).value, -25500);
+  /* "Use the lines as my month" - the one deliberate write from lines to buckets */
+  const lines = Spine.setFatFromLines();
   const after = Spine.getProfile();
-  check('the original estimate survives being tracked over',
-    after.expenses.monthlyEssential.estimatedValueCents, 315000);
-  check('the tracked figure is stored', after.expenses.monthlyEssential.trackedValueCents, 280500);
-  check('tracked becomes the current figure', Schema.monthlyExpensesCents(after).source, 'tracked');
-  /* divergence = tracked - estimated = 2,805 - 3,150 = -$345 */
-  check('divergence cents', Schema.expenseDivergenceCents(after).value, -34500);
+  check('food is groceries plus eating out', after.expenses.needs.food.monthlyCents, 45000 + 26000);
+  check('rent is the housing line', after.expenses.needs.accommodation.monthlyCents, 150000);
+  check('getting around is the transportation line', after.expenses.needs.transportation.monthlyCents, 22000);
+  check('everything else is the rest of the spending lines', after.expenses.wants.totalCents, 18000 + 15000 + 4500 + 9000);
+  check('savings lines are not spending', lines.wants, 46500);
+  check('the four now agree with the lines', Schema.expenseDivergenceCents(after).value, 0);
+  check('the month reads off the four', Schema.monthlyExpensesCents(after).value, 289500);
   Spine.reset();
 })();
 
@@ -673,6 +680,268 @@ const RULES = TABLES.debtRules;
   checkTrue('an extra $100/mo finishes sooner', faster.value < sim.value,
     `${faster.value} vs ${sim.value}`);
   checkTrue('and costs less interest', faster.totalInterestCents < sim.totalInterestCents);
+})();
+
+/* -- Avalanche ranks by the rate a debt will carry (D-188) ------------------- */
+(function () {
+  const end = new Date(); end.setMonth(end.getMonth() + 6); const iso = end.toISOString().slice(0, 10);
+  const hh = Schema.createHousehold({
+    people: [Schema.createPerson({ id: 'P', role: 'adult' })],
+    debts: [
+      Schema.createDebt({ id: 'promo', label: 'Promo card', balanceCents: 300000, rate: 0, promoEndsOn: iso, postPromoRate: 0.2499, minPaymentCents: 6000, type: 'credit_card', ownerIds: ['P'] }),
+      Schema.createDebt({ id: 'loan', label: 'Loan', balanceCents: 500000, rate: 0.08, minPaymentCents: 15000, type: 'personal', ownerIds: ['P'] })
+    ]
+  });
+  const av = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 20000 });
+  const sn = Debt.simulate(hh, RULES, { strategyId: 'snowball', extraMonthlyCents: 20000 });
+  checkTrue('a 0% card that becomes 24.99% ranks by the 24.99% in Avalanche', Debt.rankRate(hh.debts[0], 1) === 0.2499 && Debt.rankRate(hh.debts[1], 1) === 0.08);
+  checkTrue('...so Avalanche is never dearer than Snowball on it', av.totalInterestCents <= sn.totalInterestCents, av.totalInterestCents + ' vs ' + sn.totalInterestCents);
+  checkTrue('...and clears the promo card first', av.payoffs[0].debtId === 'promo');
+  check('a plain debt ranks by its own rate', Debt.rankRate(hh.debts[1], 1), 0.08);
+  const expired = Schema.createDebt({ id: 'x', balanceCents: 1000, rate: 0.05, promoEndsOn: '2020-01-01', postPromoRate: 0.30, minPaymentCents: 100 });
+  check('an expired promo ranks at the rate it already reverted to', Debt.rankRate(expired, 1), 0.30);
+  const unknown = Schema.createDebt({ id: 'u', balanceCents: 1000, rate: 0, promoEndsOn: iso, postPromoRate: null, minPaymentCents: 100 });
+  check('a promo with no go-to rate ranks at the rate it has (D-053: the plan cannot invent one)', Debt.rankRate(unknown, 1), 0);
+})();
+
+/* -- Three finish lines (D-188) -------------------------------------------- */
+(function () {
+  const hh = (function () {
+    return Schema.createHousehold({
+      people: [Schema.createPerson({ id: 'P', role: 'adult' })],
+      debts: [
+        Schema.createDebt({ id: 'loan',  label: 'Student loan', balanceCents: 1840000, rate: 0.055, minPaymentCents: 21000, type: 'student_loan', ownerIds: ['P'] }),
+        Schema.createDebt({ id: 'card',  label: 'Credit card',  balanceCents: 320000,  rate: 0.229, minPaymentCents: 9500,  type: 'credit_card',  ownerIds: ['P'] }),
+        Schema.createDebt({ id: 'small', label: 'Personal loan', balanceCents: 90000,  rate: 0.06,  minPaymentCents: 3000,  type: 'personal',     ownerIds: ['P'] })
+      ]
+    });
+  })();
+  const plan = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 10000 });
+  const ms = Debt.milestones(plan, hh, RULES, { highInterestRate: TABLES.fooRules.thresholds.highInterestDebtRate });
+  const cardMonth = plan.payoffs.filter(p => p.debtId === 'card')[0].month;
+  check('the cards line is the last card\'s payoff month', ms.cards.month, cardMonth);
+  check('...one card counted', ms.cards.count, 1);
+  check('the high-interest line is read at the FOO ladder\'s figure', ms.highInterest.threshold, 0.075);
+  check('...and with 22.9% the only rate above 7.5%, it is the card\'s month', ms.highInterest.month, cardMonth);
+  check('everything gone is the plan itself', ms.all.month, plan.value);
+  checkTrue('...and later than the cards', ms.all.month > ms.cards.month);
+  const noCards = Schema.createHousehold({ people: hh.people, debts: hh.debts.filter(d => d.type !== 'credit_card') });
+  const planNC = Debt.simulate(noCards, RULES, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  const msNC = Debt.milestones(planNC, noCards, RULES, { highInterestRate: 0.075 });
+  checkTrue('no cards: count 0 and no month, never month 0', msNC.cards.count === 0 && msNC.cards.month === null);
+  checkTrue('nothing above the line: the same', msNC.highInterest.count === 0 && msNC.highInterest.month === null);
+  check('no threshold given: no high-interest line at all', Debt.milestones(planNC, noCards, RULES, {}).highInterest, null);
+  check('an incomplete plan gives nothing', Debt.milestones(Debt.simulate(Schema.createHousehold(), RULES, {}), hh, RULES, {}), null);
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('a stale engine cannot take the room down: the finish lines are guarded', /typeof Debt\.milestones === 'function'/.test(page) && /Part of this room could not draw/.test(page));
+  checkTrue('nothing free reads as the minimums alone, never as $0 extra', /leaves nothing free after spending and the minimums, so this is the minimums alone/.test(page));
+  checkTrue('the room works the extra out through the engine when the box is blank (D-190)', /Debt\.extraCapacity\(h, TABLES, \{ estimateFrom: from, typedCents: extraCents \}\)/.test(page) && /effectiveExtraCents/.test(page) && !/function computedExtraCents/.test(page));
+  checkTrue('...the estimate leans on the intake guesses, so a pay is enough for a figure', /SLAF\.Gate\.fillGuesses\(h, TABLES, null\)/.test(page));
+  checkTrue('...and the two figures show under the box, each saying what it came from', /id="extra-basis"/.test(page) && /row\('Estimate'/.test(page) && /row\('Realized'/.test(page) && /closed month/.test(page) && /guessed, fix it in Start Here/.test(page));
+  checkTrue('...a stale engine falls back to the typed figure, never a crash', /typeof Debt\.extraCapacity !== 'function'/.test(page));
+  checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults'(, '[a-zA-Z]+')*\]\)/.test(page));
+  checkTrue('a second ring: interest over the whole plan, by debt, from the payoffs (D-190)', /Interest over the plan, by debt/.test(page) && /p\.interestPaidCents/.test(page) && /plan\.totalInterestCents\), small: 'until it is all gone'/.test(page));
+})();
+
+/* -- What is free a month for the debts (D-190) ---------------------------- */
+(function () {
+  section('Debt: the extra, estimated and realized (D-190)');
+  const T = { effectiveTaxRates: TABLES.effectiveTaxRates };
+  const hh = Demo.build();
+  const free = Debt.freeMonthlyCents(hh, T);
+  const take = Schema.takeHomeMonthlyCents(hh, T), spend = Schema.monthlyExpensesCents(hh), mins = Schema.monthlyDebtPaymentsCents(hh);
+  checkTrue('one formula: take-home less spending less every minimum', Money.isOk(free) && free.value === take.value - spend.value - mins.value);
+  check('...and it says what went in', free.takeHomeCents, take.value);
+  const noPay = Schema.createHousehold({ debts: hh.debts, expenses: hh.expenses });
+  checkTrue('no pay: incomplete, naming the pay, never zero', !Money.isOk(Debt.freeMonthlyCents(noPay, T)) && Debt.freeMonthlyCents(noPay, T).missing.indexOf('grossAnnualIncome') >= 0);
+  const Gate190 = require(path.join(ROOT, 'shared/gate.js'));
+  const guessed = Gate190.fillGuesses(noPay, Object.assign({ onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')) }, T), null);
+  const cap = Debt.extraCapacity(noPay, T, { estimateFrom: guessed });
+  checkTrue('with the intake guess standing in for the pay there is an estimate', cap.estimate !== null && cap.basis === 'estimate');
+  checkTrue('...and the estimate says the pay was guessed', cap.guessed.indexOf('grossAnnualIncome') >= 0);
+  check('nothing closed: no realized figure, and it says why', cap.realized, null);
+  checkTrue('...', /closed/.test(cap.realizedReason));
+  const capReal = Debt.extraCapacity(hh, T, {});
+  check('the demo persona: the estimate is what the room used to work out itself', capReal.cents, Math.max(0, take.value - spend.value - mins.value));
+  check('...nothing guessed', capReal.guessed.length, 0);
+  const closed = Demo.build();
+  closed.ledger = Schema.createLedger({ months: [
+    { month: '2026-05', actual: { income: 500000, expenses: 340000 } },
+    { month: '2026-06', actual: { income: 500000, expenses: 300000 } },
+    { month: '2026-07', actual: { income: 480000, expenses: 320000 } },
+    { month: '2026-08', actual: { income: 520000, expenses: 320000 } }
+  ] });
+  const real = Debt.realizedFreeMonthlyCents(closed);
+  checkTrue('closed months: the last three, averaged, less the minimums as they stand', Money.isOk(real) && real.value === Math.round((500000 + 480000 + 520000) / 3) - Math.round((300000 + 320000 + 320000) / 3) - mins.value);
+  check('...naming the months', real.months.join(','), '2026-06,2026-07,2026-08');
+  const capClosed = Debt.extraCapacity(closed, T, {});
+  check('realized beats the estimate', capClosed.basis, 'realized');
+  check('...and a typed figure beats both', Debt.extraCapacity(closed, T, { typedCents: 12345 }).basis, 'typed');
+  check('...at the typed figure', Debt.extraCapacity(closed, T, { typedCents: 12345 }).cents, 12345);
+  const noIncome = Demo.build();
+  noIncome.ledger = Schema.createLedger({ months: [{ month: '2026-08', actual: { expenses: 320000 } }] });
+  check('a closed month with no income actual does not count as realized', Debt.extraCapacity(noIncome, T, {}).realized, null);
+  const tight = Demo.build();
+  tight.expenses.wants.totalCents = 900000;
+  const capTight = Debt.extraCapacity(tight, T, {});
+  checkTrue('spending past the pay: the plan gets zero and the shortfall is named, never a negative extra', capTight.cents === 0 && capTight.shortCents > 0 && capTight.estimate.value < 0);
+})();
+
+/* -- Expenses: the picture, the four numbers, the lines you name (D-196) ---- */
+(function () {
+  section('Expenses: cadence, named lines, the log by bucket, the page order (D-196)');
+  check('a week to a month: 52 over 12', Schema.monthlyFromEvery(100000, 'weekly'), 433333);
+  check('every two weeks: 26 over 12', Schema.monthlyFromEvery(100000, 'fortnightly'), 216667);
+  check('a month is a month', Schema.monthlyFromEvery(1599, 'monthly'), 1599);
+  check('three months: a third', Schema.monthlyFromEvery(3000, 'quarterly'), 1000);
+  check('a year: a twelfth', Schema.monthlyFromEvery(12000, 'annual'), 1000);
+  check('an unknown cadence reads as a month', Schema.monthlyFromEvery(500, 'daily'), 500);
+  check('blank stays blank, never zero', Schema.monthlyFromEvery(null, 'annual'), null);
+  const e = Schema.createExpenseEntry({ descriptor: 'Streaming', categoryId: 'subscriptions', amountCents: 1000, every: 'annual', everyCents: 12000 });
+  check('an entry keeps how it was known', e.every + '/' + e.everyCents, 'annual/12000');
+  check('...and a plain line carries neither', Schema.createExpenseEntry({ amountCents: 100 }).every + '/' + Schema.createExpenseEntry({ amountCents: 100 }).everyCents, 'null/null');
+  check('...an unknown cadence is dropped', Schema.createExpenseEntry({ every: 'daily' }).every, null);
+  checkTrue('the two fields are documented', !!Schema.FIELDS['expenses.entries[].every'] && !!Schema.FIELDS['expenses.entries[].everyCents']);
+  checkTrue('the D&D copy carries them too', fs.readFileSync(path.join(ROOT, 'dnd/shared/schema.js'), 'utf8') === fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8'));
+  const h = Schema.createHousehold({ filingStatus: 'single' });
+  h.expenses.entries = [
+    Schema.createExpenseEntry({ id: 'g1', categoryId: 'groceries', amountCents: 6420, period: 'once', date: '2026-09-03', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'g2', categoryId: 'dining_out', amountCents: 3000, period: 'once', date: '2026-09-05', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'u1', categoryId: 'utilities', amountCents: 18000, period: 'once', date: '2026-09-04', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'r1', categoryId: 'housing', amountCents: 150000, period: 'once', date: '2026-09-01', source: 'log' }),
+    Schema.createExpenseEntry({ id: 's1', categoryId: 'emergency_savings', amountCents: 30000, period: 'once', date: '2026-09-02', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'o1', categoryId: 'shopping', amountCents: 5000, period: 'once', date: '2026-10-01', source: 'log' }),
+    Schema.createExpenseEntry({ id: 'cf_groceries', categoryId: 'groceries', amountCents: 45000, period: 'monthly', source: 'manual' })
+  ];
+  const by = CashFlow.logByFatBucket(h, TABLES.expenseCategories, '2026-09');
+  check('groceries and eating out land in food', by.food, 9420);
+  check('rent lands in rent or mortgage', by.accommodation, 150000);
+  check('utilities land in everything else', by.wants, 18000);
+  check('nothing on the road', by.transportation, 0);
+  check('savings is not spending, and October is not September', by.totalCents, 9420 + 150000 + 18000);
+  check('...counting the receipts, not the typed line', by.count, 4);
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  const at = id => page.indexOf('id="' + id + '"');
+  checkTrue('the picture sits above the four numbers, the lines under them, the readings last', at('picture') < at('spending') && at('spending') < at('lines') && at('lines') < at('out-summary'));
+  checkTrue('the ring and the bars are drawn from the engine, never typed', /Charts\.donut\(\{\s*title: 'The month, by bucket'/.test(page) && /CashFlow\.logByFatBucket\(h, TABLES\.expenseCategories, m\)/.test(page));
+  checkTrue('the bars carry a legend and both figures', /class="eva-legend"/.test(page) && /<small>of ' \+ \(hasEst/.test(page));
+  checkTrue('a form for a named line: what, how much, every, which kind', /id="line-form"/.test(page) && /id="n-every"/.test(page) && /<option value="subscriptions">Subscription<\/option>/.test(page) && /value="fortnightly"/.test(page));
+  checkTrue('...written through the spine as a month, remembering how it was known', /everyCents: amount/.test(page) && /amountCents: monthly, period: 'monthly', source: 'manual'/.test(page) && /Spine\.upsertExpenseEntry\(Schema\.createExpenseEntry\(\{\s*id: 'ln_'/.test(page));
+  checkTrue('subscriptions have their own list, totalled a month and a year', /id="subs-list"/.test(page) && /' a year' : ''/.test(page));
+  checkTrue('the category boxes ignore named lines, so nothing counts twice', /&& !e\.descriptor && e\.active !== false\) return e;/.test(page));
+  check('one line under each of F, A and T says what its lines add up to', (page.match(/<span class="bucket-lines" data-bucket-hint="/g) || []).length, 3);
+  checkTrue('...offering to make the number match on a tap, never silently', /data-use-bucket=/.test(page) && /Spine\.setFat\(patch\)/.test(page));
+  checkTrue('the per aid and the form share one formula', /Schema\.monthlyFromEvery\(cents, per\)/.test(page));
+  check('the registry names the steps (D-199)', Registry.byId('expenses').subsections.map(x => x.id).join(','), 'picture,spending,lines,month,more');
+  checkTrue('...the readings sit inside one More fold that a deep link opens', /<details class="slaf-card more-card" id="more"/.test(page) && /if \(p\.tagName === 'DETAILS'\) p\.open = true/.test(page));
+})();
+
+/* -- The stop line (D-191) ------------------------------------------------- */
+(function () {
+  section('Debt: where the payment goes, and what each fall frees (D-236)');
+  (function () {
+    const three = Schema.createHousehold({ meta: { hasDebt: true }, debts: [
+      Schema.createDebt({ id: 'car', label: 'Car', balanceCents: 200000, rate: 0, minPaymentCents: 50000, type: 'auto' }),
+      Schema.createDebt({ id: 'card', label: 'Card', balanceCents: 600000, rate: 0.229, minPaymentCents: 15000, type: 'credit_card' }),
+      Schema.createDebt({ id: 'loan', label: 'Loan', balanceCents: 1800000, rate: 0.055, minPaymentCents: 21000, type: 'student_loan' })] });
+    const plan = Debt.simulate(three, TABLES.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+    checkTrue('three debts on minimums alone still clear', Money.isOk(plan));
+    /* The schedule now says what each debt was paid and charged. */
+    checkTrue('every month splits its payment by debt, and the split adds up', plan.schedule.every(m => Object.keys(m.paid).reduce((t, id) => t + m.paid[id], 0) === m.paidCents));
+    checkTrue('… and its interest by debt, adding up too', plan.schedule.every(m => Object.keys(m.interest).reduce((t, id) => t + m.interest[id], 0) === m.interestCents));
+    check('the car at 0% and $500 a month falls in month 4', plan.payoffs[0].debtId + '@' + plan.payoffs[0].month, 'car@4');
+    check('… and the payoff says what it frees', plan.payoffs[0].minPaymentCents, 50000);
+    check('the plan carries every minimum by id', plan.minimums.car + plan.minimums.card + plan.minimums.loan, 86000);
+
+    /* The cascade: the freed minimum rolls onto the next target, the total holds, then it is all free. */
+    const cas = Debt.cascade(plan);
+    check('one phase per fall', cas.phases.length, plan.payoffs.length);
+    check('phase 1 is minimums to all three', JSON.stringify(cas.phases[0].perDebtCents), JSON.stringify({ car: 50000, card: 15000, loan: 21000 }));
+    check('… and the car\'s $500 rolls onto the card', cas.phases[0].fallsId + '->' + cas.phases[0].rollsOntoId, 'car->card');
+    checkTrue('phase 2 pays the card its minimum plus the car\'s, on average', Math.abs(cas.phases[1].perDebtCents.card - 65000) < 1000 && cas.phases[1].perDebtCents.car === undefined);
+    checkTrue('the monthly total holds through the push', cas.phases.slice(0, -1).every(ph => ph.monthlyCents === plan.monthlyBudgetCents));
+    check('the last fall rolls onto nothing', cas.phases[2].rollsOntoId, null);
+    check('and then the whole budget is free, from the month it is all gone', cas.freeCents + '@' + cas.doneMonth, plan.monthlyBudgetCents + '@' + plan.months);
+    /* With a stop line, a fall after the line frees money for the household, not the next debt. */
+    const stopped = Debt.simulate(three, TABLES.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 20000, stopAfter: 'cards' });
+    const sc = Debt.cascade(stopped);
+    checkTrue('past the stop line the freed minimum is yours, not the next debt\'s', Money.isOk(sc) && sc.phases.filter(p => p.fallsId === 'card')[0].rollsOntoId === null);
+    checkTrue('before it, the car still rolls onto the card', sc.phases.filter(p => p.fallsId === 'car')[0].rollsOntoId === 'card');
+    checkTrue('an incomplete plan passes through', !Money.isOk(Debt.cascade(Money.incomplete('no', []))));
+
+    /* The flow of one month: in equals out, per debt and in total. */
+    const flow = Debt.monthFlow(plan, 1);
+    checkTrue('month 1 flows', Money.isOk(flow));
+    check('three debts in the middle', flow.debts.length, 3);
+    checkTrue('minimum plus extra is what each debt was paid', flow.debts.every(d => d.fromMinimumCents + d.fromExtraCents === d.paidCents));
+    checkTrue('interest plus balance paid down is what each debt was paid', flow.debts.every(d => d.interestCents + d.principalCents === d.paidCents));
+    check('the car at 0% pays no interest', flow.debts.filter(d => d.id === 'car')[0].interestCents, 0);
+    check('the card\'s interest is 22.9% of $6,000 over twelve', flow.debts.filter(d => d.id === 'card')[0].interestCents, Math.round(600000 * 0.229 / 12));
+    check('nothing on top of the minimums in month 1', flow.extraCents, 0);
+    const withExtra = Debt.monthFlow(Debt.simulate(three, TABLES.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 30000 }), 1);
+    check('with $300 extra it goes to the card, the dearest', withExtra.debts.filter(d => d.id === 'card')[0].fromExtraCents, 30000);
+    const later = Debt.monthFlow(plan, 6);
+    checkTrue('in month 6 the card is paid from its minimum and the car\'s freed one', later.debts.filter(d => d.id === 'card')[0].fromExtraCents > 0 && !later.debts.some(d => d.id === 'car'));
+    checkTrue('a month past the plan is named, not invented', !Money.isOk(Debt.monthFlow(plan, 999)));
+
+    /* The room draws the three from the one simulation. */
+    const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+    checkTrue('the fold draws the flow, the cascade and the balances', ['flow-chart', 'cascade-chart', 'timeline-chart'].every(id => page.indexOf('id="' + id + '"') !== -1));
+    checkTrue('… from the engine, not arithmetic of its own', /Debt\.monthFlow\(plan, 1\)/.test(page) && /Debt\.cascade\(plan\)/.test(page) && /Charts\.sankey\(/.test(page) && /Charts\.columns\(/.test(page));
+    checkTrue('the list says what each payoff frees and where it goes', /Frees <b>/.test(page) && /It goes to /.test(page) && /no longer goes to debt/.test(page) && /All debts paid\./.test(page));
+    checkTrue('the fold opens with what it shows, in plain words', /What this shows:/.test(page) && /Monthly payment:/.test(page) && /First payoff:/.test(page) && /All debts paid:/.test(page));
+    /* The plain line under every title (D-237): generated from the registry. */
+    const Progress = require(path.join(ROOT, 'shared/progress.js'));
+    const purpose = Progress.purposeHtml('debt-payoff');
+    checkTrue('Debt Payoff\'s purpose line names its outputs and its needs', /Shows:<\/b> Debt-free in/.test(purpose) && /Needs:<\/b> total debt/.test(purpose));
+    checkTrue('every room gets a purpose line with a Needs clause', Registry.all().every(r => /Needs:/.test(Progress.purposeHtml(r.id))));
+    checkTrue('the stylesheet carries it', /\.slaf-purpose \{/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+  })();
+
+  section('Debt: the extra stops once the dear debt is gone (D-191)');
+  const RULES = TABLES.debtRules;
+  const hh = Demo.build();
+  const full = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000 });
+  const stop = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'cards' });
+  const mins = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  checkTrue('no stop asked for: nothing changes', full.stopMonth === null && full.stopAfter === null && full.monthlyBudgetAfterStopCents === null);
+  const cardMonth = full.payoffs.filter(p => p.label === 'Credit card')[0].month;
+  check('the card falls in the same month either way', stop.payoffs.filter(p => p.label === 'Credit card')[0].month, cardMonth);
+  check('the stop is the month after the last card', stop.stopMonth, cardMonth + 1);
+  check('...and from then the budget is the loan\'s own minimum', stop.monthlyBudgetAfterStopCents, hh.debts.filter(d => d.type === 'student_loan')[0].minPaymentCents);
+  checkTrue('the rest takes longer than the full plan', stop.value > full.value);
+  checkTrue('...and longer than minimums alone, because the freed minimum no longer rolls on', stop.value > mins.value);
+  checkTrue('interest sits between the full plan and minimums alone', stop.totalInterestCents > full.totalInterestCents && stop.totalInterestCents < mins.totalInterestCents);
+  /* Hand check: $18,400 at 5.5% on $210 a month after four months of
+     minimums clears in about 105 months; the loop says the same. */
+  checkTrue('hand check: the loan on its minimum is gone in eight to nine years', stop.value >= 100 && stop.value <= 110);
+  const noCards = Schema.createHousehold({ people: hh.people, debts: hh.debts.filter(d => d.type !== 'credit_card') });
+  const none = Debt.simulate(noCards, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'cards' });
+  check('no cards listed: the stop comes in month 1, minimums alone', none.stopMonth, 1);
+  check('...at the loan\'s minimum', none.monthlyBudgetAfterStopCents, none.minimumsCents);
+  const high = Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'highInterest', highInterestRate: 0.075 });
+  check('the high-rate stop uses the same class as the finish line', high.stopMonth, stop.stopMonth);
+  check('...and no threshold means nothing is high-rate: month 1', Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'highInterest' }).stopMonth, 1);
+  check('an unknown stop is ignored', Debt.simulate(hh, RULES, { strategyId: 'avalanche', extraMonthlyCents: 100000, stopAfter: 'everything' }).stopMonth, null);
+  checkTrue('inClass is one predicate for both', Debt.inClass(hh.debts[0], 'cards') === (hh.debts[0].type === 'credit_card') && Debt.inClass({ type: 'auto', rate: 0.08 }, 'highInterest', 0.075) && !Debt.inClass({ type: 'auto', rate: 0.05 }, 'highInterest', 0.075));
+  const cmp = Debt.compareStrategies(hh, RULES, { extraMonthlyCents: 100000, stopAfter: 'cards' });
+  checkTrue('the comparison carries the stop through to every ordering', Object.keys(cmp.results).every(id => cmp.results[id].stopMonth !== null));
+  check('the plan says what its minimums and extra were', full.minimumsCents + full.extraMonthlyCents, full.monthlyBudgetCents);
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  const qrSrc = fs.readFileSync(path.join(ROOT, 'shared/qr.js'), 'utf8');
+  checkTrue('a QR code is drawn here, no library, from the standard\'s tables (D-201)', /no library/.test(qrSrc) && !/require\(['"][^.]/.test(qrSrc) && /var RS_L = \[\[\[26,19\]\]/.test(qrSrc) && /MAX_BYTES = 2953/.test(qrSrc));
+  checkTrue('...and Your Data shows it beside the link, saying what to do when it will not fit', /id="btn-qr"/.test(fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8')) && /Too much for one QR code/.test(fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8')) && /shared\/qr\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8')));
+  const dataPage = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8'), front = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('Your Data and the front door offer the share sheet, shown only where there is one (D-200)', /id="btn-send" hidden/.test(dataPage) && /id="btn-send" hidden/.test(front) && /typeof navigator\.share === 'function'\) el\('btn-send'\)\.hidden = false/.test(dataPage) && /Spine\.sendToDevice\(\)/.test(front));
+  checkTrue('...a pasted share link reads like a chosen file', /id="link-in"/.test(dataPage) && /Spine\.codeFromFragment\(el\('link-in'\)\.value/.test(dataPage) && /pendingFile = \{ name: 'the link'/.test(dataPage));
+  checkTrue('...and a long link says so', /too long for most chat apps/.test(dataPage) && /too long for most chat apps/.test(front));
+  checkTrue('the room: one select, built once, remembered as a preference', /<select id="f-stop"/.test(page) && /Prefs\.get\('debt\.stopAfter'/.test(page) && /Prefs\.set\('debt\.stopAfter'/.test(page));
+  checkTrue('...every simulation the room runs shares the options, bar the minimums-only baseline', /function simOpts\(extra\)/.test(page) && (page.match(/Debt\.simulate\([^)]*\{ strategyId: strategyId/g) || []).length === 1 && /extraMonthlyCents: 0 \}\);/.test(page) && /compareStrategies\(scoped\(h\), RULES, simOpts\(/.test(page));
+  checkTrue('...and with a stop the room never prints a negative "sooner by"', /plan\.stopMonth === null\) \{\s*rows\.push\(\['Saved vs\. minimums only'/.test(page) && /Against minimums only/.test(page));
+  checkTrue('...the extra is said to sit on top of the minimums, and the per-month figure says what it is built from', /Extra each month, on top of the minimums/.test(page) && /function perMonthNote\(plan, h\)/.test(page) && /the minimums as typed on each line/.test(page));
+  checkTrue('...a typed extra shows digits only, the shell carries the dollar sign', /formatCents\(extraCents\)\.replace\(\/\^\\\$\/, ''\)/.test(page));
+  checkTrue('the list adds up what is owed and the minimums, counting blanks as missing, not zero', /function paintDebtTotal\(debts\)/.test(page) && /Money\.sumCents\(debts\.map\(function \(d\) \{ return d\.minPaymentCents; \}\)\)/.test(page) && /without a minimum/.test(page));
+  checkTrue('...and under the box the minimums plus the extra read as one figure going to debt', /id="extra-total"/.test(page) && /Going to debt each month: <b>' \+ Money\.formatCents\(mins\.value \+ c\.cents\)/.test(page) && /the minimums alone, nothing on top/.test(page));
 })();
 
 /* -- Strategy ordering ---------------------------------------------------- */
@@ -889,7 +1158,7 @@ section('FIRE variants');
   const target = id => Fire.calculateFIRE(h, TABLES, { variantId: id });
 
   check('standard FIRE', target('standard').value, 94500000);
-  check('lean FIRE', target('lean').value, 66150000);
+  check('lean FIRE: the FAT total, 2,430 × 12 ÷ 4% (D-197)', target('lean').value, 72900000);
   check('chubby FIRE', target('chubby').value, 118125000);
   check('fat FIRE', target('fat').value, 141750000);
 
@@ -911,7 +1180,7 @@ section('FIRE variants');
   check('coast names the full target it grows into', coast.fullTargetCents, 94500000);
   const grown = Projection.futureValueCents({
     startCents: coast.value, annualContributionCents: 0,
-    annualRate: 0.07, years: coast.yearsOfGrowth
+    annualRate: 0.05, years: coast.yearsOfGrowth
   });
   checkTrue('coasting from that number lands on the full number',
     Math.abs(grown.value - 94500000) <= 100,
@@ -956,7 +1225,7 @@ section('FIRE variants');
   const prog = Fire.progressToward(h, TABLES, { variantId: 'standard' });
   check('progress toward standard', prog.value, 48000 / 945000, 1e-12);
   check('years away matches Tier 0', prog.yearsAway.value, Tier0.fireProgress(h, TABLES).timeToFire.value);
-  check('and that is still 19', prog.yearsAway.value, 19);
+  check('and that is still 22', prog.yearsAway.value, 22);
 
   /* Lean is nearer than standard. */
   const leanProg = Fire.progressToward(h, TABLES, { variantId: 'lean' });
@@ -1141,7 +1410,7 @@ section('Quick math');
   check('and says so', r.horizonBasis, 'to age 65');
 
   /* The canonical pairing, at the horizon that actually produces it. */
-  const canonical = QuickMath.recurringHabit(h, {}, { monthlyAmountCents: 10000, years: 26.3 });
+  const canonical = QuickMath.recurringHabit(h, {}, { monthlyAmountCents: 10000, years: 31.3 });   /* 15.2: at 5% real it takes 31.3 years, not 26.3 at the old 7% */
   check('the $30k half is unchanged by horizon', canonical.fireNumberAdditionCents, 3000000);
   checkTrue('and the other half lands on about $90,000',
     Math.abs(canonical.investedInsteadCents - 9000000) < 100000,
@@ -1701,14 +1970,10 @@ section('Savings Rate');
 
   /* The delta lands on whichever figure monthlyExpensesCents actually reads,
      so the hypothetical answers the same question the real one does. */
-  const tracked = Demo.build();
-  tracked.expenses.monthlyEssential.trackedValueCents = 300000;
-  const trackedCut = Schema.withMonthlyExpensesDeltaCents(tracked, -6000);
-  check('with a tracked month, the delta moves the tracked figure',
-    trackedCut.expenses.monthlyEssential.trackedValueCents, 294000);
-  check('and leaves the estimate where it was',
-    trackedCut.expenses.monthlyEssential.estimatedValueCents,
-    tracked.expenses.monthlyEssential.estimatedValueCents);
+  const typed = Demo.build();
+  const typedCut = Schema.withMonthlyExpensesDeltaCents(typed, -6000);
+  check('the delta lands on everything else', typedCut.expenses.wants.totalCents, 72000 - 6000);
+  check('and leaves the needs where they were', typedCut.expenses.needs.food.monthlyCents, typed.expenses.needs.food.monthlyCents);
 
   /* -- Cutting spending always brings the date closer, never further ----- */
   const baseYears = Tier0.yearsToFire(h, TABLES);
@@ -1876,9 +2141,9 @@ section('SWAN Number');
 
   /* -- Ownership: exactly one room may edit it --------------------------- */
   check('the SWAN target is owned by Sleep At Night',
-    Ownership.field('swanTarget').owner, 'sleep-at-night');
+    Ownership.field('swanTarget').owner, 'runway');
   check('and Sleep At Night owns only the number and the four coverage facts (D-071; who depends on you went back to the one-pager, D-095)',
-    Ownership.ownedBy('sleep-at-night').sort().join(','), 'disabilityMonthly,oopMax,swanTarget,termLife,umbrella');
+    Ownership.ownedBy('runway').sort().join(','), 'disabilityMonthly,expectedSearchMonths,floorMonthly,oopMax,swanTarget,termLife,umbrella');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
   check('and it is not editable there', chip.isOwnHere, false);
@@ -2743,12 +3008,12 @@ section('Ratios');
   check('payoff velocity is a year of minimums over the balance',
     by.debtPayoffVelocity.value, (305 * 12) / 21600, 1e-12);
   check('the FI ratio is investments at 4% over annual spending',
-    by.fiRatio.value, (48000 * 0.04) / (3150 * 12), 1e-12);
+    by.fiRatio.value, (48000 * 0.04) / (2895 * 12) /* the month with its lines, D-197 */, 1e-12);
   check('net worth to income is 35,900 over 72,000',
     by.netWorthToIncome.value, 35900 / 72000, 1e-12);
-  check('rule of 72 at a 7% return is 10.3 years', by.ruleOf72.value, 72 / 7, 1e-12);
+  check('rule of 72 at a 5% real return is 14.4 years (15.2)', by.ruleOf72.value, 72 / 5, 1e-12);
   check('burn rate is the monthly expense figure, in cents',
-    by.burnRateCents.value, 315000);
+    by.burnRateCents.value, 289500); /* D-197 */
 
   /* -- Ratios Tier 0 already owns are CALLED, not re-derived -------------- */
   check('DTI matches engines/tier0.js exactly',
@@ -2855,7 +3120,8 @@ section('Ratios');
   const invested = explained.find(r => r.id === 'investedShare');
   checkTrue('invested share is over total assets, so it cannot pass 100%', invested.ok && invested.value <= 1);
   check('and the old net-worth denominator is gone', RatiosEngine.byId('investmentToNetWorth'), null);
-  ['index.html', 'rooms/ratios.html'].forEach(f => {
+  /* Every Ratio is a reading of The Scorecard since D-233. */
+  ['index.html', 'rooms/financial-snapshot.html'].forEach(f => {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
     checkTrue(`${f} loads shared/explain.js`, /shared\/explain\.js/.test(src));
     checkTrue(`${f} puts the ⓘ on its ratio rows`, /Explain\.button\(/.test(src) && /Explain\.panel\(/.test(src));
@@ -4345,7 +4611,7 @@ section('Not earning');
         h.people[0].incomeSources.push(
           Schema.createIncomeSource({ grossAnnualIncomeCents: income }));
       }
-      h.expenses.monthlyEssential.estimatedValueCents = 200000;
+      h.expenses = Schema.withMonthlySpend(h, 200000).expenses;
       h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 500000, liquid: true }));
       h.assets.push(Schema.createAsset({ category: 'investment', valueCents: 4800000 }));
       h.debts.push(Schema.createDebt({ type: 'credit_card', balanceCents: 300000,
@@ -4443,20 +4709,20 @@ section('Not earning');
     const cases = {
       'no income at all': bare(h => {
         h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 0 }));
-        h.expenses.monthlyEssential.estimatedValueCents = 200000;
+        h.expenses = Schema.withMonthlySpend(h, 200000).expenses;
         h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 500000, liquid: true }));
       }),
       'no expenses': bare(h => {
         h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 7200000 }));
-        h.expenses.monthlyEssential.estimatedValueCents = 0;
+        h.expenses = Schema.withMonthlySpend(h, 0).expenses;
       }),
       'everything zero': bare(h => {
         h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 0 }));
-        h.expenses.monthlyEssential.estimatedValueCents = 0;
+        h.expenses = Schema.withMonthlySpend(h, 0).expenses;
       }),
       'debt exceeds everything': bare(h => {
         h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 5000000 }));
-        h.expenses.monthlyEssential.estimatedValueCents = 300000;
+        h.expenses = Schema.withMonthlySpend(h, 300000).expenses;
         h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 100000, liquid: true }));
         h.debts.push(Schema.createDebt({ type: 'student_loan', balanceCents: 9000000,
           rate: 0.06, minPaymentCents: 60000 }));
@@ -4571,7 +4837,7 @@ section('Whether there is an employer at all');
     done.filingStatus = 'single';
     done.meta.hasDebt = false;
     done.insurance.highestDeductibleCents = 250000;
-    done.expenses.monthlyEssential.estimatedValueCents = 315000;
+    done.expenses = Schema.withMonthlySpend(done, 315000).expenses;
     done.dependents = false;
     done.assets.push(Schema.createAsset({ category: 'investment', valueCents: 4800000 }));
     const row = Progress.forRoom('start', done);
@@ -4781,7 +5047,7 @@ section('Age, and the three that move');
     const d = Ownership.describe('cashSavings', Spine.getProfile(), 'dashboard');
     checkTrue('describe carries an age', !!d.age && d.age.days === 0);
     checkTrue('and the chip prints it', /updated today/.test(Ownership.chip('cashSavings', Spine.getProfile(), 'dashboard')));
-    const old = Spine.getProfile(); old.meta.confirmedAt.cashSavings = '2020-01-01T00:00:00Z';
+    const old = Spine.getProfile(); old.meta.confirmedAt.cashSavings = '2020-01-01T00:00:00Z'; old.meta.fields.cashSavings.asOf = '2020-01-01T00:00:00Z';   /* 15.1: the as-of on the number itself is what staleness reads now (D-181) */
     checkTrue('a stale figure is marked in the chip', /is-stale/.test(Ownership.chip('cashSavings', old, 'dashboard')));
     checkTrue('an unset field has no age', Ownership.describe('investments', Spine.getProfile(), 'dashboard').age === null);
   }
@@ -4789,8 +5055,11 @@ section('Age, and the three that move');
   /* -- One write path for the figures that move ---------------------------- */
   {
     Spine.reset();
-    check('cash and investments declare a shared write path',
-      Ownership.writable().sort().join(','), 'cashSavings,investments');
+    /* D-057 gave cash and investments a shared write path; D-205 gave one
+       to every enterable row, so a confirmed suggestion, an inline ask or
+       the Express page can write through the owner. */
+    checkTrue('cash and investments declare a shared write path, and so does every enterable row now (D-205)',
+      Ownership.writable().indexOf('cashSavings') !== -1 && Ownership.writable().indexOf('investments') !== -1 && Ownership.writable().length >= 60);
     Ownership.write('cashSavings', 980000);
     check('writing cash creates the Tier 0 cash record', Schema.cashCents(Spine.getProfile()).value, 980000);
     Ownership.write('cashSavings', 990000);
@@ -4798,14 +5067,17 @@ section('Age, and the three that move');
     check('and there is exactly one cash asset', Spine.getProfile().assets.filter(a => a.category === 'cash').length, 1);
     checkTrue('it is liquid', Spine.getProfile().assets[0].liquid === true);
     let threw = false;
-    try { Ownership.write('dob', '1990-01-01'); } catch (e) { threw = true; }
-    checkTrue('a field with no shared path refuses rather than guessing', threw);
+    try { Ownership.write('netWorth', 1); } catch (e) { threw = true; }
+    checkTrue('a computed field with no shared path refuses rather than guessing', threw);
     const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
     checkTrue('Start Here writes cash through the same path', start.indexOf("Ownership.write('cashSavings'") !== -1);
     checkTrue('and no longer has its own asset writer', start.indexOf('function writeAsset') === -1);
-    const refresh = fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8');
-    checkTrue('Refresh writes through it too', refresh.indexOf('Ownership.write(') !== -1);
-    checkTrue('and never calls upsertAsset itself', refresh.indexOf('upsertAsset') === -1);
+    /* Refresh is the Ledger's since-last-time view now (D-230); the rule it
+       is here to prove — a second PLACE to edit a record is fine, a second
+       COPY of it is not — is the same rule and the same write path. */
+    const ledger = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+    checkTrue('Since last time writes through it too', ledger.indexOf('Ownership.write(') !== -1);
+    checkTrue('and never calls upsertAsset itself', ledger.indexOf('upsertAsset') === -1);
   }
 
   /* -- The instrument list is the snapshot list ---------------------------- */
@@ -4866,7 +5138,7 @@ section('Age, and the three that move');
     checkTrue('it renders the grid from Instruments.compute', dash.indexOf('Instruments.compute(') !== -1);
     checkTrue('and deltas from Instruments.deltas', dash.indexOf('Instruments.deltas(') !== -1);
     checkTrue('with one next action', dash.indexOf('id="next-action"') !== -1);
-    checkTrue('and a refresh link', dash.indexOf("Ownership.linkTo('refresh')") !== -1);
+    checkTrue('and a link to what has moved since last time', /Ownership\.linkTo\('ledger'\) \+ '#since-last-time/.test(dash));
     /* Caveats fold: every info toggle names a node that exists in the HTML,
        so nothing is built at toggle time. */
     const toggles = dash.match(/data-info="([^"]+)"/g) || [];
@@ -4881,14 +5153,23 @@ section('Age, and the three that move');
       checkTrue(`the next-action card can say ${f.key}`, dash.indexOf(f.key + ':') !== -1));
   }
 
-  /* -- The Refresh page is a utility, not a room on the map ---------------- */
+  /* -- Refresh is the Ledger's since-last-time view, not a room (D-230) ----
+     It was never a room with a number in it: it re-asked the figures that
+     move and wrote them through their owners. So it is a hat the Ledger
+     wears, and the volatile list it walks is checked where that list lives
+     rather than against a registry entry that no longer exists. */
   {
-    const r = Registry.byId('refresh');
-    checkTrue('Refresh is registered', !!r);
-    checkTrue('as a utility', r.utility === true);
-    check('walking the volatile list', r.needs.slice().sort().join(','), table.volatile.slice().sort().join(','));
-    checkTrue('and last on the path so it never interrupts a first walk',
-      Registry.inOrder()[Registry.inOrder().length - 1].id === 'refresh');
+    const r = Registry.byId('ledger');
+    checkTrue('Refresh retired into the Ledger', !Registry.byId('refresh') && !!r);
+    checkTrue('which is still a utility, so it stays off the numbered path', r.utility === true);
+    const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+    checkTrue('the since-last-time view asks the rows that move, oldest first',
+      /id="view-since"/.test(led) && /LedgerRows\.moving\(/.test(led)
+      && /Oldest first/.test(led));
+    table.volatile.forEach(f => checkTrue(`the volatile field ${f} still has an interval`,
+      typeof table.staleAfterDays[f] === 'number'));
+    const stub = fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8');
+    checkTrue('and the old page redirects, hash and all', /url=ledger\.html#since-last-time/.test(stub));
     const map = fs.readFileSync(path.join(ROOT, 'map.html'), 'utf8');
     checkTrue('the map skips utility rooms', map.indexOf('!r.utility') !== -1);
   }
@@ -4901,9 +5182,14 @@ section('Suggested, not stored');
   const Suggest = require(path.join(ROOT, 'shared/suggest.js'));
   ['show', 'clear', 'isSuggested', 'entered', 'all'].forEach(fn =>
     checkTrue(`Suggest exposes ${fn}()`, typeof Suggest[fn] === 'function'));
-  /* The whole guarantee: this file cannot write to the household. */
-  checkTrue('suggest.js never touches the spine', !/Spine\.|localStorage|updateProfile|upsert/.test(src));
-  checkTrue('and never requires it', !/require\(/.test(src));
+  /* The whole guarantee: the painting half cannot write to the household.
+     D-205 added the rules half below it; its ONE write is confirm(), which
+     goes through Ownership.write after tagging the write as suggested. */
+  const paintHalf = src.split('The rules (D-205)')[0];
+  checkTrue('the painting half of suggest.js never touches the spine', !/Spine\.|localStorage|updateProfile|upsert/.test(paintHalf));
+  checkTrue('and never requires it', !/require\(/.test(paintHalf));
+  const rulesHalf = src.split('The rules (D-205)')[1] || '';
+  checkTrue('the rules half writes in exactly one place, confirm(), through the owner', (rulesHalf.match(/Ownership\.write\(/g) || []).length === 1 && !/Spine\.(set|upsert|batch|updateProfile)/.test(rulesHalf) && /tagWrite\(\{ source: 'suggested', confidence: 'roughly' \}\)/.test(rulesHalf));
   checkTrue('focus clears the shown value so a blur reads empty', /addEventListener\('focus'[\s\S]{0,400}node\.value = ''/.test(src));
   checkTrue('show() refuses to paint over an entered value', /if \(!isSuggested\(node\) && String\(node\.value/.test(src));
   const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
@@ -4923,7 +5209,7 @@ section('Eleven cards');
   {
     const h = Demo.build();
     checkTrue('the demo says it has debt', h.meta.hasDebt === true);
-    checkTrue('Debt Payoff is on its path', Registry.nextAfter('start', [], h).id === 'debt-payoff');
+    checkTrue('Debt Payoff is on its path', (function () { const w = []; let at = Registry.nextAfter('start', [], h); while (at && w.indexOf(at.id) === -1) { w.push(at.id); at = Registry.nextAfter(at.id, w, h); } return w.indexOf('debt-payoff') !== -1; })());
     const none = Demo.build(); none.meta.hasDebt = false; none.debts = [];
     /* What the room after Start Here happens to be is a fact about the
        running order, and it moves when a room is inserted. Your Credit File
@@ -4933,14 +5219,14 @@ section('Eleven cards');
        actually about is that Debt Payoff is never offered to someone who
        owes nothing, so the whole path is walked below rather than only its
        first step. */
-    check('with no debt the path skips Debt Payoff', Registry.nextAfter('start', [], none).id, 'cash-flow');
+    check('with no debt the path still starts at the pay (D-244: the facts first)', Registry.nextAfter('start', [], none).id, 'income');
     {
       const walked = [];
       let at = Registry.nextAfter('start', [], none);
       while (at && walked.indexOf(at.id) === -1) { walked.push(at.id); at = Registry.nextAfter(at.id, walked, none); }
       checkTrue('and it is nowhere else on the path either', walked.indexOf('debt-payoff') === -1);
       checkTrue('while a household that does owe still gets it',
-        Registry.inOrder().some(r => r.id === 'debt-payoff') && Registry.nextAfter('start', [], h).id === 'debt-payoff');
+        Registry.inOrder().some(r => r.id === 'debt-payoff') && Registry.applies(Registry.byId('debt-payoff'), h));
     }
     checkTrue('and total debt stops applying', !Ownership.describe('totalDebt', none, 'map').applies);
     checkTrue('and so do the payments', !Ownership.describe('monthlyDebtPayments', none, 'map').applies);
@@ -4981,7 +5267,7 @@ section('Eleven cards');
     ['contributionPercent', 'highestDeductible', 'hasDebt', 'dob', 'state', 'employerMatch'].forEach(f =>
       check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
     check('Sleep At Night reads the deductible as a chip',
-      fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
+      fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
     check('Where It Goes reads the contribution as a chip',
       fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8').indexOf("Ownership.chip('contributionPercent'") !== -1, true);
     checkTrue('and has no box for it',
@@ -5069,11 +5355,18 @@ section('Proposed, not taken');
     checkTrue('Seed exposes mount()', typeof Seed.mount === 'function');
     checkTrue('seed.js never touches the spine', !/Spine\.|updateProfile|upsert|localStorage/.test(seedSrc));
     checkTrue('it shows through Suggest', seedSrc.indexOf('Suggest.show(') !== -1);
-    ['runway', 'quick-math', 'self-employed'].forEach(function (room) {
+    ['runway', 'financial-snapshot', 'self-employed'].forEach(function (room) {   /* Quick Math is a Scorecard reading, D-233 */
       const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
       checkTrue(`${room} mounts the seed toggle`, html.indexOf('SLAF.Seed.mount(') !== -1);
       checkTrue(`${room} loads seed.js after suggest.js`, html.indexOf('shared/suggest.js') !== -1 && html.indexOf('shared/suggest.js') < html.indexOf('shared/seed.js'));
-      checkTrue(`${room} still writes nothing to the household`, !/Spine\.(updateProfile|upsert[A-Za-z]+|setMonthlyExpenses)\(/.test(html.replace(/\/\*[\s\S]*?\*\//g, '')));
+      /* The Cushion's other three readings DO write, each through its owner
+         (D-232); the how-long reading is the page-local one and says so
+         between its markers, which is the part this rule is about. */
+      const local = room === 'runway'
+        ? html.slice(html.indexOf('---- HOW LONG:'), html.indexOf('---- end HOW LONG ----'))
+        : html;
+      checkTrue(`${room} is the marked page-local reading`, local.length > 500);
+      checkTrue(`${room} still writes nothing to the household`, !/Spine\.(updateProfile|upsert[A-Za-z]+|setMonthlyExpenses)\(/.test(local.replace(/\/\*[\s\S]*?\*\//g, '')));
     });
     const se = fs.readFileSync(path.join(ROOT, 'rooms/self-employed.html'), 'utf8');
     checkTrue('W2 vs 1099 no longer writes the salary straight into the box', !/v\['w-salary'\] = gross\.value/.test(se));
@@ -5117,8 +5410,8 @@ section('A first month, proposed');
   const cmp = CashFlow.compareToTemplate(cmpDemo, TABLES.expenseCategories, TABLES.budgetTemplates, '50_30_20', TABLES);
   check('the comparison uses the same needs target', cmp.rows.filter(r => r.bucketId === 'needs')[0].targetCents, 243000);
   check('the shares say what they are worth', cats.typicalShareConfidence, 'unverified');
-  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
-  checkTrue('Cash Flow proposes through Suggest', cf.indexOf('SLAF.Suggest.show(') !== -1);
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  checkTrue('Expenses proposes through Suggest', cf.indexOf('SLAF.Suggest.show(') !== -1);
   checkTrue('and reads a box through Suggest.entered on the way out', cf.indexOf('Suggest.entered(input)') !== -1);
   checkTrue('and names the source as unverified', /BLS CES 2023, unverified/.test(cf));
   checkTrue('with a way to take every line at once', cf.indexOf('id="btn-use-all"') !== -1);
@@ -5403,19 +5696,24 @@ section('The Statement engine');
     const noAge = rich(); noAge.people[0].dob = null;
     const na = St.liquidityLadder(noAge, T.accessRules);
     checkTrue('with no age the gate cannot be applied and it says so', na.ageKnown === false && na.gatedCents === 0);
-    checkTrue('a rated liquidity overrides the rule', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, liquidity: 1 })] }), T.accessRules, { age: 40 }).bands.today === 100);
+    /* 15.8: the ladder is a view of the piles; a stored tier moves the asset. */
+    checkTrue('a stored tier overrides the kind', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, tier: 'cash' })] }), T.accessRules, { age: 40 }).bands.today === 100);
+    checkTrue('...and a rated liquidity no longer does: the house stays in the property pile', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, liquidity: 1 })] }), T.accessRules, { age: 40 }).bands.never === 100);
+    check('the piles are reported', l.byTier.retirement, 4200000);
+    check('...and the overrides counted', l.overriddenCount, 0);
   }
 
   /* -- The bridge to 59½ ------------------------------------------------------ */
   {
     const b = St.bridgeGap(Demo.build(), T);
-    /* Demo: age 32, 19 years to FI → 51; 8.5 years × 37,800 = 321,300 needed;
-       reachable before 59½: cash 9,500 + the uncharacterised lump as taxable 48,000. */
-    check('FI lands at 51', Math.round(b.fiAge), 51);
-    check('the gap is 8.5 years', b.gapYears, 8.5);
-    check('needing 321,300', b.needCents, 32130000);
+    /* Demo: age 32, 22 years to FI at the 5% real median (15.2) → 54;
+       5.5 years × 37,800 = 207,900 needed; reachable before 59½: cash 9,500
+       + the uncharacterised lump as taxable 48,000. */
+    check('FI lands at 54', Math.round(b.fiAge), 54);
+    check('the gap is 5.5 years', b.gapYears, 5.5);
+    check('needing 207,900', b.needCents, 20790000);
     check('with 57,500 reachable', b.availableCents, 5750000);
-    check('so 263,800 short', b.value, 26380000);
+    check('so 150,400 short', b.value, 15040000);
     check('covered years is available over annual spend', b.coveredYears, 1.5);
     const r = St.bridgeGap(rich(), T, { age: 32 });
     check('the Roth basis and the brokerage count, the 401(k) does not', r.availableCents, 950000 + 600000 + 800000);
@@ -5461,12 +5759,16 @@ section('The Statement engine');
     const prop = Schema.createProperty({ assetId: 'house', mortgageId: 'mtg', rentMonthlyCents: 240000, pitiMonthlyCents: 150000, opexMonthlyCents: 40000 });
     /* NOI = (2,400 × .92 − 400) × 12 = (2,208 − 400) × 12 = 21,696.
        Cap = 21,696 / 300,000 = 7.23%. Debt service 18,000. DSCR 1.205.
-       Cash-on-cash = 3,696 / 100,000 equity = 3.7%. */
+       Return on equity = 3,696 / 100,000 equity = 3.7%. Not cash-on-cash:
+       that would divide by the cash actually put in, which this record
+       does not hold, so it is reported as null with the reason (D-224). */
     const m = St.propertyMetrics(h, prop);
     check('NOI by hand', m.noiCents, 2169600);
     check('cap rate', Math.round(m.capRate * 10000) / 10000, 0.0723);
     check('DSCR', Math.round(m.dscr * 1000) / 1000, 1.205);
-    check('cash-on-cash on 100,000 of equity', Math.round(m.cashOnCash * 1000) / 1000, 0.037);
+    check('return on equity, on 100,000 of equity', Math.round(m.returnOnEquity * 1000) / 1000, 0.037);
+    check('and cash-on-cash is not claimed from equity', m.cashOnCash, null);
+    checkTrue('… it says why instead', /cash you actually put in/.test(m.cashOnCashReason));
     checkTrue('the vacancy was assumed and says so', m.vacancyAssumed && m.vacancyRate === 0.08);
     check('monthly cash flow', m.cashFlowMonthlyCents, 30800);
     check('a rental with no asset link is incomplete', St.propertyMetrics(h, Schema.createProperty({})).status, 'incomplete');
@@ -5550,7 +5852,7 @@ section('What is finished');
 
     /* A room that reads nothing shared is not "incomplete" — it is never
        blocked, which is a different state and says so. */
-    const solo = Progress.forRoom('quick-math', h);
+    const solo = Progress.forRoom('offer-compare', h);   /* Quick Math became a Scorecard reading, D-233 */
     checkTrue('a standalone room is flagged as standalone', solo.standalone);
     checkTrue('and counts as complete rather than as behind', solo.complete);
     check('unknown room ids return nothing', Progress.forRoom('no-such-room', h), null);
@@ -5629,6 +5931,16 @@ section('What is finished');
     const path = Registry.inOrder();
     path.forEach(function (room) {
       const nav = Progress.headerNavHtml(room.id);
+      /* The dashboard is the front door, not a step on the path: it carries no
+         prev/next (D-169), and "never a dead end" is met there by the
+         walk-through button and the menu instead - asserted below. */
+      if (room.id === 'dashboard') {
+        check('the front door carries no prev/next', nav, '');
+        /* `path` is the room list in this block, not the module. */
+        const idx = fs.readFileSync(ROOT + '/index.html', 'utf8');
+        checkTrue('...but it still offers a way on: the route through the Ledger', /ledger\.html#route/.test(idx));
+        return;
+      }
       const prev = /slaf-hop--prev[^>]*href="([^"]+)"/.exec(nav);
       const next = /slaf-hop--next[^>]*href="([^"]+)"/.exec(nav);
       checkTrue(`${room.id} offers a way back`, !!prev);
@@ -5665,10 +5977,12 @@ section('What is finished');
   {
     const h = partial();
     const strip = Progress.stripHtml('fire', h);
-    checkTrue('the strip says how many are left', /2 things left/.test(strip));
-    checkTrue('it links to the owning room', /start\.html#q-investments/.test(strip));
+    checkTrue('the strip says how many are left', /2 still needed/.test(strip));
+    /* Tolerant of the ?from= return trip (D-161): the property is that it points
+       at the owner's page and anchor, not the exact character sequence. */
+    checkTrue('it links to the owning room', /start\.html(\?[^#"']*)?#q-investments/.test(strip));
     checkTrue('it offers a way back', /← /.test(strip));
-    checkTrue('and a way forward', /Next unfinished/.test(strip));
+    checkTrue('and a way forward, in plain path order', /Next: /.test(strip) && !/Next unfinished/.test(strip));
 
     /* From a room, links climb out of rooms/; from the root they must not. */
     checkTrue('links from a room are relative to rooms/',
@@ -5678,9 +5992,9 @@ section('What is finished');
       !/\.\.\//.test(fromRoot), fromRoot.slice(0, 400));
 
     const complete = Progress.stripHtml('fire', Demo.build());
-    checkTrue('a finished room says so', /everything it needs/.test(complete));
-    checkTrue('a standalone room says that instead',
-      /stands on its own/.test(Progress.stripHtml('quick-math', h)));
+    checkTrue('a finished room says nothing about it (D-186)', !/everything it needs/.test(complete) && !/slaf-progress-head/.test(complete));
+    checkTrue('a standalone room says nothing either',
+      !/stands on its own/.test(Progress.stripHtml('quick-math', h)));
     check('an unknown room renders nothing', Progress.stripHtml('nope', h), '');
   }
 })();
@@ -5794,7 +6108,8 @@ section('Facts answered once');
     checkTrue('and loads the tax table it needs', foo.indexOf("'effectiveTaxRates'") !== -1);
     const idx = fs.readFileSync(path.join(ROOT, 'rooms/foo-ladder.html'), 'utf8');
     checkTrue('the ladder page loads tier0 before the ladder script',
-      idx.indexOf('engines/tier0.js') !== -1 && idx.indexOf('engines/tier0.js') < idx.indexOf('foo-ladder.js'));
+      idx.indexOf('engines/tier0.js') !== -1
+      && idx.indexOf('<script src="../engines/tier0.js">') < idx.indexOf('<script src="../foo-ladder.js">'));
   }
 
   /* -- The footer and the timeline read the same list ---------------------- */
@@ -6010,23 +6325,37 @@ function builtCardId(roomId, id) {
      bound to it. This is the check that would have caught debt minimums
      being typeable in Cash Flow while also living in Debt Payoff. */
   const OWNED_INPUT_MARKERS = {
-    'cash-flow': [/data-cat="debt_minimums"/],
+    'cash-flow': [/data-cat="debt_minimums"/, /data-fat=/],
+    'expenses': [/data-cat="debt_minimums"/],
     'financial-snapshot': [/data-field="/, /data-write="/, /input[^>]*id="f-/],
     'start': [/data-cat=/, /data-debt=/]
   };
   Object.keys(OWNED_INPUT_MARKERS).forEach(function (roomId) {
     const room = Registry.byId(roomId);
-    const html = fs.readFileSync(path.join(ROOT, room.href), 'utf8');
+    let html = fs.readFileSync(path.join(ROOT, room.href), 'utf8');
+    /* The Scorecard holds five other readings since D-233, two of which have
+       boxes of their own; the rule is about the nine numbers. */
+    if (roomId === 'financial-snapshot') {
+      html = html.slice(html.indexOf('<section id="view-the-nine"'), html.indexOf('<!-- ============== SAVINGS RATE'));
+    }
     OWNED_INPUT_MARKERS[roomId].forEach(function (re) {
       checkTrue(`${roomId} has no input matching ${re}`, !re.test(html),
         'a room is taking input for a field it does not own');
     });
   });
 
-  /* The Financial Snapshot must take no input at all — it is a dashboard. */
+  /* The nine-numbers reading must take no input at all — it is a dashboard.
+     The Scorecard around it does hold two boxes since D-233, both in
+     readings that ask nothing of the household: Quick Math's page-local
+     sums and the rank guess, which is a preference. So the rule is checked
+     on the reading it was always about. */
   const snapHtml = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
-  const snapInputs = (snapHtml.match(/<input|<select/g) || []).length;
-  check('the Financial Snapshot has no input elements', snapInputs, 0);
+  const nine = snapHtml.slice(snapHtml.indexOf('<section id="view-the-nine"'), snapHtml.indexOf('<!-- ============== SAVINGS RATE'));
+  checkTrue('the nine-numbers reading is where it was', nine.length > 1000);
+  const snapInputs = (nine.match(/<input|<select/g) || []).length;
+  check('the nine numbers take no input', snapInputs, 0);
+  checkTrue('and neither box anywhere in the room writes a household field',
+    !/Ownership\.write\(/.test(snapHtml) && !/Spine\.(updateProfile|upsert[A-Za-z]+|set)\(/.test(snapHtml));
 
   /* Debt minimums specifically: derived, owned by Debt Payoff, uneditable
      in Cash Flow. This is the case that started all of it. */
@@ -6050,7 +6379,7 @@ section('Room order');
   checkTrue('every room declares an order', orders.every(o => typeof o === 'number'));
   check('orders are unique', new Set(orders).size, orders.length);
   checkTrue('orders are ascending', orders.every((o, i) => i === 0 || o > orders[i - 1]));
-  check('Start Here comes first', path_[0].id, 'start');
+  check('the Ledger comes first and Start Here (the older one-pager) behind it (D-206, D-208, D-230)', path_.slice(0, 2).map(r => r.id).join(','), 'ledger,start');
   check('the Snapshot comes after the rooms that feed it',
     path_.findIndex(r => r.id === 'financial-snapshot') >
     Math.max(path_.findIndex(r => r.id === 'debt-payoff'), path_.findIndex(r => r.id === 'cash-flow')),
@@ -6058,10 +6387,10 @@ section('Room order');
 
   check('with nothing visited, the next room is the first',
     Registry.nextAfter(null, []).id, 'start');
-  check('with Start done, the next is Debt Payoff',
-    Registry.nextAfter(null, ['start']).id, 'debt-payoff');
+  check('with Start done, the next is Income (the facts first, D-244)',
+    Registry.nextAfter(null, ['start']).id, 'income');
   check('skipping ahead still points at the earliest unvisited',
-    Registry.nextAfter(null, ['start', 'cash-flow']).id, 'debt-payoff');
+    Registry.nextAfter(null, ['start', 'income', 'cash-flow']).id, 'expenses');
 })();
 
 /* ==========================================================================
@@ -6177,7 +6506,7 @@ section('The Statement room');
   const stmt = Registry.byId('statement');
   checkTrue('The Statement is registered', !!stmt);
   check('as a core room', stmt.kind, 'core');
-  check('at the old Net Worth position', stmt.order, 5);
+  checkTrue('early on the path, with the facts (D-244)', stmt.order < Registry.byId('dashboard').order && stmt.order > Registry.byId('start').order);
   checkTrue('Net Worth is no longer a room', !Registry.byId('net-worth'));
   const html = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
   const stub = fs.readFileSync(path.join(ROOT, 'rooms/net-worth.html'), 'utf8');
@@ -6249,7 +6578,7 @@ section('Targets, owned by FIRE');
   check('a decided stop age reads back', Ownership.field('retireAge').read(h).value, 55);
   check('formatted as an age', Ownership.field('retireAge').format(55), 'age 55');
   const chip = Ownership.describe('coastAge', h, 'statement');
-  checkTrue('elsewhere it is read-only and links home', !chip.mine && /fire\.html#targets$/.test(chip.href));
+  checkTrue('elsewhere it is read-only and links home', !chip.mine && /fire\.html(\?[^#]*)?#targets$/.test(chip.href));
 
   /* The coast variant reads the stored age instead of a knob. */
   const fireT = Object.assign({}, TABLES);
@@ -6262,24 +6591,27 @@ section('Targets, owned by FIRE');
 section('The Coverage Checkup, and how it is split');
 
 (function () {
-  /* D-071: four facts about cover, owned by Sleep At Night; a target mix,
-     owned by Where It Goes. Both stored, both read-only elsewhere. */
+  /* D-071: four facts about cover, asked on the Cushion's at-3am reading
+     since D-232; a target mix, owned by Where It Goes. Both stored, both
+     read-only elsewhere. */
   ['oopMax', 'termLife', 'disabilityMonthly', 'umbrella'].forEach(function (f) {
-    check(`${f} is owned by Sleep At Night`, Ownership.field(f).owner, 'sleep-at-night');
+    check(`${f} is owned by The Cushion`, Ownership.field(f).owner, 'runway');
     check(`${f} links to the coverage card`, Ownership.field(f).anchor, 'coverage');
   });
   ['allocationStocks', 'allocationBonds', 'allocationCash', 'rebalanceBand'].forEach(function (f) {
     check(`${f} is owned by Where It Goes`, Ownership.field(f).owner, 'accounts');
     check(`${f} links to the allocation card`, Ownership.field(f).anchor, 'allocation');
   });
-  const san = fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8');
+  const san = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
   const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
   checkTrue('the coverage card exists', /id="coverage"/.test(san));
   checkTrue('the allocation card exists', /id="allocation"/.test(acc));
   checkTrue('the deductible is still asked in Start Here, not here', !/data-field="highestDeductible"|id="c-deductible"/.test(san)
     && Ownership.field('highestDeductible').owner === 'start');
+  checkTrue('Sleep At Night redirects to the reading it became',
+    /url=runway\.html#at-3am/.test(fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8')));
   checkTrue('Where It Goes says so in its title', /how it.s split/.test(Registry.byId('accounts').title));
-  checkTrue('Sleep At Night lists the checkup', Registry.byId('sleep-at-night').subsections.some(s => s.id === 'coverage'));
+  checkTrue('The Cushion lists the checkup', Registry.byId('runway').subsections.some(s => s.id === 'coverage'));
   checkTrue('Where It Goes lists the split', Registry.byId('accounts').subsections.some(s => s.id === 'allocation'));
 
   const h = Demo.build();
@@ -6291,7 +6623,7 @@ section('The Coverage Checkup, and how it is split');
   h.insurance.disabilityMonthlyCents = 300000;
   check('a monthly benefit is formatted per month', Ownership.field('disabilityMonthly').format(300000), '$3,000/mo');
   const elsewhere = Ownership.describe('oopMax', Object.assign(h, { insurance: Object.assign(h.insurance, { oopMaxCents: 800000 }) }), 'statement');
-  checkTrue('elsewhere it is a read-only chip linking home', !elsewhere.mine && /sleep-at-night\.html#coverage$/.test(elsewhere.href));
+  checkTrue('elsewhere it is a read-only chip linking home', !elsewhere.mine && /runway\.html(\?[^#]*)?#coverage$/.test(elsewhere.href));
 
   /* The mix, checked by one function. */
   check('no mix: incomplete', Schema.allocationStatus(h).status, 'incomplete');
@@ -6492,9 +6824,9 @@ section('The ratios T3 unlocked');
   checkTrue('which is about 23×', hf.value > 22.5 && hf.value < 23.5);
   check('room in the bracket: $49,800 before 24%', by.bracketRoom.value, 4980000);
   check('and says the next rate', by.bracketRoom.nextRate, 0.24);
-  check('bridge to 59½: 8.5 years for the demo', by.bridgeGapYears.value, 8.5);
-  check('FI date: 19 years of 365.25 days from noon on 5 Sep 2026', by.fiDate.iso, '2045-09-05');
-  check('as a decimal year to the month', by.fiDate.value, 2045 + 8 / 12, 1e-12);
+  check('bridge to 59½: 5.5 years for the demo at 5% real', by.bridgeGapYears.value, 5.5);
+  check('FI date: 22 years of 365.25 days from noon on 5 Sep 2026', by.fiDate.iso, '2048-09-05');
+  check('as a decimal year to the month', by.fiDate.value, 2048 + 8 / 12, 1e-12);
 
   /* The two that need a year to exist. */
   check('lifestyle inflation with no snapshot asks for one', by.lifestyleInflation.missing.join(','), 'snapshots');
@@ -6550,8 +6882,8 @@ section('Fixed lines, the floor, and cuttability');
   checkTrue('and the money lasts longer', atFloor.value > now.value);
   const runwayHtml = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
   checkTrue('the Runway room offers the floor as a basis', /data-in="basis"/.test(runwayHtml) && /value="floor"/.test(runwayHtml));
-  const cfHtml = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
-  checkTrue('Cash Flow asks per line', /data-fixed=/.test(cfHtml));
+  const cfHtml = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  checkTrue('Expenses asks per line', /data-fixed=/.test(cfHtml));
 })();
 
 section('Three benchmarks, and where the new numbers show');
@@ -6661,7 +6993,7 @@ section('The Rerank');
   const room = Registry.byId('rerank');
   checkTrue('The Rerank is registered, about you, after Enough', room && room.kind === 'about-you' && room.order === Registry.byId('fulfillment').order + 1);
   check('what it would cut is owned by the room', Ownership.field('rerankCut').owner, 'rerank');
-  const cutRead = Ownership.field('rerankCut').read(Object.assign(Demo.build(), { expenses: { monthlyEssential: Demo.build().expenses.monthlyEssential, entries: Demo.buildSpending() } }));
+  const cutRead = Ownership.field('rerankCut').read(Object.assign(Demo.build(), { expenses: Object.assign({}, Demo.build().expenses, { entries: Demo.buildSpending() }) }));
   check('and reads the flagged year', cutRead.value, 180500 * 12);
   check('formatted per year', Ownership.field('rerankCut').format(2166000), '$21,660/yr');
   const html = fs.readFileSync(path.join(ROOT, 'rooms/rerank.html'), 'utf8');
@@ -6883,7 +7215,7 @@ section('Life events: buying a place, on the demo');
   check('selling in year two: 11% of the price', by.reversal.value, Math.round(32400000 * 0.11));
 
   /* Month 1 and 12, longhand, with the loan amortising. */
-  const take = 486000, contrib = 24000, match = 12000, spend = 315000, rate = 0.05 / 12;
+  const take = 486000, contrib = 24000, match = 12000, spend = 289500 /* the month with its lines, D-197 */, rate = 0.05 / 12;
   const upkeep = Math.round(32400000 * 0.026 / 12);
   let cash = 950000 - Math.round(32400000 * 0.03) - Math.round(32400000 * 0.2), inv = 4800000, bal = P;
   const rows = [];
@@ -6893,7 +7225,7 @@ section('Life events: buying a place, on the demo');
     const interest = bal * i; bal -= (pmt - interest);
     rows.push({ cash: cash, nw: Math.round(cash + inv + 32400000 - (2160000 + bal)) });
   }
-  check('month 1 spending: 3,150 − 1,500 rent + the payment + 2.6% a year of upkeep, tax and insurance', r.monthly[0].expensesCents, spend - 150000 + pmt + upkeep);
+  check('month 1 spending: 2,895 − 1,500 rent + the payment + 2.6% a year of upkeep, tax and insurance', r.monthly[0].expensesCents, spend - 150000 + pmt + upkeep);
   check('month 1 cash', r.monthly[0].cashCents, rows[0].cash);
   check('month 1 net worth counts the whole building against the loan', r.monthly[0].netWorthCents, rows[0].nw, 2);
   check('month 12 cash', r.monthly[11].cashCents, rows[11].cash);
@@ -6999,10 +7331,10 @@ section('Life events: a debt sprint, on the demo');
   check('months to debt-free at the minimums, from Debt Payoff\'s engine', by.monthsNow.value, now.months);
   check('and with $200 a month more', by.monthsSprint.value, sprint.months);
   check('interest saved is the difference of the two courses', by.interestSaved.value, now.totalInterestCents - sprint.totalInterestCents);
-  check('month 1 spending is $200 lighter', r.monthly[0].expensesCents, 315000 - 20000);
-  check('and cash is exactly the baseline: the $200 went to the debt', r.monthly[0].cashCents, 1097000);
-  check('net worth is $200 better than doing nothing in month 1', r.monthly[0].netWorthCents, 1097000 + Math.round((4800000 + 24000 + 12000) * (1 + 0.05 / 12)) - (2160000 - 20000));
-  check('after six months the sprint stops: month 12 spending is the full month', r.monthly[11].expensesCents, 315000);
+  check('month 1 spending is $200 lighter', r.monthly[0].expensesCents, 289500 - 20000); /* D-197 */
+  check('and cash is exactly the baseline: the $200 went to the debt', r.monthly[0].cashCents, 1122500);
+  check('net worth is $200 better than doing nothing in month 1', r.monthly[0].netWorthCents, 1122500 + Math.round((4800000 + 24000 + 12000) * (1 + 0.05 / 12)) - (2160000 - 20000));
+  check('after six months the sprint stops: month 12 spending is the full month', r.monthly[11].expensesCents, 289500);
   check('month 12 net worth carries six payments of $200', r.monthly[11].netWorthCents - E.baseline(h, { tables: T }).monthly[11].netWorthCents, 6 * 20000);
   const wanted = Demo.build(); wanted.expenses.entries = Demo.buildSpending(); wanted.ratings.rerank.dining_out = 2;
   wanted.expenses.entries.filter(e => e.categoryId === 'dining_out')[0].amountCents = 50000;   /* dear enough to be in the top three by cost */
@@ -7143,16 +7475,16 @@ section('Life events: two households, one, on the demo');
   check('one take-home, filing jointly, on $132,000', by.takeHomeJoint.value, joint);
   check('the filing change is the difference', by.filingDelta.value, joint - apart);
   check('the duplicate line proposed is the tracked housing', r.answers.duplicateLines, 150000);
-  check('the month together: 3,150 + 2,800 − 1,500', by.spendTogether.value, 445000);
-  check('the FI number for two at 4%: 25 × a year of that', by.fiNumberTogether.value, 25 * 12 * 445000);
-  check('the FI ratio for two: (48,000 + 20,000) over it', by.fiRatioTogether.value, 6800000 / (25 * 12 * 445000), 1e-12);
+  check('the month together: 2,895 (D-197) + 2,800 − 1,500', by.spendTogether.value, 419500);
+  check('the FI number for two at 4%: 25 × a year of that', by.fiNumberTogether.value, 25 * 12 * 419500);
+  check('the FI ratio for two: (48,000 + 20,000) over it', by.fiRatioTogether.value, 6800000 / (25 * 12 * 419500), 1e-12);
   /* Month 1: the joint take-home, your plan and match as before, their cash, investments and debt joining. */
   check('month 1 income: the joint take-home less your 4%', r.monthly[0].incomeCents, joint - 24000);
   check('the plan and match continue', r.monthly[0].contributionCents + r.monthly[0].matchCents, 36000);
-  check('month 1 cash: 9,500 + their 5,000 + income − the month together', r.monthly[0].cashCents, 950000 + 500000 + (joint - 24000) - 445000);
+  check('month 1 cash: 9,500 + their 5,000 + income − the month together', r.monthly[0].cashCents, 950000 + 500000 + (joint - 24000) - 419500);
   check('month 1 investments: 48,000 + their 20,000 + 360, grown a month', r.monthly[0].investmentsCents, Math.round((4800000 + 2000000 + 36000) * (1 + 0.05 / 12)));
   check('month 1 net worth carries their $10,000 of debt', r.monthly[0].netWorthCents, r.monthly[0].cashCents + r.monthly[0].investmentsCents - (2160000 + 1000000));
-  let cash = 950000 + 500000; for (let m = 0; m < 12; m++) cash += (joint - 24000) - 445000;
+  let cash = 950000 + 500000; for (let m = 0; m < 12; m++) cash += (joint - 24000) - 419500;
   check('month 12 cash by the longhand', r.monthly[11].cashCents, cash);
   /* Without a partner's figures the event cannot price itself and says so, and changes nothing. */
   const alone = E.run(h, tpl, {}, { tables: T, d: 'default' });
@@ -7423,8 +7755,8 @@ section('The Skill Stacker: the catalogue, and the engine on the demo');
   const html = fs.readFileSync(path.join(ROOT, 'rooms/stacker.html'), 'utf8');
   checkTrue('four screens exist', ['today', 'browse', 'stacks', 'curves'].every(id => new RegExp('id="' + id + '"').test(html)));
   checkTrue('the lists are guarded', /LIVE-FORM: guarded/.test(html) && (html.match(/LiveForm\.guard\(/g) || []).length === 3);
-  checkTrue('the dashboard and Refresh load the engine so a snapshot carries the ledger',
-    /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms/refresh.html'), 'utf8')));
+  checkTrue('the dashboard and the Ledger load the engine so a snapshot carries the ledger',
+    /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /engines\/skills\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')));
 })();
 
 section('Charts: the one way a number becomes a picture');
@@ -7451,6 +7783,19 @@ section('Charts: the one way a number becomes a picture');
   checkTrue('… and a legend naming both', /<ul class="slaf-legend">.*>a<\/li>.*FI<\/li>/.test(a));
   checkTrue('no series: says so instead of drawing', /is-empty/.test(Charts.area({ series: [] })));
 
+  /* Columns (D-198): stacked, faded ahead, a divider, values only where they change. */
+  const cols = Charts.columns({ columns: [
+    { label: 'Mar', parts: [{ label: 'Benefit', value: 347600, color: '#5AA9FF' }] },
+    { label: 'Apr', parts: [{ label: 'Benefit', value: 347600, color: '#5AA9FF' }] },
+    { label: 'May', parts: [{ label: 'Benefit', value: 434500, color: '#5AA9FF' }, { label: 'Gift', value: 25000, color: '#E8B84B' }], mark: true },
+    { label: 'Jun', parts: [{ label: 'Benefit', value: 434500, color: '#5AA9FF' }], faded: true }
+  ], divider: 3, captions: ['so far', 'ahead'] });
+  check('columns: one rect per non-empty part', (cols.match(/<rect/g) || []).length, 5);
+  check('the ahead column is faded', (cols.match(/opacity="0\.42"/g) || []).length, 1);
+  checkTrue('a dashed divider with its captions', /stroke-dasharray="3 3"/.test(cols) && /so far/.test(cols) && />ahead</.test(cols));
+  check('values sit only where the total changes, and on the marked month', (cols.match(/font-size:7\.5px/g) || []).length, 3);
+  checkTrue('a legend names both parts once', /Benefit<\/li>/.test(cols) && /Gift<\/li>/.test(cols) && (cols.match(/<li>/g) || []).length === 2);
+  checkTrue('no columns: says so instead of drawing', /is-empty/.test(Charts.columns({ columns: [] })));
   const d = Charts.donut({ slices: [{ label: 'Cash', value: 950000 }, { label: 'Invest', value: 4800000 }, { label: 'Nothing', value: 0 }] });
   checkTrue('a donut is a ring of arcs', (d.match(/<circle class="arc"/g) || []).length === 2);
   checkTrue('… a zero slice is listed, not drawn', /Nothing/.test(d) && (d.match(/<circle class="arc"/g) || []).length === 2);
@@ -7524,7 +7869,7 @@ section('Between jobs: the unemployed sequence');
     return Schema.createHousehold(Object.assign({ people: [p], filingStatus: 'single', state: 'NC',
       assets: [Schema.createAsset({ id: 'a', category: 'cash', valueCents: 600000, liquid: true, ownerIds: ['p'] }),
                Schema.createAsset({ id: 'b', category: 'investment', valueCents: 1000000, ownerIds: ['p'] })],
-      expenses: { monthlyEssential: { estimatedValueCents: 300000, trackedValueCents: null }, entries: [] },
+      expenses: { wants: { totalCents: 300000 }, entries: [] },
       insurance: { highestDeductibleCents: 0 }, meta: { hasDebt: false } }, extra || {}));
   }
   const h = household(u);
@@ -7588,10 +7933,10 @@ section('Between jobs: the unemployed sequence');
   check('dependents starts unasked', Schema.createHousehold({}).dependents, null);
   check('… and "no" is kept as an empty list, not blank (D-094)', JSON.stringify(Schema.createHousehold({ dependents: false }).dependents), '[]');
   const alone = Schema.createHousehold({ dependents: false });
-  checkTrue('term life does not apply when nobody depends on the income', !Ownership.describe('termLife', alone, 'sleep-at-night').applies);
-  checkTrue('… and does when someone does, or when unasked', Ownership.describe('termLife', Schema.createHousehold({ dependents: true }), 'sleep-at-night').applies && Ownership.describe('termLife', Schema.createHousehold({}), 'sleep-at-night').applies);
+  checkTrue('term life does not apply when nobody depends on the income', !Ownership.describe('termLife', alone, 'runway').applies);
+  checkTrue('… and does when someone does, or when unasked', Ownership.describe('termLife', Schema.createHousehold({ dependents: true }), 'runway').applies && Ownership.describe('termLife', Schema.createHousehold({}), 'runway').applies);
   checkTrue('Start Here asks it, in the fine-tune drawer', /id="q-fine-tune"/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')) && /choices\('dependents'/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')) && Registry.byId('start').subsections.some(x => x.id === 'q-fine-tune'));
-  checkTrue('Sleep At Night says so instead of asking', /Nobody depends on your income/.test(fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8')));
+  checkTrue('the at-3am reading says so instead of asking', /Nobody depends on your income/.test(fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8')));
   checkTrue('… and unemploymentOf never returns undefined for a raw person', Schema.unemploymentOf(Schema.createHousehold({ people: [{ id: 'x', employmentStatus: 'unemployed', role: 'adult' }] })).since === null);
 })();
 
@@ -7821,19 +8166,19 @@ section('Core (D-094): the gate — exists() per situation');
   /* Rooms whose requires are absent are not in the map. */
   const all = Registry.all().length;
   function gone(h) { const ids = Registry.forHousehold(h).map(r => r.id); return Registry.all().map(r => r.id).filter(id => ids.indexOf(id) === -1).sort().join(','); }
-  check('unanswered: every room but the ones that need a fact (a status, a partner, a dependent)', gone(none), 'between-jobs,kids,partner');
+  check('unanswered: every room but the ones that need a fact (a partner, a dependent)', gone(none), 'kids,partner');
   check('no household: every room', Registry.forHousehold(null).length, all);
   const retiredRooms = Registry.forHousehold(hh('retired')).map(r => r.id);
-  check('retired: the working rooms are gone, and Between Jobs', gone(hh('retired')), 'accounts,between-jobs,career-move,credential,dreamline,fire,hassle,kids,partner,real-hourly-wage,savings-rate,self-employed,side-hustle,variable-income');
+  check('retired: the working rooms are gone', gone(hh('retired')), 'accounts,career-move,credential,dreamline,fire,hassle,kids,partner,real-hourly-wage,self-employed,side-hustle,variable-income');
   const bjRooms = Registry.forHousehold(hh('betweenJobs')).map(r => r.id);
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
-  check('employed, alone, no dependents: own work, between jobs, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'between-jobs,decumulation,kids,partner,self-employed,variable-income');
+  check('employed, alone, no dependents: own work, decumulation, partner, kids and variable income are gone', gone(hh('employed')), 'decumulation,kids,partner,self-employed,variable-income');
   checkTrue('self-employed: the 401(k) room is gone', Registry.forHousehold(hh('selfEmployed')).map(r => r.id).indexOf('accounts') === -1);
   checkTrue('every requires key is a branch', Object.keys(Registry.REQUIRES).every(id => Registry.REQUIRES[id].every(k => Gate.BRANCHES.indexOf(k) !== -1)));
   checkTrue('every requires room is a room', Object.keys(Registry.REQUIRES).every(id => !!Registry.byId(id)));
   check('byTag with a household filters the same way', Registry.byTag('all', hh('retired')).length, retiredRooms.length);
   check('byTag without one is every room', Registry.byTag('all').length, all);
-  check('the demo is six rooms short — no own work, not between jobs, not drawing down, alone, nobody depending', gone(Demo.build()), 'between-jobs,decumulation,kids,partner,self-employed,variable-income');
+  check('the demo is five rooms short — no own work, not drawing down, alone, nobody depending', gone(Demo.build()), 'decumulation,kids,partner,self-employed,variable-income');
 
   /* Guesses: a default for every guessable control, from the tables. */
   const tables = Object.assign({}, TABLES, { onepagerDefaults: require(path.join(ROOT, 'data/onepager_defaults.json')), uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) });
@@ -7865,7 +8210,7 @@ section('Core (D-094): the lens, by hand');
   const demo = Demo.build();
   const T = TABLES;
 
-  check('four modes', Lens.MODES.map(m => m.id).join(','), '$,hours,bought,pushed');
+  check('five modes', Lens.MODES.map(m => m.id).join(','), '$,hours,bought,pushed,paycheck');
   check('the demo has all four', Lens.available(demo, T).length, 4);
   const retired = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'retired' })] });
   check('a retiree has no hours lens', Lens.available(retired, T).map(m => m.id).join(','), '$,bought,pushed');
@@ -7926,8 +8271,8 @@ section('Core (D-094): the schema branches and their migrations');
   check('"yes" from before is one person of unknown age', JSON.stringify(Schema.createHousehold({ dependents: true }).dependents), '[{"age":null}]');
   check('"no" is an empty list', JSON.stringify(Schema.createHousehold({ dependents: false }).dependents), '[]');
   check('a list keeps its ages', JSON.stringify(Schema.createHousehold({ dependents: [{ age: 4 }, { age: 12 }] }).dependents), '[{"age":4},{"age":12}]');
-  check('term life applies to a bare "yes"', Ownership.describe('termLife', Object.assign(Schema.createHousehold({}), { dependents: true }), 'sleep-at-night').applies, true);
-  check('… not to a bare "no"', Ownership.describe('termLife', Object.assign(Schema.createHousehold({}), { dependents: false }), 'sleep-at-night').applies, false);
+  check('term life applies to a bare "yes"', Ownership.describe('termLife', Object.assign(Schema.createHousehold({}), { dependents: true }), 'runway').applies, true);
+  check('… not to a bare "no"', Ownership.describe('termLife', Object.assign(Schema.createHousehold({}), { dependents: false }), 'runway').applies, false);
   check('dependents reads a bare "no" as none', Ownership.field('dependents').read(Object.assign(Schema.createHousehold({}), { dependents: false })).value, 0);
   check('… and formats it', Ownership.field('dependents').format(0), 'No');
   check('… two people', Ownership.field('dependents').format(2), '2 people');
@@ -8046,7 +8391,7 @@ section('The dashboard (D-096): four blocks, the leads, the translator');
     const h = Schema.createHousehold(Object.assign({ state: 'NC', filingStatus: 'single', meta: { hasDebt: false, noRent: false },
       people: [Schema.createPerson({ role: 'adult', employmentStatus: status, dob: '1990-06-01', incomeSources: [Schema.createIncomeSource({ id: 'intake_income', grossAnnualIncomeCents: 6000000 })] })],
       assets: [Schema.createAsset({ category: 'cash', valueCents: 600000 }), Schema.createAsset({ category: 'investment', valueCents: 4000000 })] }, extra || {}));
-    h.expenses.monthlyEssential.estimatedValueCents = 300000;
+    h.expenses = Schema.withMonthlySpend(h, 300000).expenses;
     return h;
   }
 
@@ -8054,12 +8399,12 @@ section('The dashboard (D-096): four blocks, the leads, the translator');
      $420,000 = 3.14%. Income covering spending draws nothing. */
   const ret = hh('retired', { people: [Schema.createPerson({ role: 'adult', employmentStatus: 'retired', dob: '1958-03-01', incomeSources: [Schema.createIncomeSource({ grossAnnualIncomeCents: 2400000 })] })],
     assets: [Schema.createAsset({ category: 'cash', valueCents: 1800000 }), Schema.createAsset({ category: 'investment', valueCents: 42000000 })] });
-  ret.expenses.monthlyEssential.estimatedValueCents = 310000;
+  ret.expenses = Schema.withMonthlySpend(ret, 310000).expenses;
   const wr = Ratios.all(ret, T).rows.filter(r => r.id === 'withdrawalRate')[0];
   check('withdrawal rate = (spending × 12 − income) ÷ investments', Math.round(wr.value * 10000) / 10000, Math.round(1320000 / 42000000 * 10000) / 10000);
   check('… drawing $13,200 a year', wr.result.annualDrawCents, 1320000);
   check('… inside the 4% band', wr.verdict.zone, 'good');
-  const covered = hh('retired'); covered.expenses.monthlyEssential.estimatedValueCents = 200000;
+  const covered = hh('retired'); covered.expenses = Schema.withMonthlySpend(covered, 200000).expenses;
   check('income covering spending draws nothing — a zero, not a blank', Ratios.all(covered, T).rows.filter(r => r.id === 'withdrawalRate')[0].result.value, 0);
   checkTrue('… and says it is covered', Ratios.all(covered, T).rows.filter(r => r.id === 'withdrawalRate')[0].result.covered === true);
   checkTrue('an employed household has no withdrawal rate', !Ratios.all(hh('employed'), T).rows.filter(r => r.id === 'withdrawalRate')[0].ok);
@@ -8141,6 +8486,313 @@ section('The dashboard (D-096): four blocks, the leads, the translator');
   check('the dashboard\'s registry blurb says what it is', /Home\./.test(Registry.byId('dashboard').blurb), true);
 })();
 
+section('Up next and the FIRE tiers (D-234): what is open, what one answer opens, which rung');
+
+(function () {
+  const UpNext = require(path.join(ROOT, 'shared/upnext.js'));
+  const T = Object.assign({}, TABLES, { fooRules: require(path.join(ROOT, 'data/foo_rules.json')) });
+  const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+
+  /* The list is honest about where it points. */
+  checkTrue('every need is a shared field', UpNext.READINGS.every(r => r.needs.every(f => !!Ownership.FIELDS[f])));
+  checkTrue('every reading opens a room, at a section that room lists', UpNext.READINGS.every(r => { const room = Registry.byId(r.room); return !!room && room.subsections.some(s => s.id === r.anchor); }));
+  checkTrue('no two readings share an id', new Set(UpNext.READINGS.map(r => r.id)).size === UpNext.READINGS.length);
+
+  /* Empty: nothing open, every locked reading says which fields, and the
+     cheapest comes first. */
+  const empty = UpNext.plan(Schema.createHousehold({}), T);
+  check('an empty household opens nothing', empty.open.length, 0);
+  checkTrue('… and every locked reading names at least one field, with a link', empty.locked.every(e => e.missing.length > 0 && e.missing.every(m => /^rooms\//.test(m.href))));
+  check('… the FIRE number is one answer away', empty.next.id + ':' + empty.next.missing.map(m => m.fieldId).join(','), 'fireNumber:monthlyExpenses');
+  checkTrue('… and the list is cheapest first', empty.locked.every((e, i) => i === 0 || e.cost >= empty.locked[i - 1].cost));
+  checkTrue('… monthly expenses is named as opening the most', Object.keys(empty.byField).every(k => empty.byField[k].opens.length <= empty.byField.monthlyExpenses.opens.length));
+
+  /* `needs` is the promise: fill exactly these and the reading opens. */
+  function only(fields) {
+    const h = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })], meta: { hasDebt: true } });
+    fields.forEach(f => {
+      if (f === 'cashSavings') h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 1200000 }));
+      if (f === 'investments') h.assets.push(Schema.createAsset({ category: 'investment', valueCents: 5000000 }));
+      if (f === 'totalDebt') h.debts.push(Schema.createDebt({ label: 'Card', balanceCents: 300000, rate: 0.2, minPaymentCents: 9000, type: 'credit_card' }));
+      if (f === 'grossAnnualIncome') h.people[0].incomeSources = [Schema.createIncomeSource({ id: 'intake_income', grossAnnualIncomeCents: 7200000 })];
+      if (f === 'filingStatus') h.filingStatus = 'single';
+      if (f === 'monthlyExpenses') h.expenses = Schema.withMonthlySpend(h, 300000).expenses;
+      if (f === 'dob') h.people[0].dob = '1994-04-12';
+      if (f === 'employerMatch') {
+        if (!h.people[0].incomeSources.length) h.people[0].incomeSources = [Schema.createIncomeSource({ id: 'intake_income' })];
+        h.people[0].incomeSources[0].employerMatch = { matchPercent: 0.5, matchCapPercentOfSalary: 0.06 };
+      }
+      if (f === 'contributionPercent') h.retirement = Object.assign({}, h.retirement, { contributionPercent: 6 });
+    });
+    return h;
+  }
+  UpNext.READINGS.forEach(r => {
+    const p = UpNext.plan(only(r.needs), T);
+    const hit = p.open.filter(e => e.id === r.id)[0];
+    checkTrue(`filling only its needs opens ${r.id}` + (hit ? ' (' + hit.display + ')' : ''), !!hit, p.locked.filter(e => e.id === r.id).map(e => e.reason || e.missing.map(m => m.fieldId).join(',')).join(' '));
+    /* And one fewer leaves it locked, naming the one left out. */
+    if (r.needs.length > 1) {
+      const short = UpNext.plan(only(r.needs.slice(1)), T);
+      const left = short.locked.filter(e => e.id === r.id)[0];
+      checkTrue(`… one short and ${r.id} names ${r.needs[0]}`, !!left && left.missing.length === 1 && left.missing[0].fieldId === r.needs[0]);
+    }
+  });
+
+  /* The demo opens everything; a retiree is not asked for a savings rate. */
+  const demo = UpNext.plan(Demo.build(), T);
+  check('the demo opens every reading', demo.locked.length, 0);
+  check('… ten of them', demo.open.length, UpNext.READINGS.length);
+  checkTrue('… each with a display string, never a dash', demo.open.every(e => typeof e.display === 'string' && e.display.length > 0 && e.display !== Money.EM_DASH));
+  const ret = Demo.build(); ret.people[0].employmentStatus = 'retired';
+  checkTrue('a retiree has no savings rate or FI date reading, locked or open', ['savingsRate', 'fiDate'].every(id => !UpNext.plan(ret, T).open.concat(UpNext.plan(ret, T).locked).some(e => e.id === id)));
+
+  /* The tiers: one ladder, sorted by size, the rung reached and the next. */
+  const t = Fire.tiers(Demo.build(), T);
+  checkTrue('the demo has five rungs, no barista without a part-time income', Money.isOk(t) && t.rungs.map(r => r.id).join(',') === 'coast,lean,standard,chubby,fat');
+  checkTrue('… sorted by target', t.rungs.every((r, i) => i === 0 || r.targetCents >= t.rungs[i - 1].targetCents));
+  check('… the demo has reached none', t.value + ':' + (t.current ? t.current.id : 'none') + ':' + t.next.id, '0:none:coast');
+  check('… the gap is target less investments', t.next.gapCents, t.next.targetCents - t.investmentsCents);
+  checkTrue('… with years away at this pace', Money.isOk(t.next.yearsAway) && t.next.yearsAway.value > 0);
+  checkTrue('… and each rung carries its share', t.rungs.every(r => typeof r.share === 'number'));
+  const rich = Demo.build(); rich.assets = rich.assets.filter(a => a.category !== 'investment').concat([Schema.createAsset({ category: 'investment', valueCents: 80000000 })]);
+  const tr = Fire.tiers(rich, T);
+  check('$800,000 invested against $3,150 a month: Lean reached, FIRE next', tr.value + ':' + tr.current.id + ':' + tr.next.id, '2:lean:standard');
+  check('… $145,000 to go', tr.next.gapCents, 94500000 - 80000000);
+  const done = Demo.build(); done.assets = done.assets.filter(a => a.category !== 'investment').concat([Schema.createAsset({ category: 'investment', valueCents: 200000000 })]);
+  checkTrue('past every rung: no next', Fire.tiers(done, T).next === null && Fire.tiers(done, T).current.id === 'fat');
+  checkTrue('barista joins the ladder once a part-time income is given', Fire.tiers(Demo.build(), T, { baristaAnnualIncomeCents: 1200000 }).rungs.some(r => r.id === 'barista'));
+  const noSpend = Demo.build(); noSpend.expenses = Schema.createHousehold({}).expenses;
+  checkTrue('no expenses: incomplete, naming them', !Money.isOk(Fire.tiers(noSpend, T)) && Fire.tiers(noSpend, T).missing.indexOf('monthlyExpenses') !== -1);
+  const noInv = Demo.build(); noInv.assets = noInv.assets.filter(a => a.category !== 'investment');
+  const ti = Fire.tiers(noInv, T);
+  checkTrue('no investments: incomplete, but the rungs are still listed, unplaced', !Money.isOk(ti) && ti.rungs.length === 5 && ti.rungs.every(r => r.reached === null));
+
+  /* The page: a strip, not a fifth block; the tiers in block 4. */
+  checkTrue('the dashboard loads the up-next reader', page.indexOf('<script src="shared/upnext.js">') !== -1);
+  checkTrue('the strip is on the page, not as a section', /<div class="walk-strip up-next" id="up-next"/.test(page) && !/<section[^>]*id="up-next"/.test(page));
+  checkTrue('the tiers sit inside the date block', page.indexOf('id="fire-tiers"') > page.indexOf('id="date"') && page.indexOf('id="fire-tiers"') < page.indexOf('id="full-panel"'));
+  checkTrue('the old answers-in counter is gone', page.indexOf('id="resume"') === -1 && page.indexOf('answers in.') === -1);
+  checkTrue('the registry deep-links the strip', Registry.byId('dashboard').subsections.some(s => s.id === 'up-next'));
+})();
+
+section('The map (D-235): the road, you are here, and the routes from here');
+
+(function () {
+  const Journey = require(path.join(ROOT, 'engines/journey.js'));
+  const JourneyMap = require(path.join(ROOT, 'shared/journeymap.js'));
+  const T = Object.assign({}, TABLES, { fooRules: require(path.join(ROOT, 'data/foo_rules.json')), journeyRoutes: require(path.join(ROOT, 'data/journey_routes.json')), returnBands: require(path.join(ROOT, 'data/return_bands.json')) });
+  const demo = Demo.build();
+  const m = Journey.map(demo, T);
+
+  /* The ladder: ten steps, the FOO's placement, nothing decided here. */
+  check('ten ladder steps', m.ladder.steps.length, 10);
+  check('the demo is on step 2, as the FOO says', m.ladder.here, Foo.evaluate(demo, T).placement.step);
+  check('… steps before it done, it here, the rest ahead', m.ladder.steps.map(s => s.state).join(','), 'done,done,here,ahead,ahead,ahead,ahead,ahead,ahead,ahead');
+  const blank = Journey.map(Schema.createHousehold({}), T);
+  checkTrue('an empty household is nowhere on the ladder, and the map says why', blank.ladder.here === null && typeof blank.ladder.reason === 'string' && blank.ladder.reason.length > 0);
+  checkTrue('… its steps are unknown or ahead, never done', blank.ladder.steps.every(s => s.state !== 'done'));
+
+  /* The tiers and the back half read the same engines the dashboard does. */
+  check('the tiers are Fire.tiers', JSON.stringify(m.tiers.rungs.map(r => r.id)), JSON.stringify(Fire.tiers(demo, T).rungs.map(r => r.id)));
+  check('you are here: no tier yet, step 2', m.here.tier + ':' + m.here.step, 'null:2');
+  check('the back half is ahead', m.backHalf.state, 'ahead');
+  const ret = Demo.build(); ret.people[0].employmentStatus = 'retired';
+  check('a retiree is in the back half', Journey.map(ret, T).backHalf.state, 'here');
+
+  /* The routes: four paces, one loop. */
+  checkTrue('the routes table carries the header', typeof T.journeyRoutes.version === 'string' && typeof T.journeyRoutes.confidence === 'string' && typeof T.journeyRoutes.confidenceNote === 'string');
+  check('four routes', T.journeyRoutes.routes.length, 4);
+  checkTrue('the routes are ok for the demo', Money.isOk(m.routes));
+  const R = {}; m.routes.routes.forEach(r => { R[r.id] = r; });
+  check('the road as it is lands on the same FI year as Tier 0', R['as-is'].yearsToFire, Tier0.yearsToFire(demo, T).value);
+  check('… saving what the savings rate says is saved', R['as-is'].annualSavingCents, (Money.isOk(Tier0.savingsRate(demo, T).includingMatch) ? Tier0.savingsRate(demo, T).includingMatch : Tier0.savingsRate(demo, T).excludingMatch).annualSavingsCents);
+  check('the scenic route saves half', R.scenic.annualSavingCents, Math.round(R['as-is'].annualSavingCents * 0.5));
+  checkTrue('… and arrives later', R.scenic.yearsToFire > R['as-is'].yearsToFire && R.scenic.deltaYears < 0);
+  const floor = Schema.fatNeedsCents(demo);
+  checkTrue('the demo has its floor typed', Money.isOk(floor));
+  check('the death march lives on the floor', R.march.monthlyLivingCents, Math.round(floor.value));
+  check('… and puts in take-home less the floor', R.march.annualSavingCents, m.routes.takeHomeAnnualCents - floor.value * 12);
+  checkTrue('… so it arrives sooner', R.march.yearsToFire < R['as-is'].yearsToFire && R.march.deltaYears > 0);
+  checkTrue('coast then cruise stops adding when the Coast rung is reached, at today\'s pace', R.coast.stopSavingIn === R['as-is'].eta.coast.years);
+  check('… and arrives at the coast target age', R.coast.arriveAge, T.fireVariants.defaults.coastTargetAge);
+  check('… which is the years of growth Coast FIRE counts', R.coast.yearsToFire, Fire.calculateFIRE(demo, T, { variantId: 'coast' }).yearsOfGrowth);
+  checkTrue('soonest first, the death march leads', m.routes.routes[0].id === 'march');
+  checkTrue('every route says what to live on and what to put in', m.routes.routes.every(r => Money.isEntered(r.monthlyLivingCents) && Money.isEntered(r.annualSavingCents)));
+  checkTrue('take-home is what is lived on plus what is put in, every route', m.routes.routes.every(r => Math.abs(r.monthlyLivingCents * 12 + r.annualSavingCents - m.routes.takeHomeAnnualCents) < 12));
+
+  /* Honest edges: no floor typed is rough and says so; saving nothing never arrives; nothing entered names the field. */
+  const noFloor = Schema.withMonthlySpend(demo, 315000);
+  const nf = Journey.map(noFloor, T).routes.routes.filter(r => r.id === 'march')[0];
+  checkTrue('without the floor typed the march is rough and says so', nf.rough === true && /70%/.test(nf.note));
+  check('… at the same share Lean FIRE falls back to', T.journeyRoutes.floorShareFallback, Fire.variantById(T.fireVariants, 'lean').expenseFactor);
+  const spender = Demo.build(); spender.expenses = Schema.withMonthlySpend(spender, 650000).expenses;
+  const sp = Journey.map(spender, T).routes;
+  checkTrue('spending more than take-home: the road as it is never arrives, and says so rather than a year', Money.isOk(sp) && sp.routes.filter(r => r.id === 'as-is')[0].never === true && sp.routes.filter(r => r.id === 'as-is')[0].yearsToFire === null);
+  checkTrue('… and the never routes sort last', sp.routes.slice(sp.routes.findIndex(r => r.never)).every(r => r.never) && sp.routes.some(r => r.never));
+  const html2 = JourneyMap.html(Journey.map(spender, T), { from: 'fire' });
+  checkTrue('… and are drawn as never, not as a year', /jm-never/.test(html2));
+  checkTrue('nothing entered: the routes name monthly expenses', !Money.isOk(blank.routes) && blank.routes.missing.indexOf('monthlyExpenses') !== -1);
+  const noInc = Demo.build(); noInc.people[0].incomeSources = [];
+  checkTrue('no income: the routes say what is missing, the tiers still stand', !Money.isOk(Journey.map(noInc, T).routes) && Journey.map(noInc, T).tiers.rungs.length === 5);
+
+  /* The renderer: one road, you are here twice at most, every step a link. */
+  const html = JourneyMap.html(m, { from: 'fire' });
+  check('you are here once, on the ladder step; the demo has reached no rung', (html.match(/jm-step is-here/g) || []).length, 1);
+  check('… and the Coast rung is next', (html.match(/jm-step is-next/g) || []).length, 1);
+  const richMap = (function () { const r = Demo.build(); r.assets = r.assets.filter(a => a.category !== 'investment').concat([Schema.createAsset({ category: 'investment', valueCents: 80000000 })]); return JourneyMap.html(Journey.map(r, T), { from: 'fire' }); })();
+  checkTrue('with Lean reached: Coast done, Lean here, FIRE next', /is-done" href="[^"]*"[^>]*><i>Coast/.test(richMap) && /is-here" href="[^"]*"[^>]*><i>Lean/.test(richMap) && /is-next" href="[^"]*"[^>]*><i>FIRE/.test(richMap));
+  checkTrue('every ladder step opens the ladder room', (html.match(/class="jm-step[^"]*" href="[^"]*foo-ladder[^"]*"/g) || []).length === 10);
+  checkTrue('the four routes are drawn, soonest first', html.indexOf('jm-route-march') < html.indexOf('jm-route-as-is') && html.indexOf('jm-route-as-is') < html.indexOf('jm-route-scenic'));
+  checkTrue('the map points at the Long Way Round for the other ways', /adventure\.html[^"]*#s-ways/.test(html));
+  checkTrue('no unescaped angle bracket from data reaches the page', JourneyMap.html(Journey.map(Object.assign({}, demo, { people: [Object.assign({}, demo.people[0], { label: '<b>x</b>' })] }), T), { from: 'fire' }).indexOf('<b>x</b>') === -1);
+
+  /* The pages. */
+  const fire = fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8');
+  const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the FIRE room opens with the map, before the number', fire.indexOf('id="map"') < fire.indexOf('id="out-target"') && fire.indexOf('id="map"') > fire.indexOf('id="reading"'));
+  checkTrue('… and loads the engine and the renderer', ['engines/foo.js', 'engines/journey.js', 'shared/journeymap.js'].every(f => fire.indexOf('<script src="../' + f + '">') !== -1));
+  checkTrue('the registry deep-links it', Registry.byId('fire').subsections.some(s => s.id === 'map'));
+  checkTrue('the dashboard\'s flight plan draws the same map and lost the bare ladder strip', page.indexOf('id="journey-map"') !== -1 && page.indexOf('id="foo-steps"') === -1 && /JourneyMap\.mount\(el\('journey-map'\)/.test(page));
+  checkTrue('… and block 4 points at the map', /linkTo\('fire', 'map', ROOM_ID\)/.test(page));
+})();
+
+section('Fewer words, plain words (D-245): hints fold, pillars explain');
+
+(function () {
+  const Progress = require(path.join(ROOT, 'shared/progress.js'));
+  const hs = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/health_score.json'), 'utf8'));
+  checkTrue('every pillar says what it measures, what good is, why, and what raises it', hs.pillars.every(p => p.plain && ['measures', 'good', 'why', 'improve'].every(k => typeof p.plain[k] === 'string' && p.plain[k].length > 20)));
+  checkTrue('… in short sentences without an em dash', hs.pillars.every(p => Object.keys(p.plain).every(k => p.plain[k].indexOf('—') === -1)));
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
+  checkTrue('the Scorecard draws a verdict word and the caret on each pillar', /verdictWord\(p\.score\)/.test(page) && /class="pillar-more"/.test(page) && /To raise it:/.test(page));
+  checkTrue('the hint fold is shared and the stylesheet carries it', typeof Progress.mountHintFolds === 'function' && Progress.HINT_FOLD_CHARS > 60 && /\.slaf-hint-toggle \{/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+  checkTrue('… and mounts with every room header', /mountSectionSync\(roomId\);\s*mountHintFolds\(\);/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+})();
+
+section('Logged pay reaches every reading (D-246)');
+
+(function () {
+  const T = Object.assign({}, TABLES, { seTax: require(path.join(ROOT, 'data/se_tax_2026.json')) });
+  const plain = Demo.build();
+  check('without a log the take-home is the estimate', Schema.takeHomeAnnualCents(plain, T).source, 'estimate');
+  const logged = Demo.build();
+  logged.ledger = { income: [Schema.createIncomeEntry({ label: 'Pay', kind: 'w2', amountCents: 300000, frequency: 'fortnightly', receivedOn: '2026-09-04', taxMethod: 'w2' })] };
+  const t = Schema.takeHomeAnnualCents(logged, T);
+  check('with a recurring paycheck logged, the take-home is the log\'s', t.source, 'logged');
+  const m = Schema.loggedTakeHomeMonthlyCents(logged, T);
+  checkTrue('… twelve of this month\'s net', Money.isOk(m) && t.value === m.value * 12);
+  checkTrue('… on the log\'s own gross, never Start Here\'s salary', t.grossAnnualIncomeCents === m.grossCents * 12 && t.effectiveRate > 0 && t.effectiveRate < 0.4);
+  const sr = Tier0.savingsRate(logged, T).excludingMatch;
+  checkTrue('the savings rate divides by the same gross', Money.isOk(sr) && sr.grossAnnualIncomeCents === t.grossAnnualIncomeCents);
+  logged.ledger.income.push(Schema.createIncomeEntry({ label: 'Gift', kind: 'gift', amountCents: 100000, frequency: 'once', receivedOn: '2026-09-10' }));
+  check('a one-time gift does not change next month\'s take-home', Schema.takeHomeAnnualCents(logged, T).value, t.value);
+  const once = Demo.build(); once.ledger = { income: [Schema.createIncomeEntry({ label: 'Bonus', kind: 'bonus', amountCents: 500000, frequency: 'once', receivedOn: '2026-09-10' })] };
+  check('a log of only one-time entries leaves the estimate in place', Schema.takeHomeAnnualCents(once, T).source, 'estimate');
+  checkTrue('every page that reads Tier 0 loads the income log', ['index.html'].concat(fs.readdirSync(path.join(ROOT, 'rooms')).map(f => 'rooms/' + f)).every(f => { const t2 = fs.readFileSync(path.join(ROOT, f), 'utf8'); return t2.indexOf('engines/tier0.js') === -1 || t2.indexOf('engines/ledger.js') !== -1; }));
+  checkTrue('paired fields start their labels on the same line', /\.slaf-field \{[^}]*justify-content: flex-start/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+})();
+
+section('What a debt really costs (D-247): after the deduction, after inflation, a pace');
+
+(function () {
+  const conv = require(path.join(ROOT, 'data/student_loan_conventions.json'));
+  const o = { marginalRate: 0.22, inflation: 0.03, returnReal: 0.05, grossAnnualCents: 7200000, filingStatus: 'single', conventions: conv, rules: TABLES.debtRules };
+  const loan = Schema.createDebt({ label: 'Loan', balanceCents: 1840000, rate: 0.055, type: 'student_loan' });
+  const rc = Debt.realCost(loan, o);
+  checkTrue('a 5.5% student loan on $18,400 at 22%: the year\'s interest is $1,012', Money.isOk(rc) && rc.annualInterestCents === Math.round(1840000 * 0.055));
+  check('… all of it deductible under the cap', rc.deductibleCents, rc.annualInterestCents);
+  check('… saving 22% of it', rc.taxSavedCents, Math.round(rc.annualInterestCents * 0.22));
+  check('… so 4.29% after tax', Math.round(rc.afterTaxRate * 10000), 429);
+  check('… and 1.25% after 3% inflation', Math.round(rc.realRate * 10000), 125);
+  check('… which is: pay on schedule', rc.verdict, 'schedule');
+  checkTrue('… with the words from the rules table', rc.label === TABLES.debtRules.pace.verdicts.schedule.label && rc.why.length > 20);
+  const card = Debt.realCost(Schema.createDebt({ label: 'Card', balanceCents: 320000, rate: 0.229, type: 'credit_card' }), o);
+  checkTrue('a 22.9% card gets no deduction and reads: pay fast', card.deductionApplies === false && card.taxSavedCents === 0 && card.verdict === 'fast');
+  const family = Debt.realCost(Schema.createDebt({ label: 'Family', balanceCents: 150000, rate: 0, type: 'family' }), o);
+  checkTrue('a 0% loan costs less than nothing after inflation: pay slowly', family.realRate < 0 && family.verdict === 'slowly');
+  const half = Debt.realCost(loan, Object.assign({}, o, { grossAnnualCents: 8750000 }));
+  check('halfway through the phase-out band, half the deduction', half.phaseOutShare, 0.5);
+  const gone = Debt.realCost(loan, Object.assign({}, o, { grossAnnualCents: 10000000 }));
+  checkTrue('past it, none, and the rate stands', gone.phaseOutShare === 0 && gone.taxSavedCents === 0 && gone.afterTaxRate === gone.nominalRate);
+  const joint = Debt.realCost(loan, Object.assign({}, o, { grossAnnualCents: 10000000, filingStatus: 'married_joint' }));
+  check('filing jointly the band is higher, so the deduction is whole', joint.phaseOutShare, 1);
+  const sep = Debt.realCost(loan, Object.assign({}, o, { filingStatus: 'married_separate' }));
+  check('filing separately it is not allowed', sep.phaseOutShare, 0);
+  const capped = Debt.realCost(Schema.createDebt({ label: 'Big', balanceCents: 10000000, rate: 0.06, type: 'student_loan' }), o);
+  check('the cap holds: $6,000 of interest, $2,500 deductible', capped.deductibleCents, 250000);
+  checkTrue('no rate: incomplete, naming it', !Money.isOk(Debt.realCost(Schema.createDebt({ label: 'x', balanceCents: 1000, type: 'other' }), o)));
+  check('$19,000 in ten years at 3% is $14,138 today', Debt.deflate(1900000, 120, 0.03), 1413778);
+  checkTrue('the conventions carry the deduction with its note', typeof conv.interestDeduction.capDollars === 'number' && /verify/i.test(conv.interestDeduction.note));
+  const dp = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('Debt Payoff says what each debt really costs, on the interest line', /realCostSentence\(d\)/.test(dp) && /Really costs /.test(dp) && /studentLoanConventions/.test(dp));
+  const sl = fs.readFileSync(path.join(ROOT, 'rooms/student-loans.html'), 'utf8');
+  checkTrue('Student Loans draws the chain, the verdict and the balance in today\'s money', /id="real-cost"/.test(sl) && /SLAF\.Debt\.realCost/.test(sl) && /SLAF\.Debt\.deflate/.test(sl) && /in today\\u2019s money/.test(sl));
+  checkTrue('… and the registry deep-links it', Registry.byId('student-loans').subsections.some(x => x.id === 'real-cost'));
+})();
+
+section('The monthly gap by level, and the journey (D-249)');
+
+(function () {
+  const Gap = require(path.join(ROOT, 'engines/gap.js'));
+  const T = Object.assign({}, TABLES, { seTax: require(path.join(ROOT, 'data/se_tax_2026.json')) });
+  const empty = Gap.levels(Schema.createHousehold({}), T);
+  check('four levels', empty.total, 4);
+  check('an empty household is at level 0', empty.reachedCount, 0);
+  checkTrue('… and level 1 names its three inputs, each a link', empty.levels[0].missing.length === 3 && empty.levels[0].missing.every(m => /^rooms\//.test(m.href)));
+  const demo = Gap.levels(Demo.build(), T);
+  check('the demo is at level 1: pay, spending and debt entered, no paycheck logged', demo.reachedCount, 1);
+  check('… the gap is take-home less spending less minimums', demo.gapCents, Debt.freeMonthlyCents(Demo.build(), T).value);
+  check('… and next is level 2, a logged paycheck', demo.next.n + ':' + demo.next.missing.map(m => m.fieldId).join(','), '2:ledgerIncome');
+  checkTrue('level 3 is already satisfied by the demo\'s split, but does not count until level 2 is', demo.levels[2].reached && demo.reachedCount === 1);
+  const logged = Demo.build();
+  logged.ledger = { income: [Schema.createIncomeEntry({ label: 'Pay', kind: 'w2', amountCents: 320000, frequency: 'fortnightly', receivedOn: '2026-09-04', taxMethod: 'w2' })] };
+  const l = Gap.levels(logged, T);
+  check('with a paycheck logged the household is at level 3', l.reachedCount, 3);
+  checkTrue('level 1 still reports the estimate, level 2 the logged figure, and they differ', l.levels[0].gapCents !== l.levels[1].gapCents && l.levels[1].deltaCents === l.levels[1].gapCents - l.levels[0].gapCents);
+  check('… level 1 is the estimate the log set aside', l.levels[0].gapCents, Debt.freeMonthlyCents(Demo.build(), T).value);
+  logged.ledger.months = [{ id: '2026-08', actual: { income: 590000, expenses: 340000 } }];
+  const a = Gap.levels(logged, T);
+  check('a closed month makes level 4', a.reachedCount, 4);
+  check('… and the gap is the realized one', a.gapCents, Debt.realizedFreeMonthlyCents(logged).value);
+  checkTrue('… with the month named for the journal', a.levels[3].gap.months.join(',') === '2026-08');
+  const j = Schema.createHousehold({ journal: [{ kind: 'gap', level: 1, cents: -29000, at: '2026-09-19T00:00:00Z', basis: 'x' }] });
+  checkTrue('the journal survives the constructor with its shape', j.journal.length === 1 && j.journal[0].level === 1 && j.journal[0].cents === -29000 && typeof j.journal[0].id === 'string');
+  check('a fresh household has an empty journal', Schema.createHousehold({}).journal.length, 0);
+  const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the front page leads with the level and writes the journey', /SLAF\.Gap\.levels\(h, TABLES, ROOM_ID\)/.test(page) && /recordJourney\(h, g\)/.test(page) && /Spine\.updateProfile\(\{ journal: journal\.concat\(add\) \}\)/.test(page));
+  checkTrue('… and never writes twice for one level, nor above the level reached', /journal\.some\(function \(e\) \{ return e\.kind === 'gap' && e\.level === l\.n; \}\)/.test(page) && /l\.n > g\.reachedCount\) return;/.test(page));
+  const hist = fs.readFileSync(path.join(ROOT, 'rooms/history.html'), 'utf8');
+  checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
+})();
+
+section('Deeper questions wait for their level (D-250)');
+
+(function () {
+  const Ask = require(path.join(ROOT, 'shared/ask.js'));
+  const LedgerRows = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const T = Object.assign({}, TABLES, { ledgerRows: require(path.join(ROOT, 'data/ledger-rows.json')), features: require(path.join(ROOT, 'data/features.json')) });
+  LedgerRows.use(T.ledgerRows); Features.use(T.features);
+  const f = T.features.features.askDeeper;
+  checkTrue('the switch exists, off by default, in Advanced', f && f.default === 'off' && f.group === 'advanced');
+  /* A household with a job but no pay entered: the Income room must not
+     open with a level-3 question. */
+  const bare = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })] });
+  const rows = LedgerRows.rows(bare, T, { filter: 'all' });
+  const incomeAsks = rows.filter(r => r.askIn === 'income' && r.kind !== 'computed');
+  checkTrue('the Income room has a deeper row it could ask', incomeAsks.some(r => r.level >= 3));
+  const pick = Ask.pick(bare, 'income', T, []);
+  checkTrue('… but with nothing entered it asks nothing above level 1', !pick || pick.row.level <= 1, pick ? pick.row.id + ' level ' + pick.row.level : 'nothing');
+  const Doors = require(path.join(ROOT, 'shared/doors.js'));
+  check('the Income door is at level 1 for that household', Doors.levelOf(rows.filter(r => r.door === 'I'), bare), 1);
+  /* The demo has its level-1 and level-2 income rows in: a level-3 ask is allowed there only if the door has reached 3. */
+  const demoRows = LedgerRows.rows(Demo.build(), T, { filter: 'all' });
+  const demoLevel = Doors.levelOf(demoRows.filter(r => r.door === 'I'), Demo.build());
+  const demoPick = Ask.pick(Demo.build(), 'income', T, []);
+  checkTrue('the demo is asked nothing above its door\'s level (' + demoLevel + ')', !demoPick || demoPick.row.level <= demoLevel, demoPick ? demoPick.row.id + ' level ' + demoPick.row.level : 'nothing');
+  checkTrue('the ask module exports the gate\'s parts', typeof Doors.levelOf === 'function' && typeof Doors.isBlank === 'function');
+})();
+
 section('The room template (D-097): one shape, proven on Real Hourly Wage');
 
 (function () {
@@ -8189,7 +8841,9 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
   const help = Registry.byId('get-help');
   checkTrue('Get Help is a room', !!help);
   check('… optional, owning nothing', help.kind + '/' + help.needs.length, 'explore/0');
-  check('… before Refresh on the path', help.order < Registry.byId('refresh').order, true);
+  /* Refresh was the last thing on the path until it became a view of the
+     Ledger (D-230); Your Data is the upkeep tail now. */
+  check('… before the upkeep tail on the path', help.order < Registry.byId('data').order, true);
   checkTrue('… and names kinds of help, never a firm', (function () { const g = fs.readFileSync(path.join(ROOT, 'rooms/get-help.html'), 'utf8'); return /fee-only fiduciary/.test(g) && !/https?:\/\//.test(g.replace(/<link[^>]*>/g, '')); })());
   checkTrue('the template points its scope line there', /Registry\.byId\('get-help'\)/.test(fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8')));
   checkTrue('the real hourly wage room says what it does not do', /scope: 'This room does not model/.test(rhw));
@@ -8367,6 +9021,237 @@ section('The ledger (D-128): income entries, the expense log, closed months');
   S2.reset();
 })();
 
+section('D-194: an entry knows when it ends and what the stub took off');
+(function () {
+  const Ledger = require(path.join(ROOT, 'engines/ledger.js'));
+  const T = { effectiveTaxRates: TABLES.effectiveTaxRates, seTax: TABLES.seTax };
+  const h = Schema.createHousehold();
+  h.filingStatus = 'single';
+  const p = Schema.createPerson({ id: 'P', role: 'adult' });
+  p.incomeSources = [Schema.createIncomeSource({ id: 'src', personId: 'P', grossAnnualIncomeCents: 7200000, type: 'w2' })];
+  h.people = [p];
+  /* The shape. */
+  const job = Schema.createIncomeEntry({ kind: 'w2', amountCents: 300000, frequency: 'monthly', receivedOn: '2026-03-15', endsOn: '2026-09-15', withheldCents: 48000 });
+  check('a recurring entry keeps its last date', job.endsOn, '2026-09-15');
+  check('and the tax the stub took off', job.withheldCents, 48000);
+  check('a one-time entry never has a last date', Schema.createIncomeEntry({ kind: 'w2', amountCents: 1, frequency: 'once', endsOn: '2026-09-15' }).endsOn, null);
+  check('a method that withholds nothing carries no withheld figure', Schema.createIncomeEntry({ kind: 'se', amountCents: 1, withheldCents: 100 }).withheldCents, null);
+  check('a gift carries none either', Schema.createIncomeEntry({ kind: 'gift', amountCents: 1, withheldCents: 100 }).withheldCents, null);
+  check('empty means empty, not zero', Schema.createIncomeEntry({ kind: 'w2', amountCents: 1 }).withheldCents, null);
+  check('and zero typed stays zero', Schema.createIncomeEntry({ kind: 'w2', amountCents: 1, withheldCents: 0 }).withheldCents, 0);
+  /* Landings stop at the last date. */
+  check('it lands in the month it ends in', Ledger.occurrences(job, '2026-09').length, 1);
+  check('and never after', Ledger.occurrences(job, '2026-10').length, 0);
+  check('the day after the last date drops the landing', Ledger.occurrences(Object.assign({}, job, { endsOn: '2026-09-14' }), '2026-09').length, 0);
+  const weekly = Schema.createIncomeEntry({ kind: 'w2', amountCents: 50000, frequency: 'weekly', receivedOn: '2026-09-04', endsOn: '2026-09-18' });
+  check('a weekly entry keeps only the landings up to its last day', Ledger.occurrences(weekly, '2026-09').map(o => o.date).join(','), '2026-09-04,2026-09-11,2026-09-18');
+  check('with no last date it runs on', Ledger.occurrences(Object.assign({}, weekly, { endsOn: null }), '2026-10').length, 5);
+  /* The stub beats the table on W-2 pay. */
+  const est = Ledger.netOf(Schema.createIncomeEntry({ kind: 'w2', amountCents: 300000 }), h, T);
+  const typed = Ledger.netOf(job, h, T);
+  checkTrue('the blended rate stands in when nothing is typed', Money.isOk(est) && est.taxCents > 0 && !est.pieces.typedWithholding);
+  check('typed, the tax is what the stub says', typed.taxCents, 48000);
+  check('all of it withheld, nothing owed', typed.withheldCents + '/' + typed.owedCents, '48000/0');
+  check('and the net follows', typed.value, 252000);
+  checkTrue('marked as off the stub', typed.pieces.typedWithholding === true);
+  /* Unemployment: the tax stays the estimate; what was held back reduces what is owed. */
+  const ue = Ledger.netOf(Schema.createIncomeEntry({ kind: 'unemployment', amountCents: 60000, withheldCents: 3000 }), h, T);
+  const ue0 = Ledger.netOf(Schema.createIncomeEntry({ kind: 'unemployment', amountCents: 60000 }), h, T);
+  check('unemployment keeps the estimated tax', ue.taxCents, ue0.taxCents);
+  check('what was held back comes off what is owed', ue.owedCents, Math.max(0, ue0.taxCents - 3000));
+  check('and the cash that landed is the gross less it', ue.cashReceivedCents, 57000);
+  /* The month reads through. */
+  h.ledger = Schema.createLedger({ income: [job] });
+  check('the month after the end nets nothing from it', Ledger.month(h, T, '2026-10').count, 0);
+  check('the month it ends in nets it off the stub', Ledger.month(h, T, '2026-09').netCents, 252000);
+  /* D-195: the month says what was taken off and what is owed. */
+  const sep = Ledger.month(h, T, '2026-09');
+  check('a W-2 month: all of the tax was taken off, none owed', sep.withheldCents + '/' + sep.owedCents, '48000/0');
+  h.ledger = Schema.createLedger({ income: [Schema.createIncomeEntry({ kind: 'unemployment', amountCents: 60000, frequency: 'weekly', receivedOn: '2026-09-04', withheldCents: 3000 })] });
+  const ueMonth = Ledger.month(h, T, '2026-09');
+  check('an unemployment month: the split sums to the tax', ueMonth.withheldCents + ueMonth.owedCents, ueMonth.taxCents);
+  check('with what was held back counted per landing', ueMonth.withheldCents, 3000 * 4);
+  /* D-198: an undated weekly entry lands as its monthly average, and the
+     tax scales to that average — the gross and the tax agree. */
+  h.ledger = Schema.createLedger({ income: [Schema.createIncomeEntry({ id: 'ud', kind: 'unemployment', amountCents: 86900, frequency: 'weekly' })] });
+  const avg = Ledger.month(h, T, '2026-09');
+  const oneLanding = Ledger.netOf(Ledger.byId(h, 'ud'), h, T);
+  check('undated weekly: the month is the yearly average, 869 × 52 ÷ 12', avg.grossCents, Math.round(86900 * 52 / 12));
+  check('… and the tax is the same rate on that average, not on one landing', avg.taxCents, Math.round(oneLanding.taxCents * avg.grossCents / 86900));
+  check('… so the net is gross less tax', avg.netCents, avg.grossCents - avg.taxCents);
+  checkTrue('… well above one landing’s net, which is what it used to be', avg.netCents > oneLanding.value * 3);
+  h.ledger = Schema.createLedger({ income: [Schema.createIncomeEntry({ id: 'dd', kind: 'unemployment', amountCents: 86900, frequency: 'weekly', receivedOn: '2026-03-06' })] });
+  const sep26 = Ledger.month(h, T, '2026-09'), may26 = Ledger.month(h, T, '2026-05');
+  check('dated weekly from a Friday: four landings in September 2026', sep26.grossCents, 4 * 86900);
+  check('… five in May', may26.grossCents, 5 * 86900);
+  check('… and the tax is per landing times the landings', sep26.taxCents, oneLanding.taxCents * 4);
+})();
+
+section('Tier 17 (D-223): what a place actually costs to own');
+(function () {
+  const Own = require(path.join(ROOT, 'engines/ownership.js'));
+  const T = { housingConventions: require(path.join(ROOT, 'data/housing_conventions.json')) };
+  /* $320,000, a fifth down, 6.9% over thirty years. Every figure below was
+     worked out apart from the engine: the payment from the level-payment
+     formula, the rest straight off the conventions file. */
+  const o = { priceCents: 32000000, downPct: 0.20, annualRate: 0.069, tables: T };
+  const c = Own.cost(o);
+  checkTrue('the month prices', Money.isOk(c), c.reason);
+  check('a fifth down is $64,000, and the loan is the rest', c.downCents + '/' + c.loanCents, '6400000/25600000');
+  check('the payment is $1,686.02', c.paymentCents, 168602);
+  check('property tax a month, at 1.1% a year', c.propertyTaxMonthlyCents, 29333);
+  check('insurance a month, at 0.5%', c.insuranceMonthlyCents, 13333);
+  check('maintenance a month, at 1%', c.maintenanceMonthlyCents, 26667);
+  check('the month costs $2,379.35 all in', c.totalMonthlyCents, 237935);
+  check('… which is what the value is', c.value, 237935);
+  check('the carry and the equity are the whole of it', c.carryMonthlyCents + c.equityMonthlyCents, c.totalMonthlyCents);
+  check('nothing is assumed about an HOA without saying so', c.assumed.some(a => /HOA/.test(a)), true);
+  check('a fifth down carries no mortgage insurance', c.pmiMonthlyCents, 0);
+  /* Under the line it is charged: 5% down on the same place. */
+  const small = Own.cost(Object.assign({}, o, { downPct: 0.05 }));
+  check('5% down means a $304,000 loan', small.loanCents, 30400000);
+  check('… and $152 a month of mortgage insurance', small.pmiMonthlyCents, 15200);
+  checkTrue('… which makes the month dearer, not cheaper', small.totalMonthlyCents > c.totalMonthlyCents);
+
+  /* Let out at $2,400. The cover test is the one that fails here. */
+  const r = Own.rental(Object.assign({}, o, { grossRentMonthlyCents: 240000 }));
+  check('an 8% empty stretch takes $192 off the rent', r.vacancyCents, 19200);
+  check('operating costs exclude the mortgage', r.operatingMonthlyCents, 69333);
+  check('net operating income is $1,514.67 a month', r.noiMonthlyCents, 151467);
+  check('so it runs $171.35 a month short', r.cashFlowMonthlyCents, -17135);
+  check('the cap rate is 5.68%', Math.round(r.capRate * 10000) / 10000, 0.0568);
+  check('the loan is covered 0.90 times, under the 1.2 lenders want', Math.round(r.dscr * 10000) / 10000, 0.8984);
+  checkTrue('and it says so, twice: the cover test and the monthly shortfall', r.flags.length === 2);
+
+  /* A duplex you live in half of: the other unit lets for $1,500. */
+  const k = Own.hack(Object.assign({}, o, { unitRentsCents: [150000] }));
+  check('the other unit brings $1,380 after the empty stretch', k.collectedMonthlyCents, 138000);
+  check('so living there costs $999.35 a month', k.youPayMonthlyCents, 99935);
+  check('… and nobody is paying you yet', k.theyPayYou, false);
+  const two = Own.hack(Object.assign({}, o, { unitRentsCents: [150000, 150000] }));
+  checkTrue('two units let costs less than one', two.youPayMonthlyCents < k.youPayMonthlyCents);
+
+  /* Holding it. Nothing grows unless the caller says it does. */
+  const h = Own.hold(Object.assign({}, o, { years: 5, rentMonthlyCents: 220000 }));
+  check('five years is sixty months', h.monthsHeld, 60);
+  check('with no growth assumed, it sells for what it cost', h.valueAtSaleCents, 32000000);
+  checkTrue('… and says that is an assumption', h.assumed.some(a => /no growth/.test(a)));
+  check('what you paid is the cash to close plus the months', h.paidCents, h.cashToCloseCents + h.monthlyCents * 60);
+  check('the cost of owning is what you paid less what you keep', h.costOfOwningCents, h.paidCents - h.netProceedsCents);
+  check('equity is what it is worth less what is left on the loan', h.equityCents, h.valueAtSaleCents - h.balanceCents);
+  checkTrue('the loan is smaller after five years', h.balanceCents < 25600000);
+  checkTrue('renting at $2,200 is named the cheaper of the two', h.cheaper === 'renting' || h.cheaper === 'owning');
+  /* Growth is the caller's to assert, and it moves the answer. */
+  const grown = Own.hold(Object.assign({}, o, { years: 5, appreciationRate: 0.03 }));
+  checkTrue('3% a year leaves more at the sale', grown.netProceedsCents > h.netProceedsCents);
+
+  /* Refusals, never a number. */
+  checkTrue('no price, no answer', !Money.isOk(Own.cost({ downPct: 0.2, annualRate: 0.07, tables: T })));
+  checkTrue('a down payment over the price is refused', !Money.isOk(Own.cost(Object.assign({}, o, { downPct: 1.5 }))));
+  checkTrue('a negative rate is refused', !Money.isOk(Own.cost(Object.assign({}, o, { annualRate: -0.01 }))));
+  checkTrue('a rental with no rent is refused', !Money.isOk(Own.rental(o)));
+  checkTrue('a hack with no units is refused', !Money.isOk(Own.hack(o)));
+  checkTrue('without the conventions table it says which table', !Money.isOk(Own.cost({ priceCents: 1, downPct: 0, annualRate: 0 })));
+})();
+
+section('D-224: underwriting a rental honestly, and one set of ratios');
+(function () {
+  const Own = require(path.join(ROOT, 'engines/ownership.js'));
+  const T = { housingConventions: require(path.join(ROOT, 'data/housing_conventions.json')) };
+  const deal = { priceCents: 32000000, downPct: 0.20, annualRate: 0.069, grossRentMonthlyCents: 240000, tables: T };
+  const u = Own.underwrite(deal);
+  checkTrue('the deal underwrites', Money.isOk(u), u.reason);
+
+  /* The two reserves a listing leaves out, both worked out by hand: a
+     capital reserve of 0.5% of value a year, and management at 8% of what
+     is actually collected, not of the asking rent. */
+  check('the capital reserve is $133.33 a month', u.capexMonthlyCents, 13333);
+  check('management is 8% of the rent collected, not of the rent asked', u.managementMonthlyCents, 17664);
+  check('running costs come to $1,003.30', u.operatingMonthlyCents, 100330);
+  check('net operating income is $1,204.70', u.noiMonthlyCents, 120470);
+
+  /* The whole point: the same deal, two figures. */
+  check('rent less the mortgage reads $713.98 a month', u.advertisedCashFlowMonthlyCents, 71398);
+  check('once the reserves are counted it LOSES $481.32 a month', u.cashFlowMonthlyCents, -48132);
+  check('the gap is $1,195.30, and it reconciles exactly', u.reservesMissedMonthlyCents, 119530);
+  check('the gap is the advertised figure less the real one', u.reservesMissedMonthlyCents, u.advertisedCashFlowMonthlyCents - u.cashFlowMonthlyCents);
+  check('so the verdict is that it costs you', u.verdict, 'costs you');
+  checkTrue('and it says so in words, naming both figures',
+    u.flags.some(f => /looks like it cash flows and does not/.test(f) && /714/.test(f) && /481/.test(f)));
+
+  /* The screens, reported and caveated, never used as a verdict. */
+  const scr = {}; u.screens.forEach(x => { scr[x.id] = x; });
+  check('the 1% rule: the rent is 0.75% of the price', Math.round(scr.onePercent.value * 10000) / 10000, 0.0075);
+  check('… so it fails that screen', scr.onePercent.passes, false);
+  check('the 50% rule: costs are 41.8% of rent', Math.round(scr.fiftyPercent.value * 100000) / 100000, 0.41804);
+  check('… so it passes that one, which is why one screen is never a verdict', scr.fiftyPercent.passes, true);
+  checkTrue('both screens carry the caveat that they decide nothing',
+    u.screens.every(x => typeof x.caveat === 'string' && x.caveat.length > 30));
+  check('the loan is covered 0.71 times', Math.round(u.dscr * 100000) / 100000, 0.71452);
+
+  /* Managing it yourself does not make the fee vanish. */
+  const self = Own.underwrite(Object.assign({}, deal, { selfManaged: true }));
+  check('self-managing charges the same 8%', self.managementMonthlyCents, u.managementMonthlyCents);
+  checkTrue('… and says why it is still counted', self.notes.some(n => /your evenings/.test(n)));
+
+  /* The four ways it pays, over five years, in the 24% bracket. */
+  const t = Own.totalReturn(Object.assign({}, deal, { years: 5, marginalRate: 0.24 }));
+  check('five years of cash flow is a loss of $28,879.20', t.cashFlowCents, -2887920);
+  check('the tenant pays down $15,282.67 of the loan', t.principalPaidCents, 1528267);
+  check('nothing is counted for growth, because none was asserted', t.appreciationCents, 0);
+  check('the building depreciates over 27.5 years, land excluded', t.annualDepreciationCents, 930909);
+  check('… sheltering $11,170.91 across five years at 24%', t.shelterCents, 1117091);
+  check('so the whole five years comes to a LOSS of $2,425.62', t.totalCents, -242562);
+  check('the four parts sum to exactly that', t.parts.reduce((a, p) => a + p.cents, 0), -242562);
+  check('on $73,600 of cash in, that is -3.3%', Math.round(t.returnOnCash * 10000) / 10000, -0.033);
+  checkTrue('the shelter is named as deferred, not forgiven', t.notes.some(n => /recaptured/.test(n)));
+  checkTrue('what is spendable is held apart from what is locked up', t.spendableCents === t.cashFlowCents && t.lockedCents === t.principalPaidCents + t.appreciationCents);
+  const noBracket = Own.totalReturn(Object.assign({}, deal, { years: 5 }));
+  check('with no bracket given, no shelter is claimed', noBracket.shelterCents, 0);
+  checkTrue('… and it says that is why', noBracket.assumed.some(a => /tax bracket/.test(a)));
+
+  /* What breaks it. */
+  const st = Own.stress(deal);
+  check('four things that reliably happen are tried', st.total, 4);
+  checkTrue('it fails three of them', st.survived === 1);
+  checkTrue('no scenario is kinder than today', st.scenarios.every(s => s.swingCents === undefined || s.swingCents <= 0));
+  checkTrue('and it says how many it stops paying under', /stops paying under 3 of 4/.test(st.say));
+
+  /* The house hack, at 5% down, letting one unit of a duplex. */
+  const hk = Own.houseHack({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069,
+    unitRentsCents: [150000], rentMonthlyCents: 160000, years: 5, annualReturn: 0.07, tables: T });
+  check('at 5% down the loan carries $152 a month of mortgage insurance', Own.cost({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069, tables: T }).pmiMonthlyCents, 15200);
+  check('owning it, with the reserves, is $3,091.20 a month', hk.fullMonthlyCents, 309120);
+  check('the let unit brings $1,380 after the empty stretch', hk.collectedMonthlyCents, 138000);
+  check('so living there costs $1,711.20', hk.youPayMonthlyCents, 171120);
+  check('against $1,600 to rent, that is $111.20 a month WORSE', hk.savingMonthlyCents, -11120);
+  check('and it refuses to call that a win', hk.beatsRenting, false);
+  checkTrue('… saying the case would have to rest on the loan or the value', hk.notes.some(n => /not on the monthly figure/.test(n)));
+  check('the tenants still pay down $18,147.64 over five years', hk.principalPaidCents, 1814764);
+  checkTrue('one let unit is called out as one tenant between you and the payment', hk.notes.some(n => /one tenant between you/.test(n)));
+  check('if that unit empties, the whole $3,091.20 is yours', hk.ifBiggestUnitEmpties.youPayMonthlyCents, 309120);
+
+  /* The same building with two units let is the move that works. */
+  const hk2 = Own.houseHack({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069,
+    unitRentsCents: [150000, 150000], rentMonthlyCents: 160000, years: 5, annualReturn: 0.07, tables: T });
+  check('two units let: you pay $441.60 to live there', hk2.youPayMonthlyCents, 44160);
+  check('… a saving of $1,158.40 a month against renting', hk2.savingMonthlyCents, 115840);
+  check('and it is called a win', hk2.beatsRenting, true);
+  checkTrue('… on the condition that the saving is actually invested', hk2.notes.some(n => /only a win if it is invested/.test(n)));
+  check('five years of that saving at 7% is $82,933.22', hk2.savingInvestedCents, 8293322);
+  const noReturn = Own.houseHack({ priceCents: 32000000, downPct: 0.05, annualRate: 0.069, unitRentsCents: [150000, 150000], rentMonthlyCents: 160000, years: 5, tables: T });
+  check('with no return asserted the saving is only added up', noReturn.savingInvestedCents, 115840 * 60);
+  checkTrue('… and says it was not invested', noReturn.assumed.some(a => /not invested/.test(a)));
+
+  /* One set of ratios, shared with the statement engine. */
+  const m = Own.metrics({ noiAnnualCents: 2169600, debtServiceAnnualCents: 1800000, valueCents: 30000000, cashInvestedCents: 6000000, equityCents: 10000000 });
+  check('the cap rate is operating income over value', Math.round(m.capRate * 10000) / 10000, 0.0723);
+  check('the cover is operating income over the loan', Math.round(m.dscr * 1000) / 1000, 1.205);
+  check('cash-on-cash divides by the cash put in: 3,696 of 60,000', Math.round(m.cashOnCash * 10000) / 10000, 0.0616);
+  check('the return on equity divides by equity: 3,696 of 100,000', Math.round(m.returnOnEquity * 1000) / 1000, 0.037);
+  checkTrue('which are different numbers, and that is the point', m.cashOnCash !== m.returnOnEquity);
+})();
+
 section('Two decision sequences that cannot collide');
 
 (function () {
@@ -8459,7 +9344,7 @@ section('The D&D folder\'s vendored copies');
 
   /* Byte-identical, deliberately — including the SLAF namespace they register
      under, so this comparison stays exact. */
-  ['shared/money.js', 'shared/schema.js', 'engines/projection.js', 'engines/tier0.js', 'engines/foo.js',
+  ['shared/money.js', 'shared/schema.js', 'shared/errlog.js', 'engines/projection.js', 'engines/tier0.js', 'engines/foo.js',
    'shared/theme.css', 'shared/fonts.css', 'favicon.svg']
     .forEach(function (rel) {
       const here = fs.readFileSync(path.join(ROOT, rel));
@@ -8502,6 +9387,46 @@ section('The D&D folder\'s vendored copies');
   /* And it is not a room: nothing in the registry may point into dnd/. */
   checkTrue('no registry entry points into dnd/',
     Registry.all().every(r => r.href.indexOf('dnd/') !== 0));
+})();
+
+/* ==========================================================================
+   Room furniture is defined once (D-169)
+   --------------------------------------------------------------------------
+   `.room-head`, `.room-lede`, `.room-back` and `.notice` were copied into
+   sixty-odd room files, byte for byte, and the one room that forgot them
+   rendered with its heading against the edge (D-168). They live in
+   shared/theme.css now. A room may still define a genuinely different
+   variant (a wider head, a coloured notice); what it may not do is carry a
+   copy of the shared rule, because that is how the next drift starts.
+   ========================================================================== */
+section('Room furniture is defined once, in the shared theme');
+(function () {
+  const themeCss = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  const RULES = ['.room-head', '.room-lede', '.room-back', '.notice'];
+  const norm = body => body.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, '').replace(/;$/, '');
+  function blocks(src, sel) {
+    const out = [];
+    const re = new RegExp('(^|[}\\s])' + sel.replace('.', '\\.') + '\\s*\\{([^}]*)\\}', 'g');
+    let m;
+    while ((m = re.exec(src))) out.push(norm(m[2]));
+    return out;
+  }
+  const shared = {};
+  RULES.forEach(sel => {
+    const b = blocks(themeCss, sel);
+    checkTrue('shared/theme.css defines ' + sel + ' exactly once', b.length === 1, 'found ' + b.length);
+    shared[sel] = b[0];
+  });
+  const copies = [];
+  fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+    RULES.forEach(sel => {
+      blocks(src, sel).forEach(b => { if (b === shared[sel]) copies.push(f + ' ' + sel); });
+    });
+  });
+  checkTrue('no room carries a verbatim copy of a shared furniture rule',
+    copies.length === 0,
+    copies.slice(0, 8).join(' · ') + (copies.length > 8 ? ' …and ' + (copies.length - 8) + ' more' : ''));
 })();
 
 /* ==========================================================================
@@ -8580,6 +9505,361 @@ section('No CSS variable is used without being defined');
       !!value && !/rgba\([^)]*,\s*0?\.\d+\s*\)/.test(value) && !/transparent|none/.test(value),
       'a drawer you can read the page through is not a drawer');
   }
+})();
+
+/* ==========================================================================
+   The Long Way Round (D-167)
+   ========================================================================== */
+section('Four ways through five years');
+(function () {
+  const Adventure = require(path.join(ROOT, 'engines/adventure.js'));
+  const TABLES = { adventurePaths: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8')),
+    effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')), returnBands: require(path.join(ROOT, 'data/return_bands.json')),
+    levers: require(path.join(ROOT, 'data/levers.json')) };
+  const demo = Demo.build();
+
+  /* Empty is not zero: a projection built on an assumed nought is a confident lie. */
+  const bare = Adventure.baseline(Schema.createHousehold(), TABLES);
+  check('nothing entered, nothing projected', bare.status, 'incomplete');
+  checkTrue('and it names what is absent', (bare.missing || []).indexOf('grossAnnualIncome') > -1);
+  check('a run refuses too', Adventure.run(Schema.createHousehold(), TABLES, { pathId: 'steady' }).status, 'incomplete');
+  check('so does a run with no path chosen', Adventure.run(demo, TABLES, {}).status, 'incomplete');
+
+  const base = Adventure.baseline(demo, TABLES);
+  check('the demo has a baseline', base.status, 'ok');
+  check('...income is TAKE-HOME, gross less the estimated tax (D-171)', base.value.annualIncomeCents, 7200000 - 1368000);
+  check('...and says what the gross was', base.value.grossAnnualIncomeCents, 7200000);
+  check('without the tax table the baseline is incomplete, never gross', Adventure.baseline(demo, { adventurePaths: TABLES.adventurePaths }).status, 'incomplete');
+  check('...spending annualised from the month', base.value.annualSpendCents, 315000 * 12);
+
+  /* The target is a year of spending over the withdrawal rate - the same
+     arithmetic the FIRE room uses, re-derived here by hand. */
+  check('the target is 25x a year of spending',
+    Adventure.targetCents(3780000, 0.04), 94500000);
+
+  const steady = Adventure.run(demo, TABLES, { pathId: 'steady' }).value;
+  check('five years is five rows', steady.rows.length, 5);
+  checkTrue('the pot grows each year', steady.rows.every((r, i) =>
+    i === 0 || r.portfolioCents > steady.rows[i - 1].portfolioCents));
+
+  /* The house hack cuts spending, so it moves the finish line as well as the
+     saving - which is the whole point of the path and easy to get wrong. */
+  const hack = Adventure.run(demo, TABLES, { pathId: 'househack' }).value;
+  checkTrue('the house hack lowers the target itself',
+    hack.targetCents < steady.targetCents,
+    hack.targetCents + ' vs ' + steady.targetCents);
+  check('...by 40% of the REAL rent line, twelve months of it (D-172)',
+    hack.rows[0].spendCents, 3780000 - Math.round(150000 * 12 * 0.40));
+  check('...and says which basis it used', hack.housingBasis, 'accommodation');
+  const noRent = Demo.build(); noRent.expenses.needs.accommodation.monthlyCents = null;
+  const hackNoRent = Adventure.run(noRent, TABLES, { pathId: 'househack' }).value;
+  check('with no rent line, it falls back to the stated share', hackNoRent.housingBasis, 'assumed');
+  check('...and prints why', hackNoRent.accommodationNote, 'assumed 30% of spending because accommodation is not filled in');
+
+  /* Every shock must move the answer, or it is decoration. */
+  ['crash', 'jobloss', 'inflation', 'raise'].forEach(id => {
+    const hit = Adventure.run(demo, TABLES, { pathId: 'steady', shockIds: [id] }).value;
+    checkTrue(id + ' changes where you land', hit.portfolioCents !== steady.portfolioCents);
+  });
+  const raise = Adventure.run(demo, TABLES, { pathId: 'steady', shockIds: ['raise'] }).value;
+  checkTrue('a raise helps', raise.portfolioCents > steady.portfolioCents);
+  const crash = Adventure.run(demo, TABLES, { pathId: 'steady', shockIds: ['crash'] }).value;
+  checkTrue('a crash hurts', crash.portfolioCents < steady.portfolioCents);
+
+  /* Never Infinity and never a cheerful large number when it never arrives. */
+  check('nothing saved and no growth never arrives', Adventure.yearsFrom(100, 1000000, 0, 0), null);
+  check('already past the target is zero years', Adventure.yearsFrom(1000000, 100, 0, 0.05), 0);
+
+  check('every way the demo is offered runs: Drift, the four, and Change Jobs (D-176)', Adventure.compare(demo, TABLES).length, 6);
+  checkTrue('the room writes nothing',
+    fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8').indexOf('Ownership.write') === -1);
+
+  const t = TABLES.adventurePaths;
+  check('the paths are marked unverified, because nobody measured them', t.confidence, 'unverified');
+  checkTrue('every path states its assumption, written from its levers (D-174)',
+    t.paths.every(p => typeof Adventure.describe(p, TABLES) === 'string' && Adventure.describe(p, TABLES).length > 10));
+
+  /* D-174: the paths are lever compositions. No figure lives in the path
+     table or the engine; the walk is re-derived here from levers.json. */
+  const LV = TABLES.levers.levers;
+  checkTrue('no path carries an inline figure',
+    t.paths.every(p => ['annualRaiseReal', 'annualExtraIncomeCents', 'housingCutShare', 'raiseKeptShare', 'assumption'].every(k => !(k in p))));
+  checkTrue('every path is a list of levers the library knows',
+    t.paths.every(p => Array.isArray(p.levers) && p.levers.length && p.levers.every(x => LV[x.id])));
+  check('the levers the ways pull', Adventure.leversUsed(TABLES).map(l => l.id).join(','), 'drift,steady,hustle,househack,relocate,careermove');
+  const takeHome = 7200000 - 1368000;
+  const raiseShare = LV.steady.moves['income.grossAnnualCents'];
+  check('Steady: the raise is the steady lever\'s', steady.rows[0].incomeCents, takeHome + Math.round(takeHome * raiseShare));
+  checkTrue('...and a raise kept whole leaves spending alone', steady.rows.every(r => r.spendCents === 3780000));
+  const hustle = Adventure.run(demo, TABLES, { pathId: 'hustle' }).value;
+  const extra = LV.hustle.moves['income.extraMonthlyCents'] * 12;
+  check('Side Hustle: half the hustle in year one', hustle.rows[0].incomeCents, steady.rows[0].incomeCents + Math.round(extra / 2));
+  check('...and all of it from year two', hustle.rows[1].incomeCents, steady.rows[1].incomeCents + extra);
+  checkTrue('...said in the assumption, in dollars', hustle.assumption.indexOf('$500 a month') > -1 && hustle.assumption.indexOf('3% real raise') > -1);
+  check('...and the run names its levers', hustle.levers.map(x => x.id).join(','), 'hustle,steady');
+  const combo = Adventure.run(demo, TABLES, { pathId: 'combo' }).value;
+  check('Both, Smaller: half a hustle', combo.rows[1].incomeCents, steady.rows[1].incomeCents + extra / 2);
+  check('...and half a house hack, off the real rent line', combo.rows[0].spendCents, 3780000 - Math.round(150000 * 12 * 0.40 * 0.5));
+  checkTrue('...said at half size', combo.assumption.indexOf('$250 a month') > -1 && combo.assumption.indexOf('down 20%') > -1);
+  const drifted = Adventure.run(demo, { ...TABLES, adventurePaths: { ...t, paths: [{ id: 'drift', label: 'Drift', line: '', levers: [{ id: 'drift' }] }] } }, { pathId: 'drift' }).value;
+  check('a raise not kept is spent: Drift\'s spending rises by the raise', drifted.rows[0].spendCents, 3780000 + Math.round(takeHome * raiseShare));
+  check('...and its pot ends below Steady\'s', drifted.portfolioCents < steady.portfolioCents, true);
+  const unknown = Adventure.run(demo, { ...TABLES, adventurePaths: { ...t, paths: [{ id: 'x', label: 'x', line: '', levers: [{ id: 'nope' }] }] } }, { pathId: 'x' });
+  check('a path pulling a lever the library lacks is incomplete, not zero', unknown.status, 'incomplete');
+  checkTrue('...and names it', (unknown.missing || []).indexOf('lever:nope') > -1);
+  const engineSrc = fs.readFileSync(path.join(ROOT, 'engines/adventure.js'), 'utf8');
+  checkTrue('the engine holds no lever figure of its own',
+    !/annualRaiseReal\s*[:=]\s*0|600000|50000|0\.40?\b|0\.03\b|year === 1 \? 0\.5/.test(engineSrc.replace(/\/\*[\s\S]*?\*\//g, '')));
+
+  /* ---- v2 (D-176): the mechanics the brief names, each re-derived by hand. */
+  const T2 = { ...TABLES, fooRules: require(path.join(ROOT, 'data/foo_rules.json')), irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')), matchDefaults: require(path.join(ROOT, 'data/match_defaults.json')) };
+  const b2 = Adventure.baseline(demo, T2).value;
+  check('the baseline splits cash from what is invested', [b2.cashCents, b2.investedCents].join(','), '950000,4800000');
+  check('...and states the target as years of spending', b2.targetYears, 25);
+  check('...25 years of what you spend', b2.targetCents, 3780000 * 25);
+  const noCash = Demo.build(); noCash.assets = noCash.assets.filter(a => a.category !== 'cash');
+  check('cash not entered is null, never zero', Adventure.baseline(noCash, T2).value.cashCents, null);
+
+  /* Drift is the baseline; the delta on every other card is against it. */
+  const ways = Adventure.paths(T2, demo).map(p => p.id);
+  check('Drift leads, and Change Jobs is offered because its lever applies', ways.join(','), 'drift,steady,hustle,househack,combo,careermove');
+  const retired = Demo.build(); Schema.primaryPerson(retired).employmentStatus = 'retired';
+  checkTrue('...but not to someone retired', Adventure.paths(T2, retired).map(p => p.id).indexOf('careermove') === -1);
+  checkTrue('...and Move Somewhere Cheaper waits for a remote-work fact', ways.indexOf('relocate') === -1);
+  const remote = Demo.build(); remote.meta = Object.assign({}, remote.meta, { remoteOk: true });
+  checkTrue('...which, once stored, offers it', Adventure.paths(T2, remote).map(p => p.id).indexOf('relocate') > -1);
+  const C = Adventure.cards(demo, T2, {});
+  check('cards: Drift first', C[0].pathId, 'drift');
+  check('...with no delta of its own', C[0].delta, null);
+  checkTrue('...and every other card carries its delta against Drift, in years and dollars',
+    C.slice(1).every(c => c.delta && typeof c.delta.potCents === 'number' && c.delta.years !== undefined));
+  checkTrue('...sorted by FI date by default', C.slice(1).every((c, i, a) => i === 0 || (a[i - 1].yearsToFI === null ? 1e9 : a[i - 1].yearsToFI) <= (c.yearsToFI === null ? 1e9 : c.yearsToFI)));
+  checkTrue('...or by hours', Adventure.cards(demo, T2, { sort: 'hours' }).slice(1).every((c, i, a) => i === 0 || a[i - 1].hoursPerWeek <= c.hoursPerWeek));
+  checkTrue('...or by dollars', Adventure.cards(demo, T2, { sort: 'dollars' }).slice(1).every((c, i, a) => i === 0 || a[i - 1].potCents >= c.potCents));
+  const hustleCard = C.filter(c => c.pathId === 'hustle')[0];
+  check('the hustle card costs the lever\'s hours', hustleCard.hoursPerWeek, 15);
+  check('...and prices the extra an hour through the one hourly formula', hustleCard.impliedHourlyCents, Math.round(50000 / (15 * 4.33)));
+  check('...with the lever\'s flexibility tag', hustleCard.flex, 'portable');
+  const comboCard = C.filter(c => c.pathId === 'combo')[0];
+  check('half a hustle costs half the hours', comboCard.hoursPerWeek, 10);
+  check('...and its hourly counts the housing cut too: ($250 + $300) ÷ (10 × 4.33)', comboCard.impliedHourlyCents, Math.round((25000 + 30000) / (10 * 4.33)));
+
+  /* Drift: the raise is spent, so the target moves. */
+  const drift = Adventure.run(demo, T2, { pathId: 'drift', routeToDebt: false }).value;
+  check('Drift spends the raise: spending rises by it', drift.rows[0].spendCents, 3780000 + Math.round(5832000 * 0.03));
+  checkTrue('...so its target rises too', drift.rows[0].targetCents > 3780000 * 25);
+
+  /* Headwinds and tailwinds: same mechanics, separate lists. */
+  check('headwinds', Adventure.headwinds(T2).map(c => c.id).join(','), 'crash,jobloss,inflation');
+  check('tailwinds', Adventure.tailwinds(T2).map(c => c.id).join(','), 'raise');
+
+  /* The FOO gate: the demo sits at step 2, before the debt step. */
+  const g = Adventure.gate(demo, T2);
+  checkTrue('the demo is gated: FOO step 2, before the high-interest-debt step', g.blocked && g.step === 2);
+  check('...and the gate prices the high-interest debt it routes to', g.debtCents, 320000);
+  checkTrue('...in one sentence', /step 2/.test(g.sentence) && /\$3,200/.test(g.sentence));
+  const routed = Adventure.run(demo, T2, { pathId: 'hustle' }).value;
+  check('side income pays the debt first: year one sends the half-ramped $3,000 to it', routed.rows[0].debtPaidCents, 300000);
+  check('...year two clears the last $200', routed.rows[1].debtPaidCents, 20000);
+  checkTrue('...and says so on the row', routed.rows[1].events.indexOf('high-interest debt cleared') > -1);
+  const unrouted = Adventure.run(demo, T2, { pathId: 'hustle', routeToDebt: false }).value;
+  checkTrue('...which costs the pot exactly the debt, no more', unrouted.rows[1].investedCents - routed.rows[1].investedCents === Math.round(300000 * 1.05) + 20000);
+  const clean = Demo.build(); clean.debts = clean.debts.filter(d => d.type !== 'credit_card'); clean.retirement.contributionPercent = 6;
+  checkTrue('a household past the step (match taken, no high-interest debt) is not gated', !Adventure.gate(clean, T2).blocked);
+
+  /* A crash hits what is invested only. */
+  const crashed = Adventure.run(demo, T2, { pathId: 'steady', shockIds: ['crash'] }).value;
+  const steady2 = Adventure.run(demo, T2, { pathId: 'steady' }).value;
+  check('a crash leaves the cash alone', crashed.rows[1].cashCents, 950000);
+  check('...and takes 30% of the invested pot in year 2', crashed.rows[1].investedCents, Math.round(steady2.rows[1].investedCents * 0.7));
+
+  /* A job loss draws on cash first, month by month, and reports the runway. */
+  const lost = Adventure.run(demo, T2, { pathId: 'steady', shockIds: ['jobloss'] }).value;
+  const y3 = lost.rows[2];
+  check('six months without work in year 3', y3.lostMonths, 6);
+  check('...cash covers three of them: $9,500 ÷ $3,150', y3.runwayMonths, Math.floor(950000 / 315000));
+  /* 15.8: after the cash, the taxable pile is sold down before anything is
+     borrowed (D-181). The demo lump is uncharacterised, so it is taxable;
+     with no rates passed it sells before tax and the run says so. */
+  check('...then the taxable pile covers the other three: $9,450 sold, before tax', y3.investmentsSoldCents, 315000 * 3);
+  checkTrue('...so nothing is borrowed', y3.borrowingFromMonth === null && y3.borrowedInYearCents === 0);
+  checkTrue('...and the baseline says the sale was before tax', lost.taxableTaxApplied === false);
+  check('...the cash is down to what three months left', y3.cashCents, 950000 - 315000 * 3);
+  checkTrue('...and the invested pot is never drawn below zero', lost.rows.every(r => r.investedCents >= 0));
+  checkTrue('...the working half of the year repays what was borrowed', y3.borrowedCents === 0);
+  const thin = Demo.build(); thin.assets = thin.assets.map(a => a.category === 'cash' ? Object.assign({}, a, { valueCents: 0 }) : a);
+  const thinY3 = Adventure.run(thin, T2, { pathId: 'steady', shockIds: ['jobloss'] }).value.rows[2];
+  checkTrue('with no cash, the taxable pile covers all six months and nothing is borrowed', thinY3.runwayMonths === 0 && thinY3.investmentsSoldCents === 315000 * 6 && thinY3.borrowingFromMonth === null);
+  const locked = Demo.build(); locked.assets = locked.assets.map(a => a.category === 'cash' ? Object.assign({}, a, { valueCents: 0 }) : a.category === 'investment' ? Object.assign({}, a, { taxCharacter: 'pretax' }) : a);
+  const lockedY3 = Adventure.run(locked, T2, { pathId: 'steady', shockIds: ['jobloss'] }).value.rows[2];
+  checkTrue('with no cash and only retirement money, borrowing from month 1: the retirement pile is never sold', lockedY3.borrowingFromMonth === 1 && lockedY3.investmentsSoldCents === 0 && lockedY3.borrowedInYearCents === 315000 * 6);
+  const withRates = Adventure.run(demo, T2, { pathId: 'steady', shockIds: ['jobloss'], rates: { withdrawalRate: 0.22, capitalGainsRate: 0.15 } }).value;
+  checkTrue('with rates, the sale is grossed up for the gains tax on the assumed 60% basis: $9,450 net needs more than $9,450 sold', withRates.rows[2].investmentsSoldCents > 315000 * 3 && withRates.taxableTaxApplied === true);
+
+  /* A lever that survives a job loss keeps paying through it. */
+  const lostHustle = Adventure.run(demo, T2, { pathId: 'hustle', shockIds: ['jobloss'], routeToDebt: false }).value;
+  checkTrue('the hustle keeps paying through the lost months: the runway is never shorter than Steady\'s', lostHustle.rows[2].runwayMonths >= y3.runwayMonths);
+  checkTrue('...and its year-three saving is higher by the surviving income', lostHustle.rows[2].savedCents > y3.savedCents);
+  check('...at $2,650 a month of gap instead of $3,150: 3 months still, but $1,500 less sold', lostHustle.rows[2].investmentsSoldCents, (315000 - 50000) * 3);
+
+  /* Returns run three ways from the app's own band. */
+  const tw = Adventure.threeWays(demo, T2, { pathId: 'househack' });
+  checkTrue('three ways, low under likely under high', tw.low.value.portfolioCents < tw.likely.value.portfolioCents && tw.likely.value.portfolioCents < tw.high.value.portfolioCents);
+  check('...the likely line is the table\'s median band', tw.rates.likely, 0.05);
+
+  /* The steppers move the lever figures without touching the table. */
+  const stepped = Adventure.run(demo, T2, { pathId: 'hustle', routeToDebt: false, overrides: { hustleMonthlyCents: 60000, hustleHoursPerWeek: 20 } }).value;
+  check('a $600 hustle: year two carries $7,200 extra', stepped.rows[1].incomeCents, unrouted.rows[1].incomeCents + 120000);
+  checkTrue('...and the sentence says $600 and 20 hours', /\$600 a month/.test(stepped.assumption) && /20 hours a week/.test(stepped.assumption));
+  check('...and the hourly follows: $600 ÷ (20 × 4.33)', stepped.impliedHourlyCents, Math.round(60000 / (20 * 4.33)));
+  const hacked30 = Adventure.run(demo, T2, { pathId: 'househack', overrides: { housingShare: 0.30 } }).value;
+  check('a 30% housing cut off the real rent line', hacked30.rows[0].spendCents, 3780000 - Math.round(150000 * 0.30) * 12);
+  checkTrue('the table itself is untouched', TABLES.levers.levers.hustle.moves['income.extraMonthlyCents'] === 50000);
+
+  /* Every row carries its events and the walk still adds up. */
+  const shocked = Adventure.run(demo, T2, { pathId: 'hustle', shockIds: ['crash', 'jobloss', 'inflation', 'raise'] }).value;
+  checkTrue('year 2 names the crash and the raise', shocked.rows[1].events.indexOf('Markets fall 30%') > -1 && shocked.rows[1].events.indexOf('A real raise') > -1);
+  checkTrue('year 3 names the job loss', shocked.rows[2].events.indexOf('Six months without work') > -1);
+  checkTrue('the pot is invested plus cash less borrowed, every year', shocked.rows.every(r => r.portfolioCents === r.investedCents + (r.cashCents === null ? 0 : r.cashCents) - r.borrowedCents));
+  check('the return matches the app\'s own median band', t.returnRateReal, 0.05);
+})();
+
+/* ==========================================================================
+   Saying that it saved (D-165)
+   ========================================================================== */
+section('The app confirms what it did');
+(function () {
+  const u = fs.readFileSync(path.join(ROOT, 'shared/undo.js'), 'utf8');
+
+  checkTrue('there is a live region at all', /aria-live/.test(u));
+  checkTrue('...announced politely, not assertively', /aria-live'?,?\s*'polite'/.test(u));
+  checkTrue('the toast carries an Undo, not just a notice', /slaf-toast-undo/.test(u));
+  checkTrue('it reuses the undo stack\'s own words rather than inventing a message',
+    /peekUndo\(\)[\s\S]{0,120}showToast\(u\.label/.test(u));
+  checkTrue('an undo is announced too, so the reversal is not silent', /'Undone'/.test(u));
+  checkTrue('the first paint is not announced as news', /first paint is not news|lastDepth === null/.test(u));
+  checkTrue('depth decides, so a repaint says nothing',
+    /historySize\(\)[\s\S]{0,400}size\.undo > lastDepth/.test(u));
+  checkTrue('it dismisses itself rather than sitting over the next thing typed',
+    /setTimeout\(hideToast/.test(u));
+
+  const css = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the Undo in the toast clears the 32px tap floor',
+    /\.slaf-toast-undo \{[\s\S]{0,220}min-height: 32px/.test(css));
+  checkTrue('and so does its dismiss',
+    /\.slaf-toast-x \{[\s\S]{0,220}min-height: 32px/.test(css));
+  checkTrue('the toast is opaque, being a thing that floats over the page',
+    /\.slaf-toast \{[\s\S]{0,420}background: var\(--color-panel\)/.test(css));
+  checkTrue('it sits above the undo pills rather than under them',
+    /\.slaf-toast \{[\s\S]{0,300}z-index: 95/.test(css));
+})();
+
+/* ==========================================================================
+   The dead spot is the door (D-163)
+   ========================================================================== */
+section('The dead spot is the door');
+(function () {
+  const src = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('doors are stamped so a repaint cannot double them', /data-door/.test(src));
+  checkTrue('a reason that already links out is left alone',
+    /querySelector\('a'\)[\s\S]{0,40}continue/.test(src));
+  checkTrue('it appends beside the words, never rewrites them',
+    /insertAdjacentHTML\('afterend'/.test(src) && src.indexOf('.slaf-reason') > -1);
+  checkTrue('it reads the stored profile, not the guess-filled copy',
+    /doorHtml[\s\S]{0,320}getProfile\(\)/.test(src));
+
+  /* The door names the most-wanted missing field, and carries the way home. */
+  const row = Progress.forRoom('fire', Schema.createHousehold());
+  check('FIRE Number is blocked on the most-wanted number first',
+    row.missing[0].fieldId, 'monthlyExpenses');
+  checkTrue('and that link carries the round trip',
+    /[?&]from=fire/.test(row.missing[0].href), row.missing[0].href);
+  checkTrue('...pointing at the owner, not back at itself',
+    /expenses\.html/.test(row.missing[0].href));
+
+  const css = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the door clears the 32px tap floor',
+    /\.slaf-go \{[\s\S]{0,200}min-height: 32px/.test(css));
+})();
+
+/* ==========================================================================
+   Relevancy and guesses in every room's footer (D-162)
+   ========================================================================== */
+section('Every room says what is waiting on it');
+(function () {
+  const bare = Schema.createHousehold();
+  const fire = Progress.forRoom('fire', bare);
+
+  checkTrue('each missing field carries how many rooms want it',
+    fire.missing.every(f => typeof f.waits === 'number'));
+  checkTrue('the most-wanted number comes first',
+    fire.missing.length > 1 && fire.missing[0].waits >= fire.missing[1].waits,
+    fire.missing.map(f => f.label + ':' + f.waits).join(', '));
+  check('monthly expenses is the most-wanted number in the app',
+    fire.missing[0].fieldId, 'monthlyExpenses');
+
+  /* Counted from the registry, so it cannot drift from what rooms ask for. */
+  const byHand = Registry.all().filter(r => (r.needs || []).indexOf('monthlyExpenses') > -1).length;
+  check('the count matches the registry itself', fire.missing[0].waits, byHand);
+
+  /* A guess is filled but not answered, and must not be counted as done. */
+  const guessed = Schema.createHousehold();
+  guessed.meta = guessed.meta || {};
+  guessed.meta.guessed = { monthlyExpenses: true };
+  guessed.expenses = Schema.withMonthlySpend(guessed, 315000).expenses;
+  const row = Progress.forRoom('fire', guessed);
+  const g = row.filled.filter(f => f.guessed);
+  check('a filled-by-guess field lands in filled, flagged', g.length, 1);
+  check('...and it is the one we guessed', g[0].fieldId, 'monthlyExpenses');
+  checkTrue('the strip says so rather than reading as finished',
+    Progress.stripHtml('fire', guessed).indexOf('still a guess') > -1);
+
+  const src = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('guesses are named, not folded into done', /still a guess/.test(src));
+  checkTrue('the waiting count is derived, never hardcoded',
+    /Registry\.all\(\)[\s\S]{0,200}needs[\s\S]{0,120}WAITING/.test(src));
+})();
+
+/* ==========================================================================
+   The round trip (D-161)
+   --------------------------------------------------------------------------
+   One owner per number means the app is forever sending someone to another
+   room to fill something in, and until now nothing brought them back. Every
+   cross-room link carries where it came from; the header on the far side
+   offers the way back.
+   ========================================================================== */
+section('The round trip');
+(function () {
+  const h = Schema.createHousehold();
+
+  const away = Ownership.describe('monthlyExpenses', h, 'fire');
+  checkTrue('a link out of a room says where it came from', /[?&]from=fire/.test(away.href), away.href);
+  checkTrue('...and still lands on the owner with its anchor',
+    /expenses\.html/.test(away.href) && /#spending$/.test(away.href), away.href);
+
+  /* The owner linking to itself has nowhere to send you back to. */
+  const home = Ownership.describe('monthlyExpenses', h, 'expenses');
+  checkTrue('the owning room does not tag its own link', away.href !== home.href
+    && home.href.indexOf('from=') === -1, home.href);
+
+  const none = Ownership.describe('monthlyExpenses', h);
+  checkTrue('no calling room, no tag', none.href.indexOf('from=') === -1, none.href);
+
+  /* A made-up id must not become a link to nowhere. */
+  checkTrue('an unknown caller is dropped rather than trusted',
+    Ownership.linkTo('cash-flow', null, 'no-such-room').indexOf('from=') === -1);
+
+  /* The query string has to precede the anchor or the browser keeps it in
+     the fragment and location.search never sees it. */
+  const q = away.href.indexOf('?'), a = away.href.indexOf('#');
+  checkTrue('the query comes before the anchor', q > -1 && a > -1 && q < a, away.href);
+
+  const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('the header reads it back off the URL', /[?&]from=/.test(prog));
+  checkTrue('...and resolves it through the registry, not the raw string',
+    /returnHtml[\s\S]{0,700}Registry\.byId\(fromId\)/.test(prog));
+  const css = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the pill clears the 32px tap floor', /\.slaf-return \{[\s\S]{0,260}min-height: 32px/.test(css));
 })();
 
 /* ==========================================================================
@@ -8841,17 +10121,26 @@ section('Front Doors — twenty arrangements, no room lost');
     checkTrue('tree parents come from the group names, not a second list',
       b.groups.filter(g => g.parent).every(g => g.fullName.indexOf(g.parent + ' › ') === 0));
 
-    const html = fs.readFileSync(path.join(ROOT, 'rooms/doors.html'), 'utf8');
-    checkTrue('the room declares its live-form policy', /LIVE-FORM: built once/.test(html));
+    /* Front Doors is the Ledger's arrangements view since D-230: shelving is
+       a way of MOVING through the rooms, never a room with a number in it,
+       so it was the clearest case in the whole cut list. Everything this
+       block used to assert about rooms/doors.html is asserted about that
+       view — including that the search box is still written into the markup
+       rather than generated, which is the one thing that can regress. */
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+    checkTrue('Front Doors is no longer a room', !Registry.byId('doors'));
+    checkTrue('the old page redirects to the view, hash and all',
+      /url=ledger\.html#arrangements/.test(fs.readFileSync(path.join(ROOT, 'rooms/doors.html'), 'utf8')));
+    checkTrue('the view declares its live-form policy', /LIVE-FORM: built once/.test(html));
     checkTrue('the search box is written into the markup, never generated',
-      /<input type="search" id="q"/.test(html) && !/id=.q./.test(html.split('<script>')[1] || ''),
+      /<input type="search" id="lay-q"/.test(html) && !/id="lay-q"/.test(html.slice(html.indexOf('</main>'))),
       'a regenerated search box loses focus and closes the soft keyboard mid-word');
     checkTrue('typing rewrites only the results',
-      /el\('q'\)\.addEventListener\('input'[\s\S]{0,200}lay-body/.test(html));
-    checkTrue('the room writes nothing but the front-door choice',
-      !/upsert|setMonthlyExpenses|removeById/.test(html) && /setFrontDoor/.test(html));
-    checkTrue('the room is a utility, off the numbered path (D-051)',
-      Registry.byId('doors').utility === true && Registry.byId('doors').order > 90);
+      /el\('lay-q'\)\.addEventListener\('input'[\s\S]{0,200}lay-body/.test(html));
+    checkTrue('the view writes nothing but the front-door choice',
+      /setFrontDoor/.test(html));
+    checkTrue('the Ledger is a utility, off the numbered path (D-051)',
+      Registry.byId('ledger').utility === true);
   })();
 
   /* The stored choice. */
@@ -9120,13 +10409,18 @@ section('The Walk-Through — a route with an end');
 
   /* -- the room, and the strip ------------------------------------------- */
   (function () {
-    const html = fs.readFileSync(path.join(ROOT, 'rooms/walk.html'), 'utf8');
-    checkTrue('rooms/walk.html declares the live-form rule (D-034)',
+    /* The Walk-Through is the Ledger's route view since D-230. Its list is
+       still rebuilt wholesale on every change, so the rule that matters is
+       that the rebuilt PART holds no text input — the Ledger as a whole now
+       holds plenty, in views the route never repaints. */
+    const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+    checkTrue('the route view declares the live-form rule (D-034)',
       /LIVE-FORM: built once/.test(html));
-    checkTrue('rooms/walk.html has no text input at all',
-      !/<input(?![^>]*type="(?:checkbox|radio|file)")/i.test(html) && !/<textarea/i.test(html),
-      'the page rebuilds its list wholesale on every change; a text field there would lose focus');
-    checkTrue('rooms/walk.html loads shared/guide.js', /shared\/guide\.js/.test(html));
+    const routeView = html.slice(html.indexOf('<section id="view-route"'), html.indexOf('</main>'));
+    checkTrue('the route view has no text input at all',
+      !/<input(?![^>]*type="(?:checkbox|radio|file)")/i.test(routeView) && !/<textarea/i.test(routeView),
+      'the view rebuilds its list wholesale on every change; a text field there would lose focus');
+    checkTrue('the route view loads shared/guide.js', /shared\/guide\.js/.test(html));
 
     const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
     checkTrue('the strip is mounted from the one place every room reaches',
@@ -9153,6 +10447,4305 @@ section('The Walk-Through — a route with an end');
     fs.readdirSync(path.join(ROOT, 'engines')).filter(f => /\.js$/.test(f))
       .every(f => !/meta\.walk|Guide\./.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))),
     'a mark is a statement about the person, never about whether a number is usable');
+})();
+
+/* ==========================================================================
+   DAITE is the spine (D-171)
+   --------------------------------------------------------------------------
+   Five families - debt, assets, income, taxes, expenses - and four declared
+   context families beside them. Every room says which paths it reads and
+   writes; ownership is checked against the declaration; take-home is
+   computed once; nothing subtracts spending from GROSS income anywhere.
+   ========================================================================== */
+section('DAITE is the spine (D-171)');
+(function () {
+  const Daite = require(path.join(ROOT, 'shared/daite.js'));
+  const known = Daite.FAMILY_IDS.concat(Daite.CONTEXT);
+
+  /* 1. Every registry entry declares, and every path is under a family. */
+  Registry.all().forEach(function (room) {
+    const d = room.daite;
+    checkTrue(`${room.id} declares daite reads and writes`, d && Array.isArray(d.reads) && Array.isArray(d.writes));
+    if (!d) return;
+    d.reads.concat(d.writes).forEach(function (p) {
+      checkTrue(`${room.id} path ${p} is under a declared family`, known.indexOf(Daite.familyOf(p)) !== -1, 'family: ' + Daite.familyOf(p));
+    });
+    /* A room that reads via `needs` reads through DAITE too. */
+    (room.needs || []).forEach(function (f) {
+      checkTrue(`${room.id} need ${f} is declared as a read`, d.reads.indexOf(Daite.pathOf(f)) !== -1);
+    });
+  });
+  checkTrue('the five families are D A I T E', Daite.FAMILIES.map(f => f.letter).join('') === 'DAITE');
+
+  /* 2. Ownership derives from the declarations: every owner is a declared writer. */
+  Object.keys(Ownership.FIELDS).forEach(function (f) {
+    const o = Ownership.ownerOf(f);
+    checkTrue(`${f} has a DAITE path`, !!o.path);
+    checkTrue(`${f}: its owner ${o.owner} declares it writes ${o.path}`, o.agrees === true, 'declared: ' + o.declared.join(','));
+  });
+  /* ...and the guard bites: a field whose owner is not a declared writer refuses. */
+  const FIELDS = Ownership.FIELDS;
+  const savedOwner = FIELDS.cashSavings.owner;
+  FIELDS.cashSavings.owner = 'giving';
+  let refused = false;
+  try { Ownership.write('cashSavings', 1); } catch (e) { refused = /does not list giving/.test(e.message); }
+  FIELDS.cashSavings.owner = savedOwner;
+  checkTrue('a write refuses when the map and the registry disagree', refused);
+
+  /* 3. Take-home in one place, and savings from it. */
+  const demo = Demo.build();
+  const take = Schema.takeHomeAnnualCents(demo, TABLES);
+  const tax = Schema.estimatedAnnualTaxCents(demo, TABLES);
+  check('take-home is gross less the estimated tax', take.value, Schema.grossAnnualIncomeCents(demo).value - tax.value);
+  check('the same tax figure Tier0 reports', Tier0.estimatedAnnualTaxCents(demo, TABLES).value, tax.value);
+  check('take-home a month is the annual over twelve', Schema.takeHomeMonthlyCents(demo, TABLES).value, Math.round(take.value / 12));
+  const sr = Tier0.savingsRate(demo, TABLES).excludingMatch;
+  check('the savings rate starts from take-home', sr.takeHomeAnnualCents, take.value);
+  check('...and its numerator is take-home less spending', sr.annualSavingsCents, take.value - Schema.monthlyExpensesCents(demo).value * 12);
+  check('without the tax table, take-home is incomplete, never gross', Schema.takeHomeAnnualCents(demo, {}).status, 'incomplete');
+
+  /* 4. The grep gate: gross income minus spending appears nowhere. */
+  const files = [];
+  ['engines', 'shared', 'rooms'].forEach(function (dir) {
+    fs.readdirSync(path.join(ROOT, dir)).filter(f => /\.(js|html)$/.test(f)).forEach(f => files.push(dir + '/' + f));
+  });
+  files.push('index.html');
+  const GROSS_MINUS_SPEND = /\b(gross[A-Za-z]*)(\.value)?\s*[-−]\s*[A-Za-z.]*(expens|spend)/i;
+  const SAVED_FROM_GROSS = /\bsaved?[A-Za-z]*\s*=\s*[^;\n]*\bgrossAnnual[A-Za-z]*(\.value)?\s*[-−]/;
+  files.forEach(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    checkTrue(`${f} never subtracts spending from gross income`, !GROSS_MINUS_SPEND.test(src) && !SAVED_FROM_GROSS.test(src));
+  });
+
+  /* 5. The view: the five families read off the household, Results throughout. */
+  const v = Daite.view(demo, TABLES);
+  check('D: the debts', v.debt.items.length, demo.debts.length);
+  check('D: the total is the schema total', v.debt.totalCents.value, Schema.totalDebtCents(demo).value);
+  check('A: cash', v.assets.cashCents.value, Schema.cashCents(demo).value);
+  checkTrue('A: every invested item carries an orientation', v.assets.invested.every(a => ['pretax', 'roth', 'taxable'].indexOf(a.orientation) !== -1));
+  check('I: take-home', v.income.takeHomeAnnualCents.value, take.value);
+  check('T: the effective rate', v.taxes.effectiveRate.value, tax.effectiveRate);
+  check('E: a month', v.expenses.monthlyCents.value, Schema.monthlyExpensesCents(demo).value);
+  const empty = Daite.view(Schema.createHousehold(), TABLES);
+  check('an empty household reads incomplete, not zero', empty.income.grossAnnualCents.status, 'incomplete');
+  check('...for every family', [empty.debt.totalCents, empty.assets.cashCents, empty.taxes.effectiveRate, empty.expenses.monthlyCents].filter(r => r.status === 'incomplete').length, 4);
+
+  /* 6. The dashboard: five tiles, one a letter, each opening its owner. */
+  const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the front door loads the DAITE module', page.indexOf('<script src="shared/daite.js">') !== -1);
+  check('five tiles, in DAITE order', (page.match(/\{ id: '(debt|assets|income|taxes|expenses)',\s+field:/g) || []).map(m => m.replace(/.*id: '/, '').replace(/'.*/, '')).join(','), 'debt,assets,income,taxes,expenses');
+  checkTrue('the tiles sit in the first block', page.indexOf('id="daite"') < page.indexOf('id="full-panel"'));
+  checkTrue('the six instruments moved into the panel', page.indexOf('id="instruments"') > page.indexOf('id="full-panel"'));
+  checkTrue('every tile opens a room', /Ownership\.linkTo\(t\.owner\[0\], t\.owner\[1\], ROOM_ID\) : \(d && d\.href\)/.test(page));
+})();
+
+/* ==========================================================================
+   FAT, wants, and one optional line (D-172)
+   ========================================================================== */
+section('Expenses are four numbers (D-172)');
+(function () {
+  const catalog = require(path.join(ROOT, 'data/expense_categories.json'));
+  /* Every category lands somewhere on purpose. */
+  catalog.categories.forEach(c => checkTrue(`category ${c.id} is mapped to a bucket`, Object.prototype.hasOwnProperty.call(Schema.FAT_CATEGORY_MAP, c.id)));
+  check('the map names no category the catalogue lacks',
+    Object.keys(Schema.FAT_CATEGORY_MAP).filter(id => !catalog.categories.some(c => c.id === id)).join(','), '');
+  check('debt minimums are not expenses', Schema.fatBucketOf('debt_minimums'), 'debt');
+  check('savings has not left', Schema.fatBucketOf('retirement'), 'savings');
+
+  /* The shape. */
+  const h = Schema.createHousehold({});
+  check('needs are three lines', Object.keys(h.expenses.needs).join(','), 'food,accommodation,transportation');
+  check('wants is one number', h.expenses.wants.totalCents, null);
+  check('therapy is absent until asked for', h.expenses.wants.therapy, null);
+  checkTrue('no legacy pair on a fresh household', !('monthlyEssential' in h.expenses));
+
+  /* Empty is not zero. */
+  const f = Schema.fat(h);
+  check('a blank month is incomplete', f.totalCents.status, 'incomplete');
+  check('a blank bucket names itself', f.accommodation.missing[0], 'accommodationMonthly');
+  h.expenses.needs.food.monthlyCents = 60000;
+  check('one bucket typed is a month of one bucket', Schema.fat(h).totalCents.value, 60000);
+  check('...and says how many are in', Schema.fat(h).totalCents.entered + '/' + Schema.fat(h).totalCents.of, '1/4');
+
+  /* Therapy: a fifth line only while the toggle is on, subtracted from wants. */
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.reset();
+  Spine.setFat({ food: 60000, accommodation: 150000, transportation: 20000, wants: 90000 });
+  check('the four write', Schema.monthlyExpensesCents(Spine.getProfile()).value, 320000);
+  check('therapy is off', Schema.fat(Spine.getProfile()).therapyTracked, false);
+  check('...so it is not in the shape', Spine.getProfile().expenses.wants.therapy, null);
+  Spine.setTherapyTracked(true);
+  check('on: the line exists, blank', JSON.stringify(Spine.getProfile().expenses.wants.therapy), '{"monthlyCents":null}');
+  check('...and the month does not change until it is typed', Schema.monthlyExpensesCents(Spine.getProfile()).value, 320000);
+  Spine.setFat({ therapy: 20000 });
+  check('typed, it is its own line in the month', Schema.monthlyExpensesCents(Spine.getProfile()).value, 340000);
+  check('...five of five', Schema.fat(Spine.getProfile()).totalCents.of, 5);
+  Spine.setTherapyTracked(false);
+  check('off again: gone from the shape', Spine.getProfile().expenses.wants.therapy, null);
+  check('...and out of the month', Schema.monthlyExpensesCents(Spine.getProfile()).value, 320000);
+  /* One number for the month is what is not split out. */
+  Spine.setMonthlyExpenses(350000);
+  check('a total with needs typed lands the remainder in everything else', Spine.getProfile().expenses.wants.totalCents, 350000 - 230000);
+  Spine.reset();
+
+  /* Migration: a saved household from before the buckets. */
+  const legacyPair = Schema.createHousehold({ expenses: { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: 300000 } } });
+  check('a legacy tracked figure becomes everything else', legacyPair.expenses.wants.totalCents, 300000);
+  check('...and reads as the month', Schema.monthlyExpensesCents(legacyPair).value, 300000);
+  const legacyLines = Schema.createHousehold({ expenses: { monthlyEssential: { estimatedValueCents: 315000 }, entries: Demo.buildSpending() } });
+  check('legacy lines win over the legacy figure: food', legacyLines.expenses.needs.food.monthlyCents, 71000);
+  check('...rent', legacyLines.expenses.needs.accommodation.monthlyCents, 150000);
+  check('...everything else, without savings', legacyLines.expenses.wants.totalCents, 46500);
+  check('the lines stay as the split', legacyLines.expenses.entries.length, Demo.buildSpending().length);
+  const typedWins = Schema.createHousehold({ expenses: { needs: { food: { monthlyCents: 1 } }, monthlyEssential: { estimatedValueCents: 315000 } } });
+  check('a typed bucket is never overwritten by migration', typedWins.expenses.wants.totalCents, null);
+
+  /* The rent line is the accommodation bucket. */
+  const demo = Demo.build();
+  check('rent reads the accommodation bucket', Schema.rentMonthlyCents(demo).cents, 150000);
+  check('...from Expenses (D-192)', Schema.rentMonthlyCents(demo).source, 'expenses');
+  check('the demo month is unchanged at $3,150', Schema.monthlyExpensesCents(demo).value, 315000);
+
+  /* The gate: the rooms that read expenses read the new shape and nothing else. */
+  ['engines/cashflow.js', 'engines/fire.js', 'engines/adventure.js', 'engines/hourly.js', 'engines/tier0.js',
+   'rooms/cash-flow.html', 'rooms/expenses.html', 'rooms/fire.html', 'rooms/savings-rate.html', 'rooms/real-hourly-wage.html', 'rooms/adventure.html',
+   'shared/gate.js', 'shared/importer.js', 'engines/enough.js', 'engines/week.js', 'index.html'].forEach(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
+    checkTrue(`${f} reads the four numbers, not the legacy pair`, src.indexOf('monthlyEssential') === -1);
+  });
+  checkTrue('no hard-coded housing share of spending survives in data/ or engines/',
+    !/housingShareOfSpending/.test(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8'))
+    && fs.readdirSync(path.join(ROOT, 'engines')).every(f => !/housingShareOfSpending/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))));
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  check('Expenses asks F, A and T; everything else is what is named (D-197)', (page.match(/data-fat="(food|accommodation|transportation|wants)"/g) || []).length, 3);
+  checkTrue('...with the toggle labelled plainly', page.indexOf('Track mental health spending separately') !== -1);
+  checkTrue('...and the split folded', /<details class="drawer" id="split-more">/.test(page));
+})();
+
+/* ==========================================================================
+   DRAFTT scorecard and bands (D-173)
+   ========================================================================== */
+section('DRAFTT: seven shares against seven bands (D-173)');
+(function () {
+  const Draftt = require(path.join(ROOT, 'engines/draftt.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const bands = require(path.join(ROOT, 'data/bands.json'));
+  const T = { effectiveTaxRates: TABLES.effectiveTaxRates, expenseCategories: TABLES.expenseCategories, bands: bands };
+  const SOURCES = ['slaf', 'trench', 'moneyguy', 'fiftythirty'];
+
+  /* The table: every letter has the four sources, a default, a note on each. */
+  check('seven letters', Object.keys(bands.letters).join(','), 'debt,retirement,accommodation,food,transportation,taxes,therapy');
+  Object.keys(bands.letters).forEach(function (id) {
+    const L = bands.letters[id];
+    checkTrue(`${id} has the four sources`, SOURCES.every(s => L.sources[s]));
+    check(`${id} defaults to Eli's`, L['default'], 'slaf');
+    checkTrue(`${id}: every source says where its number comes from`, SOURCES.every(s => typeof L.sources[s].note === 'string' && L.sources[s].note.length > 20));
+    checkTrue(`${id}: bands are shares`, SOURCES.every(s => L.sources[s].low >= 0 && L.sources[s].high <= 1 && L.sources[s].low <= L.sources[s].high));
+  });
+  check('the table is marked convention, not finding', bands.confidence, 'convention');
+
+  /* A household with known numbers. */
+  const h = Schema.createHousehold({ filingStatus: 'single', state: 'CA',
+    people: [Schema.createPerson({ id: 'p', label: 'You', role: 'adult', employmentStatus: 'employed',
+      incomeSources: [Schema.createIncomeSource({ personId: 'p', grossAnnualIncomeCents: 6000000 })] })],
+    debts: [Schema.createDebt({ label: 'Card', balanceCents: 300000, rate: 0.2, minPaymentCents: 10000, type: 'credit_card' }),
+            Schema.createDebt({ label: 'Mortgage', balanceCents: 30000000, rate: 0.06, minPaymentCents: 120000, type: 'mortgage' })],
+    retirement: { contributionPercent: 10 },
+    expenses: { needs: { food: { monthlyCents: 50000 }, accommodation: { monthlyCents: 120000 }, transportation: { monthlyCents: 20000 } }, wants: { totalCents: 80000, therapy: { monthlyCents: 15000 } } } });
+  const take = Schema.takeHomeMonthlyCents(h, T);
+  checkTrue('the test household has a take-home', Money.isOk(take));
+  const r = Draftt.rows(h, T, {});
+  const by = {}; r.rows.forEach(x => by[x.id] = x);
+  check('seven rows with therapy on', r.rows.length, 7);
+  check('...in DRAFTT order', r.rows.map(x => x.letter).join(''), 'DRAFTTT');
+  check('D: non-mortgage minimums only', by.debt.amountCents, 10000);
+  check('D: share of take-home', by.debt.share.value, 10000 / take.value);
+  check('R: contributions, of gross', by.retirement.share.value, 0.10);
+  check('R: measured on gross', by.retirement.measure, 'gross');
+  check('A: rent of take-home', by.accommodation.share.value, 120000 / take.value);
+  check('F: food of take-home', by.food.share.value, 50000 / take.value);
+  check('T: getting around of take-home', by.transportation.share.value, 20000 / take.value);
+  check('T: taxes are the effective rate of gross', by.taxes.share.value, Schema.estimatedAnnualTaxCents(h, T).effectiveRate);
+  check('(T): therapy of take-home', by.therapy.share.value, 15000 / take.value);
+  checkTrue('every row links to its owner', r.rows.every(x => x.owner && Registry.byId(x.owner[0])));
+
+  /* Switching source changes the band only, never the share. */
+  SOURCES.forEach(function (src) {
+    const prefs = {}; Draftt.ORDER.forEach(id => prefs[id] = src);
+    const rs = Draftt.rows(h, T, prefs);
+    rs.rows.forEach(function (row) {
+      check(`${src}: ${row.id} share unchanged`, row.share.value, by[row.id].share.value);
+      check(`${src}: ${row.id} band is that source`, row.band.sourceId, src);
+    });
+  });
+  /* Basis conversion: a band stated on gross, read on take-home, widens by gross ÷ take-home. */
+  const mg = Draftt.bandFor(T, 'accommodation', 'moneyguy', r.ratio);
+  check('Money Guy\'s 25% of gross on the take-home row is 25% × gross/take-home', Math.round(mg.high * 1e6), Math.round(0.25 * r.ratio * 1e6));
+  checkTrue('...and says it was converted', mg.converted && mg.statedBasis === 'gross' && mg.basis === 'takeHome');
+  const tr = Draftt.bandFor(T, 'retirement', 'trench', r.ratio);
+  check('Set for Life\'s half of take-home on the gross row narrows by the same ratio', Math.round(tr.low * 1e6), Math.round(0.5 / r.ratio * 1e6));
+  check('Eli\'s 15% of gross on the gross row is not converted', Draftt.bandFor(T, 'retirement', 'slaf', r.ratio).converted, false);
+
+  /* Verdicts. */
+  check('under', Draftt.verdict(0.05, { low: 0.15, high: 1 }), 'under');
+  check('in', Draftt.verdict(0.20, { low: 0.15, high: 1 }), 'in');
+  check('over', Draftt.verdict(0.30, { low: 0, high: 0.25 }), 'over');
+  check('on the edge is in', Draftt.verdict(0.25, { low: 0, high: 0.25 }), 'in');
+
+  /* Therapy off: six rows. Empty is not zero. */
+  const off = Schema.createHousehold(JSON.parse(JSON.stringify(h))); off.expenses.wants.therapy = null;
+  check('therapy off: six rows', Draftt.rows(off, T, {}).rows.length, 6);
+  const blank = Schema.createHousehold({});
+  const rb = Draftt.rows(blank, T, {});
+  checkTrue('a blank household has no share anywhere, and every row names what it wants', rb.rows.every(x => !Money.isOk(x.share) && x.missing.length > 0));
+  const noDebt = Schema.createHousehold(JSON.parse(JSON.stringify(h))); noDebt.debts = []; noDebt.meta.hasDebt = false;
+  check('"no debt" is a zero share, not a blank', Draftt.rows(noDebt, T, {}).rows[0].share.value, 0);
+
+  /* Prefs: per user, outside the household. */
+  Prefs.reset();
+  check('a pref falls back', Prefs.get('draftt.debt', 'slaf'), 'slaf');
+  Prefs.set('draftt.debt', 'trench');
+  check('...and stores', Prefs.get('draftt.debt', 'slaf'), 'trench');
+  checkTrue('the household export carries no prefs', JSON.stringify(Demo.build()).indexOf('draftt') === -1);
+  Prefs.reset();
+
+  /* The screen: one section, seven rows max, no chart, the pick is buttons. */
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
+  checkTrue('the Snapshot opens on DRAFTT', page.indexOf('id="draftt"') < page.indexOf('id="inputs"'));
+  checkTrue('no chart in the scorecard', !/Charts\.[a-z]+\([^)]*draftt/i.test(page) && page.indexOf("el('draftt-rows')") !== -1);
+  checkTrue('the pick is a button, not a box', /data-src="' \+ row\.id/.test(page) && !/<input[^>]*draftt/.test(page));
+  checkTrue('the bands table is a registered reference table', /bands: 'bands\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+})();
+
+section('Lenses: a rule re-reads the numbers and returns a verdict (D-175)');
+(function () {
+  const Lenses = require(path.join(ROOT, 'shared/lenses.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const table = require(path.join(ROOT, 'data/lenses.json'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  Lenses.use(table);
+  const T = {};
+  Object.keys(Reference.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Reference.TABLE_FILES[k]), 'utf8')); } catch (e) { /* dnd-side tables */ } });
+  const demo = Demo.build();
+  const ids = table.lenses.map(l => l.id);
+
+  /* The table: every lens whole, the pair that makes it an advice translator mandatory. */
+  check('seven domains', table.domains.length, 7);
+  checkTrue('thirty-four lenses, ids unique', ids.length === 34 && new Set(ids).size === 34);
+  checkTrue('every lens has a non-empty forWhom AND notForWhom — a lens without them does not ship',
+    table.lenses.every(l => typeof l.forWhom === 'string' && l.forWhom.trim().length > 10 && typeof l.notForWhom === 'string' && l.notForWhom.trim().length > 10));
+  checkTrue('every lens has id, domain, name, plain, rule, reads, verdict, source',
+    table.lenses.every(l => ['id', 'domain', 'name', 'plain', 'rule', 'source'].every(k => typeof l[k] === 'string' && l[k]) && Array.isArray(l.reads) && l.reads.length && Array.isArray(l.verdict) && l.verdict.length));
+  checkTrue('a banded lens carries three sentences; an unbanded one carries one',
+    table.lenses.every(l => l.band ? l.verdict.length === 3 : l.verdict.length === 1));
+  checkTrue('every domain is a known domain', table.lenses.every(l => table.domains.some(d => d.id === l.domain)));
+  checkTrue('every domain has a default that is one of its own lenses',
+    table.domains.every(d => { const L = Lenses.get(d.default); return L && L.domain === d.id; }));
+  check('the defaults the brief names', table.domains.map(d => d.default).join(','), 'fatwants,avalanche,foo,tco,twentyfive,takehome,effmarg');
+  checkTrue('every lens has a measure in the library', ids.every(id => typeof Lenses.MEASURES[id] === 'function'));
+  checkTrue('the lenses table is a registered reference table', /lenses: 'lenses\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+  checkTrue('no lens reads a field that is not already in DAITE vocabulary (no new field)',
+    table.lenses.every(l => l.reads.every(r => /^(expenses|income|assets|debts|allocation|you|taxes|housing|progress|targets|assumptions|retirement|netWorth)/.test(r))));
+
+  /* Every lens runs on the demo without throwing, and each reads or says what is missing. */
+  let okCount = 0;
+  ids.forEach(id => {
+    const m = Lenses.measure(id, demo, T);
+    checkTrue(id + ' returns a Result', m && (m.status === 'ok' || m.status === 'incomplete'));
+    if (m.status === 'ok') okCount++;
+    else checkTrue(id + ' incomplete says why', typeof m.reason === 'string' && m.reason.length > 10);
+    const v = Lenses.verdictFor(Lenses.get(id), m);
+    checkTrue(id + ' has a verdict sentence with no unfilled token', typeof v.text === 'string' && v.text.length > 5 && !/\{\w+\}/.test(v.text));
+    const html = Lenses.render(id, demo, T);
+    checkTrue(id + ' renders a card carrying its forWhom and notForWhom', html.indexOf('lens-card') > -1 && html.indexOf('For:') > -1 && html.indexOf('Not for:') > -1);
+  });
+  check('the demo reads 27 of 33; the other six say honestly what is not entered', okCount, 27);
+
+  /* A few re-derived by hand on the demo. */
+  const takeHome = 486000;
+  check('FAT and wants: needs ÷ take-home', Lenses.measure('fatwants', demo, T).value, (71000 + 150000 + 22000) / takeHome);
+  check('50/30/20: what is left ÷ take-home', Lenses.measure('fiftythirty', demo, T).value, (takeHome - 315000) / takeHome);
+  check('25% of gross: accommodation ÷ gross a month', Lenses.measure('twentyfive', demo, T).value, 150000 / 600000);
+  check('take-home share of gross', Lenses.measure('takehome', demo, T).value, (7200000 - 1368000) / 7200000);
+  check('bucket: cash ÷ a year of spending', Lenses.measure('bucket', demo, T).value, 950000 / (315000 * 12));
+  check('the avalanche names the highest rate', Lenses.measure('avalanche', demo, T).top, 'Credit card');
+  check('...and reads the FOO high-interest line', Lenses.measure('avalanche', demo, T).band.high, 0.075);
+  check('rate by age: a 32-year-old reads the thirties line', Lenses.measure('moneyguyage', demo, T).band.high, 0.05);
+  check('the crossover is the assumed real return', Lenses.measure('crossover', demo, T).band.high, 0.05);
+  check('Die With Zero reads the age', Lenses.measure('diewithzero', demo, T).value, 32);
+  check('Shockingly Simple Math: from zero at 28.5% saved, 5% real', Math.round(Lenses.yearsFromRate(0.285, 0.05)), 29);
+  check('...at a 50% rate, about 17 years', Math.round(Lenses.yearsFromRate(0.5, 0.05)), 17);
+  check('...at 100% saved, zero years', Lenses.yearsFromRate(1, 0.05), 0);
+  check('...at nothing saved, never', Lenses.yearsFromRate(0, 0.05), null);
+  check('four buckets on the demo: pre-tax and Roth in use', Lenses.measure('fourbuckets', demo, T).filledList, 'pre-tax, Roth');
+  check('the house-hack lens reads the lever library, 40% of the rent line', Lenses.measure('househack', demo, T).value, 60000);
+
+  /* Verdicts pick the sentence by band. */
+  const L = { band: { low: 0.2, high: 0.4 }, verdict: ['u {share}', 'i {share}', 'o {share}'] };
+  check('under', Lenses.verdictFor(L, Money.ok(0.1, { share: '10%' })).text, 'u 10%');
+  check('in', Lenses.verdictFor(L, Money.ok(0.3, { share: '30%' })).text, 'i 30%');
+  check('over', Lenses.verdictFor(L, Money.ok(0.5, { share: '50%' })).text, 'o 50%');
+  check('a measure may carry its own band', Lenses.verdictFor(L, Money.ok(0.5, { share: '50%', band: { low: 0, high: 1 } })).zone, 'in');
+  check('incomplete carries the reason', Lenses.verdictFor(L, Money.incomplete('needs x', ['x'])).text, 'needs x');
+  check('an unfilled token never prints as a brace', Lenses.verdictFor({ band: null, verdict: ['a {nope} b'] }, Money.ok(1, {})).text, 'a — b');
+
+  /* Empty is not zero: a blank household reads nothing as a number. */
+  const blank = Schema.createHousehold();
+  checkTrue('a blank household makes every lens incomplete, never a zero', ids.every(id => Lenses.measure(id, blank, T).status === 'incomplete'));
+
+  /* The toggle: off leaves exactly one card per domain; on shows all. */
+  const one = Lenses.renderAll(demo, T, { more: false });
+  check('More ways off: exactly seven cards, one a domain', (one.match(/class="lens-card/g) || []).length, 7);
+  checkTrue('...and each is its domain\'s default', table.domains.every(d => one.indexOf('data-lens="' + d.default + '"') > -1));
+  check('More ways on: all thirty-four', (Lenses.renderAll(demo, T, { more: true }).match(/class="lens-card/g) || []).length, 34);
+
+  /* Framework names are a preference, never a household fact. */
+  Prefs.reset();
+  check('names show by default (no door chosen)', Lenses.frameworkNames(), true);
+  Prefs.set('door', 'beginner');
+  check('the beginner door hides them', Lenses.frameworkNames(), false);
+  Prefs.set('showFrameworkNames', true);
+  check('an explicit preference wins', Lenses.frameworkNames(), true);
+  checkTrue('with names off the header is the plain phrase', (function () { Prefs.set('showFrameworkNames', false); return Lenses.render('moneyguy25', demo, T).indexOf('Save a quarter of what you earn') > -1 && Lenses.render('moneyguy25', demo, T).indexOf('Money Guy 25%') === -1; })());
+  checkTrue('with names on the header is the framework', (function () { Prefs.set('showFrameworkNames', true); return Lenses.render('moneyguy25', demo, T).indexOf('Money Guy 25%') > -1; })());
+  Prefs.reset();
+
+  /* Rooms never write lens logic: the Snapshot mounts the section and nothing else. */
+  const snap = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
+  checkTrue('the Snapshot has a lenses section after DRAFTT', snap.indexOf('id="lenses"') > snap.indexOf('id="draftt"') && snap.indexOf('id="lenses"') < snap.indexOf('id="inputs"'));
+  checkTrue('...mounted through the library', snap.indexOf("SLAF.Lenses.mount('lenses-host'") > -1);
+  checkTrue('...with no lens rule of its own', !/forWhom|notForWhom|lens-card/.test(snap));
+  checkTrue('the library never evaluates a rule as code', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/lenses.js'), 'utf8')));
+})();
+
+section('The sidebar: grouped by purpose, not by kind (D-177)');
+(function () {
+  const Progress = require(path.join(ROOT, 'shared/progress.js'));
+  const ids = Registry.groups().map(g => g.id);
+  check('seven groups, in the brief\'s order', ids.join(','), 'home,numbers,scorecard,decisions,matters,levelup,upkeep');
+  checkTrue('every room names a group the sidebar knows', Registry.all().every(r => ids.indexOf(r.group) > -1));
+  checkTrue('...and a subgroup only where its group has them', Registry.all().every(r => {
+    const g = Registry.groupById(r.group);
+    return r.subgroup ? (g.subgroups || []).some(x => x.id === r.subgroup) : !(g.subgroups && g.subgroups.length && r.group !== 'home');
+  }));
+  checkTrue('every room appears in exactly one group', Registry.all().every(r => ids.filter(g => Registry.inGroup(g, null).some(x => x.id === r.id)).length === 1));
+  check('...and every room appears', ids.reduce((n, g) => n + Registry.inGroup(g, null).length, 0), Registry.all().length);
+  checkTrue('kind is still a property, no longer a heading', Registry.all().every(r => typeof r.kind === 'string') && !/'The path'|'About you'|'What it means'/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+  /* Four doors stood side by side under Home and it was the single thing
+     that lost people most (D-186). There is one now: the Ledger, which the
+     First Round and Express became views of (D-230). */
+  check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
+  check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
+  check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
+  checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
+  /* Your Next $100 became a reading of What The Next Dollar Does (D-231). */
+  check('Scorecard is read-only rooms', Registry.inGroup('scorecard', null).map(r => r.id).join(','), 'financial-snapshot,foo-ladder,fire,fire-lab,statements,coast-date,race');
+  checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
+  check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
+  check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree,stacker,exercises');
+  check('Upkeep, with Front Doors, the Walk-Through, Refresh and Welcome Back gone into the Ledger (D-230)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,history,settings,get-help,wrapped,one-pager,progress-card');
+  checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
+  checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
+  checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
+
+  /* The situation gate: absent, not greyed. */
+  check('retired: no Work subgroup at all', Registry.inGroup('decisions', 'retired').filter(r => r.subgroup === 'work').length, 0);
+  checkTrue('...no Career Move', !Registry.inGroup('decisions', 'retired').some(r => r.id === 'career-move'));
+  checkTrue('student: no Drawing It Down', !Registry.inGroup('decisions', 'student').some(r => r.id === 'decumulation'));
+  checkTrue('...but Career Move stays', Registry.inGroup('decisions', 'student').some(r => r.id === 'career-move'));
+  checkTrue('no situation answered: everything applies', Registry.inGroup('decisions', null).length === 30);
+  checkTrue('appliesWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
+
+  /* The one shared sidebar. */
+  const html = Progress.menuHtml('car');
+  check('seven collapsible groups', (html.match(/class="slaf-menu-group"/g) || []).length, 7);
+  check('every room is a link in it', (html.match(/data-room="/g) || []).length, Registry.all().length);
+  checkTrue('subgroup names are labels, not links', /<p class="slaf-menu-sub" data-subgroup="work">Work<\/p>/.test(html));
+  checkTrue('DRAFTT rides as a link after the Snapshot', /financial-snapshot\.html#draftt/.test(html) && html.indexOf('#draftt') > html.indexOf('data-room="financial-snapshot"'));
+  checkTrue('a search box at the top', /<input type="search" id="slaf-menu-q"/.test(html) && html.indexOf('slaf-menu-q') < html.indexOf('slaf-menu-body'));
+  checkTrue('only the current room\'s group is open on load', /data-group="decisions" open/.test(html) && !/data-group="numbers" open/.test(html) && !/data-group="home" open/.test(html));
+  checkTrue('every link carries its search text', (html.match(/data-search="/g) || []).length >= Registry.all().length);
+  checkTrue('no room hand-writes its nav', !fs.readdirSync(path.join(ROOT, 'rooms')).some(f => /slaf-menu-group|slaf-menu-sub/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+  checkTrue('prefs.js loads on every page that has the sidebar', fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /shared\/progress\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))).every(f => /shared\/prefs\.js/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+  const demo = Demo.build();
+  const readings = Ownership.readings(demo);
+  check('a status dot: Debt Payoff filled on the demo', Progress.roomStatus('debt-payoff', readings), 'filled');
+  check('...the Calendar empty', Progress.roomStatus('calendar', readings), 'empty');
+  check('...Expenses partly (therapy untracked)', Progress.roomStatus('expenses', readings), 'partly');
+  check('...Cash Flow, which owns no field since D-192, has no dot', Progress.roomStatus('cash-flow', readings), null);
+  check('...a room that owns nothing has no dot', Progress.roomStatus('ratios', readings), null);
+})();
+
+section('Pinned scenarios live beside the household, never in it (D-176)');
+(function () {
+  const Scenarios = require(path.join(ROOT, 'shared/scenarios.js'));
+  Scenarios.reset();
+  check('empty to start', Scenarios.all().length, 0);
+  const first = Scenarios.pin({ room: 'adventure', label: 'House Hack · crash', query: 'path=househack&shocks=crash' });
+  check('a pin returns the item', first.item.label, 'House Hack · crash');
+  check('...and nothing dropped', first.dropped, null);
+  check('it is listed', Scenarios.all()[0].query, 'path=househack&shocks=crash');
+  let dropped = null;
+  for (let i = 0; i < Scenarios.CAP; i++) { const r = Scenarios.pin({ room: 'adventure', label: 'way ' + i, query: 'path=steady&n=' + i }); if (r.dropped) dropped = r.dropped; }
+  check('capped at ten', Scenarios.all().length, Scenarios.CAP);
+  check('...the oldest dropped off', dropped && dropped.label, 'House Hack · crash');
+  const back = Scenarios.restore(dropped);
+  check('undo puts it back', Scenarios.all().some(s => s.id === dropped.id), true);
+  check('...and the newest over the cap goes instead', back.pushedOut && back.pushedOut.label, 'way 9');
+  check('still ten', Scenarios.all().length, Scenarios.CAP);
+  const gone = Scenarios.remove(dropped.id);
+  check('remove returns the item', gone.id, dropped.id);
+  check('...and it is gone', Scenarios.all().some(s => s.id === dropped.id), false);
+  check('remove of a stranger is null', Scenarios.remove('nope'), null);
+  checkTrue('the key is its own, not the household\'s', Scenarios.KEY !== 'slaf.prefs.v1' && /scenarios/.test(Scenarios.KEY));
+  const Daite = require(path.join(ROOT, 'shared/daite.js'));
+  checkTrue('scenarios is a DAITE context, not a family', Daite.CONTEXT.indexOf('scenarios') > -1 && !Daite.FAMILIES.some(f => (f.id || f) === 'scenarios'));
+  checkTrue('the adventure room writes nothing to the household', !/Spine\.(set|updateProfile|setFat|setMonthlyExpenses)\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8')));
+  checkTrue('...has no text input', !/<input|<textarea|contenteditable/.test(fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8')));
+  Scenarios.reset();
+})();
+
+section('Feature switches: rendering and engines, never stored facts (D-180)');
+(function () {
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const table = require(path.join(ROOT, 'data/features.json'));
+  const ids = Object.keys(table.features);
+  Prefs.reset();
+
+  check('seventeen switches: the ten shapes\' four, the twelve phenomena, and the deeper-questions gate (D-250)', ids.length, 17);
+  checkTrue('every switch has a default, a scope, a group, a label and a gloss', ids.every(id => { const f = table.features[id]; return ['on', 'off'].indexOf(f.default) > -1 && ['user', 'situation'].indexOf(f.scope) > -1 && table.groups.some(g => g.id === f.group) && f.label && f.gloss; }));
+  checkTrue('a situation switch names what sets it', ids.filter(id => table.features[id].scope === 'situation').every(id => typeof table.features[id].situationWhen === 'string'));
+  check('the four groups, in the prompt\'s order', table.groups.map(g => g.id).join(','), 'accuracy,household,horizon,advanced');
+  checkTrue('no gloss carries an em-dash', ids.every(id => table.features[id].gloss.indexOf('\u2014') === -1 && table.features[id].label.indexOf('\u2014') === -1));
+  checkTrue('every switch id appears in at least one room\'s features list', ids.every(id => Features.rooms(id).length >= 1), ids.filter(id => !Features.rooms(id).length).join(','));
+  checkTrue('...and every room\'s features list names only real switches', Registry.all().every(r => (r.features || []).every(f => ids.indexOf(f) > -1)));
+  checkTrue('the table is a registered reference table', /features: 'features\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+  checkTrue('no room reads features.json directly', !fs.readdirSync(path.join(ROOT, 'rooms')).some(f => /features\.json/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))) && !fs.readdirSync(path.join(ROOT, 'engines')).some(f => /features\.json/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))));
+
+  /* on(): the pref, else the default; situation scope from the household. */
+  const demo = Demo.build();
+  check('a default-on switch is on', Features.on('afterTaxNetWorth', demo), true);
+  check('a default-off switch is off', Features.on('sequenceRisk', demo), false);
+  check('an unknown switch is off, never a throw', Features.on('teleport', demo), false);
+  Features.set('sequenceRisk', true);
+  check('set turns it on for this person', Features.on('sequenceRisk', demo), true);
+  check('...and the pref says so', Prefs.get('features.sequenceRisk', null), true);
+  Features.set('sequenceRisk', null);
+  check('null goes back to the default', Features.on('sequenceRisk', demo), false);
+  check('a situation switch ignores prefs', (Features.set('equityComp', true), Features.on('equityComp', demo)), false);
+  const equity = Demo.build(); Schema.primaryPerson(equity).incomeSources.push(Schema.createIncomeSource({ personId: Schema.primaryPerson(equity).id, source: 'RSUs', type: 'equity', grossAnnualIncomeCents: 1000000 }));
+  check('...and reads the household: an equity source turns equityComp on', Features.on('equityComp', equity), true);
+  check('a federal student loan turns studentLoanPaths on (the demo has one)', Features.on('studentLoanPaths', demo), true);
+  const noLoan = Demo.build(); noLoan.debts = noLoan.debts.filter(d => d.type !== 'student_loan');
+  check('...and off without one', Features.on('studentLoanPaths', noLoan), false);
+  checkTrue('situationWhen is read, never evaluated', !/eval\(|new Function/.test(fs.readFileSync(path.join(ROOT, 'shared/features.js'), 'utf8')));
+
+  /* Flipping every switch on then off leaves the household byte-identical. */
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  const before = JSON.stringify(Spine.getProfile());
+  const userIds = ids.filter(id => table.features[id].scope === 'user');
+  userIds.forEach(id => Features.set(id, true));
+  checkTrue('all on', userIds.every(id => Features.on(id)));
+  userIds.forEach(id => Features.set(id, false));
+  checkTrue('all off', userIds.every(id => !Features.on(id)));
+  check('...and the household hash is unchanged', JSON.stringify(Spine.getProfile()), before);
+  userIds.forEach(id => Features.set(id, null));
+
+  /* The two starting sets. */
+  Features.applyPath('beginner');
+  checkTrue('Beginner: only the default-on set', userIds.every(id => Features.on(id) === (table.features[id].default === 'on')));
+  check('...and the door is remembered', Prefs.get('door', null), 'beginner');
+  Features.applyPath('fi');
+  checkTrue('FI: Accuracy and Horizon all on', userIds.every(id => Features.on(id) === (['accuracy', 'horizon'].indexOf(table.features[id].group) > -1 || table.features[id].default === 'on')));
+  checkTrue('...Advanced still off unless on by default', userIds.filter(id => table.features[id].group === 'advanced').every(id => Features.on(id) === (table.features[id].default === 'on')));
+  check('...and the household still unchanged', JSON.stringify(Spine.getProfile()), before);
+  Prefs.reset();
+
+  /* The Settings room. */
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/settings.html'), 'utf8');
+  checkTrue('Settings is a registered room under Upkeep', Registry.byId('settings') && Registry.byId('settings').group === 'upkeep' && Registry.inGroup('upkeep', null).some(r => r.id === 'settings'));
+  checkTrue('...that writes only prefs', JSON.stringify(Registry.daite('settings').writes) === JSON.stringify(['prefs.features']));
+  checkTrue('...with buttons, no text input', !/<input|<textarea/.test(room) && /role="switch"/.test(room));
+  checkTrue('...reading the switches through the library', /Features\.(all|on|set|rooms|applyPath)\(/.test(room) && !/features\.json/.test(room));
+})();
+
+section('Blocks: a hypothetical laid on the household, never in it (D-178)');
+(function () {
+  const Blocks = require(path.join(ROOT, 'shared/blocks.js'));
+  const Scenarios = require(path.join(ROOT, 'shared/scenarios.js'));
+  const Expr = require(path.join(ROOT, 'shared/expr.js'));
+  const demo = Demo.build();
+  const before = JSON.stringify(demo);
+  Scenarios.reset();
+
+  /* One expression language, shared with the events engine. */
+  check('the events engine evaluates through shared/expr.js', require(path.join(ROOT, 'engines/events.js')).evaluate({ '*': [2, '@x'] }, { answers: { x: 21 }, ctx: {}, tables: {} }), 42);
+  checkTrue('...and keeps no evaluator of its own', !/case '\*': v = all\(args\)/.test(fs.readFileSync(path.join(ROOT, 'engines/events.js'), 'utf8')));
+  check('and / or', Expr.evaluate({ and: [{ eq: [1, 1] }, { gt: [2, 1] }] }, {}) + '/' + Expr.evaluate({ or: [{ eq: [1, 2] }, false] }, {}), 'true/false');
+
+  /* The nine types, each with a table of four questions at most and DAITE-only lines. */
+  const TYPES = ['home', 'car', 'kid', 'jobchange', 'sabbatical', 'geo', 'hustle', 'inheritance', 'marriage'];
+  check('nine block types, no more', Scenarios.TYPES.map(t => t.id).join(','), TYPES.join(','));
+  TYPES.forEach(type => {
+    const t = Blocks.table(type);
+    checkTrue(type + ' has an expansion table in data/blocks/', !!t && t.type === type && typeof t.source === 'string' && typeof t.confidence === 'string');
+    checkTrue(type + ' asks four questions at most, none free text', t.questions.length <= 4 && t.questions.every(q => ['money', 'month', 'state', 'yesno', 'choice', 'number', 'months'].indexOf(q.kind) > -1));
+    checkTrue(type + ' lines all resolve under debt / assets / income / taxes / expenses', t.lines.every(l => /^(debt|assets|income|taxes|expenses)(\.|$)/.test(l.path)));
+    checkTrue(type + ' lines each carry a note naming where the default comes from', t.lines.every(l => typeof l.note === 'string' && l.note.length > 10));
+    checkTrue(type + ' is a registered reference table', /block/.test(Object.keys(require(path.join(ROOT, 'shared/reference.js')).TABLE_FILES).filter(k => require(path.join(ROOT, 'shared/reference.js')).TABLE_FILES[k] === 'blocks/' + type + '.json').join('')));
+  });
+  checkTrue('no room holds expansion logic', !fs.readdirSync(path.join(ROOT, 'rooms')).some(f => /propertyTaxByState|colIndexByState|runningCostShareOfPrice/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+
+  /* Each table on a known answer set, re-derived by hand. */
+  const home = Blocks.build('home', { price: 40000000, down: 8000000, when: '2028-04', state: 'IL' }, demo).value;
+  const L = id => home.lines.filter(l => l.id === id)[0];
+  check('home: the down payment leaves cash', L('down').delta, -8000000);
+  check('...closing costs at 3%', L('closing').delta, -1200000);
+  check('...the mortgage is price less down', L('mortgage').delta, 32000000);
+  check('...at the table\'s 30-year rate', L('mortgage').extra.rate, 0.065);
+  check('...with the level payment as its minimum: $320,000 at 6.5% over 360 months', L('mortgage').extra.minPaymentCents, require(path.join(ROOT, 'engines/projection.js')).levelPaymentCents({ principalCents: 32000000, annualRate: 0.065, months: 360 }).value);
+  check('...rent stops: the demo\'s $1,500 line comes off', L('rentStops').delta, -150000);
+  check('...and says it is the household\'s own figure', L('rentStops').source, 'user');
+  check('...property tax at Illinois\'s 1.95% (data/states.json, 15.6), a twelfth a month', L('propertyTax').delta, Math.round(40000000 * 0.0195 / 12));
+  check('...marked as a state figure', L('propertyTax').source, 'state');
+  check('...insurance at the national 0.5%', L('insurance').delta, Math.round(40000000 * 0.005 / 12));
+  const homeNoState = Blocks.build('home', { price: 40000000, down: 8000000, when: '2028-04', state: null }, demo).value;
+  check('with no state, property tax falls back to the national rate and says so', homeNoState.lines.filter(l => l.id === 'propertyTax')[0].source, 'national');
+  check('...at 1.1%', homeNoState.lines.filter(l => l.id === 'propertyTax')[0].delta, Math.round(40000000 * 0.011 / 12));
+  checkTrue('every line keeps its first figure as the estimate', home.lines.every(l => l.estimate === l.delta));
+
+  const car = Blocks.build('car', { price: 2500000, condition: 'used', pay: 'loan', when: '2027-01' }, demo).value;
+  check('car on a loan: a fifth down', car.lines.filter(l => l.id === 'down')[0].delta, -500000);
+  check('...four-fifths borrowed', car.lines.filter(l => l.id === 'loan')[0].delta, 2000000);
+  check('...running costs at 12% of price a year, used', car.lines.filter(l => l.id === 'running')[0].delta, Math.round(2500000 * 0.12 / 12));
+  const carCash = Blocks.build('car', { price: 2500000, condition: 'new', pay: 'cash', when: '2027-01' }, demo).value;
+  check('car in cash: the whole price leaves cash and there is no loan line', carCash.lines.map(l => l.id).join(','), 'cashPaid,vehicle,running');
+  const kid = Blocks.build('kid', { when: '2029-06', childcare: true, state: 'NC' }, demo).value;
+  check('kid: the 0-to-2 band a month', kid.lines.filter(l => l.id === 'everyday')[0].delta, 120000);
+  check('...childcare at the state figure', kid.lines.filter(l => l.id === 'childcare')[0].source, 'state');
+  check('...no childcare line when not wanted', Blocks.build('kid', { when: '2029-06', childcare: false, state: 'NC' }, demo).value.lines.some(l => l.id === 'childcare'), false);
+  const job = Blocks.build('jobchange', { gross: 9000000, remote: true, when: '2027-03' }, demo).value;
+  check('job change: the difference from the demo\'s $72,000', job.lines.filter(l => l.id === 'gross')[0].delta, 1800000);
+  check('...remote: half the getting-around line', job.lines.filter(l => l.id === 'commute')[0].delta, -11000);
+  const sab = Blocks.build('sabbatical', { months: 6, when: '2028-01', incomeDuring: 100000 }, demo).value;
+  check('sabbatical: dated for its months', JSON.stringify(sab.dates), JSON.stringify([{ start: '2028-01', end: '2028-07' }]));
+  check('...pay stops', sab.lines.filter(l => l.id === 'payStops')[0].delta, -7200000);
+  check('...cover at the COBRA single rate', sab.lines.filter(l => l.id === 'cover')[0].delta, 76100);
+  const geo = Blocks.build('geo', { state: 'TX', remote: true, when: '2027-09' }, demo).value;
+  check('move: the state changes', geo.lines[0].extra.state, 'TX');
+  check('...every needs line scales by TX 93 over NC 96, less one', geo.lines[1].delta, Math.round((93 / 96 - 1) * 10000) / 10000);
+  check('hustle: one net line', Blocks.build('hustle', { net: 60000, hours: 10, when: '2027-01' }, demo).value.lines.map(l => l.path).join(','), 'income.netMonthlyCents');
+  const inh = Blocks.build('inheritance', { amount: 5000000, when: '2030-01', into: 'retirement' }, demo).value;
+  check('inheritance into retirement: pre-tax', inh.lines[0].extra.taxCharacter + '/' + inh.lines[0].extra.category, 'pretax/retirement');
+  const mar = Blocks.build('marriage', { gross: 6000000, debt: 1000000, when: '2028-06', combine: true }, demo).value;
+  check('marriage, combining: income and debt arrive', mar.lines.map(l => l.id).join(','), 'income,debt');
+  check('...the debt\'s minimum is 2% of the balance', mar.lines[1].extra.minPaymentCents, 20000);
+  const marNo = Blocks.build('marriage', { gross: 6000000, debt: 1000000, when: '2028-06', combine: false }, demo).value;
+  check('marriage, not combining: nothing moves, and it says so', marNo.lines.length + '|' + marNo.note, '0|Not combining finances: nothing moves in your numbers.');
+  check('an unknown type is incomplete, not a throw', Blocks.build('yacht', {}, demo).status, 'incomplete');
+  check('and the household was never touched', JSON.stringify(demo), before);
+
+  /* The store: labels, validation, the estimate kept forever, duplicate, replaces. */
+  const b1 = Scenarios.addBlock(car);
+  const b2 = Scenarios.addBlock(car);
+  check('two unlabelled cars read Car 1, Car 2', b1.label + '|' + b2.label, 'Car 1|Car 2');
+  checkTrue('a line outside DAITE is rejected at write', (() => { try { Scenarios.addBlock({ type: 'car', lines: [{ path: 'you.dob', delta: 1, kind: 'oneoff' }] }); return false; } catch (e) { return /not under debt/.test(e.message); } })());
+  checkTrue('...and so is a line with no kind', (() => { try { Scenarios.addBlock({ type: 'car', lines: [{ path: 'assets.cashCents', delta: 1 }] }); return false; } catch (e) { return true; } })());
+  const edited = Scenarios.updateBlock(b1.id, { lines: b1.lines.map(l => l.id === 'running' ? Object.assign({}, l, { delta: 30000 }) : l) });
+  check('overwriting a delta keeps the original estimate beside it', edited.lines.filter(l => l.id === 'running')[0].estimate, 25000);
+  check('...and the new figure', edited.lines.filter(l => l.id === 'running')[0].delta, 30000);
+  const dup = Scenarios.duplicateBlock(b1.id, { replacing: true });
+  check('a duplicate takes the next label', dup.label, 'Car 3');
+  check('...blank dates', dup.dates.length, 0);
+  check('...and replaces the original when asked', dup.replaces, b1.id);
+  const gone = Scenarios.removeBlock(dup.id);
+  check('delete returns the block for undo', gone.id, dup.id);
+  Scenarios.restoreBlock(gone);
+  check('...and restore puts it back', Scenarios.blockById(dup.id).label, 'Car 3');
+  Scenarios.removeBlock(dup.id);
+
+  /* householdAt: two overlapping cars add; replaces cuts the old one at the new start. */
+  const carA = Object.assign({}, Scenarios.addBlock(Blocks.build('car', { price: 2000000, condition: 'used', pay: 'cash', when: '2027-01' }, demo).value));
+  const carB = Object.assign({}, Scenarios.addBlock(Blocks.build('car', { price: 3000000, condition: 'new', pay: 'cash', when: '2030-01' }, demo).value));
+  const base = Schema.fat(demo).transportation.value;
+  const both = Blocks.applyAll(demo, [carA, carB], '2031-06');
+  check('two overlapping car blocks add both running-cost lines', Schema.fat(both).transportation.value, base + Math.round(2000000 * 0.12 / 12) + Math.round(3000000 * 0.10 / 12));
+  check('...and both vehicles', both.assets.filter(a => a.category === 'vehicle').length, 2);
+  const carB2 = Object.assign({}, carB, { replaces: carA.id });
+  const replaced = Blocks.applyAll(demo, [carA, carB2], '2031-06');
+  check('with replaces set, the old car\'s lines stop at the new start', Schema.fat(replaced).transportation.value, base + Math.round(3000000 * 0.10 / 12));
+  check('...before the new start the old car still runs', Schema.fat(Blocks.applyAll(demo, [carA, carB2], '2028-06')).transportation.value, base + Math.round(2000000 * 0.12 / 12));
+  check('...the window says what cut it', Blocks.windowsAt(carA, [carA, carB2])[0].end, '2030-01');
+  check('before either starts, nothing applies', Schema.fat(Blocks.applyAll(demo, [carA, carB2], '2026-01')).transportation.value, base);
+  check('a switched-off block does nothing', Schema.fat(Blocks.applyAll(demo, [Object.assign({}, carA, { active: false })], '2028-01')).transportation.value, base);
+  const homeBlock = Scenarios.addBlock(home);
+  const withHome = Blocks.applyAll(demo, [homeBlock], '2028-06');
+  check('a home: rent off, payment on', Schema.fat(withHome).accommodation.value, 150000 - 150000 + L('payment').delta);
+  check('...tax, insurance and upkeep listed apart as applied lines', Schema.fat(withHome).applied.lines.length, 3);
+  check('...and counted in the month', Schema.fat(withHome).totalCents.value, Schema.fat(demo).totalCents.value - 150000 + L('payment').delta + L('propertyTax').delta + L('insurance').delta + L('upkeep').delta);
+  check('...the mortgage is a debt', withHome.debts.filter(d => d.type === 'mortgage').length, 1);
+  check('...the place is property', withHome.assets.filter(a => a.category === 'real_estate')[0].valueCents, 40000000);
+  check('...and cash is what is left, even below zero, so the planner can say so', Schema.cashCents(withHome).value, 950000 - 8000000 - 1200000);
+  const sabBlock = Scenarios.addBlock(sab);
+  check('a dated window: inside it the pay is gone', Schema.grossAnnualIncomeCents(Blocks.applyAll(demo, [sabBlock], '2028-03')).value, 0 + 100000 * 12);
+  check('...after it the pay is back', Schema.grossAnnualIncomeCents(Blocks.applyAll(demo, [sabBlock], '2028-09')).value, 7200000);
+  const geoBlock = Scenarios.addBlock(geo);
+  check('a move changes the state', Blocks.applyAll(demo, [geoBlock], '2028-01').state, 'TX');
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  checkTrue('Spine.householdAt exists and never writes', typeof Spine.householdAt === 'function' && !/save\(\)/.test(Spine.householdAt.toString()));
+  checkTrue('the store lives beside the household, never in it', !('blocks' in Schema.createHousehold()) && !('scenarioBlocks' in Schema.createHousehold()) && Scenarios.KEY !== 'slaf.household.v2');
+  Scenarios.reset();
+})();
+
+section('The lever library: get, applies, apply (D-174)');
+(function () {
+  const Levers = require(path.join(ROOT, 'shared/levers.js'));
+  const table = require(path.join(ROOT, 'data/levers.json'));
+  Levers.use(table);
+  const IDS = ['hustle', 'househack', 'relocate', 'careermove', 'steady', 'drift'];
+  const demo = Demo.build();
+  const before = JSON.stringify(demo);
+
+  /* The table: six levers, exactly, each one line with the six facts. */
+  check('six levers, in the brief\'s order', Object.keys(table.levers).join(','), IDS.join(','));
+  check('the table is unverified, because nobody measured a lever', table.confidence, 'unverified');
+  checkTrue('every lever states what it moves, its hours, whether it survives a job loss, its flex and when it applies',
+    IDS.every(id => { const L = table.levers[id]; return typeof L.label === 'string' && L.moves && Object.keys(L.moves).length === 1
+      && Money.isEntered(L.hoursPerWeek) && typeof L.survivesJobLoss === 'boolean' && typeof L.flex === 'string' && typeof L.appliesWhen === 'string'; }));
+  check('the hustle: $500 a month, net', table.levers.hustle.moves['income.extraMonthlyCents'], 50000);
+  check('the house hack: 40% off the accommodation line', table.levers.househack.moves['expenses.needs.accommodation'], -0.40);
+  check('the move: a quarter off every needs line', table.levers.relocate.moves['expenses.needs.*'], -0.25);
+  check('the job change: 20% more gross', table.levers.careermove.moves['income.grossAnnualCents'], 0.20);
+  check('steady keeps the whole raise', table.levers.steady.raiseKeptShare, 1.0);
+  check('drift keeps none of it', table.levers.drift.raiseKeptShare, 0.0);
+  checkTrue('the library is a registered reference table', /levers: 'levers\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
+
+  /* get and all */
+  check('get returns the lever with its id', Levers.get('hustle').id, 'hustle');
+  check('an unknown id is null, not a throw', Levers.get('teleport'), null);
+  check('all lists the six', Levers.all().length, 6);
+
+  /* applies: the phrases, read by hand against the household */
+  check('the hustle always applies', Levers.applies('hustle', demo), true);
+  check('the job change applies to someone working', Levers.applies('careermove', demo), true);
+  const retired = Demo.build(); Schema.primaryPerson(retired).employmentStatus = 'retired';
+  check('...and not to someone retired', Levers.applies('careermove', retired), false);
+  check('the house hack needs a property or a priced home', Levers.applies('househack', demo), false);
+  const owner = Demo.build(); owner.property = [{ id: 'p1', valueCents: 30000000 }];
+  check('...a property does it', Levers.applies('househack', owner), true);
+  const buyer = Demo.build(); buyer.housing = Object.assign({}, buyer.housing, { priceCents: 40000000 });
+  check('...so does a price typed in Housing Decision', Levers.applies('househack', buyer), true);
+  check('the move needs remote work, which no room asks yet', Levers.applies('relocate', demo), false);
+  const remote = Demo.build(); remote.meta = Object.assign({}, remote.meta, { remoteOk: true });
+  check('...a stored fact would say yes', Levers.applies('relocate', remote), true);
+  check('an unknown lever never applies', Levers.applies('teleport', demo), false);
+  checkTrue('appliesWhen is read, never evaluated', fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8').indexOf('eval(') === -1
+    && fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8').indexOf('new Function') === -1);
+
+  /* apply: a new household, the original untouched */
+  const hustled = Levers.apply('hustle', demo);
+  check('apply never mutates', JSON.stringify(demo), before);
+  const src = Schema.primaryPerson(hustled).incomeSources.filter(s => s.lever === 'hustle')[0];
+  checkTrue('the hustle arrives as its own income source, net of tax', src && src.grossAnnualIncomeCents === 600000 && src.netOfTax === true);
+  check('...and records the pull', JSON.stringify(hustled.meta.leversApplied), JSON.stringify([{ id: 'hustle', scale: 1 }]));
+  check('applying twice does not stack two hustles', Schema.primaryPerson(Levers.apply('hustle', hustled)).incomeSources.filter(s => s.lever === 'hustle').length, 1);
+  const moved = Levers.apply('careermove', demo);
+  check('the job change scales every gross source by a fifth', Schema.grossAnnualIncomeCents(moved).value, 7200000 * 1.2);
+  const hacked = Levers.apply('househack', demo);
+  check('the house hack cuts the accommodation line by 40%', hacked.expenses.needs.accommodation.monthlyCents, 90000);
+  check('...at half scale, by 20%', Levers.apply('househack', demo, { scale: 0.5 }).expenses.needs.accommodation.monthlyCents, 120000);
+  const relocated = Levers.apply('relocate', demo);
+  check('the move cuts every needs line by a quarter', [relocated.expenses.needs.food.monthlyCents, relocated.expenses.needs.accommodation.monthlyCents, relocated.expenses.needs.transportation.monthlyCents].join(','),
+    [Math.round(demo.expenses.needs.food.monthlyCents * 0.75), 112500, Math.round(demo.expenses.needs.transportation.monthlyCents * 0.75)].join(','));
+  const blank = Levers.apply('househack', Schema.createHousehold());
+  check('a blank line stays blank: empty is not zero', blank.expenses.needs.accommodation.monthlyCents, null);
+  check('an unknown lever returns the household unchanged', JSON.stringify(Schema.createHousehold(Levers.apply('teleport', demo))), JSON.stringify(Schema.createHousehold(JSON.parse(before))));
+
+  /* what a lever is worth, a month and an hour: monthly gain ÷ (hours × 4.33) */
+  check('the hustle is worth $500 a month', Levers.monthlyGainCents('hustle', demo).value, 50000);
+  check('...and about $7.70 an hour at fifteen hours a week', Levers.impliedHourlyCents('hustle', demo).value, Math.round(50000 / (15 * 4.33)));
+  check('the house hack is worth 40% of the rent line', Levers.monthlyGainCents('househack', demo).value, 60000);
+  check('...about $27.71 an hour at five hours a week', Levers.impliedHourlyCents('househack', demo).value, Math.round(60000 / (5 * 4.33)));
+  check('the job change is worth a fifth of gross, a month', Levers.monthlyGainCents('careermove', demo).value, Math.round(7200000 * 0.2 / 12));
+  check('...and has no hourly figure, because it costs no hours', Levers.impliedHourlyCents('careermove', demo).status, 'incomplete');
+  const noRent = Demo.build(); noRent.expenses.needs.accommodation.monthlyCents = null;
+  check('a blank rent line makes the house hack unpriced, not zero', Levers.monthlyGainCents('househack', noRent).status, 'incomplete');
+  checkTrue('...naming the line', Levers.monthlyGainCents('househack', noRent).missing.indexOf('accommodationMonthly') > -1);
+  check('no income, no job-change figure', Levers.monthlyGainCents('careermove', Schema.createHousehold()).status, 'incomplete');
+
+  /* No room inlines a lever figure again: the three that offer one read the library. */
+  const adv = fs.readFileSync(path.join(ROOT, 'rooms/adventure.html'), 'utf8');
+  const housing = fs.readFileSync(path.join(ROOT, 'rooms/housing.html'), 'utf8');
+  const career = fs.readFileSync(path.join(ROOT, 'rooms/career-move.html'), 'utf8');
+  checkTrue('the adventure loads the levers and hands them to the library', /'levers'/.test(adv) && adv.indexOf('SLAF.Levers.use(tables.levers)') > -1);
+  checkTrue('...and takes each card\'s assumption from the engine, never its own', adv.indexOf('Adventure.cards(') > -1 && !/assumption\s*:/.test(adv) && adv.indexOf('p.assumption') === -1);
+  checkTrue('...and its drawer prices every lever an hour', adv.indexOf('Levers.impliedHourlyCents') > -1);
+  checkTrue('Housing Decision reads the house hack from the library', /'levers'\]/.test(housing) && housing.indexOf("Levers.get('househack')") > -1);
+  checkTrue('Career Move proposes the offer from the job-change lever', /'levers'\]/.test(career) && career.indexOf("Levers.get('careermove')") > -1 && career.indexOf('propose: function (h, T) { return leverOffer(h, T); }') > -1);
+  checkTrue('no room or engine writes 40%, $500 or 20% of its own for a lever',
+    ![adv, housing, career].some(s => /househack[^\n]*0\.4|hustle[^\n]*50000|careermove[^\n]*0\.2\b/.test(s)));
+  const paths = fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8');
+  checkTrue('data/adventure_paths.json carries no lever figure', !/annualRaiseReal|annualExtraIncomeCents|housingCutShare|raiseKeptShare/.test(paths));
+  checkTrue('no engine reads those keys either', !fs.readdirSync(path.join(ROOT, 'engines')).some(f => /annualRaiseReal|annualExtraIncomeCents|housingCutShare/.test(fs.readFileSync(path.join(ROOT, 'engines', f), 'utf8'))));
+})();
+
+/* ==========================================================================
+   15.1 and 15.10: every number is as-of a date, from a source, at a
+   confidence (D-181). Storage unmoved; the facts live in meta.fields.
+   ========================================================================== */
+
+section('15.1 / 15.10: as-of, source and confidence on every owned number (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const Staleness = require(path.join(ROOT, 'shared/staleness.js'));
+  Money.setDisplayRounding(1);
+  /* The accessors resolve through the field map ownership registered. */
+  Spine.reset();
+  check('a blank field reads null through Schema.get', Schema.get(Spine.getProfile(), 'assets.cashCents'), null);
+  check('...and its meta is unknown with no date', JSON.stringify(Schema.meta(Spine.getProfile(), 'cashSavings')), JSON.stringify({ fieldId: 'cashSavings', asOf: null, source: null, confidence: 'unknown', room: null, entered: false }));
+  Spine.registerRoom('start');
+  Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
+  let h = Spine.getProfile();
+  check('a typed write reads back by DAITE path', Schema.get(h, 'assets.cashCents'), 950000);
+  check('...and by field id', Schema.get(h, 'cashSavings'), 950000);
+  const m = Schema.meta(h, 'assets.cashCents');
+  check('it arrived typed', m.source, 'typed');
+  check('sure', m.confidence, 'sure');
+  check('from the room that wrote it', m.room, 'start');
+  checkTrue('as of now', !!m.asOf && Date.now() - Date.parse(m.asOf) < 5000);
+  check('the field id comes back too', m.fieldId, 'cashSavings');
+  check('the as-of matches the D-056 stamp', m.asOf, Spine.confirmedAt('cashSavings'));
+  /* A tagged write: pasted, roughly, with a statement date. */
+  Spine.tagWrite({ source: 'pasted', confidence: 'roughly', asOf: '2026-08-01T00:00:00Z' });
+  Spine.upsertAsset(Schema.createAsset({ id: 'i', category: 'investment', valueCents: 4800000 }));
+  h = Spine.getProfile();
+  check('a pasted write says pasted', Schema.meta(h, 'investments').source, 'pasted');
+  check('...roughly', Schema.meta(h, 'investments').confidence, 'roughly');
+  check('...as of the statement date', Schema.meta(h, 'investments').asOf, '2026-08-01T00:00:00Z');
+  check('the tag is spent: the next write is typed again', (Spine.upsertDebt(Schema.createDebt({ id: 'd', label: 'Card', balanceCents: 100000, minPaymentCents: 5000, rate: 0.2 })), Schema.meta(Spine.getProfile(), 'totalDebt').source), 'typed');
+  check('an unknown source word falls back to typed', (Spine.tagWrite({ source: 'telepathy', confidence: 'wild' }).source), 'typed');
+  Spine.tagWrite(null);
+  /* Confirm: rough to sure, as of now. */
+  Spine.confirm('investments');
+  h = Spine.getProfile();
+  check('confirm makes it sure', Schema.meta(h, 'investments').confidence, 'sure');
+  checkTrue('...as of now', Date.now() - Date.parse(Schema.meta(h, 'investments').asOf) < 5000);
+  check('...and keeps how it arrived', Schema.meta(h, 'investments').source, 'pasted');
+  /* setFieldMeta: "roughly, for now" without touching the value. */
+  Spine.setFieldMeta('cashSavings', { confidence: 'unsure' });
+  h = Spine.getProfile();
+  check('the value is untouched', Schema.get(h, 'cashSavings'), 950000);
+  check('the confidence moved', Schema.confidenceOf(h, 'cashSavings'), 'unsure');
+  /* Removing the value removes the facts. */
+  Spine.removeById('assets', 'c');
+  check('a removed figure has no facts left', Spine.getProfile().meta.fields.cashSavings, undefined);
+  /* Precision follows the least confident input (15.10). */
+  Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 951234, liquid: true }));
+  h = Spine.getProfile();
+  check('all sure: no rounding', Schema.precisionOf(h, ['cashSavings', 'investments']).roundToCents, 1);
+  Spine.setFieldMeta('cashSavings', { confidence: 'roughly' });
+  const p = Schema.precisionOf(Spine.getProfile(), ['cashSavings', 'investments']);
+  check('one rough input: hundreds', p.roundToCents, 10000);
+  check('...named', p.fieldIds.join(','), 'cashSavings');
+  checkTrue('...and flagged approximate', p.approximate);
+  Spine.setFieldMeta('investments', { confidence: 'unknown' });
+  check('one unknown input: thousands', Schema.precisionOf(Spine.getProfile(), ['cashSavings', 'investments']).roundToCents, 100000);
+  check('a blank input does not count as imprecise', Schema.precisionOf(Spine.getProfile(), ['grossAnnualIncome']).approximate, false);
+  check('roundForConfidence: sure keeps the cent', Schema.roundForConfidence(951234, 'sure'), 951234);
+  check('...roughly rounds to the hundred', Schema.roundForConfidence(951234, 'roughly'), 950000);
+  check('...unknown to the thousand', Schema.roundForConfidence(951234, 'unknown'), 1000000);
+  check('...null stays null', Schema.roundForConfidence(null, 'unknown'), null);
+  /* The money formatter honours a screen-wide rounding. */
+  Money.setDisplayRounding(10000);
+  check('formatCents rounds to the hundred when the screen says so', Money.formatCents(951234), '$9,500');
+  check('...unless the figure opts out', Money.formatCents(951234, { exact: true }), '$9,512');
+  check('...or names its own unit', Money.formatCents(951234, { roundTo: 100000 }), '$10,000');
+  Money.setDisplayRounding(1);
+  check('back to the cent', Money.formatCents(951234), '$9,512');
+  /* Staleness reads the as-of on the number. */
+  Spine.setFieldMeta('cashSavings', { asOf: '2020-01-01T00:00:00Z' });
+  const st = Staleness.describe(Spine.getProfile(), 'cashSavings');
+  check('staleness reads asOf', st.asOf, '2020-01-01T00:00:00Z');
+  checkTrue('...as an age in days', st.days > 2000);
+  check('...and carries the confidence', st.confidence, 'roughly');
+  /* Ownership's description and chip carry the facts. */
+  const d = Ownership.describe('cashSavings', Spine.getProfile(), 'dashboard');
+  check('describe carries the level', d.level, 'roughly');
+  check('...and a glyph', d.glyph, '◐');
+  checkTrue('the chip marks a rough figure', /slaf-owned--roughly/.test(Ownership.chip('cashSavings', Spine.getProfile(), 'dashboard')));
+  checkTrue('...and says the word', /roughly/.test(Ownership.chip('cashSavings', Spine.getProfile(), 'dashboard')));
+  checkTrue('a sure figure carries no mark', !/slaf-owned-conf/.test(Ownership.chip('totalDebt', Spine.getProfile(), 'dashboard')));
+  /* Migration: a household saved before meta.fields existed. */
+  const old = Demo.build();
+  delete old.meta.fields;
+  old.meta.confirmedAt = { cashSavings: '2026-06-01T00:00:00Z' };
+  old.meta.guessed = { cashSavings: true };
+  old.meta.source = { cashSavings: 'start' };
+  Spine.reset();
+  Spine.updateProfile(old);            /* the write stamps everything it changed as typed and sure... */
+  const fresh = Spine.getProfile();
+  checkTrue('a write stamps every changed field', Object.keys(fresh.meta.fields).length > 5);
+  /* ...so simulate the stored-blob case directly. */
+  const blob = Demo.build(); delete blob.meta.fields; blob.meta.confirmedAt = { cashSavings: '2026-06-01T00:00:00Z' }; blob.meta.guessed = { cashSavings: true }; blob.meta.source = { cashSavings: 'start' };
+  const n = Spine.migrateFieldMeta.call(null);
+  checkTrue('migrateFieldMeta on an already-stamped household adds nothing', n === 0);
+  const mig = JSON.parse(JSON.stringify(blob));
+  /* Run the migration the way load() does: through the readers. */
+  const Spine2 = Spine;
+  const beforeCount = Object.keys(mig.meta.fields || {}).length;
+  check('the blob starts with no facts', beforeCount, 0);
+  Spine2.reset();
+  Spine2.importJSON(JSON.stringify(mig));
+  const imported = Spine2.getProfile();
+  check('an imported bare figure says imported', Schema.meta(imported, 'grossAnnualIncome').source, 'imported');
+  check('...roughly, until confirmed', Schema.meta(imported, 'grossAnnualIncome').confidence, 'roughly');
+  check('a field the old stamps knew keeps its date', Schema.meta(imported, 'cashSavings').asOf, '2026-06-01T00:00:00Z');
+  check('...and a guess reads as roughly', Schema.meta(imported, 'cashSavings').confidence, 'roughly');
+  check('...typed, from its room', Schema.meta(imported, 'cashSavings').source + '/' + Schema.meta(imported, 'cashSavings').room, 'typed/start');
+  checkTrue('the migration is stamped once', !!imported.meta.fieldsMigratedAt);
+  /* The vocabulary is fixed. */
+  check('nine sources, suggested then memory (D-205, D-209)', Schema.SOURCES.join(','), 'typed,pasted,imported,screenshot,migrated,block-default,quote,suggested,memory');
+  check('four confidences', Schema.CONFIDENCES.join(','), 'sure,roughly,unsure,unknown');
+  checkTrue('meta.fields is catalogued', !!Schema.FIELDS['meta.fields']);
+  checkTrue('the undo log skips the facts', fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8').indexOf("'meta.fields': true") > -1);
+  /* The room template paints the approximate line. */
+  const room = fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8');
+  checkTrue('the room template rounds to the least confident input', room.indexOf('Schema.precisionOf(h, ids)') > -1 && room.indexOf('Money.setDisplayRounding(p.roundToCents)') > -1);
+  checkTrue('...and names the rough inputs at the top', room.indexOf("'Approximate: '") > -1);
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the theme styles the line and the mark', theme.indexOf('.slaf-approx') > -1 && theme.indexOf('.slaf-owned-conf') > -1);
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   15.2: assumptions declared once, every engine real, nominal at display only
+   (D-181)
+   ========================================================================== */
+section('15.2: assumptions declared once; real by default; nominal at display time (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const Horizon = require(path.join(ROOT, 'shared/horizon.js'));
+  const featuresTable = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/features.json'), 'utf8'));
+  const bands = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/return_bands.json'), 'utf8'));
+  Features.use(featuresTable);
+  Prefs.reset();
+
+  /* The defaults: real, and the nominal 7% is retired. */
+  const D = Schema.ASSUMPTION_DEFAULTS;
+  check('the default real return is the median band', D.returnReal, bands.percentiles.p50);
+  check('expectedReturnRate is an alias of the real return', D.expectedReturnRate, D.returnReal);
+  check('inflation is declared once', D.inflation, 0.03);
+  check('real wage growth is declared once', D.realWageGrowth, 0.01);
+  check('the bands come from one file', D.returnBands, 'return_bands.json');
+  check('the retired nominal rate is a constant, not a default', D.LEGACY_NOMINAL_RETURN, 0.07);
+  checkTrue('...and is not stored', !('LEGACY_NOMINAL_RETURN' in Schema.createHousehold({}).assumptions));
+
+  /* A stored 7% from before is read as "the default", not as an override. */
+  const legacy = Schema.createHousehold({ assumptions: { expectedReturnRate: 0.07 } });
+  check('a stored 7% normalises to the real median', legacy.assumptions.expectedReturnRate, 0.05);
+  check('resolve on a legacy household gives the real median', Schema.resolveAssumptions(legacy).expectedReturnRate, 0.05);
+  const chosen = Schema.createHousehold({ assumptions: { expectedReturnRate: 0.06 } });
+  check('a rate chosen on purpose is kept', Schema.resolveAssumptions(chosen).expectedReturnRate, 0.06);
+  check('a local override wins', Schema.resolveAssumptions(legacy, { expectedReturnRate: 0.04 }).expectedReturnRate, 0.04);
+  check('the loaded table sets the median', Schema.resolveAssumptions(legacy, null, { returnBands: { percentiles: { p25: 0.02, p50: 0.055, p75: 0.08 } } }).expectedReturnRate, 0.055);
+  check('...and the real return with it', Schema.resolveAssumptions(legacy, null, { returnBands: { percentiles: { p25: 0.02, p50: 0.055, p75: 0.08 } } }).returnReal, 0.055);
+  checkTrue('the three are catalogued', !!Schema.FIELDS['assumptions.realWageGrowth'] && !!Schema.FIELDS['assumptions.returnBands'] && !!Schema.FIELDS['assumptions.inflation']);
+
+  /* The demo at 5% real: re-derived above (22 years to FI, rule of 72 = 14.4). */
+  const demo = Demo.build();
+  check('the demo runs at the real median', Schema.resolveAssumptions(demo).expectedReturnRate, 0.05);
+
+  /* Horizon: off by default, converts only when on, never stores. */
+  const h = Schema.createHousehold({ assumptions: { inflation: 0.03 } });
+  check('the switch is off by default', Horizon.on(h), false);
+  check('the factor is 1 when off', Horizon.factor(h, 10), 1);
+  check('display leaves cents alone when off', Horizon.display(h, 123456, 10), 123456);
+  checkTrue('the line says today’s money', Horizon.lineHtml(h).indexOf('today’s money') > -1);
+  Features.set('showNominal', true);
+  check('the switch turns on', Horizon.on(h), true);
+  check('the factor is (1 + inflation) ^ years', Horizon.factor(h, 10), Math.pow(1.03, 10), 1e-12);
+  check('display converts at the factor', Horizon.display(h, 100000, 10), Math.round(100000 * Math.pow(1.03, 10)));
+  check('zero years is unchanged', Horizon.display(h, 100000, 0), 100000);
+  check('a missing figure stays missing', Horizon.display(h, null, 10), null);
+  checkTrue('the line says future dollars', Horizon.lineHtml(h).indexOf('future dollars') > -1);
+  checkTrue('...and carries the toggle', Horizon.lineHtml(h).indexOf('data-horizon-toggle') > -1);
+  Features.set('showNominal', null);
+  check('back to today’s money', Horizon.on(h), false);
+  check('the household is untouched by the switch', Schema.createHousehold(h).assumptions.inflation, 0.03);
+
+  /* Every projection room carries the line once, at the top. */
+  ['adventure', 'fire', 'fire-lab', 'what-if-life', 'decumulation'].forEach(function (id) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms/' + id + '.html'), 'utf8');
+    checkTrue(id + ' loads horizon.js', src.indexOf('shared/horizon.js') > -1);
+    checkTrue(id + ' mounts the line once', (src.match(/Horizon\.mount\(/g) || []).length === 1 || (id === 'decumulation' && /horizon: true/.test(src)));
+    checkTrue(id + ' converts at display time', /Horizon\.display\(/.test(src));
+  });
+  checkTrue('prefs.js loads before features.js wherever a room loads it (the switch reads prefs)', fs.readdirSync(path.join(ROOT, 'rooms')).every(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+    const a = src.indexOf('<script src="../shared/prefs.js">'), b = src.indexOf('<script src="../shared/features.js">');
+    return b === -1 || (a > -1 && a < b);
+  }));
+  const room = fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8');
+  checkTrue('the room template mounts the line for spec.horizon', room.indexOf('spec.horizon') > -1 && room.indexOf('SLAF.Horizon.mount') > -1);
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the theme styles the line', theme.indexOf('.slaf-horizon') > -1);
+
+  /* Settings: the two rates are stepped with buttons and written to the spine. */
+  const settings = fs.readFileSync(path.join(ROOT, 'rooms/settings.html'), 'utf8');
+  checkTrue('Settings has an Assumptions section', settings.indexOf('id="assumptions"') > -1);
+  checkTrue('...that steps inflation and real wage growth', settings.indexOf("'assumptions.inflation'") > -1 && settings.indexOf("'assumptions.realWageGrowth'") > -1);
+  checkTrue('...with buttons, not typing', settings.indexOf('data-step=') > -1 && settings.indexOf('<input') === -1);
+  checkTrue('...and reads the real return from the bands table', settings.indexOf("'returnBands'") > -1);
+  checkTrue('no room writes the two rates but Settings', fs.readdirSync(path.join(ROOT, 'rooms')).filter(function (f) { return f !== 'settings.html'; }).every(function (f) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+    return !/Spine\.set\('assumptions\.(inflation|realWageGrowth)'/.test(src);
+  }));
+  Prefs.reset();
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   15.3: pretax vs after-tax assets (D-181)
+   ========================================================================== */
+section('15.3: orientation, the value after deferred tax, and the two-position control (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const AfterTax = require(path.join(ROOT, 'shared/aftertax.js'));
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const fb = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/federal_brackets_2026.json'), 'utf8'));
+  Features.use(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/features.json'), 'utf8')));
+  Prefs.reset();
+  const T = { federalBrackets: fb };
+
+  /* Orientation is read from the tax character, then the category. */
+  check('four orientations', Schema.ORIENTATIONS.join(','), 'pretax,roth,taxable,hsa');
+  check('pretax reads as pretax', Schema.orientationOf({ taxCharacter: 'pretax' }).orientation, 'pretax');
+  check('a 529 is tax-free out, like a Roth', Schema.orientationOf({ taxCharacter: '529' }).orientation, 'roth');
+  check('an HSA is its own', Schema.orientationOf({ taxCharacter: 'hsa' }).orientation, 'hsa');
+  checkTrue('one total, not split, is read as taxable and flagged', (function () { const o = Schema.orientationOf({ taxCharacter: 'unknown' }); return o.orientation === 'taxable' && o.assumed; })());
+  checkTrue('a retirement account nobody characterised is pre-tax, flagged', (function () { const o = Schema.orientationOf({ category: 'retirement' }); return o.orientation === 'pretax' && o.assumed; })());
+  checkTrue('an investment nobody characterised is taxable, flagged', (function () { const o = Schema.orientationOf({ category: 'investment' }); return o.orientation === 'taxable' && o.assumed; })());
+  check('cash has no orientation', Schema.orientationOf({ category: 'cash', taxCharacter: 'cash' }).orientation, null);
+  check('a fund already given away has none', Schema.orientationOf({ taxCharacter: 'daf' }).orientation, null);
+  check('property has none', Schema.orientationOf({ category: 'real_estate' }).orientation, null);
+
+  /* The value after deferred tax, per holding, by hand. */
+  const rates = { withdrawalRate: 0.22, capitalGainsRate: 0.15 };
+  const pre = Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'pretax' }, {}, rates);
+  check('pretax × (1 − withdrawal rate): 100,000 at 22% keeps 78,000', pre.value, 7800000);
+  check('...and names the bill', pre.deferredTaxCents, 2200000);
+  check('roth × 1', Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'roth' }, {}, rates).value, 10000000);
+  check('hsa × 1', Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'hsa' }, {}, rates).value, 10000000);
+  const tx = Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'taxable', costBasisCents: 4000000 }, {}, rates);
+  check('taxable: the gain (60,000) at 15% is 9,000', tx.deferredTaxCents, 900000);
+  check('...leaving 91,000', tx.value, 9100000);
+  check('...nothing assumed with a basis', tx.assumed.length, 0);
+  const noBasis = Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'taxable' }, {}, rates);
+  check('no basis: 60% of value stands in, so the gain is 40,000 and the bill 6,000', noBasis.deferredTaxCents, 600000);
+  check('...and it says the basis was assumed', noBasis.assumed.join(','), 'basis');
+  check('a loss owes nothing', Schema.afterTaxValue({ valueCents: 10000000, taxCharacter: 'taxable', costBasisCents: 12000000 }, {}, rates).deferredTaxCents, 0);
+  check('cash is worth what it is listed at', Schema.afterTaxValue({ valueCents: 500000, category: 'cash' }, {}, rates).value, 500000);
+  check('no value: incomplete', Schema.afterTaxValue({ taxCharacter: 'pretax' }, {}, rates).status, 'incomplete');
+  check('no rate for a pretax holding: incomplete, naming it', Schema.afterTaxValue({ valueCents: 100, taxCharacter: 'pretax' }, {}, null).missing.join(','), 'withdrawalRate');
+
+  /* The rate is the bracket at projected FI spending, not today's. Demo:
+     3,150 a month is 37,800 a year; less the 16,100 standard deduction is
+     21,700 taxable, in the 12% bracket; gains stacked there are at 0%. */
+  const demo = Demo.build();
+  const wr = Tax.withdrawalRates(demo, T);
+  check('the demo withdraws in the 12% bracket', wr.value, 0.12);
+  check('...on 21,700 of taxable income', wr.taxableIncomeCents, 2170000);
+  check('...with gains at 0% there', wr.capitalGainsRate, 0);
+  check('...nothing assumed: the demo files single', wr.assumed.length, 0);
+  checkTrue('today’s bracket is higher (72,000 gross), so this is not today’s', Tax.ordinaryTax(fb, 7200000, 'single').marginalRate > 0.12);
+  const noFs = Demo.build(); noFs.filingStatus = null;
+  check('no filing status: assumed single, and said', Tax.withdrawalRates(noFs, T).assumed.join(','), 'filingStatus');
+  check('no spending: incomplete', Tax.withdrawalRates(Schema.createHousehold({ filingStatus: 'single' }), T).status, 'incomplete');
+
+  /* The demo's one investment line is uncharacterised: taxable, basis
+     assumed, gains at 0%, so nothing is deferred and the two figures agree. */
+  const nw = Tax.afterTaxNetWorth(demo, T);
+  check('demo after-tax net worth equals the listed 35,900', nw.value, 3590000);
+  check('...with nothing deferred', nw.deferredTaxCents, 0);
+  check('...and the assumptions named', nw.assumed.join(','), 'orientation,basis');
+  /* Mark the line pre-tax: 48,000 × 12% = 5,760 owed later. */
+  const pretaxDemo = Demo.build(); pretaxDemo.assets[1].taxCharacter = 'pretax';
+  const nw2 = Tax.afterTaxNetWorth(pretaxDemo, T);
+  check('as pre-tax, 5,760 is owed later', nw2.deferredTaxCents, 576000);
+  check('...so net worth after tax is 30,140', nw2.value, 3014000);
+  check('...beside the listed 35,900', nw2.listedNetWorthCents, 3590000);
+  check('...nothing assumed now', nw2.assumed.length, 0);
+  check('the FI progress basis: investments after tax are 42,240', Tax.afterTaxInvestmentsCents(pretaxDemo, T).value, 4224000);
+  check('...cash is not in that', Tax.afterTaxInvestmentsCents(pretaxDemo, T).listedCents, 4800000);
+  const Fire = require(path.join(ROOT, 'engines/fire.js'));
+  const progListed = Fire.progressToward(pretaxDemo, T_ALL_FOR_FIRE(), { variantId: 'standard' });
+  const progAfter = Fire.progressToward(pretaxDemo, T_ALL_FOR_FIRE(), { variantId: 'standard', investmentsCents: 4224000, investmentsBasis: 'afterTax' });
+  check('progress as listed is 48,000 / 945,000', progListed.value, 48000 / 945000, 1e-12);
+  check('progress after tax is 42,240 / 945,000', progAfter.value, 42240 / 945000, 1e-12);
+  check('...and says which basis it used', progAfter.investmentsBasis + '/' + progListed.investmentsBasis, 'afterTax/listed');
+  function T_ALL_FOR_FIRE() { return TABLES; }
+
+  /* The view: the switch, the position, the line. */
+  check('the switch is on by default', AfterTax.on(demo), true);
+  check('the default position is after tax', AfterTax.basis(demo), 'afterTax');
+  AfterTax.setBasis('listed');
+  check('the position is a preference', AfterTax.basis(demo), 'listed');
+  checkTrue('the household did not change', JSON.stringify(Demo.build()) === JSON.stringify(demo));
+  AfterTax.setBasis('afterTax');
+  const pk = AfterTax.pick(pretaxDemo, T);
+  check('pick shows the after-tax figure', pk.shown.value, 3014000);
+  checkTrue('the line prints the bill', pk.line.indexOf('$5,760 of this is the tax bill you’ll pay later') === 0);
+  checkTrue('the control has two positions and no input', /data-basis="afterTax"/.test(AfterTax.controlHtml(demo)) && /data-basis="listed"/.test(AfterTax.controlHtml(demo)) && AfterTax.controlHtml(demo).indexOf('<input') === -1);
+  Features.set('afterTaxNetWorth', false);
+  check('switch off: always as listed', AfterTax.basis(demo), 'listed');
+  check('...no control', AfterTax.controlHtml(demo), '');
+  check('...pick shows the listed figure', AfterTax.pick(pretaxDemo, T).shown.value, 3590000);
+  Features.set('afterTaxNetWorth', null);
+  checkTrue('the demo line says what was assumed, in words', AfterTax.pick(demo, T).line.indexOf('Assumed:') > -1 && AfterTax.pick(demo, T).line.indexOf('60%') > -1);
+
+  /* The four rooms carry the control and the line. */
+  [['rooms/statement.html', 'nw-basis'], ['index.html', 'nw-basis'], ['rooms/fire.html', 'nw-basis'], ['rooms/financial-snapshot.html', 'nw-basis']].forEach(function (pair) {
+    const src = fs.readFileSync(path.join(ROOT, pair[0]), 'utf8');
+    checkTrue(pair[0] + ' mounts the two-position control', src.indexOf('AfterTax.mount(') > -1 && src.indexOf('id="' + pair[1] + '"') > -1);
+    checkTrue(pair[0] + ' loads the tax engine and the view', src.indexOf('engines/tax.js') > -1 && src.indexOf('shared/aftertax.js') > -1);
+  });
+  checkTrue('FIRE says which basis the bar uses', fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8').indexOf("id=\"progress-basis\"") > -1);
+  checkTrue('no room stores an orientation', fs.readdirSync(path.join(ROOT, 'rooms')).every(function (f) { return fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8').indexOf('orientation:') === -1; }));
+  Prefs.reset();
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   15.4: income by type (D-181)
+   ========================================================================== */
+section('15.4: income by type, take-home per source, what survives a job loss (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const Hourly = require(path.join(ROOT, 'engines/hourly.js'));
+  const BetweenJobs = require(path.join(ROOT, 'engines/betweenjobs.js'));
+  const Adventure = require(path.join(ROOT, 'engines/adventure.js'));
+  const fb = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/federal_brackets_2026.json'), 'utf8'));
+  const se = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/se_tax_2026.json'), 'utf8'));
+  const T = Object.assign({}, TABLES, { federalBrackets: fb, seTax: se,
+    adventurePaths: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/adventure_paths.json'), 'utf8')), returnBands: require(path.join(ROOT, 'data/return_bands.json')), levers: require(path.join(ROOT, 'data/levers.json')) });
+
+  check('seven types: the six, and equity for the situation switch', Schema.INCOME_TYPES.join(','), 'w2,1099,passive,benefit,pension,socialSecurity,equity');
+  check('an unknown type reads as a job', Schema.createIncomeSource({ type: 'wages' }).type, 'w2');
+  check('a source from before keeps its type', Schema.createIncomeSource({ type: '1099' }).type, '1099');
+  check('survivesJobLoss is null until said', Schema.createIncomeSource({ type: 'w2' }).survivesJobLoss, null);
+  check('a job stops', Schema.survivesJobLoss({ type: 'w2' }), false);
+  check('equity pay stops with the job', Schema.survivesJobLoss({ type: 'equity' }), false);
+  ['1099', 'passive', 'benefit', 'pension', 'socialSecurity'].forEach(function (t) { check(t + ' keeps paying', Schema.survivesJobLoss({ type: t }), true); });
+  check('the person can say otherwise: a job that survives', Schema.survivesJobLoss({ type: 'w2', survivesJobLoss: true }), true);
+  check('...or contract work that stops', Schema.survivesJobLoss({ type: '1099', survivesJobLoss: false }), false);
+  check('passive treatment is ordinary unless qualified', Schema.createIncomeSource({ type: 'passive', passiveTreatment: 'x' }).passiveTreatment, null);
+  checkTrue('the three are catalogued', !!Schema.FIELDS['incomeSource.survivesJobLoss'] && !!Schema.FIELDS['incomeSource.passiveTreatment'] && Schema.FIELDS['incomeSource.type'].values.indexOf('pension') > -1);
+
+  /* The demo has one job: nothing survives. Add rent and a side contract. */
+  const demo = Demo.build();
+  check('the demo: nothing survives a job loss', Schema.survivingGrossAnnualIncomeCents(demo).value, 0);
+  check('...but the answer is a zero, not a blank', Schema.survivingGrossAnnualIncomeCents(demo).status, 'ok');
+  check('no income at all: incomplete', Schema.survivingGrossAnnualIncomeCents(Schema.createHousehold({})).status, 'incomplete');
+  const mixed = Demo.build();
+  const you = Schema.primaryPerson(mixed);
+  you.incomeSources.push(Schema.createIncomeSource({ personId: you.id, source: 'Rent', type: 'passive', grossAnnualIncomeCents: 1200000 }));
+  you.incomeSources.push(Schema.createIncomeSource({ personId: you.id, source: 'Side contract', type: '1099', grossAnnualIncomeCents: 600000, hoursPerWeek: 5 }));
+  const surv = Schema.survivingGrossAnnualIncomeCents(mixed);
+  check('rent and the contract survive: 18,000 of 90,000', surv.value, 1800000);
+  check('...a fifth', surv.share, 0.2, 1e-12);
+
+  /* Take-home per source, by hand. Pool: 72,000 wages + 12,000 rent +
+     (6,000 − half the SE tax). SE: 6,000 × 92.35% × 15.3% = 848, half 424,
+     so 5,576 ordinary. Pool 89,576; less 16,100 is 73,476 taxable:
+     1,240 + 4,560 + 22% × 23,076 = 10,876.72. Shared by what each put in;
+     FICA 7.65% on the wages. */
+  const by = Tax.takeHomeBySource(mixed, T);
+  check('three rows', by.rows.length, 3);
+  const job = by.rows[0], rent = by.rows[1], side = by.rows[2];
+  check('the job: 10,876.72 × 72,000/89,576 + 5,508 FICA, about 14,250.57', job.taxCents, Math.round(1087672 * 7200000 / 8957600 + 550800), 100);
+  check('...method says payroll tax and withholding', job.method, 'payroll tax and withholding');
+  check('...and it stops with the job', job.survivesJobLoss, false);
+  check('rent: 10,876.72 × 12,000/89,576, no payroll tax, about 1,457', rent.taxCents, Math.round(1087672 * 1200000 / 8957600), 100);
+  check('...and keeps paying', rent.survivesJobLoss, true);
+  check('the contract: its share of ordinary tax plus about 848 of SE tax', side.taxCents, Math.round(1087672 * 557600 / 8957600) + 84800, 100);
+  check('...with half the SE tax deducted (423.89)', side.halfSeCents, 42389);
+  check('the parts sum to the whole', by.rows.reduce(function (a, r) { return a + r.taxCents; }, 0), by.taxCents);
+  check('take-home is gross less tax', by.value, by.grossCents - by.taxCents);
+  check('nothing assumed: the demo files single', by.assumed.length, 0);
+  const ss = Schema.createHousehold({ filingStatus: 'single', people: [Schema.createPerson({ incomeSources: [Schema.createIncomeSource({ type: 'socialSecurity', grossAnnualIncomeCents: 2400000 }), Schema.createIncomeSource({ type: 'pension', grossAnnualIncomeCents: 3000000 })] })] });
+  const ssBy = Tax.takeHomeBySource(ss, T);
+  check('Social Security: 85% of it is in the pool', ssBy.rows[0].ordinaryCents, 2040000);
+  check('...and says the share was assumed', ssBy.assumed.join(','), 'socialSecurityShare');
+  check('a pension: ordinary, no payroll tax', ssBy.rows[1].payrollCents + ssBy.rows[1].seCents, 0);
+  const q = Schema.createHousehold({ filingStatus: 'single', people: [Schema.createPerson({ incomeSources: [Schema.createIncomeSource({ type: 'w2', grossAnnualIncomeCents: 7200000 }), Schema.createIncomeSource({ type: 'passive', passiveTreatment: 'qualified', grossAnnualIncomeCents: 1000000 })] })] });
+  const qBy = Tax.takeHomeBySource(q, T);
+  check('qualified passive income stacks as gains: 15% on 10,000 above 55,900 taxable', qBy.rows[1].taxCents, 150000);
+  check('no filing status: assumed single and said', Tax.takeHomeBySource(Object.assign({}, mixed, { filingStatus: null }), T).assumed.join(','), 'filingStatus');
+  check('no income: incomplete', Tax.takeHomeBySource(Schema.createHousehold({}), T).status, 'incomplete');
+
+  /* Job-loss shocks zero only what does not survive. */
+  const bj = BetweenJobs.otherIncome(mixed, T);
+  checkTrue('Between Jobs keeps your rent and contract as other income', bj.cents > 0 && bj.basis === 'takeHome' && bj.grossAnnualCents === 1800000, JSON.stringify(bj));
+  check('...and nothing for the demo, whose one job stops', BetweenJobs.otherIncome(demo, T).cents, 0);
+  const baseMixed = Adventure.baseline(mixed, T), baseDemo = Adventure.baseline(demo, T);
+  check('the Long Way Round baseline carries the surviving take-home: a fifth', baseMixed.value.survivingAnnualIncomeCents, Math.round(baseMixed.value.annualIncomeCents * 0.2));
+  check('...zero for the demo', baseDemo.value.survivingAnnualIncomeCents, 0);
+  const walkMixed = Adventure.run(mixed, T, { pathId: 'steady', shockIds: ['jobloss'] });
+  const walkDemo = Adventure.run(demo, T, { pathId: 'steady', shockIds: ['jobloss'] });
+  const lossYear = walkMixed.value.rows.filter(function (r) { return r.lostMonths; })[0];
+  checkTrue('the job-loss year is marked', !!lossYear, JSON.stringify(walkMixed.value.rows.map(function (r) { return r.lostMonths; })));
+  checkTrue('in the job-loss year the mixed household keeps a larger share of its pay than the demo', Money.isOk(walkMixed) && Money.isOk(walkDemo) && lossYear && walkMixed.value.rows[lossYear.year - 1].incomeCents / baseMixed.value.annualIncomeCents > walkDemo.value.rows[lossYear.year - 1].incomeCents / baseDemo.value.annualIncomeCents, JSON.stringify([walkMixed.status, walkDemo.status]));
+
+  /* Real Hourly Wage: a line per source once there are two with hours. */
+  const one = Hourly.realHourlyWage(demo, T, {});
+  check('one source: no per-source lines', (one.perSource || []).length, 0);
+  Schema.primaryPerson(mixed).work = Object.assign({}, Schema.workProfile(Schema.primaryPerson(mixed)), { contractedHoursPerWeek: 40 });
+  const many = Hourly.realHourlyWage(mixed, T, {});
+  check('three sources: three lines', (many.perSource || []).length, 3);
+  check('the contract: 6,000 over 5 h × the weeks', many.perSource && many.perSource[2].nominalHourlyCents, Math.round(600000 / (5 * many.weeksPerYear)));
+  check('rent has no hours, so no rate', many.perSource && many.perSource[1].nominalHourlyCents, null);
+  check('the main job takes the paid hours from the work profile: 72,000 over 40 h', many.perSource && many.perSource[0].nominalHourlyCents, Math.round(7200000 / (40 * many.weeksPerYear)));
+
+  /* The rooms. */
+  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('Start Here asks the kind of pay with chips, not typing', start.indexOf("choices('payType'") > -1 && start.indexOf("choices('paySurvives'") > -1);
+  checkTrue('...and writes type and survivesJobLoss through the spine', /payType: function \(v\) \{ writeSource\(INCOME_ID, \{ type: v \}\)/.test(start));
+  const income = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
+  checkTrue('the Income room shows pay source by source', income.indexOf('takeHomeBySource') > -1 && income.indexOf('id="sources"') > -1);
+  const rhw = fs.readFileSync(path.join(ROOT, 'rooms/real-hourly-wage.html'), 'utf8');
+  checkTrue('Real Hourly Wage paints a line per source', rhw.indexOf('perSource') > -1 && rhw.indexOf('id="per-source"') > -1);
+  const runway = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
+  checkTrue('Runway defaults other income to what survives', runway.indexOf('survivingGrossAnnualIncomeCents') > -1);
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   15.5: recurring, annual and one-off lines (D-181)
+   ========================================================================== */
+section('15.5: cadence on every line, the yearly lines, the calendar and the sinking fund (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const Lenses = require(path.join(ROOT, 'shared/lenses.js'));
+  const Cal = require(path.join(ROOT, 'engines/calendar.js'));
+  Features.use(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/features.json'), 'utf8')));
+  Prefs.reset();
+
+  check('three cadences', Schema.CADENCES.join(','), 'monthly,annual,oneoff');
+  check('a monthly bucket line is monthly', Schema.cadenceOf({ period: 'monthly' }), 'monthly');
+  check('a dated one-off is oneoff', Schema.cadenceOf(Schema.createExpenseEntry({ period: 'once', amountCents: 100 })), 'oneoff');
+  check('a yearly line is annual', Schema.cadenceOf(Schema.createAnnualLine({ amountCents: 100 })), 'annual');
+  check('a one-off income entry is oneoff', Schema.cadenceOf(Schema.createIncomeEntry({ frequency: 'once', amountCents: 100 })), 'oneoff');
+  check('a pay source is monthly', Schema.cadenceOf(Schema.createIncomeSource({ frequency: 'fortnightly' })), 'monthly');
+  const line = Schema.createAnnualLine({ label: 'Car insurance', bucket: 'transportation', amountCents: 120000, monthDue: 3 });
+  check('a yearly line keeps its bucket and month', line.bucket + '/' + line.monthDue + '/' + line.cadence, 'transportation/3/annual');
+  check('an unknown bucket reads as everything else', Schema.createAnnualLine({ amountCents: 1, bucket: 'pets' }).bucket, 'wants');
+  check('a month out of range reads as spread only', Schema.createAnnualLine({ amountCents: 1, monthDue: 14 }).monthDue, null);
+  check('the store is on expenses.annual, empty by default', Schema.createHousehold({}).expenses.annual.length, 0);
+  checkTrue('the lines are catalogued', !!Schema.FIELDS['expenses.annual[].amountCents'] && !!Schema.FIELDS['expenses.annual[].monthDue'] && !!Schema.FIELDS['expenses.entries[].cadence']);
+
+  /* The demo plus two yearly lines: a twelfth joins each bucket. */
+  const h = Demo.build();
+  h.expenses.annual = [line, Schema.createAnnualLine({ label: 'Gifts', bucket: 'wants', amountCents: 60000, monthDue: 12 })];
+  const f = Schema.fat(h);
+  check('getting around: 220 typed + 100 a month of insurance', f.transportation.value, 32000);
+  check('...and says which part is yearly', f.transportation.annualMonthlyCents, 10000);
+  check('everything else: 720 + 50 of gifts', f.wants.value, 77000);
+  check('the month: 3,150 + 150', f.totalCents.value, 330000);
+  check('monthlyExpensesCents carries it everywhere', Schema.monthlyExpensesCents(h).value, 330000);
+  const only = Schema.createHousehold({ expenses: { annual: [{ label: 'Registration', bucket: 'transportation', amountCents: 24000 }] } });
+  check('a bucket with only a yearly line is its twelfth', Schema.fat(only).transportation.value, 2000);
+  check('...source annual', Schema.fat(only).transportation.source, 'annual');
+  check('a line with no amount does not count', Schema.annualLines(Schema.createHousehold({ expenses: { annual: [{ label: 'x' }] } })).length, 0);
+  Features.set('annualLines', false);
+  check('switch off: the lines count nowhere', Schema.fat(h).totalCents.value, 315000);
+  check('...and say so', Schema.annualMonthlyCents(h).on, false);
+  Features.set('annualLines', null);
+
+  /* The calendar: drawn on the 1st of its month, and the twelfth leaves the spread. */
+  const T = Object.assign({}, TABLES, { calendarConventions: require(path.join(ROOT, 'data/calendar_conventions.json')), expenseCategories: require(path.join(ROOT, 'data/expense_categories.json')) });
+  const march = Cal.month(Object.assign({}, h, { calendar: { cadence: 'monthly', nextPaydayDay: 15 } }), T, { now: '2026-02-20' });
+  checkTrue('the window finds the March insurance', Money.isOk(march) && march.annualHits.length === 1 && march.annualHits[0].date === '2026-03-01', Money.isOk(march) ? JSON.stringify(march.annualHits) : march.reason);
+  check('...for the whole year of it', Money.isOk(march) && march.annualHits[0].cents, 120000);
+  check('...and the month spread is the month less the yearly twelfth', Money.isOk(march) && march.spendCents - march.annualMonthlyCents - march.listedCents, Money.isOk(march) && march.restCents);
+  const day = Money.isOk(march) ? march.days.filter(function (d) { return d.date === '2026-03-01'; })[0] : null;
+  check('the 1st of March carries it as a bill', day && day.billsCents, 120000);
+  const weeks = Cal.weeks(march);
+  const cell = weeks.map(function (r) { return r.filter(function (c) { return c && c.date === '2026-03-01'; })[0]; }).filter(Boolean)[0];
+  checkTrue('...drawn as a yearly mark', cell && cell.bills.some(function (b) { return b.kind === 'annual' && /Car insurance/.test(b.label); }));
+  const quiet = Cal.month(Object.assign({}, h, { calendar: { cadence: 'monthly', nextPaydayDay: 15 } }), T, { now: '2026-05-05' });
+  check('a window with no yearly month has no hit', Money.isOk(quiet) && quiet.annualHits.length, 0);
+
+  /* The lens. */
+  const lens = Lenses.get('sinkingfund');
+  checkTrue('the sinking fund is a budgeting lens', lens && lens.domain === 'budgeting');
+  const m = Lenses.measure('sinkingfund', h, T);
+  check('150 a month set aside', m.value, 15000);
+  checkTrue('...with the verdict in plain words', /Set aside \$150 a month so nothing surprises you: 2 yearly costs, \$1,800 a year\./.test(Lenses.verdictFor ? Lenses.verdictFor(lens, m).text : Lenses.render('sinkingfund', h, T)), Lenses.render('sinkingfund', h, T).slice(0, 200));
+  check('no yearly lines: incomplete, saying where to add one', Lenses.measure('sinkingfund', Demo.build(), T).status, 'incomplete');
+
+  /* The rooms. */
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  checkTrue('Expenses has the fold, built once, with bucket chips', cf.indexOf('id="annual-fold"') > -1 && cf.indexOf('data-choices="y-bucket"') > -1 && /LIVE-FORM: built once\. -->\n    <details class="drawer" id="annual-fold"/.test(cf));
+  checkTrue('...writing through the spine', cf.indexOf('Spine.upsertAnnualLine(') > -1 && cf.indexOf('Spine.removeAnnualLine(') > -1);
+  checkTrue('...and hides behind the switch', cf.indexOf('Schema.annualLinesOn(h)') > -1);
+  const cal = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
+  checkTrue('the calendar draws yearly marks', cal.indexOf('is-annual') > -1);
+  checkTrue('the spine exports the two writers', typeof Spine.upsertAnnualLine === 'function' && typeof Spine.removeAnnualLine === 'function');
+  Prefs.reset();
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   15.6: the state table (D-181)
+   ========================================================================== */
+section('15.6: one sourced state table, read by tax, housing, kids, the car and the blocks (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const states = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/states.json'), 'utf8'));
+  const cols = ['incomeTax', 'propertyTaxEffectiveRate', 'childcareInfantCenterMonthlyCents', 'autoInsuranceFullCoverageAnnualCents', 'costOfLivingIndex'];
+  check('fifty states, DC and one row for outside the US', states.states.length, 52);
+  checkTrue('the five columns the prompt names, each with a source and an as-of', cols.every(c => states.columns[c] && /^https?:/.test(states.columns[c].source) && /^\d{4}-\d{2}-\d{2}$/.test(states.columns[c].asOf)));
+  checkTrue('every state cell carries a value, a source and an as-of', states.states.filter(r => r.code !== 'OTHER').every(r => cols.every(c => r[c] && r[c].value !== undefined && r[c].source && r[c].asOf)));
+  checkTrue('income tax type is none, flat or brackets, pointing at the one brackets file', states.states.filter(r => r.code !== 'OTHER').every(r => ['none', 'flat', 'brackets'].indexOf(r.incomeTax.value.type) > -1 && r.incomeTax.value.bracketsFile === 'state_brackets_2026.json'));
+  checkTrue('a recalled cell says verify', states.states.filter(r => r.code !== 'OTHER').every(r => cols.every(c => r[c].confidence !== 'recalled' || r[c].verify === true)));
+  checkTrue('a childcare cell older than eighteen months is marked stale', states.states.filter(r => r.code !== 'OTHER').every(r => r.childcareInfantCenterMonthlyCents.stale === true));
+  const T = { states: states };
+  const nc = Schema.stateCell(T, 'NC', 'propertyTaxEffectiveRate');
+  check('stateCell reads a cell by code and column', nc && nc.value, 0.0063);
+  check('...with its as-of', nc && nc.asOf, '2025-08-01');
+  check('...and the row\'s name', nc && nc.name, 'North Carolina');
+  check('lower case works', Schema.stateCell(T, 'nc', 'costOfLivingIndex').value, 96);
+  check('outside the US: no cell', Schema.stateCell(T, 'OTHER', 'costOfLivingIndex'), null);
+  check('no state: no cell', Schema.stateCell(T, null, 'costOfLivingIndex'), null);
+  check('no table: no cell', Schema.stateCell({}, 'NC', 'costOfLivingIndex'), null);
+  const view = Schema.statesByCode(T);
+  check('the code-keyed view flattens cells to values', view.NC.propertyTaxEffectiveRate, 0.0063);
+  check('...and carries the index base', view.national.costOfLivingIndex, 100);
+  checkTrue('the childcare column agrees with the childcare table it came from', (function () { const c = require(path.join(ROOT, 'data/childcare_by_state.json')); return Object.keys(c.states).every(code => Schema.stateCell(T, code, 'childcareInfantCenterMonthlyCents').value === c.states[code].monthlyCents); })());
+
+  /* Readers. */
+  const Housing = require(path.join(ROOT, 'engines/housing.js'));
+  const HT = Object.assign({}, TABLES, { housingConventions: require(path.join(ROOT, 'data/housing_conventions.json')), priceToRent: require(path.join(ROOT, 'data/price_to_rent.json')), mortgageRates: require(path.join(ROOT, 'data/mortgage_rates.json')), states: states });
+  const plan = { priceCents: 40000000, downPct: 0.2, rate: 0.065, rentMonthlyCents: 150000 };
+  const inNC = Housing.compare(Object.assign({}, Demo.build(), { housing: plan }), HT);
+  check('housing in NC: property tax at the state\'s 0.63%', Money.isOk(inNC) && inNC.propertyTaxRate, 0.0063);
+  check('...a twelfth of it a month on a $400,000 place', Money.isOk(inNC) && inNC.taxCents, Math.round(40000000 * 0.0063 / 12));
+  check('...and says it is the state figure', Money.isOk(inNC) && inNC.propertyTaxSource + '/' + inNC.propertyTaxState, 'state/NC');
+  const noState = Housing.compare(Object.assign({}, Demo.build(), { state: null, housing: plan }), HT);
+  check('no state: the national convention, and says so', Money.isOk(noState) && noState.propertyTaxSource, 'national');
+  check('...at the convention\'s rate', Money.isOk(noState) && noState.propertyTaxRate, HT.housingConventions.propertyTaxRate);
+  const Kids = require(path.join(ROOT, 'engines/kids.js'));
+  const care = require(path.join(ROOT, 'data/childcare_by_state.json'));
+  check('kids: childcare in NC from the state table', Kids.childcareFor(care, 'NC', states).cents, 100000);
+  check('...marked state', Kids.childcareFor(care, 'NC', states).source, 'state');
+  check('...with no state table, the old path still answers', Kids.childcareFor(care, 'NC').cents, 100000);
+  check('...outside the US: the national figure stands in', Kids.childcareFor(care, 'OTHER', states).source, 'national');
+  const Blocks = require(path.join(ROOT, 'shared/blocks.js'));
+  const geo = Blocks.build('geo', { state: 'TX', remote: true, when: '2027-09' }, Demo.build()).value;
+  check('the move block reads the index from the state table: TX 93 over NC 96', geo.lines[1].delta, Math.round((93 / 96 - 1) * 10000) / 10000);
+  const home = Blocks.build('home', { price: 40000000, down: 8000000, when: '2028-04', state: 'IL' }, Demo.build()).value;
+  check('the home block reads Illinois\'s 1.95% from the state table', home.lines.filter(l => l.id === 'propertyTax')[0].delta, Math.round(40000000 * 0.0195 / 12));
+  check('...marked state', home.lines.filter(l => l.id === 'propertyTax')[0].source, 'state');
+  checkTrue('neither block keeps a private copy of a state number', !('colIndexByState' in require(path.join(ROOT, 'data/blocks/geo.json'))) && !('propertyTaxByState' in require(path.join(ROOT, 'data/blocks/home.json'))));
+
+  /* ZIP: optional, five digits, Start Here's. */
+  check('a ZIP is kept when it is five digits', Schema.createHousehold({ zip: '27601' }).zip, '27601');
+  check('...and dropped when it is not', Schema.createHousehold({ zip: '2760' }).zip, null);
+  check('...null by default', Schema.createHousehold({}).zip, null);
+  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('Start Here asks the ZIP in Fine-tune, optional', start.indexOf('data-ctl="zip"') > -1 && start.indexOf('ZIP, if you like') > -1);
+  checkTrue('...and writes it through the spine', /zip: function \(v\) \{[^}]*Spine\.set\('zip'/.test(start));
+  checkTrue('the state is asked in the first card, beside the birth date', /select\('state', 'State'/.test(start));
+  const housingRoom = fs.readFileSync(path.join(ROOT, 'rooms/housing.html'), 'utf8');
+  checkTrue('Housing names the state\'s rate and its source', housingRoom.indexOf("Schema.stateCell(T, h.state, 'propertyTaxEffectiveRate')") > -1);
+  const carRoom = fs.readFileSync(path.join(ROOT, 'rooms/car.html'), 'utf8');
+  checkTrue('What A Car Costs names the state\'s insurance average', carRoom.indexOf("'autoInsuranceFullCoverageAnnualCents'") > -1);
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   15.7: a household of two, natively (D-181)
+   ========================================================================== */
+section('15.7: two people, one record each; the Partner room edits the second (D-181)');
+(function () {
+  const Spine = SpineMain;
+  /* name and birthYear are views of label and dob. */
+  check('name is the label', Schema.createPerson({ name: 'Sam' }).label, 'Sam');
+  check('a label wins over a name', Schema.createPerson({ label: 'Sam', name: 'Samuel' }).label, 'Sam');
+  check('birthYear reads off dob', Schema.birthYearOf({ dob: '1993-04-12' }), 1993);
+  check('...null with no date', Schema.birthYearOf({ dob: null }), null);
+  check('only a year given: dated 1 July of it', Schema.createPerson({ birthYear: 1993 }).dob, '1993-07-01');
+  check('a date given wins over a year', Schema.createPerson({ birthYear: 1990, dob: '1993-04-12' }).dob, '1993-04-12');
+  check('personName falls back', Schema.personName({ label: '  ' }, 'You'), 'You');
+  /* filing aliases */
+  check('mfj is stored as married_joint', Schema.createHousehold({ filingStatus: 'mfj' }).filingStatus, 'married_joint');
+  check('hoh is stored as head_of_household', Schema.createHousehold({ filingStatus: 'hoh' }).filingStatus, 'head_of_household');
+  check('mfs is stored as married_separate', Schema.createHousehold({ filingStatus: 'mfs' }).filingStatus, 'married_separate');
+  check('the stored value passes through', Schema.createHousehold({ filingStatus: 'single' }).filingStatus, 'single');
+  check('nothing stays nothing', Schema.createHousehold({}).filingStatus, null);
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const fb = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/federal_brackets_2026.json'), 'utf8'));
+  check('the tax engine reads the stored value: a joint return keys the joint ladder', Tax.ordinaryTax(fb, 10000000, Schema.createHousehold({ filingStatus: 'mfj' }).filingStatus).deductionCents, fb.standardDeduction.married_joint * 100);
+  /* owner: personId | joint */
+  check('an asset with one owner id is that person\'s', Schema.ownerOf({ ownerIds: ['p1'] }), 'p1');
+  check('...with none, joint', Schema.ownerOf({ ownerIds: [] }), 'joint');
+  check('...with two, joint', Schema.ownerOf({ ownerIds: ['p1', 'p2'] }), 'joint');
+  check('owner: personId is accepted on the way in', Schema.createAsset({ owner: 'p1' }).ownerIds.join(','), 'p1');
+  check('owner: joint is accepted on the way in', Schema.createDebt({ owner: 'joint' }).ownerIds.length, 0);
+  check('ownerIds still wins when given', Schema.createAsset({ owner: 'p1', ownerIds: ['p2'] }).ownerIds.join(','), 'p2');
+  /* one or two */
+  const one = Demo.build();
+  check('the demo is one adult', Schema.householdOfTwo(one), false);
+  check('...so no tag beside a figure', Schema.personTag(one, Schema.primaryPerson(one)), '');
+  const two = Demo.build();
+  two.people.push(Schema.createPerson({ label: 'Sam', role: 'adult', birthYear: 1993 }));
+  check('two adults', Schema.householdOfTwo(two), true);
+  check('...the first is tagged with their name', Schema.personTag(two, Schema.primaryPerson(two)), 'Robin Sparks');
+  check('...the second with theirs', Schema.personTag(two, two.people[1]), 'Sam');
+  check('...by id too', Schema.personTag(two, two.people[1].id), 'Sam');
+  check('...an unnamed second reads as the other of you', Schema.personTag(Object.assign({}, two, { people: [two.people[0], Schema.createPerson({ role: 'adult' })] }), 'x'), '');
+  check('a child is not a second adult', Schema.householdOfTwo(Object.assign({}, one, { people: one.people.concat([Schema.createPerson({ role: 'child' })]) })), false);
+  /* the Partner room is the editor of people[1] */
+  const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+  check('partnerName is owned by Partner', Ownership.field('partnerName').owner, 'partner');
+  check('partnerDob is owned by Partner', Ownership.field('partnerDob').owner, 'partner');
+  check('...and reads people[1]', Ownership.field('partnerName').read(two).value + '/' + Ownership.field('partnerDob').read(two).value, 'Sam/1993');
+  check('...not applicable with one adult', Ownership.field('partnerName').applies(one), false);
+  const partnerRoom = fs.readFileSync(path.join(ROOT, 'rooms/partner.html'), 'utf8');
+  checkTrue('the Partner room has a name box (text, not a number) and a birth-year box', /ctl: 'partnerName', label: 'What to call them', kind: 'text'/.test(partnerRoom) && /ctl: 'partnerBirthYear'/.test(partnerRoom));
+  checkTrue('...writing the person record, not a room of their own', /Spine\.upsertPerson\(\{ id: p\.id, label:/.test(partnerRoom) && /Spine\.upsertPerson\(\{ id: p\.id, dob:/.test(partnerRoom) && partnerRoom.indexOf("Spine.set('partner.name") === -1);
+  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('Start Here no longer names the second adult; it points at Partner', start.indexOf('data-ctl="partnerLabel"') === -1 && /partner\.html#inputs/.test(start));
+  checkTrue('...but still asks their pay and working situation', start.indexOf("moneyInput('partnerPay'") > -1 && start.indexOf("select('partnerStatus'") > -1);
+  const room = fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8');
+  checkTrue('the room template has a text kind', room.indexOf("if (spec.kind === 'text') return t;") > -1);
+  const income = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
+  checkTrue('the Income room tags each source with whose it is', income.indexOf('Schema.personTag(') > -1);
+  /* nothing was stored twice */
+  checkTrue('no household.partner.name or birthYear store exists', !/partner\.(name|birthYear)/.test(fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8')));
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   15.8 — five piles, one runway function (D-181)
+   ========================================================================== */
+section('15.8: every asset in one of five piles; one runway draws them in order (D-181)');
+(function () {
+  const T = TABLES;
+  const rules = T.accessRules;
+  /* -- The pile is read, not stored twice ------------------------------- */
+  check('the five piles', Schema.TIERS.join(','), 'cash,taxable,retirement,property,other');
+  check('the default draw order stops before property', Schema.DRAW_ORDER_DEFAULT.join(','), 'cash,taxable,retirement');
+  check('a cash account is cash', Schema.tierOf(Schema.createAsset({ category: 'cash', taxCharacter: 'cash' })).tier, 'cash');
+  check('pre-tax money is retirement', Schema.tierOf(Schema.createAsset({ category: 'investment', taxCharacter: 'pretax' })).tier, 'retirement');
+  check('a Roth is retirement', Schema.tierOf({ taxCharacter: 'roth' }).tier, 'retirement');
+  check('an HSA is retirement', Schema.tierOf({ taxCharacter: 'hsa' }).tier, 'retirement');
+  check('a lump entered as one total is retirement money until split', Schema.tierOf({ category: 'investment', taxCharacter: 'unknown' }).tier, 'retirement');
+  check('a brokerage account is taxable', Schema.tierOf({ taxCharacter: 'taxable' }).tier, 'taxable');
+  check('a 529 and a donor fund are other: not yours to spend', Schema.tierOf({ taxCharacter: '529' }).tier + ',' + Schema.tierOf({ taxCharacter: 'daf' }).tier, 'other,other');
+  check('a business is other', Schema.tierOf({ category: 'other', taxCharacter: 'business' }).tier, 'other');
+  check('with no character the category decides: investment is taxable', Schema.tierOf({ category: 'investment' }).tier, 'taxable');
+  check('...retirement is retirement', Schema.tierOf({ category: 'retirement' }).tier, 'retirement');
+  check('...real estate is property', Schema.tierOf({ category: 'real_estate' }).tier, 'property');
+  check('...a vehicle is other', Schema.tierOf({ category: 'vehicle' }).tier, 'other');
+  check('an other thing flagged liquid draws with the taxable pile', Schema.tierOf({ category: 'other', liquid: true }).tier, 'taxable');
+  checkTrue('...and says the flag decided', Schema.tierOf({ category: 'other', liquid: true }).from === 'liquid');
+  check('a stored pile wins', Schema.tierOf({ category: 'real_estate', tier: 'cash' }).tier, 'cash');
+  checkTrue('...and is not derived', Schema.tierOf({ category: 'real_estate', tier: 'cash' }).derived === false);
+  check('a nonsense stored pile is not stored', Schema.createAsset({ tier: 'gold' }).tier, null);
+  check('createAsset keeps a real one', Schema.createAsset({ tier: 'property' }).tier, 'property');
+  checkTrue('the field is declared', !!Schema.FIELDS['asset.tier'] && Schema.FIELDS['asset.tier'].class === 'raw');
+
+  /* -- The draw: tax and penalty at each step ---------------------------- */
+  const rates = { withdrawalRate: 0.12, capitalGainsRate: 0.15 };
+  const cashDraw = Schema.drawOf({ valueCents: 100000 }, 'cash', { rates: rates });
+  check('cash draws whole', cashDraw.netCents, 100000);
+  const taxableDraw = Schema.drawOf({ valueCents: 100000, costBasisCents: 60000 }, 'taxable', { rates: rates });
+  check('taxable: the gains tax on the gain over the basis: (1,000 − 600) × 15% = 60', taxableDraw.taxCents, 6000);
+  check('...net 940', taxableDraw.netCents, 94000);
+  const noBasis = Schema.drawOf({ valueCents: 100000 }, 'taxable', { rates: rates });
+  check('no basis: 60% of the value stands in, and it says so', noBasis.taxCents, 6000);
+  checkTrue('...flagged', noBasis.assumed.indexOf('basis') > -1);
+  check('no rates: before tax, net is gross', Schema.drawOf({ valueCents: 100000 }, 'taxable', {}).netCents, 100000);
+  const pre = Schema.drawOf({ valueCents: 100000, taxCharacter: 'pretax' }, 'retirement', { rates: rates, rules: rules, age: 40 });
+  check('pre-tax at 40: 12% tax', pre.taxCents, 12000);
+  check('...and the 10% early penalty', pre.penaltyCents, 10000);
+  check('...net 780', pre.netCents, 78000);
+  checkTrue('...gated, at 59.5', pre.gated && pre.accessAge === 59.5);
+  const preOld = Schema.drawOf({ valueCents: 100000, taxCharacter: 'pretax' }, 'retirement', { rates: rates, rules: rules, age: 60 });
+  check('pre-tax at 60: tax, no penalty', preOld.penaltyCents, 0);
+  check('...net 880', preOld.netCents, 88000);
+  const roth = Schema.drawOf({ valueCents: 120000, taxCharacter: 'roth', costBasisCents: 80000 }, 'retirement', { rates: rates, rules: rules, age: 40 });
+  check('Roth at 40: the basis comes out free', roth.basisFreeCents, 80000);
+  check('...the earnings pay 12% tax: 400 × 12% = 48', roth.taxCents, 4800);
+  check('...and the 10% penalty: 40', roth.penaltyCents, 4000);
+  check('...net 1,112', roth.netCents, 111200);
+  const rothOld = Schema.drawOf({ valueCents: 120000, taxCharacter: 'roth', costBasisCents: 80000 }, 'retirement', { rates: rates, rules: rules, age: 60 });
+  check('Roth at 60: qualified, nothing owed', rothOld.netCents, 120000);
+  const hsa = Schema.drawOf({ valueCents: 100000, taxCharacter: 'hsa' }, 'retirement', { rates: rates, rules: rules, age: 40 });
+  check('HSA at 40: 20% penalty on non-medical use', hsa.penaltyCents, 20000);
+  checkTrue('...gated at 65', hsa.accessAge === 65);
+  const noAge = Schema.drawOf({ valueCents: 100000, taxCharacter: 'pretax' }, 'retirement', { rates: rates, rules: rules, age: null });
+  checkTrue('no age: the gate is assumed shut and it says so', noAge.gated && noAge.assumed.indexOf('age') > -1);
+  const noRules = Schema.drawOf({ valueCents: 100000, taxCharacter: 'pretax' }, 'retirement', { rates: rates, age: 40 });
+  check('no access table: the statute default stands in', noRules.accessAge, 59.5);
+  check('an override wins without the table', Schema.drawOf({ valueCents: 100000, taxCharacter: 'pretax', accessAgeOverride: 55 }, 'retirement', { rates: rates, age: 56 }).penaltyCents, 0);
+  check('property draws nothing', Schema.drawOf({ valueCents: 100000 }, 'property', { rates: rates }).netCents, 0);
+
+  /* -- The one runway, on the rich fixture ------------------------------- */
+  function rich() {
+    const h = Demo.build();
+    h.assets = [
+      Schema.createAsset({ id: 'cash', category: 'cash', valueCents: 950000, taxCharacter: 'cash' }),
+      Schema.createAsset({ id: 'k401', category: 'retirement', valueCents: 3000000, taxCharacter: 'pretax' }),
+      Schema.createAsset({ id: 'roth', category: 'retirement', valueCents: 1200000, taxCharacter: 'roth', costBasisCents: 800000 }),
+      Schema.createAsset({ id: 'brok', category: 'investment', valueCents: 600000, taxCharacter: 'taxable' }),
+      Schema.createAsset({ id: 'house', category: 'real_estate', valueCents: 30000000 }),
+      Schema.createAsset({ id: 'biz', category: 'other', valueCents: 5000000, taxCharacter: 'business' })
+    ];
+    return h;
+  }
+  const r = Schema.runwayMonths(rich(), null, { rates: { withdrawalRate: 0.12, capitalGainsRate: 0 }, rules: rules, age: 32, monthlyExpensesCents: 400000 });
+  check('three steps in order', r.steps.map(s => s.tier).join(','), 'cash,taxable,retirement');
+  check('cash: 9,500 over 4,000 a month is 2.4 months', r.steps[0].monthsThis, 2.4);
+  check('taxable: 6,000, no gains tax at this rate, 1.5 more', r.steps[1].monthsThis, 1.5);
+  check('...3.9 at the end of the taxable step', r.steps[1].monthsCumulative, 3.9);
+  /* 401(k) 30,000 × 12% = 3,600 tax + 3,000 penalty; Roth earnings 4,000 × 12% = 480 + 400. */
+  check('retirement: 4,080 of tax', r.steps[2].taxCents, 408000);
+  check('...3,400 of penalty', r.steps[2].penaltyCents, 340000);
+  check('...net 34,520', r.steps[2].netCents, 3452000);
+  check('all of it: 12.5 months', r.value, 12.5);
+  check('the house and the business are never', r.never.grossCents, 35000000);
+  check('...by pile', r.never.byTier.property, 30000000);
+  check('cash months apart', r.cashMonths, 2.4);
+  check('beyond the cash: 10.1 months', r.beyondCashMonths, 10.1);
+  checkTrue('tax was applied and says at what rate', r.taxApplied && r.taxRate === 0.12);
+  checkTrue('the basis was assumed for the brokerage', r.assumed.indexOf('basis') > -1);
+  const drawTwo = Schema.runwayMonths(rich(), ['cash', 'taxable'], { rules: rules, age: 32, monthlyExpensesCents: 400000 });
+  check('a shorter draw order stops there: 3.9 months', drawTwo.value, 3.9);
+  checkTrue('...before tax, and says so', drawTwo.taxApplied === false && drawTwo.taxRate === null);
+  check('property in the order is ignored', Schema.runwayMonths(rich(), ['cash', 'property'], { rules: rules, age: 32, monthlyExpensesCents: 400000 }).steps.length, 1);
+  check('the household spending is the default denominator', Schema.runwayMonths(rich(), ['cash'], { rules: rules, age: 32 }).monthlyExpensesCents, Schema.monthlyExpensesCents(rich()).value);
+  check('no spending, no runway', Schema.runwayMonths(Schema.createHousehold({}), null, {}).status, 'incomplete');
+  check('nothing drawable, no runway, naming cash', Schema.runwayMonths(Schema.createHousehold({}), null, { monthlyExpensesCents: 100 }).missing[0], 'cash');
+  check('zero spending is refused', Schema.runwayMonths(rich(), null, { monthlyExpensesCents: 0 }).status, 'incomplete');
+  check('weeks, for the campaign: 50,020 over 4,000 × 12 ÷ 52', r.weeks, Math.floor(5002000 / (400000 * 12 / 52)));
+
+  /* -- The readers all read it -------------------------------------------- */
+  const run = RunwayEngine.project(rich(), T, { cushionCents: 950000, monthlyExpensesCents: 400000, rates: { withdrawalRate: 0.12, capitalGainsRate: 0 } });
+  checkTrue('Runway carries the piles behind the cushion', Money.isOk(run.tiers) && run.tiers.steps.length === 3);
+  check('...at the same outflow', run.tiers.monthlyExpensesCents, run.monthlyOutflowCents);
+  check('...before tax when the room passes no rates', RunwayEngine.project(rich(), T, { cushionCents: 950000, monthlyExpensesCents: 400000 }).tiers.taxApplied, false);
+  const bjSrc = fs.readFileSync(path.join(ROOT, 'engines/betweenjobs.js'), 'utf8');
+  checkTrue('Between Jobs hands the rates through and exposes beyondCash', /rates: o\.rates/.test(bjSrc) && /beyondCash: base\.tiers/.test(bjSrc));
+  const advSrc = fs.readFileSync(path.join(ROOT, 'engines/adventure.js'), 'utf8');
+  checkTrue('the Long Way Round reads the taxable pile through tierDraws', /Schema\.tierDraws\(household, \['taxable'\]/.test(advSrc));
+  const dndSrc = fs.readFileSync(path.join(ROOT, 'dnd/engines/character.js'), 'utf8');
+  checkTrue('the campaign HP reads runwayMonths for cash and taxable', /Schema\.runwayMonths\(household, HP_DRAW_ORDER/.test(dndSrc) && /HP_DRAW_ORDER = \['cash', 'taxable'\]/.test(dndSrc));
+  const stSrc = fs.readFileSync(path.join(ROOT, 'engines/statement.js'), 'utf8');
+  checkTrue('the ladder is a view of tierOf, not of the liquidity rating', /Schema\.tierOf\(a\)/.test(stSrc) && !/assetLiquidity/.test(stSrc));
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
+  checkTrue('the Statement edits the pile, not the liquidity rating', /data-field="tier"/.test(room) && !/data-field="liquidity"/.test(room));
+  ['rooms/runway.html'].forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    checkTrue(f + ' loads the tax engine for the rates and says before/after tax', /engines\/tax\.js/.test(src) && /before tax/.test(src));
+  });
+  checkTrue('the campaign says its runway is before tax', /before tax/.test(fs.readFileSync(path.join(ROOT, 'dnd/campaign.html'), 'utf8')));
+})();
+
+/* ==========================================================================
+   15.9 — age and the inflection dates (D-181)
+   ========================================================================== */
+section('15.9: the ages where a rule changes, dated per person and drawn on every timeline (D-181)');
+(function () {
+  const MT = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/milestones.json'), 'utf8'));
+  const Features = require(path.join(ROOT, 'shared/features.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const Charts = require(path.join(ROOT, 'shared/charts.js'));
+  Features.use(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/features.json'), 'utf8')));
+  Prefs.reset();
+  checkTrue('the table is sourced, and every row carries a rule with a source and a citation', MT.confidence === 'sourced' && MT.milestones.every(r => r.rule && r.rule.value && r.rule.source && r.rule.citation && r.rule.asOf));
+  check('ten rows', MT.milestones.length, 10);
+  checkTrue('registered as a reference table', Reference.TABLE_FILES.milestones === 'milestones.json');
+
+  /* Born 1990: full retirement age 67, RMDs at 75. */
+  const p = Schema.createPerson({ dob: '1990-03-15' });
+  const ms = Schema.milestones(p, MT, { asOf: '2026-09-10' });
+  check('the list in age order', ms.map(m => m.id).join(','), 'catchup50,hsaCatchup55,ruleOf55,penaltyFree,catchup60to63,ssEarly,medicare,fullRetirementAge,ssDelayed,rmd');
+  check('59 and a half is 59.5', ms.filter(m => m.id === 'penaltyFree')[0].age, 59.5);
+  check('...dated six months after the 59th birthday', ms.filter(m => m.id === 'penaltyFree')[0].date, '2049-09-15');
+  check('full retirement age for 1990 is 67', ms.filter(m => m.id === 'fullRetirementAge')[0].age, 67);
+  check('RMDs for 1990 start at 75', ms.filter(m => m.id === 'rmd')[0].age, 75);
+  check('years from now, at 36: catch-up in 14', ms.filter(m => m.id === 'catchup50')[0].yearsFromNow, 14);
+  checkTrue('nothing was assumed with a birth year', ms.every(m => m.assumed === false));
+  checkTrue('every row carries its rule and source', ms.every(m => m.rule && m.source && m.citation));
+
+  /* Born 1957: full retirement age 66 and 6 months, RMDs at 73. */
+  const older = Schema.milestones(Schema.createPerson({ dob: '1957-06-01' }), MT, { asOf: '2026-09-10' });
+  check('1957: full retirement age 66 and 6 months', older.filter(m => m.id === 'fullRetirementAge')[0].age, 66.5);
+  check('...ageMonths 6', older.filter(m => m.id === 'fullRetirementAge')[0].ageMonths, 6);
+  check('...dated 2023-12-01', older.filter(m => m.id === 'fullRetirementAge')[0].date, '2023-12-01');
+  check('1957: RMDs at 73', older.filter(m => m.id === 'rmd')[0].age, 73);
+  check('1950: RMDs at 72', Schema.milestones({ dob: '1950-01-01' }, MT).filter(m => m.id === 'rmd')[0].age, 72);
+  check('1955: full retirement age 66 and 2 months', Schema.milestones({ dob: '1955-01-01' }, MT).filter(m => m.id === 'fullRetirementAge')[0].age, Math.round((66 + 2 / 12) * 100) / 100);
+
+  /* No birth year: the latest rule stands in and says so. */
+  const noDob = Schema.milestones(Schema.createPerson({}), MT);
+  checkTrue('no date of birth: ages still listed, dates and years-from-now null', noDob.length === 10 && noDob.every(m => m.date === null && m.yearsFromNow === null));
+  checkTrue('...and the two birth-year rows are flagged assumed', noDob.filter(m => m.byBirthYear).every(m => m.assumed === true) && noDob.filter(m => !m.byBirthYear).every(m => m.assumed === false));
+  check('...at the 1960-and-later rule', noDob.filter(m => m.id === 'rmd')[0].age, 75);
+  check('no table, no list', Schema.milestones(p, null).length, 0);
+
+  /* Marks for a chart, per axis, clipped, merged, switched. */
+  const h = Schema.createHousehold({}); h.people = [p];
+  const byAge = Schema.milestoneMarks(h, MT, { axis: 'age', from: 36, to: 66, asOf: '2026-09-10' });
+  check('by age, 36 to 66: catch-up, 55 (two rules, one mark), 59.5, 60, 62, 65', byAge.map(k => k.x).join(','), '50,55,59.5,60,62,65');
+  checkTrue('the two rules at 55 share a mark and both names', /HSA catch-up/.test(byAge[1].label) && /rule of 55/.test(byAge[1].label));
+  checkTrue('every mark is faint and carries the rule on hover', byAge.every(k => k.faint === true && /:/.test(k.title)));
+  const byYears = Schema.milestoneMarks(h, MT, { axis: 'years', from: 0, to: 5, asOf: '2026-09-10' });
+  check('years from now, inside five years at 36: none', byYears.length, 0);
+  check('...inside thirty: seven ages', Schema.milestoneMarks(h, MT, { axis: 'years', from: 0, to: 30, asOf: '2026-09-10' }).length, 6);
+  check('months from now: 59.5 is 282 months away', Schema.milestoneMarks(h, MT, { axis: 'months', asOf: '2026-09-10' }).filter(k => /59/.test(k.label))[0].x, 282);
+  const noAge = Schema.createHousehold({}); noAge.people = [Schema.createPerson({})];
+  check('no age: nothing on a years axis', Schema.milestoneMarks(noAge, MT, { axis: 'years' }).length, 0);
+  check('...but the ages themselves still draw on an age axis', Schema.milestoneMarks(noAge, MT, { axis: 'age' }).length > 0, true);
+  Features.set('showMilestones', false);
+  check('the switch off: no marks', Schema.milestoneMarks(h, MT, { axis: 'age' }).length, 0);
+  Features.set('showMilestones', null);
+  checkTrue('the switch is on by default, in the Horizon group', Features.get('showMilestones')['default'] === 'on' && Features.get('showMilestones').group === 'horizon');
+  Prefs.reset();
+
+  /* The chart draws a faint mark with the title. */
+  const svg = Charts.area({ series: [{ label: 'x', points: [[0, 1], [10, 2]] }], vLines: [{ x: 5, label: '59½', title: 'the rule', faint: true }, { x: 7, label: 'event' }] });
+  checkTrue('a faint mark is drawn as such, with the rule as its title', /class="milestone"><title>the rule<\/title><line class="mark is-faint"/.test(svg));
+  checkTrue('...and an event mark is unchanged', /<line class="mark" /.test(svg) && /mark-label" /.test(svg));
+  checkTrue('the theme styles the faint mark', /\.mark\.is-faint/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+
+  /* Drawing It Down: the phases are the milestones inside the horizon. */
+  const Decum = require(path.join(ROOT, 'engines/decumulation.js'));
+  const d = Demo.build(); d.people[0].dob = '1970-03-15'; d.people[0].employmentStatus = 'retired';
+  d.assets = d.assets.map(a => a.category === 'investment' ? Object.assign({}, a, { valueCents: 80000000 }) : a);
+  const dt = Object.assign({}, TABLES, { milestones: MT, ratioBenchmarks: require(path.join(ROOT, 'data/ratio_benchmarks.json')), vpwTable: require(path.join(ROOT, 'data/vpw_table.json')) });
+  const plan = Decum.plan(d, dt, { asOf: '2026-09-10' });
+  checkTrue('the plan is ok on the fixture', Money.isOk(plan), plan.reason);
+  checkTrue('at 56 the phases run now, 59.5, 60, 62, 65, 67, 70, 75', Money.isOk(plan) && plan.phases.map(ph => ph.fromAge).join(',') === '56,59.5,60,62,65,67,70,75');
+  checkTrue('...the first phase ends at 59.5, year 3.5', Money.isOk(plan) && plan.phases[0].toAge === 59.5 && plan.phases[0].toYear === 3.5 && plan.phases[0].endsAt === 'penaltyFree');
+  checkTrue('...and the last runs to the horizon', Money.isOk(plan) && plan.phases[plan.phases.length - 1].toAge === 56 + plan.horizonYears);
+  check('no table: no phases, nothing else changes', Decum.plan(d, Object.assign({}, dt, { milestones: null }), { asOf: '2026-09-10' }).phases.length, 0);
+
+  /* Every timeline draws them. */
+  [['rooms/adventure.html', /milestoneMarks\(h\(\), TABLES\.milestones, \{ axis: 'years'/],
+   ['rooms/decumulation.html', /milestoneMarks\(h, T\.milestones/],
+   ['rooms/fire.html', /milestoneMarks\(h, TABLES\.milestones, \{ axis: 'age'/],
+   ['rooms/timeline.html', /milestoneMarks\(h, MILESTONES, \{ axis: 'months'/]].forEach(([f, re]) => {
+    checkTrue(f + ' draws the milestones', re.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
+  });
+  checkTrue('the Drawing It Down room says which phases the draw crosses', /p\.phases/.test(fs.readFileSync(path.join(ROOT, 'rooms/decumulation.html'), 'utf8')));
+})();
+
+/* ==========================================================================
+   Section 15 gate — the ten shapes, migration to the cent (D-181)
+   ========================================================================== */
+section('Section 15 gate: every shape has its tests, and a saved household migrates to the cent (D-181)');
+(function () {
+  const Spine = SpineMain;
+  const src = fs.readFileSync(__filename, 'utf8');
+  /* Schema tests for each shape: the ten sections above, by name. */
+  ['15.1 / 15.10', '15.2', '15.3', '15.4', '15.5', '15.6', '15.7', '15.8', '15.9'].forEach(id => {
+    checkTrue('a test section for ' + id, new RegExp("section\\('" + id.replace(/[.\/ ]/g, m => '\\' + m) + "[:\\s]").test(src));
+  });
+
+  /* A saved v1 household (the pre-spine flat profile, as lane 2's corpus
+     records it) migrates, and the dashboard reads the same cents. */
+  const flat = { annualSalary: 62000, hoursPerWeek: 40, studentLoanBalance: 22000, studentLoanRate: 5.3, visitedRooms: ['real-hourly-wage', 'student-loan'] };
+  const v2 = Schema.createHousehold(JSON.parse(JSON.stringify(Spine._migrateLegacy(flat))));
+  check('v1 salary reads as gross income, to the cent', Schema.grossAnnualIncomeCents(v2).value, 6200000);
+  check('v1 loan reads as the dashboard\'s debt, to the cent', Schema.totalDebtCents(v2).value, 2200000);
+  check('v1 rate 5.3 is 5.3%', v2.debts[0].rate, 0.053);
+  checkTrue('...and the household says where it came from', v2.meta.migratedFrom === 'flat-profile-v1');
+  checkTrue('...and every 15.x shape is present with its empty meaning', v2.assumptions && v2.zip === null && Array.isArray(v2.expenses.annual) && v2.people[0].incomeSources[0].type === 'w2' && v2.debts[0].tier === undefined);
+
+  /* A household saved before Phase A (no assumptions, no field meta, no
+     zip, no annual lines, no income types, no tiers) renders the same
+     dashboard numbers as the same household built today, to the cent. */
+  const now = Demo.build();
+  const before = JSON.parse(JSON.stringify(now));
+  delete before.assumptions; delete before.zip; delete before.meta.fields; delete before.expenses.annual;
+  before.assets.forEach(a => { delete a.tier; });
+  before.people.forEach(p => p.incomeSources.forEach(s => { delete s.type; delete s.survivesJobLoss; delete s.passiveTreatment; }));
+  const back = Schema.createHousehold(before);
+  const T = TABLES;
+  const reads = {
+    grossAnnualIncomeCents: h => Schema.grossAnnualIncomeCents(h).value,
+    takeHomeAnnualCents: h => Schema.takeHomeAnnualCents(h, T).value,
+    monthlyExpensesCents: h => Schema.monthlyExpensesCents(h).value,
+    totalDebtCents: h => Schema.totalDebtCents(h).value,
+    totalAssetsCents: h => Schema.totalAssetsCents(h).value,
+    investmentsCents: h => Schema.investmentsCents(h).value,
+    cashCents: h => Schema.cashCents(h).value,
+    netWorth: h => Tier0.netWorth(h).value,
+    savingsRate: h => Tier0.savingsRate(h, T).value,
+    fireNumber: h => Tier0.fireNumber(h).value,
+    runwayMonths: h => Schema.runwayMonths(h, null, {}).value
+  };
+  Object.keys(reads).forEach(k => {
+    const a = reads[k](now), b = reads[k](back);
+    check('migrated to the cent: ' + k, b, a);
+  });
+  checkTrue('the migrated household carries the assumption defaults', back.assumptions && back.assumptions.returnReal === 0.05 && back.assumptions.inflation === 0.03);
+  /* The store never rewrites a saved row (createHousehold keeps the arrays
+     as they are); the READERS give a pre-Phase-A row its default meaning. */
+  checkTrue('...an untyped income source stops on a job loss, as a w2 does', back.people[0].incomeSources.every(s => s.type === undefined && Schema.survivesJobLoss(s) === false));
+  checkTrue('...every asset without a pile is placed by its kind', back.assets.every(a => a.tier === undefined && Schema.tierOf(a).derived));
+  /* The Playwright half of the gate lives in test/aftertax.js (the toggle on
+     the Statement) and test/adventure.js (the marks on the Long Way Round). */
+  checkTrue('the after-tax toggle gate exists and taps the Statement', /nw-basis/.test(fs.readFileSync(path.join(ROOT, 'test/aftertax.js'), 'utf8')));
+  checkTrue('the Long Way Round gate reads the milestone marks', /g\.milestone/.test(fs.readFileSync(path.join(ROOT, 'test/adventure.js'), 'utf8')));
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   18.2 — the Ledger's row registry (D-183)
+   ========================================================================== */
+section('18.2: every number the app can hold is one Ledger row, of one of three kinds (D-183)');
+(function () {
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Levers = require(path.join(ROOT, 'shared/levers.js'));
+  const Daite = require(path.join(ROOT, 'shared/daite.js'));
+  const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const T = LR.table();
+  const rows = LR.all();
+  checkTrue('the registry is a registered table', Reference.TABLE_FILES.ledgerRows === 'ledger-rows.json');
+  checkTrue('three kinds, and every row is one of them', T.kinds.join(',') === 'know,lookup,computed' && rows.every(r => T.kinds.indexOf(r.kind) >= 0));
+  checkTrue('every row has a path, a label, a kind, a pass, a unit, an appliesWhen and minutes', rows.every(r => r.path && r.label && r.kind && [1, 2, 3].indexOf(r.pass) >= 0 && r.unit && r.appliesWhen && Money.isEntered(r.minutes)));
+  checkTrue('every path appears in exactly one row', new Set(rows.map(r => r.path)).size === rows.length);
+  checkTrue('every id appears once', new Set(rows.map(r => r.id)).size === rows.length);
+  checkTrue('every lookup row has a where sentence and a roughly hint', rows.filter(r => r.kind === 'lookup').every(r => r.where && r.roughly));
+  checkTrue('...one sentence, no em dash', rows.filter(r => r.kind === 'lookup').every(r => r.where.indexOf('—') === -1 && r.where.length < 260));
+  checkTrue('every computed row names its engine and its inputs, and the inputs are rows', rows.filter(r => r.kind === 'computed').every(r => r.engine && Array.isArray(r.inputs) && r.inputs.every(id => LR.byId(id))));
+  const engines = { Schema: Schema, Tier0: Tier0, Statement: require(path.join(ROOT, 'engines/statement.js')), Ledger: require(path.join(ROOT, 'engines/ledger.js')), Calendar: require(path.join(ROOT, 'engines/calendar.js')), Budget: require(path.join(ROOT, 'engines/budget.js')) };
+  checkTrue('...and every engine named is a real function', rows.filter(r => r.kind === 'computed').every(r => { const [m, f] = r.engine.split('.'); return engines[m] && typeof engines[m][f] === 'function'; }), rows.filter(r => r.kind === 'computed').map(r => r.engine).join(','));
+  checkTrue('a computed row is never given a where sentence', rows.filter(r => r.kind === 'computed').every(r => !r.where));
+  checkTrue('every non-preference, non-repeat row is an ownership field, so it reads and writes through the one map', rows.filter(r => !/^prefs\./.test(r.path) && !r.repeat).every(r => Ownership.FIELDS[r.id]), rows.filter(r => !/^prefs\./.test(r.path) && !r.repeat && !Ownership.FIELDS[r.id]).map(r => r.id).join(','));
+  checkTrue('a repeat row names what it repeats over', rows.filter(r => r.repeat).every(r => ['debts', 'assets', 'incomeSources', 'futureIncome', 'annualLines'].indexOf(r.repeat) >= 0));
+  checkTrue('every alias is an ownership field on the same path', rows.every(r => (r.aliases || []).every(a => Ownership.FIELDS[a] && Daite.PATHS[a] === Daite.PATHS[r.id])));
+  /* Every money and situation path in DAITE is covered by a row. */
+  const declared = Object.keys(Daite.PATHS).filter(id => /^(debt|assets|income|taxes|expenses|you)\./.test(Daite.PATHS[id]));
+  const covered = declared.filter(id => LR.byId(id));
+  checkTrue('every DAITE money or situation field has a row', covered.length === declared.length, declared.filter(id => !LR.byId(id)).join(','));
+  checkTrue('plans, preferences and progress are not rows (they are what-ifs, not facts)', rows.every(r => !/^(plans|progress)\./.test(r.path)) && rows.filter(r => /^prefs\./.test(r.path)).length === 1);
+  checkTrue('the six situation rows come first: the path, birth, state, dependents, working situation, filing', rows.slice(0, 6).map(r => r.id).join(',') === 'pathChoice,dob,state,dependents,employmentStatus,filingStatus');
+  checkTrue('the situation rows carry no letter', rows.filter(r => r.family === 'you').every(r => r.letter === null));
+  checkTrue('every money row carries its letter', rows.filter(r => r.family !== 'you').every(r => 'DAITE'.indexOf(r.letter) >= 0));
+  checkTrue('the where sentences came from lane 2 where lane 2 had one', /minimum payment due/.test(LR.byId('debtMinPayment').where) && /studentaid\.gov/.test(LR.byId('loanPlan').where));
+
+  /* appliesWhen: the levers' reader, a few more phrases. */
+  const h = Demo.build();
+  checkTrue('always applies', Levers.appliesWhen('always', h));
+  checkTrue('situation == employed on the demo', Levers.appliesWhen('situation == employed', h) && !Levers.appliesWhen('situation == retired', h));
+  checkTrue('debt.any on the demo, debt.studentLoan too', Levers.appliesWhen('debt.any', h) && Levers.appliesWhen('debt.studentLoan', h));
+  const two = Demo.build(); two.people.push(Schema.createPerson({ label: 'Sam' }));
+  checkTrue('household.two only with two adults', Levers.appliesWhen('household.two', two) && !Levers.appliesWhen('household.two', h));
+  checkTrue('an unknown phrase never applies', !Levers.appliesWhen('moon.phase == full', h));
+  checkTrue('the partner rows are absent for one adult', !LR.rows(h, {}).some(r => r.id === 'partnerName') && LR.rows(two, {}).some(r => r.id === 'partnerName'));
+  checkTrue('the between-jobs rows are absent for the employed', !LR.rows(h, {}).some(r => r.id === 'floorMonthly'));
+
+  /* Status, on the demo and on nothing. */
+  Prefs.reset();
+  const list = LR.rows(h, {});
+  checkTrue('rows come back in pass order', list.every((r, i) => i === 0 || r.pass >= list[i - 1].pass));
+  check('the demo\'s cash reads as entered', LR.status(h, LR.byId('cashSavings')).value.value, 950000);
+  checkTrue('...and as roughly, since nothing about it was ever confirmed', LR.status(h, LR.byId('cashSavings')).state === 'roughly');
+  const sure = Demo.build(); sure.meta.fields = { cashSavings: { asOf: new Date().toISOString(), source: 'typed', confidence: 'sure', room: 'ledger' } };
+  check('a confirmed figure reads as sure', LR.status(sure, LR.byId('cashSavings')).state, 'sure');
+  const old = Demo.build(); old.meta.fields = { cashSavings: { asOf: '2020-01-01T00:00:00Z', source: 'typed', confidence: 'sure', room: 'ledger' } };
+  check('a sure figure past its window reads as stale', LR.status(old, LR.byId('cashSavings')).state, 'stale');
+  check('a computed row is computed', LR.status(h, LR.byId('netWorth')).state, 'computed');
+  check('nothing entered is missing', LR.status(Schema.createHousehold({}), LR.byId('cashSavings')).state, 'missing');
+  check('a repeat row with no items is missing', LR.status(Schema.createHousehold({}), LR.byId('debtBalance')).state, 'missing');
+  check('...and lists the demo\'s debts', LR.items(h, LR.byId('debtBalance')).length, h.debts.length);
+  check('...as the row\'s value', LR.status(h, LR.byId('debtBalance')).value.value, h.debts.length);
+  check('the preference row reads from Prefs, not the household', LR.status(h, LR.byId('pathChoice')).state, 'missing');
+  Prefs.set('path', 'fi');
+  check('...and is sure once chosen', LR.status(h, LR.byId('pathChoice')).state, 'sure');
+  Prefs.reset();
+
+  /* next: exactly one row. */
+  const n = LR.next(h, {});
+  checkTrue('next is the first open row of the lowest pass', n && n.id === 'pathChoice' && n.pass === 1);
+  checkTrue('...with the minutes left and the open count', Money.isEntered(n.minutesLeft) && n.openCount > 0);
+  Prefs.set('path', 'beginner');
+  const n2 = LR.next(h, {});
+  checkTrue('choosing the path moves next to the next row', n2 && n2.id !== 'pathChoice' && n2.pass === 1, n2 && n2.id);
+  Prefs.reset();
+  const done = Demo.build(); done.meta.fields = {}; LR.rows(done, {}).forEach(r => { if (r.kind !== 'computed') done.meta.fields[r.id] = { asOf: new Date().toISOString(), source: 'typed', confidence: 'sure', room: 'ledger' }; });
+  Prefs.set('path', 'fi');
+  const nDone = LR.next(done, {});
+  checkTrue('with every entered row sure, next is a missing row, never a computed one', !nDone || nDone.kind !== 'computed');
+  Prefs.reset();
+  checkTrue('a computed row is never next', !LR.next(h, {}) || LR.next(h, {}).kind !== 'computed');
+
+  /* the readers, the inputs, the summary */
+  checkTrue('the Statement reads the cash row', LR.readersOf(LR.byId('cashSavings')).some(r => r.id === 'statement'));
+  const inputs = LR.inputsOf(LR.byId('netWorth'), h, {});
+  check('net worth names its four inputs', inputs.map(i => i.id).join(','), 'cashSavings,investments,otherAssets,totalDebt');
+  checkTrue('...none missing on the demo; the property sum is incomplete, not missing', inputs.every(i => !i.missing) && inputs.filter(i => i.id === 'otherAssets')[0].incomplete === true);
+  checkTrue('...cash missing on nothing', LR.inputsOf(LR.byId('netWorth'), Schema.createHousehold({}), {}).filter(i => i.id === 'cashSavings')[0].missing);
+  const sum = LR.summary(h, {});
+  checkTrue('the summary counts every row once', sum.total === Object.keys(sum.by).reduce((t, k) => t + sum.by[k], 0));
+  checkTrue('roughRows are the roughly and stale ones', LR.roughRows(h, {}).every(r => r.status === 'roughly' || r.status === 'stale'));
+  check('minutes sum to the half minute', LR.minutes([{ minutes: 0.5 }, { minutes: 2 }, { minutes: 0.25 }]), 3);
+  checkTrue('a search filters by label', LR.rows(h, {}, { query: 'rent' }).every(r => /rent/i.test(r.label)) && LR.rows(h, {}, { query: 'rent' }).length >= 1);
+  checkTrue('the D&D copy does not carry this module (it is SPARKS-only)', !fs.existsSync(path.join(ROOT, 'dnd/shared/ledger-rows.js')));
+})();
+
+/* ==========================================================================
+   19.1 — the nine spheres: one file, three faces (D-184)
+   ========================================================================== */
+section('19.1: nine spheres in one file, depth gating precision, the shadow measured and never named (D-184)');
+(function () {
+  const Sp = require(path.join(ROOT, 'shared/spheres.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  const T = Sp.table();
+  const list = Sp.all();
+  checkTrue('a registered table', Reference.TABLE_FILES.spheres === 'spheres.json');
+  check('nine entries', list.length, 9);
+  check('...in order, 1 to 9', list.map(s => s.order).join(','), '1,2,3,4,5,6,7,8,9');
+  check('...the brief\'s ids', list.map(s => s.id).join(','), 'moon,mercury,venus,sun,mars,jupiter,saturn,fixedstars,primum');
+  check('...the brief\'s virtues', list.map(s => s.virtue).join(','), 'Showed up,Chosen,Wanted,Known,Steady,Settled,Enough,Kept,Rest');
+  const FIELDS = ['order', 'id', 'sphere', 'virtue', 'virtueLine', 'alreadyGood', 'depth', 'unlocks', 'sharpens', 'shadow', 'action', 'drawer'];
+  checkTrue('every entry carries every field', list.every(s => FIELDS.every(f => s[f] !== undefined)));
+  checkTrue('depth lists rows and minutes', list.every(s => Array.isArray(s.depth.rows) && Money.isEntered(s.depth.minutes)));
+  checkTrue('every depth row is a Ledger row', list.every(s => s.depth.rows.every(id => LR.byId(id))));
+  checkTrue('every Ledger row belongs to exactly one sphere', LR.all().every(r => list.filter(s => s.depth.rows.indexOf(r.id) >= 0).length === 1), LR.all().filter(r => list.filter(s => s.depth.rows.indexOf(r.id) >= 0).length !== 1).map(r => r.id).join(','));
+  checkTrue('depth minutes are the rows\' minutes', list.every(s => Math.abs(s.depth.minutes - LR.minutes(s.depth.rows.map(id => LR.byId(id)))) < 0.01));
+  checkTrue('spheres 1 to 4 are already good; 5 to 9 are not', list.every(s => s.alreadyGood === (s.order <= 4)));
+  const NAMES = list.map(s => s.shadow.name);
+  check('the shadow names, in order', NAMES.join(','), 'Limbo,Gluttony,Envy,Fraud,Wrath,Greed,Pride,Treachery,Sloth');
+  checkTrue('the shadow name is in the drawer and nowhere else in the entry', list.every(s => s.drawer.indexOf(s.shadow.name.toLowerCase()) >= 0 && [s.virtue, s.virtueLine, s.sharpens, s.shadow.sentence, s.shadow.measure, s.action.label].every(t => t.toLowerCase().indexOf(s.shadow.name.toLowerCase()) === -1)));
+  checkTrue('every sentence states a measurement with a cost', list.every(s => /\{(n|minutes|dollars)\}/.test(s.shadow.sentence)));
+  checkTrue('...and no judgement word', list.every(s => !/too much|should|\bbad\b|\bover\b/i.test(s.shadow.sentence)));
+  checkTrue('...and no em dash anywhere on screen', list.every(s => [s.virtue, s.virtueLine, s.sharpens, s.shadow.sentence, s.action.label].every(t => t.indexOf('—') === -1)));
+  checkTrue('every action is one room and one filter', list.every(s => typeof s.action.room === 'string' && s.action.room && ('filter' in s.action)));
+  checkTrue('every shadow engine is a real measure', list.every(s => Sp.ENGINES.indexOf(s.shadow.engine.replace(/^Spheres\./, '')) >= 0));
+  checkTrue('the shadow names never reach a module that renders', ['shared/spheres.js', 'shared/ledger-rows.js'].every(f => { const src = fs.readFileSync(path.join(ROOT, f), 'utf8'); return NAMES.every(n => !new RegExp("'" + n + "'|\"" + n + "\"").test(src)); }));
+  checkTrue('the first six situation rows sit in sphere 1', ['pathChoice', 'dob', 'employmentStatus', 'state'].every(id => Sp.sphereOf(id).order === 1));
+  checkTrue('sphere 9 has no rows yet, and says why in the note', Sp.byOrder(9).depth.rows.length === 0 && /16\.12/.test(T.note));
+
+  /* State on the demo, on nothing, and on a household that has confirmed a sphere. */
+  Prefs.reset();
+  const h = Demo.build();
+  const st = Sp.state(h, {});
+  check('the demo stands at sphere 1: the path row is missing', st.currentOrder, 1);
+  checkTrue('nothing is complete, nothing sharp', st.completeThrough === 0 && st.sharpThrough === 0);
+  checkTrue('every sphere reports its rows and minutes', st.spheres.every(s => Array.isArray(s.rows) && Money.isEntered(s.minutesLeft)));
+  const empty = Schema.createHousehold({});
+  checkTrue('nothing entered: sphere 1 has its rows, all missing', Sp.state(empty, {}).spheres[0].counts.missing === Sp.state(empty, {}).spheres[0].counts.applicable && Sp.state(empty, {}).spheres[0].counts.applicable >= 6);
+  const sure = Demo.build(); sure.meta.fields = {};
+  Prefs.set('path', 'fi');
+  Sp.byOrder(1).depth.rows.forEach(id => { sure.meta.fields[id] = { asOf: new Date().toISOString(), source: 'typed', confidence: 'sure', room: 'ledger' }; });
+  const st1 = Sp.state(sure, {});
+  checkTrue('confirming every sphere 1 row makes it complete and sharp', st1.spheres[0].complete && st1.spheres[0].sharp);
+  check('...so the household stands at sphere 2', st1.currentOrder, 2);
+  check('...complete through 1', st1.completeThrough, 1);
+  check('...sharp through 1', st1.sharpThrough, 1);
+  const rough = Demo.build(); rough.meta.fields = {};
+  Sp.byOrder(1).depth.rows.forEach(id => { rough.meta.fields[id] = { asOf: new Date().toISOString(), source: 'pasted', confidence: 'roughly', room: 'ledger' }; });
+  const st2 = Sp.state(rough, {});
+  checkTrue('roughly on every row is complete but not sharp', st2.spheres[0].complete && !st2.spheres[0].sharp && st2.completeThrough === 1 && st2.sharpThrough === 0);
+  Prefs.reset();
+  checkTrue('a computed row never gates a sphere', Sp.byOrder(1).depth.rows.some(id => LR.byId(id).kind === 'computed') && st.spheres[0].counts.applicable < Sp.byOrder(1).depth.rows.length);
+  checkTrue('an empty sphere is complete only once everything before it is', !Sp.state(h, {}).spheres[8].complete);
+
+  /* The target: 45 cells. */
+  const cells = Sp.cells(h, {});
+  check('five letters by nine spheres', cells.length, 45);
+  checkTrue('every cell says its fill', cells.every(c => ['full', 'half', 'empty', 'dashed', 'none'].indexOf(c.fill) >= 0));
+  checkTrue('the demo\'s sphere 1 cells are half: entered, never confirmed', cells.filter(c => c.order === 1 && c.rows.length).every(c => c.fill === 'half'));
+  checkTrue('an empty household\'s sphere 1 cells are empty', Sp.cells(empty, {}).filter(c => c.order === 1 && c.rows.length).every(c => c.fill === 'empty'));
+  const stale = Demo.build(); stale.meta.fields = { cashSavings: { asOf: '2020-01-01T00:00:00Z', source: 'typed', confidence: 'sure', room: 'ledger' } };
+  checkTrue('a stale row dashes its cell', Sp.cells(stale, {}).filter(c => c.order === 1 && c.letter === 'A')[0].fill === 'dashed');
+
+  /* The measures. */
+  const m1 = Sp.measure(h, {}, 'moon');
+  checkTrue('Limbo\'s measure counts the rows never touched, with minutes', Money.isOk(m1) && m1.n > 0 && Money.isEntered(m1.minutes) && /never touched/.test(m1.sentence));
+  checkTrue('...and never says its name', !/limbo/i.test(m1.sentence));
+  const m4 = Sp.measure(h, {}, 'sun');
+  checkTrue('Fraud\'s measure counts the rough rows', Money.isOk(m4) && m4.n === LR.roughRows(h, {}).length);
+  const m5 = Sp.measure(h, {}, 'mars');
+  checkTrue('Wrath\'s measure is the interest a month on the highest-rate line', Money.isOk(m5) && m5.dollars === Math.round(h.debts.slice().sort((a, b) => b.rate - a.rate)[0].balanceCents * h.debts.slice().sort((a, b) => b.rate - a.rate)[0].rate / 12));
+  const m6 = Sp.measure(h, {}, 'jupiter');
+  checkTrue('Greed\'s measure is cash above six months of spending, zero on the demo', Money.isOk(m6) && m6.dollars === 0 && m6.n === 6);
+  const richCash = Demo.build(); richCash.assets = richCash.assets.map(a => a.category === 'cash' ? Object.assign({}, a, { valueCents: 5000000 }) : a);
+  check('...5,000,000 of cash against 315,000 a month: 3,110,000 idle', Sp.measure(richCash, {}, 'jupiter').dollars, 5000000 - 315000 * 6);
+  checkTrue('Pride waits for a car', !Money.isOk(Sp.measure(h, {}, 'saturn')));
+  const car = Demo.build(); car.assets.push(Schema.createAsset({ category: 'vehicle', valueCents: 1500000 }));
+  const m7 = Sp.measure(car, {}, 'saturn');
+  checkTrue('...and with one prices it as a share of net worth', Money.isOk(m7) && m7.dollars === 1500000 && Money.isEntered(m7.n));
+  checkTrue('Envy waits for a priced dream', !Money.isOk(Sp.measure(h, {}, 'venus')));
+  checkTrue('Treachery waits for a closed month', !Money.isOk(Sp.measure(h, {}, 'fixedstars')));
+  checkTrue('Sloth says days off are not tracked yet', !Money.isOk(Sp.measure(h, {}, 'primum')) && /not tracked/.test(Sp.measure(h, {}, 'primum').reason));
+  checkTrue('every measure result carries the action, never the name', list.every(s => { const m = Sp.measure(h, {}, s.id); return !Money.isOk(m) || (m.action && m.action.room && !new RegExp(s.shadow.name, 'i').test(m.sentence)); }));
+
+  /* The tile. */
+  const t1 = Sp.tile(h, {}, 'moon');
+  checkTrue('an incomplete sphere\'s tile shows the virtue and the minutes, and in the Ledger as its only action', t1.mode === 'minutes' && t1.virtue === 'Showed up' && /minutes in the Ledger/.test(t1.sentence) && t1.action.room === 'ledger');
+  Prefs.set('path', 'fi');
+  const t1c = Sp.tile(sure, {}, 'moon');
+  checkTrue('a complete sphere\'s tile shows the measure and the action', t1c.mode === 'measure' && /never touched/.test(t1c.sentence) && t1c.action.label === 'Look at the five');
+  Prefs.reset();
+  checkTrue('the tile never carries a shadow name', list.every(s => { const t = Sp.tile(sure, {}, s.id); return !new RegExp(s.shadow.name, 'i').test(JSON.stringify(t)); }));
+})();
+
+/* ==========================================================================
+   18.4 / 18.5 — the Ledger room: the target, the rows by sphere (D-185)
+   ========================================================================== */
+section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)');
+(function () {
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const Sp = require(path.join(ROOT, 'shared/spheres.js'));
+  const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  const room = Registry.byId('ledger');
+  checkTrue('the Ledger is the one door under Home since D-230, where four used to stand', room && room.group === 'home' && room.utility === true && room.href === 'rooms/ledger.html');
+  checkTrue('...reading every DAITE money and situation path, and writing only through the owners', room.daite.reads.length > 30 && room.daite.writes.length > 0 && /Ownership\.write/.test(html));
+  checkTrue('...and needing nothing, so it opens on an empty household', Array.isArray(room.needs) && room.needs.length === 0);
+  const body = html.split('<body')[1];
+  /* The Ledger wears six hats since D-230, and five of them are other rooms'
+     copy, other rooms' inputs and other rooms' em dashes. These checks were
+     always about the DOORS view — the Ledger's own screen — so they say so
+     now rather than reading the whole file and failing on borrowed words. */
+  const doorsView = body.slice(body.indexOf('<section id="view-doors">'), body.indexOf('<!-- ================= ROUND 1'));
+  checkTrue('the doors view is where the Ledger\'s own screen is', doorsView.length > 500);
+  checkTrue('the room reads the two tables through their modules, never the files', /Reference\.load\(\['ledgerRows', 'spheres', 'staleness', 'confidenceWeights', 'accessRules', 'effectiveTaxRates', 'plausibleRanges', 'seTax'\]\.concat\(Suggest\.TABLES\)\)/.test(body) && !/ledger-rows\.json|spheres\.json/.test(body));
+  checkTrue('the target is five wedges by nine rings', /Spheres\.cells\(/.test(html) && /viewBox="0 0 100 100"/.test(html));
+  checkTrue('one line under it: sphere N of 9, the virtue, rows left, minutes', /Sphere ' \+ s\.order \+ ' of 9, /.test(html) && /' row' \+ [^;]* \+ ' left, about '/.test(html) && /minutesWord/.test(html));
+  checkTrue('rows group by sphere then letter, numbered inside the sphere', /LETTER_WORD/.test(html) && /' of ' \+ of/.test(html));
+  checkTrue('later spheres sit under a fold, never locked', /<details class="fold" id="later">/.test(html) && !/locked/i.test(doorsView));
+  checkTrue('spheres 1 to 4 say this is already good', /This is already good\./.test(html) && /alreadyGood/.test(html));
+  checkTrue('a computed row is grey with its inputs named, each missing one a link', /is-computed/.test(html) && /LedgerRows\.inputsOf\(/.test(html) && /\(missing\)/.test(html));
+  checkTrue('a lookup row shows its where sentence until entered', /row\.where/.test(html));
+  checkTrue('every row shows the rooms that read it', /LedgerRows\.readersOf\(/.test(html) && /Read by/.test(html));
+  checkTrue('the status glyphs: sure, roughly, memory, missing, not sure yet, computed, stale', /sure: '●', roughly: '◐', memory: '◑', missing: '○', notSure: '\?', computed: '=', stale: '◌'/.test(html));
+  checkTrue('a search box filters by label, built once', /LIVE-FORM: built once/.test(html) && /id="q"/.test(doorsView) && (doorsView.match(/<input/g) || []).length === 1);
+  checkTrue('the Empyrean is one line with no number', /What Matters\. No numbers there\./.test(html));
+  const NAMES = Sp.all().map(s => s.shadow.name);
+  checkTrue('no shadow name appears in the room', NAMES.every(n => !new RegExp('\\b' + n + '\\b').test(html)));
+  checkTrue('no em dash on screen', doorsView.indexOf('—') === -1);
+  const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
+  checkTrue('every Front Doors arrangement shelves the Ledger beside Start Here', layouts.layouts.every(l => l.groups.some(g => g.rooms.indexOf('ledger') >= 0)));
+})();
+
+/* ==========================================================================
+   Backup: everything this browser holds, as one file (D-202)
+   ========================================================================== */
+
+section('Backup: one file for every key (D-202)');
+
+(function () {
+  const backupPath = path.join(ROOT, 'shared/backup.js');
+  const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+
+  /* A localStorage with the full Storage surface: the module walks it by
+     index, which the spine's stub does not need. */
+  function fakeStorage(seed) {
+    const store = Object.assign({}, seed || {});
+    const s = {
+      getItem: (k) => (k in store ? store[k] : null),
+      setItem: (k, v) => { if (s.quota !== undefined && String(v).length > s.quota) throw new Error('QuotaExceededError'); store[k] = String(v); },
+      removeItem: (k) => { delete store[k]; },
+      key: (i) => Object.keys(store)[i] === undefined ? null : Object.keys(store)[i],
+      get length() { return Object.keys(store).length; },
+      store
+    };
+    return s;
+  }
+  function fresh(seed) {
+    const s = fakeStorage(seed);
+    global.localStorage = s;
+    global.SLAF = { Schema: Schema };
+    delete require.cache[require.resolve(spinePath)];
+    global.SLAF.Spine = require(spinePath);
+    delete require.cache[require.resolve(backupPath)];
+    const Backup = require(backupPath);
+    return { s, Backup, Spine: global.SLAF.Spine };
+  }
+  function done() { delete global.localStorage; delete global.SLAF; delete require.cache[require.resolve(spinePath)]; delete require.cache[require.resolve(backupPath)]; }
+
+  /* ---- Step 1's list, held here so a missing prefix cannot go quiet ---- */
+  const src = fs.readFileSync(backupPath, 'utf8');
+  checkTrue('the module is dependency-free and UMD', !/require\(['"][^.]/.test(src) && /root\.SLAF\.Backup = api/.test(src));
+  {
+    const { Backup } = fresh({});
+    check('the prefixes are exactly slaf. and dnd.', Backup.PREFIXES.join(','), 'slaf.,dnd.');
+    checkTrue('the undo stash key is under a prefix and never carried', /^slaf\./.test(Backup.UNDO_KEY) && Backup.keys().indexOf(Backup.UNDO_KEY) === -1);
+    done();
+  }
+
+  /* Every key the app writes, statically: a room writing outside the
+     prefixes has data no backup carries, so this fails before it ships. */
+  {
+    const { Backup } = fresh({});
+    const files = [];
+    function walk(dir) {
+      fs.readdirSync(dir).forEach(f => {
+        const p = path.join(dir, f);
+        if (f === 'node_modules' || f === 'vendor' || f === '.git') return;
+        if (fs.statSync(p).isDirectory()) walk(p); else if (/\.(js|html)$/.test(f)) files.push(p);
+      });
+    }
+    ['index.html', 'map.html', 'foo-ladder.js'].forEach(f => { if (fs.existsSync(path.join(ROOT, f))) files.push(path.join(ROOT, f)); });
+    ['rooms', 'shared', 'engines', 'dnd'].forEach(d => { if (fs.existsSync(path.join(ROOT, d))) walk(path.join(ROOT, d)); });
+    const stray = [], unresolved = [];
+    const okKey = (k) => Backup.PREFIXES.some(p => k.indexOf(p) === 0) || k === '__slaf_probe__';
+    files.forEach(p => {
+      const text = fs.readFileSync(p, 'utf8');
+      const rel = path.relative(ROOT, p);
+      const re = /localStorage\.setItem\(\s*([^,]+?)\s*,/g;
+      let m;
+      while ((m = re.exec(text))) {
+        const arg = m[1].trim();
+        let key = null;
+        const lit = arg.match(/^['"]([^'"]+)['"]$/);
+        if (lit) key = lit[1];
+        else if (/^[A-Za-z_$][\w$]*$/.test(arg)) {
+          const def = text.match(new RegExp('\\b(?:var|const|let)\\s+' + arg.replace(/\$/g, '\\$') + '\\s*=\\s*[\'"]([^\'"]+)[\'"]'));
+          if (def) key = def[1];
+        } else if (/^[A-Za-z_$][\w$]*\s*\+/.test(arg)) {
+          const name = arg.split('+')[0].trim();
+          const def = text.match(new RegExp('\\b(?:var|const|let)\\s+' + name + '\\s*=\\s*[\'"]([^\'"]+)[\'"]'));
+          if (def) key = def[1];
+        }
+        if (key === null) {
+          /* A wrapper: function writeRaw(key, value) { localStorage.setItem(key, value) }.
+             Resolve every call of the wrapper instead. */
+          const head = text.slice(0, m.index);
+          const heads = /function\s+([A-Za-z_$][\w$]*)\s*\(\s*([A-Za-z_$][\w$]*)[^)]*\)\s*\{/g;
+          let fn = null, hm;
+          while ((hm = heads.exec(head))) fn = hm;        /* the nearest function above the write */
+          if (fn && fn[2] === arg) {
+            const calls = new RegExp('\\b' + fn[1] + '\\(\\s*([^,)]+?)\\s*[,)]', 'g');
+            let c, any = false;
+            while ((c = calls.exec(text))) {
+              if (c.index === fn.index) continue;
+              const a = c[1].trim();
+              if (a === fn[2]) continue;               /* the definition itself */
+              any = true;
+              const l2 = a.match(/^['"]([^'"]+)['"]$/);
+              let k2 = l2 ? l2[1] : null;
+              if (!k2 && /^[A-Za-z_$][\w$]*$/.test(a)) {
+                const d2 = text.match(new RegExp('\\b(?:var|const|let)\\s+' + a.replace(/\$/g, '\\$') + '\\s*=\\s*[\'"]([^\'"]+)[\'"]'));
+                if (d2) k2 = d2[1];
+              }
+              if (!k2 && /^[A-Za-z_$][\w$]*\s*\[/.test(a)) {
+                /* LEGACY_KEYS[i]: an array of literals */
+                const name = a.split('[')[0].trim();
+                const d3 = text.match(new RegExp('\\b(?:var|const|let)\\s+' + name + '\\s*=\\s*\\[([^\\]]*)\\]'));
+                if (d3) { (d3[1].match(/['"]([^'"]+)['"]/g) || []).forEach(q => { const kk = q.slice(1, -1); if (!okKey(kk)) stray.push(rel + ': ' + kk); }); k2 = 'resolved'; }
+              }
+              if (k2 === null) unresolved.push(rel + ': ' + fn[1] + '(' + a + ')');
+              else if (k2 !== 'resolved' && !okKey(k2)) stray.push(rel + ': ' + k2);
+            }
+            if (!any) unresolved.push(rel + ': ' + arg);
+          } else unresolved.push(rel + ': ' + arg);
+        }
+        else if (!okKey(key)) stray.push(rel + ': ' + key);
+      }
+    });
+    checkTrue('every localStorage.setItem in the repo resolves to a known key', unresolved.length === 0, unresolved.join('; '));
+    checkTrue('every stored key starts with a backed-up prefix (the static drift guard)', stray.length === 0, stray.join('; '));
+    /* The audit's list, pinned: a key that appears here for the first time
+       is a key the backup now carries, and this says so out loud. */
+    const known = ['slaf.household.v2', 'slaf.snapshots.v1', 'slaf.household.unreadable', 'slaf.prefs.v1', 'slaf.scenarios.v1', 'slaf.skilltree.seen', 'slaf.backup.undo.v1', 'slaf.errlog.v1', 'dnd.character.v1', 'dnd.skin.v1'];
+    const seen = new Set();
+    files.forEach(p => {
+      const text = fs.readFileSync(p, 'utf8');
+      (text.match(/['"](?:slaf|dnd)\.[a-zA-Z0-9_.-]+['"]/g) || []).forEach(k => {
+        const key = k.slice(1, -1);
+        if (/localStorage/.test(text)) seen.add(key);
+      });
+    });
+    const persistent = ['slaf.lens', 'slaf.seed.', 'slaf.budget.return', 'slaf.dash.3d', 'slaf.profile', 'slaf.profile.v1', 'sparks.profile'];
+    const unknown = Array.from(seen).filter(k => known.indexOf(k) === -1 && persistent.indexOf(k) === -1);
+    checkTrue('no localStorage key literal outside the audited list (add it to `known` on purpose)', unknown.length === 0, unknown.join(', '));
+    done();
+  }
+
+  /* ---- Save ------------------------------------------------------------ */
+  {
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({ label: 'You', role: 'adult' }));
+    const seed = {
+      'slaf.household.v2': JSON.stringify(h),
+      'slaf.snapshots.v1': '[]',
+      'slaf.prefs.v1': '{"sidebar.open":true}',
+      'slaf.scenarios.v1': '{"pinned":[]}',
+      'slaf.skilltree.seen': '{"a":1}',
+      'dnd.character.v1': '{"name":"Rook"}',
+      'dnd.skin.v1': 'parchment',
+      'slaf.backup.undo.v1': '{"at":"x","keys":{}}',
+      '__slaf_probe__': '1',
+      'somebody.else': 'not ours'
+    };
+    const { Backup } = fresh(seed);
+    check('keys() lists the seven owned keys, sorted, and nothing else', Backup.keys().join(','), 'dnd.character.v1,dnd.skin.v1,slaf.household.v2,slaf.prefs.v1,slaf.scenarios.v1,slaf.skilltree.seen,slaf.snapshots.v1');
+    const b = Backup.build('2026-09-10T12:00:00Z');
+    check('format', b.format, 'money-rooms-backup');
+    check('backupVersion', b.backupVersion, 1);
+    check('appVersion carries the version and the build stamp', b.appVersion, Schema.APP_VERSION + ' (' + Schema.BUILD + ')');
+    check('schemaVersion', b.schemaVersion, Schema.SCHEMA_VERSION);
+    check('savedAt', b.savedAt, '2026-09-10T12:00:00.000Z');
+    check('every owned key is in the file', Object.keys(b.keys).length, 7);
+    checkTrue('a JSON value is carried as json', b.keys['slaf.prefs.v1'].json['sidebar.open'] === true);
+    checkTrue('a plain string is carried as text, unchanged', b.keys['dnd.skin.v1'].text === 'parchment');
+    checkTrue('the undo stash, the probe and a stranger key are not in the file', !b.keys['slaf.backup.undo.v1'] && !b.keys.__slaf_probe__ && !b.keys['somebody.else']);
+    check('filename', Backup.filename('2026-09-10T12:00:00Z'), 'money-rooms-backup-2026-09-10.json');
+    checkTrue('toJSON is the file, pretty', /^\{\n  "format": "money-rooms-backup"/.test(Backup.toJSON()));
+    check('drift() names only the stranger key', Backup.drift().join(','), 'somebody.else');
+    checkTrue('the drift guard is silent off a dev host', Backup.isDev() === false && Backup.driftGuard().length === 0);
+    global.location = { protocol: 'http:', hostname: 'localhost' };
+    let warned = '';
+    const w = console.warn; console.warn = (m) => { warned = m; };
+    const stray = Backup.driftGuard();
+    console.warn = w; delete global.location;
+    check('on a dev host the guard returns the stray key', stray.join(','), 'somebody.else');
+    checkTrue('and says which, and what to do', /somebody\.else/.test(warned) && /in no backup/.test(warned));
+    done();
+  }
+
+  /* ---- Load: counts, apply, undo --------------------------------------- */
+  {
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({ label: 'You', role: 'adult' }));
+    const source = fresh({
+      'slaf.household.v2': JSON.stringify(h), 'slaf.snapshots.v1': '[]', 'slaf.prefs.v1': '{"a":1}', 'dnd.skin.v1': 'parchment'
+    });
+    const file = source.Backup.toJSON('2026-09-10T12:00:00Z');
+    done();
+
+    /* The second device: one key the same, one different, one missing, one extra. */
+    const target = fresh({ 'slaf.prefs.v1': '{"a":1}', 'dnd.skin.v1': 'ink', 'slaf.scenarios.v1': '{"pinned":[1]}', 'slaf.backup.undo.v1': 'stale' });
+    const B = target.Backup, S = target.s;
+    const check1 = B.inspect(file);
+    checkTrue('inspect ok', check1.ok, check1.reason);
+    check('kind', check1.kind, 'backup');
+    check('counts: 2 added (household, snapshots), 1 replaced (skin), 1 same (prefs), 1 removed (scenarios)', JSON.stringify(check1.counts), '{"add":2,"overwrite":1,"same":1,"remove":1}');
+    check('savedAt read back', check1.savedAt, '2026-09-10T12:00:00.000Z');
+    check('the sentence', B.countsSentence(check1.counts), 'It adds 2 things, replaces 1 thing and removes 1 thing, and leaves 1 thing as they are.');
+    checkTrue('inspect touched nothing', S.store['dnd.skin.v1'] === 'ink' && S.store['slaf.scenarios.v1'] === '{"pinned":[1]}');
+
+    const r = B.apply(file);
+    checkTrue('apply ok', r.ok, r.reason);
+    check('storage now matches the file: skin', S.store['dnd.skin.v1'], 'parchment');
+    check('storage now matches the file: household', S.store['slaf.household.v2'], JSON.stringify(h));
+    checkTrue('the key the file lacked is gone', !('slaf.scenarios.v1' in S.store));
+    check('every owned key equals the source', B.keys().join(','), 'dnd.skin.v1,slaf.household.v2,slaf.prefs.v1,slaf.snapshots.v1');
+    const u = B.undoAvailable();
+    checkTrue('an undo is available with the count of what was there', !!u && u.count === 3);
+    const back = B.undo();
+    checkTrue('undo ok', back.ok, back.reason);
+    check('undo put the old skin back', S.store['dnd.skin.v1'], 'ink');
+    check('undo put the removed key back', S.store['slaf.scenarios.v1'], '{"pinned":[1]}');
+    checkTrue('undo removed what the load added', !('slaf.household.v2' in S.store) && !('slaf.snapshots.v1' in S.store));
+    checkTrue('and there is nothing left to undo', B.undoAvailable() === null && B.undo().ok === false);
+    checkTrue('a stale stash reads as nothing to undo', (S.store['slaf.backup.undo.v1'] = 'stale', B.undoAvailable() === null));
+    delete S.store['slaf.backup.undo.v1'];
+
+    /* Round trip: load, then save, is the same file body. */
+    B.apply(file);
+    const again = JSON.parse(B.toJSON('2026-09-10T12:00:00Z'));
+    check('save after load reproduces the file byte for byte', JSON.stringify(again.keys), JSON.stringify(JSON.parse(file).keys));
+    done();
+  }
+
+  /* ---- Refusals: a readable sentence, storage untouched ----------------- */
+  {
+    const seed = { 'slaf.prefs.v1': '{"a":1}', 'dnd.skin.v1': 'ink' };
+    const { Backup: B, s: S } = fresh(Object.assign({}, seed));
+    const before = JSON.stringify(S.store);
+    const good = (function () { const t = fresh({ 'slaf.prefs.v1': '{"b":2}' }); const f = t.Backup.toJSON(); done(); return f; })();
+    global.localStorage = S; global.SLAF = { Schema: Schema };
+    const cases = [
+      ['', 'empty', /empty/],
+      [good.slice(0, Math.floor(good.length / 2)), 'truncated', /not readable/],
+      ['{"weather":"fine","rows":[1,2,3]}', 'random JSON', /not a Money Rooms backup/],
+      ['[1,2,3]', 'a JSON array', /not a Money Rooms backup/],
+      ['"just a string"', 'a JSON string', /not a Money Rooms backup/],
+      [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 99, keys: {} }), 'a newer backup format', /newer build/],
+      [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1, schemaVersion: Schema.SCHEMA_VERSION + 1, keys: {} }), 'a newer schema', /newer build/],
+      [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1, keys: { 'evil.key': { text: 'x' } } }), 'a key outside the prefixes', /does not own/],
+      [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1, keys: { 'slaf.prefs.v1': 5 } }), 'an entry that is neither json nor text', /does not read/],
+      [JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1 }), 'no keys at all', /no data/]
+    ];
+    cases.forEach(([text, name, re]) => {
+      const r = B.inspect(text);
+      checkTrue('refuses ' + name + ' with a sentence', !r.ok && re.test(r.reason) && /Nothing was changed|empty/.test(r.reason), r.reason);
+      const a = B.apply(text);
+      checkTrue('apply refuses ' + name + ' too', !a.ok);
+    });
+    check('storage untouched by every refusal', JSON.stringify(S.store), before);
+    checkTrue('a refusal leaves no undo behind', B.undoAvailable() === null);
+    done();
+  }
+
+  /* ---- A quota failure puts everything back ----------------------------- */
+  {
+    const t = fresh({ 'slaf.prefs.v1': '{"a":1}', 'dnd.skin.v1': 'ink' });
+    const big = JSON.stringify({ format: 'money-rooms-backup', backupVersion: 1, keys: { 'slaf.prefs.v1': { json: { a: 1 } }, 'slaf.household.v2': { text: 'x'.repeat(200) } } });
+    t.s.quota = 150;
+    const r = t.Backup.apply(big);
+    checkTrue('a write that does not fit fails the load with a sentence', !r.ok && /ran out of room/.test(r.reason), r.reason);
+    check('and storage is as it was', JSON.stringify(Object.keys(t.s.store).sort()), '["dnd.skin.v1","slaf.prefs.v1"]');
+    done();
+  }
+
+  /* ---- A household file from Your Data still loads ---------------------- */
+  {
+    const src = fresh({});
+    const h = Schema.createHousehold({});
+    h.people.push(Schema.createPerson({ label: 'Sam', role: 'adult' }));
+    src.Spine.replaceProfile ? src.Spine.replaceProfile(h) : src.s.setItem('slaf.household.v2', JSON.stringify(h));
+    delete require.cache[require.resolve(spinePath)]; global.SLAF.Spine = require(spinePath);
+    const hfile = global.SLAF.Spine.exportJSON();
+    done();
+    const t = fresh({ 'slaf.prefs.v1': '{"keep":true}', 'slaf.household.v2': '{"people":[]}' });
+    const c = t.Backup.inspect(hfile);
+    checkTrue('a household file is recognised', c.ok && c.kind === 'household', c.reason);
+    check('its counts cover the two keys it carries', JSON.stringify(c.counts), '{"add":1,"overwrite":1,"same":0,"remove":0}');
+    const r = t.Backup.apply(hfile);
+    checkTrue('and it loads through the spine', r.ok && r.kind === 'household', r.reason);
+    checkTrue('the household arrived', /Sam/.test(t.s.store['slaf.household.v2']));
+    check('the preferences were left alone', t.s.store['slaf.prefs.v1'], '{"keep":true}');
+    checkTrue('with an undo', t.Backup.undoAvailable() !== null);
+    const back = t.Backup.undo();
+    checkTrue('that puts the old household back', back.ok && t.s.store['slaf.household.v2'] === '{"people":[]}');
+    done();
+  }
+
+  /* ---- The two mount points, and nowhere else --------------------------- */
+  {
+    const rooms = fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html'));
+    const mounted = rooms.filter(f => /SLAF\.Backup\.mount\(/.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8')));
+    check('the widget is on the Ledger and in Settings, nowhere else', mounted.sort().join(','), 'ledger.html,settings.html');
+    mounted.forEach(f => {
+      const html = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+      checkTrue(f + ' loads backup.js after the spine', html.indexOf('shared/backup.js') > html.indexOf('shared/spine-v2.js'));
+      checkTrue(f + ' has a #backup host', /id="backup"/.test(html));
+    });
+    checkTrue('the widget: two buttons, an undo that hides, a status line', /Save a copy/.test(src) && /Load a copy/.test(src) && /data-backup="undo" hidden/.test(src) && /role="status"/.test(src));
+    checkTrue('it asks before loading, with the counts', /countsSentence\(check\.counts\)/.test(src) && /confirm/.test(src));
+    checkTrue('LIVE-FORM declared', /LIVE-FORM: built once/.test(src));
+    checkTrue('no em dash on screen', !/—/.test(src.split('function mount(host')[1] || ''));
+    checkTrue('the styles are in the theme, and vendored', /\.slaf-backup-status\.is-error/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+  }
+
+  /* ---- The build stamp ------------------------------------------------- */
+  {
+    const v = JSON.parse(fs.readFileSync(path.join(ROOT, 'version.json'), 'utf8'));
+    check('version.json version matches Schema.APP_VERSION', v.version, Schema.APP_VERSION);
+    checkTrue('Schema.BUILD is a date and minute, UTC', /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}Z$/.test(Schema.BUILD));
+    check('version.json build matches Schema.BUILD', v.build, Schema.BUILD);
+    checkTrue('every footer prints the version and the build', /' · build ' \+ g\.SLAF\.Schema\.BUILD/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+    checkTrue('the stamp tool exists and writes both files', /var BUILD = /.test(fs.readFileSync(path.join(ROOT, 'tools/stamp-build.js'), 'utf8')) && /version\.json/.test(fs.readFileSync(path.join(ROOT, 'tools/stamp-build.js'), 'utf8')));
+  }
+})();
+
+/* ==========================================================================
+   G1: protect the data (D-204)
+   ========================================================================== */
+
+section('G1: local days, the build gate, persistence, automatic snapshots (D-204)');
+
+(function () {
+  const { execFileSync } = require('child_process');
+  const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+  const backupPath = path.join(ROOT, 'shared/backup.js');
+
+  /* ---- 3. Dates on the person's clock ------------------------------------ */
+  check('localDay formats a Date in local time', Schema.localDay(new Date(2026, 7, 31, 23, 30)), '2026-08-31');
+  check('localMonth too', Schema.localMonth(new Date(2026, 7, 31, 23, 30)), '2026-08');
+  check('a day string passes through', Schema.localDay('2026-02-03'), '2026-02-03');
+  check('a timestamp string keeps its day', Schema.localDay('2026-02-03T23:59:00'), '2026-02-03');
+  check('nonsense is null, never a date', Schema.localDay('soon'), null);
+  check('isoDayUTC formats UTC parts for day arithmetic', Schema.isoDayUTC(new Date(Date.UTC(2026, 0, 31))), '2026-01-31');
+  /* The clock at 11:30pm on Aug 31 in New York. A child process, because
+     TZ must be set before the first Date in a process. */
+  const script = `
+    const S = require(${JSON.stringify(path.join(ROOT, 'shared/schema.js'))});
+    const Sp = require(${JSON.stringify(spinePath)});
+    const d = new Date(2026, 7, 31, 23, 30);
+    console.log(JSON.stringify({ utc: d.toISOString().slice(0, 10), day: S.localDay(d), month: S.localMonth(d), file: Sp.exportFilename(d), tz: Intl.DateTimeFormat().resolvedOptions().timeZone }));`;
+  const out = JSON.parse(execFileSync(process.execPath, ['-e', script], { env: Object.assign({}, process.env, { TZ: 'America/New_York' }), encoding: 'utf8' }).trim());
+  check('the child ran in New York', out.tz, 'America/New_York');
+  check('UTC would have said September', out.utc, '2026-09-01');
+  check('localDay says Aug 31', out.day, '2026-08-31');
+  check('localMonth says August', out.month, '2026-08');
+  check('the export filename carries Aug 31', out.file, 'slaf-household-2026-08-31.json');
+  /* The lint: no UTC slice of the clock anywhere the app runs. */
+  {
+    const files = [];
+    function walk(dir) {
+      fs.readdirSync(dir).forEach(f => {
+        const p = path.join(dir, f);
+        if (f === 'node_modules' || f === 'vendor' || f === '.git') return;
+        if (fs.statSync(p).isDirectory()) walk(p); else if (/\.(js|html)$/.test(f)) files.push(p);
+      });
+    }
+    ['index.html', 'map.html', 'foo-ladder.js'].forEach(f => { if (fs.existsSync(path.join(ROOT, f))) files.push(path.join(ROOT, f)); });
+    ['rooms', 'shared', 'engines', 'dnd'].forEach(d => { if (fs.existsSync(path.join(ROOT, d))) walk(path.join(ROOT, d)); });
+    const hits = [];
+    files.forEach(p => {
+      const text = fs.readFileSync(p, 'utf8');
+      const re = /toISOString\(\)\s*\.\s*(slice|substr|substring|split)\s*\(/g;
+      let m; while ((m = re.exec(text))) hits.push(path.relative(ROOT, p) + ':' + text.slice(0, m.index).split('\n').length);
+    });
+    checkTrue('no toISOString().slice (or substr, substring, split) anywhere the app runs', hits.length === 0, hits.join(', '));
+  }
+
+  /* ---- 4. The page and the core must agree ------------------------------ */
+  const htmlFiles = [];
+  ['index.html', 'map.html'].forEach(f => { if (fs.existsSync(path.join(ROOT, f))) htmlFiles.push(f); });
+  ['rooms', 'dnd'].forEach(d => fs.readdirSync(path.join(ROOT, d)).filter(f => f.endsWith('.html')).forEach(f => htmlFiles.push(d + '/' + f)));
+  const unstamped = htmlFiles.filter(f => !new RegExp('<meta name="slaf-build" content="' + Schema.BUILD.replace(/[-:. ]/g, m => '\\' + m) + '"/>').test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
+  checkTrue('every one of ' + htmlFiles.length + ' pages carries the same build stamp as the core', unstamped.length === 0, unstamped.join(', '));
+  function fakeStorage(seed) {
+    const store = Object.assign({}, seed || {});
+    return { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; }, key: (i) => Object.keys(store)[i] === undefined ? null : Object.keys(store)[i], get length() { return Object.keys(store).length; }, store };
+  }
+  function freshSpine(seed, pageStamp) {
+    const s = fakeStorage(seed);
+    global.localStorage = s;
+    if (pageStamp !== undefined) global.document = { querySelector: (q) => q === 'meta[name="slaf-build"]' ? { getAttribute: () => pageStamp } : null };
+    delete require.cache[require.resolve(spinePath)];
+    const Spine = require(spinePath);
+    return { s, Spine };
+  }
+  function done() { delete global.localStorage; delete global.document; delete global.SLAF; delete require.cache[require.resolve(spinePath)]; }
+  {
+    const { s, Spine } = freshSpine({}, 'some-older-build');
+    const st = Spine.storageState();
+    check('a page from another build: status stale-page', st.status, 'stale-page');
+    checkTrue('and not writable, naming both builds', st.writable === false && st.pageBuild === 'some-older-build' && st.coreBuild === Schema.BUILD);
+    Spine.ensurePrimaryPerson('You');
+    Spine.set('people.0.age', 31, 'age');
+    checkTrue('a write under a stale page reaches nothing in storage', !('slaf.household.v2' in s.store));
+    check('though the session still reads its own value', Spine.getProfile().people[0].age, 31);
+    done();
+  }
+  {
+    const { s, Spine } = freshSpine({}, Schema.BUILD);
+    checkTrue('the same build: writable', Spine.storageState().writable === true && Spine.storageState().status === 'fresh');
+    Spine.ensurePrimaryPerson('You');
+    checkTrue('and a write lands', 'slaf.household.v2' in s.store);
+    done();
+  }
+  {
+    const { Spine } = freshSpine({});
+    checkTrue('no meta at all (a test, a bare page): writable', Spine.storageState().writable === true && Spine.storageState().pageBuild === null);
+    done();
+  }
+  const wf = fs.readFileSync(path.join(ROOT, '.github/workflows/test.yml'), 'utf8');
+  const pg = fs.readFileSync(path.join(ROOT, '.github/workflows/pages.yml'), 'utf8');
+  checkTrue('the test workflow runs the unit suite, the D&D suite, lane 2 and the browser gates', /node test\/run\.js/.test(wf) && /dnd\/test\/run\.js/.test(wf) && /npm test/.test(wf) && /test\/forms\.js/.test(wf));
+  checkTrue('the Pages workflow waits on the suite and is off until the switch is flipped', /needs: test/.test(pg) && /uses: \.\/\.github\/workflows\/test\.yml/.test(pg) && /PAGES_VIA_ACTIONS/.test(pg));
+  const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('every room says Updating, reload in a moment, on a stale page', /Updating, reload in a moment\./.test(prog) && /stale-page/.test(prog) && /slaf-stale-reload/.test(prog));
+
+  /* ---- 2. Survive Safari ------------------------------------------------ */
+  {
+    const origNav = Object.getOwnPropertyDescriptor(global, 'navigator');
+    let asked = 0;
+    Object.defineProperty(global, 'navigator', { value: { storage: { persist: () => { asked++; return Promise.resolve(true); } } }, configurable: true, writable: true });
+    const recorded = {};
+    global.SLAF = { Prefs: { set: (k, v) => { recorded[k] = v; }, get: (k, d) => (k in recorded ? recorded[k] : d) } };
+    const { Spine } = freshSpine({});
+    Spine.ensurePrimaryPerson('You');
+    Spine.set('people.0.age', 40, 'age');
+    Spine.set('people.0.age', 41, 'age');
+    check('persist() is asked once, on the first write', asked, 1);
+    done();
+    if (origNav) Object.defineProperty(global, 'navigator', origNav); else delete global.navigator;
+    /* The answer arrives on a microtask; test/export.js, which is async, checks it is remembered. */
+    checkTrue('iPhone Safari gets the Home Screen line once, dismissable, never when installed', /Add to Home Screen/.test(prog) && /a2hs\.seen/.test(prog) && /navigator\.standalone === true/.test(prog));
+
+    /* The export nudge. */
+    {
+      const P = {}; global.SLAF = { Schema, Prefs: { set: (k, v) => { P[k] = v; }, get: (k, d) => (k in P ? P[k] : d) } };
+      global.localStorage = fakeStorage({ 'slaf.household.v2': '{}' });
+      delete require.cache[require.resolve(backupPath)];
+      const B = require(backupPath);
+      check('no copy yet: says so', B.exportAgeLine(), 'No copy saved from this browser yet.');
+      B.noteExport('2026-09-01T12:00:00Z');
+      check('today: quiet', B.exportAgeLine('2026-09-01T18:00:00Z'), 'A copy was saved today.');
+      check('twelve days: quiet', B.exportAgeLine('2026-09-13T12:00:00Z'), 'A copy was saved 12 days ago.');
+      check('forty-five days: a nudge', B.exportAgeLine('2026-10-16T12:00:00Z'), 'The last copy is 45 days old. Worth saving a fresh one.');
+      check('the age in days', B.exportAgeDays('2026-10-16T12:00:00Z'), 45);
+      delete require.cache[require.resolve(backupPath)]; delete global.localStorage; delete global.SLAF;
+      ['rooms/data.html', 'index.html'].forEach(f => checkTrue(f + ' records every export and send', (fs.readFileSync(path.join(ROOT, f), 'utf8').match(/noteExport\(\)/g) || []).length >= 2));
+    }
+  }
+  {
+      /* ---- Automatic snapshots before a bulk change ---------------------- */
+      {
+        const { Spine } = freshSpine({});
+        Spine.ensurePrimaryPerson('You');
+        Spine.upsertPerson({ id: Spine.getProfile().people[0].id, employmentStatus: 'employed' });
+        check('no snapshot yet: setting a status the first time is not a change of situation', Spine.listSnapshots().length, 0);
+        Spine.upsertPerson({ id: Spine.getProfile().people[0].id, employmentStatus: 'unemployed' });
+        check('a situation change froze what was there', Spine.listSnapshots().length, 1);
+        check('with its reason', Spine.listSnapshots()[0].reason, 'before-situation-change');
+        Spine.upsertPerson({ id: Spine.getProfile().people[0].id, employmentStatus: 'employed' });
+        check('a second change within a minute does not double up', Spine.listSnapshots().length, 1);
+        const file = JSON.stringify({ format: 'slaf-export', exportVersion: 1, schemaVersion: Schema.SCHEMA_VERSION, household: Schema.createHousehold({}), snapshots: [] });
+        const r = Spine.importJSON(file);
+        checkTrue('an import loads', r.ok, r.reason);
+        const snaps = Spine.listSnapshots();
+        check('the import kept the automatic snapshot even though the file had none', snaps.filter(x => x.reason === 'before-import').length, 1);
+        /* Replace has always made the file's snapshots the snapshots; the
+           one taken just before is the way back to what was replaced. */
+        check('and that is the one snapshot after a replace', snaps.length, 1);
+        done();
+      }
+      {
+        const { Spine } = freshSpine({});
+        check('an empty household takes no automatic snapshot', Spine.autoSnapshot('before-import'), null);
+        done();
+      }
+      {
+        const { Spine } = freshSpine({});
+        Spine.ensurePrimaryPerson('You');
+        const snap = Spine.appendSnapshot({});
+        check('a snapshot the person froze has no reason', snap.reason, null);
+        done();
+      }
+  }
+})();
+
+/* ==========================================================================
+   Phase A: the suggestion engine (D-205)
+   ========================================================================== */
+
+section('Phase A: suggestions, derived and never stored (D-205)');
+
+(function () {
+  const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+  const ownPath = path.join(ROOT, 'shared/ownership.js');
+  const sugPath = path.join(ROOT, 'shared/suggest.js');
+  const lrPath = path.join(ROOT, 'shared/ledger-rows.js');
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const Reference = require(path.join(ROOT, 'shared/reference.js'));
+  const table = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+  const T = {};
+  const FILES = { ledgerRows: 'ledger-rows.json', zipPrefixes: 'zip_prefixes.json', uiBenefits: 'ui_benefits.json', savingsPresets: 'savings_presets.json', federalBrackets: 'federal_brackets_2026.json', stateBrackets: 'state_brackets_2026.json', protectionConventions: 'protection_conventions.json', debtRules: 'debt_rules.json', onepagerDefaults: 'onepager_defaults.json', retirementMilestones: 'retirement_milestones.json', cobraAca: 'cobra_aca_2024.json' };
+  Object.keys(FILES).forEach(k => { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', FILES[k]), 'utf8')); });
+
+  /* ---- The registry rows carry the new fields ------------------------- */
+  const rows = table.rows;
+  const SugSrc = require(sugPath);
+  check('the five first-round rows, with the last pay as the pay question between jobs', rows.filter(r => r.round === 1).map(r => r.id).sort().join(','), 'cashSavings,dob,employmentStatus,grossAnnualIncome,lastPay,zip');
+  checkTrue('every row has a door in D A I T E you', rows.every(r => ['D', 'A', 'I', 'T', 'E', 'you'].indexOf(r.door) !== -1));
+  checkTrue('every row has a level 1 to 4', rows.every(r => [1, 2, 3, 4].indexOf(r.level) !== -1));
+  checkTrue('every row says whether it moves', rows.every(r => typeof r.moves === 'boolean'));
+  const noUnlock = rows.filter(r => !r.unlocks || String(r.unlocks).trim().length < 8).map(r => r.id);
+  checkTrue('field budget: every row names the insight it unlocks (G2.10)', noUnlock.length === 0, noUnlock.join(', '));
+  const badRule = rows.filter(r => r.suggestFrom && !SugSrc.RULES[r.suggestFrom]).map(r => r.id + ':' + r.suggestFrom);
+  checkTrue('every suggestFrom names a rule that exists', badRule.length === 0, badRule.join(', '));
+  const badAsk = rows.filter(r => r.askIn && !Registry.byId(r.askIn)).map(r => r.id + ':' + r.askIn);
+  checkTrue('every askIn names a room in the registry', badAsk.length === 0, badAsk.join(', '));
+  checkTrue('the ZIP table is registered and sourced', Reference.TABLE_FILES.zipPrefixes === 'zip_prefixes.json' && T.zipPrefixes.verify === true && /USPS/.test(T.zipPrefixes.source));
+  checkTrue('every rule reads its numbers from data/, none inline', !/\b(869|0\.02|1500|2200|477)\b/.test(fs.readFileSync(sugPath, 'utf8').split('var RULES')[1].split('/* Rows a rule may read')[0]));
+
+  /* ---- The persona: 27, 12203, between jobs, last pay $95,000, $3,000 cash */
+  function fresh() {
+    const store = {};
+    global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+    [spinePath, ownPath, sugPath, lrPath].forEach(p => delete require.cache[require.resolve(p)]);
+    const Spine = require(spinePath), Own = require(ownPath), Sug = require(sugPath), LR = require(lrPath);
+    LR.use(table);
+    return { Spine, Own, Sug, LR, store };
+  }
+  function done() { [spinePath, ownPath, sugPath, lrPath].forEach(p => delete require.cache[require.resolve(p)]); delete global.localStorage; }
+  {
+    const { Spine, Own, Sug } = fresh();
+    const d = new Date(); d.setFullYear(d.getFullYear() - 27); d.setDate(1);
+    Own.write('dob', Schema.localDay(d));
+    Own.write('zip', '12203');
+    Own.write('employmentStatus', 'unemployed');
+    const p = Spine.getProfile().people[0];
+    Spine.upsertPerson({ id: p.id, unemployment: Object.assign({}, Schema.unemploymentOf(Spine.getProfile()), { lastGrossAnnualCents: 9500000 }) });
+    Own.write('cashSavings', 300000);
+    const h = Spine.getProfile();
+    const before = JSON.stringify(h);
+    const out = Sug.suggestions(h, T);
+    const by = {}; out.forEach(s => { by[s.rowId] = s; });
+    check('persona: state suggested NY', by.state && by.state.value, 'NY');
+    check('persona: unemployment suggested $869 a week', by.unemployment && by.unemployment.value, 86900);
+    checkTrue('persona: employer match and contribution marked N/A', by.employerMatch && by.employerMatch.na && by.contributionPercent && by.contributionPercent.na);
+    check('persona: filing status Single', by.filingStatus && by.filingStatus.value, 'single');
+    check('persona: buffer target 5.4 months', by.bufferMonths && by.bufferMonths.value, 5.4);
+    checkTrue('persona: at least 15 rows carrying suggestions (' + out.length + ')', out.length >= 15);
+    check('persona: nothing written as entered that the persona did not type', JSON.stringify(Spine.getProfile()), before);
+    checkTrue('the benefit leaned on the suggested state and says so', by.unemployment.dependsOn.indexOf('state') !== -1);
+    checkTrue('the marginal rate leaned on filing and state', by.marginalRate && by.marginalRate.dependsOn.indexOf('filingStatus') !== -1 && by.marginalRate.dependsOn.indexOf('state') !== -1);
+    /* Tom: every suggestion names its data/ file, and the file exists. */
+    const bad = out.filter(s => !s.how || !s.sources.length || !s.sources.every(f => /^data\/[a-z0-9_.-]+\.json$/.test(f) && fs.existsSync(path.join(ROOT, f))));
+    checkTrue('Tom: every suggested value has a how line naming an existing data/ file', bad.length === 0, bad.map(s => s.rowId).join(', '));
+    checkTrue('every suggestion is marked suggested, never sure', out.every(s => s.confidence === 'suggested'));
+    /* Empty ≠ zero: a row with no rule and no entry stays out of the list. */
+    checkTrue('a row with no rule is never suggested', !out.some(s => !rows.find(r => r.id === s.rowId).suggestFrom));
+    checkTrue('a row that is entered is never suggested (zip, cash)', !by.zip && !by.cashSavings);
+    /* Confirm: one tap, through the owner, tagged suggested / roughly. */
+    Sug.confirm(by.state);
+    check('confirm wrote the state through the owner', Spine.getProfile().state, 'NY');
+    const m = Schema.meta(Spine.getProfile(), 'state');
+    checkTrue('and stamped it source suggested, confidence roughly', m.source === 'suggested' && m.confidence === 'roughly');
+    const after = Sug.suggestions(Spine.getProfile(), T);
+    checkTrue('once confirmed, the state is no longer suggested and the benefit no longer leans on it', !after.some(s => s.rowId === 'state') && after.find(s => s.rowId === 'unemployment').dependsOn.length === 0);
+    check('confirming an N/A writes nothing', Sug.confirm(by.employerMatch), null);
+    Sug.confirm(by.unemployment);
+    check('confirming the weekly benefit lands on the person', Schema.unemploymentOf(Spine.getProfile()).benefitWeeklyCents, 86900);
+    /* Overlay: a formula may read the suggestions, and knows it did. */
+    const ov = Sug.overlay(Spine.getProfile(), T);
+    checkTrue('overlay applies the rest and lists what it used', ov.used.length >= 8 && ov.household.filingStatus === 'single' && ov.household.variableIncome.bufferMonths === 5.4);
+    check('overlay leaves the stored household alone', Spine.getProfile().filingStatus, null);
+    done();
+  }
+  {
+    const { Spine, Sug } = fresh();
+    check('an empty household gets no suggestions at all', Sug.suggestions(Spine.getProfile(), T).length, 0);
+    done();
+  }
+  /* A card with a balance and no minimum gets a rough minimum, per card. */
+  {
+    const { Spine, Own, Sug } = fresh();
+    Spine.ensurePrimaryPerson('You');
+    Spine.upsertDebt(Schema.createDebt({ id: 'd1', label: 'Visa', type: 'credit_card', balanceCents: 320000, rate: 0.24 }));
+    Spine.upsertDebt(Schema.createDebt({ id: 'd2', label: 'Car', type: 'auto', balanceCents: 900000, rate: 0.06 }));
+    Spine.upsertDebt(Schema.createDebt({ id: 'd3', label: 'Amex', type: 'credit_card', balanceCents: 50000, rate: 0.2, minPaymentCents: 2500 }));
+    const mins = Sug.suggestions(Spine.getProfile(), T).filter(s => s.rowId === 'debtMinPayment');
+    check('one suggestion, for the card without a minimum', mins.map(s => s.itemId).join(','), 'd1');
+    check('2% of $3,200 is $64, above the $25 floor', mins[0].value, 6400);
+    Sug.confirm(mins[0]);
+    check('confirming writes that card’s minimum', Spine.getProfile().debts.find(d => d.id === 'd1').minPaymentCents, 6400);
+    done();
+  }
+  /* Under 26: health cover offered as one tap. */
+  {
+    const { Spine, Own, Sug } = fresh();
+    const d = new Date(); d.setFullYear(d.getFullYear() - 22);
+    Own.write('dob', Schema.localDay(d));
+    const hc = Sug.forRow(Spine.getProfile(), T, 'healthCover');
+    checkTrue('under 26: a parent’s plan is offered as a one-tap question', hc && hc.value === 'parent' && /parent/.test(hc.ask));
+    done();
+  }
+  /* The writers: every non-computed row that the doors or Express may set has a shared write path. */
+  {
+    const { Own } = fresh();
+    const need = rows.filter(r => r.kind !== 'computed' && !/^prefs\./.test(r.path) && r.id !== 'futureIncome' && r.id !== 'age');
+    const missing = need.filter(r => !Own.FIELDS[r.id] || typeof Own.FIELDS[r.id].write !== 'function').map(r => r.id);
+    checkTrue('every enterable row writes through its owner', missing.length === 0, missing.join(', '));
+    const disagree = Own.writable().filter(id => { const o = Own.ownerOf(id); return o && o.agrees === false; });
+    checkTrue('and the registry lists every owner as a writer', disagree.length === 0, disagree.join(', '));
+    done();
+  }
+  const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the Ledger shows a suggested row apart, with use it and the how line', /is-suggested/.test(led) && /use it/.test(led) && /How I guessed this/.test(led) && /Suggest\.confirm\(s\)/.test(led));
+})();
+
+/* ==========================================================================
+   Phases C, C2, D, E: the doors, the levels, the inline asks, the line (D-207)
+   ========================================================================== */
+
+section('The doors, the levels, the inline asks, the understanding line (D-207)');
+
+(function () {
+  const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+  const mods = ['shared/spine-v2.js', 'shared/ownership.js', 'shared/suggest.js', 'shared/ledger-rows.js', 'shared/doors.js', 'shared/ask.js'].map(f => path.join(ROOT, f));
+  const table = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+  const T = { ledgerRows: table };
+  ['zipPrefixes:zip_prefixes.json', 'uiBenefits:ui_benefits.json', 'savingsPresets:savings_presets.json', 'federalBrackets:federal_brackets_2026.json', 'stateBrackets:state_brackets_2026.json', 'protectionConventions:protection_conventions.json', 'debtRules:debt_rules.json', 'onepagerDefaults:onepager_defaults.json', 'retirementMilestones:retirement_milestones.json', 'cobraAca:cobra_aca_2024.json', 'confidenceWeights:confidence_weights.json', 'accessRules:access_rules.json', 'effectiveTaxRates:effective_tax_rates_2026.json', 'staleness:staleness.json']
+    .forEach(kv => { const [k, f] = kv.split(':'); T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')); });
+  function fresh() {
+    const store = {};
+    global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+    mods.forEach(p => delete require.cache[require.resolve(p)]);
+    const Spine = require(spinePath), Own = require(mods[1]), Sug = require(mods[2]), LR = require(mods[3]), Doors = require(mods[4]), Ask = require(mods[5]);
+    LR.use(table);
+    return { Spine, Own, Sug, LR, Doors, Ask };
+  }
+  function done() { mods.forEach(p => delete require.cache[require.resolve(p)]); delete global.localStorage; }
+
+  /* ---- The doors ------------------------------------------------------- */
+  {
+    const { Doors } = fresh();
+    check('six doors: D A I T E You', Doors.DOORS.map(d => d.id).join(','), 'D,A,I,T,E,you');
+    checkTrue('each carries the DAITE say line', Doors.DOORS.slice(0, 5).every(d => /what/.test(d.say)));
+    check('four levels, the same names in every door', Doors.LEVELS.map(l => l.label).join(' | '), 'How much | Where it sits | What it is made of | What it costs and where it came from');
+    checkTrue('every ledger row maps to a door and a level', table.rows.every(r => Doors.byId(r.door) && r.level >= 1 && r.level <= 4));
+    done();
+  }
+  /* ---- Empty ≠ zero on the headlines ----------------------------------- */
+  {
+    const { Spine, Doors } = fresh();
+    const h = Spine.getProfile();
+    const heads = Doors.DOORS.map(d => Doors.headline(h, T, d.id).display);
+    checkTrue('an empty household: every headline says not entered yet, never $0', heads.every(x => x === 'not entered yet'), heads.join(' | '));
+    check('understanding of nothing is 0%', Doors.understanding(h, T, [], T.confidenceWeights).percent, 0);
+    done();
+  }
+  /* ---- The persona at the doors ------------------------------------------ */
+  {
+    const { Spine, Own, Sug, Doors } = fresh();
+    const d = new Date(); d.setFullYear(d.getFullYear() - 27); d.setDate(1);
+    Own.write('dob', Schema.localDay(d)); Own.write('zip', '12203'); Own.write('employmentStatus', 'unemployed');
+    const p = Spine.getProfile().people[0];
+    Spine.upsertPerson({ id: p.id, unemployment: Object.assign({}, Schema.unemploymentOf(Spine.getProfile()), { lastGrossAnnualCents: 9500000 }) });
+    Own.write('cashSavings', 300000);
+    Spine.upsertDebt(Schema.createDebt({ id: 'visa', label: 'Visa', type: 'credit_card', balanceCents: 320000, rate: 0.24 }));
+    Spine.set('meta.hasDebt', true);
+    let h = Spine.getProfile();
+    let sug = Sug.suggestions(h, T);
+    const rec = Doors.recommend(h, T, sug);
+    check('recommended door: Debt, for the card without a minimum', rec.door, 'D');
+    checkTrue('with the reason in one sentence naming the card', /Visa’s minimum/.test(rec.reason), rec.reason);
+    check('Debt headline: total owed', Doors.headline(h, T, 'D').display, '$3,200');
+    check('Debt door level: 3 (the minimum is still blank, per item)', Doors.levelOf(Doors.rows(h, T, 'D'), h), 3);
+    const dv = Doors.doorView(h, T, 'D', sug);
+    checkTrue('Confirm these holds the card’s suggested minimum', dv.confirm.length === 1 && dv.confirm[0].rowId === 'debtMinPayment' && dv.confirm[0].value === 6400);
+    checkTrue('Add these is at most three rows', dv.add.length <= 3);
+    checkTrue('the level-3 insight: interest a month and the payoff order', dv.insight && /in interest/.test(dv.insight.headline) && /Visa/.test(dv.insight.line), dv.insight && dv.insight.headline);
+    const u = Doors.understanding(h, T, sug, T.confidenceWeights);
+    checkTrue('the understanding line is a percent between 1 and 99 for a half-filled household (' + u.percent + '%)', u.percent > 0 && u.percent < 100);
+    /* Weighted: a confirmed suggestion moves it up, by the weights file. */
+    const before = u.byDoor.T.sum;
+    Sug.confirm(sug.find(s => s.rowId === 'state'));
+    h = Spine.getProfile(); sug = Sug.suggestions(h, T);
+    const after = Doors.understanding(h, T, sug, T.confidenceWeights).byDoor.T.sum;
+    checkTrue('confirming a suggestion raises the Taxes door’s weight (suggested 0.5 → roughly 0.85)', Math.abs((after - before) - 0.35) < 0.001, before + ' → ' + after);
+    checkTrue('a suggestion counts more than a blank and less than confirmed', T.confidenceWeights.rowStates.missing < T.confidenceWeights.rowStates.suggested && T.confidenceWeights.rowStates.suggested < T.confidenceWeights.rowStates.sure);
+    /* You door headline: situation, never a number. */
+    check('You headline: the situation', Doors.headline(h, T, 'you').display, 'Unemployed');
+    done();
+  }
+  /* ---- The Roth test (C2) ------------------------------------------------- */
+  {
+    const { Spine, Doors } = fresh();
+    Spine.ensurePrimaryPerson('You');
+    Spine.upsertAsset(Schema.createAsset({ id: 'r1', label: 'Roth IRA', category: 'retirement', taxCharacter: 'roth', valueCents: 1800000 }));
+    let ins = Doors.levelInsight(Spine.getProfile(), T, 'A', 4, []);
+    checkTrue('a Roth with contributions blank: the level-4 insight says rough and names the missing number', ins && ins.rough && /not known yet/.test(ins.headline) && /contributions to Roth IRA/.test(ins.missing.join(',')), ins && ins.headline);
+    checkTrue('and never assumes zero', !/\$0/.test(ins.headline));
+    Spine.upsertAsset({ id: 'r1', costBasisCents: 1500000 });
+    ins = Doors.levelInsight(Spine.getProfile(), T, 'A', 4, []);
+    checkTrue('with contributions known: the insight uses the basis', ins && !ins.rough && ins.headline === '$15,000 of Roth money reachable now', ins && ins.headline);
+    Spine.upsertAsset({ id: 'r1', costBasisCents: 2000000 });
+    ins = Doors.levelInsight(Spine.getProfile(), T, 'A', 4, []);
+    check('basis above value: capped at the value', ins.headline, '$18,000 of Roth money reachable now');
+    const dv = Doors.doorView(Spine.getProfile(), T, 'A', []);
+    checkTrue('the door shows the deeper insight even while on an earlier level', dv.insights.some(i => i.level === 4));
+    done();
+  }
+  /* ---- The inline ask (D) ------------------------------------------------- */
+  {
+    const { Spine, Sug, Ask } = fresh();
+    Spine.ensurePrimaryPerson('You');
+    check('a room with nothing to ask gets nothing', Ask.pick(Spine.getProfile(), 'quick-math', T, []), null);
+    Spine.upsertDebt(Schema.createDebt({ id: 'visa', label: 'Visa', type: 'credit_card', balanceCents: 320000, rate: 0.24 }));
+    Spine.upsertDebt(Schema.createDebt({ id: 'car', label: 'Car', type: 'auto', balanceCents: 900000, rate: 0.06, minPaymentCents: 30000 }));
+    Spine.set('meta.hasDebt', true);
+    const h = Spine.getProfile();
+    const sug = Sug.suggestions(h, T);
+    const p = Ask.pick(h, 'debt-payoff', T, sug);
+    checkTrue('Debt Payoff asks the card’s real minimum, and only that card', p && p.row.id === 'debtMinPayment' && p.item.id === 'visa', p && p.row.id + ':' + (p.item && p.item.id));
+    checkTrue('with the suggestion beside it', p.suggestion && p.suggestion.value === 6400);
+    /* D-250: those two rooms want level-3 and level-4 rows, and this
+       household has its doors at level 1, so by default they ask nothing;
+       the askDeeper switch lets them. */
+    const Features = require(path.join(ROOT, 'shared/features.js'));
+    Features.use(require(path.join(ROOT, 'data/features.json')));
+    check('the estate room asks nothing while the you door is at level 1', Ask.pick(h, 'estate', T, sug), null);
+    Features.set('askDeeper', true);
+    checkTrue('with the deeper switch on, the estate room asks a will, POA or beneficiaries', ['willExists', 'poaExists', 'beneficiariesSet'].indexOf(Ask.pick(h, 'estate', T, sug).row.id) !== -1);
+    checkTrue('and the FI room asks allocation', /^allocation/.test(Ask.pick(h, 'fire', T, sug).row.id));
+    Features.set('askDeeper', null);
+    check('parses money', Ask.parse({ unit: 'cents' }, '1,200'), 120000);
+    check('parses a rate typed as a percent', Ask.parse({ unit: 'rate' }, '24.99'), 0.2499);
+    check('and a rate typed as a fraction', Ask.parse({ unit: 'rate' }, '0.06'), 0.06);
+    check('a blank is null, never zero', Ask.parse({ unit: 'cents' }, ''), null);
+    done();
+  }
+  const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('the ask mounts from Progress.mount, so no room needs wiring, never on the Ledger or Start Here', /Ask\.mount\(roomId, host\)/.test(prog) && /\['ledger', 'start'\]/.test(prog));
+  const askSrc = fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8');
+  checkTrue('the ask writes through the owner and declares LIVE-FORM (setNotSure is a mark, never a value)', /Ownership\.write\(p\.row\.id, value, ctx\)/.test(askSrc) && /LIVE-FORM: built once/.test(askSrc) && !/Spine\.(set(?!NotSure)|upsert)/.test(askSrc));
+  checkTrue('at most one ask per visit', /doc\.getElementById\('slaf-ask'\)\) return null/.test(askSrc));
+  const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the Ledger home asks which door, shows six, one recommended with its reason', /Which one do you want to go into now\?/.test(led) && /id="door-you"/.test(led) && /is-recommended/.test(led) && /rec\.reason/.test(led));
+  checkTrue('a door shows the level, the next level’s unlocks, Confirm these, Add these, N more unlock', /Confirm these/.test(led) && /Add these/.test(led) && /more unlock as you use the app/.test(led) && /Level ' \+ v\.level \+ ' of 4/.test(led));
+  /* D-241: the line says what the APP holds, not what the person understands
+     — the figure counts boxes, and someone avoiding their money understands
+     it perfectly well. At zero it says nothing at all, because there it is
+     not a measure of progress, only a verdict on someone who has typed
+     nothing yet. */
+  checkTrue('the understanding line reads the weights file, and only its number is written', /Doors\.understanding\(h, TABLES, SUGLIST, TABLES\.confidenceWeights\)/.test(led) && /This app holds <b id="understand-pct">/.test(led) && /el\('understand-pct'\)\.textContent/.test(led));
+  checkTrue('… and it does not greet an empty household with a zero', /el\('understand'\)\.hidden = u\.percent === 0/.test(led));
+  checkTrue('… nor does a room that has nothing in it yet open with a count and a list', /Nothing entered here yet\. /.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+  checkTrue('the spheres are kept, under a fold, not deleted', /id="spheres-fold"/.test(led) && /Spheres\.state\(/.test(led) && fs.existsSync(path.join(ROOT, 'data/spheres.json')));
+  checkTrue('search still finds any row', /LedgerRows\.rows\(Spine\.getProfile\(\), TABLES, \{ filter: 'all', query: query \}\)/.test(led));
+})();
+
+/* ==========================================================================
+   Phase F: Express, the whole form at once (D-208)
+   ========================================================================== */
+
+section('All at once: a second view of the same rows (D-208, a Ledger view since D-230)');
+
+(function () {
+  const html = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  const Registry = require(path.join(ROOT, 'shared/registry.js'));
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  checkTrue('Express is a view of the Ledger now, and the old page redirects', !Registry.byId('express')
+    && /url=ledger\.html#all-at-once/.test(fs.readFileSync(path.join(ROOT, 'rooms/express.html'), 'utf8')));
+  checkTrue('the Ledger is the one door under Home, a utility, owning nothing it writes', (function () { const r = Registry.byId('ledger'); return r && r.group === 'home' && r.utility === true && r.daite.writes.every(pth => !Registry.writersOf(pth).length || true); })());
+  checkTrue('every write goes through Ownership.write or Ownership.addItem, never the spine', /Ownership\.write\(n\.row\.id, value, ctx\)/.test(html) && /Ownership\.addItem\(L\.kind, fields\)/.test(html) && !/Spine\.(set|upsert|batch|updateProfile)\(/.test(html.slice(html.indexOf('</main>'))));
+  checkTrue('built once, declared', /LIVE-FORM: built once/.test(html) && /Nothing is rebuilt while a finger is in a box/.test(html));
+  checkTrue('no submit button; each field saves on change', !/type="submit"/.test(html) && /form\.addEventListener\('change'/.test(html));
+  checkTrue('six door shells with the registry’s ids, each level a fold open by default', ['D', 'A', 'I', 'T', 'E', 'you'].every(d => new RegExp('<details class="xdoor" id="x-' + d + '" open>').test(html)) && /details class="xlvl" id="x-' \+ esc\(d\.id\) \+ '-' \+ L \+ '" open/.test(html));
+  checkTrue('rows that stop applying are hidden, never rebuilt or cleared', /n\.el\.hidden = !applies/.test(html) && !/innerHTML = ''/.test(html.split('function paintApplies')[1].split('function paintSuggestions')[0]));
+  checkTrue('a suggestion is a chip beside the box, never typed into it', /Suggested ' \+ esc\(s\.display\) \+ ' · use it/.test(html) && /data-x-use/.test(html));
+  checkTrue('a sticky bar carries the understanding line and a jump menu', /class="xbar"/.test(html) && /position: sticky/.test(html) && /id="xjump"/.test(html) && /Doors\.understanding\(/.test(html));
+  checkTrue('lists are repeatable: debts, accounts, sources, yearly lines each get + Add another', /\+ Add another/.test(html) && /debts: \{ kind: 'debt'/.test(html) && /assets: \{ kind: 'asset'/.test(html) && /incomeSources: \{ kind: 'incomeSource'/.test(html) && /annualLines: \{ kind: 'annualLine'/.test(html));
+  checkTrue('a list item is named by lender and last four, never Card 1', /data-x-add-last4/.test(html) && /' ••' \+ last4/.test(html) && !/Card 1/.test(html));
+  checkTrue('every box carries its unit (gross or net, the period) beside it, from the one reader', /Ask\.unitHtml\(row, null, 'data-x-period'\)/.test(html) && /LedgerRows\.unitLabel\(row\)/.test(html));
+  checkTrue('an emptied box writes null, never zero', /if \(before !== null && before !== undefined\) write\(n, null, 'typed'\)/.test(html));
+  checkTrue('the one parser: Ask.parse, shared with the inline ask', /Ask\.parse\(row, raw\)/.test(html));
+  checkTrue('the front door offers both: walk me through it, give me the whole form; fi defaults to all at once', (function () { const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'); return /Walk me through it/.test(idx) && /Give me the whole form/.test(idx) && /Prefs\.get\('door', null\) === 'fi'/.test(idx) && /ledger\.html#all-at-once/.test(idx); })());
+  checkTrue('addItem goes through the list owner and the registry agrees', ['debt', 'asset', 'incomeSource', 'annualLine'].every(k => Own.LISTS[k] && Registry.writersOf(Own.LISTS[k].path).indexOf(Own.LISTS[k].owner) !== -1));
+  checkTrue('the Ledger, which is all six of them, is in every arrangement', (function () { const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts; return L.every(l => l.groups.some(g => g.rooms.indexOf('ledger') >= 0)) && !JSON.stringify(L).match(/"(express|first-round|doors|walk|refresh|comeback)"/); })());
+})();
+
+/* ==========================================================================
+   G2: numbers that stay trustworthy (D-209)
+   ========================================================================== */
+section('G2: moving rows, the life-change sheet, not sure yet and from memory, units (D-209)');
+(function () {
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ask = require(path.join(ROOT, 'shared/ask.js'));
+  const Reopen = require(path.join(ROOT, 'shared/reopen.js'));
+  const Doors = require(path.join(ROOT, 'shared/doors.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  const T = Ref.loadSync ? Ref.loadSync() : (function () { const o = {}; Object.keys(Ref.TABLE_FILES).forEach(k => { try { o[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } }); return o; })();
+  LR.use(T.ledgerRows);
+  const rowsTable = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+
+  /* -- 5. moves: every row says, and the moving list is what the refresh walks */
+  checkTrue('every row says whether it moves', rowsTable.rows.every(r => r.moves === true || r.moves === false));
+  checkTrue('balances, rates and spending move', ['cashSavings', 'debtBalance', 'debtRate', 'foodMonthly', 'grossAnnualIncome'].every(id => LR.byId(id).moves === true));
+  checkTrue('age, ZIP and filing status do not', ['dob', 'zip', 'filingStatus', 'state', 'employmentStatus'].every(id => LR.byId(id).moves === false));
+  const hd = Demo.build();
+  const mv = LR.moving(hd, T);
+  checkTrue('the demo household has moving lines with a value', mv.length >= 5);
+  checkTrue('one line per debt, keyed by row and item', mv.filter(m => m.row.id === 'debtBalance').length === hd.debts.length && mv.filter(m => m.row.id === 'debtBalance').every(m => m.key === 'debtBalance:' + m.item.id));
+  checkTrue('no computed row is asked', mv.every(m => m.row.kind !== 'computed'));
+  checkTrue('no fixed row is asked', mv.every(m => m.row.moves === true));
+  checkTrue('a blank moving row is not in the list (it is a door’s question)', mv.every(m => Money.isEntered(m.value)));
+  const refresh = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('since last time walks LedgerRows.moving, built once, and writes through the owner with the item id', /LedgerRows\.moving\(h, TABLES\)/.test(refresh) && /LIVE-FORM: built once/.test(refresh) && /Ownership\.write\(r\.row\.id, v, r\.item \? \{ itemId: r\.item\.id \} : null\)/.test(refresh));
+  checkTrue('an unchanged figure is re-confirmed, an empty box writes nothing', /else Spine\.confirm\(r\.row\.id\)/.test(refresh) && /if \(raw === ''\) return;/.test(refresh));
+  checkTrue('a since-last-time line per row, from the last snapshot’s rows', /data-moved/.test(refresh) && /LAST\.rows\[r\.key\]/.test(refresh) && /reason: 'since-last-time'/.test(refresh));
+  checkTrue('the snapshot record carries rows', /rows: \(entry && entry\.rows\) \|\| null/.test(fs.readFileSync(path.join(ROOT, 'shared/spine-v2.js'), 'utf8')));
+
+  /* -- 7. two more states besides blank ----------------------------------- */
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.reset && Spine.reset();
+  Spine.updateProfile(Schema.createHousehold());
+  Spine.ensurePrimaryPerson && Spine.ensurePrimaryPerson('You');
+  Spine.setNotSure('healthMonthly', { expectedBy: '2027-01' });
+  let h = Spine.getProfile();
+  check('not sure yet is a mark with the month, never a value', JSON.stringify(Schema.notSure(h, 'healthMonthly')).indexOf('"expectedBy":"2027-01"') > 0, true);
+  check('the row still reads incomplete, never zero', Money.isOk(Own.FIELDS.healthMonthly.read(h)), false);
+  const st = LR.status(h, LR.byId('healthMonthly'), T);
+  check('its state is notSure', st.state, 'notSure');
+  checkTrue('a bad month is dropped, the mark kept', (Spine.setNotSure('givingTarget', { expectedBy: 'soon' }) || {}).expectedBy === null);
+  checkTrue('it is not asked again before the month (parked)', Ask.parked(Spine.getProfile(), 'healthMonthly') === true);
+  Spine.setNotSure('healthMonthly', { expectedBy: '2020-01' });
+  checkTrue('a month that has passed reopens the question', Ask.parked(Spine.getProfile(), 'healthMonthly') === false);
+  Own.write('healthMonthly', 40000);
+  h = Spine.getProfile();
+  check('a value clears the mark', Schema.notSure(h, 'healthMonthly'), null);
+  check('and the row is sure', LR.status(h, LR.byId('healthMonthly'), T).state, 'sure');
+  Spine.tagWrite({ source: 'memory', confidence: 'roughly' });
+  Own.write('foodMonthly', 60000);
+  h = Spine.getProfile();
+  check('from memory is its own state', LR.status(h, LR.byId('foodMonthly'), T).state, 'memory');
+  check('with its value read as entered', Own.FIELDS.foodMonthly.read(h).value, 60000);
+  Spine.confirm('foodMonthly');
+  check('confirming lifts it to sure', LR.status(Spine.getProfile(), LR.byId('foodMonthly'), T).state, 'sure');
+  const W = T.confidenceWeights.rowStates;
+  checkTrue('both count for more than blank and less than confirmed', W.missing < W.notSure && W.notSure < W.memory && W.memory < W.sure);
+  checkTrue('not sure yet counts less than a suggestion, from memory less than roughly', W.notSure < W.suggested && W.memory < W.roughly);
+  /* the understanding line uses them */
+  const h2 = Schema.createHousehold(); h2.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })];
+  const u0 = Doors.understanding(h2, T, [], T.confidenceWeights).percent;
+  h2.meta.notSure = { cashSavings: { at: '2026-09-01T00:00:00Z', expectedBy: null } };
+  const u1 = Doors.understanding(h2, T, [], T.confidenceWeights).percent;
+  checkTrue('a not-sure mark raises the line a little, from nothing', u1 >= u0);
+  checkTrue('the item mark clears when the item gets a value', (function () {
+    Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+    const d = Own.addItem('debt', { label: 'Amex ••1003', type: 'credit_card' });
+    Spine.setNotSure('debtMinPayment:' + d.id, null); Spine.setNotSure('debtMinPayment:' + d.id, { expectedBy: null });
+    const p = Ask.pick(Spine.getProfile(), 'debt-payoff', T, []);
+    const parked = !p || p.row.id !== 'debtMinPayment';
+    Own.write('debtMinPayment', 6400, { itemId: d.id });
+    return parked && Schema.notSure(Spine.getProfile(), 'debtMinPayment:' + d.id) === null;
+  })());
+
+  /* -- 6. a life change reopens only what it touches ---------------------- */
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+  Own.write('employmentStatus', 'unemployed');
+  Own.write('cashSavings', 300000);
+  Own.write('zip', '12203');
+  check('no sheet before a change', Spine.reopenPending(), null);
+  Own.write('employmentStatus', 'employed');
+  const rec = Spine.reopenPending();
+  checkTrue('the change is recorded: from, to, when', rec && rec.field === 'employmentStatus' && rec.from === 'unemployed' && rec.to === 'employed' && typeof rec.at === 'string' && rec.dismissed === false);
+  h = Spine.getProfile();
+  check('cash was not cleared', Own.FIELDS.cashSavings.read(h).value, 300000);
+  check('the ZIP was not cleared', h.zip, '12203');
+  const rr = Reopen.rows(h, rec, T).map(r => r.id);
+  checkTrue('between jobs → working asks pay, the match, the workplace contribution and the health plan', ['grossAnnualIncome', 'employerMatch', 'contributionPercent', 'healthCover'].every(id => rr.indexOf(id) >= 0), rr.join(','));
+  checkTrue('and nothing that did not change meaning', ['cashSavings', 'zip', 'dob', 'foodMonthly', 'debtBalance'].every(id => rr.indexOf(id) === -1));
+  checkTrue('rows that no longer apply are not on the sheet', rr.indexOf('unemployment') === -1 && rr.indexOf('lastPay') === -1);
+  checkTrue('a computed row never is', rr.every(id => LR.byId(id).kind !== 'computed'));
+  checkTrue('the sheet loads the reopen map from the row registry', rowsTable.reopen.employmentStatus.rows.indexOf('employerMatch') >= 0 && typeof rowsTable.reopen.employmentStatus.why === 'string');
+  Own.write('employmentStatus', 'unemployed');
+  const back = Reopen.rows(Spine.getProfile(), Spine.reopenPending(), T).map(r => r.id);
+  checkTrue('and back: the benefit and the last pay come up, the match does not', back.indexOf('unemployment') >= 0 && back.indexOf('lastPay') >= 0 && back.indexOf('employerMatch') === -1, back.join(','));
+  Spine.setReopen(null);
+  check('Done clears it', Spine.reopenPending(), null);
+  const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('mounted from Progress on the next page, never on the Ledger, where the rows are being entered', /Reopen\.mountLater\(host\)/.test(prog) && /roomId !== 'ledger' && !document\.getElementById\('slaf-reopen'\)/.test(prog));
+  const reopenSrc = fs.readFileSync(path.join(ROOT, 'shared/reopen.js'), 'utf8');
+  checkTrue('the sheet writes through the owner, built once', /D\.Ownership\.write\(n\.row\.id, v, null\)/.test(reopenSrc) && /LIVE-FORM: built once/.test(reopenSrc) && !/Spine\.(set(?!Reopen)|upsert)/.test(reopenSrc));
+
+  /* -- 8. units beside every box, period conversion, percent slips, names -- */
+  const cents = rowsTable.rows.filter(r => r.unit === 'cents' && r.kind !== 'computed');
+  checkTrue('every money row states gross or net or that it is a balance, and the period', cents.every(r => /^(gross|net), (a month|a year|a week|every two weeks)$|^a balance, today$|^a year$/.test(LR.unitLabel(r))), cents.filter(r => !/^(gross|net), |^a balance|^a year$/.test(LR.unitLabel(r))).map(r => r.id + '=' + LR.unitLabel(r)).join(' '));
+  check('gross pay is gross, a year', LR.unitLabel(LR.byId('grossAnnualIncome')), 'gross, a year');
+  check('food is net, a month', LR.unitLabel(LR.byId('foodMonthly')), 'net, a month');
+  check('the benefit is gross, a week', LR.unitLabel(LR.byId('unemployment')), 'gross, a week');
+  check('a balance has no period', LR.period(LR.byId('cashSavings')), null);
+  check('a week to a month: 52 over 12', Money.convertPeriod(50000, 'week', 'month'), 216667);
+  check('a year to a month', Money.convertPeriod(120000, 'year', 'month'), 10000);
+  check('a month to a year', Money.convertPeriod(100000, 'month', 'year'), 1200000);
+  check('every two weeks to a month: 26 over 12', Money.convertPeriod(100000, 'fortnight', 'month'), 216667);
+  check('blank converts to nothing', Money.convertPeriod(null, 'week', 'month'), null);
+  const conv = Ask.toRowPeriod(LR.byId('foodMonthly'), 15000, 'week');
+  check('typed a week into a monthly row: converted before saving', conv.value, 65000);
+  checkTrue('and it says so on screen', /\$150\.00 a week is \$650\.00 a month\./.test(conv.note) || /\$150 a week is \$650 a month\./.test(conv.note), conv.note);
+  check('same period: untouched', Ask.toRowPeriod(LR.byId('foodMonthly'), 15000, 'month').note, null);
+  const s1 = Ask.slip({ unit: 'rate', id: 'debtRate' }, '0.24');
+  checkTrue('0.24 on a rate box asks 24% or 0.24%', s1 && /24% or 0\.24%/.test(s1.question) && s1.options[0].value === 0.24 && s1.options[1].value === 0.0024);
+  const s2 = Ask.slip({ unit: 'rate', id: 'debtRate' }, '2499');
+  checkTrue('2499 asks 24.99%', s2 && s2.options[0].value === 0.2499 && s2.options[1].value === null);
+  check('24.99 reads one way, no question', Ask.slip({ unit: 'rate', id: 'debtRate' }, '24.99'), null);
+  const s3 = Ask.slip({ unit: 'percent', id: 'contributionPercent' }, '0.04');
+  checkTrue('0.04 on the whole-number contribution box offers 4', s3 && s3.options[0].value === 4);
+  check('a money box never asks', Ask.slip({ unit: 'cents' }, '0.5'), null);
+  check('a blank never asks', Ask.slip({ unit: 'rate' }, ''), null);
+  const askSrc2 = fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8');
+  const xp = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the ask and all at once both put the slip question before the write', /data-ask-slipopt/.test(askSrc2) && /data-x-slipopt/.test(xp) && /Ask\.slip\(row, raw\)/.test(xp));
+  checkTrue('both carry Not sure yet and from memory', /data-ask-notsure/.test(askSrc2) && /data-ask-memory/.test(askSrc2) && /data-x-notsure/.test(xp) && /data-x-memory/.test(xp));
+  checkTrue('from memory tags the write, never the value', /tagWrite\(\{ source: 'memory', confidence: 'roughly' \}\)/.test(askSrc2) && /tagWrite\(\{ source: 'memory', confidence: 'roughly' \}\)/.test(xp));
+  checkTrue('the period select beside a money box with a period, in the ask and all at once', /data-ask-period/.test(askSrc2) && /data-x-period/.test(xp) && /Ask\.toRowPeriod\(row, v, per\.value\)/.test(xp));
+
+  /* -- 9. one fact, one question: a row with a value is never asked again -- */
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+  Own.write('employmentStatus', 'employed');
+  const askable = rowsTable.rows.filter(r => r.askIn && r.kind !== 'computed' && !r.repeat && ['cents', 'percent', 'rate', 'months', 'years', 'count', 'bool'].indexOf(r.unit) >= 0 && typeof Own.FIELDS[r.id].write === 'function');
+  const sample = { cents: 12345, percent: 6, rate: 0.05, months: 6, years: 20, count: 2, bool: true };
+  let askedAgain = [];
+  askable.forEach(r => {
+    try { Own.write(r.id, r.unit === 'percent' && r.id !== 'contributionPercent' ? 0.06 : sample[r.unit]); } catch (e) { return; }
+    const p = Ask.pick(Spine.getProfile(), r.askIn, T, []);
+    if (p && p.row.id === r.id) askedAgain.push(r.id);
+  });
+  checkTrue('after a value lands, no room asks that row again (' + askable.length + ' rows tried)', askedAgain.length === 0, askedAgain.join(','));
+  const bad = [];
+  rowsTable.rows.forEach(r => { if (r.askIn && r.kind !== 'computed' && !r.repeat) { const s = LR.status(Spine.getProfile(), r, T); if (s.state !== 'missing' && s.state !== 'notSure' && Ask.pick(Spine.getProfile(), r.askIn, T, []) && Ask.pick(Spine.getProfile(), r.askIn, T, []).row.id === r.id) bad.push(r.id); } });
+  checkTrue('and the ask never picks an entered row', bad.length === 0, bad.join(','));
+
+  /* -- 10. field budget: already the build gate (D-205) -------------------- */
+  checkTrue('every row names what it unlocks', rowsTable.rows.every(r => typeof r.unlocks === 'string' && r.unlocks.length > 0));
+})();
+
+/* ==========================================================================
+   G3 with J1: hardening before anyone else sees it (D-210)
+   ========================================================================== */
+section('G3: hostile files, the policy, attribution, January 1, the error log, the release walk, the spreadsheet (D-210)');
+(function () {
+  const { execFileSync } = require('child_process');
+  function walkFiles(dir, out) {
+    fs.readdirSync(dir).forEach(f => {
+      const p = path.join(dir, f);
+      if (f === 'node_modules' || f === 'vendor' || f === '.git') return;
+      if (fs.statSync(p).isDirectory()) walkFiles(p, out); else out.push(p);
+    });
+    return out;
+  }
+  /* -- 12. every innerHTML that concatenates a variable goes through esc(): the ratchet */
+  const ESC = /\b(esc|escapeHtml|escapeHTML|escape|escAttr|safe|html)\(/;
+  const baseline = JSON.parse(fs.readFileSync(path.join(ROOT, 'test/xss-baseline.json'), 'utf8')).counts;
+  const codeFiles = ['index.html', 'map.html'].map(f => path.join(ROOT, f)).concat(walkFiles(path.join(ROOT, 'rooms'), []), walkFiles(path.join(ROOT, 'shared'), []), walkFiles(path.join(ROOT, 'engines'), []), walkFiles(path.join(ROOT, 'dnd'), [])).filter(p => /\.(js|html)$/.test(p));
+  const worse = [], counts = {};
+  let unescaped = 0;
+  codeFiles.forEach(p => {
+    const t = fs.readFileSync(p, 'utf8');
+    const rel = path.relative(ROOT, p);
+    const re = /\.innerHTML\s*(?:\+)?=\s*/g;
+    let m, n = 0;
+    while ((m = re.exec(t))) {
+      let i = m.index + m[0].length, depth = 0, j = i;
+      for (; j < t.length; j++) { const c = t[j]; if (c === '(' || c === '[' || c === '{') depth++; else if (c === ')' || c === ']' || c === '}') { if (depth === 0) break; depth--; } else if (c === ';' && depth === 0) break; }
+      const rhs = t.slice(i, j);
+      const hasVar = /\+\s*[A-Za-z_$][\w$.]*\s*(\+|;|$|\))/.test(rhs) || /\$\{/.test(rhs);
+      const quoted = /^\s*['"][^'"]*['"]\s*$/.test(rhs);
+      if (hasVar && !quoted && !ESC.test(rhs)) n++;
+    }
+    if (n) counts[rel] = n;
+    unescaped += n;
+    if (n > (baseline[rel] || 0)) worse.push(rel + ' ' + (baseline[rel] || 0) + ' → ' + n);
+  });
+  checkTrue('no file gained an innerHTML that concatenates a variable without esc() (the ratchet, test/xss-baseline.json)', worse.length === 0, worse.join('; '));
+  const gone = Object.keys(baseline).filter(rel => !counts[rel] && baseline[rel] > 0);
+  checkTrue('the count only goes down: ' + unescaped + ' spots left across ' + Object.keys(counts).length + ' files', unescaped <= Object.keys(baseline).reduce((n, k) => n + baseline[k], 0));
+  checkTrue('test/xss.js types the trap into every room and loads a trapped backup', (function () { const x = fs.readFileSync(path.join(ROOT, 'test/xss.js'), 'utf8'); return /onerror=window\.__xss=1/.test(x) && /SLAF\.Backup\.apply/.test(x) && /rooms\.json/.test(x); })());
+  /* -- 13. the policy on every page, and the error log first ---------------- */
+  const pages = ['index.html', 'map.html'].concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html')).map(f => 'rooms/' + f), fs.readdirSync(path.join(ROOT, 'dnd')).filter(f => f.endsWith('.html')).map(f => 'dnd/' + f));
+  const noCsp = [], badCsp = [], noLog = [], logLate = [];
+  pages.forEach(f => {
+    const t = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    const m = /<meta http-equiv="Content-Security-Policy" content="([^"]*)"\/>/.exec(t);
+    if (!m) { noCsp.push(f); return; }
+    const c = m[1];
+    if (!/default-src 'self'/.test(c) || !/connect-src 'self'/.test(c) || !/form-action 'none'/.test(c) || !/object-src 'none'/.test(c) || !/frame-src 'none'/.test(c) || /https?:/.test(c) || /\*/.test(c)) badCsp.push(f);
+    const first = /<script[^>]*src="([^"]+)"/.exec(t);
+    if (!/shared\/errlog\.js/.test(t)) noLog.push(f);
+    else if (!first || !/shared\/errlog\.js$/.test(first[1])) logLate.push(f);
+  });
+  checkTrue('every page carries the Content Security Policy (' + pages.length + ' pages)', noCsp.length === 0, noCsp.join(','));
+  checkTrue('it allows only this origin: no other host, no wildcard, no form target, nothing embedded', badCsp.length === 0, badCsp.join(','));
+  checkTrue('connect-src is self, not none, because the tables are fetched from data/ (documented in the stamp tool)', /connect-src is\s+'self' rather than the brief's 'none'/.test(fs.readFileSync(path.join(ROOT, 'tools/stamp-build.js'), 'utf8')));
+  checkTrue('every page loads shared/errlog.js', noLog.length === 0, noLog.join(','));
+  checkTrue('and loads it first, before any other script', logLate.length === 0, logLate.join(','));
+  checkTrue('no page pulls a script, style, font or image from another origin', pages.every(f => !/(src|href)="https?:\/\/[^"]*\.(js|css|woff2?|png|svg|jpg)/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))));
+  /* -- 14. source and effective date on every file in data/ ---------------- */
+  const dataFiles = walkFiles(path.join(ROOT, 'data'), []).filter(p => p.endsWith('.json'));
+  const unattributed = dataFiles.filter(p => { const j = JSON.parse(fs.readFileSync(p, 'utf8')); return !(typeof j.source === 'string' && j.source.trim().length > 20 && /^\d{4}-\d{2}-\d{2}$/.test(j.asOf || '')); }).map(p => path.relative(ROOT, p));
+  checkTrue('every file in data/ names its source and an effective date (' + dataFiles.length + ' files)', unattributed.length === 0, unattributed.join(','));
+  checkTrue('no LICENSE file was added without the owner choosing one (stop-and-ask, G3.14)', !fs.existsSync(path.join(ROOT, 'LICENSE')) || fs.readFileSync(path.join(ROOT, 'LICENSE'), 'utf8').length > 0);
+  /* -- 15. January 1: a child process with the clock at 2027-01-01 ---------- */
+  const jan = JSON.parse(execFileSync(process.execPath, ['-e', "const o = require(" + JSON.stringify(path.join(ROOT, 'test/jan1.js')) + "); console.log(JSON.stringify({ passed: o.passed, failures: o.failures }));"], { encoding: 'utf8' }).trim());
+  checkTrue('with the clock at 2027-01-01 every year-based number says "using 2026 limits" and nothing crashes (' + jan.passed + ' checks)', jan.failures.length === 0, jan.failures.join('; '));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  check('in the table’s own year there is no note', Ref.yearNote({ taxYear: 2026 }, new Date(2026, 8, 1)), null);
+  check('a year on, the note', Ref.yearNote({ taxYear: 2026 }, new Date(2027, 0, 1)), 'using 2026 limits');
+  checkTrue('the footer prints the note beside the version', /Tax and limit figures: /.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+  /* -- 16. the local error log ---------------------------------------------- */
+  {
+    const store = {};
+    const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+    Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+    const g = { addEventListener: () => {}, document: null, location: { pathname: '/rooms/tax.html' }, navigator: { userAgent: 'test' }, localStorage: fakeLS };
+    const src = fs.readFileSync(path.join(ROOT, 'shared/errlog.js'), 'utf8');
+    new Function('self', src)(g);
+    const E = g.SLAF.ErrLog;
+    check('the log key is under the backed-up prefix', E.KEY, 'slaf.errlog.v1');
+    const e1 = E.record('error', 'Could not save 1,234.56 to the card 4111 ending 1003 at 3 months', 'ledger.html:412');
+    check('no financial values: numbers of three or more digits are blanked', e1.message, 'Could not save # to the card # ending # at 3 months');
+    check('the room is read off the page', e1.room, 'tax');
+    for (let i = 0; i < 60; i++) E.record('error', 'e' + i, '');
+    check('the log keeps the last 50', E.read().length, 50);
+    check('oldest first, newest last', E.read()[49].message, 'e59');
+    const rep = E.report();
+    checkTrue('the bug report names the version, build, room and device and the last errors', /Money Rooms bug report/.test(rep) && /room: tax/.test(rep) && /device: test/.test(rep) && /e59/.test(rep) && /No amounts are in this report/.test(rep));
+    E.clear();
+    check('clear empties it', E.read().length, 0);
+    checkTrue('the panel is built from textContent, never markup', !/innerHTML/.test(src) && /textContent = 'Something went wrong\. Your data is safe\.'/.test(src));
+    checkTrue('uncaught errors and rejected promises both land in it', /addEventListener\('error'/.test(src) && /addEventListener\('unhandledrejection'/.test(src));
+    checkTrue('the backup carries the log like every other slaf. key', require(path.join(ROOT, 'shared/backup.js')).PREFIXES.indexOf('slaf.') === 0);
+  }
+  /* -- 17. the release walk ------------------------------------------------- */
+  const rel = fs.readFileSync(path.join(ROOT, 'RELEASE.md'), 'utf8');
+  checkTrue('RELEASE.md names the four walks on a real Android phone and a real iPhone', /real\s+Android\s+phone/.test(rel) && /real\s+iPhone/.test(rel) && /Round 1/.test(rel) && /One door/.test(rel) && /All at once/.test(rel) && /import/.test(rel) && /jsdom/.test(rel));
+  /* -- J1. the spreadsheet: every number to the cent, blanks blank, not sure yet as words */
+  const Csv = require(path.join(ROOT, 'shared/csvexport.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const T = { ledgerRows: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')), staleness: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/staleness.json'), 'utf8')), confidenceWeights: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/confidence_weights.json'), 'utf8')) };
+  LR.use(T.ledgerRows);
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  const h = Demo.build();
+  h.meta.notSure = { healthMonthly: { at: '2026-09-01T00:00:00Z', expectedBy: '2027-01' } };
+  h.meta.fields = h.meta.fields || {};
+  h.meta.fields.cashSavings = { asOf: '2026-09-02T10:00:00Z', source: 'typed', confidence: 'sure', room: 'start' };
+  const files = Csv.files(h, T);
+  check('one CSV a door plus the readme', Object.keys(files).sort().join(','), 'A.csv,D.csv,E.csv,I.csv,README.txt,T.csv,you.csv');
+  const all = [].concat.apply([], ['D', 'A', 'I', 'T', 'E', 'you'].map(d => Csv.parse(files[d + '.csv'])));
+  checkTrue('every column is named and documented in the readme', Csv.COLUMNS.every(c => new RegExp('^  ' + c.padEnd(7), 'm').test(files['README.txt'])));
+  checkTrue('every unit is documented in the readme', Object.keys(Csv.UNIT_WORDS).every(u => files['README.txt'].indexOf(u + ' = ') >= 0));
+  let mismatch = [];
+  all.filter(l => l.unit === 'cents' && l.value !== '' && !l.item && l.state !== 'worked out').forEach(l => {
+    const f = Own.FIELDS[l.row]; const r = f ? f.read(h) : null;
+    if (!r || !Money.isOk(r)) { mismatch.push(l.row + ' unreadable'); return; }
+    if (Csv.dollars(r.value) !== l.value) mismatch.push(l.row + ' ' + l.value + ' vs ' + r.value);
+  });
+  checkTrue('every money value matches the app to the cent (' + all.filter(l => l.unit === 'cents' && l.value !== '').length + ' values)', mismatch.length === 0, mismatch.join('; '));
+  const cashLine = all.filter(l => l.row === 'cashSavings')[0];
+  check('cash reads 9500.00 from 950000 cents', cashLine.value, '9500.00');
+  check('with its as-of day and source', cashLine.as_of + ' ' + cashLine.source + ' ' + cashLine.state, '2026-09-02 typed confirmed');
+  const hm = all.filter(l => l.row === 'healthMonthly')[0];
+  check('not sure yet shows as words with the month', hm.state, 'not sure yet (by 2027-01)');
+  check('and its value is blank, never 0', hm.value, '');
+  const blanks = all.filter(l => l.state === 'blank');
+  checkTrue('every blank row stays blank', blanks.length > 0 && blanks.every(l => l.value === '' && l.as_of === '' && l.source === ''));
+  checkTrue('no blank ever reads 0.00', all.every(l => !(l.state === 'blank' && /^0(\.00)?$/.test(l.value))));
+  const debtLines = all.filter(l => l.row === 'debtBalance');
+  check('one line per debt, named', debtLines.map(l => l.item).join('|'), 'Student loan|Credit card');
+  check('the debt balances to the cent', debtLines.map(l => l.value).join('|'), '18400.00|3200.00');
+  check('a rate is a percent number', all.filter(l => l.row === 'debtRate' && l.item === 'Credit card')[0].value, '22.9');
+  check('cents to dollars never goes through a float', Csv.dollars(1234567), '12345.67');
+  check('a negative amount', Csv.dollars(-5), '-0.05');
+  check('a cell starting with = is not a formula to a spreadsheet', Csv.csv([{ door: 'E', level: 1, row: 'x', label: '=SUM(A1)', item: '', value: '', unit: '', state: '', as_of: '', source: '' }]).split('\r\n')[1].split(',')[3], "'=SUM(A1)");
+  check('a comma in a label is quoted and parses back', Csv.parse(Csv.csv([{ door: 'E', level: 2, row: 'foodMonthly', label: 'Food, a month', item: '', value: '710.00', unit: 'cents', state: 'roughly', as_of: '', source: '' }]))[0].label, 'Food, a month');
+  const zip = Csv.zip(files, new Date(2026, 8, 11, 12, 0, 0));
+  check('the zip starts with the local file signature', zip[0] + ',' + zip[1] + ',' + zip[2] + ',' + zip[3], '80,75,3,4');
+  check('and ends with the end-of-central-directory record', zip[zip.length - 22] + ',' + zip[zip.length - 21] + ',' + zip[zip.length - 20] + ',' + zip[zip.length - 19], '80,75,5,6');
+  check('seven entries in the central directory', zip[zip.length - 12] + zip[zip.length - 11] * 256, 7);
+  check('CRC-32 of a known string', Csv.crc32(new TextEncoder().encode('123456789')).toString(16), 'cbf43926');
+  const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
+  checkTrue('Your Data offers the spreadsheet and the whole app, with the honest note about a local server', /btn-xlsx/.test(dataHtml) && /archive\/refs\/heads\/main\.zip/.test(dataHtml) && /python3 -m http\.server/.test(dataHtml) && /Your numbers are not in the zip/.test(dataHtml));
+})();
+
+/* ==========================================================================
+   H1, H3, H2: see the math, the next $100, earned vs learned (D-211)
+   ========================================================================== */
+section('H1, H3, H2: tap any number, your next $100 ranked, earned vs learned (D-211)');
+(function () {
+  const ShowMath = require(path.join(ROOT, 'shared/showmath.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Next100 = require(path.join(ROOT, 'engines/next100.js'));
+  const SinceLast = require(path.join(ROOT, 'engines/sincelast.js'));
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  const rowsTable = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+  const T = { ledgerRows: rowsTable, staleness: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/staleness.json'), 'utf8')), fooRules: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/foo_rules.json'), 'utf8')), returnBands: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/return_bands.json'), 'utf8')), confidenceWeights: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/confidence_weights.json'), 'utf8')) };
+  LR.use(rowsTable);
+
+  /* -- H1: every computed row names its formula function; the build fails otherwise */
+  const computed = rowsTable.rows.filter(r => r.kind === 'computed');
+  const noFn = computed.filter(r => !r.formula || typeof r.formula.fn !== 'string' || !r.formula.fn);
+  checkTrue('every computed row names its formula function (' + computed.length + ' rows)', noFn.length === 0, noFn.map(r => r.id).join(','));
+  const unresolved = computed.filter(r => r.formula && !ShowMath.resolve(r.formula.fn));
+  checkTrue('and every named function exists in the shared engine', unresolved.length === 0, unresolved.map(r => r.id + '=' + r.formula.fn).join(','));
+  checkTrue('every computed row has the formula in words and its terms', computed.every(r => typeof r.formula.words === 'string' && r.formula.words.length > 10 && Array.isArray(r.formula.terms) && Array.isArray(r.formula.references)));
+  const hd = Demo.build();
+  const nw = ShowMath.of('netWorth', hd, T);
+  check('net worth: the formula in words', nw.words, 'cash plus investments plus other assets, less everything owed');
+  check('with the actual values plugged in', nw.plugged, '$35,900 = $9,500 + $48,000 + (property and other things owned: blank) − $21,600');
+  checkTrue('each input links to its row', nw.inputs.every(i => typeof i.href === 'string' && i.href.length > 0) && nw.inputs.map(i => i.id).join(',') === 'cashSavings,investments,otherAssets,totalDebt');
+  check('what would change this most: the biggest input first', nw.most[0].id + ' ' + nw.most[0].effect, 'investments 480000');
+  checkTrue('rough inputs mark the result rough right here', nw.rough === true && /Rough: /.test(nw.roughLine));
+  const cw = ShowMath.of('confidenceWeightedNetWorth', hd, T);
+  checkTrue('a reference number names its data/ file', cw.references.length === 1 && cw.references[0].file === 'data/confidence_weights.json');
+  check('a row that is not a sum names its one lever', ShowMath.of('age', hd, T).most[0].line, 'The only lever: month and year you were born.');
+  check('a non-computed row is not explained', ShowMath.of('cashSavings', hd, T), null);
+  const hs = Schema.createHousehold();
+  checkTrue('an empty household explains without a number, never a zero', /^not yet/.test(ShowMath.of('netWorth', hs, T).display) && ShowMath.of('netWorth', hs, T).missing.length >= 1);
+  const ledgerHtml = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('every computed number in the Ledger, doors and all at once alike, opens the sheet', (ledgerHtml.match(/data-math="' \+ esc\(row\.id\) \+ '"/g) || []).length >= 2 && /ShowMath\.mount\(/.test(ledgerHtml));
+  checkTrue('the sheet is built once and never holds an input', /LIVE-FORM: built once/.test(fs.readFileSync(path.join(ROOT, 'shared/showmath.js'), 'utf8')) && !/<input/.test(fs.readFileSync(path.join(ROOT, 'shared/showmath.js'), 'utf8')));
+  const sheet = ShowMath.sheetHtml(nw);
+  checkTrue('the sheet names the function, the file and the inputs', /Worked out by Ownership\.FIELDS\.netWorth\.read/.test(sheet) && /What would change this most/.test(sheet) && /Each input/.test(sheet));
+
+  /* -- H3: one scale, guaranteed and expected never blended ------------------ */
+  const h3 = Schema.createHousehold();
+  h3.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })];
+  h3.debts = [Schema.createDebt({ label: 'Amex ••1003', type: 'credit_card', balanceCents: 320000, rate: 0.25, minPaymentCents: 6400 }),
+              Schema.createDebt({ label: 'Car loan', type: 'auto', balanceCents: 1200000, rate: 0.03, minPaymentCents: 25000 })];
+  const r3 = Next100.rank(h3, T, {});
+  const card = r3.rows.filter(r => /Amex/.test(r.label))[0], loan = r3.rows.filter(r => /Car loan/.test(r.label))[0];
+  checkTrue('a 25% card ranks above a 3% loan', r3.rows.indexOf(card) < r3.rows.indexOf(loan));
+  check('and both show as guaranteed', card.kind + ',' + loan.kind, 'guaranteed,guaranteed');
+  check('the card saves its rate, exactly', card.rate, 0.25);
+  const inv = r3.rows.filter(r => r.id === 'invest')[0];
+  checkTrue('investing is expected, with its range from the bands', inv && inv.kind === 'expected' && inv.rate === 0.05 && inv.low === 0.02 && inv.high === 0.08);
+  checkTrue('the 3% loan ranks above the 5% expected? no: the scale is the return, so investing (5% expected) sits above the 3% loan', r3.rows.indexOf(inv) < r3.rows.indexOf(loan));
+  checkTrue('never blended: no row carries both kinds and the say line names the kind', r3.rows.every(r => r.kind === 'guaranteed' || r.kind === 'expected') && /guaranteed|expected/.test(r3.say));
+  checkTrue('the order of operations is a note on each line, not a re-sort', r3.rows.every(r => r.note === null || /Step \d of the order of operations/.test(r.note)) && card.fooStep === 3);
+  checkTrue('wording is what the numbers say, never an instruction', /^The numbers say/.test(r3.say) && !/you should|you must/i.test(r3.say + r3.rows.map(r => r.why).join(' ')));
+  const rm = Next100.rank(hd, T, {});
+  checkTrue('the demo: the match not yet captured is the top line, at its cents on the dollar', rm.rows[0].id === 'match' && rm.rows[0].kind === 'guaranteed' && rm.rows[0].rate === 0.5);
+  const h3b = Schema.createHousehold(); h3b.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })];
+  h3b.debts = [Schema.createDebt({ label: 'No rate yet', type: 'personal', balanceCents: 50000 })];
+  const rb = Next100.rank(h3b, T, {});
+  checkTrue('a debt without a rate is named as missing, never ranked at an assumed rate', rb.rows.every(r => r.id !== 'debt:' + h3b.debts[0].id) && rb.missing.some(m => /No rate yet/.test(m)));
+  check('with no framework names the notes are off', Next100.rank(h3, T, { frameworkNames: false }).rows.every(r => r.note === null), true);
+  checkTrue('the reading lives in What The Next Dollar Does, which reads only and is in rooms.json', (function () { const r = Registry.byId('foo-ladder'); const rj = JSON.parse(fs.readFileSync(path.join(ROOT, 'rooms.json'), 'utf8')).rooms.some(x => x.id === 'foo-ladder'); return !Registry.byId('next-hundred') && r && r.kind === 'read' && r.daite.writes.length === 0 && rj; })());
+
+  /* -- H2: earned vs learned, never mixed without the split ------------------- */
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+  Own.write('employmentStatus', 'employed'); Own.write('cashSavings', 950000); Own.write('investments', 4000000); Own.write('hasDebt', false);
+  const snap = Spine.appendSnapshot({});
+  checkTrue('a snapshot now carries the confidence and source of every field', snap.fieldMeta && snap.fieldMeta.cashSavings && snap.fieldMeta.cashSavings.confidence === 'sure');
+  Own.write('cashSavings', 1020000);                                          /* money moved */
+  Own.addItem('asset', { category: 'property', label: 'The flat', valueCents: 1400000 });   /* knowledge added */
+  Spine.tagWrite({ source: 'memory', confidence: 'roughly' }); Own.write('foodMonthly', 60000); Spine.confirm('foodMonthly');
+  const r2 = SinceLast.compute(Spine.getProfile(), snap, T);
+  check('net worth moved by the whole', r2.netWorth.delta, 1470000);
+  check('$700 of it earned (cash moved)', r2.netWorth.earned, 70000);
+  check('$14,000 of it learned (a first entry)', r2.netWorth.learned, 1400000);
+  checkTrue('earned plus learned is the whole, always', r2.netWorth.earned + r2.netWorth.learned === r2.netWorth.delta);
+  checkTrue('the cash move is earned, the food entry learned', r2.changes.some(c => c.id === 'cashSavings' && c.kind === 'earned') && r2.changes.some(c => c.id === 'foodMonthly' && c.kind === 'learned'));
+  const stripText = SinceLast.strip(Spine.getProfile(), snap, T);
+  check('the strip', stripText, 'Net worth +$14,700 since ' + String(snap.timestamp).slice(0, 10) + ': $700 earned, $14,000 learned (a first entry among what you own or owe). Also learned: you entered food, a month.');
+  const snap2 = Spine.appendSnapshot({});
+  Spine.tagWrite({ source: 'suggested', confidence: 'roughly' }); Own.write('wantsMonthly', 40000);
+  const s3 = Spine.appendSnapshot({});
+  Spine.confirm('wantsMonthly');
+  const r4 = SinceLast.compute(Spine.getProfile(), s3, T);
+  checkTrue('a confidence upgrade from suggested to confirmed is learned, with no money moving', r4.changes.length === 1 && r4.changes[0].id === 'wantsMonthly' && r4.changes[0].kind === 'learned' && /confirmed/.test(r4.changes[0].note));
+  check('nothing changed reads as nothing changed', SinceLast.strip(Spine.getProfile(), Spine.appendSnapshot({}), T), 'Nothing changed since ' + Schema.localDay() + '.');
+  checkTrue('the Ledger shows the strip on the doors home', /SinceLast\.strip\(h, last, TABLES\)/.test(ledgerHtml) && /id="since"/.test(ledgerHtml));
+  void snap2;
+})();
+
+/* ==========================================================================
+   H4, H5, H7, H8: reachable money, the popular rules, privacy proved, shares (D-212)
+   ========================================================================== */
+section('H4, H5, H7, H8: the waterfall, does the rule apply, the receipt, share the shape (D-212)');
+(function () {
+  const Reachable = require(path.join(ROOT, 'engines/reachable.js'));
+  const AdviceRules = require(path.join(ROOT, 'engines/advicerules.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const Progress = require(path.join(ROOT, 'shared/progress.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const T = {};
+  ['federalBrackets:federal_brackets_2026.json', 'seTax:se_tax_2026.json', 'accessRules:access_rules.json', 'advice:advice.json', 'fooRules:foo_rules.json', 'effectiveTaxRates:effective_tax_rates_2026.json', 'ratioBenchmarks:ratio_benchmarks.json', 'debtRules:debt_rules.json', 'ledgerRows:ledger-rows.json', 'confidenceWeights:confidence_weights.json', 'staleness:staleness.json', 'stateBrackets:state_brackets_2026.json']
+    .forEach(kv => { const [k, f] = kv.split(':'); T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8')); });
+  LR.use(T.ledgerRows);
+
+  /* -- H4: the waterfall, checked by hand on fixed rates ---------------------- */
+  const h = Schema.createHousehold(); h.filingStatus = 'single';
+  h.people = [Schema.createPerson({ role: 'adult', dob: '1992-01-01', employmentStatus: 'employed' })];
+  h.assets = [Schema.createAsset({ category: 'cash', valueCents: 500000 }),
+    Schema.createAsset({ category: 'retirement', taxCharacter: 'roth', valueCents: 2000000, costBasisCents: 1200000, label: 'Roth' }),
+    Schema.createAsset({ category: 'investment', taxCharacter: 'taxable', valueCents: 3000000, costBasisCents: 2000000 }),
+    Schema.createAsset({ category: 'retirement', taxCharacter: 'pretax', valueCents: 4000000 }),
+    Schema.createAsset({ category: 'property', valueCents: 30000000 })];
+  h.debts = [Schema.createDebt({ type: 'mortgage', balanceCents: 20000000 })];
+  const rates = { marginalRate: 0.22, stateRate: 0.05, capitalGainsRate: 0.15 };
+  const w = Reachable.waterfall(h, T, { amountCents: 2500000, rates: rates });
+  check('the order: cash, Roth basis, taxable, pre-tax, Roth earnings (cheapest dollar first)', w.tiers.map(t => t.id).join(','), 'cash,rothBasis,taxable,pretax,rothEarnings');
+  check('cash is free', w.tiers[0].costCents, 0);
+  check('Roth contributions are free and only the basis counts', w.tiers[1].availableCents + ':' + w.tiers[1].costCents, '1200000:0');
+  check('taxable: tax on the gains only, $10,000 at 15%', w.tiers[2].costCents, 150000);
+  check('pre-tax: 22% federal + 5% state + 10% penalty on $40,000', w.tiers[3].costCents, 1480000);
+  check('Roth earnings under 59½: the same 37% on $8,000', w.tiers[4].costCents, 296000);
+  check('reachable in an emergency: everything but the house', w.reachableCents, 9500000);
+  check('and the true cost of pulling it all', w.costCents, 1926000);
+  check('home equity shown, never counted: $300,000 less the $200,000 mortgage', w.homeEquityCents + ':' + w.homeShown, '10000000:true');
+  check('$25,000 by the cheapest route: cash, then Roth basis, then $8,000 of taxable', w.pulls.map(p => p.tier + '=' + p.cents).join(','), 'cash=500000,rothBasis=1200000,taxable=800000');
+  check('the pull costs only the taxable slice’s share', w.pullCostCents, 40000);
+  const older = JSON.parse(JSON.stringify(h)); older.people[0].dob = '1960-01-01';
+  const w2 = Reachable.waterfall(older, T, { rates: rates });
+  check('from 59½ the penalty drops: 27% on the pre-tax', w2.tiers.filter(t => t.id === 'pretax')[0].costCents, 1080000);
+  check('and Roth earnings are free', w2.tiers.filter(t => t.id === 'rothEarnings')[0].costCents, 0);
+  const noBasis = JSON.parse(JSON.stringify(h)); delete noBasis.assets[1].costBasisCents;
+  const w3 = Reachable.waterfall(noBasis, T, { rates: rates });
+  checkTrue('a Roth without its basis is rough, counts nothing as free and names the row', w3.rough && w3.tiers.filter(t => t.id === 'rothBasis')[0].availableCents === 0 && w3.missing.some(m => /assetCostBasis/.test(m)));
+  const noDob = JSON.parse(JSON.stringify(h)); noDob.people[0].dob = null;
+  checkTrue('no date of birth: the penalty is assumed and said, never silently dropped', Reachable.waterfall(noDob, T, { rates: rates }).assumed.some(a => /under 59/.test(a)));
+  const wd = Reachable.waterfall(Demo.build(), T, {});
+  checkTrue('on the demo the rates come from the tax tables: a marginal rate and a gains rate above zero', wd.rates.source === 'tax tables' && wd.rates.marginalRate > 0 && wd.rates.capitalGainsRate > 0, JSON.stringify(wd.rates));
+  checkTrue('the room reads only and is in every arrangement', Registry.byId('reachable').daite.writes.length === 0 && JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts.every(l => l.groups.some(g => g.rooms.indexOf('reachable') >= 0)));
+
+  /* -- H5: does the rule apply to you now? ------------------------------------- */
+  const rules = T.advice.rules;
+  checkTrue('every rule names its source and the three readings', rules.every(r => typeof r.source === 'string' && r.source.length > 10 && r.why && Array.isArray(r.appliesNow) && Array.isArray(r.notYet) && Array.isArray(r.outgrown) && r.decidedBy));
+  checkTrue('the four the brief named are in: 4%, 50/30/20, Die With Zero, max the 401(k) first', ['four_percent', 'fifty_thirty_twenty', 'die_with_zero', 'max_401k_first'].every(id => rules.some(r => r.id === id)));
+  const known = Object.keys(AdviceRules.readings(Demo.build(), T));
+  checkTrue('every condition reads a row the engine knows', rules.every(r => ['appliesNow', 'notYet', 'outgrown'].every(k => r[k].every(c => known.indexOf(c[0]) >= 0))));
+  const L = AdviceRules.list(Demo.build(), T);
+  const by = {}; L.forEach(r => { by[r.id] = r; });
+  check('the demo is still adding to the portfolio: the 4% rule is not yet', by.four_percent.status, 'notYet');
+  check('a card above the high-interest line: max the 401(k) is not yet', by.max_401k_first.status, 'notYet');
+  check('saving 32%: save 10% is outgrown', by.save_ten_percent.status, 'outgrown');
+  check('working: never touch the emergency fund applies now', by.never_touch_ef.status, 'appliesNow');
+  checkTrue('every status has a one-line reason', L.every(r => typeof r.why === 'string' && r.why.length > 10));
+  const blank = Schema.createHousehold(); blank.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })];
+  const Lb = AdviceRules.list(blank, T);
+  const ct = Lb.filter(r => r.status === 'cantTell');
+  checkTrue('with the rows blank most rules say can’t tell yet and name the number that would decide it', ct.length >= 6 && ct.every(r => /Can’t tell yet: it needs /.test(r.why) && r.decidedBy));
+  const uh = Schema.createHousehold(); uh.people = [Schema.createPerson({ role: 'adult', employmentStatus: 'unemployed' })];
+  check('between jobs: never touch the emergency fund is outgrown, because this is the emergency', AdviceRules.list(uh, T).filter(r => r.id === 'never_touch_ef')[0].status, 'outgrown');
+  checkTrue('the Unlearning room shows the section', /id="rulelist"/.test(fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8')) && /AdviceRules\.list\(h, TABLES\)/.test(fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8')));
+
+  /* -- H7: privacy you can prove ------------------------------------------------ */
+  const r0 = Progress.privacyReceipt([{ name: 'https://x.test/shared/money.js', transferSize: 1200 }, { name: 'https://x.test/data/a.json', transferSize: 300 }], 'https://x.test');
+  check('only this origin: zero', r0.count + ':' + r0.bytes, '0:0');
+  check('and the line says so', r0.line, 'Sent anywhere this session: 0 bytes. No request left this origin.');
+  const r1 = Progress.privacyReceipt([{ name: 'https://x.test/a.js', transferSize: 10 }, { name: 'https://cdn.other.com/lib.js', transferSize: 5000 }, { name: 'https://cdn.other.com/x.png', transferSize: 700 }], 'https://x.test');
+  check('a request to another origin is counted, in bytes, and the host listed', r1.line, 'Sent anywhere this session: 5700 bytes in 2 requests to https://cdn.other.com.');
+  checkTrue('the receipt is in every footer', /id="slaf-privacy"/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+
+  /* -- H8: share progress, not balances ----------------------------------------- */
+  const hd = Demo.build();
+  const cards = ShareCard.all(hd, T, { previousYears: 20, previousRate: 0.18 });
+  check('every household share type can be made from the persona', cards.map(c => c.type).join(','), 'fiDate,savingsRate,debtFree,runway,understanding');
+  let leaked = [];
+  cards.forEach(c => { const l = ShareCard.leaks(c.title + ' ' + c.line + ' ' + ShareCard.link(c) + ' ' + JSON.stringify(c.fields), hd); if (l.length) leaked.push(c.type + ':' + l.join('|')); });
+  checkTrue('no cents value from the household appears in any link or card', leaked.length === 0, leaked.join('; '));
+  checkTrue('the payload can only carry ratios, percents, months, years, hours, counts, rule ids and a year range: no cents key exists', Object.keys(ShareCard.ALLOWED).every(k => ['t', 'y', 'm', 'p', 'd', 'at', 'h', 'n', 'r', 'z', 'w'].indexOf(k) >= 0));
+  check('the five household cards, from the persona', cards.length, 5);
+  const hacked = ShareCard.encode({ fields: { t: 'runway', m: 3, cents: 950000, balance: 'lots' } });
+  check('a field not on the list is dropped before it can be encoded', JSON.stringify(ShareCard.decode('#c=' + hacked)), '{"t":"runway","m":3}');
+  check('an unknown card type is refused', ShareCard.decode('#c=' + ShareCard.encode({ fields: { t: 'balances', p: 1 } })), null);
+  const fi = cards.filter(c => c.type === 'fiDate')[0];
+  check('the FI card says how far the date moved, in months', fi.line, 'FI date moved 24 months further out.');
+  check('the savings card says the rate and where it was', cards.filter(c => c.type === 'savingsRate')[0].line, 'Savings rate up to 32% from 18%.');
+  checkTrue('a card round-trips through its link', ShareCard.render(ShareCard.decode(ShareCard.link(fi).split('#')[1])).line === fi.line);
+  checkTrue('the leak scanner itself catches a balance', ShareCard.leaks('you have $9,500 in cash', hd).length >= 1);
+  checkTrue('the doors home links to the card, which stores nothing', /progress-card\.html/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')) && !/localStorage|Spine\.(set|upsert|updateProfile)/.test(fs.readFileSync(path.join(ROOT, 'rooms/progress-card.html'), 'utf8').split('<script>')[1] || ''));
+})();
+
+/* ==========================================================================
+   I1, I3, I4, I5: Money Wrapped, the rank guess, the coast date, the quiz (D-213)
+   ========================================================================== */
+section('I1, I3, I4, I5: Money Wrapped, where do you think you rank, your coast date, the Unlearning Quiz (D-213)');
+(function () {
+  const Wrapped = require(path.join(ROOT, 'engines/wrapped.js'));
+  const Coast = require(path.join(ROOT, 'engines/coast.js'));
+  const RankGuess = require(path.join(ROOT, 'engines/rankguess.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  LR.use(T.ledgerRows);
+
+  /* -- I1: a persona year produces all four lines with no cents value anywhere */
+  const y = Number(Schema.localDay().slice(0, 4));
+  const early = Demo.build();
+  early.assets = early.assets.map(a => Object.assign({}, a, { valueCents: a.category === 'investment' ? 4000000 : a.valueCents }));
+  const raw = { people: early.people, assets: early.assets, debts: early.debts, expenses: early.expenses, filingStatus: early.filingStatus, state: early.state, retirement: early.retirement };
+  const snaps = [{ id: 's1', timestamp: y + '-01-15T12:00:00.000Z', rawInputs: raw, fields: { cashSavings: 950000, investments: 4000000, netWorth: 2790000, totalDebt: 2160000 }, fieldMeta: {} },
+                 { id: 's0', timestamp: (y - 1) + '-12-20T12:00:00.000Z', rawInputs: raw, fields: {}, fieldMeta: {} }];
+  const now = Demo.build();
+  now.people[0].workProfile = Object.assign({}, now.people[0].workProfile || {}, { hoursPerWeek: 40, commuteMinutesPerDay: 30 });
+  const W = Wrapped.year(now, snaps, T, { year: y });
+  check('the year is picked and only its snapshots count', W.year + ':' + W.snapshots, y + ':1');
+  check('four lines', W.lines.map(l => l.id).join(','), 'freedom,priciest,earned,learned');
+  checkTrue('every line has a value: days, hours, a percent, a count', W.ok, JSON.stringify(W.lines.map(l => l.id + '=' + l.value)));
+  checkTrue('days of freedom: investments grew from 40k to 48k since January, so the FI date moved closer', W.lines[0].value > 0 && /days of freedom bought/.test(W.lines[0].text));
+  checkTrue('the priciest recurring cost is rent, in hours of work', /rent or mortgage/.test(W.lines[1].text) && W.lines[1].value > 100);
+  checkTrue('the biggest earned change is a percent, not an amount', /up \d+%|down \d+%/.test(W.lines[2].text));
+  const wText = W.lines.map(l => l.text).join(' ');
+  checkTrue('no cents value from the household appears on the card', ShareCard.leaks(wText, now).length === 0, ShareCard.leaks(wText, now).join(','));
+  const wc = ShareCard.make('wrapped', now, T, { wrapped: W });
+  checkTrue('the wrapped card encodes days, hours, a percent and a count only', wc.ok && ['t', 'at', 'y', 'd', 'h', 'p', 'n'].every(k => k in wc.fields) && ShareCard.leaks(ShareCard.link(wc), now).length === 0);
+  checkTrue('and renders from its link', /days of freedom bought/.test(ShareCard.render(ShareCard.decode(ShareCard.link(wc).split('#')[1])).line));
+  const W0 = Wrapped.year(now, [], T, { year: y });
+  checkTrue('a year with no earlier snapshot says what each line needs, never invents', !W0.ok && W0.lines.every(l => l.value === null || l.id === 'priciest') && W0.missing.length >= 1);
+  checkTrue('the room exists, reads only, and is shelved everywhere', Registry.byId('wrapped') && Registry.byId('wrapped').daite.writes.length === 0 && JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts.every(l => l.groups.some(g => g.rooms.indexOf('wrapped') >= 0)));
+
+  /* -- I4: the coast date, by hand ------------------------------------------------- */
+  const hc = Schema.createHousehold(); hc.people = [Schema.createPerson({ role: 'adult', dob: '1996-06-01' })];
+  check('no growth: $100k plus $12k a year reaches $160k in exactly 60 months', Coast.date(hc, T, { targetAge: 60, returnReal: 0, fiNumberCents: 16000000, investmentsCents: 10000000, annualContributionCents: 1200000, age: 30 }).months, 60);
+  checkTrue('a pot that doubles by the target age on its own: coast now', Coast.date(hc, T, { targetAge: 40, returnReal: Math.pow(2, 1 / 10) - 1, fiNumberCents: 20000000, investmentsCents: 10000000, annualContributionCents: 0, age: 30 }).reachedNow === true);
+  const never = Coast.date(hc, T, { targetAge: 40, returnReal: 0.02, fiNumberCents: 20000000, investmentsCents: 10000000, annualContributionCents: 0, age: 30 });
+  checkTrue('not reachable at this pace says so, never a far-off date', never.neverAtThisPace === true && never.months === null);
+  check('the reverse view: $100k at 2% real for 10 years', never.noMoreContributions.atTargetAgeCents, Math.round(10000000 * Math.pow(1.02, 10)));
+  const c2 = Coast.date(hc, T, { targetAge: 60, returnReal: 0.05, fiNumberCents: 100000000, investmentsCents: 10000000, annualContributionCents: 1200000, age: 30 });
+  checkTrue('with growth the coast date comes before the target and the pot at coast, left alone, reaches the number', c2.months > 0 && c2.months < 360 && Coast.grow(c2.potAtCoastCents, 0.05, 360 - c2.months) >= 100000000 - 1);
+  checkTrue('no date of birth: incomplete, named', !Money.isOk(Coast.date(Schema.createHousehold(), T, {})) && Coast.date(Schema.createHousehold(), T, {}).missing.indexOf('dob') >= 0);
+  checkTrue('the target age defaults to the coast default in data/fire_variants.json', Coast.date(hc, T, { fiNumberCents: 100000000, investmentsCents: 10000000, annualContributionCents: 1200000, age: 30 }).targetAge === T.fireVariants.defaults.coastTargetAge);
+  checkTrue('its own formula: engines/coast.js never calls the FIRE engine', !/Fire\./.test(fs.readFileSync(path.join(ROOT, 'engines/coast.js'), 'utf8')));
+
+  /* -- I3: the guess beside the band ------------------------------------------------ */
+  const hd = Demo.build();
+  const rg = RankGuess.compare(80, hd, T);
+  check('bands, never ranks: the guess band', rg.guess.label, 'the top quarter');
+  check('the survey band for the persona (under 35, about the 48th percentile)', rg.real.label, 'below the middle');
+  check('the direction of the miss', rg.direction, 'guessedHigher');
+  checkTrue('below the median the copy says what the next band takes, never how far behind', /The next band, above the middle, takes about \$[\d,]+ more\./.test(rg.line) && !/behind|only|just/.test(rg.line));
+  checkTrue('a right guess says so', RankGuess.compare(40, hd, T).same === true);
+  checkTrue('no date of birth: the reveal says what it needs', RankGuess.compare(50, Schema.createHousehold(), T).status === 'incomplete');
+  checkTrue('the guess is a preference, never a household field', (function () { const sc = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8'); return /Prefs\.set\('rank\.guess'/.test(sc) && !/Ownership\.write|Spine\.(set|upsert)/.test(sc); })());
+
+  /* -- I5: the quiz ------------------------------------------------------------------ */
+  const uh = fs.readFileSync(path.join(ROOT, 'rooms/unlearning.html'), 'utf8');
+  checkTrue('five questions, each skipped when the Ledger has the answer', (uh.match(/\{ id: '[a-zA-Z]+', ask: /g) || []).length === 5 && /R\[q\.id\] === null \|\| R\[q\.id\] === undefined/.test(uh));
+  checkTrue('answers stay on the page: no write', /Answers stay on this page/.test(uh) && !/Spine\.set\('quiz|Ownership\.write\(/.test(uh.split('function runQuiz')[1].split('function paintRules')[0]));
+  const uc = ShareCard.make('unlearn', hd, T, { unlearn: ['save_ten_percent', 'hundred_minus_age', 'six_months'] });
+  check('the unlearn card lists three rules by name, no numbers', uc.line, 'Save 10% · 100 minus your age in stocks · Six months of expenses');
+  checkTrue('and its link carries ids only', /^[a-z_,]+$/.test(ShareCard.decode(ShareCard.link(uc).split('#')[1]).r));
+})();
+
+/* ==========================================================================
+   I2, J2, J3, J6: the cost of not knowing, the Comeback, the pay rhythm, ranges (D-214)
+   ========================================================================== */
+section('I2, J2, J3, J6: the cost of not knowing, the Comeback, the real pay cycle, no bare point (D-214)');
+(function () {
+  const NotKnowing = require(path.join(ROOT, 'engines/notknowing.js'));
+  const Lens = require(path.join(ROOT, 'shared/lens.js'));
+  const Calendar = require(path.join(ROOT, 'engines/calendar.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  LR.use(T.ledgerRows);
+
+  /* -- I2: every range row has a bound, a feed and a setter ------------------------ */
+  const PR = T.plausibleRanges;
+  checkTrue('the ranges file says it is unverified, typed from memory, and must be checked', PR.confidence === 'unverified' && PR.verify === true && /BLS|Survey of Consumer Finances/.test(PR.source) && /typed from memory/.test(PR.confidenceNote));
+  const rowsWithRange = Object.keys(PR.rows);
+  checkTrue('every range names a row the registry has, a feed the engine reads and a setter it owns', rowsWithRange.every(id => LR.byId(id) && NotKnowing.FEEDS.indexOf(PR.rows[id].feeds) >= 0 && NotKnowing.SET.indexOf(id) >= 0), rowsWithRange.filter(id => !(LR.byId(id) && NotKnowing.FEEDS.indexOf(PR.rows[id].feeds) >= 0 && NotKnowing.SET.indexOf(id) >= 0)).join(','));
+  checkTrue('every range row names what it unlocks', rowsWithRange.every(id => LR.byId(id).unlocks));
+  const h = Schema.createHousehold(); h.filingStatus = 'single';
+  h.people = [Schema.createPerson({ role: 'adult', dob: '1999-01-01', employmentStatus: 'employed' })];
+  h.people[0].incomeSources = [Schema.createIncomeSource({ personId: h.people[0].id, grossAnnualIncomeCents: 9500000, type: 'w2' })];
+  h.assets = [Schema.createAsset({ category: 'cash', valueCents: 300000 }), Schema.createAsset({ category: 'investment', valueCents: 2000000 })];
+  h.expenses = Schema.createExpenses({ needs: { food: { monthlyCents: 60000 }, accommodation: { monthlyCents: 150000 }, transportation: { monthlyCents: 20000 } } });
+  h.debts = [Schema.createDebt({ label: 'Amex', type: 'credit_card', balanceCents: 320000 })];
+  const all = NotKnowing.all(h, T);
+  checkTrue('blank rows are sized by swing, largest first', all.length >= 3 && all.every((s, i) => i === 0 || all[i - 1].swing >= s.swing));
+  const wants = all.filter(s => s.rowId === 'wantsMonthly')[0];
+  checkTrue('the blank wants line could move the FI date, phrased as a swing', wants && wants.feeds === 'fiMonths' && /This blank could move your FI date by up to \d+ months\./.test(wants.line), wants && wants.line);
+  checkTrue('never phrased as money lost', all.every(s => !/lost|losing|cost you/.test(s.line)));
+  const rate = all.filter(s => s.rowId === 'debtRate')[0];
+  checkTrue('a blank card rate: the swing is interest a month, per item', rate && rate.itemId === h.debts[0].id && rate.feeds === 'interestMonthlyCents' && rate.swing === Math.round(320000 * 0.29 / 12) - Math.round(320000 * 0.03 / 12), rate && rate.swing);
+  checkTrue('the household itself is never written: the swing runs on a copy', h.expenses.wants.totalCents === null && !Money.isEntered(h.debts[0].rate));
+  check('a row with no range has no swing', NotKnowing.swing('zip', h, T), null);
+  checkTrue('the doors sort blanks by swing and show the line', /NotKnowing\.all\(h, TABLES\)/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')) && /swings\[r\.id\]\.line/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')));
+
+  /* -- J2: the Comeback ----------------------------------------------------------- */
+  const prog = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  check('21 days', require(path.join(ROOT, 'shared/progress.js')).COMEBACK_DAYS, 21);
+  checkTrue('the last visit is a preference and the due mark is set on the way in, never on the page that clears it', /Prefs\.set\('visit\.last', now\)/.test(prog) && /roomId !== 'ledger'/.test(prog));
+  checkTrue('the front door sends people there once, only with numbers to look at', /comebackDue\(window\)/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /panelReady\(h\) && !\/comeback=seen\//.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
+  const cb = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('since last time asks only the moving rows, oldest first, writes through the owner, ends on the strip', /LedgerRows\.moving\(h, TABLES\)/.test(cb) && /Oldest first/.test(cb) && /Ownership\.write\(r\.row\.id, v, r\.item \? \{ itemId: r\.item\.id \} : null\)/.test(cb) && /SinceLast\.strip\(h, latest, TABLES\)/.test(cb) && /LIVE-FORM: built once/.test(cb));
+  const BANNED = ['haven\'t', 'missed', 'failed', 'streak', 'gap', 'behind', 'should have', 'forgot', 'lapsed', 'overdue'];
+  const copy = cb.slice(cb.indexOf('<section id="view-since"'), cb.indexOf('<!-- ================= ARRANGEMENTS')).toLowerCase();
+  checkTrue('no banned word in the since-last-time copy', BANNED.every(w => copy.indexOf(w) === -1), BANNED.filter(w => copy.indexOf(w) !== -1).join(','));
+  checkTrue('test/comeback.js sets the clock 45 days ahead and holds the banned list', /45 \* 86400000/.test(fs.readFileSync(path.join(ROOT, 'test/comeback.js'), 'utf8')) && /BANNED/.test(fs.readFileSync(path.join(ROOT, 'test/comeback.js'), 'utf8')));
+
+  /* -- J3: the real pay cycle --------------------------------------------------------- */
+  const hp = Demo.build(); hp.calendar = Object.assign({}, hp.calendar || {}, { cadence: 'fortnightly' });
+  checkTrue('the paycheck lens appears only when the cadence is known', Lens.available(hp, T).some(m => m.id === 'paycheck') && !Lens.available(Demo.build(), T).some(m => m.id === 'paycheck'));
+  check('a month read every two weeks: 26 over 12', Lens.apply(216667, 'paycheck', hp, T).value, 100000);
+  check('and says so', Lens.apply(216667, 'paycheck', hp, T).display, '$1,000 a payday');
+  hp.calendar.cadence = 'weekly';
+  check('weekly: 52 over 12', Lens.apply(433333, 'paycheck', hp, T).value, 100000);
+  hp.calendar.cadence = 'irregular';
+  checkTrue('irregular income reads a month as one low month, the planning base', Lens.apply(100000, 'paycheck', hp, T).display === '$1,000 a low month');
+  check('a two-paycheck month is the usual for fortnightly pay', Calendar.paycheckMonthLabel('fortnightly', 2).extra + ':' + Calendar.paycheckMonthLabel('fortnightly', 2).label, 'false:a two-paycheck month');
+  check('a window that catches fewer paydays than usual is not a month to name', Calendar.paycheckMonthLabel('fortnightly', 1), null);
+  check('a three-paycheck month is named, not averaged away', Calendar.paycheckMonthLabel('fortnightly', 3).label, 'a three-paycheck month: one more payday than most months');
+  check('five paydays on weekly pay', Calendar.paycheckMonthLabel('weekly', 5).label, 'a five-paycheck month: one more payday than most months');
+  check('monthly pay has no such month', Calendar.paycheckMonthLabel('monthly', 1), null);
+  checkTrue('the calendar room says it', /r\.paycheckMonth\.label/.test(fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8')));
+
+  /* -- J6: no projected date without its range ------------------------------------------ */
+  const fi = ShareCard.make('fiDate', Demo.build(), T, {});
+  checkTrue('the FI card carries the date with its range from the bands', fi.ok && typeof fi.fields.w === 'number' && typeof fi.fields.z === 'number' && fi.fields.w <= fi.fields.y && fi.fields.y <= fi.fields.z && /\(\d{4} to \d{4}\)/.test(fi.title), fi.title);
+  checkTrue('and the range survives the link', /\(\d{4} to \d{4}\)/.test(ShareCard.render(ShareCard.decode(ShareCard.link(fi).split('#')[1])).title));
+  checkTrue('the coast date shows its range, a good decade to a poor one', /Range: /.test(fs.readFileSync(path.join(ROOT, 'rooms/coast-date.html'), 'utf8')) && /data-range/.test(fs.readFileSync(path.join(ROOT, 'rooms/coast-date.html'), 'utf8')));
+})();
+
+/* ==========================================================================
+   J4, J5: bank CSV import on-device, the subscription finder (D-215)
+   ========================================================================== */
+section('J4, J5: bank CSV import on-device, the subscription finder (D-215)');
+(function () {
+  const BankCsv = require(path.join(ROOT, 'engines/bankcsv.js'));
+  const Subs = require(path.join(ROOT, 'engines/subscriptions.js'));
+  const Wrapped = require(path.join(ROOT, 'engines/wrapped.js'));
+  const Doors = require(path.join(ROOT, 'shared/doors.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  LR.use(T.ledgerRows);
+  const files = ['a', 'b', 'c'].map(x => fs.readFileSync(path.join(ROOT, 'test/fixtures/bank-' + x + '.csv'), 'utf8'));
+  /* -- J4: three layouts, one result ------------------------------------------------ */
+  const parsed = files.map(f => BankCsv.parse(f));
+  check('three layouts: comma, comma with debit and credit, semicolon quoted', parsed.map(p => p.delimiter).join(''), ',,;');
+  const maps = parsed.map(p => BankCsv.guessMap(p.headers));
+  check('the columns are guessed from the headings: date, description, amount', JSON.stringify(maps[0]), '{"date":0,"description":1,"amount":2,"debit":-1,"credit":-1}');
+  check('and debit and credit where the bank splits them', JSON.stringify(maps[1]), '{"date":0,"description":1,"amount":-1,"debit":2,"credit":3}');
+  check('a quoted payee with a comma survives', parsed[2].rows[1][1], 'TRADER JOES, #512');
+  const H = Schema.createHousehold();
+  const lines = parsed.map((p, i) => BankCsv.entries(p, maps[i], H, T));
+  checkTrue('every layout yields the same nine spending lines, dated from the file', lines.every(l => l.filter(x => x.kind === 'expense').length === 9) && lines.every(l => l.filter(x => x.kind === 'expense').map(x => x.date + ':' + x.cents).join('|') === lines[0].filter(x => x.kind === 'expense').map(x => x.date + ':' + x.cents).join('|')));
+  check('US dates read month first', BankCsv.parseDate('06/03/2026'), '2026-06-03');
+  check('a deposit is shown and left out, never logged as spending', lines[0].filter(x => x.kind === 'deposit').length + ':' + lines[0].filter(x => x.kind === 'deposit')[0].why, '1:money in; the log holds spending');
+  check('a thousands comma and a bracketed negative parse', BankCsv.cents('2,450.00') + ':' + BankCsv.cents('(15.49)'), '245000:-1549');
+  checkTrue('a streaming charge files under subscriptions when the keywords know it', lines[0].some(x => /SPOTIFY/.test(x.description) && x.categoryId === 'subscriptions'));
+  checkTrue('the signature remembers a bank by its headings', BankCsv.signature(parsed[1].headers) === 'transaction date|details|debit|credit' && BankCsv.signature(parsed[0].headers) !== BankCsv.signature(parsed[1].headers));
+  /* dedupe: apply twice changes nothing */
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+  const n1 = BankCsv.apply(lines[0], Spine);
+  check('nine lines land in the log', n1 + ':' + Spine.getProfile().expenses.entries.length, '9:9');
+  const e0 = Spine.getProfile().expenses.entries[0];
+  checkTrue('each dated from the file, exact, sourced as the log, categorised by the bank import', e0.date === '2026-06-03' && e0.dateKind === 'exact' && e0.source === 'log' && e0.categorizedBy === 'bank-csv' && e0.period === 'once' && e0.amountCents === 1549 && e0.descriptor === 'NETFLIX.COM');
+  const again = BankCsv.entries(parsed[1], maps[1], Spine.getProfile(), T);
+  check('the same statement in another layout: every spending line is already in the log', again.filter(x => x.duplicate).length, 9);
+  const n2 = BankCsv.apply(again, Spine);
+  check('and importing it changes nothing', n2 + ':' + Spine.getProfile().expenses.entries.length, '0:9');
+  const before = JSON.stringify(Spine.getProfile().expenses.entries);
+  BankCsv.apply(BankCsv.entries(parsed[2], maps[2], Spine.getProfile(), T), Spine);
+  check('nor does the third', JSON.stringify(Spine.getProfile().expenses.entries) === before, true);
+  const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
+  checkTrue('Your Data previews before anything saves and remembers the map per bank', /bankPreview\(\)/.test(dataHtml) && /bankcsv\.maps/.test(dataHtml) && /Import the new lines/.test(dataHtml));
+  checkTrue('nothing is sent: the import never fetches or posts', !/fetch\(|XMLHttpRequest|sendBeacon/.test(fs.readFileSync(path.join(ROOT, 'engines/bankcsv.js'), 'utf8')));
+
+  /* -- J5: the finder ----------------------------------------------------------------- */
+  /* The finder on the demo persona (a real wage), with the imported log. */
+  const demoBase = Demo.build();
+  Spine.updateProfile(Object.assign(demoBase, { expenses: Object.assign({}, demoBase.expenses, { entries: Spine.getProfile().expenses.entries }) }));
+  const hs = Spine.getProfile();
+  const found = Subs.find(hs, T);
+  check('two charges repeat monthly at a similar amount: Netflix and Spotify', found.map(f => f.label).sort().join(','), 'NETFLIX.COM,SPOTIFY USA');
+  const nf = found.filter(f => /NETFLIX/.test(f.label))[0];
+  check('a monthly rhythm, three times', nf.rhythm + ':' + nf.count, 'monthly:3');
+  check('its yearly cost is twelve times the typical charge', nf.yearlyCents, 1549 * 12);
+  checkTrue('and its cost in hours of work at the real wage', typeof nf.hours === 'number' && nf.hours > 0);
+  checkTrue('a one-off (the gym, the gas) is not called repeating', !found.some(f => /GYM|SHELL|TRADER/.test(f.label)));
+  const dec = Subs.decide(hs.subscriptions, nf.key, 'cancel', nf.label, nf.yearlyCents);
+  Spine.set('subscriptions', dec);
+  const again2 = Subs.find(Spine.getProfile(), T).filter(f => /NETFLIX/.test(f.label))[0];
+  check('cancel this is a stored reminder, and the charge stays found', again2.status, 'cancel');
+  checkTrue('the household carries the decision in its own list, normalised by the constructor', Schema.createHousehold(Spine.getProfile()).subscriptions[0].status === 'cancel' && Schema.createHousehold({ subscriptions: [{ key: 'x', status: 'nonsense' }] }).subscriptions[0].status === 'confirmed');
+  Spine.set('subscriptions', Subs.decide(Spine.getProfile().subscriptions, nf.key, 'dismissed', nf.label, nf.yearlyCents));
+  const leak = Subs.leak(Spine.getProfile(), T);
+  check('a dismissed charge leaves the leak line', leak.count + ':' + leak.yearlyCents, '1:' + (1199 * 12));
+  checkTrue('the Expenses door’s level 4 reads the leak line', /Subscriptions\.leak\(h, T\)/.test(fs.readFileSync(path.join(ROOT, 'shared/doors.js'), 'utf8')) && (function () { const ins = Doors.levelInsight(Spine.getProfile(), T, 'E', 4, []); return ins && /repeating charge/.test(ins.headline); })());
+  checkTrue('Money Wrapped gains the leak line only when something was found', Wrapped.year(Spine.getProfile(), [], T, {}).lines.some(l => l.id === 'leak') && !Wrapped.year(Demo.build(), [], T, {}).lines.some(l => l.id === 'leak'));
+  checkTrue('the room never cancels anything: it writes a decision and says so', /a reminder, never an action|a note to\n?\s*yourself/.test(fs.readFileSync(path.join(ROOT, 'rooms/subscriptions.html'), 'utf8')) && !/cancelSubscription|fetch\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/subscriptions.html'), 'utf8')));
+})();
+
+/* ==========================================================================
+   J7, J8: two views of Partner, Roth conversions before 65 (D-216)
+   ========================================================================== */
+section('J7, J8: two views of Partner, Roth conversions before 65 (D-216)');
+(function () {
+  const Partner = require(path.join(ROOT, 'engines/partner.js'));
+  const RothAca = require(path.join(ROOT, 'engines/rothaca.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+
+  /* -- J7: the one-sentence view, read off the split ------------------------------- */
+  const you = Schema.createPerson({ id: 'p', role: 'adult', label: 'You', incomeSources: [Schema.createIncomeSource({ personId: 'p', grossAnnualIncomeCents: 9000000 })] });
+  const sam = Schema.createPerson({ id: 'q', role: 'adult', label: 'Sam', incomeSources: [Schema.createIncomeSource({ personId: 'q', grossAnnualIncomeCents: 4000000 })] });
+  const two = Schema.createHousehold({
+    people: [you, sam], filingStatus: 'married_joint', partner: { splitMode: 'proportional', sharedMonthlyCents: 400000 },
+    assets: [Schema.createAsset({ id: 'a1', label: 'Joint savings', category: 'cash', valueCents: 1000000 }), Schema.createAsset({ id: 'a2', label: 'My 401k', category: 'retirement', valueCents: 5000000, ownerIds: ['p'] })],
+    debts: [Schema.createDebt({ id: 'd1', label: 'Sam car', balanceCents: 800000, ownerIds: ['q'] })]
+  });
+  const before = JSON.stringify(two);
+  const split = Partner.split(two, T);
+  const yes = Partner.onTrack(two, T);
+  check('on track: neither share past the watch line, both take-homes known', yes.value, 'yes');
+  checkTrue('...one sentence naming what each keeps, and nothing recalculated: the figures are the split\'s own', yes.sentence === 'On track: after the shared month you keep ' + Money.formatCents(split.people[0].keepsCents) + ' and Sam keeps ' + Money.formatCents(split.people[1].keepsCents) + ' a month.');
+  const close = Partner.onTrack(Object.assign({}, two, { partner: { splitMode: 'equal', sharedMonthlyCents: 600000 } }), T);
+  check('close: half of $6,000 is more than half of Sam\'s take-home', close.value, 'close');
+  checkTrue('...and says whose', /^Close: more than half of what Sam brings home/.test(close.sentence));
+  const no = Partner.onTrack(Object.assign({}, two, { partner: { splitMode: 'equal', sharedMonthlyCents: 1200000 } }), T);
+  check('not on track: $12,000 a month is more than the two take-homes together', no.value, 'no');
+  checkTrue('...and says by how much, from the split\'s outOfPocketCents', no.sentence.indexOf(Money.formatCents(Partner.split(Object.assign({}, two, { partner: { splitMode: 'equal', sharedMonthlyCents: 1200000 } }), T).outOfPocketCents)) > -1);
+  const pooled = Partner.onTrack(Object.assign({}, two, { partner: { splitMode: 'pooled', sharedMonthlyCents: 400000 } }), T);
+  check('one pool: on track, with what is left between you', pooled.value, 'yes');
+  const noPay = Partner.onTrack(Schema.createHousehold(Object.assign({}, two, { people: [you, Schema.createPerson({ id: 'q', role: 'adult', label: 'Sam' })] })), T);
+  check('their pay missing: can\'t tell, never a guess', noPay.value, 'cantTell');
+  checkTrue('one adult: incomplete, the same reason as the split', !Money.isOk(Partner.onTrack(Demo.build(), T)) && Partner.onTrack(Demo.build(), T).justYou === true);
+  checkTrue('no sentence carries an em-dash', [yes, close, no, pooled, noPay].every(r => r.sentence.indexOf('—') === -1));
+  /* -- J7: yours, mine, ours, from either side --------------------------------------- */
+  const mine = Partner.tags(two);
+  check('from your side: the joint account is ours, the 401k mine, the car loan yours', mine.assets.map(a => a.tag).concat(mine.debts.map(d => d.tag)).join(','), 'ours,mine,yours');
+  const theirs = Partner.tags(two, 'q');
+  check('from Sam\'s side the same rows flip', theirs.assets.map(a => a.tag).concat(theirs.debts.map(d => d.tag)).join(','), 'ours,yours,mine');
+  check('the counts add up', JSON.stringify(mine.counts), '{"mine":1,"yours":1,"ours":1,"theirs":0}');
+  check('an unknown viewer id falls back to the first adult', Partner.tags(two, 'nobody').viewer.id, 'p');
+  check('one adult: no tags', Partner.tags(Demo.build()), null);
+  check('nothing was written: the household is byte-identical after both', JSON.stringify(two) === before, true);
+  const partnerRoom = fs.readFileSync(path.join(ROOT, 'rooms/partner.html'), 'utf8');
+  checkTrue('the Partner room has the two views and a viewer switch', /data-view="track"/.test(partnerRoom) && /data-view="full"/.test(partnerRoom) && /data-viewer=/.test(partnerRoom));
+  checkTrue('...the default view is a preference per person, never on the household', /Prefs\.set\('partner\.view\.' \+ viewerId\(h\)/.test(partnerRoom) && /Prefs\.set\('partner\.viewer'/.test(partnerRoom) && partnerRoom.indexOf("Spine.set('partner.view") === -1);
+  checkTrue('...the sentence and the tags come from the engine', /Partner\.onTrack\(h, T\)/.test(partnerRoom) && /Partner\.tags\(h, viewer\)/.test(partnerRoom));
+  checkTrue('...gift privacy is not built: it waits on the owner', /Gift privacy is not\s+built/.test(partnerRoom) && !/gift/i.test(fs.readFileSync(path.join(ROOT, 'engines/partner.js'), 'utf8')));
+  const pr = Registry.byId('partner');
+  check('the registry lists the three new subsections', pr.subsections.filter(x => ['view', 'track', 'tags'].indexOf(x.id) > -1).length, 3);
+
+  /* -- J8: the engine, by hand ---------------------------------------------------------
+     Single, 56, other income $20,000, pre-tax $500,000 typed, benchmark $800 a month.
+     Year one at $40,000 converted: MAGI 60,000; taxable 60,000 - 16,100 = 43,900;
+     tax 12,400 x 10% + 31,500 x 12% = 1,240 + 3,780 = 5,020. FPL 15,650, so
+     60,000 is 3.83x, under the cliff at 62,600; the 8.66% row: 5,196 a year.
+     At $60,000 converted: MAGI 80,000 is over the cliff. Taxable 63,900:
+     1,240 + 4,560 + 13,500 x 22% = 8,770. Cliff on: the whole 9,600; off: 8.5%
+     of 80,000 = 6,800. */
+  const one = Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', dob: '1970-07-01' })], filingStatus: 'single' });
+  const under = RothAca.plan(one, T, { age: 56, benchmarkPremiumMonthlyCents: 80000, conversionAnnualCents: 4000000, otherIncomeAnnualCents: 2000000, pretaxCents: 50000000 });
+  check('nine years from 56 to 65', under.years, 9);
+  check('year one tax: $5,020', under.rows[0].taxCents, 502000);
+  check('year one premium under the cliff: 8.66% of $60,000', under.rows[0].premiumOnCents, 519600);
+  check('...the same with the cliff off, because it is under it', under.rows[0].premiumOffCents, 519600);
+  check('so the range collapses to one figure', under.lowCents === under.highCents, true);
+  check('the cliff for one person: 4 x $15,650', under.cliffCents, 6260000);
+  check('room in year one before it: $62,600 less $20,000 of other income', under.fillToCliffCents, 4260000);
+  check('never over the cliff', under.yearsOverCliff, 0);
+  check('nine conversions of $40,000 land in the Roth', under.convertedCents, 36000000);
+  check('the pre-tax balance is what is left after each year grows at p50', under.rows[1].pretaxStartCents, Math.round((50000000 - 4000000) * 1.05));
+  const over = RothAca.plan(one, T, { age: 56, benchmarkPremiumMonthlyCents: 80000, conversionAnnualCents: 6000000, otherIncomeAnnualCents: 2000000, pretaxCents: 50000000 });
+  check('at $60,000 a year: year one tax $8,770', over.rows[0].taxCents, 877000);
+  check('over the cliff, the whole benchmark: $9,600', over.rows[0].premiumOnCents, 960000);
+  check('without the cliff, 8.5% of $80,000', over.rows[0].premiumOffCents, 680000);
+  check('every year over', over.yearsOverCliff, 9);
+  check('so the range is real: low is the no-cliff rule, high the cliff', over.lowCents === over.cliffOff.totalCents && over.highCents === over.cliffOn.totalCents && over.lowCents < over.highCents, true);
+  check('the lifetime figure is the sum of the years', over.cliffOn.totalCents, over.rows.reduce((t, r) => t + r.taxCents + r.premiumOnCents, 0));
+  check('converting nothing is the baseline the extra is read against', over.extraOnCents, over.cliffOn.totalCents - over.baseline.cliffOn.totalCents);
+  checkTrue('...and the baseline prices $20,000 of income alone: 1.28x the poverty level, so 2.07% of it, and $390 of tax on the $3,900 above the standard deduction', over.baseline.cliffOn.premiumCents === 9 * 41400 && over.baseline.cliffOn.taxCents === 9 * 39000);
+  const capped = RothAca.plan(one, T, { age: 63, benchmarkPremiumMonthlyCents: 80000, conversionAnnualCents: 10000000, otherIncomeAnnualCents: 0, pretaxCents: 3000000 });
+  check('a conversion never exceeds what is left: $30,000 then nothing', capped.rows.map(r => r.conversionCents).join(','), '3000000,0');
+  /* empty is empty */
+  checkTrue('no premium typed: incomplete, asking for it', !Money.isOk(RothAca.plan(one, T, { age: 56, pretaxCents: 100 })) && RothAca.plan(one, T, { age: 56, pretaxCents: 100 }).missing[0] === 'benchmarkPremium');
+  checkTrue('no pre-tax balance anywhere: incomplete', RothAca.plan(one, T, { age: 56, benchmarkPremiumMonthlyCents: 80000 }).missing[0] === 'pretaxBalance');
+  checkTrue('at 65: the question ends', !Money.isOk(RothAca.plan(one, T, { age: 65, benchmarkPremiumMonthlyCents: 80000, pretaxCents: 100 })));
+  checkTrue('no date of birth and no age: incomplete', RothAca.plan(Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult' })], filingStatus: 'single' }), T, { benchmarkPremiumMonthlyCents: 80000, pretaxCents: 100 }).missing[0] === 'dob');
+  const held = Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', dob: '1970-07-01' })], assets: [Schema.createAsset({ category: 'retirement', valueCents: 20000000 }), Schema.createAsset({ category: 'investment', taxCharacter: 'taxable', valueCents: 5000000 })] });
+  const fromStatement = RothAca.plan(held, T, { age: 56, benchmarkPremiumMonthlyCents: 80000 });
+  check('the pre-tax balance is read off the Statement when not typed: only the pre-tax pile', fromStatement.pretaxCents + ':' + fromStatement.pretaxSource, '20000000:household');
+  checkTrue('...a retirement account with no character is assumed pre-tax, and said so; no filing status is assumed single, and said so', fromStatement.assumed.indexOf('pretaxOrientation') > -1 && fromStatement.assumed.indexOf('filingStatus') > -1 && fromStatement.filingStatus === 'single');
+  checkTrue('the no-cliff cap lives in the table, not the engine', T.aca.ifNoCliff.capPercent === 0.085 && !/0\.085/.test(fs.readFileSync(path.join(ROOT, 'engines/rothaca.js'), 'utf8')));
+  /* the room */
+  const rothRoom = fs.readFileSync(path.join(ROOT, 'rooms/roth-aca.html'), 'utf8');
+  checkTrue('the room sits behind the preMedicare switch, through Features.on', /Features\.on\('preMedicare', h\)/.test(rothRoom) && /switch-notice/.test(rothRoom));
+  checkTrue('...writes nothing to the household', rothRoom.indexOf('Spine.set(') === -1 && rothRoom.indexOf('Spine.updateProfile(') === -1);
+  checkTrue('...never a point without its range', /data-range/.test(rothRoom) && / to /.test(rothRoom));
+  checkTrue('...the premium is typed, never guessed: no premium table in data/', !fs.readdirSync(path.join(ROOT, 'data')).some(f => /premium/i.test(f)) && /only the marketplace can tell you/.test(rothRoom));
+  checkTrue('...no em-dash on screen', rothRoom.replace(/<!--[\s\S]*?-->/g, '').indexOf('—') === -1);
+  const rr = Registry.byId('roth-aca');
+  checkTrue('the registry lists it under moves with the switch, and the layouts shelve it beside Drawing It Down', rr && rr.subgroup === 'moves' && rr.features.indexOf('preMedicare') > -1 && rr.order === 33.5);
+  const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
+  const shelves = [];
+  (function walk(x) { if (Array.isArray(x)) { if (x.indexOf('decumulation') > -1) shelves.push(x); x.forEach(walk); } else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
+  checkTrue('...in every arrangement, right after it', shelves.length === 20 && shelves.every(a => a[a.indexOf('decumulation') + 1] === 'roth-aca'));
+})();
+
+/* ==========================================================================
+   K4, K6, K7, K11: one countdown, four skins (D-217)
+   ========================================================================== */
+section('K4, K6, K7, K11: one countdown, four skins (D-217)');
+(function () {
+  const Countdown = require(path.join(ROOT, 'engines/countdown.js'));
+  const Race = require(path.join(ROOT, 'engines/race.js'));
+  const DownPayment = require(path.join(ROOT, 'engines/downpayment.js'));
+  const QuitFund = require(path.join(ROOT, 'engines/quitfund.js'));
+  const Wedding = require(path.join(ROOT, 'engines/wedding.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+
+  /* -- the one countdown, by hand ----------------------------------------------- */
+  const cd = Countdown.goalCountdown({ targetCents: 2000000, savedCents: 500000, monthlyContributionCents: 50000, annualRate: 0, from: '2026-09' });
+  check('$20,000 less $5,000 at $500 a month: 30 months', cd.months, 30);
+  check('...from September 2026 that is March 2029', cd.date, '2029-03');
+  check('...a cash goal has no range: both ends are the same month', cd.range.fastDate + '|' + cd.range.slowDate, '2029-03|2029-03');
+  check('the month that would land it in a year: $1,250', cd.monthlyNeededCents(12), 125000);
+  check('nothing in and nothing growing: never, not a far-off date', Countdown.goalCountdown({ targetCents: 100, savedCents: 0, monthlyContributionCents: 0 }).neverAtThisPace, true);
+  check('already there: reached now', Countdown.goalCountdown({ targetCents: 100, savedCents: 100 }).reachedNow, true);
+  const banded = Countdown.goalCountdown({ targetCents: 10000000, savedCents: 4800000, monthlyContributionCents: 100000, annualRate: 0.05, bands: { p25: 0.02, p50: 0.05, p75: 0.08 }, from: '2026-09' });
+  checkTrue('an invested goal carries its range: the good decade lands first, the poor one last', banded.range.fastMonths < banded.months && banded.months < banded.range.slowMonths);
+  /* every skin is a skin: no countdown walks its own months */
+  ['race', 'downpayment', 'quitfund', 'wedding'].forEach(function (e) {
+    const src = fs.readFileSync(path.join(ROOT, 'engines/' + e + '.js'), 'utf8');
+    checkTrue(e + ' dates through goalCountdown and never walks months itself', /Countdown\.goalCountdown\(/.test(src) && !/Math\.pow\(/.test(src) && !/for \(var m = /.test(src));
+  });
+  ['race', 'down-payment', 'quit-fund', 'wedding'].forEach(function (r) {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms/' + r + '.html'), 'utf8');
+    checkTrue('rooms/' + r + '.html computes no date of its own', !/Math\.pow\(/.test(src) && src.indexOf('Spine.set(') === -1 && /LIVE-FORM: built once/.test(src));
+  });
+
+  /* -- K4: the race on the demo (steady saving) ------------------------------------ */
+  const race = Race.rungs(Demo.build(), T, { from: '2026-09' });
+  checkTrue('the demo races from its net worth with what it saves a month', Money.isOk(race) && race.basis === 'netWorth' && race.monthlyCents > 0);
+  check('ten rungs to $1 million', race.rows.length, 10);
+  checkTrue('after the first (partial) rung, each gap is shorter than the one before', race.rows.slice(1).every((x, i) => i === 0 || x.gapMonths <= race.rows[i].gapMonths));
+  checkTrue('every rung splits into what was saved and what grew, and the two add to the rung', race.rows.every(x => x.contributedCents + x.grownCents === x.rungCents - (x === race.rows[0] ? race.startCents : x.rungCents - Race.RUNG_CENTS)));
+  checkTrue('growth first does more of the work at a later rung, and from there on', race.firstGrowthLeadsRungCents > race.rows[0].rungCents && race.rows.filter(x => x.rungCents >= race.firstGrowthLeadsRungCents).every(x => x.growthLeads));
+  checkTrue('each date carries its range, good decade first', race.rows.every(x => x.range.fastDate <= x.date && x.date <= x.range.slowDate));
+  const nothing = Race.rungs(Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult' })], assets: [Schema.createAsset({ category: 'cash', valueCents: 100 })], debts: [Schema.createDebt({ balanceCents: 100 })] }), T, { from: '2026-09', monthlyContributionCents: 0 });
+  check('saving nothing from nothing: not reachable at this pace, never a date', nothing.neverAtThisPace + ':' + nothing.rows.length + ':' + nothing.value, 'true:0:null');
+  checkTrue('...with the monthly saving that would reach $100K in five years: under $1,666.67, because what goes in grows too', nothing.monthlyNeededCents === Countdown.monthlyNeededCents(10000000, 0, nothing.rate, 60) && nothing.monthlyNeededCents < 166667 && nothing.monthlyNeededCents > 140000);
+  const invested = Race.rungs(Demo.build(), T, { from: '2026-09', investedOnly: true });
+  checkTrue('invested money only races from the investments, not net worth', Money.isOk(invested) && invested.basis === 'invested' && invested.startCents === Schema.investmentsCents(Demo.build()).value && invested.startCents !== race.startCents);
+  const card = ShareCard.make('race', Demo.build(), T, {});
+  checkTrue('the race shares as dates only: a rung and a year, no cents', card.ok && card.fields.n === 100 && card.fields.y === Number(race.rows[0].date.slice(0, 4)) && ShareCard.leaks(ShareCard.link(card), Demo.build()).length === 0);
+  checkTrue('...and the card renders from its fields alone', /first \$100K: \d{4}/.test(ShareCard.render(ShareCard.decode(ShareCard.encode(card))).title));
+
+  /* -- K6: the down payment, by hand -------------------------------------------------
+     $400,000 at 6.5% over 30 years. 20% down = $80,000; closing 3% = $12,000;
+     P&I on $320,000 = $2,022.62; tax 1.1%/12 = $366.67; insurance 0.5%/12 = $166.67;
+     no mortgage insurance; $2,555.96 a month; two months in reserve $5,111.92;
+     needs $97,111.92. $20,000 saved and $1,000 a month: 78 months. */
+  const dp = DownPayment.plan(T, { priceCents: 40000000, savedCents: 2000000, monthlyCents: 100000, rate: 0.065, from: '2026-09' });
+  const twenty = dp.options.filter(o => o.pct === 0.2)[0];
+  check('20% down: the payment to the cent', twenty.paymentCents, 255596);
+  check('...two months of it in reserve', twenty.reservesCents, 511192);
+  check('...what the lender needs in cash', twenty.neededCents, 9711192);
+  check('...78 months away at $1,000 a month', twenty.months, 78);
+  checkTrue('a bigger down payment moves the date later and the principal and interest lower', dp.options.every((o, i) => i === 0 || (o.months >= dp.options[i - 1].months && o.principalInterestCents < dp.options[i - 1].principalInterestCents)));
+  checkTrue('...and the whole payment lower from 5% up (FHA at 3.5% carries a cheaper premium than private insurance at 5%)', dp.options.slice(1).every((o, i) => i === 0 || o.paymentCents < dp.options.slice(1)[i - 1].paymentCents));
+  checkTrue('under 20% there is mortgage insurance; at 20% there is none', dp.options.filter(o => o.pct < 0.2).every(o => o.miCents > 0) && twenty.miCents === 0);
+  const helped = DownPayment.plan(T, { priceCents: 40000000, savedCents: 2000000, monthlyCents: 100000, familyHelpCents: 2000000, rate: 0.065, from: '2026-09' });
+  checkTrue('family help moves every date earlier', helped.options.every((o, i) => (o.months || 0) <= (dp.options[i].months || 0)));
+  const stuck = DownPayment.plan(T, { priceCents: 40000000, savedCents: 0, monthlyCents: 0, from: '2026-09' });
+  checkTrue('nothing going in: not at this pace, with the monthly that would do it in five years', stuck.options.every(o => o.neverAtThisPace && o.monthlyNeededCents > 0 && o.date === null));
+  checkTrue('no price: it asks for one', !Money.isOk(DownPayment.plan(T, {})) && DownPayment.plan(T, {}).missing[0] === 'price');
+  checkTrue('every rate comes from a table, none inline', /T\.downPayment|D\.pmiAnnualRate|H\.closingCostRate/.test(fs.readFileSync(path.join(ROOT, 'engines/downpayment.js'), 'utf8')) && !/0\.0075|0\.0055|0\.03\b/.test(fs.readFileSync(path.join(ROOT, 'engines/downpayment.js'), 'utf8')));
+
+  /* -- K7: the quit fund on the demo -------------------------------------------------- */
+  const quit = QuitFund.plan(Demo.build(), T, { mode: 'quit', from: '2026-09' });
+  const laid = QuitFund.plan(Demo.build(), T, { mode: 'laidOff', from: '2026-09' });
+  checkTrue('the demo\'s free money is its cash', Money.isOk(quit) && quit.freeCents === 950000 && quit.freeTiers.map(t => t.id).join(',') === 'cash');
+  check('the month is the household month plus single COBRA cover', quit.monthCents, 315000 + T.cobraAca.monthly.cobraSingleCents);
+  check('months of freedom, to a tenth', quit.value, Math.round(950000 / quit.monthCents * 10) / 10);
+  checkTrue('quitting counts no benefit, and says why', quit.benefit.totalCents === 0 && /disqualif/.test(quit.benefit.reason));
+  checkTrue('laid off in NC: half of pay up to the state cap, for the state\'s weeks', laid.benefit.weeklyCents === Math.min(T.uiBenefits.states.NC.maxWeeklyDollars * 100, Math.round(Money.toCents(Demo.VALUES ? Demo.VALUES.grossAnnualIncome : 0) / 52 * 0.5)) && laid.benefit.weeks === T.uiBenefits.states.NC.weeks);
+  checkTrue('...which lengthens the months of freedom', laid.value > quit.value);
+  checkTrue('...and nothing else changes: the same free money, month and cover', laid.freeCents === quit.freeCents && laid.monthCents === quit.monthCents && laid.coverCents === quit.coverCents);
+  check('three targets: 3, 6, 12 months', quit.targets.map(t => t.months).join(','), '3,6,12');
+  checkTrue('each target is that many months less the benefit, dated through the countdown from the free money', laid.targets.every(t => t.targetCents === Math.max(0, t.months * laid.monthCents - laid.benefit.totalCents)) && quit.targets.every((t, i) => i === 0 || t.date >= quit.targets[i - 1].date));
+
+  /* -- K11: the wedding on the demo ---------------------------------------------------- */
+  const w = Wedding.plan(Demo.build(), T, { savedCents: 500000, monthlyCents: 80000, from: '2026-09', targetDate: '2028-06' });
+  check('the default build-up: 115 guests at $150, $15,000 fixed, a $5,200 ring', w.totalCents, 115 * 15000 + 1500000 + 520000);
+  check('$32,450 to go at $800 a month: 41 months', w.months, 41);
+  checkTrue('not in time for June 2028, and the monthly that would be: $32,450 over 21 months', w.onTime === false && w.monthlyForTargetCents === Math.ceil(3245000 / 21));
+  const wf = Wedding.plan(Demo.build(), T, { savedCents: 500000, monthlyCents: 80000, familyCents: 1000000, from: '2026-09', targetDate: '2028-06' });
+  checkTrue('family contributions, typed, move the date earlier', wf.months < w.months);
+  checkTrue('a table of eight costs eight guests, priced in FI days through the lens', w.perTableCents === 8 * 15000 && typeof w.perTableFiDays === 'number' && w.perTableFiDays > 0);
+  check('a typed total wins over the build-up', Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).source + ':' + Wedding.plan(Demo.build(), T, { totalCents: 1000000, savedCents: 1000000 }).reachedNow, 'typed:true');
+  checkTrue('the defaults table is tagged, every figure editable from the page', T.weddingDefaults.confidence === 'unverified' && /in-perguest/.test(fs.readFileSync(path.join(ROOT, 'rooms/wedding.html'), 'utf8')));
+  /* registry and shelves */
+  ['race', 'down-payment', 'wedding'].forEach(function (id) { checkTrue(id + ' is registered', !!Registry.byId(id)); });
+  checkTrue('the Quit Fund is the Cushion\'s by-choice reading now (D-232)', !Registry.byId('quit-fund') && Registry.byId('runway').subsections.some(x => x.id === 'view-by-choice'));
+  const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
+  /* Two of the four pairs have become one room each: Between Jobs beside
+     The Quit Fund is The Cushion (D-232), and Where Do You Think You Rank
+     beside The Race is a Scorecard reading beside a room (D-233). What is
+     left to check is that the two real pairs are still shelved together. */
+  const pairs = { housing: 'down-payment', partner: 'wedding' };
+  let shelved = 0;
+  (function walk(x) { if (Array.isArray(x) && x.every(i => typeof i === 'string')) { Object.keys(pairs).forEach(k => { if (x.indexOf(k) > -1 && x[x.indexOf(k) + 1] === pairs[k]) shelved++; }); } if (Array.isArray(x)) x.forEach(walk); else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
+  check('each is shelved beside its neighbour in all twenty arrangements', shelved, 40);
+})();
+
+/* ==========================================================================
+   K1, K3: the Middle Class Trap Test and the Referee (D-218)
+   ========================================================================== */
+section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
+(function () {
+  const Trap = require(path.join(ROOT, 'engines/trap.js'));
+  const Debates = require(path.join(ROOT, 'engines/debates.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  const R = T.earlyAccessRules;
+
+  /* -- the rules live in data, sourced ------------------------------------------------ */
+  checkTrue('every early-access rule has a source and a confidence', typeof R.source === 'string' && /72\(t\)/.test(R.source) && /408A/.test(R.source) && R.confidence === 'unverified');
+  checkTrue('the engine holds no rule of its own: no 59.5, no 0.10, no 0.05 inline', !/59\.5|0\.10\b|0\.05\b|\b5\b(?! \*)/.test(fs.readFileSync(path.join(ROOT, 'engines/trap.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/'[^']*'/g, '')));
+  check('the 72(t) payment on $900,000 at 52 by the amortization method at the 5% ceiling: level payment over 34.3 years, to the cent', Trap.seppPaymentCents(R, 90000000, 52), require(path.join(ROOT, 'engines/projection.js')).levelPaymentCents({ principalCents: 90000000, annualRate: 0.05, months: Math.round(34.3 * 12) }).value * 12);
+
+  /* -- the four households the brief names ------------------------------------------- */
+  function hh(o) {
+    return Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', dob: '1976-07-01', incomeSources: [Schema.createIncomeSource({ personId: 'p', grossAnnualIncomeCents: 12000000 })] })], filingStatus: 'married_joint',
+      expenses: { needs: { food: { monthlyCents: 100000 }, accommodation: { monthlyCents: 250000 }, transportation: { monthlyCents: 50000 } }, wants: { totalCents: 100000 } },
+      assets: o.assets, debts: o.debts || [], targets: { retireAge: o.retireAge } });
+  }
+  const trapped = hh({ retireAge: 52, assets: [Schema.createAsset({ label: 'Home', category: 'property', valueCents: 60000000 }), Schema.createAsset({ label: '401k', category: 'retirement', taxCharacter: 'pretax', valueCents: 90000000 }), Schema.createAsset({ label: 'Brokerage', category: 'investment', taxCharacter: 'taxable', valueCents: 6000000, costBasisCents: 4000000 }), Schema.createAsset({ label: 'Cash', category: 'cash', valueCents: 2000000 })], debts: [Schema.createDebt({ type: 'mortgage', balanceCents: 20000000, rate: 0.035 })] });
+  const soon = Trap.run(trapped, T, { age: 50 });
+  const by = (r, id) => r.paths.filter(p => p.id === id)[0];
+  checkTrue('large home equity and 401(k), small taxable, retiring in two years: Trapped under bridge accounts alone', Money.isOk(soon) && by(soon, 'bridge').verdict === 'Trapped' && by(soon, 'bridge').shortfallYears.length > 0);
+  checkTrue('...home equity is shown and not counted', soon.inputs.piles.homeEquityCents === 40000000 && soon.inputs.extraCashCents === 0);
+  checkTrue('...and the ladder cannot start in time: fewer years of bridge money than the seasoning period', by(soon, 'ladder').verdict === 'Trapped' && soon.bridgeYears < R.conversionSeasoningYears);
+  checkTrue('...the Rule of 55 is not available at 52, and says why', by(soon, 'rule55').available === false && /55/.test(by(soon, 'rule55').reason));
+  checkTrue('...every verdict carries its range across the three bands', soon.paths.filter(p => p.available).every(p => ['Trapped', 'Tight', 'Free'].indexOf(p.verdicts.p25) > -1 && p.verdicts.p75));
+  const lead = Trap.run(trapped, T, { age: 44, retireAge: 52 });
+  checkTrue('the same household with eight years of lead time: the ladder reaches Free', by(lead, 'ladder').verdict === 'Free' && lead.bridgeYears >= R.conversionSeasoningYears);
+  checkTrue('...what is saved until then landed in the bridge, and the assumption says so', lead.inputs.annualSavingsCents > 0 && lead.inputs.assumed.some(a => /lands in taxable/.test(a)));
+  const noBridgeH = hh({ retireAge: 52, assets: [Schema.createAsset({ category: 'retirement', taxCharacter: 'pretax', valueCents: 90000000 })] });
+  noBridgeH.people[0].incomeSources = [];
+  const noBridge = Trap.run(noBridgeH, T, { age: 50 });
+  checkTrue('no bridge money and two years: the ladder cannot start in time, the whole spend short through every seasoning year', by(noBridge, 'ladder').verdict === 'Trapped' && by(noBridge, 'ladder').shortfallYears.slice(0, R.conversionSeasoningYears).join(',') === '52,53,54,55,56' && by(noBridge, 'ladder').rows[0].shortfallCents >= noBridge.inputs.spendAnnualCents);
+  checkTrue('...and once conversions season, only the tax on the year\'s conversion is short', by(noBridge, 'ladder').rows[R.conversionSeasoningYears].shortfallCents === by(noBridge, 'ladder').rows[R.conversionSeasoningYears].taxCents);
+  const solid = Trap.run(hh({ retireAge: 52, assets: [Schema.createAsset({ category: 'retirement', taxCharacter: 'pretax', valueCents: 60000000 }), Schema.createAsset({ category: 'investment', taxCharacter: 'taxable', valueCents: 60000000, costBasisCents: 40000000 }), Schema.createAsset({ category: 'cash', valueCents: 5000000 })] }), T, { age: 50 });
+  checkTrue('a solid taxable bridge: Free under every available path', solid.paths.filter(p => p.available).every(p => p.verdict === 'Free'));
+  const at56 = Trap.run(trapped, T, { age: 50, retireAge: 56 });
+  checkTrue('leaving at 56: the Rule of 55 is available and Free', by(at56, 'rule55').available && by(at56, 'rule55').verdict === 'Free');
+  checkTrue('...turned off when the money is in an IRA', by(Trap.run(trapped, T, { age: 50, retireAge: 56, rule55: false }), 'rule55').available === false);
+  const sell = Trap.run(trapped, T, { age: 50, homeEquity: 'sell' });
+  checkTrue('selling the home counts the equity as cash, and bridge accounts alone get there', sell.inputs.extraCashCents === 40000000 && by(sell, 'bridge').verdict === 'Free');
+  checkTrue('borrowing counts the table\'s share of it', Trap.run(trapped, T, { age: 50, homeEquity: 'borrow' }).inputs.extraCashCents === Math.round(40000000 * R.homeEquity.borrowShareOfEquity));
+  checkTrue('the earliest age not trapped is found per path', by(soon, 'sepp').earliestAge === 50 && by(soon, 'ladder').earliestAge > 52);
+  checkTrue('every path totals its federal tax; the bridge alone pays none on cash and basis', by(soon, 'bridge').taxCents === 0 && by(soon, 'ladder').taxCents > 0 && by(soon, 'sepp').taxCents > 0);
+  checkTrue('no date of birth: incomplete, asking for it', Trap.run(Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult' })] }), T, {}).missing[0] === 'dob');
+  const trapRoom = fs.readFileSync(path.join(ROOT, 'rooms/middle-class-trap.html'), 'utf8');
+  checkTrue('the room names both sides with their sources, from the debates table', /middleClassTrap/.test(trapRoom) && /s\.source/.test(trapRoom));
+  checkTrue('...and writes nothing', trapRoom.indexOf('Spine.set(') === -1 && trapRoom.indexOf('Spine.updateProfile(') === -1);
+
+  /* -- K3: every debate has sources for every side and a flip point ------------------ */
+  const list = Debates.list(T);
+  check('seven debates in the starter set', list.length, 7);
+  checkTrue('every side has its best case and a source; every debate a flip point and an engine function', list.every(d => d.sides.length >= 2 && d.sides.every(s => s.case && s.source) && d.flip && d.flip.label && typeof Debates.FN[d.fn] === 'function'));
+  checkTrue('no side text carries an em-dash or "you should"', list.every(d => d.sides.every(s => s.case.indexOf('—') === -1 && !/you should/i.test(s.case))));
+  /* the flip: moving the key input across it changes the answer the expected way */
+  const withMortgage = rate => Schema.createHousehold(Object.assign({}, Demo.build(), { debts: [Schema.createDebt({ type: 'mortgage', balanceCents: 30000000, rate: rate })] }));
+  check('a 1% mortgage: invest, in every band', Debates.run('mortgageVsInvest', withMortgage(0.01), T).value, 'b');
+  check('a 9% mortgage: pay it off, in every band', Debates.run('mortgageVsInvest', withMortgage(0.09), T).value, 'a');
+  check('a 5% mortgage sits inside the bands: it depends', Debates.run('mortgageVsInvest', withMortgage(0.05), T).value, 'cantTell');
+  checkTrue('...and the flip point names the rate', /5\.0%/.test(Debates.run('mortgageVsInvest', withMortgage(0.05), T).flip.words));
+  const withLoan = rate => Schema.createHousehold(Object.assign({}, Demo.build(), { debts: [Schema.createDebt({ type: 'student_loan', balanceCents: 2000000, rate: rate })] }));
+  check('student loans at 1.5%: invest; at 9%: pay them off', Debates.run('studentLoansVsInvest', withLoan(0.015), T).value + Debates.run('studentLoansVsInvest', withLoan(0.09), T).value, 'ba');
+  const roth = Debates.run('rothVsTraditional', Demo.build(), T);
+  checkTrue('Roth or traditional on the demo: 22% now against 12% later says traditional', roth.value === 'a' && roth.flip.value === 0.22 && roth.flip.at === 0.12);
+  const rent = p => Debates.run('rentVsBuy', Demo.build(), T, { priceCents: p });
+  checkTrue('rent or buy moves with the price: cheap favours buying, dear favours renting, between is neutral', rent(15000000).value === 'a' && rent(60000000).value === 'b' && rent(30000000).value === 'cantTell');
+  checkTrue('...the ratio is the price over the yearly rent', rent(30000000).flip.value === Math.round(30000000 / (Schema.rentMonthlyCents(Demo.build()).cents * 12) * 10) / 10);
+  const omy = Debates.run('oneMoreYear', Demo.build(), T);
+  checkTrue('one more year on the demo: the pot does not support the spending yet, and the year closes a stated amount', omy.value === 'a' && omy.flip.distance < 0);
+  const four = Debates.run('fourPercent', Demo.build(), T);
+  checkTrue('4% or lower: never a side, always the years between', four.value === 'cantTell' && four.flip.distance > 0);
+  checkTrue('the trap debate runs the trap engine and answers solvable for the trapped household', Debates.run('middleClassTrap', trapped, T, { age: 50 }).value === 'b');
+  checkTrue('a missing input says which room to fill', !Money.isOk(Debates.run('mortgageVsInvest', Demo.build(), T)) && /Debt Payoff/.test(Debates.run('mortgageVsInvest', Demo.build(), T).reason));
+  /* shareable under the H8 rules */
+  const card = ShareCard.make('debate', Demo.build(), T, { debate: 'rothVsTraditional', result: roth });
+  checkTrue('a debate shares as its verdict only: no cents, renders from the fields alone', card.ok && ShareCard.leaks(ShareCard.link(card), Demo.build()).length === 0 && /Roth or traditional: traditional/.test(ShareCard.render(ShareCard.decode(ShareCard.encode(card))).title));
+  const debRoom = fs.readFileSync(path.join(ROOT, 'rooms/debates.html'), 'utf8');
+  checkTrue('the Referee never says "you should"', !/you should/i.test(debRoom.replace(/Never "you should"/, '')) && debRoom.indexOf('Spine.set(') === -1);
+  ['middle-class-trap', 'debates'].forEach(id => checkTrue(id + ' is registered', !!Registry.byId(id)));
+})();
+
+/* ==========================================================================
+   K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, the car (D-219)
+   ========================================================================== */
+section('K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, the car (D-219)');
+(function () {
+  const OnePager = require(path.join(ROOT, 'engines/onepager.js'));
+  const Micro = require(path.join(ROOT, 'engines/microretirement.js'));
+  const Offers = require(path.join(ROOT, 'engines/offers.js'));
+  const Degree = require(path.join(ROOT, 'engines/degree.js'));
+  const FirstCar = require(path.join(ROOT, 'engines/firstcar.js'));
+  const ShareCard = require(path.join(ROOT, 'shared/sharecard.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  const demo = Demo.build();
+
+  /* -- K2: the One-Pager ---------------------------------------------------------- */
+  const priv = OnePager.build(demo, T, { audience: 'coach', version: 'private' });
+  const pub = OnePager.build(demo, T, { audience: 'coach', version: 'public' });
+  check('the coach preset shows every section', priv.sectionsOn.join(','), OnePager.SECTIONS.map(s => s.id).join(','));
+  checkTrue('the Public version contains no cents value from the household', ShareCard.leaks(OnePager.text(pub), demo).length === 0 && !/\$/.test(OnePager.text(pub)));
+  const rowOf = (built, sec, label) => built.value.filter(s => s.id === sec)[0].rows.filter(r => r.label === label)[0];
+  checkTrue('the Private version matches the Ledger to the cent', rowOf(priv, 'income', 'Gross income, a year').value === Schema.grossAnnualIncomeCents(demo).value && rowOf(priv, 'cashflow', 'Spending, a month').value === Schema.monthlyExpensesCents(demo).value && rowOf(priv, 'assets', 'Cash').value === 950000);
+  checkTrue('blanks show as blank, never $0', rowOf(priv, 'assets', 'Pre-tax').blank === true && rowOf(priv, 'assets', 'Pre-tax').text === '' && !/\$0\b/.test(OnePager.text(priv)));
+  const unsure = Schema.createHousehold(Object.assign({}, demo, { expenses: Schema.createExpenses({}), meta: Object.assign({}, demo.meta, { notSure: { monthlyExpenses: { at: 1, expectedBy: null } } }) }));
+  checkTrue('not sure yet shows as words', rowOf(OnePager.build(unsure, T, { audience: 'coach' }), 'cashflow', 'Spending, a month').text === 'not sure yet');
+  checkTrue('presets decide the sections and any can be switched off', OnePager.build(demo, T, { audience: 'partner' }).sectionsOn.join(',') === 'story,cashflow,debts,goals' && OnePager.build(demo, T, { audience: 'partner', sections: { debts: false, ratios: true } }).sectionsOn.join(',') === 'story,cashflow,goals,ratios');
+  checkTrue('lender prep carries debt-to-income and credit notes', OnePager.build(demo, T, { audience: 'lender' }).sectionsOn.indexOf('credit') > -1 && rowOf(OnePager.build(demo, T, { audience: 'lender' }), 'debts', 'Debt-to-income').kind === 'rate');
+  const opRoom = fs.readFileSync(path.join(ROOT, 'rooms/one-pager.html'), 'utf8');
+  checkTrue('the Private file is the shape Your Data imports, so a coach can open it as an intake', /Spine\.exportObject\(\)/.test(opRoom) && /onePager/.test(opRoom));
+  checkTrue('the page has a print stylesheet and writes nothing', /@media print/.test(opRoom) && opRoom.indexOf('Spine.set(') === -1);
+
+  /* -- K5: the break -------------------------------------------------------------------- */
+  const six = Micro.plan(demo, T, { months: 6, from: '2026-09' });
+  checkTrue('a six-month break with no income: a fund at least six months of break spending plus the cushion', Money.isOk(six) && six.fundCents >= 6 * six.spendMonthlyCents + six.cushionCents && six.breakCents === 6 * (six.spendMonthlyCents + six.coverMonthlyCents));
+  checkTrue('...the cushion is the median re-entry gap in months of spending', six.cushionCents === Math.round(T.reentryGap.medianMonths * six.spendMonthlyCents));
+  const zero = Micro.plan(demo, T, { months: 6, from: '2026-09', momentumRate: 0 });
+  checkTrue('a momentum cost of zero removes that line and changes nothing else', zero.momentum.cents === 0 && zero.fundCents === six.fundCents && zero.readyDate === six.readyDate && zero.fiMovesMonths === six.fiMovesMonths);
+  checkTrue('the momentum cost is always a range from the table', six.momentum.lowCents < six.momentum.highCents && six.momentum.lowRate === T.careerMomentum.penaltyPerYearOfBreak.low);
+  checkTrue('both sides: the weeks bought and the ready date through the one countdown', six.weeksBought === 26 && /^\d{4}-\d{2}$/.test(six.readyDate));
+  checkTrue('income during the break lowers the fund', Micro.plan(demo, T, { months: 6, incomeMonthlyCents: 100000 }).fundCents < six.fundCents);
+
+  /* -- K8: the offers -------------------------------------------------------------------- */
+  check('a 50%-up-to-6% match on $100,000 is $3,000: salary × cap × rate', Schema.employerMatchCents(Offers.household(demo, { baseCents: 10000000, matchRate: 0.5, matchCapPct: 0.06 })).value, 300000);
+  check('a dollar-for-dollar match to 4% is $4,000', Schema.employerMatchCents(Offers.household(demo, { baseCents: 10000000, matchRate: 1, matchCapPct: 0.04 })).value, 400000);
+  const cmp = Offers.compare(demo, T, { offers: [
+    { label: 'A', baseCents: 10000000, matchRate: 0.5, matchCapPct: 0.06, healthMonthlyCents: 20000, commuteMonthlyCents: 15000, commuteMinutesPerDay: 60, ptoDays: 15, remoteDays: 0, state: 'NC' },
+    { label: 'B', baseCents: 9500000, bonusCents: 500000, matchRate: 1, matchCapPct: 0.04, equityLowCents: 500000, equityHighCents: 2000000, healthMonthlyCents: 10000, ptoDays: 25, remoteDays: 5, state: 'TX' }
+  ] });
+  checkTrue('two offers priced, each with a value range, a per-hour figure with the commute in the hours, and an FI date', Money.isOk(cmp) && cmp.offers.every(o => o.ok && o.valueLowCents <= o.valueHighCents && o.hoursAYear > 0 && o.fiYears !== null) && cmp.offers[0].commuteHoursAYear > 0 && cmp.offers[1].commuteHoursAYear === 0);
+  checkTrue('the one line that decides it is named', cmp.decider && cmp.decider.label && cmp.decider.diffCents > 0);
+  checkTrue('one offer is not a comparison', !Money.isOk(Offers.compare(demo, T, { offers: [{ baseCents: 100 }] })));
+  const ocRoom = fs.readFileSync(path.join(ROOT, 'rooms/offer-compare.html'), 'utf8');
+  checkTrue('accepting an offer writes the pay and records the life change for the reopen sheet', /Spine\.upsertIncomeSource\(/.test(ocRoom) && /Spine\.setReopen\(\{ field: 'grossAnnualIncome', from: 'offer-compare'/.test(ocRoom));
+
+  /* -- K9: the degree -------------------------------------------------------------------- */
+  const deg = Degree.decide(demo, T, { age: 30, tuitionCents: 6000000, years: 2, loanCents: 4000000, loanRate: 0.06, withLowCents: 9500000, withHighCents: 11000000 });
+  check('the cost: tuition, two years of pay given up, the loan interest over ten years', deg.costCents, 6000000 + 2 * 7200000 + deg.interestCents);
+  checkTrue('...the interest is the level payment engine\'s, not a second formula', deg.interestCents === require(path.join(ROOT, 'engines/projection.js')).levelPaymentCents({ principalCents: 4000000, annualRate: 0.06, months: 120 }).value * 120 - 4000000);
+  checkTrue('break-even at the middle, with its range', deg.breakEvenAge === Math.round((32 + deg.costCents / deg.gainMidCents) * 10) / 10 && deg.breakEvenLowAge < deg.breakEvenAge && deg.breakEvenAge < deg.breakEvenHighAge);
+  checkTrue('zero salary difference: does not break even', Degree.decide(demo, T, { age: 30, tuitionCents: 6000000, years: 2, withLowCents: 7200000 }).breakEvenAge === null);
+  checkTrue('employer-paid tuition moves break-even earlier', Degree.decide(demo, T, { age: 30, tuitionCents: 6000000, years: 2, loanCents: 4000000, loanRate: 0.06, withLowCents: 9500000, withHighCents: 11000000, employerHelpCents: 3000000 }).breakEvenAge < deg.breakEvenAge);
+  checkTrue('the FI date with and without, the study years counted', deg.fiWithYears !== null && deg.fiWithoutYears !== null);
+
+  /* -- K10: the car ---------------------------------------------------------------------- */
+  const car = FirstCar.check(demo, T, { priceCents: 3000000, downCents: 300000, termMonths: 60, loanRate: 0.07, insuranceMonthlyCents: 15000, gasMonthlyCents: 12000 });
+  check('30,000 with 3,000 down over 60 months on $72,000 of pay: all three parts outside', car.parts.map(p => p.inside).join(','), 'false,false,false');
+  checkTrue('...neutral words: inside or outside, never red', /inside|outside/.test(fs.readFileSync(path.join(ROOT, 'rooms/first-car.html'), 'utf8')) && !/is-red|color-critical/.test(fs.readFileSync(path.join(ROOT, 'rooms/first-car.html'), 'utf8')));
+  checkTrue('the rule test is the one call Quick Math makes', /QuickMath\.carRule2038\(/.test(fs.readFileSync(path.join(ROOT, 'engines/firstcar.js'), 'utf8')));
+  checkTrue('the highest price that fits all three, and the gap priced in FI days', car.maxAffordablePriceCents > 0 && car.gapCents === 3000000 - car.maxAffordablePriceCents && car.gapFiDays > 0);
+  checkTrue('maintenance estimated from the AAA shares when not typed', car.maintenanceEstimated && car.maintenanceCents === Math.round((15000 + 12000) / (0.25 + 0.24) * 0.2));
+  checkTrue('new against used at the same budget from the depreciation curve', car.newVsUsed.newLossCents === Math.round(3000000 * (1 - FirstCar.retained(T.carCosts, 5))) && car.newVsUsed.usedListNewCents === Math.round(3000000 / FirstCar.retained(T.carCosts, 3)));
+  checkTrue('inside all three at a fitting price', FirstCar.check(demo, T, { priceCents: 1500000, downCents: 300000, termMonths: 36, loanRate: 0.06 }).insideAll);
+  ['one-pager', 'micro-retirement', 'offer-compare', 'degree', 'first-car'].forEach(id => checkTrue(id + ' is registered', !!Registry.byId(id)));
+})();
+
+/* ==========================================================================
+   One CSV out, the same CSV back in (D-220)
+   ========================================================================== */
+section('One CSV out, the same CSV back in (D-220)');
+(function () {
+  const Csv = require(path.join(ROOT, 'shared/csvexport.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  LR.use(T.ledgerRows);
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  const demo = Demo.build();
+  const text = Csv.single(demo, T);
+  const lines = Csv.parse(text);
+  check('one CSV carries every line the spreadsheet zip does, under the same columns', lines.length, Csv.rows(demo, T).length);
+  checkTrue('...and the same header, behind the byte-order mark Excel needs', text.charAt(0) === '\ufeff' && text.split('\r\n')[0].slice(1) === Csv.COLUMNS.join(','));
+  /* the inverse of every unit */
+  const rowOf = id => LR.byId(id);
+  check('dollars read back to the cent', Csv.fromText(rowOf('cashSavings'), '1,234.56'), 123456);
+  check('a percent number reads back to a rate', Csv.fromText(rowOf('debtRate'), '24.99'), 0.2499);
+  check('the contribution percent stays a whole number', Csv.fromText(rowOf('contributionPercent'), '6'), 6);
+  check('yes and no read back', Csv.fromText(rowOf('hasDebt'), 'yes') + ':' + Csv.fromText(rowOf('hasDebt'), 'no'), 'true:false');
+  check('a match reads back from its words', JSON.stringify(Csv.fromText(rowOf('employerMatch'), '50% of the first 6%')), '{"matchPercent":0.5,"matchCapPercentOfSalary":0.06}');
+  checkTrue('a choice outside the row\'s values is refused, and says which are allowed', /w2/.test(Csv.fromText(rowOf('incomeType'), 'salary').bad));
+  checkTrue('a blank cell is null: leave it as it is', Csv.fromText(rowOf('cashSavings'), '') === null && Csv.fromText(rowOf('cashSavings'), '   ') === null);
+  checkTrue('every value the export writes reads back to the same text', Csv.rows(demo, T).filter(l => l.value !== '' && l.unit !== 'formula').every(l => { const v = Csv.fromText(rowOf(l.row), l.value); return !(v && v.bad) && Csv.valueText(rowOf(l.row), v) === l.value; }));
+  /* the round trip into an empty household */
+  Spine.updateProfile(Schema.createHousehold()); Spine.ensurePrimaryPerson('You');
+  const p1 = Csv.plan(text, Spine.getProfile(), T);
+  checkTrue('the plan names what will change, what is computed, and which items are new', p1.counts.change > 10 && p1.counts.computed > 0 && p1.counts.add > 0);
+  checkTrue('...a new account, debt or source of pay is added from its amount line, and its other lines follow it', p1.entries.filter(e => e.status === 'add').some(e => e.row === 'assetValue') && p1.entries.filter(e => e.status === 'add').some(e => e.row === 'debtRate' && /on the new item/.test(e.why)));
+  checkTrue('...nothing is written by planning', Spine.getProfile().assets.length === 0);
+  const n1 = Csv.apply(p1, Spine);
+  check('applying writes each change through its owner and adds each new item', n1.applied + ':' + n1.failed.length, (p1.counts.change + p1.counts.add) + ':0');
+  const after = Spine.getProfile();
+  checkTrue('the household now carries the demo\'s single-value rows: cash, spending, filing status, date of birth', Schema.cashCents(after).value === 950000 && Schema.monthlyExpensesCents(after).value === 315000 && after.filingStatus === demo.filingStatus && Schema.adults(after)[0].dob === Schema.adults(demo)[0].dob);
+  checkTrue('...the demo\'s two accounts, two debts and its pay came back by name, to the cent', after.assets.length === 2 && after.debts.length === 2 && after.assets.filter(a => a.label === 'Savings account')[0].valueCents === 950000 && after.debts.filter(d => d.label === 'Credit card')[0].balanceCents === 320000 && Schema.grossAnnualIncomeCents(after).value === Schema.grossAnnualIncomeCents(demo).value);
+  checkTrue('...a new account is placed by its name through the import keywords (savings reads as cash), and the rate lands on the new debt', after.assets.filter(a => a.label === 'Savings account')[0].category === 'cash' && after.debts.filter(d => d.label === 'Credit card')[0].rate === demo.debts.filter(d => d.label === 'Credit card')[0].rate);
+  checkTrue('...Start Here\'s totals are not written a second time when the file carries the account lines', p1.entries.filter(e => e.row === 'cashSavings' || e.row === 'investments').every(e => e.status === 'covered'));
+  checkTrue('the match exports as its words and reads back', Csv.rows(demo, T).filter(l => l.row === 'employerMatch')[0].value === '50% of the first 6%' && p1.entries.filter(e => e.row === 'employerMatch')[0].status === 'change');
+  const p2 = Csv.plan(text, Spine.getProfile(), T);
+  checkTrue('the same file again changes nothing that landed, and adds nothing twice', !p2.counts.add && !p2.entries.some(e => e.status === 'change' && p1.entries.filter(x => x.status === 'change' || x.status === 'add').some(x => x.row === e.row && x.item === e.item)));
+  /* a hand-made sheet by label */
+  const byLabel = Csv.plan('label,value\r\nCash and savings,"4,000"\r\nAnyone depending on your income,\r\nNope,3\r\n', Spine.getProfile(), T);
+  check('a two-column sheet matches rows by label; a blank is skipped; an unknown row is named', byLabel.entries.map(e => e.status).join(','), 'change,skip,unknown');
+  check('...and the value is read by the row\'s unit', byLabel.entries[0].value, 400000);
+  Csv.apply(byLabel, Spine);
+  check('...applied to the cent, onto the cash account the import made', Schema.cashCents(Spine.getProfile()).value, 400000);
+  checkTrue('a total like the month\'s spending is worked out from its lines, so a sheet cannot set it directly', Csv.plan('label,value\r\n"Spending, a month","4,000"\r\n', Spine.getProfile(), T).entries[0].status === 'computed');
+  checkTrue('a zero typed is a zero, a blank is not', Csv.fromText(rowOf('cashSavings'), '0') === 0);
+  checkTrue('nothing in the module reaches the network', !/fetch\(|XMLHttpRequest|sendBeacon/.test(fs.readFileSync(path.join(ROOT, 'shared/csvexport.js'), 'utf8')));
+  const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
+  checkTrue('Your Data downloads one CSV and previews a CSV before applying it', /btn-csv\b/.test(dataHtml) && /csv-file/.test(dataHtml) && /CsvExport\.plan\(/.test(dataHtml) && /CsvExport\.apply\(/.test(dataHtml) && /Apply the changes/.test(dataHtml));
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   The CSV round trip made resilient (D-221)
+   ========================================================================== */
+section('The CSV round trip made resilient (D-221)');
+(function () {
+  const C = require(path.join(ROOT, 'shared/csv.js'));
+  const Csv = require(path.join(ROOT, 'shared/csvexport.js'));
+  const BankCsv = require(path.join(ROOT, 'engines/bankcsv.js'));
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  LR.use(T.ledgerRows);
+  const BOM = '﻿';
+  const fixture = n => fs.readFileSync(path.join(ROOT, 'test/fixtures', n), 'utf8');
+  /* -- one reader for every spreadsheet's CSV ---------------------------------------- */
+  const p1 = C.parse(BOM + 'row;label;value\r\ndob;"Month; and year";1994-04-12\r\n\r\ncash;;"1.234,56"\r\nrow;label;value\r\nx;y\r\na;b;c;d;e\r');
+  check('a byte-order mark, semicolons, CRLF, a quoted delimiter, a blank row, a repeated header, a short row, a long row and a bare CR at the end all read', JSON.stringify(p1.rows) + '|' + p1.delimiter, '[["dob","Month; and year","1994-04-12"],["cash","","1.234,56"],["x","y",""],["a","b","c"]]|;');
+  check('...each row remembers its line in the file', p1.lineOf.join(','), '2,4,6,7');
+  check('a tab-separated file with a newline inside quotes', JSON.stringify(C.parse('a\tb\n1\t"x\ny"\n2\t3').rows), '[["1","x\\ny"],["2","3"]]');
+  check('Excel\'s sep= hint on line one, and headers with odd case and spaces', JSON.stringify(C.records('sep=;\nRow ;Value\n a ; 1 \n')), '[{"_n":3,"row":"a","value":"1"}]');
+  check('a bare-CR file (an old Mac) and a pipe-separated one', C.parse('a|b\r1|2\r3|4').rows.length + ':' + C.parse('a|b\r1|2\r3|4').delimiter, '2:|');
+  /* -- numbers, any way a person or a spreadsheet writes them ------------------------ */
+  const amounts = [['$1,234.56', 123456], ['(1,234.56)', -123456], ['1 234,56', 123456], ['1.234,56', 123456], ['1,234', 123400], ['1,5', 150], ['24.99', 2499], ['12k', 1200000], ['1.2m', 120000000], ['1.2E+06', 120000000], ['−5', -500], ["'1234", 123400], ['6 months', 600], ['1234/mo', 123400], ['$ 4,000 a month', 400000], ['USD 1,200', 120000], ['$-5', -500], ['12.345', 1235], ['', null], ['-', null], ['n/a', null], ['?', null], ['abc', undefined], ['=B2*12', undefined], ['1.2.3.4', undefined]];
+  checkTrue('every common way of writing an amount reads to the cent, a word for nothing is blank, and a word is not a number: ' + amounts.map(a => a[0]).join(' | '), amounts.every(a => C.amount(a[0]) === a[1]));
+  checkTrue('a percent sign is noticed and the decimals are counted', C.number('24.99%').percent && C.number('24.99%').value === 24.99 && C.number('12.345').decimals === 3);
+  const dates = [['2026-06-03', '2026-06-03'], ['6/3/2026', '2026-06-03'], ['03.06.2026', '2026-06-03'], ['13/6/2026', '2026-06-13'], ['3 Jun 2026', '2026-06-03'], ['June 3, 2026', '2026-06-03'], ['3-Jun-26', '2026-06-03'], ['46106', '2026-03-25'], ['2026/06/03', '2026-06-03'], ['20260603', '2026-06-03'], ['', null], ['nope', undefined], ['2026-13-01', undefined], ['2026-02-30', undefined]];
+  checkTrue('every common way of writing a date reads to YYYY-MM-DD, including an Excel serial, and an impossible date is refused', dates.every(d => C.date(d[0]) === d[1]));
+  check('a bare month or year is allowed only where the row allows it: 2026-06, Jun 2026 and 1990', [C.date('2026-06', { partial: true }), C.date('Jun 2026', { partial: true }), C.date('1990', { partial: true }), C.date('2026-06')].join(','), '2026-06-01,2026-06-01,1990-07-01,');
+  checkTrue('a zip or a workbook is known for what it is, before any parsing', C.looksBinary('PKrest') && C.looksBinary('ab\u0000cd') && C.looksBinary('%PDF-1.7') && !C.looksBinary('row,value\n'));
+  checkTrue('the bank importer reads through the same reader: three layouts still parse, and a bracketed negative still reads', BankCsv.parse(fixture('bank-c.csv')).delimiter === ';' && BankCsv.cents('(15.49)') === -1549 && BankCsv.parseDate('3 Jun 2026') === '2026-06-03');
+  checkTrue('...and the two parsers are one: engines/bankcsv.js has no splitter of its own', !/function splitLine|function detectDelimiter/.test(fs.readFileSync(path.join(ROOT, 'engines/bankcsv.js'), 'utf8')));
+  /* -- a cell as the row's own value ------------------------------------------------- */
+  const row = id => LR.byId(id);
+  const rd = (id, t) => Csv.read(row(id), t, T);
+  check('a rate is read as it is written, never multiplied by a hundred on a hunch: 24.99 and 24.99% are both 24.99%, and 0.5 is half a percent, with a note saying how to write fifty', [rd('debtRate', '24.99').value, rd('debtRate', '24.99%').value, rd('debtRate', '0.5').value, /read as 0.5%; write 50 or 50%/.test(rd('debtRate', '0.5').warn)].join(','), '0.2499,0.2499,0.005,true');
+  checkTrue('...so a real rate under one percent survives the trip: 0.1% stays 0.1%', Csv.valueText(row('debtRate'), rd('debtRate', '0.1').value) === '0.1');
+  checkTrue('a rate over 100 or under 0 is refused and says what it wanted', /between 0 and 100/.test(rd('debtRate', '2499').bad) && /zero or more/.test(rd('debtRate', '-5').bad));
+  checkTrue('the contribution percent stays a whole number', rd('contributionPercent', '6').value === 6 && rd('contributionPercent', '6%').value === 6);
+  checkTrue('an amount below zero, above a billion, or with a percent sign is refused with its reason', /zero or more/.test(rd('cashSavings', '(500)').bad) && /billion/.test(rd('cashSavings', '2,000,000,000').bad) && /dollars, not a percent/.test(rd('cashSavings', '5%').bad));
+  checkTrue('a third decimal is rounded to the cent and said so', rd('cashSavings', '12.345').value === 1235 && /rounded to the cent/.test(rd('cashSavings', '12.345').warn));
+  checkTrue('yes in every spelling a spreadsheet uses: TRUE, Y, x, 1, checked; and no', ['TRUE', 'Y', 'x', '1', 'checked', 'on'].every(t => rd('hasDebt', t).value === true) && ['FALSE', 'N', '0', 'off'].every(t => rd('hasDebt', t).value === false) && /yes or no/.test(rd('hasDebt', 'maybe').bad));
+  checkTrue('a choice by its id, its label, a nickname or its state name: married_joint, "Married, filing jointly", mfj, North Carolina, "every two weeks", "through work"', rd('filingStatus', 'Married, filing jointly').value === 'married_joint' && rd('filingStatus', 'mfj').value === 'married_joint' && rd('filingStatus', 'MARRIED_JOINT').value === 'married_joint' && rd('state', 'North Carolina').value === 'NC' && rd('state', 'nc').value === 'NC' && rd('payCadence', 'every two weeks').value === 'fortnightly' && rd('healthCover', 'through work').value === 'employer' && rd('employmentStatus', 'Self-employed or freelance').value === 'selfEmployed');
+  checkTrue('a choice the row does not have is refused, and the message lists the choices in words', /one of Single, Married, filing jointly/.test(rd('filingStatus', 'divorced').bad) && /one of w2, 1099/.test(rd('incomeType', 'salary').bad));
+  checkTrue('a ZIP that lost its leading zero in a spreadsheet gets it back, with a note; a ZIP+4 is trimmed; letters are refused', rd('zip', '2134').value === '02134' && /leading zero/.test(rd('zip', '2134').warn) && rd('zip', '02134-1234').value === '02134' && /five-digit/.test(rd('zip', 'ABC').bad));
+  checkTrue('the next payday is a day of the month: 15, 15th, "the 15th", or the day of a full date', rd('nextPayday', '15').value === 15 && rd('nextPayday', '15th').value === 15 && rd('nextPayday', 'the 15th').value === 15 && rd('nextPayday', '2026-06-15').value === 15 && /15th of each month/.test(rd('nextPayday', '2026-06-15').warn) && /1 to 31/.test(rd('nextPayday', '32').bad));
+  checkTrue('a birth date from any spelling, a bare year with a note, and never in the future', rd('dob', '4/12/1994').value === '1994-04-12' && rd('dob', '1994').value === '1994-07-01' && /July 1994/.test(rd('dob', '1994').warn) && /in the past/.test(rd('dob', '2099-01-01').bad));
+  checkTrue('a match in words, loosely: "100% up to 3%", "50 of first 6", "none"', rd('employerMatch', '100% up to 3%').value.matchCapPercentOfSalary === 0.03 && rd('employerMatch', '50 of first 6').value.matchPercent === 0.5 && rd('employerMatch', 'none').value.matchPercent === 0);
+  checkTrue('a count is rounded to a whole number with a note, and an absurd one refused', rd('dependents', '2.5').value === 3 && /rounded to 3/.test(rd('dependents', '2.5').warn) && /up to 50/.test(rd('dependents', '500').bad));
+  checkTrue('a formula in a cell is named as such', /not a formula/.test(rd('cashSavings', '=B2*12').bad) && /not a formula/.test(rd('debtRate', '=B2').bad));
+  checkTrue('the "will be" column shows each value as the app will: $9,750, 24.99%, Married, filing jointly, the 15th, 6 months', [Csv.shown(row('cashSavings'), 975000, T), Csv.shown(row('debtRate'), 0.2499, T), Csv.shown(row('filingStatus'), 'married_joint', T), Csv.shown(row('nextPayday'), 15, T), Csv.shown(row('bufferMonths'), 6, T)].join('|') === '$9,750|24.99%|Married, filing jointly|the 15th|6 months');
+  /* -- finding the row a line means -------------------------------------------------- */
+  const idx = Csv.rowIndex();
+  const find = w => { const f = Csv.findRow(idx, '', w); return (f.row ? f.row.id : '-') + ':' + (f.how || '-') + (f.near ? ':' + f.near : ''); };
+  check('a row by a whole word of its label, a typo, the words in any order, the owner\'s own label, or the id in any case', [find('Filing'), find('intrest rate'), find('rent a month'), find('Date of birth'), Csv.findRow(idx, 'DebtRate', '').row.id + ':' + Csv.findRow(idx, 'DebtRate', '').how, find('cash & savings')].join(' '), 'filingStatus:near debtRate:near accommodationMonthly:near dob:label debtRate:id cashSavings:label');
+  check('...and a word that is no row is no row, without a silly suggestion; a near miss gets one', find('Nope') + ' ' + find('filing statuss'), '-:- filingStatus:near');
+  /* -- a German Excel: BOM, semicolons, decimal commas, dotted dates, a sorted sheet ---- */
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Spine = require(path.join(ROOT, 'shared/spine-v2.js'));
+  Spine.updateProfile(Demo.build());
+  const de = Csv.plan(fixture('sheet-excel-de.csv'), Spine.getProfile(), T);
+  check('the sheet reads: semicolons, 9.750,00 to the cent, 22,90% as the rate held, the blank row and the repeated header dropped, the short and long rows kept', de.delimiter + ' ' + JSON.stringify(de.counts) + ' ' + de.entries.length, '; {"change":6,"add":2,"same":3} 11');
+  checkTrue('a new debt\'s rate line sits above its balance line (the sheet was sorted) and still lands on the new debt', de.entries.filter(e => e.item === 'Car loan').map(e => e.row + ':' + e.status).join(',') === 'debtRate:add,debtBalance:add' && de.entries.filter(e => e.item === 'Car loan')[0].value === 0.0625);
+  checkTrue('an account is found by its item_id even with its name as the sheet had it; a date as 12.04.1994 reads day-first; 0,06 is read as written; 2134 as 02134; "every two weeks" as fortnightly; 15. as the 15th', de.entries.filter(e => e.row === 'assetValue')[0].itemId === 'demo_asset_cash' && de.entries.filter(e => e.row === 'dob')[0].status === 'same' && de.entries.filter(e => e.row === 'contributionPercent')[0].value === 0.06 && de.entries.filter(e => e.row === 'zip')[0].value === '02134' && de.entries.filter(e => e.row === 'payCadence')[0].value === 'fortnightly' && de.entries.filter(e => e.row === 'nextPayday')[0].value === 15);
+  const r1 = Csv.apply(de, Spine);
+  const h1 = Spine.getProfile();
+  check('applying: every line lands, none fails', r1.applied + ':' + r1.added + ':' + r1.failed.length, '8:1:0');
+  checkTrue('...the car loan exists with its balance and rate, the savings account moved to $9,750, the calendar has its cadence and day, the ZIP its zero', h1.debts.length === 3 && h1.debts.filter(d => d.label === 'Car loan')[0].balanceCents === 1200000 && h1.debts.filter(d => d.label === 'Car loan')[0].rate === 0.0625 && h1.assets.filter(a => a.id === 'demo_asset_cash')[0].valueCents === 975000 && h1.calendar.cadence === 'fortnightly' && h1.calendar.nextPaydayDay === 15 && h1.zip === '02134' && h1.retirement.contributionPercent === 0.06);
+  const de2 = Csv.plan(fixture('sheet-excel-de.csv'), Spine.getProfile(), T);
+  check('the same sheet again changes nothing and adds nothing', (de2.counts.change || 0) + (de2.counts.add || 0), 0);
+  checkTrue('every value the file brought says it came from a file, not from typing', ['cashSavings', 'zip', 'contributionPercent'].every(id => ((Spine.getProfile().meta.fields || {})[id] || {}).source === 'imported'));
+  check('the whole import is one step in the undo stack', (Spine.getProfile().meta.undoStack || []).slice(-1)[0].label, 'CSV import: 8 lines');
+  Spine.undo();
+  const undone = Spine.getProfile();
+  checkTrue('...and one undo takes all of it back: the car loan gone, the savings account as it was, no ZIP', undone.debts.length === 2 && undone.assets.filter(a => a.id === 'demo_asset_cash')[0].valueCents === 950000 && !undone.zip && undone.calendar.cadence === null);
+  /* -- a hand-typed sheet with its own headers, and every kind of slip ---------------- */
+  Spine.updateProfile(Demo.build());
+  const hand = Csv.plan(fixture('sheet-hand.csv'), Spine.getProfile(), T);
+  check('a hand-typed sheet headed Name, Which, Amount, Notes is read by those names', hand.entries.map(e => e.status).join(','), 'duplicate,change,same,bad,bad,change,change,change,change,unknown,change,change,skip,change,change,same');
+  checkTrue('...a line typed twice: the last one counts; a formula and a bracketed negative are refused with their reasons; a word that is no row says so', /last one counts/.test(hand.entries[0].why) && /not a formula/.test(hand.entries[3].why) && /zero or more/.test(hand.entries[4].why) && /no row called that/.test(hand.entries[9].why));
+  checkTrue('...a balance 100 times what is held is flagged, not refused; a half person is rounded and said; a choice by its label lands', /100 times/.test(hand.entries[5].warn) && hand.entries[6].value === 3 && hand.entries[7].value === 'employer' && hand.entries[1].value === 'married_joint' && /Filing status/.test(hand.entries[1].warn));
+  const r2 = Csv.apply(hand, Spine);
+  const h2 = Spine.getProfile();
+  checkTrue('...applied: cash $4,500, married filing jointly, three dependents, cover through work, pay survives, a 100% match to 3%, $2,000 Roth, self-employed', r2.failed.length === 0 && Schema.cashCents(h2).value === 450000 && h2.filingStatus === 'married_joint' && h2.dependents.length === 3 && h2.insurance.health.type === 'employer' && Schema.primaryPerson(h2).incomeSources[0].survivesJobLoss === true && Schema.primaryPerson(h2).incomeSources[0].employerMatch.matchCapPercentOfSalary === 0.03 && h2.retirement.rothContributedCents === 200000 && Schema.primaryPerson(h2).employmentStatus === 'selfEmployed');
+  /* -- the wrong file, an empty file, two items with one name, a refused write -------- */
+  check('a bank statement in the sheet box, a file with no usable header, and an empty file are each named', [Csv.plan(fixture('bank-a.csv'), h2, T).problem, Csv.plan('just some text\nmore', h2, T).problem, Csv.plan('', h2, T).problem, Csv.plan('row,value\n', h2, T).problem].join(','), 'bank,noHeader,empty,empty');
+  Spine.upsertDebt(Schema.createDebt({ label: 'Credit card', balanceCents: 100000 }));
+  const amb = Csv.plan('label,item,value\nBalance,Credit card,5000\nBalance,Student loan,1\n', Spine.getProfile(), T);
+  checkTrue('two debts called Credit card: the line is held back and says to rename one or use item_id; the other line still reads', amb.entries[0].status === 'ambiguous' && /two items/.test(amb.entries[0].why) && amb.entries[1].status === 'change');
+  const byId = Csv.plan('label,item,value,item_id\nBalance,Credit card,5000,demo_debt_1\n', Spine.getProfile(), T);
+  checkTrue('...and with item_id the same line lands on the one meant', byId.entries[0].status === 'change' && byId.entries[0].itemId === 'demo_debt_1');
+  const bogus = Csv.plan('label,value\nCash and savings,7000\n', Spine.getProfile(), T);
+  bogus.entries.push({ n: 2, line: 3, row: 'noSuchRow', label: 'x', item: '', itemId: null, status: 'change', value: 1, create: null });
+  const r3 = Csv.apply(bogus, Spine);
+  checkTrue('a write the owner refuses is reported by line, and the other lines still land', r3.applied === 1 && r3.failed.length === 1 && r3.failed[0].line === 3 && Schema.cashCents(Spine.getProfile()).value === 700000);
+  const sigA = Csv.signature(Csv.plan('label,value\nCash and savings,8000\n', Spine.getProfile(), T));
+  Spine.updateProfile(Object.assign(Spine.getProfile(), { zip: '27601' }));
+  const sigB = Csv.signature(Csv.plan('label,value\nCash and savings,8000\n', Spine.getProfile(), T));
+  const sigC = Csv.signature(Csv.plan('label,value\nCash and savings,9000\n', Spine.getProfile(), T));
+  checkTrue('a plan\'s signature is the same while what it would write is the same, and differs when the file or the app moved', sigA === sigB && sigA !== sigC);
+  const held = Schema.cashCents(Spine.getProfile()).value / 100;
+  const agrees = Csv.plan('label,item,value\nCash and savings,,9000\nWhat each account or thing is worth,Savings account,9000\n', Spine.getProfile(), T);
+  const differs = Csv.plan('label,item,value\nCash and savings,,12500\nWhat each account or thing is worth,Savings account,9000\n', Spine.getProfile(), T);
+  const alone = Csv.plan('label,value\nCash and savings,12500\n', Spine.getProfile(), T);
+  checkTrue('a total the app works out from the accounts is left to them whenever the file lists the accounts, and a total that disagrees with them says so rather than winning and being undone next time', agrees.entries[0].status === 'covered' && differs.entries[0].status === 'covered' && /do not come to/.test(differs.entries[0].why) && differs.entries[1].status === 'change');
+  checkTrue('...and a sheet that names only the total, with no account lines, sets it', alone.entries[0].status === 'change' && alone.entries[0].value === 1250000 && held > 0);
+  const clean = Csv.plan(Csv.single(Spine.getProfile(), T), Spine.getProfile(), T);
+  checkTrue('an export nobody edited comes back with nothing to change and nothing needing a look: every line is already so, blank, worked out, or a total the accounts set', clean.problems === 0 && !clean.counts.change && !clean.counts.add && (clean.counts.same + clean.counts.skip + clean.counts.computed + clean.counts.covered) === clean.entries.length);
+  /* -- the export side: a BOM for Excel, item_id, nextPayday, the readme --------------- */
+  const demo2 = Demo.build(); demo2.calendar.nextPaydayDay = 15;
+  const single = Csv.single(demo2, T);
+  checkTrue('the export starts with the byte-order mark Excel needs, every zip file too, and carries item_id last', single.charAt(0) === BOM && Object.keys(Csv.files(demo2, T)).filter(k => /\.csv$/.test(k)).every(k => Csv.files(demo2, T)[k].charAt(0) === BOM) && Csv.COLUMNS[Csv.COLUMNS.length - 1] === 'item_id');
+  checkTrue('the next payday exports as its day and reads back as it (it used to be refused as not a date)', Csv.rows(demo2, T).filter(l => l.row === 'nextPayday')[0].value === '15' && Csv.plan(single, Demo.build(), T).entries.filter(e => e.row === 'nextPayday')[0].status === 'change');
+  checkTrue('the readme names item_id and says how a file comes back', /item_id/.test(Csv.readme(demo2, T)) && /Bringing a file back/.test(Csv.readme(demo2, T)));
+  const dataHtml = fs.readFileSync(path.join(ROOT, 'rooms/data.html'), 'utf8');
+  checkTrue('Your Data loads the shared reader, refuses a workbook, sends a bank file to the other box, re-reads the file before applying, and shows only the lines that need a look on request', /shared\/csv\.js/.test(dataHtml) && /looksBinary/.test(dataHtml) && /Bring it in through Bank CSV/.test(dataHtml) && /CsvExport\.signature\(/.test(dataHtml) && /Show only the lines that need a look/.test(dataHtml) && /reader\.onerror/.test(dataHtml));
+  Spine.reset();
+})();
+
+/* ==========================================================================
+   The thirty: docs/room-map.json against the app that exists
+   --------------------------------------------------------------------------
+   93 rooms became 30 by a test, not by taste (DECISIONS.md D-229). The map
+   is the contract: every registry room is either one of the thirty or named
+   in exactly one survivor's `absorbs`. This section is the drift alarm. It
+   fails when a new room is added without saying what it replaces, when a
+   merge ships without marking its `done`, and when a room is marked merged
+   while it is still live in the registry — which is the failure that would
+   otherwise let the map read as finished work that nobody did.
+   ========================================================================== */
+section('The thirty (docs/room-map.json)');
+
+(function () {
+  const MAP = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/room-map.json'), 'utf8'));
+  const live = {};
+  Registry.all().forEach(r => { live[r.id] = r; });
+
+  check('the map lands on thirty rooms', MAP.rooms.length, 30);
+  check('numbered 1 to 30', MAP.rooms.map(r => r.n).join(','),
+    Array.from({ length: 30 }, (_, i) => i + 1).join(','));
+
+  /* Every survivor is a room that exists now and keeps its id through the
+     merge: the id is what ownership.js, the registry and every deep link
+     already point at, and renaming it would be a second move disguised as
+     one. The TITLE is what changes. */
+  MAP.rooms.forEach(function (r) {
+    checkTrue(`survivor ${r.id} is a live room`, !!live[r.id],
+      'a survivor that is not in the registry means the map is ahead of the app');
+    checkTrue(`survivor ${r.id} is in a group the map declares`,
+      MAP.groups.some(g => g.id === r.group));
+  });
+
+  /* No room absorbed twice, and nothing absorbs itself. Two survivors
+     claiming the same room is how one field ends up with two owners. */
+  const claimedBy = {};
+  MAP.rooms.forEach(function (r) {
+    r.absorbs.forEach(function (id) {
+      checkTrue(`${r.id} does not absorb itself`, id !== r.id);
+      checkTrue(`${id} is absorbed once, by ${r.id}`, !claimedBy[id],
+        `also claimed by ${claimedBy[id]}`);
+      claimedBy[id] = r.id;
+    });
+  });
+
+  /* The accounting: every live room is a survivor or is claimed, and every
+     claimed room is either still live (not merged yet) or a redirect file
+     (merged). Both directions, or the map drifts silently in one of them. */
+  const survivors = {};
+  MAP.rooms.forEach(r => { survivors[r.id] = true; });
+  Object.keys(live).forEach(function (id) {
+    checkTrue(`live room ${id} is on the map`, survivors[id] || claimedBy[id],
+      'a room the map does not name is a room nobody decided to keep — CLAUDE.md: what does it replace?');
+  });
+
+  MAP.rooms.forEach(function (r) {
+    const done = r.done || [];
+    done.forEach(function (id) {
+      checkTrue(`${r.id} absorbs ${id}, which it lists`, r.absorbs.indexOf(id) !== -1);
+      checkTrue(`${id} is merged, so it is out of the registry`, !live[id]);
+      const stub = path.join(ROOT, 'rooms', id + '.html');
+      checkTrue(`${id} is a redirect, not a deleted file`, fs.existsSync(stub),
+        'the links are out in the world; a merged room redirects, it never 404s');
+      const html = fs.readFileSync(stub, 'utf8');
+      checkTrue(`${id} redirects to ${r.id}`,
+        new RegExp('url=(\\.\\./)?' + (r.id === 'dashboard' ? 'index' : r.id) + '\\.html').test(html));
+      checkTrue(`${id} says where it went in words too`, /Open it →|Open the|→<\/a>/.test(html));
+    });
+    r.absorbs.filter(id => done.indexOf(id) === -1).forEach(function (id) {
+      checkTrue(`${id} is not merged yet, so it is still a live room`, !!live[id],
+        'it is gone from the registry but not marked done in docs/room-map.json');
+    });
+    Object.keys(r.held || {}).forEach(function (id) {
+      checkTrue(`${r.id} holds ${id} back, which it also absorbs`, r.absorbs.indexOf(id) !== -1);
+      checkTrue(`${id} is held back, so it is still live`, !!live[id]);
+      checkTrue(`and the map says why ${id} is held`, String(r.held[id]).length > 30);
+      checkTrue(`a held room is never also marked done`, done.indexOf(id) === -1);
+    });
+  });
+
+  /* The count the whole exercise is named after. */
+  const merged = MAP.rooms.reduce((n, r) => n + (r.done || []).length, 0);
+  const toGo = MAP.rooms.reduce((n, r) => n + r.absorbs.length, 0) - merged;
+  /* 93 when the map was written. The Deal (D-227) landed on main while the
+     merge was running and is named under Housing, so the ledger is 94 now.
+     The literal stays a literal on purpose: a room added without a place on
+     the map still fails here, which is the whole point of the alarm. */
+  check('every room is accounted for: thirty, plus what they absorb, plus the Net Worth redirect',
+    MAP.rooms.length + merged + toGo + 1, 94);
+  check('and the registry holds exactly the survivors plus what has not merged yet',
+    Object.keys(live).length, MAP.rooms.length + toGo);
+
+  /* The five rules and the anti-rule are written down where the next session
+     reads them, not only in a chat log. */
+  checkTrue('the map carries the test for what earns the right to be a room', MAP.rules.length === 6);
+  checkTrue('including the anti-rule, which outranks the five',
+    MAP.rules.some(r => /ANTI-RULE/.test(r) && /emotional register/.test(r)));
+  checkTrue('When It Won\'t All Get Paid absorbs nothing and is absorbed by nothing',
+    !claimedBy['cant-pay'] && survivors['cant-pay']
+    && MAP.rooms.filter(r => r.id === 'cant-pay')[0].absorbs.length === 0);
+  checkTrue('Get Help stands alone too', !claimedBy['get-help'] && survivors['get-help']);
+
+  /* The order of the six sessions, because doing the Back Half while the
+     Decision Room shell moves underneath it is the one sequencing mistake
+     that costs a rebuild (D-228). */
+  check('six merge sessions, in order', MAP.order.map(o => o.step).join(','), '1,2,3,4,5,6');
+  MAP.order.forEach(function (o) {
+    checkTrue(`step ${o.step} targets a survivor`, survivors[o.target]);
+  });
+  check('the Back Half is built last and read first', MAP.order[5].target, 'decumulation');
+})();
+
+/* ==========================================================================
+   Every class a page names has a rule somewhere (D-226)
+   ========================================================================== */
+section('Every class a page names has a rule somewhere (D-226)');
+(function () {
+  /* The Ledger, Express and First Round each named their page wrapper
+     .slaf-room and their header .slaf-room-head. Neither existed in any
+     stylesheet, so those three rooms ran edge to edge on a phone with no
+     measure and no gutter, and nobody noticed for months. A class in the
+     markup that nothing defines is either a layout that silently does not
+     happen or a name left behind; both are worth knowing about. */
+  const cssText = fs.readdirSync(path.join(ROOT, 'shared')).filter(f => /\.css$/.test(f))
+    .map(f => fs.readFileSync(path.join(ROOT, 'shared', f), 'utf8')).join('\n');
+  const classesIn = (text) => { const out = new Set(); const re = /\.(-?[_a-zA-Z][\w-]*)/g; let m; while ((m = re.exec(text))) out.add(m[1]); return out; };
+  const shared = classesIn(cssText);
+  /* Names kept on purpose: a hook a script looks for, or a box that carries
+     its own style inline. Each one is listed so the list can only get
+     shorter; a new name that nothing defines fails the build. */
+  const HOOKS = {
+    'index.html': ['dash'],
+    'rooms/data.html': ['form-grid', 'wide'],
+    'rooms/debt-payoff.html': ['grid-2'],
+    'rooms/ledger.html': ['xbody'],   /* Express is a Ledger view now (D-230); the hook moved with its markup */
+    'rooms/fire.html': ['why'],
+    'rooms/middle-class-trap.html': ['plain'],
+    'rooms/unlearning.html': ['acts']
+  };
+  const pages = ['index.html', 'map.html'].concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
+  const orphans = [];
+  pages.forEach(rel => {
+    const raw = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const known = new Set(shared);
+    (raw.match(/<style[\s\S]*?<\/style>/g) || []).forEach(b => classesIn(b).forEach(c => known.add(c)));
+    (HOOKS[rel] || []).forEach(c => known.add(c));
+    /* Static markup only: a class built inside a script is that script's business. */
+    const markup = raw.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, '');
+    const used = new Set();
+    const re = /\bclass="([^"{}]*)"/g;
+    let m;
+    while ((m = re.exec(markup))) m[1].split(/\s+/).forEach(c => { if (c) used.add(c); });
+    [...used].filter(c => !known.has(c)).forEach(c => orphans.push(rel + ' names .' + c));
+  });
+  check('no page names a class that no stylesheet defines', orphans.join('; '), '');
+  const listed = Object.keys(HOOKS).reduce((n, k) => n + HOOKS[k].length, 0);
+  checkTrue('the names kept on purpose are few, and each is a script hook or a box styled inline: ' + listed, listed <= 8);
+  /* The wrapper the three door rooms name, and the small print every room
+     shows, are defined once and shared. */
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the page body, its header and its lede have a rule under both names they are given', /\.slaf-room\s*\{/.test(theme) && /\.slaf-room-head\s*\{/.test(theme) && /\.slaf-lede/.test(theme));
+  checkTrue('the small print under a room is defined once, in the theme, not copied into every room', /^\.disclaimer \{/m.test(theme) && fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).every(f => !/^\s*\.disclaimer \{/m.test(fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8'))));
+})();
+
+/* ==========================================================================
+   The ladder past step 4, and the order the flags come out in (D-239, D-242)
+   ========================================================================== */
+section('The ladder past step 4, and the order the flags come out in (D-239, D-242)');
+(function () {
+  /* The order. Flags used to come out in the order data/foo_rules.json listed
+     them, and the Dashboard renders flags[0] — so the front door said "point
+     the excess at the debt" (a step 3 problem) while What The Next Dollar
+     Does said "capture the employer match" (step 2), on this same household. */
+  const foo = Foo.evaluate(h, TABLES);
+  check('the top flag is the earliest rung, not the first line of the file',
+    foo.flags[0].key, 'match_left_on_table');
+  check('… and it carries the rung it belongs to', foo.flags[0].step, 2);
+  check('… with the step 3 flag behind it', foo.flags[1].key, 'ef_alongside_high_interest_debt');
+  checkTrue('every flag in the rules file declares its rung',
+    TABLES.fooRules.outOfBoundsFlags.every(f => Number.isInteger(f.step)));
+  checkTrue('a critical flag always outranks a warning, whatever its rung', (function () {
+    const RANK = { critical: 0, warning: 1 };
+    return foo.flags.every((f, i) => i === 0 || RANK[foo.flags[i - 1].severity] <= RANK[f.severity]);
+  })());
+
+  /* Housing: the guideline sat in the rules file with nothing reading it. */
+  const roofed = Demo.build();
+  roofed.expenses.needs.accommodation.monthlyCents = 250000;   /* $2,500 on $72,000 gross */
+  const roofFlags = Foo.evaluate(roofed, TABLES).flags.filter(f => f.key === 'housing_above_guideline');
+  check('a roof over the 28% guideline is a flag now', roofFlags.length, 1);
+  check('… as a warning, never a critical', roofFlags[0].severity, 'warning');
+  check('… measured against the threshold that was already in the file',
+    roofFlags[0].detail.guideline, TABLES.fooRules.thresholds.dtiHousingGuideline);
+  check('the demo\u2019s own roof is under it and stays silent',
+    Foo.evaluate(h, TABLES).flags.filter(f => f.key === 'housing_above_guideline').length, 0);
+
+  /* Past step 4 the ladder used to hand back placement: null and the untrue
+     sentence "which this room doesn't ask for yet" — untrue of the workplace
+     contribution, which the app holds. */
+  const saver = Demo.build();
+  saver.retirement = saver.retirement || {};
+  saver.retirement.contributionPercent = 10;
+  (saver.debts || []).forEach(d => { d.rate = 0.04; });
+  saver.assets.forEach(a => { if (a.category === 'cash') a.valueCents = 3000000; });
+  const past = Foo.evaluate(saver, TABLES);
+  check('steps 0 to 4 are met', past.steps.filter(s => s.status === 'met').length, 5);
+  const fifth = past.steps[past.steps.length - 1];
+  check('step 5 is still honestly unknown — an HSA or a Roth is not guessed at', fifth.status, 'unknown');
+  check('… but the workplace contribution it does hold is read', fifth.known.percent, 10);
+  check('… against the limit in data/irs_limits_2026.json',
+    fifth.known.limitCents, Math.round(TABLES.irsLimits.limits.elective401k * 100));
+  check('… and the unused space is named', fifth.known.roomCents, 2450000 - 720000);
+  checkTrue('… so the sentence no longer says the app does not ask for it',
+    !/doesn\u2019t ask for it yet|does not ask for it yet/.test(fifth.detail) && /workplace plan/.test(fifth.detail));
+
+  /* The ladder's length is data, not a 9 typed into a room. */
+  const ladderRoom = fs.readFileSync(path.join(ROOT, 'rooms/foo-ladder.html'), 'utf8');
+  checkTrue('the room reads the rung count off the rules file', /TABLES\.fooRules\.ladder/.test(ladderRoom) && !/' of 9'/.test(ladderRoom));
+  check('which is nine, from the file', TABLES.fooRules.ladder[TABLES.fooRules.ladder.length - 1].step, 9);
+})();
+
+/* ==========================================================================
+   Three numbers that read wrong (D-243)
+   ========================================================================== */
+section('Three numbers that read wrong (D-243)');
+(function () {
+  /* A marginal rate of "the lowest bracket" for someone with nothing taxable.
+     With the standard deduction covering the whole of a $12,000 income, no
+     slice is cut and the fallback used to report ladder[0].rate — 10% — so
+     the Tax room sized the room before the next bracket off a floor that is
+     not there. The next dollar is taxed at nothing until the deduction is
+     used up. */
+  const brackets = require(path.join(ROOT, 'data/federal_brackets_2026.json'));
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const small = Tax.ordinaryTax(brackets, 1200000, 'single');
+  check('nothing taxable, so nothing is cut', small.taxableIncomeCents, 0);
+  check('… and the next dollar is taxed at nothing, not at the bottom rate', small.marginalRate, 0);
+  checkTrue('… while an ordinary income still reports its real bracket',
+    Tax.ordinaryTax(brackets, 10000000, 'single').marginalRate > 0.1);
+
+  /* A label that named a different ratio than the code computed. */
+  const rows = RatiosEngine.all(h, TABLES).rows;
+  const rev = rows.filter(r => r.id === 'revolvingShare')[0];
+  check('the revolving ratio is named for what it computes', rev.label, 'Revolving share of debt');
+  check('… which is card balances over TOTAL debt, the basis its band is cut for',
+    Math.round(rev.result.value * 1000) / 1000, 0.148);
+
+  /* A formula string that parsed as housing + (utilities ÷ income). */
+  const housing = rows.filter(r => r.id === 'housingRatio')[0];
+  checkTrue('the housing formula brackets its numerator', /\(housing \+ utilities\) ÷/.test(housing.formula), housing.formula);
+
+  /* Named rather than silently switched: the withdrawal rate subtracts GROSS
+     income from after-tax spending, which reads the draw a little low. The
+     definition is specified with a worked example below and reused by the
+     Dashboard, so the note says what the basis is instead. */
+  const wd = rows.filter(r => r.id === 'withdrawalRate')[0];
+  checkTrue('the withdrawal rate says which income it subtracts',
+    /gross income/.test(wd.formula) && /before tax/.test(wd.note), wd.formula + ' | ' + wd.note);
+})();
+
+/* ==========================================================================
+   Every id a page writes to exists in that page (D-238)
+   ========================================================================== */
+section('Every id a page writes to exists in that page (D-238)');
+(function () {
+  /* The Scorecard wrote to el('provenance') and el('ra-provenance'), both of
+     which were lost when the rooms merged (D-233). `el` returned null, the
+     throw aborted the render three numbers early, and the catch around it
+     blamed data/ — so a room that had every input showed "—" for its
+     emergency fund, its debt-to-income and its FIRE number under a red
+     banner about a file that had loaded perfectly. Nothing failed loudly.
+     A write to an id the page does not carry is always that bug. */
+  const pages = ['index.html', 'map.html']
+    .concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
+  const misses = [];
+  pages.forEach(rel => {
+    const raw = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const ids = new Set();
+    let m;
+    const idRe = /\bid\s*=\s*["']([^"']+)["']/g;
+    while ((m = idRe.exec(raw))) ids.add(m[1]);
+    /* el('x'). — a read followed by a property is a use that will throw on
+       null. A bare el('x') that the page then null-checks is its own business. */
+    const useRe = /\bel\(\s*'([^']+)'\s*\)\s*\./g;
+    const seen = new Set();
+    while ((m = useRe.exec(raw))) {
+      if (ids.has(m[1]) || seen.has(m[1])) continue;
+      seen.add(m[1]);
+      misses.push(rel + " writes to #" + m[1] + ", which is not in its markup");
+    }
+  });
+  check('no page writes to an id its own markup does not carry', misses.join('; '), '');
+})();
+
+/* ==========================================================================
+   No file carries an unresolved merge conflict (D-249)
+   ========================================================================== */
+section('No file carries an unresolved merge conflict (D-249)');
+(function () {
+  /* DECISIONS.md was committed with "<<<<<<< HEAD", "=======" and
+     ">>>>>>> <branch>" still in it, and the whole suite went green: the
+     decisions checks read headings and numbers, and a marker line is
+     neither. Two sessions merging in parallel is now routine here, so the
+     cheapest possible guard is worth having. */
+  const skip = new Set(['.git', 'node_modules', 'vendor']);
+  const exts = /\.(md|js|css|html|json)$/;
+  const hits = [];
+  (function walk(dir, rel) {
+    for (const name of fs.readdirSync(dir)) {
+      if (skip.has(name)) continue;
+      const full = path.join(dir, name);
+      const here = rel ? rel + '/' + name : name;
+      const st = fs.statSync(full);
+      if (st.isDirectory()) { walk(full, here); continue; }
+      if (!exts.test(name)) continue;
+      const src = fs.readFileSync(full, 'utf8');
+      /* Anchored to the line start, which is what git writes; a string
+         mentioning the characters in prose or in code does not match. */
+      if (/^<{7} |^={7}$|^>{7} /m.test(src)) hits.push(here);
+    }
+  })(ROOT, '');
+  check('no tracked file is left mid-merge', hits.join(', '), '');
 })();
 
 /* ==========================================================================

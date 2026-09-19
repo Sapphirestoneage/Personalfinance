@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>Real Hourly Wage · SPARKS</title>
 <meta name="description" content="What your job actually pays, once you count every hour it takes and everything it costs you to do it."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -34,13 +37,8 @@
   shared/theme.css.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
-  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -61,6 +59,7 @@
       <div id="room-lens"></div>
     </div>
     <div class="room-number" id="room-number"></div>
+    <p class="slaf-hint" id="per-source" hidden></p>
   </section>
 
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
@@ -107,12 +106,16 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/suggest.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
@@ -140,6 +143,7 @@
 
   var HOUR_COLOURS = { paid: Charts.COLORS.series[0], unpaidOvertimeHoursPerWeek: Charts.COLORS.series[3], commuteHoursPerWeek: Charts.COLORS.series[1], prepHoursPerWeek: Charts.COLORS.series[2], decompressHoursPerWeek: Charts.COLORS.series[4] };
 
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   Room.mount({
     id: 'real-hourly-wage',
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
@@ -173,6 +177,21 @@
         ],
         format: function (v) { return (Math.round(v * 10) / 10) + ' h'; }
       });
+    },
+
+    /* 15.4: more than one source, each with its own hours, gets a line
+       each: the headline rate from its own hours. D-181. */
+    after: function (h, T) {
+      var host = document.getElementById('per-source');
+      var w = Hourly.realHourlyWage(h, T, {});
+      var rows = Money.isOk(w) ? (w.perSource || []) : [];
+      if (!host) return;
+      if (!rows.length) { host.hidden = true; host.innerHTML = ''; return; }
+      host.hidden = false;
+      host.innerHTML = 'Source by source: ' + rows.map(function (r) {
+        var name = r.source || Schema.INCOME_TYPE_LABELS[r.type] || 'pay';
+        return '<strong>' + esc(name) + '</strong> ' + (r.nominalHourlyCents !== null ? perHour(r.nominalHourlyCents) + ' on paper' + (r.afterTaxHourlyCents !== null ? ', ' + perHour(r.afterTaxHourlyCents) + ' after tax' : '') + ' from ' + r.hoursPerWeek + ' h a week' : Money.formatCents(r.grossAnnualIncomeCents) + ' a year, no hours given');
+      }).join(' · ') + '.';
     },
 
     inputs: [

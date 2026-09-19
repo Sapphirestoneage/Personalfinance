@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>The Skill Tree · SPARKS</title>
 <meta name="description" content="What the next hour does: every money skill in five bands, open, locked with the reason, done, or skipped because you are already past it. The FOO ladder runs above it and the two unlock each other."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -34,7 +37,6 @@
   node, a boost bar along its bottom edge; the Mario serpentine on a phone.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
   /* This room is a board, not prose. The tech tree is thousands of pixels
      wide, and a 620px measure shows the rail and two rungs of it. So the
      page takes the whole window here, and every section that IS prose keeps
@@ -45,8 +47,6 @@
     .slaf-wrap { max-width: 1800px; }
     .room-head, .slaf-wrap > section:not(#board) { max-width: var(--measure); margin-left: 0; margin-right: 0; }
   }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
   .card-gap { margin-top: var(--space-4); }
   .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
@@ -183,7 +183,6 @@
     @keyframes pulse { 0% { box-shadow: 0 0 0 2px var(--color-surface-active); } 50% { box-shadow: 0 0 0 6px var(--color-surface-active); } 100% { box-shadow: 0 0 0 2px var(--color-surface-active); } }
     .serp .s-fog { border: 1px dashed var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); color: var(--color-text-faint); font-size: var(--text-sm); text-align: center; }
   }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -254,11 +253,15 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/foo.js"></script>
 <script src="../engines/skilltree.js"></script>
 <script>

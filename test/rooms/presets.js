@@ -48,11 +48,11 @@ module.exports = function (t) {
 
   /* Emergency fund (D-130): the gap to N months of spending, over the horizon, from the table. */
   const SP = TABLES.savingsPresets.emergencyFund;
-  const he = hh({ expenses: { monthlyEssential: { estimatedValueCents: 250000 } } });
+  const he = hh({ expenses: { wants: { totalCents: 250000 } } });
   const ef = Presets.emergencyFund(he, T);
   check('the table says three months over a year', SP.targetMonths + '/' + SP.horizonMonths, '3/12');
   check('$4,000 in cash against 3 × $2,500: $3,500 short, over 12 months', ef.value + '/' + ef.gapCents + '/' + ef.targetCents, Math.ceil(350000 / 12) + '/350000/750000');
-  check('… already there: nothing more', Presets.emergencyFund(hh({ expenses: { monthlyEssential: { estimatedValueCents: 100000 } } }), T).value, 0);
+  check('… already there: nothing more', Presets.emergencyFund(hh({ expenses: { wants: { totalCents: 100000 } } }), T).value, 0);
   check('… no spending figure: it asks', Presets.emergencyFund(hh(), T).status, 'incomplete');
   checkTrue('… offered in Savings, not structural', Presets.available(he, T, { now: NOW }).some(p => p.id === 'emergencyFund' && p.bucket === 'savings' && p.offered && !p.structural));
 
@@ -69,7 +69,7 @@ module.exports = function (t) {
   hs.retirement.has401k = false;
   check('take the 401(k) away and it drops out of the live figure, the IRA stays', Budget.month(hs, T, T.expenseCategories, '2026-09', NOW).rows.filter(r => r.bucket === 'investments')[0].estimatedCents, ira.value);
   check('the constructor keeps only known presets, once each', Schema.createBudget({ presets: { '2026-09': { investments: ['maxIra', 'maxIra', 'nope'], income: [] }, bad: { savings: ['ruleOfFive'] } } }).presets['2026-09'].investments.join(',') + '/' + Object.keys(Schema.createBudget({ presets: { bad: { savings: ['ruleOfFive'] } } }).presets).length, 'maxIra/0');
-  const hs2 = hh({ expenses: { monthlyEssential: { estimatedValueCents: 250000 } }, purchase: { priceCents: 200000, monthsAway: 10 }, budget: { presets: { '2026-09': { savings: ['ruleOfFive', 'emergencyFund'] } } } });
+  const hs2 = hh({ expenses: { wants: { totalCents: 250000 } }, purchase: { priceCents: 200000, monthsAway: 10 }, budget: { presets: { '2026-09': { savings: ['ruleOfFive', 'emergencyFund'] } } } });
   check('two Savings presets stack', Presets.stacked(hs2, T, '2026-09', { now: NOW }).savings.cents, r5.value + ef.value);
 
   /* The spine: toggle, and the one-time 401(k) answer. */

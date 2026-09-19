@@ -27,15 +27,22 @@
 
   var TABLE_FILES = {
     effectiveTaxRates: 'effective_tax_rates_2026.json',
+    advice: 'advice.json',
+    plausibleRanges: 'plausible_ranges.json',
     retirementMilestones: 'retirement_milestones.json',
+    milestones: 'milestones.json',
+    ledgerRows: 'ledger-rows.json',
+    spheres: 'spheres.json',
     netWorthPercentiles: 'net_worth_percentiles_scf_2022.json',
     irsLimits: 'irs_limits_2026.json',
     savingsPresets: 'savings_presets.json',
+    adventurePaths: 'adventure_paths.json',
     /* The Skill Tree and the Exercise Library (D-131). */
     skillTree: 'skill_tree.json',
     skillLinks: 'skill_links.json',
     exercises: 'exercises.json',
     fooRules: 'foo_rules.json',
+    journeyRoutes: 'journey_routes.json',
     /* The coverage gap LATER.md named: what moves a credit score, and which
        bill to keep when the month will not close (D-147, D-148). */
     creditFactors: 'credit_factors.json',
@@ -68,6 +75,13 @@
     commonCosts: 'common_costs.json',
     tripleD: 'triple_d.json',
     returnBands: 'return_bands.json',
+    bands: 'bands.json',
+    levers: 'levers.json',
+    lenses: 'lenses.json',
+    features: 'features.json',
+    /* Scenario blocks: one expansion table a type (D-178). */
+    blockHome: 'blocks/home.json', blockCar: 'blocks/car.json', blockKid: 'blocks/kid.json', blockJobchange: 'blocks/jobchange.json',
+    blockSabbatical: 'blocks/sabbatical.json', blockGeo: 'blocks/geo.json', blockHustle: 'blocks/hustle.json', blockInheritance: 'blocks/inheritance.json', blockMarriage: 'blocks/marriage.json',
     events: 'events/index.json',
     cobraAca: 'cobra_aca_2024.json',
     travelBands: 'travel_bands.json',
@@ -104,7 +118,13 @@
     accessRules: 'access_rules.json',
     confidenceWeights: 'confidence_weights.json',
     uiBenefits: 'ui_benefits.json',
+    zipPrefixes: 'zip_prefixes.json',
     aca: 'aca_2026.json',
+    downPayment: 'down_payment.json',
+    earlyAccessRules: 'early_access_rules_2026.json',
+    careerMomentum: 'career_momentum.json',
+    debates: 'debates.json',
+    weddingDefaults: 'wedding_defaults.json',
     stateBrackets: 'state_brackets_2026.json'
   };
 
@@ -421,6 +441,31 @@
     return Money.incomplete('Income is outside the bracket table.', ['grossAnnualIncome']);
   }
 
+  /* ---- Year-based tables past their year (G3.15, D-210) --------------------
+     A table for one tax year carries taxYear (or an asOf in that year). On
+     January 1 the app has no new table, so every number that reads one must
+     say "using 2026 limits" rather than crash or use them silently. */
+  /* A table opts in with taxYear; a survey year or a cost convention's
+     asOf is not a limit that expires on January 1. */
+  function yearOf(table) {
+    return table && typeof table.taxYear === 'number' ? table.taxYear : null;
+  }
+  function yearNote(table, now) {
+    var y = yearOf(table);
+    if (y === null) return null;
+    var d = now === undefined ? new Date() : (now instanceof Date ? now : new Date(now));
+    var current = d.getFullYear();
+    return current > y ? 'using ' + y + ' limits' + (current - y === 1 ? '' : ' (' + (current - y) + ' years old)') : null;
+  }
+  /** Every note among the tables handed in, once each: [] when all current. */
+  function yearNotes(tables, now) {
+    var seen = {}, out = [];
+    Object.keys(tables || {}).forEach(function (k) {
+      var n = yearNote(tables[k], now);
+      if (n && !seen[n]) { seen[n] = true; out.push(n); }
+    });
+    return out;
+  }
   function versionsOf(tables) {
     var out = {};
     Object.keys(tables || {}).forEach(function (k) {
@@ -444,7 +489,7 @@
     CONFIDENCE_LABELS: CONFIDENCE_LABELS,
     provenanceOf: provenanceOf,
     provenance: provenance,
-    versionsOf: versionsOf,
+    versionsOf: versionsOf, yearOf: yearOf, yearNote: yearNote, yearNotes: yearNotes,
     _cache: cache,
     loadEvents: loadEvents
   };

@@ -1,0 +1,37 @@
+# Publish to GitHub Pages only after the suite is green (D-204).
+#
+# This takes effect once the repository's Pages source is switched from
+# "Deploy from a branch" to "GitHub Actions" (Settings > Pages) AND the
+# repository variable PAGES_VIA_ACTIONS is set to "true". Until both are
+# done the deploy job is skipped and the branch publish carries on as
+# before, so flipping the switch is one deliberate step, not a surprise.
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+  deploy:
+    needs: test
+    if: ${{ vars.PAGES_VIA_ACTIONS == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

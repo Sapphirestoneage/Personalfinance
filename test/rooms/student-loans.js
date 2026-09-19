@@ -10,7 +10,7 @@ module.exports = function (t) {
     const h = Schema.createHousehold(Object.assign({ state: 'NC', filingStatus: 'single', meta: { hasDebt: true },
       people: [Schema.createPerson({ id: 'p1', role: 'adult', employmentStatus: 'student', dob: '2002-06-01', incomeSources: [Schema.createIncomeSource({ id: 'i1', personId: 'p1', grossAnnualIncomeCents: 4000000 })] })],
       debts: [Schema.createDebt({ id: 'loan', label: 'Loans', balanceCents: 2000000, rate: 0.05, minPaymentCents: 21213, type: 'student_loan', ownerIds: ['p1'] })] }, extra || {}));
-    h.expenses.monthlyEssential.estimatedValueCents = 150000;
+    h.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; h.expenses.wants = { totalCents: 150000, therapy: null };
     return h;
   }
 

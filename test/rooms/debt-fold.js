@@ -9,7 +9,8 @@ module.exports = function (t) {
   const emitted = page.replace(/\/\*[\s\S]*?\*\//g, '');
 
   /* ---- What stays visible: exactly what it takes to plan a debt --------- */
-  checkTrue('balance, minimum and type are always visible', /debt-grid debt-grid--3">[\s\S]{0,400}balanceCents[\s\S]{0,300}minPaymentCents[\s\S]{0,300}data-field="type"/.test(emitted));
+  checkTrue('the balance, the rate and the minimum are the line, in that order (D-187)', /debt-grid debt-grid--3">[\s\S]{0,400}field\(d, 'balanceCents'[\s\S]{0,400}field\(d, 'rate'[\s\S]{0,400}field\(d, 'minPaymentCents'/.test(emitted));
+  checkTrue('… and the type sits behind the one caret with everything else', /drawer\(d, 'more', 'More'[\s\S]{0,600}data-field="type"/.test(emitted));
   checkTrue('… and so is how interest works, because it changes the answer', /\+ interestBlock\(d\)/.test(emitted));
 
   /* ---- What folds ------------------------------------------------------- */
@@ -17,7 +18,7 @@ module.exports = function (t) {
     && /emotionalTag/.test(emitted) && /keepBlock\(d\)/.test(emitted));
   checkTrue('the dates and the credit limit fold together', /drawer\(d, 'extras', 'Dates & limit'/.test(emitted)
     && /borrowedOn/.test(emitted) && /creditLimitCents/.test(emitted));
-  checkTrue('a caret, not a button: native details/summary so it works with no JS', /<details class="fold"/.test(emitted)
+  checkTrue('a caret, not a button: native details/summary so it works with no JS', /<details class="fold/.test(emitted)
     && /summary>/.test(emitted) && /\.fold > summary::before \{ content: '▸'/.test(page));
 
   /* ---- A closed drawer is never a black box ----------------------------- */
@@ -39,7 +40,7 @@ module.exports = function (t) {
   /* ---- Wider, because this room is an editor ---------------------------- */
   checkTrue('the room widens past the shared measure on a big screen', /@media \(min-width: 760px\)[\s\S]{0,120}max-width: 720px/.test(page)
     && /@media \(min-width: 1040px\)[\s\S]{0,120}max-width: 980px/.test(page));
-  checkTrue('… and the three facts drop to two columns on a small one', /@media \(max-width: 560px\)[\s\S]{0,200}debt-grid--3 \{ grid-template-columns: 1fr 1fr; \}/.test(page));
+  checkTrue('… and on a small one the name takes its own line, the three facts stay on one', /@media \(max-width: 560px\)[\s\S]{0,400}debt-name-cell \{ grid-column: 1 \/ -1/.test(page));
 
   /* ---- The folded fields still work ------------------------------------- */
   /* Folding is presentation: every field inside a drawer is the same input

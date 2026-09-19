@@ -32,8 +32,21 @@
     { id: '$',      label: '$',       long: 'in dollars' },
     { id: 'hours',  label: 'hours',   long: 'in hours of your life' },
     { id: 'bought', label: 'bought',  long: 'months of FI bought if saved instead' },
-    { id: 'pushed', label: 'pushed',  long: 'months FI is pushed if spent' }
+    { id: 'pushed', label: 'pushed',  long: 'months FI is pushed if spent' },
+    /* J3 (D-214): the same dollars on your real pay rhythm. Weekly, every
+       two weeks, twice a month, monthly, from data/calendar_conventions.json;
+       irregular income reads a month as one low month, the planning base. */
+    { id: 'paycheck', label: 'a payday', long: 'per paycheck, on your pay rhythm' }
   ];
+  var PAYDAYS_PER_MONTH = { weekly: 52 / 12, fortnightly: 26 / 12, semimonthly: 2, monthly: 1, irregular: 1 };
+  function cadenceOf(household) {
+    var c = household && household.calendar && household.calendar.cadence;
+    return c && PAYDAYS_PER_MONTH[c] !== undefined ? c : null;
+  }
+  function paydaysPerMonth(cadence, tables) {
+    var conv = tables && tables.calendarConventions && tables.calendarConventions.cadences && tables.calendarConventions.cadences[cadence];
+    return conv && Money.isEntered(conv.paydaysPerMonth) ? conv.paydaysPerMonth : PAYDAYS_PER_MONTH[cadence];
+  }
   var STORE_KEY = 'slaf.lens';
 
   function wage(household, tables) {
@@ -45,7 +58,8 @@
   /** The modes that exist for this household: hours only with a wage. */
   function available(household, tables) {
     var w = wage(household, tables);
-    return MODES.filter(function (m) { return m.id !== 'hours' || w !== null; });
+    var c = cadenceOf(household);
+    return MODES.filter(function (m) { return (m.id !== 'hours' || w !== null) && (m.id !== 'paycheck' || c !== null); });
   }
 
   /** What the FI arithmetic needs, once. */
@@ -76,6 +90,13 @@
       var w = wage(household, tables);
       if (w === null) return Money.incomplete('No real hourly wage for this situation.', ['realHourlyWage']);
       return Money.ok(cents / w, { unit: 'hours', display: Money.formatAsTime(cents, w), wageCents: w });
+    }
+    if (mode === 'paycheck') {
+      var c = cadenceOf(household);
+      if (!c) return Money.incomplete('How often are you paid? The calendar asks.', ['payCadence']);
+      var per = paydaysPerMonth(c, tables);
+      var each = Math.round(cents / per);
+      return Money.ok(each, { unit: 'cents', display: Money.formatCents(each) + (c === 'irregular' ? ' a low month' : ' a payday'), paydaysPerMonth: per, cadence: c });
     }
     if (mode === 'bought' || mode === 'pushed') {
       var fi = fiInputs(household, tables);
@@ -139,5 +160,39 @@
     }).join('') + '</div>';
   }
 
-  return { MODES: MODES, STORE_KEY: STORE_KEY, wage: wage, available: available, fiInputs: fiInputs, apply: apply, format: format, formatMonths: formatMonths, mode: mode, setMode: setMode, setDefault: setDefault, defaultMode: defaultMode, toggleHtml: toggleHtml };
+  /* ---- The strip: toggle plus the amounts it reads, for rooms not on the
+     template (D-170). `amountsFn(h, tables)` returns [{ label, cents, href }];
+     the strip repaints when the mode or the household changes and never
+     holds an input, so it is free to rebuild. ------------------------------- */
+  function mountStrip(hostId, amountsFn, getTables) {
+    if (typeof document === 'undefined') return null;
+    var host = document.getElementById(hostId);
+    if (!host) return null;
+    var S = spine();
+    function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function paint() {
+      var h = S ? S.getProfile() : {};
+      var tables = typeof getTables === 'function' ? getTables() : getTables;
+      var cur = mode();
+      var rows = (amountsFn && amountsFn(h, tables)) || [];
+      host.innerHTML = '<div class="slaf-lens-strip">' + toggleHtml(h, tables, hostId + '-lens')
+        + '<ul class="slaf-lens-amounts">' + rows.map(function (r) {
+            if (!Money.isEntered(r.cents)) return '';
+            var text = cur === '$' ? Money.formatCents(r.cents) : format(r.cents, cur, h, tables);
+            var label = r.href ? '<a href="' + esc(r.href) + '">' + esc(r.label) + '</a>' : esc(r.label);
+            return '<li>' + label + '<span>' + esc(text) + '</span></li>';
+          }).join('') + '</ul></div>';
+    }
+    host.addEventListener('click', function (evt) {
+      var b = evt.target.closest('[data-lens]');
+      if (!b) return;
+      setMode(b.getAttribute('data-lens'));
+      paint();
+    });
+    if (S && S.onChange) S.onChange(paint);
+    paint();
+    return { repaint: paint };
+  }
+
+  return { MODES: MODES, mountStrip: mountStrip, STORE_KEY: STORE_KEY, wage: wage, available: available, fiInputs: fiInputs, apply: apply, format: format, formatMonths: formatMonths, mode: mode, setMode: setMode, setDefault: setDefault, defaultMode: defaultMode, toggleHtml: toggleHtml, paydaysPerMonth: paydaysPerMonth, cadenceOf: cadenceOf };
 });

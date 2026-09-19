@@ -5,7 +5,7 @@
   "source": "The pillar grouping follows the standard shape of a personal-finance review — cushion, debt, saving, retirement, housing, and how the money is held. The weights within each age cohort are a judgement about what matters most at that stage of life. No published source sets them, and none is claimed.",
   "confidence": "convention",
   "confidenceNote": "These weights are the most invented numbers in this repository. They are a considered opinion about emphasis by decade, not a finding, and two sensible people would write them differently. The room shows the same household scored under every cohort so the effect of the weighting is visible rather than hidden, and every pillar's underlying ratios are listed so the score can be taken apart.",
-  "note": "SPEC.md §12.4, resolved as tunable by age cohort — see DECISIONS.md D-043. The score is a weighted average of positions against data/ratio_benchmarks.json, computed by engines/health.js. Each pillar's score is the plain mean of whichever of its ratios could be computed AND have a band; a pillar with nothing computable is ABSENT, not zero, and its weight is redistributed across the pillars that do have data. Weights within each cohort sum to 1 and test/run.js enforces that. Adding a cohort or retuning a decade is an edit to this file and no code change at all.",
+  "note": "SPEC.md §12.4, resolved as tunable by age cohort — see DECISIONS.md D-043. The score is a weighted average of positions against data/ratio_benchmarks.json, computed by engines/health.js. Each pillar's score is the plain mean of whichever of its ratios could be computed AND have a band; a pillar with nothing computable is ABSENT, not zero, and its weight is redistributed across the pillars that do have data. Weights within each cohort sum to 1 and test/run.js enforces that. Adding a cohort or retuning a decade is an edit to this file and no code change at all. Each pillar carries `plain` (D-245): what it measures, what good is, why it matters and what raises it, in words a child could follow. Thresholds named there are the same conventions the bands table holds.",
   "scoring": {
     "cap": 1.0,
     "minCoverage": 0.5,
@@ -48,7 +48,13 @@
         "liquidityRatio",
         "currentRatio",
         "runwayMonths"
-      ]
+      ],
+      "plain": {
+        "measures": "How many months of spending you could cover from money you can reach quickly.",
+        "good": "3 to 6 months of spending in cash you can get to within days.",
+        "why": "If pay stops or a big bill lands, this is what keeps you from borrowing at card rates.",
+        "improve": "Put part of every paycheck into a plain savings account until it holds about 3 months of spending. Cash first; investing can wait until this is there."
+      }
     },
     {
       "id": "debt",
@@ -61,7 +67,13 @@
         "revolvingShare",
         "debtToAsset",
         "carPaymentToIncome"
-      ]
+      ],
+      "plain": {
+        "measures": "How much of your monthly pay is already promised to debt payments, and how much of your credit limit you are using.",
+        "good": "debt payments under about 20% of take-home, and card balances under 30% of their limits.",
+        "why": "Money promised to debt cannot be saved or spent, and high card balances cost the most interest and lower your credit score.",
+        "improve": "Pay down the highest-rate card first while paying the minimums on the rest, and do not add new balances. Debt Payoff shows the order and the dates."
+      }
     },
     {
       "id": "saving",
@@ -71,7 +83,13 @@
         "savingsRate",
         "personalCashFlowRatio",
         "discretionaryIncomeRatio"
-      ]
+      ],
+      "plain": {
+        "measures": "What share of your pay stays with you each month, as savings or investments.",
+        "good": "15% or more of your pay saved every month; 20% or more is strong.",
+        "why": "The savings rate decides how many years until work is optional. It matters more than investment returns.",
+        "improve": "Raise the amount that moves to savings on payday, even by 1% of pay. Cutting one recurring expense and sending it to savings is the usual first step."
+      }
     },
     {
       "id": "retirement",
@@ -81,7 +99,13 @@
         "retirementMultiple",
         "fiRatio",
         "netWorthToIncome"
-      ]
+      ],
+      "plain": {
+        "measures": "How far your invested money has come toward the amount that could pay for your life without a paycheck.",
+        "good": "depends on age: about 1x your yearly pay invested by 30, 3x by 40, 6x by 50.",
+        "why": "Invested money grows on its own; the earlier it is there, the less of it you have to put in yourself.",
+        "improve": "Take the full employer match first, then raise your contribution rate. The FIRE room shows the target and the years at your pace."
+      }
     },
     {
       "id": "housing",
@@ -92,7 +116,13 @@
         "loanToValue",
         "homeEquityRatio",
         "realEstateConcentration"
-      ]
+      ],
+      "plain": {
+        "measures": "What share of your pay goes to rent or mortgage, tax and insurance.",
+        "good": "housing under about 28% to 30% of your pay.",
+        "why": "Housing is the biggest bill most people have. When it is too large, nothing else has room.",
+        "improve": "This one moves only with a move: a cheaper place, a housemate, or renting out part of what you own."
+      }
     },
     {
       "id": "structure",
@@ -103,7 +133,13 @@
         "cashDrag",
         "liquidToIlliquid",
         "solvencyRatio"
-      ]
+      ],
+      "plain": {
+        "measures": "Whether your money is working (invested, or paying down debt) or sitting idle in cash beyond the cushion.",
+        "good": "a cushion in cash and the rest invested, with what you own comfortably larger than what you owe.",
+        "why": "Cash beyond the cushion loses value to inflation every year; invested money grows.",
+        "improve": "Once the cushion is full, move the extra cash into investments. If you owe more than you own, the debt plan is the fix."
+      }
     }
   ],
   "cohorts": [

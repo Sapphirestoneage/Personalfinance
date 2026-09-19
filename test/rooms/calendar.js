@@ -12,7 +12,7 @@ module.exports = function (t) {
       people: [Schema.createPerson({ id: 'p1', role: 'adult', employmentStatus: 'employed', incomeSources: [Schema.createIncomeSource({ id: 'i1', personId: 'p1', grossAnnualIncomeCents: 3000000 })] })],
       assets: [Schema.createAsset({ id: 'a1', category: 'cash', valueCents: 50000, liquid: true })],
       calendar: { cadence: 'semimonthly', nextPaydayDay: 5, bills: [{ id: 'rent', label: 'Rent', cents: 90000, day: 1 }] } }, extra || {}));
-    h.expenses.monthlyEssential.estimatedValueCents = 180000;
+    h.expenses.needs = { food: { monthlyCents: null }, accommodation: { monthlyCents: null }, transportation: { monthlyCents: null } }; h.expenses.wants = { totalCents: 180000, therapy: null };
     return h;
   }
   const h = hh();
@@ -135,7 +135,7 @@ module.exports = function (t) {
   const rc = Cal.month(hh(), T, { now: NOW });
   check('with no ledger the cadence still rules, as before', rc.paydaySource + '/' + rc.paydays.map(p => p.dom).join(','), 'cadence/5,20');
   check('… and a cadence payday shows in the grid as one', Cal.weeks(rc).flat().filter(c => c && c.dom === 5)[0].ins.map(x => x.kind).join(','), 'payday');
-  check('rent comes through Schema.rentMonthlyCents now', Cal.rentCents(hl).cents + '/' + Cal.rentCents(hl).source, '90000/cash-flow');
+  check('rent comes through Schema.rentMonthlyCents now', Cal.rentCents(hl).cents + '/' + Cal.rentCents(hl).source, '90000/expenses');
 
   /* The one-pager's one-off is a dated entry (D-130). */
   const SpineC = require(path.join(ROOT, 'shared/spine-v2.js'));

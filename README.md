@@ -57,7 +57,7 @@ $ node test/run.js
 Fix that, run again, and it asks for the next thing: a deep-link anchor that
 exists, a filter tag, a `registerRoom()` call, the shared stylesheet, and
 every module its scripts depend on. Copy the shape of an existing room —
-`rooms/sleep-at-night.html` is a good small one to start from.
+`rooms/protection.html` is a good small one to start from.
 
 **The four rules that will bite you** are in `CLAUDE.md`, enforced by tests,
 and worth reading before shared code: empty is not zero, no `|| 0` in a
@@ -68,16 +68,22 @@ typing in it.
 
 ```
 index.html          The front door: the Dashboard once it has what it needs, the intake landing until then (D-058)
-foo-ladder.js       The FOO ladder's logic (shell at rooms/foo-ladder.html): build() once, paint() on every change
+foo-ladder.js       The FOO ladder's logic — one of the three readings inside rooms/foo-ladder.html, What The Next Dollar Does (D-231): build() once, paint() on every change
 map.html            Room directory: next-unfinished first, then the groups, tag filter
 MONEY-MAP.md        The discovery map that preceded the ledger build (D-128, revised in D-129); where it and the build spec differ, the decisions are what shipped
 DESIGN-AUDIT.md     The design-audit brief: everything the app is and does, for a reviewer who has never seen the repo
-version.json        The product version, major.minor; Schema.APP_VERSION matches, every export is stamped, every footer prints it (D-131)
+version.json        The product version, major.minor; Schema.APP_VERSION matches, every export is stamped, every footer prints it (D-131). `build` is the date of the last change, printed beside it; `node tools/stamp-build.js` sets it, and stamps every HTML page with the same build so a cached old page over a new core refuses to write (D-202, D-204)
+.github/workflows/  test.yml runs the whole suite on every push; pages.yml publishes only after it is green, once the Pages source is switched to GitHub Actions and PAGES_VIA_ACTIONS is set (D-204)
 scripts/            extract-v63.mjs — the Skill Tree's data port: run it against an FI-Skill-Tree-v6.3.x page and it regenerates data/skill_tree.json and data/skill_links.json (31 trees, 665 skills, 312 lanes), merging skill_tree_app.json, this app's own 40 skills, which the exercises and the Stacker point at by id and which is edited by hand, never generated (D-139). seed-exercises.mjs seeds the exercise library. seed-skill-tree.mjs, which made the old 40-skill seed, is gone — running it would have overwritten the curriculum
 favicon.svg         Sapphire mark
-rooms/              One HTML file per room
+rooms/              One HTML file per room. ledger.html is the way in and wears six hats (D-230): the six doors, #round-1 (five questions, one insight, one door, D-206), #all-at-once (the whole form, the same rows through the same owners, D-208), #since-last-time (what has moved, D-209 + D-214), #arrangements (twenty shelvings, D-153) and #route (the short way through, D-149). start.html is the older one-pager, still to retire into it. Merged rooms stay on disk as redirects, never deleted (D-227)
 vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
 shared/             The spine everything depends on
+  qr.js               a QR code of the share link, drawn from the standard's tables, no library (D-201)
+  ask.js              ask at the moment of need: the one blank row a room asks for (askIn), inline, at most once a visit, written through the owner; mounted from Progress.mount (D-207)
+  doors.js            the six doors (D, A, I, T, E, You): rows behind each, the headline, how far along, which to open next, and the first insight after the first round (D-206); the four levels, the insight each unlocks, and the understanding line (D-207)
+  suggest.js          a value the app proposes, shown but not taken (D-060), and since D-205 the rules that propose it: every answer fills more rows as suggestions, derived from data/ and never stored; one tap confirms through the owner
+  backup.js           everything this browser holds as one file: every slaf. and dnd. key, save, load with a confirm and an undo, and the drift guard that warns on a dev host when a room writes outside those prefixes (D-202). On the Ledger and in Settings
   theme.css           navy-sapphire design tokens (colour + type)
   fonts.css           Fraunces + Space Grotesk
   money.js            integer cents, decimal rates, safe divide, Result type
@@ -117,7 +123,7 @@ engines/            Shared calculation engines — one function per concept
   selfemployed.js     SE tax in visible steps, W2 vs 1099, quarterly + safe harbour
   goals.js            the shared Goal Costing Engine — wedding, deposit, trip
   accounts.js         Roth vs Traditional vs taxable, Solo 401k limits
-  swan.js             the self-reported sleep-at-night target, beside the maths
+  swan.js             the self-reported sleep-at-night target, beside the maths (the Cushion's at-3am reading, D-232)
   values.js           stated values against a categorised month — no score
   fulfillment.js      spend against a 1-10 joy rating, and the four corners
   hassle.js           what a money-saving chore pays per hour of your life
@@ -125,7 +131,7 @@ engines/            Shared calculation engines — one function per concept
   ratios.js           thirty ratios in one registry, plus the radar projection
   credential.js       one ROI engine for a career move and a single skill
   worth.js            predicted-before against rated-after, and the regret view
-  windfall.js         a lump sum all at once or spread — and when spreading wins
+  windfall.js         a lump sum all at once or spread — and when spreading wins (the lump-sum reading of What The Next Dollar Does)
   runway.js           how long the money lasts when the income stops
   health.js           the health score: ratios, weighted by age cohort
   income.js           hourly/weekly/monthly pay into a year, and jobs by month
@@ -157,6 +163,10 @@ test/run.js         Re-derives every formula outside the browser
 test/alignment.js   Browser layout check — side-by-side cells must line up
 test/forms.js       Mobile browser check — typing must survive, keyboard must stay
 test/export.js      Export → import round trip, share-link round trip, size ceiling
+test/onefact.js     Browser check — a row with a value is never asked again (D-209)
+test/xss.js         Browser check — a booby-trapped string never runs (D-210)
+test/jan1.js        The clock at 2027-01-01: year tables say which year (D-210)
+RELEASE.md          The four walks on two real phones before a release
 SPEC.md             The full Tier 0–2 build spec. The authority.
 ROADMAP.md          The master idea index, tiers 0–24, + what's actually built
 DECISIONS.md        Running log of what was decided and why.

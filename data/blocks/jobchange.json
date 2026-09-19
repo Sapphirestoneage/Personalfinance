@@ -1,0 +1,86 @@
+{
+  "id": "block_jobchange",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "type": "jobchange",
+  "label": "Job change",
+  "source": "A new job as the lines it adds: the difference between the new gross and what you earn now, and, when the job is remote, the commute's share of the getting-around line coming off.",
+  "confidence": "convention",
+  "confidenceNote": "The remote saving is a stated share, not a measurement: half of the getting-around line.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",
+  "remoteTransportSavingShare": 0.5,
+  "questions": [
+    {
+      "id": "gross",
+      "ask": "New gross income, a year",
+      "kind": "money"
+    },
+    {
+      "id": "remote",
+      "ask": "Remote",
+      "kind": "yesno"
+    },
+    {
+      "id": "when",
+      "ask": "When",
+      "kind": "month"
+    }
+  ],
+  "lines": [
+    {
+      "id": "gross",
+      "label": "Pay changes by",
+      "path": "income.grossAnnualCents",
+      "kind": "annual",
+      "delta": {
+        "-": [
+          "@gross",
+          {
+            "coalesce": [
+              "$grossAnnualCents",
+              0
+            ]
+          }
+        ]
+      },
+      "source": "user",
+      "confidence": "user",
+      "note": "The new gross less what you earn now (blank counts as none, and says so)."
+    },
+    {
+      "id": "commute",
+      "label": "The commute goes",
+      "path": "expenses.needs.transportation",
+      "kind": "monthly",
+      "delta": {
+        "neg": {
+          "round": {
+            "*": [
+              {
+                "coalesce": [
+                  "$transportationMonthlyCents",
+                  0
+                ]
+              },
+              {
+                "table": "blockJobchange",
+                "path": [
+                  "remoteTransportSavingShare"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "Half of the getting-around line, a stated share.",
+      "when": {
+        "eq": [
+          "@remote",
+          true
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "career_momentum",
+  "version": "1.0",
+  "asOf": "2026-09-11",
+  "source": "What a break from work costs in later pay: PayScale's 2018 career-gap research reported candidates with a year out of work earning in the region of 7% less than those without; Bertrand, Goldin and Katz (2010, American Economic Journal: Applied Economics) found MBA earnings fell markedly after career interruptions of six months or more; other studies find little or no penalty for short, planned breaks in fields with steady demand.",
+  "confidence": "unverified",
+  "confidenceNote": "Recalled figures from studies of different populations, none of them a planned micro-retirement of 1 to 12 months. The three bands are a convention chosen here to bracket them; the person can type their own figure and the room always shows the range.",
+  "note": "Read by engines/microretirement.js (K5, D-219). penaltyPerYearOfBreak is the share of yearly pay given up, per year of break, for the rest of the working years; a six-month break at the middle band costs half of mid × pay × the years left.",
+  "penaltyPerYearOfBreak": { "low": 0.0, "mid": 0.04, "high": 0.08 },
+  "defaultBand": "mid"
+}

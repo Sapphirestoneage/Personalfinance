@@ -1,0 +1,158 @@
+{
+  "format": "slaf-export",
+  "exportVersion": 1,
+  "schemaVersion": 2,
+  "exportedAt": "2026-09-10T01:00:39.480Z",
+  "household": {
+    "schemaVersion": 2,
+    "people": [
+      {
+        "id": "p_bj",
+        "label": "Pat",
+        "role": "adult",
+        "dob": "1982-02-09",
+        "employmentStatus": "unemployed",
+        "incomeSources": [],
+        "work": {
+          "contractedHoursPerWeek": null,
+          "unpaidOvertimeHoursPerWeek": null,
+          "commuteHoursPerWeek": null,
+          "prepHoursPerWeek": null,
+          "decompressHoursPerWeek": null,
+          "workCostsMonthlyCents": null,
+          "weeksPerYear": 48
+        }
+      }
+    ],
+    "filingStatus": "single",
+    "state": "IL",
+    "capturingFullMatch": null,
+    "assets": [
+      {
+        "id": "a_0",
+        "label": "Savings",
+        "category": "cash",
+        "valueCents": 2200000,
+        "liquid": true,
+        "ownerIds": [],
+        "taxCharacter": null
+      },
+      {
+        "id": "a_1",
+        "label": "Old 401(k)",
+        "category": "retirement",
+        "valueCents": 14000000,
+        "liquid": false,
+        "ownerIds": [],
+        "taxCharacter": "pretax"
+      }
+    ],
+    "debts": [],
+    "expenses": {
+      "monthlyEssential": {
+        "estimatedValueCents": 345000,
+        "trackedValueCents": null,
+        "source": "estimated"
+      },
+      "entries": []
+    },
+    "incomeBasis": "earned",
+    "retirement": {
+      "contributionPercent": null,
+      "rothContributedCents": null,
+      "hsaContributedCents": null,
+      "onHdhp": null,
+      "hsaFamilyPlan": null
+    },
+    "insurance": {
+      "highestDeductibleCents": 350000
+    },
+    "worthChecks": [],
+    "ratings": {},
+    "valuesProfile": {
+      "stated": [],
+      "assignments": {}
+    },
+    "swan": {
+      "basis": null,
+      "targetCents": null,
+      "targetMonths": null,
+      "note": null,
+      "setAt": null
+    },
+    "goals": [],
+    "assumptions": {
+      "expectedReturnRate": 0.07,
+      "swrRate": 0.04,
+      "marginalRate": null
+    },
+    "assumptionOverrides": {},
+    "meta": {
+      "visitedRooms": [],
+      "createdAt": null,
+      "updatedAt": "2026-09-10T01:00:39.480Z",
+      "confirmedAt": {},
+      "hasDebt": false,
+      "isDemo": true,
+      "name": "Between jobs",
+      "story": "44, laid off two months ago, severance gone, 26 weeks of unemployment insurance, COBRA.",
+      "sphere": 5,
+      "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+      "lane": "lane2 section 1 (L-1)",
+      "known": {
+        "asOf": "2026-09-10",
+        "tolerance": 0.01,
+        "monthlySpendingCents": 345000,
+        "fiTargetCents": 103500000,
+        "grossAnnualCents": null,
+        "effectiveRate": null,
+        "estimatedTaxCents": null,
+        "takeHomeAnnualCents": null,
+        "takeHomeMonthlyCents": null,
+        "savingsRate": null,
+        "runwayMonths": 6.3768115942028984,
+        "runwayWholeMonths": 6,
+        "netWorthCents": 16200000,
+        "working": [
+          "monthly spending = food $600 + accommodation $1,650 + transportation $300 + everything else $900 = $3,450",
+          "FI target = $3,450 x 12 / 0.04 = $41,400 / 0.04 = $1,035,000",
+          "gross income: no income source, so take-home and the savings rate are incomplete",
+          "runway = cash $22,000 / $3,450 a month = 6.3768 months (6 whole months; Runway.project stops at 60)",
+          "net worth = $22,000 + $140,000 - $0 = $162,000"
+        ]
+      }
+    }
+  },
+  "snapshots": [],
+  "lane2": {
+    "section": 5,
+    "commit": "9d126b6",
+    "date": "2026-09-04",
+    "subject": "Rebuild the intake: eleven cards, two people, one answer derived, \"no debt\" as an answer",
+    "via": "exportJSON",
+    "specId": "between-jobs",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 345000,
+      "fiTargetCents": 103500000,
+      "grossAnnualCents": null,
+      "effectiveRate": null,
+      "estimatedTaxCents": null,
+      "takeHomeAnnualCents": null,
+      "takeHomeMonthlyCents": null,
+      "savingsRate": null,
+      "runwayMonths": 6.3768115942028984,
+      "runwayWholeMonths": 6,
+      "netWorthCents": 16200000,
+      "working": [
+        "monthly spending = food $600 + accommodation $1,650 + transportation $300 + everything else $900 = $3,450",
+        "FI target = $3,450 x 12 / 0.04 = $41,400 / 0.04 = $1,035,000",
+        "gross income: no income source, so take-home and the savings rate are incomplete",
+        "runway = cash $22,000 / $3,450 a month = 6.3768 months (6 whole months; Runway.project stops at 60)",
+        "net worth = $22,000 + $140,000 - $0 = $162,000"
+      ]
+    },
+    "patchFallback": null
+  }
+}

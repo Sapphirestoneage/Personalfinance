@@ -1,0 +1,76 @@
+{
+  "id": "block_inheritance",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "type": "inheritance",
+  "label": "Inheritance",
+  "source": "A lump as the one line it adds: the amount arrives, into a taxable account or a retirement one.",
+  "confidence": "convention",
+  "confidenceNote": "Your own figure; no tax is modelled on the way in.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",
+  "questions": [
+    {
+      "id": "amount",
+      "ask": "Amount",
+      "kind": "money"
+    },
+    {
+      "id": "when",
+      "ask": "When",
+      "kind": "month"
+    },
+    {
+      "id": "into",
+      "ask": "Into",
+      "kind": "choice",
+      "options": [
+        {
+          "id": "taxable",
+          "label": "A taxable account"
+        },
+        {
+          "id": "retirement",
+          "label": "A retirement account"
+        }
+      ]
+    }
+  ],
+  "lines": [
+    {
+      "id": "arrives",
+      "label": "It arrives, invested",
+      "path": "assets.invested",
+      "kind": "oneoff",
+      "delta": "@amount",
+      "source": "user",
+      "confidence": "user",
+      "note": "Into the account you chose.",
+      "extra": {
+        "taxCharacter": {
+          "if": [
+            {
+              "eq": [
+                "@into",
+                "retirement"
+              ]
+            },
+            "pretax",
+            "taxable"
+          ]
+        },
+        "category": {
+          "if": [
+            {
+              "eq": [
+                "@into",
+                "retirement"
+              ]
+            },
+            "retirement",
+            "investment"
+          ]
+        }
+      }
+    }
+  ]
+}

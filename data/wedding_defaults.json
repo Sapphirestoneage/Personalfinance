@@ -1,0 +1,14 @@
+{
+  "id": "wedding_defaults",
+  "version": "2025.0",
+  "asOf": "2025-02-01",
+  "source": "The Knot Real Weddings Study for 2024 weddings: an average cost in the region of $33,000 with about 115 guests, and an average engagement ring in the region of $5,200 (The Knot Jewelry and Engagement Study). Split here into a per-guest part (catering, bar, rentals, favours) and a fixed part (venue, photography, music, attire, flowers, officiant) so a guest count moves the total.",
+  "confidence": "unverified",
+  "confidenceNote": "Recalled national averages, rounded, and the per-guest / fixed split is a convention chosen here: the study reports totals, not that split. Costs vary several-fold by region and by what the couple wants. Every figure is editable on the page.",
+  "note": "Read by engines/wedding.js (D-217). Cents. guests × perGuestCents + fixedCents + ringCents is the default total. tableSize is how many an extra table seats.",
+  "guests": 115,
+  "perGuestCents": 15000,
+  "fixedCents": 1500000,
+  "ringCents": 520000,
+  "tableSize": 8
+}

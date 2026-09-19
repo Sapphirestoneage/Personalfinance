@@ -1,0 +1,411 @@
+{
+  "id": "contribution_limits",
+  "version": "1.0",
+  "asOf": "2026-09-10",
+  "source": "IRS annual cost-of-living limits for workplace plans, IRAs, HSAs and the gift tax annual exclusion (which sets 529 gifting), current and prior year. Lane 2, section 3 (L-3).",
+  "confidence": "sourced",
+  "confidenceNote": "2026 figures read from search results quoting IRS Notice 2025-67, Rev. Proc. 2025-19 and Rev. Proc. 2025-32; 2025 figures from memory of Notice 2024-80, Rev. Proc. 2024-25 and Rev. Proc. 2024-40 (verify: true).",
+  "note": "data/irs_limits_2026.json is the file engines/presets.js reads today (elective401k, ira, hsa, annualAdditions). DECIDE: point it here and retire that file; tests/data.test.js asserts the shared figures agree.",
+  "unit": "US dollars a year",
+  "refresh": {
+    "month": "November (Notice for the next plan year), May (HSA Rev. Proc.), October (gift exclusion in the inflation Rev. Proc.)",
+    "against": "irs.gov newsroom COLA release; Rev. Proc. for HSA limits under IRC 223(g); the annual inflation adjustment Rev. Proc. for IRC 2503(b)."
+  },
+  "years": {
+    "2025": {
+      "elective401k": {
+        "value": 23500,
+        "asOf": "2024-11-01",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "catchup50Plus": {
+        "value": 7500,
+        "asOf": "2024-11-01",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "catchup60to63": {
+        "value": 11250,
+        "asOf": "2024-11-01",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "annualAdditions415c": {
+        "value": 70000,
+        "asOf": "2024-11-01",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "compensationLimit401a17": {
+        "value": 350000,
+        "asOf": "2024-11-01",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "simpleIra": {
+        "value": 16500,
+        "asOf": "2024-11-01",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "simpleCatchup50Plus": {
+        "value": 3500,
+        "asOf": "2024-11-01",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "ira": {
+        "value": 7000,
+        "asOf": "2024-11-01",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "iraCatchup50Plus": {
+        "value": 1000,
+        "asOf": "2024-11-01",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "rothPhaseOut": {
+        "single": {
+          "value": [
+            150000,
+            165000
+          ],
+          "asOf": "2024-11-01",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "head_of_household": {
+          "value": [
+            150000,
+            165000
+          ],
+          "asOf": "2024-11-01",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "married_joint": {
+          "value": [
+            236000,
+            246000
+          ],
+          "asOf": "2024-11-01",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "married_separate": {
+          "value": [
+            0,
+            10000
+          ],
+          "asOf": "2024-11-01",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        }
+      },
+      "traditionalDeductionPhaseOutCovered": {
+        "single": {
+          "value": [
+            79000,
+            89000
+          ],
+          "asOf": "2024-11-01",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "head_of_household": {
+          "value": [
+            79000,
+            89000
+          ],
+          "asOf": "2024-11-01",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "married_joint": {
+          "value": [
+            126000,
+            146000
+          ],
+          "asOf": "2024-11-01",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "married_separate": {
+          "value": [
+            0,
+            10000
+          ],
+          "asOf": "2024-11-01",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        }
+      },
+      "traditionalDeductionPhaseOutSpouseCovered": {
+        "married_joint": {
+          "value": [
+            236000,
+            246000
+          ],
+          "asOf": "2024-11-01",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-23500-for-2025-ira-limit-remains-7000",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        }
+      },
+      "hsaSelfOnly": {
+        "value": 4300,
+        "asOf": "2024-05-09",
+        "source": "https://www.irs.gov/pub/irs-drop/rp-24-25.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "hsaFamily": {
+        "value": 8550,
+        "asOf": "2024-05-09",
+        "source": "https://www.irs.gov/pub/irs-drop/rp-24-25.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "hsaCatchup55Plus": {
+        "value": 1000,
+        "asOf": "2025-01-01",
+        "source": "https://www.irs.gov/publications/p969",
+        "confidence": "sourced",
+        "historical": true
+      },
+      "giftAnnualExclusion": {
+        "value": 19000,
+        "asOf": "2024-10-22",
+        "source": "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      },
+      "gift529FiveYearElection": {
+        "value": 95000,
+        "asOf": "2024-10-22",
+        "source": "https://www.irs.gov/pub/irs-drop/rp-24-40.pdf",
+        "confidence": "recalled",
+        "verify": true,
+        "historical": true
+      }
+    },
+    "2026": {
+      "elective401k": {
+        "value": 24500,
+        "asOf": "2025-11-13",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+        "confidence": "sourced"
+      },
+      "catchup50Plus": {
+        "value": 8000,
+        "asOf": "2025-11-13",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+        "confidence": "sourced"
+      },
+      "catchup60to63": {
+        "value": 11250,
+        "asOf": "2025-11-13",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+        "confidence": "sourced",
+        "note": "SECURE 2.0 section 109: the higher catch-up for ages 60 to 63."
+      },
+      "annualAdditions415c": {
+        "value": 72000,
+        "asOf": "2025-11-13",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+        "confidence": "sourced"
+      },
+      "compensationLimit401a17": {
+        "value": 360000,
+        "asOf": "2025-11-13",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+        "confidence": "sourced"
+      },
+      "simpleIra": {
+        "value": 17000,
+        "asOf": "2025-11-13",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+        "confidence": "sourced"
+      },
+      "simpleCatchup50Plus": {
+        "value": 4000,
+        "asOf": "2025-11-13",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+        "confidence": "sourced"
+      },
+      "ira": {
+        "value": 7500,
+        "asOf": "2025-11-13",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+        "confidence": "sourced"
+      },
+      "iraCatchup50Plus": {
+        "value": 1100,
+        "asOf": "2025-11-13",
+        "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+        "confidence": "sourced"
+      },
+      "rothPhaseOut": {
+        "single": {
+          "value": [
+            153000,
+            168000
+          ],
+          "asOf": "2025-11-13",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+          "confidence": "sourced"
+        },
+        "head_of_household": {
+          "value": [
+            153000,
+            168000
+          ],
+          "asOf": "2025-11-13",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+          "confidence": "sourced"
+        },
+        "married_joint": {
+          "value": [
+            242000,
+            252000
+          ],
+          "asOf": "2025-11-13",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+          "confidence": "sourced"
+        },
+        "married_separate": {
+          "value": [
+            0,
+            10000
+          ],
+          "asOf": "2025-11-13",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+          "confidence": "sourced"
+        }
+      },
+      "traditionalDeductionPhaseOutCovered": {
+        "single": {
+          "value": [
+            81000,
+            91000
+          ],
+          "asOf": "2025-11-13",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+          "confidence": "sourced"
+        },
+        "head_of_household": {
+          "value": [
+            81000,
+            91000
+          ],
+          "asOf": "2025-11-13",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+          "confidence": "sourced"
+        },
+        "married_joint": {
+          "value": [
+            129000,
+            149000
+          ],
+          "asOf": "2025-11-13",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+          "confidence": "sourced"
+        },
+        "married_separate": {
+          "value": [
+            0,
+            10000
+          ],
+          "asOf": "2025-11-13",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+          "confidence": "sourced"
+        }
+      },
+      "traditionalDeductionPhaseOutSpouseCovered": {
+        "married_joint": {
+          "value": [
+            242000,
+            252000
+          ],
+          "asOf": "2025-11-13",
+          "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+          "confidence": "sourced"
+        }
+      },
+      "hsaSelfOnly": {
+        "value": 4400,
+        "asOf": "2025-05-01",
+        "source": "https://www.irs.gov/pub/irs-drop/rp-25-19.pdf",
+        "confidence": "sourced"
+      },
+      "hsaFamily": {
+        "value": 8750,
+        "asOf": "2025-05-01",
+        "source": "https://www.irs.gov/pub/irs-drop/rp-25-19.pdf",
+        "confidence": "sourced"
+      },
+      "hsaCatchup55Plus": {
+        "value": 1000,
+        "asOf": "2026-01-01",
+        "source": "https://www.irs.gov/publications/p969",
+        "confidence": "sourced",
+        "note": "Fixed by statute, IRC 223(b)(3); not indexed."
+      },
+      "giftAnnualExclusion": {
+        "value": 19000,
+        "asOf": "2025-10-09",
+        "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+        "confidence": "sourced",
+        "note": "IRC 2503(b); a 529 contribution is a completed gift, so this is the per-donor, per-beneficiary amount without a gift tax return."
+      },
+      "gift529FiveYearElection": {
+        "value": 95000,
+        "asOf": "2025-10-09",
+        "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+        "confidence": "sourced",
+        "note": "Five times the annual exclusion, elected on Form 709 (IRC 529(c)(2)(B))."
+      }
+    }
+  }
+}

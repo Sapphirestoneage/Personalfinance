@@ -15,7 +15,7 @@ module.exports = function (t) {
     if (Money.isEntered(opts.inv)) assets.push(Schema.createAsset({ id: 'v', category: 'investment', valueCents: opts.inv }));
     return Schema.createHousehold({
       people: [person], assets: assets, filingStatus: opts.filing || null,
-      expenses: { monthlyEssential: { estimatedValueCents: Money.isEntered(opts.spend) ? opts.spend : null } },
+      expenses: { wants: { totalCents: Money.isEntered(opts.spend) ? opts.spend : null } },
       purchase: opts.purchase || null
     });
   }
@@ -178,5 +178,5 @@ module.exports = function (t) {
   check('… appears for everyone', Gate.SITUATIONS.filter(s => Registry.applies(room, household({ status: s.status }))).map(s => s.id).join(','), 'employed,selfEmployed,betweenJobs,student,retired,mixed');
   check('… the three writes are owned here', ['purchasePrice', 'purchaseMonths', 'purchaseRate'].map(f => Ownership.field(f).owner).join(','), 'big-purchase,big-purchase,big-purchase');
   check('… anchored on the inputs', ['purchasePrice', 'purchaseMonths', 'purchaseRate'].map(f => Ownership.field(f).anchor).join(','), 'inputs,inputs,inputs');
-  check('… and the chips it reads are owned elsewhere', ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'].map(f => Ownership.field(f).owner).join(','), 'start,cash-flow,start');
+  check('… and the chips it reads are owned elsewhere', ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'].map(f => Ownership.field(f).owner).join(','), 'start,expenses,start');
 };

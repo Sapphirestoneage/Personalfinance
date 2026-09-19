@@ -170,6 +170,15 @@ body.slaf {
   margin: 0 auto;
   padding: 0 var(--space-4) var(--space-7);
 }
+/* The same page body, under the name three rooms give it. Its header sits
+   inside it, so the header adds only the space above and below. */
+.slaf-room {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-7);
+}
+.slaf-room-head { margin: 0 0 var(--space-4); }
+.slaf-room-head h1 { margin: var(--space-1) 0 0; }
 
 h1, h2, h3, .slaf-display {
   font-family: var(--font-display);
@@ -236,7 +245,10 @@ h3 { font-size: var(--text-md); }
 .slaf-field {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  /* Top-aligned (D-246): two boxes side by side start their labels on
+     the same line, and a long hint under one of them hangs below rather
+     than pushing the other box down to meet it. */
+  justify-content: flex-start;
   margin-bottom: var(--space-3);
 }
 
@@ -247,6 +259,24 @@ h3 { font-size: var(--text-md); }
   letter-spacing: var(--tracking-eyebrow);
   color: var(--color-text-subtle);
   margin-bottom: var(--space-1);
+}
+
+/* Two boxes side by side must START LEVEL (D-249).
+   A control's top is its field's top plus the label above it and nothing
+   else — hints and sources come after the control, so they never move it.
+   So the labels are what has to match: one that wraps to two lines used to
+   shove its own box 16px below its neighbour's, which is what "still not
+   even" meant. Every label in a row of fields therefore reserves two lines
+   whether it needs them or not, and the boxes line up on every card.
+   --slaf-label-lines lets a row whose longest label genuinely needs three
+   say so; test/alignment.js walks every page at 320 and 390 and fails the
+   build on any pair still out of line, so a label that outgrows its
+   reservation cannot ship. */
+.slaf-field > .slaf-label {
+  /* 1lh is exactly one line box; the em value is the same number for
+     browsers that predate the unit, and a guess by any other name. */
+  min-height: calc(var(--slaf-label-lines, 2) * 1.45em);
+  min-height: calc(var(--slaf-label-lines, 2) * 1lh);
 }
 
 .slaf-input-shell {
@@ -644,6 +674,10 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .slaf-chart .hline-label { font-weight: 600; }
 .slaf-chart .mark { stroke: rgba(191, 219, 254, 0.5); stroke-width: 0.8; stroke-dasharray: 2 3; }
 .slaf-chart .mark-label { fill: rgba(191, 219, 254, 0.7); }
+/* 15.9: age milestones, faint behind the event marks (D-181). */
+.slaf-chart .mark.is-faint { stroke-dasharray: 1 3; opacity: 0.55; }
+.slaf-chart .mark-label.is-faint { font-size: 7px; opacity: 0.7; }
+.slaf-chart .milestone:hover .mark.is-faint { opacity: 1; }
 .slaf-chart .dot { stroke: var(--ink-950); stroke-width: 1.5; }
 .slaf-chart.is-empty .slaf-reason { margin: 0; }
 .slaf-legend { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); }
@@ -708,18 +742,41 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .slaf-owned--guess .slaf-owned-value { color: var(--color-caution); }
 
 /* ---- Undo / redo, top right on every page (shared/undo.js). D-094. ---- */
-.slaf-undo { position: fixed; top: 10px; right: 10px; z-index: 40; display: flex; gap: 6px; }
-.slaf-undo-btn { border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); color: var(--color-text); font-size: var(--text-sm); min-height: 34px; padding: 0 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(6px); }
-.slaf-undo-btn:disabled { opacity: .35; cursor: default; }
+.slaf-undo { position: fixed; top: 10px; right: 10px; z-index: 40; display: flex; gap: 2px; padding: 3px; background: var(--color-surface-raised); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); box-shadow: 0 4px 16px rgba(0, 0, 0, .28); }
+.slaf-undo-btn { border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text); font-size: var(--text-sm); min-height: 32px; padding: 0 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.slaf-undo-btn:hover:not(:disabled), .slaf-undo-btn:focus-visible { background: var(--color-surface); }
+.slaf-undo-btn:disabled { opacity: .3; cursor: default; }
 .slaf-undo-btn span { font-size: var(--text-xs); }
 /* On a phone the top-right corner is the room nav's; the pair sits
    bottom right, above the soft keyboard's usual reach, as a thumb reaches. */
-@media (max-width: 640px) { .slaf-undo { top: auto; bottom: 14px; right: 12px; } html.has-undo body { padding-bottom: 72px; } .slaf-undo-btn span { display: none; } .slaf-undo-btn { padding: 0 10px; min-height: 38px; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
+@media (max-width: 640px) { .slaf-undo { top: auto; bottom: 14px; right: 12px; } html.has-undo body { padding-bottom: 76px; } .slaf-undo-btn span { display: none; } .slaf-undo-btn { padding: 0 12px; min-height: 38px; font-size: var(--text-md); } }
 
 /* ---- The lens toggle (shared/lens.js). D-094. ---- */
 .slaf-lens { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
 .slaf-lens-btn { border: none; background: transparent; color: var(--color-text-muted); font-size: var(--text-xs); min-height: 32px; padding: 0 12px; cursor: pointer; }
 .slaf-lens-btn[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+/* ---- Lens cards (shared/lenses.js). D-175. ---- */
+.lens-toggles { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0; }
+.lens-toggles .slaf-btn[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); border-color: var(--color-accent); }
+.lens-domain { margin-top: var(--space-4); }
+.lens-domain h3 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin: 0 0 var(--space-2); }
+.lens-card { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-2); background: var(--color-surface); }
+.lens-card header { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); }
+.lens-card header b { font-size: var(--text-sm); }
+.lens-card header small { font-size: var(--text-xs); color: var(--color-text-faint); }
+.lens-card .lens-rule { margin: var(--space-1) 0 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+.lens-card .lens-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); margin-top: var(--space-2); }
+.lens-card .lens-figure { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+.lens-card .lens-band { font-size: var(--text-xs); color: var(--color-text-faint); }
+.lens-card .lens-verdict { margin: var(--space-2) 0 0; font-size: var(--text-sm); }
+.lens-card .lens-verdict em { font-style: normal; text-transform: uppercase; letter-spacing: .06em; font-size: var(--text-xs); font-weight: 600; margin-right: 4px; }
+.lens-card.is-in .lens-verdict em { color: var(--color-positive); }
+.lens-card.is-over .lens-verdict em { color: var(--color-critical-text); }
+.lens-card.is-under .lens-verdict em { color: var(--color-caution); }
+.lens-card.is-incomplete .lens-figure { font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); }
+.lens-card .lens-who { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); display: flex; flex-direction: column; gap: 2px; }
+.lens-card .lens-who b { font-weight: 600; color: var(--color-text-muted); }
 
 /* ---- The room template (shared/room.js). D-097. ---- */
 .room-number { display: flex; flex-direction: column; }
@@ -770,15 +827,15 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
 /* ---- The ⓘ on a ratio (shared/explain.js) --------------------------------- */
 .slaf-info { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-muted); font: italic 700 12px/1 var(--font-display); cursor: pointer; margin-left: var(--space-2); vertical-align: middle; flex: 0 0 auto; padding: 0; }
 .slaf-info:hover, .slaf-info.is-open { border-color: var(--color-accent); color: var(--color-accent-hover); }
-.slaf-explain { margin: var(--space-2) 0 0; padding: var(--space-3); border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: rgba(46,111,232,.06); font-size: var(--text-sm); color: var(--color-text); text-align: left; }
-.slaf-explain-row { display: grid; grid-template-columns: 92px 1fr; gap: var(--space-2) var(--space-3); padding: var(--space-1) 0; align-items: baseline; }
-.slaf-explain-k { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
-.slaf-explain-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.slaf-explain-chip { display: inline-block; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px var(--space-2); font-size: var(--text-xs); color: var(--color-text); text-decoration: none; }
-a.slaf-explain-chip:hover { border-color: var(--color-accent); }
-.slaf-explain-chip.is-empty { color: var(--color-text-faint); border-style: dashed; }
-.slaf-explain-chip small { color: var(--color-accent-hover); }
-@media (max-width: 420px) { .slaf-explain-row { grid-template-columns: 1fr; gap: 2px; } }
+.slaf-math { margin: var(--space-2) 0 0; padding: var(--space-3); border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: rgba(46,111,232,.06); font-size: var(--text-sm); color: var(--color-text); text-align: left; }
+.slaf-math-row { display: grid; grid-template-columns: 92px 1fr; gap: var(--space-2) var(--space-3); padding: var(--space-1) 0; align-items: baseline; }
+.slaf-math-k { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+.slaf-math-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.slaf-math-chip { display: inline-block; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px var(--space-2); font-size: var(--text-xs); color: var(--color-text); text-decoration: none; }
+a.slaf-math-chip:hover { border-color: var(--color-accent); }
+.slaf-math-chip.is-empty { color: var(--color-text-faint); border-style: dashed; }
+.slaf-math-chip small { color: var(--color-accent-hover); }
+@media (max-width: 420px) { .slaf-math-row { grid-template-columns: 1fr; gap: 2px; } }
 
 /* ---- Manage sources: hide, set aside, restore (shared/manage.js) ---------- */
 .slaf-manage-toggle { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 3px var(--space-2); cursor: pointer; }
@@ -809,6 +866,74 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
    Injected by shared/progress.js into <body>, so it is never inside a room's
    live-input container and nothing can clip it.
    ========================================================================== */
+/* ==========================================================================
+   Room furniture (D-169)
+   --------------------------------------------------------------------------
+   Every room used to carry its own copy of these four rules - sixty-five
+   copies of .room-head, sixty-four of .room-lede and .room-back, forty-eight
+   of .notice, all but a handful byte-identical. A room that forgot one shipped
+   with a flush-left heading (The Long Way Round, D-168). One definition, here.
+   ========================================================================== */
+.room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
+.room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+.slaf-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+/* The small print under a room. Eighty rooms carried their own identical
+   copy of this and seven carried none, so it showed at full size there. */
+.disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
+.room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
+.notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
+
+/* The way back from a link you followed to fill something in. Sits above the
+   hop strip because it is the more specific promise: the hops walk the path,
+   this returns to the room that sent you. D-161. */
+/* The way out of a dead spot, sitting directly under the words that named it.
+   D-163. */
+/* The toast that says it saved, and offers to take it back. Sits above the
+   undo pills and clear of the soft keyboard's usual reach. D-165. */
+.slaf-toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: 62px; z-index: 95;
+  width: min(440px, calc(100vw - 24px));
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: 10px 10px 10px 14px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .45);
+  font-size: var(--text-sm); color: var(--color-text);
+}
+.slaf-toast-text { flex: 1; min-width: 0; line-height: 1.4; }
+.slaf-toast-undo {
+  flex: none; min-height: 32px; padding: 0 12px; border-radius: var(--radius-pill);
+  background: var(--sapphire-600); border: 1px solid var(--sapphire-600); color: #fff;
+  font-size: var(--text-sm); font-weight: 600; cursor: pointer;
+}
+.slaf-toast-undo:hover { background: var(--sapphire-500); border-color: var(--sapphire-500); }
+.slaf-toast-x {
+  flex: none; min-height: 32px; min-width: 32px; border: 0; background: transparent;
+  color: var(--color-text-subtle); font-size: 18px; line-height: 1; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.slaf-toast-x:hover { color: var(--color-text); }
+@media (min-width: 641px) { .slaf-toast { bottom: 20px; } }
+
+.slaf-go { display: inline-flex; align-items: center; min-height: 32px; margin-top: var(--space-2);
+  color: var(--color-accent-hover); font-size: var(--text-sm); text-decoration: none; }
+.slaf-go:hover { text-decoration: underline; }
+
+.slaf-progress-waits { display: block; font-family: var(--font-mono); font-size: var(--text-xs);
+  color: var(--color-text-subtle); }
+
+.slaf-return {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 32px; padding: 0 12px; margin-bottom: var(--space-2);
+  border: 1px solid var(--color-border-active); border-radius: var(--radius-pill);
+  background: var(--color-surface-active); color: var(--color-text);
+  font-size: var(--text-sm); text-decoration: none;
+}
+.slaf-return:hover { border-color: var(--color-accent-hover); color: var(--color-text); text-decoration: none; }
+.slaf-hops-host { display: flex; flex-direction: column; align-items: flex-start; }
+.slaf-hops-host .slaf-hops { width: 100%; }
+
 .slaf-menu-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; margin-bottom: var(--space-2);
@@ -861,6 +986,26 @@ a.slaf-explain-chip:hover { border-color: var(--color-accent); }
   color: var(--color-text); border-left-color: var(--color-accent);
   background: var(--color-surface-active); font-weight: 600;
 }
+/* Groups by purpose, a search box, a Recent strip and status dots (D-177). */
+.slaf-menu-search { padding: var(--space-2) var(--space-3) 0; }
+.slaf-menu-search input { width: 100%; box-sizing: border-box; min-height: 36px; padding: 0 var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--text-sm); }
+.slaf-menu-search input:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.slaf-menu-group { border-top: 1px solid var(--color-border); }
+.slaf-menu-group:first-child { border-top: none; }
+.slaf-menu-group > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: var(--space-2); padding: var(--space-2) var(--space-3); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); min-height: 40px; box-sizing: border-box; }
+.slaf-menu-group > summary::-webkit-details-marker { display: none; }
+.slaf-menu-group > summary::before { content: '▸'; font-size: 10px; transition: transform .12s; }
+.slaf-menu-group[open] > summary::before { transform: rotate(90deg); }
+.slaf-menu-group > summary small { text-transform: none; letter-spacing: 0; font-size: var(--text-xs); color: var(--color-text-faint); opacity: .8; }
+.slaf-menu-group > summary:hover { color: var(--color-text); }
+.slaf-menu-groupbody { padding-bottom: var(--space-2); }
+.slaf-menu-sub { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; padding: 0 var(--space-3) 0 calc(var(--space-3) + 6px); font-weight: 600; }
+.slaf-menu-link.is-extra, .slaf-menu-link.is-recent { font-size: var(--text-xs); }
+.slaf-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 8px; vertical-align: middle; background: var(--color-border-strong); }
+.slaf-dot.is-filled { background: var(--color-positive); }
+.slaf-dot.is-partly { background: var(--color-caution); }
+.slaf-dot.is-empty { background: transparent; box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+
 /* The page behind does not scroll while the drawer is open. */
 html.slaf-menu-open, html.slaf-menu-open body { overflow: hidden; }
 
@@ -1085,6 +1230,55 @@ a:hover { color: var(--sapphire-100); }
 .slaf-export-note { font-size: var(--text-xs); color: var(--color-text-faint);
   margin: var(--space-2) 0 0; line-height: var(--leading-loose); }
 
+/* ---- Backup (D-202) -------------------------------------------------------
+   Two buttons and a status line, on the Ledger and in Settings. Quiet on
+   purpose: it is a drawer you open twice a year, not a warning. */
+.slaf-backup { margin-top: var(--space-4); padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border); }
+.slaf-backup-lede { font-size: var(--text-sm); color: var(--color-text-muted);
+  margin: var(--space-1) 0 0; line-height: var(--leading-loose); }
+.slaf-backup-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); align-items: center; }
+.slaf-backup-acts > * { min-width: 0; }
+.slaf-backup-status { font-size: var(--text-xs); color: var(--color-text-faint);
+  margin: var(--space-2) 0 0; line-height: var(--leading-loose); min-height: 1em; }
+.slaf-backup-status.is-good { color: var(--color-text-muted); }
+.slaf-backup-status.is-error { color: var(--color-critical); }
+
+/* ---- The one inline question a room needs (D-207) ------------------------ */
+.slaf-ask { margin: var(--space-3) 0 var(--space-4); border-color: var(--color-accent); }
+.slaf-ask .ask-q { font-family: var(--font-display); font-size: var(--text-md); margin: var(--space-1) 0 var(--space-3); }
+.slaf-ask .ask-why { font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); }
+.slaf-ask .ask-ctl .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
+.slaf-ask .ask-ctl input { font-size: var(--text-md); min-height: 48px; width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
+.slaf-ask .ask-ctl .affix { color: var(--color-text-faint); }
+.slaf-ask .ask-ctl .choices .choice { min-height: 48px; }
+.slaf-ask .ask-sug { margin-top: var(--space-2); }
+.slaf-ask .ask-how { display: block; margin-top: var(--space-1); }
+.slaf-ask .ask-acts { display: flex; gap: var(--space-2); margin-top: var(--space-3); align-items: center; flex-wrap: wrap; }
+/* The unit beside every money box, the from-memory tick, the slip question,
+   the not-sure-yet month (G2.7, G2.8; D-209). Shared by the ask, Express
+   and the Refresh so the words read the same everywhere. */
+.slaf-unit { display: inline-flex; align-items: center; gap: 4px; margin-left: var(--space-2); font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+.slaf-unit select { font-size: var(--text-xs); min-height: 32px; padding: 2px var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text-muted); }
+.ask-memory, .x-memory { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-xs); color: var(--color-text-muted); }
+.ask-memory input, .x-memory input { width: 18px; height: 18px; margin: 0; }
+.ask-slip, .x-slip { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-sm); }
+.ask-slip .ask-q, .x-slip .ask-q { font-family: var(--font-display); font-size: var(--text-sm); margin: 0 0 var(--space-2); }
+.ask-slip .choices, .x-slip .choices { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.ask-slip .choice, .x-slip .choice { min-height: 40px; padding: 0 var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
+.ask-when, .x-when { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-top: var(--space-2); font-size: var(--text-sm); }
+.ask-when input[type="month"], .x-when input[type="month"] { min-height: 40px; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
+.slaf-state { font-size: var(--text-xs); color: var(--color-text-faint); }
+.slaf-state.is-notSure { color: var(--color-warning, #d97706); }
+.slaf-state.is-memory { color: var(--color-text-muted); }
+.slaf-ask .ask-note { margin-top: var(--space-2); }
+
+/* ---- Two guards every room carries (D-204) ---------------------------- */
+.slaf-stale { margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm); background: var(--color-surface-raised); font-size: var(--text-sm); line-height: var(--leading-loose); }
+.slaf-stale .slaf-btn { margin-left: var(--space-2); }
+.slaf-a2hs { margin: 0 0 var(--space-4); font-size: var(--text-xs); color: var(--color-text-muted); line-height: var(--leading-loose); }
+
 /* Print is an export too. On paper nobody needs the navigation, the undo
    pair or the export buttons themselves — they need the figures. */
 @media print {
@@ -1097,3 +1291,90 @@ a:hover { color: var(--sapphire-100); }
   details > summary { display: none; }
   details > *:not(summary) { display: block !important; }
 }
+
+/* ---- D-170: the tail fold, the band line, the lens strip ------------------- */
+.slaf-tail-folded > section.slaf-tail { display: none !important; }
+.slaf-showrest { display: block; width: 100%; max-width: var(--measure); margin: var(--space-3) auto 0;
+  background: transparent; border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md);
+  color: var(--color-text-muted); font-size: var(--text-sm); min-height: 44px; padding: var(--space-2) var(--space-3);
+  cursor: pointer; text-align: left; }
+.slaf-showrest b { color: var(--color-text); font-weight: 600; margin-right: var(--space-2); }
+.slaf-showrest small { font-size: var(--text-xs); }
+.slaf-showrest:hover { border-color: var(--color-accent-hover); color: var(--color-text); }
+.slaf-bands { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: 1.6; }
+.slaf-bands-lead { font-weight: 600; color: var(--color-text); }
+.slaf-band b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+.slaf-band--likely b { color: var(--color-accent-hover); }
+.slaf-band small, .slaf-bands-note { font-size: var(--text-xs); }
+.slaf-lens-strip { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; margin: var(--space-3) 0 0; }
+.slaf-lens-amounts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); }
+.slaf-lens-amounts li { display: inline-flex; gap: var(--space-1); align-items: baseline; color: var(--color-text-muted); }
+.slaf-lens-amounts li span { color: var(--color-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---- 15.10: the approximate line and the confidence mark (D-181) ---------
+   One line at the top of a room whose inputs are rough or unconfirmed; a
+   small mark beside an owned value that is not yet sure. Never red: a rough
+   number is a prompt to confirm, not a fault. */
+.slaf-horizon { margin: 0 0 var(--space-3); padding: var(--space-2) var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); border-left: 3px solid var(--color-border); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.slaf-horizon.is-nominal { border-left-color: var(--color-caution); }
+.slaf-horizon:empty { display: none; }
+.slaf-horizon-text { flex: 1 1 18rem; }
+.slaf-seg { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; margin: var(--space-1) 0; }
+.slaf-seg button { font: inherit; font-size: var(--text-xs); color: var(--color-text-muted); background: var(--color-surface-raised); border: 0; padding: 4px var(--space-3); cursor: pointer; min-height: 32px; }
+.slaf-seg button + button { border-left: 1px solid var(--color-border-strong); }
+.slaf-seg button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+.slaf-deferred { margin: var(--space-1) 0 0; font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.45; }
+.slaf-deferred:empty { display: none; }
+.slaf-approx { margin: 0 0 var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); }
+.slaf-approx a { color: inherit; text-decoration: underline dotted; }
+.slaf-owned-conf { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
+.slaf-owned--unknown .slaf-owned-value, .slaf-owned--unsure .slaf-owned-value { font-style: italic; }
+
+/* The error panel (G3.16, D-210): shown by shared/errlog.js instead of a
+   blank screen. Plain words, three buttons, nothing else. */
+.slaf-error { margin: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-critical, #e5484d); border-radius: var(--radius-md, 10px); background: var(--color-surface-raised); color: var(--color-text); font-size: var(--text-sm); }
+.slaf-error .slaf-error-what { margin: var(--space-2) 0; color: var(--color-text-muted); word-break: break-word; }
+.slaf-error .slaf-error-acts { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+/* Tap any number, see the math (H1, D-211): the sheet and the tappable
+   computed number. One sheet a page, filled on open. */
+.ex-btn { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted var(--color-text-faint); text-underline-offset: 3px; }
+.ex-btn:hover, .ex-btn:focus { text-decoration-color: var(--color-accent); }
+.ex-btn--big { font-family: inherit; font-size: inherit; }
+.slaf-math { position: fixed; left: 0; right: 0; bottom: 0; max-height: 80vh; overflow: auto; z-index: 60; padding: var(--space-4) max(var(--space-4), env(safe-area-inset-left)) max(var(--space-4), env(safe-area-inset-bottom)); background: var(--color-surface-raised); color: var(--color-text); border-top: 1px solid var(--color-border-strong); border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,.18); font-size: var(--text-sm); }
+.slaf-math .ex-close { float: right; }
+.slaf-math .ex-title { font-family: var(--font-display); font-size: var(--text-lg); margin: var(--space-1) 0 var(--space-2); }
+.slaf-math h3 { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); margin: var(--space-3) 0 var(--space-1); }
+.slaf-math .ex-words { color: var(--color-text-muted); margin: 0 0 var(--space-1); }
+.slaf-math .ex-plugged { font-variant-numeric: tabular-nums; margin: 0; }
+.slaf-math .ex-rough { color: var(--color-warning, #d97706); margin: 0 0 var(--space-2); }
+.slaf-math ul { margin: 0; padding-left: 1.1em; }
+.slaf-math li { margin: 2px 0; }
+.slaf-math .ex-fn { margin-top: var(--space-3); }
+@media (min-width: 720px) { .slaf-math { left: auto; right: var(--space-4); bottom: var(--space-4); width: 30rem; border-radius: var(--radius-lg, 16px); border: 1px solid var(--color-border-strong); } }
+
+/* ---- The hats: one room, several readings of the same rows (D-228) --------
+   A merged room keeps every reading its old rooms held and puts them on one
+   strip, so the choice between them is visible instead of being a choice
+   between pages. One place, because the 93-to-30 merge (D-227) gives every
+   surviving room the same strip, and a second copy of it would drift.
+   The first hat is always the simplest reading, and it is the default. */
+.slaf-hats { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-3) 0 var(--space-4); }
+.slaf-hats a { font-family: var(--font-display); font-size: var(--text-sm); text-decoration: none;
+  border: 1px solid var(--color-border); border-radius: var(--radius-pill);
+  padding: 4px 12px; color: var(--color-text-muted); min-height: 32px; }
+.slaf-hats a:hover { color: var(--color-text); border-color: var(--color-border-active); }
+.slaf-hats a[aria-current="page"] { background: var(--color-accent); border-color: var(--color-accent);
+  color: var(--color-accent-contrast); }
+
+/* The plain line under a room title (D-237): what it shows, what it needs. */
+.slaf-purpose { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-loose); }
+.slaf-purpose b { color: var(--color-text); font-weight: 600; }
+.slaf-purpose span { display: inline-block; margin-right: var(--space-3); }
+
+/* A long hint folds behind an ⓘ (D-245): the button is the whole line
+   until it is opened. */
+.slaf-hint.is-folded { margin-top: var(--space-2); }
+.slaf-hint-toggle { font: inherit; font-size: var(--text-xs); color: var(--color-accent-hover); background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px 10px; cursor: pointer; }
+.slaf-hint-toggle[aria-expanded="true"] { color: var(--color-text-muted); }
+.slaf-hint-body { display: block; margin-top: var(--space-2); }

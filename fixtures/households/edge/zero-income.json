@@ -1,0 +1,308 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_e2",
+      "label": "Edge Two",
+      "role": "adult",
+      "dob": "1990-01-01",
+      "employmentStatus": "notWorking",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [
+        {
+          "id": "p_e2_inc0",
+          "personId": "p_e2",
+          "source": "Nothing coming in",
+          "grossAnnualIncomeCents": 0,
+          "frequency": "annual",
+          "rateCents": null,
+          "hoursPerWeek": null,
+          "monthsWorked": null,
+          "ongoing": true,
+          "variableLowCents": null,
+          "variableHighCents": null,
+          "type": "w2",
+          "hassle": null,
+          "employerMatch": {
+            "matchPercent": null,
+            "matchCapPercentOfSalary": null
+          }
+        }
+      ],
+      "work": {
+        "contractedHoursPerWeek": null,
+        "unpaidOvertimeHoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "prepHoursPerWeek": null,
+        "decompressHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "weeksPerYear": 48
+      }
+    }
+  ],
+  "filingStatus": "single",
+  "state": "KS",
+  "capturingFullMatch": null,
+  "dependents": null,
+  "community": {
+    "daySchool": null
+  },
+  "assets": [
+    {
+      "id": "a_0",
+      "label": "Cash",
+      "category": "cash",
+      "valueCents": 300000,
+      "liquid": true,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    }
+  ],
+  "debts": [],
+  "expenses": {
+    "needs": {
+      "food": {
+        "monthlyCents": 40000
+      },
+      "accommodation": {
+        "monthlyCents": 90000
+      },
+      "transportation": {
+        "monthlyCents": 10000
+      }
+    },
+    "wants": {
+      "totalCents": 30000,
+      "therapy": null
+    },
+    "entries": []
+  },
+  "incomeBasis": "earned",
+  "retirement": {
+    "contributionPercent": null,
+    "rothContributedCents": null,
+    "hsaContributedCents": null,
+    "onHdhp": null,
+    "hsaFamilyPlan": null,
+    "has401k": null
+  },
+  "insurance": {
+    "highestDeductibleCents": null,
+    "oopMaxCents": null,
+    "termLifeCents": null,
+    "disabilityMonthlyCents": null,
+    "umbrella": null,
+    "health": {
+      "type": null,
+      "monthlyCents": null
+    }
+  },
+  "worthChecks": [],
+  "ratings": {},
+  "valuesProfile": {
+    "stated": [],
+    "assignments": {}
+  },
+  "swan": {
+    "basis": null,
+    "targetCents": null,
+    "targetMonths": null,
+    "note": null,
+    "setAt": null
+  },
+  "goals": [],
+  "futureIncome": [],
+  "property": [],
+  "allocation": {
+    "stocks": null,
+    "bonds": null,
+    "cash": null,
+    "rebalanceBand": null
+  },
+  "rerank": {
+    "rows": []
+  },
+  "targets": {
+    "retireAge": null,
+    "coastAge": null
+  },
+  "scenarios": [],
+  "oneOffs": [],
+  "estate": {
+    "beneficiariesSet": null,
+    "willExists": null,
+    "poaExists": null
+  },
+  "giving": {
+    "pctOfIncome": null,
+    "annualTargetCents": null
+  },
+  "decumulation": {
+    "stockShare": null,
+    "plannedAnnualDrawCents": null,
+    "socialSecurityAt": null
+  },
+  "tax": {
+    "otherPreTaxAnnualCents": null,
+    "withheldAnnualCents": null
+  },
+  "career": {
+    "offer": {
+      "grossAnnualCents": null,
+      "hoursPerWeek": null,
+      "commuteHoursPerWeek": null,
+      "workCostsMonthlyCents": null,
+      "signOnCents": null
+    }
+  },
+  "partner": {
+    "splitMode": null,
+    "sharedMonthlyCents": null
+  },
+  "kids": {
+    "tuitionTargetCents": null,
+    "tuitionSavedCents": null,
+    "tuitionMonthlyCents": null
+  },
+  "housing": {
+    "rentMonthlyCents": null,
+    "priceCents": null,
+    "downPct": null,
+    "rate": null
+  },
+  "purchase": {
+    "priceCents": null,
+    "monthsAway": null,
+    "financeRate": null,
+    "label": null
+  },
+  "variableIncome": {
+    "bufferMonths": null,
+    "windowMonths": null
+  },
+  "enough": {
+    "monthlyCents": null,
+    "source": null
+  },
+  "designedWeek": {
+    "blocks": []
+  },
+  "timeBuckets": [],
+  "dreams": [],
+  "reversibility": {
+    "decisionId": null,
+    "given": {}
+  },
+  "unlearning": {
+    "dropped": []
+  },
+  "studentLoans": {
+    "plan": null,
+    "extraMonthlyCents": null,
+    "idrShare": null,
+    "forgivenessYears": null
+  },
+  "calendar": {
+    "cadence": null,
+    "nextPaydayDay": null,
+    "bills": [],
+    "payLater": []
+  },
+  "history": {
+    "compareTo": null
+  },
+  "ledger": {
+    "income": [],
+    "months": [],
+    "dismissed": []
+  },
+  "budget": {
+    "estimated": {},
+    "presets": {}
+  },
+  "notApplicable": {},
+  "skills": {},
+  "skillTree": {
+    "state": {}
+  },
+  "exercises": {
+    "done": {},
+    "results": {}
+  },
+  "practiceLedger": [],
+  "assumptions": {
+    "returnReal": 0.05,
+    "inflation": 0.03,
+    "expectedReturnRate": 0.07,
+    "swrRate": 0.04,
+    "humanCapitalDiscountRate": 0.02,
+    "homeEquityHaircut": 0.8,
+    "marginalRate": null
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": null,
+    "confirmedAt": {},
+    "hasDebt": false,
+    "undoStack": [],
+    "redoStack": [],
+    "guessed": {},
+    "source": {},
+    "displayUnit": null,
+    "noRent": null,
+    "walk": {
+      "startedAt": null,
+      "finishedAt": null,
+      "done": {},
+      "skipped": {}
+    },
+    "frontDoor": null,
+    "isDemo": true,
+    "name": "Edge: zero income",
+    "story": "An income source typed as $0 (a real zero, not a blank); $3k of cash.",
+    "sphere": 1,
+    "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+    "lane": "lane2 section 1 (L-1)",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 170000,
+      "fiTargetCents": 51000000,
+      "grossAnnualCents": 0,
+      "effectiveRate": 0.08,
+      "estimatedTaxCents": 0,
+      "takeHomeAnnualCents": 0,
+      "takeHomeMonthlyCents": 0,
+      "savingsRate": null,
+      "runwayMonths": 1.7647058823529411,
+      "runwayWholeMonths": 1,
+      "netWorthCents": 300000,
+      "working": [
+        "monthly spending = food $400 + accommodation $900 + transportation $100 + everything else $300 = $1,700",
+        "FI target = $1,700 x 12 / 0.04 = $20,400 / 0.04 = $510,000",
+        "gross $0 single: band single up to $15,000 (zero dollars sits in the first band) -> effective rate 0.08",
+        "estimated tax = $0 x 0.08 = $0; take-home = $0 - $0 = $0 a year, $0 a month",
+        "savings rate: gross is zero, so no rate (a ratio with a zero denominator is incomplete, never 0)",
+        "runway = cash $3,000 / $1,700 a month = 1.7647 months (1 whole months; Runway.project stops at 60)",
+        "net worth = $3,000 - $0 = $3,000"
+      ]
+    }
+  }
+}

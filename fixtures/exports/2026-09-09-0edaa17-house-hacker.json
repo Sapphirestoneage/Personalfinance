@@ -1,0 +1,428 @@
+{
+  "format": "slaf-export",
+  "exportVersion": 1,
+  "schemaVersion": 2,
+  "appVersion": "2.0",
+  "exportedAt": "2026-09-10T01:00:42.407Z",
+  "household": {
+    "schemaVersion": 2,
+    "people": [
+      {
+        "id": "p_hh",
+        "label": "Alex",
+        "role": "adult",
+        "dob": "1997-02-11",
+        "employmentStatus": "both",
+        "unemployment": {
+          "since": null,
+          "benefitStatus": null,
+          "benefitWeeklyCents": null,
+          "benefitWeeksLeft": null,
+          "severanceCents": null,
+          "lastGrossAnnualCents": null,
+          "expectedSearchMonths": null,
+          "floorMonthlyCents": null
+        },
+        "incomeSources": [
+          {
+            "id": "p_hh_inc0",
+            "personId": "p_hh",
+            "source": "Day job",
+            "grossAnnualIncomeCents": 7800000,
+            "frequency": "annual",
+            "rateCents": null,
+            "hoursPerWeek": null,
+            "monthsWorked": null,
+            "ongoing": true,
+            "variableLowCents": null,
+            "variableHighCents": null,
+            "type": "w2",
+            "hassle": null,
+            "employerMatch": {
+              "matchPercent": 1,
+              "matchCapPercentOfSalary": 0.03
+            }
+          },
+          {
+            "id": "p_hh_rent",
+            "personId": "p_hh",
+            "source": "Fourplex rents",
+            "grossAnnualIncomeCents": 3000000,
+            "frequency": "annual",
+            "rateCents": null,
+            "hoursPerWeek": null,
+            "monthsWorked": null,
+            "ongoing": true,
+            "variableLowCents": null,
+            "variableHighCents": null,
+            "type": "1099",
+            "hassle": null,
+            "employerMatch": {
+              "matchPercent": null,
+              "matchCapPercentOfSalary": null
+            }
+          }
+        ],
+        "work": {
+          "contractedHoursPerWeek": null,
+          "unpaidOvertimeHoursPerWeek": null,
+          "commuteHoursPerWeek": null,
+          "prepHoursPerWeek": null,
+          "decompressHoursPerWeek": null,
+          "workCostsMonthlyCents": null,
+          "weeksPerYear": 48
+        }
+      }
+    ],
+    "filingStatus": "single",
+    "state": "TX",
+    "capturingFullMatch": true,
+    "dependents": null,
+    "community": {
+      "daySchool": null
+    },
+    "assets": [
+      {
+        "id": "a_0",
+        "label": "Checking + reserves",
+        "category": "cash",
+        "valueCents": 1800000,
+        "liquid": true,
+        "ownerIds": [],
+        "taxCharacter": null,
+        "liquidity": null,
+        "confidence": null,
+        "costBasisCents": null,
+        "hassle": null,
+        "cashFlowMonthlyCents": null,
+        "accessAgeOverride": null
+      },
+      {
+        "id": "a_1",
+        "label": "401(k)",
+        "category": "retirement",
+        "valueCents": 4000000,
+        "liquid": false,
+        "ownerIds": [],
+        "taxCharacter": "pretax",
+        "liquidity": null,
+        "confidence": null,
+        "costBasisCents": null,
+        "hassle": null,
+        "cashFlowMonthlyCents": null,
+        "accessAgeOverride": null
+      },
+      {
+        "id": "a_fourplex",
+        "label": "Fourplex",
+        "category": "real_estate",
+        "valueCents": 52000000,
+        "liquid": false,
+        "ownerIds": [],
+        "taxCharacter": null,
+        "liquidity": null,
+        "confidence": null,
+        "costBasisCents": null,
+        "hassle": null,
+        "cashFlowMonthlyCents": null,
+        "accessAgeOverride": null
+      }
+    ],
+    "debts": [
+      {
+        "id": "d_fourplex",
+        "label": "Fourplex mortgage",
+        "balanceCents": 40000000,
+        "rate": 0.065,
+        "minPaymentCents": 280000,
+        "type": "mortgage",
+        "creditLimitCents": null,
+        "promoEndsOn": null,
+        "postPromoRate": null,
+        "emotionalTag": null,
+        "keepReasons": [],
+        "excludeFromAggressive": false,
+        "interestFree": null,
+        "archived": false,
+        "borrowedOn": null,
+        "dueOn": null,
+        "ownerIds": []
+      }
+    ],
+    "expenses": {
+      "needs": {
+        "food": {
+          "monthlyCents": 55000
+        },
+        "accommodation": {
+          "monthlyCents": 280000
+        },
+        "transportation": {
+          "monthlyCents": 35000
+        }
+      },
+      "wants": {
+        "totalCents": 90000,
+        "therapy": null
+      },
+      "entries": []
+    },
+    "incomeBasis": "earned",
+    "retirement": {
+      "contributionPercent": null,
+      "rothContributedCents": null,
+      "hsaContributedCents": null,
+      "onHdhp": null,
+      "hsaFamilyPlan": null,
+      "has401k": null
+    },
+    "insurance": {
+      "highestDeductibleCents": null,
+      "oopMaxCents": null,
+      "termLifeCents": null,
+      "disabilityMonthlyCents": null,
+      "umbrella": null,
+      "health": {
+        "type": null,
+        "monthlyCents": null
+      }
+    },
+    "worthChecks": [],
+    "ratings": {},
+    "valuesProfile": {
+      "stated": [],
+      "assignments": {}
+    },
+    "swan": {
+      "basis": null,
+      "targetCents": null,
+      "targetMonths": null,
+      "note": null,
+      "setAt": null
+    },
+    "goals": [],
+    "futureIncome": [],
+    "property": [
+      {
+        "id": "prop_fourplex",
+        "assetId": "a_fourplex",
+        "mortgageId": "d_fourplex",
+        "rentMonthlyCents": 250000,
+        "pitiMonthlyCents": 280000,
+        "opexMonthlyCents": 60000,
+        "vacancyRate": 0.05,
+        "hassle": null,
+        "prospects": null
+      }
+    ],
+    "allocation": {
+      "stocks": null,
+      "bonds": null,
+      "cash": null,
+      "rebalanceBand": null
+    },
+    "rerank": {
+      "rows": []
+    },
+    "targets": {
+      "retireAge": null,
+      "coastAge": null
+    },
+    "scenarios": [],
+    "oneOffs": [],
+    "estate": {
+      "beneficiariesSet": null,
+      "willExists": null,
+      "poaExists": null
+    },
+    "giving": {
+      "pctOfIncome": null,
+      "annualTargetCents": null
+    },
+    "decumulation": {
+      "stockShare": null,
+      "plannedAnnualDrawCents": null,
+      "socialSecurityAt": null
+    },
+    "tax": {
+      "otherPreTaxAnnualCents": null,
+      "withheldAnnualCents": null
+    },
+    "career": {
+      "offer": {
+        "grossAnnualCents": null,
+        "hoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "signOnCents": null
+      }
+    },
+    "partner": {
+      "splitMode": null,
+      "sharedMonthlyCents": null
+    },
+    "kids": {
+      "tuitionTargetCents": null,
+      "tuitionSavedCents": null,
+      "tuitionMonthlyCents": null
+    },
+    "housing": {
+      "rentMonthlyCents": null,
+      "priceCents": null,
+      "downPct": null,
+      "rate": null
+    },
+    "purchase": {
+      "priceCents": null,
+      "monthsAway": null,
+      "financeRate": null,
+      "label": null
+    },
+    "variableIncome": {
+      "bufferMonths": null,
+      "windowMonths": null
+    },
+    "enough": {
+      "monthlyCents": null,
+      "source": null
+    },
+    "designedWeek": {
+      "blocks": []
+    },
+    "timeBuckets": [],
+    "dreams": [],
+    "reversibility": {
+      "decisionId": null,
+      "given": {}
+    },
+    "unlearning": {
+      "dropped": []
+    },
+    "studentLoans": {
+      "plan": null,
+      "extraMonthlyCents": null,
+      "idrShare": null,
+      "forgivenessYears": null
+    },
+    "calendar": {
+      "cadence": null,
+      "nextPaydayDay": null,
+      "bills": [],
+      "payLater": []
+    },
+    "history": {
+      "compareTo": null
+    },
+    "ledger": {
+      "income": [],
+      "months": [],
+      "dismissed": []
+    },
+    "budget": {
+      "estimated": {},
+      "presets": {}
+    },
+    "notApplicable": {},
+    "skills": {},
+    "skillTree": {
+      "state": {}
+    },
+    "exercises": {
+      "done": {},
+      "results": {}
+    },
+    "practiceLedger": [],
+    "assumptions": {
+      "returnReal": 0.05,
+      "inflation": 0.03,
+      "expectedReturnRate": 0.07,
+      "swrRate": 0.04,
+      "humanCapitalDiscountRate": 0.02,
+      "homeEquityHaircut": 0.8,
+      "marginalRate": null
+    },
+    "assumptionOverrides": {},
+    "meta": {
+      "visitedRooms": [],
+      "createdAt": null,
+      "updatedAt": "2026-09-10T01:00:42.407Z",
+      "confirmedAt": {},
+      "hasDebt": true,
+      "guessed": {},
+      "source": {},
+      "displayUnit": null,
+      "noRent": null,
+      "walk": {
+        "startedAt": null,
+        "finishedAt": null,
+        "done": {},
+        "skipped": {}
+      },
+      "frontDoor": null,
+      "isDemo": true,
+      "name": "House hacker",
+      "story": "29, owns a fourplex and lives in one unit, three units rented, W-2 plus rental income.",
+      "sphere": 6,
+      "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+      "lane": "lane2 section 1 (L-1)",
+      "known": {
+        "asOf": "2026-09-10",
+        "tolerance": 0.01,
+        "monthlySpendingCents": 460000,
+        "fiTargetCents": 138000000,
+        "grossAnnualCents": 10800000,
+        "effectiveRate": 0.24,
+        "estimatedTaxCents": 2592000,
+        "takeHomeAnnualCents": 8208000,
+        "takeHomeMonthlyCents": 684000,
+        "savingsRate": 0.24888888888888888,
+        "runwayMonths": 3.9130434782608696,
+        "runwayWholeMonths": 3,
+        "netWorthCents": 17800000,
+        "working": [
+          "monthly spending = food $550 + accommodation $2,800 + transportation $350 + everything else $900 = $4,600",
+          "FI target = $4,600 x 12 / 0.04 = $55,200 / 0.04 = $1,380,000",
+          "gross $108,000 single: band single up to $150,000 -> effective rate 0.24",
+          "estimated tax = $108,000 x 0.24 = $25,920; take-home = $108,000 - $25,920 = $82,080 a year, $6,840 a month",
+          "savings rate (excluding match) = ($82,080 - $55,200) / $108,000 = $26,880 / $108,000 = 0.2489",
+          "runway = cash $18,000 / $4,600 a month = 3.9130 months (3 whole months; Runway.project stops at 60)",
+          "net worth = $18,000 + $40,000 + $520,000 - $400,000 = $178,000"
+        ]
+      }
+    }
+  },
+  "snapshots": [],
+  "lane2": {
+    "section": 5,
+    "commit": "0edaa17",
+    "date": "2026-09-09",
+    "subject": "Section 2: expenses are four numbers: FAT, wants, and one optional line (D-172)",
+    "via": "exportJSON",
+    "specId": "house-hacker",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 460000,
+      "fiTargetCents": 138000000,
+      "grossAnnualCents": 10800000,
+      "effectiveRate": 0.24,
+      "estimatedTaxCents": 2592000,
+      "takeHomeAnnualCents": 8208000,
+      "takeHomeMonthlyCents": 684000,
+      "savingsRate": 0.24888888888888888,
+      "runwayMonths": 3.9130434782608696,
+      "runwayWholeMonths": 3,
+      "netWorthCents": 17800000,
+      "working": [
+        "monthly spending = food $550 + accommodation $2,800 + transportation $350 + everything else $900 = $4,600",
+        "FI target = $4,600 x 12 / 0.04 = $55,200 / 0.04 = $1,380,000",
+        "gross $108,000 single: band single up to $150,000 -> effective rate 0.24",
+        "estimated tax = $108,000 x 0.24 = $25,920; take-home = $108,000 - $25,920 = $82,080 a year, $6,840 a month",
+        "savings rate (excluding match) = ($82,080 - $55,200) / $108,000 = $26,880 / $108,000 = 0.2489",
+        "runway = cash $18,000 / $4,600 a month = 3.9130 months (3 whole months; Runway.project stops at 60)",
+        "net worth = $18,000 + $40,000 + $520,000 - $400,000 = $178,000"
+      ]
+    },
+    "patchFallback": null
+  }
+}

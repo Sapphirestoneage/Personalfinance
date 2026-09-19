@@ -100,6 +100,17 @@
   /** Sum a list of cent amounts. Entries that were never entered are skipped,
    *  NOT coerced to zero — and the count of real entries is reported back so a
    *  caller can tell "nothing entered" from "entered as zero". */
+  /* One period to another, in cents (G2.8, D-209): the only place a weekly,
+     fortnightly, monthly or yearly figure is converted. A year is 12 months,
+     52 weeks, 26 fortnights; the result is rounded to the cent. */
+  var PERIODS_PER_YEAR = { year: 1, month: 12, fortnight: 26, week: 52 };
+  function convertPeriod(cents, from, to) {
+    if (!isEntered(cents)) return null;
+    var a = PERIODS_PER_YEAR[from], b = PERIODS_PER_YEAR[to];
+    if (!a || !b) return null;
+    if (from === to) return Math.round(cents);
+    return Math.round(cents * a / b);
+  }
   function sumCents(list) {
     var total = 0, counted = 0;
     for (var i = 0; i < (list || []).length; i++) {
@@ -146,11 +157,25 @@
   var EM_DASH = '—';
 
   /** Integer cents -> "$1,234" (or "-$1,234"). Not-entered -> em dash. */
+  /* 15.10: a screen built on rough inputs shows no more precision than
+     they justify. A room sets the unit once (cents: 1, 10000 for hundreds,
+     100000 for thousands) and every figure formatted after that is
+     rounded to it; `opts.exact` opts a single figure out. D-181. */
+  var displayRoundingCents = 1;
+  function setDisplayRounding(unitCents) { displayRoundingCents = isEntered(unitCents) && unitCents > 1 ? unitCents : 1; return displayRoundingCents; }
+  function displayRounding() { return displayRoundingCents; }
   function formatCents(cents, opts) {
     var o = opts || {};
     if (!isEntered(cents)) return o.placeholder || EM_DASH;
-    var dollars = cents / 100;
     var decimals = o.decimals === undefined ? 0 : o.decimals;
+    var unit = o.roundTo !== undefined ? o.roundTo : displayRoundingCents;
+    /* A figure asked for WITH decimals has declared itself a cents-precision
+       figure — an hourly rate, a per-unit cost. The room's rounding unit is
+       for hundreds and thousands, and applying it here rounds every wage in
+       the app to $0.00 (the default unit for an unmarked field is $1,000).
+       `decimals: 0` is the ordinary case and still rounds. D-181, corrected. */
+    if (!o.exact && !decimals && unit > 1) cents = Math.round(cents / unit) * unit;
+    var dollars = cents / 100;
     var abs = Math.abs(dollars);
     var body = abs.toLocaleString('en-US', {
       minimumFractionDigits: decimals,
@@ -201,6 +226,7 @@
   }
 
   return {
+    setDisplayRounding: setDisplayRounding, displayRounding: displayRounding,
     EM_DASH: EM_DASH,
     isEntered: isEntered,
     ok: ok,
@@ -212,6 +238,7 @@
     parseMoney: parseMoney,
     parseRatePercent: parseRatePercent,
     sumCents: sumCents,
+    convertPeriod: convertPeriod, PERIODS_PER_YEAR: PERIODS_PER_YEAR,
     safeDivide: safeDivide,
     formatCents: formatCents,
     formatAsTime: formatAsTime,

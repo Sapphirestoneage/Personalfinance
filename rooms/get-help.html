@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>Get Help · SPARKS</title>
 <meta name="description" content="What these rooms deliberately do not do, and what kind of help to look for when a question is one of those."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -25,16 +28,12 @@
   THEMING: none this pass; a theme is a class on <body>.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
   ul.kinds { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
   ul.kinds li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
   ul.kinds li:first-child { border-top: none; }
   ul.kinds b { display: block; font-family: var(--font-display); font-size: var(--text-md); }
   ul.kinds p { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -87,6 +86,7 @@
 <script src="../shared/spine-v2.js"></script>
 <script src="../shared/ownership.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>

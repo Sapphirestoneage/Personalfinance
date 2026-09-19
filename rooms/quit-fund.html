@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>The Quit Fund · SPARKS</title>
+<meta name="description" content="The Quit Fund is the by-choice reading of The Cushion now."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  REDIRECT — The Quit Fund is the by-choice reading of The Cushion (rooms/runway.html#by-choice, DECISIONS.md D-232).
+  Four rooms asked how long you could stop earning and each drew its own
+  conclusion; they are four readings of one number now, on one strip. The
+  file stays so every link already out in the world keeps landing, hash
+  included. LIVE-FORM: built once. No inputs.
+-->
+<meta http-equiv="refresh" content="0; url=runway.html#by-choice"/>
+</head>
+<body class="slaf">
+<main class="slaf-wrap">
+  <p style="color:var(--color-text-muted)">The Quit Fund is the by-choice reading of The Cushion now.
+    <a href="runway.html#by-choice" id="go">Open it →</a></p>
+</main>
+<script>
+  /* Carry the section hash across so a deep link still lands. */
+  (function () {
+    var map = { '#months': '#months', '#dates': '#dates', '#parts': '#parts' };
+    var hash = location.hash || '';
+    var target = 'runway.html' + (map[hash] || '#by-choice');
+    document.getElementById('go').setAttribute('href', target);
+    location.replace(target);
+  })();
+</script>
+</body>
+</html>

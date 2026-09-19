@@ -1,0 +1,342 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_ap",
+      "label": "Noor",
+      "role": "adult",
+      "dob": "1979-01-12",
+      "employmentStatus": "employed",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [
+        {
+          "id": "p_ap_inc0",
+          "personId": "p_ap",
+          "source": "Pharmacist",
+          "grossAnnualIncomeCents": 11000000,
+          "frequency": "annual",
+          "rateCents": null,
+          "hoursPerWeek": null,
+          "monthsWorked": null,
+          "ongoing": true,
+          "variableLowCents": null,
+          "variableHighCents": null,
+          "type": "w2",
+          "hassle": null,
+          "employerMatch": {
+            "matchPercent": 1,
+            "matchCapPercentOfSalary": 0.04
+          }
+        }
+      ],
+      "work": {
+        "contractedHoursPerWeek": null,
+        "unpaidOvertimeHoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "prepHoursPerWeek": null,
+        "decompressHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "weeksPerYear": 48
+      }
+    }
+  ],
+  "filingStatus": "single",
+  "state": "NJ",
+  "capturingFullMatch": true,
+  "dependents": [
+    {
+      "age": 74
+    }
+  ],
+  "community": {
+    "daySchool": null
+  },
+  "assets": [
+    {
+      "id": "a_0",
+      "label": "Savings",
+      "category": "cash",
+      "valueCents": 2500000,
+      "liquid": true,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_1",
+      "label": "Brokerage",
+      "category": "investment",
+      "valueCents": 3000000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": "taxable",
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    },
+    {
+      "id": "a_2",
+      "label": "401(k)",
+      "category": "retirement",
+      "valueCents": 21000000,
+      "liquid": false,
+      "ownerIds": [],
+      "taxCharacter": "pretax",
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null
+    }
+  ],
+  "debts": [],
+  "expenses": {
+    "needs": {
+      "food": {
+        "monthlyCents": 65000
+      },
+      "accommodation": {
+        "monthlyCents": 210000
+      },
+      "transportation": {
+        "monthlyCents": 40000
+      }
+    },
+    "wants": {
+      "totalCents": 210000,
+      "therapy": null
+    },
+    "entries": []
+  },
+  "incomeBasis": "earned",
+  "retirement": {
+    "contributionPercent": null,
+    "rothContributedCents": null,
+    "hsaContributedCents": null,
+    "onHdhp": null,
+    "hsaFamilyPlan": null,
+    "has401k": null
+  },
+  "insurance": {
+    "highestDeductibleCents": null,
+    "oopMaxCents": null,
+    "termLifeCents": null,
+    "disabilityMonthlyCents": null,
+    "umbrella": null,
+    "health": {
+      "type": null,
+      "monthlyCents": null
+    }
+  },
+  "worthChecks": [],
+  "ratings": {},
+  "valuesProfile": {
+    "stated": [],
+    "assignments": {}
+  },
+  "swan": {
+    "basis": null,
+    "targetCents": null,
+    "targetMonths": null,
+    "note": null,
+    "setAt": null
+  },
+  "goals": [],
+  "futureIncome": [],
+  "property": [],
+  "allocation": {
+    "stocks": null,
+    "bonds": null,
+    "cash": null,
+    "rebalanceBand": null
+  },
+  "rerank": {
+    "rows": []
+  },
+  "targets": {
+    "retireAge": null,
+    "coastAge": null
+  },
+  "scenarios": [],
+  "oneOffs": [],
+  "estate": {
+    "beneficiariesSet": null,
+    "willExists": null,
+    "poaExists": null
+  },
+  "giving": {
+    "pctOfIncome": null,
+    "annualTargetCents": 960000
+  },
+  "decumulation": {
+    "stockShare": null,
+    "plannedAnnualDrawCents": null,
+    "socialSecurityAt": null
+  },
+  "tax": {
+    "otherPreTaxAnnualCents": null,
+    "withheldAnnualCents": null
+  },
+  "career": {
+    "offer": {
+      "grossAnnualCents": null,
+      "hoursPerWeek": null,
+      "commuteHoursPerWeek": null,
+      "workCostsMonthlyCents": null,
+      "signOnCents": null
+    }
+  },
+  "partner": {
+    "splitMode": null,
+    "sharedMonthlyCents": null
+  },
+  "kids": {
+    "tuitionTargetCents": null,
+    "tuitionSavedCents": null,
+    "tuitionMonthlyCents": null
+  },
+  "housing": {
+    "rentMonthlyCents": null,
+    "priceCents": null,
+    "downPct": null,
+    "rate": null
+  },
+  "purchase": {
+    "priceCents": null,
+    "monthsAway": null,
+    "financeRate": null,
+    "label": null
+  },
+  "variableIncome": {
+    "bufferMonths": null,
+    "windowMonths": null
+  },
+  "enough": {
+    "monthlyCents": null,
+    "source": null
+  },
+  "designedWeek": {
+    "blocks": []
+  },
+  "timeBuckets": [],
+  "dreams": [],
+  "reversibility": {
+    "decisionId": null,
+    "given": {}
+  },
+  "unlearning": {
+    "dropped": []
+  },
+  "studentLoans": {
+    "plan": null,
+    "extraMonthlyCents": null,
+    "idrShare": null,
+    "forgivenessYears": null
+  },
+  "calendar": {
+    "cadence": null,
+    "nextPaydayDay": null,
+    "bills": [],
+    "payLater": []
+  },
+  "history": {
+    "compareTo": null
+  },
+  "ledger": {
+    "income": [],
+    "months": [],
+    "dismissed": []
+  },
+  "budget": {
+    "estimated": {},
+    "presets": {}
+  },
+  "notApplicable": {},
+  "skills": {},
+  "skillTree": {
+    "state": {}
+  },
+  "exercises": {
+    "done": {},
+    "results": {}
+  },
+  "practiceLedger": [],
+  "assumptions": {
+    "returnReal": 0.05,
+    "inflation": 0.03,
+    "expectedReturnRate": 0.07,
+    "swrRate": 0.04,
+    "humanCapitalDiscountRate": 0.02,
+    "homeEquityHaircut": 0.8,
+    "marginalRate": null
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": null,
+    "confirmedAt": {},
+    "hasDebt": false,
+    "undoStack": [],
+    "redoStack": [],
+    "guessed": {},
+    "source": {},
+    "displayUnit": null,
+    "noRent": null,
+    "walk": {
+      "startedAt": null,
+      "finishedAt": null,
+      "done": {},
+      "skipped": {}
+    },
+    "frontDoor": null,
+    "isDemo": true,
+    "name": "Supporting a parent",
+    "story": "47, $110k, sends $800 a month to a parent (inside everything else).",
+    "sphere": 8,
+    "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
+    "lane": "lane2 section 1 (L-1)",
+    "known": {
+      "asOf": "2026-09-10",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 525000,
+      "fiTargetCents": 157500000,
+      "grossAnnualCents": 11000000,
+      "effectiveRate": 0.24,
+      "estimatedTaxCents": 2640000,
+      "takeHomeAnnualCents": 8360000,
+      "takeHomeMonthlyCents": 696667,
+      "savingsRate": 0.18727272727272729,
+      "runwayMonths": 4.761904761904762,
+      "runwayWholeMonths": 4,
+      "netWorthCents": 26500000,
+      "working": [
+        "monthly spending = food $650 + accommodation $2,100 + transportation $400 + everything else $2,100 = $5,250",
+        "FI target = $5,250 x 12 / 0.04 = $63,000 / 0.04 = $1,575,000",
+        "gross $110,000 single: band single up to $150,000 -> effective rate 0.24",
+        "estimated tax = $110,000 x 0.24 = $26,400; take-home = $110,000 - $26,400 = $83,600 a year, $6,966.67 a month",
+        "savings rate (excluding match) = ($83,600 - $63,000) / $110,000 = $20,600 / $110,000 = 0.1873",
+        "runway = cash $25,000 / $5,250 a month = 4.7619 months (4 whole months; Runway.project stops at 60)",
+        "net worth = $25,000 + $30,000 + $210,000 - $0 = $265,000"
+      ]
+    }
+  }
+}

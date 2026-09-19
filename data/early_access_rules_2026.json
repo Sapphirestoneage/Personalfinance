@@ -1,0 +1,41 @@
+{
+  "id": "early_access_rules",
+  "version": "2026.0",
+  "asOf": "2026-01-01",
+  "taxYear": 2026,
+  "source": "The rules for reaching retirement money before 59 and a half, as the Internal Revenue Code and IRS guidance state them: the 10% additional tax on early distributions (IRC 72(t)(1)); its exception for a series of substantially equal periodic payments, the three approved methods and the interest-rate ceiling of the greater of 5% or 120% of the federal mid-term rate (IRS Notice 2022-6, superseding Rev. Rul. 2002-62), which must run the longer of five years or until 59 and a half; the exception for separation from service in or after the year the employee turns 55, from that employer's plan only, never an IRA (IRC 72(t)(2)(A)(v), the 'Rule of 55'); the five-year wait before a converted amount can be taken from a Roth IRA without the additional tax (IRC 408A(d)(3)(F), each conversion on its own clock); and the single life expectancy table used for the amortization and minimum-distribution methods (IRS Publication 590-B, Table I, as revised for 2022).",
+  "confidence": "unverified",
+  "confidenceNote": "Transcribed from memory of the Code, the Notice and the Publication, not copied from them. The life expectancy figures are recalled to a tenth and NOT checked line by line. Every path here is shown as arithmetic on the person's own numbers, never as advice; the Middle Class Trap room names the rule it applied beside each figure.",
+  "note": "Read by engines/trap.js (K1, D-218). accessAge is where the additional tax ends. Rates are decimal fractions; ages are years.",
+  "accessAge": 59.5,
+  "penaltyRate": 0.10,
+  "conversionSeasoningYears": 5,
+  "sepp": {
+    "methods": ["requiredMinimumDistribution", "fixedAmortization", "fixedAnnuitization"],
+    "methodUsed": "fixedAmortization",
+    "maxRate": 0.05,
+    "maxRateNote": "The ceiling is the greater of 5% and 120% of the federal mid-term rate for either of the two months before the first payment; 5% is the floor of that ceiling and the figure used here, so the payment shown is the largest the floor allows.",
+    "minimumYears": 5
+  },
+  "ruleOf55": {
+    "separationAge": 55,
+    "employerPlanOnly": true,
+    "note": "Applies to a 401(k) or 403(b) of the employer you leave in or after the year you turn 55; money rolled to an IRA loses it."
+  },
+  "singleLifeExpectancy": {
+    "note": "IRS Publication 590-B Table I (Single Life Expectancy), the 2022 revision, ages 40 to 65. Ages outside the range use the nearest end.",
+    "byAge": {
+      "40": 45.7, "41": 44.8, "42": 43.8, "43": 42.9, "44": 41.9, "45": 41.0, "46": 40.0, "47": 39.0, "48": 38.1, "49": 37.1,
+      "50": 36.2, "51": 35.3, "52": 34.3, "53": 33.4, "54": 32.5, "55": 31.6, "56": 30.6, "57": 29.8, "58": 28.9, "59": 28.0,
+      "60": 27.1, "61": 26.2, "62": 25.4, "63": 24.5, "64": 23.7, "65": 22.9
+    }
+  },
+  "homeEquity": {
+    "borrowShareOfEquity": 0.5,
+    "note": "A home equity line commonly lends up to 80 to 85% of the home's value less the mortgage; half of the equity is the cautious convention used when the person picks 'borrow against it'. Home equity is shown and never counted unless the person picks sell or borrow."
+  },
+  "verdicts": {
+    "tightYearsOfBridgeLeft": 1,
+    "note": "Trapped: a year the path cannot cover spending. Tight: covered, but with less than tightYearsOfBridgeLeft of spending left in the bridge at 59 and a half, or a penalty paid along the way. Free: covered with room to spare and no penalty."
+  }
+}

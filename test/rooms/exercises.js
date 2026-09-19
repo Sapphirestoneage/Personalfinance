@@ -19,7 +19,7 @@ module.exports = function (t) {
   check('a run with an unmet requirement stays locked and names the field', rb.status + '/' + rb.missing.join(','), 'incomplete/monthlyExpenses');
   checkTrue('… the reason says what and where', /Needs: Monthly expenses\./.test(rb.reason));
   const lb = E.list(bare, T, { maxMinutes: null });
-  checkTrue('the list marks it locked with a link to the owner room', lb.rows.filter(r => r.id === 'run-fire-number')[0].locked && /cash-flow\.html/.test(lb.rows.filter(r => r.id === 'run-fire-number')[0].reasons[0].href));
+  checkTrue('the list marks it locked with a link to the owner room', lb.rows.filter(r => r.id === 'run-fire-number')[0].locked && /expenses\.html/.test(lb.rows.filter(r => r.id === 'run-fire-number')[0].reasons[0].href));
   checkTrue('a micro or canon exercise is never locked', lb.rows.filter(r => r.kind !== 'run').every(r => !r.locked));
 
   /* The demo persona: the runs compute through the owning engines. */
@@ -55,7 +55,7 @@ module.exports = function (t) {
   /* Completing one boosts its skill to open, never to done. */
   const h = Schema.createHousehold({ filingStatus: 'single', state: 'NC',
     people: [Schema.createPerson({ id: 'P', role: 'adult', employmentStatus: 'employed', incomeSources: [Schema.createIncomeSource({ id: 'i', personId: 'P', grossAnnualIncomeCents: 7200000 })] })],
-    assets: [Schema.createAsset({ id: 'a', category: 'cash', valueCents: 400000 })], expenses: { monthlyEssential: { estimatedValueCents: 250000 } } });
+    assets: [Schema.createAsset({ id: 'a', category: 'cash', valueCents: 400000 })], expenses: { wants: { totalCents: 250000 } } });
   check('before: the ladder skill is locked', ST.evaluate(h, T).byId['close-a-month'].state, 'locked');
   h.exercises = { done: { 'mx-close-a-month': '2026-09-04' }, results: {} };
   const after = ST.evaluate(h, T).byId['close-a-month'];

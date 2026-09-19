@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>FIRE Lab · SPARKS</title>
 <meta name="description" content="Every FIRE calculation on one screen, drawn: the number, how far along you are, the six flavours side by side, the milestones, the path, and what a different withdrawal rate does to all of it."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -11,7 +14,7 @@
 <!--
   ROOM SPEC — SPEC.md §11.
 
-  1. READS   expenses.monthlyEssential, investments, dob, income,
+  1. READS   the four expense numbers (D-172), investments, dob, income,
              filingStatus. Reads only; every figure has an owner elsewhere.
   2. WRITES  Nothing at all. It owns no field and stores no preview. The
              withdrawal-rate slider is a local override for this view
@@ -30,9 +33,6 @@
   markup into containers that hold no inputs (D-034).
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
 
   /* The headline pairing: one figure, one ring. On a phone they stack. */
@@ -69,8 +69,6 @@
   table.grid td.is-base { background: var(--color-surface-active); border-color: var(--color-border-active); color: var(--color-text); font-weight: 600; }
   .grid-key { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
 
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
-  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 </style>
 </head>
@@ -83,6 +81,7 @@
 </header>
 
 <main class="slaf-wrap">
+  <p class="slaf-horizon" id="horizon-line"></p>
   <div class="notice" id="load-notice" hidden></div>
 
   <section class="slaf-card" id="number">
@@ -95,6 +94,8 @@
       <div class="headline-ring" id="progress-ring"></div>
     </div>
     <dl class="facts" id="facts"></dl>
+    <div id="lab-bands"></div>
+    <div id="lab-lens"></div>
   </section>
 
   <section class="slaf-card" id="swr">
@@ -158,13 +159,22 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/horizon.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/fire.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
@@ -202,6 +212,8 @@
     return '<p class="slaf-reason">' + esc(reason) + (links.length ? ' ' + links.join(' ') : '') + '</p>';
   }
 
+  function yrs(x) { return x && Money.isOk(x) ? x.value : (Money.isEntered(x) && typeof x === 'number' ? x : 0); }
+  function fut(c, y) { return SLAF.Horizon.display(Spine.getProfile(), c, y); }   /* 15.2: display-time only; the engines stay real (D-181) */
   function yearsLabel(y) {
     if (!Money.isEntered(y)) return Money.EM_DASH;
     if (y <= 0) return 'now';
@@ -219,7 +231,7 @@
     var target = Fire.calculateFIRE(h, TABLES, opts());
     var prog = Fire.progressToward(h, TABLES, opts());
 
-    el('fire-figure').textContent = Money.isOk(target) ? Money.formatCents(target.value) : Money.EM_DASH;
+    el('fire-figure').textContent = Money.isOk(target) ? Money.formatCents(fut(target.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH;
     el('fire-say').innerHTML = Money.isOk(target)
       ? 'A year of spending, divided by the withdrawal rate.'
       : waiting(target);
@@ -245,9 +257,17 @@
           'At your current saving and assumed return.']);
       }
       el('facts').innerHTML = facts(rows);
+      /* Three ways (D-170): the same arithmetic at the low, likely and high
+         real return, so "time to get there" carries its own width. */
+      el('lab-bands').innerHTML = SLAF.Bands.lineHtml(TABLES, function (rate) {
+        var o = opts();
+        var p = Fire.progressToward(h, TABLES, Object.assign({}, o, { localOverrides: Object.assign({}, o.localOverrides || {}, { expectedReturnRate: rate }) }));
+        return Money.isOk(p) ? p.yearsAway : p;
+      }, function (v) { return yearsLabel(v); }, { lead: 'Time to get there, three ways' });
     } else {
       el('progress-ring').innerHTML = '';
       el('facts').innerHTML = '';
+      el('lab-bands').innerHTML = '';
     }
 
     /* ---- The withdrawal rate -------------------------------------------- */
@@ -348,8 +368,8 @@
            is about the journey rather than forty years of flat afterwards. */
         var years = 40, crossed = null;
         for (var i = 0; i <= years; i++) {
-          pts.push([i, Math.round(bal)]);
-          line.push([i, prog.targetCents]);
+          pts.push([i, fut(Math.round(bal), i)]);
+          line.push([i, fut(prog.targetCents, i)]);
           if (crossed === null && bal >= prog.targetCents) crossed = i;
           bal = bal * (1 + a.expectedReturnRate) + b2.annualSavingsCents;
         }
@@ -419,10 +439,17 @@
 
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
+  SLAF.Horizon.mount(document.getElementById('horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.2: today's money, once per screen (D-181) */
   Spine.onChange(render);
 
   Reference.load().then(function (tables) {
     TABLES = tables;
+    SLAF.Lens.mountStrip('lab-lens', function (h) {
+      var p = Fire.progressToward(h, TABLES, opts());
+      if (!Money.isOk(p)) return [];
+      return [{ label: 'The number', cents: p.targetCents }, { label: 'Invested now', cents: p.investmentsCents, href: Ownership.linkTo('statement', 'portfolios', ROOM_ID) },
+              { label: 'Still to go', cents: Math.max(0, p.targetCents - p.investmentsCents) }];
+    }, function () { return TABLES; });
     render();
     jumpToHash();
   }).catch(function (err) {

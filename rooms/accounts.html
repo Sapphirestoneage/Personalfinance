@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>Where It Goes &amp; how it’s split · SPARKS</title>
 <meta name="description" content="Roth, Traditional or taxable — and how much a Solo 401k actually lets you put away."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -21,10 +24,7 @@
              data/se_tax_2026.json.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
   .room-back:hover { text-decoration: underline; }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
 
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: stretch; }
@@ -58,9 +58,7 @@
   .setup-toggles { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
   .setup-toggle { display: flex; align-items: flex-start; gap: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
   .setup-toggle input { margin-top: 3px; }
-  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -134,6 +132,8 @@
     </div>
     <div class="verdict" id="a-verdict">—</div>
     <p class="why" id="a-why"></p>
+    <div id="a-bands"></div>
+    <div id="a-lens"></div>
     <ol class="ranked" id="a-ranked"></ol>
   </section>
 
@@ -201,11 +201,19 @@
 <script src="../shared/suggest.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/accounts.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script>
 (function () {
   'use strict';
@@ -281,10 +289,18 @@
       verdict.className = 'verdict is-incomplete';
       el('a-why').textContent = '';
       el('a-ranked').innerHTML = '';
+      el('a-bands').innerHTML = '';
       return;
     }
     verdict.className = 'verdict';
     var best = r.byKey[r.bestKey];
+    /* The winner's after-tax pot three ways - low, likely, high real return -
+       so the comparison carries its own width. D-170. */
+    el('a-bands').innerHTML = SLAF.Bands.lineHtml(TABLES, function (rate) {
+      var x = Accounts.compareAccounts({ pretaxCents: v['a-amount'], currentTaxRate: assumptions.marginalRate, futureTaxRate: v['a-later'],
+        annualReturn: rate, years: v['a-years'], capitalGainsRate: v['a-cg'] });
+      return Money.isOk(x) ? Money.ok(x.byKey[x.bestKey].afterTaxCents) : x;
+    }, Money.formatCents, { lead: best.label + ' after tax, three ways' });
     verdict.textContent = r.ratesEqual
       ? 'Roth and Traditional tie'
       : best.label + ' wins by ' + Money.formatCents(r.marginOverNextCents);
@@ -542,6 +558,15 @@
 
   Reference.load().then(function (tables) {
     TABLES = tables;
+    SLAF.Lens.mountStrip('a-lens', function (h) {
+      var a = Schema.resolveAssumptions(h);
+      var r = Accounts.compareAccounts({ pretaxCents: v['a-amount'], currentTaxRate: a.marginalRate, futureTaxRate: v['a-later'],
+        annualReturn: Money.isEntered(v['a-return']) ? v['a-return'] : a.expectedReturnRate, years: v['a-years'], capitalGainsRate: v['a-cg'] });
+      var rows = [];
+      if (Money.isEntered(v['a-amount'])) rows.push({ label: 'Put in, pre-tax', cents: v['a-amount'] });
+      if (Money.isOk(r)) rows.push({ label: r.byKey[r.bestKey].label + ' after tax', cents: r.byKey[r.bestKey].afterTaxCents });
+      return rows;
+    }, function () { return TABLES; });
     paintSetup();
     render();
     jumpToHash();

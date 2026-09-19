@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>Debt Payoff · SPARKS</title>
 <meta name="description" content="Every debt, in the order you'll clear them — and what a different order would cost or save."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -14,23 +17,23 @@
   1. READS   household.debts[] (balance, rate, minPayment, type,
              emotionalTag, ownerIds; interestFree, archived, borrowedOn,
              dueOn — D-124).
-  2. WRITES  household.debts[] — raw inputs only, itemised. This is the room
+  2. WRITES  household.debts[] — raw inputs only, itemised, one line each
+             with everything past the four facts behind one caret (D-187). This is the room
              that turns the Financial Snapshot's single lump-sum debt record
              into real per-debt entries, which is what the Debt Calculator
              needs (SPEC.md §9 item 2).
   3. CALLS   engines/debt.js for every figure — simulate(),
-             compareStrategies(), minimumPaymentCents(). No amortisation is
-             written in this file.
+             compareStrategies(), minimumPaymentCents(), and for the
+             fall-and-free view (D-236) monthFlow() and cascade(), read
+             off the one simulation. No amortisation is written in this
+             file.
   4. EMPTY   No debts: the plan says so. A debt missing a rate or a minimum
              names itself rather than being silently dropped or zeroed.
   5. CONFIG  data/debt_rules.json — strategies, minimum-payment conventions,
              the emotional-priority ranking, the month ceiling.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
   .room-back:hover { text-decoration: underline; }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
   .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 
@@ -41,11 +44,65 @@
   .rewards { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-top: var(--space-3); font-size: var(--text-sm); }
   .rewards.is-bad { border-left-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  .debt { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-3); }
-  .debt-top { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); }
-  .debt-name { flex: 1; min-width: 0; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-base); padding: 2px 0; outline: none; }
+  /* One line per debt (D-187): name, owed, rate, minimum, and a caret for
+     the rest. Ten debts are ten lines on a wide screen and twenty on a
+     phone, where the name takes a line of its own. */
+  .debt { border-top: 1px solid var(--color-border); padding: var(--space-1) 0 0; }
+  .debt:first-child { border-top: none; }
+  .debt-cols { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 0.8fr 1fr 1.6em; gap: var(--space-2); font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: 0 0 var(--space-1); }
+  .debt-line { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 0.8fr 1fr 1.6em; gap: var(--space-2); align-items: center; }
+  .debt-line > * { min-width: 0; }
+  .debt-line .slaf-input-shell { min-height: 32px; }
+  .debt-line input { font-size: var(--text-sm); width: 100%; min-width: 0; }
+  .debt-line .slaf-affix { font-size: var(--text-xs); }
+  .debt-name { min-width: 0; width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text); font-family: var(--font-body); font-size: var(--text-sm); padding: 3px 0; }
   .debt-name:focus { border-bottom-color: var(--color-border-active); }
+  .debt-more { background: none; border: none; color: var(--color-text-faint); cursor: pointer; font-size: 12px; padding: 0; text-align: center; }
+  .debt-more[aria-expanded="true"] { color: var(--color-accent); }
   .debt-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
+  .debt-acts { display: flex; gap: var(--space-3); align-items: center; margin-top: var(--space-3); }
+  .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: end; }
+  .debt-grid--2 { grid-template-columns: 1fr 1fr; }
+  .debt-grid--3 { display: contents; }
+  @media (max-width: 560px) {
+    .debt-cols { display: none; }
+    .debt-line { grid-template-columns: 1fr 0.8fr 1fr; }
+    .debt-line .debt-name-cell { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-2); }
+    .debt-line .debt-more { margin-left: auto; }
+    .debt-line .slaf-input-shell::before { content: attr(data-col); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); position: absolute; top: -12px; left: 0; }
+    .debt-line .slaf-input-shell { position: relative; margin-top: 11px; }
+  }
+  @media (min-width: 561px) { .debt-line .debt-more { grid-column: 5; } }
+  .plan-charts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+  @media (max-width: 640px) { .plan-charts { grid-template-columns: 1fr; } }
+  .extra-field { margin-top: var(--space-4); }
+  /* The sums (D-191): what is owed and the minimums, under the list; the
+     minimums plus the extra, under the box, as the one figure that
+     leaves the account for debt each month. */
+  .debt-total { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .debt-total b { font-family: var(--font-display); font-weight: 500; color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .extra-total { display: block; margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border-strong); font-size: var(--text-sm); }
+  .extra-total b { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; font-size: var(--text-lg); }
+  .extra-total .sum-how { display: block; color: var(--color-text-muted); font-size: var(--text-xs); }
+  .stop-field { margin-top: var(--space-3); max-width: 30em; }
+  .stop-field .slaf-input-shell { width: 100%; }
+  /* The two figures the blank box falls back to (D-190): an estimate from
+     what Start Here holds, and the realized one from closed months. The
+     one in use is marked; the other says what it is waiting on. */
+  .extra-basis { display: grid; gap: 2px; margin-top: var(--space-2); font-size: var(--text-sm); }
+  .extra-basis .basis { display: grid; grid-template-columns: auto auto 1fr; gap: 0 var(--space-2); align-items: baseline; padding: 4px 0; border-top: 1px solid var(--color-border); }
+  .extra-basis .basis:first-child { border-top: none; }
+  .extra-basis .basis-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); min-width: 5.5em; }
+  .extra-basis b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .extra-basis .basis-tag { font-size: var(--text-xs); color: var(--color-positive); white-space: nowrap; }
+  .extra-basis .basis-note { grid-column: 1 / -1; color: var(--color-text-muted); font-size: var(--text-xs); }
+  .extra-basis .basis.is-used .basis-name { color: var(--color-text); font-weight: 600; }
+  .extra-basis .basis.is-waiting b { color: var(--color-text-faint); font-weight: normal; }
+  .fold-card > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+  .fold-card > summary::-webkit-details-marker { display: none; }
+  .fold-card > summary::after { content: '▸'; color: var(--color-text-faint); font-size: 12px; transition: transform .12s ease; }
+  .fold-card[open] > summary::after { transform: rotate(90deg); }
+  .fold-card-sum { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: auto; margin-right: var(--space-2); }
   /* This room is an editor, not prose: one debt is a row of facts, and at
      480px they stack into a column a screen tall. Wider here only, so the
      shared measure stays what it is for every reading room. D-134. */
@@ -57,23 +114,19 @@
   }
 
   /* The folded parts of a row. */
-  .fold { border-top: 1px solid var(--color-border); margin-top: var(--space-3); }
+  .fold { border-top: 1px solid var(--color-border); margin-top: var(--space-2); }
+  .fold.is-more { border-top: none; margin-top: 0; }
+  .fold.is-more > summary { padding: 2px 0 var(--space-1); }
+  .fold.is-more > .fold-body { padding: var(--space-2) var(--space-3) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin: var(--space-2) 0 var(--space-2); }
   .fold > summary { display: flex; align-items: baseline; gap: var(--space-2); cursor: pointer; list-style: none; padding: var(--space-2) 0; font-size: var(--text-sm); color: var(--color-text-muted); }
   .fold > summary::-webkit-details-marker { display: none; }
   .fold > summary::before { content: '▸'; color: var(--color-text-faint); font-size: 11px; line-height: 1.4; transition: transform .12s ease; }
   .fold[open] > summary::before { transform: rotate(90deg); }
   .fold > summary:hover { color: var(--color-text); }
   .fold-title { font-weight: 600; }
-  .fold-sum { color: var(--color-text-faint); font-size: var(--text-xs); margin-left: auto; text-align: right; min-width: 0; }
+  .fold-sum { color: var(--color-text-faint); font-size: var(--text-xs); margin-left: auto; text-align: right; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fold-body { padding-bottom: var(--space-2); }
 
-  .debt-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); align-items: end; }
-  .debt-grid--2 { grid-template-columns: 1fr 1fr; }
-  .debt-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
-  @media (max-width: 560px) {
-    .debt-grid--3 { grid-template-columns: 1fr 1fr; }
-    .debt-grid--3 > *:nth-child(3) { grid-column: 1 / -1; }
-  }
   .debt-grid > * { min-width: 0; }
   .debt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; margin-top: var(--space-2); }
   .debt-warn { font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
@@ -100,15 +153,18 @@
   .strategy[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
   /* Name, interest, time to clear — three columns on fixed rails, so the
      four orderings read down as a table and not as four ragged cards. */
-  .strategy-head { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); align-items: baseline; }
+  .strategy-head { display: grid; grid-template-columns: minmax(0, 1fr) 9ch 10ch; gap: var(--space-3); align-items: baseline; }
   .strategy-name { font-weight: 600; min-width: 0; }
   .strategy-figure, .strategy-when { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
   .strategy-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; min-width: 0; }
-  .strategy-cols { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); padding: 0 var(--space-3) 2px; font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); white-space: nowrap; }
+  /* The caption row shares the cards' rails. Its letters are spaced less
+     than an eyebrow's so "interest" and "clear in" each fit their rail;
+     spaced wider they ran into one word on a phone. */
+  .strategy-cols { display: grid; grid-template-columns: minmax(0, 1fr) 9ch 10ch; gap: var(--space-3); padding: 0 var(--space-3) 2px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); white-space: nowrap; }
   .strategy-cols span + span { text-align: right; }
   .strategy-first { color: var(--color-text-faint); }
   @media (max-width: 420px) {
-    .strategy-head, .strategy-cols { grid-template-columns: minmax(0, 1fr) 7.5ch 7ch; gap: var(--space-2); }
+    .strategy-head, .strategy-cols { grid-template-columns: minmax(0, 1fr) 8ch 9.5ch; gap: var(--space-2); }
     .strategy-cols { padding: 0 var(--space-3); }
     .strategy-blurb { font-size: var(--text-xs); }
   }
@@ -137,11 +193,26 @@
   ol.timeline li > span:first-child { flex: 1 1 140px; min-width: 0; }
   ol.timeline li > .tl-when { flex: 0 1 auto; margin-left: auto; }
   ol.timeline li:first-child { border-top: none; }
+  ol.timeline li.is-free { border-top: 2px solid var(--color-positive); }
+  ol.timeline li .tl-step { display: inline-flex; width: 22px; height: 22px; border-radius: var(--radius-pill); border: 1px solid var(--color-border-strong); align-items: center; justify-content: center; font-size: var(--text-xs); margin-right: 6px; vertical-align: middle; color: var(--color-text-muted); font-style: normal; }
+  ol.timeline li .tl-then { display: block; color: var(--color-text-muted); margin-top: 2px; }
+  ol.timeline li .tl-then b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .story { margin-top: var(--space-3); font-size: var(--text-base); line-height: var(--leading-loose); }
+  .story p { margin: 0 0 var(--space-3); }
+  .story b { font-variant-numeric: tabular-nums; }
+  .why.how { color: var(--color-text-faint); font-size: var(--text-xs); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   .tl-when { color: var(--color-text-subtle); font-variant-numeric: tabular-nums; text-align: right; }
 
   /* Every figure on one rail, with what it means beside it. The value
      column is fixed so the digits line up down the card however long the
      label is; the meaning sits in its own column and never pushes them. */
+  ol.finish { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  ol.finish li { display: flex; justify-content: space-between; gap: var(--space-3); padding: 4px 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  ol.finish li:first-child { border-top: none; }
+  ol.finish li:last-child { font-weight: 600; }
+  ol.finish b { font-family: var(--font-display); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  ol.finish .fin-none { color: var(--color-text-faint); font-weight: normal; }
   .out-detail { margin-top: var(--space-3); font-size: var(--text-sm); }
   .out-detail dl { display: grid; grid-template-columns: minmax(0, auto) 9.5ch 1fr; gap: 0; margin: 0; align-items: baseline; }
   .out-detail dt { color: var(--color-text-muted); padding: var(--space-2) var(--space-3) var(--space-2) 0; border-top: 1px solid var(--color-border); grid-column: 1; white-space: nowrap; }
@@ -178,10 +249,7 @@
   .igrid .ifield { min-width: 0; display: block; }
   .interest-say { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-snug, 1.35); }
   @media (max-width: 420px) { .igrid.is-promo { grid-template-columns: 1fr 1fr; } .igrid.is-promo .ifield[data-ipart="rate"] { grid-column: 1 / -1; } }
-
-  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -195,6 +263,23 @@
 <main class="slaf-wrap">
   <div class="notice" id="load-notice" hidden></div>
 
+  <section class="slaf-card" id="out-plan">
+    <span class="slaf-eyebrow">Debt-free in</span>
+    <div class="slaf-figure" data-figure>—</div>
+    <p class="slaf-reason" data-reason></p>
+    <div data-detail></div>
+    <label class="slaf-field stop-field" id="stop">
+      <span class="slaf-label">Keep the extra going until</span>
+      <span class="slaf-input-shell"><select id="f-stop" aria-label="When the extra stops">
+        <option value="">everything is gone</option>
+        <option value="cards">the cards are gone, then minimums on the rest</option>
+        <option value="highInterest" id="opt-high">the high-rate debt is gone, then minimums on the rest</option>
+      </select></span>
+      <span class="slaf-hint" id="stop-hint">A low-rate loan you are happy to carry can run on its minimum once the dear debt is gone.</span>
+    </label>
+    <div id="plan-chart"></div>
+  </section>
+
   <section class="slaf-card" id="debts">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)">
       <span class="slaf-eyebrow">What you owe</span>
@@ -203,49 +288,68 @@
         <button type="button" data-scope="cards" aria-pressed="false">Cards only</button>
       </div>
     </div>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">One line per debt</h2>
+    <div class="debt-cols" id="debt-cols" hidden><span>Debt</span><span>Owed</span><span>Rate</span><span>Min a month</span></div>
     <div id="debt-list"></div>
+    <div class="debt-total" id="debt-total" hidden></div>
     <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a debt</button>
+    <label class="slaf-field extra-field" id="extra">
+      <span class="slaf-label">Extra each month, on top of the minimums</span>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
+        <input type="text" inputmode="decimal" id="f-extra" placeholder="e.g. 200"/></span>
+      <span class="slaf-hint" id="extra-hint">Blank shows what the minimums alone do.</span>
+      <span class="extra-basis" id="extra-basis"></span>
+      <span class="extra-total" id="extra-total"></span>
+    </label>
     <details class="archived" id="archived" hidden>
       <summary>Set aside <small id="archived-count"></small></summary>
       <p class="debt-hint" style="margin:var(--space-2) 0">Paid off, or on hold. Nothing here is counted or planned; restore one to bring it back.</p>
       <div id="archived-list"></div>
     </details>
     <div class="actions">
-      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-demo">Try with example numbers</button>
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
     </div>
   </section>
 
-  <section class="slaf-card" id="extra">
-    <span class="slaf-eyebrow">Beyond the minimums</span>
-    <label class="slaf-field" style="margin-top:var(--space-3)">
-      <span class="slaf-label">Extra you can put at debt each month</span>
-      <span class="slaf-input-shell"><span class="slaf-affix">$</span>
-        <input type="text" inputmode="decimal" id="f-extra" placeholder="e.g. 200"/></span>
-      <span class="slaf-hint">Leave it blank to see what the minimums alone do.</span>
-    </label>
-  </section>
-
-  <section class="slaf-card" id="out-plan">
-    <span class="slaf-eyebrow">Debt-free in</span>
-    <div class="slaf-figure" data-figure>—</div>
-    <p class="slaf-reason" data-reason></p>
-    <div data-detail></div>
-    <div id="plan-chart"></div>
-  </section>
-
-  <section class="slaf-card" id="out-strategies">
-    <span class="slaf-eyebrow">Which order</span>
+  <details class="slaf-card fold-card" id="out-strategies">
+    <summary><span class="slaf-eyebrow">Which order</span><span class="fold-card-sum" id="strategy-sum"></span></summary>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
       Same money every month — only the order changes. Total interest shown.
     </p>
     <div class="strategies" id="strategy-list"></div>
     <div id="strategy-chart"></div>
-  </section>
+  </details>
 
-  <section class="slaf-card" id="out-rewards" hidden>
-    <span class="slaf-eyebrow">Rewards vs. carrying a balance</span>
+  <details class="slaf-card fold-card" id="out-timeline">
+    <summary><span class="slaf-eyebrow">The order they fall, and what each one frees</span><span class="fold-card-sum" id="timeline-sum"></span></summary>
+    <!-- D-236. Three pictures of one simulation: where this month's payment
+         goes (the flow: minimums and extra in, each debt, interest and
+         balance out), where it goes as each debt falls (one column a
+         phase: a fallen debt's minimum rolls onto the next), and what is
+         still owed month by month. Then the list: the month each falls,
+         what it frees, and where that money goes. -->
+    <!-- Words first (owner, D-236 follow-up): the story of the plan in
+         plain sentences, then the steps in order, then the three pictures,
+         each with a line on how to read it. -->
+    <div class="story" id="story"></div>
+    <p class="slaf-hint" style="margin:var(--space-4) 0 0" id="steps-cap">Payoff order</p>
+    <ol class="timeline" id="timeline"></ol>
+    <p class="slaf-hint" style="margin:var(--space-5) 0 0" id="flow-cap">Where this month's payment goes</p>
+    <p class="why how" id="flow-how">Left: where the money comes from (minimums, extra). Middle: each debt. Right: what the money does. Red = interest. Green = balance reduced. Band width = amount. Tap a band to see its amount.</p>
+    <div id="flow-chart"></div>
+    <p class="why" id="flow-why"></p>
+    <p class="slaf-hint" style="margin:var(--space-5) 0 0" id="cascade-cap">Where it goes as each one falls</p>
+    <p class="why how" id="cascade-how">One column per stretch between payoffs, labelled by its start month. Column height = the monthly payment, which stays the same. Colours = which debt receives it. When a debt is paid off its colour is removed and the next debt's share grows. Green column = the month all debts are paid.</p>
+    <div id="cascade-chart"></div>
+    <p class="why" id="cascade-why"></p>
+    <p class="slaf-hint" style="margin:var(--space-5) 0 0" id="balance-cap">What is still owed</p>
+    <p class="why how" id="balance-how">Total balance owed, by month. Thin lines = individual debts; a line at zero = paid off. Dashed lines = the other payoff orders with the same payment.</p>
+    <div id="timeline-chart"></div>
+    <p class="slaf-reason" id="timeline-reason"></p>
+  </details>
+
+  <details class="slaf-card fold-card" id="out-rewards" hidden>
+    <summary><span class="slaf-eyebrow">Rewards vs. carrying a balance</span></summary>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
       Cashback only counts if the balance is cleared. Here's the arithmetic.
     </p>
@@ -256,14 +360,7 @@
         <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="r-rate" placeholder="e.g. 2" aria-label="Rewards rate"/><span class="slaf-affix">%</span></span></label>
     </div>
     <div id="rewards-body"></div>
-  </section>
-
-  <section class="slaf-card" id="out-timeline">
-    <span class="slaf-eyebrow">The order they fall</span>
-    <div id="timeline-chart"></div>
-    <ol class="timeline" id="timeline"></ol>
-    <p class="slaf-reason" id="timeline-reason"></p>
-  </section>
+  </details>
 
   <p class="disclaimer">
     Educational tool, not financial advice. Interest accrues monthly at the
@@ -280,6 +377,7 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
@@ -296,7 +394,20 @@
 
   var ROOM_ID = 'debt-payoff';
   var RULES = null;
+  var FOO = null;   /* data/foo_rules.json, for the high-interest line (D-188) */
+  var TABLES = null;
   var strategyId = 'avalanche';
+  /* Where the extra stops (D-191): '' runs it to the end; 'cards' or
+     'highInterest' drops to minimums once that class is gone. A
+     preference, not household data: it is how this person reads the plan. */
+  var Prefs = SLAF.Prefs;
+  var stopAfter = Prefs ? (Prefs.get('debt.stopAfter', '') || '') : '';
+  function highRate() { return FOO && FOO.thresholds && Money.isEntered(FOO.thresholds.highInterestDebtRate) ? FOO.thresholds.highInterestDebtRate : null; }
+  /* One set of options for every simulation the room runs, so the plan,
+     the comparison, the timeline and the held-back check all agree. */
+  function simOpts(extra) {
+    return { strategyId: strategyId, extraMonthlyCents: extra, stopAfter: stopAfter || null, highInterestRate: highRate() };
+  }
   var extraCents = null;
   /* SPEC.md §13: the Credit Card calc is a FILTERED VIEW of this calculator,
      not a separate build. Switching scope hands a filtered household to the
@@ -343,6 +454,24 @@
     return missing.length ? 'Needs ' + missing.join(' and ') + ' before it can be planned.' : '';
   }
 
+  /* The list's footer: what is owed and the minimums, added up. A debt
+     with a blank balance or minimum is counted as missing, not as zero. */
+  function paintDebtTotal(debts) {
+    var box = el('debt-total'); if (!box) return;
+    box.hidden = !debts.length;
+    if (!debts.length) return;
+    var owed = Money.sumCents(debts.map(function (d) { return d.balanceCents; }));
+    var mins = Money.sumCents(debts.map(function (d) { return d.minPaymentCents; }));
+    var n = debts.length;
+    var gaps = [];
+    if (owed.counted < n) gaps.push((n - owed.counted) + ' without a balance');
+    if (mins.counted < n) gaps.push((n - mins.counted) + ' without a minimum');
+    box.innerHTML = '<span>' + n + (n === 1 ? ' debt' : ' debts') + '</span>'
+      + '<span>owed <b>' + Money.formatCents(owed.total) + '</b></span>'
+      + '<span>minimums <b>' + Money.formatCents(mins.total) + '</b> a month</span>'
+      + (gaps.length ? '<span>(' + gaps.join(', ') + ')</span>' : '');
+  }
+
   function renderDebts(h) {
     var list = el('debt-list');
     var focusedId = document.activeElement && document.activeElement.getAttribute
@@ -351,37 +480,44 @@
       ? document.activeElement.getAttribute('data-field') : null;
 
     var debts = debtsOf(h);
+    paintDebtTotal(debts);
     if (!debts.length) {
+      el('debt-cols').hidden = true;
       list.innerHTML = '<p class="slaf-reason">No debts yet. Add one, or load the example.</p>';
       return;
     }
 
     var tags = (RULES.emotionalPriority.tags || []);
+    el('debt-cols').hidden = false;
     list.innerHTML = debts.map(function (d) {
+      /* The line: name, the three facts a plan needs, and one caret. The
+         rate is built here, once, and the interest block below only says
+         how it behaves (D-133's rule kept: one input per field). */
       return '<div class="debt" data-row="' + d.id + '">'
-        + '<div class="debt-top">'
-        + '<input class="debt-name" data-debt="' + d.id + '" data-field="label" '
-        + 'value="' + (d.label || '').replace(/"/g, '&quot;') + '" placeholder="Name this debt" aria-label="Debt name"/>'
-        + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold — keep it, stop counting it">Set aside</button>'
-        + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕</button>'
-        + '</div>'
+        + '<div class="debt-line">'
+        + '<span class="debt-name-cell"><input class="debt-name" data-debt="' + d.id + '" data-field="label" '
+        + 'value="' + (d.label || '').replace(/"/g, '&quot;') + '" placeholder="Name this debt" aria-label="Debt name"/></span>'
         + '<div class="debt-grid debt-grid--3">'
-        + field(d, 'balanceCents', 'Balance', '$', null, 'e.g. 3200')
-        + field(d, 'minPaymentCents', 'Min /mo', '$', null, d.type === 'family' ? 'or a due date' : 'e.g. 95')
-        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
-        + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="type">'
-        + DEBT_TYPES.map(function (t) {
-            return '<option value="' + t[0] + '"' + (d.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
-          }).join('')
-        + '</select></span></label>'
+        + field(d, 'balanceCents', 'Owed', '$', null, 'e.g. 3200', false, true)
+        + '<span class="ifield" data-ipart="rate" data-for="' + d.id + '">'
+        + field(d, 'rate', 'Rate', null, '%', 'e.g. 22.9', false, true)
+        + '</span>'
+        + field(d, 'minPaymentCents', 'Min a month', '$', null, d.type === 'family' ? 'or a due date' : 'e.g. 95', false, true)
         + '</div>'
-        + interestBlock(d)
-        /* Everything past this point is set once and then rarely touched,
-           so it folds away. A whole screen per debt made a three-debt
-           household unreadable on a phone (D-134). The summaries carry a
-           live count, so a closed drawer is never a black box. */
-        + drawer(d, 'why', 'Why you’re keeping it', whySummary(d),
-            '<div class="debt-meta">'
+        + '</div>'
+        /* Everything else is set once and then rarely touched, so it all
+           sits behind one caret: the kind, how interest behaves, why you
+           keep it, the dates, and the way out. A whole screen per debt
+           made a three-debt household unreadable on a phone (D-134); ten
+           debts are ten lines now (D-187). The summary says what is set. */
+        + drawer(d, 'more', 'More', moreSummary(d),
+            '<div class="debt-grid debt-grid--2">'
+            + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
+            + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="type">'
+            + DEBT_TYPES.map(function (t) {
+                return '<option value="' + t[0] + '"' + (d.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+              }).join('')
+            + '</select></span></label>'
             + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Feels like</span>'
             + '<span class="slaf-input-shell"><select data-debt="' + d.id + '" data-field="emotionalTag">'
             + '<option value="">Neutral</option>'
@@ -390,26 +526,25 @@
               }).join('')
             + '</select></span></label>'
             + '</div>'
-            + keepBlock(d))
-        /* Two dates on every debt: when it started, and when it is due
-           back in full. On a family loan the due date is what the minimum
-           comes from when no monthly amount was agreed. D-124. The limit
-           only means something on revolving debt — a mortgage has no limit
-           for the balance to be a share of — so it is built for every row
-           and hidden by type, never rebuilt on a change of type. D-045. */
-        + drawer(d, 'extras', 'Dates & limit', extrasSummary(d),
-            '<div class="debt-dates">'
-            + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Borrowed on</span>'
-            + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="borrowedOn" value="' + (d.borrowedOn || '') + '" aria-label="Date borrowed"/></span></label>'
-            + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Due back by</span>'
-            + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="dueOn" value="' + (d.dueOn || '') + '" aria-label="Date due back in full"/></span></label>'
-            + '</div>'
-            + '<p class="debt-hint" data-family-hint="' + d.id + '"' + (d.type === 'family' ? '' : ' hidden') + '>With a due date and no monthly amount, the minimum is the balance spread over the months left.</p>'
-            + '<div class="debt-limit" data-cardonly="' + d.id + '"' + (d.type === 'credit_card' ? '' : ' hidden') + '>'
-            + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
-            + '<p class="debt-hint">Optional, and only used for credit utilisation — '
-            + 'balance against limit, where 30% is the usual ceiling. Blank means the '
-            + 'ratio stays unavailable rather than guessed.</p></div>')
+            + interestBlock(d)
+            + drawer(d, 'why', 'Why you’re keeping it', whySummary(d), keepBlock(d))
+            + drawer(d, 'extras', 'Dates & limit', extrasSummary(d),
+                '<div class="debt-dates">'
+                + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Borrowed on</span>'
+                + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="borrowedOn" value="' + (d.borrowedOn || '') + '" aria-label="Date borrowed"/></span></label>'
+                + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Due back by</span>'
+                + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="dueOn" value="' + (d.dueOn || '') + '" aria-label="Date due back in full"/></span></label>'
+                + '</div>'
+                + '<p class="debt-hint" data-family-hint="' + d.id + '"' + (d.type === 'family' ? '' : ' hidden') + '>With a due date and no monthly amount, the minimum is the balance spread over the months left.</p>'
+                + '<div class="debt-limit" data-cardonly="' + d.id + '"' + (d.type === 'credit_card' ? '' : ' hidden') + '>'
+                + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
+                + '<p class="debt-hint">Optional, and only used for credit utilisation — '
+                + 'balance against limit, where 30% is the usual ceiling. Blank means the '
+                + 'ratio stays unavailable rather than guessed.</p></div>')
+            + '<div class="debt-acts">'
+            + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold — keep it, stop counting it">Set aside</button>'
+            + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕ Remove</button>'
+            + '</div>')
         + '<p class="debt-warn" data-warn="' + d.id + '"></p>'
         + '</div>';
     }).join('');
@@ -500,6 +635,8 @@
   }
 
   function paintFoldSummary(d) {
+    var more = document.querySelector('[data-fold-sum="' + drawerKey(d.id, 'more') + '"]');
+    if (more) more.innerHTML = moreSummary(d);
     var why = document.querySelector('[data-fold-sum="' + drawerKey(d.id, 'why') + '"]');
     if (why) why.innerHTML = whySummary(d);
     var ex = document.querySelector('[data-fold-sum="' + drawerKey(d.id, 'extras') + '"]');
@@ -517,21 +654,48 @@
       var b = scope.querySelector('[data-imode][data-mode="' + m[0] + '"]');
       if (b) b.setAttribute('aria-pressed', String(mode === m[0]));
     });
-    var show = { rate: mode !== 'never', promo: mode === 'promo', post: mode === 'promo' };
+    var show = { promo: mode === 'promo', post: mode === 'promo' };
     Object.keys(show).forEach(function (part) {
       var n = scope.querySelector('[data-ipart="' + part + '"]');
       if (n) n.hidden = !show[part];
     });
     var grid = scope.querySelector('[data-igrid]');
     if (grid) grid.classList.toggle('is-promo', mode === 'promo');
-    var lab = scope.querySelector('[data-ipart="rate"] .slaf-label');
-    if (lab) lab.textContent = mode === 'promo' ? 'Rate right now' : 'Rate';
-    var rate = scope.querySelector('input[data-field="rate"]');
+    /* The rate sits on the debt's own line (D-187): never hidden, only
+       renamed and, for no-interest, disabled at 0% by paintLive(). */
+    var row = document.querySelector('[data-row="' + d.id + '"]');
+    var shell = row ? row.querySelector('[data-ipart="rate"] .slaf-input-shell') : null;
+    if (shell) shell.setAttribute('data-col', mode === 'promo' ? 'Rate now' : 'Rate');
+    var rate = row ? row.querySelector('input[data-field="rate"]') : null;
     if (rate && rate !== document.activeElement) {
       rate.placeholder = mode === 'promo' ? '0' : 'e.g. 22.9';
     }
     var say = scope.querySelector('[data-interest-say]');
-    if (say) say.textContent = interestSentence(d, mode);
+    if (say) say.textContent = interestSentence(d, mode) + ' ' + realCostSentence(d);
+  }
+
+  /* What this debt really costs (D-247): the rate, after the deduction a
+     student loan gets, after inflation, and the pace that follows. The
+     rate a deduction saves at is the household's estimated effective rate
+     (the marginal rate needs the bracket tables this room does not load),
+     and the sentence says so. */
+  function realCostOpts(h) {
+    var a = Schema.resolveAssumptions(h, null, TABLES);
+    var tax = Schema.estimatedAnnualTaxCents(h, TABLES);
+    var gross = Schema.grossAnnualIncomeCents(h);
+    return { marginalRate: Money.isOk(tax) ? tax.effectiveRate : null, inflation: a.inflation, returnReal: a.returnReal,
+      grossAnnualCents: Money.isOk(gross) ? gross.value : null, filingStatus: h.filingStatus, conventions: TABLES ? TABLES.studentLoanConventions : null, rules: RULES };
+  }
+  function pct1(r) { return (Math.round(r * 1000) / 10) + '%'; }
+  function realCostSentence(d) {
+    if (!TABLES) return '';
+    var rc = Debt.realCost(d, realCostOpts(Spine.getProfile()));
+    if (!Money.isOk(rc)) return '';
+    var chain = 'Really costs ' + pct1(rc.realRate) + ' a year: ' + pct1(rc.nominalRate);
+    if (rc.deductionApplies && rc.taxSavedCents > 0) chain += ' → ' + pct1(rc.afterTaxRate) + ' after the interest deduction (saves ' + Money.formatCents(rc.taxSavedCents) + ' a year at an estimated ' + pct1(rc.marginalRate) + ')';
+    else if (rc.deductionApplies) chain += ' (the interest deduction is phased out at your income)';
+    chain += ' → ' + pct1(rc.realRate) + ' after ' + pct1(rc.inflation) + ' inflation. ' + rc.label + '.';
+    return chain;
   }
 
   /** An ISO day as a month a person reads, without a timezone shifting it. */
@@ -630,7 +794,7 @@
     });
   }
 
-  function field(debt, key, label, prefix, suffix, placeholder, disabled) {
+  function field(debt, key, label, prefix, suffix, placeholder, disabled, compact) {
     var raw = debt[key];
     var shown = '';
     if (Money.isEntered(raw)) {
@@ -639,13 +803,13 @@
         : Money.formatCents(raw);
     }
     if (key === 'rate' && disabled) shown = '0%';
-    return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + label + '</span>'
-      + '<span class="slaf-input-shell">'
-      + (prefix ? '<span class="slaf-affix">' + prefix + '</span>' : '')
+    return '<label class="slaf-field" style="margin:0">' + (compact ? '' : '<span class="slaf-label">' + label + '</span>')
+      + '<span class="slaf-input-shell"' + (compact ? ' data-col="' + label + '"' : '') + '>'
+      + (prefix && !compact ? '<span class="slaf-affix">' + prefix + '</span>' : '')
       + '<input type="text" inputmode="decimal" data-debt="' + debt.id + '" data-field="' + key + '" '
       + (disabled ? 'disabled ' : '')
       + 'value="' + shown + '" placeholder="' + placeholder + '" aria-label="' + label + '"/>'
-      + (suffix ? '<span class="slaf-affix">' + suffix + '</span>' : '')
+      + (suffix && !compact ? '<span class="slaf-affix">' + suffix + '</span>' : '')
       + '</span></label>';
   }
 
@@ -765,12 +929,23 @@
 
   function drawer(d, name, title, summary, body) {
     var open = openDrawers[drawerKey(d.id, name)] === true;
-    return '<details class="fold" data-fold="' + name + '" data-for="' + d.id + '"' + (open ? ' open' : '') + '>'
+    return '<details class="fold' + (name === 'more' ? ' is-more' : '') + '" data-fold="' + name + '" data-for="' + d.id + '"' + (open ? ' open' : '') + '>'
       + '<summary><span class="fold-title">' + title + '</span>'
       + '<span class="fold-sum" data-fold-sum="' + drawerKey(d.id, name) + '">' + summary + '</span></summary>'
       + '<div class="fold-body">' + body + '</div></details>';
   }
 
+  /** The one caret's summary: the kind, how interest behaves, and anything set below. */
+  function moreSummary(d) {
+    var t = DEBT_TYPES.filter(function (x) { return x[0] === d.type; })[0];
+    var bits = [t ? t[1].replace(/ or a friend$/, '') : 'Debt'];
+    var mode = interestMode(d);
+    if (mode === 'never') bits.push('no interest'); else if (mode === 'promo') bits.push('promo rate');
+    bits = bits.map(function (b, i) { return i === 0 ? esc(b) : b; });
+    var w = whySummary(d); if (w !== 'nothing set') bits.push(w);
+    var x = extrasSummary(d); if (x !== 'nothing set') bits.push(x);
+    return bits.join(' · ');
+  }
   /** What a closed drawer says about itself, so nothing hides silently. */
   function whySummary(d) {
     var bits = [];
@@ -850,9 +1025,6 @@
       + '<legend class="interest-cap">How interest works</legend>'
       + '<div class="imodes" role="group" aria-label="How interest is charged on this debt">' + seg + '</div>'
       + '<div class="igrid" data-igrid="' + d.id + '">'
-      + '<span class="ifield" data-ipart="rate" data-for="' + d.id + '"' + (mode === 'never' ? ' hidden' : '') + '>'
-      + field(d, 'rate', mode === 'promo' ? 'Rate right now' : 'Rate', null, '%', mode === 'promo' ? '0' : 'e.g. 22.9')
-      + '</span>'
       + '<span class="ifield" data-ipart="promo" data-for="' + d.id + '"' + (mode === 'promo' ? '' : ' hidden') + '>'
       + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Until</span>'
       + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id
@@ -1012,7 +1184,8 @@
   });
   el('f-extra').addEventListener('blur', function () {
     extraCents = Money.parseMoney(el('f-extra').value);
-    el('f-extra').value = Money.isEntered(extraCents) ? Money.formatCents(extraCents) : '';
+    /* Digits only: the shell's affix already carries the dollar sign. */
+    el('f-extra').value = Money.isEntered(extraCents) ? Money.formatCents(extraCents).replace(/^\$/, '') : '';
     render();
   });
   el('f-extra').addEventListener('keydown', function (evt) {
@@ -1044,6 +1217,24 @@
     }).join('') + '</dl>';
   }
 
+  /* The three finish lines. A class with nothing in it says so; one the
+     plan never clears says that; the last line is the headline again, so
+     the three read as one ladder. */
+  function finishLines(ms) {
+    if (!ms) return '';
+    function when(x, noneWord) {
+      if (!x || !x.count) return '<span class="fin-none">' + noneWord + '</span>';
+      if (x.month === null) return '<span class="fin-none">not at this payment</span>';
+      return x.month === 0 ? 'already' : monthsLabel(x.month);
+    }
+    var high = ms.highInterest;
+    return '<ol class="finish">'
+      + '<li><span>Credit cards gone</span><b>' + when(ms.cards, 'no cards listed') + '</b></li>'
+      + (high ? '<li><span>Anything above ' + Money.formatRate(high.threshold, { decimals: 1 }) + ' gone</span><b>' + when(high, 'nothing that high') + '</b></li>' : '')
+      + '<li><span>Everything gone</span><b>' + when(ms.all, 'nothing listed') + '</b></li>'
+      + '</ol>';
+  }
+
   function monthsLabel(months) {
     if (months < 12) return months + (months === 1 ? ' month' : ' months');
     var y = Math.floor(months / 12), m = months % 12;
@@ -1055,43 +1246,210 @@
     return Money.formatRate(rate, { decimals: 2 }).replace(/\.?0+%$/, '%');
   }
 
+  /* What is free each month, worked out rather than asked (D-188, D-190):
+     take-home less spending less every minimum, read two ways. The
+     ESTIMATE runs over what Start Here holds, with the intake's guesses
+     standing in for anything missing, so there is always a figure once
+     there is a pay. The REALIZED figure runs over the months closed in
+     Budget. A typed figure wins; realized beats the estimate. The engine
+     holds the arithmetic (Debt.extraCapacity); guarded, because a browser
+     can hold an older engine for a few minutes after a deploy. */
+  function capacity(h) {
+    if (!TABLES || typeof Debt.extraCapacity !== 'function') {
+      return { estimate: null, realized: null, typed: extraCents, basis: Money.isEntered(extraCents) ? 'typed' : null,
+        cents: Money.isEntered(extraCents) ? extraCents : null, shortCents: 0, guessed: [], estimateReason: 'Reload the page to see the estimate.', realizedReason: null };
+    }
+    var from = (SLAF.Gate && typeof SLAF.Gate.fillGuesses === 'function') ? SLAF.Gate.fillGuesses(h, TABLES, null) : h;
+    return Debt.extraCapacity(h, TABLES, { estimateFrom: from, typedCents: extraCents });
+  }
+  function effectiveExtraCents(h) { return capacity(h).cents; }
+  function monthName(ym) {
+    var m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+ym.slice(5, 7) - 1];
+    return m || ym;
+  }
+  function paintExtraHint(h) {
+    var hint = el('extra-hint'), rows = el('extra-basis'), box = el('f-extra');
+    if (!hint || !rows) return;
+    var c = capacity(h);
+    function row(name, figure, note, used, waiting) {
+      return '<span class="basis' + (used ? ' is-used' : '') + (waiting ? ' is-waiting' : '') + '">'
+        + '<span class="basis-name">' + name + '</span><b>' + figure + '</b><span class="basis-tag">' + (used ? 'in use' : '') + '</span><span class="basis-note">' + note + '</span></span>';
+    }
+    var est = c.estimate, real = c.realized, out = '';
+    if (est) {
+      var bits = 'pay after tax ' + Money.formatCents(est.takeHomeCents) + ', less spending ' + Money.formatCents(est.spendingCents) + ', less minimums ' + Money.formatCents(est.minimumsCents);
+      if (c.guessed.length) bits += ' (' + c.guessed.map(function (id) { return id === 'grossAnnualIncome' ? 'pay' : 'spending'; }).join(' and ') + ' guessed, fix it in Start Here)';
+      out += est.value > 0
+        ? row('Estimate', Money.formatCents(est.value), bits, c.basis === 'estimate')
+        : row('Estimate', '$0', 'your pay is ' + Money.formatCents(-est.value) + ' short of spending and the minimums: ' + bits
+            + '. If you can really pay more than the minimums, one of those is off. The usual two: the spending figure (<a href="expenses.html#spending">Expenses</a>) already counts these debt payments, or the pay after tax is worked out from your gross with a flat tax rate and your real paycheck is higher (<a href="start.html">Start Here</a>)', c.basis === 'estimate');
+    } else {
+      out += row('Estimate', 'waiting', (c.estimateReason && /pay|income/i.test(c.estimateReason) ? 'add your pay in ' : 'finish ') + '<a href="start.html">Start Here</a> and this fills in', false, true);
+    }
+    if (real) {
+      var ms = real.months;
+      out += row('Realized', Money.formatCents(Math.max(0, real.value)),
+        'from ' + ms.length + ' closed month' + (ms.length === 1 ? '' : 's') + ' in Budget, ' + monthName(ms[0]) + (ms.length > 1 ? ' to ' + monthName(ms[ms.length - 1]) : '')
+        + ': ' + Money.formatCents(real.incomeCents) + ' in, ' + Money.formatCents(real.spendingCents) + ' out, less minimums ' + Money.formatCents(real.minimumsCents)
+        + (real.value < 0 ? ' (' + Money.formatCents(-real.value) + ' short)' : ''), c.basis === 'realized');
+    } else {
+      out += row('Realized', 'waiting', 'close a month in <a href="budget.html">Budget</a> and the real figure shows here', false, true);
+    }
+    rows.innerHTML = out;
+    /* The one figure that leaves the account for debt each month. */
+    var total = el('extra-total');
+    if (total) {
+      var mins = Schema.monthlyDebtPaymentsCents(h);
+      if (!Money.isOk(mins)) {
+        total.innerHTML = '';
+      } else if (c.cents > 0) {
+        total.innerHTML = 'Going to debt each month: <b>' + Money.formatCents(mins.value + c.cents) + '</b>'
+          + '<span class="sum-how">minimums ' + Money.formatCents(mins.value) + ' + extra ' + Money.formatCents(c.cents)
+          + (c.basis === 'typed' ? ' (your figure)' : c.basis === 'realized' ? ' (realized)' : ' (estimate)') + (stopAfter ? ', until the stop' : '') + '</span>';
+      } else {
+        total.innerHTML = 'Going to debt each month: <b>' + Money.formatCents(mins.value) + '</b>'
+          + '<span class="sum-how">the minimums alone, nothing on top</span>';
+      }
+    }
+    var fallback = real ? 'the realized figure' : est ? 'the estimate' : null;
+    if (c.basis === 'typed') {
+      hint.textContent = 'Your figure, paid on top of the minimums' + (est ? ' (' + Money.formatCents(est.minimumsCents) + ')' : '') + '. Clear it to use ' + (fallback || 'the minimums alone') + '.';
+    } else if (c.basis && c.cents > 0) {
+      hint.textContent = 'Blank, so the plan puts ' + fallback + ', ' + Money.formatCents(c.cents) + ' a month, on top of the minimums. Type a figure to override.';
+    } else if (c.basis) {
+      hint.textContent = 'Blank, and ' + fallback + ' leaves nothing free after spending and the minimums, so this is the minimums alone. If your spending already counts these payments, take them out of it in Expenses.';
+    } else {
+      hint.textContent = 'Blank shows what the minimums alone do. Add your pay in Start Here and an estimate appears here.';
+    }
+    box.placeholder = c.basis !== 'typed' && c.cents > 0 ? String(Math.round(c.cents / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 'e.g. 200';
+  }
+
+  /* What the monthly figure is built from, in words (D-191): the
+     minimums as typed on each line, any the room worked out itself, and
+     the extra on top with where it came from. The owner asked "does 1000
+     mean above minimums?", so this says so every time. */
+  function perMonthNote(plan, h) {
+    var c = capacity(h);
+    var n = (plan.derivedMinimums || []).length;
+    var mins = 'the minimums as typed on each line, ' + Money.formatCents(plan.minimumsCents)
+      + (n ? ' (' + n + ' worked out by the card rule, 2% or $25, because none was typed)' : '');
+    var from = c.basis === 'typed' ? 'your figure' : c.basis === 'realized' ? 'the realized figure' : c.basis === 'estimate' ? 'the estimate' : 'nothing';
+    var extra = plan.extraMonthlyCents > 0 ? ', plus ' + Money.formatCents(plan.extraMonthlyCents) + ' on top (' + from + ')' : ', with nothing on top';
+    if (plan.stopMonth === 1) return 'Minimums alone from the start: ' + mins + '. Nothing of the kind the stop names is listed.';
+    return mins.charAt(0).toUpperCase() + mins.slice(1) + extra + (plan.stopMonth !== null ? ', until the stop; then each remaining debt gets its own minimum.' : '.');
+  }
+  function stopNote(plan) {
+    var what = plan.stopAfter === 'cards' ? 'the cards' : 'the high-rate debt';
+    if (plan.stopMonth === 1) {
+      return '<p class="slaf-reason">Nothing counts as ' + what + ' here, so the extra never starts: this is the minimums alone, '
+        + Money.formatCents(plan.monthlyBudgetAfterStopCents) + ' a month. Pick "everything is gone" below to aim the extra at what is left.</p>';
+    }
+    return '<p class="slaf-reason">The extra stops once ' + what + (plan.stopAfter === 'cards' ? ' are' : ' is') + ' gone, after ' + monthsLabel(plan.stopMonth - 1)
+      + '. From then on the rest runs on its own minimums, ' + Money.formatCents(plan.monthlyBudgetAfterStopCents)
+      + ' a month, and is gone in ' + monthsLabel(plan.value) + '. Interest over the plan counts that stretch too.</p>';
+  }
+
   function renderPlan(h, cmp) {
     h = scoped(h);
-    var plan = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: extraCents });
+    paintExtraHint(h);
+    var extraCents = effectiveExtraCents(h);
+    var plan = Debt.simulate(h, RULES, simOpts(extraCents));
     var detail = '';
     /* Every balance on one scale. Drawn only once the plan is complete, so
        a debt that still needs a rate is named in the reason, not pictured
        as if it were planned. */
-    el('plan-chart').innerHTML = !Money.isOk(plan) ? '' : Charts.bars({
-      title: 'What you owe, by balance',
-      rows: debtsOf(h).filter(function (d) { return Money.isEntered(d.balanceCents) && d.balanceCents > 0; }).map(function (d) {
-        var rate = Debt.effectiveRate(d);
-        var kept = Debt.keepReasonLabels(d, RULES).map(function (t) { return t.label.toLowerCase(); });
-        var note = Money.isEntered(rate) ? (rate === 0 && d.interestFree ? 'no interest' : rateLabel(rate)) : 'no rate';
-        /* Why this one is being kept, next to it — not on another screen. */
-        if (Debt.isExcluded(d)) note += ' · held back on purpose';
-        if (kept.length) note += ' · ' + kept.join(', ');
-        return { label: d.label || 'Debt', value: d.balanceCents, color: Charts.COLORS.debt, note: note };
-      })
+    /* Where the interest goes, a month (D-189): each live debt's balance
+       times the rate it carries this month, over twelve. This is the
+       picture that says which debt to kill first when the order is a
+       feeling as much as a sum: a card costing $60 a month beside a
+       student loan costing $84 on six times the balance. Cards in the
+       debt colour; the rest in the series. Drawn only once the plan is
+       complete, so a debt that still needs a rate is named in the reason,
+       not pictured as costing nothing. */
+    var live = debtsOf(h).filter(function (d) { return Money.isEntered(d.balanceCents) && d.balanceCents > 0; });
+    var slices = live.map(function (d, i) {
+      var rate = Debt.rateInMonth(d, 1);
+      if (!Money.isEntered(rate)) rate = Debt.effectiveRate(d);
+      var monthly = Money.isEntered(rate) ? Math.round(d.balanceCents * rate / 12) : 0;
+      var kept = Debt.keepReasonLabels(d, RULES).map(function (t) { return t.label.toLowerCase(); });
+      var note = (Money.isEntered(rate) ? rateLabel(rate) : 'no rate') + ' on ' + Money.formatCents(d.balanceCents);
+      if (Debt.isExcluded(d)) note += ' · held back';
+      if (kept.length) note += ' · ' + kept.join(', ');
+      return { label: d.label || 'Debt', value: monthly, note: note, cents: monthly,
+        color: d.type === 'credit_card' ? Charts.COLORS.debt : Charts.COLORS.series[(i + 1) % Charts.COLORS.series.length] };
     });
+    var totalMonthly = slices.reduce(function (t, x) { return t + x.value; }, 0);
+    var cardsMonthly = live.reduce(function (t, d, i) { return t + (d.type === 'credit_card' ? slices[i].value : 0); }, 0);
+    /* ...and over the whole plan (D-190): what each debt costs from now to
+       its last payment, read off the simulation's payoffs, in the same
+       colours, so the two rings answer "which one bleeds me now" and
+       "which one costs most before it is gone" side by side. */
+    var colorOf = {};
+    live.forEach(function (d, i) { colorOf[d.id] = slices[i].color; });
+    var planSlices = Money.isOk(plan) ? (plan.payoffs || []).map(function (p) {
+      return { label: p.label || 'Debt', value: p.interestPaidCents, cents: p.interestPaidCents,
+        note: 'gone in ' + monthsLabel(p.month), color: colorOf[p.debtId] || Charts.COLORS.series[0] };
+    }) : [];
+    var cardsPlan = Money.isOk(plan) ? (plan.payoffs || []).reduce(function (t, p) {
+      var d = live.filter(function (x) { return x.id === p.debtId; })[0];
+      return t + (d && d.type === 'credit_card' ? p.interestPaidCents : 0);
+    }, 0) : 0;
+    el('plan-chart').innerHTML = !Money.isOk(plan) ? '' : '<div class="plan-charts"><div>' + Charts.donut({
+      title: 'Interest a month, by debt',
+      slices: slices,
+      center: { big: Money.formatCents(totalMonthly), small: 'a month in interest' },
+      empty: 'Add a rate to each debt to see where the interest goes.'
+    }) + (totalMonthly > 0 && cardsMonthly > 0
+      ? '<p class="slaf-hint" style="margin-top:var(--space-2)">The cards are ' + Money.formatCents(cardsMonthly) + ' of that, '
+        + Math.round(cardsMonthly / totalMonthly * 100) + '%. Clear them and the rest costs ' + Money.formatCents(totalMonthly - cardsMonthly) + ' a month.</p>'
+      : '') + '</div><div>' + Charts.donut({
+      title: 'Interest over the plan, by debt',
+      slices: planSlices,
+      center: { big: Money.formatCents(plan.totalInterestCents), small: 'until it is all gone' },
+      empty: 'Nothing left to pay interest on.'
+    }) + (plan.totalInterestCents > 0 && cardsPlan > 0
+      ? '<p class="slaf-hint" style="margin-top:var(--space-2)">The cards cost ' + Money.formatCents(cardsPlan) + ' of that, '
+        + Math.round(cardsPlan / plan.totalInterestCents * 100) + '%, before they are gone.</p>'
+      : '') + '</div></div>';
     if (Money.isOk(plan)) {
+      /* Minimums alone, no stop: the do-nothing line every plan is read against. */
       var baseline = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: 0 });
+      /* Three finish lines before the figures (D-188): the cards, the
+         high-interest debt, everything. Each is read off this plan. */
+      /* Guarded: a browser can hold an older engines/debt.js for a few
+         minutes after a deploy, and a missing helper must not take the
+         whole room down with it. */
+      if (typeof Debt.milestones === 'function') {
+        detail += finishLines(Debt.milestones(plan, h, RULES, { highInterestRate: FOO && FOO.thresholds ? FOO.thresholds.highInterestDebtRate : null }));
+      }
       var rows = [
         ['Interest you’ll pay', Money.formatCents(plan.totalInterestCents),
          'The cost of borrowing, on top of what you actually owe.'],
         ['Total you’ll pay', Money.formatCents(plan.totalPaidCents),
          'Every payment added up, balances and interest together.'],
-        ['Per month', Money.formatCents(plan.monthlyBudgetCents),
-         'Every minimum, plus the extra, going out each month.']
+        ['Per month', plan.stopMonth !== null && plan.stopMonth > 1
+           ? Money.formatCents(plan.monthlyBudgetCents) + ', then ' + Money.formatCents(plan.monthlyBudgetAfterStopCents)
+           : Money.formatCents(plan.stopMonth === 1 ? plan.monthlyBudgetAfterStopCents : plan.monthlyBudgetCents),
+         perMonthNote(plan, h)]
       ];
-      if (Money.isOk(baseline) && Money.isEntered(extraCents) && extraCents > 0) {
+      if (plan.stopMonth !== null) detail += stopNote(plan);
+      if (Money.isOk(baseline) && Money.isEntered(extraCents) && extraCents > 0 && plan.stopMonth === null) {
         rows.push(['Saved vs. minimums only',
           Money.formatCents(baseline.totalInterestCents - plan.totalInterestCents),
           'Interest the extra keeps out of the lender’s hands.']);
         rows.push(['Sooner by', monthsLabel(baseline.value - plan.value),
           'How much earlier the extra gets you to zero.']);
+      } else if (Money.isOk(baseline) && plan.stopMonth !== null && plan.stopMonth > 1) {
+        /* With a stop the freed minimums stop rolling on, so against
+           minimums alone this can be cheaper and still later. Say both. */
+        var saved = baseline.totalInterestCents - plan.totalInterestCents;
+        var later = plan.value - baseline.value;
+        rows.push(['Against minimums only',
+          (saved >= 0 ? Money.formatCents(saved) + ' less' : Money.formatCents(-saved) + ' more') + ' interest',
+          (later > 0 ? 'and ' + monthsLabel(later) + ' longer to the end, because a cleared debt\u2019s minimum no longer rolls on to the rest.'
+                     : later < 0 ? 'and ' + monthsLabel(-later) + ' sooner to the end.' : 'and the same finish.')]);
       }
-      detail = dl(rows);
+      detail += dl(rows);
 
       /* If this ordering isn't the cheapest, say what choosing it costs.
          That is the honest way to present the Convenience Method: it is a
@@ -1100,7 +1458,7 @@
          letting the number move quietly. The plan is still the user's. */
       var held = debtsOf(h).filter(function (d) { return Debt.isExcluded(d) && Money.isEntered(d.balanceCents) && d.balanceCents > 0; });
       if (held.length) {
-        var freed = Debt.simulate(unheld(h), RULES, { strategyId: strategyId, extraMonthlyCents: extraCents });
+        var freed = Debt.simulate(unheld(h), RULES, simOpts(extraCents));
         var names = held.map(function (d) { return esc(d.label || 'one debt'); }).join(' and ');
         detail += '<p class="slaf-reason">You are keeping ' + names + ' on purpose, so the extra never aims '
           + (held.length === 1 ? 'there' : 'at those') + ' while anything else is live.'
@@ -1124,6 +1482,8 @@
       }
     }
     setCard('out-plan', plan, monthsLabel, detail);
+    /* The stop control only means something once there is a plan to stop. */
+    el('stop').hidden = !Money.isOk(plan);
     return plan;
   }
 
@@ -1141,6 +1501,13 @@
       .filter(function (r) { return r && Money.isOk(r); })
       .map(function (r) { return r.totalInterestCents; });
     var allTie = totals.length > 1 && totals.every(function (t) { return t === totals[0]; });
+    /* The folded card's one line: the order in use and what it costs. */
+    var sum = el('strategy-sum');
+    if (sum) {
+      var cur = cmp.results ? cmp.results[strategyId] : null;
+      var curS = RULES.strategies.filter(function (x) { return x.id === strategyId; })[0];
+      sum.textContent = cur && Money.isOk(cur) && curS ? curS.label + ' · ' + Money.formatCents(cur.totalInterestCents) + ' interest' : '';
+    }
 
     wrap.innerHTML = RULES.strategies.map(function (s) {
       var r = cmp.results ? cmp.results[s.id] : null;
@@ -1159,7 +1526,8 @@
         + '<span class="strategy-when">' + (ok ? monthsLabel(r.value) : Money.EM_DASH) + '</span>'
         + '</span>'
         + '<p class="strategy-blurb">' + s.blurb
-        + (ok ? ' <span class="strategy-first">First debt gone in ' + monthsLabel(r.payoffs[0].month) + '.</span>' : '')
+        + (ok ? ' <span class="strategy-first">First debt gone in ' + monthsLabel(r.payoffs[0].month) + '.</span>'
+              : ' <span class="strategy-first">Not run in this order: ' + esc((r && r.reason) || 'it could not be worked out') + '</span>')
         + '</p>'
         + '</button>';
     }).join('');
@@ -1215,14 +1583,19 @@
 
   function renderTimeline(plan, cmp) {
     var list = el('timeline'), reason = el('timeline-reason'), chart = el('timeline-chart');
+    var caps = ['steps-cap', 'flow-cap', 'flow-how', 'cascade-cap', 'cascade-how', 'balance-cap', 'balance-how'];
     if (!Money.isOk(plan)) {
       list.innerHTML = '';
       chart.innerHTML = '';
+      el('flow-chart').innerHTML = ''; el('cascade-chart').innerHTML = ''; el('story').innerHTML = '';
+      el('flow-why').textContent = ''; el('cascade-why').textContent = ''; el('timeline-sum').textContent = '';
+      caps.forEach(function (id) { el(id).hidden = true; });
       reason.textContent = plan.reason || '';
       reason.hidden = false;
       return;
     }
     reason.hidden = true;
+    caps.forEach(function (id) { el(id).hidden = false; });
     /* What is still owed, month by month, for the chosen order — filled —
        with the other orders as thin dashed lines behind it, and a mark
        where each debt falls. Month 0 is today's balance. */
@@ -1235,7 +1608,10 @@
        strategies — the bars above compare those. */
     var ids = Object.keys(plan.startingBalances || {});
     var colourOf = {};
-    ids.forEach(function (id, i) { colourOf[id] = Charts.COLORS.series[i % Charts.COLORS.series.length]; });
+    /* The target green is kept for money that is yours again (D-236), so no
+       debt is drawn in it. */
+    var palette = Charts.COLORS.series.filter(function (c) { return c !== Charts.COLORS.target; });
+    ids.forEach(function (id, i) { colourOf[id] = palette[i % palette.length]; });
     var perDebt = ids.map(function (id) {
       var pts = [[0, plan.startingBalances[id]]];
       for (var i = 0; i < plan.schedule.length; i++) {
@@ -1261,6 +1637,55 @@
       var d = new Date(start.getFullYear(), start.getMonth() + Math.round(m), 1);
       return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     };
+
+    /* Where this month's payment goes (D-236): the minimums and the extra
+       in, each debt in the middle, interest and balance paid down out. */
+    var flow = Debt.monthFlow(plan, 1);
+    if (Money.isOk(flow)) {
+      var C = Charts.COLORS;
+      var nodes = [{ id: 'min', label: 'Minimums', column: 0, color: C.muted }, { id: 'extra', label: 'Extra', column: 0, color: C.contributed || C.series[2] },
+        { id: 'int', label: 'Interest', column: 2, color: C.debt }, { id: 'prin', label: 'Balance paid down', column: 2, color: C.target }];
+      var links = [];
+      flow.debts.forEach(function (d) {
+        nodes.push({ id: 'd_' + d.id, label: d.label, column: 1, color: colourOf[d.id] || C.target });
+        if (d.fromMinimumCents > 0) links.push({ from: 'min', to: 'd_' + d.id, value: d.fromMinimumCents, color: colourOf[d.id] });
+        if (d.fromExtraCents > 0) links.push({ from: 'extra', to: 'd_' + d.id, value: d.fromExtraCents, color: colourOf[d.id] });
+        if (d.interestCents > 0) links.push({ from: 'd_' + d.id, to: 'int', value: d.interestCents, color: C.debt });
+        if (d.principalCents > 0) links.push({ from: 'd_' + d.id, to: 'prin', value: d.principalCents, color: colourOf[d.id] });
+      });
+      el('flow-chart').innerHTML = Charts.sankey({ title: 'Where this month\u2019s debt payment goes', nodes: nodes, links: links, height: Math.max(180, 40 + flow.debts.length * 34) });
+      var dearest = flow.debts.slice().sort(function (a, b) { return b.interestCents - a.interestCents; })[0];
+      el('flow-why').textContent = 'This month: ' + Money.formatCents(flow.value) + ' paid. Interest: ' + Money.formatCents(flow.interestCents) + '. Balance reduced: '
+        + Money.formatCents(flow.principalCents) + '. Extra above the minimums: ' + Money.formatCents(flow.extraCents) + '.'
+        + (dearest && dearest.interestCents > 0 ? ' Highest interest this month: ' + dearest.label + ', ' + Money.formatCents(dearest.interestCents) + '.' : '');
+    } else {
+      el('flow-chart').innerHTML = ''; el('flow-why').textContent = '';
+    }
+
+    /* Where it goes as each one falls (D-236): one column a phase, the
+       payment split by debt. A fallen debt's segment vanishes and its
+       minimum widens the next target's, at the same total, until the
+       last column is the month it is all free. */
+    var cas = Debt.cascade(plan);
+    if (Money.isOk(cas) && cas.phases.length) {
+      var cols = cas.phases.map(function (ph, i) {
+        return { label: i === 0 ? 'now' : monthLabel(ph.fromMonth - 1), mark: i === 0,
+          parts: ids.filter(function (id) { return ph.perDebtCents[id] > 0; }).map(function (id) { return { label: plan.debtLabels[id] || 'Debt', value: ph.perDebtCents[id], color: colourOf[id] }; }) };
+      });
+      cols.push({ label: monthLabel(cas.doneMonth), mark: true, parts: [{ label: 'Yours again', value: cas.freeCents, color: Charts.COLORS.target }] });
+      el('cascade-chart').innerHTML = Charts.columns({ title: 'Where the payment goes as each debt falls', columns: cols, divider: cas.phases.length, captions: ['paying it down', 'free'] });
+      var first = cas.phases[0];
+      el('cascade-why').textContent = first.rollsOntoLabel
+        ? 'First payoff: ' + first.fallsLabel + ', ' + longMonth(first.toMonth) + '. Its ' + Money.formatCents(first.freedCents) + ' a month then goes to ' + first.rollsOntoLabel + '. The monthly total stays ' + Money.formatCents(plan.monthlyBudgetCents) + ' until ' + longMonth(cas.doneMonth) + ', when all debts are paid.'
+        : 'First payoff: ' + first.fallsLabel + ', ' + longMonth(first.toMonth) + ', freeing ' + Money.formatCents(first.freedCents) + ' a month. All debts paid: ' + longMonth(cas.doneMonth) + '.';
+      el('timeline-sum').textContent = 'all paid ' + monthLabel(cas.doneMonth) + ' · ' + Money.formatCents(cas.freeCents) + ' a month freed';
+    } else {
+      el('cascade-chart').innerHTML = ''; el('cascade-why').textContent = ''; el('timeline-sum').textContent = '';
+    }
+
+    /* In plain words (D-236): the whole plan as four sentences, before any
+       picture. Every figure is the cascade's or the flow's. */
+    el('story').innerHTML = storyHtml(plan, cas, Money.isOk(flow) ? flow : null, longMonth);
     chart.innerHTML = Charts.area({
       title: 'Balance remaining, month by month, one line per debt',
       series: [{ label: 'All debts (' + plan.strategy.label.toLowerCase() + ' order)', color: Charts.COLORS.debt, points: remaining(plan), fill: true, width: 1 }]
@@ -1277,12 +1702,59 @@
          actually holds a debt back, said as such (D-132). */
       var tags = Debt.keepReasonLabels(d, RULES).map(function (t) { return '<i title="' + esc(t.hint || '') + '">' + esc(t.label) + '</i>'; });
       if (Debt.isExcluded(d)) tags.unshift('<i class="is-held" title="You are keeping this one on purpose: it is ordered last and gets only its minimum">held back on purpose</i>');
-      return '<li><span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;background:' + (colourOf[p.debtId] || Charts.COLORS.target) + '"></i>' + esc(p.label || 'Debt')
+      /* What falling frees, and where it goes (D-236): onto the next
+         target while the plan pushes, back to you once it stops. */
+      /* What falling frees, and where it goes (D-236): onto the next
+         target while the plan pushes, back to you once it stops. The next
+         target's new monthly figure is read off the next phase. */
+      var idx = Money.isOk(cas) ? cas.phases.map(function (x) { return x.fallsId; }).indexOf(p.debtId) : -1;
+      var ph = idx >= 0 ? cas.phases[idx] : null, nextPh = idx >= 0 ? cas.phases[idx + 1] : null;
+      var then = '';
+      if (ph && Money.isEntered(ph.freedCents) && ph.freedCents > 0) {
+        if (ph.rollsOntoLabel) {
+          var was = ph.perDebtCents[ph.rollsOntoId] || 0, now = nextPh ? (nextPh.perDebtCents[ph.rollsOntoId] || 0) : null;
+          then = '<span class="tl-then">Frees <b>' + Money.formatCents(ph.freedCents) + ' a month</b>. It goes to ' + esc(ph.rollsOntoLabel)
+            + (now !== null && now > was ? ' (' + Money.formatCents(was) + ' → about <b>' + Money.formatCents(now) + ' a month</b>)' : '') + '.</span>';
+        } else {
+          then = '<span class="tl-then">Frees <b>' + Money.formatCents(ph.freedCents) + ' a month</b>. It no longer goes to debt.</span>';
+        }
+      }
+      var after = ph ? (idx === 0 ? monthsLabel(p.month) + ' from now' : ph.months + (ph.months === 1 ? ' month' : ' months') + ' after the previous payoff') : monthsLabel(p.month);
+      return '<li><span><i class="tl-step">' + (idx + 1) + '</i><i style="display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle;background:' + (colourOf[p.debtId] || Charts.COLORS.target) + '"></i><b>' + esc(p.label || 'Debt') + '</b> paid off'
         + (tags.length ? '<span class="tagline">' + tags.join('') + '</span>' : '')
-        + '<small style="display:block;color:var(--color-text-faint)">from ' + Money.formatCents(plan.startingBalances[p.debtId]) + '</small></span>'
-        + '<span class="tl-when">' + longMonth(p.month) + ' · ' + monthsLabel(p.month) + ' · '
-        + Money.formatCents(p.interestPaidCents) + ' interest</span></li>';
-    }).join('');
+        + '<small style="display:block;color:var(--color-text-faint)">Balance today ' + Money.formatCents(plan.startingBalances[p.debtId]) + ' · interest paid until then ' + Money.formatCents(p.interestPaidCents) + '</small>' + then + '</span>'
+        + '<span class="tl-when">' + longMonth(p.month) + '<small style="display:block">' + after + '</small></span></li>';
+    }).join('') + (Money.isOk(cas) ? '<li class="is-free"><span><b>All debts paid.</b><span class="tl-then"><b>' + Money.formatCents(cas.freeCents) + ' a month</b> no longer goes to debt' + (cas.extraMonthlyCents > 0 ? ' (' + Money.formatCents(cas.minimumsCents) + ' minimums + ' + Money.formatCents(cas.extraMonthlyCents) + ' extra)' : '') + '.</span></span>'
+        + '<span class="tl-when">' + longMonth(cas.doneMonth) + '<small style="display:block">' + monthsLabel(cas.doneMonth) + ' from now</small></span></li>' : '');
+  }
+
+  /* The plan in plain words (D-236, flattened D-237): what this measures,
+     this month's split, the first payoff and what it frees, the end. */
+  function storyHtml(plan, cas, flow, longMonth) {
+    if (!Money.isOk(cas) || !cas.phases.length) return '';
+    var n = cas.phases.length;
+    var first = cas.phases[0], second = cas.phases[1] || null;
+    var p0 = '<b>What this shows:</b> the month each debt is paid off, in the ' + esc(plan.strategy.label.toLowerCase()) + ' order, and how much monthly payment each payoff frees.';
+    var p1 = '<b>Monthly payment:</b> ' + Money.formatCents(plan.monthlyBudgetCents) + ' across ' + n + (n === 1 ? ' debt' : ' debts') + '.';
+    if (flow) p1 += ' Of that, ' + Money.formatCents(flow.interestCents) + ' is interest and ' + Money.formatCents(flow.principalCents) + ' reduces balances.';
+    p1 += ' Extra above the minimums: ' + Money.formatCents(plan.extraMonthlyCents) + '.';
+    var p2 = '<b>First payoff:</b> ' + esc(first.fallsLabel) + ', ' + longMonth(first.toMonth) + ' (' + monthsLabel(first.toMonth) + ' from now).';
+    if (first.rollsOntoLabel) {
+      var was = first.perDebtCents[first.rollsOntoId] || 0, now = second ? (second.perDebtCents[first.rollsOntoId] || 0) : 0;
+      p2 += ' Its ' + Money.formatCents(first.freedCents) + ' a month then goes to ' + esc(first.rollsOntoLabel)
+        + (now > was ? ' (' + Money.formatCents(was) + ' → about ' + Money.formatCents(now) + ' a month)' : '')
+        + (second ? ', which is paid off ' + second.months + (second.months === 1 ? ' month' : ' months') + ' later' : '') + '.';
+      if (n >= 3) {
+        var lastThree = cas.phases.slice(-3);
+        var span = lastThree[lastThree.length - 1].toMonth - lastThree[0].fromMonth + 1;
+        p2 += ' Each payoff adds its payment to the next debt, so later payoffs come faster: the first takes ' + monthsLabel(first.months) + '; the last three happen within ' + monthsLabel(span) + '.';
+      }
+    } else {
+      p2 += ' Its ' + Money.formatCents(first.freedCents) + ' a month no longer goes to debt.';
+    }
+    var p3 = '<b>All debts paid:</b> ' + longMonth(cas.doneMonth) + ' (' + monthsLabel(cas.doneMonth) + ' from now). From then on ' + Money.formatCents(cas.freeCents) + ' a month no longer goes to debt.'
+      + (plan.totalInterestCents > 0 ? ' Total interest paid over the plan: ' + Money.formatCents(plan.totalInterestCents) + '. A larger extra shortens the plan and lowers that total.' : '');
+    return '<p>' + p0 + '</p><p>' + p1 + '</p><p>' + p2 + '</p><p>' + p3 + '</p>';
   }
 
   /* The list of debts is the one part of this page that holds live inputs,
@@ -1299,7 +1771,7 @@
     debtForm.request();
     renderArchived(h);
     /* Every ordering is run once here and shared by the three outputs. */
-    var cmp = Debt.compareStrategies(scoped(h), RULES, { extraMonthlyCents: extraCents });
+    var cmp = Debt.compareStrategies(scoped(h), RULES, simOpts(effectiveExtraCents(scoped(h))));
     var plan = renderPlan(h, cmp);
     renderStrategies(h, cmp);
     renderTimeline(plan, cmp);
@@ -1384,6 +1856,13 @@
 
   /* ---------- actions ---------------------------------------------------- */
 
+  /* The stop select is static markup, built once; the room only ever
+     writes its .value and one option's text. */
+  el('f-stop').addEventListener('change', function () {
+    stopAfter = el('f-stop').value || '';
+    if (Prefs) Prefs.set('debt.stopAfter', stopAfter || null);
+    renderNow();
+  });
   el('btn-demo').addEventListener('click', function () {
     var h = Spine.getProfile();
     if ((h.debts || []).length
@@ -1423,6 +1902,7 @@
   function jumpToHash() {
     if (!location.hash) return;
     var target = document.getElementById(location.hash.slice(1));
+    if (target && target.tagName === 'DETAILS') target.open = true;
     if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   window.addEventListener('hashchange', jumpToHash);
@@ -1433,10 +1913,20 @@
 
   SLAF.Progress.mount(ROOM_ID);
 
-  Reference.load(['debtRules']).then(function (tables) {
+  Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults', 'studentLoanConventions', 'returnBands']).then(function (tables) {
+    TABLES = tables;
     RULES = tables.debtRules;
-    renderNow();
-    jumpToHash();
+    FOO = tables.fooRules || null;
+    if (highRate() !== null) el('opt-high').textContent = 'anything at ' + Money.formatRate(highRate(), { decimals: 1 }) + ' or more is gone, then minimums on the rest';
+    el('f-stop').value = stopAfter;
+    /* A failure here is the room's own, not the table's: say so, and
+       leave what did paint on screen. */
+    try { renderNow(); jumpToHash(); }
+    catch (e) {
+      var n = el('load-notice');
+      n.hidden = false; n.className = 'notice is-error';
+      n.textContent = 'Part of this room could not draw (' + e.message + '). Reload the page; if it stays, the site is mid-update and clears in a few minutes.';
+    }
   }).catch(function (err) {
     var notice = el('load-notice');
     notice.hidden = false;

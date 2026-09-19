@@ -7,7 +7,7 @@
      portfolios               three portfolios, not one list — liquid
                               financial · illiquid financial · non-financial
      confidenceWeightedNetWorth  Σ value × how sure you are, beside the plain
-     liquidityLadder          reachable today · this month · this year · never,
+     liquidityLadder          the five piles as reachable today · this month · this year · never,
                               with pre-59½ money gated into "never" except
                               the Roth basis
      bridgeGap                the years between your FI date and 59½, and
@@ -28,20 +28,22 @@
       Money: require('../shared/money.js'),
       Schema: require('../shared/schema.js'),
       Tier0: require('./tier0.js'),
-      Fire: require('./fire.js')
+      Fire: require('./fire.js'),
+      Ownership: require('./ownership.js')
     };
   } else {
     deps = {
       Money: root.SLAF && root.SLAF.Money,
       Schema: root.SLAF && root.SLAF.Schema,
       Tier0: root.SLAF && root.SLAF.Tier0,
-      Fire: root.SLAF && root.SLAF.Fire
+      Fire: root.SLAF && root.SLAF.Fire,
+      Ownership: root.SLAF && root.SLAF.Ownership
     };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Fire);
+  var api = factory(deps.Money, deps.Schema, deps.Tier0, deps.Fire, deps.Ownership);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Statement = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Fire) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tier0, Fire, Ownership) {
   'use strict';
 
   var ACCESS_AGE_DEFAULT = 59.5;
@@ -120,25 +122,30 @@
   /**
    * liquidityLadder(household, rules, opts)
    *   opts.age  — overrides the primary person's age (tests)
-   * Bands by effective liquidity 1-4. Money behind an access age you have
-   * not reached goes to "never" — except a Roth's basis, which is reachable
-   * at its own liquidity. With no age the gate cannot be applied and the
-   * result says so rather than pretending everything is reachable.
+   * 15.8: a VIEW of the five piles (Schema.tierOf), not its own data.
+   * Cash is reachable today; taxable investments within a month; retirement
+   * money within a year once its access age is reached (a Roth's basis at
+   * any age); property, and the other pile, never. Money behind an access
+   * age you have not reached goes to "never". With no age the gate cannot
+   * be applied and the result says so rather than pretending.
    */
+  var TIER_BAND = { cash: 'today', taxable: 'thisMonth', retirement: 'thisYear', property: 'never', other: 'never' };
   function liquidityLadder(household, rules, opts) {
     if (!rules) return Money.incomplete('Access rules are not loaded.', ['accessRules']);
     var assets = valued(household);
     if (!assets.length) return Money.incomplete('Add something you own to build the ladder.', ['assets']);
     var age = opts && Money.isEntered(opts.age) ? opts.age : Schema.primaryAge(household);
-    var bands = { 1: 0, 2: 0, 3: 0, 4: 0 };
-    var gatedCents = 0, unknownCents = 0, unratedCount = 0, rows = [];
+    var bands = { today: 0, thisMonth: 0, thisYear: 0, never: 0 };
+    var byTier = { cash: 0, taxable: 0, retirement: 0, property: 0, other: 0 };
+    var gatedCents = 0, unknownCents = 0, overriddenCount = 0, rows = [];
     assets.forEach(function (a) {
+      var t = Schema.tierOf(a);
+      byTier[t.tier] += a.valueCents;
+      if (!t.derived) overriddenCount++;
       var rule = Schema.assetRule(a, rules);
-      var liq = Schema.assetLiquidity(a, rules);
-      if (!liq.rated) unratedCount++;
-      var accessAge = Schema.assetAccessAge(a, rules);
+      var accessAge = t.tier === 'retirement' ? Schema.assetAccessAge(a, rules) : null;
       var gated = Money.isEntered(age) && Money.isEntered(accessAge) && age < accessAge;
-      var band = liq.value;
+      var band = TIER_BAND[t.tier];
       var reachable = a.valueCents, locked = 0;
       if (gated) {
         /* Roth: contributions come out any time; only the earnings wait. */
@@ -148,19 +155,18 @@
       }
       if (a.taxCharacter === 'unknown') unknownCents += a.valueCents;
       bands[band] += reachable;
-      bands[4] += locked;
+      if (band !== 'never') bands.never += locked;
       gatedCents += locked;
-      rows.push({ asset: a, band: band, rated: liq.rated, accessAge: accessAge, gated: gated,
+      rows.push({ asset: a, tier: t.tier, derived: t.derived, band: band, accessAge: accessAge, gated: gated,
         reachableCents: reachable, lockedCents: locked });
     });
-    return Money.ok(bands[1] + bands[2] + bands[3], {
-      bands: {
-        today: bands[1], thisMonth: bands[2], thisYear: bands[3], never: bands[4]
-      },
-      cumulative: { today: bands[1], thisMonth: bands[1] + bands[2], thisYear: bands[1] + bands[2] + bands[3] },
+    return Money.ok(bands.today + bands.thisMonth + bands.thisYear, {
+      bands: bands,
+      cumulative: { today: bands.today, thisMonth: bands.today + bands.thisMonth, thisYear: bands.today + bands.thisMonth + bands.thisYear },
+      byTier: byTier,
       gatedCents: gatedCents,
       unknownCents: unknownCents,
-      unratedCount: unratedCount,
+      overriddenCount: overriddenCount,
       ageKnown: Money.isEntered(age),
       age: Money.isEntered(age) ? age : null,
       rows: rows,
@@ -322,9 +328,15 @@
     var balance = mortgage && Money.isEntered(mortgage.balanceCents) ? mortgage.balanceCents : 0;
     var equity = asset.valueCents - balance;
     var debtService = Money.isEntered(p.pitiMonthlyCents) ? p.pitiMonthlyCents * 12 : 0;
-    var capRate = Money.safeDivide(noi, asset.valueCents, { denominatorName: 'value' });
-    var dscr = debtService > 0 ? Money.safeDivide(noi, debtService, { denominatorName: 'debtService' }) : null;
-    var coc = Money.safeDivide(noi - debtService, equity, { denominatorName: 'equity', zeroReason: 'No equity yet.' });
+    /* The ratios come from engines/ownership.js, so a rental you own and a
+       deal you are weighing are measured the same way (D-224). What this
+       record can divide by is today's equity, not the cash that was put in
+       years ago, so the honest name for it is the return on equity; the
+       cash-on-cash needs a figure this record does not hold. */
+    var ratios = Ownership.metrics({
+      noiAnnualCents: noi, debtServiceAnnualCents: debtService,
+      valueCents: asset.valueCents, equityCents: equity
+    });
     return Money.ok(noi, {
       noiCents: noi,
       vacancyRate: vacancy, vacancyAssumed: !Money.isEntered(p.vacancyRate),
@@ -332,9 +344,13 @@
       debtServiceAnnualCents: debtService,
       equityCents: equity,
       valueCents: asset.valueCents,
-      capRate: Money.isOk(capRate) ? capRate.value : null,
-      dscr: dscr && Money.isOk(dscr) ? dscr.value : null,
-      cashOnCash: Money.isOk(coc) ? coc.value : null,
+      capRate: ratios.capRate,
+      dscr: ratios.dscr,
+      returnOnEquity: ratios.returnOnEquity,
+      /* Named, not computed: dividing by equity and calling it cash-on-cash
+         flatters a place that has gone up in value. */
+      cashOnCash: null,
+      cashOnCashReason: 'Cash-on-cash is the cash flow over the cash you actually put in. This record holds what the place is worth today, not what you paid to get into it, so what is shown is the return on today’s equity.',
       cashFlowMonthlyCents: Math.round((noi - debtService) / 12)
     });
   }

@@ -137,8 +137,12 @@
     var interestMonthly = principal > 0 ? Math.round(interestInFirstMonths(principal, rate, paymentCents, MONTHS) / MONTHS) : 0;
     var principalMonthly = paymentCents - interestMonthly;
 
-    /* The carrying costs, each a yearly share of price ÷ 12. */
-    var taxCents = Math.round(price * c.propertyTaxRate / MONTHS);
+    /* The carrying costs, each a yearly share of price ÷ 12. Property tax
+       at the state's effective rate when the household has a state in the
+       table (15.6, D-181); the national convention otherwise. */
+    var stateTax = Schema.stateCell(tables, h.state, 'propertyTaxEffectiveRate');
+    var propertyTaxRate = stateTax ? stateTax.value : c.propertyTaxRate;
+    var taxCents = Math.round(price * propertyTaxRate / MONTHS);
     var insuranceCents = Math.round(price * c.insuranceRate / MONTHS);
     var maintenanceCents = Math.round(price * c.maintenanceRate / MONTHS);
     var ownCents = paymentCents + taxCents + insuranceCents + maintenanceCents;
@@ -189,6 +193,10 @@
       interestMonthlyCents: interestMonthly,
       taxCents: taxCents,
       insuranceCents: insuranceCents,
+      propertyTaxRate: propertyTaxRate,
+      propertyTaxSource: stateTax ? 'state' : 'national',
+      propertyTaxState: stateTax ? stateTax.code : null,
+      propertyTaxAsOf: stateTax ? stateTax.asOf : null,
       maintenanceCents: maintenanceCents,
       principalCents: principal,
       downCents: downCents,

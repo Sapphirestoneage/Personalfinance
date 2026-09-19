@@ -158,6 +158,48 @@
 
   var storage = { status: 'fresh', storedVersion: null, targetVersion: null, writable: true };
 
+  /* ---- The page and the core must be the same build (D-204) --------------
+     Every HTML file carries <meta name="slaf-build"> and the schema carries
+     Schema.BUILD. A half-finished deploy, or a cached old page over a new
+     core, is the one case where a write could reshape a household with
+     code that was never tested together. So a mismatch refuses to write:
+     the session still reads, the footer says "Updating, reload in a
+     moment", and nothing is saved until the two agree. */
+  function pageBuild() {
+    if (typeof document === 'undefined' || !document.querySelector) return null;
+    var m = document.querySelector('meta[name="slaf-build"]');
+    return m && m.getAttribute('content') ? m.getAttribute('content') : null;
+  }
+  function stalePage() {
+    var page = pageBuild();
+    var core = Schema.BUILD || null;
+    if (!page || !core || page === core) return null;
+    return { page: page, core: core };
+  }
+
+  /* ---- Ask the browser to keep the data (D-204) ---------------------------
+     Safari drops a site's storage after seven days without a visit unless
+     the site is "persistent" or installed to the Home Screen. Asked once
+     per session, on the first real write; the answer is remembered in
+     Prefs where the module is loaded, so a room can say which it is. */
+  var persistAsked = false;
+  var persistResult = null;
+  function requestPersist() {
+    if (persistAsked) return;
+    persistAsked = true;
+    try {
+      if (typeof navigator === 'undefined' || !navigator.storage || typeof navigator.storage.persist !== 'function') return;
+      var p = navigator.storage.persist();
+      if (!p || typeof p.then !== 'function') return;
+      p.then(function (granted) {
+        persistResult = granted === true;
+        var g = typeof self !== 'undefined' ? self : (typeof global !== 'undefined' ? global : null);
+        var Prefs = g && g.SLAF && g.SLAF.Prefs;
+        if (Prefs && Prefs.set) Prefs.set('storage.persisted', persistResult);
+      }).catch(function () { /* the answer is no */ });
+    } catch (e) { /* no storage manager here */ }
+  }
+
   /**
    * Bring a parsed blob up to the current schema version, or refuse.
    * Returns { ok: true, household } or { ok: false, reason, storedVersion }.
@@ -223,10 +265,13 @@
   function load() {
     if (cache) return cache;
     loadUncached();
+    var stale = stalePage();
+    if (stale) storage = { status: 'stale-page', storedVersion: storage.storedVersion, targetVersion: storage.targetVersion, writable: false, pageBuild: stale.page, coreBuild: stale.core };
     lastSaved = clone(cache);
     /* First reading of every owned field, so the first save() has
        something to compare against. See registerFieldReaders(). */
     if (lastReadings === null) lastReadings = readings();
+    if (fieldReaders && migrateFieldMeta(cache, new Date().toISOString())) save({ record: false });
     return cache;
   }
 
@@ -288,7 +333,10 @@
     /* Registered after the first load: prime from the current state so the
        next save compares against something real rather than stamping
        every field at once. */
-    if (cache && fieldReaders) lastReadings = readings();
+    if (cache && fieldReaders) {
+      lastReadings = readings();
+      if (migrateFieldMeta(cache, new Date().toISOString())) save({ record: false });
+    }
   }
 
   function readings() {
@@ -304,10 +352,25 @@
      field it changes, so the one-pager can say "from The Statement" beside
      a number it did not enter. D-095. */
   var currentRoom = null;
+  /* How the next write arrived (15.1, 15.10; D-181): tagWrite() sets it,
+     the next save() stamps every changed field with it and clears it.
+     Untagged writes are typed, sure, as of now. */
+  var pendingMeta = null;
+  function tagWrite(m) {
+    var t = m || {};
+    pendingMeta = {
+      source: Schema.SOURCES.indexOf(t.source) !== -1 ? t.source : 'typed',
+      confidence: Schema.CONFIDENCES.indexOf(t.confidence) !== -1 ? t.confidence : 'sure',
+      asOf: t.asOf || null
+    };
+    return pendingMeta;
+  }
   function stampChanged(now) {
     if (!cache) return;
     cache.meta.confirmedAt = cache.meta.confirmedAt || {};
     cache.meta.source = cache.meta.source || {};
+    cache.meta.fields = cache.meta.fields || {};
+    var tag = pendingMeta || { source: 'typed', confidence: 'sure', asOf: null };
     var current = readings();
     if (lastReadings !== null) {
       Object.keys(current).forEach(function (id) {
@@ -316,19 +379,90 @@
           if (currentRoom) cache.meta.source[id] = currentRoom;
           /* A real number replaced a guess: it is no longer one. D-094. */
           if (cache.meta.guessed && cache.meta.guessed[id]) delete cache.meta.guessed[id];
+          if (current[id] === null || current[id] === undefined) { delete cache.meta.fields[id]; return; }
+          cache.meta.fields[id] = { asOf: tag.asOf || now, source: tag.source, confidence: tag.confidence, room: currentRoom || null };
+          /* A value arrived: "not sure yet" no longer applies (D-209). */
+          if (cache.meta.notSure && cache.meta.notSure[id]) delete cache.meta.notSure[id];
         }
       });
     }
+    pendingMeta = null;
     lastReadings = current;
   }
 
-  /** "Yes, still $9,500" — re-stamp a field without changing its value. */
+  /** "Yes, still $9,500" — re-stamp a field without changing its value:
+      as of now, and sure (Confirm, in the Ledger's three verbs). */
   function confirm(fieldId) {
     var h = load();
     h.meta.confirmedAt = h.meta.confirmedAt || {};
-    h.meta.confirmedAt[fieldId] = new Date().toISOString();
+    h.meta.fields = h.meta.fields || {};
+    var now = new Date().toISOString();
+    h.meta.confirmedAt[fieldId] = now;
+    var prev = h.meta.fields[fieldId] || {};
+    h.meta.fields[fieldId] = { asOf: now, source: prev.source || 'typed', confidence: 'sure', room: prev.room || currentRoom || null };
     save(); notify();
     return h.meta.confirmedAt[fieldId];
+  }
+  /** "Not sure yet" on a row (G2.7, D-209): no value, never zero, with the
+      month the person expects to know by (YYYY-MM) or null. key is a field
+      id or fieldId:itemId. Pass null as opts to take the mark off. */
+  function setNotSure(key, opts) {
+    var h = load();
+    h.meta.notSure = h.meta.notSure || {};
+    if (opts === null) { delete h.meta.notSure[key]; }
+    else {
+      var by = opts && opts.expectedBy ? String(opts.expectedBy) : null;
+      h.meta.notSure[key] = { at: new Date().toISOString(), expectedBy: by && /^\d{4}-\d{2}$/.test(by) ? by : null };
+    }
+    save(); notify();
+    return h.meta.notSure[key] || null;
+  }
+  function notSureOf(key) { return Schema.notSure(load(), key); }
+  /** The life change waiting for its sheet (G2.6, D-209): the record, or null. */
+  function reopenPending() { var h = load(); return h.meta.reopen && typeof h.meta.reopen === 'object' ? h.meta.reopen : null; }
+  function setReopen(rec) { var h = load(); h.meta.reopen = rec || null; save(); notify(); return h.meta.reopen; }
+  /** Change the facts about a number without changing the number:
+      "roughly, for now", a statement date, where it came from. */
+  function setFieldMeta(fieldId, patch) {
+    var h = load();
+    h.meta.fields = h.meta.fields || {};
+    var prev = h.meta.fields[fieldId] || Schema.meta(h, fieldId);
+    var p = patch || {};
+    h.meta.fields[fieldId] = {
+      asOf: p.asOf || prev.asOf || new Date().toISOString(),
+      source: Schema.SOURCES.indexOf(p.source) !== -1 ? p.source : (prev.source || 'typed'),
+      confidence: Schema.CONFIDENCES.indexOf(p.confidence) !== -1 ? p.confidence : (prev.confidence || 'sure'),
+      room: p.room || prev.room || null
+    };
+    if (h.meta.fields[fieldId].asOf) { h.meta.confirmedAt = h.meta.confirmedAt || {}; h.meta.confirmedAt[fieldId] = h.meta.fields[fieldId].asOf; }
+    save(); notify();
+    return h.meta.fields[fieldId];
+  }
+  /** The migration (15.1): every entered figure that has no facts about it
+      gets them. A field the spine stamped since D-056 was typed by the
+      person and is sure as of that stamp; a bare value from before is
+      migrated, ROUGHLY, as of the migration: somebody typed it once, so it
+      is rounded to the hundred, not the thousand, and the Refresh room asks
+      them to confirm it (15.4 changed this from unknown, D-181). Runs once
+      the field map is registered, and again on each load in case a field
+      is new. */
+  function migrateFieldMeta(h, when) {
+    if (!fieldReaders || !h || !h.meta) return 0;
+    h.meta.fields = h.meta.fields || {};
+    var current;
+    try { current = fieldReaders(h) || {}; } catch (e) { return 0; }
+    var n = 0;
+    Object.keys(current).forEach(function (id) {
+      if (current[id] === null || current[id] === undefined || h.meta.fields[id]) return;
+      var at = h.meta.confirmedAt && h.meta.confirmedAt[id];
+      var guessed = !!(h.meta.guessed && h.meta.guessed[id]);
+      h.meta.fields[id] = at
+        ? { asOf: at, source: 'typed', confidence: guessed ? 'roughly' : 'sure', room: (h.meta.source && h.meta.source[id]) || null }
+        : { asOf: when, source: 'migrated', confidence: 'roughly', room: null };
+      n++;
+    });
+    if (n && !h.meta.fieldsMigratedAt) h.meta.fieldsMigratedAt = when;
+    return n;
   }
 
   /** ISO timestamp of the last set/confirm, or null when never stamped —
@@ -345,7 +479,7 @@
      entry for a batch). Undo applies the befores, redo the afters. The
      stacks live in meta so they survive a reload and go with a reset. */
   var HISTORY_CAP = 100;
-  var HISTORY_SKIP = { 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.source': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.createdAt': true };
+  var HISTORY_SKIP = { 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.source': true, 'meta.fields': true, 'meta.fieldsMigratedAt': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.createdAt': true };
   var lastSaved = null;
   var applyingHistory = false;
   var batchDepth = 0, batchChanges = null, batchLabel = null;
@@ -460,6 +594,7 @@
       return;
     }
     writeRaw(STORAGE_KEY, JSON.stringify(cache));
+    requestPersist();
   }
 
   /**
@@ -479,7 +614,10 @@
       storedVersion: storage.storedVersion,
       targetVersion: storage.targetVersion,
       writable: storage.writable,
-      quarantineKey: storage.writable ? null : QUARANTINE_KEY
+      quarantineKey: storage.status === 'corrupt' || storage.status === 'ahead' || storage.status === 'no-migration' ? QUARANTINE_KEY : null,
+      pageBuild: storage.pageBuild || pageBuild(),
+      coreBuild: Schema.BUILD || null,
+      persisted: persistResult
     };
   }
 
@@ -528,6 +666,30 @@
     return JSON.parse(JSON.stringify(load()));
   }
 
+  /**
+   * The household with every active scenario block whose dates cover
+   * `date` applied (D-178). Blocks live beside the household, never in it;
+   * this is the only way one reaches a room. opts.blocks overrides the
+   * store's active set (a test, or a planner toggling). Never a write.
+   */
+  function householdAt(date, opts) {
+    var h = getProfile();
+    var B = blocksModule();
+    if (!B) return h;
+    var list = opts && opts.blocks ? opts.blocks : (scenariosModule() ? scenariosModule().activeBlocks() : []);
+    return B.applyAll(h, list, date);
+  }
+  function blocksModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('./blocks.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Blocks ? g.SLAF.Blocks : null;
+  }
+  function scenariosModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('./scenarios.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Scenarios ? g.SLAF.Scenarios : null;
+  }
+
   /* ---- Public write ----------------------------------------------------- */
 
   var COMPUTED_GUARD = ['netWorth', 'netWorthCents', 'savingsRate', 'fireNumber',
@@ -559,9 +721,17 @@
     Object.keys(p).forEach(function (key) {
       if (key === 'schemaVersion') return;
       if (key === 'expenses') {
-        next.expenses.monthlyEssential = Object.assign({}, next.expenses.monthlyEssential,
-          (p.expenses && p.expenses.monthlyEssential) || {});
-        if (p.expenses && p.expenses.entries) next.expenses.entries = p.expenses.entries;
+        /* The four buckets merge a key at a time (D-172); the lines replace
+           whole; the legacy pair, if a caller still sends one, is kept on
+           the record and not read. */
+        var px = p.expenses || {};
+        if (px.needs) Schema.FAT_NEEDS.forEach(function (k) { if (px.needs[k] && px.needs[k].monthlyCents !== undefined) next.expenses.needs[k].monthlyCents = px.needs[k].monthlyCents; });
+        if (px.wants) {
+          if (px.wants.totalCents !== undefined) next.expenses.wants.totalCents = px.wants.totalCents;
+          if (px.wants.therapy !== undefined) next.expenses.wants.therapy = px.wants.therapy ? { monthlyCents: px.wants.therapy.monthlyCents === undefined ? null : px.wants.therapy.monthlyCents } : null;
+        }
+        if (px.monthlyEssential) next.expenses.monthlyEssential = Object.assign({}, next.expenses.monthlyEssential || {}, px.monthlyEssential);
+        if (px.entries) next.expenses.entries = px.entries;
         return;
       }
       if (key === 'goals') { next.goals = p.goals; return; }
@@ -660,6 +830,16 @@
 
   function upsertPerson(person) {
     var h = load();
+    var before = person && person.id ? Schema.personById(h, person.id) : null;
+    if (before && before.employmentStatus && person.employmentStatus !== undefined
+        && person.employmentStatus !== null && person.employmentStatus !== before.employmentStatus) {
+      autoSnapshot('before-situation-change');
+      /* The rows that change meaning get one short sheet, nothing is
+         cleared (G2.6, D-209). Only the primary adult's situation. */
+      if (before.role === 'adult' && Schema.primaryPerson(h) && Schema.primaryPerson(h).id === before.id) {
+        h.meta.reopen = { field: 'employmentStatus', from: before.employmentStatus, to: person.employmentStatus, at: new Date().toISOString(), dismissed: false };
+      }
+    }
     var result = upsertIn(h.people, person);
     save(); notify();
     return result;
@@ -742,18 +922,72 @@
    * SPEC.md §12.3 — a tracked figure NEVER overwrites the estimate. Both are
    * stored; `source` records which one is current.
    */
-  function setMonthlyExpenses(cents, kind) {
+  /* ---- Expenses: FAT, wants, therapy (D-172) ---------------------------
+     setFat(patch)            write any of { food, accommodation,
+                              transportation, wants, therapy } as cents;
+                              a key left out is untouched, null clears
+     setTherapyTracked(on)    the toggle: on creates the line (blank), off
+                              removes it from the shape entirely
+     setFatFromLines()        roll the typical-month lines into the four
+                              buckets - Cash Flow's "use the lines as my
+                              month" button, never automatic
+     setMonthlyExpenses(c)    one number for the month: what is not split
+                              out. With needs typed, the total less the
+                              needs; else the whole of it. Kept for Start
+                              Here's single box and older callers; the
+                              second argument is ignored. */
+  function setFat(patch) {
     var h = load();
-    var pair = h.expenses.monthlyEssential;
-    if (kind === 'tracked') {
-      pair.trackedValueCents = cents;
-      pair.source = 'tracked';
-    } else {
-      pair.estimatedValueCents = cents;
-      if (!Money.isEntered(pair.trackedValueCents)) pair.source = 'estimated';
+    var p = patch || {};
+    var e = h.expenses;
+    Schema.FAT_NEEDS.forEach(function (k) { if (p[k] !== undefined) e.needs[k].monthlyCents = p[k]; });
+    if (p.wants !== undefined) e.wants.totalCents = p.wants;
+    if (p.therapy !== undefined) {
+      if (p.therapy === null && !e.wants.therapy) { /* off stays off */ }
+      else e.wants.therapy = { monthlyCents: p.therapy };
     }
     save(); notify();
-    return JSON.parse(JSON.stringify(pair));
+    return JSON.parse(JSON.stringify(e));
+  }
+  /* 15.5: the named yearly lines. Owned by Expenses (D-192). */
+  function upsertAnnualLine(line) {
+    var h = load();
+    h.expenses.annual = h.expenses.annual || [];
+    var merged = upsertIn(h.expenses.annual, Schema.createAnnualLine(line));
+    save(); notify();
+    return merged;
+  }
+  function removeAnnualLine(id) {
+    var h = load();
+    var list = h.expenses.annual || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) { list.splice(i, 1); save(); notify(); return true; }
+    }
+    return false;
+  }
+  function setTherapyTracked(on) {
+    var h = load();
+    h.expenses.wants.therapy = on ? (h.expenses.wants.therapy || { monthlyCents: null }) : null;
+    save(); notify();
+    return !!h.expenses.wants.therapy;
+  }
+  function setFatFromLines() {
+    var h = load();
+    var lines = Schema.fatFromLines(h.expenses.entries);
+    Schema.FAT_NEEDS.forEach(function (k) { if (lines[k] !== null) h.expenses.needs[k].monthlyCents = lines[k]; });
+    if (lines.wants !== null) h.expenses.wants.totalCents = lines.wants;
+    save(); notify();
+    return lines;
+  }
+  function setMonthlyExpenses(cents) {
+    var h = load();
+    var e = h.expenses;
+    var needs = 0;
+    Schema.FAT_NEEDS.forEach(function (k) { if (Money.isEntered(e.needs[k].monthlyCents)) needs += e.needs[k].monthlyCents; });
+    if (e.wants.therapy && Money.isEntered(e.wants.therapy.monthlyCents)) needs += e.wants.therapy.monthlyCents;
+    e.wants.totalCents = Money.isEntered(cents) ? Math.max(0, cents - needs) : null;
+    save(); notify();
+    return JSON.parse(JSON.stringify(e));
   }
 
   /* ---- Goals ------------------------------------------------------------ */
@@ -923,7 +1157,7 @@
     var h = load();
     h.skillTree = Schema.createSkillTree(h.skillTree || {});
     if (on === false || on === null) delete h.skillTree.state[id];
-    else h.skillTree.state[id] = { state: 'done', on: typeof on === 'string' && on ? on : new Date().toISOString().slice(0, 10), by: by === 'proof' ? 'proof' : 'self' };
+    else h.skillTree.state[id] = { state: 'done', on: typeof on === 'string' && on ? on : Schema.localDay(), by: by === 'proof' ? 'proof' : 'self' };
     pendingLabel = label || ((on === false || on === null ? 'Reopened skill: ' : 'Skill done: ') + id);
     save(); notify();
     return h.skillTree.state[id] || null;
@@ -934,7 +1168,7 @@
     h.exercises = Schema.createExercisesLog(h.exercises || {});
     if (done === false) { delete h.exercises.done[id]; delete h.exercises.results[id]; }
     else {
-      h.exercises.done[id] = typeof done === 'string' && done ? done : new Date().toISOString().slice(0, 10);
+      h.exercises.done[id] = typeof done === 'string' && done ? done : Schema.localDay();
       if (result && typeof result === 'object') h.exercises.results[id] = result;
     }
     pendingLabel = label || ((done === false ? 'Undid exercise: ' : 'Exercise done: ') + id);
@@ -1232,11 +1466,34 @@
       fields: (entry && entry.fields) || (function () { load(); return readings(); })(),
       assumptionsUsed: (entry && entry.assumptionsUsed) || null,
       referenceVersions: (entry && entry.referenceVersions) || null,
-      computedOutputs: (entry && entry.computedOutputs) || null
+      computedOutputs: (entry && entry.computedOutputs) || null,
+      /* Why it was taken: null for one the person froze on purpose, or
+         'before-import', 'before-merge', 'before-situation-change' for
+         the automatic one the spine takes ahead of a bulk change (D-204). */
+      reason: (entry && entry.reason) || null,
+      /* The moving rows as the Refresh saw them, by row key (fieldId or
+         fieldId:itemId), so the next refresh can say what changed since
+         last time, line by line (G2.5, D-209). null on every other snapshot. */
+      rows: (entry && entry.rows) || null,
+      /* The confidence and source of every field at this moment, so a later
+         "since last time" can tell money that moved from knowledge added
+         (H2, D-211): { id: { confidence, source, asOf } }. */
+      fieldMeta: (entry && entry.fieldMeta) || (function () { load(); var out = {}; var f = (cache.meta && cache.meta.fields) || {}; Object.keys(f).forEach(function (id) { out[id] = { confidence: f[id].confidence, source: f[id].source, asOf: f[id].asOf }; }); return out; })()
     };
     all.push(record);
     writeRaw(SNAPSHOT_KEY, JSON.stringify(all));
     return record;
+  }
+  /* The automatic snapshot: only when there is something to keep, and
+     never twice within a minute for the same reason (a double tap). */
+  function autoSnapshot(reason) {
+    var h = load();
+    var anything = (h.people || []).length || (h.assets || []).length || (h.debts || []).length
+      || (h.expenses && (h.expenses.entries || []).length);
+    if (!anything) return null;
+    var last = latestSnapshot();
+    if (last && last.reason === reason && (Date.now() - Date.parse(last.timestamp)) < 60000) return last;
+    return appendSnapshot({ reason: reason });
   }
 
   /* Snapshots are READ BACK now, not just written. Two reads:
@@ -1309,8 +1566,8 @@
 
   function exportFilename(now) {
     var d = now ? new Date(now) : new Date();
-    var iso = isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
-    return 'slaf-household-' + iso.slice(0, 10) + '.json';
+    if (isNaN(d.getTime())) d = new Date();
+    return 'slaf-household-' + Schema.localDay(d) + '.json';
   }
 
   /**
@@ -1358,6 +1615,7 @@
     var check = inspectImport(text);
     if (!check.ok) return check;
     if (!Importer || typeof Importer.merge !== 'function') return { ok: false, reason: 'The importer is not loaded.' };
+    autoSnapshot('before-merge');
     var merged = Importer.merge(getProfile(), Schema.createHousehold(check.household));
     var h = load();
     var keep = { undoStack: h.meta.undoStack || [], redoStack: h.meta.redoStack || [], visitedRooms: h.meta.visitedRooms || [] };
@@ -1378,11 +1636,33 @@
   function importJSON(text) {
     var check = inspectImport(text);
     if (!check.ok) return check;
+    /* What was here is frozen first, so a wrong file is one snapshot away
+       from the numbers it replaced. The file's snapshots do not lose it. */
+    var kept = autoSnapshot('before-import');
+    var snaps = (check.snapshots || []).slice();
+    if (kept && !snaps.some(function (s) { return s && s.id === kept.id; })) {
+      snaps.push(kept);
+      snaps.sort(function (a, b) { return String(a.timestamp).localeCompare(String(b.timestamp)); });
+    }
     writeRaw(STORAGE_KEY, JSON.stringify(check.household));
-    writeRaw(SNAPSHOT_KEY, JSON.stringify(check.snapshots));
+    writeRaw(SNAPSHOT_KEY, JSON.stringify(snaps));
     cache = null;
     lastReadings = null;
     load();
+    /* A figure the file carries no facts about arrived by import, as of
+       the file's own date when it has one (15.1). */
+    if (fieldReaders && cache) {
+      var when = check.exportedAt || new Date().toISOString();
+      cache.meta.fields = cache.meta.fields || {};
+      var cur = readings();
+      var touched = 0;
+      Object.keys(cur).forEach(function (id) {
+        if (cur[id] === null || cur[id] === undefined) return;
+        var f = cache.meta.fields[id];
+        if (!f || f.source === 'migrated') { cache.meta.fields[id] = { asOf: when, source: 'imported', confidence: f && f.confidence !== 'unknown' ? f.confidence : 'roughly', room: null }; touched++; }
+      });
+      if (touched) save({ record: false });
+    }
     notify();
     return { ok: true, reason: null, household: getProfile(), snapshots: listSnapshots() };
   }
@@ -1462,6 +1742,56 @@
     });
   }
 
+  /** The site root this page lives under, for a link that opens the front door. */
+  function siteRoot() {
+    if (typeof location === 'undefined') return '';
+    return location.origin + location.pathname.replace(/rooms\/[^/]*$/, '').replace(/[^/]*$/, '');
+  }
+
+  /**
+   * sendToDevice() — the phone's own share sheet (D-200): the export as a
+   * file where the browser can share files (mail, messages, a drive, a
+   * nearby device), else the link. Promise<{ how: 'file' | 'link' }>;
+   * rejects with name 'AbortError' when the person closes the sheet, and
+   * with a plain message where there is no sheet at all.
+   */
+  function sendToDevice() {
+    if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+      return Promise.reject(new Error('This browser has no share sheet. Download the file or copy the link instead.'));
+    }
+    var title = 'SPARKS: my numbers';
+    var text = 'My SPARKS household. On the other device, open Your Data and load this file.';
+    /* A browser that has navigator.share and then refuses it is common: a
+       link opened inside another app (a chat, a mail client) lands in that
+       app's own browser, which says it has a share sheet and answers
+       "Permission denied". The caller gets one plain error, marked
+       `blocked`, so it can hand over the file another way (D-203). */
+    function blocked(err) {
+      var e = new Error('This browser would not open the share sheet. That happens inside another app\u2019s browser: open this page in Chrome or Safari and try again, or download the file and send it from Downloads.');
+      e.name = 'NotAllowedError'; e.blocked = true; e.cause = err;
+      return e;
+    }
+    function isAbort(err) { return err && err.name === 'AbortError'; }
+    function asLink() {
+      return shareFragment().then(function (frag) {
+        return navigator.share({ title: title, url: siteRoot() + frag }).then(function () { return { how: 'link' }; });
+      }).catch(function (err) { if (isAbort(err)) throw err; throw blocked(err); });
+    }
+    var attempt = null;
+    try {
+      if (typeof File === 'function' && typeof navigator.canShare === 'function') {
+        var file = new File([exportJSON()], exportFilename(), { type: 'application/json' });
+        if (navigator.canShare({ files: [file] })) {
+          attempt = navigator.share({ files: [file], title: title, text: text }).then(function () { return { how: 'file' }; });
+        }
+      }
+    } catch (e) { attempt = null; /* no file sharing here: the link below */ }
+    if (!attempt) return asLink();
+    /* The file refused: the link is a second try, since some sheets take a
+       URL and not a file. Refused twice is refused. */
+    return attempt.catch(function (err) { if (isAbort(err)) throw err; return asLink(); });
+  }
+
   /** The fragment for a URL: '#h=' + code. */
   function shareFragment(obj) {
     return toShareCode(obj).then(function (code) { return '#h=' + code; });
@@ -1496,6 +1826,7 @@
     STORAGE_KEY: STORAGE_KEY,
     SNAPSHOT_KEY: SNAPSHOT_KEY,
     getProfile: getProfile,
+    householdAt: householdAt,
     updateProfile: updateProfile,
     onChange: onChange,
     registerRoom: registerRoom,
@@ -1510,6 +1841,11 @@
     upsertScenario: upsertScenario,
     removeById: removeById,
     setMonthlyExpenses: setMonthlyExpenses,
+    setFat: setFat,
+    upsertAnnualLine: upsertAnnualLine,
+    removeAnnualLine: removeAnnualLine,
+    setTherapyTracked: setTherapyTracked,
+    setFatFromLines: setFatFromLines,
     upsertGoal: upsertGoal,
     removeGoal: removeGoal,
     upsertExpenseEntry: upsertExpenseEntry,
@@ -1543,6 +1879,9 @@
     assignCategoryToValue: assignCategoryToValue,
     listSnapshots: listSnapshots,
     appendSnapshot: appendSnapshot,
+    autoSnapshot: autoSnapshot,
+    setNotSure: setNotSure, notSureOf: notSureOf, reopenPending: reopenPending, setReopen: setReopen,
+    stalePage: stalePage,
     latestSnapshot: latestSnapshot,
     snapshotDelta: snapshotDelta,
     registerFieldReaders: registerFieldReaders,
@@ -1569,8 +1908,11 @@
     toShareCode: toShareCode,
     fromShareCode: fromShareCode,
     shareFragment: shareFragment,
+    sendToDevice: sendToDevice,
+    siteRoot: siteRoot,
     codeFromFragment: codeFromFragment,
     reset: reset,
+    tagWrite: tagWrite, setFieldMeta: setFieldMeta, migrateFieldMeta: function () { var h = load(); var n = migrateFieldMeta(h, new Date().toISOString()); if (n) save({ record: false }); return n; },
     _reload: _reload,
     _migrateLegacy: migrateLegacy
   };

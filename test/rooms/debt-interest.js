@@ -54,7 +54,7 @@ module.exports = function (t) {
     && /Every payment added up, balances and interest together\./.test(page));
   checkTrue('… on a fixed column so the digits line up', /grid-template-columns: minmax\(0, auto\) 9\.5ch 1fr/.test(page));
   checkTrue('the four orderings read as a table with the captions said once', /class="strategy-cols"/.test(page)
-    && /grid-template-columns: minmax\(0, 1fr\) 8\.5ch 8ch/.test(page));
+    && /grid-template-columns: minmax\(0, 1fr\) 9ch 10ch/.test(page));
   checkTrue('a tie badges nothing: four identical figures under a "cheapest" flag reads as a bug', /if \(allTie\) badge = '';/.test(page)
     && /var allTie = totals\.length > 1/.test(page));
 };

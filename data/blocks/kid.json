@@ -1,0 +1,106 @@
+{
+  "id": "block_kid",
+  "version": "1.0",
+  "asOf": "2026-09-09",
+  "type": "kid",
+  "label": "Kid",
+  "source": "A child as the lines it adds: the birth's out-of-pocket cost once, the everyday cost of a small child a month (data/child_cost.json, the 0-to-2 band), and childcare a month by state (data/childcare_by_state.json) when it is wanted.",
+  "confidence": "convention",
+  "confidenceNote": "Averages. Childcare varies by city as much as by state; the state figure is the fallback for a real quote.",
+  "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",
+  "questions": [
+    {
+      "id": "when",
+      "ask": "When",
+      "kind": "month"
+    },
+    {
+      "id": "childcare",
+      "ask": "Childcare",
+      "kind": "yesno"
+    },
+    {
+      "id": "state",
+      "ask": "State",
+      "kind": "state"
+    }
+  ],
+  "lines": [
+    {
+      "id": "birth",
+      "label": "The birth, out of pocket",
+      "path": "assets.cashCents",
+      "kind": "oneoff",
+      "delta": {
+        "neg": {
+          "table": "childCost",
+          "path": [
+            "birthOutOfPocketCents"
+          ]
+        }
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "A typical out-of-pocket for a birth with insurance (child_cost.json)."
+    },
+    {
+      "id": "everyday",
+      "label": "A small child, a month",
+      "path": "expenses.applied",
+      "kind": "monthly",
+      "delta": {
+        "table": "childCost",
+        "path": [
+          "bands",
+          0,
+          "monthlyCents"
+        ]
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "The 0-to-2 band: food, clothes, gear, the everyday."
+    },
+    {
+      "id": "childcare",
+      "label": "Childcare, a month",
+      "path": "expenses.applied",
+      "kind": "monthly",
+      "delta": {
+        "coalesce": [
+          {
+            "table": "childcareByState",
+            "path": [
+              "states",
+              "@state",
+              "monthlyCents"
+            ]
+          },
+          {
+            "table": "childcareByState",
+            "path": [
+              "national",
+              "monthlyCents"
+            ]
+          }
+        ]
+      },
+      "source": "national",
+      "confidence": "convention",
+      "note": "Full-time care at the state average; the national figure when the state is not set.",
+      "when": {
+        "eq": [
+          "@childcare",
+          true
+        ]
+      },
+      "stateSource": {
+        "table": "childcareByState",
+        "path": [
+          "states",
+          "@state",
+          "monthlyCents"
+        ]
+      }
+    }
+  ]
+}

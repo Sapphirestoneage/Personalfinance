@@ -130,6 +130,9 @@
    * opts, all optional except where the household cannot supply them:
    *   preset                   'quit' | 'laid_off' | 'business'
    *   cushionCents             defaults to the household's cash
+   *   rates                    { withdrawalRate, capitalGainsRate } from
+   *                            engines/tax, for the piles behind the cash
+   *                            (meta.tiers, 15.8); absent = before tax
    *   monthlyExpensesCents     defaults to the household's
    *   expenseCutCents          what you would trim, per month
    *   extraMonthlyCostCents    health cover you now pay yourself, per month
@@ -146,6 +149,7 @@
   function project(household, tables, opts) {
     var o = opts || {};
     var preset = PRESETS[o.preset] || PRESETS.quit;
+    var t = tables || {};
 
     var cushion = Money.isEntered(o.cushionCents)
       ? o.cushionCents : valueOf(Schema.cashCents(household));
@@ -216,6 +220,14 @@
     var steadyInflow = other + Math.round(rampTarget * rampShare(shape, HORIZON_MONTHS, rampMonths));
     var steadyBurn = outflow - steadyInflow;
 
+    /* 15.8: what is behind the cushion. The one runway function draws the
+       piles in order at this month's outflow, with nothing coming in: the
+       cushion is the cash step; taxable, then retirement, follow, net of
+       the tax and penalty on the way out when the room passes the rates
+       (o.rates) and before tax, said so, when it does not. D-181. */
+    var tiers = Schema.runwayMonths(household, Schema.DRAW_ORDER_DEFAULT,
+      { rates: o.rates || null, rules: t.accessRules || null, monthlyExpensesCents: outflow });
+
     return Money.ok(sustainable ? HORIZON_MONTHS : runway, {
       preset: preset,
       sustainable: sustainable,
@@ -225,6 +237,7 @@
       cushionCents: cushion,
       severanceCents: severance,
       startingCents: cushion + severance,
+      tiers: tiers,
       monthlyExpensesCents: expenses,
       /* 'current' unless the room passed the floor (D-082). */
       expenseBasis: o.expenseBasis || 'current',

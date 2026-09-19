@@ -1,0 +1,224 @@
+{
+  "id": "aca",
+  "version": "2.0",
+  "asOf": "2026-09-10",
+  "source": "HHS poverty guidelines (2025 and 2026) and the ACA premium tax credit applicable percentage tables for 2025 (enhanced, ARPA/IRA) and 2026 (current law after the enhancement expired). Lane 2, section 3 (L-3).",
+  "confidence": "sourced",
+  "confidenceNote": "The 2026 guidelines and the 2026 applicable percentages were read from search results quoting HHS and Rev. Proc. 2025-25; the 2025 rows from memory of the same sources (verify: true). The legislative question, whether Congress restores the enhanced credits for 2026, is a fact that can change under this file: `currentLaw.changeDate` says what changed and when.",
+  "note": "The older data/aca_2026.json carries a single FPL row and the 2026 table for engines/tax.js; DECIDE: point the engine here and retire that file, or keep both in sync (tests/data.test.js asserts the 2025 base and the top percentage agree).",
+  "refresh": {
+    "month": "January (poverty guidelines) and August (applicable percentages, Rev. Proc. for the next plan year)",
+    "against": "aspe.hhs.gov poverty guidelines; the IRS revenue procedure under IRC 36B(b)(3)(A)(ii); Congress.gov for any premium tax credit legislation."
+  },
+  "fpl": {
+    "2025": {
+      "contiguous": {
+        "base": {
+          "value": 15650,
+          "asOf": "2025-01-17",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/prior-hhs-poverty-guidelines-federal-register-references/2025-poverty-guidelines",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "perAdditionalPerson": {
+          "value": 5500,
+          "asOf": "2025-01-17",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/prior-hhs-poverty-guidelines-federal-register-references/2025-poverty-guidelines",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "note": "Household of one is `base`; each additional person adds `perAdditionalPerson`. Guidelines are published each January and govern marketplace coverage for the FOLLOWING plan year (2025 guidelines price 2026 coverage)."
+      },
+      "alaska": {
+        "base": {
+          "value": 19550,
+          "asOf": "2025-01-17",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/prior-hhs-poverty-guidelines-federal-register-references/2025-poverty-guidelines",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "perAdditionalPerson": {
+          "value": 6880,
+          "asOf": "2025-01-17",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/prior-hhs-poverty-guidelines-federal-register-references/2025-poverty-guidelines",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "note": "Household of one is `base`; each additional person adds `perAdditionalPerson`. Guidelines are published each January and govern marketplace coverage for the FOLLOWING plan year (2025 guidelines price 2026 coverage)."
+      },
+      "hawaii": {
+        "base": {
+          "value": 17990,
+          "asOf": "2025-01-17",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/prior-hhs-poverty-guidelines-federal-register-references/2025-poverty-guidelines",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "perAdditionalPerson": {
+          "value": 6330,
+          "asOf": "2025-01-17",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/prior-hhs-poverty-guidelines-federal-register-references/2025-poverty-guidelines",
+          "confidence": "recalled",
+          "verify": true,
+          "historical": true
+        },
+        "note": "Household of one is `base`; each additional person adds `perAdditionalPerson`. Guidelines are published each January and govern marketplace coverage for the FOLLOWING plan year (2025 guidelines price 2026 coverage)."
+      }
+    },
+    "2026": {
+      "contiguous": {
+        "base": {
+          "value": 15960,
+          "asOf": "2026-01-15",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
+          "confidence": "sourced"
+        },
+        "perAdditionalPerson": {
+          "value": 5680,
+          "asOf": "2026-01-15",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
+          "confidence": "sourced"
+        },
+        "note": "Household of one is `base`; each additional person adds `perAdditionalPerson`. Guidelines are published each January and govern marketplace coverage for the FOLLOWING plan year (2025 guidelines price 2026 coverage)."
+      },
+      "alaska": {
+        "base": {
+          "value": 19950,
+          "asOf": "2026-01-15",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
+          "confidence": "sourced"
+        },
+        "perAdditionalPerson": {
+          "value": 7100,
+          "asOf": "2026-01-15",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
+          "confidence": "sourced"
+        },
+        "note": "Household of one is `base`; each additional person adds `perAdditionalPerson`. Guidelines are published each January and govern marketplace coverage for the FOLLOWING plan year (2025 guidelines price 2026 coverage)."
+      },
+      "hawaii": {
+        "base": {
+          "value": 18360,
+          "asOf": "2026-01-15",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
+          "confidence": "sourced"
+        },
+        "perAdditionalPerson": {
+          "value": 6530,
+          "asOf": "2026-01-15",
+          "source": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
+          "confidence": "sourced"
+        },
+        "note": "Household of one is `base`; each additional person adds `perAdditionalPerson`. Guidelines are published each January and govern marketplace coverage for the FOLLOWING plan year (2025 guidelines price 2026 coverage)."
+      }
+    }
+  },
+  "applicablePercentage": {
+    "2025": {
+      "value": [
+        {
+          "fromFpl": 0,
+          "toFpl": 1.5,
+          "from": 0,
+          "to": 0
+        },
+        {
+          "fromFpl": 1.5,
+          "toFpl": 2,
+          "from": 0,
+          "to": 0.02
+        },
+        {
+          "fromFpl": 2,
+          "toFpl": 2.5,
+          "from": 0.02,
+          "to": 0.04
+        },
+        {
+          "fromFpl": 2.5,
+          "toFpl": 3,
+          "from": 0.04,
+          "to": 0.06
+        },
+        {
+          "fromFpl": 3,
+          "toFpl": 4,
+          "from": 0.06,
+          "to": 0.085
+        },
+        {
+          "fromFpl": 4,
+          "toFpl": null,
+          "from": 0.085,
+          "to": 0.085
+        }
+      ],
+      "asOf": "2024-08-01",
+      "source": "https://www.irs.gov/pub/irs-drop/rp-24-35.pdf",
+      "confidence": "recalled",
+      "verify": true,
+      "note": "The enhanced table under the American Rescue Plan Act as extended by the Inflation Reduction Act: 0% up to 150% of FPL, 8.5% cap with no 400% cliff.",
+      "cliffMultiple": null,
+      "historical": true
+    },
+    "2026": {
+      "value": [
+        {
+          "fromFpl": 0,
+          "toFpl": 1.33,
+          "from": 0.021,
+          "to": 0.021
+        },
+        {
+          "fromFpl": 1.33,
+          "toFpl": 1.5,
+          "from": 0.0314,
+          "to": 0.0419
+        },
+        {
+          "fromFpl": 1.5,
+          "toFpl": 2,
+          "from": 0.0419,
+          "to": 0.066
+        },
+        {
+          "fromFpl": 2,
+          "toFpl": 2.5,
+          "from": 0.066,
+          "to": 0.0844
+        },
+        {
+          "fromFpl": 2.5,
+          "toFpl": 3,
+          "from": 0.0844,
+          "to": 0.0996
+        },
+        {
+          "fromFpl": 3,
+          "toFpl": 4,
+          "from": 0.0996,
+          "to": 0.0996
+        }
+      ],
+      "asOf": "2025-07-18",
+      "source": "https://www.irs.gov/pub/irs-drop/rp-25-25.pdf",
+      "confidence": "sourced",
+      "note": "Rev. Proc. 2025-25. Within a band the percentage rises linearly from `from` at `fromFpl` to `to` at `toFpl`. Above 400% of FPL there is no credit (the cliff).",
+      "cliffMultiple": 4
+    }
+  },
+  "currentLaw": {
+    "changeDate": {
+      "value": "2026-01-01",
+      "asOf": "2026-01-01",
+      "source": "https://www.congress.gov/crs-product/R48290",
+      "confidence": "sourced",
+      "note": "The enhanced premium tax credits of 2021 to 2025 expired on 2025-12-31 under current law: for 2026 the pre-ARPA percentage table applies and the 400% of FPL eligibility ceiling returns. CRS R48290. DECIDE: re-check whether legislation has restored the enhancement before relying on the 2026 table."
+    }
+  }
+}

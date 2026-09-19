@@ -50,7 +50,7 @@ const DND_CHARACTER = (() => {
     Schema.createAsset({ id: 'dnd_asset_investments', category: 'investment', valueCents: 4800000, liquid: false })
   ];
   h.debts = [Schema.createDebt({ id: 'dnd_debt_total', balanceCents: 2160000, rate: 0.22, type: 'credit_card' })];
-  h.expenses = { monthlyEssential: { estimatedValueCents: 315000, trackedValueCents: null, source: 'estimated' }, entries: [] };
+  h.expenses = { wants: { totalCents: 315000 }, entries: [] };
   h.dndProfile = { fixedCostShare: 0.55, yearsSustained: 4, disruptionSurvived: true,
     healthCoverage: 2, automatedSaving: 'most' };
   return h;
@@ -245,7 +245,7 @@ const CASES = [
     /* The Refresh page: every box opens holding the current figure, and
        typing over it must replace it, not append to it — a phone selects
        nothing on tap, so the case types with clearFirst. */
-    room: '/rooms/refresh.html',
+    room: '/rooms/ledger.html#since-last-time',
     container: '#fields',
     seed: 'demo',
     fields: [
@@ -267,7 +267,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/sleep-at-night.html',
+    room: '/rooms/runway.html#at-3am',
     container: '#coverage',
     seed: 'demo',
     fields: [
@@ -525,13 +525,13 @@ const CASES = [
       return [
         ['the share landed as a ratio', r.pct, 0.05],
         ['the target landed, in cents', r.target, 120000],
-        ['and the number is the target with the share worked back', r.number.indexOf('$1,200') !== -1 && r.number.indexOf('1.7%') !== -1, true]
+        ['and the number is the target with the share worked back', r.number.indexOf('$1,200') !== -1 && r.number.indexOf('1.7%') !== -1 ? true : r.number, true]
       ];
     }
   },
   {
     /* Between Jobs (D-098): the two owned boxes land on person.unemployment. */
-    room: '/rooms/between-jobs.html',
+    room: '/rooms/runway.html#job-hunting',
     container: '#room-inputs',
     seed: 'demo',
     prepare: async (page) => {
@@ -600,12 +600,17 @@ const CASES = [
       { sel: '#asset-list .asset:last-child input[data-field="valueCents"]', type: '5000' }
     ],
     expect: async (page) => {
+      /* 15.8: the pile select stores the override and moves the flag. */
+      await page.selectOption('#asset-list .asset:last-child select[data-field="tier"]', 'taxable');
+      await page.waitForTimeout(400);
       const a = await page.evaluate(() =>
         (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets
           .filter(x => x.category === 'real_estate' || x.category === 'vehicle').pop());
       return [
         ['the name was kept', a.label, 'The car'],
-        ['the value was kept', a.valueCents, 500000]
+        ['the value was kept', a.valueCents, 500000],
+        ['the pile was stored', a.tier, 'taxable'],
+        ['and the liquid flag follows it', a.liquid, true]
       ];
     }
   },
@@ -614,10 +619,11 @@ const CASES = [
        place a careless rebuild would close the keyboard mid-word. The results
        under it are rewritten on every keystroke, so if the box itself were
        ever regenerated this case would catch it. D-034, D-153. */
-    room: '/rooms/doors.html',
+    room: '/rooms/ledger.html#arrangements',
     container: '#search-host',
     seed: 'demo',
     prepare: async (page) => {
+      await page.waitForSelector('[data-layout="search"]');
       await page.tap('[data-layout="search"]');
       await page.waitForTimeout(250);
       /* Stamp the node. If any keystroke rebuilt the box, the stamp goes with
@@ -625,16 +631,16 @@ const CASES = [
          D-034 property here — focus cannot be asserted after the fact,
          because the harness deliberately blurs before expect() runs so that
          every other room's focusout commit fires (see the blur below). */
-      await page.evaluate(() => { document.getElementById('q').__stamp = 'before-typing'; });
+      await page.evaluate(() => { document.getElementById('lay-q').__stamp = 'before-typing'; });
     },
     fields: [
-      { sel: '#q', type: 'rent' }
+      { sel: '#lay-q', type: 'rent' }
     ],
     expect: async (page) => {
       const r = await page.evaluate(() => ({
-        value: document.getElementById('q').value,
-        stamp: document.getElementById('q').__stamp || '(node was replaced)',
-        hits: document.querySelectorAll('.door').length,
+        value: document.getElementById('lay-q').value,
+        stamp: document.getElementById('lay-q').__stamp || '(node was replaced)',
+        hits: document.querySelectorAll('#lay-body .door').length,
         all: document.querySelectorAll('#search-host input').length,
         wrote: (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).meta.frontDoor
       }));
@@ -700,8 +706,8 @@ const CASES = [
     /* The front page. It is the most input-heavy page in the repo and it is
        hand-built vanilla — the exact place the keyboard bug would come back
        if the build-once rule slipped. */
-    room: '/rooms/foo-ladder.html',
-    container: '.wrap',
+    room: '/rooms/foo-ladder.html#every-month',
+    container: '#view-ladder .wrap',
     seed: 'demo',
     prepare: async (page) => {
       /* The deductible is a stored fact now, owned by Sleep At Night. Give
@@ -737,8 +743,11 @@ const CASES = [
       const step1 = await page.evaluate(() =>
         document.body.innerText.includes('in cash & savings covers your')
         || document.body.innerText.includes('in cash & savings.'));
+      /* Count inside the ladder reading only: the lump-sum reading next door
+         has its own "what the waiting cash earns" box, which is a different
+         question and not a second place to enter the balance (D-231). */
       const oneCashRow = await page.evaluate(() =>
-        Array.from(document.querySelectorAll('.slaf-label'))
+        Array.from(document.querySelectorAll('#view-ladder .slaf-label'))
           .filter(l => /cash/i.test(l.textContent)).length);
       return [
         ['the prepaid goal was kept', v.goal, '20000'],
@@ -810,7 +819,7 @@ const CASES = [
     /* The Windfall stores nothing — every input is page-local. So the check
        is that what you typed is still in the box after the page has
        recomputed around it, which is the failure the guard exists for. */
-    room: '/rooms/windfall.html',
+    room: '/rooms/foo-ladder.html#a-lump-sum',
     container: '#the-money',
     seed: 'demo',
     fields: [
@@ -967,25 +976,115 @@ const CASES = [
     }
   },
   {
-    /* The Income room's entry form: built once, saved on a tap. */
+    /* The Income room's entry form: built once, saved on a tap. Since D-193
+       it folds behind one line, so a real tap on the summary has to open it
+       first; the fields it reveals have to survive a tap and typing; and
+       Save has to fold it back with the entry in the ledger. */
     room: '/rooms/income.html',
     container: '#add-form',
     seed: 'demo',
+    prepare: async (page) => { await page.tap('#add-fold > summary'); await page.tap('#form-more > summary'); },
     fields: [
+      { sel: '#f-amount', type: '2400' },
       { sel: '#f-label', type: 'Day job' },
-      { sel: '#f-amount', type: '2400' }
+      { sel: '#f-withheld', type: '480' }
     ],
     expect: async (page) => {
+      const wasOpen = await page.evaluate(() => document.getElementById('add-fold').open);
       await page.selectOption('#f-frequency', 'fortnightly');
       await page.tap('#btn-save');
       await page.waitForTimeout(300);
       const e = await page.evaluate(() => ((JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).ledger || {}).income[0]);
-      const listed = await page.evaluate(() => document.querySelectorAll('#entries li').length);
+      const r = await page.evaluate(() => ({
+        listed: document.querySelectorAll('#entries li').length,
+        picture: !document.getElementById('picture').hidden && document.querySelectorAll('#pic-sources .row').length,
+        open: document.getElementById('add-fold').open,
+        say: document.getElementById('form-say').textContent.slice(0, 6) }));
       return [
+        ['the tap on the summary opened the fold', wasOpen, true],
         ['the entry was saved', e && e.label, 'Day job'],
         ['with its amount', e && e.amountCents, 240000],
         ['every two weeks', e && e.frequency, 'fortnightly'],
-        ['and is listed at once', listed, 1]
+        ['and what the stub took off (D-194)', e && e.withheldCents, 48000],
+        ['and is listed at once', r.listed, 1],
+        ['Save folded the form back', r.open, false],
+        ['and the picture drew the one source (D-194)', r.picture, 1],
+        ['and said so under the fold', r.say, 'Added.']
+      ];
+    }
+  },
+  {
+    /* The four numbers (D-172): typed, kept, and the month follows. */
+    room: '/rooms/expenses.html',
+    container: '#fat',
+    seed: 'empty',
+    fields: [
+      { sel: '#fat input[data-fat="food"]', type: '600' },
+      { sel: '#fat input[data-fat="accommodation"]', type: '1500' }
+    ],
+    expect: async (page) => {
+      const e = await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).expenses);
+      const shown = await page.evaluate(() => ({ fat: document.getElementById('fat-total').textContent, lean: document.getElementById('lean-fi').textContent }));
+      return [
+        ['food was kept', e && e.needs.food.monthlyCents, 60000],
+        ['rent was kept', e && e.needs.accommodation.monthlyCents, 150000],
+        ['getting around stayed blank, not zero', e && e.needs.transportation.monthlyCents, null],
+        ['everything else is not a box any more (D-197)', e && e.wants.totalCents, null],
+        ['the FAT total waits on the third number', /transportation/.test(shown.fat), true]
+      ];
+    }
+  },
+  {
+    /* 15.5: a yearly cost typed into the fold lands as a line, in its bucket,
+       and a twelfth of it joins the month (D-181). */
+    room: '/rooms/expenses.html',
+    container: '#annual-form',
+    seed: 'demo',
+    prepare: async (page) => { await page.evaluate(() => { document.getElementById('more').open = true; document.getElementById('annual-fold').open = true; }); },
+    fields: [
+      { sel: '#y-label', type: 'Car insurance' },
+      { sel: '#y-amount', type: '1200' }
+    ],
+    expect: async (page) => {
+      await page.tap('#y-bucket .choice[data-value="transportation"]');
+      await page.selectOption('#y-month', '3');
+      await page.tap('#btn-annual-add');
+      await page.waitForTimeout(300);
+      const r = await page.evaluate(() => { const h = SLAF.Spine.getProfile(); const l = h.expenses.annual[0]; return { n: h.expenses.annual.length, label: l && l.label, cents: l && l.amountCents, bucket: l && l.bucket, month: l && l.monthDue, transport: SLAF.Schema.fat(h).transportation.value, rows: document.querySelectorAll('#annual-list li').length }; });
+      return [
+        ['the yearly line landed', r.n, 1],
+        ['with its name', r.label, 'Car insurance'],
+        ['a year of it, in cents', r.cents, 120000],
+        ['in the bucket tapped', r.bucket, 'transportation'],
+        ['paid in March', r.month, 3],
+        ['a twelfth joined getting around: 220 + 100', r.transport, 32000],
+        ['and it is listed', r.rows, 1]
+      ];
+    }
+  },
+  {
+    /* A named line (D-196): typed as a year, kept as a month, listed under
+       subscriptions with the year it was known as. */
+    room: '/rooms/expenses.html',
+    container: '#line-form',
+    seed: 'demo',
+    fields: [
+      { sel: '#n-label', type: 'Streaming' },
+      { sel: '#n-amount', type: '120' }
+    ],
+    expect: async (page) => {
+      await page.selectOption('#n-every', 'annual');
+      await page.tap('#btn-line-add');
+      await page.waitForTimeout(300);
+      const r = await page.evaluate(() => { const h = SLAF.Spine.getProfile(); const l = h.expenses.entries.filter(e => e.descriptor === 'Streaming')[0]; return { n: !!l, cents: l && l.amountCents, every: l && l.every, typed: l && l.everyCents, cat: l && l.categoryId, rows: document.querySelectorAll('#subs-list li').length, sum: document.getElementById('subs-sum').textContent }; });
+      return [
+        ['the line landed', r.n, true],
+        ['a year of 120 is 10 a month', r.cents, 1000],
+        ['it remembers it was a year', r.every, 'annual'],
+        ['and the amount as typed', r.typed, 12000],
+        ['under subscriptions', r.cat, 'subscriptions'],
+        ['and it is listed', r.rows, 1],
+        ['with the month and the year', r.sum, '$10 a month · $120 a year']
       ];
     }
   },
@@ -1011,9 +1110,10 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/cash-flow.html',
+    room: '/rooms/expenses.html',
     container: '#buckets',
     seed: 'demo',
+    prepare: async (page) => { await page.evaluate(() => { document.getElementById('more').open = true; document.getElementById('split-more').open = true; }); },
     fields: [
       { sel: '#buckets input[data-cat="housing"]', type: '1500' },
       { sel: '#buckets input[data-cat="groceries"]', type: '450' },
@@ -1055,11 +1155,248 @@ const CASES = [
       }));
       const undo = (JSON.parse(r.blob).meta.undoStack || []).map(e => e.label).join(' | ');
       return [
-        ['the cash-out cost is worked out', r.number.indexOf('$14,500') !== -1, true],
+        ['the cash-out cost is worked out', r.number.indexOf('$14,500') !== -1 ? true : r.number, true],
         ['the 20% withheld is shown apart from it', r.rows.indexOf('$8,000') !== -1, true],
         ['and what the balance would have been, left alone', r.rows.indexOf('left alone') !== -1, true],
         ['the what-if balance reached no stored field', r.blob.indexOf('4000000') !== -1, false],
         ['and left no undo entry behind', /old plan|year you left/.test(undo), false]
+      ];
+    }
+  },
+  {
+    /* THE FIRST ROUND (D-206): five screens, one box each, all in the markup
+       from boot; script only toggles [hidden]. Typing on each screen has to
+       survive the Next tap that reveals the next one. */
+    room: '/rooms/ledger.html#round-1',
+    container: '#view-round1',
+    seed: 'empty',
+    fields: [
+      { sel: '#in-age', type: '27' },
+      { sel: '[data-next="q-zip"]', tap: true },
+      { sel: '#in-zip', type: '12203' },
+      { sel: '[data-next="q-situation"]', tap: true },
+      { sel: '[data-situation="unemployed"]', tap: true },
+      { sel: '[data-next="q-pay"]', tap: true },
+      { sel: '#in-pay', type: '95000' },
+      { sel: '[data-next="q-cash"]', tap: true },
+      { sel: '#in-cash', type: '3000' }
+    ],
+    expect: async (page) => {
+      await page.tap('#btn-finish');
+      await page.waitForFunction(() => /runway|Nearly there/.test(document.getElementById('ins-headline').textContent), null, { timeout: 5000 });
+      const s = await page.evaluate(() => {
+        const h = SLAF.Spine.getProfile();
+        return { age: SLAF.Schema.primaryAge(h), zip: h.zip, status: h.people[0].employmentStatus,
+          lastPay: SLAF.Schema.unemploymentOf(h).lastGrossAnnualCents, cash: SLAF.Schema.cashCents(h).value,
+          headline: document.getElementById('ins-headline').textContent,
+          visible: [...document.querySelectorAll('.screen')].filter(e => !e.hidden).map(e => e.id).join(',') };
+      });
+      return [
+        ['the age landed as a birth date', s.age, 27],
+        ['the ZIP landed', s.zip, '12203'],
+        ['the situation landed', s.status, 'unemployed'],
+        ['the last pay landed on the person', s.lastPay, 9500000],
+        ['cash landed', s.cash, 300000],
+        ['one screen showing at the end: the insight', s.visible, 'insight'],
+        ['and it says something', /runway/.test(s.headline), true]
+      ];
+    }
+  },
+  {
+    /* EXPRESS (D-208): the whole form on one page, built once. Typing into
+       boxes across doors, a situation tap that hides and shows rows around
+       them, and adding a card block: the keyboard must stay open through
+       all of it. */
+    room: '/rooms/ledger.html#all-at-once',
+    container: '#xform',
+    seed: 'empty',
+    prepare: async (page) => { await page.waitForSelector('[data-x-row="dob"]'); },
+    fields: [
+      { sel: '[data-x-row="zip"] [data-x-input]', type: '12203' },
+      { sel: '[data-x-row="employmentStatus"] [data-x-val="unemployed"]', tap: true },
+      { sel: '[data-x-row="lastPay"] [data-x-input]', type: '95000' },
+      { sel: '[data-x-row="cashSavings"] [data-x-input]', type: '3000' },
+      { sel: '[data-x-add="debts"] [data-x-add-name]', type: 'Amex 1003' },
+      { sel: '[data-x-add="debts"] [data-x-add-btn]', tap: true },
+      { sel: '.xitem[data-x-list="debts"] [data-x-row="debtBalance"] [data-x-input]', type: '3200', fresh: true }
+    ],
+    expect: async (page) => {
+      const s = await page.evaluate(() => {
+        const h = SLAF.Spine.getProfile();
+        return { zip: h.zip, status: h.people[0].employmentStatus, lastPay: SLAF.Schema.unemploymentOf(h).lastGrossAnnualCents, cash: SLAF.Schema.cashCents(h).value,
+          debt: (h.debts[0] || {}).label + ':' + (h.debts[0] || {}).balanceCents, rows: document.querySelectorAll('[data-x-row]').length };
+      });
+      return [
+        ['the ZIP landed', s.zip, '12203'],
+        ['the situation landed', s.status, 'unemployed'],
+        ['the last pay landed', s.lastPay, 9500000],
+        ['cash landed', s.cash, 300000],
+        ['the card was added by name and its balance typed', s.debt, 'Amex 1003:320000'],
+        ['the form is long', s.rows > 60, true]
+      ];
+    }
+  },
+  {
+    /* ROTH CONVERSIONS BEFORE 65 (J8, D-216): four what-if boxes in the
+       HTML, re-rendered on every keystroke into siblings, never rebuilt. */
+    room: '/rooms/roth-aca.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '#in-premium', type: '800' },
+      { sel: '#in-pretax', type: '500000' },
+      { sel: '#in-conv', type: '40000' }
+    ],
+    expect: async (page) => {
+      const num = await page.evaluate(() => document.getElementById('r-num').textContent);
+      const rows = await page.evaluate(() => document.querySelectorAll('#r-rows li').length);
+      return [
+        ['a lifetime figure is shown', /^\$[\d,]+/.test(num), true],
+        ['a row a year to 65', rows > 0, true]
+      ];
+    }
+  },
+  {
+    /* DOWN PAYMENT COUNTDOWN (K6, D-217): five boxes, re-rendered into a
+       sibling list on every keystroke. */
+    room: '/rooms/down-payment.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '#in-price', type: '400000' },
+      { sel: '#in-saved', type: '20000' },
+      { sel: '#in-monthly', type: '1000' }
+    ],
+    expect: async (page) => {
+      const n = await page.evaluate(() => document.querySelectorAll('#d-opts li').length);
+      const twenty = await page.evaluate(() => (document.querySelector('#d-opts li[data-pct="0.2"] .when') || {}).textContent || '');
+      return [
+        ['four ways in', n, 4],
+        ['the 20% date is a month and a year', /^[A-Z][a-z]+ \d{4}$/.test(twenty), true]
+      ];
+    }
+  },
+  {
+    /* WEDDING COUNTDOWN (K11, D-217): nine boxes and a slider. */
+    room: '/rooms/wedding.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [
+      { sel: '#in-guests', type: '80' },
+      { sel: '#in-saved', type: '5000' },
+      { sel: '#in-monthly', type: '800' }
+    ],
+    expect: async (page) => {
+      const num = await page.evaluate(() => document.getElementById('w-num').textContent);
+      const sub = await page.evaluate(() => document.getElementById('w-sub').textContent);
+      return [
+        ['a date is shown', /^[A-Z][a-z]+ \d{4}\.$/.test(num), true],
+        ['built from 80 guests', /80 guests/.test(sub), true]
+      ];
+    }
+  },
+  {
+    /* THE MIDDLE CLASS TRAP TEST (K1, D-218): one age box, four paths
+       re-rendered into siblings. */
+    room: '/rooms/middle-class-trap.html',
+    container: '#verdict',
+    seed: 'demo',
+    fields: [{ sel: '#in-age', type: '50' }],
+    expect: async (page) => {
+      const paths = await page.evaluate(() => document.querySelectorAll('#t-paths li').length);
+      const hint = await page.evaluate(() => document.getElementById('t-age-hint').textContent);
+      return [['four paths', paths, 4], ['the typed age is the one bridged', /from 50 to/.test(hint), true]];
+    }
+  },
+  {
+    /* THE REFEREE (K3, D-218): the price box on rent or buy. */
+    room: '/rooms/debates.html',
+    container: '#answer',
+    seed: 'demo',
+    prepare: async (page) => { await page.tap('[data-debate="rentVsBuy"]'); },
+    fields: [{ sel: '#in-price', type: '150000' }],
+    expect: async (page) => {
+      const a = await page.evaluate(() => document.getElementById('d-num').getAttribute('data-answer'));
+      return [['a cheap place favours buying', a, 'a']];
+    }
+  },
+  {
+    /* MICRO-RETIREMENT PLANNER (K5, D-219): six boxes. */
+    room: '/rooms/micro-retirement.html',
+    container: '#fund',
+    seed: 'demo',
+    fields: [{ sel: '#in-months', type: '6' }, { sel: '#in-income', type: '500' }],
+    expect: async (page) => {
+      const fund = await page.evaluate(() => Number(document.getElementById('m-sub').getAttribute('data-fund')));
+      return [['a fund is priced', fund > 0, true]];
+    }
+  },
+  {
+    /* OFFER COMPARE (K8, D-219): four columns built once, two shown. */
+    room: '/rooms/offer-compare.html',
+    container: '#offers',
+    seed: 'demo',
+    fields: [{ sel: '#o0-base', type: '95000' }, { sel: '#o1-base', type: '100000' }, { sel: '#o1-commute', type: '200' }],
+    expect: async (page) => {
+      const best = await page.evaluate(() => document.getElementById('o-num').getAttribute('data-best'));
+      return [['a best offer is named', best === '0' || best === '1', true]];
+    }
+  },
+  {
+    /* THE DEGREE DECISION (K9, D-219): ten boxes. */
+    room: '/rooms/degree.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [{ sel: '#in-tuition', type: '60000' }, { sel: '#in-years', type: '2' }, { sel: '#in-with-low', type: '95000' }],
+    expect: async (page) => {
+      const be = await page.evaluate(() => document.getElementById('g-num').getAttribute('data-breakeven'));
+      return [['a break-even age', /^\d+(\.\d)?$/.test(be), true]];
+    }
+  },
+  {
+    /* THE FIRST CAR CHECK (K10, D-219): seven boxes. */
+    room: '/rooms/first-car.html',
+    container: '#inputs',
+    seed: 'demo',
+    fields: [{ sel: '#in-price', type: '30000' }, { sel: '#in-down', type: '6000' }, { sel: '#in-term', type: '36' }],
+    expect: async (page) => {
+      const n = await page.evaluate(() => document.querySelectorAll('#c-parts li').length);
+      return [['three parts', n, 3]];
+    }
+  },
+  {
+    /* The Deal (D-227): eleven boxes, all built once, all writing to one
+       property record. The figures below are the hand-checked ones from
+       test/run.js, so a tap that goes astray shows up as a wrong reading
+       rather than only as a lost keystroke. */
+    room: '/rooms/property.html',
+    container: '#deal',
+    seed: 'empty',
+    fields: [
+      { sel: '#in-price', type: '320000' },
+      { sel: '#in-down', type: '20' },
+      { sel: '#in-rate', type: '6.9' }
+    ],
+    expect: async (page) => {
+      await page.tap('#in-rent'); await page.waitForTimeout(200);
+      await page.keyboard.type('2400', { delay: 15 });
+      await page.evaluate(() => document.activeElement.blur());
+      await page.waitForTimeout(400);
+      const s = await page.evaluate(() => {
+        const p = (SLAF.Spine.getProfile().property || [])[0] || {};
+        return { price: p.priceCents, down: p.downPct, rate: p.rate, rent: p.rentMonthlyCents,
+          adv: document.getElementById('adv').textContent,
+          real: document.getElementById('real').textContent,
+          monthShown: !document.getElementById('month').hidden };
+      });
+      return [
+        ['the price landed as cents', s.price, 32000000],
+        ['the down payment landed as a share', s.down, 0.2],
+        ['the rate landed as a decimal', s.rate, 0.069],
+        ['the rent landed', s.rent, 240000],
+        ['the month appeared', s.monthShown, true],
+        ['the listing figure reads $714', /714/.test(s.adv), true],
+        ['and the real one reads a loss of $481', /481/.test(s.real), true]
       ];
     }
   }
@@ -1223,6 +1560,16 @@ function check(name, actual, expected) {
   console.log('  ✗ ' + name + `  (expected ${expected}, got ${actual})`);
 }
 
+async function revealFolded(page) {
+  try {
+    const btn = await page.$('#showrest');
+    if (btn && !(await btn.evaluate(n => n.hidden))) {
+      await btn.tap();
+      await page.waitForTimeout(250);
+    }
+  } catch (e) { /* room has no fold: nothing to open */ }
+}
+
 async function seed(page, kind) {
   await page.evaluate((k) => { localStorage.removeItem('slaf.household.v2'); }, kind);
   if (kind === 'empty') return;
@@ -1235,6 +1582,28 @@ async function seed(page, kind) {
       localStorage.setItem('slaf.household.v2', JSON.stringify(h));
     }, Demo.buildSpending());
   }
+}
+
+/* After a choice or a Next, the page keeps moving for a moment: the room
+   repaints what applies, and the progress strip holds its height for 400 ms
+   and lets it go at a second (shared/progress.js, the D-034/D-046 family).
+   A tap that lands mid-motion focuses the box it was aimed at but leaves
+   the caret in the label beside it, so every keystroke after it inserts
+   nothing — which is what made the Express walk fail about one run in two
+   on CI. A person waits for the page to stop; so does this: still for
+   650 ms (past both timers when they fire), or two seconds at most. */
+async function settled(page) {
+  await page.evaluate(() => new Promise((resolve) => {
+    const t0 = performance.now();
+    let last = '', since = t0;
+    const tick = () => {
+      const now = document.documentElement.scrollHeight + ':' + Math.round(window.scrollY) + ':' + Math.round(document.body.getBoundingClientRect().height);
+      if (now !== last) { last = now; since = performance.now(); }
+      if (performance.now() - since >= 650 || performance.now() - t0 >= 2000) resolve();
+      else setTimeout(tick, 50);
+    };
+    tick();
+  }));
 }
 
 /* Give every control in the container a tag we can look for afterwards. */
@@ -1274,7 +1643,10 @@ async function tagFields(page, container) {
     process.exit(0);
   }
 
+  const ONLY = process.env.SLAF_ONLY ? process.env.SLAF_ONLY.split(',') : null;
+  const wanted = c => !ONLY || ONLY.some(id => c.room.indexOf('/' + id + '.html') > -1);
   for (const c of CASES) {
+    if (!wanted(c)) continue;
     console.log('\n' + c.room + '  ' + c.container);
     const ctx = await browser.newContext(devices['Pixel 7']);
     ctx.setDefaultTimeout(6000);
@@ -1286,11 +1658,25 @@ async function tagFields(page, container) {
     await seed(page, c.seed);
     await page.reload({ waitUntil: 'networkidle' });
     await page.waitForTimeout(400);
+    /* Start Here folds everything past the first two questions for a new
+       arrival (D-166). A person opens it to reach the rest, so the harness
+       does the same before it starts tapping - otherwise it tests a page no
+       user ever sees and five real controls go unchecked. */
+    await revealFolded(page);
     if (c.prepare) { await c.prepare(page); await page.waitForTimeout(400); }
+    /* Again after prepare: several cases navigate, which lands on a freshly
+       folded page. */
+    await revealFolded(page);
 
     await tagFields(page, c.container);
 
     for (const f of c.fields) {
+      /* A tap-only step (a Next button, a choice): tap, then let the page
+         stop moving before the next finger lands. */
+      if (f.tap) { await page.tap(f.sel); await settled(page); continue; }
+      /* A box that a tap just created (a new list block) is tagged now; the
+         guard then holds for the typing that follows, which is the point. */
+      if (f.fresh) await tagFields(page, c.container);
       const before = await page.getAttribute(f.sel, 'data-livetag');
       check(`${f.sel.split(' ').pop()} is tagged before the tap`, before !== null, true);
       await page.tap(f.sel);
@@ -1341,6 +1727,7 @@ async function tagFields(page, container) {
   }
 
   for (const c of SELECT_CASES) {
+    if (!wanted(c)) continue;
     console.log('\n' + c.room + '  ' + c.container);
     const ctx = await browser.newContext(devices['Pixel 7']);
     ctx.setDefaultTimeout(6000);
@@ -1352,7 +1739,15 @@ async function tagFields(page, container) {
     await seed(page, c.seed);
     await page.reload({ waitUntil: 'networkidle' });
     await page.waitForTimeout(400);
+    /* Start Here folds everything past the first two questions for a new
+       arrival (D-166). A person opens it to reach the rest, so the harness
+       does the same before it starts tapping - otherwise it tests a page no
+       user ever sees and five real controls go unchecked. */
+    await revealFolded(page);
     if (c.prepare) { await c.prepare(page); await page.waitForTimeout(400); }
+    /* Again after prepare: several cases navigate, which lands on a freshly
+       folded page. */
+    await revealFolded(page);
 
     await tagFields(page, c.container);
 

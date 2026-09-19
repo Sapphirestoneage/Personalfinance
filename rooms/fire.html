@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>FIRE Number · SPARKS</title>
 <meta name="description" content="What you'd need to stop working — lean, standard, chubby, fat, coast or barista."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -11,7 +14,7 @@
 <!--
   ROOM SPEC — SPEC.md §11.
 
-  1. READS   expenses.monthlyEssential (via Cash Flow's tracked figure when
+  1. READS   the month of spending (the four numbers, D-172; via Cash Flow when
              there is one), investments, dob, income, filingStatus.
   2. WRITES  Nothing. It owns no field. The variant parameters below — coast
              target age, part-time income, and the withdrawal rate — are
@@ -20,6 +23,10 @@
   3. CALLS   engines/fire.js — one calculateFIRE() parameterised by variant,
              per §8. Projection comes from engines/projection.js, the same
              loop Tier 0 uses. No formula is written in this file.
+             engines/journey.js draws the map (D-235): the ladder, the
+             tiers, the back half, you-are-here, and the four routes from
+             here; shared/journeymap.js renders it, here and on the
+             dashboard's flight plan alike.
   4. EMPTY   No expenses: every variant says so. Barista without a part-time
              figure, and Coast without a date of birth, each name what they
              need rather than guessing.
@@ -28,10 +35,7 @@
              rate that drives the projection).
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
   .room-back:hover { text-decoration: underline; }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
 
   .variants { display: grid; gap: var(--space-2); }
@@ -55,9 +59,7 @@
   .out-detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
 
   .preview-note { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
-  .notice { font-size: var(--text-sm); color: var(--color-text-muted); background: rgba(46,111,232,.10); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  .disclaimer { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; line-height: var(--leading-loose); margin-top: var(--space-6); }
 </style>
 </head>
 <body class="slaf">
@@ -69,6 +71,7 @@
 </header>
 
 <main class="slaf-wrap">
+  <p class="slaf-horizon" id="horizon-line"></p>
   <div class="notice" id="load-notice" hidden></div>
 
   <section class="slaf-card" id="reading">
@@ -76,12 +79,31 @@
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
   </section>
 
+  <!-- THE MAP (D-235). The whole road on one card: the ten ladder steps,
+       the tier rungs, the back half, "you are here" on each, and the
+       routes from here with the years to the finish. Read from
+       engines/journey.js; drawn by shared/journeymap.js. Nothing here is
+       an input. -->
+  <section class="slaf-card" id="map">
+    <span class="slaf-eyebrow">The map</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      One road: the ladder your next dollar climbs, the tiers where work
+      becomes optional, and the back half where the pot pays you. You are
+      here, and these are the paces from here to the finish. Tap any step
+      to open its room.
+    </p>
+    <div id="map-body" style="margin-top:var(--space-3)"></div>
+  </section>
+
   <section class="slaf-card" id="out-target">
     <span class="slaf-eyebrow" id="target-label">Your number</span>
     <div class="slaf-figure" data-figure>—</div>
     <p class="slaf-reason" data-reason></p>
+    <div id="nw-basis" hidden style="margin-top:var(--space-2)"></div>
     <div class="slaf-bar" style="margin-top:var(--space-3)"><span id="progress-bar" style="width:0"></span></div>
+    <p class="slaf-deferred" id="progress-basis"></p>
     <div data-detail></div>
+    <div id="fire-lens"></div>
     <div id="out-path"></div>
     <p class="why slaf-hint" id="path-why" style="margin:var(--space-2) 0 0"></p>
   </section>
@@ -153,12 +175,26 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/horizon.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/fire.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/journey.js"></script>
+<script src="../shared/journeymap.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../shared/aftertax.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
 <script>
 (function () {
@@ -182,6 +218,7 @@
 
   function optsFor(id, h) {
     var targets = (h && h.targets) || {};
+    var inv = afterTaxInvestments(h);
     var localOverrides = {};
     if (Money.isEntered(preview.swrRate)) localOverrides.swrRate = preview.swrRate;
     if (Money.isEntered(preview.expectedReturnRate)) localOverrides.expectedReturnRate = preview.expectedReturnRate;
@@ -189,8 +226,18 @@
       variantId: id,
       localOverrides: localOverrides,
       coastTargetAge: Money.isEntered(targets.coastAge) ? targets.coastAge : null,
-      baristaAnnualIncomeCents: preview.baristaAnnualIncomeCents
+      baristaAnnualIncomeCents: preview.baristaAnnualIncomeCents,
+      /* 15.3: progress against the investments after deferred tax when the
+         switch is on and the control says so. The engine takes the figure;
+         only this room reads the switch. D-181. */
+      investmentsCents: inv ? inv.value : null,
+      investmentsBasis: inv ? 'afterTax' : null
     };
+  }
+  function afterTaxInvestments(h) {
+    if (!TABLES || !SLAF.AfterTax || SLAF.AfterTax.basis(h) !== 'afterTax') return null;
+    var inv = SLAF.Tax.afterTaxInvestmentsCents(h, TABLES);
+    return Money.isOk(inv) ? inv : null;
   }
 
   function dl(rows) {
@@ -199,10 +246,19 @@
     }).join('') + '</dl>';
   }
 
+  function yrs(x) { return x && Money.isOk(x) ? x.value : (Money.isEntered(x) && typeof x === 'number' ? x : 0); }
+  function fut(c, y) { return SLAF.Horizon.display(Spine.getProfile(), c, y); }   /* 15.2: display-time only; the engines stay real (D-181) */
   function yearsLabel(result) {
     if (!Money.isOk(result)) return result.reason || '';
     if (result.value === 0) return 'You’re already there.';
     return 'About ' + result.value + ' year' + (result.value === 1 ? '' : 's') + ' away at your current savings rate.';
+  }
+
+  /* The map (D-235): the engine reads, the shared renderer draws, and the
+     money on it goes through the same horizon as the rest of the page. */
+  function renderMap(h) {
+    var m = SLAF.Journey.map(h, TABLES, optsFor(null, h));
+    SLAF.JourneyMap.mount(el('map-body'), m, { from: ROOM_ID, fmt: function (c) { return Money.formatCents(c); } });
   }
 
   function renderReading(h) {
@@ -226,7 +282,7 @@
         var btn = list.querySelector('[data-variant="' + v.id + '"]');
         btn.setAttribute('aria-pressed', v.id === variantId);
         var fig = btn.querySelector('.variant-figure');
-        fig.textContent = ok ? Money.formatCents(t.value) : Money.EM_DASH;
+        fig.textContent = ok ? Money.formatCents(fut(t.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH;
         fig.classList.toggle('is-incomplete', !ok);
         btn.querySelector('.variant-eta').textContent = variantEta(t, prog);
       });
@@ -240,7 +296,7 @@
         + 'aria-pressed="' + (v.id === variantId) + '">'
         + '<span class="variant-head"><span class="variant-name">' + v.label + '</span>'
         + '<span class="variant-figure' + (ok ? '' : ' is-incomplete') + '">'
-        + (ok ? Money.formatCents(t.value) : Money.EM_DASH) + '</span></span>'
+        + (ok ? Money.formatCents(fut(t.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH) + '</span></span>'
         + '<p class="variant-blurb">' + v.blurb + '</p>'
         + '<p class="variant-eta">' + variantEta(t, prog) + '</p>'
         + '</button>';
@@ -256,6 +312,17 @@
     return '';
   }
 
+  /* Years away three ways - low, likely, high real return from the one band
+     table - so the headline never pretends one rate is a fact. D-170. */
+  function bandsLine(h) {
+    var o = optsFor(variantId, h);
+    if (o.variantId && Fire.variantById(TABLES.fireVariants, o.variantId) && Fire.variantById(TABLES.fireVariants, o.variantId).mode === 'coast') return '';
+    return SLAF.Bands.lineHtml(TABLES, function (rate) {
+      var p = Fire.progressToward(h, TABLES, Object.assign({}, o, { localOverrides: Object.assign({}, o.localOverrides, { expectedReturnRate: rate }) }));
+      return Money.isOk(p) ? p.yearsAway : p;
+    }, function (v) { return v === 0 ? 'already there' : v + ' yrs'; }, { lead: 'Years away, three ways' });
+  }
+
   function renderTarget(h) {
     var section = el('out-target');
     var figure = section.querySelector('[data-figure]');
@@ -269,13 +336,17 @@
     var prog = Fire.progressToward(h, TABLES, optsFor(variantId, h));
     var ok = Money.isOk(target);
 
-    figure.textContent = ok ? Money.formatCents(target.value) : Money.EM_DASH;
+    figure.textContent = ok ? Money.formatCents(fut(target.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH;
     figure.classList.toggle('slaf-figure--incomplete', !ok);
     reason.textContent = ok ? '' : (target.reason || '');
     reason.hidden = ok;
 
     el('progress-bar').style.width =
       (Money.isOk(prog) ? Math.min(100, Math.max(0, prog.value * 100)) : 0) + '%';
+    var inv = afterTaxInvestments(h);
+    el('progress-basis').textContent = inv
+      ? 'Progress counts your investments after the tax you’ll owe on them: ' + Money.formatCents(inv.value) + ' after tax, ' + Money.formatCents(inv.listedCents) + ' as listed.'
+      : (SLAF.AfterTax.on(h) ? 'Progress counts your investments as listed.' : '');
 
     if (!ok) { detail.innerHTML = ''; el('out-path').innerHTML = ''; el('path-why').textContent = ''; return; }
 
@@ -284,7 +355,7 @@
       ['At a withdrawal rate of', Money.formatRate(target.swrRate, { decimals: 1 })]
     ];
     if (target.variant.mode === 'coast') {
-      rows.push(['Grows into', Money.formatCents(target.fullTargetCents)]);
+      rows.push(['Grows into', Money.formatCents(fut(target.fullTargetCents, target.yearsOfGrowth))]);
       rows.push(['Over', target.yearsOfGrowth + ' years, to age ' + target.coastTargetAge]);
     }
     if (Money.isEntered(target.baristaAnnualIncomeCents)) {
@@ -301,11 +372,12 @@
     detail.className = 'out-detail';
     detail.innerHTML = dl(rows)
       + '<p class="slaf-reason">' + (Money.isOk(prog) ? yearsLabel(prog.yearsAway) : prog.reason || '') + '</p>'
+      + bandsLine(h)
       + (target.variant.mode === 'coast'
           ? '<p class="slaf-reason">Coast doesn’t mean stop working — it means stop <em>saving</em>. You still cover your own costs until then.</p>'
           : '')
       + (target.expenseSource === 'estimated'
-          ? '<p class="slaf-reason">Based on your estimated spending. Track a month in Cash Flow and this sharpens up.</p>'
+          ? '<p class="slaf-reason">Based on your estimated spending. Split a month by category in Expenses and this sharpens up.</p>'
           : '');
   }
 
@@ -338,7 +410,7 @@
     if (!Money.isOk(path)) { host.innerHTML = ''; why.textContent = path.reason; return; }
     /* What you put in is drawn net of withdrawals and floored at zero: once
        the pot is paying you back, the line has nothing left to say. */
-    var pts = function (k) { return path.years.map(function (r) { return [age + r.year, Math.max(0, r[k])]; }); };
+    var pts = function (k) { return path.years.map(function (r) { return [age + r.year, fut(Math.max(0, r[k]), r.year)]; }); };
     var crossed = null;
     path.years.forEach(function (r) { if (crossed === null && r.balanceCents >= target.value) crossed = age + r.year; });
     host.innerHTML = Charts.area({
@@ -348,7 +420,8 @@
         { label: 'What you put in', color: Charts.COLORS.contributed, points: pts('contributedCents'), fill: false }
       ],
       hLines: [{ y: target.value, label: target.variant.label + ' ' + Charts.shortMoney(target.value), color: Charts.COLORS.target }],
-      vLines: stopAge !== null ? [{ x: stopAge, label: 'stop at ' + stopAge }] : [],
+      /* 15.9: the age milestones on the way, faint. D-181. */
+      vLines: Schema.milestoneMarks(h, TABLES.milestones, { axis: 'age', from: age, to: age + path.years.length }).concat(stopAge !== null ? [{ x: stopAge, label: 'stop at ' + stopAge }] : []),
       dots: crossed !== null ? [{ x: crossed, y: target.value }] : [],
       x: { label: 'age', format: function (v) { return String(Math.round(v)); } },
       y: { min: Math.min(0, path.value) }
@@ -397,6 +470,7 @@
     var h = Spine.getProfile();
     paintTargets(h);
     renderReading(h);
+    renderMap(h);
     renderVariants(h);
     renderTarget(h);
 
@@ -459,11 +533,22 @@
   Spine.registerRoom(ROOM_ID);
 
   SLAF.Progress.mount(ROOM_ID);
+  SLAF.AfterTax.mount(el('nw-basis'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.3 (D-181) */
+
+  SLAF.Horizon.mount(document.getElementById('horizon-line'), { household: function () { return Spine.getProfile(); }, onChange: function () { render(); } });   /* 15.2: today's money, once per screen (D-181) */
   Spine.onChange(render);
 
   Reference.load().then(function (tables) {
     TABLES = tables;
     render();
+    SLAF.Lens.mountStrip('fire-lens', function (h) {
+      var t = Fire.calculateFIRE(h, TABLES, optsFor(variantId, h));
+      var p = Fire.progressToward(h, TABLES, optsFor(variantId, h));
+      var rows = [];
+      if (Money.isOk(t)) { rows.push({ label: 'Your number', cents: t.value }); rows.push({ label: 'A year of spending', cents: t.annualExpensesCents, href: Ownership.linkTo('expenses', 'spending', ROOM_ID) }); }
+      if (Money.isOk(p)) rows.push({ label: 'Still to go', cents: Math.max(0, p.targetCents - p.investmentsCents) });
+      return rows;
+    }, function () { return TABLES; });
     jumpToHash();
   }).catch(function (err) {
     var notice = el('load-notice');

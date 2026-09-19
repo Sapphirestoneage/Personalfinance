@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
 <title>Your Statements · SPARKS</title>
 <meta name="description" content="An income statement, a cash flow statement and a balance sheet for a household — plus the same period said in sentences."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -38,9 +41,6 @@
   THEMING: none this pass. Nothing here names a colour outside the tokens.
 -->
 <style>
-  .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-3); }
-  .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
-  .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
 
   /* The basis notice. Same weight as a heading on purpose. */
@@ -143,11 +143,15 @@
 <script src="../shared/ownership.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/statements.js"></script>
 <script>
@@ -310,7 +314,7 @@
 
     el('how-body').innerHTML =
       '<p><strong>Nothing here is calculated twice.</strong> What you earn comes from Income, what living '
-      + 'costs from Cash Flow, what you own and owe from The Statement and Debt Payoff, and the contribution '
+      + 'costs from Expenses, what you own and owe from The Statement and Debt Payoff, and the contribution '
       + 'from the same line Savings Rate uses. This page arranges those figures; it does not recompute them, '
       + 'so a number here can never disagree with the room it came from.</p>'
       + '<p><strong>A dash is not a zero.</strong> Any figure that is not entered prints as ' + DASH + ', and '
