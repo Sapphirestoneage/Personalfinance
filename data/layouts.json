@@ -24,6 +24,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "debt-payoff",
             "expenses",
             "cash-flow",
@@ -127,6 +128,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "debt-payoff",
             "expenses",
             "cash-flow",
@@ -267,7 +269,8 @@
             "debt-payoff",
             "settings",
             "start",
-            "ledger"
+            "ledger",
+            "loose-ends"
           ]
         },
         {
@@ -482,6 +485,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "dashboard",
             "settings",
             "data",
@@ -606,6 +610,7 @@
             "dashboard",
             "start",
             "ledger",
+            "loose-ends",
             "data",
             "one-pager",
             "progress-card",
@@ -640,6 +645,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "expenses",
             "cash-flow",
             "subscriptions",
@@ -788,7 +794,8 @@
             "statements",
             "settings",
             "start",
-            "ledger"
+            "ledger",
+            "loose-ends"
           ]
         },
         {
@@ -967,6 +974,7 @@
             "side-hustle",
             "start",
             "ledger",
+            "loose-ends",
             "student-loans",
             "tax",
             "rollover",
@@ -1019,6 +1027,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "dashboard",
             "financial-snapshot",
             "race",
@@ -1273,6 +1282,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "skill-tree",
             "data",
             "one-pager",
@@ -1400,6 +1410,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "data",
             "one-pager",
             "progress-card",
@@ -1515,6 +1526,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "dashboard",
             "settings",
             "variance",
@@ -1642,6 +1654,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "dashboard",
             "expenses",
             "cash-flow",
@@ -1698,6 +1711,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "variance",
             "fulfillment",
             "rerank",
@@ -1902,6 +1916,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "settings",
             "data",
             "one-pager",
@@ -1960,6 +1975,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "expenses",
             "cash-flow",
             "subscriptions",
@@ -2051,6 +2067,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "income",
             "budget",
             "expenses",
@@ -2167,6 +2184,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "timeline",
             "partner",
             "wedding",
@@ -2397,6 +2415,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "settings",
             "data",
             "one-pager",
@@ -2542,6 +2561,7 @@
           "rooms": [
             "start",
             "ledger",
+            "loose-ends",
             "data",
             "one-pager",
             "progress-card",

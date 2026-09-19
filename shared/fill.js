@@ -140,7 +140,7 @@
   function naAt(h, id) { var m = h && h.meta && h.meta.notApplicableAt; return m && m[id] ? m[id] : null; }
   function display(row, value) {
     var f = Ownership.FIELDS[row.id];
-    if (!Money.isEntered(value)) return null;
+    if (!present(value)) return null;
     if (row.repeat) return value === 1 ? '1 listed' : value + ' listed';
     try { return f && f.format ? f.format(value) : String(value); } catch (e) { return String(value); }
   }

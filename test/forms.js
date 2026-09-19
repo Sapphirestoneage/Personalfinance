@@ -1237,6 +1237,34 @@ const CASES = [
     }
   },
   {
+    /* LOOSE ENDS (Fill Mode, D-265): a row's editor opens on tap and the
+       list repaints on every spine change. The box must survive that while
+       a finger is in it; Save then writes through the owner and the row
+       leaves the list. */
+    room: '/rooms/loose-ends.html',
+    container: '#le-rows',
+    seed: 'demo',
+    prepare: async (page) => {
+      await page.waitForSelector('[data-le-row="cashSavings"] [data-le-open]');
+      await page.tap('[data-le-row="cashSavings"] [data-le-open]');
+      await page.waitForTimeout(300);
+    },
+    fields: [
+      { sel: '[data-le-row="cashSavings"] [data-ask-input]', type: '12345' }
+    ],
+    expect: async (page) => {
+      await page.tap('[data-le-row="cashSavings"] [data-fc-act="save"]');
+      await page.waitForTimeout(500);
+      const r = await page.evaluate(() => ({ cash: SLAF.Schema.cashCents(SLAF.Spine.getProfile()).value, conf: SLAF.Schema.meta(SLAF.Spine.getProfile(), 'cashSavings').confidence, gone: !document.querySelector('[data-le-row="cashSavings"]'), said: document.getElementById('le-count').textContent }));
+      return [
+        ['cash was rewritten through its owner', r.cash, 1234500],
+        ['and is sure now', r.conf, 'sure'],
+        ['so the row left the list', r.gone, true],
+        ['and the page said what changed', /Cash and savings is sharp now/.test(r.said), true]
+      ];
+    }
+  },
+  {
     /* EXPRESS (D-208): the whole form on one page, built once. Typing into
        boxes across doors, a situation tap that hides and shows rows around
        them, and adding a card block: the keyboard must stay open through

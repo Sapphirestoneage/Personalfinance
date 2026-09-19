@@ -424,6 +424,14 @@
     try { return Ownership.readings(S.getProfile()); } catch (e) { return null; }
   }
 
+  /* The Loose Ends badge (D-265): how many rows are rough, unknown or
+     stale, hidden at zero. Counted by shared/fill.js once its tables are
+     in; until then, and on a page that never loads them, no badge. */
+  var LOOSE_COUNT = 0;
+  function badgeHtml(room) {
+    if (room.id !== 'loose-ends' || !LOOSE_COUNT) return '';
+    return '<span class="slaf-menu-badge" aria-label="' + LOOSE_COUNT + ' loose ends">' + LOOSE_COUNT + '</span>';
+  }
   function menuLink(room, roomId, current, status) {
     var here = room.id === current;
     var search = (room.title + ' ' + (room.aliases || []).join(' ')).toLowerCase();
@@ -432,7 +440,39 @@
       + ' data-room="' + escapeHtml(room.id) + '" data-search="' + escapeHtml(search) + '">'
       + escapeHtml(room.title)
       + (status ? '<i class="slaf-dot is-' + status + '" title="' + status + '" aria-label="' + status + '"></i>' : '')
+      + badgeHtml(room)
       + '</a>';
+  }
+  /** Load Fill Mode's reader and tables on a page that does not carry them
+      (the same loader the ask card uses), then keep the badge current. */
+  function withFill(fn) {
+    var g = globals();
+    if (!g || !g.document || !g.SLAF || !g.SLAF.Spine || !g.SLAF.Reference) return;
+    var base = (typeof location !== 'undefined' && location.pathname.indexOf('/rooms/') !== -1 ? '../' : '');
+    function load(src) {
+      return new Promise(function (resolve, reject) {
+        var sc = g.document.createElement('script');
+        sc.src = src; sc.onload = resolve; sc.onerror = function () { reject(new Error('could not load ' + src)); };
+        g.document.head.appendChild(sc);
+      });
+    }
+    var chain = g.SLAF.FillCard ? Promise.resolve() : load(base + 'shared/fillcard.js');
+    chain.then(function () { return g.SLAF.FillCard.ensure(); }).then(function (tables) { fn(g.SLAF.Fill, tables); }).catch(function () { /* no badge is fine */ });
+  }
+  function mountBadge(roomId) {
+    withFill(function (Fill, tables) {
+      var S = spine();
+      function count() {
+        var n = 0;
+        try { n = Fill.looseCount(S.getProfile(), tables); } catch (e) { n = 0; }
+        if (n === LOOSE_COUNT) return;
+        LOOSE_COUNT = n;
+        var panel = typeof document !== 'undefined' ? document.querySelector('#slaf-menu .slaf-menu-body') : null;
+        if (panel) panel.innerHTML = menuBodyHtml(roomId);
+      }
+      count();
+      if (S && S.onChange) S.onChange(count);
+    });
   }
   function extraLink(l, roomId) {
     var search = (l.title + ' ' + (l.aliases || []).join(' ')).toLowerCase();
@@ -580,6 +620,7 @@
     }, true);
     var q = panel.querySelector('#slaf-menu-q');
     if (q) q.addEventListener('input', function () { applySearch(panel, q.value); });
+    mountBadge(roomId);
 
     /* The situation and the dots can change under the page: rebuild the
        body only, never the search box (a live input, D-034). */

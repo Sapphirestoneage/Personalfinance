@@ -39,9 +39,12 @@
   "rooms": [
     {
       "n": 1, "id": "ledger", "title": "The Ledger", "group": "way-in",
-      "absorbs": ["start", "first-round", "express", "doors", "walk", "comeback", "refresh"],
+      "absorbs": ["start", "first-round", "express", "doors", "walk", "comeback", "refresh", "loose-ends"],
       "done": ["first-round", "express", "doors", "walk", "comeback", "refresh"],
-      "held": { "start": "Start Here owns 17 shared fields, more than any other room. Where those owners go is the open question at the top of STATUS.md, and it is the owner's to answer, not a session's to guess." },
+      "held": {
+        "loose-ends": "Loose Ends (D-265) is a door into the Ledger's rows with its own sidebar badge, which a hash view of the Ledger cannot carry. It stays a page until the sidebar can count a view; it stores nothing and writes only through the owners.",
+        "start": "Start Here owns 17 shared fields, more than any other room. Where those owners go is the open question at the top of STATUS.md, and it is the owner's to answer, not a session's to guess."
+      },
       "note": "First Round is Round 1, Express is the all-at-once door, Welcome Back and Refresh are one 'since last time'."
     },
     { "n": 2, "id": "dashboard", "title": "The Dashboard", "group": "way-in", "absorbs": [], "done": [],

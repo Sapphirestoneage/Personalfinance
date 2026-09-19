@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Loose Ends · SPARKS</title>
+<meta name="description" content="Every number you marked roughly or don't know yet, and any that has gone stale, in one list. Sharpen them here; each box is the Ledger's own."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  LOOSE ENDS — Fill Mode, the owner's brief of 2026-09-19 (D-265).
+
+  1. READS   every Ledger row's state through shared/fill.js: rough, unknown,
+             stale (known or rough past its window) and hidden (Not for me).
+  2. WRITES  nothing of its own. Every box is the same editor the Next card
+             uses (shared/fillcard.js), and every button is one call into
+             Fill.act, which writes through the owner. The Ledger stays the
+             only place a fact is stored; this is a second door to its rows.
+  3. SHOWS   one row a loose end: name (a link to its Ledger box), the value
+             or "not set", the state tag, the date it was marked, where to
+             find it, how many rooms read it, and the inline editor.
+             Filters: All, Don't know, Roughly, Stale, Hidden. "Go through
+             these one at a time" runs the hero card over this list only.
+  4. EMPTY   "Nothing to come back to. Everything you've entered is as
+             sharp as you marked it."
+
+  LIVE-FORM: a row's editor is opened on tap and built once; the list is
+  repainted on a spine change only when no box inside it has focus, and a
+  repaint keeps whichever row was open.
+  No em dashes in the copy: the owner reads it on a phone.
+-->
+<style>
+  .le-top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3); }
+  .le-count { margin: 0; font-size: var(--text-sm); color: var(--color-text-muted); flex: 1 1 auto; }
+  .le-filters { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0 0 var(--space-3); }
+  .le-filters button { font-family: var(--font-display); font-size: var(--text-sm); border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 4px 12px; min-height: 32px; background: transparent; color: var(--color-text-muted); cursor: pointer; }
+  .le-filters button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); }
+  .le-filters button small { opacity: .8; margin-left: 4px; }
+  .le-list { list-style: none; margin: 0; padding: 0; }
+  .le-row { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+  .le-row:first-child { border-top: none; }
+  .le-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); }
+  .le-name { font-weight: 600; color: var(--color-text); text-decoration: none; font-size: var(--text-base); }
+  .le-name:hover { text-decoration: underline; }
+  .le-val { font-variant-numeric: tabular-nums; color: var(--color-text); }
+  .le-val.is-unset { color: var(--color-text-faint); font-style: italic; }
+  .le-tag { font-size: var(--text-xs); border-radius: var(--radius-pill); padding: 1px 8px; border: 1px solid var(--color-border-strong); color: var(--color-text-muted); }
+  .le-tag.is-unknown { border-color: var(--color-critical); color: var(--color-critical); }
+  .le-tag.is-rough { border-color: var(--color-caution); }
+  .le-tag.is-stale { border-color: var(--color-warning, #d97706); }
+  .le-tag.is-na { opacity: .7; }
+  .le-meta { margin: var(--space-1) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); line-height: 1.5; }
+  .le-meta button { background: none; border: 0; padding: 0; color: var(--color-accent-hover); cursor: pointer; font: inherit; }
+  .le-where { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-loose); }
+  .le-rooms { margin: var(--space-1) 0 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+  .le-rooms a { color: var(--color-accent-hover); margin-right: var(--space-2); }
+  .le-acts { margin: var(--space-2) 0 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .le-acts .slaf-btn { min-height: 40px; }
+  .le-editor { margin: var(--space-2) 0 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); }
+  .le-editor .le-said { margin: var(--space-2) 0 0; padding: var(--space-2) var(--space-3); border-left: 3px solid var(--color-accent); font-size: var(--text-sm); }
+  .le-empty { margin: var(--space-3) 0; font-size: var(--text-base); line-height: var(--leading-loose); }
+  .le-walk { margin: 0 0 var(--space-3); }
+</style>
+</head>
+<body class="slaf">
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>Loose Ends</h1>
+  <p class="room-lede">Every number you marked roughly or don’t know yet, and any that has gone stale, in one place. Sharpen them here; each box is the Ledger’s own.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div id="loose-walk"></div>
+
+  <section class="slaf-card" id="loose-list">
+    <div class="le-top">
+      <p class="le-count" id="le-count"></p>
+      <button type="button" class="slaf-btn" id="btn-walk" hidden>Go through these one at a time →</button>
+    </div>
+    <div class="le-filters" id="loose-filters" role="group" aria-label="Filter"></div>
+    <ul class="le-list" id="le-rows"></ul>
+    <p class="le-empty" id="le-empty" hidden></p>
+  </section>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/daite.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/ledger-rows.js"></script>
+<script src="../shared/suggest.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../shared/upnext.js"></script>
+<script src="../shared/ask.js"></script>
+<script src="../shared/fill.js"></script>
+<script src="../shared/fillcard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Spine = SLAF.Spine, Reference = SLAF.Reference, Fill = SLAF.Fill, FillCard = SLAF.FillCard, LedgerRows = SLAF.LedgerRows, Staleness = SLAF.Staleness, Money = SLAF.Money;
+  var ROOM_ID = 'loose-ends';
+  var TABLES = null;
+  var FILTER = 'all';
+  var OPEN = null;             /* the row id whose editor is open */
+  var SAID = {};               /* row id → the before/after sentence to show once */
+  var SNAP = null;             /* the readings before the last tap */
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function h() { return Spine.getProfile(); }
+
+  var FILTERS = [
+    { id: 'all', label: 'All' }, { id: 'unknown', label: 'Don’t know' }, { id: 'rough', label: 'Roughly' },
+    { id: 'stale', label: 'Stale' }, { id: 'hidden', label: 'Hidden' }
+  ];
+  function dateWord(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function tag(r) {
+    if (r.state === 'na') return '<span class="le-tag is-na">Not for me</span>';
+    var out = r.state === 'unknown' ? '<span class="le-tag is-unknown">Don’t know</span>' : r.state === 'rough' ? '<span class="le-tag is-rough">Roughly</span>' : '';
+    if (r.stale) out += ' <span class="le-tag is-stale">Stale</span>';
+    return out;
+  }
+  function markedLine(r) {
+    var f = r.fill;
+    var when = dateWord(f.at);
+    if (r.state === 'na') return when ? 'Marked not for you ' + when + '.' : 'Marked not for you.';
+    if (r.state === 'unknown') return when ? 'Marked don’t know ' + when + '.' : 'Marked don’t know.';
+    var word = r.state === 'rough' ? 'Marked roughly ' : 'Entered ';
+    if (r.stale && r.fill.days !== undefined) { var st = Staleness.describe(h(), r.id); return word + (when || '') + (st && st.label ? ', ' + st.label : '') + '. Past its refresh window.'; }
+    return when ? word + when + '.' : '';
+  }
+  function roomsLine(r) {
+    var rd = Fill.readers(r);
+    if (!rd.count) return '';
+    return '<button type="button" data-le-rooms="' + esc(r.id) + '" aria-expanded="false">Used in ' + rd.count + (rd.count === 1 ? ' place' : ' places') + '</button>'
+      + '<span class="le-rooms" data-le-rooms-list="' + esc(r.id) + '" hidden>'
+      + rd.rooms.map(function (x) { return '<a href="../' + esc(x.href) + '">' + esc(x.title) + '</a>'; }).join('')
+      + rd.readings.map(function (x) { return '<a href="' + esc(SLAF.Ownership.linkTo(x.room, null, ROOM_ID)) + '">' + esc(x.label) + '</a>'; }).join('')
+      + '</span>';
+  }
+  function rowHtml(r) {
+    var f = r.fill;
+    var val = r.state === 'unknown' ? '<span class="le-val is-unset">not set</span>' : r.state === 'na' ? '<span class="le-val is-unset">hidden</span>' : '<span class="le-val">' + esc(f.display || 'not set') + '</span>';
+    var open = OPEN === r.id;
+    var acts = r.state === 'na'
+      ? '<div class="le-acts"><button type="button" class="slaf-btn" data-le-applies="' + esc(r.id) + '">Applies after all</button></div>'
+      : (open ? '' : '<div class="le-acts"><button type="button" class="slaf-btn" data-le-open="' + esc(r.id) + '">' + (r.state === 'unknown' ? 'Fill it in' : 'Sharpen it') + '</button></div>');
+    return '<li class="le-row" data-le-row="' + esc(r.id) + '">'
+      + '<div class="le-head"><a class="le-name" href="' + esc(Fill.ledgerHref(r, ROOM_ID)) + '">' + esc(r.label) + '</a>' + val + tag(r) + '</div>'
+      + '<p class="le-meta">' + esc(markedLine(r)) + ' ' + roomsLine(r) + '</p>'
+      + (r.where ? '<p class="le-where">' + esc(r.where) + '</p>' : '')
+      + acts
+      + (open ? '<div class="le-editor" data-le-editor>' + FillCard.editorHtml(r, { roomId: ROOM_ID, tables: TABLES }) + '<p class="le-said" data-le-said hidden></p></div>' : '')
+      + (!open && SAID[r.id] ? '<p class="le-editor le-said">' + esc(SAID[r.id]) + '</p>' : '')
+      + '</li>';
+  }
+  function focused(scope) {
+    var a = document.activeElement;
+    return a && scope.contains(a) && (a.tagName === 'INPUT' || a.tagName === 'SELECT' || a.tagName === 'TEXTAREA');
+  }
+  function paintFilters(counts) {
+    el('loose-filters').innerHTML = FILTERS.map(function (f) {
+      var n = f.id === 'all' ? counts.loose : counts[f.id];
+      return '<button type="button" data-le-filter="' + f.id + '" aria-pressed="' + (FILTER === f.id) + '">' + esc(f.label) + (n ? '<small>' + n + '</small>' : '') + '</button>';
+    }).join('');
+  }
+  function paint() {
+    if (!TABLES) return;
+    var list = el('le-rows');
+    if (focused(list)) return;                 /* never under a finger */
+    var le = Fill.looseEnds(h(), TABLES, FILTER);
+    var c = le.counts;
+    paintFilters(c);
+    el('le-count').textContent = c.loose
+      ? c.loose + (c.loose === 1 ? ' loose end' : ' loose ends') + ': ' + c.unknown + ' don’t know, ' + c.rough + ' roughly, ' + c.stale + ' stale.'
+      : '';
+    el('btn-walk').hidden = !c.loose;
+    if (OPEN && !le.rows.some(function (r) { return r.id === OPEN; })) OPEN = null;
+    list.innerHTML = le.rows.map(rowHtml).join('');
+    var empty = el('le-empty');
+    if (!le.rows.length) {
+      empty.hidden = false;
+      empty.textContent = FILTER === 'all'
+        ? 'Nothing to come back to. Everything you’ve entered is as sharp as you marked it.'
+        : FILTER === 'hidden' ? 'Nothing hidden. Every row still applies to you.' : 'Nothing here under this filter.';
+    } else empty.hidden = true;
+    if (OPEN) wireOpen();
+  }
+  function wireOpen() {
+    var li = document.querySelector('[data-le-row="' + OPEN + '"] [data-le-editor]');
+    var row = LedgerRows.byId(OPEN);
+    if (!li || !row) return;
+    var full = Fill.rows(h(), TABLES).filter(function (r) { return r.id === OPEN; })[0] || row;
+    FillCard.wire(li, full, { tables: TABLES, roomId: ROOM_ID,
+      onBefore: function () { SNAP = Fill.snapshot(h(), TABLES, ROOM_ID); },
+      onAct: function (res, action, r) {
+        if (!res.ok) return;
+        var after = Fill.snapshot(h(), TABLES, ROOM_ID);
+        var moved = Fill.whatChanged(SNAP, after);
+        var lead = action === 'save' ? r.label + ' is sharp now.' : action === 'roughly' ? r.label + ', roughly.' : action === 'unknown' ? r.label + ' parked until you know.' : r.label + ' is out of the plan.';
+        SAID = {}; SAID[r.id] = lead + (moved ? ' ' + moved : '');
+        OPEN = null;
+        paint();
+        /* A sharpened row leaves the list, so the sentence goes at the top. */
+        if (!document.querySelector('[data-le-row="' + r.id + '"]')) { el('le-count').textContent = SAID[r.id] + ' ' + el('le-count').textContent; }
+      } });
+    var box = li.querySelector('input, select');
+    if (box) { try { box.focus({ preventScroll: true }); } catch (e) { /* fine */ } }
+  }
+
+  el('loose-list').addEventListener('click', function (ev) {
+    var t = ev.target.closest ? ev.target.closest('[data-le-filter],[data-le-open],[data-le-applies],[data-le-rooms]') : null;
+    if (!t) return;
+    if (t.hasAttribute('data-le-filter')) { FILTER = t.getAttribute('data-le-filter'); OPEN = null; paint(); return; }
+    if (t.hasAttribute('data-le-open')) { OPEN = t.getAttribute('data-le-open'); SAID = {}; paint(); return; }
+    if (t.hasAttribute('data-le-applies')) {
+      var row = LedgerRows.byId(t.getAttribute('data-le-applies'));
+      if (row) Fill.act('applies', row, null, { tables: TABLES });
+      return;
+    }
+    if (t.hasAttribute('data-le-rooms')) {
+      var list = document.querySelector('[data-le-rooms-list="' + t.getAttribute('data-le-rooms') + '"]');
+      if (list) { list.hidden = !list.hidden; t.setAttribute('aria-expanded', String(!list.hidden)); }
+    }
+  });
+
+  /* "Go through these one at a time": the hero card over the loose ends
+     only, at the top of the page, back to the list when they are done. */
+  var WALK = null;
+  el('btn-walk').addEventListener('click', function () {
+    if (WALK) { WALK.remove(); WALK = null; }
+    OPEN = null;
+    WALK = FillCard.mount(el('loose-walk'), { roomId: ROOM_ID, tables: TABLES, scope: 'loose', id: 'fill-next',
+      onDone: function (card) { setTimeout(function () { if (WALK === card) { card.remove(); WALK = null; } paint(); }, 2500); } });
+    el('btn-walk').hidden = true;
+    if (WALK) WALK.scrollIntoView({ block: 'start' });
+    var stop = document.createElement('p');
+    stop.className = 'slaf-hint le-walk';
+    stop.innerHTML = '<button type="button" class="slaf-btn slaf-btn--quiet" id="btn-walk-stop">Back to the list</button>';
+    el('loose-walk').appendChild(stop);
+    el('btn-walk-stop').addEventListener('click', function () { if (WALK) WALK.remove(); WALK = null; stop.remove(); paint(); });
+  });
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+  Spine.onChange(paint);
+
+  FillCard.ensure().then(function (t) {
+    return Reference.load(['states', 'staleness']).then(function (more) { return Object.assign({}, t, more); });
+  }).then(function (t) {
+    TABLES = t;
+    Staleness.use(t.staleness);
+    var m = /^#(all|unknown|rough|stale|hidden)$/.exec(location.hash || '');
+    if (m) FILTER = m[1];
+    paint();
+    if (location.hash === '#loose-walk') el('btn-walk').click();
+  }).catch(function (err) {
+    el('le-empty').hidden = false;
+    el('le-empty').textContent = 'Couldn’t load the reference tables in data/ (' + err.message + '). Serve this over HTTP rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

@@ -26,14 +26,16 @@
   LIVE-FORM: built once — buttons only, no text input.
 -->
 <style>
-  .sw { list-style: none; margin: 0; padding: 0; }
-  .sw li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: start; }
+  .sw, .fill-sw { list-style: none; margin: 0; padding: 0; }
+  .sw li, .fill-sw li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: start; }
   .sw li:first-child { border-top: none; }
-  .sw b { display: block; font-size: var(--text-sm); }
-  .sw .gloss { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; line-height: 1.45; }
-  .sw .where { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
-  .sw .where a { color: var(--color-accent-hover); text-decoration: none; }
-  .sw .state { font-size: var(--text-xs); color: var(--color-text-faint); text-align: right; margin-top: 4px; }
+  .sw b, .fill-sw b { display: block; font-size: var(--text-sm); }
+  .sw .gloss, .fill-sw .gloss { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; line-height: 1.45; }
+  .sw .where, .fill-sw .where { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1); }
+  .sw .where a, .fill-sw .where a { color: var(--color-accent-hover); text-decoration: none; }
+  .sw .state, .fill-sw .state { font-size: var(--text-xs); color: var(--color-text-faint); text-align: right; margin-top: 4px; }
+  .fill-sw .hidden-list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+  .fill-sw .hidden-list .slaf-btn { min-height: 36px; }
   .paths { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-2); }
 </style>
 </head>
@@ -54,7 +56,11 @@
   <section class="slaf-card" id="household" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Household</span><p class="slaf-hint" id="household-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="household-list"></ul></section>
   <section class="slaf-card" id="horizon" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Horizon</span><p class="slaf-hint" id="horizon-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="horizon-list"></ul></section>
   <section class="slaf-card" id="assumptions" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Assumptions</span><p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Declared once, here, and read by every projection. Every engine works in today’s money, so the return is real (over inflation) and comes from the return bands table; the two rates below are yours to step.</p><ul class="sw" id="assumptions-list"></ul></section>
-  <section class="slaf-card" id="advanced" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Advanced</span><p class="slaf-hint" id="advanced-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="advanced-list"></ul></section>
+  <section class="slaf-card" id="advanced" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Advanced</span><p class="slaf-hint" id="advanced-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="advanced-list"></ul>
+    <!-- Fill Mode (D-264, D-265): the delay before a "don't know" is asked
+         again, and the rows marked "Not for me", which come back from here
+         or from Loose Ends' Hidden filter. Not switches, so not in .sw. -->
+    <ul class="fill-sw" id="fill-list"></ul></section>
   <section class="slaf-card" id="backup" style="margin-top:var(--space-4)" aria-label="Backup"></section>
 </main>
 
@@ -73,6 +79,10 @@
 <script src="../shared/undo.js"></script>
 <script src="../shared/gate.js"></script>
 <script src="../shared/backup.js"></script>
+<script src="../shared/daite.js"></script>
+<script src="../shared/levers.js"></script>
+<script src="../shared/ledger-rows.js"></script>
+<script src="../shared/fill.js"></script>
 <script>
 (function () {
   'use strict';
@@ -134,8 +144,32 @@
   function paintAssumptions() {
     el('assumptions-list').innerHTML = RATE_ROWS.map(rateRow).join('') + returnRow();
   }
+  /* Fill Mode (D-264, D-265): the days before a "don't know" is asked again,
+     stepped by a week, and the rows the household marked "Not for me". */
+  var UNKNOWN_STEP = 7, UNKNOWN_MAX = 90;
+  function fillRows() {
+    var Fill = SLAF.Fill, LR = SLAF.LedgerRows;
+    if (!Fill || !TABLES || !TABLES.ledgerRows) return '';
+    var days = Fill.unknownReturnDays();
+    var isDefault = Prefs.get('fill.unknownReturnDays', null) === null;
+    var loose = SLAF.Registry.byId('loose-ends');
+    var where = loose ? '<span class="where">Read by <a href="../' + esc(loose.href) + '">' + esc(loose.title) + '</a> and the Next card on <a href="../index.html">The Dashboard</a>.</span>' : '';
+    var delay = '<li data-fill="unknownReturnDays"><div><b>Ask again after</b><span class="gloss">A row you marked don’t know yet stays out of the Next card this long, or until the working plan is complete, whichever comes first.</span>' + where + '</div>'
+      + '<div class="stepper"><button type="button" class="slaf-seed-btn" data-unknown-dir="-1" aria-label="Fewer days"' + (days - UNKNOWN_STEP < 0 ? ' disabled' : '') + '>−</button>'
+      + '<output>' + days + ' days</output>'
+      + '<button type="button" class="slaf-seed-btn" data-unknown-dir="1" aria-label="More days"' + (days + UNKNOWN_STEP > UNKNOWN_MAX ? ' disabled' : '') + '>+</button>'
+      + '<span class="state">' + (isDefault ? 'the default' : 'yours') + '</span></div></li>';
+    var hidden = Fill.looseEnds(h(), TABLES, 'hidden').rows;
+    var list = hidden.length
+      ? '<div class="hidden-list">' + hidden.map(function (r) { return '<button type="button" class="slaf-btn slaf-btn--quiet" data-applies="' + esc(r.id) + '">' + esc(r.label) + ' · applies after all</button>'; }).join('') + '</div>'
+      : '<span class="gloss">Nothing hidden. Every row still applies to you.</span>';
+    var hiddenRow = '<li data-fill="hidden"><div><b>Not for me</b><span class="gloss">Rows you took out of the plan. Tap one to bring it back; it returns to the Next card and to every room that read it.</span>' + list + '</div><div><span class="state">' + hidden.length + ' hidden</span></div></li>';
+    return delay + hiddenRow;
+  }
+  function paintFill() { el('fill-list').innerHTML = fillRows(); }
   function paint() {
     paintAssumptions();
+    paintFill();
     Features.groups().forEach(function (g) {
       el(g.id + '-line').textContent = g.line;
       el(g.id + '-list').innerHTML = Features.all().filter(function (f) { return f.group === g.id; }).map(row).join('');
@@ -150,6 +184,22 @@
     if (b) { Features.set(b.getAttribute('data-feature'), !Features.on(b.getAttribute('data-feature'), h())); paint(); return; }
     var p = e.target.closest('button[data-path]');
     if (p) { Features.applyPath(p.getAttribute('data-path')); paint(); return; }
+    var u = e.target.closest('button[data-unknown-dir]');
+    if (u) {
+      var cur = SLAF.Fill.unknownReturnDays();
+      var nxt = cur + UNKNOWN_STEP * Number(u.getAttribute('data-unknown-dir'));
+      if (nxt < 0 || nxt > UNKNOWN_MAX) return;
+      Prefs.set('fill.unknownReturnDays', nxt);
+      paintFill();
+      return;
+    }
+    var ap = e.target.closest('button[data-applies]');
+    if (ap) {
+      var row = SLAF.LedgerRows.byId(ap.getAttribute('data-applies'));
+      if (row) SLAF.Fill.act('applies', row, null, { tables: TABLES });
+      paintFill();
+      return;
+    }
     var s = e.target.closest('button[data-step]');
     if (s) {
       var path = s.getAttribute('data-step'), key = path.split('.')[1];
@@ -166,8 +216,10 @@
   Spine.registerRoom(ROOM_ID);
   SLAF.Progress.mount(ROOM_ID);
   SLAF.Backup.mount('#backup');
-  Reference.load(['features', 'returnBands']).then(function (tables) {
+  Reference.load(['features', 'returnBands', 'ledgerRows', 'nextWeights']).then(function (tables) {
     TABLES = tables;
+    SLAF.LedgerRows.use(tables.ledgerRows);
+    SLAF.Fill.use(tables.nextWeights, null);
     Features.use(tables.features);
     paint();
     Spine.onChange(paint);

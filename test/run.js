@@ -11059,8 +11059,9 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('kind is still a property, no longer a heading', Registry.all().every(r => typeof r.kind === 'string') && !/'The path'|'About you'|'What it means'/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
   /* Four doors stood side by side under Home and it was the single thing
      that lost people most (D-186). There is one now: the Ledger, which the
-     First Round and Express became views of (D-230). */
-  check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
+     First Round and Express became views of (D-230). Loose Ends (D-265) is
+     not a door in: it is the Ledger's doubtful rows, listed, with a badge. */
+  check('Home: the Dashboard, the Ledger, its Loose Ends, and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,loose-ends,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
@@ -14737,8 +14738,10 @@ section('The thirty (docs/room-map.json)');
      merge was running and is named under Housing, so the ledger is 94 now.
      The literal stays a literal on purpose: a room added without a place on
      the map still fails here, which is the whole point of the alarm. */
+  /* 95 with Loose Ends (D-265), held under the Ledger: a door into its rows
+     with a sidebar badge, not a room with a number of its own. */
   check('every room is accounted for: thirty, plus what they absorb, plus the Net Worth redirect',
-    MAP.rooms.length + merged + toGo + 1, 94);
+    MAP.rooms.length + merged + toGo + 1, 95);
   check('and the registry holds exactly the survivors plus what has not merged yet',
     Object.keys(live).length, MAP.rooms.length + toGo);
 

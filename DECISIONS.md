@@ -14890,6 +14890,46 @@ deep link into the Ledger and back, with a clean console.
 
 ---
 
+## D-265 — Loose Ends: every rough, unknown and stale number in one list, with a badge
+
+**Why.** Once a number can be marked roughly or don't know (D-264), the
+person needs one place to come back to them, instead of hunting through
+rooms; and a rough number is a finished answer, so no room may ask for it
+again. The owner's brief of 2026-09-19, part 3.
+
+**Decision.** `rooms/loose-ends.html`, group Home, directly under the
+Ledger in the sidebar, with a count badge that hides at zero
+(`shared/progress.js`). One row a loose end: the name (a link to its Ledger
+box), the value or "not set", the state tag, the date it was marked, where
+to find it, how many places read it, and the same editor the Next card
+uses, so no number is typed in two places. Filters All, Don't know,
+Roughly, Stale, Hidden; Don't know sorts first, then Roughly, each by the
+Next card's score. "Go through these one at a time" runs the hero card over
+this list only. A sharpened number says what moved in the plan. Stale is a
+known or rough number past its refresh window (`data/staleness.json`) and
+counts in the badge. Settings gains the delay before a "don't know" is
+asked again (prefs `fill.unknownReturnDays`, stepped by a week) and the
+rows marked Not for me, which come back from there or from Hidden.
+
+**Replaces or removes.** A new page under the freeze, so it is held under
+the Ledger on `docs/room-map.json`: a door into the Ledger's rows with a
+badge a hash view cannot carry, storing nothing and writing only through
+the owners. It replaces the hunt: the Refresh view (`#since-last-time`)
+keeps the moving rows; this holds the doubtful ones.
+
+**Stored shape.** No change; the states are read from D-264's facts.
+`data/layouts.json` lists the room in all twenty arrangements.
+
+**Verified.** `node test/run.js`, `node test/forms.js` (a row's box survives
+the list's repaint; Save writes through the owner and the row leaves),
+`test/sidebar.js`, `test/render.js`. In a browser at 380px: empty, the demo
+persona's 23 rough rows, sharpen one ("Debt-to-income moved from 5% to
+47%"), the badge falling from 23 to 21 on every page, the walk, Not for me
+into Hidden and back. `test/settings.js`'s heading check fails before this
+change too: the Backup card (D-202) sits under the four headings.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

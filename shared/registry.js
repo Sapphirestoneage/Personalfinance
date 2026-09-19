@@ -534,6 +534,35 @@
         { id: 'backup',       label: 'Backup' }
       ]
     },
+    /* Loose Ends (Fill Mode, D-265): every row marked roughly, don't know
+       or gone stale, in one list, so they can be revisited together instead
+       of hunted through rooms. A second door into the Ledger's rows: it
+       stores nothing and writes only through the owners, like the Ledger's
+       own views. Held under the Ledger on the room map. */
+    {
+      id: 'loose-ends',
+      group: 'home', aliases: ['loose ends', 'roughly', 'rough', 'don\u2019t know', 'unknown', 'stale', 'come back to', 'revisit', 'hidden', 'not for me'],
+      kind: 'about-you',
+      utility: true,
+      needs: [],
+      /* Under the Ledger in the sidebar (Home sorts by order past the named
+         few); on the path just after Start Here, which the Ledger precedes. */
+      order: 1.1,
+      title: 'Loose Ends',
+      blurb: 'Every number you marked roughly or don\u2019t know yet, and any that has gone stale, in one list. Sharpen them here, one at a time or all at once; each box is the Ledger\u2019s own.',
+      href: 'rooms/loose-ends.html',
+      tier: 0,
+      tags: ['income', 'cashflow', 'debt'],
+      daite: { reads: ["assets","assets.allocation","assets.cashCents","assets.contributions.hsa","assets.contributions.pretax","assets.contributions.roth","assets.invested","assets.property","debt.items","debt.items[].minimumCents","debt.items[].plan","debt.none","expenses","expenses.floor","expenses.giving","expenses.insurance","expenses.log","expenses.months","expenses.needs.accommodation","expenses.needs.food","expenses.needs.transportation","expenses.shared","expenses.wants","expenses.wants.therapy","income.cadence","income.future","income.grossAnnualCents","income.ledger","income.sources[].benefit","income.sources[].employerMatch","income.variable","taxes.filingStatus","taxes.marginalRate","taxes.otherPreTax","taxes.state","taxes.withheld","taxes.zip","you.cover","you.dependents","you.dob","you.estate","you.partner","you.situation"],
+               /* Owns nothing. Every box writes through Ownership.write, the
+                  owner's own path, exactly as the Ledger's views do (D-230). */
+               writes: [] },
+      subsections: [
+        { id: 'loose-list',    label: 'The list' },
+        { id: 'loose-filters', label: 'Filters' },
+        { id: 'loose-walk',    label: 'One at a time' }
+      ]
+    },
     {
       id: 'accounts',
       group: 'numbers', subgroup: 'assets', aliases: ['401k', 'ira', 'roth', 'hsa', 'allocation', 'contributions', 'match'],
