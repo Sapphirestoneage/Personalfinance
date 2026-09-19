@@ -11,7 +11,7 @@ Reference data: confidence_weights.json, debt_rules.json, effective_tax_rates_20
 Owns: nothing
 Reads from other owners: employerMatch (start), debtRate (debt-payoff)
 Latest decisions:
-  - D-238 — The ladder answers past step 4
+  - D-240 — The ladder answers past step 4
   - D-231 — What The Next Dollar Does: one question at three amounts
   - D-058 — The Dashboard is the front door; the FOO ladder is a room
   - D-054 — A back and a next in every room, at the top

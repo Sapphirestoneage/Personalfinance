@@ -216,10 +216,63 @@
     return out;
   }
 
+  /** The tiers: every variant with a target, as rungs of one ladder in
+   *  order of size, and which rung the investments have reached.
+   *
+   *  Coast, Lean, FIRE, Chubby and Fat are the same formula at different
+   *  sizes (Coast is the standard target discounted back to today), so
+   *  they sort by their computed target and the order can change: near
+   *  the coast age, Coast climbs above Lean. Barista joins only when a
+   *  part-time income is handed in, since without one it has no size.
+   *
+   *  The value is the number of rungs reached. `current` is the highest
+   *  rung reached (null below the first), `next` the first not reached
+   *  (null past the last) with the gap in cents and the years away at
+   *  the current pace, read from progressToward. Incomplete while there
+   *  is no target at all (no expenses); an incomplete investments figure
+   *  still lists the rungs so a page can draw the ladder unplaced. */
+  var TIER_ORDER = ['coast', 'lean', 'standard', 'chubby', 'fat', 'barista'];
+  function tiers(household, tables, opts) {
+    var all = allVariants(household, tables, opts);
+    var rungs = TIER_ORDER.filter(function (id) { return all[id] && Money.isOk(all[id].target); })
+      .map(function (id) {
+        var t = all[id].target, p = all[id].progress;
+        return { id: id, label: all[id].variant.label, blurb: all[id].variant.blurb,
+          targetCents: t.value, progress: p,
+          share: Money.isOk(p) ? p.value : null,
+          yearsAway: Money.isOk(p) ? p.yearsAway : null };
+      })
+      .sort(function (a, b) { return a.targetCents - b.targetCents; });
+    if (!rungs.length) {
+      var first = all.standard ? all.standard.target : null;
+      return Money.incomplete(first && first.reason ? first.reason : 'Add your monthly expenses to see the FIRE tiers.',
+        first && first.missing ? first.missing : ['monthlyExpenses']);
+    }
+    /* The same basis progressToward measures against: the after-tax figure
+       when the caller hands one in (D-181), the listed balance otherwise. */
+    var o = opts || {};
+    var investments = Money.isEntered(o.investmentsCents) ? Money.ok(o.investmentsCents) : Schema.investmentsCents(household);
+    if (!Money.isOk(investments)) {
+      return Object.assign(Money.incomplete('Add your investment balance to see which tier you are on.', ['investments']),
+        { rungs: rungs.map(function (r) { return Object.assign({ reached: null, gapCents: null }, r); }) });
+    }
+    var current = null, next = null;
+    rungs.forEach(function (r) {
+      r.reached = investments.value >= r.targetCents;
+      r.gapCents = r.reached ? 0 : r.targetCents - investments.value;
+      if (r.reached) current = r;
+      else if (!next) next = r;
+    });
+    var reached = rungs.filter(function (r) { return r.reached; }).length;
+    return Money.ok(reached, { rungs: rungs, current: current, next: next, investmentsCents: investments.value });
+  }
+
   return {
     variantById: variantById,
     calculateFIRE: calculateFIRE,
     progressToward: progressToward,
-    allVariants: allVariants
+    allVariants: allVariants,
+    tiers: tiers,
+    TIER_ORDER: TIER_ORDER
   };
 });

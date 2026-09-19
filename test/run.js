@@ -8426,6 +8426,176 @@ section('The dashboard (D-096): four blocks, the leads, the translator');
   check('the dashboard\'s registry blurb says what it is', /Home\./.test(Registry.byId('dashboard').blurb), true);
 })();
 
+section('Up next and the FIRE tiers (D-234): what is open, what one answer opens, which rung');
+
+(function () {
+  const UpNext = require(path.join(ROOT, 'shared/upnext.js'));
+  const T = Object.assign({}, TABLES, { fooRules: require(path.join(ROOT, 'data/foo_rules.json')) });
+  const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+
+  /* The list is honest about where it points. */
+  checkTrue('every need is a shared field', UpNext.READINGS.every(r => r.needs.every(f => !!Ownership.FIELDS[f])));
+  checkTrue('every reading opens a room, at a section that room lists', UpNext.READINGS.every(r => { const room = Registry.byId(r.room); return !!room && room.subsections.some(s => s.id === r.anchor); }));
+  checkTrue('no two readings share an id', new Set(UpNext.READINGS.map(r => r.id)).size === UpNext.READINGS.length);
+
+  /* Empty: nothing open, every locked reading says which fields, and the
+     cheapest comes first. */
+  const empty = UpNext.plan(Schema.createHousehold({}), T);
+  check('an empty household opens nothing', empty.open.length, 0);
+  checkTrue('… and every locked reading names at least one field, with a link', empty.locked.every(e => e.missing.length > 0 && e.missing.every(m => /^rooms\//.test(m.href))));
+  check('… the FIRE number is one answer away', empty.next.id + ':' + empty.next.missing.map(m => m.fieldId).join(','), 'fireNumber:monthlyExpenses');
+  checkTrue('… and the list is cheapest first', empty.locked.every((e, i) => i === 0 || e.cost >= empty.locked[i - 1].cost));
+  checkTrue('… monthly expenses is named as opening the most', Object.keys(empty.byField).every(k => empty.byField[k].opens.length <= empty.byField.monthlyExpenses.opens.length));
+
+  /* `needs` is the promise: fill exactly these and the reading opens. */
+  function only(fields) {
+    const h = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: 'employed' })], meta: { hasDebt: true } });
+    fields.forEach(f => {
+      if (f === 'cashSavings') h.assets.push(Schema.createAsset({ category: 'cash', valueCents: 1200000 }));
+      if (f === 'investments') h.assets.push(Schema.createAsset({ category: 'investment', valueCents: 5000000 }));
+      if (f === 'totalDebt') h.debts.push(Schema.createDebt({ label: 'Card', balanceCents: 300000, rate: 0.2, minPaymentCents: 9000, type: 'credit_card' }));
+      if (f === 'grossAnnualIncome') h.people[0].incomeSources = [Schema.createIncomeSource({ id: 'intake_income', grossAnnualIncomeCents: 7200000 })];
+      if (f === 'filingStatus') h.filingStatus = 'single';
+      if (f === 'monthlyExpenses') h.expenses = Schema.withMonthlySpend(h, 300000).expenses;
+      if (f === 'dob') h.people[0].dob = '1994-04-12';
+      if (f === 'employerMatch') {
+        if (!h.people[0].incomeSources.length) h.people[0].incomeSources = [Schema.createIncomeSource({ id: 'intake_income' })];
+        h.people[0].incomeSources[0].employerMatch = { matchPercent: 0.5, matchCapPercentOfSalary: 0.06 };
+      }
+      if (f === 'contributionPercent') h.retirement = Object.assign({}, h.retirement, { contributionPercent: 6 });
+    });
+    return h;
+  }
+  UpNext.READINGS.forEach(r => {
+    const p = UpNext.plan(only(r.needs), T);
+    const hit = p.open.filter(e => e.id === r.id)[0];
+    checkTrue(`filling only its needs opens ${r.id}` + (hit ? ' (' + hit.display + ')' : ''), !!hit, p.locked.filter(e => e.id === r.id).map(e => e.reason || e.missing.map(m => m.fieldId).join(',')).join(' '));
+    /* And one fewer leaves it locked, naming the one left out. */
+    if (r.needs.length > 1) {
+      const short = UpNext.plan(only(r.needs.slice(1)), T);
+      const left = short.locked.filter(e => e.id === r.id)[0];
+      checkTrue(`… one short and ${r.id} names ${r.needs[0]}`, !!left && left.missing.length === 1 && left.missing[0].fieldId === r.needs[0]);
+    }
+  });
+
+  /* The demo opens everything; a retiree is not asked for a savings rate. */
+  const demo = UpNext.plan(Demo.build(), T);
+  check('the demo opens every reading', demo.locked.length, 0);
+  check('… ten of them', demo.open.length, UpNext.READINGS.length);
+  checkTrue('… each with a display string, never a dash', demo.open.every(e => typeof e.display === 'string' && e.display.length > 0 && e.display !== Money.EM_DASH));
+  const ret = Demo.build(); ret.people[0].employmentStatus = 'retired';
+  checkTrue('a retiree has no savings rate or FI date reading, locked or open', ['savingsRate', 'fiDate'].every(id => !UpNext.plan(ret, T).open.concat(UpNext.plan(ret, T).locked).some(e => e.id === id)));
+
+  /* The tiers: one ladder, sorted by size, the rung reached and the next. */
+  const t = Fire.tiers(Demo.build(), T);
+  checkTrue('the demo has five rungs, no barista without a part-time income', Money.isOk(t) && t.rungs.map(r => r.id).join(',') === 'coast,lean,standard,chubby,fat');
+  checkTrue('… sorted by target', t.rungs.every((r, i) => i === 0 || r.targetCents >= t.rungs[i - 1].targetCents));
+  check('… the demo has reached none', t.value + ':' + (t.current ? t.current.id : 'none') + ':' + t.next.id, '0:none:coast');
+  check('… the gap is target less investments', t.next.gapCents, t.next.targetCents - t.investmentsCents);
+  checkTrue('… with years away at this pace', Money.isOk(t.next.yearsAway) && t.next.yearsAway.value > 0);
+  checkTrue('… and each rung carries its share', t.rungs.every(r => typeof r.share === 'number'));
+  const rich = Demo.build(); rich.assets = rich.assets.filter(a => a.category !== 'investment').concat([Schema.createAsset({ category: 'investment', valueCents: 80000000 })]);
+  const tr = Fire.tiers(rich, T);
+  check('$800,000 invested against $3,150 a month: Lean reached, FIRE next', tr.value + ':' + tr.current.id + ':' + tr.next.id, '2:lean:standard');
+  check('… $145,000 to go', tr.next.gapCents, 94500000 - 80000000);
+  const done = Demo.build(); done.assets = done.assets.filter(a => a.category !== 'investment').concat([Schema.createAsset({ category: 'investment', valueCents: 200000000 })]);
+  checkTrue('past every rung: no next', Fire.tiers(done, T).next === null && Fire.tiers(done, T).current.id === 'fat');
+  checkTrue('barista joins the ladder once a part-time income is given', Fire.tiers(Demo.build(), T, { baristaAnnualIncomeCents: 1200000 }).rungs.some(r => r.id === 'barista'));
+  const noSpend = Demo.build(); noSpend.expenses = Schema.createHousehold({}).expenses;
+  checkTrue('no expenses: incomplete, naming them', !Money.isOk(Fire.tiers(noSpend, T)) && Fire.tiers(noSpend, T).missing.indexOf('monthlyExpenses') !== -1);
+  const noInv = Demo.build(); noInv.assets = noInv.assets.filter(a => a.category !== 'investment');
+  const ti = Fire.tiers(noInv, T);
+  checkTrue('no investments: incomplete, but the rungs are still listed, unplaced', !Money.isOk(ti) && ti.rungs.length === 5 && ti.rungs.every(r => r.reached === null));
+
+  /* The page: a strip, not a fifth block; the tiers in block 4. */
+  checkTrue('the dashboard loads the up-next reader', page.indexOf('<script src="shared/upnext.js">') !== -1);
+  checkTrue('the strip is on the page, not as a section', /<div class="walk-strip up-next" id="up-next"/.test(page) && !/<section[^>]*id="up-next"/.test(page));
+  checkTrue('the tiers sit inside the date block', page.indexOf('id="fire-tiers"') > page.indexOf('id="date"') && page.indexOf('id="fire-tiers"') < page.indexOf('id="full-panel"'));
+  checkTrue('the old answers-in counter is gone', page.indexOf('id="resume"') === -1 && page.indexOf('answers in.') === -1);
+  checkTrue('the registry deep-links the strip', Registry.byId('dashboard').subsections.some(s => s.id === 'up-next'));
+})();
+
+section('The map (D-235): the road, you are here, and the routes from here');
+
+(function () {
+  const Journey = require(path.join(ROOT, 'engines/journey.js'));
+  const JourneyMap = require(path.join(ROOT, 'shared/journeymap.js'));
+  const T = Object.assign({}, TABLES, { fooRules: require(path.join(ROOT, 'data/foo_rules.json')), journeyRoutes: require(path.join(ROOT, 'data/journey_routes.json')), returnBands: require(path.join(ROOT, 'data/return_bands.json')) });
+  const demo = Demo.build();
+  const m = Journey.map(demo, T);
+
+  /* The ladder: ten steps, the FOO's placement, nothing decided here. */
+  check('ten ladder steps', m.ladder.steps.length, 10);
+  check('the demo is on step 2, as the FOO says', m.ladder.here, Foo.evaluate(demo, T).placement.step);
+  check('… steps before it done, it here, the rest ahead', m.ladder.steps.map(s => s.state).join(','), 'done,done,here,ahead,ahead,ahead,ahead,ahead,ahead,ahead');
+  const blank = Journey.map(Schema.createHousehold({}), T);
+  checkTrue('an empty household is nowhere on the ladder, and the map says why', blank.ladder.here === null && typeof blank.ladder.reason === 'string' && blank.ladder.reason.length > 0);
+  checkTrue('… its steps are unknown or ahead, never done', blank.ladder.steps.every(s => s.state !== 'done'));
+
+  /* The tiers and the back half read the same engines the dashboard does. */
+  check('the tiers are Fire.tiers', JSON.stringify(m.tiers.rungs.map(r => r.id)), JSON.stringify(Fire.tiers(demo, T).rungs.map(r => r.id)));
+  check('you are here: no tier yet, step 2', m.here.tier + ':' + m.here.step, 'null:2');
+  check('the back half is ahead', m.backHalf.state, 'ahead');
+  const ret = Demo.build(); ret.people[0].employmentStatus = 'retired';
+  check('a retiree is in the back half', Journey.map(ret, T).backHalf.state, 'here');
+
+  /* The routes: four paces, one loop. */
+  checkTrue('the routes table carries the header', typeof T.journeyRoutes.version === 'string' && typeof T.journeyRoutes.confidence === 'string' && typeof T.journeyRoutes.confidenceNote === 'string');
+  check('four routes', T.journeyRoutes.routes.length, 4);
+  checkTrue('the routes are ok for the demo', Money.isOk(m.routes));
+  const R = {}; m.routes.routes.forEach(r => { R[r.id] = r; });
+  check('the road as it is lands on the same FI year as Tier 0', R['as-is'].yearsToFire, Tier0.yearsToFire(demo, T).value);
+  check('… saving what the savings rate says is saved', R['as-is'].annualSavingCents, (Money.isOk(Tier0.savingsRate(demo, T).includingMatch) ? Tier0.savingsRate(demo, T).includingMatch : Tier0.savingsRate(demo, T).excludingMatch).annualSavingsCents);
+  check('the scenic route saves half', R.scenic.annualSavingCents, Math.round(R['as-is'].annualSavingCents * 0.5));
+  checkTrue('… and arrives later', R.scenic.yearsToFire > R['as-is'].yearsToFire && R.scenic.deltaYears < 0);
+  const floor = Schema.fatNeedsCents(demo);
+  checkTrue('the demo has its floor typed', Money.isOk(floor));
+  check('the death march lives on the floor', R.march.monthlyLivingCents, Math.round(floor.value));
+  check('… and puts in take-home less the floor', R.march.annualSavingCents, m.routes.takeHomeAnnualCents - floor.value * 12);
+  checkTrue('… so it arrives sooner', R.march.yearsToFire < R['as-is'].yearsToFire && R.march.deltaYears > 0);
+  checkTrue('coast then cruise stops adding when the Coast rung is reached, at today\'s pace', R.coast.stopSavingIn === R['as-is'].eta.coast.years);
+  check('… and arrives at the coast target age', R.coast.arriveAge, T.fireVariants.defaults.coastTargetAge);
+  check('… which is the years of growth Coast FIRE counts', R.coast.yearsToFire, Fire.calculateFIRE(demo, T, { variantId: 'coast' }).yearsOfGrowth);
+  checkTrue('soonest first, the death march leads', m.routes.routes[0].id === 'march');
+  checkTrue('every route says what to live on and what to put in', m.routes.routes.every(r => Money.isEntered(r.monthlyLivingCents) && Money.isEntered(r.annualSavingCents)));
+  checkTrue('take-home is what is lived on plus what is put in, every route', m.routes.routes.every(r => Math.abs(r.monthlyLivingCents * 12 + r.annualSavingCents - m.routes.takeHomeAnnualCents) < 12));
+
+  /* Honest edges: no floor typed is rough and says so; saving nothing never arrives; nothing entered names the field. */
+  const noFloor = Schema.withMonthlySpend(demo, 315000);
+  const nf = Journey.map(noFloor, T).routes.routes.filter(r => r.id === 'march')[0];
+  checkTrue('without the floor typed the march is rough and says so', nf.rough === true && /70%/.test(nf.note));
+  check('… at the same share Lean FIRE falls back to', T.journeyRoutes.floorShareFallback, Fire.variantById(T.fireVariants, 'lean').expenseFactor);
+  const spender = Demo.build(); spender.expenses = Schema.withMonthlySpend(spender, 650000).expenses;
+  const sp = Journey.map(spender, T).routes;
+  checkTrue('spending more than take-home: the road as it is never arrives, and says so rather than a year', Money.isOk(sp) && sp.routes.filter(r => r.id === 'as-is')[0].never === true && sp.routes.filter(r => r.id === 'as-is')[0].yearsToFire === null);
+  checkTrue('… and the never routes sort last', sp.routes.slice(sp.routes.findIndex(r => r.never)).every(r => r.never) && sp.routes.some(r => r.never));
+  const html2 = JourneyMap.html(Journey.map(spender, T), { from: 'fire' });
+  checkTrue('… and are drawn as never, not as a year', /jm-never/.test(html2));
+  checkTrue('nothing entered: the routes name monthly expenses', !Money.isOk(blank.routes) && blank.routes.missing.indexOf('monthlyExpenses') !== -1);
+  const noInc = Demo.build(); noInc.people[0].incomeSources = [];
+  checkTrue('no income: the routes say what is missing, the tiers still stand', !Money.isOk(Journey.map(noInc, T).routes) && Journey.map(noInc, T).tiers.rungs.length === 5);
+
+  /* The renderer: one road, you are here twice at most, every step a link. */
+  const html = JourneyMap.html(m, { from: 'fire' });
+  check('you are here once, on the ladder step; the demo has reached no rung', (html.match(/jm-step is-here/g) || []).length, 1);
+  check('… and the Coast rung is next', (html.match(/jm-step is-next/g) || []).length, 1);
+  const richMap = (function () { const r = Demo.build(); r.assets = r.assets.filter(a => a.category !== 'investment').concat([Schema.createAsset({ category: 'investment', valueCents: 80000000 })]); return JourneyMap.html(Journey.map(r, T), { from: 'fire' }); })();
+  checkTrue('with Lean reached: Coast done, Lean here, FIRE next', /is-done" href="[^"]*"[^>]*><i>Coast/.test(richMap) && /is-here" href="[^"]*"[^>]*><i>Lean/.test(richMap) && /is-next" href="[^"]*"[^>]*><i>FIRE/.test(richMap));
+  checkTrue('every ladder step opens the ladder room', (html.match(/class="jm-step[^"]*" href="[^"]*foo-ladder[^"]*"/g) || []).length === 10);
+  checkTrue('the four routes are drawn, soonest first', html.indexOf('jm-route-march') < html.indexOf('jm-route-as-is') && html.indexOf('jm-route-as-is') < html.indexOf('jm-route-scenic'));
+  checkTrue('the map points at the Long Way Round for the other ways', /adventure\.html[^"]*#s-ways/.test(html));
+  checkTrue('no unescaped angle bracket from data reaches the page', JourneyMap.html(Journey.map(Object.assign({}, demo, { people: [Object.assign({}, demo.people[0], { label: '<b>x</b>' })] }), T), { from: 'fire' }).indexOf('<b>x</b>') === -1);
+
+  /* The pages. */
+  const fire = fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8');
+  const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the FIRE room opens with the map, before the number', fire.indexOf('id="map"') < fire.indexOf('id="out-target"') && fire.indexOf('id="map"') > fire.indexOf('id="reading"'));
+  checkTrue('… and loads the engine and the renderer', ['engines/foo.js', 'engines/journey.js', 'shared/journeymap.js'].every(f => fire.indexOf('<script src="../' + f + '">') !== -1));
+  checkTrue('the registry deep-links it', Registry.byId('fire').subsections.some(s => s.id === 'map'));
+  checkTrue('the dashboard\'s flight plan draws the same map and lost the bare ladder strip', page.indexOf('id="journey-map"') !== -1 && page.indexOf('id="foo-steps"') === -1 && /JourneyMap\.mount\(el\('journey-map'\)/.test(page));
+  checkTrue('… and block 4 points at the map', /linkTo\('fire', 'map', ROOM_ID\)/.test(page));
+})();
+
 section('The room template (D-097): one shape, proven on Real Hourly Wage');
 
 (function () {
@@ -12719,7 +12889,7 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
   const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   checkTrue('the Ledger home asks which door, shows six, one recommended with its reason', /Which one do you want to go into now\?/.test(led) && /id="door-you"/.test(led) && /is-recommended/.test(led) && /rec\.reason/.test(led));
   checkTrue('a door shows the level, the next level’s unlocks, Confirm these, Add these, N more unlock', /Confirm these/.test(led) && /Add these/.test(led) && /more unlock as you use the app/.test(led) && /Level ' \+ v\.level \+ ' of 4/.test(led));
-  /* D-237: the line says what the APP holds, not what the person understands
+  /* D-239: the line says what the APP holds, not what the person understands
      — the figure counts boxes, and someone avoiding their money understands
      it perfectly well. At zero it says nothing at all, because there it is
      not a measure of progress, only a verdict on someone who has typed
@@ -14214,9 +14384,9 @@ section('Every class a page names has a rule somewhere (D-226)');
 })();
 
 /* ==========================================================================
-   The ladder past step 4, and the order the flags come out in (D-235, D-238)
+   The ladder past step 4, and the order the flags come out in (D-237, D-240)
    ========================================================================== */
-section('The ladder past step 4, and the order the flags come out in (D-235, D-238)');
+section('The ladder past step 4, and the order the flags come out in (D-237, D-240)');
 (function () {
   /* The order. Flags used to come out in the order data/foo_rules.json listed
      them, and the Dashboard renders flags[0] — so the front door said "point
@@ -14271,9 +14441,9 @@ section('The ladder past step 4, and the order the flags come out in (D-235, D-2
 })();
 
 /* ==========================================================================
-   Three numbers that read wrong (D-239)
+   Three numbers that read wrong (D-241)
    ========================================================================== */
-section('Three numbers that read wrong (D-239)');
+section('Three numbers that read wrong (D-241)');
 (function () {
   /* A marginal rate of "the lowest bracket" for someone with nothing taxable.
      With the standard deduction covering the whole of a $12,000 income, no
@@ -14310,9 +14480,9 @@ section('Three numbers that read wrong (D-239)');
 })();
 
 /* ==========================================================================
-   Every id a page writes to exists in that page (D-234)
+   Every id a page writes to exists in that page (D-236)
    ========================================================================== */
-section('Every id a page writes to exists in that page (D-234)');
+section('Every id a page writes to exists in that page (D-236)');
 (function () {
   /* The Scorecard wrote to el('provenance') and el('ra-provenance'), both of
      which were lost when the rooms merged (D-233). `el` returned null, the

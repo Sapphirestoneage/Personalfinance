@@ -13961,7 +13961,67 @@ checks), `node tools/context/build.js --check`. All six readings, the five
 redirects and the deep links `#draftt`, `#out-rate`, `#out-wealth`, `#habit`
 and `#guess` loaded at 390px with a clean console.
 
-## D-234 — A page may not write to an id it does not carry
+## D-234 — Up next: what is open, what one answer opens, and which FIRE tier you are on
+
+**Why.** The owner: the app feels clunky; it should say at all times what
+it can already tell you, what to fill in to unlock the next reading with
+the fewest numbers, and which tier of FIRE you are on and what reaches the
+next one. The panel note on STATUS.md said the same: thirty is still a
+library, one screen in front of it.
+
+**Decision.** `shared/upnext.js` lists ten readings, each naming the least
+set of shared fields it needs and the engine that produces it; `plan()`
+returns which are open, which are locked cheapest first with the missing
+fields as links, and per field how many readings it opens. `engines/fire.js`
+gains `tiers()`: every variant with a target as rungs of one ladder sorted
+by size (Barista only with a part-time income), the rung reached, the next
+one, the gap and the years at this pace. `index.html` draws both: one strip
+above the four blocks, on the landing and the panel alike, and the rungs
+inside block 4. `needs` is a promise, and the test fills exactly those on an
+empty household to hold it.
+
+**Replaces or removes.** The landing's "N of M answers in" counter and its
+pick-up link; the strip is the one progress line on the page and "Continue"
+goes to the cheapest unlock. No new room, screen or field; the blocks stay
+four (D-096 still holds).
+
+**Stored shape.** No change. Nothing here is stored.
+
+**Verified.** `node test/run.js` (31,040 checks), `node test/forms.js` (619
+checks), `node tools/context/build.js --check`. Empty, part-way and the demo
+loaded at 390px with a clean console; the strip, the rungs and every link
+checked by hand.
+
+## D-235 — The map: one road, you are here, and the routes from here
+
+**Why.** The owner, after D-234: a map of the whole FIRE road with "you
+are here", and the routes you can take, named — the scenic one, the death
+march. The pieces existed in four rooms (the ladder, the tiers, the back
+half, the Long Way Round) and no screen put them on one line.
+
+**Decision.** `engines/journey.js` reads the road: the ten FOO steps
+(`Foo.evaluate`), the tier rungs (`Fire.tiers`), the back half, and where
+you are on each; and paces four routes from `data/journey_routes.json`:
+the road as it is, the scenic route (half today's saving), the death march
+(spend only the FAT floor, D-197; 70% of spending until it is typed, the
+same fallback Lean uses) and coast then cruise (today's pace to the Coast
+rung, then nothing, arriving at the coast age). Every year comes from
+`Projection.yearsToTargetCents`, so "as it is" is the dashboard's FI year.
+`shared/journeymap.js` draws it once; `rooms/fire.html#map` opens the room
+with it and the dashboard's flight plan shows the same map. A rung not yet
+reached reads "next", never "you are here".
+
+**Replaces or removes.** The dashboard's bare ladder strip and its
+sentence; block 4's link now goes to the map. The route names are a
+vocabulary the owner asked for by name; they are data, not rooms.
+
+**Stored shape.** No change. The map writes nothing.
+
+**Verified.** `node test/run.js` (31,127 checks), `node test/forms.js`,
+`node tools/context/build.js --check`. The FIRE room and the flight plan
+at 390px and 1100px with a clean console, empty and with the demo.
+
+## D-236 — A page may not write to an id it does not carry
 
 **Why.** The Scorecard wrote to `el('provenance')` and `el('ra-provenance')`;
 both elements were lost in the D-233 merge. `el` returned null, the throw
@@ -13985,7 +14045,7 @@ and adds a guard against the same class of loss.
 **Verified.** `node test/run.js` (31,018 checks). The nine numbers at 390px:
 3 months, 5.1%, $945,000, no banner, clean console.
 
-## D-235 — Flags come out in the ladder's order, and the roof is read
+## D-237 — Flags come out in the ladder's order, and the roof is read
 
 **Why.** The Dashboard renders `foo.flags[0]`, and flags fired in the order
 `data/foo_rules.json` listed them. The file put cash-versus-high-interest-debt
@@ -14013,7 +14073,7 @@ at 0.36/0.43 to agree with its own note, with `dtiComfortCeiling` and with
 **Verified.** `node test/run.js` (31,018 checks). Demo dashboard and ladder
 room both read step 2 at 390px.
 
-## D-236 — The FI date carries its range and says what it assumes
+## D-238 — The FI date carries its range and says what it assumes
 
 **Why.** `index.html` printed "22 years at this pace" from one assumed return,
 in the largest type on the page, while `rooms/fire.html` showed the same
@@ -14035,7 +14095,7 @@ reachable from no screen a person starts on.
 **Verified.** `node test/run.js` (31,018 checks). Demo dashboard at 390px;
 a household with a $4,500 roof routes to Can't Pay with the step line hidden.
 
-## D-237 — Nothing counts a person's failures before they have typed anything
+## D-239 — Nothing counts a person's failures before they have typed anything
 
 **Why.** `rooms/ledger.html` is home, and its default view's second line read
 "You understand 0% of your financial picture", over six doors counting out 59
@@ -14061,7 +14121,7 @@ deletion.
 **Verified.** `node test/run.js` (31,018 checks). Blank Ledger, blank Start
 Here and the seeded Scorecard at 390px; counters return on a seeded household.
 
-## D-238 — The ladder answers past step 4
+## D-240 — The ladder answers past step 4
 
 **Why.** A household that had met steps 0–4 got `placement: null`, and the
 Dashboard fell through to "the panel needs … before it can place you". The
@@ -14082,7 +14142,7 @@ of the "of 9" that was typed into it.
 **Verified.** `node test/run.js` (31,018 checks). A 10%-contributing household
 past step 4 reads "$17,300 of that space is unused".
 
-## D-239 — Three numbers that read wrong, and one named rather than changed
+## D-241 — Three numbers that read wrong, and one named rather than changed
 
 **Why.** `engines/tax.js` fell back to the lowest bracket's rate when no slice
 was cut, so a household whose standard deduction covers its income was told its

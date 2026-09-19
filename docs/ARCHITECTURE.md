@@ -21,7 +21,7 @@ render; engines never write. Undo snapshots sit under `slaf.snapshots.v1`.
 ## Folders
 
 - `rooms/` — 71 registered pages, one per room; markup + inline script.
-- `engines/` — 64 pure calculation modules; take a household, return Results.
+- `engines/` — 89 pure calculation modules; take a household, return Results.
 - `shared/spine-v2.js` — load/save/migrate the household; `onChange`; `householdAt`.
 - `shared/schema.js` — constructors and accessors; every stored shape starts here.
 - `shared/money.js` — integer cents, `ok`/`incomplete` Results, formatting.

@@ -45,6 +45,13 @@
   Nothing else on the screen: the radar, the ring and the climb, the
   weather, the flight plan, the goals and the data controls are folded
   under "The full panel" and "Your data".
+
+  UP NEXT (D-234). One strip above the blocks, on the landing and on the
+  panel alike: how many readings are open, which one is the fewest
+  answers away, and the exact fields that open it (shared/upnext.js).
+  Block 4 carries the FIRE tiers as rungs of one ladder (Fire.tiers):
+  the rung reached, the next, and the gap. A strip, not a block; the
+  blocks stay four.
   shared/instruments.js is the list a snapshot freezes, so "since last
   time" always covers exactly what is on screen.
 
@@ -67,6 +74,22 @@
   .walk-strip > * { min-width: 0; }
   .walk-say { flex: 1 1 220px; margin: 0; font-size: var(--text-sm);
     line-height: var(--leading-loose); }
+  /* Up next (D-234): the same strip shape. The count, the one reading
+     that is fewest answers away with its fields as links, and the two
+     after it, smaller. `is-all-open` when nothing is locked. */
+  .up-next { display: block; }
+  .up-next .un-count { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin: 0; }
+  .up-next .un-meter { height: 6px; border-radius: var(--radius-pill); background: rgba(30,58,138,.35); overflow: hidden; margin: var(--space-2) 0; }
+  .up-next .un-meter > span { display: block; height: 100%; background: var(--color-accent); }
+  .up-next .un-say { margin: var(--space-2) 0 0; font-size: var(--text-base); line-height: var(--leading-loose); }
+  .up-next .un-say strong { color: var(--color-text); }
+  .up-next .un-say a { color: var(--color-accent-hover); }
+  .up-next .un-more { margin: var(--space-2) 0 0; padding: 0; list-style: none; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .up-next .un-more li { display: inline; }
+  .up-next .un-more li + li::before { content: ' · '; }
+  .up-next .un-more a { color: var(--color-accent-hover); }
+  .up-next .un-open { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .up-next .un-open a { color: inherit; }
   .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
   .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
   .room-back:hover { text-decoration: underline; }
@@ -247,6 +270,11 @@
   .steps i.done { background: var(--sapphire-300); border-color: var(--sapphire-300); color: var(--color-accent-contrast); font-weight: 600; }
   .steps i.here { border-color: var(--color-accent-hover); color: var(--color-accent-hover); }
   .steps.levels { margin-top: var(--space-3); }
+  /* The FIRE tiers (D-234): the same chips, wide enough for a word. */
+  .steps.tiers i { width: auto; padding: 0 var(--space-2); }
+  .date .tiers-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .date .tiers-say strong { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .date .tiers-say a { color: var(--color-accent-hover); }
 
   .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   .flag { border-left: 3px solid var(--color-accent); background: rgba(46,111,232,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); }
@@ -276,7 +304,6 @@
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-example">See it with example numbers</button>
     </div>
     <p class="resume"><a href="rooms/start.html" id="btn-long-form">The older one-pager is still here.</a></p>
-    <p class="resume" id="resume" hidden></p>
     <p class="privacy">Educational tool, not financial advice. Your figures are stored only in this browser — there is no account and no server.
       Have a saved file or a share link? <a href="#your-data">Load it below.</a></p>
   </section>
@@ -303,6 +330,18 @@
        is navigation, not a reading, so it takes the same slim shape the
        walk strip has inside every room and stays out of the count. -->
   <div class="dash walk-strip" id="walk-card" hidden></div>
+
+  <!-- UP NEXT (D-234). A strip, not a block, for the same reason as the
+       walk strip above. Rendered on the landing and on the panel alike:
+       what the app can already say, what is one answer away, and the
+       fields that open it. The one counter of progress on this page. -->
+  <div class="walk-strip up-next" id="up-next" hidden>
+    <p class="un-count" id="un-count"></p>
+    <div class="un-meter" aria-hidden="true"><span id="un-meter"></span></div>
+    <p class="un-say" id="un-say"></p>
+    <ul class="un-more" id="un-more"></ul>
+    <p class="un-open" id="un-open"></p>
+  </div>
 
   <!-- ONE SCREEN, FOUR BLOCKS (D-096). Every number opens the room it came from. -->
   <div class="blocks">
@@ -346,6 +385,11 @@
       <span class="big" id="date-big">—</span>
       <p class="say" id="date-say"></p>
       <ul class="lensed" id="date-lensed"></ul>
+      <!-- The FIRE tiers (D-234): Coast, Lean, FIRE, Chubby, Fat as rungs
+           of one ladder, sorted by size; the rung reached, the next, the
+           gap. Fire.tiers is the one reading; the room draws the same. -->
+      <div class="steps tiers" id="fire-tiers" aria-label="The FIRE tiers"></div>
+      <p class="tiers-say" id="tiers-say"></p>
       <a class="go" id="date-go" href="#"></a>
     </div>
   </section>
@@ -420,10 +464,13 @@
 
   <section class="slaf-card dash" id="out-plan" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Flight plan</span>
-    <h2 style="margin:var(--space-2) 0 0">Where you are on the ladder</h2>
-    <div class="steps" id="foo-steps"></div>
-    <p class="why" id="foo-why"></p>
-    <div class="steps levels" id="wealth-levels" aria-label="The five levels of wealth"></div>
+    <h2 style="margin:var(--space-2) 0 0">Where you are on the road</h2>
+    <!-- The map (D-235): the ladder, the tiers, the back half and the
+         routes from here, drawn by shared/journeymap.js from
+         engines/journey.js. It replaced the bare ladder strip; the
+         five levels of wealth keep their own strip below. -->
+    <div id="journey-map" style="margin-top:var(--space-3)"></div>
+    <div class="steps levels" id="wealth-levels" aria-label="The five levels of wealth" style="margin-top:var(--space-5)"></div>
     <p class="why" id="levels-why"></p>
     <ul class="goals" id="goal-bars"></ul>
     <p class="why" id="goals-why"></p>
@@ -512,6 +559,9 @@
 <script src="shared/charts.js"></script>
 <script src="shared/explain.js"></script>
 <script src="shared/gate.js"></script>
+<script src="shared/upnext.js"></script>
+<script src="engines/journey.js"></script>
+<script src="shared/journeymap.js"></script>
 <script src="engines/skilltree.js"></script>
 <script src="shared/lens.js"></script>
 <script src="shared/bands.js"></script>
@@ -1024,6 +1074,7 @@
       var shown = mode === '$' ? Money.formatCents(r[1]) : Lens.format(r[1], mode, h, TABLES);
       return '<li><a href="' + Ownership.linkTo(r[2], r[3]) + '">' + esc(r[0]) + '</a><span>' + esc(shown) + '</span></li>';
     }).join('');
+    renderTiers(h);
   }
   document.addEventListener('click', function (evt) {
     var b = evt.target.closest('.slaf-lens-btn');
@@ -1183,21 +1234,81 @@
       : 'Small, sharp money tools that share one set of numbers.';
     if (ready) return true;
 
-    /* Part-way through: say how far, and where the next answer is. */
-    var o = SLAF.Progress.overall(h);
-    var resume = el('resume');
-    if (o.fieldsFilled > 0 && o.missing.length) {
-      var next = o.missing[0];
-      resume.hidden = false;
-      resume.innerHTML = o.fieldsFilled + ' of ' + o.fieldsTotal + ' answers in. Pick up at '
-        + '<a href="' + next.href + '">' + esc(next.label) + '</a> in ' + esc(next.ownerTitle) + ' →';
+    /* Part-way through: the Up Next strip says what is open and what the
+       next answer opens (D-234); the first button carries on there. */
+    var plan = renderUpNext(h);
+    if (plan.open.length && plan.next && plan.next.missing.length) {
       el('btn-start').textContent = 'Continue →';
-      el('btn-start').href = next.href;
-    } else {
-      resume.hidden = true;
+      el('btn-start').href = plan.next.missing[0].href;
     }
     return false;
   }
+
+  /* ---- Up next (D-234) ------------------------------------------------------
+     One strip: N of M readings open, a meter, the reading fewest answers
+     away with its missing fields as links (each saying how many readings
+     it opens), the two after it, and what is already open, each a link
+     to its room. shared/upnext.js decides; this only draws. */
+  function fieldLink(m, plan) {
+    var opens = plan.byField[m.fieldId] ? plan.byField[m.fieldId].opens.length : 0;
+    return '<a href="' + esc(m.href) + '">' + esc(m.label.toLowerCase()) + '</a>'
+      + (opens > 1 ? ' <span class="dim">(opens ' + opens + ')</span>' : '');
+  }
+  function renderUpNext(h) {
+    var strip = el('up-next');
+    var plan = SLAF.UpNext.plan(h, TABLES, ROOM_ID);
+    strip.hidden = false;
+    strip.className = 'walk-strip up-next' + (plan.next ? '' : ' is-all-open');
+    el('un-count').textContent = plan.open.length + ' of ' + plan.total + ' readings open';
+    el('un-meter').style.width = Math.round(100 * plan.open.length / (plan.total || 1)) + '%';
+    var next = plan.next;
+    if (!next) {
+      el('un-say').innerHTML = 'Every reading is open. The deeper rows refine them: <a href="' + Ownership.linkTo('ledger', 'doors-home', ROOM_ID) + '">open the Ledger →</a>';
+    } else if (next.missing.length) {
+      var n = next.missing.length;
+      el('un-say').innerHTML = 'Up next: <strong>' + esc(next.label) + '</strong>, ' + esc(next.say)
+        + '. <span class="dim">' + n + (n === 1 ? ' answer' : ' answers') + ' away:</span> '
+        + next.missing.map(function (m) { return fieldLink(m, plan); }).join(', ') + '.';
+    } else {
+      el('un-say').innerHTML = 'Up next: <strong>' + esc(next.label) + '</strong>. ' + esc(next.reason || '')
+        + ' <a href="' + esc(next.href) + '">Open ' + esc(next.roomTitle) + ' →</a>';
+    }
+    el('un-more').innerHTML = plan.locked.slice(1, 3).map(function (e) {
+      return '<li>Then ' + esc(e.label) + ', ' + e.cost + (e.cost === 1 ? ' answer' : ' answers') + ' away'
+        + (e.missing.length ? ': ' + e.missing.map(function (m) { return fieldLink(m, plan); }).join(', ') : '') + '</li>';
+    }).join('');
+    el('un-open').innerHTML = plan.open.length
+      ? 'Open: ' + plan.open.map(function (e) { return '<a href="' + esc(e.href) + '">' + esc(e.label) + ' ' + esc(e.display) + '</a>'; }).join(' · ')
+      : '';
+    return plan;
+  }
+
+  /* ---- The FIRE tiers (D-234) --------------------------------------------
+     Rungs of one ladder in the date block: reached, here, ahead. The
+     sentence names the rung reached, the next one, the gap and the years
+     at this pace, and opens the FIRE room's variants. */
+  function renderTiers(h) {
+    var strip = el('fire-tiers'), say = el('tiers-say');
+    var t = SLAF.Fire.tiers(h, TABLES);
+    var rungs = t.rungs || [];
+    if (!rungs.length) {
+      strip.innerHTML = '';
+      say.textContent = Gate.exists(h, 'savingsRate') ? t.reason : '';
+      return;
+    }
+    strip.innerHTML = rungs.map(function (r) {
+      var cls = r.reached === true ? 'done' : (t.next && t.next.id === r.id) ? 'here' : '';
+      return '<i class="' + cls + '" title="' + esc(r.label) + ': ' + esc(Money.formatCents(r.targetCents)) + '">' + esc(r.label.replace(/ FIRE$/, '')) + '</i>';
+    }).join('');
+    if (!Money.isOk(t)) { say.innerHTML = esc(t.reason) + tiersLink(); return; }
+    var head = t.current ? '<strong>' + esc(t.current.label) + '</strong> reached. ' : 'Below the first tier. ';
+    if (!t.next) { say.innerHTML = head + 'Every tier is behind you.' + tiersLink(); return; }
+    var yrs = t.next.yearsAway;
+    var pace = Money.isOk(yrs) ? (yrs.alreadyThere ? '' : ', about ' + Math.round(yrs.value) + (Math.round(yrs.value) === 1 ? ' year' : ' years') + ' at this pace') : '';
+    say.innerHTML = head + 'Next: <strong>' + esc(t.next.label) + '</strong> at ' + esc(Money.formatCents(t.next.targetCents))
+      + ', <strong>' + esc(Money.formatCents(t.next.gapCents)) + '</strong> to go' + pace + '.' + tiersLink();
+  }
+  function tiersLink() { return ' <a href="' + esc(Ownership.linkTo('fire', 'map', ROOM_ID)) + '">The map →</a>'; }
 
   /* ---- Your data: export, import, share. D-059. ------------------------------ */
 
@@ -1382,7 +1493,8 @@
     if (!route(h)) return;
     var all = Ratios.all(h, TABLES, { snapshots: Spine.listSnapshots() });
 
-    /* the four blocks */
+    /* the strip above the blocks, then the four blocks */
+    renderUpNext(h);
     renderDaite(h);
     var c = renderInstruments(h);
     renderNextAction(h, c);
@@ -1435,20 +1547,8 @@
 
     renderAltitude(h);
 
-    /* flight plan */
-    var foo = Foo.evaluate(h, TABLES);
-    var placed = foo.placement && Money.isEntered(foo.placement.step) ? foo.placement.step : null;
-    var cells = [];
-    for (var i = 0; i <= 9; i++) {
-      var cls = placed === null ? '' : i < placed ? 'done' : i === placed ? 'here' : '';
-      cells.push('<i class="' + cls + '">' + i + '</i>');
-    }
-    el('foo-steps').innerHTML = cells.join('');
-    el('foo-why').textContent = placed === null
-      ? (foo.placement && foo.placement.reason) || 'Not enough entered to place you on the ladder yet.'
-      : 'You are on step ' + placed + '. '
-        + (foo.flags.length ? foo.flags.length + ' flag' + (foo.flags.length === 1 ? '' : 's')
-            + ' worth reading in the Snapshot.' : 'No out-of-bounds flags.');
+    /* flight plan: the map (D-235), then the levels and the goals */
+    SLAF.JourneyMap.mount(el('journey-map'), SLAF.Journey.map(h, TABLES), { from: ROOM_ID });
 
     renderLevels(h);
     renderGoals(h);

@@ -30,13 +30,13 @@ module.exports = function (t) {
      step 2, capture the match (test/run.js, "foo placement step number").
      Its banded ratios (engines/ratios.js against ratio_benchmarks v1.3):
        debtToIncome  1,220 owed a month ÷ 6,000 gross a month... the engine
-                     reads 0.051 → good (≤ 0.36, D-235: the 28% figure is the
+                     reads 0.051 → good (≤ 0.36, D-237: the 28% figure is the
                      housing front-end rule, not this one)
        savingsRate   0.285 → good (≥ 0.15)
        housingRatio  1,500 accommodation ÷ 6,000 gross = 0.25 → good (≤ 0.28).
                      It used to have no verdict, because the ratio waited on a
                      categorised month; the demo's roof was typed all along
-                     (D-235)
+                     (D-237)
        emergencyFund 9,500 ÷ 3,150 = 3.02 months → watch
      Against step 2 and those zones, rule by rule:
        starter-fund-first        steps [0,1]   2 > 1                → stop
@@ -65,7 +65,7 @@ module.exports = function (t) {
   check('… debtToIncome good', st.zones.debtToIncome, 'good');
   check('… savingsRate good', st.zones.savingsRate, 'good');
   check('… emergencyFundMonths watch', st.zones.emergencyFundMonths, 'watch');
-  check('… housingRatio good, read off the typed roof (D-235)', st.zones.housingRatio, 'good');
+  check('… housingRatio good, read off the typed roof (D-237)', st.zones.housingRatio, 'good');
 
   const c = Unlearning.classify(demo, T, {});
   checkTrue('the demo classifies', Money.isOk(c), c.reason);
