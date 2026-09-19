@@ -240,8 +240,61 @@
     return n;
   }
 
+  /* ---- The month said plainly (D-257) ----------------------------------------
+     One reading of a sheet a person can say out loud: what was expected out
+     (expenses, savings, investments, debt), what has gone so far, what is
+     left, and how far through the month it is. Income is read beside it.
+     A bucket with no estimate is left out of "expected" and named, never
+     counted as nought. Each row gets one plain sentence the same way. */
+  var OUT = ['expenses', 'savings', 'investments', 'debt'];
+  function summary(sheet, now) {
+    if (!sheet || !sheet.rows) return null;
+    var by = {}; sheet.rows.forEach(function (r) { by[r.bucket] = r; });
+    var expected = 0, gone = 0, unestimated = [];
+    OUT.forEach(function (b) {
+      var r = by[b]; if (!r) return;
+      if (Money.isEntered(r.estimatedCents)) expected += r.estimatedCents; else unestimated.push(r.label);
+      if (Money.isEntered(r.actualCents)) gone += r.actualCents;
+    });
+    var inc = by.income || {};
+    var d = now ? new Date(now) : new Date();
+    var ym = sheet.month, y = +ym.slice(0, 4), mo = +ym.slice(5, 7);
+    var total = new Date(y, mo, 0).getDate();
+    var passed = sheet.status === 'closed' || !sheet.isCurrent ? (sheet.isFuture ? 0 : total) : Math.min(total, d.getDate());
+    var left = expected - gone;
+    var verdict = sheet.status === 'closed' ? (left >= 0 ? 'within' : 'over')
+      : unestimated.length === OUT.length ? 'none'
+      : left < 0 ? 'over' : sheet.isCurrent && passed > 0 && gone > expected * passed / total ? 'fast' : 'within';
+    var say = verdict === 'none' ? 'Nothing is expected yet: set a month in Expenses and it fills in.'
+      : sheet.status === 'closed' ? (left >= 0 ? Money.formatCents(left) + ' of what was expected went unspent.' : Money.formatCents(-left) + ' over what was expected.')
+      : sheet.isFuture ? Money.formatCents(expected) + ' expected out. Nothing has happened yet.'
+      : left < 0 ? Money.formatCents(-left) + ' over what was expected, with ' + (total - passed) + ' days to go.'
+      : Money.formatCents(left) + ' left of what was expected, with ' + (total - passed) + ' days to go' + (verdict === 'fast' ? ': spending is running ahead of the month.' : '.');
+    var rows = {};
+    sheet.rows.forEach(function (r) { rows[r.bucket] = plainRow(r, sheet); });
+    return { expectedOutCents: expected, goneCents: gone, leftCents: left, unestimated: unestimated,
+      expectedInCents: Money.isEntered(inc.estimatedCents) ? inc.estimatedCents : null, landedCents: Money.isEntered(inc.actualCents) ? inc.actualCents : null,
+      days: { passed: passed, total: total, left: total - passed }, verdict: verdict, say: say, rows: rows };
+  }
+  /* "Expected $600 · so far $410 · $190 left", or what can be said without one of them. */
+  function plainRow(r, sheet) {
+    var e = r.estimatedCents, a = Money.isEntered(r.actualCents) ? r.actualCents : 0;
+    var closed = sheet && sheet.status === 'closed';
+    var isIn = r.bucket === 'income';
+    var soFar = closed ? (isIn ? 'landed ' : 'spent ') : (isIn ? 'landed so far ' : 'so far ');
+    if (!Money.isEntered(e)) return { word: 'none', text: 'No estimate yet · ' + soFar + Money.formatCents(a) };
+    var diff = a - e;
+    var word = diff === 0 ? 'on' : isIn ? (diff < 0 ? 'short' : 'above') : (diff > 0 ? 'over' : 'within');
+    var tail = isIn
+      ? (diff < 0 ? Money.formatCents(-diff) + ' still to come' : diff > 0 ? Money.formatCents(diff) + ' more than expected' : 'as expected')
+      : (diff > 0 ? Money.formatCents(diff) + ' over' : diff < 0 ? Money.formatCents(-diff) + ' left' : 'exactly as expected');
+    return { word: word, text: 'Expected ' + Money.formatCents(e) + ' · ' + soFar + Money.formatCents(a) + ' · ' + tail };
+  }
+
   return {
     BUCKETS: BUCKETS,
+    summary: summary,
+    plainRow: plainRow,
     LABELS: LABELS,
     closedMonths: closedMonths,
     recordFor: recordFor,

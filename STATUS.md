@@ -50,9 +50,12 @@ Updated: 2026-09-19
   beside the balance sheet (D-254).
   The Car room takes new or used with the age, the running costs and
   repairs, and prices the car all in a month against the 8% cap (D-255).
+  The lens toggle says what it does and hides where nothing changes
+  (D-256); Budget leads each month with what is left, in a sentence
+  (D-257).
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
-  the Budget month view made obvious; a plain-language lede pass.
+  a plain-language lede pass.
 - **Boxes line up now (D-249).** Reported from a phone, third time asked:
   side-by-side controls sat 16px apart on 17 pages. Labels in a row reserve
   the same number of lines, so the boxes start level whatever a label does.

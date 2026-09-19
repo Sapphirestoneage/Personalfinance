@@ -14610,6 +14610,56 @@ all-in; the used hold loses less; the room asks the six), lane 2,
 room at 390px with the demo, new and used at three years, clean
 console.
 
+## D-256 — The lens says what it does, and hides where nothing changes
+
+**Why.** The owner, on the Credit page: "what changes with the different
+screens?" The $ / hours / bought / pushed toggle sat on every room with
+no caption and no line on what a mode meant, and stayed on pages where
+it read nothing.
+
+**Decision.** `shared/lens.js` `toggleHtml` wraps the buttons with a
+caption ("Read these numbers as") and one line on the mode in use,
+from the modes' own `long` text; `hasAmounts(rows)` says whether a lens
+has a figure to read. `shared/room.js` and the strip show the toggle
+only when the room's amounts list holds an entered figure; otherwise
+the toggle and the list are empty.
+
+**Replaces or removes.** The bare toggle on rooms with nothing to read.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node test/forms.js`,
+`node tools/context/build.js --check`; Real Hourly Wage at 390px shows
+the caption and the line, the Calendar and the Car with nothing typed
+show no toggle, clean console.
+
+## D-257 — Budget: the month said plainly
+
+**Why.** The owner, on Budget: "I don't know what's going on here;
+interesting idea but there needs to be a better way, redesigned and
+made way more clear and obvious."
+
+**Decision.** `engines/budget.js` `summary(sheet, now)` reads a sheet
+as one thing a person can say: what was expected out (expenses,
+savings, investments, debt; a bucket with no estimate is named, never
+counted as nought), what has gone, what is left, the day of the month,
+and a verdict (within, fast when more has gone than the days explain,
+over, none); `plainRow` gives every bucket one sentence ("Expected
+$600 · so far $410 · $190 left"). `rooms/budget.html` leads the sheet
+with the figure, the sentence and one bar with a marker for where the
+month is, and each card's head carries its sentence above the bar.
+Nothing else on the page moves.
+
+**Replaces or removes.** Nothing on screen; the freeze allows it because
+the page gains one reading and no control.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (the sum leaves the unestimated bucket
+out and names it; within, fast and over; the sentences), lane 2,
+`node tools/context/build.js --check`; Budget at 390px with the demo,
+clean console.
+
 ---
 
 # The Dungeons & Dividends entries
