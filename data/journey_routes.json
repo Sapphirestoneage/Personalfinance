@@ -1,0 +1,16 @@
+{
+  "id": "journey_routes",
+  "version": "1.0",
+  "asOf": "2026-09-19",
+  "source": "Not findings. Four paces at which a household can walk the same road to the same tiers, each a rule about how much of take-home is saved. The owner asked for them by name (D-235): the scenic route, the death march, and the road as it is; coasting is the Coast FIRE variant read as a route.",
+  "confidence": "convention",
+  "confidenceNote": "The shares are teaching devices, not advice. Half of today's saving and spending only the floor are the two ends people actually describe; nothing here says either is right for you.",
+  "note": "Read by engines/journey.js. A route is a `pace` rule: `current` saves what the household saves today (Tier0.savingsRate); `share` saves that share of today's saving; `floor` spends only the FAT floor (Schema.fatNeedsCents, D-197) and saves the rest of take-home, falling back to `floorShareFallback` of today's spending until food, a roof and getting around are typed (the same fallback Lean FIRE uses); `coast` saves at today's pace until the Coast rung and then stops, arriving at the coast target age from data/fire_variants.json. Every year figure comes from engines/projection.js yearsToTargetCents, the one loop the app has.",
+  "floorShareFallback": 0.7,
+  "routes": [
+    { "id": "as-is",  "label": "The road as it is",  "line": "Save what you save now, and keep walking.", "pace": "current" },
+    { "id": "scenic", "label": "The scenic route",   "line": "Save half of what you save now; the other half is spent on the years between.", "pace": "share", "share": 0.5 },
+    { "id": "march",  "label": "The death march",    "line": "Spend only the floor: food, a roof, getting around. Everything else goes in.", "pace": "floor" },
+    { "id": "coast",  "label": "Coast, then cruise", "line": "Save at today's pace until the Coast rung, then stop adding and let it grow to the finish.", "pace": "coast" }
+  ]
+}
