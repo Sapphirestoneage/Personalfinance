@@ -19,9 +19,11 @@ Updated: 2026-09-19
   lets a template room become a reading.
 - Ledger rework brief: built through Phase K; H6, I6, I7, I8 wait. On the
   owner: the Pages switch, the domain (G1.1), a LICENSE (G3.14).
-- **Up next (D-234).** The front page leads with what is open, which reading
-  is the fewest answers away and the fields that open it (`shared/upnext.js`),
-  and which FIRE tier the pot has reached, gap to the next (`Fire.tiers`).
+- **Up next and the map (D-234, D-235).** The front page leads with what is
+  open, which reading is the fewest answers away and the fields that open it
+  (`shared/upnext.js`), and which FIRE tier the pot has reached. The FIRE
+  room opens with the map (`engines/journey.js`): ladder, tiers, back half,
+  you are here, and four paced routes from here; the flight plan draws it too.
 
 ## Freeze
 - ON, and the merge is how it is honoured: every session leaves fewer screens.
@@ -40,5 +42,5 @@ Updated: 2026-09-19
 - Galloway: model the means-tested floor, or the Back Half sells comfort.
 - Donegan: the merged Work room will hold eight rooms about having a job and
   none about building something that pays you.
-- Hormozi: thirty is still a library. One screen in front of it. D-234 is
-  the first answer; whether the thirty need less than that is still open.
+- Hormozi: thirty is still a library. One screen in front of it. D-234 and
+  D-235 are the first answer; whether the thirty need less is still open.

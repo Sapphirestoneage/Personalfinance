@@ -8,7 +8,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 - **ledger** — The Ledger (utility) · 2248 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-230, D-226, D-207
 - **start** — Start Here · 1000 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
-- **dashboard** — The Dashboard · 1677 lines · no engines · DD-028, DD-026, DD-025
+- **dashboard** — The Dashboard · 1670 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
 
@@ -33,7 +33,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 - **financial-snapshot** — The Scorecard · 2584 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-233, D-036, D-007
 - **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-156
-- **fire** — FIRE Number · 531 lines · engines: projection, tier0, fire, selfemployed, tax, hourly · owns: retireAge, coastAge · D-228, D-162, D-161
+- **fire** — FIRE Number · 562 lines · engines: projection, tier0, fire, foo, journey, selfemployed, tax, hourly · owns: retireAge, coastAge · D-235, D-228, D-162
 - **fire-lab** — FIRE Lab · 462 lines · engines: projection, tier0, cashflow, fire, hourly · D-228, D-138
 - **foo-ladder** — What The Next Dollar Does · 695 lines · engines: projection, tier0, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-231, D-058, D-054
 - **coast-date** — Your Coast Date · 122 lines · engines: projection, tier0, coast · D-213

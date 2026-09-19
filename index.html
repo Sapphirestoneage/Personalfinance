@@ -463,10 +463,13 @@
 
   <section class="slaf-card dash" id="out-plan" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Flight plan</span>
-    <h2 style="margin:var(--space-2) 0 0">Where you are on the ladder</h2>
-    <div class="steps" id="foo-steps"></div>
-    <p class="why" id="foo-why"></p>
-    <div class="steps levels" id="wealth-levels" aria-label="The five levels of wealth"></div>
+    <h2 style="margin:var(--space-2) 0 0">Where you are on the road</h2>
+    <!-- The map (D-235): the ladder, the tiers, the back half and the
+         routes from here, drawn by shared/journeymap.js from
+         engines/journey.js. It replaced the bare ladder strip; the
+         five levels of wealth keep their own strip below. -->
+    <div id="journey-map" style="margin-top:var(--space-3)"></div>
+    <div class="steps levels" id="wealth-levels" aria-label="The five levels of wealth" style="margin-top:var(--space-5)"></div>
     <p class="why" id="levels-why"></p>
     <ul class="goals" id="goal-bars"></ul>
     <p class="why" id="goals-why"></p>
@@ -556,6 +559,8 @@
 <script src="shared/explain.js"></script>
 <script src="shared/gate.js"></script>
 <script src="shared/upnext.js"></script>
+<script src="engines/journey.js"></script>
+<script src="shared/journeymap.js"></script>
 <script src="engines/skilltree.js"></script>
 <script src="shared/lens.js"></script>
 <script src="engines/advice.js"></script>
@@ -1215,7 +1220,7 @@
     say.innerHTML = head + 'Next: <strong>' + esc(t.next.label) + '</strong> at ' + esc(Money.formatCents(t.next.targetCents))
       + ', <strong>' + esc(Money.formatCents(t.next.gapCents)) + '</strong> to go' + pace + '.' + tiersLink();
   }
-  function tiersLink() { return ' <a href="' + esc(Ownership.linkTo('fire', 'variants', ROOM_ID)) + '">The tiers →</a>'; }
+  function tiersLink() { return ' <a href="' + esc(Ownership.linkTo('fire', 'map', ROOM_ID)) + '">The map →</a>'; }
 
   /* ---- Your data: export, import, share. D-059. ------------------------------ */
 
@@ -1447,20 +1452,8 @@
 
     renderAltitude(h);
 
-    /* flight plan */
-    var foo = Foo.evaluate(h, TABLES);
-    var placed = foo.placement && Money.isEntered(foo.placement.step) ? foo.placement.step : null;
-    var cells = [];
-    for (var i = 0; i <= 9; i++) {
-      var cls = placed === null ? '' : i < placed ? 'done' : i === placed ? 'here' : '';
-      cells.push('<i class="' + cls + '">' + i + '</i>');
-    }
-    el('foo-steps').innerHTML = cells.join('');
-    el('foo-why').textContent = placed === null
-      ? (foo.placement && foo.placement.reason) || 'Not enough entered to place you on the ladder yet.'
-      : 'You are on step ' + placed + '. '
-        + (foo.flags.length ? foo.flags.length + ' flag' + (foo.flags.length === 1 ? '' : 's')
-            + ' worth reading in the Snapshot.' : 'No out-of-bounds flags.');
+    /* flight plan: the map (D-235), then the levels and the goals */
+    SLAF.JourneyMap.mount(el('journey-map'), SLAF.Journey.map(h, TABLES), { from: ROOM_ID });
 
     renderLevels(h);
     renderGoals(h);

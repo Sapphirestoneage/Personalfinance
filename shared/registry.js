@@ -369,6 +369,7 @@
       daite: { reads: ['assets.invested', 'expenses', 'you.dob'], writes: ['plans.targets'] },
       subsections: [
         { id: 'reading',    label: 'What this reads' },
+        { id: 'map',        label: 'The map' },
         { id: 'out-target', label: 'Your number' },
         { id: 'variants',   label: 'Six ways to ask it' },
         { id: 'targets',    label: 'Your targets' },

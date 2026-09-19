@@ -23,6 +23,10 @@
   3. CALLS   engines/fire.js — one calculateFIRE() parameterised by variant,
              per §8. Projection comes from engines/projection.js, the same
              loop Tier 0 uses. No formula is written in this file.
+             engines/journey.js draws the map (D-235): the ladder, the
+             tiers, the back half, you-are-here, and the four routes from
+             here; shared/journeymap.js renders it, here and on the
+             dashboard's flight plan alike.
   4. EMPTY   No expenses: every variant says so. Barista without a part-time
              figure, and Coast without a date of birth, each name what they
              need rather than guessing.
@@ -73,6 +77,22 @@
   <section class="slaf-card" id="reading">
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <!-- THE MAP (D-235). The whole road on one card: the ten ladder steps,
+       the tier rungs, the back half, "you are here" on each, and the
+       routes from here with the years to the finish. Read from
+       engines/journey.js; drawn by shared/journeymap.js. Nothing here is
+       an input. -->
+  <section class="slaf-card" id="map">
+    <span class="slaf-eyebrow">The map</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">
+      One road: the ladder your next dollar climbs, the tiers where work
+      becomes optional, and the back half where the pot pays you. You are
+      here, and these are the paces from here to the finish. Tap any step
+      to open its room.
+    </p>
+    <div id="map-body" style="margin-top:var(--space-3)"></div>
   </section>
 
   <section class="slaf-card" id="out-target">
@@ -164,6 +184,9 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/fire.js"></script>
+<script src="../engines/foo.js"></script>
+<script src="../engines/journey.js"></script>
+<script src="../shared/journeymap.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/tax.js"></script>
 <script src="../shared/aftertax.js"></script>
@@ -227,6 +250,13 @@
     if (!Money.isOk(result)) return result.reason || '';
     if (result.value === 0) return 'You’re already there.';
     return 'About ' + result.value + ' year' + (result.value === 1 ? '' : 's') + ' away at your current savings rate.';
+  }
+
+  /* The map (D-235): the engine reads, the shared renderer draws, and the
+     money on it goes through the same horizon as the rest of the page. */
+  function renderMap(h) {
+    var m = SLAF.Journey.map(h, TABLES, optsFor(null, h));
+    SLAF.JourneyMap.mount(el('map-body'), m, { from: ROOM_ID, fmt: function (c) { return Money.formatCents(c); } });
   }
 
   function renderReading(h) {
@@ -438,6 +468,7 @@
     var h = Spine.getProfile();
     paintTargets(h);
     renderReading(h);
+    renderMap(h);
     renderVariants(h);
     renderTarget(h);
 
