@@ -41,6 +41,16 @@
   shared/theme.css.
 -->
 <style>
+  .rc-list { list-style: none; margin: 0; padding: 0; }
+  .rc-list li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .rc-list li:first-child { border-top: none; padding-top: 0; }
+  .rc-chain { display: block; margin-top: var(--space-1); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+  .rc-verdict { display: inline-block; margin-top: var(--space-2); font-weight: 600; }
+  .rc-verdict.is-fast { color: var(--color-critical); }
+  .rc-verdict.is-schedule { color: var(--color-text); }
+  .rc-verdict.is-slowly { color: var(--color-positive); }
+  .rc-why { color: var(--color-text-muted); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 </style>
@@ -68,6 +78,14 @@
   <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Three plans, side by side</span>
     <div id="room-chart"></div>
+  </section>
+
+  <!-- What the loans really cost (D-247): the rate, after the interest
+       deduction, after inflation; the pace that follows; and the balance
+       drawn in today's money beside the dollars on the statement. -->
+  <section class="slaf-card" id="real-cost" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What the loans really cost</span>
+    <div id="real-cost-body" style="margin-top:var(--space-3)"></div>
   </section>
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
@@ -160,7 +178,7 @@
   Room.mount({
     id: 'student-loans',
     guessAs: 'student',
-    tables: ['studentLoanConventions', 'debtRules', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    tables: ['studentLoanConventions', 'debtRules', 'effectiveTaxRates', 'returnBands', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
     reads: ['totalDebt', 'monthlyDebtPayments', 'grossAnnualIncome'],
 
     number: function (h, T) {
@@ -217,6 +235,47 @@
         read: function (h) { return readPlan(h).forgivenessYears; }, write: function (v) { write('forgivenessYears', v === null ? null : Math.max(0, v)); },
         propose: function (h, T) { return { value: conv(T).forgivenessYears, source: 'the usual horizon; ' + conv(T).forgivenessYearsGraduate + ' for graduate loans (convention)' }; } }
     ],
+
+    /* What the loans really cost (D-247). */
+    after: function (h, T) {
+      var host = document.getElementById('real-cost-body');
+      if (!host) return;
+      var r = StudentLoans.compare(h, T, {});
+      if (!Money.isOk(r)) { host.innerHTML = '<p class="slaf-reason">' + esc(r.reason) + '</p>'; return; }
+      var a = SLAF.Schema.resolveAssumptions(h, null, T);
+      var tax = SLAF.Schema.estimatedAnnualTaxCents(h, T);
+      var gross = SLAF.Schema.grossAnnualIncomeCents(h);
+      var opts = { marginalRate: Money.isOk(tax) ? tax.effectiveRate : null, inflation: a.inflation, returnReal: a.returnReal,
+        grossAnnualCents: Money.isOk(gross) ? gross.value : null, filingStatus: h.filingStatus, conventions: conv(T), rules: T.debtRules };
+      var pct1 = function (x) { return (Math.round(x * 1000) / 10) + '%'; };
+      var rows = r.loans.map(function (d) {
+        var rc = SLAF.Debt.realCost(d, opts);
+        if (!Money.isOk(rc)) return '<li><b>' + esc(d.label || 'Loan') + '</b>: ' + esc(rc.reason) + '</li>';
+        return '<li><b>' + esc(d.label || 'Loan') + '</b> ' + money(d.balanceCents) + ' at ' + pct1(rc.nominalRate)
+          + '<span class="rc-chain">' + pct1(rc.nominalRate) + ' rate → ' + pct1(rc.afterTaxRate) + ' after the deduction'
+          + (rc.taxSavedCents > 0 ? ' (' + money(rc.taxSavedCents) + ' a year back at an estimated ' + pct1(rc.marginalRate) + ')' : rc.phaseOutShare === 0 && rc.deductionApplies ? ' (phased out at your income)' : '')
+          + ' → <b>' + pct1(rc.realRate) + '</b> after ' + pct1(rc.inflation) + ' inflation</span>'
+          + '<span class="rc-verdict is-' + rc.verdict + '">' + esc(rc.label) + '.</span> <span class="rc-why">' + esc(rc.why) + '</span></li>';
+      });
+      /* The balance over the standard plan, in the dollars on the statement
+         and in today's money, so the gap between the two lines is what
+         inflation pays. */
+      var std = r.plans.standard, chart = '';
+      if (std && std.ok && std.simulation && std.simulation.schedule) {
+        var sch = std.simulation.schedule;
+        var nominal = [[0, r.startingBalanceCents]].concat(sch.map(function (m) { return [m.month / 12, m.remainingCents]; }));
+        var today = [[0, r.startingBalanceCents]].concat(sch.map(function (m) { return [m.month / 12, SLAF.Debt.deflate(m.remainingCents, m.month, a.inflation)]; }));
+        var paidNominal = std.totalPaidCents;
+        var paidToday = sch.reduce(function (t, m) { return t + SLAF.Debt.deflate(m.paidCents, m.month, a.inflation); }, 0);
+        chart = Charts.area({ title: 'The balance on the standard plan, in the dollars on the statement and in today\u2019s money',
+          series: [{ id: 'nominal', label: 'Balance, as the statement will show it', color: Charts.COLORS.debt, points: nominal, fill: true, width: 1.2 },
+                   { id: 'today', label: 'The same balance in today\u2019s money', color: Charts.COLORS.contributed, points: today, fill: false, width: 1.6 }],
+          x: { label: 'years from now', format: function (v) { return String(Math.round(v)); } }, y: { min: 0 } })
+          + '<p class="why">Every payment on the standard plan adds up to ' + money(paidNominal) + ' on paper, but ' + money(paidToday) + ' in today\u2019s money: at ' + pct1(a.inflation) + ' inflation the later payments are made with cheaper dollars. That is why a low-rate loan is worth paying slowly, and a card at 20% is not.</p>';
+      }
+      var html = '<ul class="rc-list">' + rows.join('') + '</ul>' + chart;
+      host.innerHTML = html;
+    },
 
     amounts: function (h, T) {
       var r = StudentLoans.compare(h, T, {});

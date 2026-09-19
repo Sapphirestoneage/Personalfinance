@@ -1562,6 +1562,7 @@
       subsections: [
         { id: 'number',      label: 'The plan that clears them' },
         { id: 'chart',       label: 'Three plans, side by side' },
+        { id: 'real-cost',   label: 'What the loans really cost' },
         { id: 'inputs',      label: 'The plan' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },

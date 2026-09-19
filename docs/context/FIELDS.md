@@ -12,7 +12,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by statement, side-hustle, credential, rollover, roth-aca, property, debates
+- `marginalRate` — Marginal tax rate · read by statement, debt-payoff, student-loans, side-hustle, credential, rollover, roth-aca, property, debates
 - `allocationStocks` — Target: stocks · **no other room mentions it**
 - `allocationBonds` — Target: bonds · **no other room mentions it**
 - `allocationCash` — Target: cash · **no other room mentions it**
@@ -167,7 +167,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by income, expenses, cash-flow, statement, accounts, tax, dashboard, financial-snapshot, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, credential, cant-pay, rollover, roth-aca, middle-class-trap, career-move, partner, wrapped, one-pager
+- `filingStatus` — Filing status · read by income, expenses, cash-flow, statement, accounts, debt-payoff, student-loans, tax, dashboard, financial-snapshot, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, credential, cant-pay, rollover, roth-aca, middle-class-trap, career-move, partner, wrapped, one-pager
 - `grossAnnualIncome` — Gross annual income · read by ledger, expenses, cash-flow, statement, accounts, debt-payoff, student-loans, tax, variable-income, calendar, dashboard, financial-snapshot, fire, statements, real-hourly-wage, hassle, self-employed, side-hustle, credential, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, adventure, week, buckets, dreamline, reversibility, unlearning, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger

@@ -10,7 +10,7 @@ paths:
 # The Ledger (`ledger`)
 File: rooms/ledger.html · 2264 lines · utility room
 Engines: projection, tier0, income, ledger, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills
-Reference data: access_rules.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +13 more
+Reference data: access_rules.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +14 more
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), lastPay (start), cashSavings (start), employmentStatus (start), contributionPercent (start), partnerDob (partner), totalDebt (debt-payoff), otherAssets (statement), +16 more
 Latest decisions:

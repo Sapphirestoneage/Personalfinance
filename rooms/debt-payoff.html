@@ -671,7 +671,31 @@
       rate.placeholder = mode === 'promo' ? '0' : 'e.g. 22.9';
     }
     var say = scope.querySelector('[data-interest-say]');
-    if (say) say.textContent = interestSentence(d, mode);
+    if (say) say.textContent = interestSentence(d, mode) + ' ' + realCostSentence(d);
+  }
+
+  /* What this debt really costs (D-247): the rate, after the deduction a
+     student loan gets, after inflation, and the pace that follows. The
+     rate a deduction saves at is the household's estimated effective rate
+     (the marginal rate needs the bracket tables this room does not load),
+     and the sentence says so. */
+  function realCostOpts(h) {
+    var a = Schema.resolveAssumptions(h, null, TABLES);
+    var tax = Schema.estimatedAnnualTaxCents(h, TABLES);
+    var gross = Schema.grossAnnualIncomeCents(h);
+    return { marginalRate: Money.isOk(tax) ? tax.effectiveRate : null, inflation: a.inflation, returnReal: a.returnReal,
+      grossAnnualCents: Money.isOk(gross) ? gross.value : null, filingStatus: h.filingStatus, conventions: TABLES ? TABLES.studentLoanConventions : null, rules: RULES };
+  }
+  function pct1(r) { return (Math.round(r * 1000) / 10) + '%'; }
+  function realCostSentence(d) {
+    if (!TABLES) return '';
+    var rc = Debt.realCost(d, realCostOpts(Spine.getProfile()));
+    if (!Money.isOk(rc)) return '';
+    var chain = 'Really costs ' + pct1(rc.realRate) + ' a year: ' + pct1(rc.nominalRate);
+    if (rc.deductionApplies && rc.taxSavedCents > 0) chain += ' → ' + pct1(rc.afterTaxRate) + ' after the interest deduction (saves ' + Money.formatCents(rc.taxSavedCents) + ' a year at an estimated ' + pct1(rc.marginalRate) + ')';
+    else if (rc.deductionApplies) chain += ' (the interest deduction is phased out at your income)';
+    chain += ' → ' + pct1(rc.realRate) + ' after ' + pct1(rc.inflation) + ' inflation. ' + rc.label + '.';
+    return chain;
   }
 
   /** An ISO day as a month a person reads, without a timezone shifting it. */
@@ -1889,7 +1913,7 @@
 
   SLAF.Progress.mount(ROOM_ID);
 
-  Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults']).then(function (tables) {
+  Reference.load(['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults', 'studentLoanConventions', 'returnBands']).then(function (tables) {
     TABLES = tables;
     RULES = tables.debtRules;
     FOO = tables.fooRules || null;
