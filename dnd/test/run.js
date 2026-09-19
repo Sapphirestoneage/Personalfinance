@@ -1008,8 +1008,15 @@ section('Dungeons & Dividends — the share card');
      builds its figures by filtering on isOk and pushing only what scored. */
   checkTrue('ability scores are filtered to the ones that scored',
     /STAT_IDS\.filter\(function \(id\) \{ return Money\.isOk/.test(src));
-  checkTrue('vitals are pushed only when they are not null',
-    /if \(d\.hp !== null\)/.test(src) && /if \(d\.ac !== null\)/.test(src));
+  /* The sheet layout draws a box per vital whether or not it scored. The
+     rule survives in a different shape: an unmeasured box is left empty and
+     captioned, and the score slot is never given a dash. */
+  checkTrue('an unmeasured vital is captioned, not dashed',
+    /if \(d\.hp !== null\) \{/.test(src) && /if \(d\.ac !== null\) \{/.test(src)
+    && /'not measured'/.test(src));
+  checkTrue('and no score slot ever prints a dash as a value',
+    !/fillText\(d\.\w+ !== null \? String\(d\.\w+\) : '—'/.test(src)
+    && !/: '—', bx \+ boxW/.test(src));
   checkTrue('and the card never renders an em dash as a value',
     !/Money\.EM_DASH/.test(src));
 
@@ -1866,6 +1873,60 @@ section('Dungeons & Dividends — the campaign (DD-024)');
     /dndScenarios/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
 })();
 
+section('Dungeons & Dividends — a sheet that looks like one, and a link that previews (DD-029)');
+
+(function () {
+  const card = fs.readFileSync(path.join(ROOT, 'card.html'), 'utf8');
+  /* The silhouette IS the share asset: six ability boxes with a modifier
+     circle, a shield for armour, a hit-point box, saving throws with
+     proficiency dots, a features panel. Each is a distinct drawing routine. */
+  checkTrue('the card draws a shield for armour', /function shield\(/.test(card) && /shield\(ctx, rx \+ aW \/ 2/.test(card));
+  checkTrue('and the six ability boxes in a column', /order\.forEach\(function \(id, i\)/.test(card) && /Char\.STAT_IDS/.test(card));
+  checkTrue('with the modifier in a circle on the bottom edge', /ctx\.arc\(bx \+ boxW \/ 2, cy, 24/.test(card));
+  checkTrue('a saving-throw list with proficiency dots', /'Saving throws'/.test(card) && /if \(sv\.proficient\) \{ ctx\.fillStyle = sk\.accent; ctx\.fill\(\); \}/.test(card));
+  checkTrue('and a features panel', /'Features & traits'/.test(card));
+  checkTrue('hit points are labelled as weeks of runway', /weeks of runway/.test(card));
+  checkTrue('the sheet prints the published address, not wherever it was rendered',
+    /meta\[property="og:url"\]/.test(card) && /fillText\(siteAddress\(\)/.test(card)
+    && !/fillText\(location\.host/.test(card));
+  /* It reads the same engines as everything else — nothing is retyped. */
+  checkTrue('saving throws come from the engine', /Char\.savingThrows\(s\.stats, s\.klass, s\.proficiencyBonus/.test(card));
+  checkTrue('the class flavour comes from the profile table', /TABLES\.dndProfile\.classes\[classId\]/.test(card));
+  /* And it never carries a typed figure. The card's data function must not
+     reach for any money on the household. */
+  const dataFn = card.slice(card.indexOf('function cardData()'), card.indexOf('function draw()'));
+  checkTrue('the card never reads a money figure',
+    !/grossAnnualIncomeCents|valueCents|balanceCents|estimatedValueCents|monthlyEssential/.test(dataFn));
+
+  /* ---- link previews --------------------------------------------------- */
+  ['index.html', 'campaign.html', 'card.html', 'profile.html', 'descent.html', 'menagerie.html']
+    .forEach(function (f) {
+      const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+      checkTrue(`${f} has an og:title`, /property="og:title"/.test(src));
+      checkTrue(`${f} has an og:description`, /property="og:description"/.test(src));
+      checkTrue(`${f} points its preview image at og.png`, /property="og:image" content="https:\/\/[^"]+\/dnd\/og\.png"/.test(src));
+      checkTrue(`${f} has an absolute og:url`, /property="og:url" content="https:\/\//.test(src));
+      checkTrue(`${f} asks for a large twitter card`, /name="twitter:card" content="summary_large_image"/.test(src));
+    });
+  const og = path.join(ROOT, 'og.png');
+  checkTrue('og.png exists', fs.existsSync(og));
+  if (fs.existsSync(og)) {
+    const buf = fs.readFileSync(og);
+    /* PNG IHDR: width at bytes 16-19, height at 20-23 */
+    const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
+    check('og.png is 1200 wide', w, 1200);
+    check('and 630 tall', h, 630);
+    checkTrue('and is not empty', buf.length > 20000);
+  }
+
+  /* ---- the share moments ------------------------------------------------- */
+  const camp = fs.readFileSync(path.join(ROOT, 'campaign.html'), 'utf8');
+  checkTrue('the chapter review leads with sharing the sheet',
+    /Share your character sheet/.test(camp));
+  checkTrue('and the character screen offers it too',
+    /Share my character sheet/.test(camp));
+})();
+
 section('Dungeons & Dividends — four ways in (DD-028)');
 
 (function () {
@@ -1948,7 +2009,7 @@ section('Dungeons & Dividends — four ways in (DD-028)');
   checkTrue('and the labels stop saying "your numbers" under one',
     /BORROWED_WORD/.test(camp) && /measured from these numbers/.test(camp));
   checkTrue('the share card says when it is a ready-made one',
-    /a ready-made character/.test(fs.readFileSync(path.join(ROOT, 'card.html'), 'utf8')));
+    /d\.pregenName \+ ' · ready-made'/.test(fs.readFileSync(path.join(ROOT, 'card.html'), 'utf8')));
   checkTrue('and so does the profile',
     /a ready-made character, not you/.test(fs.readFileSync(path.join(ROOT, 'profile.html'), 'utf8')));
 

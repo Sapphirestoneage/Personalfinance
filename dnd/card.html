@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Your card — Dungeons &amp; Dividends</title>
 <meta name="description" content="A share card for your Dungeons &amp; Dividends character — class, level, ability scores, alignment and what hunts you, as an image you can save."/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Dungeons &amp; Dividends"/>
+<meta property="og:title" content="My character — Dungeons &amp; Dividends"/>
+<meta property="og:description" content="A D&amp;D-style character sheet for your money. Roll your own — free, no sign-up."/>
+<meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/dnd/card.html"/>
+<meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="My character — Dungeons &amp; Dividends"/>
+<meta name="twitter:description" content="A D&amp;D-style character sheet for your money. Roll your own — free, no sign-up."/>
+<meta name="twitter:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
@@ -167,7 +179,21 @@
       if (Money.isOk(qr)) { quizClass = qr.top.name; quizLever = qr.top.lever; }
     }
 
+    /* The sheet-shaped card wants the same things a 5e sheet has: saving
+       throws with proficiency marked, and the class's own flavour — its sign,
+       its alignment line, its one-line headline. All derived, none typed. */
+    var saves = s.klass || stats.length
+      ? Char.savingThrows(s.stats, s.klass, s.proficiencyBonus, TABLES, s.grants)
+      : [];
+    var classId = s.klass ? s.klass.id : (quizClass ? (TABLES.dndClasses.classes.filter(function (c) {
+      return c.name === quizClass; })[0] || {}).id : null);
+    var prof = (classId && TABLES.dndProfile && TABLES.dndProfile.classes[classId]) || null;
+
     return {
+      saves: saves,
+      sign: prof ? prof.sign : null,
+      dndAlignment: prof ? prof.alignment : null,
+      headline: prof ? prof.headline : null,
       /* A shared card built on a pregen must say so on the card itself —
          it is the one artefact that travels away from the tool. */
       pregenName: (p.pregen && p.pregen.name) || null,
@@ -207,15 +233,60 @@
     drawInto(c.getContext('2d'), h, d);
   }
 
+  /* Small shapes a character sheet is made of. */
+  function rrect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+  }
+  function shield(ctx, cx, top, w, h) {
+    ctx.beginPath();
+    ctx.moveTo(cx - w / 2, top);
+    ctx.lineTo(cx + w / 2, top);
+    ctx.lineTo(cx + w / 2, top + h * 0.55);
+    ctx.quadraticCurveTo(cx + w / 2, top + h * 0.85, cx, top + h);
+    ctx.quadraticCurveTo(cx - w / 2, top + h * 0.85, cx - w / 2, top + h * 0.55);
+    ctx.closePath();
+  }
+  /* Restores whatever alignment was in force, rather than forcing left: the
+     hit-point box draws its caption then its number, and a helper that reset
+     alignment to left sent the number sliding out under the next box. */
+  /* The address printed on the sheet. The sheet leaves the browser, so it
+     carries the published address from the page's own og:url tag rather
+     than wherever it happened to be rendered — a local server, a file. */
+  function siteAddress() {
+    var og = document.querySelector('meta[property="og:url"]');
+    var url = og && og.getAttribute('content') ? og.getAttribute('content') : location.href;
+    return url.replace(/^https?:\/\//, '').replace(/card\.html.*$/, '');
+  }
+
+  function cap(ctx, sk, BODY, text, x, y, align) {
+    var was = ctx.textAlign;
+    ctx.fillStyle = sk.dim; ctx.font = '600 18px ' + BODY;
+    ctx.textAlign = align || 'left';
+    ctx.fillText(String(text).toUpperCase(), x, y);
+    ctx.textAlign = was;
+  }
+
+  /* THE SHEET. This is drawn to be recognised from across a room as a D&D
+     character sheet: six ability boxes stacked down the left with the
+     modifier in a circle, a shield for armour, a box for hit points, a column
+     of saving throws with proficiency dots, and a features panel. Everything
+     on it is derived; nothing on it is a figure somebody typed, because this
+     is the one thing that leaves the tool. */
   function drawInto(ctx, H, d) {
     var sk = SKINS[DND.Skin.get()] || SKINS.navy;
     var DISP = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif';
     var BODY = '"Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif';
-    var M = 72;
+    var M = 60;
 
     ctx.fillStyle = sk.bg; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = sk.rule; ctx.lineWidth = 4;
+    ctx.strokeStyle = sk.rule; ctx.lineWidth = 3;
     ctx.strokeRect(M / 2, M / 2, W - M, H - M);
+    ctx.strokeStyle = sk.rule; ctx.lineWidth = 1;
+    ctx.strokeRect(M / 2 + 8, M / 2 + 8, W - M - 16, H - M - 16);
 
     if (!d || (!d.klass && !d.stats.length)) {
       ctx.fillStyle = sk.dim; ctx.textAlign = 'center';
@@ -227,143 +298,212 @@
       return MIN_H - FOOTER_SPACE;
     }
 
-    var y = M + 40;
-    ctx.textAlign = 'left';
+    var y = M + 44;
 
-    /* eyebrow */
-    ctx.fillStyle = sk.accent;
-    ctx.font = '600 26px ' + BODY;
-    ctx.fillText('DUNGEONS & DIVIDENDS', M, y);
-    y += 64;
+    /* ---- header: eyebrow, name, then the three-box strip a 5e sheet has --- */
+    ctx.fillStyle = sk.accent; ctx.font = '600 22px ' + BODY;
+    ctx.fillText('DUNGEONS & DIVIDENDS  ·  CHARACTER SHEET', M, y);
+    y += 58;
 
-    /* name, or the class if there is no name */
     var title = d.name || d.klass || 'Unnamed';
     ctx.fillStyle = sk.ink;
-    var ts = fit(ctx, title, W - M * 2, 88, '400', DISP);
+    var ts = fit(ctx, title, W - M * 2, 78, '400', DISP);
     ctx.font = '400 ' + ts + 'px ' + DISP;
     ctx.fillText(title, M, y);
-    y += 26;
+    y += 30;
 
-    /* class · level · lever. When there is no name the class IS the title, so
-       the subtitle carries only the level rather than saying the class twice. */
-    if (d.klass) {
-      ctx.fillStyle = sk.dim;
-      ctx.font = '34px ' + BODY;
-      var sub = d.name
-        ? d.klass + (d.level !== null ? ', level ' + d.level : '')
-        : (d.level !== null ? 'Level ' + d.level : '');
-      /* Say which kind of class this is, so a shared card never implies a
-         measurement that was never taken. */
-      if (d.classIsInstinct) sub = sub ? sub + ' · by instinct' : 'By instinct, not yet measured';
-      if (d.pregenName) sub = d.pregenName + ' · a ready-made character';
-      if (sub) { ctx.fillText(sub, M, y + 30); y += 44; }
-      if (d.lever) {
-        ctx.fillStyle = sk.accent;
-        ctx.font = 'italic 30px ' + BODY;
-        ctx.fillText(d.lever, M, y + 30);
-        y += 40;
+    var strip = [];
+    var classLine = d.klass
+      ? d.klass + (d.level !== null ? ', level ' + d.level : '')
+      : 'No class yet';
+    if (d.classIsInstinct) classLine += ' (by instinct)';
+    if (d.pregenName) classLine = d.pregenName + ' · ready-made';
+    strip.push(['Class & level', classLine]);
+    strip.push(['Sign', d.sign ? d.sign.glyph + ' ' + d.sign.name : 'needs a class']);
+    strip.push(['Alignment', d.dndAlignment || (d.alignment ? d.alignment.name : 'needs a class')]);
+    var sw = (W - M * 2 - 2 * 14) / 3;
+    strip.forEach(function (b, i) {
+      var x = M + i * (sw + 14);
+      ctx.strokeStyle = sk.rule; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x, y + 46); ctx.lineTo(x + sw, y + 46); ctx.stroke();
+      ctx.fillStyle = sk.ink;
+      var fs = fit(ctx, b[1], sw - 8, 28, '400', BODY);
+      ctx.font = '400 ' + fs + 'px ' + BODY;
+      ctx.fillText(b[1], x, y + 36);
+      cap(ctx, sk, BODY, b[0], x, y + 68);
+    });
+    y += 104;
+
+    /* ---- left column: the six ability boxes ------------------------------ */
+    var colX = M, boxW = 196, boxH = 132, gap = 16;
+    var order = Char.STAT_IDS;
+    var byId = {};
+    d.stats.forEach(function (st) { byId[st.id] = st; });
+    var finance = {};
+    (TABLES.dndRules.stats || []).forEach(function (m) { finance[m.id] = m.finance; });
+    var leftTop = y;
+    order.forEach(function (id, i) {
+      var st = byId[id];
+      var bx = colX, by = leftTop + i * (boxH + gap);
+      ctx.fillStyle = sk.panel;
+      rrect(ctx, bx, by, boxW, boxH, 14); ctx.fill();
+      ctx.strokeStyle = sk.rule; ctx.lineWidth = 2;
+      if (st && st.bought) { ctx.save(); ctx.setLineDash([7, 5]); ctx.strokeStyle = sk.accent; }
+      rrect(ctx, bx, by, boxW, boxH, 14); ctx.stroke();
+      if (st && st.bought) ctx.restore();
+
+      cap(ctx, sk, BODY, id, bx + boxW / 2, by + 26, 'center');
+      ctx.fillStyle = sk.dim; ctx.font = '17px ' + BODY; ctx.textAlign = 'center';
+      var fl = fit(ctx, finance[id] || '', boxW - 16, 17, '400', BODY);
+      ctx.font = fl + 'px ' + BODY;
+      ctx.fillText(finance[id] || '', bx + boxW / 2, by + 48);
+
+      if (st) {
+        ctx.fillStyle = sk.ink; ctx.font = '400 60px ' + DISP;
+        ctx.fillText(String(st.score), bx + boxW / 2, by + 106);
+      } else {
+        ctx.fillStyle = sk.dim; ctx.font = '17px ' + BODY;
+        ctx.fillText('not scored', bx + boxW / 2, by + 98);
       }
-    }
-    y += 34;
 
-    /* ability scores — only the ones that scored */
-    if (d.stats.length) {
-      var boxW = (W - M * 2 - 16 * (d.stats.length - 1)) / d.stats.length;
-      d.stats.forEach(function (st, i) {
-        var x = M + i * (boxW + 16);
-        ctx.fillStyle = sk.panel;
-        ctx.fillRect(x, y, boxW, 150);
-        if (st.bought) {
-          /* Bought, not measured — the card must not claim a Strength nobody
-             measured, so a bought score is boxed differently and labelled. */
-          ctx.save();
-          ctx.setLineDash([6, 5]); ctx.strokeStyle = sk.accent; ctx.lineWidth = 2;
-          ctx.strokeRect(x + 1, y + 1, boxW - 2, 148);
-          ctx.restore();
-        }
-        ctx.fillStyle = sk.dim;
-        ctx.font = '600 22px ' + BODY;
-        ctx.textAlign = 'center';
-        ctx.fillText(st.id, x + boxW / 2, y + 40);
-        ctx.fillStyle = sk.ink;
-        ctx.font = '400 56px ' + DISP;
-        ctx.fillText(String(st.score), x + boxW / 2, y + 100);
-        ctx.fillStyle = sk.accent;
-        ctx.font = '26px ' + BODY;
-        ctx.fillText((st.mod >= 0 ? '+' : '') + st.mod + (st.bought ? ' ·b' : ''), x + boxW / 2, y + 132);
-      });
+      /* the modifier, in the circle that overlaps the bottom edge */
+      var cy = by + boxH;
+      ctx.fillStyle = sk.bg;
+      ctx.beginPath(); ctx.arc(bx + boxW / 2, cy, 24, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = st && st.bought ? sk.accent : sk.rule; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(bx + boxW / 2, cy, 24, 0, Math.PI * 2); ctx.stroke();
+      if (st) {
+        ctx.fillStyle = sk.accent; ctx.font = '600 22px ' + BODY;
+        ctx.fillText((st.mod >= 0 ? '+' : '') + st.mod, bx + boxW / 2, cy + 8);
+      }
       ctx.textAlign = 'left';
-      y += 190;
-    }
+    });
+    var leftBottom = leftTop + order.length * (boxH + gap) - gap + 30;
 
-    /* vitals — each only if measured */
-    var vitals = [];
-    if (d.hp !== null) vitals.push(['HIT POINTS', d.hp + (d.maxHp !== null ? ' / ' + d.maxHp : '') + ' wk']);
-    if (d.ac !== null) vitals.push(['ARMOUR', String(d.ac)]);
-    if (d.tier) vitals.push(['TIER', d.tier.id + ' · ' + d.tier.name]);
-    if (d.stats.some(function (st) { return st.bought; })) {
-      ctx.fillStyle = sk.dim; ctx.font = '22px ' + BODY;
-      ctx.fillText('·b = bought with points, not measured. Stands until real numbers replace it.', M, y);
-      y += 34;
-    }
-    if (vitals.length) {
-      vitals.forEach(function (v, i) {
-        var x = M + i * ((W - M * 2) / vitals.length);
-        ctx.fillStyle = sk.dim; ctx.font = '600 22px ' + BODY;
-        ctx.fillText(v[0], x, y);
-        ctx.fillStyle = sk.ink;
-        var vs = fit(ctx, v[1], (W - M * 2) / vitals.length - 20, 40, '400', DISP);
-        ctx.font = '400 ' + vs + 'px ' + DISP;
-        ctx.fillText(v[1], x, y + 46);
-      });
-      y += 96;
-    }
+    /* ---- right column ----------------------------------------------------- */
+    var rx = colX + boxW + 36, rw = W - M - rx;
+    var ry = leftTop;
 
-    if (d.exhaustion) {
-      ctx.fillStyle = sk.warn; ctx.font = '600 26px ' + BODY;
-      ctx.fillText(d.exhaustion.toUpperCase() + ' — every save is harder', M, y + 8);
-      y += 52;
+    /* row A: shield, hit points, level */
+    var aW = (rw - 2 * 16) / 3, aH = 170;
+    /* armour */
+    ctx.fillStyle = sk.panel; shield(ctx, rx + aW / 2, ry, 118, 140); ctx.fill();
+    ctx.strokeStyle = sk.rule; ctx.lineWidth = 2; shield(ctx, rx + aW / 2, ry, 118, 140); ctx.stroke();
+    ctx.textAlign = 'center';
+    /* An unmeasured box is left EMPTY and captioned, never given a dash: a
+       dash in the score slot reads as a value, and this card leaves the tool. */
+    if (d.ac !== null) {
+      ctx.fillStyle = sk.ink; ctx.font = '400 62px ' + DISP;
+      ctx.fillText(String(d.ac), rx + aW / 2, ry + 88);
+    } else {
+      ctx.fillStyle = sk.dim; ctx.font = '18px ' + BODY;
+      ctx.fillText('not measured', rx + aW / 2, ry + 82);
     }
-
-    /* rule */
-    ctx.strokeStyle = sk.rule; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(M, y); ctx.lineTo(W - M, y); ctx.stroke();
-    y += 54;
-
-    /* alignment */
-    if (d.alignment) {
-      ctx.fillStyle = sk.dim; ctx.font = '600 22px ' + BODY;
-      ctx.fillText('ALIGNMENT', M, y);
-      ctx.fillStyle = sk.ink; ctx.font = '400 40px ' + DISP;
-      ctx.fillText(d.alignment.emoji + ' ' + d.alignment.name, M, y + 48);
-      ctx.fillStyle = sk.dim; ctx.font = '24px ' + BODY;
-      ctx.fillText(d.alignment.axisLabel, M, y + 84);
-      y += 128;
+    cap(ctx, sk, BODY, 'Armour class', rx + aW / 2, ry + aH - 8, 'center');
+    /* hit points */
+    var hx = rx + aW + 16;
+    ctx.fillStyle = sk.panel; rrect(ctx, hx, ry, aW, aH - 26, 14); ctx.fill();
+    ctx.strokeStyle = sk.rule; rrect(ctx, hx, ry, aW, aH - 26, 14); ctx.stroke();
+    if (d.hp !== null) {
+      ctx.fillStyle = sk.ink; ctx.font = '400 62px ' + DISP;
+      ctx.fillText(String(d.hp), hx + aW / 2, ry + 78);
+      ctx.fillStyle = sk.dim;
+      var hpSub = d.hp === 1 ? 'week of runway' : 'weeks of runway';
+      var hs = fit(ctx, hpSub, aW - 16, 20, '400', BODY);
+      ctx.font = hs + 'px ' + BODY;
+      ctx.fillText(hpSub, hx + aW / 2, ry + 112);
+    } else {
+      ctx.fillStyle = sk.dim; ctx.font = '18px ' + BODY;
+      ctx.fillText('not measured', hx + aW / 2, ry + 82);
     }
+    cap(ctx, sk, BODY, 'Hit points', hx + aW / 2, ry + aH - 8, 'center');
+    /* level */
+    var lx = hx + aW + 16;
+    ctx.fillStyle = sk.panel; rrect(ctx, lx, ry, aW, aH - 26, 14); ctx.fill();
+    ctx.strokeStyle = sk.rule; rrect(ctx, lx, ry, aW, aH - 26, 14); ctx.stroke();
+    if (d.level !== null) {
+      ctx.fillStyle = sk.ink; ctx.font = '400 62px ' + DISP;
+      ctx.fillText(String(d.level), lx + aW / 2, ry + 78);
+      ctx.fillStyle = sk.dim; ctx.font = '20px ' + BODY;
+      ctx.fillText(d.tier ? 'tier ' + d.tier.id : 'of 20', lx + aW / 2, ry + 112);
+    } else {
+      ctx.fillStyle = sk.dim; ctx.font = '18px ' + BODY;
+      ctx.fillText('needs numbers', lx + aW / 2, ry + 82);
+    }
+    cap(ctx, sk, BODY, 'Level', lx + aW / 2, ry + aH - 8, 'center');
+    ctx.textAlign = 'left';
+    ry += aH + 18;
 
-    /* what hunts you */
+    /* row B: saving throws */
+    ctx.fillStyle = sk.panel; rrect(ctx, rx, ry, rw, 62 + d.saves.length * 40, 14); ctx.fill();
+    ctx.strokeStyle = sk.rule; rrect(ctx, rx, ry, rw, 62 + d.saves.length * 40, 14); ctx.stroke();
+    cap(ctx, sk, BODY, 'Saving throws', rx + 20, ry + 30);
+    var sy = ry + 66;
+    d.saves.forEach(function (sv) {
+      ctx.beginPath(); ctx.arc(rx + 30, sy - 7, 8, 0, Math.PI * 2);
+      ctx.strokeStyle = sk.accent; ctx.lineWidth = 2; ctx.stroke();
+      if (sv.proficient) { ctx.fillStyle = sk.accent; ctx.fill(); }
+      if (sv.ok) {
+        ctx.fillStyle = sk.ink; ctx.font = '600 24px ' + BODY;
+        ctx.fillText((sv.modifier >= 0 ? '+' : '') + sv.modifier, rx + 52, sy);
+      }
+      ctx.fillStyle = sv.ok ? sk.ink : sk.dim; ctx.font = '400 24px ' + BODY;
+      ctx.fillText(sv.name, rx + 118, sy);
+      /* The finance label, not the full sentence: the sentence shrank to
+         eleven pixels to fit and nobody can read eleven pixels on a phone. */
+      ctx.fillStyle = sk.dim; ctx.font = '19px ' + BODY;
+      ctx.fillText(sv.ok ? (finance[sv.stat] || '') : 'not scored', rx + 300, sy);
+      sy += 40;
+    });
+    ry = sy + 12;
+
+    /* row C: features & traits */
+    var feat = [];
+    if (d.headline) feat.push({ k: 'How you play', v: '“' + d.headline + '”', italic: true });
+    if (d.lever) feat.push({ k: 'Your lever', v: d.lever });
+    if (d.exhaustion) feat.push({ k: 'Condition', v: d.exhaustion + ' — every save is harder', warn: true });
     if (d.hunted.length) {
-      ctx.fillStyle = sk.dim; ctx.font = '600 22px ' + BODY;
-      ctx.fillText(d.weakest.length ? 'THINNEST ON ' + d.weakest.join(' · ') : 'HUNTED BY', M, y);
-      y += 40;
-      ctx.fillStyle = sk.ink; ctx.font = '30px ' + BODY;
-      d.hunted.forEach(function (n) {
-        var lines = wrap(ctx, n, W - M * 2 - 30);
-        lines.forEach(function (ln, li) {
-          ctx.fillText((li === 0 ? '· ' : '  ') + ln, M, y);
-          y += 40;
-        });
-      });
+      feat.push({ k: d.weakest.length ? 'Thinnest on ' + d.weakest.join(' & ') + ' — hunted by' : 'Hunted by',
+                  v: d.hunted.join(' · ') });
+    }
+    /* measure first, so the box fits its text */
+    ctx.font = '400 24px ' + BODY;
+    var featLines = [];
+    feat.forEach(function (f) {
+      ctx.font = (f.italic ? 'italic ' : '') + '400 24px ' + BODY;
+      var lines = wrap(ctx, f.v, rw - 40);
+      featLines.push({ f: f, lines: lines });
+    });
+    var featH = 44 + featLines.reduce(function (n, x) { return n + 26 + x.lines.length * 30 + 10; }, 0);
+    ctx.fillStyle = sk.panel; rrect(ctx, rx, ry, rw, featH, 14); ctx.fill();
+    ctx.strokeStyle = sk.rule; rrect(ctx, rx, ry, rw, featH, 14); ctx.stroke();
+    cap(ctx, sk, BODY, 'Features & traits', rx + 20, ry + 30);
+    var fy = ry + 62;
+    featLines.forEach(function (x) {
+      cap(ctx, sk, BODY, x.f.k, rx + 20, fy); fy += 26;
+      ctx.fillStyle = x.f.warn ? sk.warn : sk.ink;
+      ctx.font = (x.f.italic ? 'italic ' : '') + '400 24px ' + BODY;
+      x.lines.forEach(function (ln) { ctx.fillText(ln, rx + 20, fy); fy += 30; });
+      fy += 10;
+    });
+    ry += featH;
+
+    var y2 = Math.max(leftBottom, ry) + 10;
+
+    if (d.stats.some(function (st) { return st.bought; })) {
+      ctx.fillStyle = sk.dim; ctx.font = '19px ' + BODY;
+      ctx.fillText('Dashed boxes are scores bought with points, not measured. They stand until real numbers replace them.', M, y2 + 10);
+      y2 += 30;
     }
 
     /* footer */
-    ctx.fillStyle = sk.dim; ctx.font = '24px ' + BODY;
+    ctx.fillStyle = sk.dim; ctx.font = '22px ' + BODY;
     ctx.textAlign = 'center';
-    ctx.fillText('Roll your own character', W / 2, H - M - 46);
+    ctx.fillText('Roll your own character — free, no sign-up, nothing leaves your browser', W / 2, H - M - 40);
     ctx.fillStyle = sk.accent; ctx.font = '600 26px ' + BODY;
-    ctx.fillText(location.host + location.pathname.replace(/card\.html$/, ''), W / 2, H - M - 8);
+    ctx.fillText(siteAddress(), W / 2, H - M - 4);
     ctx.textAlign = 'left';
-    return y;
+    return y2;
   }
 
   function shareText() {

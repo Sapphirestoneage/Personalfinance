@@ -11312,3 +11312,98 @@ card is the one that matters, because it leaves. Never let `metCreatures` reach
 a score; if you want a measurement, ask for the money. And a new pregen must
 declare in `expect` what it is for, or the set drifts into four characters that
 all teach the same thing.
+
+## DD-029 — A sheet that looks like one, and a link that previews
+
+The ask was for something that can go online and travel: a person comes away
+with a character sheet that looks like D&D, shares it, and the person they
+share it with understands it without a guide. Three things were built and one
+rule was tightened.
+
+### The silhouette is the share asset
+
+`dnd/card.html` was a tidy table of stats. It now draws the 5e sheet shape
+people already recognise: a column of six ability boxes with the modifier in
+a circle on the bottom edge, a shield for Armour Class, a hit-point box, a
+Level box, a saving-throw list with proficiency dots, and a features panel —
+all in canvas, in both skins, sized to its content.
+
+Each box keeps its finance meaning on its face so the sheet explains itself:
+STR is *Earning power*, DEX is *Resilience / mobility*, and hit points are
+captioned **weeks of runway**, which is the one number on the sheet that
+lands hardest with someone who has never seen the tool. The features panel
+carries the class headline in the voice of the profile (*"You would rather
+your money did the work."*), the lever, any active condition in red, and
+which creatures are hunting the two thinnest saves.
+
+Nothing on the sheet is retyped. Saving throws come from
+`Character.savingThrows()`, the ability labels from `dnd_rules.json`, the
+sign, alignment and headline from `dnd_profile.json`. The sheet reads the
+same engines as every other page, so it cannot drift from them.
+
+### The sheet never carries a typed figure
+
+This is the rule that matters, because the sheet is the one artefact that
+leaves the browser. It carries a class, six scores, a Level, runway in
+weeks, saving throws and creature names — all derived, all coarse. It never
+carries income, a balance, a debt, or spending. The test slices the card's
+data function and asserts it does not reach for any money field on the
+household. The share moments on the campaign say the same thing in one
+line under the button, so a person knows what they are sending before
+they send it.
+
+**Bought scores stay marked.** A score that came from point buy or the dice
+draws with a dashed border, and the sheet says so in a footnote. Otherwise a
+sheet of rolled 18s would travel as if it were measured.
+
+### Empty slots are captioned, never dashed
+
+The old card only pushed a vital when it had a value. The sheet shape draws
+a box per vital whether or not it scored, which is exactly the situation
+the empty≠zero rule (SPEC §4, §5) is about: an unmeasured slot must not
+read as a score, and a dash reads as one. So an unmeasured slot is left
+empty and captioned — *not measured*, *not scored*, *needs numbers*, *needs
+a class* — and a test asserts no score slot ever prints a dash as its value.
+The captions double as the call to action: the sheet tells the reader what
+to go and enter.
+
+### The link previews
+
+Six pages carry Open Graph and Twitter card tags with absolute URLs, so a
+pasted link unfurls in a chat as a picture rather than a bare address. The
+picture is `dnd/og.png` — the parchment sheet of one ready-made character,
+tilted, next to the line *A D&D character sheet for your actual money.* It
+is generated from the real card renderer, not drawn separately, so it can
+be regenerated when the sheet changes and never shows a sheet the tool
+does not produce. It is a pregen by construction: no real household is
+ever rendered into a committed file.
+
+### Words a player never sees
+
+The campaign's review still said *the ladder's pick* and *the one the ladder
+would have made*; the ladder is an internal name. It now says *the strongest
+move*. Two on-screen uses of *sub-stat* went the same way. The rule from
+DD-026 stands: acronyms and engine names stay in code, comments and tests.
+
+### What was not done
+
+The Fellowship party link is still waiting on the disclosure decision in
+DD-028 — the sheet's *never a typed figure* rule is the same question in
+another shape, and the answer should be the same person's. Table Mode is
+still unbuilt.
+
+### Compatibility note
+
+**Stored shape:** unchanged. Nothing new is written to `dndProfile` or the
+household; the sheet and the previews read only.
+
+**Rooms updated:** `dnd/card.html` (the sheet), `dnd/campaign.html` (share
+moments, jargon), `dnd/index.html`, `dnd/profile.html`, `dnd/descent.html`,
+`dnd/menagerie.html` (preview tags only), `dnd/og.png` (new),
+`dnd/test/run.js`.
+
+**Before touching the sheet from a new room:** anything you add to the
+card's data function must be derived and coarse — if it is a figure someone
+typed, it does not go on the sheet. The test on the data slice will catch
+the obvious fields; the rule is wider than the regex. And regenerate
+`og.png` from the renderer when the layout changes, from a pregen only.
