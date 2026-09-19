@@ -81,8 +81,8 @@ Fields: 114. Traced: 105. No other room mentions it: **53**.
 
 ## expenses (8)
 
-- `rentMonthly` — Rent or mortgage, a month · read by calendar, housing, property, debates
-- `monthlyExpenses` — Monthly expenses · read by start, budget, statement, variable-income, calendar, dashboard, financial-snapshot, fire, fire-lab, statements, real-hourly-wage, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, enough, adventure, week, buckets, dreamline, reversibility, unlearning, debates, one-pager
+- `rentMonthly` — Rent or mortgage, a month · read by cash-flow, calendar, housing, property, debates
+- `monthlyExpenses` — Monthly expenses · read by start, cash-flow, budget, statement, variable-income, calendar, dashboard, financial-snapshot, fire, fire-lab, statements, real-hourly-wage, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, enough, adventure, week, buckets, dreamline, reversibility, unlearning, debates, one-pager
 - `foodMonthly` — Food, a month · read by ledger
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
@@ -171,7 +171,7 @@ Fields: 114. Traced: 105. No other room mentions it: **53**.
 - `grossAnnualIncome` — Gross annual income · read by ledger, expenses, cash-flow, statement, accounts, debt-payoff, student-loans, tax, variable-income, calendar, dashboard, financial-snapshot, fire, statements, real-hourly-wage, hassle, self-employed, side-hustle, credential, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, adventure, week, buckets, dreamline, reversibility, unlearning, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
-- `cashSavings` — Cash & savings · read by ledger, budget, statement, variable-income, calendar, dashboard, financial-snapshot, statements, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, reversibility, unlearning, history, wrapped, one-pager
+- `cashSavings` — Cash & savings · read by ledger, cash-flow, budget, statement, variable-income, calendar, dashboard, financial-snapshot, statements, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, reversibility, unlearning, history, wrapped, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, student-loans, tax, runway, offer-compare, unlearning
 - `employerMatch` — Employer match · read by financial-snapshot, foo-ladder, statements, offer-compare, unlearning

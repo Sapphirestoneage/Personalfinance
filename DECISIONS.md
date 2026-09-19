@@ -14511,6 +14511,37 @@ highest rate; off past the stop line), lane 2, `node test/forms.js`,
 `node tools/context/build.js --check`; Debt Payoff at 390px with the
 demo: the list reads, the choice survives a reload, clean console.
 
+## D-253 — What hits your account, and when: the month as turns, in Cash Flow and the Calendar
+
+**Why.** The owner, in Cash Flow: "I want to see a calendar along with a
+chart graph with the month going up and down as cash flow increases or
+decreases and a point of what caused it. Basically say what hits your
+account and when and then it can recalc." The Calendar room had the
+line and the grid; Cash Flow, where receipts are logged, had neither,
+and nothing named each turn.
+
+**Decision.** `engines/calendar.js` assembles what a day does in one
+place (`eventsOn`) and reads the month as `turns(result)`: every payday,
+landing, bill, pay-later instalment, logged receipt and yearly cost, in
+the order it lands, signed, with the balance at the end of that day.
+`shared/daybyday.js` draws the one picture from it: the balance line
+with a dot per turn (in green, out red, potential faint), the same days
+as the calendar grid, and the turns listed with what caused each and
+what is left. `rooms/cash-flow.html` shows it under the flow and
+recalculates on every render, so a receipt logged above moves the line;
+`rooms/calendar.html` draws the same and keeps no copy of the grid.
+
+**Replaces or removes.** The grid markup and its styles in the Calendar
+room (now `shared/daybyday.js` and `shared/theme.css`).
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (turns ordered, signed, carrying the
+day's balance; the grid and the turns share one event assembly; a dot
+per turn), `node test/forms.js`, `node tools/context/build.js --check`;
+Cash Flow and the Calendar at 390px with the demo, empty state and with
+a pay rhythm set, clean console.
+
 ---
 
 # The Dungeons & Dividends entries

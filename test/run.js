@@ -8765,6 +8765,37 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
 })();
 
+section('What hits your account, and when: the month as turns, in Cash Flow and the Calendar (D-253)');
+
+(function () {
+  const Cal = require(path.join(ROOT, 'engines/calendar.js'));
+  const DayByDay = require(path.join(ROOT, 'shared/daybyday.js'));
+  const T = Object.assign({}, TABLES, { calendarConventions: require(path.join(ROOT, 'data/calendar_conventions.json')) });
+  const h = Schema.createHousehold({
+    people: [Schema.createPerson({ role: 'adult', employmentStatus: 'employed', incomeSources: [Schema.createIncomeSource({ grossAnnualIncomeCents: 6000000 })] })],
+    assets: [Schema.createAsset({ category: 'cash', valueCents: 400000, liquid: true })],
+    expenses: { wants: { totalCents: 300000 }, entries: [] },
+    filingStatus: 'single', state: 'NC', meta: { hasDebt: false },
+    calendar: { cadence: 'fortnightly', nextPaydayDay: 5 }
+  });
+  const r = Cal.month(h, T, {});
+  checkTrue('the month runs', Money.isOk(r), r.reason);
+  const turns = Cal.turns(r);
+  checkTrue('a fortnightly pay gives two or three paydays as turns, money in', turns.length >= 2 && turns.every(t => t.direction === 'in' && t.cents > 0 && t.kind === 'payday'));
+  checkTrue('turns are in the order they land', turns.every((t, i) => i === 0 || t.index >= turns[i - 1].index));
+  checkTrue('each turn carries the balance at the end of its day, the schedule\'s own', turns.every(t => t.balanceCents === r.days[t.index].balanceCents));
+  checkTrue('the grid and the turns read the one event assembly', typeof Cal.eventsOn === 'function' && Cal.weeks(r).flat().filter(Boolean).every(d => { const ev = Cal.eventsOn(r, r.days[d.index]); return ev.ins.length === d.ins.length && ev.bills.length === d.bills.length; }));
+  check('an incomplete month has no turns', Cal.turns(Money.incomplete('no', [])).length, 0);
+  const html = DayByDay.html(r);
+  check('the picture marks every turn on the line', (html.match(/class="dot"/g) || []).length, turns.length);
+  checkTrue('… draws the grid and lists the turns with what caused each and what is left', /cal-grid/.test(html) && (html.match(/<li class="[^"]*"><span class="tn-when">/g) || []).length === turns.length && /after<\/span>/.test(html));
+  checkTrue('an incomplete month says why, in the chart\'s empty state', /How often are you paid/.test(DayByDay.html(Cal.month(Schema.createHousehold({}), T, {}))));
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8'), calRoom = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
+  checkTrue('Cash Flow shows it and recalculates on every render', /id="day-by-day"/.test(cf) && /engines\/calendar\.js/.test(cf) && /shared\/daybyday\.js/.test(cf) && /renderDayByDay\(h\)/.test(cf) && /DayByDay\.html\(r\)/.test(cf));
+  checkTrue('the Calendar room draws the same, and holds no copy of the grid', /DayByDay\.html\(/.test(calRoom) && !/cal-grid/.test(calRoom));
+  checkTrue('the registry names the section', Registry.byId('cash-flow').subsections.some(x => x.id === 'day-by-day'));
+})();
+
 section('Debt Payoff: the order is a preference, and the plan says when it is in effect (D-252)');
 
 (function () {
@@ -11756,8 +11787,8 @@ section('15.5: cadence on every line, the yearly lines, the calendar and the sin
   checkTrue('Expenses has the fold, built once, with bucket chips', cf.indexOf('id="annual-fold"') > -1 && cf.indexOf('data-choices="y-bucket"') > -1 && /LIVE-FORM: built once\. -->\n    <details class="drawer" id="annual-fold"/.test(cf));
   checkTrue('...writing through the spine', cf.indexOf('Spine.upsertAnnualLine(') > -1 && cf.indexOf('Spine.removeAnnualLine(') > -1);
   checkTrue('...and hides behind the switch', cf.indexOf('Schema.annualLinesOn(h)') > -1);
-  const cal = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
-  checkTrue('the calendar draws yearly marks', cal.indexOf('is-annual') > -1);
+  const cal = fs.readFileSync(path.join(ROOT, 'shared/daybyday.js'), 'utf8');
+  checkTrue('the calendar draws yearly marks (in the shared day-by-day module since D-253)', cal.indexOf('is-annual') > -1);
   checkTrue('the spine exports the two writers', typeof Spine.upsertAnnualLine === 'function' && typeof Spine.removeAnnualLine === 'function');
   Prefs.reset();
   Spine.reset();

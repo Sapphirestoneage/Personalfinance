@@ -97,7 +97,8 @@ module.exports = function (t) {
   check('four cadences', Object.keys(conv.cadences).length, 4);
   check('fortnightly is 26 ÷ 12 paydays a month', Math.round(conv.cadences.fortnightly.paydaysPerMonth * 1000) / 1000, Math.round(26 / 12 * 1000) / 1000);
   const page = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
-  checkTrue('the page draws the grid under the line', /cal-grid/.test(page) && /Cal\.weeks\(/.test(page));
+  const dbd = fs.readFileSync(path.join(ROOT, 'shared/daybyday.js'), 'utf8');
+  checkTrue('the page draws the grid under the line, through the shared day-by-day module (D-253)', /DayByDay\.html\(m\(h, T\)\)/.test(page) && /cal-grid/.test(dbd) && /Cal\.weeks\(/.test(dbd));
   checkTrue('the page mounts the template as calendar', /Room\.mount\(\{/.test(page) && /id: 'calendar'/.test(page));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + id + '"').test(page)));
   check('… two inputs, the cadence and the next payday; bills and pay-later are the log’s now (D-130)', (page.match(/ctl: '/g) || []).length, 2);

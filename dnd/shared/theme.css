@@ -1378,3 +1378,43 @@ a:hover { color: var(--sapphire-100); }
 .slaf-hint-toggle { font: inherit; font-size: var(--text-xs); color: var(--color-accent-hover); background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px 10px; cursor: pointer; }
 .slaf-hint-toggle[aria-expanded="true"] { color: var(--color-text-muted); }
 .slaf-hint-body { display: block; margin-top: var(--space-2); }
+
+/* ---- The month, day by day (D-253; the grid was the Calendar room's, now shared) ---- */
+.cal-grid { margin-top: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+.cal-head, .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-head span { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); text-align: center; padding: var(--space-1) 0; border-bottom: 1px solid var(--color-border); }
+.cal-cell { min-height: 58px; padding: 4px 3px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); font-size: 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cal-cell:last-child { border-right: none; }
+.cal-row:last-child .cal-cell { border-bottom: none; }
+.cal-cell.is-blank { background: transparent; }
+.cal-cell b { font-weight: 600; color: var(--color-text-muted); font-size: 11px; white-space: nowrap; }
+.cal-cell.is-today b { color: var(--color-accent-hover); }
+.cal-cell small { margin-top: auto; font-variant-numeric: tabular-nums; color: var(--color-text); }
+.cal-cell.is-tight { background: rgba(232,184,75,.08); }
+.cal-cell.is-under { background: rgba(229,72,77,.12); }
+.cal-cell.is-under small { color: var(--color-critical); }
+.cal-cell.is-low { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.cal-in, .cal-out { font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 3px; padding: 0 2px; }
+.cal-in { color: var(--color-positive); background: rgba(48,164,108,.14); }
+.cal-out { color: var(--color-critical); background: rgba(229,72,77,.12); }
+.cal-out.is-pl { color: var(--color-caution); background: rgba(232,184,75,.14); }
+.cal-out.is-annual { color: var(--color-caution); background: rgba(232,184,75,.14); font-weight: 600; }
+.cal-in.is-estimated, .cal-out.is-estimated { outline: 1px dashed currentColor; outline-offset: -1px; }
+.cal-in.is-potential, .cal-out.is-potential { opacity: .5; text-decoration: underline dotted; }
+.cal-key { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+.cal-key .k-low { outline: 2px solid var(--color-accent); outline-offset: 1px; border-radius: 2px; padding: 0 3px; }
+.cal-key .k-under { background: rgba(229,72,77,.12); color: var(--color-critical); border-radius: 2px; padding: 0 3px; }
+.turns { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+.turns li { display: grid; grid-template-columns: 5.5ch minmax(0, 1fr) auto auto; gap: var(--space-2); align-items: baseline; padding: var(--space-1) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+.turns li:first-child { border-top: none; }
+.turns .tn-when { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+.turns .tn-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.turns .tn-amt, .turns .tn-bal { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.turns .tn-amt.is-in { color: var(--color-positive); }
+.turns .tn-amt.is-out { color: var(--color-critical); }
+.turns .tn-bal { color: var(--color-text-muted); font-size: var(--text-xs); }
+.turns .tn-bal.is-under { color: var(--color-critical); }
+.turns li.is-potential { opacity: .6; }
+.turns li.is-low .tn-bal { color: var(--color-accent-hover); font-weight: 600; }
+.turns-more { margin-top: var(--space-2); }
+.turns-more summary { cursor: pointer; font-size: var(--text-xs); color: var(--color-text-faint); }
