@@ -94,7 +94,13 @@
         rough: false, note: null, eta: {}, yearsToFire: null, never: false, reason: null };
       var saving;
       if (spec.pace === 'current' || spec.pace === 'coast') saving = currentSaving;
-      else if (spec.pace === 'share') saving = Math.round(currentSaving * spec.share);
+      else if (spec.pace === 'share') {
+        /* Half of nothing is nothing, and half of a shortfall is not a
+           slower road: with no saving today the scenic route is the road
+           as it is, and says so. */
+        if (currentSaving <= 0) { saving = currentSaving; route.note = 'Nothing is saved today, so there is no half to keep back; this is the road as it is.'; }
+        else saving = Math.round(currentSaving * spec.share);
+      }
       else if (spec.pace === 'floor') {
         var floor = Schema.fatNeedsCents(household);
         var floorCents;
