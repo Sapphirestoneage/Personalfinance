@@ -41,6 +41,8 @@ Updated: 2026-09-19
   askDeeper switch lifts it (D-250).
   Every asset says where it is held and what kind of account it is, and
   the type sets the tax character (D-251).
+  Debt Payoff keeps the chosen order and says, stretch by stretch, when
+  it is in effect and when nothing goes beyond the minimums (D-252).
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
   the car's used/new and running costs; a running-balance chart on the month;

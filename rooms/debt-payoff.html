@@ -197,6 +197,13 @@
   ol.timeline li .tl-step { display: inline-flex; width: 22px; height: 22px; border-radius: var(--radius-pill); border: 1px solid var(--color-border-strong); align-items: center; justify-content: center; font-size: var(--text-xs); margin-right: 6px; vertical-align: middle; color: var(--color-text-muted); font-style: normal; }
   ol.timeline li .tl-then { display: block; color: var(--color-text-muted); margin-top: 2px; }
   ol.timeline li .tl-then b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .effect { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  .effect li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); align-items: baseline; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .effect li:first-child { border-top: none; }
+  .effect .fx-state { display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--color-border-strong); color: var(--color-text-muted); margin-right: var(--space-2); white-space: nowrap; }
+  .effect .is-on .fx-state { border-color: var(--color-border-active); color: var(--color-text); }
+  .effect .fx-when { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text-muted); }
+  .effect b { font-variant-numeric: tabular-nums; }
   .story { margin-top: var(--space-3); font-size: var(--text-base); line-height: var(--leading-loose); }
   .story p { margin: 0 0 var(--space-3); }
   .story b { font-variant-numeric: tabular-nums; }
@@ -332,6 +339,11 @@
          plain sentences, then the steps in order, then the three pictures,
          each with a line on how to read it. -->
     <div class="story" id="story"></div>
+    <!-- D-252: when the chosen order is in effect. The order only decides
+         where money beyond the minimums goes; with none to place it
+         changes nothing, and past the stop line it is off. -->
+    <p class="slaf-hint" style="margin:var(--space-4) 0 0" id="effect-cap">When the order is in effect</p>
+    <ol class="effect" id="effect"></ol>
     <p class="slaf-hint" style="margin:var(--space-4) 0 0" id="steps-cap">Payoff order</p>
     <ol class="timeline" id="timeline"></ol>
     <p class="slaf-hint" style="margin:var(--space-5) 0 0" id="flow-cap">Where this month's payment goes</p>
@@ -396,12 +408,15 @@
   var RULES = null;
   var FOO = null;   /* data/foo_rules.json, for the high-interest line (D-188) */
   var TABLES = null;
+  /* The order is a preference (D-252): chosen once, kept across visits.
+     How this person reads the plan, not a household fact. */
   var strategyId = 'avalanche';
   /* Where the extra stops (D-191): '' runs it to the end; 'cards' or
      'highInterest' drops to minimums once that class is gone. A
      preference, not household data: it is how this person reads the plan. */
   var Prefs = SLAF.Prefs;
   var stopAfter = Prefs ? (Prefs.get('debt.stopAfter', '') || '') : '';
+  if (Prefs && Prefs.get('debt.strategy', null)) strategyId = Prefs.get('debt.strategy', null);
   function highRate() { return FOO && FOO.thresholds && Money.isEntered(FOO.thresholds.highInterestDebtRate) ? FOO.thresholds.highInterestDebtRate : null; }
   /* One set of options for every simulation the room runs, so the plan,
      the comparison, the timeline and the held-back check all agree. */
@@ -1572,6 +1587,7 @@
     var btn = evt.target.closest('[data-strategy]');
     if (!btn) return;
     strategyId = btn.getAttribute('data-strategy');
+    if (Prefs) Prefs.set('debt.strategy', strategyId);
     render();
   });
 
@@ -1686,6 +1702,7 @@
     /* In plain words (D-236): the whole plan as four sentences, before any
        picture. Every figure is the cascade's or the flow's. */
     el('story').innerHTML = storyHtml(plan, cas, Money.isOk(flow) ? flow : null, longMonth);
+    el('effect').innerHTML = effectHtml(plan, monthLabel);
     chart.innerHTML = Charts.area({
       title: 'Balance remaining, month by month, one line per debt',
       series: [{ label: 'All debts (' + plan.strategy.label.toLowerCase() + ' order)', color: Charts.COLORS.debt, points: remaining(plan), fill: true, width: 1 }]
@@ -1726,6 +1743,26 @@
         + '<span class="tl-when">' + longMonth(p.month) + '<small style="display:block">' + after + '</small></span></li>';
     }).join('') + (Money.isOk(cas) ? '<li class="is-free"><span><b>All debts paid.</b><span class="tl-then"><b>' + Money.formatCents(cas.freeCents) + ' a month</b> no longer goes to debt' + (cas.extraMonthlyCents > 0 ? ' (' + Money.formatCents(cas.minimumsCents) + ' minimums + ' + Money.formatCents(cas.extraMonthlyCents) + ' extra)' : '') + '.</span></span>'
         + '<span class="tl-when">' + longMonth(cas.doneMonth) + '<small style="display:block">' + monthsLabel(cas.doneMonth) + ' from now</small></span></li>' : '');
+  }
+
+  /* When the order is in effect (D-252): one line per stretch of the
+     plan, on or off, with the debt the money beyond the minimums goes at
+     and how much. Read off Debt.pushPhases; nothing simulated here. */
+  function effectHtml(plan, monthLabel) {
+    var ph = Debt.pushPhases ? Debt.pushPhases(plan) : null;
+    if (!ph || !Money.isOk(ph)) return '';
+    var name = plan.strategy.label;
+    var span = function (p) { return p.fromMonth === p.toMonth ? monthLabel(p.fromMonth) : monthLabel(p.fromMonth) + ' – ' + monthLabel(p.toMonth); };
+    if (!ph.everInEffect) {
+      return '<li><span><span class="fx-state">off</span>' + esc(name) + ' is not in effect: nothing goes beyond the minimums, so the order changes nothing. Each debt runs its own schedule; a freed minimum rolls on only once you add an extra.</span><span class="fx-when">' + span(ph.phases[0]) + '</span></li>';
+    }
+    return ph.phases.map(function (p) {
+      if (p.inEffect) {
+        return '<li class="is-on"><span><span class="fx-state">on</span>' + esc(name) + ' puts <b>' + Money.formatCents(p.pushCents) + ' a month</b> beyond the minimums at <b>' + esc(p.targetLabel) + '</b>.</span><span class="fx-when">' + span(p) + '</span></li>';
+      }
+      var why = plan.stopMonth !== null && p.fromMonth >= plan.stopMonth ? 'the stop line has passed: minimums only from here' : 'nothing beyond the minimums this stretch';
+      return '<li><span><span class="fx-state">off</span>' + esc(name) + ' is not in effect: ' + why + '.</span><span class="fx-when">' + span(p) + '</span></li>';
+    }).join('');
   }
 
   /* The plan in plain words (D-236, flattened D-237): what this measures,

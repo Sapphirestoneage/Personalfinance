@@ -14483,6 +14483,34 @@ case types an institution and picks 401(k)), lane 2,
 `node tools/context/build.js --check`; the Statement at 390px with the
 demo: boxes level, no overflow, clean console.
 
+## D-252 — Debt Payoff: the order is a preference, and the plan says when it is in effect
+
+**Why.** The owner: "for the avalanche, select modes and show when
+avalanche is in effect vs not." The order reset to Avalanche on every
+visit, and nothing said that with no extra to place the order changes
+nothing at all.
+
+**Decision.** The chosen order is a preference (`debt.strategy` in
+`slaf.prefs.v1`), kept across visits like the stop line. `engines/debt.js`
+records on every month of the schedule what went beyond the minimums
+(`pushCents`) and the debt it went at first (`targetId`), and
+`Debt.pushPhases(plan)` reads the schedule as stretches: on, with the
+amount and the target, or off, when nothing is beyond the minimums or
+the stop line has passed. `rooms/debt-payoff.html` lists those
+stretches under the story as "When the order is in effect", one line
+each, dated. Nothing is simulated twice.
+
+**Replaces or removes.** The order resetting on each visit; the
+unspoken assumption that avalanche is always doing something.
+
+**Stored shape.** No change to the household. One new preference key.
+
+**Verified.** `node test/run.js` (a new section: no extra means off
+until the first minimum is freed; an extra means on from month 1 at the
+highest rate; off past the stop line), lane 2, `node test/forms.js`,
+`node tools/context/build.js --check`; Debt Payoff at 390px with the
+demo: the list reads, the choice survives a reload, clean console.
+
 ---
 
 # The Dungeons & Dividends entries
