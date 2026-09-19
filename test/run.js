@@ -5209,7 +5209,7 @@ section('Eleven cards');
   {
     const h = Demo.build();
     checkTrue('the demo says it has debt', h.meta.hasDebt === true);
-    checkTrue('Debt Payoff is on its path', Registry.nextAfter('start', [], h).id === 'debt-payoff');
+    checkTrue('Debt Payoff is on its path', (function () { const w = []; let at = Registry.nextAfter('start', [], h); while (at && w.indexOf(at.id) === -1) { w.push(at.id); at = Registry.nextAfter(at.id, w, h); } return w.indexOf('debt-payoff') !== -1; })());
     const none = Demo.build(); none.meta.hasDebt = false; none.debts = [];
     /* What the room after Start Here happens to be is a fact about the
        running order, and it moves when a room is inserted. Your Credit File
@@ -5219,14 +5219,14 @@ section('Eleven cards');
        actually about is that Debt Payoff is never offered to someone who
        owes nothing, so the whole path is walked below rather than only its
        first step. */
-    check('with no debt the path skips Debt Payoff', Registry.nextAfter('start', [], none).id, 'expenses');
+    check('with no debt the path still starts at the pay (D-244: the facts first)', Registry.nextAfter('start', [], none).id, 'income');
     {
       const walked = [];
       let at = Registry.nextAfter('start', [], none);
       while (at && walked.indexOf(at.id) === -1) { walked.push(at.id); at = Registry.nextAfter(at.id, walked, none); }
       checkTrue('and it is nowhere else on the path either', walked.indexOf('debt-payoff') === -1);
       checkTrue('while a household that does owe still gets it',
-        Registry.inOrder().some(r => r.id === 'debt-payoff') && Registry.nextAfter('start', [], h).id === 'debt-payoff');
+        Registry.inOrder().some(r => r.id === 'debt-payoff') && Registry.applies(Registry.byId('debt-payoff'), h));
     }
     checkTrue('and total debt stops applying', !Ownership.describe('totalDebt', none, 'map').applies);
     checkTrue('and so do the payments', !Ownership.describe('monthlyDebtPayments', none, 'map').applies);
@@ -6387,10 +6387,10 @@ section('Room order');
 
   check('with nothing visited, the next room is the first',
     Registry.nextAfter(null, []).id, 'start');
-  check('with Start done, the next is Debt Payoff',
-    Registry.nextAfter(null, ['start']).id, 'debt-payoff');
+  check('with Start done, the next is Income (the facts first, D-244)',
+    Registry.nextAfter(null, ['start']).id, 'income');
   check('skipping ahead still points at the earliest unvisited',
-    Registry.nextAfter(null, ['start', 'cash-flow']).id, 'debt-payoff');
+    Registry.nextAfter(null, ['start', 'income', 'cash-flow']).id, 'expenses');
 })();
 
 /* ==========================================================================
@@ -6506,7 +6506,7 @@ section('The Statement room');
   const stmt = Registry.byId('statement');
   checkTrue('The Statement is registered', !!stmt);
   check('as a core room', stmt.kind, 'core');
-  check('at the old Net Worth position', stmt.order, 5);
+  checkTrue('early on the path, with the facts (D-244)', stmt.order < Registry.byId('dashboard').order && stmt.order > Registry.byId('start').order);
   checkTrue('Net Worth is no longer a room', !Registry.byId('net-worth'));
   const html = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
   const stub = fs.readFileSync(path.join(ROOT, 'rooms/net-worth.html'), 'utf8');

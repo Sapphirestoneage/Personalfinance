@@ -7,37 +7,37 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Home (3)
 
 - **ledger** — The Ledger (utility) · 2262 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-241, D-230, D-226
-- **start** — Start Here · 1000 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
+- **start** — Start Here · 1004 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1765 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
 
-- **debt-payoff** — Debt Payoff · 1913 lines · engines: projection, debt · owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-236, D-191, D-190
+- **income** — Income · 786 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-207, D-198, D-195
 - **expenses** — Expenses · 1188 lines · engines: projection, tier0, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-207, D-199, D-196
 - **cash-flow** — Cash Flow · 564 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget · D-192, D-181, D-163
-- **income** — Income · 786 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-207, D-198, D-195
 - **budget** — Budget · 483 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-130, D-129, D-128
-- **variance** — Estimated vs Actual · 232 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
 - **statement** — The Statement · 722 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
-- **real-hourly-wage** — Real Hourly Wage · 250 lines · engines: projection, tier0, hourly · D-054, D-021, D-001
 - **accounts** — Where It Goes & how it’s split · 581 lines · engines: selfemployed, accounts, projection, tier0, hourly · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand · D-130, D-071, D-062
+- **debt-payoff** — Debt Payoff · 1917 lines · engines: projection, debt · owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-236, D-191, D-190
+- **student-loans** — Student Loan Decision · 267 lines · engines: projection, tier0, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-120
 - **credit** — Your Credit File · 475 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-147
-- **cant-pay** — When It Won’t All Get Paid · 529 lines · engines: projection, tier0, cashflow · D-240, D-148
-- **rollover** — The Account You Left Behind · 756 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom · D-150
 - **tax** — Tax · 258 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly · owns: otherPreTax, withheld · D-150, D-142, D-129
 - **variable-income** — Variable Income · 291 lines · engines: projection, tier0, selfemployed, income, ledger, variableincome · owns: incomeLow, incomeHigh, bufferMonths, variableWindow · D-128, D-113
-- **student-loans** — Student Loan Decision · 267 lines · engines: projection, tier0, debt, studentloans, hourly · owns: loanPlan, loanExtra, idrShare, forgivenessYears · D-120
 - **calendar** — Money Calendar & Pay-Later · 268 lines · engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-130, D-121
+- **variance** — Estimated vs Actual · 232 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
+- **real-hourly-wage** — Real Hourly Wage · 250 lines · engines: projection, tier0, hourly · D-054, D-021, D-001
+- **cant-pay** — When It Won’t All Get Paid · 529 lines · engines: projection, tier0, cashflow · D-240, D-148
+- **rollover** — The Account You Left Behind · 756 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom · D-150
 
 ## Scorecard (7)
 
 - **financial-snapshot** — The Scorecard · 2601 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-241, D-238, D-233
-- **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-156
+- **foo-ladder** — What The Next Dollar Does · 701 lines · engines: projection, tier0, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-242, D-231, D-058
 - **fire** — FIRE Number · 562 lines · engines: projection, tier0, fire, foo, journey, selfemployed, tax, hourly · owns: retireAge, coastAge · D-240, D-235, D-228
 - **fire-lab** — FIRE Lab · 462 lines · engines: projection, tier0, cashflow, fire, hourly · D-228, D-138
-- **foo-ladder** — What The Next Dollar Does · 701 lines · engines: projection, tier0, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-242, D-231, D-058
 - **coast-date** — Your Coast Date · 122 lines · engines: projection, tier0, coast · D-213
 - **race** — The Race to $100K · 155 lines · engines: projection, tier0, countdown, race · D-217
+- **statements** — Your Statements · 385 lines · engines: projection, tier0, cashflow, statements · D-156
 
 ## Decisions (30)
 

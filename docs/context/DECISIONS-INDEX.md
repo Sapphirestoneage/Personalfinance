@@ -5,15 +5,15 @@ One line per entry in DECISIONS.md: id, title, `[start-end]` lines, `{rooms}` it
 touches. `~` marks an entry a later one supersedes. Read one with
 `node tools/context/pack.js D-123` or `sed -n START,ENDp DECISIONS.md`.
 
-## SPARKS (D-) (232)
+## SPARKS (D-) (233)
 
-- D-001 — Repo state did not match the brief's Section 0 premise [13-58] {real-hourly-wage, dashboard}
+- D-001 — Repo state did not match the brief's Section 0 premise [13-58] {dashboard, real-hourly-wage}
 - D-002 — navy-sapphire design system, centralised as CSS custom properties [60-99]
 - D-003 — spine-v2 stores a household; compatibility note [101-143] {expenses}
 - D-004 — units, locked [145-163]
 - D-005 — demo persona: Robin Sparks [165-194]
 - D-006 — age is derived client-side [196-205]
-- ~D-007 — the FOO calculator stays at the site root; the Map is a subpage [207-248] {financial-snapshot, dashboard, foo-ladder}
+- ~D-007 — the FOO calculator stays at the site root; the Map is a subpage [207-248] {dashboard, financial-snapshot, foo-ladder}
 - D-008 — `capturingFullMatch`: an input Tier 0 needs but does not list [250-271]
 - D-009 — reference tables carry explicit precision caveats [273-300]
 - D-010 — the FOO app's input layer rewritten; why two FOO implementations exist [302-352]
@@ -60,7 +60,7 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-051 — Four rooms matter. The other twenty-one were pretending to. [2591-2663]
 - D-052 — Facts get answered once. What-ifs get thrown away. [2665-2739]
 - D-053 — A 0% card is a card with a deadline [2741-2815]
-- D-054 — A back and a next in every room, at the top [2817-2921] {real-hourly-wage, dashboard, foo-ladder, protection}
+- D-054 — A back and a next in every room, at the top [2817-2921] {dashboard, foo-ladder, real-hourly-wage, protection}
 - D-055 — "Are you working?" is asked first, and it removes questions [2923-3037] {start}
 - D-056 — Time exists: every owned field knows when it was last confirmed, and snapshots are read back [3039-3108]
 - D-057 — Age is shown, and the three figures that move get a page of their own [3110-3185] {start}
@@ -68,7 +68,7 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-059 — The household can leave the browser, by hand only [3233-3273] {dashboard}
 - D-060 — A suggested value is shown, never stored [3275-3329]
 - D-061 — Eleven cards: the intake asks less, derives one answer, and takes "no debt" as an answer [3331-3411] {start, accounts, partner}
-- D-062 — Explore rooms open with your numbers proposed, and the federal bracket is one of them [3413-3469] {self-employed, side-hustle, credential, accounts, runway}
+- D-062 — Explore rooms open with your numbers proposed, and the federal bracket is one of them [3413-3469] {accounts, self-employed, side-hustle, credential, runway}
 - D-063 — Cash Flow opens with a whole month proposed [3471-3503] {cash-flow}
 - D-066 — The 10x Statement's shape: what an asset is, how sure you are, when you can reach it [3505-3589] {hassle, property}
 - D-067 — A tax engine in named steps; the effective-rate table stays as the fallback [3591-3641]
@@ -85,9 +85,9 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-086 — Two decision sequences, so they can stop colliding [4200-4295]
 - D-087 — One life event, three ways: the events engine, the What If room, and the first template [4297-4371] {what-if-life}
 - D-088 — The life-event templates, one by one [4373-4536]
-- D-089 — 3D on the dashboard: every instrument three ways, with nothing changing but the assumptions [4538-4574] {dashboard, rerank, tax}
+- D-089 — 3D on the dashboard: every instrument three ways, with nothing changing but the assumptions [4538-4574] {tax, dashboard, rerank}
 - D-090 — The Skill Stacker: three at a time, did or didn't, and a ledger of what each day was worth [4576-4669] {stacker, goals}
-- D-091 — Charts: one module, three shapes, and the Personal Finance Club look [4671-4740] {debt-payoff, cash-flow, statement, stacker, goals, what-if-life}
+- D-091 — Charts: one module, three shapes, and the Personal Finance Club look [4671-4740] {cash-flow, statement, debt-payoff, stacker, goals, what-if-life}
 - D-092 — Unemployed is an answer with a sequence of its own [4742-4830]
 - D-094 — One pager in, one pager out: the core [4832-5004] {income, protection, decumulation, estate, giving, partner}
 - D-095 — The one-pager: one gate, ten cards at most, every box a guess until it is yours [5006-5116] {start}
@@ -123,8 +123,8 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-125 — Your Data: a file added or replacing, and a pasted statement sorted [5934-5970] {dashboard, data}
 - D-126 — Cash Flow: the month at a glance, the common lines open, a per aid [5972-5997] {cash-flow}
 - D-127 — Money Calendar: the month as a calendar [5999-6010]
-- D-128 — The ledger: income entries, the expense log, the reflected budget, the month closed [6012-6119] {cash-flow, income, budget, variance, tax, variable-income}
-- D-129 — The ledger, revised: four ways to be taxed, three things an expense can produce, a budget of cards with presets, N/A and the what-if [6121-6235] {cash-flow, income, budget, tax, big-purchase}
+- D-128 — The ledger: income entries, the expense log, the reflected budget, the month closed [6012-6119] {income, cash-flow, budget, tax, variable-income, variance}
+- D-129 — The ledger, revised: four ways to be taxed, three things an expense can produce, a budget of cards with presets, N/A and the what-if [6121-6235] {income, cash-flow, budget, tax, big-purchase}
 - D-130 — What was pushed off, built: dates that are only estimated or potential, the calendar from the ledger, one month of spending, one rent, what the log moved, N/A in its owner room, an emergency-fund preset [6237-6343] {many rooms}
 - D-131 — The Skill Tree and the Exercise Library, as rooms: two ladders, one game [6345-6465] {dashboard, stacker, skill-tree, exercises}
 - D-132 — Debt Payoff: reasons to keep it, and a hold-back the household flips itself [6467-6559] {debt-payoff}
@@ -137,7 +137,7 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-139 — The Skill Tree gets its real curriculum: 625 skills, 25 trees, 312 lanes [6961-7128] {stacker, skill-tree, exercises}
 - D-140 — The board, redrawn as a tech tree [7130-7207] {skill-tree}
 - D-141 — The card says what the curriculum says [7209-7262] {stacker, skill-tree, exercises}
-- D-142 — A room does not ask a question your situation has no answer to [7264-7376] {income, fire, tax}
+- D-142 — A room does not ask a question your situation has no answer to [7264-7376] {income, tax, fire}
 - D-143 — The panel audit: the crash, and the things it said that were not true [7378-7483] {dashboard}
 - D-144 — The panel audit: contrast, tap targets and the missing triangle [7485-7571] {dashboard}
 - D-145 — The language pass: names a stranger already knows [7573-7631] {dashboard}
@@ -145,7 +145,7 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-147 — Your Credit File: the room that refuses to show a score [7717-7792] {credit}
 - D-148 — When It Won't All Get Paid [7794-7895] {cant-pay}
 - D-149 — The Walk-Through: fifty-nine rooms, and a route with an end [7897-8032]
-- D-150 — The Account You Left Behind: four futures, one trap, one sum [8034-8180] {rollover, tax}
+- D-150 — The Account You Left Behind: four futures, one trap, one sum [8034-8180] {tax, rollover}
 - D-151 — What A Car Costs: the payment is the least informative number [8182-8284] {car}
 - D-152 — What Comes Next: a life as periods, and the months they add up to [8286-8401] {statement, timeline}
 - D-153 — Front Doors: twenty arrangements, one engine, no room lost [8403-8504]
@@ -176,7 +176,7 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-178 — The block model: a hypothetical laid on the household, never in it [10326-10448]
 - D-179 — The master build prompt: the phase order against what already exists, and Phase A's removal list [10450-10539] {partner}
 - D-180 — Feature switches: rendering and engines, never stored facts [10541-10618] {settings}
-- D-181 — Section 15: the ten foundation shapes, one commit a shape [10620-11616] {cash-flow, income, partner}
+- D-181 — Section 15: the ten foundation shapes, one commit a shape [10620-11616] {income, cash-flow, partner}
 - D-182 — Lane 2 merged after Phase A: what came in, what was already consumed, what stays a proposal [11618-11665]
 - D-183 — The Ledger, 18.2: every number the app can hold is one row, of one of three kinds [11667-11726] {ledger}
 - D-184 — The nine spheres, 19.1: one file, three faces, the shadow measured and never named [11728-11785]
@@ -202,7 +202,7 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-204 — G1: protect the data that already exists [12706-12782]
 - D-205 — Phase A: suggestions, derived and never stored [12784-12865]
 - D-206 — Phase B: the first round is five questions [12867-12917]
-- D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line [12919-12997] {ledger, expenses, income}
+- D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line [12919-12997] {ledger, income, expenses}
 - D-208 — Express: the whole form at once, a second view of the same rows [12999-13024]
 - D-209 — G2: numbers that stay trustworthy (moving rows, the life-change sheet, two more states, units) [13026-13064]
 - D-210 — G3 with J1: hostile files, the policy, attribution, January 1, the error log, the release walk, the spreadsheet [13066-13104]
@@ -235,39 +235,40 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-237 — Plain words: what a page shows, what it needs, and the debt fold said flat [14056-14087]
 - D-238 — A page may not write to an id it does not carry [14088-14110] {financial-snapshot}
 - D-239 — Flags come out in the ladder's order, and the roof is read [14112-14138] {dashboard}
-- D-240 — The FI date carries its range and says what it assumes [14140-14160] {fire, dashboard, cant-pay}
-- D-241 — Nothing counts a person's failures before they have typed anything [14162-14186] {ledger, financial-snapshot, dashboard}
+- D-240 — The FI date carries its range and says what it assumes [14140-14160] {dashboard, fire, cant-pay}
+- D-241 — Nothing counts a person's failures before they have typed anything [14162-14186] {ledger, dashboard, financial-snapshot}
 - D-242 — The ladder answers past step 4 [14188-14207] {foo-ladder}
-- D-243 — Three numbers that read wrong, and one named rather than changed [14209-14236]
+- D-243 — Three numbers that read wrong, and one named rather than changed [14209-14233]
+- D-244 — The path is the numbers, then the dashboard, then the readings; a decision room is not "next" [14235-14267]
 
 ## Dungeons & Dividends (DD-) (29)
 
-- DD-001 — HP is measured in weeks, which is what makes §3A stop contradicting itself [14271-14323]
-- DD-002 — The eighteen scoring formulas, and why "average" means the median American [14325-14408]
-- DD-003 — Seven classes, not ten [14410-14434]
-- DD-004 — The character sheet is a sibling, not a room [14436-14511]
-- DD-005 — The character sheet lives here after all, in a folder [14513-14564] {dashboard}
-- DD-006 — The D&D tool's licence posture, and what "parody" actually constrains [14566-14602]
-- DD-007 — The D&D sheet is the form, and how that survives D-034 [14604-14670]
-- DD-008 — A monster's danger is a property of the meeting, not of the monster [14672-14801]
-- DD-009 — The free page tells you what hunts you, and is careful about what it cannot see [14803-14911] {dashboard}
-- DD-010 — Fifteen more creatures, and a mark saying which are ours [14913-14985]
-- DD-011 — Four tiers of play, and a function that refuses to place you [14987-15058]
-- DD-012 — Exhaustion is derived, statuses are declared, and both change the game [15060-15152]
-- DD-013 — Rests and pace, in the only unit HP has [15154-15241]
-- DD-014 — The card is the product, so it is drawn rather than laid out [15243-15311] {dashboard}
-- DD-015 — The file says which of itself may be believed, and a character can come home [15313-15397]
-- DD-016 — DM mode: the scenario is the URL, and it never touches your character [15399-15484]
-- DD-017 — Six types, derived from the bestiary, and a log field I said existed and did not [15486-15575]
-- DD-018 — Six abilities to buy, like D&D Beyond, and what a bought Strength is worth [15577-15655] {dashboard}
-- DD-019 — Two ways to get hurt: bills attack your armour, pitches go around it [15657-15747]
-- DD-020 — A failed save has to cost something [15749-15783]
-- DD-021 — A bleed is measured against a rest [15785-15824]
-- DD-022 — One strong save, one weak, and every save covered [15826-15863]
-- DD-023 — ASIs and feats that do something [15865-15933]
-- DD-024 — The campaign: ten rounds, a fork of your household, and advice that moves with you [15935-16075]
-- DD-025 — Creation lives in the campaign: your numbers, your six, and the receipts [16077-16196] {dashboard}
-- DD-026 — The whole run through: five questions, a build, your six, and what to do about them [16198-16360] {dashboard}
-- DD-027 — The long read: an Enneagram-shaped profile, and the one thing it refuses to do [16362-16592]
-- DD-028 — Four ways in, because one front door was asking before it gave [16594-16717] {dashboard}
-- DD-029 — HP reads the one runway function; the lump is one total, not split [16719-16737]
+- DD-001 — HP is measured in weeks, which is what makes §3A stop contradicting itself [14302-14354]
+- DD-002 — The eighteen scoring formulas, and why "average" means the median American [14356-14439]
+- DD-003 — Seven classes, not ten [14441-14465]
+- DD-004 — The character sheet is a sibling, not a room [14467-14542]
+- DD-005 — The character sheet lives here after all, in a folder [14544-14595] {dashboard}
+- DD-006 — The D&D tool's licence posture, and what "parody" actually constrains [14597-14633]
+- DD-007 — The D&D sheet is the form, and how that survives D-034 [14635-14701]
+- DD-008 — A monster's danger is a property of the meeting, not of the monster [14703-14832]
+- DD-009 — The free page tells you what hunts you, and is careful about what it cannot see [14834-14942] {dashboard}
+- DD-010 — Fifteen more creatures, and a mark saying which are ours [14944-15016]
+- DD-011 — Four tiers of play, and a function that refuses to place you [15018-15089]
+- DD-012 — Exhaustion is derived, statuses are declared, and both change the game [15091-15183]
+- DD-013 — Rests and pace, in the only unit HP has [15185-15272]
+- DD-014 — The card is the product, so it is drawn rather than laid out [15274-15342] {dashboard}
+- DD-015 — The file says which of itself may be believed, and a character can come home [15344-15428]
+- DD-016 — DM mode: the scenario is the URL, and it never touches your character [15430-15515]
+- DD-017 — Six types, derived from the bestiary, and a log field I said existed and did not [15517-15606]
+- DD-018 — Six abilities to buy, like D&D Beyond, and what a bought Strength is worth [15608-15686] {dashboard}
+- DD-019 — Two ways to get hurt: bills attack your armour, pitches go around it [15688-15778]
+- DD-020 — A failed save has to cost something [15780-15814]
+- DD-021 — A bleed is measured against a rest [15816-15855]
+- DD-022 — One strong save, one weak, and every save covered [15857-15894]
+- DD-023 — ASIs and feats that do something [15896-15964]
+- DD-024 — The campaign: ten rounds, a fork of your household, and advice that moves with you [15966-16106]
+- DD-025 — Creation lives in the campaign: your numbers, your six, and the receipts [16108-16227] {dashboard}
+- DD-026 — The whole run through: five questions, a build, your six, and what to do about them [16229-16391] {dashboard}
+- DD-027 — The long read: an Enneagram-shaped profile, and the one thing it refuses to do [16393-16623]
+- DD-028 — Four ways in, because one front door was asking before it gave [16625-16748] {dashboard}
+- DD-029 — HP reads the one runway function; the lump is one total, not split [16750-16768]

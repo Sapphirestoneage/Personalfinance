@@ -104,13 +104,17 @@
   .sub-label { display: block; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); margin: var(--space-3) 0 var(--space-2); }
 
   /* The confidence badge: one per box, after the label. */
-  .slaf-label { display: flex; align-items: baseline; gap: 6px; }
-  /* `white-space: nowrap` on a badge beside a label that already fills the
-     column is how a 358px card ended up 49px wider than a 320px phone. The
-     badge is short; letting it wrap costs nothing and stops the page moving
-     sideways. D-146. */
-  .conf { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; border-radius: var(--radius-pill); padding: 1px 6px; border: 1px solid var(--color-border); color: var(--color-text-faint); overflow-wrap: anywhere; max-width: 100%; }
+  /* The label wraps as a whole line and the badge drops under it intact:
+     a badge that broke inside itself ("YOU / ENTERED") read as a typo.
+     The row wraps, so nowrap on the badge cannot push the card wider
+     (D-146 stands: the badge never widens the column). */
+  .slaf-label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
+  .conf { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; border-radius: var(--radius-pill); padding: 1px 6px; border: 1px solid var(--color-border); color: var(--color-text-faint); overflow-wrap: normal; max-width: 100%; flex: 0 1 auto; }
   .conf:empty { display: none; }
+  /* "You entered" is the normal state of a filled box, so it is not a
+     badge: only a guess, and a figure that lives in another room, are
+     worth marking. */
+  .conf.is-entered { display: none; }
   .conf.is-guess { border-color: var(--color-caution); color: var(--color-caution); }
   .conf.is-entered { border-color: var(--color-positive, #3fa66b); color: var(--color-positive, #3fa66b); }
   .conf.is-room { border-color: var(--color-accent); color: var(--color-accent-hover); }
