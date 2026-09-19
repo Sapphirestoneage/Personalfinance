@@ -113,6 +113,16 @@
       "order": 1.5
     },
     {
+      "id": "calendar",
+      "title": "The Calendar",
+      "file": "rooms/calendar.html",
+      "reads": [],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 1.55
+    },
+    {
       "id": "budget",
       "title": "The Close",
       "file": "rooms/budget.html",

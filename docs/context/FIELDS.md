@@ -59,8 +59,8 @@ Fields: 114. Traced: 105. No other room mentions it: **56**.
 
 ## expenses (8)
 
-- `rentMonthly` — Rent or mortgage, a month · read by cash-flow, financial-snapshot, housing, debates
-- `monthlyExpenses` — Monthly expenses · read by start, income, cash-flow, budget, statement, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
+- `rentMonthly` — Rent or mortgage, a month · read by cash-flow, calendar, financial-snapshot, housing, debates
+- `monthlyExpenses` — Monthly expenses · read by start, income, cash-flow, calendar, budget, statement, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `foodMonthly` — Food, a month · read by ledger, statement
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger, statement
 - `transportationMonthly` — Getting around, a month · read by ledger, statement
@@ -137,10 +137,10 @@ Fields: 114. Traced: 105. No other room mentions it: **56**.
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
 - `filingStatus` — Filing status · read by income, expenses, statement, debt-payoff, tax, dashboard, financial-snapshot, fire, cant-pay, decumulation, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, statement, debt-payoff, tax, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, calendar, statement, debt-payoff, tax, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
-- `cashSavings` — Cash & savings · read by ledger, income, cash-flow, budget, statement, dashboard, financial-snapshot, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
+- `cashSavings` — Cash & savings · read by ledger, income, cash-flow, calendar, budget, statement, dashboard, financial-snapshot, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, debt-payoff, tax, runway, career-move, debates
 - `employerMatch` — Employer match · read by statement, financial-snapshot, foo-ladder, career-move, debates

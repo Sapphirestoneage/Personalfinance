@@ -249,6 +249,33 @@
         { id: 'cal-inputs', label: 'Paydays, bills, pay-later' }
       ]
     },
+    /* The Calendar (D-308): the month as a calendar with your own dates on
+       it. Reinstated by the owner after D-275 folded it into The Month: a
+       date that is not money (apply for a card, a renewal to cancel, a
+       form due) needs a place, and the picture it sits on is The Month's
+       own, drawn by shared/daybyday.js, never a copy. */
+    {
+      id: 'calendar',
+      features: [],
+      group: 'numbers', subgroup: 'expenses', aliases: ['calendar', 'dates', 'this month', 'to do', 'deadline', 'renewal', 'apply'],
+      kind: 'about-you',
+      needs: [],
+      order: 1.55,
+      title: 'The Calendar',
+      blurb: 'The next 31 days as a calendar: paydays, bills and receipts on their days, and your own dates beside them, a card to apply for, a renewal to cancel, a form due. Your dates are drawn, never counted.',
+      href: 'rooms/calendar.html',
+      tier: 1,
+      tags: ['cashflow'],
+      /* It writes household.calendar.events, its own list of dates. Not a
+         DAITE family and not a fact another room waits on, so no dot and
+         no ownership field: the list is read by the calendar engine and
+         written here, nowhere else (D-308). */
+      daite: { reads: ['expenses', 'income'], writes: [] },
+      subsections: [
+        { id: 'month',     label: 'The next 31 days' },
+        { id: 'own-dates', label: 'Your own dates' }
+      ]
+    },
     {
       id: 'debt-payoff',
       features: ['studentLoanPaths'],

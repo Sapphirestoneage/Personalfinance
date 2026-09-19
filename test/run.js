@@ -8964,6 +8964,41 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('The Close shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('budget').subsections.some(x => x.id === 'journey'));
 })();
 
+section('The Calendar comes back, with your own dates on it (D-308)');
+
+(function () {
+  const Cal = require(path.join(ROOT, 'engines/calendar.js'));
+  const DayByDay = require(path.join(ROOT, 'shared/daybyday.js'));
+  const T = Object.assign({}, TABLES, { calendarConventions: require(path.join(ROOT, 'data/calendar_conventions.json')) });
+  const ev = Schema.createCalendarEvent({ label: 'Apply for the travel card', date: '2026-09-25', kind: 'todo' });
+  checkTrue('an own date is a label, a day and a kind, not done', ev.label === 'Apply for the travel card' && ev.date === '2026-09-25' && ev.kind === 'todo' && ev.done === false && /^cal/.test(ev.id));
+  check('a bad day is null, never guessed', Schema.createCalendarEvent({ label: 'x', date: 'soon' }).date, null);
+  check('an unknown kind reads as to do', Schema.createCalendarEvent({ label: 'x', date: '2026-09-25', kind: 'party' }).kind, 'todo');
+  check('the calendar shape carries the list', Schema.createCalendar({}).events.length, 0);
+  const h = Schema.createHousehold({
+    people: [Schema.createPerson({ role: 'adult', employmentStatus: 'employed', incomeSources: [Schema.createIncomeSource({ grossAnnualIncomeCents: 6000000 })] })],
+    assets: [Schema.createAsset({ category: 'cash', valueCents: 400000, liquid: true })],
+    expenses: { wants: { totalCents: 300000 }, entries: [] }, filingStatus: 'single', state: 'NC', meta: { hasDebt: false },
+    calendar: { cadence: 'fortnightly', nextPaydayDay: 5, events: [ev, Schema.createCalendarEvent({ label: 'Renewal to cancel', date: '2026-10-02', kind: 'deadline', done: true }), Schema.createCalendarEvent({ label: 'Far away', date: '2027-03-01' })] }
+  });
+  const r = Cal.month(h, T, { now: '2026-09-19T12:00:00' });
+  checkTrue('the month runs', Money.isOk(r), r.reason);
+  check('own dates in the window are found, the far one is not', (r.ownHits || []).map(x => x.label).join('|'), 'Apply for the travel card|Renewal to cancel');
+  const turns = Cal.turns(r);
+  const own = turns.filter(t => t.direction === 'note');
+  checkTrue('they are turns with no money, in date order', own.length === 2 && own.every(t => t.cents === 0 && t.kind === 'own') && own[0].label === 'Apply for the travel card' && own[1].done === true);
+  checkTrue('… and the balance line is untouched by them', r.days.every(d => Money.isEntered(d.balanceCents)) && turns.filter(t => t.direction !== 'note').every(t => t.cents !== 0 || t.kind === 'log'));
+  const day = Cal.weeks(r).flat().filter(Boolean).filter(d => d.date === '2026-09-25')[0];
+  checkTrue('the grid day carries the note', day && day.notes.length === 1 && day.notes[0].sub === 'todo');
+  const html = DayByDay.html(r);
+  checkTrue('the picture draws a date of yours on its day and lists it without an amount', /class="cal-own" title="Apply for the travel card"/.test(html) && /is-note/.test(html) && /tn-amt is-note">To do</.test(html) && /cal-own is-done is-deadline/.test(html));
+  checkTrue('the list is the room\'s own: no ownership field, no DAITE path, no dot', !Ownership.FIELDS.calendarEvents && !require(path.join(ROOT, 'shared/daite.js')).PATHS.calendarEvents && Registry.daite('calendar').writes.length === 0);
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
+  checkTrue('the room is live again, draws the shared picture, and writes only its own dates', !/http-equiv="refresh"/.test(room) && /DayByDay\.html\(r\)/.test(room) && /Spine\.set\('calendar\.events'/.test(room) && !/Spine\.set\('calendar\.(cadence|bills|nextPaydayDay)/.test(room));
+  checkTrue('every arrangement places it beside The Month', require(path.join(ROOT, 'data/layouts.json')).layouts.every(l => l.groups.some(g => (g.rooms || []).indexOf('calendar') !== -1)));
+  checkTrue('the registry and the map both know it', !!Registry.byId('calendar') && JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/room-map.json'), 'utf8')).rooms.some(x => x.id === 'calendar'));
+})();
+
 section('Plain words on the path: the ledes name the thing, the number and the unit (D-258)');
 
 (function () {
@@ -11324,7 +11359,9 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   /* Eight since D-290: The Account You Left Behind became The Statement's
      "a plan you left behind" reading, which is where an old workplace
      account belongs — something you own that landed somewhere. */
-  check('...eight of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 8);
+  /* Nine since D-306: the Calendar came back beside The Month, for the
+     dates that are not money. */
+  check('...nine of them, Expenses among them since D-192 and the Calendar since D-308', Registry.inGroup('numbers', null).length, 9);
   /* The rule is about HOUSEHOLD data: a Your Numbers room writes a DAITE
      family, not a context. `prefs.*` is not a context — it is a
      preference, per person and per browser, and D-276 brought one into
@@ -11378,7 +11415,9 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
      now and holds the Calendar's four, so it has the Calendar's dot: empty
      on a demo that has entered none of them (D-275). */
   check('...The Month, which took the Calendar\'s four fields, is empty', Progress.roomStatus('cash-flow', readings), 'empty');
-  checkTrue('...and the Calendar is not a room to have a dot', !Registry.byId('calendar'));
+  /* Back since D-308, and still no dot: it owns no DAITE field, only its
+     own list of dates, which is not a thing to be nagged about. */
+  checkTrue('...and the Calendar is back (D-308) but not a room to have a dot', !!Registry.byId('calendar') && Progress.roomStatus('calendar', readings) === null);
   check('...a room that owns nothing has no dot', Progress.roomStatus('ratios', readings), null);
 })();
 
@@ -15360,9 +15399,11 @@ section('The thirty (docs/room-map.json)');
      anything the Decision Room should hold. The check is not "thirty" — it
      is that the map and the registry agree, and that every room the map
      names as a survivor is one. */
-  check('the map lands on thirty-one rooms', MAP.rooms.length, 31);
-  check('numbered 1 to 31', MAP.rooms.map(r => r.n).join(','),
-    Array.from({ length: 31 }, (_, i) => i + 1).join(','));
+  /* Thirty-two since D-308: the owner brought the Calendar back for the
+     dates that are not money. */
+  check('the map lands on thirty-two rooms', MAP.rooms.length, 32);
+  check('numbered 1 to 32', MAP.rooms.map(r => r.n).join(','),
+    Array.from({ length: 32 }, (_, i) => i + 1).join(','));
 
   /* Every survivor is a room that exists now and keeps its id through the
      merge: the id is what ownership.js, the registry and every deep link

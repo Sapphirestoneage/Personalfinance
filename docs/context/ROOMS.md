@@ -10,11 +10,12 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **start** — Start Here · 1189 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-262, D-259, D-249
 - **dashboard** — The Dashboard · 1836 lines · no engines · DD-030, DD-028, DD-026
 
-## Your Numbers (8)
+## Your Numbers (9)
 
 - **income** — Income · 2275 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget, variableincome, hourly, hassle, timeline · owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, futureIncome, incomeType, paySurvives · D-295, D-294, D-277
 - **expenses** — Expenses · 1604 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed, tax, hourly, subscriptions, merchants, bankcsv · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-306, D-267, D-263
 - **cash-flow** — The Month · 844 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-275, D-260, D-253
+- **calendar** — The Calendar · 169 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, calendar · D-308, D-275, D-253
 - **budget** — The Close · 1045 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history · owns: monthsClosed, historyCompareTo · D-276, D-257, D-130
 - **statement** — The Statement · 2582 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, debt, gap, statements, taxroom · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType · D-290, D-278, D-261
 - **debt-payoff** — Debt · 2889 lines · engines: projection, debt, tier0, income, selfemployed, ledger, studentloans, hourly, foo, cashflow, fire, statement, benchmarks, ratios · owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-279, D-252, D-236
@@ -57,13 +58,12 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **one-pager** — The Card · 449 lines · engines: projection, tier0, tax, income, ledger, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-303, D-264, D-219
 - **settings** — Settings (utility) · 225 lines · no engines · D-303, D-180
 
-## Files in rooms/ not in the registry (63)
+## Files in rooms/ not in the registry (62)
 
 - rooms/accounts.html
 - rooms/adventure.html
 - rooms/between-jobs.html
 - rooms/buckets.html
-- rooms/calendar.html
 - rooms/coast-date.html
 - rooms/comeback.html
 - rooms/credential.html
