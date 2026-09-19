@@ -12,7 +12,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Your Numbers (16)
 
-- **debt-payoff** — Debt Payoff · 1854 lines · engines: projection, debt · owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-236, D-191, D-190
+- **debt-payoff** — Debt Payoff · 1913 lines · engines: projection, debt · owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-236, D-191, D-190
 - **expenses** — Expenses · 1188 lines · engines: projection, tier0, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-207, D-199, D-196
 - **cash-flow** — Cash Flow · 564 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget · D-192, D-181, D-163
 - **income** — Income · 786 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-207, D-198, D-195

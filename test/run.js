@@ -888,7 +888,14 @@ const RULES = TABLES.debtRules;
     const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
     checkTrue('the fold draws the flow, the cascade and the balances', ['flow-chart', 'cascade-chart', 'timeline-chart'].every(id => page.indexOf('id="' + id + '"') !== -1));
     checkTrue('… from the engine, not arithmetic of its own', /Debt\.monthFlow\(plan, 1\)/.test(page) && /Debt\.cascade\(plan\)/.test(page) && /Charts\.sankey\(/.test(page) && /Charts\.columns\(/.test(page));
-    checkTrue('the list says what each fall frees and where it goes', /frees <b>/.test(page) && /which rolls onto/.test(page) && /yours from then on/.test(page) && /Everything gone\./.test(page));
+    checkTrue('the list says what each payoff frees and where it goes', /Frees <b>/.test(page) && /It goes to /.test(page) && /no longer goes to debt/.test(page) && /All debts paid\./.test(page));
+    checkTrue('the fold opens with what it shows, in plain words', /What this shows:/.test(page) && /Monthly payment:/.test(page) && /First payoff:/.test(page) && /All debts paid:/.test(page));
+    /* The plain line under every title (D-237): generated from the registry. */
+    const Progress = require(path.join(ROOT, 'shared/progress.js'));
+    const purpose = Progress.purposeHtml('debt-payoff');
+    checkTrue('Debt Payoff\'s purpose line names its outputs and its needs', /Shows:<\/b> Debt-free in/.test(purpose) && /Needs:<\/b> total debt/.test(purpose));
+    checkTrue('every room gets a purpose line with a Needs clause', Registry.all().every(r => /Needs:/.test(Progress.purposeHtml(r.id))));
+    checkTrue('the stylesheet carries it', /\.slaf-purpose \{/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
   })();
 
   section('Debt: the extra stops once the dear debt is gone (D-191)');
