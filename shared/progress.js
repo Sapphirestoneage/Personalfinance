@@ -938,11 +938,18 @@
     if (!filled.length) return '';           /* nothing entered: nothing to date */
     var l = Staleness.line(household, filled);
     if (!l) return '';
+    /* How many of these the app filled in as guesses (D-094, D-162) and the
+       person never typed over. The beginner learns which figures are theirs;
+       the expert learns which figures to distrust first. Same fact, one
+       clause, no new formula: forRoom already carries the flag. */
+    var guessed = row.filled.filter(function (f) { return f.guessed; }).length;
+    var guessText = guessed ? ' ' + (guessed === filled.length ? (guessed === 1 ? 'It is a guess the app filled in.' : 'All ' + guessed + ' are guesses the app filled in.')
+      : guessed + ' of ' + filled.length + (guessed === 1 ? ' is a guess' : ' are guesses') + ' the app filled in.') : '';
     var refresh = Registry.byId('refresh');
     var link = l.stale && refresh ? ' <a href="' + escapeHtml(href(refresh.href, roomId)) + '">Look at them \u2192</a>' : '';
     return '<p class="slaf-age' + (l.stale ? ' is-stale' : '') + '" id="slaf-age">'
       + '<span class="slaf-age-dot" aria-hidden="true"></span>'
-      + escapeHtml(l.text) + link + '</p>';
+      + escapeHtml(l.text + guessText) + link + '</p>';
   }
 
   /* ---- "These are not your numbers" (D-248) -------------------------------

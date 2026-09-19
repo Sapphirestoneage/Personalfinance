@@ -183,13 +183,20 @@ This is a decision, not a bug: closing a door moves 17 owned fields. It sits
 above the fix line deliberately. **It is the single biggest remaining cost to
 the beginner** — the lift has four queues and no sign saying which is shortest.
 
-### F7 — Express is a cliff, not a black diamond ○ not fixed
+### F7 — Express was a cliff, not a black diamond ▲ fixed (D-249)
 
-94 visible inputs on one page (Expenses: 87). The expert path is real, which
-most tools cannot claim — but a black diamond is steep *and groomed*. 94 boxes
-is ungroomed. The material for the fix already exists: the rows carry doors
-and levels 1–4, and Express already groups by them. What is missing is a
-default that opens level 1 only, with the rest one tap away.
+Measured on a phone: the all-at-once view (Express became a hat of the Ledger
+under D-230) opened with **93 boxes across 21 levels, all expanded, 11,720px
+tall** before a number was typed — 169 boxes and 20,090px with a household
+loaded. The expert path was real, which most tools cannot claim — but a black
+diamond is steep *and groomed*.
+
+**Fix** — level 1 of each door (the totals) opens; a deeper level opens only
+when you have put a number in it, when a link points into it, or when the
+"Show every level" switch is on — one tap, remembered per device. A closed
+level's summary says what opening it gets you and how far along it is. After
+the First Round: **6 folds open of 21, 5,229px**. The switch opens all 21 and
+survives a reload. Nothing is rebuilt; every box keeps its node (D-034).
 
 ### F8 — `test/forms.js` has been silently skipping ▲ fixed
 
@@ -210,16 +217,19 @@ correctly shows nothing, because nothing that was never entered can be old):
 |---|---|---|
 | Rooms showing when their numbers were last touched | **2 of 92** | **66 of 92** |
 | Rooms saying the example household is the example | **0 of 92** | **91 of 92**, plus the dashboard |
+| All-at-once view on a phone, after five answers | 21 folds open · 11,720px | **6 open · 5,229px** |
+| Rooms saying how many figures are app-filled guesses | 0 | every room with an age line |
 | Page errors across all 92 rooms, full household | 0 | **0** |
 | Home vs Ledger progress meter | 4 of 16 · 31% | **31% · 31%** |
 
 The 26 rooms with no age line declare no `needs` or hold nothing entered —
 silence there is the honest answer, not a gap.
 
-Suites: `node test/run.js` 30,634 checks; `node test/forms.js` 604 checks,
-typing survives in every room; `node tools/context/build.js --check` current.
-`tests/` a11y could not run — `axe-core` is not installed in this container
-and there is no egress to fetch it; that gap is pre-existing and untouched.
+Suites: `node test/run.js` 31,639 checks; `node test/forms.js`, typing
+survives in every room; `node tools/context/build.js --check` current; the
+a11y suite, once its dependency was fetched through the proxy: **77 rooms
+audited, 0 rules failed** (the previous report had 12 rooms with a serious
+violation).
 
 ---
 

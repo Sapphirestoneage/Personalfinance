@@ -35,15 +35,14 @@ Updated: 2026-09-19
   fold behind an ⓘ; every score pillar says what is good, why, what to do;
   logged pay reaches every reading (D-246); every debt says what it really
   costs after the deduction and inflation, and the pace to pay it (D-247).
-- **End-to-end audit, walked in a browser as beginner and expert** (D-248,
-  `docs/END-TO-END-AUDIT.md`). Four seams fixed: every room says how old its
-  numbers are (2 → 66 of 92 screens); the example household says it is the
-  example (0 → 91); home opens on what you earned and when you were last
-  here, not the pitch; one progress meter, not two. `test/forms.js` had been
-  skipping silently in the container and now runs.
+- **The audit (D-248, D-249; `docs/END-TO-END-AUDIT.md`).** Every room says
+  how old its numbers are and which are guesses; the example household says
+  so everywhere; home opens on what you earned; one meter; the all-at-once
+  view opens at level 1 (21 → 6 folds, 11,720 → 5,229px on a phone) with a
+  remembered "show every level" switch. forms.js and a11y run again.
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
-  deeper questions behind an advanced level; a typed take-home pay; the
+  ~~deeper questions behind an advanced level~~ (D-249); a typed take-home pay; the
   car's used/new and running costs; a running-balance chart on the month;
   the Budget month view made obvious; statements in detail, each line
   expandable; the readings FIRE people expect; a plain-language lede pass.

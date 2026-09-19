@@ -6,100 +6,101 @@ Report only, nothing fixed (lane 2, section 6, DECISIONS.md L-6). axe-core 4 wit
 
 | | |
 |---|---|
-| Rooms audited | 68 (0 redirect stubs skipped) |
-| Rooms with no axe violation | 53 |
-| Rooms with a serious or critical violation | 12 |
-| Distinct rules failed | 8 |
-| Rooms where every tab stop shows a focus ring | 66 |
-| Rooms where the menu is reachable by keyboard | 68 |
+| Rooms audited | 77 (0 redirect stubs skipped) |
+| Rooms with no axe violation | 77 |
+| Rooms with a serious or critical violation | 0 |
+| Distinct rules failed | 0 |
+| Rooms where every tab stop shows a focus ring | 0 |
+| Rooms where the menu is reachable by keyboard | 0 |
 | Rooms with a keyboard trap | 0 |
-| Rooms with a page error while auditing | 0 |
+| Rooms with a page error while auditing | 77 |
 
 ## Rules failed, most rooms first
 
 | rule | severity | rooms | nodes | one-line fix |
 |---|---|---|---|---|
-| `color-contrast` | serious | 11 | 16 | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-| `heading-order` | moderate | 3 | 3 | Do not skip a heading level; an h3 under an h1 needs an h2 between them. |
-| `empty-table-header` | minor | 1 | 2 | Table header text should not be empty |
-| `definition-list` | serious | 1 | 1 | <dl> elements must only directly contain properly-ordered <dt> and <dd> groups, <script>, <template> or <div> elements |
-| `nested-interactive` | serious | 1 | 1 | Do not nest a button or link inside another; split them. |
-| `aria-prohibited-attr` | serious | 1 | 1 | Elements must only use permitted ARIA attributes |
-| `landmark-one-main` | moderate | 1 | 1 | Wrap the room content in one <main>. |
-| `region` | moderate | 1 | 11 | Put every piece of content inside a landmark (main, nav, header, footer, aside). |
 
 ## Structure, every room
 
 | room | lang | main | h1 | heading skips | zoomable | inputs without a label | buttons without a name | links without a name | images without alt | positive tabindex |
 |---|---|---|---|---|---|---|---|---|---|---|
-| start | en | 1 | 1 | 0 | yes | 0/30 | 6/31 | 0/75 | 0/0 | 0 |
-| debt-payoff | en | 1 | 1 | 0 | yes | 0/4 | 0/17 | 0/77 | 0/0 | 0 |
-| cash-flow | en | 1 | 1 | 0 | yes | 0/90 | 3/33 | 1/80 | 0/0 | 0 |
-| income | en | 1 | 1 | 0 | yes | 0/13 | 0/11 | 0/81 | 0/0 | 0 |
-| budget | en | 1 | 1 | 0 | yes | 0/1 | 0/26 | 0/86 | 0/0 | 0 |
-| variance | en | 1 | 1 | 0 | yes | 0/2 | 0/12 | 0/80 | 0/0 | 0 |
-| financial-snapshot | en | 1 | 1 | 0 | yes | 0/1 | 0/38 | 0/100 | 0/0 | 0 |
-| statements | en | 1 | 1 | 0 | yes | 0/1 | 0/11 | 0/80 | 0/0 | 0 |
-| statement | en | 1 | 1 | 1 | yes | 0/25 | 0/11 | 0/90 | 0/0 | 0 |
-| savings-rate | en | 1 | 1 | 0 | yes | 0/1 | 0/11 | 0/85 | 0/0 | 0 |
-| sleep-at-night | en | 1 | 1 | 0 | yes | 0/8 | 0/11 | 0/83 | 0/0 | 0 |
-| fire | en | 1 | 1 | 0 | yes | 0/6 | 0/17 | 0/83 | 0/0 | 0 |
-| fire-lab | en | 1 | 1 | 0 | yes | 0/2 | 0/11 | 0/80 | 0/0 | 0 |
-| real-hourly-wage | en | 1 | 1 | 0 | yes | 0/8 | 0/11 | 0/84 | 0/0 | 0 |
-| hassle | en | 1 | 1 | 0 | yes | 0/15 | 0/20 | 0/82 | 0/0 | 0 |
-| quick-math | en | 1 | 1 | 0 | yes | 0/16 | 0/14 | 0/81 | 0/0 | 0 |
-| self-employed | en | 1 | 1 | 0 | yes | 0/9 | 0/11 | 0/84 | 0/0 | 0 |
-| side-hustle | en | 1 | 1 | 0 | yes | 0/5 | 0/11 | 0/82 | 0/0 | 0 |
-| ratios | en | 1 | 1 | 0 | yes | 0/1 | 0/53 | 0/184 | 0/0 | 0 |
-| dashboard | en | 1 | 1 | 0 | yes | 0/3 | 4/39 | 71/162 | 0/0 | 0 |
-| credential | en | 1 | 1 | 0 | yes | 0/8 | 0/11 | 0/80 | 0/0 | 0 |
-| accounts | en | 1 | 1 | 0 | yes | 0/17 | 0/14 | 0/83 | 0/0 | 0 |
-| fulfillment | en | 1 | 1 | 0 | yes | 0/1 | 0/8 | 0/82 | 0/0 | 0 |
-| rerank | en | 1 | 1 | 0 | yes | 0/20 | 0/31 | 0/85 | 0/0 | 0 |
-| stacker | en | 1 | 1 | 0 | yes | 0/1 | 0/93 | 0/88 | 0/0 | 0 |
-| skill-tree | en | 1 | 1 | 0 | yes | 0/2 | 0/31 | 0/83 | 0/0 | 0 |
-| exercises | en | 1 | 1 | 0 | yes | 0/3 | 0/57 | 0/183 | 0/0 | 0 |
-| values | en | 1 | 1 | 0 | yes | 0/1 | 0/17 | 0/80 | 0/0 | 0 |
-| goals | en | 1 | 1 | 0 | yes | 0/1 | 0/13 | 0/79 | 0/0 | 0 |
-| foo-ladder | en | 0 | 1 | 0 | yes | 0/12 | 0/23 | 0/90 | 0/0 | 0 |
-| worth | en | 1 | 1 | 0 | yes | 0/1 | 0/10 | 0/80 | 0/0 | 0 |
-| windfall | en | 1 | 1 | 0 | yes | 0/5 | 0/13 | 0/79 | 0/0 | 0 |
-| runway | en | 1 | 1 | 0 | yes | 0/15 | 0/14 | 0/81 | 0/0 | 0 |
-| car | en | 1 | 1 | 1 | yes | 0/5 | 0/11 | 0/81 | 0/0 | 0 |
-| credit | en | 1 | 1 | 0 | yes | 0/1 | 0/11 | 0/85 | 0/0 | 0 |
-| cant-pay | en | 1 | 1 | 1 | yes | 0/1 | 0/8 | 0/87 | 0/0 | 0 |
-| rollover | en | 1 | 1 | 1 | yes | 0/3 | 0/11 | 0/85 | 0/0 | 0 |
-| health | en | 1 | 1 | 0 | yes | 0/1 | 0/8 | 0/82 | 0/0 | 0 |
-| what-if-life | en | 1 | 1 | 0 | yes | 0/7 | 0/24 | 0/84 | 0/0 | 0 |
-| timeline | en | 1 | 1 | 0 | yes | 0/1 | 0/8 | 0/80 | 0/0 | 0 |
-| get-help | en | 1 | 1 | 0 | yes | 0/1 | 0/7 | 0/79 | 0/0 | 0 |
-| between-jobs | en | 1 | 1 | 0 | yes | 0/3 | 0/14 | 0/90 | 0/0 | 0 |
-| protection | en | 1 | 1 | 0 | yes | 0/3 | 0/11 | 0/91 | 0/0 | 0 |
-| decumulation | en | 1 | 1 | 0 | yes | 0/4 | 0/14 | 0/88 | 0/0 | 0 |
-| tax | en | 1 | 1 | 0 | yes | 0/3 | 0/11 | 0/85 | 0/0 | 0 |
-| estate | en | 1 | 1 | 0 | yes | 0/1 | 0/17 | 0/85 | 0/0 | 0 |
-| giving | en | 1 | 1 | 0 | yes | 0/3 | 0/12 | 0/83 | 0/0 | 0 |
-| career-move | en | 1 | 1 | 0 | yes | 0/6 | 0/13 | 0/84 | 0/0 | 0 |
-| partner | en | 1 | 1 | 0 | yes | 0/2 | 0/15 | 0/84 | 0/0 | 0 |
-| kids | en | 1 | 1 | 0 | yes | 0/4 | 0/12 | 0/86 | 0/0 | 0 |
-| housing | en | 1 | 1 | 0 | yes | 0/5 | 0/15 | 0/85 | 0/0 | 0 |
-| big-purchase | en | 1 | 1 | 0 | yes | 0/5 | 0/11 | 2/86 | 0/0 | 0 |
-| variable-income | en | 1 | 1 | 0 | yes | 0/5 | 0/15 | 0/87 | 0/0 | 0 |
-| enough | en | 1 | 1 | 0 | yes | 0/2 | 0/14 | 0/85 | 0/0 | 0 |
-| adventure | en | 1 | 1 | 0 | yes | 0/1 | 0/28 | 0/82 | 0/0 | 0 |
-| week | en | 1 | 1 | 0 | yes | 0/14 | 0/23 | 0/83 | 0/0 | 0 |
-| buckets | en | 1 | 1 | 0 | yes | 0/8 | 0/17 | 0/83 | 0/0 | 0 |
-| dreamline | en | 1 | 1 | 0 | yes | 0/11 | 0/11 | 0/84 | 0/0 | 0 |
-| reversibility | en | 1 | 1 | 0 | yes | 0/5 | 0/11 | 0/85 | 0/0 | 0 |
-| unlearning | en | 1 | 1 | 0 | yes | 0/2 | 0/13 | 0/85 | 0/0 | 0 |
-| student-loans | en | 1 | 1 | 0 | yes | 0/5 | 0/14 | 0/87 | 0/0 | 0 |
-| calendar | en | 1 | 1 | 0 | yes | 0/3 | 0/11 | 0/86 | 0/0 | 0 |
-| history | en | 1 | 1 | 0 | yes | 0/2 | 0/12 | 0/83 | 0/0 | 0 |
-| doors | en | 1 | 1 | 0 | yes | 0/2 | 0/27 | 0/141 | 0/0 | 0 |
-| walk | en | 1 | 1 | 0 | yes | 0/1 | 0/43 | 0/116 | 0/0 | 0 |
-| data | en | 1 | 1 | 0 | yes | 0/6 | 0/16 | 0/79 | 0/0 | 0 |
-| settings | en | 1 | 1 | 0 | yes | 0/1 | 0/23 | 0/128 | 0/0 | 0 |
-| refresh | en | 1 | 1 | 0 | yes | 0/3 | 0/8 | 0/81 | 0/0 | 0 |
+| ledger | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| start | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| income | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| expenses | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| cash-flow | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| budget | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| statement | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| accounts | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| debt-payoff | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| student-loans | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| credit | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| tax | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| variable-income | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| calendar | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| variance | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| dashboard | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| financial-snapshot | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| foo-ladder | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| fire | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| fire-lab | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| coast-date | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| race | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| statements | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| real-hourly-wage | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| hassle | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| self-employed | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| reachable | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| subscriptions | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| side-hustle | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| credential | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| fulfillment | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| rerank | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| stacker | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| skill-tree | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| exercises | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| values | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| goals | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| worth | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| runway | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| car | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| cant-pay | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| rollover | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| what-if-life | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| timeline | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| get-help | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| micro-retirement | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| protection | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| decumulation | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| roth-aca | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| middle-class-trap | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| estate | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| giving | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| career-move | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| offer-compare | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| degree | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| partner | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| wedding | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| kids | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| housing | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| down-payment | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| property | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| big-purchase | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| first-car | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| enough | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| adventure | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| week | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| buckets | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| dreamline | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| reversibility | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| unlearning | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| debates | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| history | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| wrapped | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| data | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| one-pager | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| settings | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
+| progress-card | none | undefined | undefined | undefined | no | undefined/undefined | undefined/undefined | undefined/undefined | undefined/undefined | undefined |
 
 ## Keyboard pass, every room
 
@@ -107,385 +108,699 @@ Tab up to 45 times from the top of the page, waiting 200ms after each for the tr
 
 | room | tab stops | without a ring | menu reachable | first input reachable | Escape closes the menu | trap |
 |---|---|---|---|---|---|---|
-| start | 45 | 0 | yes | yes | yes | no |
-| debt-payoff | 10 | 0 | yes | yes | yes | no |
-| cash-flow | 29 | 0 | yes | yes | yes | no |
-| income | 22 | 0 | yes | yes | yes | no |
-| budget | 20 | 0 | yes | no | yes | no |
-| variance | 34 | 0 | yes | yes | yes | no |
-| financial-snapshot | 45 | 0 | yes | no | yes | no |
-| statements | 16 | 0 | yes | no | yes | no |
-| statement | 31 | 0 | yes | yes | yes | no |
-| savings-rate | 30 | 0 | yes | no | yes | no |
-| sleep-at-night | 19 | 0 | yes | yes | yes | no |
-| fire | 26 | 0 | yes | yes | yes | no |
-| fire-lab | 32 | 0 | yes | yes | yes | no |
-| real-hourly-wage | 23 | 0 | yes | yes | yes | no |
-| hassle | 37 | 11 | yes | yes | yes | no |
-| quick-math | 45 | 0 | yes | yes | yes | no |
-| self-employed | 8 | 0 | yes | no | yes | no |
-| side-hustle | 19 | 0 | yes | yes | yes | no |
-| ratios | 45 | 0 | yes | no | yes | no |
-| dashboard | 20 | 0 | yes | no | yes | no |
-| credential | 42 | 0 | yes | yes | yes | no |
-| accounts | 35 | 0 | yes | yes | yes | no |
-| fulfillment | 13 | 0 | yes | no | yes | no |
-| rerank | 45 | 0 | yes | yes | yes | no |
-| stacker | 45 | 0 | yes | no | yes | no |
-| skill-tree | 45 | 0 | yes | yes | yes | no |
-| exercises | 45 | 0 | yes | yes | yes | no |
-| values | 20 | 0 | yes | no | yes | no |
-| goals | 16 | 0 | yes | no | yes | no |
-| foo-ladder | 38 | 0 | yes | yes | yes | no |
-| worth | 26 | 0 | yes | no | yes | no |
-| windfall | 20 | 0 | yes | yes | yes | no |
-| runway | 26 | 0 | yes | yes | yes | no |
-| car | 40 | 0 | yes | yes | yes | no |
-| credit | 17 | 0 | yes | no | yes | no |
-| cant-pay | 16 | 0 | yes | no | yes | no |
-| rollover | 32 | 0 | yes | no | yes | no |
-| health | 11 | 0 | yes | no | yes | no |
-| what-if-life | 32 | 0 | yes | yes | yes | no |
-| timeline | 24 | 0 | yes | no | yes | no |
-| get-help | 10 | 0 | yes | no | yes | no |
-| between-jobs | 8 | 0 | yes | no | yes | no |
-| protection | 40 | 0 | yes | yes | yes | no |
-| decumulation | 8 | 0 | yes | no | yes | no |
-| tax | 18 | 0 | yes | yes | yes | no |
-| estate | 45 | 0 | yes | no | yes | no |
-| giving | 10 | 0 | yes | yes | yes | no |
-| career-move | 23 | 0 | yes | yes | yes | no |
-| partner | 22 | 0 | yes | yes | yes | no |
-| kids | 8 | 0 | yes | no | yes | no |
-| housing | 45 | 0 | yes | yes | yes | no |
-| big-purchase | 21 | 0 | yes | yes | yes | no |
-| variable-income | 8 | 0 | yes | no | yes | no |
-| enough | 23 | 0 | yes | yes | yes | no |
-| adventure | 45 | 0 | yes | no | yes | no |
-| week | 27 | 0 | yes | yes | yes | no |
-| buckets | 27 | 0 | yes | yes | yes | no |
-| dreamline | 24 | 0 | yes | yes | yes | no |
-| reversibility | 38 | 0 | yes | yes | yes | no |
-| unlearning | 21 | 0 | yes | yes | yes | no |
-| student-loans | 8 | 0 | yes | no | yes | no |
-| calendar | 40 | 0 | yes | yes | yes | no |
-| history | 18 | 0 | yes | yes | yes | no |
-| doors | 45 | 0 | yes | no | yes | no |
-| walk | 45 | 0 | yes | no | yes | no |
-| data | 16 | 0 | yes | yes | yes | no |
-| settings | 45 | 0 | yes | no | yes | no |
-| refresh | 26 | 1 | yes | yes | yes | no |
+| ledger | ? | ? | no | n/a | no menu opened | no |
+| start | ? | ? | no | n/a | no menu opened | no |
+| income | ? | ? | no | n/a | no menu opened | no |
+| expenses | ? | ? | no | n/a | no menu opened | no |
+| cash-flow | ? | ? | no | n/a | no menu opened | no |
+| budget | ? | ? | no | n/a | no menu opened | no |
+| statement | ? | ? | no | n/a | no menu opened | no |
+| accounts | ? | ? | no | n/a | no menu opened | no |
+| debt-payoff | ? | ? | no | n/a | no menu opened | no |
+| student-loans | ? | ? | no | n/a | no menu opened | no |
+| credit | ? | ? | no | n/a | no menu opened | no |
+| tax | ? | ? | no | n/a | no menu opened | no |
+| variable-income | ? | ? | no | n/a | no menu opened | no |
+| calendar | ? | ? | no | n/a | no menu opened | no |
+| variance | ? | ? | no | n/a | no menu opened | no |
+| dashboard | ? | ? | no | n/a | no menu opened | no |
+| financial-snapshot | ? | ? | no | n/a | no menu opened | no |
+| foo-ladder | ? | ? | no | n/a | no menu opened | no |
+| fire | ? | ? | no | n/a | no menu opened | no |
+| fire-lab | ? | ? | no | n/a | no menu opened | no |
+| coast-date | ? | ? | no | n/a | no menu opened | no |
+| race | ? | ? | no | n/a | no menu opened | no |
+| statements | ? | ? | no | n/a | no menu opened | no |
+| real-hourly-wage | ? | ? | no | n/a | no menu opened | no |
+| hassle | ? | ? | no | n/a | no menu opened | no |
+| self-employed | ? | ? | no | n/a | no menu opened | no |
+| reachable | ? | ? | no | n/a | no menu opened | no |
+| subscriptions | ? | ? | no | n/a | no menu opened | no |
+| side-hustle | ? | ? | no | n/a | no menu opened | no |
+| credential | ? | ? | no | n/a | no menu opened | no |
+| fulfillment | ? | ? | no | n/a | no menu opened | no |
+| rerank | ? | ? | no | n/a | no menu opened | no |
+| stacker | ? | ? | no | n/a | no menu opened | no |
+| skill-tree | ? | ? | no | n/a | no menu opened | no |
+| exercises | ? | ? | no | n/a | no menu opened | no |
+| values | ? | ? | no | n/a | no menu opened | no |
+| goals | ? | ? | no | n/a | no menu opened | no |
+| worth | ? | ? | no | n/a | no menu opened | no |
+| runway | ? | ? | no | n/a | no menu opened | no |
+| car | ? | ? | no | n/a | no menu opened | no |
+| cant-pay | ? | ? | no | n/a | no menu opened | no |
+| rollover | ? | ? | no | n/a | no menu opened | no |
+| what-if-life | ? | ? | no | n/a | no menu opened | no |
+| timeline | ? | ? | no | n/a | no menu opened | no |
+| get-help | ? | ? | no | n/a | no menu opened | no |
+| micro-retirement | ? | ? | no | n/a | no menu opened | no |
+| protection | ? | ? | no | n/a | no menu opened | no |
+| decumulation | ? | ? | no | n/a | no menu opened | no |
+| roth-aca | ? | ? | no | n/a | no menu opened | no |
+| middle-class-trap | ? | ? | no | n/a | no menu opened | no |
+| estate | ? | ? | no | n/a | no menu opened | no |
+| giving | ? | ? | no | n/a | no menu opened | no |
+| career-move | ? | ? | no | n/a | no menu opened | no |
+| offer-compare | ? | ? | no | n/a | no menu opened | no |
+| degree | ? | ? | no | n/a | no menu opened | no |
+| partner | ? | ? | no | n/a | no menu opened | no |
+| wedding | ? | ? | no | n/a | no menu opened | no |
+| kids | ? | ? | no | n/a | no menu opened | no |
+| housing | ? | ? | no | n/a | no menu opened | no |
+| down-payment | ? | ? | no | n/a | no menu opened | no |
+| property | ? | ? | no | n/a | no menu opened | no |
+| big-purchase | ? | ? | no | n/a | no menu opened | no |
+| first-car | ? | ? | no | n/a | no menu opened | no |
+| enough | ? | ? | no | n/a | no menu opened | no |
+| adventure | ? | ? | no | n/a | no menu opened | no |
+| week | ? | ? | no | n/a | no menu opened | no |
+| buckets | ? | ? | no | n/a | no menu opened | no |
+| dreamline | ? | ? | no | n/a | no menu opened | no |
+| reversibility | ? | ? | no | n/a | no menu opened | no |
+| unlearning | ? | ? | no | n/a | no menu opened | no |
+| debates | ? | ? | no | n/a | no menu opened | no |
+| history | ? | ? | no | n/a | no menu opened | no |
+| wrapped | ? | ? | no | n/a | no menu opened | no |
+| data | ? | ? | no | n/a | no menu opened | no |
+| one-pager | ? | ? | no | n/a | no menu opened | no |
+| settings | ? | ? | no | n/a | no menu opened | no |
+| progress-card | ? | ? | no | n/a | no menu opened | no |
 
 ## Per room
 
-### start (`rooms/start.html`)
+### ledger (`rooms/ledger.html`)
 
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `color-contrast` | serious | 1 | `button[data-situation="employed"] > small` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-
-### debt-payoff (`rooms/debt-payoff.html`)
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/ledger.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/ledger.html", waiting until "networkidle"[22m
 
 No axe violation.
 
-### cash-flow (`rooms/cash-flow.html`)
+### start (`rooms/start.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/start.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/start.html", waiting until "networkidle"[22m
 
 No axe violation.
 
 ### income (`rooms/income.html`)
 
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/income.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/income.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### expenses (`rooms/expenses.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/expenses.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/expenses.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### cash-flow (`rooms/cash-flow.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/cash-flow.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/cash-flow.html", waiting until "networkidle"[22m
+
 No axe violation.
 
 ### budget (`rooms/budget.html`)
 
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `color-contrast` | serious | 1 | `.is-empty.row > .lbl` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-
-### variance (`rooms/variance.html`)
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/budget.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/budget.html", waiting until "networkidle"[22m
 
 No axe violation.
-
-### financial-snapshot (`rooms/financial-snapshot.html`)
-
-No axe violation.
-
-### statements (`rooms/statements.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `empty-table-header` | minor | 2 | `tr:nth-child(1) > th:nth-child(2)` | Table header text should not be empty |
 
 ### statement (`rooms/statement.html`)
 
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `heading-order` | moderate | 1 | `.portfolio:nth-child(1) > .head > h3` | Do not skip a heading level; an h3 under an h1 needs an h2 between them. |
-
-### savings-rate (`rooms/savings-rate.html`)
-
-No axe violation.
-
-### sleep-at-night (`rooms/sleep-at-night.html`)
-
-No axe violation.
-
-### fire (`rooms/fire.html`)
-
-No axe violation.
-
-### fire-lab (`rooms/fire-lab.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `color-contrast` | serious | 1 | `.is-empty.row > .lbl > small` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-| `definition-list` | serious | 1 | `#facts` | <dl> elements must only directly contain properly-ordered <dt> and <dd> groups, <script>, <template> or <div> elements |
-
-### real-hourly-wage (`rooms/real-hourly-wage.html`)
-
-No axe violation.
-
-### hassle (`rooms/hassle.html`)
-
-No axe violation.
-
-Focus without a visible ring: SELECT "Hassle for this chore"; SELECT "Hassle for Opening an account for a bonu"; SELECT "Hassle for Moving cash to a better savin"; SELECT "Hassle for Re-shopping an insurance poli"; SELECT "Hassle for Negotiating a bill down"; SELECT "Hassle for Auditing and cancelling subsc"; SELECT "Hassle for Refinancing a loan"; SELECT "Hassle for Signing up for a card bonus" and 3 more. Fix: keep a :focus-visible outline on the shared control classes in shared/theme.css.
-
-### quick-math (`rooms/quick-math.html`)
-
-No axe violation.
-
-### self-employed (`rooms/self-employed.html`)
-
-No axe violation.
-
-### side-hustle (`rooms/side-hustle.html`)
-
-No axe violation.
-
-### ratios (`rooms/ratios.html`)
-
-No axe violation.
-
-### dashboard (`index.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `nested-interactive` | serious | 1 | `#your-data-drawer > summary` | Do not nest a button or link inside another; split them. |
-
-### credential (`rooms/credential.html`)
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/statement.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/statement.html", waiting until "networkidle"[22m
 
 No axe violation.
 
 ### accounts (`rooms/accounts.html`)
 
-No axe violation.
-
-### fulfillment (`rooms/fulfillment.html`)
-
-No axe violation.
-
-### rerank (`rooms/rerank.html`)
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/accounts.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/accounts.html", waiting until "networkidle"[22m
 
 No axe violation.
 
-### stacker (`rooms/stacker.html`)
-
-No axe violation.
-
-### skill-tree (`rooms/skill-tree.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `aria-prohibited-attr` | serious | 1 | `.here` | Elements must only use permitted ARIA attributes |
-| `color-contrast` | serious | 2 | `.s-grid > .is-dim.is-locked[data-skill="cut-one-line"] > .n-` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-
-### exercises (`rooms/exercises.html`)
-
-No axe violation.
-
-### values (`rooms/values.html`)
-
-No axe violation.
-
-### goals (`rooms/goals.html`)
-
-No axe violation.
-
-### foo-ladder (`rooms/foo-ladder.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `color-contrast` | serious | 2 | `.card-active > .grid2 > .slaf-field:nth-child(1) > .slaf-own` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-| `landmark-one-main` | moderate | 1 | `html` | Wrap the room content in one <main>. |
-| `region` | moderate | 11 | `.card-active` | Put every piece of content inside a landmark (main, nav, header, footer, aside). |
-
-### worth (`rooms/worth.html`)
-
-No axe violation.
-
-### windfall (`rooms/windfall.html`)
-
-No axe violation.
-
-### runway (`rooms/runway.html`)
-
-No axe violation.
-
-### car (`rooms/car.html`)
-
-No axe violation.
-
-### credit (`rooms/credit.html`)
-
-No axe violation.
-
-### cant-pay (`rooms/cant-pay.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `color-contrast` | serious | 3 | `.bill-ask > .dial[href$="tel:211"]` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-| `heading-order` | moderate | 1 | `#gap-detail > .callout > h3` | Do not skip a heading level; an h3 under an h1 needs an h2 between them. |
-
-### rollover (`rooms/rollover.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `heading-order` | moderate | 1 | `.tradeoff:nth-child(1) > h3` | Do not skip a heading level; an h3 under an h1 needs an h2 between them. |
-
-### health (`rooms/health.html`)
-
-No axe violation.
-
-### what-if-life (`rooms/what-if-life.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `color-contrast` | serious | 1 | `button[data-event="sabbatical"] > small` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-
-### timeline (`rooms/timeline.html`)
-
-No axe violation.
-
-### get-help (`rooms/get-help.html`)
-
-No axe violation.
-
-### between-jobs (`rooms/between-jobs.html`)
-
-No axe violation.
-
-### protection (`rooms/protection.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `color-contrast` | serious | 2 | `.row.is-empty:nth-child(1) > .lbl > small` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-
-### decumulation (`rooms/decumulation.html`)
-
-No axe violation.
-
-### tax (`rooms/tax.html`)
-
-No axe violation.
-
-### estate (`rooms/estate.html`)
-
-No axe violation.
-
-### giving (`rooms/giving.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `color-contrast` | serious | 1 | `.row.is-empty > .lbl > small` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-
-### career-move (`rooms/career-move.html`)
-
-No axe violation.
-
-### partner (`rooms/partner.html`)
-
-No axe violation.
-
-### kids (`rooms/kids.html`)
-
-No axe violation.
-
-### housing (`rooms/housing.html`)
-
-No axe violation.
-
-### big-purchase (`rooms/big-purchase.html`)
-
-No axe violation.
-
-### variable-income (`rooms/variable-income.html`)
-
-No axe violation.
-
-### enough (`rooms/enough.html`)
-
-No axe violation.
-
-### adventure (`rooms/adventure.html`)
-
-No axe violation.
-
-### week (`rooms/week.html`)
-
-No axe violation.
-
-### buckets (`rooms/buckets.html`)
-
-No axe violation.
-
-### dreamline (`rooms/dreamline.html`)
-
-No axe violation.
-
-### reversibility (`rooms/reversibility.html`)
-
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `color-contrast` | serious | 1 | `.lbl > small` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-
-### unlearning (`rooms/unlearning.html`)
+### debt-payoff (`rooms/debt-payoff.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/debt-payoff.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/debt-payoff.html", waiting until "networkidle"[22m
 
 No axe violation.
 
 ### student-loans (`rooms/student-loans.html`)
 
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/student-loans.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/student-loans.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### credit (`rooms/credit.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/credit.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/credit.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### tax (`rooms/tax.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/tax.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/tax.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### variable-income (`rooms/variable-income.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/variable-income.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/variable-income.html", waiting until "networkidle"[22m
+
 No axe violation.
 
 ### calendar (`rooms/calendar.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/calendar.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/calendar.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### variance (`rooms/variance.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/variance.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/variance.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### dashboard (`index.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/index.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/index.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### financial-snapshot (`rooms/financial-snapshot.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/financial-snapshot.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/financial-snapshot.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### foo-ladder (`rooms/foo-ladder.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/foo-ladder.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/foo-ladder.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### fire (`rooms/fire.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/fire.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/fire.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### fire-lab (`rooms/fire-lab.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/fire-lab.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/fire-lab.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### coast-date (`rooms/coast-date.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/coast-date.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/coast-date.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### race (`rooms/race.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/race.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/race.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### statements (`rooms/statements.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/statements.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/statements.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### real-hourly-wage (`rooms/real-hourly-wage.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/real-hourly-wage.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/real-hourly-wage.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### hassle (`rooms/hassle.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/hassle.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/hassle.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### self-employed (`rooms/self-employed.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/self-employed.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/self-employed.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### reachable (`rooms/reachable.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/reachable.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/reachable.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### subscriptions (`rooms/subscriptions.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/subscriptions.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/subscriptions.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### side-hustle (`rooms/side-hustle.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/side-hustle.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/side-hustle.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### credential (`rooms/credential.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/credential.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/credential.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### fulfillment (`rooms/fulfillment.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/fulfillment.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/fulfillment.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### rerank (`rooms/rerank.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/rerank.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/rerank.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### stacker (`rooms/stacker.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/stacker.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/stacker.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### skill-tree (`rooms/skill-tree.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/skill-tree.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/skill-tree.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### exercises (`rooms/exercises.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/exercises.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/exercises.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### values (`rooms/values.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/values.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/values.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### goals (`rooms/goals.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/goals.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/goals.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### worth (`rooms/worth.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/worth.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/worth.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### runway (`rooms/runway.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/runway.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/runway.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### car (`rooms/car.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/car.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/car.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### cant-pay (`rooms/cant-pay.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/cant-pay.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/cant-pay.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### rollover (`rooms/rollover.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/rollover.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/rollover.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### what-if-life (`rooms/what-if-life.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/what-if-life.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/what-if-life.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### timeline (`rooms/timeline.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/timeline.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/timeline.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### get-help (`rooms/get-help.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/get-help.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/get-help.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### micro-retirement (`rooms/micro-retirement.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/micro-retirement.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/micro-retirement.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### protection (`rooms/protection.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/protection.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/protection.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### decumulation (`rooms/decumulation.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/decumulation.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/decumulation.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### roth-aca (`rooms/roth-aca.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/roth-aca.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/roth-aca.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### middle-class-trap (`rooms/middle-class-trap.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/middle-class-trap.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/middle-class-trap.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### estate (`rooms/estate.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/estate.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/estate.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### giving (`rooms/giving.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/giving.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/giving.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### career-move (`rooms/career-move.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/career-move.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/career-move.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### offer-compare (`rooms/offer-compare.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/offer-compare.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/offer-compare.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### degree (`rooms/degree.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/degree.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/degree.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### partner (`rooms/partner.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/partner.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/partner.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### wedding (`rooms/wedding.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/wedding.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/wedding.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### kids (`rooms/kids.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/kids.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/kids.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### housing (`rooms/housing.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/housing.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/housing.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### down-payment (`rooms/down-payment.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/down-payment.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/down-payment.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### property (`rooms/property.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/property.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/property.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### big-purchase (`rooms/big-purchase.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/big-purchase.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/big-purchase.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### first-car (`rooms/first-car.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/first-car.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/first-car.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### enough (`rooms/enough.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/enough.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/enough.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### adventure (`rooms/adventure.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/adventure.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/adventure.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### week (`rooms/week.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/week.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/week.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### buckets (`rooms/buckets.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/buckets.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/buckets.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### dreamline (`rooms/dreamline.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/dreamline.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/dreamline.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### reversibility (`rooms/reversibility.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/reversibility.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/reversibility.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### unlearning (`rooms/unlearning.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/unlearning.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/unlearning.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### debates (`rooms/debates.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/debates.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/debates.html", waiting until "networkidle"[22m
 
 No axe violation.
 
 ### history (`rooms/history.html`)
 
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/history.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/history.html", waiting until "networkidle"[22m
+
 No axe violation.
 
-### doors (`rooms/doors.html`)
+### wrapped (`rooms/wrapped.html`)
 
-| rule | severity | nodes | first target | one-line fix |
-|---|---|---|---|---|
-| `color-contrast` | serious | 1 | `button[data-layout="path"] > .code` | Darken the text or lighten the background until the ratio reaches 4.5:1 (3:1 for large text); the token is in shared/theme.css. |
-
-### walk (`rooms/walk.html`)
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/wrapped.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/wrapped.html", waiting until "networkidle"[22m
 
 No axe violation.
 
 ### data (`rooms/data.html`)
 
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/data.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/data.html", waiting until "networkidle"[22m
+
+No axe violation.
+
+### one-pager (`rooms/one-pager.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/one-pager.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/one-pager.html", waiting until "networkidle"[22m
+
 No axe violation.
 
 ### settings (`rooms/settings.html`)
 
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/settings.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/settings.html", waiting until "networkidle"[22m
+
 No axe violation.
 
-### refresh (`rooms/refresh.html`)
+### progress-card (`rooms/progress-card.html`)
+
+Page error while auditing: nav: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8765/rooms/progress-card.html
+Call log:
+[2m  - navigating to "http://127.0.0.1:8765/rooms/progress-card.html", waiting until "networkidle"[22m
 
 No axe violation.
-
-Focus without a visible ring: INPUT "Cash and savings". Fix: keep a :focus-visible outline on the shared control classes in shared/theme.css.
 

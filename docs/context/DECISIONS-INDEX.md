@@ -5,7 +5,7 @@ One line per entry in DECISIONS.md: id, title, `[start-end]` lines, `{rooms}` it
 touches. `~` marks an entry a later one supersedes. Read one with
 `node tools/context/pack.js D-123` or `sed -n START,ENDp DECISIONS.md`.
 
-## SPARKS (D-) (237)
+## SPARKS (D-) (238)
 
 - D-001 — Repo state did not match the brief's Section 0 premise [13-58] {dashboard, real-hourly-wage}
 - D-002 — navy-sapphire design system, centralised as CSS custom properties [60-99]
@@ -243,36 +243,37 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-245 — Fewer words on the page, and every score says what is good, why, and what to do [14266-14289] {financial-snapshot}
 - D-246 — Logged pay reaches every reading, and paired boxes start level [14291-14316] {income}
 - D-247 — What a debt really costs: after the deduction, after inflation, and the pace that follows [14318-14345]
-- D-248 — A number that does not say how old it is, or whose it is, is half a number [14348-14394] {expenses, debt-payoff, dashboard}
+- D-248 — A number that does not say how old it is, or whose it is, is half a number [14348-14392] {expenses, debt-payoff, dashboard}
+- D-249 — The all-at-once view opens at level 1; every deeper level is one tap away [14394-14425] {ledger}
 
 ## Dungeons & Dividends (DD-) (29)
 
-- DD-001 — HP is measured in weeks, which is what makes §3A stop contradicting itself [14429-14481]
-- DD-002 — The eighteen scoring formulas, and why "average" means the median American [14483-14566]
-- DD-003 — Seven classes, not ten [14568-14592]
-- DD-004 — The character sheet is a sibling, not a room [14594-14669]
-- DD-005 — The character sheet lives here after all, in a folder [14671-14722] {dashboard}
-- DD-006 — The D&D tool's licence posture, and what "parody" actually constrains [14724-14760]
-- DD-007 — The D&D sheet is the form, and how that survives D-034 [14762-14828]
-- DD-008 — A monster's danger is a property of the meeting, not of the monster [14830-14959]
-- DD-009 — The free page tells you what hunts you, and is careful about what it cannot see [14961-15069] {dashboard}
-- DD-010 — Fifteen more creatures, and a mark saying which are ours [15071-15143]
-- DD-011 — Four tiers of play, and a function that refuses to place you [15145-15216]
-- DD-012 — Exhaustion is derived, statuses are declared, and both change the game [15218-15310]
-- DD-013 — Rests and pace, in the only unit HP has [15312-15399]
-- DD-014 — The card is the product, so it is drawn rather than laid out [15401-15469] {dashboard}
-- DD-015 — The file says which of itself may be believed, and a character can come home [15471-15555]
-- DD-016 — DM mode: the scenario is the URL, and it never touches your character [15557-15642]
-- DD-017 — Six types, derived from the bestiary, and a log field I said existed and did not [15644-15733]
-- DD-018 — Six abilities to buy, like D&D Beyond, and what a bought Strength is worth [15735-15813] {dashboard}
-- DD-019 — Two ways to get hurt: bills attack your armour, pitches go around it [15815-15905]
-- DD-020 — A failed save has to cost something [15907-15941]
-- DD-021 — A bleed is measured against a rest [15943-15982]
-- DD-022 — One strong save, one weak, and every save covered [15984-16021]
-- DD-023 — ASIs and feats that do something [16023-16091]
-- DD-024 — The campaign: ten rounds, a fork of your household, and advice that moves with you [16093-16233]
-- DD-025 — Creation lives in the campaign: your numbers, your six, and the receipts [16235-16354] {dashboard}
-- DD-026 — The whole run through: five questions, a build, your six, and what to do about them [16356-16518] {dashboard}
-- DD-027 — The long read: an Enneagram-shaped profile, and the one thing it refuses to do [16520-16750]
-- DD-028 — Four ways in, because one front door was asking before it gave [16752-16875] {dashboard}
-- DD-029 — HP reads the one runway function; the lump is one total, not split [16877-16895]
+- DD-001 — HP is measured in weeks, which is what makes §3A stop contradicting itself [14460-14512]
+- DD-002 — The eighteen scoring formulas, and why "average" means the median American [14514-14597]
+- DD-003 — Seven classes, not ten [14599-14623]
+- DD-004 — The character sheet is a sibling, not a room [14625-14700]
+- DD-005 — The character sheet lives here after all, in a folder [14702-14753] {dashboard}
+- DD-006 — The D&D tool's licence posture, and what "parody" actually constrains [14755-14791]
+- DD-007 — The D&D sheet is the form, and how that survives D-034 [14793-14859]
+- DD-008 — A monster's danger is a property of the meeting, not of the monster [14861-14990]
+- DD-009 — The free page tells you what hunts you, and is careful about what it cannot see [14992-15100] {dashboard}
+- DD-010 — Fifteen more creatures, and a mark saying which are ours [15102-15174]
+- DD-011 — Four tiers of play, and a function that refuses to place you [15176-15247]
+- DD-012 — Exhaustion is derived, statuses are declared, and both change the game [15249-15341]
+- DD-013 — Rests and pace, in the only unit HP has [15343-15430]
+- DD-014 — The card is the product, so it is drawn rather than laid out [15432-15500] {dashboard}
+- DD-015 — The file says which of itself may be believed, and a character can come home [15502-15586]
+- DD-016 — DM mode: the scenario is the URL, and it never touches your character [15588-15673]
+- DD-017 — Six types, derived from the bestiary, and a log field I said existed and did not [15675-15764]
+- DD-018 — Six abilities to buy, like D&D Beyond, and what a bought Strength is worth [15766-15844] {dashboard}
+- DD-019 — Two ways to get hurt: bills attack your armour, pitches go around it [15846-15936]
+- DD-020 — A failed save has to cost something [15938-15972]
+- DD-021 — A bleed is measured against a rest [15974-16013]
+- DD-022 — One strong save, one weak, and every save covered [16015-16052]
+- DD-023 — ASIs and feats that do something [16054-16122]
+- DD-024 — The campaign: ten rounds, a fork of your household, and advice that moves with you [16124-16264]
+- DD-025 — Creation lives in the campaign: your numbers, your six, and the receipts [16266-16385] {dashboard}
+- DD-026 — The whole run through: five questions, a build, your six, and what to do about them [16387-16549] {dashboard}
+- DD-027 — The long read: an Enneagram-shaped profile, and the one thing it refuses to do [16551-16781]
+- DD-028 — Four ways in, because one front door was asking before it gave [16783-16906] {dashboard}
+- DD-029 — HP reads the one runway function; the lump is one total, not split [16908-16926]

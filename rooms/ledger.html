@@ -231,6 +231,14 @@
   #view-express details.xlvl { margin-top: var(--space-2); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
   
   #view-express details.xlvl > summary { cursor: pointer; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); padding: var(--space-1) 0; }
+  /* The level's gloss says what opening it gets you; the count says how far
+     along it is. Both plain text on the summary line, so a closed level is a
+     sentence rather than a mystery (D-249). */
+  #view-express details.xlvl > summary .xgloss { display: block; text-transform: none; letter-spacing: 0; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
+  #view-express details.xlvl > summary .xlcount { float: right; text-transform: none; letter-spacing: 0; font-variant-numeric: tabular-nums; color: var(--color-text-faint); }
+  #view-express details.xlvl:not([open]) > summary { padding-bottom: var(--space-2); }
+  #view-express .xbar .xdepth { font: inherit; font-family: var(--font-display); font-size: var(--text-sm); border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px 10px; background: none; color: var(--color-text-muted); cursor: pointer; min-height: 32px; }
+  #view-express .xbar .xdepth[aria-pressed="true"] { color: var(--color-text); border-color: var(--color-border-active); }
   
   #view-express .xrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-2) var(--space-3); align-items: start; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
   
@@ -670,10 +678,14 @@
 
   <!-- ================= ALL AT ONCE (was rooms/express.html) ============= -->
   <section id="view-express" hidden>
-  <p class="slaf-lede">Every question on one page, grouped by door and level. Fill what you know, skip the rest; each box saves the moment you leave it.</p>
+  <p class="slaf-lede">Every question on one page, grouped by door and level. Level 1 of each door is open — the totals. The deeper levels are one tap away, and any level you have started stays open. Each box saves the moment you leave it.</p>
   <p class="switch">Rather be walked through it? <a href="#round-1">Five questions, one a screen.</a></p>
   <div class="xbar" id="xbar">
     <span class="pct">This app holds <b id="xpct-pct">…</b> of your numbers so far.</span>
+    <!-- The depth switch (D-249): one tap and every level is open, and it
+         stays that way on this device. The person who wants all 90 boxes
+         gets them; the person who does not is never shown them first. -->
+    <button type="button" class="xdepth" id="x-depth" aria-pressed="false">Show every level</button>
     <nav class="jump" id="xjump" aria-label="Jump to a door"></nav>
   </div>
 
@@ -1092,6 +1104,13 @@
   }
   function routeHash() {
     var view = routeView();
+    /* #x-D-3: a link into one level of one door opens that level (D-249). */
+    var lm = /^#x-(D|A|I|T|E|you)-([1-4])$/.exec(location.hash || '');
+    if (lm) {
+      var lv = document.getElementById('x-' + lm[1] + '-' + lm[2]), dr = document.getElementById('x-' + lm[1]);
+      if (dr) dr.open = true;
+      if (lv) { lv.open = true; try { lv.scrollIntoView({ block: 'start' }); } catch (e) { /* fine */ } }
+    }
     var m = /^#door-(D|A|I|T|E|you)$/.exec(location.hash || '');
     showDoor(view === 'view-doors' && m ? m[1] : null);
     if (!m && location.hash === '#doors-home') { try { history.replaceState(null, '', location.pathname); } catch (e) { /* fine */ } }
@@ -1393,16 +1412,38 @@
   }
 
   /* ---- The whole form, built once ---------------------------------------------- */
+  /* Which levels open at build (D-249). The all-at-once view used to open
+     every level of every door: 93 boxes on a phone, 21 sections, eleven
+     thousand pixels tall before a single number was typed — the black
+     diamond with no grooming. Level 1 is the totals and is always open.
+     A deeper level opens when the person has already put a number in it
+     (their work is never folded away from them), when the link points into
+     it, or when the depth switch is on. Toggling <details> shows and hides;
+     it never rebuilds, so every box keeps its node (D-034). */
+  var ALL_LEVELS_PREF = 'ledger.allLevels';
+  function allLevelsOn() { try { return SLAF.Prefs && SLAF.Prefs.get ? SLAF.Prefs.get(ALL_LEVELS_PREF, false) === true : false; } catch (e) { return false; } }
+  function levelStarted(hh, rows) {
+    var st = {};
+    LedgerRows.rows(hh, TABLES, { filter: 'all' }).forEach(function (r) { st[r.id] = r.status; });
+    return rows.some(function (r) { var v = st[r.id]; return v && v !== 'missing' && v !== 'notSure' && v !== 'computed'; });
+  }
+  function levelTargeted(door, L) {
+    var m = /^#x-(D|A|I|T|E|you)-([1-4])$/.exec(location.hash || '');
+    return !!m && m[1] === door && Number(m[2]) === L;
+  }
   function build() {
     var hh = h();
     var all = LedgerRows.all().filter(function (r) { return !/^prefs\./.test(r.path); });
+    var everything = allLevelsOn();
     Doors.DOORS.forEach(function (d) {
       var mine = all.filter(function (r) { return r.door === d.id; });
       var out = '';
       [1, 2, 3, 4].forEach(function (L) {
         var rows = mine.filter(function (r) { return r.level === L; });
         if (!rows.length) return;
-        out += '<details class="xlvl" id="x-' + esc(d.id) + '-' + L + '" open><summary>Level ' + L + ' · ' + esc(Doors.LEVELS[L - 1].label) + '</summary>';
+        var open = L === 1 || everything || levelStarted(hh, rows) || levelTargeted(d.id, L);
+        out += '<details class="xlvl" id="x-' + esc(d.id) + '-' + L + '"' + (open ? ' open' : '') + '><summary>Level ' + L + ' · ' + esc(Doors.LEVELS[L - 1].label)
+          + '<span class="xgloss">' + esc(Doors.LEVELS[L - 1].gloss) + '</span><span class="xlcount" data-x-lvlcount="' + esc(d.id) + '-' + L + '"></span></summary>';
         var listsHere = {};
         rows.forEach(function (r) {
           if (ITEM_ROWS[r.id]) { listsHere[ITEM_ROWS[r.id]] = true; }
@@ -1425,6 +1466,7 @@
     el('xjump').innerHTML = Doors.DOORS.map(function (d) { return '<a href="#x-' + esc(d.id) + '">' + esc(d.letter) + '</a>'; }).join('');
     index();
     wire();
+    wireDepth();
     paintValues();
     paintApplies();
     paintSuggestions();
@@ -1503,7 +1545,38 @@
       var c = Doors.counts(hh, TABLES, d.id, []);
       var cnt = document.querySelector('[data-x-count="' + d.id + '"]');
       if (cnt) cnt.textContent = c.known + ' of ' + c.total + ' known';
+      Object.keys(c.byLevel || {}).forEach(function (L) {
+        var n = document.querySelector('[data-x-lvlcount="' + d.id + '-' + L + '"]');
+        if (n) n.textContent = c.byLevel[L].known + ' of ' + c.byLevel[L].total;
+      });
     });
+  }
+  /* The depth switch: flips every level's <details>, remembers the choice. */
+  function paintDepth() {
+    var on = allLevelsOn();
+    var b = el('x-depth');
+    if (!b) return;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.textContent = on ? 'Level 1 first' : 'Show every level';
+  }
+  function wireDepth() {
+    var b = el('x-depth');
+    if (!b) return;
+    b.addEventListener('click', function () {
+      var on = !allLevelsOn();
+      try { SLAF.Prefs.set(ALL_LEVELS_PREF, on); } catch (e) { /* storage refused: still works for this page */ }
+      var hh = h();
+      Array.prototype.forEach.call(document.querySelectorAll('details.xlvl'), function (lv) {
+        var m = /^x-(D|A|I|T|E|you)-([1-4])$/.exec(lv.id);
+        if (!m) return;
+        var L = Number(m[2]);
+        if (on) { lv.open = true; return; }
+        var rows = LedgerRows.all().filter(function (r) { return r.door === m[1] && r.level === L; });
+        lv.open = L === 1 || levelStarted(hh, rows) || levelTargeted(m[1], L);
+      });
+      paintDepth();
+    });
+    paintDepth();
   }
   var SUG = {};
   function paintSuggestions() {

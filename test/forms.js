@@ -1232,7 +1232,17 @@ const CASES = [
     room: '/rooms/ledger.html#all-at-once',
     container: '#xform',
     seed: 'empty',
-    prepare: async (page) => { await page.waitForSelector('[data-x-row="dob"]'); },
+    /* D-249: only level 1 of each door is open at first; the debts list is
+       level 2. This walk types into every box, which is the expert's path,
+       so it flips the depth switch first — and in doing so checks that a
+       folded box opens and takes typing without being rebuilt. */
+    prepare: async (page) => {
+      await page.waitForSelector('[data-x-row="dob"]');
+      const before = await page.$eval('#x-D-2', d => d.open);
+      await page.click('#x-depth');
+      await page.waitForSelector('#x-D-2[open]');
+      page.__depthBefore = before;
+    },
     fields: [
       { sel: '[data-x-row="zip"] [data-x-input]', type: '12203' },
       { sel: '[data-x-row="employmentStatus"] [data-x-val="unemployed"]', tap: true },
@@ -1249,6 +1259,7 @@ const CASES = [
           debt: (h.debts[0] || {}).label + ':' + (h.debts[0] || {}).balanceCents, rows: document.querySelectorAll('[data-x-row]').length };
       });
       return [
+        ['level 2 of Debt was folded before the switch (D-249)', page.__depthBefore, false],
         ['the ZIP landed', s.zip, '12203'],
         ['the situation landed', s.status, 'unemployed'],
         ['the last pay landed', s.lastPay, 9500000],

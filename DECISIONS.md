@@ -14391,6 +14391,37 @@ itself was skipping silently in this container — it looked for Chromium at a
 path that had moved and for playwright only in the local tree — and now finds
 both, because a check that passes by not running is not a check.
 
+## D-249 — The all-at-once view opens at level 1; every deeper level is one tap away
+
+**Why.** Measured on a phone (docs/END-TO-END-AUDIT.md F7): the all-at-once
+view of the Ledger opened with 93 boxes across 21 levels, every one expanded,
+11,720 pixels tall before a single number was typed — 20,090 with a household
+loaded. The expert path was real, and ungroomed. The owner's brief of
+2026-09-19 asks for "deeper questions behind an advanced level".
+
+**Decision.** `rooms/ledger.html` only. Level 1 of each door (the totals)
+opens by default. A deeper level opens when the person has already put a
+number in it (their work is never folded away), when the link points into it
+(`#x-E-3` opens level 3 of Expenses and its door), or when the depth switch
+is on. The switch is one button in the sticky bar, remembered in Prefs
+(`ledger.allLevels`) so an expert flips it once per device. A closed level's
+summary carries the level's gloss from `Doors.LEVELS` and its known-of-total
+count from `Doors.counts().byLevel`, so a fold reads as a sentence. Toggling
+`<details>` shows and hides; nothing is rebuilt (D-034). Also, from the same
+audit: the room age line (D-248) now says how many of the figures on screen
+are guesses the app filled in (`Progress.forRoom` already carried the flag).
+
+**Replaces or removes.** The default that every level is open. No new room,
+control type or vocabulary: the levels, the gloss and the counts all existed.
+
+**Stored shape.** No change to `slaf.household.v2`. One Prefs key,
+`ledger.allLevels`, a boolean; absent reads as off.
+
+**Verified.** `node test/run.js` (31,639), `node test/forms.js`, the a11y suite
+(77 rooms, 0 rules failed), and the phone walk re-measured: 6 levels open of
+21 and 5,229 pixels after the First Round; the switch opens all 21 and
+survives a reload; the deep link opens its level.
+
 ---
 
 # The Dungeons & Dividends entries
