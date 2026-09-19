@@ -94,7 +94,7 @@ Fields: 114. Traced: 105. No other room mentions it: **56**.
 - `ledgerIncome` — Income logged, a month · read by statement
 - `futureIncome` — Money that is coming · read by statement
 - `incomeType` — What kind of pay · read by ledger
-- `paySurvives` — Keeps paying if the job goes · read by ledger, start
+- `paySurvives` — Would this pay keep coming if the job ended? · read by ledger, start
 
 ## partner (7)
 
@@ -163,9 +163,9 @@ Fields: 114. Traced: 105. No other room mentions it: **56**.
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
 - `netWorth` — Net worth · read by ledger, budget, dashboard, financial-snapshot, fire, what-if-life, one-pager
 - `assetValue` — What each account or thing is worth · read by ledger
-- `assetCharacter` — How it is taxed on the way out · read by ledger
-- `assetTier` — Which pile it sits in · read by ledger
-- `assetCostBasis` — Cost basis · read by ledger
+- `assetCharacter` — How this account is taxed when money comes out · read by ledger
+- `assetTier` — Which pile it belongs to: cash, taxable, retirement, property · read by ledger
+- `assetCostBasis` — What you paid in (the cost basis) · read by ledger
 - `assetInstitution` — Where it is held · **no other room mentions it**
 - `assetAccountType` — Account type · **no other room mentions it**
 

@@ -1275,7 +1275,8 @@
       line = 'Level 0 of ' + g.total + '. To see what is left each month, enter: ' + l1.missing.map(function (m) { return '<a href="' + esc(m.href) + '">' + esc(m.label.toLowerCase()) + '</a>'; }).join(', ') + '.';
     } else {
       var c = g.current;
-      line = '<strong>Level ' + c.n + ' of ' + g.total + '.</strong> Left each month: <strong class="' + (c.gapCents < 0 ? 'is-short' : '') + '">' + esc(signedMoney(c.gapCents)) + '</strong>'
+      /* The figure is a door (D-311): the income statement shows what it is made of. */
+      line = '<strong>Level ' + c.n + ' of ' + g.total + '.</strong> Left each month: <a href="rooms/statements.html" title="See what this is made of"><strong class="' + (c.gapCents < 0 ? 'is-short' : '') + '">' + esc(signedMoney(c.gapCents)) + '</strong></a>'
         + (c.gapCents < 0 ? ' short' : '') + ' <span class="dim">(' + esc(c.basis) + ')</span>.';
       if (g.next) line += ' To make it more exact, enter: ' + g.next.missing.map(function (m) { return '<a href="' + esc(m.href) + '">' + esc(m.label.toLowerCase()) + '</a>'; }).join(', ') + ' <span class="dim">(level ' + g.next.n + ', ' + esc(g.next.say) + ')</span>.';
       else line += ' Every level is in.';

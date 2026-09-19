@@ -38,6 +38,10 @@ Updated: 2026-09-19
   The Month draws, plus your own dates (a card to apply for, a renewal to
   cancel, a form due), drawn on the month and never counted. Thirty-two
   rooms. All three intakes stay (D-309).
+- **Plain words everywhere (D-310)**: every live room's lede and blurb, and
+  the twenty-eight questions rooms ask, say the thing, the number and the
+  unit; a renamed row remembers its old words for the CSV round trip. The
+  deduction says its year, the front-page figure is a door (D-311).
 - **Freeze ON, and honoured** for everything but the one room the owner
   asked back.
 
