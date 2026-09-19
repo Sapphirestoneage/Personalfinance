@@ -450,7 +450,8 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>The Statement</h1>
-  <p class="room-lede">What you own, where the next dollar lands, and the same period written out.</p>
+  <p class="room-lede">Everything you own, in three groups, and the one number underneath: your net worth. Where the next dollar lands, and the same period written out.</p>
+  <p class="print-only" id="print-date"></p>
 </header>
 
 <main class="slaf-wrap">
@@ -920,6 +921,15 @@
      one line. Cash, property, business are set by category, not chosen. */
   var KINDS = Schema.TAX_CHARACTERS.map(function (t) { return [t.id, t.label + ' \u2014 ' + t.hint]; })
     .concat([['hsa', 'HSA'], ['529', '529 plan'], ['daf', 'Donor-advised fund']]);
+  /* The account types, grouped the way a statement lists them (D-251).
+     Blank means not asked; the Kind box beneath still says how it is taxed. */
+  function accountTypeOptions(a) {
+    var groups = [], by = {};
+    Schema.ACCOUNT_TYPES.forEach(function (t) { if (!by[t.group]) { by[t.group] = []; groups.push(t.group); } by[t.group].push(t); });
+    return '<option value=""' + (a.accountType ? '' : ' selected') + '>Not set</option>' + groups.map(function (gname) {
+      return '<optgroup label="' + esc(gname) + '">' + by[gname].map(function (t) { return '<option value="' + esc(t.id) + '"' + (a.accountType === t.id ? ' selected' : '') + '>' + esc(t.label) + '</option>'; }).join('') + '</optgroup>';
+    }).join('');
+  }
   function byCategoryLabel(a, rules) {
     var rule = rules ? Schema.assetRule(Object.assign({}, a, { taxCharacter: null }), rules) : null;
     var t = rule ? Schema.TAX_CHARACTERS.filter(function (k) { return k.id === rule.key; })[0] : null;
@@ -996,7 +1006,13 @@
         + '<input class="asset-name" data-asset="' + a.id + '" data-field="label" value="' + esc(a.label || '') + '" placeholder="' + esc(name) + '" aria-label="Name"' + (mine ? '' : ' readonly') + '/>'
         + (mine ? '<button type="button" class="asset-remove" data-remove="' + a.id + '" aria-label="Remove">✕</button>' : '')
         + '</div>'
-        + '<div class="asset-grid">' + valueCell + typeCell
+        + '<div class="asset-grid">'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Where it is held</span>'
+        + '<span class="slaf-input-shell"><input type="text" data-asset="' + a.id + '" data-field="institution" value="' + esc(a.institution || '') + '" placeholder="e.g. the bank or broker" aria-label="Where it is held"/></span></label>'
+        + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Account type</span>'
+        + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="accountType" aria-label="Account type">' + accountTypeOptions(a) + '</select></span></label>'
+        + '</div>'
+        + '<div class="asset-grid" style="margin-top:var(--space-2)">' + valueCell + typeCell
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Which pile it sits in</span>'
         + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="tier" aria-label="Pile">'
         + tierOptions(a) + '</select></span></label>'
@@ -1018,7 +1034,7 @@
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Reachable from age</span>'
         + '<span class="slaf-input-shell"><input type="text" inputmode="decimal" data-asset="' + a.id + '" data-field="accessAgeOverride" value="' + (Money.isEntered(a.accessAgeOverride) ? a.accessAgeOverride : '') + '" placeholder="' + (Money.isEntered(access) ? 'rule: ' + access : 'no age gate') + '" aria-label="Access age override"/></span></label>'
         + '</div></details>'
-        + '<p class="asset-sub">' + (rule ? 'Filed under ' + esc((rules.buckets.filter(function (b) { return b.id === rule.bucket; })[0] || {}).label || rule.bucket)
+        + '<p class="asset-sub">' + (Schema.whereItSits(a) ? esc(Schema.whereItSits(a)) + ' \u00b7 ' : '') + (rule ? 'Filed under ' + esc((rules.buckets.filter(function (b) { return b.id === rule.bucket; })[0] || {}).label || rule.bucket)
           + (Money.isEntered(access) ? ' · reachable from ' + access : ' · no age gate') : '') + '</p>'
         + '</div>';
     }).join('');
@@ -1070,6 +1086,13 @@
     else if (field === 'category') { if (!mine) return; patch.category = text; patch.liquid = false; }
     else if (field === 'valueCents') { if (!mine) return; patch.valueCents = Money.parseMoney(text); }
     else if (field === 'taxCharacter') { patch.taxCharacter = text === '' ? (existing.taxCharacter === 'unknown' ? 'unknown' : null) : text; }
+    else if (field === 'institution') { patch.institution = text === '' ? null : text; }
+    else if (field === 'accountType') {
+      /* One function decides what a type implies (Schema.applyAccountType):
+         the tax character always, the category only while it is 'other'. */
+      Object.assign(patch, Schema.applyAccountType(existing, text === '' ? null : text));
+      if (patch.category) { patch.liquid = patch.category === 'cash'; }
+    }
     else if (field === 'tier') {
       /* 15.8: the pile. Blank = derived from the kind; `liquid` follows the
          pile so every reader of the flag agrees. D-181. */
@@ -1168,7 +1191,8 @@
       return '<div class="portfolio"><div class="head"><h3>' + esc(b.label) + '</h3><span class="tot">' + fmt(b.totalCents) + '</span></div>'
         + '<p class="blurb">' + esc(b.blurb) + (b.cashFlowMonthlyCents ? ' Throws off ' + fmt(b.cashFlowMonthlyCents) + ' a month.' : '') + '</p>'
         + (b.assets.length ? '<ul>' + b.assets.map(function (x) {
-            return '<li><span>' + esc(x.asset.label || x.rule.key) + (x.asset.taxCharacter ? '' : ' <em style="color:var(--color-text-faint)">(' + esc(x.rule.key) + ', by category)</em>') + '</span><span class="amt">' + fmt(x.asset.valueCents) + '</span></li>';
+            var where = Schema.whereItSits(x.asset);
+            return '<li><span>' + esc(x.asset.label || x.rule.key) + (where ? ' <em style="color:var(--color-text-faint)">' + esc(where) + '</em>' : '') + (x.asset.taxCharacter ? '' : ' <em style="color:var(--color-text-faint)">(' + esc(x.rule.key) + ', by category)</em>') + '</span><span class="amt">' + fmt(x.asset.valueCents) + '</span></li>';
           }).join('') + '</ul>' : '<p class="blurb">Nothing here.</p>')
         + '</div>';
     }).join('');

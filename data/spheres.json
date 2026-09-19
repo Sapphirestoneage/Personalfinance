@@ -227,6 +227,8 @@
       "depth": {
         "rows": [
           "assetCharacter",
+          "assetAccountType",
+          "assetInstitution",
           "assetCostBasis",
           "rothContributed",
           "hsaContributed",
@@ -236,7 +238,7 @@
           "rebalanceBand",
           "stockShare"
         ],
-        "minutes": 9.0
+        "minutes": 10.0
       },
       "unlocks": [
         "accounts",

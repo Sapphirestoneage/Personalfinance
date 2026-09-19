@@ -13961,6 +13961,731 @@ checks), `node tools/context/build.js --check`. All six readings, the five
 redirects and the deep links `#draftt`, `#out-rate`, `#out-wealth`, `#habit`
 and `#guess` loaded at 390px with a clean console.
 
+## D-234 — Up next: what is open, what one answer opens, and which FIRE tier you are on
+
+**Why.** The owner: the app feels clunky; it should say at all times what
+it can already tell you, what to fill in to unlock the next reading with
+the fewest numbers, and which tier of FIRE you are on and what reaches the
+next one. The panel note on STATUS.md said the same: thirty is still a
+library, one screen in front of it.
+
+**Decision.** `shared/upnext.js` lists ten readings, each naming the least
+set of shared fields it needs and the engine that produces it; `plan()`
+returns which are open, which are locked cheapest first with the missing
+fields as links, and per field how many readings it opens. `engines/fire.js`
+gains `tiers()`: every variant with a target as rungs of one ladder sorted
+by size (Barista only with a part-time income), the rung reached, the next
+one, the gap and the years at this pace. `index.html` draws both: one strip
+above the four blocks, on the landing and the panel alike, and the rungs
+inside block 4. `needs` is a promise, and the test fills exactly those on an
+empty household to hold it.
+
+**Replaces or removes.** The landing's "N of M answers in" counter and its
+pick-up link; the strip is the one progress line on the page and "Continue"
+goes to the cheapest unlock. No new room, screen or field; the blocks stay
+four (D-096 still holds).
+
+**Stored shape.** No change. Nothing here is stored.
+
+**Verified.** `node test/run.js` (31,040 checks), `node test/forms.js` (619
+checks), `node tools/context/build.js --check`. Empty, part-way and the demo
+loaded at 390px with a clean console; the strip, the rungs and every link
+checked by hand.
+
+## D-235 — The map: one road, you are here, and the routes from here
+
+**Why.** The owner, after D-234: a map of the whole FIRE road with "you
+are here", and the routes you can take, named — the scenic one, the death
+march. The pieces existed in four rooms (the ladder, the tiers, the back
+half, the Long Way Round) and no screen put them on one line.
+
+**Decision.** `engines/journey.js` reads the road: the ten FOO steps
+(`Foo.evaluate`), the tier rungs (`Fire.tiers`), the back half, and where
+you are on each; and paces four routes from `data/journey_routes.json`:
+the road as it is, the scenic route (half today's saving), the death march
+(spend only the FAT floor, D-197; 70% of spending until it is typed, the
+same fallback Lean uses) and coast then cruise (today's pace to the Coast
+rung, then nothing, arriving at the coast age). Every year comes from
+`Projection.yearsToTargetCents`, so "as it is" is the dashboard's FI year.
+`shared/journeymap.js` draws it once; `rooms/fire.html#map` opens the room
+with it and the dashboard's flight plan shows the same map. A rung not yet
+reached reads "next", never "you are here".
+
+**Replaces or removes.** The dashboard's bare ladder strip and its
+sentence; block 4's link now goes to the map. The route names are a
+vocabulary the owner asked for by name; they are data, not rooms.
+
+**Stored shape.** No change. The map writes nothing.
+
+**Verified.** `node test/run.js` (31,127 checks), `node test/forms.js`,
+`node tools/context/build.js --check`. The FIRE room and the flight plan
+at 390px and 1100px with a clean console, empty and with the demo.
+
+## D-236 — Debt Payoff: where the payment goes, and what each fall frees
+
+**Why.** The owner, from the phone: a sankey of the debt money, and a
+timeline of when it is over, because "the car will be paid off pretty
+quickly, and that frees up quite a lot of money, no?" It does, the engine
+already rolled the freed minimum onto the next debt, and no screen said so.
+
+**Decision.** `engines/debt.js` `simulate()` now records, per month, what
+each debt was paid and charged (`schedule[].paid`, `.interest`), every
+minimum by id, and on each payoff the minimum it frees. Two readers over
+that, nothing simulated again: `monthFlow(plan, month)`, the month as a
+flow (minimums and extra in, each debt, interest and balance paid down
+out), and `cascade(plan)`, the plan as phases between falls, what each
+debt gets a month, what the fallen one frees and where it goes: onto the
+next target while the plan pushes, back to the household once the stop
+line (D-191) has passed or nothing is left. `rooms/debt-payoff.html`'s
+"The order they fall" fold draws the flow (`Charts.sankey`), the cascade
+(`Charts.columns`, one column a phase, a last one for the month it is all
+free) above the balances, and each payoff in the list says what it frees
+and where that goes, ending with the month the whole budget is yours.
+
+**Replaces or removes.** Nothing leaves; the fold absorbs the story
+rather than a second card. The freeze allows it: no room, screen or
+field is added, and the summary line now says the one figure people want.
+
+**Stored shape.** No change. Nothing here is stored.
+
+**Verified.** `node test/run.js` (31,186 checks), `node test/forms.js`,
+`node tools/context/build.js --check`. The room at 390px with three
+example debts: the flow, the columns, the list and a clean console.
+
+## D-237 — Plain words: what a page shows, what it needs, and the debt fold said flat
+
+**Why.** The owner, on the phone with nine debts: the fold "doesn't feel
+helpful, there needs to be more explanation", and then, of the app at
+large, "all the words feel sing-songy; even I have a difficult time
+understanding what it is, what the purpose is and what it's measuring."
+The house voice writes a lede as a line of prose and never says the
+three plain things.
+
+**Decision.** `shared/progress.js` `purposeHtml(roomId)` generates one
+flat line under every room title, mounted with the header: **Shows:** the
+room's registry subsections (those whose id starts with `out-`, else all
+but reading, inputs and assumptions), **Needs:** its `needs` by field
+label. Generated, so it cannot drift from what the room does. The Debt
+Payoff fold opens with four flat sentences (What this shows, Monthly
+payment, First payoff, All debts paid), then the payoff order with what
+each frees and where it goes, then the three charts, each with one line
+saying what its axes and colours are. `shared/charts.js`: sankey labels
+get a halo and a middle column's name is cut to its gap; narrow columns
+label every k-th month. The rule for new copy from here: name the thing,
+the number and the unit; no metaphor in a caption.
+
+**Replaces or removes.** Nothing; the line is generated from data every
+room already carries. The lede stays until a room-by-room copy pass,
+which is the owner's call on order (STATUS).
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,222 checks), `node test/forms.js`,
+`node tools/context/build.js --check`. Debt Payoff at 390px with nine
+example debts, clean console.
+## D-238 — A page may not write to an id it does not carry
+
+**Why.** The Scorecard wrote to `el('provenance')` and `el('ra-provenance')`;
+both elements were lost in the D-233 merge. `el` returned null, the throw
+aborted the render three cards early, and the catch around it announced
+"Couldn't load the reference tables in data/" over tables that had loaded.
+Emergency fund coverage, debt-to-income and the FIRE number all read "—" on a
+household holding every input for them.
+
+**Decision.** Both elements restored in `rooms/financial-snapshot.html`, as
+`.slaf-hint` not `.disclaimer`: `Progress.mount` inserts its box before the
+first `.disclaimer` in the page, and one nested inside a room's own section is
+a descendant of `<main>`, not a child, so `insertBefore` throws. That anchor in
+`shared/progress.js` now checks `parentNode` too. `test/run.js` fails the build
+if any page writes to an id its own markup does not carry.
+
+**Replaces or removes.** Nothing. It restores two elements the merge dropped
+and adds a guard against the same class of loss.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,018 checks). The nine numbers at 390px:
+3 months, 5.1%, $945,000, no banner, clean console.
+
+## D-239 — Flags come out in the ladder's order, and the roof is read
+
+**Why.** The Dashboard renders `foo.flags[0]`, and flags fired in the order
+`data/foo_rules.json` listed them. The file put cash-versus-high-interest-debt
+(step 3) above an uncaptured employer match (step 2), so the front door said
+"point the excess at the debt" while What The Next Dollar Does said "capture
+the employer match, 50% guaranteed", on the same household. Separately,
+`engines/ratios.js` made the housing ratio wait on a categorised month while
+`Schema.rentMonthlyCents` had the figure typed.
+
+**Decision.** Every flag in `data/foo_rules.json` carries the ladder `step` it
+belongs to; `engines/foo.js` sorts critical-before-warning, then earliest step,
+so every consumer inherits one order. `index.html` names the rung under the
+action and links to the ladder. `housingRatio` and `backEndRatio` fall back to
+the typed accommodation figure and report which basis they read.
+`housing_above_guideline` fires off `thresholds.dtiHousingGuideline`, which no
+code had ever read; warning severity, never critical.
+
+**Replaces or removes.** Nothing added to a screen: the housing flag competes
+for the one next-action slot rather than adding a box.
+
+**Stored shape.** No change. `data/ratio_benchmarks.json` bands `debtToIncome`
+at 0.36/0.43 to agree with its own note, with `dtiComfortCeiling` and with
+`backEndRatio`; a snapshot taken before this compares a zone cut at 0.28.
+
+**Verified.** `node test/run.js` (31,018 checks). Demo dashboard and ladder
+room both read step 2 at 390px.
+
+## D-240 — The FI date carries its range and says what it assumes
+
+**Why.** `index.html` printed "22 years at this pace" from one assumed return,
+in the largest type on the page, while `rooms/fire.html` showed the same
+household as 29 / 22 / 18. And `yearsToFire` compounds D-080's *residual* rate
+— how much could have been saved — with nothing saying so.
+
+**Decision.** The line under the date carries the band from `shared/bands.js`
+through the same rate override `rooms/fire.html` uses, and says the pace
+assumes everything not spent goes in. `renderNextAction` gains one branch,
+ahead of the flags, for take-home under what the month costs: it routes to
+`rooms/cant-pay.html` and says no step of the ladder answers that. `index.html`
+loads `shared/bands.js`.
+
+**Replaces or removes.** Nothing. `rooms/cant-pay.html` already existed and was
+reachable from no screen a person starts on.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,018 checks). Demo dashboard at 390px;
+a household with a $4,500 roof routes to Can't Pay with the step line hidden.
+
+## D-241 — Nothing counts a person's failures before they have typed anything
+
+**Why.** `rooms/ledger.html` is home, and its default view's second line read
+"You understand 0% of your financial picture", over six doors counting out 59
+empty boxes. `shared/progress.js` greeted an untouched room with "13 still
+needed to finish this room" and thirteen links ending on "Any debt". The
+Scorecard opened on a composite score `data/health_score.json` calls "the most
+invented numbers in this repository".
+
+**Decision.** The Ledger's line says what the app holds, not what the person
+understands, and is hidden at 0%. A door shows its ring and count once it has
+one row in it. `shared/progress.js` at zero state shows one line and the first
+door instead of a count and a list; the counter is unchanged from the first
+entry onward. `rooms/financial-snapshot.html` opens on `view-the-nine`; the
+score is hat two and every deep link still lands. The demo confirm on
+`index.html` fires only when something has been entered.
+
+**Replaces or removes.** Removes a percentage, six counters and a thirteen-item
+list from the zero state — the freeze's direction, by state rather than by
+deletion.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,018 checks). Blank Ledger, blank Start
+Here and the seeded Scorecard at 390px; counters return on a seeded household.
+
+## D-242 — The ladder answers past step 4
+
+**Why.** A household that had met steps 0–4 got `placement: null`, and the
+Dashboard fell through to "the panel needs … before it can place you". The
+sentence behind it said steps 5 and up need contributions "which this room
+doesn't ask for yet" — untrue of `retirement.contributionPercent`, which the
+app holds, against a limit already in `data/irs_limits_2026.json`.
+
+**Decision.** `engines/foo.js` keeps step 5 `unknown` — an HSA or a Roth is not
+guessed at — but reports what is known: the percentage, the dollars, the
+elective-deferral limit and the unused space, as fields on the step.
+`rooms/foo-ladder.html` reads the rung count off `data/foo_rules.json` instead
+of the "of 9" that was typed into it.
+
+**Replaces or removes.** Nothing. It reads two figures that were already there.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,018 checks). A 10%-contributing household
+past step 4 reads "$17,300 of that space is unused".
+
+## D-243 — Three numbers that read wrong, and one named rather than changed
+
+**Why.** `engines/tax.js` fell back to the lowest bracket's rate when no slice
+was cut, so a household whose standard deduction covers its income was told its
+next dollar is taxed at 10%. `engines/ratios.js` labelled `cards ÷ total debt`
+"Revolving to installment debt" — a different ratio — and wrote a housing
+formula that parses as `housing + (utilities ÷ income)`.
+
+**Decision.** Marginal rate is 0 when nothing is taxable. `revolvingShare` is
+"Revolving share of debt", the basis its band is cut for. The housing formula
+brackets its numerator. The withdrawal rate keeps subtracting GROSS income from
+after-tax spending — specified with a worked example and sixteen checks in
+`test/run.js`, reused by the Dashboard's loop, so moving it is a decision about
+the number's meaning — and its formula and note now say so.
+
+**Replaces or removes.** Nothing. `PANEL_REVIEW.md` and `PROGRESS.md` are new
+files: the panel's findings, the fixes, and four items left to the owner.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,018 checks), `node test/forms.js`
+(playwright not installed in this container — the phone walk was done instead
+with a scripted Chromium sweep of all 95 pages at 390px with the demo
+household: no page errors, no console errors, no 404s).
+
+## D-244 — The path is the numbers, then the dashboard, then the readings; a decision room is not "next"
+
+**Why.** The owner, tapping Next from the Cushion: a safety room at step
+7, then When It Won't All Get Paid, then The Account You Left Behind,
+then What If, Life, "and I don't even know my full numbers yet". The path
+order had grown by accretion and the header's prev/next walked every
+room in the registry, decisions included.
+
+**Decision.** `shared/registry.js` `order`: the facts first (Start, Income,
+Expenses, Cash Flow, Budget, Statement, Accounts, Debt, Student Loans,
+Credit, Tax, Calendar, Estimated vs Actual), then the Dashboard, then the
+readings (Scorecard, Next Dollar, FIRE, Coast, Race, Statements, Real
+Hourly Wage). `shared/progress.js` `chain(h)`: prev/next walk only rooms
+in the home, numbers and scorecard groups that are not `explore` and
+apply to this household; a decision room's way back is the Dashboard and
+its way on is the map. `data/walk_stages.json` puts the safety stage
+after where-it-goes. Also: Start Here's badge no longer breaks inside a
+word and the ordinary "you entered" badge is gone; the Debt Payoff
+comparison's captions each fit their rail and an order that could not run
+says why.
+
+**Replaces or removes.** The arbitrary neighbours a decision room used to
+show; nothing else. No room, screen or field.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,255 checks), `node test/forms.js`
+(619), `node tools/context/build.js --check`; every room swept at 390px
+with the demo household for overflow and console errors (Start Here's
+badge overflow found and fixed).
+
+## D-245 — Fewer words on the page, and every score says what is good, why, and what to do
+
+**Why.** The owner: "there are so many words on the page, the huge
+majority needs to be hidden and summoned by an ⓘ or caret", and of the
+Scorecard's pillars, "explain like I'm 5: what's good, why it's good,
+purpose, what to do to improve."
+
+**Decision.** `shared/progress.js` `mountHintFolds()`, mounted with every
+room header: a hint paragraph longer than a line folds to one small
+button ("ⓘ What this is"); the text is a tap away, changed in place,
+never rebuilt. `data/health_score.json` gives every pillar `plain`:
+what it measures, what good is, why it matters, what raises it, in
+sentences a child could follow. `rooms/financial-snapshot.html` draws a
+verdict word (Good, Okay, Needs work) and the measure on each pillar,
+with the rest behind one caret.
+
+**Replaces or removes.** The hint paragraphs as open text; the pillar's
+literary blurb on the Scorecard (still in the table for the menu).
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,474 checks), `node test/forms.js`
+(619), `node tools/context/build.js --check`; the Scorecard and the
+Cushion at 390px with the demo, clean console.
+
+## D-246 — Logged pay reaches every reading, and paired boxes start level
+
+**Why.** The owner: "where is that $3,285 coming from? I'm getting $3,400
+or so." The Income room already held the answer ($3,436 net, logged) and
+no other room read it: STATUS's known structural problem 1.
+
+**Decision.** `shared/schema.js` `loggedTakeHomeMonthlyCents(h, T)`: this
+month's recurring entries in the income log, gross less tax, one-time
+entries never. `takeHomeAnnualCents` uses twelve of it when it exists
+(`source: 'logged'`), on the log's own gross, and the estimate otherwise
+(`source: 'estimate'`). `engines/tier0.js` divides the savings rate by
+the same gross. Every page that loads Tier 0 now loads the log engine, so
+the figure is the same on every screen. Also: `.slaf-field` is
+top-aligned, so two boxes side by side start their labels on the same
+line and a long hint under one hangs below instead of pushing the other
+box down.
+
+**Replaces or removes.** The estimate as the take-home wherever a paycheck
+is logged; STATUS's structural problem 1.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,509 checks), `node test/forms.js`,
+`node tools/context/build.js --check`; the dashboard's income tile at
+390px moves from the estimate to the logged figure once a fortnightly
+wage is logged, clean console.
+
+## D-247 — What a debt really costs: after the deduction, after inflation, and the pace that follows
+
+**Why.** The owner: "do the tax calc since student loan interest is tax
+deductible; show how much it's worth after inflation and why it makes
+sense to pay this slowly but others faster because it outpaced
+inflation."
+
+**Decision.** `engines/debt.js` `realCost(debt, opts)`: the rate, then
+after the federal student loan interest deduction (the cap and the
+income phase-out by filing status from `data/student_loan_conventions.json`,
+student loans only, at the rate the room passes and names), then after
+inflation, against the real return the app assumes; the verdict is one
+of three words from `data/debt_rules.json` `pace` (pay slowly at or below
+zero real, on schedule below the real return, fast above it), each with
+its why. `deflate(cents, months, inflation)` is the one place a future
+amount becomes today's money. Debt Payoff says it on every debt's
+interest line; Student Loans gets a card with the chain per loan, the
+verdict, and the standard plan's balance drawn in the statement's dollars
+and in today's money, with what the whole plan costs each way.
+
+**Replaces or removes.** Nothing; the card sits where the plan is chosen.
+The deduction figures are recalled and marked to verify.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node test/forms.js`, `node
+tools/context/build.js --check`; both rooms with the demo at 390px, clean
+console; the chain checked by hand (5.5% → 4.29% → 1.25% at 22% and 3%).
+
+## D-248 — Levels: the monthly gap, refined tier by tier; and the journey, what it thought and what was
+
+**Why.** The owner: "the calculator should have an understanding of where
+I am; there should be levels structured so, like, list x to get to the
+gap per month, then make that precise, each tier more specific; and
+record the journey a whole lot more, so I can see here is what you
+thought, here is what was."
+
+**Decision.** `engines/gap.js` reads the monthly gap (take-home less
+spending less the minimums, `Debt.freeMonthlyCents`) at four levels, each
+a list of ownership fields: 1 Rough (pay, one spending number, total
+debt; take-home estimated), 2 Exact pay (a recurring paycheck logged;
+level 1 keeps reading the estimate so the two can differ), 3 Spending
+split (the four lines and every minimum), 4 Actual (a closed month,
+`Debt.realizedFreeMonthlyCents`). The level you are on is the highest
+reached in order. The front-page strip leads with it: the level, the gap
+at that level with its basis, and the exact inputs the next level needs.
+The journey: `household.journal[]` (`Schema.createJournalEntry`), one
+entry the first time each level is reached and one per month closed,
+written only by the dashboard, never recomputed; the strip says "level 1
+thought X; level 3 says Y" and History lists the whole journey.
+
+**Replaces or removes.** The "N of 10 readings open" count on the strip;
+the readings list stays beneath the level.
+
+**Stored shape.** `journal` is a new top-level array on
+`slaf.household.v2`; `createHousehold` defaults it to `[]`, so an older
+save loads with an empty journey and nothing else changes. Entries carry
+`{ id, at, kind, level, cents, basis, month, note }`.
+
+**Verified.** `node test/run.js`, lane 2 with `tests/properties/gap.test.js`,
+`node tools/context/build.js --check`; the front page at 390px through
+empty, demo and logged-pay states, the journal written once per level,
+History's journey listed, clean console.
+
+
+## D-249 — Boxes side by side line up, and the check that says so looks everywhere
+
+**Why.** The owner, on a phone, on the Statement: "Still not even!!!!" The
+two dropdowns under an asset — which pile it sits in, how sure it is worth
+that — sat 16px apart, and did on 17 pages. D-246 had just top-aligned
+`.slaf-field` so labels start level, which un-did the bottom-alignment that
+had been keeping the boxes level: each fix broke the other one.
+
+**Decision.** A control's top is its field's top plus the label above it and
+nothing else — hints and sources come after the control and never move it.
+So the labels are what must match. `shared/theme.css`: every `.slaf-label`
+reserves `--slaf-label-lines` (default 2) line boxes, in `1lh` with an `em`
+fallback. A row whose longest label genuinely needs three says so —
+`shared/room.js` takes `labelLines` on a room spec, `rooms/start.html`'s
+`.row` sets 3 because a label there can carry a provenance chip. The
+Statement's `.asset-grid` drops to one column under 380px, the rule
+`.room-grid` has always had. Housing's longest label is now "Rent instead,
+a month".
+
+**Replaces or removes.** Removes the top-versus-bottom alignment argument:
+neither wins, the labels are equalised instead. Removes `test/alignment.js`'s
+list of rooms and selectors.
+
+**Stored shape.** No change.
+
+**Also.** `test/run.js` now fails if any tracked file still carries a
+`<<<<<<<`, `=======` or `>>>>>>>` line: DECISIONS.md was committed
+mid-merge and the whole suite went green, because the decisions checks
+read headings and numbers and a marker line is neither.
+
+**Verified.** `node test/alignment.js` — every page in the app, every
+container holding two or more field cells, at 320 and 390, plus the card
+passes at four widths: green. `node test/run.js` (31,537). A sweep of all 95
+pages at 320/390/414/1100, seeded and blank, finds no crooked pair and no
+overlapping or spilling child.
+
+**Why it came back.** `test/alignment.js` already ran in CI, and
+`rooms/statement.html` with `.asset-grid` was already in its TARGETS list.
+It passed anyway, three ways: it recognised a control only by
+`.slaf-input-shell`, `.slaf-owned` and `.slaf-owned-inline`, and the boxes in
+question are bare `<select>`s; with fewer than two recognised boxes it
+`return`ed instead of failing; and any container class nobody had added to
+the list was invisible regardless. A list you must remember to extend, plus a
+silent skip for anything unrecognised, is two ways to pass a page that is
+visibly crooked. The pass now walks every page found on disk, finds
+containers by structure rather than by name, counts `select`, `input`,
+`textarea` and `button` as controls, and treats a cell whose control it
+cannot find as a failure rather than a skip. It found three more crooked
+pairs in Start Here on its first run, which is the point.
+
+## D-250 — Deeper questions wait for their level
+
+**Why.** The owner, in Income: "Keeps paying if the job goes: what does
+this even mean? Have this be for a more advanced tier." A room's one
+question was the deepest blank row it wanted, asked before the basics.
+
+**Decision.** `shared/ask.js` asks a row only at or below the level its
+door has reached, the Ledger's own rule (`Doors.levelOf`: the lowest
+level with a blank row). A room whose rows are all deeper asks nothing.
+A user switch in Settings, `askDeeper` (Advanced, off), lifts the gate.
+`paySurvives` moves to level 4 in `data/ledger-rows.json`: a finer point,
+not a "where it sits" fact. The ask loads prefs, features and doors
+itself, so no room needs wiring.
+
+**Replaces or removes.** The level-2 "keeps paying" question on the
+Income room for anyone whose pay is not yet at level 4; Estate and FI
+ask nothing until their doors reach the rows they want.
+
+**Stored shape.** No change. The switch lives in `slaf.prefs.v1` like
+every other feature.
+
+**Verified.** `node test/run.js` (estate and FI asks re-pinned behind the
+switch), lane 2, `node tools/context/build.js --check`; Income at 390px
+with the demo: no ask off, the question back on; Settings lists the
+switch; clean console.
+
+## D-251 — Where each asset sits: the institution and the account type
+
+**Why.** The owner, on the Statement: "make it so that I can show which
+type of account it's in and at what institution, and whether it's a
+401k, IRA, Roth, HSA, taxable." A card held only a name and a kind.
+
+**Decision.** Every asset carries `institution` (typed) and `accountType`
+(one of `Schema.ACCOUNT_TYPES`: bank, brokerage, 401(k), Roth 401(k),
+403(b), 457(b), TSP, pension, the IRAs, HSA, 529, DAF, several-in-one,
+other). Choosing a type runs `Schema.applyAccountType`: it sets the tax
+character the type implies, and the category only while it is still
+'other'; the Kind box stays editable. `rooms/statement.html` shows both
+boxes at the top of each card and reads "bank · type" on the sub-line
+and the portfolio list. Two Ledger rows on the A door
+(`assetAccountType` level 2, `assetInstitution` level 4), asked by the
+Statement. The demo savings account sits at Example Bank, high-yield.
+
+**Replaces or removes.** Nothing on screen; the freeze allows it because
+the two boxes replace the name-only guessing of what "Investments +
+retirement" contains.
+
+**Stored shape.** `asset.institution` (text|null) and `asset.accountType`
+(enum|null) are new on every asset in `slaf.household.v2`; an older save
+loads with both null and reads as before. `createAsset` defaults them.
+
+**Verified.** `node test/run.js`, `node test/forms.js` (the Statement
+case types an institution and picks 401(k)), lane 2,
+`node tools/context/build.js --check`; the Statement at 390px with the
+demo: boxes level, no overflow, clean console.
+
+## D-252 — Debt Payoff: the order is a preference, and the plan says when it is in effect
+
+**Why.** The owner: "for the avalanche, select modes and show when
+avalanche is in effect vs not." The order reset to Avalanche on every
+visit, and nothing said that with no extra to place the order changes
+nothing at all.
+
+**Decision.** The chosen order is a preference (`debt.strategy` in
+`slaf.prefs.v1`), kept across visits like the stop line. `engines/debt.js`
+records on every month of the schedule what went beyond the minimums
+(`pushCents`) and the debt it went at first (`targetId`), and
+`Debt.pushPhases(plan)` reads the schedule as stretches: on, with the
+amount and the target, or off, when nothing is beyond the minimums or
+the stop line has passed. `rooms/debt-payoff.html` lists those
+stretches under the story as "When the order is in effect", one line
+each, dated. Nothing is simulated twice.
+
+**Replaces or removes.** The order resetting on each visit; the
+unspoken assumption that avalanche is always doing something.
+
+**Stored shape.** No change to the household. One new preference key.
+
+**Verified.** `node test/run.js` (a new section: no extra means off
+until the first minimum is freed; an extra means on from month 1 at the
+highest rate; off past the stop line), lane 2, `node test/forms.js`,
+`node tools/context/build.js --check`; Debt Payoff at 390px with the
+demo: the list reads, the choice survives a reload, clean console.
+
+## D-253 — What hits your account, and when: the month as turns, in Cash Flow and the Calendar
+
+**Why.** The owner, in Cash Flow: "I want to see a calendar along with a
+chart graph with the month going up and down as cash flow increases or
+decreases and a point of what caused it. Basically say what hits your
+account and when and then it can recalc." The Calendar room had the
+line and the grid; Cash Flow, where receipts are logged, had neither,
+and nothing named each turn.
+
+**Decision.** `engines/calendar.js` assembles what a day does in one
+place (`eventsOn`) and reads the month as `turns(result)`: every payday,
+landing, bill, pay-later instalment, logged receipt and yearly cost, in
+the order it lands, signed, with the balance at the end of that day.
+`shared/daybyday.js` draws the one picture from it: the balance line
+with a dot per turn (in green, out red, potential faint), the same days
+as the calendar grid, and the turns listed with what caused each and
+what is left. `rooms/cash-flow.html` shows it under the flow and
+recalculates on every render, so a receipt logged above moves the line;
+`rooms/calendar.html` draws the same and keeps no copy of the grid.
+
+**Replaces or removes.** The grid markup and its styles in the Calendar
+room (now `shared/daybyday.js` and `shared/theme.css`).
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (turns ordered, signed, carrying the
+day's balance; the grid and the turns share one event assembly; a dot
+per turn), `node test/forms.js`, `node tools/context/build.js --check`;
+Cash Flow and the Calendar at 390px with the demo, empty state and with
+a pay rhythm set, clean console.
+
+## D-254 — Statements that open, and the FIRE statement
+
+**Why.** The owner: "the statements need to be in way more detail, with
+expansion of each; right now income looks like cash flow; what would
+FIRE people want to see? Add them"; and "create a FIRE statement with
+the values and relevant things in there"; and "when I click on a number
+I want to be able to go to the number."
+
+**Decision.** `engines/statements.js`: every line carries `how` (one
+sentence), `parts` (what it is made of) and `field` or `room` (where
+its number lives); the income statement takes tax off between earned
+and living (the one take-home estimate every reading uses) and the
+living line opens to the four buckets; the cash flow starts at
+take-home, since the match never lands and the tax was never yours;
+the balance sheet lines open to the accounts and the debts. New
+`fireStatement`: a year of spending, the withdrawal rate, the FI
+number with lean and fat, invested today, the FI ratio, years of
+spending saved, the coast number and whether it is reached, net worth,
+the savings rate, saved in a year, the monthly gap, years to FI, the
+real return and inflation assumed, each read from the engine that owns
+it (fire, tier0, gap). `rooms/statements.html`: a fourth tab, one row
+function that opens every line to its how, its parts and "Change it in
+<room> →" through `Ownership.linkTo`.
+
+**Replaces or removes.** "Cash in from work" at gross on the cash flow
+statement; the flat, unexplained lines.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (tax off before living; the cash flow at
+take-home; the FI number, ratio and savings rate equal the owning
+engines' figures; nothing entered refuses; a dash never a zero), lane
+2, `node tools/context/build.js --check`; every tab at 390px with the
+demo, lines opening, links resolving, clean console.
+
+## D-255 — The car: new or used, the running costs, and all in a month
+
+**Why.** The owner, on the car page: "include if you bought used or
+new, repairs or not, other related numbers as well." The page priced
+depreciation from the top of the curve and named the running costs as
+shares only, so a used car read as a new one and the monthly figure
+stayed the payment.
+
+**Decision.** `engines/quickmath.js` gains `retainedFrom(curve, age,
+years)`: the curve read from the car's age, the one function the Car
+room and `engines/firstcar.js` both use (the first-car engine's own
+curve reader is gone). `firstcar.check` takes `ageYears` and
+`repairsMonthlyCents`; the all-in figure counts repairs, and
+`depreciation` says what the hold loses from that age. `rooms/car.html`
+asks, under the template's fine-tune fold, new or used, the age,
+insurance (the state average offered, never written), fuel,
+maintenance (estimated from the AAA shares when blank, said so) and
+repairs set aside; the headline, the curve and the year-by-year list
+read from the age; a new section "What it costs all in, a month" lists
+every line, cash out against the same 8% cap the payment is tested on,
+and all in with the value lost.
+
+**Replaces or removes.** The first-car engine's private curve reader;
+the shares-only reading of running costs.
+
+**Stored shape.** No change. The car stays page state (D-052).
+
+**Verified.** `node test/run.js` (the curve from an age; repairs in the
+all-in; the used hold loses less; the room asks the six), lane 2,
+`node test/forms.js`, `node tools/context/build.js --check`; the Car
+room at 390px with the demo, new and used at three years, clean
+console.
+
+## D-256 — The lens says what it does, and hides where nothing changes
+
+**Why.** The owner, on the Credit page: "what changes with the different
+screens?" The $ / hours / bought / pushed toggle sat on every room with
+no caption and no line on what a mode meant, and stayed on pages where
+it read nothing.
+
+**Decision.** `shared/lens.js` `toggleHtml` wraps the buttons with a
+caption ("Read these numbers as") and one line on the mode in use,
+from the modes' own `long` text; `hasAmounts(rows)` says whether a lens
+has a figure to read. `shared/room.js` and the strip show the toggle
+only when the room's amounts list holds an entered figure; otherwise
+the toggle and the list are empty.
+A projection room keeps a figure to read: Accounts' strip reads what
+goes into the plan this year at the contribution rate until an amount
+is typed, so the browser gate's rule (a lens on every projection room)
+and this one agree.
+
+**Replaces or removes.** The bare toggle on rooms with nothing to read.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node test/forms.js`,
+`node tools/context/build.js --check`; Real Hourly Wage at 390px shows
+the caption and the line, the Calendar and the Car with nothing typed
+show no toggle, clean console.
+
+## D-257 — Budget: the month said plainly
+
+**Why.** The owner, on Budget: "I don't know what's going on here;
+interesting idea but there needs to be a better way, redesigned and
+made way more clear and obvious."
+
+**Decision.** `engines/budget.js` `summary(sheet, now)` reads a sheet
+as one thing a person can say: what was expected out (expenses,
+savings, investments, debt; a bucket with no estimate is named, never
+counted as nought), what has gone, what is left, the day of the month,
+and a verdict (within, fast when more has gone than the days explain,
+over, none); `plainRow` gives every bucket one sentence ("Expected
+$600 · so far $410 · $190 left"). `rooms/budget.html` leads the sheet
+with the figure, the sentence and one bar with a marker for where the
+month is, and each card's head carries its sentence above the bar.
+Nothing else on the page moves.
+
+**Replaces or removes.** Nothing on screen; the freeze allows it because
+the page gains one reading and no control.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (the sum leaves the unestimated bucket
+out and names it; within, fast and over; the sentences), lane 2,
+`node tools/context/build.js --check`; Budget at 390px with the demo,
+clean console.
+
+## D-258 — Plain words on the path: the ledes name the thing, the number and the unit
+
+**Why.** The owner: "all the words feel sing-songy; even I'm having a
+difficult time understanding what it is, what the purpose is and what
+it's measuring"; and "treat this like financial planning software,
+meant to be understood by third graders and FIRE people alike."
+
+**Decision.** The ledes of the sixteen rooms on the path (Start Here
+through Variable Income) and their registry blurbs are rewritten in
+short sentences that name the thing, the number and the unit, with no
+dashes and no flourish; the room says what it measures before anything
+else. `test/run.js` holds the line: no dash and no sentence over thirty
+words in a path room's lede or blurb. On Cash Flow, the month's four
+figures link to the rooms they come from, so a number is a door.
+
+**Replaces or removes.** The old ledes and blurbs on those rooms.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node test/forms.js`,
+`node tools/context/build.js --check`; the path rooms at 390px, clean
+console.
 
 ## D-259 — The Card: three things to hand over
 
@@ -17698,3 +18423,98 @@ the whole lesson, would have read as four years. The vendored
 `dnd/shared/schema.js` is the byte-identical copy that carries the piles.
 `liquidAssetsCents` (the DEX pool and the Anchor pool) reads the same two
 piles, so nothing else moved.
+
+## DD-030 — A sheet that looks like one, and a link that previews
+
+The ask was for something that can go online and travel: a person comes away
+with a character sheet that looks like D&D, shares it, and the person they
+share it with understands it without a guide. Three things were built and one
+rule was tightened.
+
+### The silhouette is the share asset
+
+`dnd/card.html` was a tidy table of stats. It now draws the 5e sheet shape
+people already recognise: a column of six ability boxes with the modifier in
+a circle on the bottom edge, a shield for Armour Class, a hit-point box, a
+Level box, a saving-throw list with proficiency dots, and a features panel —
+all in canvas, in both skins, sized to its content.
+
+Each box keeps its finance meaning on its face so the sheet explains itself:
+STR is *Earning power*, DEX is *Resilience / mobility*, and hit points are
+captioned **weeks of runway**, which is the one number on the sheet that
+lands hardest with someone who has never seen the tool. The features panel
+carries the class headline in the voice of the profile (*"You would rather
+your money did the work."*), the lever, any active condition in red, and
+which creatures are hunting the two thinnest saves.
+
+Nothing on the sheet is retyped. Saving throws come from
+`Character.savingThrows()`, the ability labels from `dnd_rules.json`, the
+sign, alignment and headline from `dnd_profile.json`. The sheet reads the
+same engines as every other page, so it cannot drift from them.
+
+### The sheet never carries a typed figure
+
+This is the rule that matters, because the sheet is the one artefact that
+leaves the browser. It carries a class, six scores, a Level, runway in
+weeks, saving throws and creature names — all derived, all coarse. It never
+carries income, a balance, a debt, or spending. The test slices the card's
+data function and asserts it does not reach for any money field on the
+household. The share moments on the campaign say the same thing in one
+line under the button, so a person knows what they are sending before
+they send it.
+
+**Bought scores stay marked.** A score that came from point buy or the dice
+draws with a dashed border, and the sheet says so in a footnote. Otherwise a
+sheet of rolled 18s would travel as if it were measured.
+
+### Empty slots are captioned, never dashed
+
+The old card only pushed a vital when it had a value. The sheet shape draws
+a box per vital whether or not it scored, which is exactly the situation
+the empty≠zero rule (SPEC §4, §5) is about: an unmeasured slot must not
+read as a score, and a dash reads as one. So an unmeasured slot is left
+empty and captioned — *not measured*, *not scored*, *needs numbers*, *needs
+a class* — and a test asserts no score slot ever prints a dash as its value.
+The captions double as the call to action: the sheet tells the reader what
+to go and enter.
+
+### The link previews
+
+Six pages carry Open Graph and Twitter card tags with absolute URLs, so a
+pasted link unfurls in a chat as a picture rather than a bare address. The
+picture is `dnd/og.png` — the parchment sheet of one ready-made character,
+tilted, next to the line *A D&D character sheet for your actual money.* It
+is generated from the real card renderer, not drawn separately, so it can
+be regenerated when the sheet changes and never shows a sheet the tool
+does not produce. It is a pregen by construction: no real household is
+ever rendered into a committed file.
+
+### Words a player never sees
+
+The campaign's review still said *the ladder's pick* and *the one the ladder
+would have made*; the ladder is an internal name. It now says *the strongest
+move*. Two on-screen uses of *sub-stat* went the same way. The rule from
+DD-026 stands: acronyms and engine names stay in code, comments and tests.
+
+### What was not done
+
+The Fellowship party link is still waiting on the disclosure decision in
+DD-028 — the sheet's *never a typed figure* rule is the same question in
+another shape, and the answer should be the same person's. Table Mode is
+still unbuilt.
+
+### Compatibility note
+
+**Stored shape:** unchanged. Nothing new is written to `dndProfile` or the
+household; the sheet and the previews read only.
+
+**Rooms updated:** `dnd/card.html` (the sheet), `dnd/campaign.html` (share
+moments, jargon), `dnd/index.html`, `dnd/profile.html`, `dnd/descent.html`,
+`dnd/menagerie.html` (preview tags only), `dnd/og.png` (new),
+`dnd/test/run.js`.
+
+**Before touching the sheet from a new room:** anything you add to the
+card's data function must be derived and coarse — if it is a figure someone
+typed, it does not go on the sheet. The test on the data slice will catch
+the obvious fields; the rule is wider than the regex. And regenerate
+`og.png` from the renderer when the layout changes, from a pregen only.

@@ -167,10 +167,15 @@
   function formatCents(cents, opts) {
     var o = opts || {};
     if (!isEntered(cents)) return o.placeholder || EM_DASH;
-    var unit = o.roundTo !== undefined ? o.roundTo : displayRoundingCents;
-    if (!o.exact && unit > 1) cents = Math.round(cents / unit) * unit;
-    var dollars = cents / 100;
     var decimals = o.decimals === undefined ? 0 : o.decimals;
+    var unit = o.roundTo !== undefined ? o.roundTo : displayRoundingCents;
+    /* A figure asked for WITH decimals has declared itself a cents-precision
+       figure — an hourly rate, a per-unit cost. The room's rounding unit is
+       for hundreds and thousands, and applying it here rounds every wage in
+       the app to $0.00 (the default unit for an unmarked field is $1,000).
+       `decimals: 0` is the ordinary case and still rounds. D-181, corrected. */
+    if (!o.exact && !decimals && unit > 1) cents = Math.round(cents / unit) * unit;
+    var dollars = cents / 100;
     var abs = Math.abs(dollars);
     var body = abs.toLocaleString('en-US', {
       minimumFractionDigits: decimals,

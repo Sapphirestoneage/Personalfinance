@@ -42,6 +42,7 @@
     skillLinks: 'skill_links.json',
     exercises: 'exercises.json',
     fooRules: 'foo_rules.json',
+    journeyRoutes: 'journey_routes.json',
     /* The coverage gap LATER.md named: what moves a credit score, and which
        bill to keep when the month will not close (D-147, D-148). */
     creditFactors: 'credit_factors.json',

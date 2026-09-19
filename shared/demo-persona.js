@@ -145,12 +145,12 @@
       filingStatus: VALUES.filingStatus,
       state: VALUES.state,
       assets: [
-        Schema.createAsset({
-          id: 'demo_asset_cash', label: 'Savings account', category: 'cash',
+        Schema.createAsset(Object.assign({
+          id: 'demo_asset_cash', label: 'Savings account', category: 'cash', institution: 'Example Bank',
           valueCents: Money.toCents(VALUES.cashSavings), liquid: true, ownerIds: [person.id]
-        }),
+        }, Schema.applyAccountType({ category: 'cash' }, 'hysa'))),
         Schema.createAsset({
-          id: 'demo_asset_invest', label: 'Investments + retirement', category: 'investment',
+          id: 'demo_asset_invest', label: 'Investments + retirement', category: 'investment', accountType: 'mixed',
           valueCents: Money.toCents(VALUES.investmentsAndRetirement), liquid: false, ownerIds: [person.id]
         })
       ],

@@ -56,27 +56,25 @@
       "order": 1
     },
     {
-      "id": "debt-payoff",
-      "title": "Debt",
-      "file": "rooms/debt-payoff.html",
+      "id": "income",
+      "title": "Income",
+      "file": "rooms/income.html",
       "reads": [
-        "totalDebt",
-        "monthlyDebtPayments"
+        "dob"
       ],
       "writes": [
-        "loanPlan",
-        "loanExtra",
-        "idrShare",
-        "forgivenessYears",
-        "totalDebt",
-        "monthlyDebtPayments",
-        "debtBalance",
-        "debtRate",
-        "debtMinPayment"
+        "incomeLow",
+        "incomeHigh",
+        "bufferMonths",
+        "variableWindow",
+        "ledgerIncome",
+        "futureIncome",
+        "incomeType",
+        "paySurvives"
       ],
       "requires": [],
-      "dashboardNumber": "debtToIncome",
-      "order": 2
+      "dashboardNumber": null,
+      "order": 1.2
     },
     {
       "id": "expenses",
@@ -97,7 +95,7 @@
       ],
       "requires": [],
       "dashboardNumber": null,
-      "order": 3
+      "order": 1.4
     },
     {
       "id": "cash-flow",
@@ -112,28 +110,7 @@
       ],
       "requires": [],
       "dashboardNumber": null,
-      "order": 3.1
-    },
-    {
-      "id": "income",
-      "title": "Income",
-      "file": "rooms/income.html",
-      "reads": [
-        "dob"
-      ],
-      "writes": [
-        "incomeLow",
-        "incomeHigh",
-        "bufferMonths",
-        "variableWindow",
-        "ledgerIncome",
-        "futureIncome",
-        "incomeType",
-        "paySurvives"
-      ],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 3.2
+      "order": 1.5
     },
     {
       "id": "budget",
@@ -146,25 +123,7 @@
       ],
       "requires": [],
       "dashboardNumber": null,
-      "order": 3.4
-    },
-    {
-      "id": "financial-snapshot",
-      "title": "The Scorecard",
-      "file": "rooms/financial-snapshot.html",
-      "reads": [
-        "grossAnnualIncome",
-        "monthlyExpenses",
-        "cashSavings",
-        "investments",
-        "totalDebt",
-        "dob",
-        "filingStatus"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": "savingsRate",
-      "order": 4
+      "order": 1.6
     },
     {
       "id": "statement",
@@ -189,11 +148,110 @@
         "assetValue",
         "assetCharacter",
         "assetTier",
-        "assetCostBasis"
+        "assetCostBasis",
+        "assetInstitution",
+        "assetAccountType"
       ],
       "requires": [],
       "dashboardNumber": "netWorth",
-      "order": 5
+      "order": 1.8
+    },
+    {
+      "id": "debt-payoff",
+      "title": "Debt",
+      "file": "rooms/debt-payoff.html",
+      "reads": [
+        "totalDebt",
+        "monthlyDebtPayments"
+      ],
+      "writes": [
+        "loanPlan",
+        "loanExtra",
+        "idrShare",
+        "forgivenessYears",
+        "totalDebt",
+        "monthlyDebtPayments",
+        "debtBalance",
+        "debtRate",
+        "debtMinPayment"
+      ],
+      "requires": [],
+      "dashboardNumber": "debtToIncome",
+      "order": 2
+    },
+    {
+      "id": "tax",
+      "title": "Tax",
+      "file": "rooms/tax.html",
+      "reads": [
+        "grossAnnualIncome",
+        "filingStatus",
+        "state"
+      ],
+      "writes": [
+        "otherPreTax",
+        "withheld"
+      ],
+      "requires": [
+        "income"
+      ],
+      "dashboardNumber": null,
+      "order": 2.4
+    },
+    {
+      "id": "dashboard",
+      "title": "The Dashboard",
+      "file": "index.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "cashSavings",
+        "investments",
+        "totalDebt"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 3
+    },
+    {
+      "id": "financial-snapshot",
+      "title": "The Scorecard",
+      "file": "rooms/financial-snapshot.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "cashSavings",
+        "investments",
+        "totalDebt",
+        "dob",
+        "filingStatus"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": "savingsRate",
+      "order": 4
+    },
+    {
+      "id": "foo-ladder",
+      "title": "What The Next Dollar Does",
+      "file": "rooms/foo-ladder.html",
+      "reads": [
+        "grossAnnualIncome",
+        "filingStatus",
+        "monthlyExpenses",
+        "cashSavings",
+        "employerMatch",
+        "dob",
+        "highestDeductible",
+        "contributionPercent",
+        "rothContributed",
+        "hsaContributed"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": "fooStep",
+      "order": 4.2
     },
     {
       "id": "fire",
@@ -213,23 +271,7 @@
         "savingsRate"
       ],
       "dashboardNumber": "fiEtaYear",
-      "order": 8
-    },
-    {
-      "id": "dashboard",
-      "title": "The Dashboard",
-      "file": "index.html",
-      "reads": [
-        "grossAnnualIncome",
-        "monthlyExpenses",
-        "cashSavings",
-        "investments",
-        "totalDebt"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 15
+      "order": 4.4
     },
     {
       "id": "skill-tree",
@@ -275,27 +317,6 @@
       "requires": [],
       "dashboardNumber": null,
       "order": 22
-    },
-    {
-      "id": "foo-ladder",
-      "title": "What The Next Dollar Does",
-      "file": "rooms/foo-ladder.html",
-      "reads": [
-        "grossAnnualIncome",
-        "filingStatus",
-        "monthlyExpenses",
-        "cashSavings",
-        "employerMatch",
-        "dob",
-        "highestDeductible",
-        "contributionPercent",
-        "rothContributed",
-        "hsaContributed"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": "fooStep",
-      "order": 23
     },
     {
       "id": "runway",
@@ -404,25 +425,6 @@
       "requires": [],
       "dashboardNumber": "withdrawalRate",
       "order": 33
-    },
-    {
-      "id": "tax",
-      "title": "Tax",
-      "file": "rooms/tax.html",
-      "reads": [
-        "grossAnnualIncome",
-        "filingStatus",
-        "state"
-      ],
-      "writes": [
-        "otherPreTax",
-        "withheld"
-      ],
-      "requires": [
-        "income"
-      ],
-      "dashboardNumber": null,
-      "order": 34
     },
     {
       "id": "career-move",

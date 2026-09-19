@@ -195,7 +195,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>The Month</h1>
-  <p class="room-lede">When the money moves, and the day it gets tight.</p>
+  <p class="room-lede">When money moves: this month at a glance, every receipt on its date, what hits your account and when, where it all goes, and the day it gets tight.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -269,6 +269,17 @@
     <h2 style="margin:var(--space-2) 0 0" id="flow-title">This month, from what is logged</h2>
     <div id="flow-chart"></div>
     <p class="slaf-hint" id="flow-why" style="margin:var(--space-2) 0 0"></p>
+  </section>
+
+  <!-- D-253: what hits the account and when, from the one month the
+       calendar engine runs: paydays from Income, bills and receipts on
+       their dates, the balance line with every turn marked. -->
+  <section class="slaf-card" id="day-by-day" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What hits your account, and when</span>
+    <h2 style="margin:var(--space-2) 0 0" id="dbd-title">The next 31 days</h2>
+    <p class="slaf-hint" id="dbd-sum" style="margin:var(--space-1) 0 0"></p>
+    <div id="dbd-body"></div>
+    <p class="slaf-reason" style="margin-top:var(--space-2)">Paydays come from Income, bills and receipts land on their dates, and everything else is spread evenly. The pay rhythm is set in <a href="calendar.html#inputs">The Calendar</a>. Log a receipt above and this recalculates.</p>
   </section>
 
   <section class="slaf-card" id="out-net-flow">
@@ -352,6 +363,7 @@
 <script src="../shared/charts.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../engines/calendar.js"></script>
+<script src="../shared/daybyday.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/room.js"></script>
 <script>
@@ -502,14 +514,29 @@
     renderGlance(h, summary, flow);
     setCard('out-net-flow', flow, function (v) { return Money.formatCents(v); },
       Money.isOk(flow) ? dl([
-        ['Take-home pay', Money.formatCents(flow.netMonthlyIncomeCents)],
-        ['Spending', Money.formatCents(flow.spendMonthlyCents)],
-        ['Into savings', Money.formatCents(flow.savingsMonthlyCents)],
+        ['<a href="' + Ownership.linkTo('income', 'sources', 'cash-flow') + '">Take-home pay</a>', Money.formatCents(flow.netMonthlyIncomeCents)],
+        ['<a href="' + Ownership.linkTo('expenses', 'spending', 'cash-flow') + '">Spending</a>', Money.formatCents(flow.spendMonthlyCents)],
+        ['<a href="' + Ownership.linkTo('accounts', 'setup', 'cash-flow') + '">Into savings</a>', Money.formatCents(flow.savingsMonthlyCents)],
         ['Unassigned', Money.formatCents(flow.unassignedCents)]
       ]) + '<p class="slaf-reason">Spending is the month typed in <a href="expenses.html#spending">Expenses</a>; the log below is what actually left.</p>' : '');
     renderLog(h);
     renderManageLog(h);
     renderFlow(h);
+    renderDayByDay(h);
+  }
+
+  /* The month, day by day (D-253): the one function the Calendar room
+     draws; here it recalculates with every receipt logged. */
+  function renderDayByDay(h) {
+    var Cal = SLAF.Calendar, DayByDay = SLAF.DayByDay;
+    if (!Cal || !DayByDay) return;
+    var r = Cal.month(h, TABLES, {});
+    el('dbd-body').innerHTML = DayByDay.html(r);
+    var ord = function (n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+    el('dbd-sum').textContent = Money.isOk(r)
+      ? 'Low point ' + Money.formatCents(r.lowCents) + ' on the ' + ord(r.lowDom) + (r.belowZero ? ' · under zero from the ' + ord(r.firstBelowDom) : r.tight ? ' · tightest the ' + ord(r.tight.fromDom) + '–' + ord(r.tight.toDom) : ' · never under a week of spending')
+        + ' · ' + Cal.turns(r).length + ' things land'
+      : '';
   }
 
   /* ---------- the expense log (D-128) ----------------------------------------

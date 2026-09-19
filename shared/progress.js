@@ -199,16 +199,31 @@
     return null;
   }
 
-  /** Plain path neighbours, regardless of whether they are finished. */
-  function neighbours(roomId) {
-    var path = Registry.inOrder();
+  /* The chain "next" walks (D-244): the rooms that hold or read the
+     household's numbers, in path order, for this household. A decision
+     room (a car, a wedding, a rollover) is opened because you have that
+     decision, never because it came after the last page, so it has no
+     prev and next of its own; it points at the map and the dashboard. */
+  var CHAIN_GROUPS = ['home', 'numbers', 'scorecard'];
+  function chain(household) {
+    return Registry.inOrder().filter(function (r) {
+      if (CHAIN_GROUPS.indexOf(r.group) === -1 || r.kind === 'explore') return false;
+      return household ? Registry.applies(r, household) : true;
+    });
+  }
+  /** Path neighbours on the chain, regardless of whether they are finished. */
+  function neighbours(roomId, household) {
+    var h = household;
+    if (h === undefined) { var S = spine(); h = S && S.getProfile ? S.getProfile() : null; }
+    var path = chain(h);
     var idx = -1;
     path.forEach(function (r, i) { if (r.id === roomId) idx = i; });
     return {
       prev: idx > 0 ? path[idx - 1] : null,
       next: idx >= 0 && idx < path.length - 1 ? path[idx + 1] : null,
       index: idx,
-      total: path.length
+      total: path.length,
+      onChain: idx !== -1
     };
   }
 
@@ -245,7 +260,20 @@
     /* Simplified on the owner's word (D-186): when something is missing,
        one short head and the list, without the room counts; when nothing
        is, nothing at all. Silence is the signal that a room is complete. */
-    if (row.missing.length) {
+    /* Nothing entered yet is not a shortfall, it is a start. The count and
+       the list are a nudge for someone part-way through — at zero they are a
+       thirteen-item indictment of a person who has typed nothing, handed to
+       them before they have done anything wrong, and the last item on Start
+       Here is the word "Any debt". So at zero: one line and the first door,
+       and the counting behaviour returns intact the moment anything is in. */
+    var started = (row.filled || []).length > 0;
+    if (row.missing.length && !started) {
+      var first = row.missing[0];
+      out.push('<p class="slaf-progress-head">Nothing entered here yet. '
+        + 'Start with <a href="' + escapeHtml(href(first.href.replace(/^\.\.\//, ''), roomId)) + '">'
+        + escapeHtml(first.label.toLowerCase()) + '</a>'
+        + (first.ownHere ? ', on this page' : ', in ' + escapeHtml(first.ownerTitle)) + '.</p>');
+    } else if (row.missing.length) {
       out.push('<p class="slaf-progress-head"><strong>' + row.missing.length
         + ' still needed</strong> to finish this room.</p>');
       out.push('<ul class="slaf-progress-list">' + row.missing.map(function (f) {
@@ -316,8 +344,14 @@
     if (roomId === 'dashboard') return '';
     var nb = neighbours(roomId);
     var mapHref = (atRoot(roomId) ? '' : '../') + 'map.html';
+    var homeHref = (atRoot(roomId) ? '' : '../') + 'index.html';
 
     function link(room, dir) {
+      /* Off the chain (D-244): a decision room's way back is the dashboard
+         and its way on is the map; it has no neighbours of its own. */
+      if (!room && !nb.onChain && dir === 'prev') {
+        return '<a class="slaf-hop slaf-hop--prev" href="' + homeHref + '">← The Dashboard</a>';
+      }
       if (!room) {
         return '<a class="slaf-hop slaf-hop--' + dir + '" href="' + mapHref + '">'
           + (dir === 'prev' ? '← All rooms' : 'All rooms →') + '</a>';
@@ -920,6 +954,77 @@
     new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
   }
 
+  /* ---- The plain line under the title (D-237) ----------------------------
+     Every room's lede is written in the house voice, and the owner could
+     not tell from it what a page is for, what it shows or what it needs.
+     This line is generated, not written: the outputs are the room's
+     registry subsections (the ones whose id starts with out-, or all of
+     them when none does) and the inputs are its `needs`, by field label.
+     Flat words, no verbs of feeling. */
+  function purposeHtml(roomId) {
+    var room = Registry.byId(roomId);
+    if (!room) return '';
+    var subs = room.subsections || [];
+    var outs = subs.filter(function (x) { return /^out-/.test(x.id); });
+    if (!outs.length) outs = subs.filter(function (x) { return x.id !== 'reading' && x.id !== 'inputs' && x.id !== 'assumptions'; });
+    var shows = outs.slice(0, 4).map(function (x) { return escapeHtml(x.label); });
+    var more = outs.length > 4 ? ' and ' + (outs.length - 4) + ' more' : '';
+    var needs = (room.needs || []).map(function (id) { var f = Ownership.field ? Ownership.field(id) : null; return f ? escapeHtml(f.label.toLowerCase()) : null; }).filter(Boolean);
+    var parts = [];
+    if (shows.length) parts.push('<span><b>Shows:</b> ' + shows.join(', ') + more + '.</span>');
+    parts.push('<span><b>Needs:</b> ' + (needs.length ? needs.join(', ') : 'nothing entered elsewhere') + '.</span>');
+    return '<p class="slaf-purpose" id="slaf-purpose">' + parts.join(' ') + '</p>';
+  }
+  function mountPurpose(roomId) {
+    if (typeof document === 'undefined' || document.getElementById('slaf-purpose')) return;
+    var html = purposeHtml(roomId);
+    if (!html) return;
+    var lede = document.querySelector('.room-head .room-lede') || document.querySelector('.room-head h1, .room-head .room-title');
+    if (!lede) return;
+    lede.insertAdjacentHTML('afterend', html);
+  }
+
+  /* ---- Fewer words on the page (D-245) ------------------------------------
+     The owner: most of the words should be hidden and summoned by an ⓘ.
+     Every hint paragraph longer than a line folds to one small button
+     that names what it is; the text is still there, one tap away. The
+     paragraph is changed in place, never rebuilt, and a paragraph a room
+     later writes into by id simply overwrites the fold. Short hints and
+     the ones that carry a figure or a link the room set stay open. */
+  var HINT_FOLD_CHARS = 110;
+  function mountHintFolds(scope) {
+    if (typeof document === 'undefined') return 0;
+    var host = scope || document.querySelector('main') || document.body;
+    if (!host) return 0;
+    var n = 0;
+    Array.prototype.forEach.call(host.querySelectorAll('p.slaf-hint'), function (para) {
+      if (para.getAttribute('data-fold') === 'never' || para.querySelector('.slaf-hint-toggle')) return;
+      var text = (para.textContent || '').replace(/\s+/g, ' ').trim();
+      if (text.length <= HINT_FOLD_CHARS) return;
+      if (para.querySelector('input, select, button')) return;
+      var body = document.createElement('span');
+      body.className = 'slaf-hint-body';
+      while (para.firstChild) body.appendChild(para.firstChild);
+      body.hidden = true;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slaf-hint-toggle';
+      btn.setAttribute('aria-expanded', 'false');
+      btn.textContent = '\u24D8 What this is';
+      btn.addEventListener('click', function () {
+        var open = body.hidden;
+        body.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        btn.textContent = open ? '\u24D8 Hide' : '\u24D8 What this is';
+      });
+      para.classList.add('is-folded');
+      para.appendChild(btn);
+      para.appendChild(body);
+      n++;
+    });
+    return n;
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
     /* Mounted once. The header goes up at DOMContentLoaded (see the listener
@@ -934,11 +1039,13 @@
     nav.innerHTML = returnHtml(roomId) + headerNavHtml(roomId);
     back.parentNode.replaceChild(nav, back);
     mountMenu(roomId, nav);
+    mountPurpose(roomId);
     mountSituation(roomId);
     mountWalk(roomId, nav);
     mountDoors(roomId);
     mountFold(roomId);
     mountSectionSync(roomId);
+    mountHintFolds();
     return nav;
   }
 
@@ -1303,6 +1410,9 @@
 
   return {
     mount: mount,
+    chain: chain,
+    mountHintFolds: mountHintFolds, HINT_FOLD_CHARS: HINT_FOLD_CHARS,
+    purposeHtml: purposeHtml,
     mountHeader: mountHeader, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
     mountFold: mountFold,
     mountSectionSync: mountSectionSync,

@@ -25,27 +25,24 @@ try { chromium = require('playwright').chromium; } catch (e) { /* handled below 
 const BASE = process.env.SLAF_BASE || 'http://127.0.0.1:8765';
 const EXECUTABLE = process.env.SLAF_CHROMIUM || '/opt/pw-browsers/chromium';
 
-const TARGETS = [
-  ['/rooms/start.html#q-match', '.q-pair'],
-  ['/rooms/debt-payoff.html', '.debt-grid'],
-  ['/rooms/debt-payoff.html', '.fold-body .debt-meta'],
-  ['/rooms/fire.html', '.params'],
-  ['/rooms/real-hourly-wage.html', '.grid-2'],
-  ['/rooms/financial-snapshot.html#quick-math', '.grid-2'],
-  ['/rooms/financial-snapshot.html#quick-math', '.grid-3'],
-  ['/rooms/career-move.html', '.grid-2'],
-  ['/rooms/statement.html', '.grid-2'],
-  ['/rooms/hassle.html', '.grid-2'],
-  ['/rooms/career-move.html', '.grid-2'],
-  ['/rooms/career-move.html', '.grid-2'],
-  ['/rooms/statement.html', '.asset-grid'],
-  ['/rooms/statement.html', '.pair'],
-  ['/rooms/foo-ladder.html', '.grid2'],
-  ['/rooms/expenses.html', '.cat-row'],
-  ['/rooms/start.html', '.q-three'],
-  ['/rooms/start.html', '.q-about']
-];
-
+/* EVERY page, found on disk — never a list (D-247).
+   This file used to name the rooms and the container classes to look at.
+   rooms/statement.html and .asset-grid were both ON that list and the
+   Statement still shipped with its two dropdowns 16px out of line, because
+   the check only recognised .slaf-input-shell as a control and the boxes in
+   question are bare <select>s: with fewer than two recognised boxes the row
+   was skipped silently. A list you have to remember to add to, plus a
+   control test that quietly skips what it does not recognise, is two ways
+   to pass a page that is visibly crooked. So: every page in the app, every
+   container that holds two or more cells with controls in them, and a cell
+   whose control cannot be found is a FAILURE, not a skip. */
+const PAGES = (() => {
+  const fs = require('fs'), path = require('path');
+  const root = path.join(__dirname, '..');
+  const rooms = fs.readdirSync(path.join(root, 'rooms'))
+    .filter(f => /\.html$/.test(f)).sort().map(f => '/rooms/' + f);
+  return ['/index.html', '/map.html'].concat(rooms);
+})();
 /* Cells that sit side by side as CARDS rather than as labelled controls.
    Nothing in the list above can catch these: they hold no .slaf-input-shell,
    so the control-alignment pass skips them entirely, and a short card beside
@@ -110,22 +107,30 @@ const EQUAL_HEIGHT = [
       SLAF.Spine.updateProfile({ ratings: { joy: { housing: 6, groceries: 7,
         dining_out: 9, entertainment: 8, subscriptions: 3, transportation: 4 } } }); });
 
-    for (const [page, sel] of TARGETS) {
+    /* Discovery pass. 320px is where a label wraps hardest and 390px is the
+       commonest phone; the pair brackets the behaviour without walking every
+       page four times. */
+    if (width === 320 || width === 390) {
+    for (const page of PAGES) {
       await p.goto(BASE + page, { waitUntil: 'networkidle' });
-      await p.waitForTimeout(page === '/' ? 900 : 600);
-      const rows = await p.evaluate((sel) => {
+      await p.waitForTimeout(page === '/index.html' ? 700 : 450);
+      const rows = await p.evaluate(() => {
+        const CONTROL = '.slaf-input-shell, .slaf-owned, .slaf-owned-inline,'
+          + ' select, input, textarea, button, .slaf-select';
         const out = [];
-        document.querySelectorAll(sel).forEach(grid => {
-          /* A merged room holds several readings and shows one (D-229). The
-             same class can exist in a hidden one — the joy curve and the
-             rerank both draw .rate-row — and measuring that reports a row
-             of zero-height cells, which reads as "nothing rendered" and is
-             a false alarm. Measure what is on screen. */
-          if (grid.offsetParent === null) return;
-          /* Group the grid's cells into visual rows by their own top edge,
-             then check that the interactive box in each cell of a row starts
-             at the same y. Cells alone on a row are trivially aligned. */
-          const cells = Array.from(grid.children);
+        /* Any element that is the parent of two or more .slaf-field cells,
+           whatever the room chose to call it. */
+        const hosts = new Set();
+        document.querySelectorAll('.slaf-field').forEach(f => {
+          if (f.parentElement) hosts.add(f.parentElement);
+        });
+        hosts.forEach(grid => {
+          const disp = getComputedStyle(grid).display;
+          if (disp !== 'grid' && disp !== 'flex') return;
+          const cells = Array.from(grid.children).filter(c =>
+            c.classList && c.classList.contains('slaf-field')
+            && c.offsetParent !== null && c.getBoundingClientRect().height > 0);
+          if (cells.length < 2) return;
           const byRow = {};
           cells.forEach(c => {
             const t = Math.round(c.getBoundingClientRect().top);
@@ -134,26 +139,40 @@ const EQUAL_HEIGHT = [
           Object.keys(byRow).forEach(t => {
             const group = byRow[t];
             if (group.length < 2) return;
-            const boxes = group.map(c => c.querySelector('.slaf-input-shell, .slaf-owned, .slaf-owned-inline'))
-                               .filter(Boolean);
-            if (boxes.length < 2) return;
-            const tops = boxes.map(n => Math.round(n.getBoundingClientRect().top));
-            const bottoms = boxes.map(n => Math.round(n.getBoundingClientRect().bottom));
+            const info = group.map(c => {
+              const box = c.querySelector(CONTROL);
+              const lab = c.querySelector('.slaf-label');
+              return { top: box ? box.getBoundingClientRect().top : null,
+                       label: lab ? (lab.textContent || '').trim().slice(0, 30) : '(no label)' };
+            });
+            const missing = info.filter(x => x.top === null).map(x => x.label);
+            const tops = info.filter(x => x.top !== null).map(x => x.top);
             out.push({
-              tops, spread: Math.max(...tops) - Math.min(...tops),
-              bottomSpread: Math.max(...bottoms) - Math.min(...bottoms),
-              labels: group.map(c => { const l = c.querySelector('.slaf-label'); return l ? Math.round(l.getBoundingClientRect().height) : 0; })
+              where: (grid.className || grid.tagName).toString().split(' ')[0],
+              missing: missing,
+              spread: tops.length > 1 ? Math.max(...tops) - Math.min(...tops) : 0,
+              labels: info.map(x => x.label)
             });
           });
         });
         return out;
-      }, sel);
-      rows.forEach((r, i) => {
-        const ok = r.spread === 0 && r.bottomSpread === 0;
-        if (!ok) bad++;
-        console.log((ok ? '  ✓' : '  ✗') + ` ${width}px ${page} ${sel}[row ${i}]  top-spread=${r.spread}px bottom-spread=${r.bottomSpread}px labelHeights=${JSON.stringify(r.labels)}`);
+      });
+      rows.forEach(r => {
+        /* A cell with no control at all is the silent skip that let this
+           through last time. It is reported, not ignored. */
+        if (r.missing.length) {
+          bad++;
+          console.log(`  \u2717 ${width}px ${page} .${r.where}  no control found in: ${JSON.stringify(r.missing)}`);
+          return;
+        }
+        if (r.spread > 1.5) {
+          bad++;
+          console.log(`  \u2717 ${width}px ${page} .${r.where}  boxes ${r.spread.toFixed(1)}px out of line: ${JSON.stringify(r.labels)}`);
+        }
       });
     }
+    }
+
     for (const [page, sel] of EQUAL_HEIGHT) {
       await p.goto(BASE + page, { waitUntil: 'networkidle' });
       await p.waitForTimeout(600);

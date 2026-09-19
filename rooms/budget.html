@@ -160,6 +160,23 @@
   #view-this-month .na-note { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
   
   #view-this-month .na-note button { background: none; border: 0; padding: 0; font: inherit; color: var(--color-accent-hover); cursor: pointer; text-decoration: underline; }
+  /* The month said plainly (D-257): one figure, one sentence, one bar. */
+  #view-this-month .month-say { margin-top: var(--space-4); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); }
+  #view-this-month .month-say .ms-big { font-family: var(--font-display); font-size: var(--text-2xl); font-variant-numeric: tabular-nums; line-height: 1.1; }
+  #view-this-month .month-say .ms-big.is-over { color: var(--color-critical); }
+  #view-this-month .month-say .ms-big.is-fast { color: var(--color-caution); }
+  #view-this-month .month-say .ms-big.is-within { color: var(--color-positive); }
+  #view-this-month .month-say .ms-say { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  #view-this-month .month-say .ms-track { position: relative; height: 10px; margin-top: var(--space-3); border-radius: 5px; background: var(--color-surface); border: 1px solid var(--color-border); overflow: hidden; }
+  #view-this-month .month-say .ms-track i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--color-positive); }
+  #view-this-month .month-say .ms-track i.is-over { background: var(--color-critical); }
+  #view-this-month .month-say .ms-track i.is-fast { background: var(--color-caution); }
+  #view-this-month .month-say .ms-track b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--color-text-muted); }
+  #view-this-month .month-say .ms-key { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-1); font-size: var(--text-xs); color: var(--color-text-faint); }
+  #view-this-month .month-say .ms-in { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); }
+  #view-this-month .bucket-card .c-plain { display: block; font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 400; margin-top: 2px; }
+  #view-this-month .bucket-card .c-plain.is-over { color: var(--color-critical); }
+  #view-this-month .bucket-card .c-plain.is-short { color: var(--color-caution); }
   /* Hypothetical — a what-if view of the same sheet. Visually its own
      thing: dashed amber edge, amber banner, and nothing on it writes. */
   
@@ -258,7 +275,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>The Close</h1>
-  <p class="room-lede">Close the month. Then read the months back, and the line they make.</p>
+  <p class="room-lede">Close the month: what you expected, what landed, and what is left. Then read the months back, and the line they make.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -281,6 +298,8 @@
     </div>
     <div class="hypo-bar"><button type="button" class="hypo-toggle" id="btn-hypo" aria-pressed="false">What if… (a view that saves nothing)</button></div>
     <div class="hypo-banner" id="hypo-banner" role="status"><strong>Hypothetical</strong><span>A what-if view of this month. Options you marked not applicable are back, and anything you stack here is not saved — switch it off and the real budget is exactly as it was.</span></div>
+    <!-- D-257: the month said plainly before the buckets. -->
+    <div class="month-say" id="month-say"></div>
     <div class="cards" id="rows"></div>
     <p class="why" id="sheet-why"></p>
   </section>
@@ -569,6 +588,22 @@
     el('month-title').innerHTML = esc(sheet.label) + '<span class="status' + (sheet.status === 'closed' ? ' is-closed' : '') + '" id="month-status">'
       + (sheet.status === 'closed' ? 'closed ' + esc(shortDate(sheet.closedAt)) : sheet.isFuture ? 'ahead — estimates only' : sheet.isCurrent ? 'open, this month' : 'open, not yet closed') + '</span>';
     if (justAdded) openBucket = justAdded;
+    /* The month said plainly (D-257): read off the sheet by the engine. */
+    var sum = Budget.summary(sheet);
+    if (sum) {
+      var pctOf = function (c, max) { return Math.max(0, Math.min(100, max > 0 ? c / max * 100 : 0)); };
+      var max = Math.max(sum.expectedOutCents, sum.goneCents, 1);
+      var dayPct = sum.days.total ? sum.days.passed / sum.days.total * 100 : 0;
+      var big = sum.verdict === 'none' ? 'Nothing expected yet'
+        : sum.leftCents < 0 ? money(-sum.leftCents) + ' over'
+        : money(sum.leftCents) + (sheet.status === 'closed' ? ' unspent' : ' left to spend');
+      el('month-say').innerHTML = '<div class="ms-big is-' + esc(sum.verdict) + '">' + esc(big) + '</div>'
+        + '<p class="ms-say">' + esc(sum.say) + (sum.unestimated.length && sum.verdict !== 'none' ? ' No estimate yet for ' + esc(sum.unestimated.join(', ').toLowerCase()) + '.' : '') + '</p>'
+        + (sum.verdict !== 'none' ? '<div class="ms-track" role="img" aria-label="What has gone against what was expected"><i class="is-' + esc(sum.verdict) + '" style="width:' + pctOf(sum.goneCents, max) + '%"></i>'
+          + (sheet.isCurrent ? '<b style="left:' + pctOf(sum.expectedOutCents * dayPct / 100, max) + '%" title="Where the month is"></b>' : '') + '</div>'
+          + '<div class="ms-key"><span>' + esc(money(sum.goneCents)) + ' gone' + (sheet.isCurrent ? ' · day ' + sum.days.passed + ' of ' + sum.days.total : '') + '</span><span>' + esc(money(sum.expectedOutCents)) + ' expected out</span></div>' : '')
+        + (Money.isEntered(sum.expectedInCents) || Money.isEntered(sum.landedCents) ? '<p class="ms-in">Income: ' + esc(sum.rows.income.text.toLowerCase()) + '.</p>' : '');
+    } else { el('month-say').innerHTML = ''; }
     el('rows').innerHTML = sheet.rows.map(function (r) {
       var open = sheet.status === 'open' && !hypo;
       var isOpen = openBucket === r.bucket;
@@ -577,7 +612,9 @@
       if (!lines.length) lines.push('<li class="is-hint"><span>' + esc(open ? 'Nothing has landed in this bucket yet this month.' : 'Nothing was logged in this bucket.') + '</span></li>');
       return '<article class="bucket-card' + (justAdded === r.bucket ? ' just-added' : '') + (isOpen ? ' is-open' : '') + '" id="bucket-' + r.bucket + '">'
         + '<button type="button" class="c-head" data-toggle="' + r.bucket + '" aria-expanded="' + isOpen + '">'
-        + '<span><span class="c-name">' + esc(r.label) + '<span class="c-chev">▶</span></span><span class="c-from">' + esc(sheet.status === 'closed' ? 'as closed' : (Money.isEntered(r.estimatedCents) ? 'estimate from ' + r.estFrom : (r.estReason || 'no estimate yet'))) + '</span></span>'
+        + '<span><span class="c-name">' + esc(r.label) + '<span class="c-chev">▶</span></span>'
+        + (sum ? '<span class="c-plain is-' + esc(sum.rows[r.bucket].word) + '">' + esc(sum.rows[r.bucket].text) + '</span>' : '')
+        + '<span class="c-from">' + esc(sheet.status === 'closed' ? 'as closed' : (Money.isEntered(r.estimatedCents) ? 'estimate from ' + r.estFrom : (r.estReason || 'no estimate yet'))) + '</span></span>'
         + diffCell(r) + '</button>'
         + compareBar(r, sheet.status === 'closed')
         + '<div class="c-body"><ul class="c-lines">' + lines.join('') + '</ul>'

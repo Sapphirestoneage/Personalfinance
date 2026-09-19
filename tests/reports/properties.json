@@ -1,8 +1,8 @@
 {
   "seed": 20260910,
   "numRuns": 100,
-  "engines": 88,
-  "files": 91,
+  "engines": 90,
+  "files": 93,
   "missingFiles": [],
   "extraFiles": [
     "blocks",
@@ -949,7 +949,7 @@
       "notes": [],
       "properties": [
         {
-          "name": "no throw, no NaN or Infinity, on any valid household (3 functions)",
+          "name": "no throw, no NaN or Infinity, on any valid household (4 functions)",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -1106,6 +1106,30 @@
         },
         {
           "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "gap",
+      "notes": [],
+      "properties": [
+        {
+          "name": "levels are reached in order: the level you are on is a prefix",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the gap at levels 2 and 3 is the debt engine's free-monthly figure",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every missing input is a link into a room",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -1365,6 +1389,72 @@
         },
         {
           "name": "annualising a stored annual figure returns it unchanged; a monthly rate times twelve",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "journey",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (2 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the ladder has one rung per FOO step, and \"here\" is the one marked here",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the road as it is lands on the same FI year as Tier 0 (one loop)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every route lives on plus puts in exactly take-home",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the death march never arrives later than the road as it is, the scenic route never sooner",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "spending up never brings a route's FIRE year earlier",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "routes are sorted soonest first, never-arrives last",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -1709,6 +1799,12 @@
         },
         {
           "name": "every stress is a worse day than today, never a better one",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a house hack carries the building’s reserves too, and letting more units never makes you pay more",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -2503,7 +2599,7 @@
       "notes": [],
       "properties": [
         {
-          "name": "no throw, no NaN or Infinity, on any valid household (5 functions)",
+          "name": "no throw, no NaN or Infinity, on any valid household (6 functions)",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -3164,6 +3260,6 @@
       ]
     }
   ],
-  "totalProperties": 403,
+  "totalProperties": 417,
   "failedProperties": 7
 }

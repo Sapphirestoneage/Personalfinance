@@ -278,6 +278,15 @@
     <div class="under" id="loan-under"></div>
   </section>
 
+  <!-- D-255: every dollar a month, on one line, against the 8% cap. -->
+  <section class="slaf-card" id="out-allin" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What it costs all in, a month</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">The payment is one line. This is all of them: the payment, insurance, fuel, maintenance, what you set aside for repairs, and what the car loses in value while you own it.</p>
+    <p class="verdict" id="allin-verdict"></p>
+    <p class="verdict-say" id="allin-say"></p>
+    <ul class="rows" id="allin-rows"></ul>
+  </section>
+
   <section class="slaf-card" id="out-ways" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Lease, new, or a year old</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
@@ -327,6 +336,9 @@
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../engines/quickmath.js"></script>
@@ -444,20 +456,30 @@
      page says which one rather than inventing it; the two places that DO
      fall back — a missing rate and a missing deposit — say so out loud
      wherever their answer is shown. */
-  var car = { priceCents: null, downCents: null, termMonths: null, rate: null };
+  var car = { priceCents: null, downCents: null, termMonths: null, rate: null,
+    /* D-255: new or used and how old, and the running costs a month. */
+    condition: null, ageYears: null, insuranceCents: null, fuelCents: null, maintenanceCents: null, repairsCents: null };
   function opts() {
     return {
       carPriceCents: car.priceCents, priceCents: car.priceCents,
-      downPaymentCents: car.downCents,
+      downPaymentCents: car.downCents, downCents: car.downCents,
       termMonths: car.termMonths,
-      loanRate: car.rate
+      loanRate: car.rate,
+      ageYears: age(),
+      insuranceMonthlyCents: car.insuranceCents, gasMonthlyCents: car.fuelCents,
+      maintenanceMonthlyCents: car.maintenanceCents, repairsMonthlyCents: car.repairsCents
     };
   }
+  /* The car's age on the curve: a used car's, else nought. */
+  function age() { return car.condition === 'used' && Money.isEntered(car.ageYears) && car.ageYears > 0 ? car.ageYears : 0; }
+  function used() { return age() > 0; }
 
   /* ---- The table ---------------------------------------------------------- */
   function table(T) { return (T && T.carCosts) || null; }
   function curve(T) { var t = table(T); return t ? t.depreciation : []; }
-  function share(T, years) { return QuickMath.retainedShareAt(curve(T), years); }
+  /* The share of the price still there after `years` of owning it, read
+     from the car's age on the curve (D-255): one function, engines/quickmath. */
+  function share(T, years) { return QuickMath.retainedFrom(curve(T), age(), years); }
   function worthAt(T, years) {
     var s = share(T, years);
     return Money.isEntered(car.priceCents) && Money.isEntered(s)
@@ -528,10 +550,39 @@
         read: function () { return car.termMonths; },
         write: function (v) { car.termMonths = v === null ? null : Number(v); } }
     ],
+    /* D-255: new or used, and the running costs a month, under the fold
+       the template keeps for a room's finer inputs (four above stay). */
+    moreLabel: 'New or used, and what it costs to run',
+    more: [
+      { ctl: 'condition', kind: 'choice', label: 'New or used?',
+        options: [['new', 'New'], ['used', 'Used']], hint: 'Used: say how old below, and the drop is read from there on the curve, not from the top.',
+        read: function () { return car.condition; },
+        write: function (v) { car.condition = v || null; } },
+      { ctl: 'age', label: 'How old it is, in years', placeholder: '3', affix: 'yrs',
+        hint: 'For a used car. A three-year-old car has already lost the steep part.',
+        read: function () { return car.ageYears; },
+        write: function (v) { car.ageYears = v === null ? null : Math.max(0, v); } },
+      { ctl: 'insurance', kind: 'money', label: 'Insurance, a month', placeholder: '150',
+        hint: 'Your quote. Blank, and the state average is offered where your state is set.',
+        propose: function (h, T) { var st = Schema.stateCell(T, h.state, 'autoInsuranceFullCoverageAnnualCents'); return st ? { value: Math.round(st.value / MONTHS), source: 'the ' + st.name + ' average, full coverage' } : null; },
+        read: function () { return car.insuranceCents; },
+        write: function (v) { car.insuranceCents = v; } },
+      { ctl: 'fuel', kind: 'money', label: 'Fuel or charging, a month', placeholder: '120',
+        read: function () { return car.fuelCents; },
+        write: function (v) { car.fuelCents = v; } },
+      { ctl: 'maintenance', kind: 'money', label: 'Maintenance and tyres, a month', placeholder: '60',
+        hint: 'Blank, and it is estimated from insurance and fuel at the AAA shares, and says so.',
+        read: function () { return car.maintenanceCents; },
+        write: function (v) { car.maintenanceCents = v; } },
+      { ctl: 'repairs', kind: 'money', label: 'Set aside for repairs, a month', placeholder: '50',
+        hint: 'A used car needs one. Blank is read as nothing set aside, and the line says so.',
+        read: function () { return car.repairsCents; },
+        write: function (v) { car.repairsCents = v; } }
+    ],
 
     /* -- What it loses while you own it, in dollars a month ---------------- */
     number: function (h, T) {
-      var label = 'What it loses in the first three years';
+      var label = used() ? 'What it loses in your first three years, bought at ' + age() + ' years old' : 'What it loses in the first three years';
       if (!table(T)) return { label: label, value: null, reason: 'The car costs table did not load.' };
       var lost = lostBy(T, HEADLINE_YEARS), worth = worthAt(T, HEADLINE_YEARS);
       var retained = share(T, HEADLINE_YEARS);
@@ -550,7 +601,8 @@
       var sub = '<strong>' + esc(Money.formatCents(car.priceCents)) + '</strong> now, about '
         + '<strong>' + esc(Money.formatCents(worth)) + '</strong> then — '
         + '<strong>' + esc(Money.formatCents(perMonth)) + '</strong> a month of value, before a drop of '
-        + 'fuel, a day of insurance or a single repair.';
+        + 'fuel, a day of insurance or a single repair.'
+        + (used() ? ' Bought used, the steep first year is someone else\'s: the drop here is the curve from year ' + esc(String(age())) + ' on.' : '');
       var u = QuickMath.carUnderwater(opts(), curve(T));
       if (Money.isOk(u)) {
         sub += ' The payment on this loan would be <strong>' + esc(Money.formatCents(u.monthlyPaymentCents))
@@ -570,7 +622,7 @@
           title: 'What share of the price a car is still worth',
           series: [{ id: 'share', label: 'Share of the price it is still worth',
                      color: Charts.COLORS.contributed,
-                     points: rows.map(function (r) { return [r.year, r.retainedShare * 100]; }) }],
+                     points: rows.map(function (r) { return [r.year, share(T, r.year) * 100]; }) }],
           hLines: [{ y: 100, label: 'what you paid', color: Charts.COLORS.spend }],
           vLines: [{ x: 1, label: 'year one' }],
           x: { label: 'years owned', format: year },
@@ -582,9 +634,9 @@
         title: 'What the car is worth, and what you have lost, year by year',
         series: [
           { id: 'worth', label: 'What it is still worth', color: Charts.COLORS.contributed, fill: true,
-            points: rows.map(function (r) { return [r.year, Math.round(P * r.retainedShare)]; }) },
+            points: rows.map(function (r) { return [r.year, Math.round(P * share(T, r.year))]; }) },
           { id: 'lost', label: 'What you have lost', color: Charts.COLORS.debt, fill: false, dash: true,
-            points: rows.map(function (r) { return [r.year, P - Math.round(P * r.retainedShare)]; }) }
+            points: rows.map(function (r) { return [r.year, P - Math.round(P * share(T, r.year))]; }) }
         ],
         hLines: [{ y: P, label: 'what you paid', color: Charts.COLORS.spend }],
         vLines: [{ x: 1, label: 'year one' }],
@@ -599,6 +651,8 @@
       var rows = [];
       if (!table(T) || !Money.isEntered(car.priceCents)) return rows;
       rows.push({ label: 'Three years of depreciation', cents: lostBy(T, HEADLINE_YEARS) });
+      var fc = SLAF.FirstCar ? SLAF.FirstCar.check(h, T, opts()) : null;
+      if (fc && Money.isOk(fc) && fc.allInMonthlyCents > 0) rows.push({ label: 'A year of running it, all in', cents: (fc.allInMonthlyCents) * MONTHS });
       rows.push({ label: 'A 20% deposit on this car',
         cents: Math.round(car.priceCents * table(T).loanGuidance.downPaymentShare) });
       var u = QuickMath.carUnderwater(opts(), curve(T));
@@ -678,13 +732,13 @@
 
       /* ---- What it loses, year by year --------------------------------- */
       setHtml('drop-rows', t.depreciation.map(function (r) {
-        var worth = priced ? Math.round(car.priceCents * r.retainedShare) : null;
+        var worth = priced ? Math.round(car.priceCents * share(T, r.year)) : null;
         var lost = priced ? car.priceCents - worth : null;
         var name = r.year === 0 ? 'The day you buy it'
           : r.year === 1 ? 'After one year' : 'After ' + r.year + ' years';
         var val = priced
           ? Money.formatCents(worth) + ' · ' + Money.formatCents(lost) + ' lost'
-          : Money.formatRate(r.retainedShare, { decimals: 0 }) + ' of the price';
+          : Money.formatRate(share(T, r.year), { decimals: 0 }) + ' of the price';
         return '<li><div class="r-head"><span class="r-name">' + esc(name) + '</span>'
           + '<span class="r-val' + (r.year === 1 ? ' is-out' : '') + '">' + esc(val) + '</span></div>'
           + (r.note ? '<p class="r-say">' + esc(r.note) + '</p>' : '')
@@ -787,6 +841,43 @@
       el('loan-verdict').className = 'verdict is-' + verdictZone;
       setHtml('loan-say', say);
       setHtml('loan-rows', rows);
+
+      /* ---- All in, a month (D-255) ------------------------------------ */
+      var fc = SLAF.FirstCar && priced ? SLAF.FirstCar.check(h, T, opts()) : null;
+      var aVerdict, aZone = 'blank', aSay = '', aRows = '';
+      if (!priced) {
+        aVerdict = 'Type a price above.';
+        aSay = 'Then every line here fills from what you type below it, and the blanks say what they are read as.';
+      } else if (!fc || !Money.isOk(fc)) {
+        aVerdict = 'This needs what you earn.';
+        aSay = esc(fc ? fc.reason : 'The check did not run.') + ' ' + incomeLink('Add your income in Start Here');
+      } else {
+        var dep = lostBy(T, HEADLINE_YEARS), depMonth = dep === null ? null : Math.round(dep / (HEADLINE_YEARS * MONTHS));
+        var withDrop = fc.allInMonthlyCents + (depMonth || 0);
+        var cap = fc.paymentCapCents;
+        var line = function (name, cents, note, out) {
+          return '<li><div class="r-head"><span class="r-name">' + esc(name) + '</span><span class="r-val' + (out ? ' is-out' : '') + '">' + esc(Money.isEntered(cents) ? Money.formatCents(cents) : Money.EM_DASH) + '</span></div>' + (note ? '<p class="r-say">' + esc(note) + '</p>' : '') + '</li>';
+        };
+        aRows = line('The payment', fc.paymentCents, Money.isEntered(car.termMonths) ? Money.formatCents(fc.loanCents) + ' borrowed over ' + months(car.termMonths) + (Money.isEntered(car.rate) ? '' : ', at the assumed ' + Money.formatRate(QuickMath.CAR_RULE.assumedRate, { decimals: 0 })) + '.' : 'No term chosen: read as no loan, so no payment.')
+          + line('Insurance', fc.insuranceCents, Money.isEntered(car.insuranceCents) ? null : 'Blank: read as nothing. Type your quote, or use the state average offered in the box.')
+          + line('Fuel or charging', fc.gasCents, Money.isEntered(car.fuelCents) ? null : 'Blank: read as nothing.')
+          + line('Maintenance and tyres', fc.maintenanceCents, fc.maintenanceEstimated ? (fc.maintenanceCents > 0 ? 'Estimated from insurance and fuel at the AAA shares; type your own to replace it.' : 'Blank, and nothing to estimate it from yet.') : null)
+          + line('Set aside for repairs', fc.repairsCents, fc.repairsEntered ? null : 'Blank: read as nothing set aside.' + (used() ? ' A used car will ask for some.' : ''))
+          + '<li><div class="r-head"><span class="r-name">Cash out, a month</span><span class="r-val ' + (fc.allInInside === false ? 'is-out' : fc.allInInside ? 'is-good' : '') + '">' + esc(Money.formatCents(fc.allInMonthlyCents)) + '</span></div>'
+          + '<p class="r-say">' + esc(Money.isEntered(fc.allInShare) ? Money.formatRate(fc.allInShare, { decimals: 1 }) + ' of a month of gross pay, against the 8% cap of ' + Money.formatCents(cap) + ' a month that the loan test applies to the payment alone.' : 'The share of pay needs your income.') + '</p></li>'
+          + line('What it loses in value, a month', depMonth, (used() ? 'From year ' + age() + ' on the curve' : 'The first three years, the steep part') + ', spread over the months. Not cash out, but gone all the same.')
+          + '<li><div class="r-head"><span class="r-name">All in, a month</span><span class="r-val">' + esc(Money.formatCents(withDrop)) + '</span></div><p class="r-say">Cash out plus the value lost. This is what the car costs; the payment is the smallest part of it.</p></li>';
+        aVerdict = fc.allInInside === null ? Money.formatCents(fc.allInMonthlyCents) + ' a month, all in'
+          : fc.allInInside ? Money.formatCents(fc.allInMonthlyCents) + ' a month cash out, inside the 8% cap'
+          : Money.formatCents(fc.allInMonthlyCents) + ' a month cash out, over the 8% cap by ' + Money.formatCents(fc.allInMonthlyCents - cap);
+        aZone = fc.allInInside === null ? 'blank' : fc.allInInside ? 'good' : 'out';
+        aSay = 'The 20/3/8 test caps the payment at 8% of a month of gross pay. Held to the same line, the whole cost of running the car '
+          + (fc.allInInside === null ? 'needs your income to be measured.' : fc.allInInside ? 'still fits.' : 'does not: the car costs more than the payment says.');
+      }
+      setText('allin-verdict', aVerdict);
+      el('allin-verdict').className = 'verdict is-' + aZone;
+      setHtml('allin-say', aSay);
+      setHtml('allin-rows', aRows);
 
       /* ---- Underwater: the concrete harm a monthly payment hides -------- */
       var uw = t.underwater;

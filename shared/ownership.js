@@ -930,6 +930,8 @@
     assetCharacter: { label: 'How it is taxed on the way out', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
     assetTier: { label: 'Which pile it sits in', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
     assetCostBasis: { label: 'Cost basis', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetInstitution: { label: 'Where it is held', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetAccountType: { label: 'Account type', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
     incomeType: { label: 'What kind of pay', owner: 'income', anchor: 'sources', read: function (h) { var p = Schema.primaryPerson(h); return countOf(p ? (p.incomeSources || []) : [], 'incomeSources'); }, format: function (v) { return v + ' listed'; } },
     paySurvives: { label: 'Keeps paying if the job goes', owner: 'income', anchor: 'sources', read: function (h) { var p = Schema.primaryPerson(h); return countOf(p ? (p.incomeSources || []) : [], 'incomeSources'); }, format: function (v) { return v + ' listed'; } },
     annualLine: { label: 'Once-a-year costs', owner: 'expenses', anchor: 'more', read: function (h) { return countOf(((h.expenses || {}).annual || []), 'annualLines'); }, format: function (v) { return v + ' listed'; } }
@@ -970,6 +972,11 @@
     assetCharacter: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { taxCharacter: v || null }); },
     assetTier: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { tier: v || null }); },
     assetCostBasis: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { costBasisCents: Money.isEntered(v) ? Math.round(v) : null }); },
+    assetInstitution: function (v, ctx) { var t = String(v === null || v === undefined ? '' : v).trim(); return itemPatch(Spine.upsertAsset, ctx, { institution: t === '' ? null : t }); },
+    assetAccountType: function (v, ctx) {
+      var a = (Spine.getProfile().assets || []).filter(function (x) { return ctx && x.id === ctx.itemId; })[0];
+      return itemPatch(Spine.upsertAsset, ctx, Schema.applyAccountType(a, v || null));
+    },
     contributionPercent: setAt('retirement.contributionPercent', 'Contribution'),
     rothContributed: centsAt('retirement.rothContributedCents', 'Roth so far'),
     hsaContributed: centsAt('retirement.hsaContributedCents', 'HSA so far'),

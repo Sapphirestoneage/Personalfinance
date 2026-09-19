@@ -71,7 +71,13 @@
       }
       prevTop = hi;
     }
-    return { taxDollars: tax, slices: slices, marginalRate: slices.length ? slices[slices.length - 1].rate : (ladder[0] ? ladder[0].rate : 0) };
+    /* With nothing taxable, no slice is cut. The fallback used to report the
+       LOWEST bracket's rate, so a $12,000 earner whose standard deduction
+       wipes out their taxable income was told their next dollar is taxed at
+       10% — and the Tax room then sized the room before the next bracket
+       from that wrong floor. The next dollar there is taxed at nothing until
+       the deduction is used up, so the marginal rate is 0. */
+    return { taxDollars: tax, slices: slices, marginalRate: slices.length ? slices[slices.length - 1].rate : 0 };
   }
 
   /* ---- 1. Ordinary income --------------------------------------------------- */

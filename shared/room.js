@@ -126,9 +126,18 @@
     /* ---- Build once ------------------------------------------------------- */
     var inputsHost = el('room-inputs');
     if (inputsHost) {
+      /* Two boxes side by side start level because every label in the grid
+         reserves the same number of lines (D-249). Two is the default and
+         covers almost every label; a room whose longest label genuinely
+         needs three says `labelLines: 3` in its spec rather than letting
+         that one label shove its own box below its neighbour's.
+         test/alignment.js fails the build if any pair is still crooked. */
       var ctl = function (c) { return control(c, PREFIX); };
-      inputsHost.innerHTML = '<div class="room-grid">' + (spec.inputs || []).map(ctl).join('') + '</div>'
-        + (spec.more && spec.more.length ? '<details class="room-more"><summary>' + esc(spec.moreLabel || 'Fine-tune') + '</summary><div class="room-grid">' + spec.more.map(ctl).join('') + '</div></details>' : '');
+      var gridOpen = spec.labelLines
+        ? '<div class="room-grid" style="--slaf-label-lines:' + (+spec.labelLines) + '">'
+        : '<div class="room-grid">';
+      inputsHost.innerHTML = gridOpen + (spec.inputs || []).map(ctl).join('') + '</div>'
+        + (spec.more && spec.more.length ? '<details class="room-more"><summary>' + esc(spec.moreLabel || 'Fine-tune') + '</summary>' + gridOpen + spec.more.map(ctl).join('') + '</div></details>' : '');
     }
     var byCtl = {};
     all.forEach(function (c) { byCtl[c.ctl] = c; });
@@ -247,10 +256,13 @@
     function paintLens(h) {
       var host = el('room-lens'), list = el('room-amounts');
       if (!host || !Lens) return;
+      var rows = spec.amounts ? (spec.amounts(h, TABLES) || []) : [];
+      /* The lens reads the amounts list; with nothing in it the toggle
+         would change nothing on the page, so it is not shown (D-256). */
+      if (!Lens.hasAmounts(rows)) { host.innerHTML = ''; if (list) list.innerHTML = ''; return; }
       host.innerHTML = Lens.toggleHtml(h, TABLES, 'lens');
-      if (!list || !spec.amounts) return;
+      if (!list) return;
       var mode = Lens.mode();
-      var rows = spec.amounts(h, TABLES) || [];
       list.innerHTML = rows.map(function (r) {
         if (!Money.isEntered(r.cents)) return '';
         var shown = mode === '$' ? Money.formatCents(r.cents) : Lens.format(r.cents, mode, h, TABLES);
