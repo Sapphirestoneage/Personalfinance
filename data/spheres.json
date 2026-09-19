@@ -72,11 +72,12 @@
           "assetTier",
           "otherAssets",
           "incomeType",
+          "takeHomeMonthly",
           "employerMatch",
           "contributionPercent",
           "capturingFullMatch"
         ],
-        "minutes": 17.0
+        "minutes": 18.0
       },
       "unlocks": [
         "debt-payoff",

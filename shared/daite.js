@@ -66,6 +66,7 @@
     rebalanceBand: 'assets.allocation', stockShare: 'assets.allocation',
     rothContributed: 'assets.contributions.roth', hsaContributed: 'assets.contributions.hsa', contributionPercent: 'assets.contributions.pretax',
     /* I */
+    takeHomeMonthly: 'income.takeHomeMonthlyCents',
     grossAnnualIncome: 'income.grossAnnualCents', employerMatch: 'income.sources[].employerMatch', capturingFullMatch: 'income.sources[].employerMatch',
     unemployment: 'income.sources[].benefit', incomeLow: 'income.variable', incomeHigh: 'income.variable', bufferMonths: 'income.variable',
     variableWindow: 'income.variable', futureIncome: 'income.future', ledgerIncome: 'income.ledger',

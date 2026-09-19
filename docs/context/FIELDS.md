@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 112. Traced: 103. No other room mentions it: **51**.
+Fields: 113. Traced: 104. No other room mentions it: **51**.
 
 
 ## accounts (7)
@@ -84,9 +84,9 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `rentMonthly` — Rent or mortgage, a month · read by housing, property, debates, calendar
 - `monthlyExpenses` — Monthly expenses · read by start, budget, financial-snapshot, statements, statement, fire, fire-lab, real-hourly-wage, dashboard, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, variable-income, enough, adventure, week, buckets, dreamline, reversibility, unlearning, debates, calendar, one-pager
 - `foodMonthly` — Food, a month · read by ledger
-- `accommodationMonthly` — Rent or mortgage, a month · read by ledger
+- `accommodationMonthly` — Rent or mortgage, a month · read by first-look, ledger
 - `transportationMonthly` — Getting around, a month · read by ledger
-- `wantsMonthly` — Everything else, a month · read by ledger
+- `wantsMonthly` — Everything else, a month · read by first-look, ledger
 - `therapyMonthly` — Therapy, a month · read by ledger
 - `annualLine` — Once-a-year costs · read by ledger
 
@@ -94,6 +94,10 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `retireAge` — Stop working at · read by dashboard, stacker, exercises, coast-date, rollover, what-if-life, micro-retirement, decumulation, middle-class-trap, buckets, one-pager
 - `coastAge` — Coast: arrive by · read by coast-date
+
+## first-look (1)
+
+- `takeHomeMonthly` — What lands each month · read by ledger, cash-flow, financial-snapshot, runway, giving, career-move, partner, dreamline, reversibility, unlearning, calendar
 
 ## giving (2)
 
@@ -168,15 +172,15 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
 - `filingStatus` — Filing status · read by expenses, cash-flow, income, financial-snapshot, statement, fire, fire-lab, real-hourly-wage, self-employed, side-hustle, dashboard, credential, accounts, cant-pay, rollover, roth-aca, middle-class-trap, tax, career-move, partner, wrapped, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
+- `grossAnnualIncome` — Gross annual income · read by first-look, ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
-- `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
+- `cashSavings` — Cash & savings · read by first-look, ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
 - `investments` — Investments + retirement · too generic to trace
-- `employmentStatus` — Working situation · read by ledger, runway, tax, offer-compare, unlearning, student-loans
-- `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, unlearning
-- `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, wrapped
-- `hasDebt` — Any debt · read by dashboard, unlearning, student-loans
+- `employmentStatus` — Working situation · read by first-look, ledger, runway, tax, offer-compare, unlearning, student-loans
+- `employerMatch` — Employer match · read by first-look, financial-snapshot, statements, foo-ladder, offer-compare, unlearning
+- `capturingFullMatch` — Capturing the full match · read by first-look, expenses, financial-snapshot, dashboard, stacker, wrapped
+- `hasDebt` — Any debt · read by first-look, dashboard, unlearning, student-loans
 - `contributionPercent` — Workplace contribution · read by ledger, statements, accounts, what-if-life, tax
 - `highestDeductible` — Highest deductible · read by statement, runway, protection
 - `dependents` — Anyone depending on your income · too generic to trace

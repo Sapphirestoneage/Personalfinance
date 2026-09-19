@@ -23,6 +23,7 @@
           "name": "The numbered path",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "debt-payoff",
             "expenses",
@@ -126,6 +127,7 @@
           "name": "Applies to everyone",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "debt-payoff",
             "expenses",
@@ -267,6 +269,7 @@
             "debt-payoff",
             "settings",
             "start",
+            "first-look",
             "ledger"
           ]
         },
@@ -481,6 +484,7 @@
           "name": "None of the above",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "dashboard",
             "settings",
@@ -605,6 +609,7 @@
           "rooms": [
             "dashboard",
             "start",
+            "first-look",
             "ledger",
             "data",
             "one-pager",
@@ -639,6 +644,7 @@
           "name": "Before the ladder",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "expenses",
             "cash-flow",
@@ -788,6 +794,7 @@
             "statements",
             "settings",
             "start",
+            "first-look",
             "ledger"
           ]
         },
@@ -966,6 +973,7 @@
             "reversibility",
             "side-hustle",
             "start",
+            "first-look",
             "ledger",
             "student-loans",
             "tax",
@@ -1018,6 +1026,7 @@
           "name": "The hall",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "dashboard",
             "financial-snapshot",
@@ -1272,6 +1281,7 @@
           "name": "Set up once",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "skill-tree",
             "data",
@@ -1399,6 +1409,7 @@
           "name": "The app itself",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "data",
             "one-pager",
@@ -1514,6 +1525,7 @@
           "name": "Never finding out",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "dashboard",
             "settings",
@@ -1641,6 +1653,7 @@
           "name": "Nobody \u2014 just the numbers",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "dashboard",
             "expenses",
@@ -1697,6 +1710,7 @@
           "name": "Layer 1",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "variance",
             "fulfillment",
@@ -1901,6 +1915,7 @@
           "name": "Never asked about, always reachable",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "settings",
             "data",
@@ -1959,6 +1974,7 @@
           "name": "One sitting",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "expenses",
             "cash-flow",
@@ -2050,6 +2066,7 @@
           "name": "Needs nothing explained",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "income",
             "budget",
@@ -2166,6 +2183,7 @@
           "name": "Hub \u00b7 Start Here",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "timeline",
             "partner",
@@ -2396,6 +2414,7 @@
           "name": "About the app, not about your money",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "settings",
             "data",
@@ -2541,6 +2560,7 @@
           "name": "Always there, never in the way",
           "rooms": [
             "start",
+            "first-look",
             "ledger",
             "data",
             "one-pager",

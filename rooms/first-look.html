@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-12 14:16Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>First Look · SPARKS</title>
+<meta name="description" content="Four to seven questions, one to a screen, ending on your own money flowing and one thing to do next. Rough numbers are fine; no account, nothing leaves this browser."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC — SPEC.md §11. The front door (DECISIONS.md D-234).
+
+  1. READS   Its own answers, through the ownership map: working situation,
+             what lands each month, rent or mortgage, everything else, what
+             is saved and invested, whether a card is carried, the match,
+             and the withdrawal rate the finish line sets.
+  2. WRITES  Every one of those, through each field's OWNER — nothing is
+             stored twice and nothing private is kept here. What lands each
+             month is the one field First Look owns itself (D-234); the
+             rest belong to Start Here, Expenses and Debt as they always
+             did. An estimate is written at confidence `roughly` with the
+             field it was worked out from, so Refresh asks about it.
+  3. CALLS   engines/firstlook.js for every figure, shared/charts.js for
+             the flow. No arithmetic on this page.
+  4. EMPTY   This room IS the empty state: it opens on question one and
+             says plainly that rough answers are fine. A question never
+             answered leaves its fact absent, never zero.
+  5. CONFIG  data/return_bands.json (the real return; the median band is
+             the 5% the assumptions panel starts at).
+
+  LIVE-FORM: built once. Every screen and every control is in the markup
+  below and is only ever shown, hidden, detached or re-attached — never
+  rebuilt. A question the situation does not ask is DETACHED from the
+  document, so it is absent rather than hidden or disabled; the node is
+  kept and put back whole if the situation changes, so nothing typed is
+  lost and no live container is torn down under a finger (D-034).
+-->
+<style>
+  .fl-rule { height: 3px; background: var(--color-border); border-radius: var(--radius-pill); overflow: hidden; margin: 0 0 var(--space-4); }
+  .fl-rule > i { display: block; height: 100%; width: 0; background: var(--color-accent); transition: width 240ms ease; }
+  @media (prefers-reduced-motion: reduce) { .fl-rule > i { transition: none; } }
+  .fl-step h2 { font-size: var(--text-xl); line-height: 1.25; margin: var(--space-2) 0 var(--space-3); }
+  .fl-step .slaf-input-shell { width: 100%; }
+  .fl-step .slaf-input-shell input { font-size: var(--text-lg); min-height: 48px; }
+  .fl-opt { display: flex; align-items: flex-start; gap: var(--space-2); margin: var(--space-3) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .fl-opt input { margin-top: 3px; min-width: 20px; min-height: 20px; }
+  .fl-acts { display: flex; gap: var(--space-2); align-items: center; margin: var(--space-4) 0 0; }
+  .fl-acts .slaf-btn { min-height: 44px; }
+  .fl-head { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.15; margin: var(--space-2) 0 0; }
+  .fl-head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .fl-pair { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: var(--space-3) 0 0; }
+  .fl-pair > div { flex: 1 1 140px; }
+  .fl-pair b { display: block; font-family: var(--font-display); font-size: var(--text-xl); }
+  .fl-scrub { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-3) 0 0; flex-wrap: wrap; }
+  .fl-scrub input { flex: 1 1 160px; min-width: 120px; min-height: 32px; }
+  .fl-year { font-size: var(--text-sm); color: var(--color-text-muted); white-space: nowrap; }
+  .fl-flowlist { list-style: none; padding: 0; margin: var(--space-3) 0 0; font-size: var(--text-sm); }
+  .fl-flowlist li { display: flex; justify-content: space-between; gap: var(--space-3); padding: 2px 0; border-bottom: 1px solid var(--color-border); }
+  .fl-next-title { font-size: var(--text-lg); margin: var(--space-2) 0 var(--space-1); }
+  .fl-rates { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: var(--space-2) 0 0; }
+  .fl-rates label { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .fl-rates .slaf-input-shell { width: 8em; }
+  .fl-onward { display: block; margin: var(--space-4) 0 0; min-height: 44px; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>First Look</h1>
+  <p class="room-lede">A few questions, one to a screen. Rough numbers are fine — you can correct any of them later, and everything below moves when you do. Nothing leaves this browser.</p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+  <div class="fl-rule" id="fl-rule" role="progressbar" aria-label="How far through" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="fl-rule-fill"></i></div>
+
+  <section class="slaf-card fl-step" id="q-situation">
+    <span class="slaf-eyebrow" data-count></span>
+    <h2>Where are you right now?</h2>
+    <div class="choices" data-choices="situation">
+      <button type="button" class="choice" data-value="employed">Working a job</button>
+      <button type="button" class="choice" data-value="unemployed">Between jobs</button>
+      <button type="button" class="choice" data-value="selfEmployed">Working for myself</button>
+      <button type="button" class="choice" data-value="student">Studying</button>
+    </div>
+    <p class="slaf-hint">This decides which questions you get. The ones that do not apply to you are not asked at all.</p>
+    <div class="fl-acts"><button type="button" class="slaf-btn slaf-btn--quiet" data-back hidden>Back</button></div>
+  </section>
+
+  <section class="slaf-card fl-step" id="q-takehome" hidden>
+    <span class="slaf-eyebrow" data-count></span>
+    <h2>What lands in your account each month?</h2>
+    <p class="slaf-hint" data-hint>After tax and everything taken out — the figure your bank shows. A round guess is fine.</p>
+    <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-takehome" placeholder="e.g. 3,200" aria-label="What lands in your account each month"/></span>
+    <label class="fl-opt"><input type="checkbox" id="in-gross-toggle"/><span>I only know my salary before tax. Let me enter that instead.</span></label>
+    <div id="fl-gross" hidden>
+      <p class="slaf-hint">Gross pay, a year. Take-home is then estimated at three quarters of it and marked rough.</p>
+      <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-gross" placeholder="e.g. 60,000" aria-label="Gross pay a year"/></span>
+    </div>
+    <div class="fl-acts"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next</button></div>
+  </section>
+
+  <section class="slaf-card fl-step" id="q-coming-in" hidden>
+    <span class="slaf-eyebrow" data-count></span>
+    <h2>What is coming in right now?</h2>
+    <p class="slaf-hint">Everything that arrives in a month: unemployment, severance spread over the months it covers, side work. Zero is a real answer, and this room handles it.</p>
+    <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-coming" placeholder="e.g. 0" aria-label="What is coming in each month"/></span>
+    <div class="fl-acts"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next</button></div>
+  </section>
+
+  <section class="slaf-card fl-step" id="q-housing" hidden>
+    <span class="slaf-eyebrow" data-count></span>
+    <h2>What does housing cost you?</h2>
+    <p class="slaf-hint">Rent, or mortgage plus what keeps the lights on. One number a month, roughly.</p>
+    <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-housing" placeholder="e.g. 1,400" aria-label="Housing, a month"/></span>
+    <div class="fl-acts"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next</button></div>
+  </section>
+
+  <section class="slaf-card fl-step" id="q-living" hidden>
+    <span class="slaf-eyebrow" data-count></span>
+    <h2>Everything else, roughly?</h2>
+    <p class="slaf-hint">Food, getting around, phone, the rest of it. One number a month. Nobody knows this one exactly.</p>
+    <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-living" placeholder="e.g. 1,100" aria-label="Everything else, a month"/></span>
+    <label class="fl-opt"><input type="checkbox" id="in-living-guess"/><span>I honestly do not know. Estimate it for me.</span></label>
+    <p class="slaf-hint" id="fl-living-note" hidden></p>
+    <div class="fl-acts"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next</button></div>
+  </section>
+
+  <section class="slaf-card fl-step" id="q-savings" hidden>
+    <span class="slaf-eyebrow" data-count></span>
+    <h2 data-q>What do you have saved or invested?</h2>
+    <p class="slaf-hint" data-hint>One number, everything together. Nearest hundred is close enough.</p>
+    <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="in-saved" placeholder="e.g. 9,000" aria-label="What you have saved or invested"/></span>
+    <p class="slaf-hint" id="fl-invested-note" hidden></p>
+    <label class="fl-opt"><input type="checkbox" id="in-card"/><span>I am carrying a balance on a credit card.</span></label>
+    <div class="fl-acts"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next</button></div>
+  </section>
+
+  <section class="slaf-card fl-step" id="q-match" hidden>
+    <span class="slaf-eyebrow" data-count></span>
+    <h2>Does your job match retirement contributions?</h2>
+    <div class="choices" data-choices="match">
+      <button type="button" class="choice" data-value="full">Yes, and I am getting all of it</button>
+      <button type="button" class="choice" data-value="partial">Yes, but not all of it</button>
+      <button type="button" class="choice" data-value="none">No match</button>
+      <button type="button" class="choice" data-value="unsure">Not sure</button>
+    </div>
+    <p class="slaf-hint">Not sure is a real answer, and it is the one this room can do something about.</p>
+    <div class="fl-acts"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>Next</button></div>
+  </section>
+
+  <section class="slaf-card fl-step" id="q-finish" hidden>
+    <span class="slaf-eyebrow" data-count></span>
+    <h2>Which finish line are you aiming at?</h2>
+    <div class="choices" data-choices="finish">
+      <button type="button" class="choice" data-value="early">Stop as early as possible</button>
+      <button type="button" class="choice" data-value="optional">Reach work optional and keep going</button>
+      <button type="button" class="choice" data-value="undecided">Not decided yet</button>
+    </div>
+    <p class="slaf-hint">This sets how much of the pot you would live on a year. Not decided is fine — the cautious rate is assumed, and you can change it on the next screen.</p>
+    <div class="fl-acts"><button type="button" class="slaf-btn slaf-btn--quiet" data-back>Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next>See it</button></div>
+  </section>
+
+  <section id="result" hidden>
+    <div class="slaf-card">
+      <span class="slaf-eyebrow">Your first look</span>
+      <p class="fl-head" id="fl-headline"></p>
+      <p class="fl-head-sub" id="fl-headline-sub"></p>
+      <p class="slaf-hint" id="fl-estimates" hidden></p>
+      <div class="fl-pair">
+        <div><span class="slaf-eyebrow">The number to reach</span><b id="fl-fi"></b><span class="slaf-hint" id="fl-fi-note"></span></div>
+        <div><span class="slaf-eyebrow">What you have today</span><b id="fl-have"></b><span class="slaf-hint" id="fl-have-note"></span></div>
+      </div>
+    </div>
+
+    <div class="slaf-card" id="fl-flow-card" style="margin-top:var(--space-4)">
+      <span class="slaf-eyebrow">Where the money goes</span>
+      <div id="fl-flow"></div>
+      <div class="fl-scrub">
+        <label class="fl-year" for="in-year">Year</label>
+        <input type="range" id="in-year" min="0" max="30" step="1" value="0" aria-label="Which year to show"/>
+        <span class="fl-year" id="fl-year-label"></span>
+      </div>
+      <ul class="fl-flowlist" id="fl-flowlist"></ul>
+      <p class="slaf-hint" id="fl-flow-note"></p>
+    </div>
+
+    <div class="slaf-card" id="fl-next" style="margin-top:var(--space-4)">
+      <span class="slaf-eyebrow">One thing to do next</span>
+      <p class="fl-next-title" id="fl-next-title"></p>
+      <p class="slaf-hint" id="fl-next-reason"></p>
+      <a class="slaf-btn slaf-btn--primary fl-onward" id="fl-onward" href="../map.html">Open it →</a>
+    </div>
+
+    <details class="slaf-card" id="fl-assumptions" style="margin-top:var(--space-4)">
+      <summary>What this assumed</summary>
+      <div class="fl-rates">
+        <label for="in-return">Real return a year<span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-return" aria-label="Real return a year"/><span class="slaf-affix">%</span></span></label>
+        <label for="in-swr">Withdrawal rate<span class="slaf-input-shell"><input type="text" inputmode="decimal" id="in-swr" aria-label="Withdrawal rate"/><span class="slaf-affix">%</span></span></label>
+      </div>
+      <dl id="fl-assume-list"></dl>
+      <p class="slaf-hint">Not modelled yet, and it matters: tax in retirement, Social Security, and the luck of which decade you get. Those are real pieces of arithmetic, not corrections to this one, and they live in the rooms that own them.</p>
+    </details>
+
+    <div class="fl-acts">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="fl-again">Change an answer</button>
+    </div>
+  </section>
+
+  <p class="disclaimer">
+    Educational tool, not financial advice. Today's dollars throughout: the
+    return is real, after inflation, and nothing here is grown for pay rises.
+    Everything stays in this browser.
+  </p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/daite.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/firstlook.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Ownership = SLAF.Ownership, Charts = SLAF.Charts, FL = SLAF.FirstLook;
+  var ROOM_ID = 'first-look';
+  var TABLES = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function h() { return Spine.getProfile(); }
+
+  /* ---- The screens ---------------------------------------------------------
+     One node per step, built once in the markup. `slot` remembers where a
+     detached node goes back, so a question the situation stopped asking is
+     removed from the document entirely and restored whole if the answer
+     changes. Nothing is ever rebuilt. */
+  var ANCHOR = { situation: 'q-situation', takehome: 'q-takehome', 'coming-in': 'q-coming-in',
+                 housing: 'q-housing', living: 'q-living', savings: 'q-savings', match: 'q-match', finish: 'q-finish' };
+  var NODES = {}, SLOT = {}, HOST = null;
+  Object.keys(ANCHOR).forEach(function (id, i) { NODES[id] = el(ANCHOR[id]); SLOT[id] = i; });
+  HOST = NODES.situation.parentNode;
+  /* Every control, resolved ONCE and held by reference. A question the
+     situation does not ask is detached from the document, and
+     getElementById stops finding what is not in it — so nothing below may
+     look a control up by id after the first paint. The node itself keeps
+     its value while it is out, which is how an answer survives a change of
+     situation and back again. */
+  var BOX = {}, PANEL = {};
+  ['fl-gross', 'fl-living-note', 'fl-invested-note'].forEach(function (id) { PANEL[id] = el(id); });
+  ['in-takehome', 'in-gross', 'in-gross-toggle', 'in-coming', 'in-housing', 'in-living',
+   'in-living-guess', 'in-saved', 'in-card'].forEach(function (id) { BOX[id] = el(id); });
+  var current = 'situation';
+  var year = 0;
+
+  function attached(id) { return NODES[id].parentNode === HOST; }
+  /** Put the applicable questions in the document, in order, and take the
+      rest out. Absent, not hidden: nothing greyed out says "not for you". */
+  function syncSteps() {
+    var want = FL.steps(FL.situationOf(h())).map(function (s) { return s.id; });
+    if (!want.length) want = ['situation'];
+    Object.keys(NODES).forEach(function (id) {
+      if (want.indexOf(id) === -1 && attached(id)) HOST.removeChild(NODES[id]);
+    });
+    /* Re-insert in slot order, each before the first later node present. */
+    want.forEach(function (id) {
+      if (attached(id)) return;
+      var after = null;
+      want.forEach(function (other) { if (after === null && SLOT[other] > SLOT[id] && attached(other)) after = NODES[other]; });
+      HOST.insertBefore(NODES[id], after || el('result'));
+    });
+    return want;
+  }
+
+  function order() { var w = syncSteps(); return w; }
+
+  function show(id) {
+    var list = order();
+    if (id !== 'result' && list.indexOf(id) === -1) id = list[0];
+    current = id;
+    list.forEach(function (s, i) {
+      NODES[s].hidden = s !== id;
+      var cap = NODES[s].querySelector('[data-count]');
+      if (cap) cap.textContent = 'Question ' + (i + 1) + ' of ' + list.length;
+      var back = NODES[s].querySelector('[data-back]');
+      if (back) back.hidden = i === 0;
+    });
+    el('result').hidden = id !== 'result';
+    el('fl-rule').hidden = id === 'result';
+    var at = id === 'result' ? list.length : list.indexOf(id);
+    var pct = Math.round(at / list.length * 100);
+    el('fl-rule-fill').style.width = pct + '%';
+    el('fl-rule').setAttribute('aria-valuenow', String(pct));
+    var hash = '#/first-look/' + id;
+    if (location.hash !== hash) history.replaceState(null, '', hash);
+    if (id === 'result') paintResult();
+    else {
+      var box = NODES[id].querySelector('input[type="text"]');
+      if (box) { try { box.focus(); } catch (e) { /* fine */ } }
+    }
+  }
+
+  function stepFromHash() {
+    var raw = String(location.hash || '').replace(/^#/, '');
+    if (!raw) return null;
+    if (raw === 'result' || raw === '/first-look/result') return 'result';
+    var m = /^\/first-look\/(.+)$/.exec(raw);
+    if (m) return m[1];
+    /* The ownership chip and the registry link with a plain anchor. */
+    for (var id in ANCHOR) { if (ANCHOR[id] === raw) return id; }
+    return raw === 'result' ? 'result' : null;
+  }
+  function move(delta) {
+    var list = order(), i = list.indexOf(current);
+    if (i === -1) { show(list[0]); return; }
+    var next = i + delta;
+    if (next < 0) return;
+    show(next >= list.length ? 'result' : list[next]);
+  }
+
+  /* ---- Writing the answers -------------------------------------------------
+     Every one goes through its owner (Ownership.write), so the Ledger has
+     it, every room reads it, and re-running First Look changes the same
+     fact rather than adding a second one. An estimate is tagged rough and
+     carries the field it came from. */
+  function writeRough(fieldId, derivedFrom, fn) {
+    Spine.batch('First Look: ' + fieldId, function () {
+      Spine.tagWrite({ source: 'typed', confidence: 'roughly', derivedFrom: derivedFrom || null });
+      fn();
+    });
+  }
+  function writeTyped(label, fn) {
+    Spine.batch('First Look: ' + label, function () {
+      Spine.tagWrite({ source: 'typed', confidence: 'roughly' });
+      fn();
+    });
+  }
+  function cents(node) { return Money.parseMoney(node.value); }
+
+  /* A choice off a list of four is a sure answer, not a rough one, so it
+     carries no rough tag. Making sure the person exists FIRST matters:
+     ensurePrimaryPerson saves, and a save is what spends a pending tag. */
+  function setSituation(v) {
+    Spine.ensurePrimaryPerson();
+    Spine.batch('First Look: where you are', function () { Ownership.write('employmentStatus', v); });
+  }
+  function saveTakeHome() {
+    var gross = BOX['in-gross-toggle'].checked;
+    if (gross) {
+      var g = cents(BOX['in-gross']);
+      writeTyped('gross pay', function () { Ownership.write('grossAnnualIncome', g); });
+      /* The estimate, written as a fact of its own so that Refresh and the
+         staleness nag can ask about it: rough, and from the salary. */
+      if (Money.isEntered(g)) writeRough('takeHomeMonthly', 'grossAnnualIncome', function () {
+        Ownership.write('takeHomeMonthly', Math.round(g / 12 * FL.TAKE_HOME_SHARE));
+      });
+      return;
+    }
+    var t = cents(BOX['in-takehome']);
+    writeTyped('what lands each month', function () { Ownership.write('takeHomeMonthly', t); });
+  }
+  function saveComingIn() {
+    var t = cents(BOX['in-coming']);
+    writeTyped('what is coming in', function () { Ownership.write('takeHomeMonthly', t); });
+  }
+  function saveHousing() {
+    var v = cents(BOX['in-housing']);
+    writeTyped('housing', function () { Ownership.write('accommodationMonthly', v); });
+  }
+  function saveLiving() {
+    if (BOX['in-living-guess'].checked) {
+      var take = FL.takeHomeMonthly(h());
+      if (!Money.isOk(take)) return;
+      var est = Math.max(FL.LIVING_FLOOR_CENTS, Math.round(take.value * FL.LIVING_SHARE));
+      writeRough('wantsMonthly', 'takeHomeMonthly', function () { Ownership.write('wantsMonthly', est); });
+      return;
+    }
+    var v = cents(BOX['in-living']);
+    writeTyped('everything else', function () { Ownership.write('wantsMonthly', v); });
+  }
+  function saveSaved() {
+    var v = cents(BOX['in-saved']);
+    writeTyped('what you have saved', function () { Ownership.write('cashSavings', v); });
+    saveCard();
+  }
+  /* The card is a line on the debt list, not a flag of its own: naming it
+     is what lets Debt ask for the balance and the rate next. Adding it
+     twice is the thing re-running must not do. */
+  function existingCard() {
+    return (h().debts || []).filter(function (d) { return d.type === 'credit_card'; })[0] || null;
+  }
+  function saveCard() {
+    var on = BOX['in-card'].checked, card = existingCard();
+    if (on && !card) {
+      Spine.batch('First Look: a card', function () { Ownership.addItem('debt', { label: 'Credit card', type: 'credit_card' }); });
+      return;
+    }
+    /* Taking the tick off removes the line only while it is still empty —
+       a balance typed in Debt since is the person's, not this room's. */
+    if (!on && card && !Money.isEntered(card.balanceCents)) {
+      Spine.batch('First Look: no card', function () { Ownership.removeItem('debt', card.id); });
+    }
+  }
+  function saveMatch(v) {
+    Spine.batch('First Look: the match', function () {
+      if (v === 'unsure') { Spine.setNotSure('employerMatch', { expectedBy: null }); return; }
+      Spine.setNotSure('employerMatch', null);
+      if (v === 'none') { Ownership.write('employerMatch', { matchPercent: 0, matchCapPercentOfSalary: 0 }); return; }
+      Ownership.write('capturingFullMatch', v === 'full');
+    });
+  }
+  function saveFinish(v) {
+    var line = FL.finishLine(v);
+    Spine.batch('First Look: the finish line', function () {
+      Spine.setAssumptionOverride('swrRate', v === 'undecided' ? null : line.rate);
+    });
+  }
+
+  /* ---- Painting the questions ---------------------------------------------
+     Values only, never markup, and never into a box that has the cursor. */
+  function set(node, value) {
+    if (!node || node === document.activeElement) return;
+    node.value = Money.isEntered(value) ? String(Math.round(value) / 100) : '';
+  }
+  function pressed(name, value) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-choices="' + name + '"] .choice'), function (b) {
+      b.setAttribute('aria-pressed', String(value !== null && value !== undefined && String(value) === b.getAttribute('data-value')));
+    });
+  }
+  function paintQuestions() {
+    var p = h();
+    pressed('situation', FL.situationOf(p));
+    pressed('match', FL.matchAnswer(p));
+    pressed('finish', FL.finishOf(p));
+    var entered = Schema.enteredTakeHomeMonthlyCents(p);
+    var meta = Schema.meta(p, 'takeHomeMonthly');
+    var fromSalary = meta.derivedFrom === 'grossAnnualIncome';
+    if (BOX['in-gross-toggle'] !== document.activeElement && fromSalary) BOX['in-gross-toggle'].checked = true;
+    PANEL['fl-gross'].hidden = !BOX['in-gross-toggle'].checked;
+    set(BOX['in-takehome'], BOX['in-gross-toggle'].checked ? null : entered);
+    var g = Schema.grossAnnualIncomeCents(p);
+    set(BOX['in-gross'], Money.isOk(g) ? g.value : null);
+    set(BOX['in-coming'], entered);
+    var fat = Schema.fat(p);
+    set(BOX['in-housing'], Money.isOk(fat.accommodation) ? fat.accommodation.value : null);
+    var livingMeta = Schema.meta(p, 'wantsMonthly');
+    var guessed = livingMeta.derivedFrom === 'takeHomeMonthly';
+    if (BOX['in-living-guess'] !== document.activeElement) BOX['in-living-guess'].checked = guessed;
+    set(BOX['in-living'], guessed ? null : (Money.isOk(fat.wants) ? fat.wants.value : null));
+    BOX['in-living'].disabled = false;
+    var note = PANEL['fl-living-note'];
+    if (BOX['in-living-guess'].checked) {
+      var take = FL.takeHomeMonthly(p);
+      note.hidden = false;
+      note.textContent = Money.isOk(take)
+        ? 'Estimated at ' + Money.formatCents(Math.max(FL.LIVING_FLOOR_CENTS, Math.round(take.value * FL.LIVING_SHARE))) + ' a month: 45% of what lands, never under $600. It is marked rough, and correcting it moves everything.'
+        : 'Answer the money-in question first and this can be estimated.';
+    } else { note.hidden = true; }
+    var cash = Schema.cashCents(p);
+    set(BOX['in-saved'], Money.isOk(cash) ? cash.value : null);
+    if (BOX['in-card'] !== document.activeElement) BOX['in-card'].checked = !!existingCard();
+    var inv = Schema.investmentsCents(p);
+    var invNote = PANEL['fl-invested-note'];
+    if (Money.isOk(inv) && inv.value > 0) {
+      invNote.hidden = false;
+      invNote.textContent = 'You already have ' + Money.formatCents(inv.value) + ' invested on file. This box is what is saved on top of that; the total below counts both.';
+    } else { invNote.hidden = true; }
+    /* Between jobs the pot question is a different question. */
+    var sit = FL.situationOf(p);
+    var sq = NODES.savings.querySelector('[data-q]'), sh = NODES.savings.querySelector('[data-hint]');
+    if (sit === 'unemployed') {
+      sq.textContent = 'What can you reach right now?';
+      sh.textContent = 'Cash you could actually spend this month — not the retirement account, and not the house. One number.';
+    } else {
+      sq.textContent = 'What do you have saved or invested?';
+      sh.textContent = 'One number, everything together. Nearest hundred is close enough.';
+    }
+    var th = NODES.takehome.querySelector('[data-hint]');
+    if (th) th.textContent = sit === 'selfEmployed'
+      ? 'What your own work actually leaves you with in a month, after tax set aside. A round guess is fine.'
+      : 'After tax and everything taken out — the figure your bank shows. A round guess is fine.';
+  }
+
+  /* ---- The result ---------------------------------------------------------- */
+  function paintResult() {
+    var r = FL.result(h(), TABLES);
+    if (!Money.isOk(r)) {
+      el('fl-headline').textContent = 'Not yet.';
+      el('fl-headline-sub').textContent = r.reason;
+      el('fl-flow').innerHTML = '';
+      el('fl-flowlist').innerHTML = '';
+      el('fl-next-title').textContent = 'Finish the questions';
+      el('fl-next-reason').textContent = 'A couple of answers are still missing, so there is nothing honest to draw yet.';
+      el('fl-onward').setAttribute('href', '#/first-look/situation');
+      el('fl-fi').textContent = Money.EM_DASH;
+      el('fl-have').textContent = Money.EM_DASH;
+      return;
+    }
+    paintHeadline(r);
+    paintEstimates(r);
+    paintFigures(r);
+    var max = FL.scrubberYears(r);
+    var slider = el('in-year');
+    slider.max = String(max);
+    if (year > max) year = max;
+    if (slider !== document.activeElement) slider.value = String(year);
+    paintFlow(r);
+    paintNext(r);
+    paintAssumptions(r);
+  }
+
+  function paintHeadline(r) {
+    var head = el('fl-headline'), sub = el('fl-headline-sub');
+    if (r.headline.id === 'runway') {
+      head.textContent = Money.formatMonths(r.runwayMonths) + ' of runway.';
+      sub.textContent = 'What you can reach, ' + Money.formatCents(r.savedCents) + ', against a month that costs ' + Money.formatCents(r.costsMonthlyCents)
+        + ' and brings in ' + Money.formatCents(r.takeHomeMonthlyCents) + '. In today’s money, if nothing else changes.';
+      return;
+    }
+    if (r.headline.id === 'more-coming-in') {
+      head.textContent = 'More is arriving than going out.';
+      sub.textContent = Money.formatCents(r.surplusMonthlyCents) + ' a month over, on ' + Money.formatCents(r.takeHomeMonthlyCents)
+        + ' in and ' + Money.formatCents(r.costsMonthlyCents) + ' out. In today’s money, if nothing else changes.';
+      return;
+    }
+    if (r.headline.id === 'gap') {
+      head.textContent = Money.formatCents(-r.surplusMonthlyCents) + ' short each month.';
+      sub.textContent = Money.formatCents(r.takeHomeMonthlyCents) + ' lands and ' + Money.formatCents(r.costsMonthlyCents)
+        + ' goes out. The rest of the plan waits behind that, so there is no finish date on this screen yet'
+        + (Money.isEntered(r.runwayMonths) ? ' — what you have saved covers the gap for about ' + Money.formatMonths(r.runwayMonths) + '.' : '.');
+      return;
+    }
+    var rate = Money.isOk(r.savingsRate) ? Money.formatRate(r.savingsRate.value) : Money.EM_DASH;
+    head.textContent = rate + ' of what lands is being kept.';
+    sub.textContent = (Money.isEntered(r.yearsToFI)
+        ? (r.yearsToFI === 0 ? 'You are already at the number.' : 'At that pace the pot reaches ' + Money.formatCents(r.fiNumberCents) + ' in about ' + r.yearsToFI + ' years.')
+        : 'At that pace the pot does not reach ' + Money.formatCents(r.fiNumberCents) + ' within sixty years.')
+      + ' In today’s money, if nothing else changes.';
+  }
+
+  function paintEstimates(r) {
+    var host = el('fl-estimates');
+    if (!r.estimated.length) { host.hidden = true; host.textContent = ''; return; }
+    host.hidden = false;
+    host.textContent = 'Estimated, not entered: ' + r.estimated.map(function (e) { return e.label + ' (' + e.how + ')'; }).join('; ')
+      + '. Everything above and below moves when you correct them.';
+  }
+
+  function paintFigures(r) {
+    el('fl-fi').textContent = Money.formatCents(r.fiNumberCents);
+    el('fl-fi-note').textContent = Money.formatCents(r.costsAnnualCents) + ' a year of costs at a '
+      + Money.formatRate(r.withdrawalRate, { decimals: 1 }) + ' withdrawal rate.';
+    el('fl-have').textContent = Money.formatCents(r.savedCents);
+    el('fl-have-note').textContent = Money.isEntered(r.investedCents) && r.investedCents > 0
+      ? Money.formatCents(r.cashCents || 0) + ' saved and ' + Money.formatCents(r.investedCents) + ' invested.'
+      : 'Everything you said you have.';
+  }
+
+  function paintFlow(r) {
+    var f = FL.flow(r, year);
+    var nodes = [{ id: 'spine', label: '', column: 1, color: Charts.COLORS.muted }];
+    var links = [];
+    var colour = { housing: Charts.COLORS.spend, living: Charts.COLORS.cash, saving: Charts.COLORS.target, health: Charts.COLORS.debt };
+    f.sources.forEach(function (s) {
+      nodes.push({ id: s.id, label: s.label, column: 0, color: s.id === 'portfolio' ? Charts.COLORS.growth : s.id === 'cash' ? Charts.COLORS.cash : Charts.COLORS.contributed });
+      links.push({ from: s.id, to: 'spine', value: s.monthlyCents });
+    });
+    f.outflows.forEach(function (o) {
+      nodes.push({ id: o.id, label: o.label, column: 2, color: colour[o.id] || Charts.COLORS.series[0] });
+      links.push({ from: 'spine', to: o.id, value: o.monthlyCents, color: colour[o.id] });
+    });
+    el('fl-flow').innerHTML = Charts.sankey({
+      title: 'Where a month of money goes in year ' + f.year,
+      nodes: nodes, links: links, height: 220,
+      empty: 'Nothing flows yet — answer the money questions and it appears.'
+    });
+    el('fl-year-label').textContent = (f.year === 0 ? 'this year' : 'in ' + f.year + ' years')
+      + ' · invested ' + Money.formatCents(f.potCents);
+    el('fl-flowlist').innerHTML = f.sources.map(function (s) {
+      return '<li><span>' + esc(s.label) + ' in</span><span>' + esc(Money.formatCents(s.monthlyCents)) + ' a month</span></li>';
+    }).concat(f.outflows.map(function (o) {
+      return '<li><span>' + esc(o.label) + (o.rough ? ' (rough)' : '') + '</span><span>' + esc(Money.formatCents(o.monthlyCents)) + ' a month</span></li>';
+    })).join('');
+    el('fl-flow-note').textContent = f.postFi
+      ? 'Past the finish line the pay has stopped: the same month is paid by the portfolio, and health cover appears, a rough ' + Money.formatCents(r.healthCoverAnnualCents) + ' a year.'
+      : (Money.isEntered(r.yearsToFI)
+        ? 'Drag the year forward. At ' + r.yearsToFI + ' years the source on the left stops being ' + r.sourceLabel.toLowerCase() + ' and becomes the portfolio.'
+        : 'Amounts are a month, in today’s money.');
+  }
+
+  function paintNext(r) {
+    el('fl-next-title').textContent = r.next.title;
+    el('fl-next-reason').textContent = r.next.reason;
+    var room = SLAF.Registry.byId(r.next.room);
+    el('fl-onward').setAttribute('href', room ? Ownership.linkTo(r.next.room, null, ROOM_ID) : '../map.html');
+    el('fl-onward').textContent = (room ? 'Open ' + room.title : 'All rooms') + ' →';
+  }
+
+  function paintAssumptions(r) {
+    if (el('in-return') !== document.activeElement) el('in-return').value = String(Math.round(r.returnReal * 1000) / 10);
+    if (el('in-swr') !== document.activeElement) el('in-swr').value = String(Math.round(r.withdrawalRate * 1000) / 10);
+    var rows = [
+      ['Everything is today’s money', 'real, after inflation', 'the return below is a real return; nothing is grown for pay rises'],
+      ['Real return a year', Money.formatRate(r.returnReal, { decimals: 1 }), 'data/return_bands.json, the median of ten-year outcomes'],
+      ['Withdrawal rate', Money.formatRate(r.withdrawalRate, { decimals: 1 }), r.finish === 'undecided' ? 'no finish line chosen, so the cautious rate is assumed' : 'the finish line you chose'],
+      ['Health cover once the pay stops', Money.formatCents(r.healthCoverAnnualCents) + ' a year', 'rough: a national ballpark, not your plan'],
+      ['Money in, a month', Money.formatCents(r.takeHomeMonthlyCents), r.estimated.some(function (e) { return e.fieldId === 'takeHomeMonthly'; }) ? 'estimated at 75% of the salary you gave' : 'what you entered'],
+      ['Housing, a month', Money.formatCents(r.housingMonthlyCents), 'what you entered'],
+      ['Everything else, a month', Money.formatCents(r.livingMonthlyCents), r.estimated.some(function (e) { return e.fieldId === 'wantsMonthly'; }) ? 'estimated at 45% of what lands, floor $600' : 'what you entered'],
+      ['Saved and invested', Money.formatCents(r.savedCents), 'what you entered, plus anything already on file']
+    ];
+    el('fl-assume-list').innerHTML = rows.map(function (row) {
+      return '<dt>' + esc(row[0]) + '</dt><dd><b>' + esc(row[1]) + '</b><small>' + esc(row[2]) + '</small></dd>';
+    }).join('');
+  }
+
+  /* ---- Events --------------------------------------------------------------- */
+  document.addEventListener('click', function (evt) {
+    var b = evt.target.closest ? evt.target.closest('[data-choices] .choice, [data-next], [data-back], #fl-again') : null;
+    if (!b) return;
+    if (b.id === 'fl-again') { show(order()[0]); return; }
+    if (b.hasAttribute('data-next')) { saveCurrent(); move(1); return; }
+    if (b.hasAttribute('data-back')) { saveCurrent(); move(-1); return; }
+    var name = b.closest('[data-choices]').getAttribute('data-choices');
+    var v = b.getAttribute('data-value');
+    if (name === 'situation') { setSituation(v); show(order()[1] || 'result'); return; }
+    if (name === 'match') { saveMatch(v); move(1); return; }
+    if (name === 'finish') { saveFinish(v); show('result'); return; }
+  });
+
+  function saveCurrent() {
+    if (current === 'takehome') saveTakeHome();
+    else if (current === 'coming-in') saveComingIn();
+    else if (current === 'housing') saveHousing();
+    else if (current === 'living') saveLiving();
+    else if (current === 'savings') saveSaved();
+  }
+
+  /* A box saves when the finger leaves it, exactly as shared/room.js does.
+     Without this, ticking the checkbox below a number repaints the screen
+     and the untyped-yet-unsaved number is wiped by its own stored blank. */
+  document.addEventListener('focusout', function (evt) {
+    var n = evt.target;
+    if (!n || n.tagName !== 'INPUT' || n.type !== 'text' || !n.id || n.id.indexOf('in-') !== 0) return;
+    if (n.id === 'in-return' || n.id === 'in-swr') return;
+    saveCurrent();
+  });
+  document.addEventListener('keydown', function (evt) {
+    if (evt.key !== 'Enter' || evt.target.tagName !== 'INPUT' || evt.target.type !== 'text') return;
+    evt.preventDefault();
+    saveCurrent();
+    move(1);
+  });
+  BOX['in-gross-toggle'].addEventListener('change', function () {
+    PANEL['fl-gross'].hidden = !BOX['in-gross-toggle'].checked;
+    var box = BOX[BOX['in-gross-toggle'].checked ? 'in-gross' : 'in-takehome'];
+    try { box.focus(); } catch (e) { /* fine */ }
+  });
+  BOX['in-living-guess'].addEventListener('change', function () { saveLiving(); paintQuestions(); });
+  BOX['in-card'].addEventListener('change', saveCard);
+  el('in-year').addEventListener('input', function () {
+    year = Number(el('in-year').value) || 0;
+    var r = FL.result(h(), TABLES);
+    if (Money.isOk(r)) paintFlow(r);
+  });
+  function rate(node) {
+    var v = Money.parseRatePercent(node.value);
+    return Money.isEntered(v) ? v : null;
+  }
+  el('in-return').addEventListener('change', function () {
+    var v = rate(el('in-return'));
+    if (v === null) { paintResult(); return; }
+    Spine.setAssumptionOverride('returnReal', Math.min(FL.RETURN_MAX, Math.max(FL.RETURN_MIN, v)));
+  });
+  el('in-swr').addEventListener('change', function () {
+    var v = rate(el('in-swr'));
+    if (v === null || v <= 0) { paintResult(); return; }
+    Spine.setAssumptionOverride('swrRate', v);
+  });
+  window.addEventListener('hashchange', function () {
+    var s = stepFromHash();
+    if (s && s !== current) show(s);
+  });
+
+  /* Undo and redo reach every answer because every answer is a spine
+     write; the spine's change notification repaints both halves. */
+  Spine.onChange(function () { paintQuestions(); if (current === 'result') paintResult(); });
+
+  Spine.registerRoom(ROOM_ID);
+  SLAF.Progress.mount(ROOM_ID);
+
+  Reference.load(['returnBands', 'effectiveTaxRates', 'federalBrackets']).then(function (t) {
+    TABLES = t;
+    paintQuestions();
+    var wanted = stepFromHash();
+    var done = Money.isOk(FL.result(h(), TABLES));
+    show(wanted || (done ? 'result' : order()[0]));
+  }).catch(function (err) {
+    var n = el('load-notice');
+    n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+  });
+})();
+</script>
+</body>
+</html>

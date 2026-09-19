@@ -89,14 +89,15 @@
   /* ---- Headlines ---------------------------------------------------------
      One number a door; "not entered yet" until it exists. Take-home a month
      is worked out from the pay through the DAITE view (one place, D-171). */
+  /* One place (D-171), and since D-234 that place prefers the figure the
+     person entered over the one worked back from gross. */
   function takeHomeMonthly(household, tables) {
+    var t = Schema.takeHomeMonthlyCents(household, tables);
+    if (Money.isOk(t)) return Money.ok(t.value, { basis: t.entered ? 'entered' : 'take-home' });
     var v = Daite && Daite.view ? Daite.view(household, tables) : null;
-    if (!v) return Money.incomplete('No income view.', ['grossAnnualIncome']);
-    var t = v.income.takeHomeAnnualCents;
-    if (Money.isOk(t)) return Money.ok(Math.round(t.value / MONTHS), { basis: 'take-home' });
-    var g = v.income.grossAnnualCents;
+    var g = v ? v.income.grossAnnualCents : Money.incomplete('No income view.', ['grossAnnualIncome']);
     if (Money.isOk(g)) return Money.ok(Math.round(g.value / MONTHS), { basis: 'gross' });
-    return Money.incomplete('Not entered yet.', ['grossAnnualIncome']);
+    return Money.incomplete('Not entered yet.', ['takeHomeMonthly']);
   }
   function headline(household, tables, door, opts) {
     var d = typeof door === 'string' ? byId(door) : door;

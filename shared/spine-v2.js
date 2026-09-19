@@ -356,12 +356,18 @@
      the next save() stamps every changed field with it and clears it.
      Untagged writes are typed, sure, as of now. */
   var pendingMeta = null;
+  /* `derivedFrom` (D-234): this figure was worked out from another one
+     rather than typed — a take-home estimated at 75% of a salary, a living
+     cost estimated from a take-home. It rides with the confidence so that
+     the screen showing the figure can name the number to correct, and the
+     Refresh room picks it up with no extra work. */
   function tagWrite(m) {
     var t = m || {};
     pendingMeta = {
       source: Schema.SOURCES.indexOf(t.source) !== -1 ? t.source : 'typed',
       confidence: Schema.CONFIDENCES.indexOf(t.confidence) !== -1 ? t.confidence : 'sure',
-      asOf: t.asOf || null
+      asOf: t.asOf || null,
+      derivedFrom: typeof t.derivedFrom === 'string' && t.derivedFrom ? t.derivedFrom : null
     };
     return pendingMeta;
   }
@@ -380,7 +386,7 @@
           /* A real number replaced a guess: it is no longer one. D-094. */
           if (cache.meta.guessed && cache.meta.guessed[id]) delete cache.meta.guessed[id];
           if (current[id] === null || current[id] === undefined) { delete cache.meta.fields[id]; return; }
-          cache.meta.fields[id] = { asOf: tag.asOf || now, source: tag.source, confidence: tag.confidence, room: currentRoom || null };
+          cache.meta.fields[id] = { asOf: tag.asOf || now, source: tag.source, confidence: tag.confidence, room: currentRoom || null, derivedFrom: tag.derivedFrom || null };
           /* A value arrived: "not sure yet" no longer applies (D-209). */
           if (cache.meta.notSure && cache.meta.notSure[id]) delete cache.meta.notSure[id];
         }
@@ -399,7 +405,9 @@
     var now = new Date().toISOString();
     h.meta.confirmedAt[fieldId] = now;
     var prev = h.meta.fields[fieldId] || {};
-    h.meta.fields[fieldId] = { asOf: now, source: prev.source || 'typed', confidence: 'sure', room: prev.room || currentRoom || null };
+    /* Confirming a derived figure makes it the person's own answer: it is
+       no longer worked out from anything (D-234). */
+    h.meta.fields[fieldId] = { asOf: now, source: prev.source || 'typed', confidence: 'sure', room: prev.room || currentRoom || null, derivedFrom: null };
     save(); notify();
     return h.meta.confirmedAt[fieldId];
   }
@@ -432,7 +440,8 @@
       asOf: p.asOf || prev.asOf || new Date().toISOString(),
       source: Schema.SOURCES.indexOf(p.source) !== -1 ? p.source : (prev.source || 'typed'),
       confidence: Schema.CONFIDENCES.indexOf(p.confidence) !== -1 ? p.confidence : (prev.confidence || 'sure'),
-      room: p.room || prev.room || null
+      room: p.room || prev.room || null,
+      derivedFrom: p.derivedFrom === null ? null : (p.derivedFrom || prev.derivedFrom || null)
     };
     if (h.meta.fields[fieldId].asOf) { h.meta.confirmedAt = h.meta.confirmedAt || {}; h.meta.confirmedAt[fieldId] = h.meta.fields[fieldId].asOf; }
     save(); notify();

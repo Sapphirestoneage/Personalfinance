@@ -3,6 +3,24 @@
   "note": "Generated from shared/registry.js and shared/ownership.js; do not edit by hand.",
   "rooms": [
     {
+      "id": "first-look",
+      "title": "First Look",
+      "file": "rooms/first-look.html",
+      "reads": [
+        "employmentStatus",
+        "grossAnnualIncome",
+        "accommodationMonthly",
+        "wantsMonthly",
+        "cashSavings"
+      ],
+      "writes": [
+        "takeHomeMonthly"
+      ],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 0.25
+    },
+    {
       "id": "ledger",
       "title": "The Ledger",
       "file": "rooms/ledger.html",

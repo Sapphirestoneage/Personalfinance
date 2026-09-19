@@ -130,7 +130,8 @@
     'household.studentLoans.plan':               { class: 'raw',        unit: 'enum',    values: ['standard', 'income_driven', 'aggressive'], note: 'with extraMonthlyCents, idrShare (0–1 of discretionary income), forgivenessYears. Owned by Student Loan Decision. D-101' },
     'household.calendar.cadence':                { class: 'raw',        unit: 'enum',    values: ['weekly', 'fortnightly', 'semimonthly', 'monthly'], note: 'with nextPaydayDay (1–31), bills[] {label, cents, day}, payLater[] {label, cents, dueDay, instalmentsLeft}. Owned by Money Calendar. D-101' },
     'household.history.compareTo':               { class: 'raw',        unit: 'id',      note: 'the snapshot History compares today against. Owned by History. D-101' },
-    'meta.fields':                               { class: 'raw',        unit: 'map',     note: '{ fieldId: { asOf, source, confidence, room } }: when a number was last set or confirmed, how it arrived (typed, pasted, imported, screenshot, migrated, block-default, quote) and how sure the person is (sure, roughly, unsure, unknown). Schema.meta reads it; the spine writes it. D-181' },
+    'household.income.takeHomeMonthlyCents':      { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'what actually lands in the account in a month, after tax and every deduction. A FACT, not a derivation: until First Look asked for it the app could only work it back from gross through the effective-rate table, so a person who knows their net pay but not their salary had nowhere to put the number they do know. Read through Schema.takeHomeMonthlyCents, which prefers it over the derivation. Owned by First Look. D-234' },
+    'meta.fields':                               { class: 'raw',        unit: 'map',     note: '{ fieldId: { asOf, source, confidence, room, derivedFrom } }: when a number was last set or confirmed, how it arrived (typed, pasted, imported, screenshot, migrated, block-default, quote) and how sure the person is (sure, roughly, unsure, unknown), and, when the figure was worked out from another one rather than typed, the field id it came from (derivedFrom). Schema.meta reads it; the spine writes it. D-181, derivedFrom D-234' },
     'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
     'household.expenses.needs.food.monthlyCents':          { class: 'raw', unit: 'cents', note: 'FAT: food a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
     'household.expenses.needs.accommodation.monthlyCents': { class: 'raw', unit: 'cents', note: 'FAT: rent, or mortgage plus tax plus insurance, one number a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
@@ -1157,6 +1158,17 @@
   /* Tax facts the Tax room asks (D-098): pre-tax money beyond the workplace
      contribution (HSA, a traditional IRA), and what has been withheld this
      year, for a refund-or-owe estimate. */
+  /* 15.1 / D-234: the money that actually arrives. Gross is what the job
+     says; this is what the bank shows, and for a person between jobs it is
+     the benefit plus the severance slice plus the side work. Kept beside
+     the sources rather than on one of them because it is a fact about the
+     household's month, not about any single job. Owned by First Look. */
+  function createIncomeFacts(fields) {
+    var f = fields || {};
+    return {
+      takeHomeMonthlyCents: Money.isEntered(f.takeHomeMonthlyCents) ? Math.round(f.takeHomeMonthlyCents) : null
+    };
+  }
   function createTaxFacts(fields) {
     var f = fields || {};
     return {
@@ -2127,6 +2139,10 @@
       estate: createEstate(f.estate),
       giving: createGiving(f.giving),
       decumulation: createDecumulation(f.decumulation),
+      /* What lands in the account each month, when the person knows it.
+         One field, one owner (First Look); every reader goes through
+         Schema.takeHomeMonthlyCents as before. D-234. */
+      income: createIncomeFacts(f.income),
       tax: createTaxFacts(f.tax),
       career: createCareer(f.career),
       partner: createPartnerPlan(f.partner),
@@ -2581,10 +2597,22 @@
       grossAnnualIncomeCents: gross.value, estimatedTaxCents: tax.value, effectiveRate: tax.effectiveRate, referenceVersion: tax.referenceVersion
     });
   }
+  /** What actually lands in the account in a month.
+   *  An entered figure wins: somebody who reads their own bank statement
+   *  knows this better than any effective-rate table does, and until D-234
+   *  there was nowhere to put it. Otherwise it is gross minus the estimated
+   *  tax, as before, and `entered` says which of the two this is. */
+  function enteredTakeHomeMonthlyCents(household) {
+    var v = ((household || {}).income || {}).takeHomeMonthlyCents;
+    return Money.isEntered(v) ? v : null;
+  }
   function takeHomeMonthlyCents(household, tables) {
+    var entered = enteredTakeHomeMonthlyCents(household);
+    if (entered !== null) return Money.ok(entered, { entered: true, source: 'entered' });
     var t = takeHomeAnnualCents(household, tables);
     if (!Money.isOk(t)) return t;
     return Money.ok(Math.round(t.value / 12), {
+      entered: false, source: 'derived',
       grossAnnualIncomeCents: t.grossAnnualIncomeCents, estimatedTaxCents: t.estimatedTaxCents, effectiveRate: t.effectiveRate, referenceVersion: t.referenceVersion
     });
   }
@@ -2917,6 +2945,11 @@
       source: SOURCES.indexOf(f.source) !== -1 ? f.source : (f.asOf ? 'typed' : null),
       confidence: CONFIDENCES.indexOf(f.confidence) !== -1 ? f.confidence : 'unknown',
       room: f.room || null,
+      /* The field this one was worked out from, when it was not typed
+         (D-234): a take-home estimated at 75% of a salary, a living cost
+         estimated from a take-home. The Refresh room and the staleness nag
+         already read `confidence`; this says what to correct to fix it. */
+      derivedFrom: f.derivedFrom || null,
       entered: entered
     };
   }
@@ -3116,6 +3149,8 @@
     estimatedAnnualTaxCents: estimatedAnnualTaxCents,
     takeHomeAnnualCents: takeHomeAnnualCents,
     takeHomeMonthlyCents: takeHomeMonthlyCents,
+    enteredTakeHomeMonthlyCents: enteredTakeHomeMonthlyCents,
+    createIncomeFacts: createIncomeFacts,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
     FAT_NEEDS: FAT_NEEDS,

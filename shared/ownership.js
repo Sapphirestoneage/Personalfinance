@@ -168,6 +168,20 @@
       applies: function (h) { return !(Schema.isUnemployed(h) && !Money.isOk(Schema.grossAnnualIncomeCents(h))); },
       notApplicableBecause: 'Between jobs — the runway is the number that matters now.'
     },
+    /* What actually lands in the account each month (D-234). The one fact
+       First Look owns, and the one the app could not hold before it: gross
+       is what the job says, this is what the bank shows. Between jobs it is
+       the benefit plus the severance slice plus the side work — the same
+       question, which is why it is one field and not two. */
+    takeHomeMonthly: {
+      label: 'What lands each month', owner: 'first-look', anchor: 'q-takehome',
+      read: function (h) {
+        var v = Schema.enteredTakeHomeMonthlyCents(h);
+        return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['takeHomeMonthly']);
+      },
+      format: function (v) { return money(v) + '/mo'; },
+      write: function (cents) { return Spine.set('income.takeHomeMonthlyCents', Money.isEntered(cents) ? Math.round(cents) : null, 'What lands each month'); }
+    },
     unemployment: {
       label: 'Between jobs', owner: 'start', anchor: 'q-unemployed',
       read: function (h) {
@@ -232,7 +246,12 @@
       read: function (h) { return Schema.capturingFullMatchDerived(h); },
       format: function (v) { return v ? 'Yes' : 'No'; },
       applies: function (h) { return Schema.capturingQuestionApplies(h); },
-      notApplicableBecause: 'There is no match to capture.'
+      notApplicableBecause: 'There is no match to capture.',
+      /* The stored fallback, through the owner (D-208), so a surface that
+         asks the question in words — First Look, the Ask card — writes it
+         the way Start Here does rather than reaching into the household.
+         A contribution percent, once entered, still wins over it. */
+      write: function (v) { return Spine.set('capturingFullMatch', v === true ? true : v === false ? false : null, 'Capturing the full match'); }
     },
     hasDebt: {
       label: 'Any debt', owner: 'start', anchor: 'q-debt',

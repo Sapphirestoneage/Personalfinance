@@ -6319,18 +6319,22 @@ section('Room order');
   checkTrue('every room declares an order', orders.every(o => typeof o === 'number'));
   check('orders are unique', new Set(orders).size, orders.length);
   checkTrue('orders are ascending', orders.every((o, i) => i === 0 || o > orders[i - 1]));
-  check('the Ledger comes first and Start Here (the older one-pager) behind it (D-206, D-208, D-230)', path_.slice(0, 2).map(r => r.id).join(','), 'ledger,start');
+  check('First Look is the front door, the Ledger behind it, then Start Here (D-206, D-208, D-230, D-234)', path_.slice(0, 3).map(r => r.id).join(','), 'first-look,ledger,start');
   check('the Snapshot comes after the rooms that feed it',
     path_.findIndex(r => r.id === 'financial-snapshot') >
     Math.max(path_.findIndex(r => r.id === 'debt-payoff'), path_.findIndex(r => r.id === 'cash-flow')),
     true);
 
-  check('with nothing visited, the next room is the first',
-    Registry.nextAfter(null, []).id, 'start');
+  /* Nothing visited is exactly the stranger First Look was built for, so
+     it is what the path offers first now (D-234). */
+  check('with nothing visited, the next room is the front door',
+    Registry.nextAfter(null, []).id, 'first-look');
+  check('with First Look and the Ledger behind you, the next is Start Here',
+    Registry.nextAfter(null, ['first-look', 'ledger']).id, 'start');
   check('with Start done, the next is Debt Payoff',
-    Registry.nextAfter(null, ['start']).id, 'debt-payoff');
+    Registry.nextAfter(null, ['first-look', 'ledger', 'start']).id, 'debt-payoff');
   check('skipping ahead still points at the earliest unvisited',
-    Registry.nextAfter(null, ['start', 'cash-flow']).id, 'debt-payoff');
+    Registry.nextAfter(null, ['first-look', 'ledger', 'start', 'cash-flow']).id, 'debt-payoff');
 })();
 
 /* ==========================================================================
@@ -10467,7 +10471,11 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   /* Four doors stood side by side under Home and it was the single thing
      that lost people most (D-186). There is one now: the Ledger, which the
      First Round and Express became views of (D-230). */
-  check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
+  /* Four became one; one became two, on purpose (D-234): First Look asks
+     four to seven questions and shows you one picture, the Ledger holds
+     every number there is. They are a door and a filing cabinet, not two
+     doors side by side, and the room map says which is which. */
+  check('Home: First Look, the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,first-look,ledger,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
@@ -10836,7 +10844,7 @@ section('15.1 / 15.10: as-of, source and confidence on every owned number (D-181
   /* The accessors resolve through the field map ownership registered. */
   Spine.reset();
   check('a blank field reads null through Schema.get', Schema.get(Spine.getProfile(), 'assets.cashCents'), null);
-  check('...and its meta is unknown with no date', JSON.stringify(Schema.meta(Spine.getProfile(), 'cashSavings')), JSON.stringify({ fieldId: 'cashSavings', asOf: null, source: null, confidence: 'unknown', room: null, entered: false }));
+  check('...and its meta is unknown with no date', JSON.stringify(Schema.meta(Spine.getProfile(), 'cashSavings')), JSON.stringify({ fieldId: 'cashSavings', asOf: null, source: null, confidence: 'unknown', room: null, derivedFrom: null, entered: false }));
   Spine.registerRoom('start');
   Spine.upsertAsset(Schema.createAsset({ id: 'c', category: 'cash', valueCents: 950000, liquid: true }));
   let h = Spine.getProfile();
@@ -14060,9 +14068,12 @@ section('The thirty (docs/room-map.json)');
   const live = {};
   Registry.all().forEach(r => { live[r.id] = r; });
 
-  check('the map lands on thirty rooms', MAP.rooms.length, 30);
-  check('numbered 1 to 30', MAP.rooms.map(r => r.n).join(','),
-    Array.from({ length: 30 }, (_, i) => i + 1).join(','));
+  /* Thirty-one since D-234: First Look is the one room added rather than
+     merged, and the count moved WITH a map entry saying so, which is the
+     only way this alarm is meant to be quietened. */
+  check('the map lands on thirty-one rooms', MAP.rooms.length, 31);
+  check('numbered 1 to 31', MAP.rooms.map(r => r.n).join(','),
+    Array.from({ length: 31 }, (_, i) => i + 1).join(','));
 
   /* Every survivor is a room that exists now and keeps its id through the
      merge: the id is what ownership.js, the registry and every deep link
@@ -14129,8 +14140,8 @@ section('The thirty (docs/room-map.json)');
      merge was running and is named under Housing, so the ledger is 94 now.
      The literal stays a literal on purpose: a room added without a place on
      the map still fails here, which is the whole point of the alarm. */
-  check('every room is accounted for: thirty, plus what they absorb, plus the Net Worth redirect',
-    MAP.rooms.length + merged + toGo + 1, 94);
+  check('every room is accounted for: the survivors, plus what they absorb, plus the Net Worth redirect',
+    MAP.rooms.length + merged + toGo + 1, 95);
   check('and the registry holds exactly the survivors plus what has not merged yet',
     Object.keys(live).length, MAP.rooms.length + toGo);
 

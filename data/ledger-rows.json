@@ -240,6 +240,27 @@
       }
     },
     {
+      "id": "takeHomeMonthly",
+      "path": "income.takeHomeMonthlyCents",
+      "letter": "I",
+      "label": "What lands in your account, a month",
+      "kind": "lookup",
+      "unit": "cents",
+      "pass": 1,
+      "appliesWhen": "always",
+      "minutes": 1,
+      "where": "Your bank app: the pay that arrived last month, or the benefit plus anything else that came in.",
+      "roughly": "What you think turns up in a normal month, to the nearest hundred.",
+      "family": "income",
+      "door": "I",
+      "level": 1,
+      "round": null,
+      "suggestFrom": null,
+      "askIn": null,
+      "moves": true,
+      "unlocks": "the savings rate and the FI date without waiting on a salary figure"
+    },
+    {
       "id": "grossAnnualIncome",
       "path": "income.grossAnnualCents",
       "letter": "I",

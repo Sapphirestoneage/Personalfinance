@@ -19,6 +19,48 @@
   var FILTER_TAGS = ['income', 'cashflow', 'debt'];
 
   var ROOMS = [
+    /* First Look (D-234): the front door. Four to seven questions, one to a
+       screen, ending on one picture of the person's own money and one thing
+       to do next. It is where a session with nothing on file lands, and the
+       only room that asks before it shows. Everything it collects is a
+       normal Ledger fact, so the Ledger opens with its first level already
+       cleared rather than at zero. */
+    {
+      id: 'first-look',
+      group: 'home', aliases: ['first look', 'start', 'begin', 'new here', 'two minutes',
+                               'front door', 'quick', 'first time', 'try it'],
+      kind: 'about-you',
+      /* Money in is either figure: what lands (this room's own field) or
+         the salary it can be worked back from. `needs` cannot say "either",
+         and gross is the one every other room reads, so gross is what is
+         listed; the Ledger's own I-door row asks for the take-home. */
+      needs: ['employmentStatus', 'grossAnnualIncome', 'accommodationMonthly', 'wantsMonthly', 'cashSavings'],
+      /* 0.25, not 0: Registry.inOrder() reads `a.order || 99`, so a zero
+         would sort this room last. It sits ahead of the Ledger (0.5). */
+      order: 0.25,
+      title: 'First Look',
+      blurb: 'Four to seven questions, one to a screen, rough numbers welcome. It ends on your own money flowing and one thing to do next \u2014 in today\'s dollars, in under two minutes, with no account.',
+      href: 'rooms/first-look.html',
+      tier: 0,
+      tags: ['income', 'cashflow', 'debt'],
+      daite: {
+        reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'debt.none', 'expenses.needs.accommodation', 'expenses.wants',
+                'income.grossAnnualCents', 'income.sources[].employerMatch', 'income.takeHomeMonthlyCents', 'you.situation'],
+        writes: ['assets.cashCents', 'debt.items', 'debt.none', 'expenses.needs.accommodation', 'expenses.wants',
+                 'income.grossAnnualCents', 'income.sources[].employerMatch', 'income.takeHomeMonthlyCents', 'you.situation']
+      },
+      subsections: [
+        { id: 'q-situation', label: 'Where you are' },
+        { id: 'q-takehome',  label: 'What lands each month' },
+        { id: 'q-coming-in', label: 'What is coming in' },
+        { id: 'q-housing',   label: 'What housing costs' },
+        { id: 'q-living',    label: 'Everything else' },
+        { id: 'q-savings',   label: 'What you have saved' },
+        { id: 'q-match',     label: 'The match' },
+        { id: 'q-finish',    label: 'The finish line' },
+        { id: 'result',      label: 'Your first look' }
+      ]
+    },
     {
       id: 'start',
       group: 'home', aliases: ['begin', 'setup', 'one-pager', 'situation', 'intake'],
@@ -1818,7 +1860,7 @@
   /* The order the brief lists rooms within a group, where it differs from
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
-    home: ['dashboard', 'planner', 'start'],
+    home: ['first-look', 'dashboard', 'planner', 'start'],
     numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
     decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
