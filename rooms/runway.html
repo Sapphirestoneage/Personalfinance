@@ -21,7 +21,11 @@
 
     #how-long     cash against the month, and what would buy more of it
     #job-hunting  the same runway against a search, with the benefit,
-                  the severance and the floor month (engines/betweenjobs.js)
+                  the severance and the floor month (engines/betweenjobs.js).
+                  It OWNS the two facts that only exist once the pay has
+                  stopped — whether unemployment is coming, and what the
+                  last job paid — and the highest deductible on the
+                  coverage card. All three were Start Here's (D-234).
     #by-choice    what it takes to walk away, and the dates you get there
                   (engines/quitfund.js)
     #at-3am       the amount you named against what the cash covers, and
@@ -524,14 +528,17 @@
     <span class="slaf-eyebrow">Coverage checkup</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">What a bad year can cost, and what stands behind you</h2>
     <p class="slaf-hint" style="margin:0">
-      Four facts about your cover, asked here once. The Statement's worst
-      plausible year reads the out-of-pocket maximum from this card. Leave
-      blank what you do not have — blank means "not entered", never zero,
-      and the read-out says so.
+      Five facts about your cover, asked here once. The Statement's worst
+      plausible year reads the out-of-pocket maximum from this card, and the
+      deductible is the first thing a cash cushion has to clear, which is
+      what this reading is about. Leave blank what you do not have — blank
+      means "not entered", never zero, and the read-out says so.
     </p>
     <div class="cover-grid">
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Health out-of-pocket max</span>
         <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-oop" placeholder="e.g. 8000" aria-label="Health out-of-pocket maximum"/></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Highest deductible</span>
+        <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-deductible" placeholder="e.g. 1500" aria-label="Highest deductible"/></span></label>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Term life in force</span>
         <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="c-life" placeholder="e.g. 500000" aria-label="Term life cover in force"/></span></label>
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Disability benefit, a month</span>
@@ -1238,6 +1245,23 @@
         propose: function (h, T) { return BetweenJobs.proposeFloorCents(h); } }
     ],
 
+    /* The two facts that only exist once the pay has actually stopped.
+       They came from Start Here with this reading (D-234); they are under
+       the fold because the two above are the ones that matter whether or
+       not the job has gone, and this reading opens for anyone. */
+    moreLabel: 'If the pay has already stopped',
+    more: [
+      { ctl: 'benefitStatus', label: 'Unemployment', kind: 'select',
+        options: [['', 'Not said'], ['receiving', 'Getting it'], ['applied', 'Applied, waiting'],
+                  ['notApplied', 'Not applied'], ['ineligible', 'Not eligible']],
+        read: function (h) { return readUnemployment(h).benefitStatus || ''; },
+        write: function (v) { Ownership.write('unemployment', v || null); } },
+      { ctl: 'lastPay', label: 'Your last pay, a year', kind: 'money', placeholder: 'e.g. 62,000',
+        hint: 'What the job paid before it ended. The benefit estimate, the marginal rate and the milestones all read it.',
+        read: function (h) { return readUnemployment(h).lastGrossAnnualCents; },
+        write: function (v) { Ownership.write('lastPay', v); } }
+    ],
+
     amounts: function (h, T) {
       var p = planOf(h, T);
       var rows = [];
@@ -1245,8 +1269,8 @@
       if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
       if (Money.isOk(p)) {
         rows.push({ label: 'The floor month' + (p.floorSource === 'convention' ? ', proposed' : ''), cents: p.floorCents, href: p.floorSource === 'yours' ? null : '#inputs' });
-        if (p.severanceCents > 0) rows.push({ label: 'Severance in hand', cents: p.severanceCents, href: Ownership.linkTo('start', 'q-unemployed') });
-        if (p.benefit.monthlyCents > 0) rows.push({ label: 'The benefit, a month', cents: p.benefit.monthlyCents, href: Ownership.linkTo('start', 'q-unemployed') });
+        if (p.severanceCents > 0) rows.push({ label: 'Severance in hand', cents: p.severanceCents, href: '#the-plan' });
+        if (p.benefit.monthlyCents > 0) rows.push({ label: 'The benefit, a month', cents: p.benefit.monthlyCents, href: '#inputs' });
         if (p.other.cents > 0) rows.push({ label: 'Other income, a month' + (p.other.basis === 'gross' ? ' (before tax)' : ''), cents: p.other.cents, href: Ownership.linkTo('start', 'q-partner') });
       }
       return rows;
@@ -1419,7 +1443,8 @@
      LIVE-FORM: built once — the four controls are in the HTML above and
      only ever have their .value set, never while one of them has focus. */
 
-  var COVER_MONEY = [['c-oop', 'oopMaxCents'], ['c-life', 'termLifeCents'], ['c-disability', 'disabilityMonthlyCents']];
+  var COVER_MONEY = [['c-oop', 'oopMaxCents'], ['c-deductible', 'highestDeductibleCents'],
+                     ['c-life', 'termLifeCents'], ['c-disability', 'disabilityMonthlyCents']];
 
   COVER_MONEY.forEach(function (spec) {
     bindMoney(spec[0], function (cents) {

@@ -144,8 +144,11 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `reversibilityDecision` — The decision being weighed · **no other room mentions it**
 
-## runway (7)
+## runway (10)
 
+- `unemployment` — Between jobs · too generic to trace
+- `lastPay` — Your last pay, a year · read by ledger, start
+- `highestDeductible` — Highest deductible · read by start, statement, protection
 - `oopMax` — Out-of-pocket maximum · read by statement, protection
 - `termLife` — Term life in force · read by protection
 - `disabilityMonthly` — Disability benefit · read by protection
@@ -169,17 +172,14 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `practiceLedger` — Practice ledger · read by skill-tree
 
-## start (9)
+## start (6)
 
 - `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
-- `unemployment` — Between jobs · too generic to trace
-- `lastPay` — Your last pay, a year · read by ledger
 - `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, unlearning
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, wrapped
 - `contributionPercent` — Workplace contribution · read by ledger, statements, accounts, what-if-life, tax
-- `highestDeductible` — Highest deductible · read by statement, runway, protection
 
 ## statement (7)
 

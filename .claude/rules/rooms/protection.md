@@ -8,7 +8,7 @@ File: rooms/protection.html · 267 lines
 Engines: projection, tier0, protection
 Reference data: protection_conventions.json
 Owns: healthCover, healthMonthly
-Reads from other owners: grossAnnualIncome (start), cashSavings (start), highestDeductible (start), oopMax (runway), termLife (runway), disabilityMonthly (runway), monthlyExpenses (expenses)
+Reads from other owners: grossAnnualIncome (start), cashSavings (start), highestDeductible (runway), oopMax (runway), termLife (runway), disabilityMonthly (runway), monthlyExpenses (expenses)
 Latest decisions:
   - D-103 — Protection: each need against what is held
   - D-098 — The first six tranche rooms: what each owns, before it is built

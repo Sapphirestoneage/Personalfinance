@@ -176,7 +176,7 @@
       notApplicableBecause: 'Between jobs — the runway is the number that matters now.'
     },
     unemployment: {
-      label: 'Between jobs', owner: 'start', anchor: 'q-unemployed',
+      label: 'Between jobs', owner: 'runway', anchor: 'inputs',
       read: function (h) {
         var u = Schema.unemploymentOf(h);
         if (u.benefitStatus) return Money.ok(u.benefitStatus, { unemployment: u });
@@ -193,9 +193,10 @@
     },
     /* Between jobs, "Your last pay" is the first round's pay question (D-206):
        it feeds the benefit estimate, the marginal rate and the milestones,
-       and lives on the person beside the benefit. Start Here owns it. */
+       and lives on the person beside the benefit. The Cushion's
+       job-hunting reading owns it (D-234). */
     lastPay: {
-      label: 'Your last pay, a year', owner: 'start', anchor: 'q-unemployed',
+      label: 'Your last pay, a year', owner: 'runway', anchor: 'inputs',
       read: function (h) { var v = Schema.unemploymentOf(h).lastGrossAnnualCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['lastPay']); },
       format: function (v) { return money(v) + '/yr'; },
       applies: function (h) { return Schema.isUnemployed(h); },
@@ -302,10 +303,11 @@
       format: function (v) { return Money.formatRate(v, { decimals: 0 }); }
     },
 
-    /* Sleep At Night owns the deductible: it is the first thing a cash
-       cushion has to cover, which is that room's whole subject. */
+    /* The Cushion's at-3am reading owns the deductible: it is the first
+       thing a cash cushion has to cover, which is that reading's whole
+       subject. The comment said so from D-232; the box arrived in D-234. */
     highestDeductible: {
-      label: 'Highest deductible', owner: 'start', anchor: 'q-deductible',
+      label: 'Highest deductible', owner: 'runway', anchor: 'coverage',
       read: function (h) {
         var v = (h.insurance || {}).highestDeductibleCents;
         return Money.isEntered(v) ? Money.ok(v)

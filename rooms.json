@@ -34,14 +34,11 @@
       ],
       "writes": [
         "grossAnnualIncome",
-        "unemployment",
-        "lastPay",
         "cashSavings",
         "investments",
         "employerMatch",
         "capturingFullMatch",
-        "contributionPercent",
-        "highestDeductible"
+        "contributionPercent"
       ],
       "requires": [],
       "dashboardNumber": null,
@@ -516,6 +513,9 @@
         "monthlyExpenses"
       ],
       "writes": [
+        "unemployment",
+        "lastPay",
+        "highestDeductible",
         "oopMax",
         "termLife",
         "disabilityMonthly",

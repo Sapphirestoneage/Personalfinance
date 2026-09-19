@@ -2082,8 +2082,9 @@ section('SWAN Number');
   /* -- Ownership: exactly one room may edit it --------------------------- */
   check('the SWAN target is owned by Sleep At Night',
     Ownership.field('swanTarget').owner, 'runway');
-  check('and Sleep At Night owns only the number and the four coverage facts (D-071; who depends on you went back to the one-pager, D-095)',
-    Ownership.ownedBy('runway').sort().join(','), 'disabilityMonthly,expectedSearchMonths,floorMonthly,oopMax,swanTarget,termLife,umbrella');
+  check('and the Cushion owns the number, the five coverage facts and the two between-jobs ones (D-071, D-234)',
+    Ownership.ownedBy('runway').sort().join(','),
+    'disabilityMonthly,expectedSearchMonths,floorMonthly,highestDeductible,lastPay,oopMax,swanTarget,termLife,umbrella,unemployment');
   const chip = Ownership.describe('swanTarget', months6, 'financial-snapshot');
   check('elsewhere it renders as a read-only $18,900', chip.display, '$18,900');
   check('and it is not editable there', chip.isOwnHere, false);
@@ -5212,8 +5213,19 @@ section('Eleven cards');
     check('three characters are asked', Schema.TAX_CHARACTERS.map(t => t.id).join(','), 'pretax,roth,taxable');
     check('a new household has not answered about debt', Schema.createHousehold({}).meta.hasDebt, null);
     check('the demo answers every intake field', Progress.forRoom('start', Demo.build()).missing.length, 0);
-    ['contributionPercent', 'highestDeductible', 'employerMatch'].forEach(f =>
+    ['contributionPercent', 'employerMatch'].forEach(f =>
       check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
+    /* The three facts that only matter once the pay has stopped, or when
+       the cushion is being priced, went to the Cushion (D-234). */
+    ['highestDeductible', 'unemployment', 'lastPay'].forEach(f =>
+      check(`${f} is owned by the Cushion`, Ownership.field(f).owner, 'runway'));
+    {
+      const rw = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
+      checkTrue('the Cushion asks all three, which is how ownership moves',
+        /id="c-deductible"/.test(rw) && /ctl: 'benefitStatus'/.test(rw) && /ctl: 'lastPay'/.test(rw));
+      checkTrue('and the two between-jobs facts write through the owner path',
+        (rw.match(/Ownership\.write\('(unemployment|lastPay)'/g) || []).length === 2);
+    }
     /* The taxes.* facts left Start Here for the room they change: D-234. */
     ['state', 'zip', 'filingStatus'].forEach(f =>
       check(`${f} is owned by Tax`, Ownership.field(f).owner, 'tax'));
@@ -6005,7 +6017,7 @@ section('Facts answered once');
     const OWNED = {
       contributionPercent: 'start', rothContributed: 'accounts',
       hsaContributed: 'accounts', marginalRate: 'accounts',
-      highestDeductible: 'start'
+      highestDeductible: 'runway'
     };
     const h = Schema.createHousehold({});
     h.retirement = { contributionPercent: 4, rothContributedCents: 300000,
@@ -6568,8 +6580,11 @@ section('The Coverage Checkup, and how it is split');
   const acc = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
   checkTrue('the coverage card exists', /id="coverage"/.test(san));
   checkTrue('the allocation card exists', /id="allocation"/.test(acc));
-  checkTrue('the deductible is still asked in Start Here, not here', !/data-field="highestDeductible"|id="c-deductible"/.test(san)
-    && Ownership.field('highestDeductible').owner === 'start');
+  /* D-234: the deductible moved onto this card, where the comment in the
+     ownership map had said it belonged since D-232. */
+  checkTrue('the deductible is asked on the coverage card now', /id="c-deductible"/.test(san)
+    && Ownership.field('highestDeductible').owner === 'runway'
+    && Ownership.field('highestDeductible').anchor === 'coverage');
   checkTrue('Sleep At Night redirects to the reading it became',
     /url=runway\.html#at-3am/.test(fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8')));
   checkTrue('Where It Goes says so in its title', /how it.s split/.test(Registry.byId('accounts').title));

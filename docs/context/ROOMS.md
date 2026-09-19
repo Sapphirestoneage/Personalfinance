@@ -7,7 +7,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Home (3)
 
 - **ledger** — The Ledger (utility) · 2248 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-230, D-226, D-207
-- **start** — Start Here · 1000 lines · engines: income · owns: grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employerMatch, capturingFullMatch, contributionPercent, highestDeductible · D-166, D-159, D-146
+- **start** — Start Here · 1000 lines · engines: income · owns: grossAnnualIncome, cashSavings, investments, employerMatch, capturingFullMatch, contributionPercent · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1570 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
@@ -48,7 +48,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **side-hustle** — Side Hustle · 506 lines · engines: projection, tier0, selfemployed, hourly, sidehustle · D-062, D-033
 - **credential** — Worth Learning · 485 lines · engines: projection, tier0, hourly, credential · D-062
 - **worth** — Worth It · 606 lines · engines: projection, tier0, hourly, worth
-- **runway** — The Cushion · 1717 lines · engines: projection, tier0, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-232, D-130, D-082
+- **runway** — The Cushion · 1742 lines · engines: projection, tier0, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo · owns: unemployment, lastPay, highestDeductible, oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-232, D-130, D-082
 - **car** — What A Car Costs · 655 lines · engines: projection, tier0, hourly, quickmath · D-151
 - **what-if-life** — What If, Life · 551 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events · D-146, D-091, D-087
 - **timeline** — What Comes Next · 504 lines · engines: timeline · owns: futureIncome · D-152

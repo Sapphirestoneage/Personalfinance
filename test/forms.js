@@ -299,6 +299,7 @@ const CASES = [
     seed: 'demo',
     fields: [
       { sel: '#c-oop', type: '8000' },
+      { sel: '#c-deductible', type: '1500', clearFirst: true },
       { sel: '#c-life', type: '500000' },
       { sel: '#c-disability', type: '3000' }
     ],
@@ -309,7 +310,9 @@ const CASES = [
         ['the out-of-pocket maximum was stored', i.oopMaxCents, 800000],
         ['the term life was stored', i.termLifeCents, 50000000],
         ['the disability benefit was stored', i.disabilityMonthlyCents, 300000],
-        ['and the deductible from Start Here was left alone', i.highestDeductibleCents, 250000]
+        /* D-234: the deductible is asked here now, and typing over the
+           demo's figure has to replace it rather than append to it. */
+        ['the deductible is this card\'s now, and was typed over', i.highestDeductibleCents, 150000]
       ];
     }
   },
@@ -1456,6 +1459,29 @@ const CASES = [
    select loses the tap the same way; there is nothing to type, so the check
    is that the node survives and the choice sticks. */
 const SELECT_CASES = [
+  {
+    /* THE CUSHION (D-234): the benefit status moved here from Start Here
+       and sits under the fine-tune fold on the job-hunting reading. */
+    room: '/rooms/runway.html#job-hunting',
+    container: '#inputs',
+    seed: 'demo',
+    prepare: async (page) => {
+      await page.evaluate(() => {
+        const d = document.querySelector('#inputs details.room-more');
+        if (d) d.open = true;
+      });
+      await page.waitForTimeout(250);
+    },
+    picks: [
+      ['[data-ctl="benefitStatus"]', 'receiving']
+    ],
+    read: () => {
+      /* It lives on the person, beside the benefit: Schema.unemploymentOf. */
+      const h = JSON.parse(localStorage.getItem('slaf.household.v2'));
+      const you = (h.people || []).filter(p => p.role === 'adult')[0] || {};
+      return { benefitStatus: (you.unemployment || {}).benefitStatus };
+    }
+  },
   {
     /* SETTINGS (D-234): the About you card owns the date of birth, the
        working situation and who depends on you. Every switch list on this
