@@ -186,7 +186,7 @@
     'asset.cashFlowMonthlyCents':                { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'net monthly cash the asset throws off; null for one that does not' },
     'asset.accessAgeOverride':                   { class: 'raw',        unit: 'years',   note: 'overrides the access age derived from access_rules (e.g. a rule-of-55 plan). null = derived' },
     'asset.institution':                         { class: 'raw',        unit: 'text',    note: 'the bank, broker or plan that holds it, as the person names it. null = not typed. D-251' },
-    'asset.accountType':                         { class: 'raw',        unit: 'enum',    values: ['checking', 'savings', 'hysa', 'money_market', 'cd', 'brokerage', 'stock_plan', 'crypto', '401k', 'roth_401k', '403b', '457b', 'tsp', 'pension', 'traditional_ira', 'roth_ira', 'sep_ira', 'simple_ira', 'hsa', '529', 'daf', 'mixed', 'other'], note: 'the account type on its statement (Schema.ACCOUNT_TYPES). Choosing one sets taxCharacter and, where the category is still other, the category, through Schema.applyAccountType; the character stays editable. null = not asked. D-251' },
+    'asset.accountType':                         { class: 'raw',        unit: 'enum',    values: ['checking', 'savings', 'hysa', 'money_market', 'cd', 'brokerage', 'stock_plan', 'crypto', '401k', 'roth_401k', '403b', '457b', 'tsp', 'old_401k', 'pension', 'traditional_ira', 'roth_ira', 'sep_ira', 'simple_ira', 'hsa', '529', 'daf', 'mixed', 'other'], note: 'the account type on its statement (Schema.ACCOUNT_TYPES). Choosing one sets taxCharacter and, where the category is still other, the category, through Schema.applyAccountType; the character stays editable. null = not asked. D-251' },
     'futureIncome.monthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'a pension, Social Security, an annuity, an inheritance you would rather not count. Owned by the Statement' },
     'futureIncome.confidence':                   { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4] },
     'property.rentMonthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'gross rent. The value itself lives on the linked real_estate asset — one number, one owner' },
@@ -1434,6 +1434,9 @@
     { id: '403b',            label: '403(b)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
     { id: '457b',            label: '457(b)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
     { id: 'tsp',             label: 'TSP',                   taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    /* A plan left at a former employer (D-307): the same pre-tax money, tagged
+       so Left Behind can find it and the Statement can point at it. */
+    { id: 'old_401k',        label: 'A plan at a former employer', taxCharacter: 'pretax', category: 'retirement', group: 'Work retirement' },
     { id: 'pension',         label: 'Pension',               taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
     { id: 'traditional_ira', label: 'Traditional IRA',       taxCharacter: 'pretax',  category: 'retirement', group: 'IRA' },
     { id: 'roth_ira',        label: 'Roth IRA',              taxCharacter: 'roth',    category: 'retirement', group: 'IRA' },

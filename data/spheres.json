@@ -71,13 +71,14 @@
           "investments",
           "assetValue",
           "assetTier",
+          "assetConfidence",
           "otherAssets",
           "incomeType",
           "employerMatch",
           "contributionPercent",
           "capturingFullMatch"
         ],
-        "minutes": 17.0
+        "minutes": 17.5
       },
       "unlocks": [
         "debt-payoff",
@@ -231,15 +232,20 @@
           "assetAccountType",
           "assetInstitution",
           "assetCostBasis",
+          "assetCashFlow",
+          "assetHassle",
+          "assetAccessAge",
           "rothContributed",
           "hsaContributed",
+          "onHdhp",
+          "hsaFamilyPlan",
           "allocationStocks",
           "allocationBonds",
           "allocationCash",
           "rebalanceBand",
           "stockShare"
         ],
-        "minutes": 10.0
+        "minutes": 15.5
       },
       "unlocks": [
         "accounts",

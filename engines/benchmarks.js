@@ -294,18 +294,37 @@
 
   /* ---- 6. Human capital ---------------------------------------------------- */
 
+  /**
+   * humanCapital(household, tables, opts)
+   * The present value of the pay still to come. One loop, two callers:
+   *   - the ratios read it as before: gross pay, the stop age set in FIRE
+   *     Number, the humanCapitalDiscountRate assumption, no raises;
+   *   - the Statement (D-307) names each of those: opts.basis 'take-home'
+   *     reads Schema.takeHomeAnnualCents; opts.stopAge is the age work
+   *     becomes optional (the opening's likely FI age, else its fallback);
+   *     opts.discountRate is the likely real return; opts.raiseRate is the
+   *     declared real raise rate, compounding the pay year by year.
+   * Every figure is in today's money. Nothing here is stored.
+   */
   function humanCapital(household, tables, opts) {
-    var gross = Schema.grossAnnualIncomeCents(household);
-    if (!Money.isOk(gross)) return Money.incomplete('Add your income to value the pay still to come.', ['grossAnnualIncome']);
-    var age = ageOf(household, opts);
+    var o = opts || {};
+    var basis = o.basis === 'take-home' ? 'take-home' : 'gross';
+    var income = basis === 'take-home' ? Schema.takeHomeAnnualCents(household, tables) : Schema.grossAnnualIncomeCents(household);
+    if (!Money.isOk(income)) return Money.incomplete(basis === 'take-home' ? 'Add your take-home pay to value the pay still to come.' : 'Add your income to value the pay still to come.', [basis === 'take-home' ? 'takeHomeMonthly' : 'grossAnnualIncome']);
+    var age = ageOf(household, o);
     if (!Money.isEntered(age)) return Money.incomplete('Add your date of birth to count the years.', ['dob']);
-    var stop = household.targets && household.targets.retireAge;
+    var stop = Money.isEntered(o.stopAge) ? o.stopAge : (household.targets && household.targets.retireAge);
     if (!Money.isEntered(stop)) return Money.incomplete('Set the age you intend to stop, in FIRE Number.', ['retireAge']);
     var years = Math.max(0, Math.round(stop - age));
-    var d = Schema.resolveAssumptions(household).humanCapitalDiscountRate;
-    var pv = 0;
-    for (var t = 1; t <= years; t++) pv += gross.value / Math.pow(1 + d, t);
-    return Money.ok(Math.round(pv), { years: years, discountRate: d, annualIncomeCents: gross.value, stopAge: stop, undiscountedCents: gross.value * years });
+    var d = Money.isEntered(o.discountRate) ? o.discountRate : Schema.resolveAssumptions(household).humanCapitalDiscountRate;
+    var g = Money.isEntered(o.raiseRate) ? o.raiseRate : 0;
+    var pv = 0, undiscounted = 0;
+    for (var t = 1; t <= years; t++) {
+      var pay = income.value * Math.pow(1 + g, t - 1);
+      undiscounted += pay;
+      pv += pay / Math.pow(1 + d, t);
+    }
+    return Money.ok(Math.round(pv), { years: years, discountRate: d, raiseRate: g, basis: basis, annualIncomeCents: income.value, stopAge: stop, stopAgeFrom: Money.isEntered(o.stopAge) ? (o.stopAgeFrom || 'named') : 'retireAge', undiscountedCents: Math.round(undiscounted) });
   }
 
   /* ---- 7. Net worth in years ----------------------------------------------- */

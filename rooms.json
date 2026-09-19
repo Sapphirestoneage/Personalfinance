@@ -8,7 +8,27 @@
       "file": "rooms/ledger.html",
       "reads": [],
       "writes": [
-        "takeHomeMonthly"
+        "takeHomeMonthly",
+        "rothContributed",
+        "hsaContributed",
+        "onHdhp",
+        "hsaFamilyPlan",
+        "marginalRate",
+        "allocationStocks",
+        "allocationBonds",
+        "allocationCash",
+        "rebalanceBand",
+        "otherAssets",
+        "assetValue",
+        "assetCharacter",
+        "assetTier",
+        "assetCostBasis",
+        "assetInstitution",
+        "assetAccountType",
+        "assetConfidence",
+        "assetCashFlow",
+        "assetHassle",
+        "assetAccessAge"
       ],
       "requires": [],
       "dashboardNumber": null,
@@ -137,26 +157,68 @@
         "totalDebt"
       ],
       "writes": [
-        "rothContributed",
-        "hsaContributed",
-        "marginalRate",
-        "allocationStocks",
-        "allocationBonds",
-        "allocationCash",
-        "rebalanceBand",
-        "otherAssets",
         "confidenceWeightedNetWorth",
-        "netWorth",
-        "assetValue",
-        "assetCharacter",
-        "assetTier",
-        "assetCostBasis",
-        "assetInstitution",
-        "assetAccountType"
+        "netWorth"
       ],
       "requires": [],
       "dashboardNumber": "netWorth",
       "order": 1.8
+    },
+    {
+      "id": "bridge",
+      "title": "The Bridge",
+      "file": "rooms/bridge.html",
+      "reads": [
+        "dob",
+        "monthlyExpenses",
+        "investments"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 1.81
+    },
+    {
+      "id": "which-account",
+      "title": "Which Account",
+      "file": "rooms/which-account.html",
+      "reads": [
+        "filingStatus",
+        "grossAnnualIncome",
+        "dob"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 1.82
+    },
+    {
+      "id": "the-mix",
+      "title": "The Mix",
+      "file": "rooms/the-mix.html",
+      "reads": [
+        "investments"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 1.83
+    },
+    {
+      "id": "the-documents",
+      "title": "The Documents",
+      "file": "rooms/the-documents.html",
+      "reads": [
+        "grossAnnualIncome",
+        "monthlyExpenses",
+        "cashSavings",
+        "investments",
+        "totalDebt"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 1.84
     },
     {
       "id": "debt-payoff",
@@ -274,6 +336,20 @@
       ],
       "dashboardNumber": "fiEtaYear",
       "order": 4.4
+    },
+    {
+      "id": "left-behind",
+      "title": "Left Behind",
+      "file": "rooms/left-behind.html",
+      "reads": [
+        "dob",
+        "grossAnnualIncome",
+        "filingStatus"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 8.35
     },
     {
       "id": "skill-tree",

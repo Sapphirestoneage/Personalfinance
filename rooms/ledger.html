@@ -1685,7 +1685,8 @@
   var TABLES = null;
   var NODES = {};        /* rowId or rowId:itemId → { row, el, input, sug, saved } */
   var LISTS = { debts: { kind: 'debt', rows: ['debtBalance', 'debtRate', 'debtMinPayment'], label: 'Debts', level: 2, door: 'D' },
-                assets: { kind: 'asset', rows: ['assetValue', 'assetCharacter', 'assetTier', 'assetCostBasis'], label: 'Accounts and things owned', level: 2, door: 'A' },
+                /* The account layer (D-307): every per-account fact the Statement used to edit, entered here and nowhere else. */
+                assets: { kind: 'asset', rows: ['assetValue', 'assetAccountType', 'assetCharacter', 'assetTier', 'assetConfidence', 'assetCostBasis', 'assetCashFlow', 'assetHassle', 'assetAccessAge'], label: 'Accounts and things owned', level: 2, door: 'A' },
                 incomeSources: { kind: 'incomeSource', rows: ['grossAnnualIncome', 'incomeType', 'paySurvives'], label: 'Sources of pay', level: 1, door: 'I' },
                 annualLines: { kind: 'annualLine', rows: ['annualLine'], label: 'Once-a-year costs', level: 3, door: 'E' } };
   var ITEM_ROWS = {};
@@ -1699,6 +1700,7 @@
   function itemValue(row, item) {
     if (row.id === 'debtBalance') return item.balanceCents; if (row.id === 'debtRate') return item.rate; if (row.id === 'debtMinPayment') return item.minPaymentCents;
     if (row.id === 'assetValue') return item.valueCents; if (row.id === 'assetCharacter') return item.taxCharacter; if (row.id === 'assetTier') return item.tier; if (row.id === 'assetCostBasis') return item.costBasisCents;
+    if (row.id === 'assetAccountType') return item.accountType; if (row.id === 'assetConfidence') return item.confidence; if (row.id === 'assetCashFlow') return item.cashFlowMonthlyCents; if (row.id === 'assetHassle') return item.hassle; if (row.id === 'assetAccessAge') return item.accessAgeOverride;
     if (row.id === 'grossAnnualIncome') return item.grossAnnualIncomeCents; if (row.id === 'incomeType') return item.type; if (row.id === 'paySurvives') return item.survivesJobLoss;
     if (row.id === 'annualLine') return item.amountCents;
     return null;
@@ -1726,7 +1728,7 @@
   /* ---- Building a control, once ----------------------------------------------- */
   function enumValues(row) {
     if (row.id === 'state') return (TABLES.states.states || []).map(function (s) { return { v: s.code, l: s.code + ' ' + s.name }; });
-    var labels = Ask.ENUM_LABELS[row.id] || {};
+    var labels = Ask.ENUM_LABELS[row.id] || (row.id === 'assetAccountType' ? Schema.ACCOUNT_TYPE_LABELS : null) || {};
     var vals = row.values || Object.keys(labels);
     return vals.map(function (v) { return { v: v, l: labels[v] || v }; });
   }
@@ -1757,9 +1759,14 @@
   /* The two states besides blank (G2.7): "Not sure yet", with the month they
      expect to know by, and "from memory" on the next save. Only on rows a
      person types, never on a computed one. */
+  /* The rows a household may mark Not applicable (D-130): no workplace plan
+     at all, no HSA whatever the plan. The mark lives on the row here since
+     the Statement stopped asking (D-307); every room reads it as a chip. */
+  var NA_ROWS = ['contributionPercent', 'hsaContributed'];
   function statesHtml(row) {
     if (row.kind === 'computed') return '';
-    return '<div class="xstates"><span class="slaf-state" data-x-state></span>'
+    var na = NA_ROWS.indexOf(row.id) >= 0 ? Ownership.naButton(row.id, h(), row.id === 'contributionPercent' ? { off: 'No plan at all: N/A', on: 'No plan ✓' } : { off: 'No HSA at all: N/A', on: 'No HSA ✓' }) : '';
+    return '<div class="xstates"><span class="slaf-state" data-x-state></span>' + na
       + '<button type="button" class="slaf-btn slaf-btn--quiet slaf-btn--small" data-x-notsure>Not sure yet</button>'
       + '<label class="x-memory"><input type="checkbox" data-x-memory/> from memory</label></div>'
       + '<div class="x-when" data-x-when hidden><label>Expect to know by <input type="month" data-x-expected aria-label="Expected month"/></label> <button type="button" class="slaf-btn slaf-btn--small" data-x-notsure-save>Mark it</button></div>'
@@ -1767,7 +1774,8 @@
   }
   function rowHtml(row, key, item) {
     var f = Ownership.FIELDS[row.id];
-    var owner = f ? SLAF.Registry.byId(f.owner) : null;
+    /* A row the Ledger itself owns has no second door to name. */
+    var owner = f && f.owner !== 'ledger' ? SLAF.Registry.byId(f.owner) : null;
     /* WHAT THIS ONE IS FOR. the rows table (shared/ledger-rows.js) gives every row an
        `unlocks` line saying what answering it makes possible, and Express
        had never shown it: the label alone told you the name of a number, not
@@ -2291,6 +2299,16 @@
       if (t.hasAttribute('data-x-use')) {
         var key = t.getAttribute('data-x-use'), s = SUG[key], n2 = NODES[key];
         if (s && n2) write(n2, s.value, 'suggested');
+        return;
+      }
+      if (t.hasAttribute('data-na-field')) {
+        /* Toggled in place: the button is rewritten, nothing around it is. */
+        var naId = t.getAttribute('data-na-field');
+        Spine.setNotApplicable(naId, t.getAttribute('aria-pressed') !== 'true');
+        var fresh = document.createElement('span');
+        fresh.innerHTML = Ownership.naButton(naId, h(), naId === 'contributionPercent' ? { off: 'No plan at all: N/A', on: 'No plan ✓' } : { off: 'No HSA at all: N/A', on: 'No HSA ✓' });
+        t.replaceWith(fresh.firstChild);
+        paintApplies(); paintBar();
         return;
       }
       if (t.hasAttribute('data-x-add-btn')) {

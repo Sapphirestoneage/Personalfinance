@@ -287,25 +287,36 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/statement.html#where-it-lands',
-    container: '#allocation',
+    /* The target mix is entered in the Ledger's A door since D-307; The Mix
+       reads it. The four rows sit at level 3, so every level is opened. */
+    room: '/rooms/ledger.html#all-at-once',
+    container: '#x-A',
     seed: 'demo',
+    prepare: async (page) => {
+      await page.waitForSelector('[data-mode="all"]');
+      await page.tap('[data-mode="all"]');
+      await page.waitForSelector('details.xlvl');
+      await page.$eval('details.xlvl', ns => ns.forEach(n => { n.open = true; }));
+      await page.waitForSelector('[data-x-row="allocationStocks"] [data-x-input]');
+    },
     fields: [
-      { sel: '[data-alloc="stocks"]', type: '70' },
-      { sel: '[data-alloc="bonds"]', type: '20' },
-      { sel: '[data-alloc="cash"]', type: '10' },
-      { sel: '[data-alloc="rebalanceBand"]', type: '5' }
+      { sel: '[data-x-row="allocationStocks"] [data-x-input]', type: '70' },
+      { sel: '[data-x-row="allocationBonds"] [data-x-input]', type: '20' },
+      { sel: '[data-x-row="allocationCash"] [data-x-input]', type: '10' },
+      { sel: '[data-x-row="rebalanceBand"] [data-x-input]', type: '5' }
     ],
     expect: async (page) => {
       const a = await page.evaluate(() =>
         (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).allocation || {});
+      await page.goto(BASE + '/rooms/the-mix.html', { waitUntil: 'networkidle' });
+      await page.waitForTimeout(500);
       const read = await page.evaluate(() => document.getElementById('alloc-read').textContent);
       return [
         ['stocks stored as a share of one', a.stocks, 0.7],
         ['bonds too', a.bonds, 0.2],
         ['cash too', a.cash, 0.1],
         ['the band too', a.rebalanceBand, 0.05],
-        ['and the read-out names the band', /65%–75%/.test(read), true]
+        ['and The Mix reads the band back', /65% to 75%/.test(read), true]
       ];
     }
   },
@@ -589,39 +600,50 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/statement.html',
-    container: '#asset-list',
+    /* THE ACCOUNT LAYER (D-307): an account is named, valued, typed and
+       rated in the Ledger's A door and nowhere else. The Statement reads it. */
+    room: '/rooms/ledger.html#all-at-once',
+    container: '#x-A',
     seed: 'demo',
-    prepare: async (page) => { await page.tap('#btn-add'); },
+    prepare: async (page) => {
+      await page.waitForSelector('[data-mode="all"]');
+      await page.tap('[data-mode="all"]');
+      await page.waitForSelector('details.xlvl');
+      await page.$eval('details.xlvl', ns => ns.forEach(n => { n.open = true; }));
+      await page.waitForSelector('[data-x-add="assets"] [data-x-add-name]');
+    },
     fields: [
-      /* The first cards are Start Here's cash and investments, whose names
-         and values are read-only here; the tap on #btn-add appends ours. */
-      { sel: '#asset-list .asset:last-child input[data-field="label"]', type: 'The car' },
-      { sel: '#asset-list .asset:last-child input[data-field="valueCents"]', type: '5000' },
-      /* D-251: where it is held is typed on any card, Start Here's included. */
-      { sel: '#asset-list .asset:nth-child(2) input[data-field="institution"]', type: 'Example Broker' }
+      { sel: '[data-x-add="assets"] [data-x-add-name]', type: 'The car' },
+      { sel: '[data-x-add="assets"] [data-x-add-inst]', type: 'The driveway' },
+      { sel: '[data-x-add="assets"] [data-x-add-btn]', tap: true },
+      { sel: '.xitem[data-x-list="assets"]:last-of-type [data-x-row="assetValue"] [data-x-input]', type: '5000', fresh: true }
     ],
     expect: async (page) => {
-      /* 15.8: the pile select stores the override and moves the flag. */
-      await page.selectOption('#asset-list .asset:last-child select[data-field="tier"]', 'taxable');
-      await page.waitForTimeout(400);
-      /* D-251: the account type sets the tax character; the lump from
-         Start Here keeps its category. */
-      await page.selectOption('#asset-list .asset:nth-child(2) select[data-field="accountType"]', '401k');
-      await page.waitForTimeout(400);
-      const a = await page.evaluate(() =>
-        (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets
-          .filter(x => x.category === 'real_estate' || x.category === 'vehicle').pop());
-      const lump = await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets[1]);
+      /* The pile, the type and the confidence are selects on the same line. */
+      const id = await page.evaluate(() => document.querySelector('.xitem[data-x-list="assets"]:last-of-type').getAttribute('data-x-itemid'));
+      await page.selectOption('.xitem[data-x-itemid="' + id + '"] [data-x-row="assetTier"] select[data-x-input]', 'taxable');
+      await page.waitForTimeout(300);
+      await page.selectOption('.xitem[data-x-itemid="' + id + '"] [data-x-row="assetConfidence"] select[data-x-input]', '2');
+      await page.waitForTimeout(300);
+      /* D-251: the account type sets the tax character on the demo's lump. */
+      const lumpId = await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets.filter(x => x.category === 'investment')[0].id);
+      await page.selectOption('.xitem[data-x-itemid="' + lumpId + '"] [data-x-row="assetAccountType"] select[data-x-input]', '401k');
+      await page.waitForTimeout(300);
+      const s = await page.evaluate(([id, lumpId]) => {
+        const h = JSON.parse(localStorage.getItem('slaf.household.v2')) || {};
+        const a = h.assets.filter(x => x.id === id)[0], lump = h.assets.filter(x => x.id === lumpId)[0];
+        return { label: a.label, inst: a.institution, value: a.valueCents, tier: a.tier, liquid: a.liquid, confidence: a.confidence, type: lump.accountType, tc: lump.taxCharacter, cat: lump.category };
+      }, [id, lumpId]);
       return [
-        ['the name was kept', a.label, 'The car'],
-        ['the value was kept', a.valueCents, 500000],
-        ['the pile was stored', a.tier, 'taxable'],
-        ['and the liquid flag follows it', a.liquid, true],
-        ['where it is held was stored', lump.institution, 'Example Broker'],
-        ['the account type was stored', lump.accountType, '401k'],
-        ['and set the tax character', lump.taxCharacter, 'pretax'],
-        ['without moving the lump out of its category', lump.category, 'investment']
+        ['the name was kept', s.label, 'The car'],
+        ['where it is held was kept', s.inst, 'The driveway'],
+        ['the value was kept', s.value, 500000],
+        ['the pile was stored', s.tier, 'taxable'],
+        ['and the liquid flag follows it', s.liquid, true],
+        ['the confidence was stored as the number the scale names', s.confidence, 2],
+        ['the account type was stored', s.type, '401k'],
+        ['and set the tax character', s.tc, 'pretax'],
+        ['without moving the lump out of its category', s.cat, 'investment']
       ];
     }
   },
@@ -1151,8 +1173,8 @@ const CASES = [
        every other case here — that nothing reached the household (D-052).
        The pinned $14,500 is the demo persona's cash-out cost: $8,800 federal
        at 22%, $1,700 North Carolina at 4.25%, $4,000 penalty on $40,000. */
-    room: '/rooms/statement.html#left-behind',
-    container: '#ro-room-inputs',
+    room: '/rooms/left-behind.html',
+    container: '#room-inputs',
     seed: 'demo',
     fields: [
       { sel: '[data-ctl="balance"]', type: '40000' },
@@ -1160,7 +1182,7 @@ const CASES = [
     ],
     expect: async (page) => {
       const r = await page.evaluate(() => ({
-        number: document.getElementById('ro-room-number').innerText,
+        number: document.getElementById('room-number').innerText,
         rows: document.getElementById('cost-rows').innerText,
         blob: localStorage.getItem('slaf.household.v2') || ''
       }));

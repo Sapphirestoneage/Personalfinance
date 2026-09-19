@@ -74,6 +74,7 @@
     if (c === 'debt.studentLoan') return !!(h && (h.debts || []).some(function (d) { return d.type === 'student_loan'; }));
     if (c === 'income.variable') { var so = situationOf(h); return so === 'selfEmployed' || so === 'mixed' || !!(h && h.variableIncome && (Money.isEntered(h.variableIncome.bufferMonths) || Money.isEntered(h.variableIncome.windowMonths))); }
     if (c === 'cover.hsa') return !!(h && (h.assets || []).some(function (a) { return a.taxCharacter === 'hsa'; })) || !!(h && h.retirement && Money.isEntered(h.retirement.hsaContributedCents));
+    if (c === 'cover.hdhp') return !!(h && h.retirement && h.retirement.onHdhp === true);
     if (c === 'asset.invested') return true;
     if (c === 'assets.property.length > 0') return ((h && h.property) || []).length > 0;
     /* A priced home in Housing Decision is the intent to buy. */

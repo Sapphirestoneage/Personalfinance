@@ -1812,7 +1812,7 @@
     SLAF.Lens.mountStrip('fp-lens', function (h) {
       var r = Tier0.fireProgress(h, TABLES);
       if (!Money.isOk(r)) return [];
-      return [{ label: 'Invested', cents: r.investmentsCents, href: Ownership.linkTo('statement', 'portfolios', ROOM_ID) }, { label: 'Target', cents: r.fireNumberCents, href: 'fire.html#out-target' },
+      return [{ label: 'Invested', cents: r.investmentsCents, href: Ownership.linkTo('statement', 'net-worth', ROOM_ID) }, { label: 'Target', cents: r.fireNumberCents, href: 'fire.html#out-target' },
               { label: 'Still to go', cents: Math.max(0, r.fireNumberCents - r.investmentsCents) }];
     }, function () { return TABLES; });
     render();

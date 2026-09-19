@@ -5394,10 +5394,12 @@ section('Eleven cards');
       check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
     check('Sleep At Night reads the deductible as a chip',
       fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
-    check('Where It Goes reads the contribution as a chip',
-      fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8').indexOf("Ownership.chip('contributionPercent'") !== -1, true);
+    /* Which Account since D-307: it reads the contribution as a chip and has
+       no fact box of any kind. */
+    checkTrue('Which Account reads the contribution as a chip',
+      fs.readFileSync(path.join(ROOT, 'rooms/which-account.html'), 'utf8').indexOf("'contributionPercent'") !== -1);
     checkTrue('and has no box for it',
-      fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8').indexOf('data-setup="contributionPercent"') === -1);
+      fs.readFileSync(path.join(ROOT, 'rooms/which-account.html'), 'utf8').indexOf('data-setup=') === -1);
   }
 
   /* -- The two tables -------------------------------------------------- */
@@ -5508,15 +5510,17 @@ section('Proposed, not taken');
     /* Where It Goes is The Statement's where-it-lands reading (D-278). */
     /* Side Hustle and Worth Learning are Work readings (D-281), Where It
        Goes a Statement reading (D-278) — all three on two pages now. */
-    ['career-move', 'statement'].forEach(function (room) {
+    ['career-move', 'which-account'].forEach(function (room) {
       const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
       checkTrue(`${room} proposes the federal bracket`, html.indexOf('Reference.marginalBracket(') !== -1);
-      checkTrue(`${room} labels it federal only and unverified`, /federal only, an estimate/.test(html));
-      checkTrue(`${room} reads the box through Suggest.entered`, html.indexOf('Suggest.entered(node)') !== -1);
+      checkTrue(`${room} labels it federal only and unverified`, /federal only, an estimate/.test(html) || /federal only/.test(html));
+      /* Career Move proposes it as a chip; Which Account, where every box is a
+         what-if, proposes it as the box's placeholder (D-307). */
+      checkTrue(`${room} proposes it without writing it`, html.indexOf('Suggest.entered(node)') !== -1 || /placeholder = String\(Math\.round\(b\.value/.test(html));
     });
-    const acc = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
-    checkTrue('Where It Goes has one box for the marginal rate, not two', acc.indexOf('id="a-now"') === -1 && acc.indexOf('data-setup="marginalRate"') !== -1);
-    checkTrue('and the comparison reads the shared rate', /currentTaxRate: assumptions\.marginalRate/.test(acc));
+    const acc = fs.readFileSync(path.join(ROOT, 'rooms/which-account.html'), 'utf8');
+    checkTrue('Which Account has one what-if box for the rate now, prefilled from the Ledger, and no fact box (D-307)', acc.indexOf('id="a-now"') !== -1 && acc.indexOf('data-setup=') === -1 && /set\('a-now', a\.marginalRate/.test(acc));
+    checkTrue('and the comparison reads that box', /currentTaxRate: v\['a-now'\]/.test(acc));
   }
 })();
 
@@ -5824,8 +5828,12 @@ section('The Statement engine');
     /* Brokerage (2) 6,000 + Roth basis 8,000 at the Roth's default 3 → 30 days: 6,000; this year: 8,000. */
     check('the brokerage this month', l.bands.thisMonth, 600000);
     check('the Roth basis this year', l.bands.thisYear, 800000);
-    /* Never: 401(k) 30,000 + Roth earnings 4,000 + house 300,000 + business 50,000. */
-    check('pre-59½ money, the house and the business are never', l.bands.never, 3000000 + 400000 + 30000000 + 5000000);
+    /* Never: 401(k) 30,000 + Roth earnings 4,000, behind the age gate. The
+       house 300,000 and the business 50,000 are slow, not never (D-307):
+       months, through a sale or a loan against them. */
+    check('pre-59½ money is never, until the birthday', l.bands.never, 3000000 + 400000);
+    check('the house and the business are slow', l.bands.slow, 30000000 + 5000000);
+    check('and the slow rung is the last cumulative step', l.cumulative.slow, 950000 + 600000 + 800000 + 30000000 + 5000000);
     check('gated money is named', l.gatedCents, 3400000);
     check('reachable within a year is the value', l.value, 950000 + 600000 + 800000);
     const older = St.liquidityLadder(rich(), T.accessRules, { age: 60 });
@@ -5836,7 +5844,7 @@ section('The Statement engine');
     checkTrue('with no age the gate cannot be applied and it says so', na.ageKnown === false && na.gatedCents === 0);
     /* 15.8: the ladder is a view of the piles; a stored tier moves the asset. */
     checkTrue('a stored tier overrides the kind', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, tier: 'cash' })] }), T.accessRules, { age: 40 }).bands.today === 100);
-    checkTrue('...and a rated liquidity no longer does: the house stays in the property pile', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, liquidity: 1 })] }), T.accessRules, { age: 40 }).bands.never === 100);
+    checkTrue('...and a rated liquidity no longer does: the house stays in the property pile', St.liquidityLadder(Object.assign(rich(), { assets: [Schema.createAsset({ category: 'real_estate', valueCents: 100, liquidity: 1 })] }), T.accessRules, { age: 40 }).bands.slow === 100);
     check('the piles are reported', l.byTier.retirement, 4200000);
     check('...and the overrides counted', l.overriddenCount, 0);
   }
@@ -6188,9 +6196,10 @@ section('Facts answered once');
   {
     const OWNED = {
       /* The three account facts moved with their boxes when Where It Goes
-         became The Statement's where-it-lands reading (D-278). */
-      contributionPercent: 'start', rothContributed: 'statement',
-      hsaContributed: 'statement', marginalRate: 'statement',
+         became The Statement's where-it-lands reading (D-278), and again to
+         the Ledger when the Statement stopped asking anything (D-307). */
+      contributionPercent: 'start', rothContributed: 'ledger',
+      hsaContributed: 'ledger', marginalRate: 'ledger',
       highestDeductible: 'start'
     };
     const h = Schema.createHousehold({});
@@ -6307,8 +6316,8 @@ section('Facts answered once');
        holds: the room that holds those facts is not a what-if room. */
     const accounts = Registry.byId('statement');
     checkTrue('what holds the account facts is not a what-if room', accounts.kind !== 'explore');
-    checkTrue('… and Where It Goes is no longer a room of its own', !Registry.byId('accounts')
-      && /url=statement\.html#where-it-lands/.test(fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8')));
+    checkTrue('… and Where It Goes is no longer a room of its own: its stub goes to Which Account (D-307)', !Registry.byId('accounts')
+      && /url=which-account\.html#compare/.test(fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8')));
     /* The rule from D-051, re-checked here because this change is exactly
        the kind that breaks it: an optional room cannot own a field others
        wait on. Stated as it is meant, not as "owns nothing" — the merges
@@ -6673,10 +6682,10 @@ section('The Statement room');
   ['#out-net-worth', '#ledger', '#from-elsewhere'].forEach(function (old) {
     checkTrue(`old deep link ${old} is mapped`, stub.indexOf("'" + old + "'") !== -1);
   });
-  checkTrue('the room declares its live-form policy', /LIVE-FORM: guarded/.test(html));
+  checkTrue('the room declares its live-form policy: built once, it has no inputs (D-307)', /LIVE-FORM: built once/.test(html) && !/LIVE-FORM: guarded/.test(html));
   checkTrue('the room takes no debt input (Debt Payoff owns debts)', !/data-field="balanceCents"/.test(html));
 
-  check('itemised assets are owned by The Statement', Ownership.field('otherAssets').owner, 'statement');
+  check('itemised assets are owned by the Ledger, whose A door lists them (D-307)', Ownership.field('otherAssets').owner, 'ledger');
   check('net worth is owned by The Statement', Ownership.field('netWorth').owner, 'statement');
   check('so is the weighted figure', Ownership.field('confidenceWeightedNetWorth').owner, 'statement');
   /* Money that is coming MOVED to the Timeline in D-152. The Statement still
@@ -6689,8 +6698,8 @@ section('The Statement room');
   checkTrue('...and The Statement no longer edits it',
     !/data-future="/.test(html) && !/upsertFutureIncome/.test(html),
     'two editors for one field is the thing D-017 exists to prevent');
-  checkTrue('...but The Statement still shows it, and links to its owner',
-    /futureIncome/.test(html) && /timeline\.html/.test(html));
+  checkTrue('...but The Bridge still shows it, and links to its owner (D-307)',
+    /futureIncome/.test(fs.readFileSync(path.join(ROOT, 'rooms/bridge.html'), 'utf8')) && /timeline\.html/.test(fs.readFileSync(path.join(ROOT, 'rooms/bridge.html'), 'utf8')));
   checkTrue('cash is still asked in Start Here', Ownership.field('cashSavings').owner === 'start');
   /* Check each anchor in its OWNER's file, not in this one. The four used to
      share a room, so reading them all out of statement.html was the same
@@ -6759,24 +6768,26 @@ section('The Coverage Checkup, and how it is split');
     check(`${f} is owned by The Cushion`, Ownership.field(f).owner, 'runway');
     check(`${f} links to the coverage card`, Ownership.field(f).anchor, 'coverage');
   });
+  /* The target mix is entered in the Ledger's A door since D-307; The Mix
+     reads it. */
   ['allocationStocks', 'allocationBonds', 'allocationCash', 'rebalanceBand'].forEach(function (f) {
-    check(`${f} is owned by The Statement`, Ownership.field(f).owner, 'statement');
-    check(`${f} links to the allocation card`, Ownership.field(f).anchor, 'allocation');
+    check(`${f} is owned by the Ledger`, Ownership.field(f).owner, 'ledger');
+    check(`${f} links to the A door`, Ownership.field(f).anchor, 'x-A');
   });
   const san = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
-  const acc = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
+  const acc = fs.readFileSync(path.join(ROOT, 'rooms/the-mix.html'), 'utf8');
   checkTrue('the coverage card exists', /id="coverage"/.test(san));
-  checkTrue('the allocation card exists', /id="allocation"/.test(acc));
+  checkTrue('the allocation card exists, in The Mix since D-307', /id="allocation"/.test(acc));
   checkTrue('the deductible is still asked in Start Here, not here', !/data-field="highestDeductible"|id="c-deductible"/.test(san)
     && Ownership.field('highestDeductible').owner === 'start');
   checkTrue('Sleep At Night redirects to the reading it became',
     /url=runway\.html#at-3am/.test(fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8')));
   /* The title said "& how it's split"; the reading's hat says "Where it
      lands" and its lede says the same thing in full (D-278). */
-  checkTrue('the where-it-lands reading says so in its lede',
-    /how the next dollar is split/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')));
+  checkTrue('Which Account says so in its lede (D-307)',
+    /for the next dollar/.test(fs.readFileSync(path.join(ROOT, 'rooms/which-account.html'), 'utf8')));
   checkTrue('The Cushion lists the checkup', Registry.byId('runway').subsections.some(s => s.id === 'coverage'));
-  checkTrue('The Statement lists the split', Registry.byId('statement').subsections.some(s => s.id === 'allocation'));
+  checkTrue('The Mix lists the split', Registry.byId('the-mix').subsections.some(s => s.id === 'allocation'));
 
   const h = Demo.build();
   check('nothing entered: not priced, not zero', Ownership.field('oopMax').read(h).status, 'incomplete');
@@ -9095,9 +9106,9 @@ section('Statements that open, and the FIRE statement (D-254)');
   const onlySpend = Schema.createHousehold({ expenses: { wants: { totalCents: 300000 }, entries: [] } });
   const partial = St.fireStatement(onlySpend, TABLES);
   checkTrue('with spending but nothing invested, invested today is a dash, never zero', Money.isOk(partial) && !byLabel(partial.value.standing, 'Invested today').entered);
-  /* Your Statements is The Statement's documents reading since D-278. */
-  const room = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
-  checkTrue('the reading has the fourth tab, loads the engines, and opens every line through one row function', /id: 'fire',\s+label: 'FIRE statement'/.test(room) && /engines\/fire\.js/.test(room) && /engines\/gap\.js/.test(room) && /<details class="ln">/.test(room) && /Ownership\.linkTo\(f\.owner, f\.anchor, 'statement'\)/.test(room));
+  /* Your Statements was The Statement's documents reading from D-278 and is The Documents since D-307. */
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/the-documents.html'), 'utf8');
+  checkTrue('the room has the fourth tab, loads the engines, and opens every line through one row function', /id: 'fire',\s+label: 'FIRE statement'/.test(room) && /engines\/fire\.js/.test(room) && /engines\/gap\.js/.test(room) && /<details class="ln">/.test(room) && /Ownership\.linkTo\(f\.owner, f\.anchor, 'the-documents'\)/.test(room));
   checkTrue('the export carries the tax lines and the FIRE statement', /inc\.value\.taxes/.test(room) && /section: 'FIRE statement'/.test(room));
 })();
 
@@ -9185,12 +9196,14 @@ section('Where each asset sits: the institution and the account type (D-251)');
   const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
   const rows = require(path.join(ROOT, 'data/ledger-rows.json')).rows;
   const inst = rows.filter(r => r.id === 'assetInstitution')[0], typ = rows.filter(r => r.id === 'assetAccountType')[0];
-  checkTrue('both are Statement rows on the A door, one line per asset', inst && typ && [inst, typ].every(r => r.askIn === 'statement' && r.door === 'A' && r.repeat === 'assets'));
+  checkTrue('both are Ledger rows on the A door, one line per asset, asked nowhere else (D-307)', inst && typ && [inst, typ].every(r => r.askIn === null && r.door === 'A' && r.repeat === 'assets'));
   check('the account type is a level-2 fact (where it sits)', typ.level, 2);
   check('the institution is a finer point', inst.level, 4);
   checkTrue('the item map reads both', LR.ITEM_VALUE.assetInstitution === 'institution' && LR.ITEM_VALUE.assetAccountType === 'accountType');
-  const stmt = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
-  checkTrue('the Statement shows both boxes on every card and writes through the one function', /data-field="institution"/.test(stmt) && /data-field="accountType"/.test(stmt) && /Schema\.applyAccountType\(existing/.test(stmt) && /Schema\.whereItSits\(a\)/.test(stmt));
+  const ledgerHtml = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the Ledger\'s A door holds both: the institution on the line\'s identity form, the type as a row (D-307)', /data-x-item-field="institution"/.test(ledgerHtml) && /'assetAccountType'/.test(ledgerHtml));
+  checkTrue('… and the type is written through the one function', /Schema\.applyAccountType\(a, v \|\| null\)/.test(fs.readFileSync(path.join(ROOT, 'shared/ownership.js'), 'utf8')));
+  checkTrue('the Statement has no box for either', !/data-field="institution"/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')));
   checkTrue('the demo names where its savings sit', /institution: 'Example Bank'[\s\S]{0,200}applyAccountType\(\{ category: 'cash' \}, 'hysa'\)/.test(fs.readFileSync(path.join(ROOT, 'shared/demo-persona.js'), 'utf8')));
 })();
 
@@ -9383,8 +9396,7 @@ section('LATER.md, built (D-100): the log across tabs, worded labels, the defaul
      the branch moved from the room to the reading, so rooms.json — which
      lists rooms — carries no requirement for it, and the router does. */
   check('The Statement requires no branch', rooms.filter(r => r.id === 'statement')[0].requires.join(','), '');
-  checkTrue('… and the where-it-lands reading declares the retirement branch',
-    /\{ id: 'view-where-it-lands', match: [^}]*branch: 'retirement' \}/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')));
+  check('… and Which Account, the reading that became a room again, requires nothing either (D-307)', rooms.filter(r => r.id === 'which-account')[0].requires.join(','), '');
   check('FIRE is where the FI year opens', rooms.filter(r => r.id === 'fire')[0].dashboardNumber, 'fiEtaYear');
   check('the committed rooms.json is what the tool writes now (run node tools/rooms-json.js)', fs.readFileSync(path.join(ROOT, 'rooms.json'), 'utf8'), tool.render());
   checkTrue('and the dashboard opens the same rooms the tool says', (function () {
@@ -11324,7 +11336,10 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   /* Eight since D-290: The Account You Left Behind became The Statement's
      "a plan you left behind" reading, which is where an old workplace
      account belongs — something you own that landed somewhere. */
-  check('...eight of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 8);
+  /* Twelve since D-307: the four rooms carved from the Statement (The
+     Bridge, Which Account, The Mix, The Documents) read the Ledger and
+     sit beside it under Assets. */
+  check('...twelve of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 12);
   /* The rule is about HOUSEHOLD data: a Your Numbers room writes a DAITE
      family, not a context. `prefs.*` is not a context — it is a
      preference, per person and per browser, and D-276 brought one into
@@ -11419,7 +11434,7 @@ section('Feature switches: rendering and engines, never stored facts (D-180)');
   const ids = Object.keys(table.features);
   Prefs.reset();
 
-  check('seventeen switches: the ten shapes\' four, the twelve phenomena, and the deeper-questions gate (D-250)', ids.length, 17);
+  check('eighteen switches: the ten shapes\' four, the twelve phenomena, the deeper-questions gate (D-250), and the pay still to come (D-307)', ids.length, 18);
   checkTrue('every switch has a default, a scope, a group, a label and a gloss', ids.every(id => { const f = table.features[id]; return ['on', 'off'].indexOf(f.default) > -1 && ['user', 'situation'].indexOf(f.scope) > -1 && table.groups.some(g => g.id === f.group) && f.label && f.gloss; }));
   checkTrue('a situation switch names what sets it', ids.filter(id => table.features[id].scope === 'situation').every(id => typeof table.features[id].situationWhen === 'string'));
   check('the four groups, in the prompt\'s order', table.groups.map(g => g.id).join(','), 'accuracy,household,horizon,advanced');
@@ -12471,8 +12486,8 @@ section('15.8: every asset in one of five piles; one runway draws them in order 
   checkTrue('the campaign HP reads runwayMonths for cash and taxable', /Schema\.runwayMonths\(household, HP_DRAW_ORDER/.test(dndSrc) && /HP_DRAW_ORDER = \['cash', 'taxable'\]/.test(dndSrc));
   const stSrc = fs.readFileSync(path.join(ROOT, 'engines/statement.js'), 'utf8');
   checkTrue('the ladder is a view of tierOf, not of the liquidity rating', /Schema\.tierOf\(a\)/.test(stSrc) && !/assetLiquidity/.test(stSrc));
-  const room = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
-  checkTrue('the Statement edits the pile, not the liquidity rating', /data-field="tier"/.test(room) && !/data-field="liquidity"/.test(room));
+  const ledgerRoom = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the Ledger edits the pile, not the liquidity rating (D-307)', /'assetTier'/.test(ledgerRoom) && !/assetLiquidity/.test(ledgerRoom));
   ['rooms/runway.html'].forEach(f => {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
     checkTrue(f + ' loads the tax engine for the rates and says before/after tax', /engines\/tax\.js/.test(src) && /before tax/.test(src));
@@ -15281,9 +15296,12 @@ section('The thirty (docs/room-map.json)');
      anything the Decision Room should hold. The check is not "thirty" — it
      is that the map and the registry agree, and that every room the map
      names as a survivor is one. */
-  check('the map lands on thirty-one rooms', MAP.rooms.length, 31);
-  check('numbered 1 to 31', MAP.rooms.map(r => r.n).join(','),
-    Array.from({ length: 31 }, (_, i) => i + 1).join(','));
+  /* Thirty-six since D-307: the Statement gave up four readings to become
+     four sections, and each reading became a room that reads the Ledger
+     and writes nothing (n 32 to 36). Same screens, one owner. */
+  check('the map lands on thirty-six rooms', MAP.rooms.length, 36);
+  check('numbered 1 to 36', MAP.rooms.map(r => r.n).join(','),
+    Array.from({ length: 36 }, (_, i) => i + 1).join(','));
 
   /* Every survivor is a room that exists now and keeps its id through the
      merge: the id is what ownership.js, the registry and every deep link
@@ -15519,8 +15537,11 @@ section('The thirty (docs/room-map.json)');
     check('every linkTo anchor is an id on that page, or a hash its router routes', lost.join(', '), '');
   })();
 
-  check('every room is accounted for: thirty, plus what they absorb, plus the Net Worth redirect',
-    MAP.rooms.length + merged + toGo + 1, 94);
+  /* 99 since D-307: the five rooms carved from the Statement are survivors
+     that were never among the 93, so the count of files the map explains
+     grows by five. */
+  check('every room is accounted for: the survivors, plus what they absorb, plus the Net Worth redirect',
+    MAP.rooms.length + merged + toGo + 1, 99);
   check('and the registry holds exactly the survivors plus what has not merged yet',
     Object.keys(live).length, MAP.rooms.length + toGo);
 
@@ -15845,20 +15866,21 @@ section('One holding, more than one account (D-261)');
     split.assets.filter(a => a.category === 'investment')
       .reduce((n, a) => n + a.valueCents, 0));
 
-  /* The rooms. The Statement may name and value an investment account; the
-     "remove everything added here" sweep must still leave them alone. */
+  /* The rooms. Since D-307 an account is named, valued and removed in the
+     Ledger's A door and nowhere else; the Statement reads the list. */
   const stmt = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
-  checkTrue('the Statement values investment rows itself', /VALUED_HERE\s*=\s*OWNED\.concat\(\['investment', 'retirement'\]\)/.test(stmt));
-  checkTrue('… and offers a button to add an account', /id="btn-add-investment"/.test(stmt));
-  checkTrue('… while "remove everything added here" is still scoped to OWNED, never the retirement money',
-    /filter\(function \(a\) \{ return OWNED\.indexOf\(a\.category\) !== -1; \}\)/.test(stmt));
+  const ledgerA = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the Ledger adds an account line and values it', /data-x-add="assets"|data-x-add="' \+ esc\(listKey\)/.test(ledgerA) && /'assetValue'/.test(ledgerA));
+  checkTrue('… and removes one line at a time, never a sweep', /data-x-remove/.test(ledgerA) && !/Remove everything added here/.test(ledgerA));
+  /* The head script still names the old button ids, to forward links to them. */
+  checkTrue('the Statement offers no add, no remove, no box', !/id="btn-add/.test(stmt) && !/id="btn-clear"/.test(stmt) && !/data-field=/.test(stmt));
 
   /* Start Here must NOT keep offering one box once the money is split:
      Ownership.write('investments') edits the first matching asset only. */
   const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
   checkTrue('Start Here stands its single box down once there is more than one account',
     /invAccounts\.length > 1/.test(start) && /invBox\.hidden = split/.test(start));
-  checkTrue('… and points at The Statement instead', /Edit them in <a href="statement\.html#assets">/.test(start));
+  checkTrue('… and points at the Ledger instead (D-307)', /Edit them in <a href="ledger\.html#x-A">/.test(start));
 
   /* The write that would have been silent: one box, two accounts. */
   const before = Schema.investmentsCents(split).value;

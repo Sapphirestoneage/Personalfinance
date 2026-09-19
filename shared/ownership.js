@@ -112,7 +112,7 @@
 
   function allocationRow(slice, label) {
     return {
-      label: label, owner: 'statement', anchor: 'allocation',
+      label: label, owner: 'ledger', anchor: 'x-A',
       read: function (h) {
         var v = (h.allocation || {})[slice];
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not set.', ['allocation.' + slice]);
@@ -282,7 +282,7 @@
       notApplicableBecause: 'You said there is no employer.'
     },
     rothContributed: {
-      label: 'Roth so far this year', owner: 'statement', anchor: 'setup',
+      label: 'Roth so far this year', owner: 'ledger', anchor: 'x-A',
       read: function (h) {
         var v = (h.retirement || {}).rothContributedCents;
         return Money.isEntered(v) ? Money.ok(v)
@@ -291,7 +291,7 @@
       format: money
     },
     hsaContributed: {
-      label: 'HSA so far this year', owner: 'statement', anchor: 'setup',
+      label: 'HSA so far this year', owner: 'ledger', anchor: 'x-A',
       read: function (h) {
         var v = (h.retirement || {}).hsaContributedCents;
         return Money.isEntered(v) ? Money.ok(v)
@@ -303,8 +303,26 @@
       applies: function (h) { return !!((h.retirement || {}).onHdhp); },
       notApplicableBecause: 'No HSA without a high-deductible plan.'
     },
+    onHdhp: {
+      label: 'On a high-deductible health plan', owner: 'ledger', anchor: 'x-A',
+      read: function (h) {
+        var v = (h.retirement || {}).onHdhp;
+        return v === true || v === false ? Money.ok(v) : Money.incomplete('Not answered yet.', ['onHdhp']);
+      },
+      format: function (v) { return v ? 'Yes' : 'No'; }
+    },
+    hsaFamilyPlan: {
+      label: 'Family coverage on that plan', owner: 'ledger', anchor: 'x-A',
+      read: function (h) {
+        var v = (h.retirement || {}).hsaFamilyPlan;
+        return v === true || v === false ? Money.ok(v) : Money.incomplete('Not answered yet.', ['hsaFamilyPlan']);
+      },
+      format: function (v) { return v ? 'Family' : 'Single'; },
+      applies: function (h) { return !!((h.retirement || {}).onHdhp); },
+      notApplicableBecause: 'No HSA without a high-deductible plan.'
+    },
     marginalRate: {
-      label: 'Marginal tax rate', owner: 'statement', anchor: 'setup',
+      label: 'Marginal tax rate', owner: 'ledger', anchor: 'x-T',
       read: function (h) {
         var a = Schema.resolveAssumptions(h);
         return Money.isEntered(a.marginalRate) ? Money.ok(a.marginalRate)
@@ -722,7 +740,7 @@
     allocationBonds: allocationRow('bonds', 'Target: bonds'),
     allocationCash: allocationRow('cash', 'Target: cash'),
     rebalanceBand: {
-      label: 'Rebalance band', owner: 'statement', anchor: 'allocation',
+      label: 'Rebalance band', owner: 'ledger', anchor: 'x-A',
       read: function (h) {
         var v = (h.allocation || {}).rebalanceBand;
         return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not set.', ['rebalanceBand']);
@@ -749,10 +767,11 @@
       notApplicableBecause: 'You said there is no debt.'
     },
 
-    /* The Net Worth room owns everything you own that Start Here doesn't
-       ask about — a house, a car, anything else. */
+    /* Everything owned that the opening does not ask about, a house, a car,
+       anything else, is a line in the Ledger's A door since D-307: the
+       Statement reads the list and never edits it. */
     otherAssets: {
-      label: 'Property & other assets', owner: 'statement', anchor: 'assets',
+      label: 'Property & other assets', owner: 'ledger', anchor: 'x-A',
       read: function (h) { return Schema.otherAssetsCents(h); },
       format: money
     },
@@ -760,7 +779,7 @@
        derived — it lives here so the dashboard and the map can read it as
        one figure with one owner. */
     confidenceWeightedNetWorth: {
-      label: 'Confidence-weighted net worth', owner: 'statement', anchor: 'portfolios',
+      label: 'Confidence-weighted net worth', owner: 'statement', anchor: 'net-worth',
       read: function (h) {
         var St = (typeof module === 'object' && module.exports)
           ? require('../engines/statement.js')
@@ -787,7 +806,7 @@
       format: function (v) { return money(v) + '/mo'; }
     },
     netWorth: {
-      label: 'Net worth', owner: 'statement', anchor: 'portfolios',
+      label: 'Net worth', owner: 'statement', anchor: 'net-worth',
       read: function (h) {
         var a = Schema.totalAssetsCents(h), d = Schema.totalDebtCents(h);
         if (!Money.isOk(a) || !Money.isOk(d)) {
@@ -944,12 +963,16 @@
     debtBalance: { label: 'Balance', owner: 'debt-payoff', anchor: 'debts', read: function (h) { return countOf(h.debts || [], 'debts'); }, format: function (v) { return v + ' listed'; } },
     debtRate: { label: 'Interest rate', owner: 'debt-payoff', anchor: 'debts', read: function (h) { return countOf(h.debts || [], 'debts'); }, format: function (v) { return v + ' listed'; } },
     debtMinPayment: { label: 'Minimum payment, a month', owner: 'debt-payoff', anchor: 'debts', read: function (h) { return countOf(h.debts || [], 'debts'); }, format: function (v) { return v + ' listed'; } },
-    assetValue: { label: 'What each account or thing is worth', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
-    assetCharacter: { label: 'How it is taxed on the way out', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
-    assetTier: { label: 'Which pile it sits in', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
-    assetCostBasis: { label: 'Cost basis', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
-    assetInstitution: { label: 'Where it is held', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
-    assetAccountType: { label: 'Account type', owner: 'statement', anchor: 'assets', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetValue: { label: 'What each account or thing is worth', owner: 'ledger', anchor: 'x-A', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetCharacter: { label: 'How it is taxed on the way out', owner: 'ledger', anchor: 'x-A', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetTier: { label: 'Which pile it sits in', owner: 'ledger', anchor: 'x-A', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetCostBasis: { label: 'Cost basis, or Roth contributions', owner: 'ledger', anchor: 'x-A', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetInstitution: { label: 'Where it is held', owner: 'ledger', anchor: 'x-A', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetAccountType: { label: 'Account type', owner: 'ledger', anchor: 'x-A', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetConfidence: { label: 'How sure you are it is worth that', owner: 'ledger', anchor: 'x-A', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetCashFlow: { label: 'Cash it throws off, a month', owner: 'ledger', anchor: 'x-A', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetHassle: { label: 'Hassle to hold', owner: 'ledger', anchor: 'x-A', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
+    assetAccessAge: { label: 'Reachable from age, if the usual rule is wrong', owner: 'ledger', anchor: 'x-A', read: function (h) { return countOf(h.assets || [], 'assets'); }, format: function (v) { return v + ' listed'; } },
     incomeType: { label: 'What kind of pay', owner: 'income', anchor: 'sources', read: function (h) { var p = Schema.primaryPerson(h); return countOf(p ? (p.incomeSources || []) : [], 'incomeSources'); }, format: function (v) { return v + ' listed'; } },
     paySurvives: { label: 'Keeps paying if the job goes', owner: 'income', anchor: 'sources', read: function (h) { var p = Schema.primaryPerson(h); return countOf(p ? (p.incomeSources || []) : [], 'incomeSources'); }, format: function (v) { return v + ' listed'; } },
     annualLine: { label: 'Once-a-year costs', owner: 'expenses', anchor: 'more', read: function (h) { return countOf(((h.expenses || {}).annual || []), 'annualLines'); }, format: function (v) { return v + ' listed'; } }
@@ -995,6 +1018,15 @@
       var a = (Spine.getProfile().assets || []).filter(function (x) { return ctx && x.id === ctx.itemId; })[0];
       return itemPatch(Spine.upsertAsset, ctx, Schema.applyAccountType(a, v || null));
     },
+    /* The rated and looked-up per-account facts the Statement used to edit
+       (D-066), entered in the Ledger's A door since D-307. A rating arrives
+       from a select as text; it is stored as the number the scale names. */
+    assetConfidence: function (v, ctx) { var n = v === null || v === undefined || v === '' ? null : Number(v); return itemPatch(Spine.upsertAsset, ctx, { confidence: n !== null && [1, 2, 3, 4].indexOf(n) >= 0 ? n : null }); },
+    assetCashFlow: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { cashFlowMonthlyCents: Money.isEntered(v) ? Math.round(v) : null }); },
+    assetHassle: function (v, ctx) { var n = v === null || v === undefined || v === '' ? null : Number(v); return itemPatch(Spine.upsertAsset, ctx, { hassle: n !== null && [1, 2, 3].indexOf(n) >= 0 ? n : null }); },
+    assetAccessAge: function (v, ctx) { return itemPatch(Spine.upsertAsset, ctx, { accessAgeOverride: Money.isEntered(v) && v > 0 ? v : null }); },
+    onHdhp: boolAt('retirement.onHdhp', 'High-deductible plan'),
+    hsaFamilyPlan: boolAt('retirement.hsaFamilyPlan', 'Family HSA coverage'),
     contributionPercent: setAt('retirement.contributionPercent', 'Contribution'),
     rothContributed: centsAt('retirement.rothContributedCents', 'Roth so far'),
     hsaContributed: centsAt('retirement.hsaContributedCents', 'HSA so far'),
@@ -1183,7 +1215,7 @@
      and the doors add through the owner exactly as they write. D-208. */
   var LISTS = {
     debt: { owner: 'debt-payoff', path: 'debt.items', add: function (f) { Spine.set('meta.hasDebt', true); return Spine.upsertDebt(Schema.createDebt(Object.assign({ label: 'A debt', type: 'other' }, f || {}))); } },
-    asset: { owner: 'statement', path: 'assets', add: function (f) { var p = primary(); return Spine.upsertAsset(Schema.createAsset(Object.assign({ label: 'An account', category: 'investment', ownerIds: [p.id] }, f || {}))); } },
+    asset: { owner: 'ledger', path: 'assets', add: function (f) { var p = primary(); return Spine.upsertAsset(Schema.createAsset(Object.assign({ label: 'An account', category: 'investment', ownerIds: [p.id] }, f || {}))); } },
     incomeSource: { owner: 'start', path: 'income.grossAnnualCents', add: function (f) { var p = primary(); return Spine.upsertIncomeSource(p.id, Schema.createIncomeSource(Object.assign({ personId: p.id, source: 'A source', type: 'w2' }, f || {}))); } },
     annualLine: { owner: 'expenses', path: 'expenses.annual[]', add: function (f) { return Spine.upsertAnnualLine(Object.assign({ label: 'A yearly cost' }, f || {})); } }
   };
