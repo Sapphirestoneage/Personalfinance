@@ -1,8 +1,8 @@
 {
   "seed": 20260910,
   "numRuns": 100,
-  "engines": 91,
-  "files": 94,
+  "engines": 92,
+  "files": 95,
   "missingFiles": [],
   "extraFiles": [
     "blocks",
@@ -1577,6 +1577,54 @@
         },
         {
           "name": "the same lever applied twice to the same household gives the same household",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
+      "engine": "merchants",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (5 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every dated line lands in exactly one merchant, and the merchants add up to the log",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a rule files its merchant, refile names only the lines it moves, and removing the rule moves nothing",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the slope cumulates to the log, never falls, and parts by exactly what was bought ahead or paid late",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -3284,6 +3332,6 @@
       ]
     }
   ],
-  "totalProperties": 420,
+  "totalProperties": 427,
   "failedProperties": 7
 }

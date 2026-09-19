@@ -1490,6 +1490,12 @@ html.has-math, html.has-math body { overflow: hidden; }
 .cal-key { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
 .cal-key .k-low { outline: 2px solid var(--color-accent); outline-offset: 1px; border-radius: 2px; padding: 0 3px; }
 .cal-key .k-under { background: rgba(229,72,77,.12); color: var(--color-critical); border-radius: 2px; padding: 0 3px; }
+.cal-own { display: block; font-style: normal; font-size: 9px; line-height: 1.2; color: var(--color-accent-hover); background: rgba(90,169,255,.14); border-radius: 3px; padding: 1px 3px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-own.is-deadline { color: var(--color-caution); background: rgba(232,184,75,.14); }
+.cal-own.is-done { text-decoration: line-through; opacity: .55; }
+.turns li.is-note .tn-what { color: var(--color-accent-hover); }
+.turns li.is-note.is-done .tn-what { text-decoration: line-through; opacity: .6; }
+.turns .tn-amt.is-note { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); }
 .turns { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
 .turns li { display: grid; grid-template-columns: 5.5ch minmax(0, 1fr) auto auto; gap: var(--space-2); align-items: baseline; padding: var(--space-1) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
 .turns li:first-child { border-top: none; }
@@ -1504,3 +1510,63 @@ html.has-math, html.has-math body { overflow: hidden; }
 .turns li.is-low .tn-bal { color: var(--color-accent-hover); font-weight: 600; }
 .turns-more { margin-top: var(--space-2); }
 .turns-more summary { cursor: pointer; font-size: var(--text-xs); color: var(--color-text-faint); }
+
+/* ---- Your own dates on the Calendar (D-308) ---- */
+.own-form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: end; }
+.own-form .slaf-field { margin: 0; }
+.own-form .own-label { grid-column: 1 / -1; }
+.own-form .own-acts { grid-column: 1 / -1; display: flex; gap: var(--space-2); align-items: center; }
+ol.own-dates { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+ol.own-dates li { display: grid; grid-template-columns: 5.5ch minmax(0, 1fr) auto; gap: var(--space-2); align-items: baseline; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+ol.own-dates li:first-child { border-top: none; }
+ol.own-dates .od-when { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+ol.own-dates .od-what small { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); }
+ol.own-dates li.is-done .od-what { text-decoration: line-through; opacity: .6; }
+ol.own-dates li.is-past .od-when { color: var(--color-caution); }
+ol.own-dates .od-acts { display: flex; gap: var(--space-1); white-space: nowrap; }
+/* ---- A statement in, the merchants, the slope (D-306) --------------------
+   One intake for a bank or card CSV, mounted by shared/bankintake.js in Your
+   Data and in Expenses; the merchant list and the slope live in Expenses. */
+.slaf-bank-pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.slaf-bank-pick label.slaf-btn { cursor: pointer; }
+.slaf-bank-map { display: grid; grid-template-columns: repeat(auto-fit, minmax(9em, 1fr)); gap: var(--space-2); margin-top: var(--space-3); }
+.slaf-bank-map label { margin: 0; }
+.slaf-bank-map select { width: 100%; box-sizing: border-box; min-height: 44px; font: inherit; font-size: var(--text-sm); padding: 0 var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
+.slaf-bank-flip { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-2); min-height: 44px; font-size: var(--text-sm); color: var(--color-text); cursor: pointer; }
+.slaf-bank-flip input { width: 20px; height: 20px; margin: 0; accent-color: var(--color-accent); }
+.slaf-bank-tally { margin: var(--space-3) 0 0; font-size: var(--text-sm); color: var(--color-text); }
+.slaf-bank-preview { overflow-x: auto; margin-top: var(--space-2); }
+.slaf-bank-preview table { width: 100%; border-collapse: collapse; font-size: var(--text-xs); }
+.slaf-bank-preview th, .slaf-bank-preview td { text-align: left; padding: var(--space-1) var(--space-2); border-top: 1px solid var(--color-border); vertical-align: top; }
+.slaf-bank-preview th { color: var(--color-text-faint); font-weight: 600; border-top: 0; }
+.slaf-bank-preview td.amt { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.slaf-bank-preview td small { color: var(--color-text-faint); }
+.slaf-bank-preview tr.is-out { opacity: .55; }
+.slaf-bank-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
+.slaf-bank-note { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; line-height: var(--leading-normal); }
+.slaf-bank-note.is-error { color: var(--color-critical); }
+.slaf-bank-note.is-good { color: var(--color-text); }
+
+.slaf-merch { list-style: none; margin: 0; padding: 0; }
+.slaf-merch > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); align-items: start; }
+.slaf-merch > li:first-child { border-top: 0; }
+.slaf-merch .mc-lab { font-weight: 600; overflow-wrap: anywhere; }
+.slaf-merch .mc-lab small { display: block; font-weight: 400; color: var(--color-text-faint); font-size: var(--text-xs); }
+.slaf-merch .mc-amt { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.slaf-merch .mc-amt small { display: block; color: var(--color-text-faint); font-size: var(--text-xs); }
+.slaf-merch .mc-cat { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+.slaf-merch .mc-cat select { min-height: 44px; font: inherit; font-size: var(--text-sm); padding: 0 var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); max-width: 100%; }
+.slaf-merch .mc-cat .mc-rule { font-size: var(--text-xs); color: var(--color-positive); }
+.slaf-merch .mc-cat .mc-mixed { font-size: var(--text-xs); color: var(--color-caution); }
+.slaf-merch details { grid-column: 1 / -1; }
+.slaf-merch details > summary { cursor: pointer; font-size: var(--text-xs); color: var(--color-text-muted); min-height: 32px; display: flex; align-items: center; }
+.slaf-merch .mc-lines { list-style: none; margin: var(--space-1) 0 0; padding: 0; }
+.slaf-merch .mc-lines li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-1) var(--space-2); align-items: center; padding: var(--space-1) 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+.slaf-merch .mc-lines .ln-for { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.slaf-merch .mc-lines .ln-for input[type="date"] { min-height: 36px; font: inherit; font-size: var(--text-xs); padding: 0 var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); }
+.slaf-merch .mc-lines .ln-for.is-set { color: var(--color-text); }
+.slaf-slope-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(9em, 1fr)); gap: var(--space-2) var(--space-3); margin-top: var(--space-3); }
+.slaf-slope-figs .fig { display: flex; flex-direction: column; gap: 2px; }
+.slaf-slope-figs .fig b { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+.slaf-slope-figs .fig span { font-size: var(--text-xs); color: var(--color-text-muted); }
+.slaf-slope-month { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }

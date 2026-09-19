@@ -8,13 +8,14 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 - **ledger** — The Ledger (utility) · 3185 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, coast, opening, benchmarks, ratios, skills · owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge · D-313, D-303, D-241
 - **start** — Start Here · 1189 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-262, D-259, D-249
-- **dashboard** — The Dashboard · 1836 lines · no engines · DD-030, DD-028, DD-026
+- **dashboard** — The Dashboard · 1837 lines · no engines · DD-030, DD-028, DD-026
 
-## Your Numbers (12)
+## Your Numbers (13)
 
 - **income** — Income · 2275 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget, variableincome, hourly, hassle, timeline · owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, futureIncome, incomeType, paySurvives · D-295, D-294, D-277
-- **expenses** — Expenses · 1410 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed, tax, hourly, subscriptions · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-267, D-263, D-207
+- **expenses** — Expenses · 1604 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed, tax, hourly, subscriptions, merchants, bankcsv · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-306, D-267, D-263
 - **cash-flow** — The Month · 844 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-275, D-260, D-253
+- **calendar** — The Calendar · 169 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, calendar · D-308, D-275, D-253
 - **budget** — The Close · 1045 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history · owns: monthsClosed, historyCompareTo · D-276, D-257, D-130
 - **statement** — The Statement · 483 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, hourly, foo, coast, opening, benchmarks · owns: confidenceWeightedNetWorth, netWorth · D-313, D-290, D-278
 - **bridge** — The Bridge · 295 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, hourly · D-313
@@ -34,7 +35,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Decisions (10)
 
 - **left-behind** — Left Behind · 755 lines · engines: projection, tier0, fire, selfemployed, tax, income, ledger, cashflow, taxroom, hourly · D-316, D-313, D-150
-- **runway** — The Cushion · 1771 lines · engines: projection, tier0, income, ledger, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo, fire, statement · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-314, D-232, D-130
+- **runway** — The Cushion · 1767 lines · engines: projection, tier0, income, ledger, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo, fire, statement · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-314, D-232, D-130
 - **car** — Wheels · 938 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, quickmath, firstcar · D-268, D-255, D-151
 - **what-if-life** — What If · 1257 lines · engines: projection, tier0, income, ledger, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, foo, adventure · D-296, D-146, D-087
 - **protection** — Protection · 470 lines · engines: projection, tier0, income, selfemployed, ledger, protection, hourly, estate · owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists · D-266, D-103, D-098
@@ -58,17 +59,16 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Upkeep (4)
 
 - **get-help** — Get Help (utility) · 120 lines · no engines · D-097
-- **data** — Your Data (utility) · 869 lines · engines: tax, bankcsv · D-305, D-221, D-220
+- **data** — Your Data (utility) · 822 lines · engines: tax, subscriptions, merchants, bankcsv · D-306, D-305, D-221
 - **one-pager** — The Card · 449 lines · engines: projection, tier0, tax, income, ledger, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-303, D-264, D-219
 - **settings** — Settings (utility) · 225 lines · no engines · D-303, D-180
 
-## Files in rooms/ not in the registry (63)
+## Files in rooms/ not in the registry (62)
 
 - rooms/accounts.html
 - rooms/adventure.html
 - rooms/between-jobs.html
 - rooms/buckets.html
-- rooms/calendar.html
 - rooms/coast-date.html
 - rooms/comeback.html
 - rooms/credential.html

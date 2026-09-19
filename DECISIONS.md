@@ -16261,6 +16261,143 @@ protected save with its fingerprint, the sealed file chosen back and refused
 on the wrong passphrase, then opened; every sample file dropped through the
 one intake landing in its own panel.
 
+## D-306 — A statement in, every place money went, and the slope of a month
+
+**Why.** The owner: a spot to import bank and credit card statements, the
+unique entries isolated and categorised the way Rocket Money does, and a
+"this was bought in advance for day X" so the slope of spending shows the
+accounting a cash log hides. The import existed (D-215) but only inside Your
+Data, read a card statement's charges as deposits, and filed by keyword alone.
+
+**Decision.** `rooms/expenses.html` gains a third reading, `#statements`: the
+intake, `#merchants` (one line a place: count, total, dates, rhythm, and a
+category that becomes a rule), and `#slope` (a month cumulated by the day
+money left and by the day it was for). `shared/bankintake.js` is the one
+intake, mounted there and in Your Data, with a card switch that
+`engines/bankcsv.js` reads as `map.flip` and pre-ticks when charges outnumber
+payments. `engines/merchants.js` keys a merchant the way the finder does,
+applies rules, and draws the slope; a rule re-files every line of that
+merchant in one undo and the next statement files by it before any keyword.
+
+**Replaces or removes.** Your Data's inline bank code (the widget replaces
+it); the `data.html#bank` deep link now lands. No screen added: a reading.
+
+**Stored shape.** `expenses.entries[].forDate` (ISO or null; absent reads as
+null, and every month total still counts the day it left) and
+`expenses.rules[]` `{ key, categoryId, label, at }`, normalised by
+`createExpenses`; a household without them is unchanged. Prefs `bankcsv.maps`
+now carry `flip`. A merchant is its first three words with digits dropped, so
+"AMTRAK 44 NYP-BOS" and "AMTRAK 45 NYP-BOS" are one place and a differently
+worded line from the same company is not; that is the finder's rule too.
+
+**Verified.** `node test/run.js` (33,654), `dnd/test/run.js`, export, xlsx,
+the eight browser gates, and at 390px: a card CSV recognised and flipped,
+five lines in, four merchants, a rule filing Amtrak under travel, a for-date
+of the 25th reading "bought 15 days ahead" and the slope parting by $200, the
+same file through Your Data's one door with every line already in the log.
+
+## D-308 — The Calendar comes back, with your own dates on it
+
+**Why.** The owner: "reinstate the calendar, that way there can be cash
+flow but also so you can add your own things to it, like apply for a
+new credit card, or things that are financial in nature but not
+inherently cash flow." D-275 folded the Calendar into The Month by rule
+2 of D-229; what The Month cannot hold is a date that is not money.
+
+**Decision.** `rooms/calendar.html` is a live room again: the one month
+picture `shared/daybyday.js` draws (The Month's own, never a copy), and
+under it your own dates: what, when, and a kind (to do, deadline,
+note), with done and remove. They live in `household.calendar.events[]`
+(`Schema.createCalendarEvent`), written by this room alone through the
+spine; not an ownership field, not a DAITE family, so no dot and no
+nag. `engines/calendar.js` reads them into the month as `ownHits` and
+`turns` of direction `note` with no money; the picture draws each on
+its day and lists it without an amount, in the Calendar and in The
+Month's dates reading alike. The pay rhythm and the bills stay The
+Month's. The registry, `docs/room-map.json` (thirty-two now) and every
+one of the twenty arrangements carry it beside The Month.
+
+**Replaces or removes.** The redirect stub. Nothing else; the owner's
+call overrides the freeze for this one room, and it holds no field
+that anything else reads.
+
+**Stored shape.** `calendar.events[]` is new on `slaf.household.v2`:
+`{ id, date, label, kind, done }`. `createCalendar` defaults it to `[]`;
+an older save loads with none and reads as before.
+
+**Verified.** `node test/run.js`, lane 2, `dnd/test/run.js`,
+`node test/features.js`, `node tools/context/build.js --check`; the
+Calendar at 390px with the demo: a date added, drawn on the grid and
+listed, marked done, shown in The Month too, removed; clean console.
+
+## D-309 — All three intakes stay
+
+**Why.** STATUS asked the owner which intake survives: Round 1, All at
+once, or Start Here. The owner: "have all 3 options available."
+
+**Decision.** All three stay live and reachable: Round 1 and All at
+once as the Ledger's doors, Start Here as its own room. Nothing retires
+into anything. `docs/room-map.json` keeps Start Here held under the
+Ledger with this as the reason, so the map and the app agree.
+
+**Replaces or removes.** The plan to retire Start Here into Express.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (the map's held rule), the three doors
+open at 390px.
+## D-310 — Plain words off the path, and the questions asked in rooms
+
+**Why.** D-258 rewrote the sixteen path rooms; the owner asked for the
+rest, and for the inline questions: "Keeps paying if the job goes: what
+does this even mean?"
+
+**Decision.** The ledes and registry blurbs of the seventeen rooms off
+the path are rewritten in short sentences that name the thing, the
+number and the unit, and the test that held the line for the path now
+covers every live room. Twenty-eight asked rows in
+`data/ledger-rows.json` get labels a person can answer ("Would this pay
+keep coming if the job ended?", "What you paid in (the cost basis)");
+the four ownership labels that mirror them follow. A renamed row keeps
+its old words in `wasLabels`, and `shared/csvexport.js` indexes them,
+so a sheet exported or typed under the old label still lands on the
+row (D-222's round trip holds).
+
+**Replaces or removes.** The old ledes, blurbs and labels.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (every live room's lede and blurb: no
+dash, no sentence over thirty words; every asked label under fourteen
+words; the hand-typed sheet with the old label still imports),
+`node test/forms.js`, `node tools/context/build.js --check`; four
+off-path rooms and the Income ask at 390px, clean console.
+
+## D-311 — Loose ends closed: the deduction says its year, and the front-page figure is a door
+
+**Why.** Left over from the owner's brief: the student-loan interest
+deduction figures were marked "to verify"; the front page's monthly
+figure was not a link; a typo audit was promised; the Cash Flow month
+card reads incomplete with the example numbers.
+
+**Decision.** `data/student_loan_conventions.json` carries the tax-year
+2025 band as recalled from IRS Topic 456 ($85,000 to $100,000 single,
+$170,000 to $200,000 joint, none filing separately) and says the IRS
+site could not be reached to confirm it; the phase-out test reads the
+band from the table. The front page's "Left each month" figure links
+to Your Statements, where it is made of lines. A scan of every live
+room's visible text for doubled words, doubled punctuation, spaces
+before punctuation and common misspellings found nothing real. The
+month card with the example numbers is by design: the household demo
+leaves the expense log empty on purpose, and The Month's own example
+button fills it.
+
+**Replaces or removes.** The "to verify" note with no year.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node tools/context/build.js --check`;
+the front page at 390px with the demo, the figure a link, clean console.
 ## D-312 — The five-input opening: take-home, a band, a coast date, the levers
 
 **Why.** The owner's build prompt: the product answers one question first,

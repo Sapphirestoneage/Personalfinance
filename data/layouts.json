@@ -27,6 +27,7 @@
             "debt-payoff",
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "financial-snapshot",
@@ -90,6 +91,7 @@
             "debt-payoff",
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "financial-snapshot",
@@ -169,6 +171,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "income"
           ]
@@ -261,6 +264,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "big-purchase",
             "car",
@@ -365,6 +369,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "income",
             "debt-payoff",
@@ -442,6 +447,7 @@
             "ledger",
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "financial-snapshot",
@@ -553,6 +559,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "debt-payoff",
@@ -645,6 +652,7 @@
             "left-behind",
             "expenses",
             "cash-flow",
+            "calendar",
             "debt-payoff",
             "decumulation",
             "week",
@@ -708,6 +716,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "income",
             "settings"
@@ -811,6 +820,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget"
           ]
         },
@@ -933,6 +943,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "income",
             "settings",
@@ -986,6 +997,7 @@
             "cant-pay",
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "runway"
           ]
@@ -1132,6 +1144,7 @@
             "dashboard",
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "financial-snapshot",
             "settings",
@@ -1160,6 +1173,7 @@
             "debt-payoff",
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "skill-tree",
@@ -1242,7 +1256,8 @@
             "runway",
             "get-help",
             "expenses",
-            "cash-flow"
+            "cash-flow",
+            "calendar"
           ]
         },
         {
@@ -1351,6 +1366,7 @@
             "ledger",
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "statement",
@@ -1414,6 +1430,7 @@
             "budget",
             "expenses",
             "cash-flow",
+            "calendar",
             "goals",
             "protection",
             "tax",
@@ -1498,6 +1515,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "settings"
@@ -1579,6 +1597,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "statement",
@@ -1687,6 +1706,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "settings",

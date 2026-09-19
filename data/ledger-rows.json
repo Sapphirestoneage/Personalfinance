@@ -5,7 +5,7 @@
   "source": "Every number the app can hold, one row each: the ownership field map (shared/ownership.js), its DAITE path (shared/daite.js), and lane 2's where sentences (data/lane2/ledger-rows.where.json, L-4) for the rows a person has to look up. Master build section 18.2.",
   "confidence": "convention",
   "confidenceNote": "A registry, not a measurement. kind says how a row is entered (know: from your head; lookup: fetched, with the where sentence; computed: never typed, read from an engine with its inputs named). pass is the walk-through's order (data/walk_stages.json): 1 what is true right now, 2 make it hard to go backwards, 3 the rest. minutes is a rough cost to enter. appliesWhen uses the same fixed phrases as data/levers.json (shared/levers.js, appliesWhen), and a failing row is absent, not greyed.",
-  "note": "id is the ownership field id, so the row reads and writes through the one map every room already uses; aliases names a second ownership id that reads the same path. repeat says a row is one line per item (debts, assets, incomeSources, futureIncome, annualLines). family is the DAITE family, or you for the situation rows, which carry no letter and sit first. Plans, preferences and progress paths are not rows: they are what a decision room asks for its own what-if, not facts about the household (D-183). door (D, A, I, T, E, you) and level (1 how much, 2 where it sits, 3 what it is made of, 4 what it costs and where it came from) are the doors' depth order; round 1 marks the five first-round rows; suggestFrom names a shared/suggest.js rule that can guess the row; askIn names the room that asks it in context; moves says whether a monthly refresh should re-ask it; unlocks names the insight the row feeds, and a row without one fails the build. D-205. formula names the one engine function behind a computed row (fn, resolved by the build), the formula in words, its terms (coef 1 or -1 for a sum, null where the row is not a sum) and the reference tables it reads (H1, D-211).",
+  "note": "id is the ownership field id, so the row reads and writes through the one map every room already uses; aliases names a second ownership id that reads the same path. repeat says a row is one line per item (debts, assets, incomeSources, futureIncome, annualLines). family is the DAITE family, or you for the situation rows, which carry no letter and sit first. Plans, preferences and progress paths are not rows: they are what a decision room asks for its own what-if, not facts about the household (D-183). door (D, A, I, T, E, you) and level (1 how much, 2 where it sits, 3 what it is made of, 4 what it costs and where it came from) are the doors' depth order; round 1 marks the five first-round rows; suggestFrom names a shared/suggest.js rule that can guess the row; askIn names the room that asks it in context; moves says whether a monthly refresh should re-ask it; unlocks names the insight the row feeds, and a row without one fails the build. D-205. formula names the one engine function behind a computed row (fn, resolved by the build), the formula in words, its terms (coef 1 or -1 for a sum, null where the row is not a sum) and the reference tables it reads (H1, D-211). wasLabels lists a row's former labels, so a sheet exported or typed under the old words still lands on the row (D-310).",
   "reopen": {
     "note": "G2.6 (D-209): when the field named here changes, the rows listed change meaning and get one short sheet (shared/reopen.js), together with any row that newly applies under the new answer. Nothing is cleared; each row shows what it holds and the person confirms or types over it.",
     "employmentStatus": {
@@ -286,7 +286,7 @@
     },
     {
       "id": "lastPay",
-      "label": "Your last pay, a year",
+      "label": "Your last pay, a year, before tax",
       "letter": "I",
       "family": "income",
       "path": "income.sources[].lastPay",
@@ -302,13 +302,16 @@
       "suggestFrom": null,
       "askIn": "runway",
       "moves": false,
-      "unlocks": "the benefit estimate, the marginal rate and the milestones while between jobs"
+      "unlocks": "the benefit estimate, the marginal rate and the milestones while between jobs",
+      "wasLabels": [
+        "Your last pay, a year"
+      ]
     },
     {
       "id": "incomeType",
       "path": "income.sources[].type",
       "letter": "I",
-      "label": "What kind of pay",
+      "label": "What kind of pay this is",
       "kind": "know",
       "unit": "enum",
       "pass": 1,
@@ -331,13 +334,16 @@
       "suggestFrom": null,
       "askIn": "income",
       "moves": false,
-      "unlocks": "how each source is taxed: W-2 withholding, self-employment tax, or none"
+      "unlocks": "how each source is taxed: W-2 withholding, self-employment tax, or none",
+      "wasLabels": [
+        "What kind of pay"
+      ]
     },
     {
       "id": "paySurvives",
       "path": "income.sources[].survivesJobLoss",
       "letter": "I",
-      "label": "Keeps paying if the job goes",
+      "label": "Would this pay keep coming if the job ended?",
       "kind": "know",
       "unit": "bool",
       "pass": 2,
@@ -351,7 +357,10 @@
       "suggestFrom": null,
       "askIn": "income",
       "moves": false,
-      "unlocks": "the worst plausible year: what keeps paying if the job goes"
+      "unlocks": "the worst plausible year: what keeps paying if the job goes",
+      "wasLabels": [
+        "Keeps paying if the job goes"
+      ]
     },
     {
       "id": "employerMatch",
@@ -438,7 +447,7 @@
       "id": "futureIncome",
       "path": "income.future",
       "letter": "I",
-      "label": "Money that is coming: a pension, a benefit, a job ahead",
+      "label": "Money that is coming later: a pension, a benefit, a job ahead",
       "kind": "know",
       "unit": "cents",
       "pass": 3,
@@ -455,7 +464,10 @@
       "suggestFrom": null,
       "askIn": "income",
       "moves": true,
-      "unlocks": "the timeline: what stacks and where the gaps are"
+      "unlocks": "the timeline: what stacks and where the gaps are",
+      "wasLabels": [
+        "Money that is coming: a pension, a benefit, a job ahead"
+      ]
     },
     {
       "id": "payCadence",
@@ -537,7 +549,7 @@
       "id": "bufferMonths",
       "path": "income.variable.bufferMonths",
       "letter": "I",
-      "label": "Buffer, months",
+      "label": "Buffer to hold, in months of spending",
       "kind": "know",
       "unit": "months",
       "pass": 2,
@@ -551,13 +563,16 @@
       "askIn": "income",
       "moves": false,
       "unlocks": "the buffer target, and how far the cash is from it",
-      "note": "A buffer target applies to anyone; Variable Income reads it, the Rule of 5 suggests it (D-205)."
+      "note": "A buffer target applies to anyone; Variable Income reads it, the Rule of 5 suggests it (D-205).",
+      "wasLabels": [
+        "Buffer, months"
+      ]
     },
     {
       "id": "variableWindow",
       "path": "income.variable.window",
       "letter": "I",
-      "label": "Rolling window, months",
+      "label": "Months to average over",
       "kind": "know",
       "unit": "months",
       "pass": 3,
@@ -570,7 +585,10 @@
       "suggestFrom": null,
       "askIn": "income",
       "moves": false,
-      "unlocks": "the rolling average the variable-income view reads"
+      "unlocks": "the rolling average the variable-income view reads",
+      "wasLabels": [
+        "Rolling window, months"
+      ]
     },
     {
       "id": "ledgerIncome",
@@ -743,7 +761,7 @@
       "id": "assetCharacter",
       "path": "assets.items[].taxCharacter",
       "letter": "A",
-      "label": "How it is taxed on the way out",
+      "label": "How this account is taxed when money comes out",
       "kind": "know",
       "unit": "enum",
       "pass": 2,
@@ -771,13 +789,16 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "reachable money: what you could get to in an emergency, by tax type"
+      "unlocks": "reachable money: what you could get to in an emergency, by tax type",
+      "wasLabels": [
+        "How it is taxed on the way out"
+      ]
     },
     {
       "id": "assetTier",
       "path": "assets.items[].tier",
       "letter": "A",
-      "label": "Which pile it sits in",
+      "label": "Which pile it belongs to: cash, taxable, retirement, property",
       "kind": "know",
       "unit": "enum",
       "pass": 2,
@@ -798,13 +819,16 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "the liquidity ladder: cash, taxable, retirement, property"
+      "unlocks": "the liquidity ladder: cash, taxable, retirement, property",
+      "wasLabels": [
+        "Which pile it sits in"
+      ]
     },
     {
       "id": "assetCostBasis",
       "path": "assets.items[].costBasisCents",
       "letter": "A",
-      "label": "Cost basis, or Roth contributions",
+      "label": "What you paid in (the cost basis), or a Roth’s contributions",
       "kind": "lookup",
       "unit": "cents",
       "pass": 3,
@@ -820,7 +844,10 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "the tax on pulling money from a taxable account, and the Roth contributions you can take back before 59½"
+      "unlocks": "the tax on pulling money from a taxable account, and the Roth contributions you can take back before 59½",
+      "wasLabels": [
+        "Cost basis"
+      ]
     },
     {
       "letter": "A",
@@ -961,7 +988,7 @@
       "id": "contributionPercent",
       "path": "assets.contributions.pretax",
       "letter": "A",
-      "label": "Workplace contribution, share of pay",
+      "label": "Workplace contribution, as a share of pay",
       "kind": "lookup",
       "unit": "percent",
       "pass": 1,
@@ -976,7 +1003,10 @@
       "suggestFrom": "contributionNotApplicable",
       "askIn": null,
       "moves": false,
-      "unlocks": "the savings rate as contributed, and whether the match is captured"
+      "unlocks": "the savings rate as contributed, and whether the match is captured",
+      "wasLabels": [
+        "Workplace contribution, share of pay"
+      ]
     },
     {
       "id": "rothContributed",
@@ -1142,7 +1172,7 @@
       "id": "rebalanceBand",
       "path": "assets.allocation.band",
       "letter": "A",
-      "label": "Rebalance band",
+      "label": "Rebalance when the split drifts by",
       "kind": "know",
       "unit": "percent",
       "pass": 3,
@@ -1155,13 +1185,16 @@
       "suggestFrom": null,
       "askIn": "fire",
       "moves": false,
-      "unlocks": "when the drift is far enough to act on"
+      "unlocks": "when the drift is far enough to act on",
+      "wasLabels": [
+        "Rebalance band"
+      ]
     },
     {
       "id": "stockShare",
       "path": "assets.allocation.stockShare",
       "letter": "A",
-      "label": "Share in stocks",
+      "label": "Share of the pot in stocks",
       "kind": "know",
       "unit": "percent",
       "pass": 3,
@@ -1174,7 +1207,10 @@
       "suggestFrom": null,
       "askIn": "decumulation",
       "moves": false,
-      "unlocks": "the decumulation path’s risk"
+      "unlocks": "the decumulation path’s risk",
+      "wasLabels": [
+        "Share in stocks"
+      ]
     },
     {
       "id": "netWorth",
@@ -1466,7 +1502,7 @@
       "id": "idrShare",
       "path": "debt.items[].plan.idrShare",
       "letter": "D",
-      "label": "Income-driven share",
+      "label": "Share of income the income-driven plan takes",
       "kind": "know",
       "unit": "percent",
       "pass": 3,
@@ -1479,13 +1515,16 @@
       "suggestFrom": null,
       "askIn": "debt-payoff",
       "moves": false,
-      "unlocks": "the income-driven payment"
+      "unlocks": "the income-driven payment",
+      "wasLabels": [
+        "Income-driven share"
+      ]
     },
     {
       "id": "forgivenessYears",
       "path": "debt.items[].plan.forgivenessYears",
       "letter": "D",
-      "label": "Forgiveness after",
+      "label": "Years until the loan is forgiven",
       "kind": "know",
       "unit": "years",
       "pass": 3,
@@ -1498,13 +1537,16 @@
       "suggestFrom": null,
       "askIn": "debt-payoff",
       "moves": false,
-      "unlocks": "the forgiveness horizon on the student loan path"
+      "unlocks": "the forgiveness horizon on the student loan path",
+      "wasLabels": [
+        "Forgiveness after"
+      ]
     },
     {
       "id": "marginalRate",
       "path": "taxes.marginalRate",
       "letter": "T",
-      "label": "Marginal tax rate",
+      "label": "Your marginal tax rate: the tax on the next dollar",
       "kind": "lookup",
       "unit": "rate",
       "pass": 3,
@@ -1519,13 +1561,16 @@
       "suggestFrom": "marginalRateFromBrackets",
       "askIn": null,
       "moves": false,
-      "unlocks": "the value of every pre-tax dollar: the Roth versus traditional answer"
+      "unlocks": "the value of every pre-tax dollar: the Roth versus traditional answer",
+      "wasLabels": [
+        "Marginal tax rate"
+      ]
     },
     {
       "id": "otherPreTax",
       "path": "taxes.otherPreTax",
       "letter": "T",
-      "label": "Other pre-tax deductions, a year",
+      "label": "Other pre-tax deductions from pay, a year",
       "kind": "lookup",
       "unit": "cents",
       "pass": 3,
@@ -1540,13 +1585,16 @@
       "suggestFrom": null,
       "askIn": "tax",
       "moves": true,
-      "unlocks": "taxable income after the deductions the paycheck already takes"
+      "unlocks": "taxable income after the deductions the paycheck already takes",
+      "wasLabels": [
+        "Other pre-tax deductions, a year"
+      ]
     },
     {
       "id": "withheld",
       "path": "taxes.withheld",
       "letter": "T",
-      "label": "Tax withheld so far this year",
+      "label": "Tax withheld from pay so far this year",
       "kind": "lookup",
       "unit": "cents",
       "pass": 3,
@@ -1561,7 +1609,10 @@
       "suggestFrom": null,
       "askIn": "tax",
       "moves": true,
-      "unlocks": "whether withholding is on track for the year"
+      "unlocks": "whether withholding is on track for the year",
+      "wasLabels": [
+        "Tax withheld so far this year"
+      ]
     },
     {
       "id": "foodMonthly",
@@ -1739,7 +1790,7 @@
       "id": "floorMonthly",
       "path": "expenses.floor",
       "letter": "E",
-      "label": "The floor, a month",
+      "label": "The lean month: the least a month can cost",
       "kind": "know",
       "unit": "cents",
       "pass": 2,
@@ -1752,7 +1803,10 @@
       "suggestFrom": "floorFromConvention",
       "askIn": "runway",
       "moves": true,
-      "unlocks": "the runway at the floor"
+      "unlocks": "the runway at the floor",
+      "wasLabels": [
+        "The floor, a month"
+      ]
     },
     {
       "id": "healthCover",
@@ -1798,7 +1852,7 @@
       "id": "highestDeductible",
       "path": "you.cover.deductible",
       "letter": null,
-      "label": "Highest deductible",
+      "label": "Your highest insurance deductible",
       "kind": "lookup",
       "unit": "cents",
       "pass": 2,
@@ -1813,13 +1867,16 @@
       "suggestFrom": "deductibleTypical",
       "askIn": "runway",
       "moves": false,
-      "unlocks": "the first thing a cash cushion has to cover"
+      "unlocks": "the first thing a cash cushion has to cover",
+      "wasLabels": [
+        "Highest deductible"
+      ]
     },
     {
       "id": "oopMax",
       "path": "you.cover.oopMax",
       "letter": null,
-      "label": "Out-of-pocket maximum",
+      "label": "Your out-of-pocket maximum, a year",
       "kind": "lookup",
       "unit": "cents",
       "pass": 2,
@@ -1834,13 +1891,16 @@
       "suggestFrom": null,
       "askIn": "runway",
       "moves": false,
-      "unlocks": "the worst plausible year’s medical line"
+      "unlocks": "the worst plausible year’s medical line",
+      "wasLabels": [
+        "Out-of-pocket maximum"
+      ]
     },
     {
       "id": "termLife",
       "path": "you.cover.termLife",
       "letter": null,
-      "label": "Term life in force",
+      "label": "Term life insurance in force",
       "kind": "lookup",
       "unit": "cents",
       "pass": 2,
@@ -1855,13 +1915,16 @@
       "suggestFrom": "termLifeBetweenJobs",
       "askIn": "runway",
       "moves": false,
-      "unlocks": "the life-cover gap against ten times income"
+      "unlocks": "the life-cover gap against ten times income",
+      "wasLabels": [
+        "Term life in force"
+      ]
     },
     {
       "id": "disabilityMonthly",
       "path": "you.cover.disability",
       "letter": null,
-      "label": "Disability benefit, a month",
+      "label": "Disability benefit if you could not work, a month",
       "kind": "lookup",
       "unit": "cents",
       "pass": 2,
@@ -1876,13 +1939,16 @@
       "suggestFrom": "disabilityBetweenJobs",
       "askIn": "runway",
       "moves": false,
-      "unlocks": "the disability-cover gap against 60% of pay"
+      "unlocks": "the disability-cover gap against 60% of pay",
+      "wasLabels": [
+        "Disability benefit, a month"
+      ]
     },
     {
       "id": "umbrella",
       "path": "you.cover.umbrella",
       "letter": null,
-      "label": "Umbrella policy",
+      "label": "An umbrella liability policy",
       "kind": "lookup",
       "unit": "cents",
       "pass": 3,
@@ -1897,13 +1963,16 @@
       "suggestFrom": null,
       "askIn": "runway",
       "moves": false,
-      "unlocks": "the liability gap"
+      "unlocks": "the liability gap",
+      "wasLabels": [
+        "Umbrella policy"
+      ]
     },
     {
       "id": "givingPct",
       "path": "expenses.giving.share",
       "letter": "E",
-      "label": "Giving, share of income",
+      "label": "Giving, as a share of income",
       "kind": "know",
       "unit": "percent",
       "pass": 3,
@@ -1916,7 +1985,10 @@
       "suggestFrom": null,
       "askIn": "values",
       "moves": false,
-      "unlocks": "the giving rate beside the savings rate"
+      "unlocks": "the giving rate beside the savings rate",
+      "wasLabels": [
+        "Giving, share of income"
+      ]
     },
     {
       "id": "givingTarget",
@@ -1941,7 +2013,7 @@
       "id": "splitMode",
       "path": "expenses.shared.mode",
       "letter": "E",
-      "label": "How shared costs are split",
+      "label": "How the shared costs are split between you",
       "kind": "know",
       "unit": "enum",
       "pass": 2,
@@ -1954,7 +2026,10 @@
       "suggestFrom": null,
       "askIn": "partner",
       "moves": false,
-      "unlocks": "each partner’s share of the shared month"
+      "unlocks": "each partner’s share of the shared month",
+      "wasLabels": [
+        "How shared costs are split"
+      ]
     },
     {
       "id": "sharedMonthly",
@@ -2067,7 +2142,7 @@
       "id": "beneficiariesSet",
       "path": "you.estate.beneficiaries",
       "letter": null,
-      "label": "Beneficiaries named",
+      "label": "Beneficiaries named on your accounts",
       "kind": "know",
       "unit": "bool",
       "pass": 3,
@@ -2080,7 +2155,10 @@
       "suggestFrom": null,
       "askIn": "protection",
       "moves": false,
-      "unlocks": "the estate checklist: who gets the accounts"
+      "unlocks": "the estate checklist: who gets the accounts",
+      "wasLabels": [
+        "Beneficiaries named"
+      ]
     },
     {
       "id": "willExists",
@@ -2105,7 +2183,7 @@
       "id": "poaExists",
       "path": "you.estate.poa",
       "letter": null,
-      "label": "A power of attorney",
+      "label": "A power of attorney: who acts if you cannot",
       "kind": "know",
       "unit": "bool",
       "pass": 3,
@@ -2118,7 +2196,10 @@
       "suggestFrom": null,
       "askIn": "protection",
       "moves": false,
-      "unlocks": "the estate checklist: who acts if you cannot"
+      "unlocks": "the estate checklist: who acts if you cannot",
+      "wasLabels": [
+        "A power of attorney"
+      ]
     }
   ]
 }

@@ -59,8 +59,8 @@ Fields: 121. Traced: 112. No other room mentions it: **58**.
 
 ## expenses (8)
 
-- `rentMonthly` — Rent or mortgage, a month · read by cash-flow, financial-snapshot, housing, debates
-- `monthlyExpenses` — Monthly expenses · read by ledger, start, income, cash-flow, statement, bridge, which-account, the-documents, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
+- `rentMonthly` — Rent or mortgage, a month · read by cash-flow, calendar, financial-snapshot, housing, debates
+- `monthlyExpenses` — Monthly expenses · read by ledger, start, income, cash-flow, calendar, statement, bridge, which-account, the-documents, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `foodMonthly` — Food, a month · read by ledger, the-documents
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger, the-documents
 - `transportationMonthly` — Getting around, a month · read by ledger, the-documents
@@ -94,11 +94,11 @@ Fields: 121. Traced: 112. No other room mentions it: **58**.
 - `ledgerIncome` — Income logged, a month · read by the-documents
 - `futureIncome` — Money that is coming · read by bridge
 - `incomeType` — What kind of pay · read by ledger
-- `paySurvives` — Keeps paying if the job goes · read by ledger, start
+- `paySurvives` — Would this pay keep coming if the job ended? · read by ledger, start
 
 ## ledger (21)
 
-- `takeHomeMonthly` — Take-home pay, a month · read by cash-flow, statement, financial-snapshot, values, goals, runway, career-move, partner, big-purchase, debates
+- `takeHomeMonthly` — Take-home pay, a month · read by cash-flow, calendar, statement, financial-snapshot, values, goals, runway, career-move, partner, big-purchase, debates
 - `rothContributed` — Roth so far this year · read by which-account
 - `hsaContributed` — HSA so far this year · read by which-account
 - `onHdhp` — On a high-deductible health plan · read by bridge, which-account
@@ -110,9 +110,9 @@ Fields: 121. Traced: 112. No other room mentions it: **58**.
 - `rebalanceBand` — Rebalance band · read by the-mix
 - `otherAssets` — Property & other assets · read by statement, the-documents, protection, one-pager
 - `assetValue` — What each account or thing is worth · **no other room mentions it**
-- `assetCharacter` — How it is taxed on the way out · **no other room mentions it**
-- `assetTier` — Which pile it sits in · **no other room mentions it**
-- `assetCostBasis` — Cost basis, or Roth contributions · **no other room mentions it**
+- `assetCharacter` — How this account is taxed when money comes out · **no other room mentions it**
+- `assetTier` — Which pile it belongs to: cash, taxable, retirement, property · **no other room mentions it**
+- `assetCostBasis` — What you paid in (the cost basis), or a Roth’s contributions · **no other room mentions it**
 - `assetInstitution` — Where it is held · **no other room mentions it**
 - `assetAccountType` — Account type · **no other room mentions it**
 - `assetConfidence` — How sure you are it is worth that · **no other room mentions it**
@@ -161,10 +161,10 @@ Fields: 121. Traced: 112. No other room mentions it: **58**.
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
 - `filingStatus` — Filing status · read by income, expenses, which-account, debt-payoff, tax, dashboard, financial-snapshot, fire, left-behind, cant-pay, decumulation, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, which-account, the-documents, debt-payoff, tax, dashboard, financial-snapshot, fire, left-behind, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, calendar, which-account, the-documents, debt-payoff, tax, dashboard, financial-snapshot, fire, left-behind, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · **no other room mentions it**
-- `cashSavings` — Cash & savings · read by ledger, income, cash-flow, budget, statement, bridge, the-documents, dashboard, financial-snapshot, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
+- `cashSavings` — Cash & savings · read by ledger, income, cash-flow, calendar, budget, statement, bridge, the-documents, dashboard, financial-snapshot, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, which-account, debt-payoff, tax, runway, career-move, debates
 - `employerMatch` — Employer match · read by the-documents, financial-snapshot, foo-ladder, career-move, debates

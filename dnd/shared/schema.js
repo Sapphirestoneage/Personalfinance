@@ -43,7 +43,7 @@
      beside the version in every footer and in every backup, so a phone
      showing an old page can be told apart from a bug. version.json carries
      the same string; `node tools/stamp-build.js` sets both to today. D-202. */
-  var BUILD = '2026-09-19 17:18Z';
+  var BUILD = '2026-09-19 19:19Z';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -128,6 +128,7 @@
     'household.reversibility.decisionId':        { class: 'raw',        unit: 'id',      note: 'the decision being weighed, with given{} answers. Owned by Reversibility. D-101' },
     'household.unlearning.dropped':              { class: 'raw',        unit: 'ids',     note: 'rules from data/unlearning.json you have let go of. Owned by Unlearning. D-101' },
     'household.studentLoans.plan':               { class: 'raw',        unit: 'enum',    values: ['standard', 'income_driven', 'aggressive'], note: 'with extraMonthlyCents, idrShare (0–1 of discretionary income), forgivenessYears. Owned by Student Loan Decision. D-101' },
+    'household.calendar.events[].date':          { class: 'raw',        unit: 'text',    note: 'YYYY-MM-DD; with label (text), kind (todo | deadline | note) and done (bool): your own dates, drawn on the month and never counted as money. Owned by the Calendar. D-308' },
     'household.calendar.cadence':                { class: 'raw',        unit: 'enum',    values: ['weekly', 'fortnightly', 'semimonthly', 'monthly'], note: 'with nextPaydayDay (1–31), bills[] {label, cents, day}, payLater[] {label, cents, dueDay, instalmentsLeft}. Owned by Money Calendar. D-101' },
     'household.history.compareTo':               { class: 'raw',        unit: 'id',      note: 'the snapshot History compares today against. Owned by History. D-101' },
     'meta.fields':                               { class: 'raw',        unit: 'map',     note: '{ fieldId: { asOf, source, confidence, room } }: when a number was last set or confirmed, how it arrived (typed, pasted, imported, screenshot, migrated, block-default, quote) and how sure the person is (sure, roughly, unsure, unknown). Schema.meta reads it; the spine writes it. D-181' },
@@ -234,6 +235,9 @@
     'expenses.entries[].deductible':             { class: 'raw',        unit: 'bool',    note: 'true only when linkedIncomeId is set — enforced by createExpenseEntry, so a personal expense can never reduce taxable income. D-128' },
     'expenses.entries[].hidden':                 { class: 'raw',        unit: 'bool',    note: 'off the default list, still counted. D-128' },
     'expenses.entries[].active':                 { class: 'raw',        unit: 'bool',    note: 'false = archived: stops counting toward new estimates and actuals; closed months are untouched. D-128' },
+    'expenses.entries[].forDate':                { class: 'raw',        unit: 'iso-date', note: 'the day the money was FOR when that is not the day it left: bought ahead, or paid late. Null = the same day. Read by the slope in Expenses only; every month total keeps counting the day it left. D-306' },
+    'expenses.rules[].key':                      { class: 'raw',        unit: 'text',    note: 'a merchant, as engines/merchants.js keys it (the finder’s key): which lines the rule files. Owned by Expenses. D-306' },
+    'expenses.rules[].categoryId':               { class: 'raw',        unit: 'enum',    note: 'an id from data/expense_categories.json: where every line from that merchant files, past and future. D-306' },
     'household.ledger.income[].kind':            { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'other'], note: 'a dated income entry: amountCents, frequency (once, weekly, fortnightly, monthly, annual), receivedOn, taxable, taxMethod (w2, se, none), costs[] for se/side/rental, hidden, active. Owned by Income. D-128' },
     'household.ledger.income[].dateKind':        { class: 'raw',        unit: 'enum',    values: ['exact', 'estimated', 'potential'], note: 'how sure the date is — the same three as an expense: potential income (a bonus that may not come) is drawn, never counted. D-130' },
     'household.ledger.income[].taxMethod':       { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'unemployment', 'none'], note: 'taxed how: withheld at the source; owed with self-employment tax on the net of costs; owed as ordinary income with no SE tax (unemployment); or not taxable. Four, no catch-all. D-128, D-129' },
@@ -1329,10 +1333,21 @@
     var f = fields || {};
     return { id: f.id || newId('bnpl'), label: f.label === undefined ? null : f.label, cents: Money.isEntered(f.cents) ? f.cents : null, dueDay: Money.isEntered(f.dueDay) ? f.dueDay : null, instalmentsLeft: Money.isEntered(f.instalmentsLeft) ? f.instalmentsLeft : null };
   }
+  /* Your own dates (D-308): anything with a date that is not money in or
+     out. Apply for a card, a renewal to cancel, a form due. Drawn on the
+     month, never counted. kind: todo (something to do), deadline (a day
+     something must be done by), note (a day worth knowing about). */
+  var CALENDAR_EVENT_KINDS = ['todo', 'deadline', 'note'];
+  var CALENDAR_EVENT_LABELS = { todo: 'To do', deadline: 'Deadline', note: 'Note' };
+  function createCalendarEvent(fields) {
+    var f = fields || {};
+    return { id: f.id || newId('cal'), date: typeof f.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f.date) ? f.date : null,
+      label: f.label === undefined || f.label === null ? null : String(f.label), kind: CALENDAR_EVENT_KINDS.indexOf(f.kind) >= 0 ? f.kind : 'todo', done: f.done === true };
+  }
   function createCalendar(fields) {
     var f = fields || {};
     return { cadence: PAY_CADENCES.indexOf(f.cadence) >= 0 ? f.cadence : null, nextPaydayDay: Money.isEntered(f.nextPaydayDay) ? f.nextPaydayDay : null,
-      bills: (f.bills || []).map(createBill), payLater: (f.payLater || []).map(createPayLater) };
+      bills: (f.bills || []).map(createBill), payLater: (f.payLater || []).map(createPayLater), events: (f.events || []).map(createCalendarEvent) };
   }
   /** One journal entry: when, what kind of reading, at which level, the
    *  figure, and the basis in words. Never computed on read; a record. */
@@ -1692,7 +1707,13 @@
          transaction-shaped (SPEC.md §12.5). See createExpenseEntry(). */
       entries: entries,
       /* Named yearly lines (15.5). See createAnnualLine(). */
-      annual: (f.annual || []).map(createAnnualLine)
+      annual: (f.annual || []).map(createAnnualLine),
+      /* Where a merchant's lines file (D-306): { key, categoryId, label, at }.
+         A rule re-files every line from that merchant, past and future;
+         absent reads as none. */
+      rules: (f.rules || []).filter(function (r) { return r && typeof r.key === 'string' && r.key && typeof r.categoryId === 'string' && r.categoryId; }).map(function (r) {
+        return { key: r.key, categoryId: r.categoryId, label: typeof r.label === 'string' ? r.label : r.key, at: typeof r.at === 'string' ? r.at : null };
+      })
     };
     /* Migration (D-172): a household saved before the four buckets existed
        carried one monthly figure - tracked over estimated - and maybe a
@@ -1888,7 +1909,11 @@
       dateReceived: reimb && status === 'received' && typeof f.dateReceived === 'string' && f.dateReceived ? f.dateReceived : null,
       receivedAmountCents: reimb && status === 'received' && Money.isEntered(f.receivedAmountCents) ? f.receivedAmountCents : null,
       hidden: f.hidden === true,
-      active: f.active === undefined ? true : f.active !== false
+      active: f.active === undefined ? true : f.active !== false,
+      /* The day the money was FOR, when that is not the day it left: a
+         ticket bought ahead, a bill paid late. Null = the same day. The
+         slope in Expenses reads it; nothing that counts a month does. D-306. */
+      forDate: typeof f.forDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f.forDate) ? f.forDate : null
     };
   }
 
@@ -3254,6 +3279,7 @@
     saidNoDebt: saidNoDebt,
     TAX_CHARACTERS: TAX_CHARACTERS,
     ACCOUNT_TYPES: ACCOUNT_TYPES, ACCOUNT_TYPE_LABELS: ACCOUNT_TYPE_LABELS, accountType: accountType, applyAccountType: applyAccountType, whereItSits: whereItSits,
+    createCalendarEvent: createCalendarEvent, CALENDAR_EVENT_KINDS: CALENDAR_EVENT_KINDS, CALENDAR_EVENT_LABELS: CALENDAR_EVENT_LABELS,
     createWorkProfile: createWorkProfile,
     WORK_DEFAULTS: WORK_DEFAULTS,
     createAsset: createAsset,

@@ -296,7 +296,7 @@ const CASES = [
       await page.waitForSelector('[data-mode="all"]');
       await page.tap('[data-mode="all"]');
       await page.waitForSelector('details.xlvl');
-      await page.$eval('details.xlvl', ns => ns.forEach(n => { n.open = true; }));
+      await page.$$eval('details.xlvl', ns => ns.forEach(n => { n.open = true; }));
       await page.waitForSelector('[data-x-row="allocationStocks"] [data-x-input]');
     },
     fields: [
@@ -600,6 +600,28 @@ const CASES = [
     }
   },
   {
+    /* The Calendar (D-308): one text box for your own date, built once;
+       the list beneath it rebuilds on every write and holds no input. */
+    room: '/rooms/calendar.html',
+    container: '#own-form',
+    seed: 'demo',
+    fields: [
+      { sel: '#own-what', type: 'Apply for the travel card' }
+    ],
+    expect: async (page) => {
+      await page.fill('#own-when', '2030-01-15');
+      await page.tap('#own-add');
+      await page.waitForTimeout(500);
+      const ev = await page.evaluate(() => ((JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).calendar || {}).events || []);
+      return [
+        ['the date was stored', ev.length, 1],
+        ['with its label', ev[0] && ev[0].label, 'Apply for the travel card'],
+        ['on its day', ev[0] && ev[0].date, '2030-01-15'],
+        ['and the box cleared for the next one', await page.$eval('#own-what', e => e.value), '']
+      ];
+    }
+  },
+  {
     /* THE ACCOUNT LAYER (D-313): an account is named, valued, typed and
        rated in the Ledger's A door and nowhere else. The Statement reads it. */
     room: '/rooms/ledger.html#all-at-once',
@@ -609,7 +631,7 @@ const CASES = [
       await page.waitForSelector('[data-mode="all"]');
       await page.tap('[data-mode="all"]');
       await page.waitForSelector('details.xlvl');
-      await page.$eval('details.xlvl', ns => ns.forEach(n => { n.open = true; }));
+      await page.$$eval('details.xlvl', ns => ns.forEach(n => { n.open = true; }));
       await page.waitForSelector('[data-x-add="assets"] [data-x-add-name]');
     },
     fields: [

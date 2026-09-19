@@ -2,7 +2,6 @@
 paths:
   - "rooms/ledger.html"
   - "engines/variance.js"
-  - "engines/subscriptions.js"
   - "engines/sincelast.js"
   - "engines/notknowing.js"
   - "engines/layouts.js"

@@ -229,6 +229,13 @@
     var paydaysPerMonth = cadence ? conv.cadences[cadence].paydaysPerMonth : null;
     var perPayday = !ledgerDrives && cadence ? Math.round(takeHome.value / paydaysPerMonth) : 0;
 
+    /* Your own dates in the window (D-308): drawn on their day, never
+       counted. A date outside the window is simply not here. */
+    var ownHits = [];
+    ((h.calendar || {}).events || []).forEach(function (e) {
+      if (!e || !e.date || indexOfDate[e.date] === undefined || !e.label) return;
+      ownHits.push({ id: e.id, label: e.label, kind: 'own', sub: e.kind || 'todo', done: e.done === true, index: indexOfDate[e.date], date: e.date, dom: dates[indexOfDate[e.date]].dom });
+    });
     /* The log's dated entries in the window (D-130): a bill on its day. */
     var catalog = tables && tables.expenseCategories;
     var logHits = [], potentialOut = 0, logMonthlyCents = 0;
@@ -327,7 +334,7 @@
       paycheckMonth: paycheckMonthLabel(cadence, paydays.length),
       cadence: cadence, cadenceLabel: cadence ? conv.cadences[cadence].label : null, nextPaydayDay: nextDay,
       paydaySource: ledgerDrives ? 'ledger' : 'cadence',
-      incomeHits: incomeHits, logHits: logHits, logMonthlyCents: logMonthlyCents,
+      incomeHits: incomeHits, logHits: logHits, logMonthlyCents: logMonthlyCents, ownHits: ownHits,
       annualHits: annualHits, annualMonthlyCents: annual.monthlyCents, annualCount: annual.count,
       potentialInCents: potentialIn, potentialOutCents: potentialOut,
       bills: bills.map(function (x) { var hit = firstHitOf(x.id, billHits); return { id: x.id, label: x.label, cents: x.cents, day: x.day, firstDom: hit ? hit.dom : null, firstDate: hit ? hit.date : null, firstIndex: hit ? hit.index : null }; }),
@@ -358,7 +365,9 @@
       bills: result.billHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'bill', dateKind: 'exact', potential: false }; })
         .concat(result.payLaterHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'payLater', dateKind: 'exact', potential: false }; }))
         .concat((result.logHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: 'log', dateKind: x.dateKind, potential: x.potential, recurring: x.recurring }; }))
-        .concat((result.annualHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label + ' (yearly)', cents: x.cents, kind: 'annual', dateKind: 'estimated', potential: false }; }))
+        .concat((result.annualHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label + ' (yearly)', cents: x.cents, kind: 'annual', dateKind: 'estimated', potential: false }; })),
+      /* Your own dates that day (D-308): no money, drawn and listed. */
+      notes: (result.ownHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { id: x.id, label: x.label, kind: 'own', sub: x.sub, done: x.done }; })
     };
   }
   /* The month as turns (D-253): every event that moves the balance, in
@@ -373,6 +382,7 @@
       var base = { index: d.index, dom: d.dom, date: d.date, weekday: WEEKDAYS[when.getDay()], month: when.toLocaleDateString('en-US', { month: 'short' }), balanceCents: d.balanceCents };
       ev.ins.forEach(function (x) { out.push(Object.assign({}, base, { label: x.label, cents: x.cents, kind: x.kind, dateKind: x.dateKind, potential: !!x.potential, direction: 'in' })); });
       ev.bills.forEach(function (x) { out.push(Object.assign({}, base, { label: x.label, cents: -x.cents, kind: x.kind, dateKind: x.dateKind, potential: !!x.potential, direction: 'out' })); });
+      (ev.notes || []).forEach(function (x) { out.push(Object.assign({}, base, { id: x.id, label: x.label, cents: 0, kind: 'own', sub: x.sub, done: x.done, dateKind: 'exact', potential: false, direction: 'note' })); });
     });
     return out;
   }
@@ -390,7 +400,7 @@
         firstOfMonth: d.dom === 1, month: when.toLocaleDateString('en-US', { month: 'short' }),
         balanceCents: d.balanceCents, paydayCents: d.paydayCents, billsCents: d.billsCents, payLaterCents: d.payLaterCents, spreadCents: d.spreadCents,
         inCents: d.paydayCents, outCents: d.billsCents + d.payLaterCents,
-        ins: ev.ins, bills: ev.bills,
+        ins: ev.ins, bills: ev.bills, notes: ev.notes,
         isLow: d.index === result.lowIndex, belowZero: d.balanceCents < 0,
         tight: !!(result.tight && d.index >= result.tight.fromIndex && d.index <= result.tight.toIndex),
         today: d.index === 0
@@ -411,6 +421,7 @@
     paycheckMonthLabel: paycheckMonthLabel,
     month: month,
     balancePoints: balancePoints,
+    EVENT_LABELS: Schema.CALENDAR_EVENT_LABELS || { todo: 'To do', deadline: 'Deadline', note: 'Note' },
     weeks: weeks,
     eventsOn: eventsOn,
     turns: turns,
