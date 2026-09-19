@@ -213,6 +213,19 @@
   }
 
   /**
+   * The share of what you paid a car bought at `ageYears` old is still worth
+   * `years` later (D-255): the curve read from that point, not from the top.
+   * A new car is age 0 and reads as retainedShareAt. Null when the curve or
+   * the age cannot be read.
+   */
+  function retainedFrom(curve, ageYears, years) {
+    var age = Money.isEntered(ageYears) && ageYears > 0 ? ageYears : 0;
+    var atAge = retainedShareAt(curve, age), later = retainedShareAt(curve, age + years);
+    if (!Money.isEntered(atAge) || !Money.isEntered(later) || atAge <= 0) return null;
+    return later / atAge;
+  }
+
+  /**
    * How long a car loan leaves you owing more than the car is worth.
    *   opts:  { priceCents, downPaymentCents, termMonths, loanRate }
    *   curve: data/car_costs.json `depreciation`
@@ -390,6 +403,7 @@
     usesToReach: usesToReach,
     carRule2038: carRule2038,
     retainedShareAt: retainedShareAt,
+    retainedFrom: retainedFrom,
     carUnderwater: carUnderwater,
     ruleOfFive: ruleOfFive
   };

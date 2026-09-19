@@ -48,9 +48,10 @@ Updated: 2026-09-19
   Your Statements: every line opens to how it is worked out and where
   to change it, tax comes off before living, and a FIRE statement sits
   beside the balance sheet (D-254).
+  The Car room takes new or used with the age, the running costs and
+  repairs, and prices the car all in a month against the 8% cap (D-255).
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
-  the car's used/new and running costs;
   the Budget month view made obvious; a plain-language lede pass.
 - **Boxes line up now (D-249).** Reported from a phone, third time asked:
   side-by-side controls sat 16px apart on 17 pages. Labels in a row reserve

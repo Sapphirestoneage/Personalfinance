@@ -165,6 +165,7 @@
         { id: 'out-drop',   label: 'What it loses' },
         { id: 'out-run',    label: 'What it costs to run' },
         { id: 'out-loan',   label: 'Whether the loan fits' },
+        { id: 'out-allin',  label: 'All in, a month' },
         { id: 'out-ways',   label: 'Lease, new, or a year old' },
         { id: 'reading',    label: 'Reading from elsewhere' }
       ]

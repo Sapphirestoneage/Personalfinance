@@ -49,7 +49,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **credential** — Worth Learning · 488 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, credential · D-062
 - **worth** — Worth It · 609 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, worth
 - **runway** — The Cushion · 1719 lines · engines: projection, tier0, income, ledger, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-232, D-130, D-082
-- **car** — What A Car Costs · 658 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, quickmath · D-151
+- **car** — What A Car Costs · 747 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, quickmath, firstcar · D-255, D-151
 - **what-if-life** — What If, Life · 553 lines · engines: projection, tier0, income, ledger, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events · D-146, D-091, D-087
 - **timeline** — What Comes Next · 504 lines · engines: timeline · owns: futureIncome · D-152
 - **micro-retirement** — Micro-Retirement Planner · 169 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, countdown, microretirement · D-219
