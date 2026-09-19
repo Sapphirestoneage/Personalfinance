@@ -352,7 +352,13 @@
     }
     line.className = 'step-line';
     el('step-pre').textContent = 'Your next dollar belongs to ';
-    el('step-num').textContent = 'step ' + res.value + ' of 9';
+    /* The count comes from the ladder in data/foo_rules.json, not from a 9
+       typed here: reference data lives in data/, and a room that inlines it
+       is a room that will disagree with it one day. The ladder is numbered
+       from 0 (cover the basics), so the last step's number is the count. */
+    var rungs = TABLES && TABLES.fooRules && TABLES.fooRules.ladder;
+    var last = rungs && rungs.length ? rungs[rungs.length - 1].step : null;
+    el('step-num').textContent = 'step ' + res.value + (last === null ? '' : ' of ' + last);
     el('step-post').textContent = (res.meta && res.meta.title ? ', ' + res.meta.title : '')
       + '. That is true of all three amounts below.';
   }

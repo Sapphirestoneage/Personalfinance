@@ -44,6 +44,28 @@
     return { key: key, status: 'unknown', detail: detail || null, missing: missing || [] };
   }
 
+  /** What goes into the workplace plan, against this year's elective-deferral
+   *  limit. Both figures already exist — retirement.contributionPercent and
+   *  data/irs_limits_2026.json — and neither was being read past step 4.
+   *  Returns null when either is missing; a guess here would be a number
+   *  people act on. */
+  function workplaceDeferral(household, tables) {
+    var pct = ((household || {}).retirement || {}).contributionPercent;
+    var gross = Schema.grossAnnualIncomeCents(household);
+    var limits = tables && tables.irsLimits && tables.irsLimits.limits;
+    var limitDollars = limits && limits.elective401k;
+    if (!Money.isEntered(pct) || !Money.isOk(gross) || !Money.isEntered(limitDollars)) return null;
+    var contributed = Math.round(gross.value * pct / 100);
+    var limitCents = Math.round(limitDollars * 100);
+    return {
+      percent: pct,
+      contributedCents: contributed,
+      limitCents: limitCents,
+      roomCents: limitCents - contributed,
+      atLimit: contributed >= limitCents
+    };
+  }
+
   /** Debts carrying a rate above the high-interest threshold, with a balance
    *  still on them. A debt whose rate was never entered cannot be judged. */
   function highInterestDebts(household, thresholds) {
@@ -190,12 +212,37 @@
     if (steps[steps.length - 1].status !== 'met') return { steps: steps, rules: rules };
 
     /* --- Steps 5+ --------------------------------------------------------
-       HSA eligibility, Roth IRA contributions, remaining tax-advantaged
-       space and taxable brokerage all need contribution figures Tier 0 does
-       not collect. Saying so is the honest answer; guessing is not. */
-    steps.push(unknown('max_hsa',
-      'Steps 5 and up need your actual contributions — HSA, IRA, 401(k) — which this room doesn’t ask for yet.',
-      ['contributions']));
+       HSA eligibility and what actually went into a Roth or an IRA are
+       figures nothing here collects, so the step stays UNKNOWN: guessing a
+       placement would be worse than not having one.
+
+       But the workplace contribution IS held — retirement.contributionPercent,
+       owned by Where It Goes — and the elective-deferral limit is in
+       data/irs_limits_2026.json. The old sentence said steps 5 and up "need
+       your actual contributions … which this room doesn't ask for yet",
+       which was not true of the one contribution the app has, and it left a
+       household that had cleared the first five rungs with no next job for
+       its next dollar at all. Say what is known, name the space that is
+       left, and keep the step unknown. */
+    var deferral = workplaceDeferral(household, tables);
+    if (deferral) {
+      var used = '$' + Math.round(deferral.contributedCents / 100).toLocaleString('en-US');
+      var cap = '$' + Math.round(deferral.limitCents / 100).toLocaleString('en-US');
+      var spare = '$' + Math.round(Math.max(0, deferral.roomCents) / 100).toLocaleString('en-US');
+      var step5 = unknown('max_hsa',
+        'Steps 5 and up need what goes into an HSA, a Roth or an IRA, which nothing here asks for yet. What is known: '
+          + deferral.percent + '% of pay goes into the workplace plan, about ' + used
+          + ' a year, against this year\u2019s ' + cap + ' elective-deferral limit'
+          + (deferral.atLimit ? ' — that limit is already met.' : ' — ' + spare + ' of that space is unused.'),
+        ['contributions']);
+      step5.known = deferral;
+      steps.push(step5);
+    } else {
+      steps.push(unknown('max_hsa',
+        'Steps 5 and up need what you put into an HSA, a Roth or an IRA, and what goes into the workplace plan. '
+          + 'Answer the workplace contribution in Where It Goes and this can at least say how much of the year\u2019s limit is left.',
+        ['contributions']));
+    }
 
     return { steps: steps, rules: rules };
   }

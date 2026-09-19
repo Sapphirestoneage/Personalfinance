@@ -14214,6 +14214,63 @@ section('Every class a page names has a rule somewhere (D-226)');
 })();
 
 /* ==========================================================================
+   The ladder past step 4, and the order the flags come out in (D-235, D-238)
+   ========================================================================== */
+section('The ladder past step 4, and the order the flags come out in (D-235, D-238)');
+(function () {
+  /* The order. Flags used to come out in the order data/foo_rules.json listed
+     them, and the Dashboard renders flags[0] — so the front door said "point
+     the excess at the debt" (a step 3 problem) while What The Next Dollar
+     Does said "capture the employer match" (step 2), on this same household. */
+  const foo = Foo.evaluate(h, TABLES);
+  check('the top flag is the earliest rung, not the first line of the file',
+    foo.flags[0].key, 'match_left_on_table');
+  check('… and it carries the rung it belongs to', foo.flags[0].step, 2);
+  check('… with the step 3 flag behind it', foo.flags[1].key, 'ef_alongside_high_interest_debt');
+  checkTrue('every flag in the rules file declares its rung',
+    TABLES.fooRules.outOfBoundsFlags.every(f => Number.isInteger(f.step)));
+  checkTrue('a critical flag always outranks a warning, whatever its rung', (function () {
+    const RANK = { critical: 0, warning: 1 };
+    return foo.flags.every((f, i) => i === 0 || RANK[foo.flags[i - 1].severity] <= RANK[f.severity]);
+  })());
+
+  /* Housing: the guideline sat in the rules file with nothing reading it. */
+  const roofed = Demo.build();
+  roofed.expenses.needs.accommodation.monthlyCents = 250000;   /* $2,500 on $72,000 gross */
+  const roofFlags = Foo.evaluate(roofed, TABLES).flags.filter(f => f.key === 'housing_above_guideline');
+  check('a roof over the 28% guideline is a flag now', roofFlags.length, 1);
+  check('… as a warning, never a critical', roofFlags[0].severity, 'warning');
+  check('… measured against the threshold that was already in the file',
+    roofFlags[0].detail.guideline, TABLES.fooRules.thresholds.dtiHousingGuideline);
+  check('the demo\u2019s own roof is under it and stays silent',
+    Foo.evaluate(h, TABLES).flags.filter(f => f.key === 'housing_above_guideline').length, 0);
+
+  /* Past step 4 the ladder used to hand back placement: null and the untrue
+     sentence "which this room doesn't ask for yet" — untrue of the workplace
+     contribution, which the app holds. */
+  const saver = Demo.build();
+  saver.retirement = saver.retirement || {};
+  saver.retirement.contributionPercent = 10;
+  (saver.debts || []).forEach(d => { d.rate = 0.04; });
+  saver.assets.forEach(a => { if (a.category === 'cash') a.valueCents = 3000000; });
+  const past = Foo.evaluate(saver, TABLES);
+  check('steps 0 to 4 are met', past.steps.filter(s => s.status === 'met').length, 5);
+  const fifth = past.steps[past.steps.length - 1];
+  check('step 5 is still honestly unknown — an HSA or a Roth is not guessed at', fifth.status, 'unknown');
+  check('… but the workplace contribution it does hold is read', fifth.known.percent, 10);
+  check('… against the limit in data/irs_limits_2026.json',
+    fifth.known.limitCents, Math.round(TABLES.irsLimits.limits.elective401k * 100));
+  check('… and the unused space is named', fifth.known.roomCents, 2450000 - 720000);
+  checkTrue('… so the sentence no longer says the app does not ask for it',
+    !/doesn\u2019t ask for it yet|does not ask for it yet/.test(fifth.detail) && /workplace plan/.test(fifth.detail));
+
+  /* The ladder's length is data, not a 9 typed into a room. */
+  const ladderRoom = fs.readFileSync(path.join(ROOT, 'rooms/foo-ladder.html'), 'utf8');
+  checkTrue('the room reads the rung count off the rules file', /TABLES\.fooRules\.ladder/.test(ladderRoom) && !/' of 9'/.test(ladderRoom));
+  check('which is nine, from the file', TABLES.fooRules.ladder[TABLES.fooRules.ladder.length - 1].step, 9);
+})();
+
+/* ==========================================================================
    Every id a page writes to exists in that page (D-234)
    ========================================================================== */
 section('Every id a page writes to exists in that page (D-234)');
