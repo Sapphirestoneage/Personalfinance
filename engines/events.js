@@ -557,7 +557,7 @@
   }
 
   /* Choice lists read from a reference table — one resolver, in the loader
-     (shared/reference.js), shared with the block library. D-267. */
+     (shared/reference.js), shared with the block library. D-292. */
   function resolveChoices(template, tables) {
     var R = (typeof module === 'object' && module.exports) ? require('../shared/reference.js') : ((typeof self !== 'undefined' && self.SLAF) ? self.SLAF.Reference : null);
     return R && R.resolveChoices ? R.resolveChoices(template, tables) : template;

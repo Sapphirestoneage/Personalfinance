@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-061, D-101, D-249 (the merge).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-061, D-101, D-274 (the merge).
   Registry: debt-payoff.
 
   THREE READINGS OF WHAT YOU OWE.
@@ -35,7 +35,7 @@
 
   1. READS   the debts listed here, what comes in, and the month.
   2. WRITES  the five debt fields as before, and the four loan-plan fields,
-             whose owner moved here with their boxes (D-249). The credit
+             whose owner moved here with their boxes (D-274). The credit
              reading writes nothing: it holds no score and never asks for
              one.
   3. CALLS   the engines each reading already called; no arithmetic moved.
@@ -43,7 +43,7 @@
   5. CONFIG  the tables each engine names.
 
   THE TWO LATER READINGS are built from shared/room.js as parts of this
-  room (D-235), each with a prefix and a root of its own.
+  room (D-260), each with a prefix and a root of its own.
 
   THEMING: none this pass. A theme is a class on <body> and a palette in
   shared/theme.css.
@@ -54,7 +54,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- The order, from rooms/debt-payoff.html (D-249) ---- */
+  /* ---- The order, from rooms/debt-payoff.html (D-274) ---- */
   
   #view-the-order .room-back:hover { text-decoration: underline; }
   
@@ -427,13 +427,13 @@
   
   #view-the-order .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- Student loans, from rooms/student-loans.html (D-249) ---- */
+  /* ---- Student loans, from rooms/student-loans.html (D-274) ---- */
   
   #view-the-loans section[id] { scroll-margin-top: var(--space-4); }
   
   #view-the-loans .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- Your credit file, from rooms/credit.html (D-249) ---- */
+  /* ---- Your credit file, from rooms/credit.html (D-274) ---- */
   
   #view-the-file section[id] { scroll-margin-top: var(--space-4); }
   
@@ -756,7 +756,7 @@
 <script src="../engines/ratios.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- the order, the loans, the file (D-249) ----
+/* ---- the order, the loans, the file (D-274) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -764,7 +764,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -820,7 +820,7 @@
 
 
 <script>
-/* ---- READING view-the-order, from rooms/debt-payoff.html (D-249) ---- */
+/* ---- READING view-the-order, from rooms/debt-payoff.html (D-274) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
@@ -2230,7 +2230,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-loans, from rooms/student-loans.html (D-249) ---- */
+/* ---- READING view-the-loans, from rooms/student-loans.html (D-274) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -2374,7 +2374,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-file, from rooms/credit.html (D-249) ---- */
+/* ---- READING view-the-file, from rooms/credit.html (D-274) ---- */
 (function () {
   'use strict';
   /* No SLAF.Spine here on purpose: this room reads the household through the

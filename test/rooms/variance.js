@@ -48,7 +48,7 @@ module.exports = function (t) {
   check('and the closed months are untouched', Spine.getProfile().ledger.months[2].actual.expenses, 296000);
   Spine.reset();
 
-  /* variance is a reading of budget since D-246, so this file reads its slice of
+  /* variance is a reading of budget since D-271, so this file reads its slice of
      that page: its own markup and its own script. `slice.page` is the
      whole file, for the few facts that really are page-wide. */
   const slice = reading('rooms/budget.html', 'view-every-month', "READING view-every-month,");
@@ -56,7 +56,7 @@ module.exports = function (t) {
   checkTrue('the page renders the single, the trend and the per-bucket views', /Variance\.single\(/.test(page) && /Variance\.trend\(/.test(page) && /Variance\.perBucket\(/.test(page));
   checkTrue('the one write is behind a button', /data-use=/.test(page) && /Spine\.setBudgetEstimate\(/.test(page));
   checkTrue('and nothing else writes in this reading', (page.match(/Spine\.(set|upsert|update|close|revise)[A-Za-z]*\(/g) || []).length === 1);
-  /* Estimated vs Actual is The Close's every-month reading since D-246. */
+  /* Estimated vs Actual is The Close's every-month reading since D-271. */
   const room = Registry.byId('budget');
   checkTrue('it is a reading of The Close now', !!room && !Registry.byId('variance')
     && /url=budget\.html#every-month/.test(fs.readFileSync(path.join(ROOT, 'rooms/variance.html'), 'utf8')));

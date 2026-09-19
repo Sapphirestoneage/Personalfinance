@@ -218,7 +218,7 @@
    *  text input is not a display — it is the person's own number, waiting
    *  to be read back. A room that fills an input with a rounded figure and
    *  then parses it on the next blur silently replaces what was typed.
-   *  That is how a rent of $2,400 became $2,000 (D-257). The "$" is left
+   *  That is how a rent of $2,400 became $2,000 (D-282). The "$" is left
    *  on; the caller strips it if its box has an affix. */
   function forInput(cents, opts) {
     var o = {};

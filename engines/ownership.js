@@ -1,7 +1,7 @@
 /* ==========================================================================
    engines/ownership.js — what a place actually costs to own. Tier 17.
    --------------------------------------------------------------------------
-   PUBLISHED AS SLAF.Owning, not SLAF.Ownership (D-250). shared/ownership.js
+   PUBLISHED AS SLAF.Owning, not SLAF.Ownership (D-275). shared/ownership.js
    is a different module with a different job — which room owns which field —
    and it had this name first. The two never shared a page until Housing took
    The Deal, and then the second one loaded clobbered the first: the rent-or-

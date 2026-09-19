@@ -67,7 +67,7 @@ module.exports = function (t) {
 
   /* -- The room, the row --------------------------------------------------- */
   {
-    /* Enough is a reading of The Number since D-255: one multiplication
+    /* Enough is a reading of The Number since D-280: one multiplication
        between five rooms, and this is the one that changes the spending it
        multiplies. */
     const room = Registry.byId('fire');
@@ -322,7 +322,7 @@ module.exports = function (t) {
 
   /* -- The page ------------------------------------------------------------------ */
   {
-    /* Enough is The Number's enough reading since D-255: its own slice of
+    /* Enough is The Number's enough reading since D-280: its own slice of
        that page, behind en-. `slice.page` is the whole file, for the facts
        that really are page-wide. */
     const slice = t.reading('rooms/fire.html', 'view-enough', 'READING view-enough,');
@@ -338,7 +338,7 @@ module.exports = function (t) {
     checkTrue('every script is included', positions.every(function (p) { return p >= 0; }));
     /* The page serves five readings, so their engines interleave and the
        exact sequence is not the page's to keep. shared/room.js last still
-       is: it is the one that reads what the others defined (D-252). */
+       is: it is the one that reads what the others defined (D-277). */
     checkTrue('and the template loads last', (function () {
       const tags = slice.page.match(/<script src="\.\.\/[^"]+"><\/script>/g) || [];
       return /shared\/room\.js/.test(tags[tags.length - 1]);

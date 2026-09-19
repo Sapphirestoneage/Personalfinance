@@ -141,7 +141,7 @@ module.exports = function (t) {
   checkTrue('… loads the engine after tier0 and before the lens', tag('engines/tier0.js') !== -1 && tag('engines/tier0.js') < tag('engines/protection.js') && tag('engines/protection.js') < tag('shared/lens.js'));
   checkTrue('… is not the stub', html.indexOf('STUB') === -1 && html.indexOf('Hourly.realHourlyWage') === -1);
   checkTrue('… writes health cover through Spine.set on the two paths it owns', /Spine\.set\('insurance\.health\.type'/.test(html) && /Spine\.set\('insurance\.health\.monthlyCents'/.test(html));
-  /* The page holds a second reading since D-236 (where it goes), which
+  /* The page holds a second reading since D-261 (where it goes), which
      writes estate.* through its own owner. Between them, those are the only
      paths either may set. */
   checkTrue('… and nothing else', (html.match(/Spine\.set\('([^']+)'/g) || []).every(m => /Spine\.set\('(insurance\.health\.|estate\.)/.test(m)) && !/upsertPerson|upsertAsset|updateProfile/.test(html));

@@ -230,7 +230,7 @@ module.exports = function (t) {
   /* The hours branch was Price the Dream's requirement, not the room's.
      Big Purchase asks what one thing costs, which applies to anybody, so
      the merged room requires nothing and the dream reading says it has no
-     wage rather than vanishing (D-240). The branch is unchanged and still
+     wage rather than vanishing (D-265). The branch is unchanged and still
      gates what it always did. */
   check('the merged room requires no branch', Registry.requires('big-purchase').join(','), '');
   ['employed', 'selfEmployed', 'mixed', 'student'].forEach(function (s) {
@@ -247,7 +247,7 @@ module.exports = function (t) {
   }));
   check('the ownership row is owned by this room at its inputs', Ownership.field('dreamsMonthly').owner + '#' + Ownership.field('dreamsMonthly').anchor, 'big-purchase#dl-inputs');
 
-  /* dreamline is a reading of big-purchase since D-240, so this file reads its slice of
+  /* dreamline is a reading of big-purchase since D-265, so this file reads its slice of
      that page: its own markup and its own script. `slice.page` is the
      whole file, for the few facts that really are page-wide. */
   const slice = reading('rooms/big-purchase.html', 'view-the-dream', "READING view-the-dream,");

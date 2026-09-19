@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md
-  D-101, D-216, D-217, D-219, D-251 (the merge). Registry: career-move.
+  D-101, D-216, D-217, D-219, D-276 (the merge). Registry: career-move.
 
   EIGHT READINGS, EVERY ONE ABOUT HAVING A JOB.
 
@@ -59,13 +59,13 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- This offer, from rooms/career-move.html (D-251) ---- */
+  /* ---- This offer, from rooms/career-move.html (D-276) ---- */
   
   #view-the-offer section[id] { scroll-margin-top: var(--space-4); }
   
   #view-the-offer .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- Offers side by side, from rooms/offer-compare.html (D-251) ---- */
+  /* ---- Offers side by side, from rooms/offer-compare.html (D-276) ---- */
   
   #view-side-by-side .offers { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-top: var(--space-3); }
   
@@ -112,7 +112,7 @@
   #view-side-by-side .results.show-3,
   #view-side-by-side .results.show-4 { grid-template-columns: 1fr; } }
 
-  /* ---- A second job, from rooms/side-hustle.html (D-251) ---- */
+  /* ---- A second job, from rooms/side-hustle.html (D-276) ---- */
   
   #view-a-second-job .room-back:hover { text-decoration: underline; }
   
@@ -191,7 +191,7 @@
   
   #view-a-second-job .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- On your own, from rooms/self-employed.html (D-251) ---- */
+  /* ---- On your own, from rooms/self-employed.html (D-276) ---- */
   
   #view-on-your-own .room-back:hover { text-decoration: underline; }
   
@@ -247,7 +247,7 @@
   
   #view-on-your-own .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- Worth learning?, from rooms/credential.html (D-251) ---- */
+  /* ---- Worth learning?, from rooms/credential.html (D-276) ---- */
   
   #view-worth-learning .room-back:hover { text-decoration: underline; }
   
@@ -303,7 +303,7 @@
   
   #view-worth-learning .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- A degree, from rooms/degree.html (D-251) ---- */
+  /* ---- A degree, from rooms/degree.html (D-276) ---- */
   
   #view-a-degree .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
   
@@ -323,7 +323,7 @@
   @media (max-width: 480px) { 
   #view-a-degree .ask { grid-template-columns: 1fr; } }
 
-  /* ---- A break, from rooms/micro-retirement.html (D-251) ---- */
+  /* ---- A break, from rooms/micro-retirement.html (D-276) ---- */
   
   #view-a-break .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
   
@@ -736,7 +736,7 @@
 <script src="../shared/blocks.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- seven questions about a job (D-251) ----
+/* ---- seven questions about a job (D-276) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -744,7 +744,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -804,7 +804,7 @@
 
 
 <script>
-/* ---- READING view-the-offer, from rooms/career-move.html (D-251) ---- */
+/* ---- READING view-the-offer, from rooms/career-move.html (D-276) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -849,7 +849,7 @@
     part: true,
     /* shared/room.js filters its document-level listeners by root. A
        part mount without one answers the whole page, including the
-       other readings' boxes (D-252). */
+       other readings' boxes (D-277). */
     root: 'view-the-offer',
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'levers'],
     reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses', 'investments'],
@@ -975,7 +975,7 @@
 </script>
 
 <script>
-/* ---- READING view-side-by-side, from rooms/offer-compare.html (D-251) ---- */
+/* ---- READING view-side-by-side, from rooms/offer-compare.html (D-276) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Offers = SLAF.Offers;
@@ -1060,7 +1060,7 @@
 </script>
 
 <script>
-/* ---- READING view-a-second-job, from rooms/side-hustle.html (D-251) ---- */
+/* ---- READING view-a-second-job, from rooms/side-hustle.html (D-276) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
@@ -1378,7 +1378,7 @@
 </script>
 
 <script>
-/* ---- READING view-on-your-own, from rooms/self-employed.html (D-251) ---- */
+/* ---- READING view-on-your-own, from rooms/self-employed.html (D-276) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -1585,7 +1585,7 @@
 </script>
 
 <script>
-/* ---- READING view-worth-learning, from rooms/credential.html (D-251) ---- */
+/* ---- READING view-worth-learning, from rooms/credential.html (D-276) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
@@ -1899,7 +1899,7 @@
 </script>
 
 <script>
-/* ---- READING view-a-degree, from rooms/degree.html (D-251) ---- */
+/* ---- READING view-a-degree, from rooms/degree.html (D-276) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Degree = SLAF.Degree;
@@ -1945,7 +1945,7 @@
 </script>
 
 <script>
-/* ---- READING view-a-break, from rooms/micro-retirement.html (D-251) ---- */
+/* ---- READING view-a-break, from rooms/micro-retirement.html (D-276) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Micro = SLAF.MicroRetirement, Blocks = SLAF.Blocks, Scenarios = SLAF.Scenarios;

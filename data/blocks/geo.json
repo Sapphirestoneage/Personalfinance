@@ -112,7 +112,7 @@
       },
       "source": "national",
       "confidence": "unverified",
-      "note": "Destination over origin, less one: a share on each needs line. The destination is a city index (data/col_index.json) when one is named, else the state index; the origin is YOUR state’s index, because that is the one thing the household already knows and a block asks four answers at most. The move event in What If asks your city too; both read the destination from the same table row. D-267.",
+      "note": "Destination over origin, less one: a share on each needs line. The destination is a city index (data/col_index.json) when one is named, else the state index; the origin is YOUR state’s index, because that is the one thing the household already knows and a block asks four answers at most. The move event in What If asks your city too; both read the destination from the same table row. D-292.",
       "stateSource": {
         "table": "statesByCode",
         "path": [

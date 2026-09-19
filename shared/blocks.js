@@ -62,7 +62,7 @@
   function questions(type) {
     var t = table(type);
     if (!t) return [];
-    /* A choice read from a table (a city, D-267) is filled in from the
+    /* A choice read from a table (a city, D-292) is filled in from the
        loaded tables, through the loader's one resolver. */
     var R = (typeof module === 'object' && module.exports) ? require('./reference.js') : ((typeof self !== 'undefined' && self.SLAF) ? self.SLAF.Reference : null);
     if (R && R.resolveChoices) R.resolveChoices({ questions: t.questions }, tables());

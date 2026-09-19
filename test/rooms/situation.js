@@ -56,27 +56,27 @@ module.exports = function (t) {
      Between Jobs left this list in D-232: it is a reading of The Cushion
      now, and The Cushion applies to everyone — the question "how long while
      job hunting" is one an employed person is entitled to ask.
-     Price the Dream left it in D-240 for the same reason: it is a reading
+     Price the Dream left it in D-265 for the same reason: it is a reading
      of Big Purchase, and what one thing costs is a question anyone may ask.
      The dream reading still needs a wage to price the list in hours, and
      says so rather than disappearing.
-     Kids and Tuition left it in D-241 by merging INTO a room that is still
+     Kids and Tuition left it in D-266 by merging INTO a room that is still
      gated: Family requires a partner OR a dependent, and each reading keeps
      the branch its room had, so the hat is absent when the branch is. What
      changed is that one entry covers both — a household with children and
      no partner now has the room, and only the children's hat in it.
-     Variable Income and the Real Hourly Wage left it in D-247, readings of
+     Variable Income and the Real Hourly Wage left it in D-272, readings of
      Income, which requires nothing: what comes in is a question for
      everybody, and each of those two readings keeps its own branch, so its
      hat is absent exactly where its room used to be. Where It Goes left it
-     in D-248 the same way — a reading of The Statement, which everybody
+     in D-273 the same way — a reading of The Statement, which everybody
      has, keeping the retirement branch on its own hat.
-     Six work rooms left it in D-251 as readings of Work, which keeps the
+     Six work rooms left it in D-276 as readings of Work, which keeps the
      appliesWhen every one of them carried. The Account You Left Behind is
      NOT among them: it never had that rule, and folding it in would have
      taken it from exactly the people it is for. It is held, with the
      reason, in docs/room-map.json.
-     The Back Half left it in D-256. D-254 merged three what-ifs into it —
+     The Back Half left it in D-281. D-279 merged three what-ifs into it —
      what you can reach, through the 59½ wall, the price of cover — and
      left the room's decumulation branch where it was, which hid all three
      from everybody still working. They are FOR people still working: the
@@ -97,7 +97,7 @@ module.exports = function (t) {
     var off = Registry.inOrder().filter(function (r) { return !Registry.applies(r, h); }).map(function (r) { return r.id; });
     check(status + ': the rooms that do not apply', off.join(','), EXPECTED[status].join(','));
     /* And every one of them can say why, in words. Two things can take a
-       room away since D-251 — a branch it needs, or a situation it says it
+       room away since D-276 — a branch it needs, or a situation it says it
        is not for — so this asks the registry, which knows both, rather
        than the gate, which knows one. */
     checkTrue(status + ': … and each says why in a sentence',

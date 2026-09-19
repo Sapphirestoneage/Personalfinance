@@ -143,7 +143,7 @@ module.exports = function (t) {
   section('The Skill Tree rooms, the wiring and the version (D-131)');
   const page = fs.readFileSync(path.join(ROOT, 'rooms/skill-tree.html'), 'utf8');
   /* The page now serves three readings with different disciplines, so it
-     declares the strictest of them: guarded (D-244). The board itself
+     declares the strictest of them: guarded (D-269). The board itself
      still builds once — nothing on it is rebuilt under a finger. */
   checkTrue('the page declares its live-form policy', /LIVE-FORM: guarded/.test(page));
   checkTrue('every node carries its reason in its title, and a fogged node renders no name', /title="' \+ esc\(title\)/.test(page) && /s\.state === 'fogged' \? '' : '<span class="n-name">/.test(page));
@@ -152,7 +152,7 @@ module.exports = function (t) {
   checkTrue('a bypassed branch stays reopenable: the card offers mark done for it', /s\.state === 'done' \? '<button[^']*data-reopen/.test(page));
   checkTrue('the phone gets the serpentine, one tree at a time', /class="serp"/.test(page) && /window\.innerWidth <= 700/.test(page));
   checkTrue('no band beyond the next one prints a name: the engine blanks it and the room draws a silhouette', /s\.name = null|name: fog && !o\.reveal \? null/.test(fs.readFileSync(path.join(ROOT, 'engines/skilltree.js'), 'utf8')));
-  /* A visible change the merge made, chosen rather than inherited (D-244).
+  /* A visible change the merge made, chosen rather than inherited (D-269).
      reconcile() is the three-at-a-time reading's boot step: it writes, by
      proof, every once-off skill the household already demonstrates, and
      reverts one whose fact has gone. It used to run only when someone
@@ -167,7 +167,7 @@ module.exports = function (t) {
   check('… and an empty household proves nothing, so nothing is written',
     require(path.join(ROOT, 'engines/skills.js')).verifyOnce(Schema.createHousehold({}), TABLES, '2026-09-13').verified.length, 0);
 
-  /* The Stacker and Exercises are readings of this page since D-244. */
+  /* The Stacker and Exercises are readings of this page since D-269. */
   const exPage = page;
   checkTrue('the exercises room completes and runs through the spine, nothing else', (exPage.match(/Spine\.markExercise\(/g) || []).length === 3 && /Exercises\.compute\(/.test(exPage));
   const stacker = page;

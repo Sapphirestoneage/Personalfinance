@@ -110,7 +110,7 @@
   };
   /** The first reason this room does not apply, or null if it does. */
   /* A requirement is a branch key, or an ARRAY of keys meaning any one of
-     them will do. The any-of form arrived with the merges (D-241): a room
+     them will do. The any-of form arrived with the merges (D-266): a room
      that holds several readings exists when any of them does, and the
      readings gate themselves inside it. */
   function anyOf(household, k) {

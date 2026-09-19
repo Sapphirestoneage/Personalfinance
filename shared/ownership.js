@@ -41,7 +41,7 @@
   var api = factory(deps.Money, deps.Schema, deps.Registry, deps.Spine);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   /* SLAF.Ownership is THIS module: who owns which field. engines/ownership.js
-     is the property engine and publishes as SLAF.Owning (D-250). */
+     is the property engine and publishes as SLAF.Owning (D-275). */
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Ownership = api; }
 })(typeof self !== 'undefined' ? self : null, function (Money, Schema, Registry, Spine) {
   'use strict';
@@ -586,7 +586,7 @@
       format: function (v) { return money(v) + '/mo'; }
     },
     /* Can It Be Undone asked this of ONE decision. It is a field on every
-       block of the Decision Room now (D-253), so the row reads across them:
+       block of the Decision Room now (D-278), so the row reads across them:
        how many of the things you are weighing you have asked it of. The
        stored `reversibility.decisionId` is still read, for a household
        written before the merge. */

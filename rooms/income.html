@@ -12,8 +12,8 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-097, D-101, D-247 (the merge),
-  D-264, D-265. Registry: income.
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-097, D-101, D-272 (the merge),
+  D-289, D-290. Registry: income.
 
   FIVE READINGS OF WHAT COMES IN: NOW, UNEVENLY, PER HOUR, AND LATER.
 
@@ -29,13 +29,13 @@
     #what-is-coming   every dated period that pays: jobs, benefits, a
                       pension — laid end to end, with the gaps shown
 
-  WHAT IS COMING OWNS futureIncome[] (D-265). The owner moved Statement →
+  WHAT IS COMING OWNS futureIncome[] (D-290). The owner moved Statement →
   Timeline (D-152) → here: a dated period that pays you is income with a
   start and an end on it, and What Comes Next was two navigations from
   everything else coming in. The Statement still SHOWS the roll-up and
   links back. One owner per shared number (D-017).
 
-  THE FOURTH READING IS THE THIRD ONE'S QUESTION ANSWERED (D-264). Worth
+  THE FOURTH READING IS THE THIRD ONE'S QUESTION ANSWERED (D-289). Worth
   the Hassle was a room in a different group of the app, and it only ever
   asked one thing: is this chore worth more an hour than your time is? The
   hour it is measured against is the one the reading beside it works out.
@@ -56,13 +56,13 @@
   1. READS   the log this room owns, and what the household spends.
   2. WRITES  ledgerIncome, incomeType and paySurvives as before, and the
              four variable-income fields, whose owner moved here with their
-             boxes (D-247). The real-hourly reading writes nothing.
+             boxes (D-272). The real-hourly reading writes nothing.
   3. CALLS   the engines each reading already called; no arithmetic moved.
   4. EMPTY   nothing logged is nothing logged, never a zero.
   5. CONFIG  the tables each engine names.
 
   THE TWO LATER READINGS are built from shared/room.js as parts of this
-  room (D-235), each with a prefix and a root of its own.
+  room (D-260), each with a prefix and a root of its own.
 
   THEMING: none this pass. A theme is a class on <body> and a palette in
   shared/theme.css.
@@ -73,7 +73,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- What lands, from rooms/income.html (D-247) ---- */
+  /* ---- What lands, from rooms/income.html (D-272) ---- */
   
   #view-what-lands section[id] { scroll-margin-top: var(--space-4); }
   /* D-193: the entry form folds behind one line. The card's face is the
@@ -235,13 +235,13 @@
   @media (max-width: 420px) { 
   #view-what-lands .form-grid { grid-template-columns: 1fr; } }
 
-  /* ---- When it varies, from rooms/variable-income.html (D-247) ---- */
+  /* ---- When it varies, from rooms/variable-income.html (D-272) ---- */
   
   #view-when-it-varies section[id] { scroll-margin-top: var(--space-4); }
   
   #view-when-it-varies .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- What it pays, from rooms/real-hourly-wage.html (D-247) ---- */
+  /* ---- What it pays, from rooms/real-hourly-wage.html (D-272) ---- */
   
   #view-what-it-pays section[id] { scroll-margin-top: var(--space-4); }
   
@@ -812,7 +812,7 @@
 <script src="../shared/features.js"></script>
 <script src="../engines/timeline.js"></script>
 <script>
-/* ---- what lands, what it averages, what it pays (D-247) ----
+/* ---- what lands, what it averages, what it pays (D-272) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -820,7 +820,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-241).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -878,7 +878,7 @@
 
 
 <script>
-/* ---- READING view-what-lands, from rooms/income.html (D-247) ---- */
+/* ---- READING view-what-lands, from rooms/income.html (D-272) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Ledger = SLAF.Ledger, Manage = SLAF.Manage, Budget = SLAF.Budget;
@@ -1355,7 +1355,7 @@
 </script>
 
 <script>
-/* ---- READING view-when-it-varies, from rooms/variable-income.html (D-247) ---- */
+/* ---- READING view-when-it-varies, from rooms/variable-income.html (D-272) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -1518,7 +1518,7 @@
 </script>
 
 <script>
-/* ---- READING view-what-it-pays, from rooms/real-hourly-wage.html (D-247) ---- */
+/* ---- READING view-what-it-pays, from rooms/real-hourly-wage.html (D-272) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -1651,7 +1651,7 @@
 </script>
 
 <script>
-/* ---- READING view-worth-the-hassle, from rooms/hassle.html (D-264) ---- */
+/* ---- READING view-worth-the-hassle, from rooms/hassle.html (D-289) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
@@ -1949,7 +1949,7 @@
 
 
 <script>
-/* ---- READING view-what-is-coming, from rooms/timeline.html (D-265) ---- */
+/* ---- READING view-what-is-coming, from rooms/timeline.html (D-290) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,

@@ -13,8 +13,8 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11. On the frozen template (D-097), twice, which is
-  why the dream reading carries a prefix and a root (D-235). DECISIONS.md
-  D-101, D-240 (the merge). Registry: big-purchase.
+  why the dream reading carries a prefix and a root (D-260). DECISIONS.md
+  D-101, D-265 (the merge). Registry: big-purchase.
 
   ONE FORM, ONE THING OR THE WHOLE LIST.
 
@@ -29,7 +29,7 @@
   1. READS   cash, the month you spend, and for the dream reading what you
              earn, so the total can be put in hours at your real rate.
   2. WRITES  purchasePrice, purchaseMonths and purchaseRate as before, and
-             dreamsMonthly, whose owner moved here with its boxes (D-240).
+             dreamsMonthly, whose owner moved here with its boxes (D-265).
   3. CALLS   the engines each reading already called; no arithmetic moved.
   4. EMPTY   neither reading invents a price. Nothing priced is nothing
              priced, never a zero.
@@ -44,7 +44,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- One thing, from rooms/big-purchase.html (D-240) ---- */
+  /* ---- One thing, from rooms/big-purchase.html (D-265) ---- */
   
   #view-one-thing section[id] { scroll-margin-top: var(--space-4); }
   
@@ -52,7 +52,7 @@
   
   #view-one-thing .room-drawer-links { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
 
-  /* ---- The whole list, from rooms/dreamline.html (D-240) ---- */
+  /* ---- The whole list, from rooms/dreamline.html (D-265) ---- */
   
   #view-the-dream section[id] { scroll-margin-top: var(--space-4); }
   
@@ -190,7 +190,7 @@
 <script src="../engines/dreamline.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- one thing, and the whole list (D-240) ----
+/* ---- one thing, and the whole list (D-265) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -229,7 +229,7 @@
 
 
 <script>
-/* ---- READING view-one-thing, from rooms/big-purchase.html (D-240) ---- */
+/* ---- READING view-one-thing, from rooms/big-purchase.html (D-265) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -289,7 +289,7 @@
     part: true,
     /* shared/room.js filters its document-level listeners by root. A
        part mount without one answers the whole page, including the
-       other readings' boxes (D-252). */
+       other readings' boxes (D-277). */
     root: 'view-one-thing',
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
     reads: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'],
@@ -374,7 +374,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-dream, from rooms/dreamline.html (D-240) ---- */
+/* ---- READING view-the-dream, from rooms/dreamline.html (D-265) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,

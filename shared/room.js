@@ -36,7 +36,7 @@
                                and a reading that claimed any of them would
                                claim them twice. Everything else is the same.
        prefix: 'kids-'         (optional) TWO readings on one page, each
-       root: 'view-kids'       built from this template (D-235). The skeleton
+       root: 'view-kids'       built from this template (D-260). The skeleton
                                ids below are fixed names, so a second copy on
                                the same page would write into the first one's
                                nodes. `prefix` puts every id behind a name of
@@ -114,7 +114,7 @@
     var TABLES = null;
     var lastChart = null;
     /* Two readings from this template on one page: each names its own nodes
-       and ignores the other's controls (D-235). With neither set this is the
+       and ignores the other's controls (D-260). With neither set this is the
        same lookup it always was. */
     var PREFIX = spec.prefix || '';
     var el = function (id) { return elIn(PREFIX, id); };
@@ -307,7 +307,7 @@
          computes from its own typed boxes, all of them sure — is not
          rounded to a precision that belongs to someone else's fields. The
          Deal showed a $714 cash flow as $1,000 and a $481 monthly loss as
-         $0 that way, the moment it became a reading of Housing. D-258. */
+         $0 that way, the moment it became a reading of Housing. D-283. */
       var outer = spec.part ? Money.displayRounding() : null;
       paintInputs(h);
       paintHorizon();

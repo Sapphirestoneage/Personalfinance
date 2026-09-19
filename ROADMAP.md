@@ -148,14 +148,14 @@ resolved as **tunable by age cohort** (D-043), the weights live in
 House Hack · Whole Life Insurance · Prenup/Estate · Personal Inflation ·
 Second Mouse Framework · Trust Framework
 
-Three came off this list in the D-267 reconciliation, two of them long
+Three came off this list in the D-292 reconciliation, two of them long
 shipped and miscounted here: **Kids** reads `data/childcare_by_state.json`
 through `engines/kids.js` (Family's children reading); the **Advice
 Translator** is `data/advice_translator.json` + `engines/advice.js`, rules
 not an LLM, read by The Referee; and the **HCOL/MCOL/LCOL modifier** is
 declined on purpose — this app measures a person against their own month,
 so cost of living is already inside every number, and the city index is
-read where it belongs, by the move event and the move block (D-267).
+read where it belongs, by the move event and the move block (D-292).
 
 Each of the six is blocked on something specific, and none of them on
 effort:
@@ -221,7 +221,7 @@ exactly what D-036 exists to stop.
    carries an explainer — what it is, why it matters, what moves it, what
    it looks at — from `data/ratio_explainers.json`, checked 45 for 45 on
    every run. What was missing was the names people search by, which The
-   Scorecard now answers to (D-268).
+   Scorecard now answers to (D-293).
 
 ---
 

@@ -1881,7 +1881,7 @@
       /* Either itemise it or name one lump figure — never both silently. */
       lineItems: f.lineItems || [],
       lumpTargetCents: f.lumpTargetCents === undefined ? null : f.lumpTargetCents,
-      /* Can it be undone (D-253). Reversibility was a room that asked this
+      /* Can it be undone (D-278). Reversibility was a room that asked this
          of ONE decision; it is two fields on every block now. Both default
          to null, which is "not asked", never "free" or "instant" — a block
          with no answer says the question is open rather than that the door
@@ -1907,7 +1907,7 @@
          below MAKE it (engines/goals.js itemAmountCents), they do not sit
          beside it. `unitLabel` is what one of them is called, and
          `unitsPerGroup` how many come at a time, because nobody invites
-         one more guest: they add a table. D-263. */
+         one more guest: they add a table. D-288. */
       perUnitCents: f.perUnitCents === undefined ? null : f.perUnitCents,
       units: f.units === undefined ? null : f.units,
       unitLabel: f.unitLabel === undefined ? null : f.unitLabel,
@@ -1916,7 +1916,7 @@
          typed as a positive figure and carries this flag; the sign is applied
          where the line is summed (engines/goals.js itemAmountCents), never
          in a box. A block whose lines net negative pays, and answers the five
-         questions the other way round. D-269. */
+         questions the other way round. D-294. */
       pays: f.pays === true
     };
   }

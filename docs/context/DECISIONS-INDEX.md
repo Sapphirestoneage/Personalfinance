@@ -229,44 +229,44 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-231 — What The Next Dollar Does: one question at three amounts [13863-13892] {foo-ladder}
 - D-232 — The Cushion: four readings of one number [13894-13928] {runway}
 - D-233 — The Scorecard: six readings, one measuring stick, simplest first [13930-13962] {financial-snapshot}
-- D-234 — The Card: three things to hand over [13965-13998] {one-pager}
-- D-235 — Two readings from one template on one page: a prefix and a root [14000-14027]
-- D-236 — Protection: cover, and where it goes [14029-14052] {protection}
-- D-237 — Expenses: the month, and what repeats in it [14054-14084] {expenses}
-- D-238 — Wheels: does it fit, then what it costs [14086-14109] {car}
-- D-239 — The Life: the week, and the decades [14111-14137] {week}
-- D-240 — Big Purchase: one thing, or the whole list [14139-14166] {big-purchase}
-- D-241 — Family, and a gate that survives a merge [14168-14201] {partner}
-- D-242 — The Referee takes Unlearning [14203-14229] {debates}
-- D-243 — What Matters, four readings of one expense log [14231-14261] {income, values}
-- D-244 — The Skill Tree takes the Stacker and the Exercises [14263-14291] {skill-tree}
-- D-245 — The Month: what moved, and the dates [14293-14316] {cash-flow}
-- D-246 — The Close: this month, every month, over time [14318-14347] {budget}
-- D-247 — Income: what lands, what it averages, what it pays [14349-14392] {income}
-- D-248 — The Statement: what you own, where it lands, the documents [14394-14423] {statement}
-- D-249 — Debt: the order, the loans, the file [14425-14449] {debt-payoff}
-- D-250 — Housing: rent or buy, the deposit, the deal [14451-14496] {housing}
-- D-251 — Work: seven questions about a job [14498-14537] {career-move}
-- D-252 — What the phone walk found [14539-14587]
-- D-253 — The Decision Room: one shell, five outputs on every block [14589-14635] {goals}
-- D-254 — The Back Half, four readings of coming down [14637-14678] {decumulation}
-- D-255 — The Number, five readings of one multiplication [14680-14711] {fire}
-- D-256 — A gate on a room is not a gate on its readings [14713-14733] {decumulation}
-- D-257 — A box a person types in is not a display [14735-14758]
-- D-258 — A merged page has several readings and one display rounding [14760-14782]
-- D-259 — An entry heading is level 2, and the check now says so [14784-14804]
-- D-260 — The Statement takes the account you left behind [14806-14828] {statement}
-- D-261 — A merged page lost its fold, and nobody could see it [14830-14855]
-- D-262 — The Decision Room gets a second reading: the ones behind you [14857-14883] {goals}
-- D-263 — A block can be priced per unit, and then it can be asked what one more costs [14885-14924]
-- D-264 — Income takes Worth the Hassle, and eight readings got their scrolling back [14926-14965] {income}
-- D-265 — What Comes Next is income with a start and an end on it [14967-14994] {income}
-- D-266 — What If: two scenario rooms are each other, not two block types [14996-15045] {goals, what-if-life}
-- D-267 — The city index, read where it is owned [15047-15084]
-- D-268 — The glossary already exists; give it the names people search by [15086-15109]
-- D-269 — A block that pays [15111-15139] {goals}
-- D-270 — Rows by the handful: templates, decisions, debates [15141-15167] {debates}
-- D-271 — The cliff, as a reading of Tax [15169-15199] {tax}
+- D-259 — The Card: three things to hand over [13965-13998] {one-pager}
+- D-260 — Two readings from one template on one page: a prefix and a root [14000-14027]
+- D-261 — Protection: cover, and where it goes [14029-14052] {protection}
+- D-262 — Expenses: the month, and what repeats in it [14054-14084] {expenses}
+- D-263 — Wheels: does it fit, then what it costs [14086-14109] {car}
+- D-264 — The Life: the week, and the decades [14111-14137] {week}
+- D-265 — Big Purchase: one thing, or the whole list [14139-14166] {big-purchase}
+- D-266 — Family, and a gate that survives a merge [14168-14201] {partner}
+- D-267 — The Referee takes Unlearning [14203-14229] {debates}
+- D-268 — What Matters, four readings of one expense log [14231-14261] {income, values}
+- D-269 — The Skill Tree takes the Stacker and the Exercises [14263-14291] {skill-tree}
+- D-270 — The Month: what moved, and the dates [14293-14316] {cash-flow}
+- D-271 — The Close: this month, every month, over time [14318-14347] {budget}
+- D-272 — Income: what lands, what it averages, what it pays [14349-14392] {income}
+- D-273 — The Statement: what you own, where it lands, the documents [14394-14423] {statement}
+- D-274 — Debt: the order, the loans, the file [14425-14449] {debt-payoff}
+- D-275 — Housing: rent or buy, the deposit, the deal [14451-14496] {housing}
+- D-276 — Work: seven questions about a job [14498-14537] {career-move}
+- D-277 — What the phone walk found [14539-14587]
+- D-278 — The Decision Room: one shell, five outputs on every block [14589-14635] {goals}
+- D-279 — The Back Half, four readings of coming down [14637-14678] {decumulation}
+- D-280 — The Number, five readings of one multiplication [14680-14711] {fire}
+- D-281 — A gate on a room is not a gate on its readings [14713-14733] {decumulation}
+- D-282 — A box a person types in is not a display [14735-14758]
+- D-283 — A merged page has several readings and one display rounding [14760-14782]
+- D-284 — An entry heading is level 2, and the check now says so [14784-14804]
+- D-285 — The Statement takes the account you left behind [14806-14828] {statement}
+- D-286 — A merged page lost its fold, and nobody could see it [14830-14855]
+- D-287 — The Decision Room gets a second reading: the ones behind you [14857-14883] {goals}
+- D-288 — A block can be priced per unit, and then it can be asked what one more costs [14885-14924]
+- D-289 — Income takes Worth the Hassle, and eight readings got their scrolling back [14926-14965] {income}
+- D-290 — What Comes Next is income with a start and an end on it [14967-14994] {income}
+- D-291 — What If: two scenario rooms are each other, not two block types [14996-15045] {goals, what-if-life}
+- D-292 — The city index, read where it is owned [15047-15084]
+- D-293 — The glossary already exists; give it the names people search by [15086-15109]
+- D-294 — A block that pays [15111-15139] {goals}
+- D-295 — Rows by the handful: templates, decisions, debates [15141-15167] {debates}
+- D-296 — The cliff, as a reading of Tax [15169-15199] {tax}
 
 ## Dungeons & Dividends (DD-) (29)
 

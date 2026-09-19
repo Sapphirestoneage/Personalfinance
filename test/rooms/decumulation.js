@@ -148,7 +148,7 @@ module.exports = function (t) {
   checkTrue('with the intake’s guesses for a retiree the room has a number', Money.isOk(pg), pg.reason);
 
   /* ---- The page ------------------------------------------------------------ */
-  /* This room carries a second reading since D-254, so these assertions
+  /* This room carries a second reading since D-279, so these assertions
      read its own slice; `page` is the whole file, for the facts that
      really are page-wide. */
   const slice = reading('rooms/decumulation.html', 'view-the-draw', "READING view-the-draw,");

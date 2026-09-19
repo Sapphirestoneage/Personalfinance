@@ -174,7 +174,7 @@ module.exports = function (t) {
   });
   check('Ownership.variableSource picks the 1099 source', t.Ownership.variableSource(mixed2).id, 's');
   check('… reads the low month from it', t.Ownership.field('incomeLow').read(h1).value, 350000);
-  /* The branch moved from the room to the reading (D-247): Income is open
+  /* The branch moved from the room to the reading (D-272): Income is open
      to everyone, and this reading's hat is absent without the branch. */
   check('the room it lives in requires no branch', t.Registry.requires('income').join(','), '');
   checkTrue('… and the reading declares the branch its room had',
@@ -182,7 +182,7 @@ module.exports = function (t) {
   checkTrue('… which exists for the self-employed and mixed, not the employed', t.Gate.exists(h1, 'variableIncome') && t.Gate.exists(mixed, 'variableIncome') && !t.Gate.exists(emp, 'variableIncome'));
 
   /* -- The page ----------------------------------------------------------- */
-  /* variable-income is a reading of income since D-247, so this file reads its slice of
+  /* variable-income is a reading of income since D-272, so this file reads its slice of
      that page: its own markup and its own script. `slice.page` is the
      whole file, for the few facts that really are page-wide. */
   const slice = reading('rooms/income.html', 'view-when-it-varies', "READING view-when-it-varies,");

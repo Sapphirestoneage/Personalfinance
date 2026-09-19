@@ -11,7 +11,7 @@ Reference data: adventure_paths.json, car_costs.json, debt_rules.json, effective
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), contributionPercent (start), totalDebt (debt-payoff), netWorth (statement), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:
-  - D-266 — What If: two scenario rooms are each other, not two block types
+  - D-291 — What If: two scenario rooms are each other, not two block types
   - D-146 — The responsive audit, kept
   - D-087 — One life event, three ways: the events engine, the What If room, and the first template
 Full context: node tools/context/pack.js what-if-life

@@ -4,9 +4,9 @@ Updated: 2026-09-19
 
 ## Where it stands
 - **93 → 32 rooms**, 62 redirect stubs, nothing deleted; `docs/room-map.json`
-  is the cut list, checked every run. What If earns a room (D-266); Start
+  is the cut list, checked every run. What If earns a room (D-291); Start
   Here waits on an owner decision (item 1).
-- **The book, reconciled (D-267..D-271)**: the city index is read where it
+- **The book, reconciled (D-292..D-296)**: the city index is read where it
   is owned; the ratio glossary was already Every Ratio and now answers to
   its names; a Decision Room block can PAY you; eight templates, five
   reversibility rows and two debates landed as rows; Tax has a second
@@ -23,7 +23,7 @@ Updated: 2026-09-19
    and All at once — and Start Here is a third: a situation gate, then only
    the cards that apply, every guess badged. What helps is Express gaining
    the filter and the badges so Start Here retires into it.
-2. **OWNER DECISION: is the income floor means-tested?** (D-228, D-254.)
+2. **OWNER DECISION: is the income floor means-tested?** (D-228, D-279.)
    The FI target waits on it, and it moves the number every room shows.
 3. **OWNER DECISION: the Trust Framework** — three vetting questions,
    shippable as they stand, but a lens under the freeze. Yes or no.

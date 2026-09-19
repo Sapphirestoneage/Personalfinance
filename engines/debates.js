@@ -169,7 +169,7 @@
     return r;
   }
 
-  /* ---- D-270: two debates from the book, on engines that already exist ---- */
+  /* ---- D-295: two debates from the book, on engines that already exist ---- */
   /* Soft saving against the rate: the one projection loop, run at the
      household's contribution and at half of it, judged against the age
      FIRE owns. The flip is found by bisection over the contribution on

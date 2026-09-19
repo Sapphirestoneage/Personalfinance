@@ -20,7 +20,7 @@
    monthly figure fits in the money you actually have spare — which is why
    this reads Cash Flow's surplus rather than asking again.
 
-   FIVE OUTPUTS ON EVERY BLOCK (D-253). The Decision Room asks the same five
+   FIVE OUTPUTS ON EVERY BLOCK (D-278). The Decision Room asks the same five
    questions of anything you are weighing, and `plan` answers all five:
 
        what it costs      totalCents
@@ -37,14 +37,14 @@
    None of the five is a new formula. That is the point of the shell: a
    block type adds a way to FILL these, never a sixth answer.
 
-   A LINE CAN PAY YOU (D-269): rent a lodger pays, the thing you sell, the
+   A LINE CAN PAY YOU (D-294): rent a lodger pays, the thing you sell, the
    rent you would not pay for a year at home. Typed positive, flagged
    `pays`, counted negative in itemAmountCents. A block whose lines net
    negative answers the same five questions the other way round — what it
    pays, the hours it buys back, when it starts, what it adds — through
    the same Lens, opposite direction. Not a sixth answer either.
 
-   A LINE CAN BE PRICED PER UNIT (D-263): so many guests at so much each,
+   A LINE CAN BE PRICED PER UNIT (D-288): so many guests at so much each,
    so many nights at so much a night. `itemAmountCents` makes the line's
    figure from the two, and `marginalOf` asks what ONE MORE costs — in
    money, in hours, and in FI days, through the same Lens. That is not a
@@ -88,7 +88,7 @@
      figure. A goal with neither is incomplete, not zero.                  */
 
   /* What ONE line is worth. A typed figure wins; otherwise a per-unit line
-     makes its own (D-263). One function, because the total, the marginal
+     makes its own (D-288). One function, because the total, the marginal
      cost and the room's own read-out must never disagree about it. */
   function itemAmountCents(item) {
     if (!item) return null;
@@ -96,7 +96,7 @@
     if (Money.isEntered(item.amountCents)) v = item.amountCents;
     else if (Money.isEntered(item.perUnitCents) && Money.isEntered(item.units)) v = Math.round(item.perUnitCents * item.units);
     if (v === null) return null;
-    /* A line that pays is typed positive and counted negative (D-269). */
+    /* A line that pays is typed positive and counted negative (D-294). */
     return item.pays === true ? -Math.abs(v) : v;
   }
   function goalTotalCents(goal) {
@@ -139,7 +139,7 @@
    * date still reports its total and what is left to find.
    */
   /**
-   * Can it be undone — the fifth output, on every block (D-253).
+   * Can it be undone — the fifth output, on every block (D-278).
    *
    * Reversibility was a room that priced ONE named decision from a table of
    * questions. The table is still how a block can be STARTED, but the two
@@ -187,7 +187,7 @@
      it costs you" asked of the smallest decision the block contains — one
      more guest, one more night — through the same Lens, with no second
      conversion. A block with no per-unit line has no margin and says null.
-     D-263. */
+     D-288. */
   function marginalOf(goal, household, tables) {
     var line = ((goal && goal.lineItems) || []).filter(function (i) {
       return Money.isEntered(i.perUnitCents) && i.perUnitCents > 0;
@@ -219,7 +219,7 @@
     /* A block with no price is not a block with no answers. A decision —
        change jobs, have a child — may never carry a figure, and the undo
        question is answered for it either way, so the incomplete result
-       carries what IS known rather than nothing (D-253). */
+       carries what IS known rather than nothing (D-278). */
     if (!Money.isOk(total)) {
       return Object.assign(Money.incomplete(total.reason, total.missing),
         { goalId: goal.id, name: goal.name, undo: undoNow, priced: false });
@@ -229,7 +229,7 @@
     var remaining = Math.max(0, total.value - saved);
     var months = monthsUntil(goal.targetDate, o.asOf);
 
-    /* ---- A block that PAYS (D-269) ----------------------------------------
+    /* ---- A block that PAYS (D-294) ----------------------------------------
        Its lines net negative: a lodger's rent, the thing you sell, the year
        at home. Nothing is to be found, so the first four answers turn
        around — what it pays, the hours it buys back and the FI it brings
@@ -295,8 +295,8 @@
        what it costs you and what one more of them costs are all known —
        only "when it lands" and "whether it fits" wait on a date. Throwing
        the rest away made a fully priced wedding read "Add a price" on
-       every row, which is the same mistake D-253 fixed for the unpriced
-       block, in the other direction. D-263. */
+       every row, which is the same mistake D-278 fixed for the unpriced
+       block, in the other direction. D-288. */
     if (!Money.isOk(months)) {
       return Object.assign(Money.incomplete(months.reason, months.missing), shared);
     }
@@ -319,7 +319,7 @@
       var flow = CashFlow.netCashFlow(household, tables.expenseCategories, tables);
       /* When there is no surplus to compare against, say what Cash Flow
          says — it names the thing to go and do. A room guessing its own
-         reason here would send people to the wrong place (D-253). */
+         reason here would send people to the wrong place (D-278). */
       if (!Money.isOk(flow)) affordabilityReason = flow.reason;
       if (Money.isOk(flow)) {
         affordability = {
@@ -368,7 +368,7 @@
       var flow = CashFlow.netCashFlow(household, tables.expenseCategories, tables);
       /* When there is no surplus to compare against, say what Cash Flow
          says — it names the thing to go and do. A room guessing its own
-         reason here would send people to the wrong place (D-253). */
+         reason here would send people to the wrong place (D-278). */
       if (!Money.isOk(flow)) affordabilityReason = flow.reason;
       if (Money.isOk(flow)) {
         affordability = {
@@ -388,7 +388,7 @@
   /** Build a goal from a template — line-item labels, no amounts. */
   /* A template's line is a LABEL, or an object when the line is priced per
      unit: { label, unitLabel, unitsPerGroup }. Still no amounts — the
-     templates say what a thing is made of and never what it costs. D-263. */
+     templates say what a thing is made of and never what it costs. D-288. */
   function fromTemplate(table, templateId, name) {
     var t = templateById(table, templateId);
     if (!t) return null;

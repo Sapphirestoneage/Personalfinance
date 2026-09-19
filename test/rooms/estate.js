@@ -110,7 +110,7 @@ module.exports = function (t) {
   })());
 
   /* -- Ownership: the three facts moved with the boxes that ask them -------
-     Estate Basics is Protection's where-it-goes reading since D-236. */
+     Estate Basics is Protection's where-it-goes reading since D-261. */
   ['beneficiariesSet', 'willExists', 'poaExists'].forEach(function (f) {
     var d = t.Ownership.field(f);
     check('ownership: ' + f + ' is owned by protection at #es-inputs', d && (d.owner + '/' + d.anchor), 'protection/es-inputs');
@@ -119,7 +119,7 @@ module.exports = function (t) {
 
   /* -- The reading --------------------------------------------------------
      Both readings on this page are built from shared/room.js, so the estate
-     one carries a prefix and a root of its own (D-235); its skeleton ids are
+     one carries a prefix and a root of its own (D-260); its skeleton ids are
      the same names behind that prefix. */
   var html = t.fs.readFileSync(t.path.join(t.ROOT, 'rooms/protection.html'), 'utf8');
   checkTrue('Estate Basics is no longer a room', !t.Registry.byId('estate'));

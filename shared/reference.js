@@ -477,7 +477,7 @@
      — {table, path, label, first} — instead of carrying `choices`. The list
      is read from the named table here, once, so a template never keeps a
      private copy of the forty cities data/col_index.json owns. A table that
-     is not loaded leaves the question as it was. D-267. */
+     is not loaded leaves the question as it was. D-292. */
   function resolveChoices(obj, tables) {
     if (!obj || !obj.questions) return obj;
     obj.questions.forEach(function (q) {

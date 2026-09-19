@@ -12,8 +12,8 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11, §9 item 6, §13. DECISIONS.md D-253 (the shell),
-  D-262 (the second reading), D-263 (a line priced per unit).
+  ROOM SPEC — SPEC.md §11, §9 item 6, §13. DECISIONS.md D-278 (the shell),
+  D-287 (the second reading), D-288 (a line priced per unit).
 
   TWO READINGS OF A DECISION.
 
@@ -47,14 +47,14 @@
   a decision people weigh (data/reversibility.json), which arrives with the
   undo question already priced where there is an honest figure for it.
 
-  A LINE CAN PAY YOU (D-269): typed positive, flagged with the "pays you"
+  A LINE CAN PAY YOU (D-294): typed positive, flagged with the "pays you"
   toggle, counted negative. A block whose lines net negative brings money
   in, and the five read the other way round: what it pays, the hours it
   buys back, when it starts, what it adds to what is spare — then the undo
   question exactly as before. That is what a lodger is, and the year at
   home, and selling the car. Not a sixth answer either.
 
-  A LINE CAN BE PRICED PER UNIT (D-263): so many guests at so much each.
+  A LINE CAN BE PRICED PER UNIT (D-288): so many guests at so much each.
   The two figures MAKE the line's amount, they do not sit beside it, and
   the room shows the product as a read-out rather than a third box — two
   ways to type one figure is how they come to disagree. What it buys is
@@ -99,7 +99,7 @@
   .goal-note.warn { color: var(--color-caution); }
   .goal-note.good { color: var(--color-positive); }
 
-  /* The five, on every block (D-253). One row per question, the question in
+  /* The five, on every block (D-278). One row per question, the question in
      the muted face and the answer in the reading one, so a block scans as
      five answers rather than a paragraph. */
   .five { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
@@ -215,7 +215,7 @@
   #view-behind-you .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
 
-  /* A line priced per unit: how many, times how much each, equals. D-263. */
+  /* A line priced per unit: how many, times how much each, equals. D-288. */
   .item--unit { display: grid; grid-template-columns: 1fr 4.5rem auto 6rem auto auto; align-items: center; gap: var(--space-2); }
   .item--unit .unit-x { color: var(--color-text-muted); font-size: var(--text-sm); }
   .item--unit .unit-sum { font-variant-numeric: tabular-nums; text-align: right; color: var(--color-text-muted); font-size: var(--text-sm); }
@@ -225,7 +225,7 @@
     .item--unit .unit-x { display: none; }
     .item--unit .unit-sum { grid-column: 1 / -1; text-align: left; }
   }
-  /* The pays-you toggle on a line (D-269). */
+  /* The pays-you toggle on a line (D-294). */
   .item button.pays { font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); border: 1px solid var(--color-border); border-radius: 999px; background: transparent; color: var(--color-text-muted); cursor: pointer; white-space: nowrap; }
   .item button.pays.is-on { border-color: var(--color-positive); color: var(--color-positive); }
   .item--unit { grid-template-columns: 1fr 4.5rem auto 6rem auto auto auto; }
@@ -366,7 +366,7 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/cashflow.js"></script>
-<!-- The five outputs (D-253). Order matters and each of these captures the
+<!-- The five outputs (D-278). Order matters and each of these captures the
      one before it at load: hourly before the lens, expr before events,
      events before reversibility, all of them before goals. -->
 <script src="../engines/hourly.js"></script>
@@ -392,7 +392,7 @@
   function el(id) { return document.getElementById(id); }
   /* Attribute AND text: the five outputs and the decision picker put table
      text and a person's own block name into element content, not only into
-     value="" (D-253). Escaping & and < as well is correct in both places. */
+     value="" (D-278). Escaping & and < as well is correct in both places. */
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -414,7 +414,7 @@
     }).join('');
 
     /* The decisions Can It Be Undone used to list, as a way to START a
-       block (D-253). The room went; its catalogue and its engine did not. */
+       block (D-278). The room went; its catalogue and its engine did not. */
     el('decisions').innerHTML = Reversibility.list(TABLES).map(function (d) {
       return '<button type="button" class="pick" data-decision="' + esc(d.id) + '">'
         + '<strong>' + esc(d.label) + '</strong><span>' + esc(d.why || '') + '</span></button>';
@@ -437,7 +437,7 @@
     });
   }
 
-  /* ---- The five, on every block (D-253) -------------------------------
+  /* ---- The five, on every block (D-278) -------------------------------
      One shell asks the same five questions of anything you are weighing.
      Every one of them either answers or says what it is missing: a blank
      row would read as a zero, and none of these is ever zero by default. */
@@ -455,10 +455,10 @@
        with no PRICE knows almost nothing; a block with a price and no DATE
        knows what it costs and what it costs you, and waits on the date
        only for the other two. `priced` is what the plan says, not whether
-       the whole result came back ok. D-263. */
+       the whole result came back ok. D-288. */
     var priced = p && p.priced === true;
     var full = Money.isOk(p);
-    /* A block that pays answers the first four the other way round (D-269). */
+    /* A block that pays answers the first four the other way round (D-294). */
     if (priced && p.pays) {
       out.costs = { said: 'Pays you ' + Money.formatCents(p.paysCents)
         + (p.costsCents > 0 ? ' after ' + Money.formatCents(p.costsCents) + ' of costs' : '') };
@@ -519,7 +519,7 @@
   }
 
   /* The fifth row, apart, because it is the one answer a block can give
-     before it has a price at all (D-253). */
+     before it has a price at all (D-278). */
   function undoRow(u) {
     if (!u.asked) {
       return { missing: 'Not asked yet. What would undoing it cost, and take?' };
@@ -545,7 +545,7 @@
      decision inside the block — one more guest, one more night — which for
      a wedding is the only question anybody actually argues about. Not a
      sixth row: it sits apart, under the five, and only where a line is
-     priced per unit. D-263. */
+     priced per unit. D-288. */
   function marginHtml(p) {
     var m = p && p.perUnit;
     if (!m || !Money.isEntered(m.perUnitCents)) return '';
@@ -628,7 +628,7 @@
     }
 
     /* The five, under whatever the headline said — including on a block
-       with no price, which still has an answer to the fifth (D-253). */
+       with no price, which still has an answer to the fifth (D-278). */
     out.push(fiveHtml(p));
     out.push(marginHtml(p));
 
@@ -657,7 +657,7 @@
         + '" placeholder="if not itemised" aria-label="Lump target"/></span></label>'
         + '</div>');
 
-      /* Can it be undone: two figures, on every block (D-253). Blank is
+      /* Can it be undone: two figures, on every block (D-278). Blank is
          "not asked" — the fifth row says so rather than calling it a door. */
       out.push('<span class="slaf-label" style="display:block;margin-top:var(--space-4)">If you changed your mind</span>');
       out.push('<div class="grid-2">'
@@ -677,7 +677,7 @@
       out.push('<span class="slaf-label">What it\'s made of</span>');
       (goal.lineItems || []).forEach(function (li) {
         /* A line priced PER UNIT asks for the two figures that make it and
-           shows what they come to, rather than one box (D-263). The total
+           shows what they come to, rather than one box (D-288). The total
            is a read-out, never an input: two ways to type one figure is
            how they come to disagree. */
         if (li.unitLabel) {
@@ -827,7 +827,7 @@
     if (field === 'name') patch.name = raw === '' ? null : raw;
     else if (field === 'targetDate') patch.targetDate = raw === '' ? null : raw;
     /* Months are a count, not money: parseMoney would read 3 as $3.00 and
-       store 300 (D-253). Blank stays null — not asked, not zero. */
+       store 300 (D-278). Blank stays null — not asked, not zero. */
     else if (field === 'undoMonths') {
       var n = String(raw).replace(/[^0-9.]/g, '');
       patch.undoMonths = n === '' ? null : Number(n);
@@ -845,7 +845,7 @@
       if (field === 'label') copy.label = raw === '' ? null : raw;
       /* A count of guests, not money: parseMoney would read 115 as $115
          and store 11500 — the same trap as undoMonths. Blank is null, not
-         asked, never zero. D-263. */
+         asked, never zero. D-288. */
       else if (field === 'units') {
         var n = String(raw).replace(/[^0-9.]/g, '');
         copy.units = n === '' ? null : Number(n);
@@ -859,7 +859,7 @@
   }
 
   document.addEventListener('click', function (evt) {
-    /* A line pays you, or costs you: a toggle, stored as a flag (D-269). */
+    /* A line pays you, or costs you: a toggle, stored as a flag (D-294). */
     var pays = evt.target.closest('button[data-field="pays"]');
     if (pays) {
       writeItem(pays.getAttribute('data-goal'), pays.getAttribute('data-item'), 'pays', pays.getAttribute('aria-pressed') !== 'true');
@@ -988,7 +988,7 @@
 </script>
 
 <script>
-/* ---- what you are weighing, and what you already decided (D-262) ----
+/* ---- what you are weighing, and what you already decided (D-287) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -996,7 +996,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-241). */
+   so its hat is ABSENT, not greyed, when the branch is not there (D-266). */
 (function () {
   'use strict';
   function el(id) { return document.getElementById(id); }
@@ -1049,7 +1049,7 @@
 
 
 <script>
-/* ---- READING view-behind-you, from rooms/worth.html (D-262) ---- */
+/* ---- READING view-behind-you, from rooms/worth.html (D-287) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,

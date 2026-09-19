@@ -13962,7 +13962,7 @@ redirects and the deep links `#draftt`, `#out-rate`, `#out-wealth`, `#habit`
 and `#guess` loaded at 390px with a clean console.
 
 
-## D-234 — The Card: three things to hand over
+## D-259 — The Card: three things to hand over
 
 **Why.** The One-Pager, the Progress Card and Money Wrapped were three rooms
 for one act — making something you can give to somebody else. All three read
@@ -13997,7 +13997,7 @@ that once before the guard existed, which is why the guard exists.
 redirects and the deep links `#audience` and `#w-lines` loaded at 390px with
 a gutter, no horizontal scroll and a clean console.
 
-## D-235 — Two readings from one template on one page: a prefix and a root
+## D-260 — Two readings from one template on one page: a prefix and a root
 
 **Why.** `shared/room.js` builds a room from a spec into fixed skeleton ids —
 `room-number`, `room-chart`, `room-inputs` and the rest. That was right while
@@ -14022,11 +14022,11 @@ drawer, the why, the scope line.
 
 **Verified.** `node test/run.js` and `node test/forms.js` (619 checks) with
 no template room passing either field — the existing rooms are untouched.
-Then on the first page to use it (Protection, D-236): tapping a control in
+Then on the first page to use it (Protection, D-261): tapping a control in
 the second reading wrote that reading's own field and left the first
 reading's cover fields alone, with a clean console.
 
-## D-236 — Protection: cover, and where it goes
+## D-261 — Protection: cover, and where it goes
 
 **Why.** Estate Basics was one fact asked three times — beneficiaries, a
 will, a power of attorney. Rule 4 of D-229: a single fact is a card in the
@@ -14038,7 +14038,7 @@ behind you.
 (the three facts, and what would pass without them). The three estate fields
 move their owner to `protection` at `#es-inputs`, with the boxes that ask
 them. Both readings are built from `shared/room.js`, so the second carries
-the prefix and root of D-235.
+the prefix and root of D-260.
 
 **Replaces or removes.** One registry room (75 → 74), a redirect carrying its
 deep links. `askIn` for the three facts now names Protection.
@@ -14051,7 +14051,7 @@ and the deep links `#es-inputs` and `#inputs` at 390px with a clean console,
 and a write from the estate reading landing on `estate.beneficiariesSet`
 while the cover fields stayed null.
 
-## D-237 — Expenses: the month, and what repeats in it
+## D-262 — Expenses: the month, and what repeats in it
 
 **Why.** The Subscription Finder never held a figure of its own. It read the
 expense log Expenses owns and pointed at the rows that come back on a rhythm.
@@ -14083,7 +14083,7 @@ together.
 **Verified.** `node test/run.js` (31,034 checks). Both readings, the redirect
 and the deep links `#more` and `#found` at 390px with a clean console.
 
-## D-238 — Wheels: does it fit, then what it costs
+## D-263 — Wheels: does it fit, then what it costs
 
 **Decision.** The First Car Check becomes the first reading of What A Car
 Costs, and the room is called Wheels. Two hats: `#the-check` (the default) and
@@ -14108,7 +14108,7 @@ and CSS. The costs reading beside it has always coloured an over-budget row
 and still may; a 20/3/8 part that is outside is a fact about a car, not a
 failing grade.
 
-## D-239 — The Life: the week, and the decades
+## D-264 — The Life: the week, and the decades
 
 **Decision.** Time Buckets becomes the decades reading of Designed Week, and
 the room is called The Life. Two hats: `#the-week` (the default) and
@@ -14120,7 +14120,7 @@ first because it is the scale you can act on tomorrow.
 
 **Ownership.** `bucketsPlanned` moves with its boxes: owner `week`, anchor
 `bk-inputs`. Both readings are built from `shared/room.js`, so the decades
-one carries `prefix: 'bk-'` and `root: 'view-the-decades'` (D-235).
+one carries `prefix: 'bk-'` and `root: 'view-the-decades'` (D-260).
 
 **Compatibility.** No stored shape changes; `timeBuckets` and
 `designedWeek` are untouched and each reading still writes only its own. The
@@ -14136,7 +14136,7 @@ is now "every script it needs is loaded, and `shared/room.js` is last" — on a
 page serving two readings the interleaving is not the page's to keep, but the
 template loading last still is.
 
-## D-240 — Big Purchase: one thing, or the whole list
+## D-265 — Big Purchase: one thing, or the whole list
 
 **Decision.** Price the Dream becomes the whole-list reading of Big Purchase.
 Two hats: `#one-thing` (the default) and `#the-dream`.
@@ -14148,7 +14148,7 @@ most people arrive holding one thing, not a list.
 
 **Ownership.** `dreamsMonthly` moves with its boxes: owner `big-purchase`,
 anchor `dl-inputs`. The dream reading carries `prefix: 'dl-'` and
-`root: 'view-the-dream'` (D-235).
+`root: 'view-the-dream'` (D-260).
 
 **The gate moved, on purpose.** Price the Dream required the `hours` branch,
 so it vanished for anyone retired or between jobs. That was the reading's
@@ -14165,7 +14165,7 @@ its own fields: four `purchase.*` on one side, `dreams` on the other.
 a string that reading happens to contain. Merged pages carry the THEMING note
 the template rooms carry.
 
-## D-241 — Family, and a gate that survives a merge
+## D-266 — Family, and a gate that survives a merge
 
 **Decision.** Kids and Tuition becomes the children reading of Partner, and
 the room is called Family. Two hats: `#two-of-you` (the default) and
@@ -14200,7 +14200,7 @@ that asks.
 switch are untouched inside the two-of-you reading, and so is the note that
 gift privacy waits on the owner.
 
-## D-242 — The Referee takes Unlearning
+## D-267 — The Referee takes Unlearning
 
 **Decision.** Unlearning becomes the still-applies reading of The Referee.
 Two hats: `#which-side` (the default) and `#still-applies`.
@@ -14228,7 +14228,7 @@ nothing, and the test for that reads the debate reading's slice rather than
 the page, because the page is no longer read-only. The page-local select
 note and the `.acts` class hook moved with their markup.
 
-## D-243 — What Matters, four readings of one expense log
+## D-268 — What Matters, four readings of one expense log
 
 **Decision.** The Joy Curve, The Rerank and Giving become readings of What
 Matters. Four hats: `#said-and-spent` (the default), `#the-joy-curve`,
@@ -14260,7 +14260,7 @@ same line.
 `monthlyExpenses`, because that is what the reading it opens on wants. The
 giving reading still reads income and says so when there is none.
 
-## D-244 — The Skill Tree takes the Stacker and the Exercises
+## D-269 — The Skill Tree takes the Stacker and the Exercises
 
 **Decision.** The Skill Stacker and Exercises become readings of The Skill
 Tree. Three hats: `#the-tree` (the default), `#the-three`, `#the-doing`.
@@ -14290,7 +14290,7 @@ retired pages are set to 0 so no file can spend a budget it did not earn.
 **LIVE-FORM.** The page declares `guarded`, the strictest of the three
 readings' disciplines. The board still builds once.
 
-## D-245 — The Month: what moved, and the dates
+## D-270 — The Month: what moved, and the dates
 
 **Decision.** The Money Calendar becomes the dates reading of Cash Flow, and
 the room is called The Month. Two hats: `#what-moved` (the default) and
@@ -14315,7 +14315,7 @@ dates reading's number and chart. The calendar reading's link to
 `cash-flow.html#log` now lands on the other hat of its own page, which the
 router handles.
 
-## D-246 — The Close: this month, every month, over time
+## D-271 — The Close: this month, every month, over time
 
 **Decision.** Estimated vs Actual and History become readings of Budget, and
 the room is called The Close. Three hats: `#this-month` (the default),
@@ -14346,7 +14346,7 @@ one, so the exception is a decision rather than a hole.
 **Compatibility.** No stored shape changes. Checked against the pre-merge
 pages: all three readings render identically.
 
-## D-247 — Income: what lands, what it averages, what it pays
+## D-272 — Income: what lands, what it averages, what it pays
 
 **Decision.** Variable Income and the Real Hourly Wage become readings of
 Income. Three hats: `#what-lands` (the default), `#when-it-varies`,
@@ -14391,7 +14391,7 @@ matched as a line, and `title`/`blurb` take the indent they find. Budget's
 room's registry title equals its title in `docs/room-map.json`, so the map
 and the app cannot disagree silently again.
 
-## D-248 — The Statement: what you own, where it lands, the documents
+## D-273 — The Statement: what you own, where it lands, the documents
 
 **Decision.** Where It Goes and Your Statements become readings of The
 Statement. Three hats: `#what-you-own` (the default), `#where-it-lands`,
@@ -14422,7 +14422,7 @@ one" while a reading inside it satisfied neither.
 **Compatibility.** No stored shape changes. Checked against the pre-merge
 pages: all three readings render identical element counts and text.
 
-## D-249 — Debt: the order, the loans, the file
+## D-274 — Debt: the order, the loans, the file
 
 **Decision.** The Student Loan Decision and Your Credit File become readings
 of Debt Payoff, and the room is called Debt. Three hats: `#the-order` (the
@@ -14448,7 +14448,7 @@ the fields.
 **Compatibility.** No stored shape changes. Checked against the pre-merge
 pages: all three readings render identically.
 
-## D-250 — Housing: rent or buy, the deposit, the deal
+## D-275 — Housing: rent or buy, the deposit, the deal
 
 **Decision.** The Down Payment Countdown and The Deal become readings of
 Housing. Three hats: `#rent-or-buy` (the default), `#the-deposit`,
@@ -14493,9 +14493,9 @@ that replaced them.
   browser and lets one reading write into another's node);
 - every `linkTo` names a live room, and every whole-literal anchor is an id
   on that page, a card the gate declares, or a hash its router routes;
-- the LIVE-FORM pattern check, per reading rather than per page (D-248).
+- the LIVE-FORM pattern check, per reading rather than per page (D-273).
 
-## D-251 — Work: seven questions about a job
+## D-276 — Work: seven questions about a job
 
 **Decision.** Offer Compare, Side Hustle, Going Self-Employed, Worth
 Learning, The Degree Decision and the Micro-Retirement Planner become
@@ -14536,11 +14536,11 @@ written, by the offer reading, as before; the other six readings are
 what-ifs and own nothing. Checked against the pre-merge pages: all seven
 render identically.
 
-## D-252 — What the phone walk found
+## D-277 — What the phone walk found
 
 `node test/run.js` reads files. `node test/forms.js` opens a phone and taps.
-Every merge in D-238..D-251 was green on the first and had not been run
-through the second since D-237. It found five things, and four of them were
+Every merge in D-263..D-276 was green on the first and had not been run
+through the second since D-262. It found five things, and four of them were
 shipped and live.
 
 **1. A reading calling a helper the merge had removed.** The tool strips
@@ -14586,7 +14586,7 @@ It has more listeners, more boot, and one DOM, and three of the five above
 are only visible with a browser open. The phone walk runs before a merge
 ships, not after the programme.
 
-## D-253 — The Decision Room: one shell, five outputs on every block
+## D-278 — The Decision Room: one shell, five outputs on every block
 
 **Decision.** Goals becomes The Decision Room. Every block answers the same
 five questions, and Can It Be Undone stops being a room: its two figures are
@@ -14634,7 +14634,7 @@ anti-rule of D-229 and not a block; and Worth The Hassle is a block whose
 cost is negative, which the shell cannot price until it can price what a
 thing pays.
 
-## D-254 — The Back Half, four readings of coming down
+## D-279 — The Back Half, four readings of coming down
 
 **Decision.** Reachable Money, the Middle Class Trap Test and Roth
 Conversions Before 65 become readings of Drawing It Down, and the room is
@@ -14670,14 +14670,14 @@ So the four readings are one room, which is real and useful on its own, and
 the reframe is stated at the top of the room's own spec so nobody reads the
 merge as the job being done.
 
-**A tool fix this merge forced.** `apply_renames` was widened in D-250 to
+**A tool fix this merge forced.** `apply_renames` was widened in D-275 to
 rename whole-word string literals. That is right for ids and wrong for a
 CLASS that happens to share an id's name — `<table class="years"
 id="t-years">` lost its class and its stylesheet rule with it. Class
 attributes are parked before the rename and restored after; the "names a
 class no stylesheet defines" check caught it.
 
-## D-255 — The Number, five readings of one multiplication
+## D-280 — The Number, five readings of one multiplication
 
 **Decision.** The FIRE Lab, Your Coast Date, Enough and The Race become
 readings of the FIRE Number, and the room is called The Number. Five hats:
@@ -14701,7 +14701,7 @@ once each — and the check now says that rather than "once per file".
 The Number is five readings of `engines/tier0.js fireNumber`, which is
 spending ÷ the withdrawal rate. D-228 wants it to be a read-out of The Back
 Half with the naive 25× beside it and one sentence on the gap. That is the
-same engine change D-254 left standing, waiting on the same owner question:
+same engine change D-279 left standing, waiting on the same owner question:
 whether the income floor is modelled as means-tested. It is written at the
 top of both rooms' specs so the merge is not mistaken for the job.
 
@@ -14710,9 +14710,9 @@ question are one room, so the person who wants the plain number gets it
 first and the person who wants to move the withdrawal rate can, without
 either of them being a separate destination to find.
 
-## D-256 — A gate on a room is not a gate on its readings
+## D-281 — A gate on a room is not a gate on its readings
 
-**Why.** The phone walk found it. D-254 folded three what-ifs into The Back
+**Why.** The phone walk found it. D-279 folded three what-ifs into The Back
 Half and left the room's `decumulation` branch where it was, so an employed
 person met "NOT FOR YOU RIGHT NOW" on the three readings written for people
 still working. The trap test only means anything to someone employed with
@@ -14721,7 +14721,7 @@ the money behind the wall.
 **Decision.** The Back Half requires nothing. The DRAW carries
 `branch: 'decumulation'` on the router, so only its hat goes when the work
 has not stopped. `shared/registry.js`, `rooms/decumulation.html`. This is
-the shape D-241, D-248 and D-251 already use.
+the shape D-266, D-273 and D-276 already use.
 
 **Replaces or removes.** `REQUIRES.decumulation`. The `appliesWhen`
 situation rule stays: it is a different mechanism and it is still right —
@@ -14732,13 +14732,13 @@ a student is not reading any of this.
 **Verified.** `node test/run.js`, `node test/forms.js`, and the room opened
 in a browser as an employed person: three hats, the draw's absent.
 
-## D-257 — A box a person types in is not a display
+## D-282 — A box a person types in is not a display
 
 **Why.** A rent typed as $2,400 in The Deal stored as $2,000. D-181 rounds
 what a room SHOWS to the precision its inputs justify; The Deal filled its
 input with that rounded figure and parsed it back on the next blur. It was
 lossless as its own room only because that room needed nothing — merged
-into Housing (D-250) it inherited three fields the empty household has not
+into Housing (D-275) it inherited three fields the empty household has not
 got, so the page rounds to thousands.
 
 **Decision.** `Money.forInput` (`shared/money.js`, and the vendored D&D
@@ -14757,9 +14757,9 @@ cleared the two failures STATUS had recorded as pre-existing and unrelated
 (an income stub's withholding, a cash-flow receipt). They were this bug,
 at the nearest hundred.
 
-## D-258 — A merged page has several readings and one display rounding
+## D-283 — A merged page has several readings and one display rounding
 
-**Why.** The other half of D-257, and the worse half. D-181 rounds a room's
+**Why.** The other half of D-282, and the worse half. D-181 rounds a room's
 figures to the precision its inputs justify, through a page-global unit set
 by `Room.mount`. A merged page has one mount and several readings. Housing
 needs three household fields the empty household has not got, so it rounds
@@ -14781,12 +14781,12 @@ one. A reading that wants its own rounding mounts as a part and gets it.
 **Verified.** `node test/run.js` (31,540), `node test/forms.js`, and The Deal
 in a browser: $714 and −$481, where it read $1,000 and −$0 before.
 
-## D-259 — An entry heading is level 2, and the check now says so
+## D-284 — An entry heading is level 2, and the check now says so
 
-**Why.** Every entry of this programme — D-238 to D-258, twenty-one of them
+**Why.** Every entry of this programme — D-263 to D-283, twenty-one of them
 — was written `### D-NNN`. `DECISIONS-INDEX.md` and `pack.js` both match
-`## ` exactly, so the index folded all of them into D-237's line range and
-`node tools/context/pack.js D-250` found nothing. CLAUDE.md tells every
+`## ` exactly, so the index folded all of them into D-262's line range and
+`node tools/context/pack.js D-275` found nothing. CLAUDE.md tells every
 session to read this file through the index and never top to bottom, so a
 whole programme of decisions was, in practice, unwritten. The existing
 check tested `^## D` and a `###` line simply did not match it.
@@ -14801,9 +14801,9 @@ already said `## D-NNN`; nothing enforced it.
 **Stored shape.** No change.
 
 **Verified.** `node test/run.js` (31,540), and the index now carries
-D-238 … D-259 with their own line ranges.
+D-263 … D-284 with their own line ranges.
 
-## D-260 — The Statement takes the account you left behind
+## D-285 — The Statement takes the account you left behind
 
 **Why.** The last room held out of the merges with an open question on it.
 The Account You Left Behind sat in Your Numbers and had no situation rule;
@@ -14827,9 +14827,9 @@ balance typed there is a what-if held in one closure variable (D-052).
 reading A/B'd against the old room in a browser: the four options, the
 trap, the cost rows and the why all read the same, and the console is clean.
 
-## D-261 — A merged page lost its fold, and nobody could see it
+## D-286 — A merged page lost its fold, and nobody could see it
 
-**Why.** Found A/B'ing D-260. `Progress.mountFold` (D-166) and the
+**Why.** Found A/B'ing D-285. `Progress.mountFold` (D-166) and the
 URL-follows-you sync (D-170) both read `<main>`'s section children. On a
 merged page those children are the READINGS, and the router hides all but
 one — so `secs.length` is 1, `1 <= FOLD_KEEP` and `1 < 2` are both true,
@@ -14854,7 +14854,7 @@ browser: The Statement 6,215px → 4,422px folded, each of its four readings
 folding to its own named sections, "Show the rest" opening the one on
 screen, and the fold rebuilding on every hat.
 
-## D-262 — The Decision Room gets a second reading: the ones behind you
+## D-287 — The Decision Room gets a second reading: the ones behind you
 
 **Why.** Worth It was held out of the merges on the anti-rule — a different
 emotional register does not merge — and the anti-rule was right about the
@@ -14882,7 +14882,7 @@ reading A/B'd against the old room in a browser: all five panels
 character-for-character identical, console clean. The xss count moved with
 the reading (worth 2 → goals 3); the repo total is still 58.
 
-## D-263 — A block can be priced per unit, and then it can be asked what one more costs
+## D-288 — A block can be priced per unit, and then it can be asked what one more costs
 
 **Why.** The Wedding Countdown was held out of the merges for a reason that
 was right: it is not a goal template, it is a room built around one
@@ -14913,7 +14913,7 @@ never zero. Nothing rewrites an existing goal.
 returning `Money.incomplete` and throwing away everything it knew, so a
 fully priced wedding read "No price on it yet" on every row. It carries
 its answers now: what it costs, what it costs you and what one more costs
-do not wait on a date. That is the same mistake D-253 fixed for the
+do not wait on a date. That is the same mistake D-278 fixed for the
 unpriced block, in the other direction.
 
 **Verified.** `node test/run.js` (31,570) — the shell's answers checked
@@ -14923,7 +14923,7 @@ count and 150 into the price each, landing as a count and as cents, the
 line adding to $12,000 and the margin reading "One more table of 8 guests
 · $1,200 · 57 h of your life · FI 1 mo later".
 
-## D-264 — Income takes Worth the Hassle, and eight readings got their scrolling back
+## D-289 — Income takes Worth the Hassle, and eight readings got their scrolling back
 
 **Why.** Worth the Hassle was held for the Decision Room and did not belong
 there: a chore that pays per hour is a rate, not a dated target made of
@@ -14964,7 +14964,7 @@ browser: the reading A/B'd panel by panel against the old room — all five
 identical — and the preset ratings picked one after another without the
 page changing under them, which is the bug the check is named for.
 
-## D-265 — What Comes Next is income with a start and an end on it
+## D-290 — What Comes Next is income with a start and an end on it
 
 **Why.** Held out of the Decision Room with the right reason: a period of
 future income is not a decision you are weighing, it is a fact about a
@@ -14993,7 +14993,7 @@ across all five readings, the period list's live-form guard holding — and
 A/B'd against the old room in a browser: the months ahead, the periods and
 the gaps all character-for-character identical, console clean.
 
-## D-266 — What If: two scenario rooms are each other, not two block types
+## D-291 — What If: two scenario rooms are each other, not two block types
 
 **Why.** The cut list folded What If, Life and The Long Way Round into The
 Decision Room. Neither is a block. A block is one decision with a price and
@@ -15044,7 +15044,7 @@ console. A `pin-toast` that lived outside `<main>` came with it; the merge
 tool only takes `<main>`, so it was rescued by hand. Every stub followed in
 a browser: all seven land on the reading that replaced the room.
 
-## D-267 — The city index, read where it is owned
+## D-292 — The city index, read where it is owned
 
 **Why.** The ROADMAP called the cost-of-living modifier blocked on a COL
 index. `data/col_index.json` has forty cities and the What If move event
@@ -15083,7 +15083,7 @@ template carrying no copy; the resolver giving 41 · 40 · 3. In a browser:
 the move event's three lists render from the table, national average
 first, console clean.
 
-## D-268 — The glossary already exists; give it the names people search by
+## D-293 — The glossary already exists; give it the names people search by
 
 **Why.** The ROADMAP listed the Tier 18 Ratio Glossary as unbuilt. It is
 Every Ratio, The Scorecard's reading since D-044: forty-five ratios in
@@ -15098,7 +15098,7 @@ savings rate, emergency fund, fi ratio, retirement multiple, net worth to
 income. `ROADMAP.md` is corrected: discrepancy 5 says the glossary is
 built; "Not built in Tier 2" drops Kids (shipped in Family) and the Advice
 Translator (shipped as rules in The Referee), and declines the HCOL/MCOL/
-LCOL modifier on purpose (see D-267).
+LCOL modifier on purpose (see D-292).
 
 **Replaces or removes.** Three phantom entries on the not-built list and a
 false gap in the discrepancy list. No screen; the room was already there.
@@ -15108,7 +15108,7 @@ false gap in the discrepancy list. No screen; the room was already there.
 **Verified.** `node test/run.js` (the 45-for-45 explainer check, the
 registry alias check); `node tools/context/build.js --check`.
 
-## D-269 — A block that pays
+## D-294 — A block that pays
 
 **Why.** Every line in a Decision Room block was a cost. Taking in a lodger,
 a year at home, a side job, selling the second car: the book's questions
@@ -15138,7 +15138,7 @@ block is unchanged, the toggle writes only a boolean); `node test/forms.js`
 on `rooms/goals.html` (the lodger template, the toggle flipping and
 following). In a browser: "Pays $9,600 · Buys back 456 h · FI 5 mo sooner".
 
-## D-270 — Rows by the handful: templates, decisions, debates
+## D-295 — Rows by the handful: templates, decisions, debates
 
 **Why.** The book's remaining "tools" were mostly rows: questions the
 shell already answers, given a template, a reversibility entry or a
@@ -15146,7 +15146,7 @@ debate. Under the freeze a row is the right size — it adds to a table the
 app already reads and no screen.
 
 **Decision.** `data/goal_templates.json` gains eight blocks: lodger and a
-year at home (paying lines, D-269), fertility, surgery, legal, funeral, a
+year at home (paying lines, D-294), fertility, surgery, legal, funeral, a
 move, a business; custom stays last. `data/reversibility.json` gains five
 decisions: go back to school, co-sign a loan (not reversible), start a
 business, take in a lodger, move in with parents. `data/debates.json` and
@@ -15166,7 +15166,7 @@ every reversibility row shaped, the two new debates answer on the demo
 household); `node test/forms.js` on `rooms/debates.html` (the car price
 box relabelled, answer `b` at $25,000).
 
-## D-271 — The cliff, as a reading of Tax
+## D-296 — The cliff, as a reading of Tax
 
 **Why.** The book's Benefits Cliff calculator: a raise that costs more than
 it pays, because it crosses the income line for Medicaid, SNAP or the ACA

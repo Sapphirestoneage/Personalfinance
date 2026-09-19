@@ -119,13 +119,13 @@ module.exports = function (t) {
   check('… both anchored at the giving reading’s inputs', Ownership.field('givingPct').anchor + '/' + Ownership.field('givingTarget').anchor, 'gv-inputs/gv-inputs');
   /* `needs` is what the ROOM advertises — What Matters opens on said
      against spent, which wants the month. This reading reads income and
-     says so if it has none (D-243). */
+     says so if it has none (D-268). */
   check('the room it lives in needs the month', Registry.byId('values').needs.join(','), 'monthlyExpenses');
   checkTrue('… and this reading still reads income', /reads: \[[^\]]*'grossAnnualIncome'/.test(reading('rooms/values.html', 'view-what-you-give', 'READING view-what-you-give,').html));
   check('giving starts unanswered', JSON.stringify(Schema.createHousehold({}).giving), JSON.stringify({ pctOfIncome: null, annualTargetCents: null }));
 
   /* ---- The page ---------------------------------------------------------------- */
-  /* giving is a reading of values since D-243, so this file reads its slice of
+  /* giving is a reading of values since D-268, so this file reads its slice of
      that page: its own markup and its own script. `slice.page` is the
      whole file, for the few facts that really are page-wide. */
   const slice = reading('rooms/values.html', 'view-what-you-give', "READING view-what-you-give,");

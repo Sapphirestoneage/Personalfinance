@@ -14,7 +14,7 @@
 <!--
   ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-098.
 
-  TWO READINGS SINCE D-271.
+  TWO READINGS SINCE D-296.
 
     #what-it-takes   the bracket picture, as before
     #the-cliff       the lines where the state stops helping, and what a
@@ -58,7 +58,7 @@
 <style>
   section[id] { scroll-margin-top: var(--space-4); }
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- The cliff (D-271) ---- */
+  /* ---- The cliff (D-296) ---- */
   #view-the-cliff .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
   #view-the-cliff .head-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; }
   #view-the-cliff .cl-ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
@@ -136,7 +136,7 @@
   </section>
   </section>
 
-  <!-- ===== THE CLIFF (this room's own reading, D-271) ===== -->
+  <!-- ===== THE CLIFF (this room's own reading, D-296) ===== -->
   <section id="view-the-cliff" hidden>
   <p class="slaf-lede">A raise that crosses a line can cost more than it pays. Where the lines are for a household your size, in your state, and what a raise you name would cross.</p>
 
@@ -224,8 +224,8 @@
 
   Room.mount({
     id: 'tax',
-    /* One of two readings since D-271: a part mount with a root, so the
-       document-level listeners answer only this reading (D-252); the router
+    /* One of two readings since D-296: a part mount with a root, so the
+       document-level listeners answer only this reading (D-277); the router
        registers the room. */
     part: true,
     root: 'view-what-it-takes',
@@ -335,7 +335,7 @@
 </script>
 
 <script>
-/* ---- what the state takes, and the lines where it stops helping (D-271) ----
+/* ---- what the state takes, and the lines where it stops helping (D-296) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -343,7 +343,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-241). */
+   so its hat is ABSENT, not greyed, when the branch is not there (D-266). */
 (function () {
   'use strict';
   function el(id) { return document.getElementById(id); }
@@ -396,7 +396,7 @@
 
 
 <script>
-/* ---- READING view-the-cliff, this room's own (D-271) ---- */
+/* ---- READING view-the-cliff, this room's own (D-296) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Cliff = SLAF.Cliff, Ownership = SLAF.Ownership;

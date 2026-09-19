@@ -108,7 +108,7 @@ module.exports = function (t) {
   checkTrue('the Statement sets it beside the cash figure and applies nothing', /cashMovedSince\(/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')) && /nothing moves it for you/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')));
 
   /* The sheet: no field to type in, ever. The rule is this reading's — the
-     over-time reading beside it since D-246 has a compare-to select, which
+     over-time reading beside it since D-271 has a compare-to select, which
      it always had. */
   const slice = reading('rooms/budget.html', 'view-this-month', 'READING view-this-month,');
   const page = slice.html;

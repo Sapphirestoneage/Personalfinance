@@ -185,12 +185,12 @@ module.exports = function (t) {
   /* The merged room asks for nothing up front: the debate reading it opens
      on needs no figure, and this reading names what it lacks rather than
      being held back. `needs` is what the room advertises, not what a
-     reading inside it reads (D-242). */
+     reading inside it reads (D-267). */
   check('the merged room advertises no prerequisite', Registry.byId('debates').needs.join(','), '');
   checkTrue('… and this reading still reads the month', /reads: \['monthlyExpenses'/.test(reading('rooms/debates.html', 'view-still-applies', 'READING view-still-applies,').html));
   checkTrue('the room appears for everyone', Registry.applies ? Registry.applies(Registry.byId('debates'), demo) : true);
 
-  /* unlearning is a reading of debates since D-242, so this file reads its slice of
+  /* unlearning is a reading of debates since D-267, so this file reads its slice of
      that page: its own markup and its own script. `slice.page` is the
      whole file, for the few facts that really are page-wide. */
   const slice = reading('rooms/debates.html', 'view-still-applies', "READING view-still-applies,");

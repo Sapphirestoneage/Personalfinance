@@ -169,7 +169,7 @@ module.exports = function (t) {
 
   section('Designed Week — the room on the template');
 
-  /* The Life carries two readings since D-239. These assertions are about
+  /* The Life carries two readings since D-264. These assertions are about
      the week; `page` is the whole file, for the facts that really are about
      the page. */
   const slice = reading("rooms/week.html", "view-the-week", "tables: ['weekBlocks'");

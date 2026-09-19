@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. BRIEF §6.2. DECISIONS.md D-087, D-266 (the merge).
+  ROOM SPEC — SPEC.md §11. BRIEF §6.2. DECISIONS.md D-087, D-291 (the merge).
 
   TWO READINGS OF THE YEARS AHEAD.
 
@@ -715,7 +715,7 @@
   Promise.all([Reference.load(), Reference.loadEvents()]).then(function (loaded) {
     TABLES = loaded[0];
     EVENTS = loaded[1];
-    /* A template's choice lists come from the reference tables (D-267). */
+    /* A template's choice lists come from the reference tables (D-292). */
     EVENTS.list.forEach(function (tpl) { Events.resolveChoices(tpl, TABLES); });
     SLAF.Staleness.use(TABLES.staleness);
     if (!state.templateId && EVENTS.list.length) state.templateId = EVENTS.list[0].id;
@@ -738,7 +738,7 @@
 </script>
 
 <script>
-/* ---- one event three ways, and five years every way (D-266) ----
+/* ---- one event three ways, and five years every way (D-291) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -746,7 +746,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-241). */
+   so its hat is ABSENT, not greyed, when the branch is not there (D-266). */
 (function () {
   'use strict';
   function el(id) { return document.getElementById(id); }
@@ -799,7 +799,7 @@
 
 
 <script>
-/* ---- READING view-five-years, from rooms/adventure.html (D-266) ---- */
+/* ---- READING view-five-years, from rooms/adventure.html (D-291) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Schema = SLAF.Schema,

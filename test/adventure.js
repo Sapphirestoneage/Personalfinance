@@ -56,7 +56,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('one chart with every way and the target rule', (await page.$$('#chart svg path.line')).length >= 5 && (await page.$$('#chart svg line.hline')).length === 1);
   check('the band is shaded behind the chosen way', (await page.$$('#chart svg path.band')).length === 1);
   check('headwinds and tailwinds are separate lists', (await page.$$('#headwinds .shock')).length === 3 && (await page.$$('#tailwinds .shock')).length === 1);
-  /* Scoped to the READING since D-266: this is one of two on the page, and
+  /* Scoped to the READING since D-291: this is one of two on the page, and
      the other one — One event, three ways — is a form. The rule is that
      THIS reading takes no typing, not that the page takes none. The
      sidebar's own search box (D-177) is outside main either way. */

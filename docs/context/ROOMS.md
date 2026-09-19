@@ -12,49 +12,49 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Your Numbers (8)
 
-- **debt-payoff** — Debt · 2644 lines · engines: projection, debt, tier0, studentloans, hourly, foo, cashflow, fire, statement, benchmarks, ratios · owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-249, D-207, D-191
-- **expenses** — Expenses · 1402 lines · engines: projection, tier0, cashflow, fire, income, selfemployed, tax, hourly, subscriptions · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-237, D-207, D-199
-- **cash-flow** — The Month · 896 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-245, D-192, D-163
-- **income** — Income · 2275 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget, variableincome, hourly, hassle, timeline · owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, futureIncome, incomeType, paySurvives · D-265, D-264, D-247
-- **budget** — The Close · 976 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history · owns: monthsClosed, historyCompareTo · D-246, D-130, D-129
-- **statement** — The Statement · 2442 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, statements, taxroom · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-260, D-248, D-157
+- **debt-payoff** — Debt · 2644 lines · engines: projection, debt, tier0, studentloans, hourly, foo, cashflow, fire, statement, benchmarks, ratios · owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-274, D-207, D-191
+- **expenses** — Expenses · 1402 lines · engines: projection, tier0, cashflow, fire, income, selfemployed, tax, hourly, subscriptions · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-262, D-207, D-199
+- **cash-flow** — The Month · 896 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-270, D-192, D-163
+- **income** — Income · 2275 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget, variableincome, hourly, hassle, timeline · owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, futureIncome, incomeType, paySurvives · D-290, D-289, D-272
+- **budget** — The Close · 976 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history · owns: monthsClosed, historyCompareTo · D-271, D-130, D-129
+- **statement** — The Statement · 2442 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, statements, taxroom · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-285, D-273, D-157
 - **cant-pay** — When It Won’t All Get Paid · 529 lines · engines: projection, tier0, cashflow · D-148
-- **tax** — Tax · 463 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly, rothaca, cliff · owns: otherPreTax, withheld · D-271, D-150, D-142
+- **tax** — Tax · 463 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly, rothaca, cliff · owns: otherPreTax, withheld · D-296, D-150, D-142
 
 ## Scorecard (3)
 
 - **financial-snapshot** — The Scorecard · 2597 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-233, D-036, D-007
-- **fire** — The Number · 1434 lines · engines: projection, tier0, fire, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race · owns: enoughMonthly, retireAge, coastAge · D-255, D-228, D-161
+- **fire** — The Number · 1434 lines · engines: projection, tier0, fire, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race · owns: enoughMonthly, retireAge, coastAge · D-280, D-228, D-161
 - **foo-ladder** — What The Next Dollar Does · 695 lines · engines: projection, tier0, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-231, D-058, D-054
 
 ## Decisions (9)
 
 - **runway** — The Cushion · 1726 lines · engines: projection, tier0, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-232, D-130, D-082
-- **car** — Wheels · 847 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-238, D-151
-- **what-if-life** — What If · 1255 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, foo, adventure · D-266, D-146, D-087
-- **protection** — Protection · 467 lines · engines: projection, tier0, protection, hourly, estate · owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists · D-236, D-103, D-098
-- **decumulation** — The Back Half · 793 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation, selfemployed, tax, reachable, trap, rothaca · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-256, D-254, D-228
-- **career-move** — Work · 2003 lines · engines: projection, tier0, hourly, careermove, offers, selfemployed, sidehustle, credential, degree, countdown, microretirement · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-251
-- **partner** — Family · 660 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner, kids · owns: partnerName, partnerDob, splitMode, sharedMonthly, tuitionTarget, tuitionSaved, tuitionMonthly · D-241, D-216, D-109
-- **housing** — Housing · 898 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing, debt, countdown, downpayment, ownership · owns: rentAlternative, homePrice, downPct, mortgageRate · D-250, D-130, D-111
-- **big-purchase** — Big Purchase · 494 lines · engines: projection, tier0, hourly, quickmath, purchase, dreamline · owns: purchasePrice, purchaseMonths, purchaseRate, dreamsMonthly · D-240, D-129, D-112
+- **car** — Wheels · 847 lines · engines: projection, tier0, hourly, quickmath, firstcar · D-263, D-151
+- **what-if-life** — What If · 1255 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, foo, adventure · D-291, D-146, D-087
+- **protection** — Protection · 467 lines · engines: projection, tier0, protection, hourly, estate · owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists · D-261, D-103, D-098
+- **decumulation** — The Back Half · 793 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation, selfemployed, tax, reachable, trap, rothaca · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-281, D-279, D-228
+- **career-move** — Work · 2003 lines · engines: projection, tier0, hourly, careermove, offers, selfemployed, sidehustle, credential, degree, countdown, microretirement · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-276
+- **partner** — Family · 660 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, partner, kids · owns: partnerName, partnerDob, splitMode, sharedMonthly, tuitionTarget, tuitionSaved, tuitionMonthly · D-266, D-216, D-109
+- **housing** — Housing · 898 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, housing, debt, countdown, downpayment, ownership · owns: rentAlternative, homePrice, downPct, mortgageRate · D-275, D-130, D-111
+- **big-purchase** — Big Purchase · 494 lines · engines: projection, tier0, hourly, quickmath, purchase, dreamline · owns: purchasePrice, purchaseMonths, purchaseRate, dreamsMonthly · D-265, D-129, D-112
 
 ## What Matters (4)
 
-- **values** — What Matters · 1675 lines · engines: projection, tier0, cashflow, values, fulfillment, rerank, foo, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget, rerankCut · D-243
-- **goals** — The Decision Room · 1465 lines · engines: projection, tier0, cashflow, hourly, events, reversibility, goals, worth · owns: reversibilityDecision · D-269, D-266, D-262
-- **week** — The Life · 522 lines · engines: projection, tier0, hourly, cashflow, week, ratios, buckets · owns: designedHours, bucketsPlanned · D-239
-- **debates** — The Referee · 580 lines · engines: selfemployed, tax, projection, tier0, trap, quickmath, firstcar, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-270, D-242, D-218
+- **values** — What Matters · 1675 lines · engines: projection, tier0, cashflow, values, fulfillment, rerank, foo, fire, statement, benchmarks, ratios, hourly, giving · owns: givingPct, givingTarget, rerankCut · D-268
+- **goals** — The Decision Room · 1465 lines · engines: projection, tier0, cashflow, hourly, events, reversibility, goals, worth · owns: reversibilityDecision · D-294, D-291, D-287
+- **week** — The Life · 522 lines · engines: projection, tier0, hourly, cashflow, week, ratios, buckets · owns: designedHours, bucketsPlanned · D-264
+- **debates** — The Referee · 580 lines · engines: selfemployed, tax, projection, tier0, trap, quickmath, firstcar, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules · owns: unlearningDropped · D-295, D-267, D-218
 
 ## Level Up (1)
 
-- **skill-tree** — The Skill Tree · 1528 lines · engines: projection, tier0, foo, skilltree, cashflow, statement, swan, benchmarks, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, skills, income, fire, decumulation, exercises · owns: skillsDone, exercisesDone, practiceLedger · D-244, D-141, D-140
+- **skill-tree** — The Skill Tree · 1528 lines · engines: projection, tier0, foo, skilltree, cashflow, statement, swan, benchmarks, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, skills, income, fire, decumulation, exercises · owns: skillsDone, exercisesDone, practiceLedger · D-269, D-141, D-140
 
 ## Upkeep (4)
 
 - **get-help** — Get Help (utility) · 120 lines · no engines · D-097
 - **data** — Your Data (utility) · 702 lines · engines: tax, bankcsv · D-221, D-220, D-125
-- **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-234, D-219
+- **one-pager** — The Card · 417 lines · engines: projection, tier0, tax, debt, selfemployed, hourly, sincelast, wrapped, cashflow, ratios, trap, onepager · D-259, D-219
 - **settings** — Settings (utility) · 181 lines · no engines · D-180
 
 ## Files in rooms/ not in the registry (63)

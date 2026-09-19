@@ -95,7 +95,7 @@
       features: ['equityComp', 'matchVesting', 'showMilestones'],
       group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources', 'variable income', 'irregular', 'uneven', 'real hourly wage', 'what it pays', 'per hour', 'hassle', 'diy', 'chores', 'cheaper option', 'timeline', 'what comes next', 'future income', 'periods', 'gaps'],
       kind: 'about-you',
-      /* dob arrived with What is coming (D-265), which turns "from age 67"
+      /* dob arrived with What is coming (D-290), which turns "from age 67"
          into a month. */
       needs: ['dob'],
       order: 3.2,
@@ -453,7 +453,7 @@
       id: 'goals',
       group: 'matters', aliases: ['goals', 'targets', 'wedding', 'dream', 'decisions', 'undo', 'reversible', 'one-way door', 'can it be undone', 'weighing', 'worth it', 'purchase', 'joy per dollar', 'regret', 'wedding countdown', 'engagement', 'ring', 'guests', 'per guest', 'one more table'],
       kind: 'about-you',
-      /* grossAnnualIncome arrived with Behind you (D-262), which prices what
+      /* grossAnnualIncome arrived with Behind you (D-287), which prices what
          a thing turned out to be worth in hours of your life. */
       needs: ['monthlyExpenses', 'grossAnnualIncome'],
       order: 22,
@@ -623,7 +623,7 @@
   ROOMS.push({
     id: 'protection',
     features: ['agingParents'],
-    /* Two readings since D-236: what stands behind you if a year goes
+    /* Two readings since D-261: what stands behind you if a year goes
        wrong, and where it all goes if the worst does. */
     group: 'decisions', subgroup: 'family',
     aliases: ['insurance', 'life insurance', 'disability', 'coverage',
@@ -892,7 +892,7 @@
      conversation; Private with full numbers, Public with ratios and time. */
   ROOMS.push({
     id: 'one-pager',
-    /* Three things to hand over since D-234: the progress card, the year in
+    /* Three things to hand over since D-259: the progress card, the year in
        four lines, and the whole page. The aliases carry all three. */
     group: 'upkeep', aliases: ['one pager', 'one-pager', 'snapshot page', 'print', 'share with a coach', 'lender', 'planner',
                                'card', 'progress card', 'share progress', 'shape not size',
@@ -962,7 +962,7 @@
     { id: 'levelup',   label: 'Level Up' },
     { id: 'upkeep',    label: 'Upkeep',
       /* The map link hung off History, which became The Close's over-time
-         reading in D-246. It hangs off Your Data now, which is the room
+         reading in D-271. It hangs off Your Data now, which is the room
          this group leads with and is not going anywhere. */
       links: [{ after: 'data', title: 'Every room, on one page', href: 'map.html', aliases: ['map', 'all rooms', 'every room'] }] }
   ];
@@ -1023,11 +1023,11 @@
      (D-094). Rooms with none are for everyone. The check is Gate.exists,
      reached lazily because the gate loads after the registry. */
   var REQUIRES = {
-    /* Where It Goes became The Statement's where-it-lands reading (D-248).
+    /* Where It Goes became The Statement's where-it-lands reading (D-273).
        The Statement requires nothing — what you own is a question for
        everybody — and that READING keeps the retirement branch, declared on
        the router, so its hat is absent when there is no employer plan. */
-    /* Worth the hassle became Income's fourth reading (D-264) and kept the
+    /* Worth the hassle became Income's fourth reading (D-289) and kept the
        hours branch on the router, the way What it pays does. Income itself
        requires nothing: what comes in is a question for everybody. */
     fire: ['savingsRate'],
@@ -1035,23 +1035,23 @@
        which anyone may open: it reads as if the pay stopped today and says
        so. The Cushion itself requires nothing. */
     protection: ['protection'],
-    /* The Back Half holds four readings (D-254), and only ONE of them is
+    /* The Back Half holds four readings (D-279), and only ONE of them is
        about money already being drawn. What you can reach, Through the wall
        and The price of cover are questions a person asks while still
        working — the trap test is only interesting to someone employed with
        the money behind the wall. They required nothing as rooms and they
        require nothing now, so the ROOM requires nothing; the draw carries
        the decumulation branch on the router, and its hat is absent until
-       the work stops. D-256.
+       the work stops. D-281.
 
-       This is what D-254 got wrong: it left the room's gate where it was
+       This is what D-279 got wrong: it left the room's gate where it was
        and hid three pre-retirement readings from everybody pre-retirement. */
     tax: ['income'],
-    /* Work holds seven readings (D-251). The room keeps the situation rule
+    /* Work holds seven readings (D-276). The room keeps the situation rule
        every one of them had — appliesWhen "situation != retired" — but not
        the career branch: Offers side by side, A degree and A break never
        required it. Each READING that did carries it on the router. */
-    /* Family holds both readings (D-241), so it exists when EITHER does: a
+    /* Family holds both readings (D-266), so it exists when EITHER does: a
        household with children and no partner is a household, and so is the
        reverse. The nested array is the gate's any-of form. Each READING
        keeps the branch its room had, declared on the router, so its hat is
@@ -1059,14 +1059,14 @@
        who sees what. */
     partner: [['partner', 'dependents']],
     /* Variable Income and the Real Hourly Wage became readings of Income
-       (D-247). Income requires nothing — what comes in is a question for
+       (D-272). Income requires nothing — what comes in is a question for
        everybody — and each READING keeps the branch its room had, declared
        on the router, so its hat is absent when the branch is not there. */
-    /* Price the Dream became Big Purchase's whole-list reading (D-240). The
+    /* Price the Dream became Big Purchase's whole-list reading (D-265). The
        hours branch was its requirement, not the room's: the one-thing
        reading applies to anyone, and the dream reading says it has no wage
        rather than vanishing. Same call as Between Jobs above. */
-    /* The Student Loan Decision became Debt's loans reading (D-249). Debt
+    /* The Student Loan Decision became Debt's loans reading (D-274). Debt
        requires nothing and has not since D-061 — someone who answered "no
        debt" is skipped past it, not shut out of it — and the READING keeps
        the debt branch on the router. */
@@ -1110,13 +1110,13 @@
     /* Two things can make a room absent, and they have to agree: the
        branches it requires, and the situations it declares it is not for.
        They always did agree while every room carried both — Career Move
-       required `career` AND said "not retired" — and D-251 pulled them
+       required `career` AND said "not retired" — and D-276 pulled them
        apart: Work requires nothing, because Offers side by side is for a
        person between jobs, and still is not for a retired one. So this
        reads both, as inGroup already did. */
     if (!appliesToSituation(room, G.situationOf ? G.situationOf(household) : null)) return false;
     /* A requirement is a branch key, or an array of keys meaning any one
-       will do — a merged room exists when any of its readings does (D-241). */
+       will do — a merged room exists when any of its readings does (D-266). */
     return requires(room.id).every(function (k) {
       return Array.isArray(k) ? k.some(function (x) { return G.exists(household, x); }) : G.exists(household, k);
     });
