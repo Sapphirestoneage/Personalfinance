@@ -589,6 +589,28 @@ const CASES = [
     }
   },
   {
+    /* The Calendar (D-306): one text box for your own date, built once;
+       the list beneath it rebuilds on every write and holds no input. */
+    room: '/rooms/calendar.html',
+    container: '#own-form',
+    seed: 'demo',
+    fields: [
+      { sel: '#own-what', type: 'Apply for the travel card' }
+    ],
+    expect: async (page) => {
+      await page.fill('#own-when', '2030-01-15');
+      await page.tap('#own-add');
+      await page.waitForTimeout(500);
+      const ev = await page.evaluate(() => ((JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).calendar || {}).events || []);
+      return [
+        ['the date was stored', ev.length, 1],
+        ['with its label', ev[0] && ev[0].label, 'Apply for the travel card'],
+        ['on its day', ev[0] && ev[0].date, '2030-01-15'],
+        ['and the box cleared for the next one', await page.$eval('#own-what', e => e.value), '']
+      ];
+    }
+  },
+  {
     room: '/rooms/statement.html',
     container: '#asset-list',
     seed: 'demo',

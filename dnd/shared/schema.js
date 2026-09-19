@@ -128,6 +128,7 @@
     'household.reversibility.decisionId':        { class: 'raw',        unit: 'id',      note: 'the decision being weighed, with given{} answers. Owned by Reversibility. D-101' },
     'household.unlearning.dropped':              { class: 'raw',        unit: 'ids',     note: 'rules from data/unlearning.json you have let go of. Owned by Unlearning. D-101' },
     'household.studentLoans.plan':               { class: 'raw',        unit: 'enum',    values: ['standard', 'income_driven', 'aggressive'], note: 'with extraMonthlyCents, idrShare (0–1 of discretionary income), forgivenessYears. Owned by Student Loan Decision. D-101' },
+    'household.calendar.events[].date':          { class: 'raw',        unit: 'text',    note: 'YYYY-MM-DD; with label (text), kind (todo | deadline | note) and done (bool): your own dates, drawn on the month and never counted as money. Owned by the Calendar. D-306' },
     'household.calendar.cadence':                { class: 'raw',        unit: 'enum',    values: ['weekly', 'fortnightly', 'semimonthly', 'monthly'], note: 'with nextPaydayDay (1–31), bills[] {label, cents, day}, payLater[] {label, cents, dueDay, instalmentsLeft}. Owned by Money Calendar. D-101' },
     'household.history.compareTo':               { class: 'raw',        unit: 'id',      note: 'the snapshot History compares today against. Owned by History. D-101' },
     'meta.fields':                               { class: 'raw',        unit: 'map',     note: '{ fieldId: { asOf, source, confidence, room } }: when a number was last set or confirmed, how it arrived (typed, pasted, imported, screenshot, migrated, block-default, quote) and how sure the person is (sure, roughly, unsure, unknown). Schema.meta reads it; the spine writes it. D-181' },
@@ -1326,10 +1327,21 @@
     var f = fields || {};
     return { id: f.id || newId('bnpl'), label: f.label === undefined ? null : f.label, cents: Money.isEntered(f.cents) ? f.cents : null, dueDay: Money.isEntered(f.dueDay) ? f.dueDay : null, instalmentsLeft: Money.isEntered(f.instalmentsLeft) ? f.instalmentsLeft : null };
   }
+  /* Your own dates (D-306): anything with a date that is not money in or
+     out. Apply for a card, a renewal to cancel, a form due. Drawn on the
+     month, never counted. kind: todo (something to do), deadline (a day
+     something must be done by), note (a day worth knowing about). */
+  var CALENDAR_EVENT_KINDS = ['todo', 'deadline', 'note'];
+  var CALENDAR_EVENT_LABELS = { todo: 'To do', deadline: 'Deadline', note: 'Note' };
+  function createCalendarEvent(fields) {
+    var f = fields || {};
+    return { id: f.id || newId('cal'), date: typeof f.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f.date) ? f.date : null,
+      label: f.label === undefined || f.label === null ? null : String(f.label), kind: CALENDAR_EVENT_KINDS.indexOf(f.kind) >= 0 ? f.kind : 'todo', done: f.done === true };
+  }
   function createCalendar(fields) {
     var f = fields || {};
     return { cadence: PAY_CADENCES.indexOf(f.cadence) >= 0 ? f.cadence : null, nextPaydayDay: Money.isEntered(f.nextPaydayDay) ? f.nextPaydayDay : null,
-      bills: (f.bills || []).map(createBill), payLater: (f.payLater || []).map(createPayLater) };
+      bills: (f.bills || []).map(createBill), payLater: (f.payLater || []).map(createPayLater), events: (f.events || []).map(createCalendarEvent) };
   }
   /** One journal entry: when, what kind of reading, at which level, the
    *  figure, and the basis in words. Never computed on read; a record. */
@@ -3205,6 +3217,7 @@
     saidNoDebt: saidNoDebt,
     TAX_CHARACTERS: TAX_CHARACTERS,
     ACCOUNT_TYPES: ACCOUNT_TYPES, ACCOUNT_TYPE_LABELS: ACCOUNT_TYPE_LABELS, accountType: accountType, applyAccountType: applyAccountType, whereItSits: whereItSits,
+    createCalendarEvent: createCalendarEvent, CALENDAR_EVENT_KINDS: CALENDAR_EVENT_KINDS, CALENDAR_EVENT_LABELS: CALENDAR_EVENT_LABELS,
     createWorkProfile: createWorkProfile,
     WORK_DEFAULTS: WORK_DEFAULTS,
     createAsset: createAsset,

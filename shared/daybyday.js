@@ -49,18 +49,25 @@
           var marks = '';
           (d.ins || []).forEach(function (x) { marks += '<i class="cal-in' + (x.potential ? ' is-potential' : x.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(x.label) + mark(x) + '">+' + short(x.cents) + '</i>'; });
           d.bills.forEach(function (b) { marks += '<i class="cal-out' + (b.kind === 'payLater' ? ' is-pl' : b.kind === 'annual' ? ' is-annual' : '') + (b.potential ? ' is-potential' : b.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(b.label) + mark(b) + '">−' + short(b.cents) + '</i>'; });
+          (d.notes || []).forEach(function (n) { marks += '<i class="cal-own' + (n.done ? ' is-done' : '') + (n.sub === 'deadline' ? ' is-deadline' : '') + '" title="' + esc(n.label) + '">' + esc(n.label) + '</i>'; });
           return '<span class="' + cls + '"><b>' + (d.firstOfMonth || d.today ? d.month + ' ' : '') + d.dom + '</b>' + marks + '<small>' + short(d.balanceCents) + '</small></span>';
         }).join('') + '</div>';
       }).join('')
-      + '</div><p class="cal-key"><i class="cal-in">+$</i> money in · <i class="cal-out">−$</i> a bill or a logged expense · <i class="cal-out is-pl">−$</i> pay-later · <i class="cal-out is-estimated">−$</i> date estimated · <i class="cal-out is-potential">−$</i> potential, not counted · the figure is the cash at the end of the day · <span class="k-low">the low point</span> · <span class="k-under">under zero</span></p>';
+      + '</div><p class="cal-key"><i class="cal-in">+$</i> money in · <i class="cal-out">−$</i> a bill or a logged expense · <i class="cal-own">a date of yours</i> · <i class="cal-out is-pl">−$</i> pay-later · <i class="cal-out is-estimated">−$</i> date estimated · <i class="cal-out is-potential">−$</i> potential, not counted · the figure is the cash at the end of the day · <span class="k-low">the low point</span> · <span class="k-under">under zero</span></p>';
   }
 
   /* The turns, listed: what hits the account, when, and what is left. */
   function turnsHtml(r) {
     if (!Money.isOk(r)) return '';
     var list = Cal.turns(r);
-    if (!list.length) return '<p class="slaf-reason">Nothing lands in the next 31 days: no payday, no bill, no receipt with a date.</p>';
+    if (!list.length) return '<p class="slaf-reason">Nothing lands in the next 31 days: no payday, no bill, no receipt with a date, no date of yours.</p>';
     var li = function (t) {
+      if (t.direction === 'note') {
+        /* Your own date (D-306): what it is, no amount, no balance. */
+        return '<li class="is-note' + (t.done ? ' is-done' : '') + '"><span class="tn-when">' + esc(t.month) + ' ' + t.dom + '</span>'
+          + '<span class="tn-what">' + esc(t.label) + '</span>'
+          + '<span class="tn-amt is-note">' + esc((Cal.EVENT_LABELS && Cal.EVENT_LABELS[t.sub]) || t.sub) + '</span><span class="tn-bal">' + (t.done ? 'done' : '') + '</span></li>';
+      }
       return '<li class="' + (t.potential ? 'is-potential ' : '') + (t.index === r.lowIndex ? 'is-low' : '') + '">'
         + '<span class="tn-when">' + esc(t.month) + ' ' + t.dom + '</span>'
         + '<span class="tn-what">' + esc(t.label) + esc(mark(t)) + '</span>'
