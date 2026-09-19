@@ -1608,6 +1608,7 @@
     tags: ['cashflow'],
     daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['prefs.history'] },
       subsections: [
+        { id: 'journey',    label: 'The journey' },
         { id: 'number',      label: 'Since the first snapshot' },
         { id: 'chart',       label: 'Net worth over time' },
         { id: 'inputs',      label: 'Compare and freeze' },

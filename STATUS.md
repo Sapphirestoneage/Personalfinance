@@ -34,7 +34,9 @@ Updated: 2026-09-19
   the path is the numbers, the dashboard, then the readings; long hints
   fold behind an ⓘ; every score pillar says what is good, why, what to do;
   logged pay reaches every reading (D-246); every debt says what it really
-  costs after the deduction and inflation, and the pace to pay it (D-247).
+  costs after the deduction and inflation, and the pace to pay it (D-247);
+  the front page leads with the level of the monthly gap and the journey
+  records what it thought at each level and what was (D-248).
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
   deeper questions behind an advanced level; a typed take-home pay; the

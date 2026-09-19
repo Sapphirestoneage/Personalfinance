@@ -8730,6 +8730,41 @@ section('What a debt really costs (D-247): after the deduction, after inflation,
   checkTrue('… and the registry deep-links it', Registry.byId('student-loans').subsections.some(x => x.id === 'real-cost'));
 })();
 
+section('The monthly gap by level, and the journey (D-248)');
+
+(function () {
+  const Gap = require(path.join(ROOT, 'engines/gap.js'));
+  const T = Object.assign({}, TABLES, { seTax: require(path.join(ROOT, 'data/se_tax_2026.json')) });
+  const empty = Gap.levels(Schema.createHousehold({}), T);
+  check('four levels', empty.total, 4);
+  check('an empty household is at level 0', empty.reachedCount, 0);
+  checkTrue('… and level 1 names its three inputs, each a link', empty.levels[0].missing.length === 3 && empty.levels[0].missing.every(m => /^rooms\//.test(m.href)));
+  const demo = Gap.levels(Demo.build(), T);
+  check('the demo is at level 1: pay, spending and debt entered, no paycheck logged', demo.reachedCount, 1);
+  check('… the gap is take-home less spending less minimums', demo.gapCents, Debt.freeMonthlyCents(Demo.build(), T).value);
+  check('… and next is level 2, a logged paycheck', demo.next.n + ':' + demo.next.missing.map(m => m.fieldId).join(','), '2:ledgerIncome');
+  checkTrue('level 3 is already satisfied by the demo\'s split, but does not count until level 2 is', demo.levels[2].reached && demo.reachedCount === 1);
+  const logged = Demo.build();
+  logged.ledger = { income: [Schema.createIncomeEntry({ label: 'Pay', kind: 'w2', amountCents: 320000, frequency: 'fortnightly', receivedOn: '2026-09-04', taxMethod: 'w2' })] };
+  const l = Gap.levels(logged, T);
+  check('with a paycheck logged the household is at level 3', l.reachedCount, 3);
+  checkTrue('level 1 still reports the estimate, level 2 the logged figure, and they differ', l.levels[0].gapCents !== l.levels[1].gapCents && l.levels[1].deltaCents === l.levels[1].gapCents - l.levels[0].gapCents);
+  check('… level 1 is the estimate the log set aside', l.levels[0].gapCents, Debt.freeMonthlyCents(Demo.build(), T).value);
+  logged.ledger.months = [{ id: '2026-08', actual: { income: 590000, expenses: 340000 } }];
+  const a = Gap.levels(logged, T);
+  check('a closed month makes level 4', a.reachedCount, 4);
+  check('… and the gap is the realized one', a.gapCents, Debt.realizedFreeMonthlyCents(logged).value);
+  checkTrue('… with the month named for the journal', a.levels[3].gap.months.join(',') === '2026-08');
+  const j = Schema.createHousehold({ journal: [{ kind: 'gap', level: 1, cents: -29000, at: '2026-09-19T00:00:00Z', basis: 'x' }] });
+  checkTrue('the journal survives the constructor with its shape', j.journal.length === 1 && j.journal[0].level === 1 && j.journal[0].cents === -29000 && typeof j.journal[0].id === 'string');
+  check('a fresh household has an empty journal', Schema.createHousehold({}).journal.length, 0);
+  const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  checkTrue('the front page leads with the level and writes the journey', /SLAF\.Gap\.levels\(h, TABLES, ROOM_ID\)/.test(page) && /recordJourney\(h, g\)/.test(page) && /Spine\.updateProfile\(\{ journal: journal\.concat\(add\) \}\)/.test(page));
+  checkTrue('… and never writes twice for one level, nor above the level reached', /journal\.some\(function \(e\) \{ return e\.kind === 'gap' && e\.level === l\.n; \}\)/.test(page) && /l\.n > g\.reachedCount\) return;/.test(page));
+  const hist = fs.readFileSync(path.join(ROOT, 'rooms/history.html'), 'utf8');
+  checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
+})();
+
 section('The room template (D-097): one shape, proven on Real Hourly Wage');
 
 (function () {
