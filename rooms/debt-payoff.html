@@ -1565,7 +1565,10 @@
        strategies — the bars above compare those. */
     var ids = Object.keys(plan.startingBalances || {});
     var colourOf = {};
-    ids.forEach(function (id, i) { colourOf[id] = Charts.COLORS.series[i % Charts.COLORS.series.length]; });
+    /* The target green is kept for money that is yours again (D-236), so no
+       debt is drawn in it. */
+    var palette = Charts.COLORS.series.filter(function (c) { return c !== Charts.COLORS.target; });
+    ids.forEach(function (id, i) { colourOf[id] = palette[i % palette.length]; });
     var perDebt = ids.map(function (id) {
       var pts = [[0, plan.startingBalances[id]]];
       for (var i = 0; i < plan.schedule.length; i++) {
@@ -1598,7 +1601,7 @@
     if (Money.isOk(flow)) {
       var C = Charts.COLORS;
       var nodes = [{ id: 'min', label: 'Minimums', column: 0, color: C.muted }, { id: 'extra', label: 'Extra', column: 0, color: C.contributed || C.series[2] },
-        { id: 'int', label: 'Interest', column: 2, color: C.debt }, { id: 'prin', label: 'Balance paid down', column: 2, color: C.growth }];
+        { id: 'int', label: 'Interest', column: 2, color: C.debt }, { id: 'prin', label: 'Balance paid down', column: 2, color: C.target }];
       var links = [];
       flow.debts.forEach(function (d) {
         nodes.push({ id: 'd_' + d.id, label: d.label, column: 1, color: colourOf[d.id] || C.target });
@@ -1625,7 +1628,7 @@
         return { label: i === 0 ? 'now' : monthLabel(ph.fromMonth - 1), mark: i === 0,
           parts: ids.filter(function (id) { return ph.perDebtCents[id] > 0; }).map(function (id) { return { label: plan.debtLabels[id] || 'Debt', value: ph.perDebtCents[id], color: colourOf[id] }; }) };
       });
-      cols.push({ label: monthLabel(cas.doneMonth), mark: true, parts: [{ label: 'Yours again', value: cas.freeCents, color: Charts.COLORS.growth }] });
+      cols.push({ label: monthLabel(cas.doneMonth), mark: true, parts: [{ label: 'Yours again', value: cas.freeCents, color: Charts.COLORS.target }] });
       el('cascade-chart').innerHTML = Charts.columns({ title: 'Where the payment goes as each debt falls', columns: cols, divider: cas.phases.length, captions: ['paying it down', 'free'] });
       var first = cas.phases[0];
       el('cascade-why').textContent = first.rollsOntoLabel
