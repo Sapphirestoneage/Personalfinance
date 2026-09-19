@@ -248,7 +248,7 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-250 — Deeper questions wait for their level [14430-14454] {income}
 - D-251 — Where each asset sits: the institution and the account type [14456-14486] {statement}
 
-## Dungeons & Dividends (DD-) (29)
+## Dungeons & Dividends (DD-) (30)
 
 - DD-001 — HP is measured in weeks, which is what makes §3A stop contradicting itself [14521-14573]
 - DD-002 — The eighteen scoring formulas, and why "average" means the median American [14575-14658]
@@ -279,3 +279,4 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - DD-027 — The long read: an Enneagram-shaped profile, and the one thing it refuses to do [16612-16842]
 - DD-028 — Four ways in, because one front door was asking before it gave [16844-16967] {dashboard}
 - DD-029 — HP reads the one runway function; the lump is one total, not split [16969-16987]
+- DD-030 — A sheet that looks like one, and a link that previews [16989-17082] {dashboard}
