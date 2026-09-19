@@ -53,7 +53,7 @@
   .tagline{color:var(--ice-dim);font-size:13px;letter-spacing:.1em;text-transform:uppercase;}
 
   /* ---------- Tabs ---------- */
-  .tabs{display:grid;grid-template-columns:repeat(6,1fr);background:var(--navy-900);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;max-width:980px;margin:0 auto;}
+  .tabs{display:grid;grid-template-columns:repeat(7,1fr);background:var(--navy-900);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;max-width:980px;margin:0 auto;}
   .tab-btn{font-family:'Bebas Neue',sans-serif;letter-spacing:.04em;font-size:clamp(11px,2.9vw,15px);background:none;border:none;color:var(--ice-dim);padding:15px 2px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s;text-align:center;}
   .tab-btn.active{color:var(--sapphire-soft);border-bottom-color:var(--sapphire);}
   .tab-btn:hover{color:#fff;}
@@ -250,7 +250,7 @@
   </div>
   <h1 class="title">House Lights</h1>
   <div class="tagline">Broadway ticket playbook &amp; show logbook</div>
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ice-dim);margin-top:8px;letter-spacing:.08em;">v3.1 · Aug 4 2026 · 365-show database</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ice-dim);margin-top:8px;letter-spacing:.08em;">v4.0 · Sep 2026 · <span id="dbCount">—</span>-show database</div>
 </div>
 
 <div id="onThisDay" style="display:none;max-width:980px;margin:0 auto;padding:10px 18px;background:rgba(255,201,77,0.08);border-bottom:1px solid rgba(255,201,77,0.2);font-size:12.5px;color:var(--gold);text-align:center;"></div>
@@ -260,6 +260,7 @@
   <button class="tab-btn" data-view="log">Logbook</button>
   <button class="tab-btn" data-view="showdb">Shows</button>
   <button class="tab-btn" data-view="theatres">Theatres</button>
+  <button class="tab-btn" data-view="merch">Merch</button>
   <button class="tab-btn" data-view="stats">Stats</button>
   <button class="tab-btn" data-view="results">Results</button>
 </div>
@@ -398,6 +399,14 @@
       <input type="text" id="f-actors" placeholder="Standout performers — comma separated (optional)">
       <input type="text" id="f-recBy" placeholder="Who recommended it? (optional)" autocomplete="off">
     </div>
+    <div style="margin-bottom:10px;">
+      <span class="field-lbl">🥤 Souvenirs you took home (tap any)</span>
+      <div class="vibe-chips" id="souvChips"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <input type="number" id="f-merch" placeholder="Merch spend ($, optional)" min="0" step="0.01" style="flex:1;min-width:150px;width:auto;">
+        <input type="number" id="f-cupPrice" placeholder="Cup price ($, if you got one)" min="0" step="0.01" style="flex:1;min-width:150px;width:auto;display:none;">
+      </div>
+    </div>
     <textarea id="f-notes" placeholder="Notes — best moment, would you see it again..."></textarea>
     <div style="margin-top:10px;">
       <span class="field-lbl">Photos — Playbill, seat view, stub (up to 3, stored compressed)</span>
@@ -480,6 +489,52 @@
   </div>
   <div id="theatreList"></div>
   <p style="color:var(--ice-dim);font-size:11px;margin-top:14px;">Current shows as of August 2026 (Broadway League). Tap a theatre to check it off.</p>
+</div>
+
+<!-- ============ MERCH — souvenirs & cups ============ -->
+<div class="view" id="view-merch">
+  <div class="stat-grid" id="merchStatGrid"></div>
+  <div class="panel">
+    <div class="panel-label">🥤 Your Cup Shelf</div>
+    <div id="cupShelf"></div>
+  </div>
+  <div class="panel" id="merchForm">
+    <div class="panel-label">Add a Souvenir</div>
+    <p style="font-size:11.5px;color:var(--ice-dim);margin:-4px 0 10px;line-height:1.6;">Souvenirs tagged on a Logbook entry land here automatically. Use this for anything you picked up without logging a show — a gift, a cup from a friend, a poster from a stage-door table.</p>
+    <div class="grid3">
+      <input type="text" id="m-show" list="showsDL" placeholder="Show *" autocomplete="off">
+      <select id="m-item"></select>
+      <input type="number" id="m-price" placeholder="Price ($)" min="0" step="0.01">
+    </div>
+    <div class="grid2">
+      <select id="m-theatre"><option value="">Theatre (auto-fills for known shows)</option></select>
+      <input type="date" id="m-date">
+    </div>
+    <input type="text" id="m-notes" placeholder="Notes — colour, who it was for, where it lives now (optional)" style="margin-bottom:10px;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <button type="button" class="btn" id="merchAddBtn">Add Souvenir</button>
+      <span id="merchMsg" style="font-size:12px;"></span>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">🗄 Everything You Own</div>
+    <div class="chips" id="merchFilter" style="margin-bottom:12px;"></div>
+    <div id="merchList"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">🏛 Which Theatres Have Cups — Field Guide</div>
+    <p style="font-size:11.5px;color:var(--ice-dim);margin:-4px 0 12px;line-height:1.6;">Most Broadway houses sell a show-branded souvenir cup at the bar — roughly $15–25 with a drink — and in most houses that lidded cup is the only way a drink gets to your seat. Policies and prices change with every show, so this table is yours to keep current: tap <b style="color:var(--ice);">Cups?</b> to cycle what you found, and any cup you log from a show marks its house automatically.</p>
+    <div class="chips" id="cupGuideFilter" style="margin-bottom:12px;">
+      <button type="button" class="chip on" data-f="all">All 41</button>
+      <button type="button" class="chip" data-f="yes">Confirmed cups</button>
+      <button type="button" class="chip" data-f="unknown">Unreported</button>
+      <button type="button" class="chip" data-f="Shubert">Shubert</button>
+      <button type="button" class="chip" data-f="Nederlander">Nederlander</button>
+      <button type="button" class="chip" data-f="ATG">ATG</button>
+      <button type="button" class="chip" data-f="other">Other operators</button>
+    </div>
+    <div id="cupGuide"></div>
+  </div>
 </div>
 
 <!-- ============ DIAGNOSTICS ============ -->
@@ -708,6 +763,12 @@ const BKEY='house-lights-budget-v1';
 const BDGKEY='house-lights-badges-v1';
 const ELOKEY='house-lights-elo-v1';
 const GOALKEY='house-lights-goal-v1';
+const MERCHKEY='house-lights-merch-v1';
+const CUPKEY='house-lights-cups-v1';
+const BINGOKEY='house-lights-bingo-v1';
+let merch=[];         // standalone souvenirs: {id,item,show,theatre,price,date,notes}
+let cupReports={};    // {theatreName:{cup:'yes'|'no'|'',price:'',notes:''}} — user field reports
+let bingoManual={};   // {squareId:true} — squares ticked by hand
 let shows=[];
 let visited={};   // {theatreName:true}
 let wishlist=[];  // ordered array of show names — index = priority
@@ -754,6 +815,9 @@ async function loadShows(){
   try{const v=await store.get(BDGKEY);if(v)earnedBadges=JSON.parse(v);}catch(e){}
   try{const v=await store.get(ELOKEY);if(v)elo=JSON.parse(v);}catch(e){}
   try{const v=await store.get(GOALKEY);if(v)goals=JSON.parse(v);}catch(e){}
+  try{const v=await store.get(MERCHKEY);if(v)merch=JSON.parse(v);}catch(e){}
+  try{const v=await store.get(CUPKEY);if(v)cupReports=JSON.parse(v);}catch(e){}
+  try{const v=await store.get(BINGOKEY);if(v)bingoManual=JSON.parse(v);}catch(e){}
   // probe write so the save-note is accurate before first add
   await store.set('house-lights-probe','1');
   renderAll();
@@ -775,11 +839,14 @@ async function saveBudgets(){await store.set(BKEY,JSON.stringify(budgets));}
 async function saveBadges(){await store.set(BDGKEY,JSON.stringify(earnedBadges));}
 async function saveElo(){await store.set(ELOKEY,JSON.stringify(elo));}
 async function saveGoals(){await store.set(GOALKEY,JSON.stringify(goals));}
+async function saveMerch(){await store.set(MERCHKEY,JSON.stringify(merch));}
+async function saveCupReports(){await store.set(CUPKEY,JSON.stringify(cupReports));}
+async function saveBingo(){await store.set(BINGOKEY,JSON.stringify(bingoManual));}
 
 /* ---- export / import ---- */
 function exportJSON(){
   try{
-  const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),shows,visited,wishlist,budgets},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),shows,visited,wishlist,budgets,goals,merch,cupReports,earnedBadges,elo,bingoManual},null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='house-lights-backup.json';a.click();
   toast('Backup created — check your downloads.');
@@ -947,10 +1014,18 @@ function importJSON(file){
         const have=new Set(shows.map(x=>x.id));
         data.shows.forEach(x=>{if(!have.has(x.id))shows.push(x);});
         Object.assign(visited,data.visited||{});
-        Object.assign(wishlist,data.wishlist||{});
+        (Array.isArray(data.wishlist)?data.wishlist:Object.keys(data.wishlist||{})).forEach(addWish);
         Object.assign(budgets,data.budgets||{});
+        Object.assign(goals,data.goals||{});
+        Object.assign(cupReports,data.cupReports||{});
+        Object.assign(bingoManual,data.bingoManual||{});
+        const haveM=new Set(merch.map(x=>x.id));
+        (data.merch||[]).forEach(x=>{if(!haveM.has(x.id))merch.push(x);});
+        (data.earnedBadges||[]).forEach(b=>{if(!earnedBadges.includes(b))earnedBadges.push(b);});
+        Object.assign(elo,data.elo||{});
         renderAll();
         await saveShows();await saveVisited();await saveWishlist();await saveBudgets();
+        await saveGoals();await saveMerch();await saveCupReports();await saveBadges();await saveElo();await saveBingo();
         alert('Imported! Logbook now has '+shows.length+' shows.');
       }else alert('That file doesn\'t look like a House Lights backup.');
     }catch(err){alert('Couldn\'t read that file: '+err.message);}
@@ -1421,4 +1496,1027 @@ function applyGenreHints(name){
   document.querySelectorAll('.cat-chip').forEach(c=>c.classList.toggle('on',selCats.has(c.dataset.v)));
 }
 
-/* Show → theatre
+/* ================= SHOW DATABASE ================= */
+/* Theatre short codes — every archive row names its house by one of these, so the
+   Theatres tab can stitch the archive to the checklist. Renamed houses use their
+   current name (Cort → James Earl Jones, Brooks Atkinson → Lena Horne,
+   American Airlines → Todd Haimes, Helen Hayes → Hayes, Foxwoods/Hilton → Lyric). */
+const T={
+  AH:"Al Hirschfeld Theatre",AM:"Ambassador Theatre",AW:"August Wilson Theatre",BE:"Belasco Theatre",
+  JA:"Bernard B. Jacobs Theatre",BO:"Booth Theatre",BH:"Broadhurst Theatre",BW:"Broadway Theatre",
+  CS:"Circle in the Square Theatre",BA:"Ethel Barrymore Theatre",EO:"Eugene O'Neill Theatre",
+  SC:"Gerald Schoenfeld Theatre",GE:"Gershwin Theatre",HA:"Hayes Theater",HU:"Hudson Theatre",
+  IM:"Imperial Theatre",JJ:"James Earl Jones Theatre",GO:"John Golden Theatre",LH:"Lena Horne Theatre",
+  LO:"Longacre Theatre",LF:"Lunt-Fontanne Theatre",LC:"Lyceum Theatre",LY:"Lyric Theatre",
+  MA:"Majestic Theatre",MQ:"Marquis Theatre",MI:"Minskoff Theatre",MB:"Music Box Theatre",
+  NE:"Nederlander Theatre",NS:"Neil Simon Theatre",NA:"New Amsterdam Theatre",PA:"Palace Theatre",
+  RR:"Richard Rodgers Theatre",FR:"Samuel J. Friedman Theatre",SH:"Shubert Theatre",SJ:"St. James Theatre",
+  SS:"Stephen Sondheim Theatre",S54:"Studio 54",TH:"Todd Haimes Theatre",VB:"Vivian Beaumont Theater",
+  WK:"Walter Kerr Theatre",WG:"Winter Garden Theatre"
+};
+/* Who runs each Broadway house — this decides bar policy, cup design and where the
+   merch stand is, so the cup field guide groups by it. */
+const OPERATORS={
+  Shubert:["AM","BA","BE","BO","BH","BW","JJ","GO","IM","JA","LO","LC","MA","MB","SC","SH","WG"],
+  Nederlander:["LH","GE","LF","MQ","MI","NE","NS","PA","RR"],
+  ATG:["AH","AW","EO","SJ","WK","HU","LY"],
+  Disney:["NA"],Roundabout:["TH","S54","SS"],"Manhattan Theatre Club":["FR"],
+  "Lincoln Center Theater":["VB"],"Second Stage":["HA"],Independent:["CS"]
+};
+const OPERATOR_OF={};
+Object.entries(OPERATORS).forEach(([op,codes])=>codes.forEach(c=>{OPERATOR_OF[T[c]]=op;}));
+
+/* Twenty seasons of Broadway, [title, house, year it closed]. Long-runners and
+   limited runs alike; a show that moved houses is filed under its last one. */
+const HIST=[
+["The Phantom of the Opera","MA",2023],["Cats","NS",2017],["Les Misérables","IM",2016],["Mamma Mia!","BH",2015],
+["Jersey Boys","AW",2017],["Rent","NE",2008],["Avenue Q","GO",2009],["Monty Python's Spamalot","SH",2009],
+["Hairspray","NS",2009],["Mary Poppins","NA",2013],["The Color Purple","BW",2008],["Spring Awakening","EO",2009],
+["Legally Blonde","PA",2008],["Curtains","AH",2008],["Grease","LH",2009],["Young Frankenstein","LY",2009],
+["The Little Mermaid","LF",2009],["In the Heights","RR",2011],["Xanadu","HA",2008],["[title of show]","LC",2008],
+["Passing Strange","BE",2008],["Gypsy","SJ",2009],["South Pacific","VB",2010],["Billy Elliot the Musical","IM",2012],
+["Shrek the Musical","BW",2010],["West Side Story","PA",2011],["Hair","AH",2010],["Next to Normal","BO",2011],
+["Rock of Ages","HA",2015],["9 to 5: The Musical","MQ",2009],["Memphis","SH",2012],["Fela!","EO",2011],
+["A Little Night Music","WK",2011],["Promises, Promises","BW",2011],["American Idiot","SJ",2011],
+["La Cage aux Folles","LO",2011],["Million Dollar Quartet","NE",2011],["The Addams Family","LF",2011],
+["Spider-Man: Turn Off the Dark","LY",2014],["Sister Act","BW",2012],["Priscilla Queen of the Desert","PA",2012],
+["Catch Me If You Can","NS",2011],["Anything Goes","SS",2012],["War Horse","VB",2013],["Follies","MQ",2012],
+["Bonnie & Clyde","SC",2011],["Godspell","CS",2012],["Newsies","NE",2014],["Once","JA",2015],
+["Nice Work If You Can Get It","IM",2013],["Evita","MQ",2013],["Ghost the Musical","LF",2012],
+["Peter and the Starcatcher","LH",2013],["Bring It On: The Musical","SJ",2012],["Chaplin","BA",2013],
+["Annie","PA",2014],["A Christmas Story: The Musical","LF",2012],["Kinky Boots","AH",2019],["Matilda the Musical","SH",2017],
+["Motown the Musical","LF",2015],["Pippin","MB",2015],["Rodgers + Hammerstein's Cinderella","BW",2015],["Big Fish","NS",2013],
+["First Date","LO",2014],["Beautiful: The Carole King Musical","SS",2019],["A Gentleman's Guide to Love and Murder","WK",2016],
+["After Midnight","LH",2014],["Rocky","WG",2014],["If/Then","RR",2015],["Bullets Over Broadway","SJ",2014],
+["Hedwig and the Angry Inch","BE",2015],["Cabaret (2014)","S54",2015],["Violet","TH",2014],["Holler If Ya Hear Me","PA",2014],
+["The Last Ship","NS",2015],["Side Show","SJ",2015],["On the Town","LY",2015],["Honeymoon in Vegas","NE",2015],
+["The Curious Incident of the Dog in the Night-Time","BA",2016],["It's Only a Play","JA",2015],["An American in Paris","PA",2016],
+["Fun Home","CS",2016],["Something Rotten!","SJ",2017],["Finding Neverland","LF",2016],["The King and I","VB",2016],
+["Doctor Zhivago","BW",2015],["Gigi","NS",2015],["The Visit","LC",2015],["Amazing Grace","NE",2015],
+["Spring Awakening (Deaf West)","LH",2016],["On Your Feet!","MQ",2017],["Allegiance","LO",2016],["School of Rock","WG",2019],
+["The Color Purple (2015)","JA",2017],["Fiddler on the Roof","BW",2016],["Bright Star","JJ",2016],["Disaster!","NE",2016],
+["She Loves Me","S54",2016],["American Psycho","SC",2016],["Waitress","BA",2020],["Tuck Everlasting","BH",2016],
+["Shuffle Along","MB",2016],["Paramour","LY",2017],["The Humans","SC",2017],["Eclipsed","GO",2016],
+["Holiday Inn","S54",2017],["Falsettos","WK",2017],["Natasha, Pierre & the Great Comet of 1812","IM",2017],
+["Dear Evan Hansen","MB",2022],["A Bronx Tale","LO",2018],["In Transit","CS",2017],["The Front Page","BH",2017],
+["Oh, Hello on Broadway","LC",2017],["Sunset Boulevard (2017)","PA",2017],["Come From Away","SC",2022],["Miss Saigon","BW",2018],
+["Amélie","WK",2017],["War Paint","NE",2017],["Groundhog Day","AW",2017],["Anastasia","BH",2019],
+["Charlie and the Chocolate Factory","LF",2018],["Bandstand","JA",2017],["Hello, Dolly!","SH",2018],["Indecent","JJ",2017],
+["Oslo","VB",2017],["A Doll's House, Part 2","GO",2017],["The Play That Goes Wrong","LC",2019],["Prince of Broadway","FR",2017],
+["Once on This Island","CS",2019],["The Band's Visit","BA",2019],["SpongeBob SquarePants","PA",2018],["Farinelli and the King","BE",2018],
+["Frozen","SJ",2020],["Mean Girls","AW",2020],["Carousel","IM",2018],["My Fair Lady","VB",2019],
+["Angels in America","NS",2018],["The Iceman Cometh","JA",2018],["Summer: The Donna Summer Musical","LF",2018],["Saint Joan","FR",2018],
+["Travesties","TH",2018],["Three Tall Women","GO",2018],["Children of a Lesser God","S54",2018],["Head Over Heels","HU",2019],
+["Pretty Woman: The Musical","NE",2019],["Gettin' the Band Back Together","BE",2018],["The Boys in the Band","BO",2018],["Straight White Men","HA",2018],
+["Bernhardt/Hamlet","TH",2018],["The Nap","FR",2018],["The Lifespan of a Fact","S54",2019],["The Ferryman","JA",2019],
+["The Prom","LO",2019],["The Cher Show","NS",2019],["King Kong","BW",2019],["Network","BE",2019],
+["To Kill a Mockingbird","SH",2022],["American Son","BO",2019],["The Waverly Gallery","GO",2019],["Choir Boy","FR",2019],
+["Ain't Too Proud","IM",2022],["Be More Chill","LC",2019],["Kiss Me, Kate","S54",2019],["What the Constitution Means to Me","HA",2019],
+["Oklahoma!","CS",2020],["Tootsie","MQ",2020],["Beetlejuice","MQ",2023],["Burn This","HU",2019],
+["Hillary and Clinton","GO",2019],["Ink","FR",2019],["Gary: A Sequel to Titus Andronicus","BO",2019],["All My Sons","TH",2019],
+["Sea Wall / A Life","HU",2019],["Betrayal","JA",2019],["The Great Society","VB",2019],["Derren Brown: Secret","JJ",2020],
+["Freestyle Love Supreme","BO",2022],["Linda Vista","HA",2019],["The Height of the Storm","FR",2019],["Slave Play","AW",2022],
+["The Sound Inside","S54",2020],["Tina: The Tina Turner Musical","LF",2024],["The Lightning Thief","LO",2020],["The Inheritance","BA",2020],
+["A Christmas Carol","LC",2020],["Jagged Little Pill","BH",2021],["My Name Is Lucy Barton","FR",2020],["Grand Horizons","HA",2020],
+["A Soldier's Play","TH",2020],["West Side Story (2020)","BW",2020],["Girl from the North Country","BE",2022],["Company","JA",2022],
+["Diana: The Musical","LO",2021],["Mrs. Doubtfire","SS",2022],["Caroline, or Change","S54",2022],["Pass Over","AW",2021],
+["Lackawanna Blues","FR",2021],["Chicken & Biscuits","CS",2021],["Thoughts of a Colored Man","GO",2021],["Is This a Room","LC",2021],
+["Dana H.","LC",2021],["Trouble in Mind","TH",2022],["Clyde's","HA",2022],["Flying Over Sunset","VB",2022],
+["The Lehman Trilogy","NE",2022],["Skeleton Crew","FR",2022],["The Music Man","WG",2023],["Paradise Square","BA",2022],
+["Plaza Suite","HU",2022],["Take Me Out","SC",2023],["Birthday Candles","TH",2022],["How I Learned to Drive","FR",2022],
+["The Minutes","S54",2022],["Funny Girl","AW",2023],["Macbeth","LO",2022],["A Strange Loop","LC",2023],
+["POTUS","SH",2022],["for colored girls who have considered suicide / when the rainbow is enuf","BO",2022],["Mr. Saturday Night","NE",2022],["American Buffalo","CS",2022],
+["The Skin of Our Teeth","VB",2022],["Into the Woods","SJ",2023],["The Kite Runner","HA",2022],["Cost of Living","FR",2022],
+["Death of a Salesman (2022)","HU",2023],["1776","TH",2023],["Leopoldstadt","LO",2023],["The Piano Lesson","BA",2023],
+["Topdog/Underdog","GO",2023],["Almost Famous","JA",2023],["Walking with Ghosts","MB",2022],["KPOP","CS",2022],
+["Ain't No Mo'","BE",2022],["Some Like It Hot","SH",2023],["A Beautiful Noise","BH",2024],["Ohio State Murders","JJ",2023],
+["Kimberly Akimbo","BO",2024],["Between Riverside and Crazy","HA",2023],["The Collaboration","FR",2023],["Pictures from Home","S54",2023],
+["Parade","JA",2023],["Bad Cinderella","IM",2023],["Sweeney Todd","LF",2024],["Shucked","NE",2024],
+["Life of Pi","SC",2023],["Camelot","VB",2023],["Fat Ham","TH",2023],["Prima Facie","GO",2023],
+["New York, New York","SJ",2023],["Summer, 1976","FR",2023],["Good Night, Oscar","BE",2023],["Peter Pan Goes Wrong","BA",2023],
+["Grey House","LC",2023],["Once Upon a One More Time","MQ",2023],["The Shark Is Broken","GO",2023],["Here Lies Love","BW",2023],
+["Just for Us","HU",2023],["Purlie Victorious","MB",2024],["Jaja's African Hair Braiding","FR",2023],["Gutenberg! The Musical!","JJ",2024],
+["Merrily We Roll Along","HU",2024],["Melissa Etheridge: My Window","CS",2023],["I Need That","TH",2023],["Harmony","BA",2024],
+["Spamalot (2023)","SJ",2024],["How to Dance in Ohio","BE",2024],["Appropriate","BE",2024],["Days of Wine and Roses","S54",2024],
+["Prayer for the French Republic","FR",2024],["Doubt: A Parable","TH",2024],["The Notebook","SC",2024],["Water for Elephants","IM",2024],
+["The Who's Tommy","NE",2024],["An Enemy of the People","CS",2024],["Lempicka","LO",2024],["The Wiz","MQ",2024],
+["Suffs","MB",2025],["Hell's Kitchen","SH",2026],["Cabaret at the Kit Kat Club","AW",2025],["Stereophonic","GO",2025],
+["Mother Play","HA",2024],["Patriots","BA",2024],["Illinoise","SJ",2024],["Uncle Vanya","VB",2024],
+["Mary Jane","FR",2024],["Home","TH",2024],["Job","HA",2024],["The Roommate","BO",2024],
+["McNeal","VB",2024],["Yellow Face","TH",2024],["Sunset Boulevard (2024)","SJ",2025],["Our Town","BA",2025],
+["Romeo + Juliet","CS",2025],["The Hills of California","BH",2024],["Left on Tenth","JJ",2024],["Swept Away","LO",2024],
+["Tammy Faye","PA",2024],["Death Becomes Her","LF",2026],["Elf the Musical","MQ",2025],["A Wonderful World","S54",2025],
+["Gypsy (2024)","MA",2025],["Cult of Love","HA",2025],["Eureka Day","FR",2025],["All In: Comedy About Love","HU",2025],
+["English","TH",2025],["Redwood","NE",2025],["Purpose","HA",2025],["Othello","BA",2025],
+["Glengarry Glen Ross","PA",2025],["Good Night, and Good Luck","WG",2025],["The Picture of Dorian Gray","MB",2025],["Boop! The Musical","BH",2025],
+["Smash","IM",2025],["The Last Five Years","HU",2025],["Real Women Have Curves","JJ",2025],["Floyd Collins","VB",2025],
+["Dead Outlaw","LO",2025],["Pirates! The Penzance Musical","TH",2025],["John Proctor Is the Villain","BO",2025],["Call Me Izzy","S54",2025],
+["Mamma Mia! (2025)","WG",2026],["Punch","FR",2025],["Art","MB",2025],["Chess","IM",2026],
+["Waiting for Godot","HU",2026],["Liberation","JJ",2025],["Oedipus","S54",2026],["Little Bear Ridge Road","BO",2026],
+["The Queen of Versailles","SJ",2026],["Beetlejuice (2025)","PA",2026]
+];
+const ALL_SHOWS=[];
+const SHOW_MAP={};
+function buildShowDB(){
+  THEATRES.forEach(t=>{
+    const s=(t.s||'').trim();
+    if(/^(currently dark|multiple|varies|season varies)/i.test(s))return;
+    let m=s.match(/^Upcoming:\s*(.+)$/i);
+    if(m){ALL_SHOWS.push({n:m[1].trim(),th:t.n,y:'Now',soon:true});return;}
+    m=s.match(/^(.+?)\s*\(next:\s*(.+?)\)\s*$/);
+    if(m){ALL_SHOWS.push({n:m[1].trim(),th:t.n,y:'Now'});ALL_SHOWS.push({n:m[2].trim(),th:t.n,y:'Now',soon:true});return;}
+    ALL_SHOWS.push({n:s,th:t.n,y:'Now'});
+  });
+  HIST.forEach(h=>ALL_SHOWS.push({n:h[0],th:T[h[1]]||h[1],y:h[2]}));
+  ALL_SHOWS.forEach(s=>{SHOW_MAP[s.n.toLowerCase()]=s.th;});
+  const dc=document.getElementById('dbCount');if(dc)dc.textContent=ALL_SHOWS.length;
+}
+
+/* ================= SHARED HELPERS ================= */
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function isUpcoming(x){return !!x.date&&x.date>todayISO();}
+function seenShows(){return shows.filter(x=>!isUpcoming(x));}
+function fmt$(n){if(n==null||isNaN(n))return '—';return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});}
+function fmtDate(d){if(!d)return '';const p=d.split('-').map(Number);if(p.length<3||isNaN(p[0]))return d;return new Date(p[0],p[1]-1,p[2]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function entryCost(x){return x.price==null||x.price===''?null:Number(x.price)*(x.qty||1);}
+function entrySavings(x){return x.price!=null&&x.face!=null&&x.face!==''?(Number(x.face)-Number(x.price))*(x.qty||1):null;}
+function photosOf(x){return x.photos||(x.photo?[x.photo]:[]);}
+function newId(p){return (p||'s')+Date.now()+Math.random().toString(36).slice(2,6);}
+function uniqueNames(list){const seen=new Set();return list.filter(x=>{const k=x.show.toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});}
+function tally(list,keyFn){const t={};list.forEach(x=>{const ks=keyFn(x);(Array.isArray(ks)?ks:[ks]).forEach(k=>{if(k===undefined||k===null||k==='')return;t[k]=(t[k]||0)+1;});});return Object.entries(t).sort((a,b)=>b[1]-a[1]);}
+/* One bar chart, everywhere. pairs = [[label,value]], opts.fmt formats the number, opts.gold swaps the fill. */
+function bars(id,pairs,opts){
+  opts=opts||{};
+  const el=document.getElementById(id);if(!el)return;
+  if(!pairs.length){el.innerHTML='<div class="empty" style="border:none;padding:20px;">'+esc(opts.empty||'Nothing to chart yet.')+'</div>';return;}
+  const max=Math.max(...pairs.map(p=>p[1]))||1;
+  el.innerHTML=pairs.slice(0,opts.limit||12).map(p=>`<div class="bar-row"><span title="${esc(p[0])}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p[0])}</span><div class="bar-track"><div class="bar-fill${opts.gold?' gold':''}" style="width:${Math.max(2,p[1]/max*100)}%"></div></div><span class="bar-num">${opts.fmt?opts.fmt(p[1]):p[1]}</span></div>`).join('');
+}
+function showUndo(entry){
+  let t=document.getElementById('hlToast');
+  toast('Removed '+entry.show+'.',7000);
+  t=document.getElementById('hlToast');
+  const b=document.createElement('button');
+  b.type='button';b.textContent='Undo';b.className='chip on';b.style.marginLeft='10px';
+  b.addEventListener('click',async()=>{shows.push(entry);renderAll();await saveShows();t.style.display='none';});
+  t.appendChild(b);
+}
+function renderAll(){
+  renderShowPicker();
+  renderLog();
+  renderShowDB();
+  renderTheatres();
+  renderMerch();
+  renderStats();
+  renderResults();
+}
+
+/* ================= LOGBOOK — form ================= */
+/* LIVE-FORM: built once. Every input on the log form is in the HTML; the code only
+   reads and writes .value, so a tap never lands on a node that has been replaced. */
+const SOUVENIRS=["Playbill","Souvenir cup","T-shirt","Hoodie","Magnet","Poster","Program","Pin","Ornament","Tote bag","Cast recording","Other"];
+const SOUV_EMOJI={"Playbill":"📖","Souvenir cup":"🥤","T-shirt":"👕","Hoodie":"🧥","Magnet":"🧲","Poster":"🖼","Program":"📕","Pin":"📌","Ornament":"🎄","Tote bag":"👜","Cast recording":"💿","Other":"🎁"};
+const SIMPLE_METHODS=["Lottery","Rush / Same-day","TKTS","Discount code / app","Membership (HipTix, TDF, etc.)","Free / Comp / Ushered","Credit card perk","Gift","Full price","Other"];
+const selSouv=new Set();
+let pendingPhotos=[];
+let editingId=null;
+let quickMode=false;
+let logFilterVal='all';
+const $=id=>document.getElementById(id);
+
+function initLog(){
+  // pickers
+  $('f-theatre').innerHTML='<option value="">Theatre (auto-fills for current shows)</option>'+THEATRES.map(t=>`<option>${esc(t.n)}</option>`).join('');
+  $('f-method').innerHTML='<option value="">How\'d you get the ticket?</option><optgroup label="Quick">'+SIMPLE_METHODS.map(m=>`<option>${esc(m)}</option>`).join('')+'</optgroup><optgroup label="Specific (from the Guide)">'+METHODS.map(m=>`<option>${esc(m.m)}</option>`).join('')+'</optgroup>';
+  $('showsDL').innerHTML=ALL_SHOWS.map(s=>`<option value="${esc(s.n)}">`).join('');
+  Object.entries(CAT_GROUPS).forEach(([gid,list])=>{
+    $(gid).innerHTML=list.map(c=>`<button type="button" class="chip cat-chip" data-v="${esc(c)}">${esc(c)}</button>`).join('');
+  });
+  document.querySelectorAll('.cat-chip').forEach(c=>c.addEventListener('click',()=>{
+    const v=c.dataset.v;selCats.has(v)?selCats.delete(v):selCats.add(v);c.classList.toggle('on',selCats.has(v));
+  }));
+  $('vibeChips').innerHTML=VIBES.map(v=>`<button type="button" class="chip vibe-chip" data-v="${esc(v)}">${esc(v)}</button>`).join('');
+  document.querySelectorAll('.vibe-chip').forEach(c=>c.addEventListener('click',()=>{
+    const v=c.dataset.v;selVibes.has(v)?selVibes.delete(v):selVibes.add(v);c.classList.toggle('on',selVibes.has(v));
+  }));
+  $('souvChips').innerHTML=SOUVENIRS.map(v=>`<button type="button" class="chip souv-chip" data-v="${esc(v)}">${SOUV_EMOJI[v]} ${esc(v)}</button>`).join('');
+  document.querySelectorAll('.souv-chip').forEach(c=>c.addEventListener('click',()=>{
+    const v=c.dataset.v;selSouv.has(v)?selSouv.delete(v):selSouv.add(v);c.classList.toggle('on',selSouv.has(v));
+    $('f-cupPrice').style.display=selSouv.has('Souvenir cup')?'':'none';
+  }));
+  document.querySelectorAll('#stars .star').forEach(s=>s.addEventListener('click',()=>{
+    curRating=curRating===+s.dataset.v?0:+s.dataset.v;paintStars();
+  }));
+  $('f-company').addEventListener('change',()=>{$('f-withWho').style.display=$('f-company').value==='Solo'?'none':'';});
+  $('detailsToggle').addEventListener('click',()=>{
+    const open=$('detailsSection').style.display!=='none';
+    $('detailsSection').style.display=open?'none':'';
+    $('detailsToggle').textContent=open?'＋ Add details — rating, who with, vibes, photo...':'－ Hide details';
+  });
+  $('quickToggle').addEventListener('click',()=>{
+    quickMode=!quickMode;
+    $('quickToggle').textContent='⚡ Quick-add: '+(quickMode?'ON':'OFF');
+    $('quickToggle').classList.toggle('on',quickMode);
+    $('quickHint').style.display=quickMode?'':'none';
+  });
+  $('showSearch').addEventListener('input',renderShowPicker);
+  $('f-show').addEventListener('input',()=>{onShowTyped($('f-show').value.trim());});
+  $('f-photo').addEventListener('change',async e=>{
+    const files=[...e.target.files].slice(0,3-pendingPhotos.length);
+    for(const f of files){try{pendingPhotos.push(await compressImage(f));}catch(err){}}
+    e.target.value='';paintPhotoThumbs();
+  });
+  $('addBtn').addEventListener('click',submitEntry);
+  $('cancelEditBtn').addEventListener('click',()=>{clearForm();toast('Edit cancelled.');});
+  // lightbox lives outside the form so it can sit over every tab
+  const lb=document.createElement('div');lb.id='lightbox';lb.innerHTML='<img alt="">';
+  lb.addEventListener('click',()=>{lb.style.display='none';});
+  document.body.appendChild(lb);
+}
+function paintStars(){document.querySelectorAll('#stars .star').forEach(s=>s.classList.toggle('on',+s.dataset.v<=curRating));}
+function paintPhotoThumbs(){
+  $('photoThumbs').innerHTML=pendingPhotos.map((p,i)=>`<span style="position:relative;display:inline-block;"><img src="${p}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--line);"><button type="button" class="ph-rm" data-i="${i}" style="position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;line-height:1;">✕</button></span>`).join('');
+  $('photoStatus').textContent=pendingPhotos.length?pendingPhotos.length+' of 3 photos attached':'';
+  document.querySelectorAll('.ph-rm').forEach(b=>b.addEventListener('click',()=>{pendingPhotos.splice(+b.dataset.i,1);paintPhotoThumbs();}));
+}
+function compressImage(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const max=520;const sc=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.72));
+    };
+    img.onerror=rej;img.src=url;
+  });
+}
+function onShowTyped(name){
+  const th=SHOW_MAP[name.toLowerCase()];
+  if(th){$('f-theatre').value=th;$('f-type').value=theatreCat(th)||'';}
+  applyGenreHints(name);
+  renderSmartFill(name);
+  document.querySelectorAll('#showPicker .show-chip').forEach(c=>c.classList.toggle('picked',c.dataset.s.toLowerCase()===name.toLowerCase()));
+}
+function pickShow(name){$('f-show').value=name;onShowTyped(name);}
+/* The likely deal for this show, from the Guide — one tap fills method + price. */
+function renderSmartFill(name){
+  const box=$('smartFill');
+  if(!name){box.style.display='none';return;}
+  const low=name.toLowerCase();
+  const opts=[];
+  if(/hamilton/.test(low))opts.push(['Hamilton Lottery ($10 seats)',10]);
+  opts.push(['Broadway Direct Lottery',45],['TodayTix (Rush + Discount)',40],['TKTS Booth — Times Square',85],['Standing Room Only (SRO)',35],['Full price',null]);
+  box.style.display='';
+  $('smartBtns').innerHTML=opts.map(o=>`<button type="button" class="chip sf-btn" data-m="${esc(o[0])}" data-p="${o[1]==null?'':o[1]}">${esc(o[0].replace(/ \(.*\)$/,''))}${o[1]!=null?' · ~$'+o[1]:''}</button>`).join('');
+  document.querySelectorAll('.sf-btn').forEach(b=>b.addEventListener('click',()=>{
+    $('f-method').value=b.dataset.m;
+    if(b.dataset.p!==''&&!$('f-price').value)$('f-price').value=b.dataset.p;
+    document.querySelectorAll('.sf-btn').forEach(x=>x.classList.toggle('on',x===b));
+  }));
+}
+function renderShowPicker(){
+  const q=$('showSearch').value.trim().toLowerCase();
+  let list=q?ALL_SHOWS.filter(s=>s.n.toLowerCase().includes(q)).slice(0,60):ALL_SHOWS.filter(s=>s.y==='Now'&&!s.soon);
+  const cur=$('f-show').value.trim().toLowerCase();
+  $('showPicker').innerHTML=list.length?list.map(s=>{
+    const logged=!!loggedEntryFor(s.n);
+    return `<button type="button" class="show-chip${logged?' logged':''}${cur===s.n.toLowerCase()?' picked':''}" data-s="${esc(s.n)}">${logged?'✓ ':''}${esc(s.n)}${s.y!=='Now'?` <span style="opacity:.55;font-size:10px;">'${String(s.y).slice(2)}</span>`:''}</button>`;
+  }).join(''):'<span style="font-size:12px;color:var(--ice-dim);">No match — just type the name in the box below.</span>';
+  document.querySelectorAll('#showPicker .show-chip').forEach(c=>c.addEventListener('click',()=>{
+    quickMode?quickAdd(c.dataset.s):pickShow(c.dataset.s);
+  }));
+}
+function baseEntry(name,th){
+  return {id:newId(),show:name,date:'',price:null,qty:1,theatre:th||'',method:'',type:theatreCat(th),rating:0,company:'Solo',withWho:[],recBy:'',vibes:[],cats:GENRE_HINTS[name.toLowerCase()]||[],seat:'',seatParts:{},face:null,actors:[],notes:'',photos:[],souvenirs:[],merchSpend:null,cupPrice:null};
+}
+async function quickAdd(name){
+  const th=SHOW_MAP[name.toLowerCase()]||'';
+  shows.push(baseEntry(name,th));
+  if(th&&!visited[th])visited[th]=true;
+  if(isWished(name))removeWish(name);
+  renderAll();await saveShows();await saveVisited();await saveWishlist();
+  toast('⚡ Logged '+name+'. Tap ✎ on it later to add details.');
+}
+function readForm(){
+  const name=$('f-show').value.trim();
+  const priceRaw=$('f-price').value.trim();
+  const faceRaw=$('f-face').value.trim().replace(/[$,]/g,'');
+  const merchRaw=$('f-merch').value.trim();
+  const cupRaw=$('f-cupPrice').value.trim();
+  const sp={level:$('f-seatLevel').value,side:$('f-seatSide').value,depth:$('f-seatDepth').value,num:$('f-seatNum').value.trim()};
+  const th=$('f-theatre').value;
+  return {
+    show:name,date:$('f-date').value,
+    price:priceRaw===''?null:parseFloat(priceRaw),
+    qty:Math.max(1,parseInt($('f-qty').value)||1),
+    face:faceRaw===''?null:parseFloat(faceRaw),
+    theatre:th,method:$('f-method').value,type:$('f-type').value||theatreCat(th),
+    rating:curRating,company:$('f-company').value,
+    withWho:$('f-company').value==='Solo'?[]:splitList($('f-withWho').value),
+    recBy:$('f-recBy').value.trim(),
+    vibes:[...selVibes],cats:[...selCats],actors:splitList($('f-actors').value),
+    seatParts:sp,seat:[sp.level,sp.depth,sp.side,sp.num].filter(Boolean).join(' '),
+    notes:$('f-notes').value.trim(),photos:pendingPhotos.slice(),
+    souvenirs:[...selSouv],
+    merchSpend:merchRaw===''?null:parseFloat(merchRaw),
+    cupPrice:selSouv.has('Souvenir cup')&&cupRaw!==''?parseFloat(cupRaw):null
+  };
+}
+async function submitEntry(){
+  const data=readForm();
+  const msg=$('formMsg');
+  if(!data.show){msg.style.color='var(--red)';msg.textContent='Name the show first.';$('f-show').focus();return;}
+  if(data.price!=null&&isNaN(data.price)){msg.style.color='var(--red)';msg.textContent='That price isn\'t a number.';return;}
+  if(editingId){
+    const i=shows.findIndex(x=>x.id===editingId);
+    if(i>=0)shows[i]=Object.assign({},shows[i],data);
+    toast('Saved changes to '+data.show+'.');
+  }else{
+    shows.push(Object.assign({id:newId()},data));
+    toast(isUpcoming(data)?'🎟 '+data.show+' is on the countdown.':'Added '+data.show+' to your logbook.');
+  }
+  if(data.theatre&&!visited[data.theatre])visited[data.theatre]=true;
+  if(data.souvenirs.includes('Souvenir cup')&&data.theatre)noteCupAt(data.theatre,data.cupPrice);
+  if(isWished(data.show))removeWish(data.show);
+  clearForm();
+  renderAll();
+  await saveShows();await saveVisited();await saveWishlist();await saveCupReports();
+}
+function clearForm(){
+  ['f-show','f-date','f-price','f-qty','f-face','f-withWho','f-recBy','f-actors','f-seatNum','f-notes','f-merch','f-cupPrice'].forEach(id=>{$(id).value='';});
+  ['f-theatre','f-method','f-type','f-seatLevel','f-seatSide','f-seatDepth'].forEach(id=>{$(id).value='';});
+  $('f-company').value='Solo';$('f-withWho').style.display='none';$('f-cupPrice').style.display='none';
+  curRating=0;paintStars();
+  selVibes.clear();selCats.clear();selSouv.clear();
+  document.querySelectorAll('.vibe-chip,.cat-chip,.souv-chip,.sf-btn').forEach(c=>c.classList.remove('on'));
+  pendingPhotos=[];paintPhotoThumbs();
+  $('smartFill').style.display='none';
+  editingId=null;
+  $('addBtn').textContent='Add to Logbook';
+  $('cancelEditBtn').style.display='none';
+  $('formMsg').textContent='';
+  document.querySelectorAll('#showPicker .show-chip').forEach(c=>c.classList.remove('picked'));
+}
+function editEntry(id){
+  const x=shows.find(e=>e.id===id);if(!x)return;
+  clearForm();
+  editingId=id;
+  $('f-show').value=x.show;$('f-date').value=x.date||'';
+  $('f-price').value=x.price==null?'':x.price;$('f-qty').value=x.qty||1;
+  $('f-face').value=x.face==null?'':x.face;
+  $('f-theatre').value=x.theatre||'';$('f-method').value=x.method||'';$('f-type').value=x.type||'';
+  curRating=x.rating||0;paintStars();
+  $('f-company').value=x.company||'Solo';$('f-withWho').style.display=$('f-company').value==='Solo'?'none':'';
+  $('f-withWho').value=(x.withWho||[]).join(', ');
+  $('f-recBy').value=x.recBy||'';$('f-actors').value=(x.actors||[]).join(', ');
+  const sp=x.seatParts||{};
+  $('f-seatLevel').value=sp.level||'';$('f-seatSide').value=sp.side||'';$('f-seatDepth').value=sp.depth||'';$('f-seatNum').value=sp.num||(!sp.level?x.seat||'':'');
+  $('f-notes').value=x.notes||'';
+  (x.vibes||[]).forEach(v=>selVibes.add(v));(x.cats||[]).forEach(v=>selCats.add(v));(x.souvenirs||[]).forEach(v=>selSouv.add(v));
+  document.querySelectorAll('.vibe-chip').forEach(c=>c.classList.toggle('on',selVibes.has(c.dataset.v)));
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.toggle('on',selCats.has(c.dataset.v)));
+  document.querySelectorAll('.souv-chip').forEach(c=>c.classList.toggle('on',selSouv.has(c.dataset.v)));
+  $('f-merch').value=x.merchSpend==null?'':x.merchSpend;
+  $('f-cupPrice').style.display=selSouv.has('Souvenir cup')?'':'none';$('f-cupPrice').value=x.cupPrice==null?'':x.cupPrice;
+  pendingPhotos=photosOf(x).slice();paintPhotoThumbs();
+  renderSmartFill(x.show);
+  $('detailsSection').style.display='';$('detailsToggle').textContent='－ Hide details';
+  $('addBtn').textContent='Save Changes';$('cancelEditBtn').style.display='';
+  $('formMsg').style.color='var(--gold)';$('formMsg').textContent='Editing "'+x.show+'"';
+  $('addForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function deleteEntry(id){
+  const x=shows.find(e=>e.id===id);if(!x)return;
+  shows=shows.filter(e=>e.id!==id);
+  renderAll();await saveShows();
+  showUndo(x);
+}
+function starStr(n){return n?'★'.repeat(n)+'☆'.repeat(5-n):'';}
+function entryHTML(x,count){
+  const cost=entryCost(x),sav=entrySavings(x);
+  const ph=photosOf(x);
+  const meta=[
+    x.date?fmtDate(x.date):'no date yet',
+    x.theatre,x.type&&x.type!==theatreCat(x.theatre)?x.type:'',x.method,x.seat,
+    x.company&&x.company!=='Solo'?x.company+((x.withWho||[]).length?' — '+x.withWho.join(', '):''):(x.company==='Solo'?'Solo':''),
+    x.recBy?'rec. by '+x.recBy:'',
+    (x.actors||[]).length?'⭐ '+x.actors.join(', '):''
+  ].filter(Boolean).map(esc).join(' · ');
+  const souv=(x.souvenirs||[]).map(s=>`<span class="le-vibe" style="border-color:rgba(255,201,77,.3);color:var(--gold);background:rgba(255,201,77,.08);">${SOUV_EMOJI[s]||'🎁'} ${esc(s)}</span>`).join('');
+  return `<div class="log-entry" data-id="${x.id}">
+    <div class="le-body">
+      <div class="le-title">${esc(x.show)}${count>1?`<span class="le-count">×${count}</span>`:''}${isUpcoming(x)?' <span class="le-count" style="background:var(--green);">UPCOMING</span>':''}</div>
+      ${x.rating?`<div class="le-stars">${starStr(x.rating)}</div>`:''}
+      <div class="le-meta">${meta}</div>
+      ${(x.vibes||[]).length||souv?`<div class="le-vibes">${(x.vibes||[]).map(v=>`<span class="le-vibe">${esc(v)}</span>`).join('')}${souv}</div>`:''}
+      ${x.notes?`<div class="le-meta" style="color:var(--ice);margin-top:6px;font-style:italic;">“${esc(x.notes)}”</div>`:''}
+      ${sav!=null&&sav>0?`<div class="le-meta" style="color:var(--green);">Saved ${fmt$(sav)} vs face</div>`:''}
+    </div>
+    ${ph.length?`<div class="le-photos">${ph.map(p=>`<img src="${p}" alt="" class="le-photo">`).join('')}</div>`:''}
+    <div style="text-align:right;">
+      <div class="le-price">${cost==null?'<span style="color:var(--ice-dim);font-size:11px;">no price</span>':fmt$(cost)}</div>
+      ${cost!=null&&(x.qty||1)>1?`<div style="font-size:10px;color:var(--ice-dim);">${x.qty} × ${fmt$(x.price)}</div>`:''}
+      ${x.merchSpend?`<div style="font-size:10px;color:var(--gold);">+${fmt$(x.merchSpend)} merch</div>`:''}
+      <button type="button" class="le-edit" data-id="${x.id}" title="Edit">✎</button><button type="button" class="le-del" data-id="${x.id}" title="Delete">✕</button>
+    </div>
+  </div>`;
+}
+function renderLog(){
+  const counts={};shows.forEach(x=>{const k=x.show.toLowerCase();counts[k]=(counts[k]||0)+1;});
+  const up=shows.filter(isUpcoming).sort((a,b)=>a.date.localeCompare(b.date));
+  $('upcomingPanel').style.display=up.length?'':'none';
+  const t0=new Date(todayISO());
+  $('upcomingList').innerHTML=up.map(x=>{
+    const days=Math.round((new Date(x.date)-t0)/86400000);
+    return `<div class="log-entry" data-id="${x.id}" style="padding:12px 16px 12px 20px;">
+      <div class="le-body"><div class="le-title">${esc(x.show)}</div><div class="le-meta">${fmtDate(x.date)}${x.theatre?' · '+esc(x.theatre):''}${x.seat?' · '+esc(x.seat):''}</div></div>
+      <div style="text-align:right;"><div class="le-price" style="color:var(--green);">${days===0?'TONIGHT':days===1?'tomorrow':days+' days'}</div>
+      <button type="button" class="le-edit" data-id="${x.id}" title="Edit">✎</button><button type="button" class="le-del" data-id="${x.id}" title="Delete">✕</button></div>
+    </div>`;
+  }).join('');
+  // filters: all · by year · five stars · needs details
+  const seen=seenShows();
+  const years=[...new Set(seen.map(x=>(x.date||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  const chips=[['all','All'],...years.map(y=>[y,y]),['five','★★★★★'],['bare','Needs details']];
+  if(!chips.some(c=>c[0]===logFilterVal))logFilterVal='all';
+  $('logFilter').innerHTML=chips.map(c=>`<button type="button" class="chip${logFilterVal===c[0]?' on':''}" data-f="${c[0]}">${c[1]}</button>`).join('');
+  document.querySelectorAll('#logFilter .chip').forEach(c=>c.addEventListener('click',()=>{logFilterVal=c.dataset.f;renderLog();}));
+  let list=seen;
+  if(logFilterVal==='five')list=list.filter(x=>x.rating===5);
+  else if(logFilterVal==='bare')list=list.filter(isBareEntry);
+  else if(logFilterVal!=='all')list=list.filter(x=>(x.date||'').startsWith(logFilterVal));
+  list=list.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.id.localeCompare(a.id));
+  $('logHeader').textContent=`Your Shows — ${seen.length} logged · ${uniqueNames(seen).length} unique`;
+  $('logList').innerHTML=list.length?list.map(x=>entryHTML(x,counts[x.show.toLowerCase()])).join('')
+    :`<div class="empty">${shows.length?'Nothing matches this filter.':'No shows yet. Tap a current show above, or search 20 years of Broadway. ⚡ Quick-add logs it in one tap.'}</div>`;
+  document.querySelectorAll('.le-edit').forEach(b=>b.addEventListener('click',()=>editEntry(b.dataset.id)));
+  document.querySelectorAll('.le-del').forEach(b=>b.addEventListener('click',()=>deleteEntry(b.dataset.id)));
+  document.querySelectorAll('.le-photo').forEach(im=>im.addEventListener('click',()=>{
+    const lb=$('lightbox');lb.querySelector('img').src=im.src;lb.style.display='flex';
+  }));
+}
+function renderOnThisDay(){
+  const el=$('onThisDay');if(!el)return;
+  const md=todayISO().slice(5);const yr=+todayISO().slice(0,4);
+  const hits=seenShows().filter(x=>x.date&&x.date.slice(5)===md&&+x.date.slice(0,4)<yr);
+  if(!hits.length){el.style.display='none';return;}
+  el.style.display='';
+  el.innerHTML='📅 On this day: '+hits.map(x=>`<b>${esc(x.show)}</b> (${yr-+x.date.slice(0,4)} yr${yr-+x.date.slice(0,4)===1?'':'s'} ago${x.theatre?', '+esc(x.theatre):''})`).join(' · ');
+}
+
+/* ================= MERCH — souvenirs & cups ================= */
+/* LIVE-FORM: built once. The Add-a-Souvenir controls are in the HTML; the code only
+   fills their option lists at start-up and reads/writes .value afterwards. The cup
+   field guide's per-theatre inputs write straight to cupReports on change and never
+   trigger a rebuild of the list they sit in. */
+let merchFilterVal='all';
+let cupGuideVal='all';
+function noteCupAt(theatre,price){
+  const r=cupReports[theatre]||{cup:'',price:'',notes:''};
+  r.cup='yes';
+  if(price!=null&&price!==''&&!r.price)r.price=price;
+  cupReports[theatre]=r;
+}
+/* One flat list of everything owned: souvenirs tagged on a logbook entry, plus standalone items. */
+function allSouvenirs(){
+  const out=[];
+  shows.forEach(x=>(x.souvenirs||[]).forEach(s=>out.push({id:x.id+':'+s,item:s,show:x.show,theatre:x.theatre||'',price:s==='Souvenir cup'?x.cupPrice:null,date:x.date||'',notes:'',entryId:x.id})));
+  merch.forEach(m=>out.push(Object.assign({},m)));
+  return out.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+}
+function merchSpendTotal(){
+  let t=0;
+  shows.forEach(x=>{t+=x.merchSpend!=null?Number(x.merchSpend):(x.cupPrice!=null?Number(x.cupPrice):0);});
+  merch.forEach(m=>{t+=Number(m.price)||0;});
+  return t;
+}
+function cupsOwned(){return allSouvenirs().filter(s=>s.item==='Souvenir cup');}
+function cupStatus(th){
+  const r=cupReports[th];
+  if(r&&r.cup)return r.cup;
+  return cupsOwned().some(c=>c.theatre===th)?'yes':'';
+}
+function initMerch(){
+  $('m-item').innerHTML=SOUVENIRS.map(s=>`<option${s==='Souvenir cup'?' selected':''}>${esc(s)}</option>`).join('');
+  $('m-theatre').innerHTML='<option value="">Theatre (auto-fills for known shows)</option>'+THEATRES.map(t=>`<option>${esc(t.n)}</option>`).join('');
+  $('m-show').addEventListener('input',()=>{const th=SHOW_MAP[$('m-show').value.trim().toLowerCase()];if(th)$('m-theatre').value=th;});
+  $('merchAddBtn').addEventListener('click',async()=>{
+    const show=$('m-show').value.trim();
+    const msg=$('merchMsg');
+    if(!show){msg.style.color='var(--red)';msg.textContent='Which show is it from?';return;}
+    const pr=$('m-price').value.trim();
+    const item={id:newId('m'),item:$('m-item').value,show,theatre:$('m-theatre').value,price:pr===''?null:parseFloat(pr),date:$('m-date').value,notes:$('m-notes').value.trim()};
+    merch.push(item);
+    if(item.item==='Souvenir cup'&&item.theatre)noteCupAt(item.theatre,item.price);
+    ['m-show','m-price','m-date','m-notes'].forEach(id=>{$(id).value='';});$('m-theatre').value='';
+    msg.textContent='';
+    renderAll();await saveMerch();await saveCupReports();
+    toast((SOUV_EMOJI[item.item]||'🎁')+' Added '+item.item+' from '+show+'.');
+  });
+  document.querySelectorAll('#cupGuideFilter .chip').forEach(ch=>ch.addEventListener('click',()=>{
+    document.querySelectorAll('#cupGuideFilter .chip').forEach(c2=>c2.classList.remove('on'));
+    ch.classList.add('on');cupGuideVal=ch.dataset.f;renderCupGuide();
+  }));
+}
+function renderMerchStats(){
+  const all=allSouvenirs(),cups=cupsOwned();
+  const byItem=tally(all,s=>s.item);
+  const confirmed=THEATRES.filter(t=>t.c==='Broadway'&&cupStatus(t.n)==='yes').length;
+  $('merchStatGrid').innerHTML=[
+    [all.length,'souvenirs owned'],[cups.length,'cups on the shelf',true],[fmt$(merchSpendTotal()),'spent on merch',true],
+    [confirmed+' / 41','houses with cups confirmed'],[byItem.length?byItem[0][0]:'—','most collected']
+  ].map(s=>`<div class="stat-card"><div class="num${s[2]?' gold':''}">${esc(String(s[0]))}</div><div class="lbl">${s[1]}</div></div>`).join('');
+}
+function renderMerch(){
+  renderMerchStats();
+  // the shelf
+  const cups=cupsOwned();
+  $('cupShelf').innerHTML=cups.length
+    ?`<div style="display:flex;flex-wrap:wrap;gap:10px;padding:14px 10px 0;border-bottom:6px solid var(--navy-600);border-radius:0 0 4px 4px;">${cups.map(c=>`<div style="text-align:center;width:96px;padding:8px 4px;background:rgba(47,107,255,.08);border:1px solid var(--line);border-radius:10px 10px 4px 4px;">
+        <div style="font-size:34px;line-height:1;">🥤</div>
+        <div style="font-size:11px;font-weight:700;color:#fff;margin-top:6px;line-height:1.25;">${esc(c.show)}</div>
+        <div style="font-size:9.5px;color:var(--ice-dim);margin-top:3px;">${esc((c.theatre||'').replace(/ Theat(re|er)$/,''))}</div>
+        ${c.price!=null?`<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);margin-top:3px;">${fmt$(c.price)}</div>`:''}
+      </div>`).join('')}</div>
+      <div style="font-size:11px;color:var(--ice-dim);margin-top:10px;">${cups.length} cup${cups.length===1?'':'s'} · ${[...new Set(cups.map(c=>c.theatre).filter(Boolean))].length} different houses${cups.some(c=>c.price!=null)?' · '+fmt$(cups.reduce((a,c)=>a+(Number(c.price)||0),0))+' in cups':''}</div>`
+    :'<div class="empty" style="padding:28px;">No cups yet. Tag <b>🥤 Souvenir cup</b> on a show in the Logbook, or add one below, and it goes on the shelf.</div>';
+  // everything owned
+  const all=allSouvenirs();
+  const kinds=[...new Set(all.map(s=>s.item))];
+  if(merchFilterVal!=='all'&&!kinds.includes(merchFilterVal))merchFilterVal='all';
+  $('merchFilter').innerHTML=[['all','All ('+all.length+')'],...kinds.map(k=>[k,(SOUV_EMOJI[k]||'🎁')+' '+k])].map(c=>`<button type="button" class="chip${merchFilterVal===c[0]?' on':''}" data-f="${esc(c[0])}">${esc(c[1])}</button>`).join('');
+  document.querySelectorAll('#merchFilter .chip').forEach(c=>c.addEventListener('click',()=>{merchFilterVal=c.dataset.f;renderMerch();}));
+  const list=merchFilterVal==='all'?all:all.filter(s=>s.item===merchFilterVal);
+  $('merchList').innerHTML=list.length?list.map(s=>`<div class="th-row" style="cursor:default;">
+      <div style="font-size:22px;min-width:30px;text-align:center;">${SOUV_EMOJI[s.item]||'🎁'}</div>
+      <div style="flex:1;"><div class="th-name">${esc(s.item)} — ${esc(s.show)}</div><div class="th-show">${[s.theatre,s.date?fmtDate(s.date):'',s.notes].filter(Boolean).map(esc).join(' · ')||'<span style="opacity:.6">no details</span>'}</div></div>
+      ${s.price!=null?`<span class="le-price" style="font-size:13px;">${fmt$(s.price)}</span>`:''}
+      ${s.entryId?`<button type="button" class="th-hist mr-edit" data-id="${s.entryId}" title="Edit the logbook entry">✎ entry</button>`:`<button type="button" class="sdb-minus mr-del" data-id="${s.id}" title="Remove">−</button>`}
+    </div>`).join('')
+    :'<div class="empty" style="padding:24px;">Nothing here yet.</div>';
+  document.querySelectorAll('.mr-edit').forEach(b=>b.addEventListener('click',()=>{switchView('log');editEntry(b.dataset.id);}));
+  document.querySelectorAll('.mr-del').forEach(b=>b.addEventListener('click',async()=>{
+    const item=merch.find(m=>m.id===b.dataset.id);
+    merch=merch.filter(m=>m.id!==b.dataset.id);
+    renderAll();await saveMerch();
+    if(item)toast('Removed '+item.item+' from '+item.show+'.');
+  }));
+  renderCupGuide();
+}
+function renderCupGuide(){
+  const cups=cupsOwned();
+  let list=THEATRES.filter(t=>t.c==='Broadway');
+  if(cupGuideVal==='yes')list=list.filter(t=>cupStatus(t.n)==='yes');
+  else if(cupGuideVal==='unknown')list=list.filter(t=>!cupStatus(t.n));
+  else if(cupGuideVal==='other')list=list.filter(t=>!['Shubert','Nederlander','ATG'].includes(OPERATOR_OF[t.n]));
+  else if(cupGuideVal!=='all')list=list.filter(t=>OPERATOR_OF[t.n]===cupGuideVal);
+  const STATUS={yes:['✓ Cups','var(--green)'],no:['✕ No cups','var(--red)'],'':['? Cups','var(--ice-dim)']};
+  $('cupGuide').innerHTML=list.length?list.map(t=>{
+    const st=cupStatus(t.n),r=cupReports[t.n]||{},own=cups.filter(c=>c.theatre===t.n);
+    const nm=esc(t.n);
+    return `<div class="th-row" style="cursor:default;flex-wrap:wrap;${st==='yes'?'border-color:rgba(61,220,151,.3);':''}">
+      <div style="flex:1;min-width:180px;"><div class="th-name">${nm}</div>
+        <div class="th-show">Now: <b>${esc(t.s)}</b>${own.length?` · you own: ${own.map(c=>'🥤 '+esc(c.show)).join(', ')}`:''}</div>
+        ${r.notes?`<div class="th-show" style="color:var(--ice);">“${esc(r.notes)}”</div>`:''}</div>
+      <span class="th-tag" style="margin-left:0;">${esc(OPERATOR_OF[t.n]||'')}</span>
+      <button type="button" class="th-hist cg-cycle" data-n="${nm}" style="color:${STATUS[st][1]};border-color:${STATUS[st][1]};min-width:78px;">${STATUS[st][0]}</button>
+      <input type="text" class="cg-price" data-n="${nm}" value="${esc(r.price??'')}" placeholder="$" title="Cup price you paid or saw" style="width:64px;padding:5px 8px;font-size:11px;">
+      <input type="text" class="cg-notes" data-n="${nm}" value="${esc(r.notes||'')}" placeholder="notes — bar location, lid, refills…" style="flex:1 1 100%;margin-top:6px;padding:5px 8px;font-size:11px;">
+    </div>`;
+  }).join(''):'<div class="empty" style="padding:24px;">Nothing matches this filter.</div>';
+  document.querySelectorAll('.cg-cycle').forEach(b=>b.addEventListener('click',async()=>{
+    const n=b.dataset.n;const r=cupReports[n]||{cup:'',price:'',notes:''};
+    r.cup=r.cup==='yes'?'no':r.cup==='no'?'':'yes';
+    cupReports[n]=r;renderMerchStats();renderCupGuide();await saveCupReports();
+  }));
+  const saveField=(cls,key)=>document.querySelectorAll(cls).forEach(i=>i.addEventListener('change',async()=>{
+    const n=i.dataset.n;const r=cupReports[n]||{cup:'',price:'',notes:''};
+    r[key]=i.value.trim().replace(/^\$/,'');cupReports[n]=r;renderMerchStats();await saveCupReports();
+  }));
+  saveField('.cg-price','price');saveField('.cg-notes','notes');
+}
+
+/* ================= STATS ================= */
+/* LIVE-FORM: built once. The budget and goal inputs are in the HTML; renderBudget
+   only writes their .value when they are not focused. */
+function initStats(){
+  $('budgetSave').addEventListener('click',async()=>{
+    const y=String(new Date().getFullYear());
+    const b=$('budgetInput').value.trim(),g=$('goalInput').value.trim();
+    if(b!=='')budgets[y]=parseFloat(b);else delete budgets[y];
+    if(g!=='')goals[y]=parseInt(g);else delete goals[y];
+    renderBudget();await saveBudgets();await saveGoals();
+    toast('Set for '+y+'.');
+  });
+  $('expJson').addEventListener('click',exportJSON);
+  $('expCsv').addEventListener('click',exportCSV);
+  $('expXlsx').addEventListener('click',exportXLSX);
+  $('impXlsx').addEventListener('change',e=>{if(e.target.files[0])importXLSX(e.target.files[0]);e.target.value='';});
+  $('impJson').addEventListener('change',e=>{if(e.target.files[0])importJSON(e.target.files[0]);e.target.value='';});
+}
+const isDeal=m=>/lotter|rush|sro|standing|tkts|cancell|discount|comp|usher|free|papering|extras|play-by-play|club free|gold club|hiptix|linctix|mtc35|tdf|under-30|perks|ticketsatwork|aaa|alumni|broadway week|off-broadway week|partial|restricted|dress|preview|theatr/i.test(m||'');
+function renderStats(){
+  const seen=seenShows();
+  const priced=seen.filter(x=>x.price!=null&&x.price!=='');
+  const spent=priced.reduce((a,x)=>a+entryCost(x),0);
+  const tix=priced.reduce((a,x)=>a+(x.qty||1),0);
+  const rated=seen.filter(x=>x.rating);
+  const avgR=rated.length?rated.reduce((a,x)=>a+x.rating,0)/rated.length:null;
+  const saved=seen.map(entrySavings).filter(s=>s!=null&&s>0).reduce((a,b)=>a+b,0);
+  const bway=THEATRES.filter(t=>t.c==='Broadway').filter(t=>visited[t.n]).length;
+  $('statGrid').innerHTML=[
+    [seen.length,'shows seen'],[uniqueNames(seen).length,'unique titles'],[fmt$(spent),'spent on tickets',true],
+    [tix?fmt$(spent/tix):'—','avg per ticket',true],[bway+' / 41','Broadway houses'],[avgR?avgR.toFixed(1)+' ★':'—','avg rating'],
+    [saved?fmt$(saved):'—','saved vs face',true],[fmt$(merchSpendTotal()),'merch',true]
+  ].map(s=>`<div class="stat-card"><div class="num${s[2]?' gold':''}">${esc(String(s[0]))}</div><div class="lbl">${s[1]}</div></div>`).join('');
+
+  // timeline — by year, or by month when everything sits inside one year
+  const dated=seen.filter(x=>x.date);
+  const years=[...new Set(dated.map(x=>x.date.slice(0,4)))].sort();
+  let tl;
+  if(years.length<=1&&dated.length){
+    const y=years[0];
+    const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    tl=MON.map((m,i)=>[m+' '+y,dated.filter(x=>x.date.slice(5,7)===String(i+1).padStart(2,'0')).length]).filter(p=>p[1]);
+  }else tl=years.map(y=>[y,dated.filter(x=>x.date.startsWith(y)).length]);
+  bars('timelineChart',tl,{empty:'Add dates to your shows to see the timeline.',limit:24});
+
+  renderDonut(seen);
+  bars('rewatchBars',tally(seen,x=>x.show).filter(p=>p[1]>1),{empty:'See a show more than once and it\'ll rank here.',fmt:n=>'×'+n,gold:true});
+  renderBudget();
+  const byM={};priced.forEach(x=>{const k=x.method||'Unspecified';byM[k]=(byM[k]||0)+entryCost(x);});
+  bars('methodBars',Object.entries(byM).sort((a,b)=>b[1]-a[1]),{empty:'Log prices to see this.',fmt:fmt$});
+  bars('ratingBars',[5,4,3,2,1].map(r=>[starStr(r),rated.filter(x=>x.rating===r).length]).filter(p=>p[1]),{empty:'Log rated shows to see this.',gold:true});
+  bars('companyBars',tally(seen,x=>x.company||'Solo'),{empty:'Log shows to see this.'});
+  bars('buddyBars',tally(seen,x=>x.withWho||[]),{empty:'Add names when you go with someone to build your buddy leaderboard.',gold:true});
+  bars('catBars',tally(seen,x=>x.cats||[]),{empty:'Tag categories when logging to see your taste profile.'});
+  // recommenders: who sends you to the good stuff — average rating of what they suggested
+  const rec={};seen.filter(x=>x.recBy&&x.rating).forEach(x=>{(rec[x.recBy]=rec[x.recBy]||[]).push(x.rating);});
+  bars('recBars',Object.entries(rec).map(([n,rs])=>[n+' ('+rs.length+')',rs.reduce((a,b)=>a+b,0)/rs.length]).sort((a,b)=>b[1]-a[1]),{empty:'Add "who recommended it" plus a rating — then see whose taste you should trust.',fmt:n=>n.toFixed(1)+'★',gold:true});
+  bars('seatBars',tally(seen,x=>(x.seatParts&&x.seatParts.level)||''),{empty:'Pick seat levels when logging to see your habitat.'});
+  bars('actorBars',tally(seen,x=>x.actors||[]),{empty:'Add standout performers when logging shows to build this.',gold:true});
+}
+function renderDonut(seen){
+  const el=$('donutChart');
+  const pairs=tally(seen,x=>x.cats||[]).slice(0,6);
+  if(!pairs.length){el.innerHTML='<div class="empty" style="border:none;padding:20px;flex:1;">Tag categories on your shows and your taste shows up here.</div>';return;}
+  const total=pairs.reduce((a,p)=>a+p[1],0);
+  const COL=['#2f6bff','#ffc94d','#3ddc97','#5b8cff','#ff5d5d','#8fa3cc'];
+  const R=54,C=2*Math.PI*R;let off=0;
+  const segs=pairs.map((p,i)=>{const len=p[1]/total*C;const s=`<circle r="${R}" cx="70" cy="70" fill="none" stroke="${COL[i]}" stroke-width="22" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 70 70)"></circle>`;off+=len;return s;}).join('');
+  el.innerHTML=`<svg width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Genre mix">${segs}<text x="70" y="66" text-anchor="middle" fill="#fff" font-size="20" font-weight="700" font-family="IBM Plex Mono,monospace">${seen.length}</text><text x="70" y="82" text-anchor="middle" fill="#8fa3cc" font-size="9" letter-spacing="1">SHOWS</text></svg>
+    <div style="flex:1;min-width:160px;">${pairs.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:6px;"><span style="width:10px;height:10px;border-radius:3px;background:${COL[i]};flex-shrink:0;"></span><span style="flex:1;">${esc(p[0])}</span><span class="bar-num">${Math.round(p[1]/total*100)}%</span></div>`).join('')}</div>`;
+}
+function renderBudget(){
+  const y=String(new Date().getFullYear());
+  $('budgetYearLbl').textContent=y+':';
+  if(document.activeElement!==$('budgetInput'))$('budgetInput').value=budgets[y]??'';
+  if(document.activeElement!==$('goalInput'))$('goalInput').value=goals[y]??'';
+  const ys=seenShows().filter(x=>(x.date||'').startsWith(y));
+  const spent=ys.reduce((a,x)=>a+(entryCost(x)||0),0)+shows.filter(x=>(x.date||'').startsWith(y)).reduce((a,x)=>a+(x.merchSpend!=null?Number(x.merchSpend):(Number(x.cupPrice)||0)),0);
+  const b=budgets[y],g=goals[y];
+  const dayOfYear=Math.floor((new Date()-new Date(+y,0,1))/86400000)+1;
+  const yearFrac=dayOfYear/(((+y%4===0&&+y%100!==0)||+y%400===0)?366:365);
+  const row=(lbl,val,max,txt,gold)=>`<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span>${lbl}</span><span class="bar-num">${txt}</span></div><div class="prog-track"><div class="prog-fill${gold?' gold':''}" style="width:${Math.min(100,val/max*100)}%;${val>max?'background:var(--red);':''}"></div></div></div>`;
+  let html='';
+  if(b!=null)html+=row('Tickets + merch this year',spent,b,fmt$(spent)+' of '+fmt$(b)+(spent>b?' — over by '+fmt$(spent-b):' · '+fmt$(b-spent)+' left'),true);
+  if(g!=null)html+=row('Shows this year',ys.length,g,ys.length+' of '+g+(ys.length>=g?' 🎉':' · '+(g-ys.length)+' to go'));
+  if(b!=null||g!=null){
+    const paceB=b!=null?(spent/b<=yearFrac?'✓ under pace on spend':'⚠ ahead of pace on spend'):'';
+    const paceG=g!=null?(ys.length/g>=yearFrac?'✓ on track for your show goal':'you\'d need '+Math.max(0,g-ys.length)+' more in '+Math.max(1,Math.round((1-yearFrac)*12))+' months'):'';
+    html+=`<div style="font-size:11.5px;color:var(--ice-dim);">${Math.round(yearFrac*100)}% of the year gone · ${[paceB,paceG].filter(Boolean).join(' · ')}</div>`;
+  }
+  $('budgetViz').innerHTML=html||'<div class="empty" style="border:none;padding:16px;">Set an annual budget and a show goal — SLAF mode tells you if you\'re on pace.</div>';
+}
+
+/* ================= RESULTS — the shareable stuff ================= */
+let appLoaded=false;
+/* Everything the archetype, badges and bingo look at, computed once per render. */
+function badgeContext(){
+  const seen=seenShows();
+  const m=x=>x.method||'';
+  const levels=new Set(seen.map(x=>(x.seatParts&&x.seatParts.level)||'').filter(Boolean));
+  const priced=seen.filter(x=>x.price!=null&&x.price!=='');
+  const rep=tally(seen,x=>x.show.toLowerCase());
+  const rated=seen.filter(x=>x.rating);
+  return {
+    n:seen.length,unique:uniqueNames(seen).length,
+    lotto:seen.filter(x=>/lotter/i.test(m(x))).length,
+    rush:seen.filter(x=>/rush|sro|standing/i.test(m(x))).length,
+    sro:seen.filter(x=>/sro|standing/i.test(m(x))).length,
+    tkts:seen.filter(x=>/tkts/i.test(m(x))).length,
+    deals:seen.filter(x=>isDeal(m(x))).length,
+    cheapest:priced.length?Math.min(...priced.map(x=>Number(x.price))):null,
+    avgPrice:priced.length?priced.reduce((a,x)=>a+Number(x.price),0)/priced.length:null,
+    saved:seen.map(entrySavings).filter(s=>s!=null&&s>0).reduce((a,b)=>a+b,0),
+    maxRepeat:rep.length?rep[0][1]:0,
+    houses:THEATRES.filter(t=>t.c==='Broadway'&&visited[t.n]).length,
+    cups:cupsOwned().length,souvenirs:allSouvenirs().length,
+    off:seen.filter(x=>/off-broadway/i.test(x.type||'')||theatreCat(x.theatre)==='Off-Broadway').length,
+    cried:seen.filter(x=>(x.vibes||[]).includes('Cried')).length,
+    ovation:seen.filter(x=>(x.vibes||[]).includes('Standing ovation')).length,
+    withOthers:seen.filter(x=>(x.company||'Solo')!=='Solo').length,
+    solo:seen.filter(x=>!isBareEntry(x)&&(x.company||'Solo')==='Solo').length,
+    dates:seen.filter(x=>x.company==='Date').length,
+    family:seen.filter(x=>x.company==='Family').length,
+    photos:seen.filter(x=>photosOf(x).length).length,
+    closing:seen.filter(x=>isClosingSoon(x.show)).length,
+    upcoming:shows.filter(isUpcoming).length,
+    plays:seen.filter(x=>(x.cats||[]).includes('Play')).length,
+    musicals:seen.filter(x=>(x.cats||[]).some(c=>/musical/i.test(c))).length,
+    revivals:seen.filter(x=>(x.cats||[]).includes('Revival')).length,
+    jukebox:seen.filter(x=>(x.cats||[]).includes('Jukebox Musical')).length,
+    levels,rated:rated.length,avgRating:rated.length?rated.reduce((a,x)=>a+x.rating,0)/rated.length:null
+  };
+}
+function computeArchetype(c){
+  if(!c.n)return {e:'🎭',t:'The Understudy',d:'Every star started in the wings. Log one show and your theatregoer type appears here.'};
+  const rules=[
+    [c.n>=3&&c.lotto/c.n>=0.35,'🎰','The Lottery Hustler','You play the odds and win. A third or more of your seats came from a lottery — the cheapest chair in the house, every time.'],
+    [c.n>=3&&c.deals/c.n>=0.5,'🕵️','The Deal Hunter','Half your tickets came through a rush, a code, a booth or a membership. Face value is a rumour you\'ve heard about.'],
+    [c.avgPrice!=null&&c.avgPrice>=175,'👑','Orchestra Royalty','You buy the seat you want and you sit in it. Center orchestra, no compromises, and the Playbill is always pristine.'],
+    [c.cups>=5,'🥤','The Cup Collector','Five or more souvenir cups. The cabinet is a shrine. Someone has asked you to stop and you have not stopped.'],
+    [c.n>=4&&c.n/c.unique>=1.5,'🔁','The Repeat Offender','You go back. Then you go back again. Your favourites are less shows than places you live part-time.'],
+    [c.houses>=20,'🏛','The House Collector','Twenty or more of the 41 Broadway houses. You know which mezzanine has the legroom and which bar has the short line.'],
+    [c.n>=3&&c.plays/c.n>=0.5,'📜','The Drama Devotee','Mostly plays. You\'re there for the words, the silence before the line, and the two-hander with no intermission.'],
+    [c.n>=3&&c.solo/c.n>=0.6,'🪑','The Solo Seat','You go alone and you love it. Single-ticket lottery odds, no schedule to sync, nobody talking during the overture.'],
+    [c.rated>=3&&c.avgRating>=4.5,'👏','The Standing Ovation','You love almost everything and you are not sorry. The theatre is better for people like you.'],
+    [c.n>=25,'🎟','The Season Ticket','Twenty-five shows and counting. Ushers recognise you. You have opinions about the new sound system at the Palace.']
+  ];
+  const hit=rules.find(r=>r[0]);
+  return hit?{e:hit[1],t:hit[2],d:hit[3]}:{e:'🌟',t:'The Broadway Regular',d:'A balanced diet of musicals and plays, deals and splurges, friends and solo nights. Log a few more and a sharper type will find you.'};
+}
+const BADGES=[
+  {id:'first',e:'🎟',n:'Opening Night',d:'Logged your first show',t:c=>c.n>=1},
+  {id:'five',e:'🖐',n:'High Five',d:'Five shows logged',t:c=>c.n>=5},
+  {id:'ten',e:'🔟',n:'Double Digits',d:'Ten shows logged',t:c=>c.n>=10},
+  {id:'25',e:'🎖',n:'Quarter Century',d:'Twenty-five shows',t:c=>c.n>=25},
+  {id:'50',e:'🏆',n:'Half-Hundred',d:'Fifty shows',t:c=>c.n>=50},
+  {id:'100',e:'💯',n:'The Hundred',d:'One hundred shows',t:c=>c.n>=100},
+  {id:'lotto',e:'🎰',n:'Lucky Draw',d:'Won a lottery',t:c=>c.lotto>=1},
+  {id:'rush',e:'🏃',n:'Rush Hour',d:'Scored a rush or SRO ticket',t:c=>c.rush>=1},
+  {id:'under30',e:'💸',n:'Under Thirty',d:'A ticket under $30',t:c=>c.cheapest!=null&&c.cheapest<30},
+  {id:'saver',e:'🐷',n:'Saved a Hundred',d:'$100+ saved against face value',t:c=>c.saved>=100},
+  {id:'repeat',e:'🔁',n:'Encore',d:'Saw the same show twice',t:c=>c.maxRepeat>=2},
+  {id:'triple',e:'🔂',n:'Superfan',d:'Same show three or more times',t:c=>c.maxRepeat>=3},
+  {id:'houses5',e:'🏛',n:'House Hunter',d:'Five Broadway houses',t:c=>c.houses>=5},
+  {id:'houses10',e:'🗺',n:'District Local',d:'Ten Broadway houses',t:c=>c.houses>=10},
+  {id:'houses20',e:'🧭',n:'Half the District',d:'Twenty Broadway houses',t:c=>c.houses>=20},
+  {id:'houses41',e:'👑',n:'All 41',d:'Every Broadway house',t:c=>c.houses>=41},
+  {id:'cup1',e:'🥤',n:'First Sip',d:'First souvenir cup',t:c=>c.cups>=1},
+  {id:'cup5',e:'🧃',n:'Cupboard Full',d:'Five souvenir cups',t:c=>c.cups>=5},
+  {id:'cup10',e:'🍹',n:'Cup Hoarder',d:'Ten souvenir cups',t:c=>c.cups>=10},
+  {id:'souv10',e:'🎁',n:'Gift Shop Regular',d:'Ten souvenirs of any kind',t:c=>c.souvenirs>=10},
+  {id:'off',e:'🎪',n:'Downtown',d:'Saw something Off-Broadway',t:c=>c.off>=1},
+  {id:'cried',e:'😭',n:'Waterworks',d:'Cried at a show',t:c=>c.cried>=1},
+  {id:'ovation',e:'👏',n:'On Your Feet',d:'Stood for an ovation',t:c=>c.ovation>=1},
+  {id:'buddy',e:'👯',n:'Plus One',d:'Went with someone five times',t:c=>c.withOthers>=5},
+  {id:'photo',e:'📸',n:'Say Playbill',d:'Attached a photo',t:c=>c.photos>=1},
+  {id:'closing',e:'⏳',n:'Caught It in Time',d:'Saw a show in its closing stretch',t:c=>c.closing>=1},
+  {id:'planner',e:'📅',n:'Planner',d:'Booked a future show',t:c=>c.upcoming>=1}
+];
+function checkBadges(silent){
+  const c=badgeContext();
+  const earned=BADGES.filter(b=>b.t(c)).map(b=>b.id);
+  const fresh=earned.filter(id=>!earnedBadges.includes(id));
+  if(!fresh.length)return;
+  fresh.forEach(id=>earnedBadges.push(id));
+  saveBadges();
+  if(silent||!appLoaded)return;
+  const b=BADGES.find(x=>x.id===fresh[0]);
+  toast('🏅 New badge: '+b.e+' '+b.n+' — '+b.d+(fresh.length>1?' (+'+(fresh.length-1)+' more in Results)':''),6000);
+}
+function theatreGrid(){
+  const bway=THEATRES.filter(t=>t.c==='Broadway');
+  const cells=bway.map(t=>visited[t.n]?'🟦':'⬛');
+  const rows=[];for(let i=0;i<cells.length;i+=7)rows.push(cells.slice(i,i+7).join(''));
+  return rows.join('\n');
+}
+function shareText(){
+  const c=badgeContext(),a=computeArchetype(c);
+  return `🎭 House Lights — my Broadway logbook\n${a.e} ${a.t}\n${c.n} shows · ${c.houses}/41 houses · ${c.cups} souvenir cup${c.cups===1?'':'s'}\n\n${theatreGrid()}\n\n#HouseLights #Broadway`;
+}
+async function copyText(txt,label){
+  try{await navigator.clipboard.writeText(txt);toast('📋 '+(label||'Copied')+' — paste it anywhere.');}
+  catch(e){
+    const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;left:-9999px;';document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');toast('📋 '+(label||'Copied')+'.');}catch(e2){toast('Couldn\'t copy here — select the text and copy it by hand.',5000);}
+    ta.remove();
+  }
+}
+async function downloadCard(el,name){
+  if(typeof html2canvas==='undefined'){toast('⚠️ The image engine couldn\'t load here — open this page in Chrome or Safari.',5000);return;}
+  try{
+    const canvas=await html2canvas(el,{backgroundColor:'#060b18',scale:2,useCORS:true});
+    const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download=name;a.click();
+    toast('🖼 Card saved — check your downloads.');
+  }catch(e){toast('⚠️ Download blocked in this viewer — open the page in Chrome/Safari.',6000);}
+}
+/* Broadway Bingo — 25 squares, most tick themselves from your logbook; the rest you tap. */
+const BINGO=[
+  ['lotto','Won a lottery',c=>c.lotto>=1],['rush','Rush ticket',c=>c.rush>=1],['sro','Standing room',c=>c.sro>=1],['tkts','TKTS run',c=>c.tkts>=1],['under50','Ticket under $50',c=>c.cheapest!=null&&c.cheapest<50],
+  ['orch','Orchestra seat',c=>c.levels.has('Orchestra')],['balc','Balcony seat',c=>c.levels.has('Balcony')],['mezz','Mezzanine',c=>[...c.levels].some(l=>/mezz/i.test(l))],['box','Box seat',c=>c.levels.has('Box')],['photo','Playbill photo',c=>c.photos>=1],
+  ['play','Saw a play',c=>c.plays>=1],['musical','Saw a musical',c=>c.musicals>=1],['free','FREE',()=>true],['revival','A revival',c=>c.revivals>=1],['jukebox','Jukebox musical',c=>c.jukebox>=1],
+  ['cried','Cried',c=>c.cried>=1],['ovation','Standing ovation',c=>c.ovation>=1],['solo','Went solo',c=>c.solo>=1],['date','Date night',c=>c.dates>=1],['family','Family outing',c=>c.family>=1],
+  ['cup','Souvenir cup',c=>c.cups>=1],['repeat','Repeated a show',c=>c.maxRepeat>=2],['off','Off-Broadway',c=>c.off>=1],['houses10','10 Broadway houses',c=>c.houses>=10],['closing','Caught a closing show',c=>c.closing>=1]
+];
+function bingoState(c){return BINGO.map(sq=>({id:sq[0],label:sq[1],auto:sq[2](c),on:sq[2](c)||!!bingoManual[sq[0]]}));}
+function bingoLines(on){
+  const g=i=>on[i];let lines=0;
+  for(let r=0;r<5;r++){if([0,1,2,3,4].every(k=>g(r*5+k)))lines++;if([0,1,2,3,4].every(k=>g(k*5+r)))lines++;}
+  if([0,6,12,18,24].every(g))lines++;if([4,8,12,16,20].every(g))lines++;
+  return lines;
+}
+/* This-or-That — pairwise Elo over the shows you've seen; ten taps make a defensible top ten. */
+let rankPair=null;
+function eloOf(n){return (elo[n]&&elo[n].r)||1200;}
+function matchesOf(n){return (elo[n]&&elo[n].m)||0;}
+function nextPair(){
+  const names=uniqueNames(seenShows()).map(x=>x.show);
+  if(names.length<2)return null;
+  const sorted=names.slice().sort((a,b)=>matchesOf(a)-matchesOf(b)||Math.random()-0.5);
+  const a=sorted[0];
+  const pool=names.filter(n=>n!==a);
+  const b=pool[Math.floor(Math.random()*pool.length)];
+  return Math.random()<0.5?[a,b]:[b,a];
+}
+async function rankWin(w,l){
+  const K=32,ra=eloOf(w),rb=eloOf(l);
+  const ea=1/(1+Math.pow(10,(rb-ra)/400));
+  elo[w]={r:Math.round(ra+K*(1-ea)),m:matchesOf(w)+1};
+  elo[l]={r:Math.round(rb-K*(1-ea)),m:matchesOf(l)+1};
+  rankPair=null;renderRanker();await saveElo();
+}
+function renderRanker(){
+  const box=$('rankerBox');if(!box)return;
+  const names=uniqueNames(seenShows()).map(x=>x.show);
+  if(names.length<2){box.innerHTML='<div class="empty" style="border:none;padding:20px;">Log two different shows and the ranker opens.</div>';return;}
+  rankPair=rankPair||nextPair();
+  const ranked=names.filter(n=>matchesOf(n)>0).sort((a,b)=>eloOf(b)-eloOf(a));
+  const votes=Object.values(elo).reduce((a,e)=>a+(e.m||0),0)/2;
+  box.innerHTML=`<div style="font-size:12px;color:var(--ice-dim);margin-bottom:10px;">Which was better? ${votes} vote${votes===1?'':'s'} so far — ten or so makes the list trustworthy.</div>
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:16px;">
+      <button type="button" class="btn rk-btn" data-w="${esc(rankPair[0])}" data-l="${esc(rankPair[1])}" style="padding:18px 12px;font-size:17px;white-space:normal;line-height:1.2;">${esc(rankPair[0])}</button>
+      <span style="font-family:'Bebas Neue',sans-serif;color:var(--ice-dim);font-size:15px;letter-spacing:.1em;">VS</span>
+      <button type="button" class="btn rk-btn" data-w="${esc(rankPair[1])}" data-l="${esc(rankPair[0])}" style="padding:18px 12px;font-size:17px;white-space:normal;line-height:1.2;">${esc(rankPair[1])}</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"><button type="button" class="chip" id="rkSkip">Skip this pair</button>${ranked.length?'<button type="button" class="chip" id="rkCopy">📋 Copy my top 10</button><button type="button" class="chip" id="rkReset" style="color:var(--red);">Reset rankings</button>':''}</div>
+    ${ranked.length?`<div class="th-section" style="margin-top:0;">Your Top ${Math.min(10,ranked.length)}</div>`+ranked.slice(0,10).map((n,i)=>`<div class="th-row" style="cursor:default;padding:9px 14px;"><span style="font-family:'IBM Plex Mono',monospace;color:${i<3?'var(--gold)':'var(--ice-dim)'};font-weight:600;min-width:26px;">${i+1}</span><div style="flex:1;" class="th-name">${esc(n)}</div><span class="bar-num">${eloOf(n)}</span></div>`).join(''):''}`;
+  document.querySelectorAll('.rk-btn').forEach(b=>b.addEventListener('click',()=>rankWin(b.dataset.w,b.dataset.l)));
+  $('rkSkip').addEventListener('click',()=>{rankPair=null;renderRanker();});
+  const cp=$('rkCopy');if(cp)cp.addEventListener('click',()=>copyText('🎭 My Broadway Top '+Math.min(10,ranked.length)+'\n'+ranked.slice(0,10).map((n,i)=>(i+1)+'. '+n).join('\n')+'\n\n#HouseLights','Top 10 copied'));
+  const rs=$('rkReset');if(rs)rs.addEventListener('click',async()=>{elo={};rankPair=null;renderRanker();await saveElo();toast('Rankings cleared.');});
+}
+function wrappedYear(){
+  const seen=seenShows().filter(x=>x.date);
+  const cur=String(new Date().getFullYear());
+  if(seen.some(x=>x.date.startsWith(cur)))return cur;
+  const ys=[...new Set(seen.map(x=>x.date.slice(0,4)))].sort();
+  return ys.length?ys[ys.length-1]:null;
+}
+function wrappedHTML(){
+  const y=wrappedYear();
+  if(!y)return '';
+  const ys=seenShows().filter(x=>(x.date||'').startsWith(y));
+  const spent=ys.reduce((a,x)=>a+(entryCost(x)||0),0);
+  const top=ys.filter(x=>x.rating).sort((a,b)=>b.rating-a.rating||(b.date||'').localeCompare(a.date||''))[0];
+  const house=tally(ys,x=>x.theatre)[0];
+  const buddy=tally(ys,x=>x.withWho||[])[0];
+  const deals=ys.map(x=>[x,entrySavings(x)]).filter(p=>p[1]!=null&&p[1]>0).sort((a,b)=>b[1]-a[1])[0];
+  const cheapest=ys.filter(x=>x.price!=null&&x.price!=='').sort((a,b)=>Number(a.price)-Number(b.price))[0];
+  const cups=cupsOwned().filter(c=>(c.date||'').startsWith(y)).length;
+  const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const busy=tally(ys,x=>x.date.slice(5,7))[0];
+  const nowCount=ALL_SHOWS.filter(s=>s.y==='Now'&&!s.soon).length;
+  const nowSeen=ALL_SHOWS.filter(s=>s.y==='Now'&&!s.soon&&loggedEntryFor(s.n)).length;
+  const line=(l,v)=>v?`<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px;text-align:left;"><span style="color:var(--ice-dim);">${l}</span><b style="color:#fff;text-align:right;">${v}</b></div>`:'';
+  return `<div class="share-card" id="wrappedCard" style="background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,201,77,0.22), transparent 70%),linear-gradient(165deg,#1a1530 0%,#070d1e 100%);border-color:rgba(255,201,77,.35);">
+    <div class="sc-eyebrow" style="color:var(--gold);">House Lights · Wrapped</div>
+    <div class="sc-type">Your ${y}</div>
+    <div class="sc-stats"><div><div class="n">${ys.length}</div><div class="l">shows</div></div><div><div class="n">${fmt$(spent)}</div><div class="l">on tickets</div></div><div><div class="n">${cups}</div><div class="l">cups added</div></div></div>
+    ${line('Show of the year',top?esc(top.show)+' '+starStr(top.rating):'')}
+    ${line('Home theatre',house?esc(house[0])+' ×'+house[1]:'')}
+    ${line('Theatre buddy',buddy?esc(buddy[0])+' ×'+buddy[1]:'')}
+    ${line('Best bargain',deals?esc(deals[0].show)+' — saved '+fmt$(deals[1]):(cheapest?esc(cheapest.show)+' — '+fmt$(cheapest.price):''))}
+    ${line('Busiest month',busy?MON[+busy[0]-1]+' ('+busy[1]+')':'')}
+    ${line('Of what\'s running now',nowCount?nowSeen+' of '+nowCount+' seen ('+Math.round(nowSeen/nowCount*100)+'%)':'')}
+    <div class="sc-footer" style="margin-top:14px;">house lights · broadway logbook</div>
+  </div>`;
+}
+function renderResults(){
+  const c=badgeContext(),a=computeArchetype(c);
+  const earned=BADGES.filter(b=>b.t(c));
+  const locked=BADGES.filter(b=>!b.t(c));
+  const bs=bingoState(c),lines=bingoLines(bs.map(s=>s.on));
+  const seen=seenShows();
+  const recent=seen.filter(x=>x.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
+  const houses=THEATRES.filter(t=>visited[t.n]).map(t=>t.n.replace(/ Theat(re|er)$/,''));
+  const buddies=tally(seen,x=>x.withWho||[]).slice(0,6);
+  const yrs=[...new Set(seen.map(x=>(x.date||'').slice(0,4)).filter(Boolean))].sort();
+  $('resultsArea').innerHTML=`
+    <div class="share-card" id="typeCard">
+      <div class="sc-eyebrow">House Lights · Theatregoer Type</div>
+      <div class="sc-emoji">${a.e}</div>
+      <div class="sc-type">${a.t}</div>
+      <div class="sc-desc">${a.d}</div>
+      <div class="sc-stats"><div><div class="n">${c.n}</div><div class="l">shows</div></div><div><div class="n">${c.houses}/41</div><div class="l">houses</div></div><div><div class="n">${c.cups}</div><div class="l">cups</div></div></div>
+      ${earned.length?`<div class="sc-badges">${earned.slice(0,8).map(b=>`<span class="sc-badge">${b.e} ${b.n}</span>`).join('')}${earned.length>8?`<span class="sc-badge">+${earned.length-8}</span>`:''}</div>`:''}
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:1px;line-height:1.35;white-space:pre;margin-bottom:12px;">${theatreGrid()}</div>
+      <div class="sc-footer">the 41 broadway houses · 🟦 visited</div>
+    </div>
+    <div class="share-actions" style="margin-bottom:24px;">
+      <button type="button" class="btn" id="dlType">🖼 Save card as image</button>
+      <button type="button" class="btn ghost" id="cpType">📋 Copy share text</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">🏅 Badges — ${earned.length} of ${BADGES.length}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;">
+        ${earned.map(b=>`<div style="background:rgba(255,201,77,.08);border:1px solid rgba(255,201,77,.3);border-radius:8px;padding:10px;"><div style="font-size:22px;">${b.e}</div><div style="font-weight:700;font-size:12.5px;color:#fff;margin-top:4px;">${b.n}</div><div style="font-size:10.5px;color:var(--ice-dim);">${b.d}</div></div>`).join('')}
+        ${locked.map(b=>`<div style="border:1px dashed var(--line);border-radius:8px;padding:10px;opacity:.5;"><div style="font-size:22px;filter:grayscale(1);">${b.e}</div><div style="font-weight:700;font-size:12.5px;margin-top:4px;">${b.n}</div><div style="font-size:10.5px;color:var(--ice-dim);">${b.d}</div></div>`).join('')}
+      </div>
+    </div>
+
+    ${wrappedHTML()?wrappedHTML()+`<div class="share-actions" style="margin-bottom:24px;"><button type="button" class="btn" id="dlWrapped">🖼 Save Wrapped as image</button></div>`:''}
+
+    <div class="panel">
+      <div class="panel-label">🎱 Broadway Bingo — ${lines} line${lines===1?'':'s'}${lines>=1?' · BINGO!':''}</div>
+      <div style="font-size:11.5px;color:var(--ice-dim);margin-bottom:10px;">Most squares tick themselves from your logbook. Tap any other to mark it by hand.</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;max-width:460px;margin:0 auto 12px;">
+        ${bs.map(s=>`<button type="button" class="bingo-sq" data-id="${s.id}" data-auto="${s.auto?1:0}" style="aspect-ratio:1;border-radius:8px;border:1px solid ${s.on?'rgba(255,201,77,.5)':'var(--line)'};background:${s.on?'rgba(255,201,77,.18)':'var(--navy-900)'};color:${s.on?'var(--gold)':'var(--ice-dim)'};font-family:'Public Sans',sans-serif;font-size:10px;font-weight:${s.on?700:500};padding:4px;cursor:${s.auto?'default':'pointer'};line-height:1.2;">${s.on?'✓ ':''}${s.label}</button>`).join('')}
+      </div>
+      <div class="share-actions"><button type="button" class="chip" id="cpBingo">📋 Copy bingo card</button></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">⚔️ This or That — Rank Your Shows</div>
+      <div id="rankerBox"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">📖 Your Season, As a Programme</div>
+      <div class="playbill" id="playbillDoc">
+        <div class="pb-mast"><div class="pb-logo">HOUSE LIGHTS</div><div class="pb-sub">A season in review · ${yrs.length?esc(yrs[0]+(yrs.length>1?'–'+yrs[yrs.length-1]:'')):'no dates yet'}</div></div>
+        <div class="pb-body">
+          <div class="pb-title">${esc(a.t)}</div>
+          <div class="pb-under">${c.n} performance${c.n===1?'':'s'} · ${c.houses} Broadway house${c.houses===1?'':'s'} · ${c.cups} souvenir cup${c.cups===1?'':'s'}</div>
+          <div class="pb-stats"><div><div class="n">${c.unique}</div><div class="l">titles</div></div><div><div class="n">${c.avgRating?c.avgRating.toFixed(1):'—'}</div><div class="l">avg rating</div></div><div><div class="n">${c.saved?fmt$(c.saved):'—'}</div><div class="l">saved</div></div></div>
+          <hr class="pb-rule"><div class="pb-sec">The Programme</div>
+          ${recent.length?recent.map(x=>`<div class="pb-showline"><span class="t">${esc(x.show)}</span><span class="d">${fmtDate(x.date)}</span></div>`).join(''):'<div class="pb-cast" style="color:#8a8270;">Dated shows appear here.</div>'}
+          ${buddies.length?`<hr class="pb-rule"><div class="pb-sec">The Cast</div><div class="pb-cast">${buddies.map(b=>`<b>${esc(b[0])}</b> · ${b[1]}`).join('<br>')}</div>`:''}
+          ${houses.length?`<hr class="pb-rule"><div class="pb-sec">The Houses</div><div class="pb-venues">${houses.map(esc).join(' · ')}</div>`:''}
+          <div class="pb-foot">House Lights · Broadway logbook</div>
+        </div>
+      </div>
+      <div class="share-actions"><button type="button" class="btn" id="dlPlaybill">🖼 Save programme as image</button></div>
+    </div>`;
+  $('dlType').addEventListener('click',()=>downloadCard($('typeCard'),'house-lights-type.png'));
+  $('cpType').addEventListener('click',()=>copyText(shareText(),'Share text copied'));
+  const dw=$('dlWrapped');if(dw)dw.addEventListener('click',()=>downloadCard($('wrappedCard'),'house-lights-wrapped.png'));
+  $('dlPlaybill').addEventListener('click',()=>downloadCard($('playbillDoc'),'house-lights-programme.png'));
+  $('cpBingo').addEventListener('click',()=>{
+    const rows=[];for(let i=0;i<25;i+=5)rows.push(bs.slice(i,i+5).map(s=>s.on?'🟨':'⬛').join(''));
+    copyText('🎱 Broadway Bingo — '+lines+' line'+(lines===1?'':'s')+'\n'+rows.join('\n')+'\n\n#HouseLights #Broadway','Bingo card copied');
+  });
+  document.querySelectorAll('.bingo-sq').forEach(b=>b.addEventListener('click',async()=>{
+    if(b.dataset.auto==='1')return;
+    bingoManual[b.dataset.id]?delete bingoManual[b.dataset.id]:bingoManual[b.dataset.id]=true;
+    renderResults();await saveBingo();
+  }));
+  renderRanker();
+  checkBadges(!appLoaded);
+}
+
+/* ================= TABS + START-UP ================= */
+function switchView(v){
+  if(!$('view-'+v))v='playbook';
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));
+  if(location.hash!=='#'+v)history.replaceState(null,'','#'+v);
+}
+function initTabs(){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{switchView(b.dataset.view);window.scrollTo({top:0});}));
+  window.addEventListener('hashchange',()=>switchView(location.hash.slice(1)));
+  if(location.hash)switchView(location.hash.slice(1));
+}
+document.addEventListener('DOMContentLoaded',async()=>{
+  buildShowDB();
+  buildTheatreShows();
+  initChips();
+  $('search').addEventListener('input',renderPlaybook);
+  $('sortBy').addEventListener('change',renderPlaybook);
+  renderPlaybook();
+  initShowDB();
+  initTheatres();
+  initLog();
+  initMerch();
+  initStats();
+  initTabs();
+  await loadShows();
+  appLoaded=true;
+});
+</script>
+</body>
+</html>

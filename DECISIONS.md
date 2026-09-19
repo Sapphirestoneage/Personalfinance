@@ -4571,6 +4571,65 @@ phone-browser tap of the toggle on the demo, the setting surviving a
 reload, and the whole-site sweep — which also caught the dashboard
 missing the rating module the Rerank engine needs, fixed here.
 
+## D-090 — House Lights: a third app in the repo, on its own storage, with its own merch and cup tracking
+
+*(2026-09-19.)* `house-lights/index.html` is a Broadway ticket playbook and
+show logbook the owner built elsewhere and asked to keep here. It is a
+**standalone app**, filed the way `dnd/` is: it does not read the household
+model, does not load the shared spine, owns no shared number, and the SPARKS
+test suite does not scan it. It keeps its own decisions in this one entry and
+its own `house-lights/README.md`; nothing in `SPEC.md` governs it.
+
+**What arrived, and what was rebuilt.** The pasted source was cut off
+mid-script, at the show-to-theatre map. Everything after that point —
+the show archive, the logbook form and list, the stats, the results, tab
+switching and start-up — was rebuilt from the calls and element ids the
+surviving half already made: `ALL_SHOWS` as `{n, th, y}`, `SHOW_MAP` keyed by
+lower-cased title, `renderAll`, `seenShows`, `isUpcoming`, `checkBadges`,
+`showUndo`, and the Elo, goals and badges stores it had declared but never
+used. The archive is 375 productions, current ones parsed out of the theatre
+list, the rest a `[title, house, year closed]` table compiled from memory of
+the 2006–2026 seasons; a wrong year there is a data fix, not a code one.
+
+**Departures from the SPARKS rules, deliberately.** Money is dollars as
+typed, not integer cents, because that is the shape the existing half of the
+app already stored and exported and a migration would have broken every
+backup the owner has. Empty is still not zero: a price never entered is
+`null`, shown as "no price", and excluded from every average. The form is
+`LIVE-FORM: built once` in the SPARKS sense — every input is in the HTML and
+the code only writes `.value` — and the cup field guide's per-house inputs
+save on `change` without rebuilding the list they sit in.
+
+**Souvenirs and cups.** An entry carries `souvenirs[]`, `merchSpend` and
+`cupPrice`; standalone items (a gift, a cup from a friend) go in a separate
+`merch` store so they never invent a show visit. The Merch tab reads both.
+Which theatres sell cups is *field data*, not reference data: the guide
+ships knowing only each house's operator (Shubert, Nederlander, ATG, Disney,
+Roundabout, MTC, LCT, Second Stage, Circle in the Square), starts every
+house as unreported, and marks a house confirmed either when the owner logs
+a cup from a show there or taps the status. Bar policy and cup prices change
+with every production, so a hard-coded table would be wrong within a season.
+
+**The shareable layer.** A theatregoer type computed from the log, badges
+that announce themselves once (silently on first load so an upgrade does not
+fire twenty toasts), a 41-house emoji grid in the Wordle idiom, a Wrapped
+card for the year, Broadway Bingo with squares that tick themselves, a
+this-or-that Elo ranker that builds a top ten, and the season laid out as a
+programme. Cards save as PNG through html2canvas; text copies to the
+clipboard with an `execCommand` fallback. The masthead says HOUSE LIGHTS,
+not Playbill — the layout nods at the idiom without borrowing the mark.
+
+**Verified.** A Playwright drive on an iPhone-13 viewport with touch: a
+one-tap log from the Shows tab marking its house visited; a full entry with
+a souvenir cup landing on the Merch shelf, confirming its house in the guide
+and carrying its price there; cycling a house's status and filtering by
+operator; a standalone magnet summing into merch spend; stats, budget pace,
+type card, badges, Wrapped, bingo, a ranker vote putting the winner first;
+everything surviving a reload and a hash deep-link; delete then undo; CSV
+and JSON export producing files, JSON re-import not duplicating. No console
+or page errors. `node test/run.js` still passes untouched, as it should:
+this app is outside its walls.
+
 ---
 
 # The Dungeons & Dividends entries
