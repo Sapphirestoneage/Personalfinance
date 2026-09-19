@@ -131,7 +131,10 @@
   /* ---- reads: the cover facts live in Sleep At Night ---------------------- */
   function health(h) { return ((h && h.insurance) || {}).health || {}; }
   function coverLink() { return Ownership.linkTo('sleep-at-night', 'coverage'); }
-  function startLink(anchor) { return Ownership.linkTo('start', anchor); }
+  /* Both of these moved out of Start Here in D-234; the room they are
+     asked in is the room this links to. */
+  function deductibleLink() { return Ownership.linkTo('runway', 'coverage'); }
+  function cashLink() { return Ownership.linkTo('statement', 'assets'); }
   var HEALTH_LABELS = { employer: 'Through work', marketplace: 'Marketplace', cobra: 'COBRA', medicaid: 'Medicaid', parent: 'A parent’s plan', none: 'None' };
   var HEALTH_TYPES = Schema.HEALTH_TYPES || ['employer', 'marketplace', 'cobra', 'medicaid', 'parent', 'none'];
 
@@ -222,13 +225,13 @@
       if (Money.isEntered(hm)) rows.push({ label: 'A year of health cover', cents: hm * 12 });
       var ins = h.insurance || {};
       if (Money.isEntered(ins.oopMaxCents)) rows.push({ label: 'The out-of-pocket maximum', cents: ins.oopMaxCents, href: coverLink() });
-      else if (Money.isEntered(ins.highestDeductibleCents)) rows.push({ label: 'The highest deductible', cents: ins.highestDeductibleCents, href: startLink('q-deductible') });
+      else if (Money.isEntered(ins.highestDeductibleCents)) rows.push({ label: 'The highest deductible', cents: ins.highestDeductibleCents, href: deductibleLink() });
       if (Money.isOk(r)) {
         r.lines.forEach(function (l) {
           if (!l.applies || l.gapCents === null || l.gapCents <= 0) return;
           if (l.id === 'disability') rows.push({ label: 'The disability gap, a month', cents: l.gapCents, href: coverLink() });
           if (l.id === 'life') rows.push({ label: 'The term-life gap', cents: l.gapCents, href: coverLink() });
-          if (l.id === 'cushion') rows.push({ label: 'The cushion gap, to the floor', cents: l.gapCents, href: startLink('q-cash') });
+          if (l.id === 'cushion') rows.push({ label: 'The cushion gap, to the floor', cents: l.gapCents, href: cashLink() });
         });
       }
       return rows;

@@ -172,7 +172,7 @@
       var value, tail = '';
       if (p.never) value = 'Outlasts you';
       else if (p.lastsToAge !== null) value = String(p.lastsToAge);
-      else { value = Math.round(p.yearsUntilEmpty) + ' years'; tail = ' <a href="' + Ownership.linkTo('start', 'q-about') + '">Add your birth date for the age →</a>'; }
+      else { value = Math.round(p.yearsUntilEmpty) + ' years'; tail = ' <a href="' + Ownership.linkTo('settings', 'you') + '">Add your birth date for the age →</a>'; }
       if (!p.never) sub += '. ' + (Math.round(p.yearsUntilEmpty * 10) / 10) + ' years at a ' + Money.formatRate(p.returnReal, { decimals: 0 }) + ' real return';
       else sub += '. At a ' + Money.formatRate(p.returnReal, { decimals: 0 }) + ' real return the draw never empties the investments';
       /* 15.9: the phases the draw crosses, one sentence; only the ages
@@ -238,7 +238,7 @@
       var spend = Schema.monthlyExpensesCents(h);
       var rows = [];
       if (Money.isOk(p)) rows.push({ label: 'A year’s draw', cents: p.drawCents, href: p.planned ? Ownership.linkTo('decumulation', 'inputs') : null });
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('expenses', 'spending') });
       if (Money.isOk(p) && p.vpw) rows.push({ label: 'What VPW allows this year', cents: p.vpw.allowedCents });
       return rows;
     },

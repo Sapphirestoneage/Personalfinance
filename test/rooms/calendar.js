@@ -150,8 +150,10 @@ module.exports = function (t) {
   check('… going out, a log entry', oo2.direction + '/' + oo2.cents + '/' + oo2.on + '/' + oo2.where, 'out/120000/2026-12/log');
   check('… and a household saved before still reads its legacy list', Schema.oneOffEntry(Schema.createHousehold({ oneOffs: [{ cents: 7000, direction: 'in', on: '2026-10' }] })).where, 'legacy');
   SpineC.reset();
+  /* Start Here is a redirect since D-234; the one-off is a dated entry
+     wherever it is written, which is what the helpers above prove. */
   const startPage = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
-  checkTrue('Start Here writes the one-off as an entry and reads it back through the helper', /Schema\.ONE_OFF_IN/.test(startPage) && /Schema\.ONE_OFF_OUT/.test(startPage) && /Schema\.oneOffEntry\(x\)/.test(startPage) && !/Spine\.set\('oneOffs', \[Schema\.createOneOff/.test(startPage));
+  checkTrue('and the retired one-pager writes nothing at all', !/Spine\.set\(/.test(startPage));
   const calPage = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
   checkTrue('the calendar room no longer types bills; it points at the log', !/ctl: 'rentDay'/.test(calPage) && !/ctl: 'plCents'/.test(calPage) && /cash-flow\.html#log/.test(calPage) && /engines\/ledger\.js/.test(calPage));
 };

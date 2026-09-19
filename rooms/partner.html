@@ -324,7 +324,7 @@
     amounts: function (h, T) {
       var s = Partner.split(h, T);
       if (!Money.isOk(s)) return [];
-      var rows = [{ label: 'The shared month', cents: s.sharedCents, href: s.sharedSource === 'household' ? Ownership.linkTo('start', 'q-expenses') : '#inputs' }];
+      var rows = [{ label: 'The shared month', cents: s.sharedCents, href: s.sharedSource === 'household' ? Ownership.linkTo('expenses', 'spending') : '#inputs' }];
       if (s.mode === 'pooled') {
         if (s.poolInCents !== null) rows.push({ label: 'Into the pool, a month', cents: s.poolInCents });
         if (s.poolLeftCents !== null) rows.push({ label: 'Left each month, together', cents: s.poolLeftCents });

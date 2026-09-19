@@ -13,31 +13,6 @@
       "order": 0.5
     },
     {
-      "id": "start",
-      "title": "Start Here",
-      "file": "rooms/start.html",
-      "reads": [
-        "employmentStatus",
-        "unemployment",
-        "dob",
-        "state",
-        "filingStatus",
-        "grossAnnualIncome",
-        "monthlyExpenses",
-        "cashSavings",
-        "investments",
-        "employerMatch",
-        "contributionPercent",
-        "capturingFullMatch",
-        "highestDeductible",
-        "hasDebt"
-      ],
-      "writes": [],
-      "requires": [],
-      "dashboardNumber": null,
-      "order": 1
-    },
-    {
       "id": "debt-payoff",
       "title": "Debt Payoff",
       "file": "rooms/debt-payoff.html",
@@ -92,7 +67,9 @@
       "id": "income",
       "title": "Income",
       "file": "rooms/income.html",
-      "reads": [],
+      "reads": [
+        "grossAnnualIncome"
+      ],
       "writes": [
         "grossAnnualIncome",
         "ledgerIncome",
@@ -336,7 +313,10 @@
       "file": "rooms/accounts.html",
       "reads": [
         "grossAnnualIncome",
-        "filingStatus"
+        "filingStatus",
+        "employerMatch",
+        "contributionPercent",
+        "capturingFullMatch"
       ],
       "writes": [
         "employerMatch",

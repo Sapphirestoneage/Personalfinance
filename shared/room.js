@@ -272,7 +272,7 @@
       host.hidden = !(filled && filled.length);
       if (filled && filled.length) {
         host.innerHTML = 'Shown with guesses for ' + filled.map(function (f) { var d = Ownership.field(f); return d ? d.label.toLowerCase() : f; }).join(', ')
-          + '. <a href="' + Ownership.linkTo('start', null) + '">Make it yours in Start Here →</a>';
+          + '. <a href="' + Ownership.linkTo('ledger', 'all-at-once') + '">Make it yours in the Ledger →</a>';
       }
     }
 

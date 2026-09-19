@@ -258,8 +258,8 @@
     });
   }
   function el(id) { return document.getElementById(id); }
-  function startLink(anchor, text) {
-    return '<a href="' + Ownership.linkTo('start', anchor) + '">' + esc(text) + ' →</a>';
+  function ownerLink(room, anchor, text) {
+    return '<a href="' + Ownership.linkTo(room, anchor) + '">' + esc(text) + ' →</a>';
   }
   /* An incomplete Result names the fields it wanted. Turn the first one this
      app actually owns into a link to the room that owns it, so a blank figure
@@ -709,7 +709,7 @@
               'Your state schedule, applied to the same taxable income. Local taxes and state credits are not in it.')
           : row('State income tax', 'not counted', 'is-blank',
               'No state is set, so the total below is federal and penalty only — it is not a claim that your state takes nothing. '
-              + startLink('q-about', 'Set your state in Start Here')));
+              + ownerLink('tax', 'inputs', 'Set your state in Tax')));
 
         rows.push(c.penaltyApplies
           ? row('The ' + esc(Money.formatRate(c.penaltyRate, { decimals: 0 })) + ' early-withdrawal penalty',

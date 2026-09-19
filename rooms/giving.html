@@ -223,7 +223,7 @@
         rows.push({ label: 'A month given', cents: p.monthlyCents, href: '#inputs' });
       }
       var tithe = Giving.convention(T, 'tithe');
-      if (tithe && Money.isOk(gross)) rows.push({ label: 'The tithe, a year — ' + tithe.label + ' of ' + Money.formatCents(gross.value), cents: Math.round(gross.value * tithe.pct), href: Ownership.linkTo('start', 'q-income') });
+      if (tithe && Money.isOk(gross)) rows.push({ label: 'The tithe, a year — ' + tithe.label + ' of ' + Money.formatCents(gross.value), cents: Math.round(gross.value * tithe.pct), href: Ownership.linkTo('income', 'sources') });
       return rows;
     },
 

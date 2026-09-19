@@ -234,7 +234,7 @@
       var spend = Schema.monthlyExpensesCents(h);
       var rows = [];
       if (Money.isOk(two)) rows.push({ label: 'A month of enough', cents: two.enoughMonthlyCents, href: '#inputs' });
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('expenses', 'spending') });
       if (Money.isOk(two) && two.monthlyGapCents !== 0) rows.push({ label: two.monthlyGapCents > 0 ? 'The gap, a month (spending − enough)' : 'The gap, a month (enough − spending)', cents: Math.abs(two.monthlyGapCents) });
       return rows;
     },

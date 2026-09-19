@@ -226,7 +226,7 @@
         rows.push({ label: 'The price', cents: r.priceCents, href: '#inputs' });
         if (r.financed && r.totalInterestCents !== null) rows.push({ label: 'The interest, financed over ' + r.termMonths + ' months', cents: r.totalInterestCents });
       }
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('expenses', 'spending') });
       return rows;
     },
 

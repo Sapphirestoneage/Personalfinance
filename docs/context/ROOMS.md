@@ -4,10 +4,9 @@
 One line per room: id, title, lines, engines, owned fields, latest decisions.
 Full context for one: `node tools/context/pack.js <id>`.
 
-## Home (3)
+## Home (2)
 
 - **ledger** — The Ledger (utility) · 2248 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-230, D-226, D-207
-- **start** — Start Here · 1000 lines · engines: income · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1570 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
@@ -18,7 +17,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **income** — Income · 821 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: grossAnnualIncome, ledgerIncome, incomeType, paySurvives · D-207, D-198, D-195
 - **budget** — Budget · 483 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-130, D-129, D-128
 - **variance** — Estimated vs Actual · 232 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
-- **statement** — The Statement · 730 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: cashSavings, investments, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
+- **statement** — The Statement · 733 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: cashSavings, investments, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis · D-157, D-152, D-130
 - **real-hourly-wage** — Real Hourly Wage · 250 lines · engines: projection, tier0, hourly · D-054, D-021, D-001
 - **accounts** — Where It Goes & how it’s split · 641 lines · engines: selfemployed, accounts, projection, tier0, hourly · owns: employerMatch, capturingFullMatch, contributionPercent, rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand · D-130, D-071, D-062
 - **credit** — Your Credit File · 475 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios · D-147
@@ -53,7 +52,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **what-if-life** — What If, Life · 551 lines · engines: projection, tier0, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events · D-146, D-091, D-087
 - **timeline** — What Comes Next · 504 lines · engines: timeline · owns: futureIncome · D-152
 - **micro-retirement** — Micro-Retirement Planner · 166 lines · engines: projection, tier0, hourly, countdown, microretirement · D-219
-- **protection** — Protection · 267 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-103, D-098, D-094
+- **protection** — Protection · 270 lines · engines: projection, tier0, protection · owns: healthCover, healthMonthly · D-103, D-098, D-094
 - **decumulation** — Drawing It Down · 273 lines · engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-228, D-104, D-098
 - **roth-aca** — Roth Conversions Before 65 · 206 lines · engines: selfemployed, tax, rothaca · D-228, D-216
 - **middle-class-trap** — The Middle Class Trap Test · 201 lines · engines: selfemployed, tax, projection, tier0, trap · D-228, D-218
@@ -102,7 +101,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **settings** — Settings (utility) · 265 lines · no engines · owns: dob, age, employmentStatus, dependents · D-180
 - **progress-card** — Progress Card (utility) · 139 lines · engines: projection, tier0, tax, debt · D-212
 
-## Files in rooms/ not in the registry (18)
+## Files in rooms/ not in the registry (19)
 
 - rooms/between-jobs.html
 - rooms/comeback.html
@@ -120,5 +119,6 @@ Full context for one: `node tools/context/pack.js <id>`.
 - rooms/refresh.html
 - rooms/savings-rate.html
 - rooms/sleep-at-night.html
+- rooms/start.html
 - rooms/walk.html
 - rooms/windfall.html

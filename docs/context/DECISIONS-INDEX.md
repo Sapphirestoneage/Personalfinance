@@ -24,7 +24,7 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-015 — Debt Calculator: one engine, four orderings, no second builds [497-547]
 - D-016 — the Debt Payoff room shows what a choice costs [549-577] {debt-payoff}
 - D-017 — one owner per shared number; everywhere else it's a link [579-639]
-- D-018 — a guided intake, and the rooms as an ordered path [641-680] {start}
+- D-018 — a guided intake, and the rooms as an ordered path [641-680]
 - D-019 — side-by-side controls line up, at every width [682-718]
 - D-020 — FIRE variants: one formula, and one projection loop [720-755]
 - D-021 — Real Hourly Wage, and where a work profile lives [757-793] {real-hourly-wage}
@@ -61,13 +61,13 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-052 — Facts get answered once. What-ifs get thrown away. [2665-2739]
 - D-053 — A 0% card is a card with a deadline [2741-2815]
 - D-054 — A back and a next in every room, at the top [2817-2921] {real-hourly-wage, dashboard, foo-ladder, protection}
-- D-055 — "Are you working?" is asked first, and it removes questions [2923-3037] {start}
+- D-055 — "Are you working?" is asked first, and it removes questions [2923-3037]
 - D-056 — Time exists: every owned field knows when it was last confirmed, and snapshots are read back [3039-3108]
-- D-057 — Age is shown, and the three figures that move get a page of their own [3110-3185] {start}
+- D-057 — Age is shown, and the three figures that move get a page of their own [3110-3185]
 - D-058 — The Dashboard is the front door; the FOO ladder is a room [3187-3231] {dashboard, foo-ladder}
 - D-059 — The household can leave the browser, by hand only [3233-3273] {dashboard}
 - D-060 — A suggested value is shown, never stored [3275-3329]
-- D-061 — Eleven cards: the intake asks less, derives one answer, and takes "no debt" as an answer [3331-3411] {start, accounts, partner}
+- D-061 — Eleven cards: the intake asks less, derives one answer, and takes "no debt" as an answer [3331-3411] {accounts, partner}
 - D-062 — Explore rooms open with your numbers proposed, and the federal bracket is one of them [3413-3469] {self-employed, side-hustle, credential, accounts, runway}
 - D-063 — Cash Flow opens with a whole month proposed [3471-3503] {cash-flow}
 - D-066 — The 10x Statement's shape: what an asset is, how sure you are, when you can reach it [3505-3589] {hassle, property}
@@ -90,7 +90,7 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-091 — Charts: one module, three shapes, and the Personal Finance Club look [4671-4740] {debt-payoff, cash-flow, statement, stacker, goals, what-if-life}
 - D-092 — Unemployed is an answer with a sequence of its own [4742-4830]
 - D-094 — One pager in, one pager out: the core [4832-5004] {income, protection, decumulation, estate, giving, partner}
-- D-095 — The one-pager: one gate, ten cards at most, every box a guess until it is yours [5006-5116] {start}
+- D-095 — The one-pager: one gate, ten cards at most, every box a guess until it is yours [5006-5116]
 - D-096 — The dashboard is home: four blocks, and every number opens its room [5118-5217] {dashboard}
 - D-097 — One shape for every room, proven on Real Hourly Wage and frozen [5219-5311] {get-help}
 - D-098 — The first six tranche rooms: what each owns, before it is built [5313-5359] {income, protection, decumulation, estate, giving}
@@ -141,7 +141,7 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-143 — The panel audit: the crash, and the things it said that were not true [7378-7483] {dashboard}
 - D-144 — The panel audit: contrast, tap targets and the missing triangle [7485-7571] {dashboard}
 - D-145 — The language pass: names a stranger already knows [7573-7631] {dashboard}
-- D-146 — The responsive audit, kept [7633-7715] {start, what-if-life}
+- D-146 — The responsive audit, kept [7633-7715] {what-if-life}
 - D-147 — Your Credit File: the room that refuses to show a score [7717-7792] {credit}
 - D-148 — When It Won't All Get Paid [7794-7895] {cant-pay}
 - D-149 — The Walk-Through: fifty-nine rooms, and a route with an end [7897-8032]
@@ -154,14 +154,14 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-156 — Your Statements: the three documents, and the basis printed on them [8605-8658] {statements}
 - D-157 — The menu you could read the page through [8660-8759] {statement, dashboard}
 - D-158 — An empty debt list is not "no debt" [8761-8831]
-- D-159 — Two boxes buy a number, and the other seven wait [8833-8900] {start, cash-flow}
+- D-159 — Two boxes buy a number, and the other seven wait [8833-8900] {cash-flow}
 - D-160 — The ledger: five states, and how many rooms are waiting [8902-8971]
 - D-161 — The way back [8973-9033] {fire}
 - D-162 — The ledger, everywhere, without building a second one [9035-9084] {fire}
 - D-163 — The dead spot is the door [9086-9140] {cash-flow}
 - D-164 — Two rooms called Enough [9142-9164] {fulfillment, enough}
 - D-165 — Saying that it saved [9166-9224]
-- D-166 — The other five questions, folded [9226-9281] {start}
+- D-166 — The other five questions, folded [9226-9281]
 - D-167 — The Long Way Round, and what the spec asked for instead [9283-9364] {adventure}
 - D-168 — A room that renders nothing, quietly [9366-9451]
 - D-169 — The audit after the feedback: what was measured, what moved [9453-9521] {dashboard}

@@ -4753,8 +4753,10 @@ section('Whether there is an employer at all');
 
   /* -- What that does to "what is left to do" ------------------------------ */
   {
-    const employed = Progress.forRoom('start', withStatus('employed'));
-    const retired  = Progress.forRoom('start', withStatus('retired'));
+    /* D-234: the 401(k) card is Where It Goes's, so that is the room
+       whose "what is left to do" shrinks when the match cannot apply. */
+    const employed = Progress.forRoom('accounts', withStatus('employed'));
+    const retired  = Progress.forRoom('accounts', withStatus('retired'));
 
     checkTrue('an employee is asked about the match',
       employed.missing.concat(employed.filled).some(f => f.fieldId === 'employerMatch'));
@@ -4781,7 +4783,7 @@ section('Whether there is an employer at all');
     done.expenses = Schema.withMonthlySpend(done, 315000).expenses;
     done.dependents = false;
     done.assets.push(Schema.createAsset({ category: 'investment', valueCents: 4800000 }));
-    const row = Progress.forRoom('start', done);
+    const row = Progress.forRoom('accounts', done);
     check('a retiree who answers everything else is finished', row.missing.length, 0);
     checkTrue('and reads as complete', row.complete);
     check('at a full share', row.share, 1);
@@ -5010,9 +5012,9 @@ section('Age, and the three that move');
     let threw = false;
     try { Ownership.write('netWorth', 1); } catch (e) { threw = true; }
     checkTrue('a computed field with no shared path refuses rather than guessing', threw);
-    const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
-    checkTrue('Start Here writes cash through the same path', start.indexOf("Ownership.write('cashSavings'") !== -1);
-    checkTrue('and no longer has its own asset writer', start.indexOf('function writeAsset') === -1);
+    const ledger0 = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+    checkTrue('the Ledger writes cash through the same path', ledger0.indexOf("Ownership.write('cashSavings'") !== -1);
+    checkTrue('and has no asset writer of its own', ledger0.indexOf('function writeAsset') === -1);
     /* Refresh is the Ledger's since-last-time view now (D-230); the rule it
        is here to prove — a second PLACE to edit a record is fine, a second
        COPY of it is not — is the same rule and the same write path. */
@@ -5201,9 +5203,10 @@ section('Eleven cards');
     checkTrue('with no contribution the old stored answer is the fallback', fb.value === true && fb.derived === false);
     h.capturingFullMatch = null;
     check('and with neither it is incomplete', Schema.capturingFullMatchDerived(h).status, 'incomplete');
-    check('the ownership map reads the derivation', Ownership.describe('capturingFullMatch', Demo.build(), 'start').display, 'No');
-    const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
-    checkTrue('Start Here no longer asks it', start.indexOf('data-choices="capturingFullMatch"') === -1);
+    check('the ownership map reads the derivation', Ownership.describe('capturingFullMatch', Demo.build(), 'accounts').display, 'No');
+    const acc0 = fs.readFileSync(path.join(ROOT, 'rooms/accounts.html'), 'utf8');
+    checkTrue('and the room that owns it does not ask it either (D-234)',
+      acc0.indexOf('data-setup="capturingFullMatch"') === -1);
   }
 
   /* -- The stored shape ------------------------------------------------ */
@@ -5212,7 +5215,10 @@ section('Eleven cards');
     check('and keeps one it is given', Schema.createAsset({ taxCharacter: 'roth' }).taxCharacter, 'roth');
     check('three characters are asked', Schema.TAX_CHARACTERS.map(t => t.id).join(','), 'pretax,roth,taxable');
     check('a new household has not answered about debt', Schema.createHousehold({}).meta.hasDebt, null);
-    check('the demo answers every intake field', Progress.forRoom('start', Demo.build()).missing.length, 0);
+    /* D-234 split the intake across six rooms, so "the demo answers
+       everything" is now a question asked of each of them. */
+    ['income', 'accounts', 'tax', 'statement', 'expenses', 'debt-payoff'].forEach(id =>
+      check(`the demo answers everything ${id} needs`, Progress.forRoom(id, Demo.build()).missing.length, 0));
     /* The 401(k) card went to Where It Goes whole (D-234), which already
        owned the rest of the retirement setup. */
     ['contributionPercent', 'employerMatch', 'capturingFullMatch'].forEach(f => {
@@ -5255,8 +5261,7 @@ section('Eleven cards');
         /ctl: 'filingStatus'/.test(tax) && /ctl: 'state'/.test(tax) && /ctl: 'zip'/.test(tax));
       checkTrue('and writes them through the owner path',
         (tax.match(/Ownership\.write\('(filingStatus|state|zip)'/g) || []).length === 3);
-      checkTrue('Start Here no longer claims them',
-        !/taxes\.filingStatus/.test(JSON.stringify(Registry.byId('start').daite.writes)));
+      checkTrue('Start Here is not a room any more', Registry.byId('start') === null);
     }
     check('Sleep At Night reads the deductible as a chip',
       fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8').indexOf("Ownership.chip('highestDeductible'") !== -1, true);
@@ -5282,14 +5287,12 @@ section('Eleven cards');
     const md = require(path.join(ROOT, 'data/match_defaults.json'));
     check('the suggested match is 50% of the first 6%', md.mostCommon.matchPercent + '/' + md.mostCommon.matchCapPercentOfSalary, '0.5/0.06');
     check('marked as a convention', md.confidence, 'convention');
-    const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
-    checkTrue('Start Here shows it through Suggest, never writes it', /propose\('matchPercent', Object\.assign\(\{ unit: 'pct' \}, g\.matchPercent\)/.test(start));
-    checkTrue('with a "no match" button that writes zeros explicitly', start.indexOf("id=\"btn-no-match\"") !== -1 && /matchPercent: 0, matchCapPercentOfSalary: 0/.test(start));
-    /* The one-pager builds every card any situation could show, once,
-       from the gate's list (D-095). */
+    /* The match default is still a proposal, never a write. The one-pager
+       that used to show it is a redirect (D-234); Gate.CARDS is the card
+       model it was built from and nothing builds from it any more, which is
+       the next thing to cut. */
     const Gate = require(path.join(ROOT, 'shared/gate.js'));
-    check('twelve cards the gate knows', Gate.allCards().length, 12);
-    checkTrue('and the page builds them from that list', /Gate\.allCards\(\)\.forEach/.test(start));
+    check('twelve cards the gate still knows', Gate.allCards().length, 12);
     checkTrue('one of which is the second person, shown only when there are two',
       !Gate.CARDS.partnerPay.when(Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult' })] }))
       && Gate.CARDS.partnerPay.when(Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult' }), Schema.createPerson({ role: 'adult' })] })));
@@ -6140,15 +6143,14 @@ section('Facts answered once');
     se.people[0].incomeSources[0].employerMatch = { matchPercent: null, matchCapPercentOfSalary: null };
     checkTrue('with no employer it stops', !Schema.capturingQuestionApplies(se));
     checkTrue('and the ownership map uses the same rule',
-      !Ownership.describe('capturingFullMatch', se, 'start').applies
-      && Ownership.describe('capturingFullMatch', fresh, 'start').applies);
-    const startNeeds = Progress.forRoom('start', fresh);
-    /* Thirteen shared fields: the 401(k) card carries the match, the
-       contribution and the derived capture; born + state share one card
-       (D-061, D-092). Between jobs does not count here — it applies only
-       when the status says so — and "anyone depending on you" lives in
-       the fine-tune drawer, optional, so it is not a need (D-095). */
-     check('so Start Here counts thirteen fields from the first screen', startNeeds.total, 13);
+      !Ownership.describe('capturingFullMatch', se, 'accounts').applies
+      && Ownership.describe('capturingFullMatch', fresh, 'accounts').applies);
+    /* D-234: the three questions of the 401(k) card are Where It Goes's
+       needs now, and the derived one drops out of the denominator on a
+       household with no match to capture, exactly as it did on the
+       one-pager (D-061). */
+    check('all three drop out when there is no employer and nothing typed',
+      Progress.forRoom('accounts', fresh).total - Progress.forRoom('accounts', se).total, 3);
   }
 
   /* -- Rooms that hold facts are not "explore" rooms --------------------- */
@@ -6272,13 +6274,10 @@ section('Promotional rates');
 
 section('Ownership');
 
-/* The one-pager builds its cards from Gate.CARDS at load, so their ids are
-   not literal in the file; an anchor that names one of them lands. D-095. */
-function builtCardId(roomId, id) {
-  if (roomId !== 'start') return false;
-  const Gate = require(path.join(ROOT, 'shared/gate.js'));
-  return Object.keys(Gate.CARDS).some(k => Gate.CARDS[k].id === id);
-}
+/* Every anchor is a literal element id in its owner's file now. The
+   one-pager built its cards from Gate.CARDS at load, so its anchors were
+   the one exception; it is a redirect since D-234 and owns nothing. */
+function builtCardId() { return false; }
 
 (function () {
   const roomIds = Registry.all().map(r => r.id);
@@ -6327,8 +6326,7 @@ function builtCardId(roomId, id) {
   const OWNED_INPUT_MARKERS = {
     'cash-flow': [/data-cat="debt_minimums"/, /data-fat=/],
     'expenses': [/data-cat="debt_minimums"/],
-    'financial-snapshot': [/data-field="/, /data-write="/, /input[^>]*id="f-/],
-    'start': [/data-cat=/, /data-debt=/]
+    'financial-snapshot': [/data-field="/, /data-write="/, /input[^>]*id="f-/]
   };
   Object.keys(OWNED_INPUT_MARKERS).forEach(function (roomId) {
     const room = Registry.byId(roomId);
@@ -6379,18 +6377,18 @@ section('Room order');
   checkTrue('every room declares an order', orders.every(o => typeof o === 'number'));
   check('orders are unique', new Set(orders).size, orders.length);
   checkTrue('orders are ascending', orders.every((o, i) => i === 0 || o > orders[i - 1]));
-  check('the Ledger comes first and Start Here (the older one-pager) behind it (D-206, D-208, D-230)', path_.slice(0, 2).map(r => r.id).join(','), 'ledger,start');
+  check('the Ledger comes first, and Debt behind it now Start Here has retired into it (D-230, D-234)', path_.slice(0, 2).map(r => r.id).join(','), 'ledger,debt-payoff');
   check('the Snapshot comes after the rooms that feed it',
     path_.findIndex(r => r.id === 'financial-snapshot') >
     Math.max(path_.findIndex(r => r.id === 'debt-payoff'), path_.findIndex(r => r.id === 'cash-flow')),
     true);
 
   check('with nothing visited, the next room is the first',
-    Registry.nextAfter(null, []).id, 'start');
-  check('with Start done, the next is Debt Payoff',
-    Registry.nextAfter(null, ['start']).id, 'debt-payoff');
+    Registry.nextAfter(null, []).id, 'debt-payoff');
+  check('with Debt done, the next is the one after it',
+    Registry.nextAfter(null, ['debt-payoff']).id, 'expenses');
   check('skipping ahead still points at the earliest unvisited',
-    Registry.nextAfter(null, ['start', 'cash-flow']).id, 'debt-payoff');
+    Registry.nextAfter(null, ['debt-payoff', 'cash-flow']).id, 'expenses');
 })();
 
 /* ==========================================================================
@@ -7902,9 +7900,12 @@ section('Between jobs: the unemployed sequence');
   const dash = Progress.forRoom('dashboard', h);
   check('the dashboard has nothing left to ask this household', dash.missing.length, 0);
   checkTrue('… income sits in the not-applicable list', dash.notApplicable.some(f => f.fieldId === 'grossAnnualIncome'));
-  const start = Progress.forRoom('start', household(null));
-  checkTrue('Start Here lists the between-jobs card as outstanding until it is answered', start.missing.some(f => f.fieldId === 'unemployment'));
-  checkTrue('… and the 401(k) as not applicable', start.notApplicable.some(f => f.fieldId === 'employerMatch'));
+  /* D-234: the between-jobs facts are the Cushion's and the 401(k) card is
+     Where It Goes's, so each room answers for its own. */
+  checkTrue('the between-jobs row is outstanding until it is answered',
+    !Ownership.describe('unemployment', household(null), 'runway').isSet);
+  checkTrue('… and the 401(k) is not applicable to a household with no employer',
+    Progress.forRoom('accounts', household(null)).notApplicable.some(f => f.fieldId === 'employerMatch'));
 
   /* The runway by hand: $6,000 cash, $3,000 a month out, $1,000 a month
      of benefit for three months. 6,000 → 4,000 → 2,000 → 0 → −3,000: three
@@ -7914,13 +7915,9 @@ section('Between jobs: the unemployed sequence');
   check('… out of money in the fourth', r.ranOutInMonth, 4);
   check('on cash alone, two', Runway.project(h, T, { preset: 'quit' }).runwayMonths, 2);
 
-  (function () {
-    const Gate = require(path.join(ROOT, 'shared/gate.js'));
-    check('Start Here has the card', Gate.CARDS.betweenJobs.id, 'q-unemployed');
-    checkTrue('… and only asks it when between jobs', Gate.ORDER.betweenJobs.indexOf('betweenJobs') !== -1 && Object.keys(Gate.ORDER).every(s => s === 'betweenJobs' || Gate.ORDER[s].indexOf('betweenJobs') === -1));
-    checkTrue('… and stops asking for income then', Gate.ORDER.betweenJobs.indexOf('pay') === -1);
-  })();
-  checkTrue('the registry links to the card', Registry.byId('start').subsections.some(x => x.id === 'q-unemployed'));
+  checkTrue('the Cushion asks it, on the job-hunting reading',
+    Ownership.field('unemployment').owner === 'runway'
+    && Registry.byId('runway').subsections.some(x => x.id === 'inputs'));
   checkTrue('the dashboard loads the runway engine for the between-jobs action', /engines\/runway\.js/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /function betweenJobs/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')));
   checkTrue('Runway opens on laid off with the facts', /function prefillFromFacts/.test(fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8')));
   (function () {
@@ -8369,7 +8366,6 @@ section('The one-pager (D-095): import, confidence, the drawer');
     check(`${f} is owned by Settings`, Ownership.field(f).owner, 'settings');
     check(`${f} lands on the About you card`, Ownership.field(f).anchor, 'you');
   });
-  checkTrue('… and is not on the list of things Start Here needs', Registry.byId('start').needs.indexOf('dependents') === -1);
   {
     const st = fs.readFileSync(path.join(ROOT, 'rooms/settings.html'), 'utf8');
     checkTrue('Settings asks all three, which is how ownership moves',
@@ -8379,24 +8375,36 @@ section('The one-pager (D-095): import, confidence, the drawer');
     checkTrue('the card sits outside the lists Settings repaints (D-034)',
       st.indexOf('<section class="slaf-card" id="you"') < st.indexOf('id="accuracy-list"'));
   }
-  checkTrue('the drawer and the import are the page\'s own sections', ['q-fine-tune', 'q-import'].every(id => Registry.byId('start').subsections.some(x => x.id === id)));
-
-  /* Ten at most, whoever you are. */
+  /* Ten at most, whoever you are: the gate's card model, which nothing
+     builds from since D-234 but which still decides which questions a
+     situation makes sense of. */
   Object.keys(Gate.ORDER).forEach(function (s) {
     const two = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult', employmentStatus: Gate.byId(s).status }), Schema.createPerson({ role: 'adult' })] });
     checkTrue(`${s} with a partner: at most ten cards`, Gate.fieldsFor(s, two).length <= 10);
   });
 
-  /* The page's own contract. */
+  /* The redirect's own contract (D-234). Start Here's anchors did not all
+     go to one room, so the map has to carry each question to the page that
+     asks it now, and every one of those has to be a real room. */
   const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
-  checkTrue('the gate change is one batch', /el\('gate'\)\.addEventListener\('click'[\s\S]{0,400}Spine\.batch\('Situation: '/.test(start));
-  checkTrue('and so is "See my dashboard"', /function commitGuesses[\s\S]{0,200}Spine\.batch\('Filled in the one-pager'/.test(start));
-  checkTrue('and the import', /Spine\.batch\('Imported '/.test(start));
-  checkTrue('cards that do not apply are removed from the page, not hidden', /box\.removeChild\(n\)/.test(start) && !/node\.hidden = !on/.test(start));
-  checkTrue('every box carries a badge', /function badge\(name\)/.test(start) && (start.match(/\+ badge\(name\)/g) || []).length >= 3 && /function paintBadges/.test(start));
-  checkTrue('the page declares its live-form discipline', /LIVE-FORM: built once/.test(start));
-  checkTrue('and a place for a theme', /THEMING:/.test(start));
-  checkTrue('the photo path degrades to paste when the browser cannot read text', /TextDetector/.test(start) && /paste/i.test(start));
+  checkTrue('Start Here is a redirect, not a deleted file', /url=ledger\.html#all-at-once/.test(start));
+  checkTrue('and says where it went in words too', /Open it →/.test(start));
+  checkTrue('it declares its live-form discipline: no inputs at all',
+    /LIVE-FORM: built once\. No inputs\./.test(start) && !/<input/.test(start));
+  const targets = (start.match(/'#q-[a-z-]+':\s*'([a-z-]+)\.html#[a-z0-9-]+'/g) || [])
+    .map(l => l.match(/'([a-z-]+)\.html#([a-z0-9-]+)'/));
+  checkTrue('every old question maps somewhere', targets.length >= 13);
+  targets.forEach(function (m) {
+    const room = Registry.all().filter(r => r.href === 'rooms/' + m[1] + '.html')[0];
+    checkTrue(`#${m[2]} in ${m[1]}.html is a live room`, !!room, `no registry room at rooms/${m[1]}.html`);
+    if (!room) return;
+    const html = fs.readFileSync(path.join(ROOT, room.href), 'utf8');
+    /* Either a real element id, or a view hash a multi-view room switches
+       on (the Ledger's #all-at-once, the Cushion's #job-hunting). */
+    checkTrue(`… and #${m[2]} is somewhere it can land in ${m[1]}.html`,
+      new RegExp(`id=["']${m[2]}["']`).test(html) || html.indexOf('#' + m[2]) !== -1);
+  });
+  checkTrue('and the one-pager is out of the registry', Registry.byId('start') === null);
 })();
 
 section('The dashboard (D-096): four blocks, the leads, the translator');
@@ -8631,7 +8639,7 @@ section('LATER.md, built (D-100): the log across tabs, worded labels, the defaul
   const rooms = tool.build();
   check('every room is in rooms.json', rooms.length, Registry.all().length);
   checkTrue('each row has the brief\'s fields', rooms.every(r => ['id', 'title', 'file', 'reads', 'writes', 'requires', 'dashboardNumber', 'order'].every(k => k in r)));
-  check('Start Here writes what ownership says', rooms.filter(r => r.id === 'start')[0].writes.join(','), Ownership.ownedBy('start').join(','));
+  check('the Statement writes what ownership says', rooms.filter(r => r.id === 'statement')[0].writes.sort().join(','), Ownership.ownedBy('statement').sort().join(','));
   check('Accounts requires the retirement branch', rooms.filter(r => r.id === 'accounts')[0].requires.join(','), 'retirement');
   check('FIRE is where the FI year opens', rooms.filter(r => r.id === 'fire')[0].dashboardNumber, 'fiEtaYear');
   check('the committed rooms.json is what the tool writes now (run node tools/rooms-json.js)', fs.readFileSync(path.join(ROOT, 'rooms.json'), 'utf8'), tool.render());
@@ -10069,9 +10077,10 @@ section('The Walk-Through — a route with an end');
   (function () {
     const h = person('employed');
     const first = Guide.nextStep(h, T);
-    check('the walk starts at Start Here', first.id, 'start');
-    h.meta.walk = { done: { start: 'x' }, skipped: {} };
-    check('a marked step is not offered again', Guide.nextStep(h, T).id !== 'start', true);
+    /* D-234: Start Here left the walk with the rest of its questions. */
+    check('the walk starts at the first room of the first stage', first.id, 'income');
+    h.meta.walk = { done: { income: 'x' }, skipped: {} };
+    check('a marked step is not offered again', Guide.nextStep(h, T).id !== 'income', true);
     check('marking one step moves the count', Guide.progress(h, T).done, 1);
 
     /* Schema.createWalk is the guard: a shape claiming a room is both done
@@ -10547,7 +10556,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   /* Four doors stood side by side under Home and it was the single thing
      that lost people most (D-186). There is one now: the Ledger, which the
      First Round and Express became views of (D-230). */
-  check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
+  check('Home: the Dashboard and the Ledger, which Start Here has now retired into (D-234)', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   check('...sixteen of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 16);
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses)\b/.test(w))));
@@ -11330,9 +11339,10 @@ section('15.4: income by type, take-home per source, what survives a job loss (D
   check('the main job takes the paid hours from the work profile: 72,000 over 40 h', many.perSource && many.perSource[0].nominalHourlyCents, Math.round(7200000 / (40 * many.weeksPerYear)));
 
   /* The rooms. */
-  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
-  checkTrue('Start Here asks the kind of pay with chips, not typing', start.indexOf("choices('payType'") > -1 && start.indexOf("choices('paySurvives'") > -1);
-  checkTrue('...and writes type and survivesJobLoss through the spine', /payType: function \(v\) \{ writeSource\(INCOME_ID, \{ type: v \}\)/.test(start));
+  /* D-234: the kind of pay is asked source by source in Income, which is
+     also where the annual gross is now. */
+  checkTrue('the kind of pay is Income\'s to ask',
+    Ownership.field('incomeType').owner === 'income' && Ownership.field('paySurvives').owner === 'income');
   const income = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
   checkTrue('the Income room shows pay source by source', income.indexOf('takeHomeBySource') > -1 && income.indexOf('id="sources"') > -1);
   const rhw = fs.readFileSync(path.join(ROOT, 'rooms/real-hourly-wage.html'), 'utf8');
@@ -11477,10 +11487,14 @@ section('15.6: one sourced state table, read by tax, housing, kids, the car and 
   check('a ZIP is kept when it is five digits', Schema.createHousehold({ zip: '27601' }).zip, '27601');
   check('...and dropped when it is not', Schema.createHousehold({ zip: '2760' }).zip, null);
   check('...null by default', Schema.createHousehold({}).zip, null);
-  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
-  checkTrue('Start Here asks the ZIP in Fine-tune, optional', start.indexOf('data-ctl="zip"') > -1 && start.indexOf('ZIP, if you like') > -1);
-  checkTrue('...and writes it through the spine', /zip: function \(v\) \{[^}]*Spine\.set\('zip'/.test(start));
-  checkTrue('the state is asked in the first card, beside the birth date', /select\('state', 'State'/.test(start));
+  /* D-234: both are taxes.* facts and Tax asks them, the ZIP under a fold
+     because it changes nothing in that room's arithmetic. */
+  const taxPage = fs.readFileSync(path.join(ROOT, 'rooms/tax.html'), 'utf8');
+  checkTrue('Tax asks the ZIP under the fold, optional',
+    /ctl: 'zip'/.test(taxPage) && /moreLabel: 'Where exactly'/.test(taxPage));
+  checkTrue('...and writes it through the owner path', /Ownership\.write\('zip'/.test(taxPage));
+  checkTrue('the state is asked on the same card, beside how you file',
+    /ctl: 'state'/.test(taxPage) && /ctl: 'filingStatus'/.test(taxPage));
   const housingRoom = fs.readFileSync(path.join(ROOT, 'rooms/housing.html'), 'utf8');
   checkTrue('Housing names the state\'s rate and its source', housingRoom.indexOf("Schema.stateCell(T, h.state, 'propertyTaxEffectiveRate')") > -1);
   const carRoom = fs.readFileSync(path.join(ROOT, 'rooms/car.html'), 'utf8');
@@ -11539,9 +11553,11 @@ section('15.7: two people, one record each; the Partner room edits the second (D
   const partnerRoom = fs.readFileSync(path.join(ROOT, 'rooms/partner.html'), 'utf8');
   checkTrue('the Partner room has a name box (text, not a number) and a birth-year box', /ctl: 'partnerName', label: 'What to call them', kind: 'text'/.test(partnerRoom) && /ctl: 'partnerBirthYear'/.test(partnerRoom));
   checkTrue('...writing the person record, not a room of their own', /Spine\.upsertPerson\(\{ id: p\.id, label:/.test(partnerRoom) && /Spine\.upsertPerson\(\{ id: p\.id, dob:/.test(partnerRoom) && partnerRoom.indexOf("Spine.set('partner.name") === -1);
+  /* The one-pager that asked about the second adult is a redirect, and
+     its partner question lands on the Partner room (D-234). */
   const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
-  checkTrue('Start Here no longer names the second adult; it points at Partner', start.indexOf('data-ctl="partnerLabel"') === -1 && /partner\.html#inputs/.test(start));
-  checkTrue('...but still asks their pay and working situation', start.indexOf("moneyInput('partnerPay'") > -1 && start.indexOf("select('partnerStatus'") > -1);
+  checkTrue('the retired one-pager sends the partner question to Partner',
+    start.indexOf('data-ctl="partnerLabel"') === -1 && /partner\.html#inputs/.test(start));
   const room = fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8');
   checkTrue('the room template has a text kind', room.indexOf("if (spec.kind === 'text') return t;") > -1);
   const income = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');

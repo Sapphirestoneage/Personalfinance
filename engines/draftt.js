@@ -31,7 +31,7 @@
 
   var ORDER = ['debt', 'retirement', 'accommodation', 'food', 'transportation', 'taxes', 'therapy'];
   var OWNER = {
-    debt: ['debt-payoff', 'debts'], retirement: ['start', 'q-plan'], accommodation: ['expenses', 'spending'],
+    debt: ['debt-payoff', 'debts'], retirement: ['accounts', 'setup'], accommodation: ['expenses', 'spending'],
     food: ['expenses', 'spending'], transportation: ['expenses', 'spending'], taxes: ['tax', 'number'], therapy: ['expenses', 'spending']
   };
 

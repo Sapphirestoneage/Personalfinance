@@ -238,7 +238,7 @@
       var rows = [];
       if (Money.isOk(d)) rows.push({ label: 'The designed week, a month', cents: d.monthlyCents });
       var now = Schema.monthlyExpensesCents(h);
-      if (Money.isOk(now)) rows.push({ label: 'The month you have', cents: now.value, href: Ownership.linkTo('start', 'q-expenses') });
+      if (Money.isOk(now)) rows.push({ label: 'The month you have', cents: now.value, href: Ownership.linkTo('expenses', 'spending') });
       if (Money.isOk(d) && d.gapCents !== null) rows.push({ label: d.gapCents < 0 ? 'The gap: the designed week costs less' : 'The gap: the designed week costs more', cents: Math.abs(d.gapCents) });
       if (Money.isOk(d) && d.fiCents !== null) rows.push({ label: 'FI on this week', cents: d.fiCents });
       return rows;

@@ -12,7 +12,6 @@
       "title": "What's true right now",
       "goal": "The handful of numbers everything else is built on. Nothing further in here means much until these are real.",
       "rooms": [
-        "start",
         "income",
         "expenses",
         "cash-flow",

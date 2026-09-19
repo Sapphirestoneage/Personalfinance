@@ -20,35 +20,6 @@
 
   var ROOMS = [
     {
-      id: 'start',
-      group: 'home', aliases: ['begin', 'setup', 'one-pager', 'situation', 'intake'],
-      kind: 'core',
-      needs: ['employmentStatus', 'unemployment', 'dob', 'state', 'filingStatus', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments',
-              'employerMatch', 'contributionPercent', 'capturingFullMatch', 'highestDeductible', 'hasDebt'],
-      order: 1,
-      title: 'Start Here',
-      blurb: 'One page. Say your situation, fix the guesses that are wrong, and get a dashboard back. Every other room opens already filled in.',
-      href: 'rooms/start.html',
-      tier: 0,
-      tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ['assets.cashCents', 'assets.contributions.pretax', 'assets.invested', 'debt.none', 'expenses', 'income.grossAnnualCents', 'income.sources[].benefit', 'income.sources[].employerMatch', 'taxes.filingStatus', 'taxes.state', 'taxes.zip', 'you.cover', 'you.dob', 'you.situation'], writes: [] },
-      subsections: [
-        { id: 'q-employment',  label: 'Your situation' },
-        { id: 'q-about',       label: 'About you' },
-        { id: 'q-income',      label: 'What you earn' },
-        { id: 'q-own-work',    label: 'Your own work' },
-        { id: 'q-unemployed',  label: 'Between jobs' },
-        { id: 'q-partner',     label: 'The other of you' },
-        { id: 'q-expenses',    label: 'What goes out' },
-        { id: 'q-cash',        label: 'Cash and the deductible' },
-        { id: 'q-investments', label: 'Investments' },
-        { id: 'q-plan',        label: 'Your 401(k)' },
-        { id: 'q-debt',        label: 'What you owe' },
-        { id: 'q-fine-tune',   label: 'Fine-tune' },
-        { id: 'q-import',      label: 'Paste numbers in' }
-      ]
-    },
-    {
       id: 'financial-snapshot',
       features: ['afterTaxNetWorth', 'homeDetail', 'agingParents'],
       group: 'scorecard', aliases: ['snapshot', 'draftt', 'lenses', 'scorecard', 'nine numbers'],
@@ -95,14 +66,14 @@
       features: ['equityComp', 'matchVesting'],
       group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources'],
       kind: 'about-you',
-      needs: [],
+      needs: ['grossAnnualIncome'],
       order: 3.2,
       title: 'Income',
       blurb: 'Everything coming in, logged as it lands — a paycheque, a gig, a gift, a dividend, the rent — each netted the way it is actually taxed.',
       href: 'rooms/income.html',
       tier: 1,
       tags: ['income'],
-      daite: { reads: [], writes: ['income.costs', 'income.grossAnnualCents', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss'] },
+      daite: { reads: ['income.grossAnnualCents'], writes: ['income.costs', 'income.grossAnnualCents', 'income.ledger', 'income.sources[].type', 'income.sources[].survivesJobLoss'] },
       subsections: [
         { id: 'month', label: 'This month' },
         { id: 'log',   label: 'Every entry' },
@@ -537,14 +508,14 @@
          rooms read. An explore room owns nothing anybody waits on, and this
          one owns four things. DECISIONS.md D-052. */
       kind: 'about-you',
-      needs: ['grossAnnualIncome', 'filingStatus'],
+      needs: ['grossAnnualIncome', 'filingStatus', 'employerMatch', 'contributionPercent', 'capturingFullMatch'],
       order: 17,
       title: 'Where It Goes & how it\u2019s split',
       blurb: 'Roth, Traditional or taxable, how much a Solo 401(k) actually lets you put away \u2014 and the mix you are aiming for.',
       href: 'rooms/accounts.html',
       tier: 2,
       tags: ['income'],
-      daite: { reads: ['income.grossAnnualCents', 'taxes.filingStatus'], writes: ['assets.allocation', 'assets.contributions.hsa', 'assets.contributions.pretax', 'assets.contributions.roth', 'income.sources[].employerMatch', 'taxes.marginalRate'] },
+      daite: { reads: ['assets.contributions.pretax', 'income.grossAnnualCents', 'income.sources[].employerMatch', 'taxes.filingStatus'], writes: ['assets.allocation', 'assets.contributions.hsa', 'assets.contributions.pretax', 'assets.contributions.roth', 'income.sources[].employerMatch', 'taxes.marginalRate'] },
       subsections: [
         { id: 'setup',   label: 'Your retirement setup' },
         { id: 'compare', label: 'Roth vs. Traditional vs. taxable' },

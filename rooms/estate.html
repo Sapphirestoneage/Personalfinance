@@ -176,7 +176,7 @@
       if (!Money.isOk(r) || !Money.isOk(r.assets)) return [];
       return [
         { label: 'Would pass by the state’s rules', cents: r.atRiskCents },
-        { label: 'Everything you own', cents: r.assets.value, href: Ownership.linkTo('start', 'q-investments') }
+        { label: 'Everything you own', cents: r.assets.value, href: Ownership.linkTo('statement', 'assets') }
       ];
     },
 

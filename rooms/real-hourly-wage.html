@@ -210,7 +210,7 @@
       var w = Hourly.realHourlyWage(h, T, {});
       var spend = Schema.monthlyExpensesCents(h);
       var rows = [];
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('expenses', 'spending') });
       if (Money.isOk(w)) {
         rows.push({ label: 'A year of tax, estimated', cents: w.estimatedTaxCents || 0 });
         if (w.annualWorkCostsCents > 0) rows.push({ label: 'A year of the costs of working', cents: w.annualWorkCostsCents });

@@ -1266,12 +1266,12 @@
       var p = planOf(h, T);
       var rows = [];
       var spend = Schema.monthlyExpensesCents(h);
-      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('start', 'q-expenses') });
+      if (Money.isOk(spend)) rows.push({ label: 'A month of spending', cents: spend.value, href: Ownership.linkTo('expenses', 'spending') });
       if (Money.isOk(p)) {
         rows.push({ label: 'The floor month' + (p.floorSource === 'convention' ? ', proposed' : ''), cents: p.floorCents, href: p.floorSource === 'yours' ? null : '#inputs' });
         if (p.severanceCents > 0) rows.push({ label: 'Severance in hand', cents: p.severanceCents, href: '#the-plan' });
         if (p.benefit.monthlyCents > 0) rows.push({ label: 'The benefit, a month', cents: p.benefit.monthlyCents, href: '#inputs' });
-        if (p.other.cents > 0) rows.push({ label: 'Other income, a month' + (p.other.basis === 'gross' ? ' (before tax)' : ''), cents: p.other.cents, href: Ownership.linkTo('start', 'q-partner') });
+        if (p.other.cents > 0) rows.push({ label: 'Other income, a month' + (p.other.basis === 'gross' ? ' (before tax)' : ''), cents: p.other.cents, href: Ownership.linkTo('partner', 'inputs') });
       }
       return rows;
     },

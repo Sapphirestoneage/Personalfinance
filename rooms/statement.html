@@ -344,10 +344,13 @@
           + '<input type="text" inputmode="decimal" data-asset="' + a.id + '" data-field="valueCents" value="'
           + (Money.isEntered(a.valueCents) ? fmt(a.valueCents) : '') + '" placeholder="e.g. 320000" aria-label="Value"/></span>'
           + (a.category === 'cash' ? cashMovedHint(h) : '') + '</label>'
+        /* Nothing reaches this branch any more: every category this room
+           lists is one it owns since D-234. It stays as the shape a
+           borrowed value takes, for whatever lands here next. */
         : '<div class="slaf-field" style="margin:0"><span class="slaf-label">What it\'s worth</span>'
-          + '<a class="slaf-owned slaf-owned--field" href="' + Ownership.linkTo('start', a.category === 'cash' ? 'q-cash' : 'q-investments') + '">'
+          + '<a class="slaf-owned slaf-owned--field" href="' + Ownership.linkTo('ledger', 'all-at-once') + '">'
           + '<span class="slaf-owned-value">' + (Money.isEntered(a.valueCents) ? fmt(a.valueCents) : Money.EM_DASH) + '</span>'
-          + '<span class="slaf-owned-from">Start Here →</span></a>' + (a.category === 'cash' ? cashMovedHint(h) : '') + '</div>';
+          + '<span class="slaf-owned-from">The Ledger →</span></a></div>';
       var typeCell = mine
         ? '<label class="slaf-field" style="margin:0"><span class="slaf-label">Type</span>'
           + '<span class="slaf-input-shell"><select data-asset="' + a.id + '" data-field="category">'
