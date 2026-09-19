@@ -90,6 +90,9 @@
   .up-next .un-more a { color: var(--color-accent-hover); }
   .up-next .un-open { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); }
   .up-next .un-open a { color: inherit; }
+  .up-next .is-short { color: var(--color-critical); }
+  .up-next .un-journey { display: block; }
+  .up-next .un-journey b { color: var(--color-text); font-variant-numeric: tabular-nums; }
   .room-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-4); }
   .room-back { display: inline-block; color: var(--color-accent-hover); text-decoration: none; font-size: var(--text-sm); margin-bottom: var(--space-3); }
   .room-back:hover { text-decoration: underline; }
@@ -338,6 +341,10 @@
   <div class="walk-strip up-next" id="up-next" hidden>
     <p class="un-count" id="un-count"></p>
     <div class="un-meter" aria-hidden="true"><span id="un-meter"></span></div>
+    <!-- The level and the gap (D-248): where you are, what the gap is at
+         this level, what makes it more exact, and what it was before. -->
+    <p class="un-say" id="un-level"></p>
+    <p class="un-more un-journey" id="un-journey"></p>
     <p class="un-say" id="un-say"></p>
     <ul class="un-more" id="un-more"></ul>
     <p class="un-open" id="un-open"></p>
@@ -563,6 +570,7 @@
 <script src="shared/gate.js"></script>
 <script src="shared/upnext.js"></script>
 <script src="engines/journey.js"></script>
+<script src="engines/gap.js"></script>
 <script src="shared/journeymap.js"></script>
 <script src="engines/skilltree.js"></script>
 <script src="shared/lens.js"></script>
@@ -1256,13 +1264,68 @@
     return '<a href="' + esc(m.href) + '">' + esc(m.label.toLowerCase()) + '</a>'
       + (opens > 1 ? ' <span class="dim">(opens ' + opens + ')</span>' : '');
   }
+  function signedMoney(c) { return (c < 0 ? '\u2212' : '') + Money.formatCents(Math.abs(c)); }
+  /* The level line (D-248): "Level 2 of 4. Left each month: $140 (from
+     your logged paychecks). To make it exact: food, a roof, ..." */
+  function renderLevel(h) {
+    var g = SLAF.Gap.levels(h, TABLES, ROOM_ID);
+    var line;
+    if (!g.current) {
+      var l1 = g.levels[0];
+      line = 'Level 0 of ' + g.total + '. To see what is left each month, enter: ' + l1.missing.map(function (m) { return '<a href="' + esc(m.href) + '">' + esc(m.label.toLowerCase()) + '</a>'; }).join(', ') + '.';
+    } else {
+      var c = g.current;
+      line = '<strong>Level ' + c.n + ' of ' + g.total + '.</strong> Left each month: <strong class="' + (c.gapCents < 0 ? 'is-short' : '') + '">' + esc(signedMoney(c.gapCents)) + '</strong>'
+        + (c.gapCents < 0 ? ' short' : '') + ' <span class="dim">(' + esc(c.basis) + ')</span>.';
+      if (g.next) line += ' To make it more exact, enter: ' + g.next.missing.map(function (m) { return '<a href="' + esc(m.href) + '">' + esc(m.label.toLowerCase()) + '</a>'; }).join(', ') + ' <span class="dim">(level ' + g.next.n + ', ' + esc(g.next.say) + ')</span>.';
+      else line += ' Every level is in.';
+    }
+    el('un-level').innerHTML = line;
+    el('un-count').textContent = 'Level ' + g.reachedCount + ' of ' + g.total;
+    el('un-meter').style.width = Math.round(100 * g.reachedCount / g.total) + '%';
+    recordJourney(h, g);
+    renderJourney(h);
+    return g;
+  }
+  /* The journey (D-248): one entry the first time each level is reached,
+     and one per month closed, so the page can say what it thought and
+     what was. The dashboard is the only writer; the entry is a record of
+     a reading, never an input, and nothing recomputes it. */
+  function recordJourney(h, g) {
+    var journal = h.journal || [];
+    var add = [];
+    var now = new Date().toISOString();
+    g.levels.forEach(function (l) {
+      /* Only the levels actually reached in order: a split typed before a
+         paycheck is logged is level 3's input, not level 3. */
+      if (!l.reached || l.n > g.reachedCount) return;
+      if (journal.some(function (e) { return e.kind === 'gap' && e.level === l.n; })) return;
+      add.push(Schema.createJournalEntry({ at: now, kind: 'gap', level: l.n, cents: l.gapCents, basis: l.basis }));
+    });
+    var actual = g.levels[3];
+    if (actual.reached && actual.gap && actual.gap.months) {
+      actual.gap.months.forEach(function (ym) {
+        if (journal.some(function (e) { return e.kind === 'close' && e.month === ym; })) return;
+        add.push(Schema.createJournalEntry({ at: now, kind: 'close', level: 4, month: ym, cents: actual.gapCents, basis: 'closed months to ' + ym }));
+      });
+    }
+    if (add.length) Spine.updateProfile({ journal: journal.concat(add) });
+  }
+  function renderJourney(h) {
+    var j = (h.journal || []).filter(function (e) { return e.kind === 'gap' && Money.isEntered(e.cents); }).sort(function (a, b) { return a.level - b.level; });
+    var node = el('un-journey');
+    if (j.length < 2) { node.innerHTML = ''; return; }
+    var first = j[0], last = j[j.length - 1];
+    node.innerHTML = 'Level ' + first.level + ' thought <b>' + esc(signedMoney(first.cents)) + '</b>; level ' + last.level + ' says <b>' + esc(signedMoney(last.cents)) + '</b>'
+      + (last.cents !== first.cents ? ' (' + (last.cents > first.cents ? 'up' : 'down') + ' ' + esc(Money.formatCents(Math.abs(last.cents - first.cents))) + ' a month)' : ' (the same)')
+      + '. <a href="' + Ownership.linkTo('history', 'journey', ROOM_ID) + '">The whole journey →</a>';
+  }
   function renderUpNext(h) {
     var strip = el('up-next');
     var plan = SLAF.UpNext.plan(h, TABLES, ROOM_ID);
     strip.hidden = false;
     strip.className = 'walk-strip up-next' + (plan.next ? '' : ' is-all-open');
-    el('un-count').textContent = plan.open.length + ' of ' + plan.total + ' readings open';
-    el('un-meter').style.width = Math.round(100 * plan.open.length / (plan.total || 1)) + '%';
+    renderLevel(h);
     var next = plan.next;
     if (!next) {
       el('un-say').innerHTML = 'Every reading is open. The deeper rows refine them: <a href="' + Ownership.linkTo('ledger', 'doors-home', ROOM_ID) + '">open the Ledger →</a>';
