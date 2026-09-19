@@ -550,7 +550,7 @@
   <!-- ================= THE DOORS (the default view) ==================== -->
   <section id="view-doors">
   <p class="slaf-lede" id="lede-home">Which one do you want to go into now?</p>
-  <p class="understand" id="understand" aria-live="polite">You understand <b id="understand-pct">…</b> of your financial picture.</p>
+  <p class="understand" id="understand" aria-live="polite">This app holds <b id="understand-pct">…</b> of your numbers so far.</p>
   <p class="since" id="since" hidden></p>
   <p class="since"><a href="progress-card.html">Share progress, not balances →</a></p>
 
@@ -673,7 +673,7 @@
   <p class="slaf-lede">Every question on one page, grouped by door and level. Fill what you know, skip the rest; each box saves the moment you leave it.</p>
   <p class="switch">Rather be walked through it? <a href="#round-1">Five questions, one a screen.</a></p>
   <div class="xbar" id="xbar">
-    <span class="pct">You understand <b id="xpct-pct">…</b> of your financial picture.</span>
+    <span class="pct">This app holds <b id="xpct-pct">…</b> of your numbers so far.</span>
     <nav class="jump" id="xjump" aria-label="Jump to a door"></nav>
   </div>
 
@@ -988,7 +988,12 @@
       return '<a class="door' + (isRec ? ' is-recommended' : '') + '" href="#door-' + esc(d.id) + '" data-door="' + esc(d.id) + '">'
         + '<span class="door-top">'
         + '<span class="door-name">' + mark + '<span class="label">' + esc(d.label) + '</span></span>'
-        + '<span class="door-ring">' + ring(c.known, c.total) + '<span class="ringlab">' + c.known + ' of ' + c.total + '</span></span>'
+        /* A counter is progress once there is progress. At zero it is a
+           denominator: six tiles counting out fifty-nine boxes someone has
+           not filled, on a screen they have not typed a character into. The
+           ring and its label appear the moment the door has one row in it,
+           and the door keeps its name and what it is for either way (D-237). */
+        + (c.known > 0 ? '<span class="door-ring">' + ring(c.known, c.total) + '<span class="ringlab">' + c.known + ' of ' + c.total + '</span></span>' : '')
         + '</span>'
         + '<span class="say">' + esc(d.say) + '</span>'
         + '<span class="num' + (hl.display === 'not entered yet' ? ' is-blank' : '') + '">' + esc(hl.display) + '</span>'
@@ -1001,6 +1006,13 @@
        renders the same line twice. */
     var u = Doors.understanding(h, TABLES, SUGLIST, TABLES.confidenceWeights);
     el('understand-pct').textContent = u.percent + '%';
+    /* At zero the line is not a measure of anything, it is a greeting that
+       tells someone who has typed nothing that they are at nothing. The
+       figure is progress once there is progress; before that it is silent.
+       It also stopped saying "you understand": what is being counted is how
+       many boxes this app holds, which is not the same as what a person
+       understands about their own life. */
+    el('understand').hidden = u.percent === 0;
     /* Since last time, split: money that moved, knowledge added (H2, D-211). */
     var last = Spine.latestSnapshot ? Spine.latestSnapshot() : null;
     var strip = last && SLAF.SinceLast ? SLAF.SinceLast.strip(h, last, TABLES) : null;
@@ -1507,6 +1519,8 @@
   function paintBar() {
     var u = Doors.understanding(h(), TABLES, Suggest.suggestions(h(), TABLES), TABLES.confidenceWeights);
     el('xpct-pct').textContent = u.percent + '%';
+    var xp = el('xpct-pct').parentNode;
+    if (xp) xp.hidden = u.percent === 0;
   }
 
   /* ---- Writes: each through the owner ---------------------------------------------- */

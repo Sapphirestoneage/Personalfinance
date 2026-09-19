@@ -1283,7 +1283,14 @@
     }
   } catch (e) { /* fine */ }
   el('btn-example').addEventListener('click', function () {
-    if (!window.confirm('Fill every answer with the example household, Robin Sparks? This replaces anything you have entered.')) return;
+    /* Only warn about losing something when there is something to lose. A
+       first-time visitor has entered nothing, and telling them this "replaces
+       anything you have entered" is a scare dialog in front of the one path
+       that shows the whole app for no typing at all. */
+    var hasSomething = SLAF.Progress && SLAF.Progress.forRoom
+      ? (SLAF.Progress.forRoom('start', Spine.getProfile()) || { filled: [] }).filled.length > 0
+      : true;
+    if (hasSomething && !window.confirm('Fill every answer with the example household, Robin Sparks? This replaces anything you have entered.')) return;
     var d = SLAF.DemoPersona.build();
     Spine.updateProfile({
       people: d.people, filingStatus: d.filingStatus, state: d.state,
