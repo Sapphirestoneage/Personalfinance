@@ -337,6 +337,36 @@
      the bills and pay-later instalments drawn, the spread — and where the
      balance stands, so a page can draw a calendar rather than a line. */
   var WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  /* What one day does, in two lists (the one place this is assembled; the
+     grid and the turns both read it, D-253). ins: a cadence payday, or the
+     ledger's landings and any repayment (D-130); a potential one is drawn,
+     not counted. bills: the bills, the pay-later instalments, the logged
+     receipts and the yearly costs that land that day. */
+  function eventsOn(result, d) {
+    return {
+      ins: (d.paydayCents > 0 && result.paydaySource === 'cadence' && result.paydays.some(function (p) { return p.index === d.index; }) ? [{ label: 'Payday', cents: result.perPaydayCents, kind: 'payday', dateKind: 'exact', potential: false }] : [])
+        .concat((result.incomeHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: x.kind, dateKind: x.dateKind, potential: x.potential }; })),
+      bills: result.billHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'bill', dateKind: 'exact', potential: false }; })
+        .concat(result.payLaterHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'payLater', dateKind: 'exact', potential: false }; }))
+        .concat((result.logHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: 'log', dateKind: x.dateKind, potential: x.potential, recurring: x.recurring }; }))
+        .concat((result.annualHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label + ' (yearly)', cents: x.cents, kind: 'annual', dateKind: 'estimated', potential: false }; }))
+    };
+  }
+  /* The month as turns (D-253): every event that moves the balance, in
+     the order it lands, with the balance at the end of that day. Money in
+     is positive, money out negative; a potential one is listed and marked,
+     never counted. What a chart's markers and a list both read. */
+  function turns(result) {
+    if (!Money.isOk(result)) return [];
+    var out = [];
+    result.days.forEach(function (d) {
+      var when = startOf(d.date), ev = eventsOn(result, d);
+      var base = { index: d.index, dom: d.dom, date: d.date, weekday: WEEKDAYS[when.getDay()], month: when.toLocaleDateString('en-US', { month: 'short' }), balanceCents: d.balanceCents };
+      ev.ins.forEach(function (x) { out.push(Object.assign({}, base, { label: x.label, cents: x.cents, kind: x.kind, dateKind: x.dateKind, potential: !!x.potential, direction: 'in' })); });
+      ev.bills.forEach(function (x) { out.push(Object.assign({}, base, { label: x.label, cents: -x.cents, kind: x.kind, dateKind: x.dateKind, potential: !!x.potential, direction: 'out' })); });
+    });
+    return out;
+  }
   function weeks(result) {
     if (!Money.isOk(result)) return [];
     var first = startOf(result.startDate);
@@ -345,19 +375,13 @@
     for (i = 0; i < pad; i++) row.push(null);
     result.days.forEach(function (d) {
       var when = startOf(d.date);
+      var ev = eventsOn(result, d);
       row.push({
         index: d.index, date: d.date, dom: d.dom, weekday: WEEKDAYS[when.getDay()],
         firstOfMonth: d.dom === 1, month: when.toLocaleDateString('en-US', { month: 'short' }),
         balanceCents: d.balanceCents, paydayCents: d.paydayCents, billsCents: d.billsCents, payLaterCents: d.payLaterCents, spreadCents: d.spreadCents,
         inCents: d.paydayCents, outCents: d.billsCents + d.payLaterCents,
-        /* What comes in that day: a cadence payday, or the ledger's landings
-           and any repayment (D-130); a potential one is drawn, not counted. */
-        ins: (d.paydayCents > 0 && result.paydaySource === 'cadence' && result.paydays.some(function (p) { return p.index === d.index; }) ? [{ label: 'Payday', cents: result.perPaydayCents, kind: 'payday', dateKind: 'exact', potential: false }] : [])
-          .concat((result.incomeHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: x.kind, dateKind: x.dateKind, potential: x.potential }; })),
-        bills: result.billHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'bill', dateKind: 'exact', potential: false }; })
-          .concat(result.payLaterHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'payLater', dateKind: 'exact', potential: false }; }))
-          .concat((result.logHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: 'log', dateKind: x.dateKind, potential: x.potential, recurring: x.recurring }; }))
-          .concat((result.annualHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label + ' (yearly)', cents: x.cents, kind: 'annual', dateKind: 'estimated', potential: false }; })),
+        ins: ev.ins, bills: ev.bills,
         isLow: d.index === result.lowIndex, belowZero: d.balanceCents < 0,
         tight: !!(result.tight && d.index >= result.tight.fromIndex && d.index <= result.tight.toIndex),
         today: d.index === 0
@@ -379,6 +403,8 @@
     month: month,
     balancePoints: balancePoints,
     weeks: weeks,
+    eventsOn: eventsOn,
+    turns: turns,
     WEEKDAYS: WEEKDAYS,
     rentCents: rentCents,
     semimonthlyPair: semimonthlyPair,

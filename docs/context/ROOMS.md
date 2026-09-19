@@ -14,7 +14,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 - **income** — Income · 786 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-250, D-246, D-207
 - **expenses** — Expenses · 1189 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-207, D-199, D-196
-- **cash-flow** — Cash Flow · 564 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget · D-192, D-181, D-163
+- **cash-flow** — Cash Flow · 592 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, calendar · D-253, D-192, D-181
 - **budget** — Budget · 483 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-130, D-129, D-128
 - **statement** — The Statement · 750 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType · D-251, D-249, D-157
 - **accounts** — Where It Goes & how it’s split · 583 lines · engines: selfemployed, accounts, projection, tier0, income, ledger, hourly · owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand · D-130, D-071, D-062
@@ -23,7 +23,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **credit** — Your Credit File · 478 lines · engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios · D-147
 - **tax** — Tax · 258 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly · owns: otherPreTax, withheld · D-150, D-142, D-129
 - **variable-income** — Variable Income · 291 lines · engines: projection, tier0, selfemployed, income, ledger, variableincome · owns: incomeLow, incomeHigh, bufferMonths, variableWindow · D-128, D-113
-- **calendar** — Money Calendar & Pay-Later · 268 lines · engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-130, D-121
+- **calendar** — Money Calendar & Pay-Later · 225 lines · engines: projection, tier0, hourly, income, selfemployed, ledger, cashflow, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-253, D-130, D-121
 - **variance** — Estimated vs Actual · 232 lines · engines: income, selfemployed, ledger, projection, tier0, cashflow, budget, variance · D-128
 - **real-hourly-wage** — Real Hourly Wage · 253 lines · engines: projection, tier0, income, selfemployed, ledger, hourly · D-054, D-021, D-001
 - **cant-pay** — When It Won’t All Get Paid · 532 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow · D-240, D-148

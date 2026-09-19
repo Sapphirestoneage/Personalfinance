@@ -280,6 +280,7 @@
       subsections: [
         { id: 'glance',          label: 'At a glance' },
         { id: 'log',             label: 'The expense log' },
+        { id: 'day-by-day',      label: 'What hits your account, and when' },
         { id: 'flow',            label: 'Where it flows' },
         { id: 'out-net-flow',    label: 'What’s left' }
       ]

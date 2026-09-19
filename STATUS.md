@@ -43,9 +43,11 @@ Updated: 2026-09-19
   the type sets the tax character (D-251).
   Debt Payoff keeps the chosen order and says, stretch by stretch, when
   it is in effect and when nothing goes beyond the minimums (D-252).
+  Cash Flow and the Calendar draw the month as turns: what hits the
+  account, when, and what is left, one shared picture (D-253).
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
-  the car's used/new and running costs; a running-balance chart on the month;
+  the car's used/new and running costs;
   the Budget month view made obvious; statements in detail, each line
   expandable; the readings FIRE people expect; a plain-language lede pass.
 - **Boxes line up now (D-249).** Reported from a phone, third time asked:
