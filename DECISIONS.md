@@ -16261,58 +16261,6 @@ protected save with its fingerprint, the sealed file chosen back and refused
 on the wrong passphrase, then opened; every sample file dropped through the
 one intake landing in its own panel.
 
-<<<<<<< HEAD
-## D-306 — The Calendar comes back, with your own dates on it
-
-**Why.** The owner: "reinstate the calendar, that way there can be cash
-flow but also so you can add your own things to it, like apply for a
-new credit card, or things that are financial in nature but not
-inherently cash flow." D-275 folded the Calendar into The Month by rule
-2 of D-229; what The Month cannot hold is a date that is not money.
-
-**Decision.** `rooms/calendar.html` is a live room again: the one month
-picture `shared/daybyday.js` draws (The Month's own, never a copy), and
-under it your own dates: what, when, and a kind (to do, deadline,
-note), with done and remove. They live in `household.calendar.events[]`
-(`Schema.createCalendarEvent`), written by this room alone through the
-spine; not an ownership field, not a DAITE family, so no dot and no
-nag. `engines/calendar.js` reads them into the month as `ownHits` and
-`turns` of direction `note` with no money; the picture draws each on
-its day and lists it without an amount, in the Calendar and in The
-Month's dates reading alike. The pay rhythm and the bills stay The
-Month's. The registry, `docs/room-map.json` (thirty-two now) and every
-one of the twenty arrangements carry it beside The Month.
-
-**Replaces or removes.** The redirect stub. Nothing else; the owner's
-call overrides the freeze for this one room, and it holds no field
-that anything else reads.
-
-**Stored shape.** `calendar.events[]` is new on `slaf.household.v2`:
-`{ id, date, label, kind, done }`. `createCalendar` defaults it to `[]`;
-an older save loads with none and reads as before.
-
-**Verified.** `node test/run.js`, lane 2, `dnd/test/run.js`,
-`node test/features.js`, `node tools/context/build.js --check`; the
-Calendar at 390px with the demo: a date added, drawn on the grid and
-listed, marked done, shown in The Month too, removed; clean console.
-
-## D-307 — All three intakes stay
-
-**Why.** STATUS asked the owner which intake survives: Round 1, All at
-once, or Start Here. The owner: "have all 3 options available."
-
-**Decision.** All three stay live and reachable: Round 1 and All at
-once as the Ledger's doors, Start Here as its own room. Nothing retires
-into anything. `docs/room-map.json` keeps Start Here held under the
-Ledger with this as the reason, so the map and the app agree.
-
-**Replaces or removes.** The plan to retire Start Here into Express.
-
-**Stored shape.** No change.
-
-**Verified.** `node test/run.js` (the map's held rule), the three doors
-open at 390px.
-=======
 ## D-306 — A statement in, every place money went, and the slope of a month
 
 **Why.** The owner: a spot to import bank and credit card statements, the
@@ -16347,8 +16295,57 @@ the eight browser gates, and at 390px: a card CSV recognised and flipped,
 five lines in, four merchants, a rule filing Amtrak under travel, a for-date
 of the 25th reading "bought 15 days ahead" and the slope parting by $200, the
 same file through Your Data's one door with every line already in the log.
->>>>>>> origin/main
 
+## D-308 — The Calendar comes back, with your own dates on it
+
+**Why.** The owner: "reinstate the calendar, that way there can be cash
+flow but also so you can add your own things to it, like apply for a
+new credit card, or things that are financial in nature but not
+inherently cash flow." D-275 folded the Calendar into The Month by rule
+2 of D-229; what The Month cannot hold is a date that is not money.
+
+**Decision.** `rooms/calendar.html` is a live room again: the one month
+picture `shared/daybyday.js` draws (The Month's own, never a copy), and
+under it your own dates: what, when, and a kind (to do, deadline,
+note), with done and remove. They live in `household.calendar.events[]`
+(`Schema.createCalendarEvent`), written by this room alone through the
+spine; not an ownership field, not a DAITE family, so no dot and no
+nag. `engines/calendar.js` reads them into the month as `ownHits` and
+`turns` of direction `note` with no money; the picture draws each on
+its day and lists it without an amount, in the Calendar and in The
+Month's dates reading alike. The pay rhythm and the bills stay The
+Month's. The registry, `docs/room-map.json` (thirty-two now) and every
+one of the twenty arrangements carry it beside The Month.
+
+**Replaces or removes.** The redirect stub. Nothing else; the owner's
+call overrides the freeze for this one room, and it holds no field
+that anything else reads.
+
+**Stored shape.** `calendar.events[]` is new on `slaf.household.v2`:
+`{ id, date, label, kind, done }`. `createCalendar` defaults it to `[]`;
+an older save loads with none and reads as before.
+
+**Verified.** `node test/run.js`, lane 2, `dnd/test/run.js`,
+`node test/features.js`, `node tools/context/build.js --check`; the
+Calendar at 390px with the demo: a date added, drawn on the grid and
+listed, marked done, shown in The Month too, removed; clean console.
+
+## D-309 — All three intakes stay
+
+**Why.** STATUS asked the owner which intake survives: Round 1, All at
+once, or Start Here. The owner: "have all 3 options available."
+
+**Decision.** All three stay live and reachable: Round 1 and All at
+once as the Ledger's doors, Start Here as its own room. Nothing retires
+into anything. `docs/room-map.json` keeps Start Here held under the
+Ledger with this as the reason, so the map and the app agree.
+
+**Replaces or removes.** The plan to retire Start Here into Express.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (the map's held rule), the three doors
+open at 390px.
 ---
 
 # The Dungeons & Dividends entries

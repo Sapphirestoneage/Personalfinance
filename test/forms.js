@@ -589,7 +589,7 @@ const CASES = [
     }
   },
   {
-    /* The Calendar (D-306): one text box for your own date, built once;
+    /* The Calendar (D-308): one text box for your own date, built once;
        the list beneath it rebuilds on every write and holds no input. */
     room: '/rooms/calendar.html',
     container: '#own-form',

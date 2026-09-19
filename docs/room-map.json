@@ -114,7 +114,7 @@
         "refresh"
       ],
       "held": {
-        "start": "Decided by the owner (D-307): all three intakes stay. Round 1 and All at once are the Ledger's doors, Start Here is its own room, and nothing retires into anything. NOT an ownership question, which is what this note used to say. The 17 owners would go to the Ledger, the way every other merge moved them — the Ledger already WRITES dob, state, zip, filingStatus, grossAnnualIncome, cashSavings, investments, contributionPercent and employmentStatus through Ownership.write, so the label would simply follow the asking. The real question is which INTAKE survives. The Ledger already holds two: Round 1 (five questions, one a screen, deliberately gentle — D-230) and All at once (every question on one page, grouped by DAITE door). Start Here is a third shape: one situation gate, then only the cards that apply, every box filled with a guess shown as one and badged. Folding it in as a seventh reading would give the room three overlapping ways in, which is accumulation, not a merge — the freeze asks what a thing replaces and the honest answer is 'nothing'. What would actually help is Express gaining the situation filter and the guess badges so Start Here retires INTO it. That is a feature, not a move, and it changes the first screen every new arrival sees. Owner's call. D-296."
+        "start": "Decided by the owner (D-309): all three intakes stay. Round 1 and All at once are the Ledger's doors, Start Here is its own room, and nothing retires into anything. NOT an ownership question, which is what this note used to say. The 17 owners would go to the Ledger, the way every other merge moved them — the Ledger already WRITES dob, state, zip, filingStatus, grossAnnualIncome, cashSavings, investments, contributionPercent and employmentStatus through Ownership.write, so the label would simply follow the asking. The real question is which INTAKE survives. The Ledger already holds two: Round 1 (five questions, one a screen, deliberately gentle — D-230) and All at once (every question on one page, grouped by DAITE door). Start Here is a third shape: one situation gate, then only the cards that apply, every box filled with a guess shown as one and badged. Folding it in as a seventh reading would give the room three overlapping ways in, which is accumulation, not a merge — the freeze asks what a thing replaces and the honest answer is 'nothing'. What would actually help is Express gaining the situation filter and the guess badges so Start Here retires INTO it. That is a feature, not a move, and it changes the first screen every new arrival sees. Owner's call. D-296."
       },
       "note": "First Round is Round 1, Express is the all-at-once door, Welcome Back and Refresh are one 'since last time'."
     },
@@ -183,7 +183,7 @@
       "title": "The Month",
       "group": "facts",
       "absorbs": [],
-      "note": "What happened in the month and what is still to land in it are one month. The Calendar came back as its own room for the dates that are not money (D-306); the dates reading stays here too, drawn by the one shared picture.",
+      "note": "What happened in the month and what is still to land in it are one month. The Calendar came back as its own room for the dates that are not money (D-308); the dates reading stays here too, drawn by the one shared picture.",
       "done": []
     },
     {
@@ -548,7 +548,7 @@
       "title": "The Calendar",
       "group": "facts",
       "absorbs": [],
-      "note": "Reinstated by the owner (D-306). Rule 2 of D-229 folded it into The Month; what brought it back is a thing The Month does not hold: a date that is not money in or out. Apply for a card, cancel a renewal, a form due. The picture is The Month's, shared; only the list of your own dates is this room's.",
+      "note": "Reinstated by the owner (D-308). Rule 2 of D-229 folded it into The Month; what brought it back is a thing The Month does not hold: a date that is not money in or out. Apply for a card, cancel a renewal, a form due. The picture is The Month's, shared; only the list of your own dates is this room's.",
       "done": []
     }
   ]

@@ -229,7 +229,7 @@
     var paydaysPerMonth = cadence ? conv.cadences[cadence].paydaysPerMonth : null;
     var perPayday = !ledgerDrives && cadence ? Math.round(takeHome.value / paydaysPerMonth) : 0;
 
-    /* Your own dates in the window (D-306): drawn on their day, never
+    /* Your own dates in the window (D-308): drawn on their day, never
        counted. A date outside the window is simply not here. */
     var ownHits = [];
     ((h.calendar || {}).events || []).forEach(function (e) {
@@ -366,7 +366,7 @@
         .concat(result.payLaterHits.filter(function (b) { return b.index === d.index; }).map(function (b) { return { label: b.label, cents: b.cents, kind: 'payLater', dateKind: 'exact', potential: false }; }))
         .concat((result.logHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label, cents: x.cents, kind: 'log', dateKind: x.dateKind, potential: x.potential, recurring: x.recurring }; }))
         .concat((result.annualHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { label: x.label + ' (yearly)', cents: x.cents, kind: 'annual', dateKind: 'estimated', potential: false }; })),
-      /* Your own dates that day (D-306): no money, drawn and listed. */
+      /* Your own dates that day (D-308): no money, drawn and listed. */
       notes: (result.ownHits || []).filter(function (x) { return x.index === d.index; }).map(function (x) { return { id: x.id, label: x.label, kind: 'own', sub: x.sub, done: x.done }; })
     };
   }

@@ -1511,8 +1511,7 @@ html.has-math, html.has-math body { overflow: hidden; }
 .turns-more { margin-top: var(--space-2); }
 .turns-more summary { cursor: pointer; font-size: var(--text-xs); color: var(--color-text-faint); }
 
-<<<<<<< HEAD
-/* ---- Your own dates on the Calendar (D-306) ---- */
+/* ---- Your own dates on the Calendar (D-308) ---- */
 .own-form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: end; }
 .own-form .slaf-field { margin: 0; }
 .own-form .own-label { grid-column: 1 / -1; }
@@ -1525,7 +1524,6 @@ ol.own-dates .od-what small { display: block; font-size: 9px; text-transform: up
 ol.own-dates li.is-done .od-what { text-decoration: line-through; opacity: .6; }
 ol.own-dates li.is-past .od-when { color: var(--color-caution); }
 ol.own-dates .od-acts { display: flex; gap: var(--space-1); white-space: nowrap; }
-=======
 /* ---- A statement in, the merchants, the slope (D-306) --------------------
    One intake for a bank or card CSV, mounted by shared/bankintake.js in Your
    Data and in Expenses; the merchant list and the slope live in Expenses. */
@@ -1572,4 +1570,3 @@ ol.own-dates .od-acts { display: flex; gap: var(--space-1); white-space: nowrap;
 .slaf-slope-figs .fig b { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
 .slaf-slope-figs .fig span { font-size: var(--text-xs); color: var(--color-text-muted); }
 .slaf-slope-month { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
->>>>>>> origin/main

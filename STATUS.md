@@ -34,15 +34,15 @@ Updated: 2026-09-19
   it was for, so what was bought ahead or paid late shows as the gap.
 - **The reframe D-228 asks for has NOT shipped**; the FI target is still
   spending ÷ the withdrawal rate, and both rooms say so in their spec.
-- **The Calendar is back (D-306)**, at the owner's call: the month picture
+- **The Calendar is back (D-308)**, at the owner's call: the month picture
   The Month draws, plus your own dates (a card to apply for, a renewal to
   cancel, a form due), drawn on the month and never counted. Thirty-two
-  rooms. All three intakes stay (D-307).
+  rooms. All three intakes stay (D-309).
 - **Freeze ON, and honoured** for everything but the one room the owner
   asked back.
 
 ## Next (top item first; one per session)
-1. ~~Which intake survives?~~ Decided (D-307): all three stay. Round 1 and
+1. ~~Which intake survives?~~ Decided (D-309): all three stay. Round 1 and
    All at once in the Ledger, Start Here as its own room.
 2. **OWNER DECISION: is the income floor means-tested?** (D-228, D-284.)
    The FI target waits on it, and it moves the number every room shows.

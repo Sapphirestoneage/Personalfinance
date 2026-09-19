@@ -63,7 +63,7 @@
     if (!list.length) return '<p class="slaf-reason">Nothing lands in the next 31 days: no payday, no bill, no receipt with a date, no date of yours.</p>';
     var li = function (t) {
       if (t.direction === 'note') {
-        /* Your own date (D-306): what it is, no amount, no balance. */
+        /* Your own date (D-308): what it is, no amount, no balance. */
         return '<li class="is-note' + (t.done ? ' is-done' : '') + '"><span class="tn-when">' + esc(t.month) + ' ' + t.dom + '</span>'
           + '<span class="tn-what">' + esc(t.label) + '</span>'
           + '<span class="tn-amt is-note">' + esc((Cal.EVENT_LABELS && Cal.EVENT_LABELS[t.sub]) || t.sub) + '</span><span class="tn-bal">' + (t.done ? 'done' : '') + '</span></li>';

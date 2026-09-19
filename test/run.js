@@ -8964,7 +8964,7 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('The Close shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('budget').subsections.some(x => x.id === 'journey'));
 })();
 
-section('The Calendar comes back, with your own dates on it (D-306)');
+section('The Calendar comes back, with your own dates on it (D-308)');
 
 (function () {
   const Cal = require(path.join(ROOT, 'engines/calendar.js'));
@@ -11361,7 +11361,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
      account belongs — something you own that landed somewhere. */
   /* Nine since D-306: the Calendar came back beside The Month, for the
      dates that are not money. */
-  check('...nine of them, Expenses among them since D-192 and the Calendar since D-306', Registry.inGroup('numbers', null).length, 9);
+  check('...nine of them, Expenses among them since D-192 and the Calendar since D-308', Registry.inGroup('numbers', null).length, 9);
   /* The rule is about HOUSEHOLD data: a Your Numbers room writes a DAITE
      family, not a context. `prefs.*` is not a context — it is a
      preference, per person and per browser, and D-276 brought one into
@@ -11415,9 +11415,9 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
      now and holds the Calendar's four, so it has the Calendar's dot: empty
      on a demo that has entered none of them (D-275). */
   check('...The Month, which took the Calendar\'s four fields, is empty', Progress.roomStatus('cash-flow', readings), 'empty');
-  /* Back since D-306, and still no dot: it owns no DAITE field, only its
+  /* Back since D-308, and still no dot: it owns no DAITE field, only its
      own list of dates, which is not a thing to be nagged about. */
-  checkTrue('...and the Calendar is back (D-306) but not a room to have a dot', !!Registry.byId('calendar') && Progress.roomStatus('calendar', readings) === null);
+  checkTrue('...and the Calendar is back (D-308) but not a room to have a dot', !!Registry.byId('calendar') && Progress.roomStatus('calendar', readings) === null);
   check('...a room that owns nothing has no dot', Progress.roomStatus('ratios', readings), null);
 })();
 
@@ -15399,7 +15399,7 @@ section('The thirty (docs/room-map.json)');
      anything the Decision Room should hold. The check is not "thirty" — it
      is that the map and the registry agree, and that every room the map
      names as a survivor is one. */
-  /* Thirty-two since D-306: the owner brought the Calendar back for the
+  /* Thirty-two since D-308: the owner brought the Calendar back for the
      dates that are not money. */
   check('the map lands on thirty-two rooms', MAP.rooms.length, 32);
   check('numbered 1 to 32', MAP.rooms.map(r => r.n).join(','),
