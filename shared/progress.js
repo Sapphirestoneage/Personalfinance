@@ -317,6 +317,9 @@
     if (nb.next) {
       out.push('<a class="slaf-progress-btn is-next" href="' + escapeHtml(href(nb.next.href, roomId))
         + '">Next: ' + escapeHtml(nb.next.title) + ' →</a>');
+    } else if (nb.onChain) {
+      /* The last room on the path: the way forward is the map. */
+      out.push('<a class="slaf-progress-btn is-next" href="' + escapeHtml(href('map.html', roomId)) + '">Next: The map →</a>');
     } else {
       out.push('<span></span>');
     }

@@ -143,7 +143,8 @@
         { id: 'trend', label: 'Are the guesses improving?' },
         { id: 'hi-number', label: 'Since the first snapshot' },
         { id: 'hi-chart', label: 'Net worth over time' },
-        { id: 'hi-inputs', label: 'Compare and freeze' }
+        { id: 'hi-inputs', label: 'Compare and freeze' },
+        { id: 'journey', label: 'The journey' }
       ]
     },
     {
@@ -267,6 +268,7 @@
         { id: 'out-timeline',    label: 'The order they fall, and what each frees' },
         { id: 'sl-number', label: 'The plan that clears them' },
         { id: 'sl-inputs', label: 'The plan' },
+        { id: 'sl-real-cost', label: 'What the loans really cost' },
         { id: 'cr-number', label: 'What a score is made of' },
         { id: 'lever', label: 'The one that moves fastest' }
       ]

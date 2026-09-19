@@ -8841,7 +8841,7 @@ section('The map (D-235): the road, you are here, and the routes from here');
   checkTrue('with Lean reached: Coast done, Lean here, FIRE next', /is-done" href="[^"]*"[^>]*><i>Coast/.test(richMap) && /is-here" href="[^"]*"[^>]*><i>Lean/.test(richMap) && /is-next" href="[^"]*"[^>]*><i>FIRE/.test(richMap));
   checkTrue('every ladder step opens the ladder room', (html.match(/class="jm-step[^"]*" href="[^"]*foo-ladder[^"]*"/g) || []).length === 10);
   checkTrue('the four routes are drawn, soonest first', html.indexOf('jm-route-march') < html.indexOf('jm-route-as-is') && html.indexOf('jm-route-as-is') < html.indexOf('jm-route-scenic'));
-  checkTrue('the map points at the Long Way Round for the other ways', /adventure\.html[^"]*#s-ways/.test(html));
+  checkTrue('the map points at the Long Way Round for the other ways', /what-if-life\.html[^"]*#s-ways/.test(html));
   checkTrue('no unescaped angle bracket from data reaches the page', JourneyMap.html(Journey.map(Object.assign({}, demo, { people: [Object.assign({}, demo.people[0], { label: '<b>x</b>' })] }), T), { from: 'fire' }).indexOf('<b>x</b>') === -1);
 
   /* The pages. */
@@ -8923,9 +8923,9 @@ section('What a debt really costs (D-247): after the deduction, after inflation,
   checkTrue('the conventions carry the deduction with its note', typeof conv.interestDeduction.capDollars === 'number' && /verify/i.test(conv.interestDeduction.note));
   const dp = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
   checkTrue('Debt Payoff says what each debt really costs, on the interest line', /realCostSentence\(d\)/.test(dp) && /Really costs /.test(dp) && /studentLoanConventions/.test(dp));
-  const sl = fs.readFileSync(path.join(ROOT, 'rooms/student-loans.html'), 'utf8');
-  checkTrue('Student Loans draws the chain, the verdict and the balance in today\'s money', /id="real-cost"/.test(sl) && /SLAF\.Debt\.realCost/.test(sl) && /SLAF\.Debt\.deflate/.test(sl) && /in today\\u2019s money/.test(sl));
-  checkTrue('… and the registry deep-links it', Registry.byId('student-loans').subsections.some(x => x.id === 'real-cost'));
+  /* The Student Loan Decision is Debt's loans reading since D-274. */
+  checkTrue('the loans reading draws the chain, the verdict and the balance in today\'s money', /id="sl-real-cost"/.test(dp) && /SLAF\.Debt\.realCost/.test(dp) && /SLAF\.Debt\.deflate/.test(dp) && /in today\\u2019s money/.test(dp));
+  checkTrue('… and the registry deep-links it', Registry.byId('debt-payoff').subsections.some(x => x.id === 'sl-real-cost'));
 })();
 
 section('The monthly gap by level, and the journey (D-249)');
@@ -8959,14 +8959,16 @@ section('The monthly gap by level, and the journey (D-249)');
   const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   checkTrue('the front page leads with the level and writes the journey', /SLAF\.Gap\.levels\(h, TABLES, ROOM_ID\)/.test(page) && /recordJourney\(h, g\)/.test(page) && /Spine\.updateProfile\(\{ journal: journal\.concat\(add\) \}\)/.test(page));
   checkTrue('… and never writes twice for one level, nor above the level reached', /journal\.some\(function \(e\) \{ return e\.kind === 'gap' && e\.level === l\.n; \}\)/.test(page) && /l\.n > g\.reachedCount\) return;/.test(page));
-  const hist = fs.readFileSync(path.join(ROOT, 'rooms/history.html'), 'utf8');
-  checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
+  /* History is The Close's over-time reading since D-271. */
+  const hist = fs.readFileSync(path.join(ROOT, 'rooms/budget.html'), 'utf8');
+  checkTrue('The Close shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('budget').subsections.some(x => x.id === 'journey'));
 })();
 
 section('Plain words on the path: the ledes name the thing, the number and the unit (D-258)');
 
 (function () {
-  const rooms = ['start', 'income', 'expenses', 'cash-flow', 'budget', 'statement', 'accounts', 'debt-payoff', 'student-loans', 'credit', 'tax', 'calendar', 'fire', 'fire-lab', 'coast-date', 'statements', 'real-hourly-wage', 'variance', 'variable-income'];
+  /* The path's rooms; the ones the merges retired read through the room that holds them now. */
+  const rooms = ['start', 'income', 'expenses', 'cash-flow', 'budget', 'statement', 'debt-payoff', 'tax', 'fire'];
   rooms.forEach(id => {
     const src = fs.readFileSync(path.join(ROOT, 'rooms/' + id + '.html'), 'utf8');
     const m = /<p class="room-lede">([\s\S]*?)<\/p>/.exec(src);
@@ -9093,8 +9095,9 @@ section('Statements that open, and the FIRE statement (D-254)');
   const onlySpend = Schema.createHousehold({ expenses: { wants: { totalCents: 300000 }, entries: [] } });
   const partial = St.fireStatement(onlySpend, TABLES);
   checkTrue('with spending but nothing invested, invested today is a dash, never zero', Money.isOk(partial) && !byLabel(partial.value.standing, 'Invested today').entered);
-  const room = fs.readFileSync(path.join(ROOT, 'rooms/statements.html'), 'utf8');
-  checkTrue('the room has the fourth tab, loads the engines, and opens every line through one row function', /id: 'fire',\s+label: 'FIRE statement'/.test(room) && /engines\/fire\.js/.test(room) && /engines\/gap\.js/.test(room) && /<details class="ln">/.test(room) && /Ownership\.linkTo\(f\.owner, f\.anchor, 'statements'\)/.test(room));
+  /* Your Statements is The Statement's documents reading since D-273. */
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
+  checkTrue('the reading has the fourth tab, loads the engines, and opens every line through one row function', /id: 'fire',\s+label: 'FIRE statement'/.test(room) && /engines\/fire\.js/.test(room) && /engines\/gap\.js/.test(room) && /<details class="ln">/.test(room) && /Ownership\.linkTo\(f\.owner, f\.anchor, 'statement'\)/.test(room));
   checkTrue('the export carries the tax lines and the FIRE statement', /inc\.value\.taxes/.test(room) && /section: 'FIRE statement'/.test(room));
 })();
 
@@ -9123,9 +9126,11 @@ section('What hits your account, and when: the month as turns, in Cash Flow and 
   check('the picture marks every turn on the line', (html.match(/class="dot"/g) || []).length, turns.length);
   checkTrue('… draws the grid and lists the turns with what caused each and what is left', /cal-grid/.test(html) && (html.match(/<li class="[^"]*"><span class="tn-when">/g) || []).length === turns.length && /after<\/span>/.test(html));
   checkTrue('an incomplete month says why, in the chart\'s empty state', /How often are you paid/.test(DayByDay.html(Cal.month(Schema.createHousehold({}), T, {}))));
-  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8'), calRoom = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
-  checkTrue('Cash Flow shows it and recalculates on every render', /id="day-by-day"/.test(cf) && /engines\/calendar\.js/.test(cf) && /shared\/daybyday\.js/.test(cf) && /renderDayByDay\(h\)/.test(cf) && /DayByDay\.html\(r\)/.test(cf));
-  checkTrue('the Calendar room draws the same, and holds no copy of the grid', /DayByDay\.html\(/.test(calRoom) && !/cal-grid/.test(calRoom));
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  /* The Money Calendar is The Month's dates reading since D-270: its slice of the page. */
+  const calRoom = cf.slice(cf.indexOf('READING view-the-dates'));
+  checkTrue('The Month shows it and recalculates on every render', /id="day-by-day"/.test(cf) && /engines\/calendar\.js/.test(cf) && /shared\/daybyday\.js/.test(cf) && /renderDayByDay\(h\)/.test(cf) && /DayByDay\.html\(r\)/.test(cf));
+  checkTrue('the dates reading draws the same, and holds no copy of the grid', /DayByDay\.html\(/.test(calRoom) && !/cal-grid/.test(calRoom));
   checkTrue('the registry names the section', Registry.byId('cash-flow').subsections.some(x => x.id === 'day-by-day'));
 })();
 
@@ -13588,9 +13593,13 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
        the askDeeper switch lets them. */
     const Features = require(path.join(ROOT, 'shared/features.js'));
     Features.use(require(path.join(ROOT, 'data/features.json')));
-    check('the estate room asks nothing while the you door is at level 1', Ask.pick(h, 'estate', T, sug), null);
+    /* Estate Basics is Protection's where-it-goes reading since D-261, so
+       the inline ask is put to the room that holds it; every row it owns
+       sits at level 2 or deeper. */
+    check('Protection asks nothing while the you door is at level 1', Ask.pick(h, 'protection', T, sug), null);
     Features.set('askDeeper', true);
-    checkTrue('with the deeper switch on, the estate room asks a will, POA or beneficiaries', ['willExists', 'poaExists', 'beneficiariesSet'].indexOf(Ask.pick(h, 'estate', T, sug).row.id) !== -1);
+    const deeper = Ask.pick(h, 'protection', T, sug);
+    checkTrue('with the deeper switch on, Protection asks cover, a will, POA or beneficiaries', !!deeper && ['willExists', 'poaExists', 'beneficiariesSet', 'healthCover', 'healthMonthly'].indexOf(deeper.row.id) !== -1, deeper && deeper.row.id);
     checkTrue('and the FI room asks allocation', /^allocation/.test(Ask.pick(h, 'fire', T, sug).row.id));
     Features.set('askDeeper', null);
     check('parses money', Ask.parse({ unit: 'cents' }, '1,200'), 120000);

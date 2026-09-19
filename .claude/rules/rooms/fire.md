@@ -1,21 +1,22 @@
 ---
 paths:
   - "rooms/fire.html"
+  - "engines/journey.js"
   - "engines/fulfillment.js"
   - "engines/enough.js"
   - "engines/coast.js"
   - "engines/race.js"
 ---
 # The Number (`fire`)
-File: rooms/fire.html · 1434 lines
-Engines: projection, tier0, fire, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race
-Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, fire_variants.json, return_bands.json, se_tax_2026.json
+File: rooms/fire.html · 1465 lines
+Engines: projection, tier0, income, ledger, fire, foo, journey, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race
+Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, fire_variants.json, foo_rules.json, irs_limits_2026.json, +3 more
 Owns: enoughMonthly, retireAge, coastAge
-Reads from other owners: netWorth (statement), monthlyExpenses (expenses)
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), netWorth (statement), monthlyExpenses (expenses)
 Latest decisions:
   - D-280 — The Number, five readings of one multiplication
+  - D-240 — The FI date carries its range and says what it assumes
+  - D-235 — The map: one road, you are here, and the routes from here
   - D-228 — You cannot size the mountain until you know how you come down it
   - D-161 — The way back
-  - D-142 — A room does not ask a question your situation has no answer to
-  - D-138 — The FIRE Lab: every calculation on one screen, drawn
 Full context: node tools/context/pack.js fire

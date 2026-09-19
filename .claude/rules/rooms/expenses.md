@@ -4,8 +4,8 @@ paths:
   - "engines/subscriptions.js"
 ---
 # Expenses (`expenses`)
-File: rooms/expenses.html · 1402 lines
-Engines: projection, tier0, cashflow, fire, income, selfemployed, tax, hourly, subscriptions
+File: rooms/expenses.html · 1403 lines
+Engines: projection, tier0, ledger, cashflow, fire, income, selfemployed, tax, hourly, subscriptions
 Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, fire_variants.json, se_tax_2026.json
 Owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), capturingFullMatch (start), monthlyDebtPayments (debt-payoff)

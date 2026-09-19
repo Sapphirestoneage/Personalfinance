@@ -12,10 +12,10 @@ Updated: 2026-09-19
   reversibility rows and two debates landed as rows; Tax has a second
   reading, The cliff. No new room. `ROADMAP.md`'s not-built list is honest
   again: six, each blocked on a dataset or an instruction.
+- **Main merged in (D-297)**: its panel rounds (D-234..D-258) land in the
+  rooms that absorbed theirs; this lane renumbered to D-259..D-296.
 - **The reframe D-228 asks for has NOT shipped**; the FI target is still
   spending ÷ the withdrawal rate, and both rooms say so in their spec.
-- Run the phone walk after every change; it caught the pays toggle
-  rebuilding under a guard this session.
 - **Freeze ON, and honoured**: nothing this session added a screen.
 
 ## Next (top item first; one per session)
@@ -30,8 +30,7 @@ Updated: 2026-09-19
 4. `data/benefit_cliffs_2026.json` is `unverified`; the three lines want a source.
 
 ## Known open
-- Nothing. `forms.js`, `run.js`, the static suites and the context check
-  are clean on this tree.
+- Nothing. Every CI step is clean on this tree, browser gates included.
 
 ## Panel notes
 - Galloway: the means-tested floor, item 2. Hormozi: thirty-two is still a

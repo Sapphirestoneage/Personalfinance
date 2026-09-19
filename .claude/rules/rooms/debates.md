@@ -8,9 +8,9 @@ paths:
   - "engines/advicerules.js"
 ---
 # The Referee (`debates`)
-File: rooms/debates.html · 580 lines
-Engines: selfemployed, tax, projection, tier0, trap, quickmath, firstcar, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules
-Reference data: aca_2026.json, advice.json, advice_translator.json, car_costs.json, confidence_weights.json, debates.json, +14 more
+File: rooms/debates.html · 582 lines
+Engines: selfemployed, tax, projection, tier0, income, ledger, trap, quickmath, firstcar, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules
+Reference data: aca_2026.json, advice.json, advice_translator.json, car_costs.json, confidence_weights.json, debates.json, +16 more
 Owns: unlearningDropped
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), employmentStatus (start), employerMatch (start), hasDebt (start), marginalRate (statement), rentMonthly (expenses), mortgageRate (housing), +3 more
 Latest decisions:

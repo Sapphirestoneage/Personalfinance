@@ -3,18 +3,19 @@ paths:
   - "rooms/statement.html"
   - "engines/presets.js"
   - "engines/accounts.js"
+  - "engines/gap.js"
   - "engines/statements.js"
 ---
 # The Statement (`statement`)
-File: rooms/statement.html · 2442 lines
-Engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, statements, taxroom
-Reference data: access_rules.json, car_costs.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, +7 more
-Owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis
-Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), employerMatch (start), contributionPercent (start), highestDeductible (start), oopMax (runway), totalDebt (debt-payoff), +4 more
+File: rooms/statement.html · 2555 lines
+Engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, debt, gap, statements, taxroom
+Reference data: access_rules.json, car_costs.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, +9 more
+Owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), employerMatch (start), contributionPercent (start), highestDeductible (start), oopMax (runway), ledgerIncome (income), +9 more
 Latest decisions:
   - D-285 — The Statement takes the account you left behind
   - D-273 — The Statement: what you own, where it lands, the documents
+  - D-251 — Where each asset sits: the institution and the account type
+  - D-249 — Boxes side by side line up, and the check that says so looks everywhere
   - D-157 — The menu you could read the page through
-  - D-152 — What Comes Next: a life as periods, and the months they add up to
-  - D-130 — What was pushed off, built: dates that are only estimated or potential, the calendar from the ledger, one month of spending, one rent, what the log moved, N/A in its owner room, an emergency-fund preset
 Full context: node tools/context/pack.js statement

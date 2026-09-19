@@ -1318,7 +1318,7 @@
     var first = j[0], last = j[j.length - 1];
     node.innerHTML = 'Level ' + first.level + ' thought <b>' + esc(signedMoney(first.cents)) + '</b>; level ' + last.level + ' says <b>' + esc(signedMoney(last.cents)) + '</b>'
       + (last.cents !== first.cents ? ' (' + (last.cents > first.cents ? 'up' : 'down') + ' ' + esc(Money.formatCents(Math.abs(last.cents - first.cents))) + ' a month)' : ' (the same)')
-      + '. <a href="' + Ownership.linkTo('history', 'journey', ROOM_ID) + '">The whole journey →</a>';
+      + '. <a href="' + Ownership.linkTo('budget', 'journey', ROOM_ID) + '">The whole journey →</a>';
   }
   function renderUpNext(h) {
     var strip = el('up-next');

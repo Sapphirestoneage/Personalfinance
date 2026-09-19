@@ -105,6 +105,10 @@
   #view-what-you-own .asset-remove { background: none; border: none; color: var(--color-accent); cursor: pointer; font-size: var(--text-md); padding: 0 var(--space-1); }
   
   #view-what-you-own .asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); align-items: stretch; }
+  /* One column on a narrow phone (D-249): at 320px two columns leave 145px
+     for "how sure it is worth that", which wraps to four lines beside a
+     neighbour's two and drops its box 32px below. */
+  @media (max-width: 380px) { #view-what-you-own .asset-grid { grid-template-columns: 1fr; } }
   
   #view-what-you-own .asset-grid .slaf-label { display: block; margin-bottom: var(--space-1); }
   
@@ -302,6 +306,17 @@
 
   
   #view-the-documents table.ledger { width: 100%; border-collapse: collapse; margin-top: var(--space-2); }
+  /* Every line opens (D-254): the label is the summary, the rest folds. */
+  #view-the-documents table.ledger details.ln summary { cursor: pointer; list-style: none; display: inline; }
+  #view-the-documents table.ledger details.ln summary::-webkit-details-marker { display: none; }
+  #view-the-documents table.ledger details.ln summary::after { content: ' \25B8'; color: var(--color-text-faint); font-size: 10px; }
+  #view-the-documents table.ledger details.ln[open] summary::after { content: ' \25BE'; }
+  #view-the-documents .ln-more { margin: var(--space-2) 0 var(--space-1); font-size: var(--text-xs); color: var(--color-text-muted); line-height: var(--leading-loose); }
+  #view-the-documents .ln-more .ln-how { margin: 0; }
+  #view-the-documents .ln-more table.ln-parts { width: 100%; border-collapse: collapse; margin: var(--space-1) 0; }
+  #view-the-documents .ln-more table.ln-parts td { padding: 2px 0; border: 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+  #view-the-documents .ln-more table.ln-parts td.amt { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: var(--space-3); }
+  #view-the-documents .ln-more .ln-link { display: inline-block; margin-top: var(--space-1); }
   
   #view-the-documents table.ledger th { text-align: left; font-size: var(--text-xs); text-transform: uppercase;
     letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); font-weight: 500;
@@ -451,7 +466,6 @@
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>The Statement</h1>
   <p class="room-lede">Everything you own, in three groups, and the one number underneath: your net worth. Where the next dollar lands, and the same period written out.</p>
-  <p class="print-only" id="print-date"></p>
 </header>
 
 <main class="slaf-wrap">
@@ -823,6 +837,8 @@
 <script src="../engines/hourly.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
+<script src="../engines/debt.js"></script>
+<script src="../engines/gap.js"></script>
 <script src="../engines/statements.js"></script>
 <script src="../engines/taxroom.js"></script>
 <script src="../shared/room.js"></script>
@@ -1708,6 +1724,13 @@
         annualReturn: Money.isEntered(v['a-return']) ? v['a-return'] : a.expectedReturnRate, years: v['a-years'], capitalGainsRate: v['a-cg'] });
       var rows = [];
       if (Money.isEntered(v['a-amount'])) rows.push({ label: 'Put in, pre-tax', cents: v['a-amount'] });
+      else {
+        /* Nothing typed yet: the lens reads what goes into the plan this
+           year at the contribution rate, the one line engines/cashflow
+           computes, so a projection reading always has a figure (D-256). */
+        var c = SLAF.CashFlow ? SLAF.CashFlow.savingsRateContributed(h, TABLES) : null;
+        if (c && Money.isOk(c) && c.parts && c.parts[0] && Money.isEntered(c.parts[0].annualCents)) rows.push({ label: 'Into the plan this year, at your contribution rate', cents: c.parts[0].annualCents });
+      }
       if (Money.isOk(r)) rows.push({ label: r.byKey[r.bestKey].label + ' after tax', cents: r.byKey[r.bestKey].afterTaxCents });
       return rows;
     }, function () { return TABLES; });
@@ -1727,7 +1750,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Progress = SLAF.Progress,
-      Reference = SLAF.Reference, St = SLAF.Statements, RoomExport = SLAF.RoomExport;
+      Reference = SLAF.Reference, St = SLAF.Statements, RoomExport = SLAF.RoomExport, Ownership = SLAF.Ownership;
 
   function esc(s) {
     return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -1743,6 +1766,7 @@
     { id: 'income',  label: 'Income statement' },
     { id: 'cash',    label: 'Cash flow' },
     { id: 'balance', label: 'Balance sheet' },
+    { id: 'fire',    label: 'FIRE statement' },
     { id: 'review',  label: 'The period in words' }
   ];
   var which = 'income';
@@ -1750,13 +1774,47 @@
   /* A row renders its own missing-ness. This is the whole discipline of the
      page in four lines: entered figures print, blanks print a dash, and
      nothing in between silently becomes a zero. */
+  /* A figure in the line's unit (D-254): money unless the line says a rate,
+     a number of years or a multiple. */
+  function figure(l) {
+    if (!l.entered) return DASH;
+    if (l.unit === 'rate') return Money.formatRate(l.cents, { decimals: 1 });
+    if (l.unit === 'years') return (Math.round(l.cents * 10) / 10) + (l.cents === 1 ? ' year' : ' years');
+    return l.kind === 'out' ? '(' + money(l.cents) + ')' : money(l.cents);
+  }
+  /* Where a line's number lives (D-254): the field's owner room, or the
+     room the line names. Every number is a link to where it comes from. */
+  function lineHref(l) {
+    if (!Ownership) return null;
+    if (l.field && Ownership.FIELDS && Ownership.FIELDS[l.field]) {
+      var f = Ownership.FIELDS[l.field];
+      return { href: Ownership.linkTo(f.owner, f.anchor, 'statement'), room: f.owner };
+    }
+    if (l.room) return { href: Ownership.linkTo(l.room, l.anchor, 'statement'), room: l.room };
+    return null;
+  }
+  function roomTitle(id) { var r = SLAF.Registry && SLAF.Registry.byId(id); return r ? r.title : id; }
+
   function row(l, opts) {
     var o = opts || {};
     var cls = (l.indent ? ' is-indent' : '') + (o.cls ? ' ' + o.cls : '');
-    var amt = l.entered
-      ? (l.kind === 'out' ? '(' + money(l.cents) + ')' : money(l.cents))
-      : DASH;
-    return '<tr class="' + cls.trim() + '"><td class="lbl">' + esc(l.label)
+    var amt = figure(l);
+    var link = lineHref(l);
+    /* Each line opens (D-254): how it is worked out, the parts it is made
+       of, and the room to change it in. A line with none of those stays a
+       plain row. */
+    var more = '';
+    if (l.how || (l.parts && l.parts.length) || link) {
+      more = '<div class="ln-more">'
+        + (l.how ? '<p class="ln-how">' + esc(l.how) + '</p>' : '')
+        + (l.parts && l.parts.length ? '<table class="ln-parts">' + l.parts.map(function (x) { return '<tr><td>' + esc(x.label) + '</td><td class="amt' + (x.entered ? '' : ' is-blank') + '">' + esc(x.entered ? money(x.cents) : DASH) + '</td></tr>'; }).join('') + '</table>' : '')
+        + (link ? '<a class="ln-link" href="' + esc(link.href) + '">Change it in ' + esc(roomTitle(link.room)) + ' \u2192</a>' : '')
+        + '</div>';
+    }
+    var label = more
+      ? '<details class="ln"><summary>' + esc(l.label) + '</summary>' + more + '</details>'
+      : esc(l.label);
+    return '<tr class="' + cls.trim() + '"><td class="lbl">' + label
       + (l.note ? '<span class="n">' + esc(l.note) + '</span>' : '')
       + '</td><td class="amt' + (l.entered ? (l.kind === 'out' ? ' is-out' : '') : ' is-blank') + '">'
       + esc(amt) + '</td></tr>';
@@ -1781,7 +1839,10 @@
     var out = [docHead('Income statement', s.period), '<table class="ledger">'];
     out.push('<tr><th>What came in</th><th class="amt"></th></tr>');
     s.revenue.forEach(function (l) { out.push(row(l)); });
-    out.push(totalRow('Total in', s.revenueTotal));
+    out.push(totalRow('Total earned', s.revenueTotal));
+    out.push('<tr><th>What the government took</th><th class="amt"></th></tr>');
+    s.taxes.forEach(function (l) { out.push(row(l)); });
+    out.push(totalRow('Take-home', s.takeHomeTotal));
     out.push('<tr><th>What went out</th><th class="amt"></th></tr>');
     s.costs.forEach(function (l) { out.push(row(l)); });
     out.push(totalRow('Total out', { cents: -s.costsTotal.cents, complete: s.costsTotal.complete, missing: s.costsTotal.missing }));
@@ -1838,6 +1899,21 @@
     return out.join('');
   }
 
+  function fireDoc(h) {
+    var r = St.fireStatement(h, TABLES);
+    if (!Money.isOk(r)) return '<p class="slaf-reason">' + esc(r.reason) + '</p>';
+    var s = r.value;
+    var out = ['<div class="doc-h"><h2>FIRE statement</h2><span class="per">As at today</span></div>', '<table class="ledger">'];
+    var section = function (title, lines) { out.push('<tr><th>' + esc(title) + '</th><th class="amt"></th></tr>'); lines.forEach(function (l) { out.push(row(l)); }); };
+    section('The target', s.target);
+    section('Where you stand', s.standing);
+    section('The pace', s.pace);
+    section('Assumed', s.assumptions);
+    out.push('</table>');
+    out.push('<p class="slaf-hint" style="margin-top:var(--space-3)">Tap a line for how it is worked out and where to change it. The FI number is a year of spending divided by the withdrawal rate; the ratio is what is invested against it; the years are how long the pace takes to close the gap.</p>');
+    return out.join('');
+  }
+
   function reviewDoc(h) {
     var r = St.review(h, TABLES, { snapshots: Spine.listSnapshots ? Spine.listSnapshots() : [] });
     if (!Money.isOk(r)) return '<p class="slaf-reason">' + esc(r.reason) + '</p>';
@@ -1878,6 +1954,7 @@
     el('doc-body').innerHTML =
         which === 'cash' ? cashDoc(h)
       : which === 'balance' ? balanceDoc(h)
+      : which === 'fire' ? fireDoc(h)
       : which === 'review' ? reviewDoc(h)
       : incomeDoc(h);
 
@@ -1889,7 +1966,11 @@
       + '<p><strong>A dash is not a zero.</strong> Any figure that is not entered prints as ' + DASH + ', and '
       + 'every subtotal waiting on one says which line it is waiting for rather than summing around it.</p>'
       + '<p><strong>Debt appears twice in the cash flow, on purpose.</strong> A payment is both a cost of the '
-      + 'month and a transfer that reduces what you owe. It is shown in both sections and subtracted once.</p>';
+      + 'month and a transfer that reduces what you owe. It is shown in both sections and subtracted once.</p>'
+      + '<p><strong>The income statement is earnings; the cash flow is what landed.</strong> The first starts at gross pay and '
+      + 'takes tax off; the second starts at take-home, because the match never touches your account and the tax was never yours.</p>'
+      + '<p><strong>Every line opens.</strong> Tap one for how it is worked out, the parts it is made of, and the room to change it in. '
+      + 'The FIRE statement reads the FI number, the savings rate and the gap from the engines that own them; nothing is worked out twice.</p>';
   }
 
   DOCS.forEach(function (d) {
@@ -1909,7 +1990,7 @@
       var rows = [];
       var inc = St.incomeStatement(h, TABLES);
       if (Money.isOk(inc)) {
-        inc.value.revenue.concat(inc.value.costs).forEach(function (l) {
+        inc.value.revenue.concat(inc.value.taxes || [], inc.value.costs).forEach(function (l) {
           rows.push({ section: 'Income statement', label: l.label, value: l.entered ? money(l.cents) : '',
             cents: l.entered ? l.cents : null, status: l.entered ? 'entered' : 'not entered' });
         });
@@ -1928,6 +2009,14 @@
           value: bal.value.netWorthComplete ? money(bal.value.netWorth) : '',
           cents: bal.value.netWorthComplete ? bal.value.netWorth : null,
           status: bal.value.netWorthComplete ? 'entered' : 'not entered' });
+      }
+      var fire = St.fireStatement(h, TABLES);
+      if (Money.isOk(fire)) {
+        var fv = fire.value;
+        fv.target.concat(fv.standing, fv.pace, fv.assumptions).forEach(function (l) {
+          rows.push({ section: 'FIRE statement', label: l.label, value: l.entered ? (l.unit === 'cents' ? money(l.cents) : String(Math.round(l.cents * 1000) / 1000)) : '',
+            cents: l.entered && l.unit === 'cents' ? l.cents : null, status: l.entered ? 'entered' : 'not entered' });
+        });
       }
       rows.push({ section: 'Basis', label: 'These figures are',
         value: St.period(h).basis === 'recorded' ? 'a record of closed months'

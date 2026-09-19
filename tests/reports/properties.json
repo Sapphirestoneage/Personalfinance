@@ -457,6 +457,36 @@
       ]
     },
     {
+      "engine": "cliff",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "coast",
       "notes": [],
       "properties": [
@@ -3120,42 +3150,6 @@
       ]
     },
     {
-      "engine": "wedding",
-      "notes": [],
-      "properties": [
-        {
-          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
-          "ok": true,
-          "numRuns": 100,
-          "seed": 20260910
-        },
-        {
-          "name": "the same input gives the same output twice (no hidden state)",
-          "ok": true,
-          "numRuns": 100,
-          "seed": 20260910
-        },
-        {
-          "name": "the household passed in is byte-identical afterwards",
-          "ok": true,
-          "numRuns": 100,
-          "seed": 20260910
-        },
-        {
-          "name": "cents in, cents out: no *Cents field carries a fraction",
-          "ok": true,
-          "numRuns": 100,
-          "seed": 20260910
-        },
-        {
-          "name": "guests × per guest + fixed + ring is the total; a typed total wins; family help never lands later",
-          "ok": true,
-          "numRuns": 100,
-          "seed": 20260910
-        }
-      ]
-    },
-    {
       "engine": "week",
       "notes": [],
       "properties": [
@@ -3260,6 +3254,6 @@
       ]
     }
   ],
-  "totalProperties": 417,
+  "totalProperties": 416,
   "failedProperties": 7
 }

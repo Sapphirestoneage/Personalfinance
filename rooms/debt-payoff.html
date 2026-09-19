@@ -434,6 +434,16 @@
 
   /* ---- Student loans, from rooms/student-loans.html (D-274) ---- */
   
+  #view-the-loans .rc-list { list-style: none; margin: 0; padding: 0; }
+  #view-the-loans .rc-list li { padding: var(--space-3) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  #view-the-loans .rc-list li:first-child { border-top: none; padding-top: 0; }
+  #view-the-loans .rc-chain { display: block; margin-top: var(--space-1); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+  #view-the-loans .rc-verdict { display: inline-block; margin-top: var(--space-2); font-weight: 600; }
+  #view-the-loans .rc-verdict.is-fast { color: var(--color-critical); }
+  #view-the-loans .rc-verdict.is-schedule { color: var(--color-text); }
+  #view-the-loans .rc-verdict.is-slowly { color: var(--color-positive); }
+  #view-the-loans .rc-why { color: var(--color-text-muted); }
+  #view-the-loans .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   #view-the-loans section[id] { scroll-margin-top: var(--space-4); }
   
   #view-the-loans .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
@@ -653,6 +663,14 @@
   <p class="room-why" id="sl-room-why" hidden></p>
   <p class="room-scope" id="sl-room-scope"></p>
 
+  <!-- What the loans really cost (D-247): the rate, after the interest
+       deduction, after inflation; the pace that follows; and the balance
+       drawn in today's money beside the dollars on the statement. -->
+  <section class="slaf-card" id="sl-real-cost" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">What the loans really cost</span>
+    <div id="sl-real-cost-body" style="margin-top:var(--space-3)"></div>
+  </section>
+
   <section class="slaf-card" id="sl-reading" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="sl-reading-list" style="margin-top:var(--space-3)"></div>
@@ -776,6 +794,9 @@
 <script src="../shared/charts.js"></script>
 <script src="../shared/suggest.js"></script>
 <script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
 <script src="../engines/studentloans.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../shared/lens.js"></script>
@@ -2452,8 +2473,47 @@
     prefix: 'sl-',
     root: 'view-the-loans',
     guessAs: 'student',
-    tables: ['studentLoanConventions', 'debtRules', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
+    tables: ['studentLoanConventions', 'debtRules', 'effectiveTaxRates', 'returnBands', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],
     reads: ['totalDebt', 'monthlyDebtPayments', 'grossAnnualIncome'],
+
+    /* What the loans really cost (D-247): one Debt.realCost per loan, and
+       the standard plan's balance in today's money beside the dollars on
+       the statement. */
+    after: function (h, T) {
+      var host = document.getElementById('sl-real-cost-body');
+      if (!host) return;
+      var r = StudentLoans.compare(h, T, {});
+      if (!Money.isOk(r)) { host.innerHTML = '<p class="slaf-reason">' + esc(r.reason) + '</p>'; return; }
+      var a = SLAF.Schema.resolveAssumptions(h, null, T);
+      var tax = SLAF.Schema.estimatedAnnualTaxCents(h, T);
+      var gross = SLAF.Schema.grossAnnualIncomeCents(h);
+      var opts = { marginalRate: Money.isOk(tax) ? tax.effectiveRate : null, inflation: a.inflation, returnReal: a.returnReal,
+        grossAnnualCents: Money.isOk(gross) ? gross.value : null, filingStatus: h.filingStatus, conventions: conv(T), rules: T.debtRules };
+      var pct1 = function (x) { return (Math.round(x * 1000) / 10) + '%'; };
+      var rows = r.loans.map(function (d) {
+        var rc = SLAF.Debt.realCost(d, opts);
+        if (!Money.isOk(rc)) return '<li><b>' + esc(d.label || 'Loan') + '</b>: ' + esc(rc.reason) + '</li>';
+        return '<li><b>' + esc(d.label || 'Loan') + '</b> ' + money(d.balanceCents) + ' at ' + pct1(rc.nominalRate)
+          + '<span class="rc-chain">' + pct1(rc.nominalRate) + ' rate → ' + pct1(rc.afterTaxRate) + ' after the deduction'
+          + (rc.taxSavedCents > 0 ? ' (' + money(rc.taxSavedCents) + ' a year back at an estimated ' + pct1(rc.marginalRate) + ')' : rc.phaseOutShare === 0 && rc.deductionApplies ? ' (phased out at your income)' : '')
+          + ' → <b>' + pct1(rc.realRate) + '</b> after ' + pct1(rc.inflation) + ' inflation</span>'
+          + '<span class="rc-verdict is-' + esc(rc.verdict) + '">' + esc(rc.label) + '.</span> <span class="rc-why">' + esc(rc.why) + '</span></li>';
+      });
+      var std = r.plans.standard, chart = '';
+      if (std && std.ok && std.simulation && std.simulation.schedule) {
+        var sch = std.simulation.schedule;
+        var nominal = [[0, r.startingBalanceCents]].concat(sch.map(function (m) { return [m.month / 12, m.remainingCents]; }));
+        var today = [[0, r.startingBalanceCents]].concat(sch.map(function (m) { return [m.month / 12, SLAF.Debt.deflate(m.remainingCents, m.month, a.inflation)]; }));
+        var paidNominal = std.totalPaidCents;
+        var paidToday = sch.reduce(function (t, m) { return t + SLAF.Debt.deflate(m.paidCents, m.month, a.inflation); }, 0);
+        chart = Charts.area({ title: 'The balance on the standard plan, in the dollars on the statement and in today\u2019s money',
+          series: [{ id: 'nominal', label: 'Balance, as the statement will show it', color: Charts.COLORS.debt, points: nominal, fill: true, width: 1.2 },
+                   { id: 'today', label: 'The same balance in today\u2019s money', color: Charts.COLORS.contributed, points: today, fill: false, width: 1.6 }],
+          x: { label: 'years from now', format: function (v) { return String(Math.round(v)); } }, y: { min: 0 } })
+          + '<p class="why">Every payment on the standard plan adds up to ' + money(paidNominal) + ' on paper, but ' + money(paidToday) + ' in today\u2019s money: at ' + pct1(a.inflation) + ' inflation the later payments are made with cheaper dollars. That is the whole case for paying a cheap loan slowly.</p>';
+      }
+      host.innerHTML = '<ul class="rc-list">' + rows.join('') + '</ul>' + chart;
+    },
 
     number: function (h, T) {
       var r = StudentLoans.compare(h, T, {});

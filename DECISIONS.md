@@ -15921,6 +15921,40 @@ on `rooms/tax.html#the-cliff` (raise and size read, three rows, size not
 stored). In a browser with the demo household: 4.6× the line, a $5,000
 raise crosses none, the first reading untouched.
 
+## D-297 — Two lanes meet: main's readings land where their rooms went
+
+**Why.** Main carried D-234..D-258 (the panel rounds) on the room layout
+before the 93 → 32 merge; this lane carried the merge. Both numbered from
+D-234, and main had built inside five rooms this lane had already turned
+into readings of other rooms.
+
+**Decision.** This lane's entries move up by twenty-five: D-234..D-271
+are D-259..D-296 everywhere, as the panel round was renumbered before it.
+Main's work lives where its room went: the accounts lens reads the year's
+contribution in The Statement's where-it-lands reading (D-256); the month
+as turns is The Month's dates reading, drawn by `shared/daybyday.js` with
+no copy of the grid (D-253); the journey is The Close's over-time reading
+(D-248); statements that open and the FIRE statement are The Statement's
+documents reading (D-254); what a loan really costs is Debt's loans
+reading (D-247). The registry takes main's path order (D-244) and plain
+words (D-258); the last room on the path points at the map; the map's
+other ways open What If. Retired rooms stay redirects.
+
+**Replaces or removes.** Nothing on screen. The test suites main added
+read the room that holds each reading now, not the redirect.
+
+**Stored shape.** No change. `journal` (D-248) and the asset's
+`institution` and `accountType` (D-251) are main's shapes, unchanged.
+
+**Verified.** Every CI step, locally: `node test/run.js` (33,146),
+`dnd/test/run.js`, `test/export.js`, `test/xlsx.js`, Lane 2 (`npm test`
+in `tests/`, with a property file for `engines/cliff.js`), and the eight
+browser gates: render, features, sidebar, forms (655), onefact, xss,
+comeback, alignment. Each ported reading opened in a browser with the demo:
+three loans priced, the grid and the turns drawn once a cadence is set,
+the FIRE tab with sixteen lines that open, the lens reading $2,880 into
+the plan. Console clean.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -88,7 +88,7 @@
     return '<div class="jm-stage jm-routes"><span class="jm-cap">The routes from here · same road, four paces</span>'
       + '<ul class="jm-route-list">' + routes.routes.map(function (r) { return routeHtml(r, fmt); }).join('') + '</ul>'
       + '<p class="jm-say">At a ' + esc(Money.formatRate(routes.annualRate, { decimals: 0 })) + ' real return. Other ways to change the pace, side work, a cheaper roof, a better job: '
-      + '<a href="' + link('adventure', 's-ways', from) + '">The Long Way Round →</a></p></div>';
+      + '<a href="' + link('what-if-life', 's-ways', from) + '">The Long Way Round →</a></p></div>';
   }
 
   function html(map, opts) {

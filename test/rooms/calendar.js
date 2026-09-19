@@ -100,7 +100,7 @@ module.exports = function (t) {
      this file reads its slice of that page. */
   const slice = reading('rooms/cash-flow.html', 'view-the-dates', 'READING view-the-dates,');
   const page = slice.html;
-  checkTrue('the page draws the grid under the line', /cal-grid/.test(page) && /Cal\.weeks\(/.test(page));
+  checkTrue('the reading draws the grid under the line through shared/daybyday.js, and holds no copy of it (D-253)', /DayByDay\.html\(m\(h, T\)\)/.test(page) && !/cal-grid/.test(page));
   checkTrue('the page mounts the template as a part of The Month', /Room\.mount\(\{/.test(page) && /id: 'cash-flow',\n\s*part: true,\n\s*prefix: 'cal-',\n\s*root: 'view-the-dates',/.test(page));
   ['number', 'chart', 'inputs', 'amounts', 'assumptions', 'reading', 'room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'].forEach(id => checkTrue(`… has #${id}`, new RegExp('id="' + (id === 'load-notice' ? '' : 'cal-') + id + '"').test(page)));
   check('… two inputs, the cadence and the next payday; bills and pay-later are the log’s now (D-130)', (page.match(/ctl: '/g) || []).length, 2);

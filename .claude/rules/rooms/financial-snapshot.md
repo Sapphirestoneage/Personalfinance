@@ -7,12 +7,15 @@ paths:
   - "engines/rankguess.js"
 ---
 # The Scorecard (`financial-snapshot`)
-File: rooms/financial-snapshot.html · 2597 lines
+File: rooms/financial-snapshot.html · 2624 lines
 Engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess
-Reference data: bands.json, car_costs.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +11 more
+Reference data: bands.json, car_costs.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +12 more
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), employerMatch (start), capturingFullMatch (start), rentMonthly (expenses), downPct (housing), totalDebt (debt-payoff), +4 more
 Latest decisions:
+  - D-245 — Fewer words on the page, and every score says what is good, why, and what to do
+  - D-241 — Nothing counts a person's failures before they have typed anything
+  - D-238 — A page may not write to an id it does not carry
   - D-233 — The Scorecard: six readings, one measuring stick, simplest first
   - D-036 — Confidence as a field, and the Snapshot bug that hid behind a notice
 Full context: node tools/context/pack.js financial-snapshot

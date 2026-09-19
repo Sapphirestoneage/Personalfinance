@@ -7,9 +7,9 @@ paths:
   - "engines/exercises.js"
 ---
 # The Skill Tree (`skill-tree`)
-File: rooms/skill-tree.html · 1528 lines
-Engines: projection, tier0, foo, skilltree, cashflow, statement, swan, benchmarks, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, skills, income, fire, decumulation, exercises
-Reference data: car_costs.json, debt_rules.json, effective_tax_rates_2026.json, exercises.json, expense_categories.json, fire_variants.json, +9 more
+File: rooms/skill-tree.html · 1531 lines
+Engines: projection, tier0, income, selfemployed, ledger, foo, skilltree, cashflow, statement, swan, benchmarks, rerank, hourly, tax, debt, quickmath, vpw, ss, events, skills, fire, decumulation, exercises
+Reference data: car_costs.json, debt_rules.json, effective_tax_rates_2026.json, exercises.json, expense_categories.json, fire_variants.json, +11 more
 Owns: skillsDone, exercisesDone, practiceLedger
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), capturingFullMatch (start), stockShare (decumulation), plannedAnnualDraw (decumulation), socialSecurityAt (decumulation), monthsClosed (budget), rerankCut (values), +2 more
 Latest decisions:

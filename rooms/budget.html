@@ -268,6 +268,9 @@
   #view-over-time section[id] { scroll-margin-top: var(--space-4); }
   
   #view-over-time .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  #view-over-time ol.journey li { margin: var(--space-2) 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  #view-over-time ol.journey li b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  #view-over-time ol.journey li small { color: var(--color-text-faint); }
 </style>
 </head>
 <body class="slaf">
@@ -391,6 +394,14 @@
     <span class="slaf-eyebrow">What this is reading</span>
     <div id="hi-reading-list" style="margin-top:var(--space-3)"></div>
   </section>
+
+  <!-- The journey (D-248): what the app said at each level and each month
+       close, in order, with the later figure beside the earlier one. -->
+  <section class="slaf-card" id="journey" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The journey: what it thought, then what was</span>
+    <ol class="journey" id="journey-list" style="margin:var(--space-3) 0 0;padding-left:1.2em"></ol>
+    <p class="slaf-reason" id="journey-reason"></p>
+  </section>
   </section>
 
   <p class="disclaimer">Educational tool, not financial advice. Nothing is typed in this room: it reads what Income and the expense log already hold. Everything stays in this browser.</p>
@@ -450,7 +461,7 @@
   function el(id) { return document.getElementById(id); }
   var VIEWS = [
     { id: 'view-every-month', match: /^#(every-month|va-|single|per-bucket|trend|trend-|bucket-|buckets|picker|month(?![a-z])|use-revised)/ },
-    { id: 'view-over-time', match: /^#(over-time|hi-)/ },
+    { id: 'view-over-time', match: /^#(over-time|hi-|journey)/ },
     { id: 'view-this-month', match: /.*/ }
   ];
   function open(v) {
@@ -918,7 +929,27 @@
   function review(h, T) { return History.review(h, Spine.listSnapshots(), T, {}); }
   function pct(v) { return v === null || v === undefined ? '' : ' (' + (v >= 0 ? '+' : '−') + Math.round(Math.abs(v) * 1000) / 10 + '%)'; }
   function signed(c) { return (c >= 0 ? '+' : '−') + Money.formatCents(Math.abs(c)); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   var lastOptions = null;
+
+  /* The journey (D-248): every line the front page wrote when a level of
+     the monthly gap was reached, and every month closed, in order. */
+  function renderJourney(h) {
+    var list = document.getElementById('journey-list'), reason = document.getElementById('journey-reason');
+    if (!list || !reason) return;
+    var j = (h.journal || []).slice().sort(function (a, b) { return (a.at || '') < (b.at || '') ? -1 : (a.at || '') > (b.at || '') ? 1 : (a.level || 0) - (b.level || 0); });
+    if (!j.length) { list.innerHTML = ''; reason.textContent = 'Nothing recorded yet. The front page writes a line the first time each level of the monthly gap is reached, and one for every month closed in this room.'; return; }
+    reason.textContent = '';
+    var prev = null;
+    list.innerHTML = j.map(function (e) {
+      var when = e.at ? new Date(e.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+      var what = e.kind === 'close' ? 'Month closed (' + esc(e.month) + '): left each month was ' : 'Level ' + e.level + ' said: left each month is ';
+      var cents = Money.isEntered(e.cents) ? signed(e.cents) : Money.EM_DASH;
+      var diff = prev !== null && Money.isEntered(e.cents) ? ' <small>(' + (e.cents >= prev ? 'up ' : 'down ') + Money.formatCents(Math.abs(e.cents - prev)) + ' on the line before)</small>' : '';
+      if (Money.isEntered(e.cents)) prev = e.cents;
+      return '<li><b>' + esc(when) + '</b> · ' + what + '<b>' + esc(cents) + '</b> <small>(' + esc(e.basis || '') + ')</small>' + diff + '</li>';
+    }).join('');
+  }
 
   var room = Room.mount({
     id: 'budget',
@@ -987,6 +1018,7 @@
     scope: 'This room does not sync anywhere; snapshots and the log live in this browser, and a share code carries the snapshots but not the log.',
 
     after: function (h, T) {
+      renderJourney(h);
       /* The compare-to options come from the snapshot list, painted only
          when the list changed and never under focus. */
       var sel = document.querySelector('[data-ctl="compareTo"]');

@@ -2,9 +2,9 @@
   "archetypes": 24,
   "edges": 6,
   "sweep": {
-    "calls": 7980,
-    "engines": 89,
-    "functions": 266
+    "calls": 8040,
+    "engines": 90,
+    "functions": 268
   },
   "findings": [],
   "failures": [],
@@ -18,6 +18,11 @@
       "fn": "careermove.offerWork",
       "params": "household, offer",
       "needs": "offer"
+    },
+    {
+      "fn": "goals.plan",
+      "params": "household, goal, tables, opts",
+      "needs": "goal"
     },
     {
       "fn": "skills.due",

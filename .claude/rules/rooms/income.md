@@ -16,5 +16,5 @@ Latest decisions:
   - D-289 — Income takes Worth the Hassle, and eight readings got their scrolling back
   - D-272 — Income: what lands, what it averages, what it pays
   - D-268 — What Matters, four readings of one expense log
-  - D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line
+  - D-250 — Deeper questions wait for their level
 Full context: node tools/context/pack.js income
