@@ -982,6 +982,47 @@
     lede.insertAdjacentHTML('afterend', html);
   }
 
+  /* ---- Fewer words on the page (D-245) ------------------------------------
+     The owner: most of the words should be hidden and summoned by an ⓘ.
+     Every hint paragraph longer than a line folds to one small button
+     that names what it is; the text is still there, one tap away. The
+     paragraph is changed in place, never rebuilt, and a paragraph a room
+     later writes into by id simply overwrites the fold. Short hints and
+     the ones that carry a figure or a link the room set stay open. */
+  var HINT_FOLD_CHARS = 110;
+  function mountHintFolds(scope) {
+    if (typeof document === 'undefined') return 0;
+    var host = scope || document.querySelector('main') || document.body;
+    if (!host) return 0;
+    var n = 0;
+    Array.prototype.forEach.call(host.querySelectorAll('p.slaf-hint'), function (para) {
+      if (para.getAttribute('data-fold') === 'never' || para.querySelector('.slaf-hint-toggle')) return;
+      var text = (para.textContent || '').replace(/\s+/g, ' ').trim();
+      if (text.length <= HINT_FOLD_CHARS) return;
+      if (para.querySelector('input, select, button')) return;
+      var body = document.createElement('span');
+      body.className = 'slaf-hint-body';
+      while (para.firstChild) body.appendChild(para.firstChild);
+      body.hidden = true;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slaf-hint-toggle';
+      btn.setAttribute('aria-expanded', 'false');
+      btn.textContent = '\u24D8 What this is';
+      btn.addEventListener('click', function () {
+        var open = body.hidden;
+        body.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        btn.textContent = open ? '\u24D8 Hide' : '\u24D8 What this is';
+      });
+      para.classList.add('is-folded');
+      para.appendChild(btn);
+      para.appendChild(body);
+      n++;
+    });
+    return n;
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
     /* Mounted once. The header goes up at DOMContentLoaded (see the listener
@@ -1002,6 +1043,7 @@
     mountDoors(roomId);
     mountFold(roomId);
     mountSectionSync(roomId);
+    mountHintFolds();
     return nav;
   }
 
@@ -1324,6 +1366,7 @@
   return {
     mount: mount,
     chain: chain,
+    mountHintFolds: mountHintFolds, HINT_FOLD_CHARS: HINT_FOLD_CHARS,
     purposeHtml: purposeHtml,
     mountHeader: mountHeader, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
     mountFold: mountFold,

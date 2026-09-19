@@ -27,24 +27,18 @@ Updated: 2026-09-19
   understand 0% of their life. All fixed, and `test/run.js` now fails if a
   page writes to an id its own markup does not carry. Four panel claims
   struck as wrong on checking; four items left to the owner.
-- **Up next and the map (D-234, D-235).** The front page leads with what is
-  open, which reading is the fewest answers away and the fields that open it
-  (`shared/upnext.js`), and which FIRE tier the pot has reached. The FIRE
-  room opens with the map (`engines/journey.js`): ladder, tiers, back half,
-  you are here, and four paced routes from here; the flight plan draws it too.
-- **Debt Payoff (D-236)** draws where the payment goes and what each fall
-  frees: the freed minimum rolls onto the next debt, then it is all yours.
-- **Plain words (D-237).** Every room title now carries a generated line:
-  Shows: … Needs: …. The owner finds the house voice hard to read; new copy
-  names the thing, the number and the unit. A room-by-room lede pass is
-  open and the order is the owner's.
-- **The path (D-244)** is the numbers, then the dashboard, then the readings;
-  a decision room has no prev/next of its own. The owner's brief, 2026-09-19:
-  treat it as financial planning software, readable by a third grader and a
-  FIRE person alike; fewer words on the page, the rest behind an ⓘ; every
-  score says what is good, why, and what to do; deeper questions behind an
-  advanced level; a typed take-home pay; the car's used/new and running
-  costs; a running-balance chart on the month. Queued in that order.
+- **This session (D-234, D-235, D-236, D-237, D-244, D-245).** The front
+  page leads with what is open and what one answer opens; the FIRE room
+  opens with the map and four paced routes; Debt Payoff draws where the
+  payment goes and what each fall frees; every title carries Shows/Needs;
+  the path is the numbers, the dashboard, then the readings; long hints
+  fold behind an ⓘ; every score pillar says what is good, why, what to do.
+- **The owner's brief, 2026-09-19:** treat it as financial planning software,
+  readable by a third grader and a FIRE person alike. Queued, in order:
+  deeper questions behind an advanced level; a typed take-home pay; the
+  car's used/new and running costs; a running-balance chart on the month;
+  the Budget month view made obvious; statements in detail, each line
+  expandable; the readings FIRE people expect; a plain-language lede pass.
 
 ## Freeze
 - ON, and the merge is how it is honoured: every session leaves fewer screens.
