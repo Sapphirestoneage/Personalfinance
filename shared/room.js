@@ -236,10 +236,13 @@
     function paintLens(h) {
       var host = el('room-lens'), list = el('room-amounts');
       if (!host || !Lens) return;
+      var rows = spec.amounts ? (spec.amounts(h, TABLES) || []) : [];
+      /* The lens reads the amounts list; with nothing in it the toggle
+         would change nothing on the page, so it is not shown (D-256). */
+      if (!Lens.hasAmounts(rows)) { host.innerHTML = ''; if (list) list.innerHTML = ''; return; }
       host.innerHTML = Lens.toggleHtml(h, TABLES, 'lens');
-      if (!list || !spec.amounts) return;
+      if (!list) return;
       var mode = Lens.mode();
-      var rows = spec.amounts(h, TABLES) || [];
       list.innerHTML = rows.map(function (r) {
         if (!Money.isEntered(r.cents)) return '';
         var shown = mode === '$' ? Money.formatCents(r.cents) : Lens.format(r.cents, mode, h, TABLES);

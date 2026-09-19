@@ -752,6 +752,10 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 @media (max-width: 640px) { .slaf-undo { top: auto; bottom: 14px; right: 12px; } html.has-undo body { padding-bottom: 76px; } .slaf-undo-btn span { display: none; } .slaf-undo-btn { padding: 0 12px; min-height: 38px; font-size: var(--text-md); } }
 
 /* ---- The lens toggle (shared/lens.js). D-094. ---- */
+/* The lens says what it does (D-256): a caption, the buttons, one line on the mode in use. */
+.slaf-lens-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.slaf-lens-cap { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); white-space: nowrap; }
+.slaf-lens-say { flex-basis: 100%; font-size: var(--text-xs); color: var(--color-text-muted); }
 .slaf-lens { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
 .slaf-lens-btn { border: none; background: transparent; color: var(--color-text-muted); font-size: var(--text-xs); min-height: 32px; padding: 0 12px; cursor: pointer; }
 .slaf-lens-btn[aria-pressed="true"] { background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }

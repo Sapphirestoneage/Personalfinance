@@ -8765,6 +8765,52 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
 })();
 
+section('Budget: the month said plainly (D-257)');
+
+(function () {
+  const Budget = require(path.join(ROOT, 'engines/budget.js'));
+  const sheet = { month: '2026-09', label: 'September 2026', status: 'open', isCurrent: true, isFuture: false, rows: [
+    { bucket: 'income', label: 'Income', estimatedCents: 500000, actualCents: 250000 },
+    { bucket: 'expenses', label: 'Expenses', estimatedCents: 300000, actualCents: 198000 },
+    { bucket: 'savings', label: 'Savings', estimatedCents: 50000, actualCents: 0 },
+    { bucket: 'investments', label: 'Investments', estimatedCents: null, actualCents: 20000 },
+    { bucket: 'debt', label: 'Debt', estimatedCents: 30000, actualCents: 30000 }] };
+  const sum = Budget.summary(sheet, '2026-09-21T12:00:00');
+  check('expected out is the estimated buckets, the unestimated one left out and named', sum.expectedOutCents + ':' + sum.unestimated.join(','), '380000:Investments');
+  check('gone so far counts every out bucket', sum.goneCents, 248000);
+  check('what is left is the difference', sum.leftCents, 132000);
+  check('the day of the month is read', sum.days.passed + '/' + sum.days.total + '/' + sum.days.left, '21/30/9');
+  checkTrue('the sentence says what is left and the days to go', /\$1,320 left of what was expected, with 9 days to go/.test(sum.say));
+  check('the verdict: within, with spending not ahead of the month', sum.verdict, 'within');
+  const fast = Budget.summary(Object.assign({}, sheet, { rows: sheet.rows.map(r => r.bucket === 'expenses' ? Object.assign({}, r, { actualCents: 290000 }) : r) }), '2026-09-05T12:00:00');
+  check('… fast, when more has gone than the days explain', fast.verdict, 'fast');
+  const over = Budget.summary(Object.assign({}, sheet, { rows: sheet.rows.map(r => r.bucket === 'expenses' ? Object.assign({}, r, { actualCents: 400000 }) : r) }), '2026-09-19T12:00:00');
+  checkTrue('… over, said as over', over.verdict === 'over' && /over what was expected/.test(over.say));
+  check('a row reads as one plain sentence', sum.rows.expenses.text, 'Expected $3,000 · so far $1,980 · $1,020 left');
+  check('… income says what is still to come', sum.rows.income.text, 'Expected $5,000 · landed so far $2,500 · $2,500 still to come');
+  check('… no estimate is said, never counted as nought', sum.rows.investments.text, 'No estimate yet · so far $200');
+  checkTrue('nothing expected anywhere is its own verdict', Budget.summary({ month: '2026-09', status: 'open', isCurrent: true, rows: sheet.rows.map(r => Object.assign({}, r, { estimatedCents: null })) }, '2026-09-19T12:00:00').verdict === 'none');
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/budget.html'), 'utf8');
+  checkTrue('the room leads with the month said plainly, read off the engine, and each card carries its sentence', /id="month-say"/.test(room) && /Budget\.summary\(sheet\)/.test(room) && /class="c-plain is-/.test(room));
+})();
+
+section('The lens says what it does, and hides where nothing changes (D-256)');
+
+(function () {
+  const Lens = require(path.join(ROOT, 'shared/lens.js'));
+  const demo = Demo.build();
+  const html = Lens.toggleHtml(demo, TABLES, 'lens-t');
+  checkTrue('the toggle carries a caption and a line on the mode in use', /slaf-lens-cap">Read these numbers as</.test(html) && /slaf-lens-say">\$: in dollars\.</.test(html));
+  checkTrue('… and still one button a mode', (html.match(/slaf-lens-btn/g) || []).length === Lens.available(demo, TABLES).length);
+  check('nothing to read: no amounts', Lens.hasAmounts([]), false);
+  check('… a blank amount is not one', Lens.hasAmounts([{ label: 'x', cents: null }]), false);
+  check('… an entered amount is', Lens.hasAmounts([{ label: 'x', cents: 100 }]), true);
+  const room = fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8'), lens = fs.readFileSync(path.join(ROOT, 'shared/lens.js'), 'utf8');
+  checkTrue('the template hides the toggle when the room has nothing to read', /if \(!Lens\.hasAmounts\(rows\)\) \{ host\.innerHTML = ''/.test(room));
+  checkTrue('… and so does the strip', /if \(!hasAmounts\(rows\)\) \{ host\.innerHTML = ''; return; \}/.test(lens));
+  checkTrue('the styles exist', /\.slaf-lens-cap \{/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+})();
+
 section('The car: new or used, the running costs, and all in a month (D-255)');
 
 (function () {
