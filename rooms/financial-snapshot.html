@@ -77,6 +77,13 @@
   #view-the-score ul.bars .top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
   
   #view-the-score ul.bars .nm { font-size: var(--text-sm); font-weight: 600; }
+  #view-the-score ul.bars .verdict { color: var(--color-text); }
+  #view-the-score ul.bars .verdict.is-good { color: var(--color-positive); }
+  #view-the-score ul.bars .verdict.is-bad { color: var(--color-critical); }
+  #view-the-score ul.bars .pillar-more { margin-top: var(--space-2); font-size: var(--text-sm); }
+  #view-the-score ul.bars .pillar-more summary { cursor: pointer; color: var(--color-accent-hover); font-size: var(--text-xs); }
+  #view-the-score ul.bars .pillar-more p { margin: var(--space-2) 0 0; color: var(--color-text-muted); }
+  #view-the-score ul.bars .pillar-more p b { color: var(--color-text); }
   
   #view-the-score ul.bars .wt { font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
   
@@ -1102,6 +1109,7 @@
   function toneOf(score) {
     return score >= 0.85 ? ' is-good' : score < 0.5 ? ' is-bad' : '';
   }
+  function verdictWord(score) { return score >= 0.85 ? 'Good' : score >= 0.5 ? 'Okay' : 'Needs work'; }
 
   function renderScore(s) {
     var fig = el('score-figure'), band = el('score-band'), reason = el('score-reason');
@@ -1135,13 +1143,21 @@
     if (!Money.isOk(s)) { el('pillars').innerHTML = ''; return; }
     el('pillars').innerHTML = s.pillars.map(function (p) {
       var width = p.available ? Math.max(2, Math.round(p.score * 100)) : 0;
+      /* The plain words live on the table's pillar, by id (D-245). */
+      var row = ((TABLES.healthScore && TABLES.healthScore.pillars) || []).filter(function (x) { return x.id === p.id; })[0];
+      p = Object.assign({ plain: row ? row.plain : null }, p);
       return '<li class="' + (p.available ? '' : 'is-absent') + '">'
         + '<div class="top"><span class="nm">' + esc(p.label) + '</span>'
         + '<span class="wt">' + (p.available ? Math.round(p.score * 100) + ' / 100 · ' : '')
         + pct(p.weight) + ' of the score</span></div>'
         + '<div class="track"><div class="fill' + (p.available ? toneOf(p.score) : '')
         + '" style="width:' + width + '%"></div></div>'
-        + '<div class="sub">' + esc(p.blurb) + '</div>'
+        /* Plain words on every pillar (D-245): a verdict word, what it
+           measures, then what good is, why it matters and what raises it
+           behind one caret. */
+        + '<div class="sub">' + (p.available ? '<b class="verdict' + toneOf(p.score) + '">' + verdictWord(p.score) + '.</b> ' : '') + esc(p.plain ? p.plain.measures : p.blurb) + '</div>'
+        + (p.plain ? '<details class="pillar-more"><summary>What is good, why it matters, and what raises it</summary>'
+            + '<p><b>Good is:</b> ' + esc(p.plain.good) + '</p><p><b>Why it matters:</b> ' + esc(p.plain.why) + '</p><p><b>To raise it:</b> ' + esc(p.plain.improve) + '</p></details>' : '')
         + (p.available
             ? '<div class="parts">' + p.counted.map(function (c) {
                 return esc(c.label) + ' ' + Math.round(c.score * 100);

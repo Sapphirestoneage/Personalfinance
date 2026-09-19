@@ -14263,6 +14263,31 @@ show; nothing else. No room, screen or field.
 with the demo household for overflow and console errors (Start Here's
 badge overflow found and fixed).
 
+## D-245 — Fewer words on the page, and every score says what is good, why, and what to do
+
+**Why.** The owner: "there are so many words on the page, the huge
+majority needs to be hidden and summoned by an ⓘ or caret", and of the
+Scorecard's pillars, "explain like I'm 5: what's good, why it's good,
+purpose, what to do to improve."
+
+**Decision.** `shared/progress.js` `mountHintFolds()`, mounted with every
+room header: a hint paragraph longer than a line folds to one small
+button ("ⓘ What this is"); the text is a tap away, changed in place,
+never rebuilt. `data/health_score.json` gives every pillar `plain`:
+what it measures, what good is, why it matters, what raises it, in
+sentences a child could follow. `rooms/financial-snapshot.html` draws a
+verdict word (Good, Okay, Needs work) and the measure on each pillar,
+with the rest behind one caret.
+
+**Replaces or removes.** The hint paragraphs as open text; the pillar's
+literary blurb on the Scorecard (still in the table for the menu).
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,474 checks), `node test/forms.js`
+(619), `node tools/context/build.js --check`; the Scorecard and the
+Cushion at 390px with the demo, clean console.
+
 
 ---
 

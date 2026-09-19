@@ -8656,6 +8656,19 @@ section('The map (D-235): the road, you are here, and the routes from here');
   checkTrue('… and block 4 points at the map', /linkTo\('fire', 'map', ROOM_ID\)/.test(page));
 })();
 
+section('Fewer words, plain words (D-245): hints fold, pillars explain');
+
+(function () {
+  const Progress = require(path.join(ROOT, 'shared/progress.js'));
+  const hs = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/health_score.json'), 'utf8'));
+  checkTrue('every pillar says what it measures, what good is, why, and what raises it', hs.pillars.every(p => p.plain && ['measures', 'good', 'why', 'improve'].every(k => typeof p.plain[k] === 'string' && p.plain[k].length > 20)));
+  checkTrue('… in short sentences without an em dash', hs.pillars.every(p => Object.keys(p.plain).every(k => p.plain[k].indexOf('—') === -1)));
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
+  checkTrue('the Scorecard draws a verdict word and the caret on each pillar', /verdictWord\(p\.score\)/.test(page) && /class="pillar-more"/.test(page) && /To raise it:/.test(page));
+  checkTrue('the hint fold is shared and the stylesheet carries it', typeof Progress.mountHintFolds === 'function' && Progress.HINT_FOLD_CHARS > 60 && /\.slaf-hint-toggle \{/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
+  checkTrue('… and mounts with every room header', /mountSectionSync\(roomId\);\s*mountHintFolds\(\);/.test(fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8')));
+})();
+
 section('The room template (D-097): one shape, proven on Real Hourly Wage');
 
 (function () {

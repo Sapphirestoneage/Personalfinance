@@ -1350,3 +1350,10 @@ a:hover { color: var(--sapphire-100); }
 .slaf-purpose { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-loose); }
 .slaf-purpose b { color: var(--color-text); font-weight: 600; }
 .slaf-purpose span { display: inline-block; margin-right: var(--space-3); }
+
+/* A long hint folds behind an ⓘ (D-245): the button is the whole line
+   until it is opened. */
+.slaf-hint.is-folded { margin-top: var(--space-2); }
+.slaf-hint-toggle { font: inherit; font-size: var(--text-xs); color: var(--color-accent-hover); background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 2px 10px; cursor: pointer; }
+.slaf-hint-toggle[aria-expanded="true"] { color: var(--color-text-muted); }
+.slaf-hint-body { display: block; margin-top: var(--space-2); }
