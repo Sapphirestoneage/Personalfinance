@@ -90,7 +90,7 @@ section can be read with `sed -n START,ENDp FILE` instead of the whole file.
   - 12. Builder's own audit: strengths, gaps, recommendations [523-600]
   - 13. Numbers about the build (for scale) [601-615]
 
-## LATER.md (240 lines)
+## LATER.md (241 lines)
 
 - LATER.md — what the brief said not to build, and then said to [1-8]
   - From T8 (the FI-losophy rooms, the D-093 draft) — built [9-30]
@@ -102,7 +102,7 @@ section can be read with `sed -n START,ENDp FILE` instead of the whole file.
   - One debt, one screen (D-134) [125-138]
   - The menu (D-135) [139-151]
   - Phone and desktop, measured (D-136) [152-168]
-  - What people ask about that this does not answer (the coverage gap) [169-240]
+  - What people ask about that this does not answer (the coverage gap) [169-241]
 
 ## README.md (251 lines)
 

@@ -1,39 +1,76 @@
 # STATUS (keep under 40 lines; /wrap rewrites it)
 
-Updated: 2026-09-12
+Updated: 2026-09-19
 
 ## Where it stands
-- The Ledger rework brief (owner, 2026-09-11) is being built in order: G1, A, B, C/C2, D, E, F, G2, G3 with J1, H1 to H5, H7, H8 shipped (D-204 to D-212); H6 waits on sourced 1871-on returns data (egress blocked); I1 to I5 shipped (D-213, D-214); J2 to J8 shipped (D-214 to D-216; J7 without gift privacy, which waits on the owner); K4, K6, K7, K11 shipped on the one countdown (D-217); K1 and K3 shipped (D-218); K2, K5, K8, K9, K10 shipped (D-219): Phase K is built; one CSV out and back in (D-220), made to survive a real spreadsheet (D-221: one reader for every CSV, any way a number, date, yes or choice is written, a preview naming what each line would do, one undo for the lot) and then made a spreadsheet (D-222: the download is a real .xlsx with a tab a door, money in money cells, headings in words; a workbook or a CSV comes back); I6 (Eli's taxonomy), I7 (needs H6), I8 (needs the §11 tree) wait. Still waiting on the owner: the Pages switch, the domain (G1.1), a LICENSE (G3.14). The owner's brief overrides the freeze for those phases; each adds a VIEW of existing rows (First Round, doors, Express), no second store.
-- ~70 rooms live on GitHub Pages. Each room works on its own; the connections
-  between them are the weak spot (see docs/ARCHITECTURE.md "Known problems").
-- Context system added. Sessions should no longer read the archives.
-- End-to-end audit, walked in a browser as beginner and expert
-  (`docs/END-TO-END-AUDIT.md`, D-226). Four seams fixed: every room says how
-  old its numbers are; the example household says it is the example; home
-  opens on what you earned, not the pitch; one progress meter, not two.
+- **93 → 30 is the programme.** The reframe (D-228): you cannot size the
+  mountain until you know how you come down it, so the Back Half defines the
+  target and The Number becomes a read-out of it. The room test and the
+  thirty are D-229 and `docs/room-map.json`, which `test/run.js` checks
+  against the registry every run. That map is the cut list: `absorbs` minus
+  `done` is what is left, `held` says what is not moving yet, and why.
+- **Four of the six merges are done; 92 registry rooms → 76.** D-230, the
+  Ledger swallowed navigation. D-232, The Cushion is four readings of one
+  number, seven field owners moved with their boxes. D-231, What The Next
+  Dollar Does is one question at three amounts, the FOO step above all
+  three. D-233, The Scorecard is six readings of the same entered numbers
+  and opens on the plainest. Every old URL redirects, hash and all.
+  `.slaf-hats` is the one reading strip; `part: true` in `shared/room.js`
+  lets a template room become a reading.
+- Ledger rework brief: built through Phase K; H6, I6, I7, I8 wait.
+- **The panel round (D-238 to D-243).** Three rounds, seven lenses, in
+  `PANEL_REVIEW.md`; fixes and what is left in `PROGRESS.md`. Six of seven
+  lenses finished at 8+, Donegan at 7. The Scorecard had been dropping three
+  of its nine numbers behind a banner blaming `data/`; every per-hour figure
+  rendered `$0.00`; the front door and the ladder gave one household two
+  different next steps; the home room told a first-time visitor they
+  understand 0% of their life. All fixed, and `test/run.js` now fails if a
+  page writes to an id its own markup does not carry. Four panel claims
+  struck as wrong on checking; four items left to the owner.
+- **This session (D-234, D-235, D-236, D-237, D-244, D-245).** The front
+  page leads with what is open and what one answer opens; the FIRE room
+  opens with the map and four paced routes; Debt Payoff draws where the
+  payment goes and what each fall frees; every title carries Shows/Needs;
+  the path is the numbers, the dashboard, then the readings; long hints
+  fold behind an ⓘ; every score pillar says what is good, why, what to do;
+  logged pay reaches every reading (D-246); every debt says what it really
+  costs after the deduction and inflation, and the pace to pay it (D-247).
+- **End-to-end audit, walked in a browser as beginner and expert** (D-248,
+  `docs/END-TO-END-AUDIT.md`). Four seams fixed: every room says how old its
+  numbers are (2 → 66 of 92 screens); the example household says it is the
+  example (0 → 91); home opens on what you earned and when you were last
+  here, not the pitch; one progress meter, not two. `test/forms.js` had been
+  skipping silently in the container and now runs.
+- **The owner's brief, 2026-09-19:** treat it as financial planning software,
+  readable by a third grader and a FIRE person alike. Queued, in order:
+  deeper questions behind an advanced level; a typed take-home pay; the
+  car's used/new and running costs; a running-balance chart on the month;
+  the Budget month view made obvious; statements in detail, each line
+  expandable; the readings FIRE people expect; a plain-language lede pass.
 
 ## Freeze
-- ON. No new rooms, frameworks, or vocabularies until the first journey
-  below works end to end.
+- ON, and the merge is how it is honoured: every session leaves fewer screens.
 
 ## Next (top item first; one per session)
-1. Decide who owns income sources once Start Here retires (Ledger or Income).
-   OWNER DECISION NEEDED. Now the top cost to a beginner: four ways in are
-   live on the landing and none can close until this is decided (D-226 F6).
-2. Make logged income reconcile with typical income (known problem 1).
-3. First journey works end to end: about 8 questions in, a FOO step and an FI
-   date range out. Add a node test for it.
-4. Monthly close prompts a backup export.
-5. Express opens at level 1 only (94 boxes on one page today). D-226 F7.
+1. **Turn the Pages switch on.** OWNER, one click, and nothing anyone has
+   built is usable until it happens: Settings → Pages → Deploy from a branch
+   → `main` / root. Also on the owner: the domain (G1.1), a LICENSE (G3.14).
+2. **Which income figure is authoritative?** OWNER DECISION. Tested: $500 a
+   month into `ledger.income[]` moves neither gross income nor the FI date —
+   the headline numbers read only `people[].incomeSources[]` and no room
+   writes one, so income growth can be modelled and not recorded. Root of
+   ARCHITECTURE problem #1, of `engines/taxroom.js:140`, and of the one lens
+   below 8. Details in `PROGRESS.md`.
+3. **Who owns Start Here's 17 fields once it retires into the Ledger?**
+   OWNER DECISION. Blocks the last room of step 1; tangled with 2.
+4. Step 5: the Decision Room shell — one shell, five outputs on every block,
+   then goals, wedding and big purchase before any deep module.
+5. Step 6: the Back Half, once the shell has stopped moving. D-228 is its brief.
+6. The room-by-room lede pass (D-237); the first journey end to end; a
+   monthly close that prompts a backup.
 
-## Cut list (for /simplify, one per session, owner approves each)
-- Retire Start Here, Front Doors, Walk-Through into the Ledger (decided).
-- Merge candidates, not yet decided: Financial Snapshot / Savings Rate /
-  Every Ratio / The Score into the DRAFTT scorecard; FIRE Number + FIRE Lab;
-  Worth It / Worth the Hassle / Price the Dream; Designed Week + Time Buckets;
-  Budget + Estimated vs Actual into a monthly close.
-- rooms/net-worth.html is a redirect to statement.html, not in the registry.
-
-## Proposed in chat, not decided
-- Four layers: Ledger (facts), Log (actuals, one + button), Blocks, Readings.
-- Round 1 uses only answer-from-your-head rows; lookups move to round 2.
+## Panel notes not yet answered
+- The doors: five ways in where `index.html:19` says two. Tangled with 3.
+- Galloway: model the means-tested floor. Can't Pay (D-240) is the interim.
+- Donegan: no room is about building something that pays you.
+- Hormozi: thirty is still a library. D-234 and D-235 are the first answer.

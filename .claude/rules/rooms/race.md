@@ -4,9 +4,9 @@ paths:
   - "engines/race.js"
 ---
 # The Race to $100K (`race`)
-File: rooms/race.html · 157 lines
-Engines: projection, tier0, countdown, race
-Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json
+File: rooms/race.html · 159 lines
+Engines: projection, tier0, income, selfemployed, ledger, countdown, race
+Reference data: effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: netWorth (statement)
 Latest decisions:

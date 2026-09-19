@@ -9,9 +9,9 @@
   "bands": {
     "debtToIncome": {
       "direction": "lower",
-      "good": 0.28,
-      "warn": 0.36,
-      "note": "The 36% back-end rule used by mortgage underwriters."
+      "good": 0.36,
+      "warn": 0.43,
+      "note": "Every required debt payment over gross pay. 36% is the ceiling underwriters use for total debt service; 43% is the common qualified-mortgage limit. The 28% front-end rule belongs to the housing ratio, not to this one."
     },
     "housingRatio": {
       "direction": "lower",

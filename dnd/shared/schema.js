@@ -43,7 +43,7 @@
      beside the version in every footer and in every backup, so a phone
      showing an old page can be told apart from a bug. version.json carries
      the same string; `node tools/stamp-build.js` sets both to today. D-202. */
-  var BUILD = '2026-09-12 07:54Z';
+  var BUILD = '2026-09-12 14:16Z';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -132,7 +132,7 @@
     'household.history.compareTo':               { class: 'raw',        unit: 'id',      note: 'the snapshot History compares today against. Owned by History. D-101' },
     'meta.fields':                               { class: 'raw',        unit: 'map',     note: '{ fieldId: { asOf, source, confidence, room } }: when a number was last set or confirmed, how it arrived (typed, pasted, imported, screenshot, migrated, block-default, quote) and how sure the person is (sure, roughly, unsure, unknown). Schema.meta reads it; the spine writes it. D-181' },
     'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
-    'meta.visits':                               { class: 'raw',        unit: 'map',     note: '{ firstAt, lastAt, days: [YYYY-MM-DD], count }: the calendar days this app was opened. Spine.noteVisit writes it on every room open; no formula reads it and no engine sees it. Absent on anything saved before D-226, which reads back as no days recorded. D-226' },
+    'meta.visits':                               { class: 'raw',        unit: 'map',     note: '{ firstAt, lastAt, days: [YYYY-MM-DD], count }: the calendar days this app was opened. Spine.noteVisit writes it on every room open; no formula reads it and no engine sees it. Absent on anything saved before D-248, which reads back as no days recorded. D-248' },
     'household.expenses.needs.food.monthlyCents':          { class: 'raw', unit: 'cents', note: 'FAT: food a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
     'household.expenses.needs.accommodation.monthlyCents': { class: 'raw', unit: 'cents', note: 'FAT: rent, or mortgage plus tax plus insurance, one number a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
     'household.expenses.needs.transportation.monthlyCents':{ class: 'raw', unit: 'cents', note: 'FAT: getting around, a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
@@ -994,7 +994,22 @@
       opexMonthlyCents: f.opexMonthlyCents === undefined ? null : f.opexMonthlyCents,
       vacancyRate: f.vacancyRate === undefined ? null : f.vacancyRate,
       hassle: f.hassle === undefined ? null : f.hassle,
-      prospects: f.prospects === undefined ? null : f.prospects
+      prospects: f.prospects === undefined ? null : f.prospects,
+      /* The terms of the deal, for a place being weighed rather than one
+         already owned (D-227). A record written before this has them all
+         null and reads exactly as it did. */
+      label: typeof f.label === 'string' && f.label.trim() ? f.label.trim() : null,
+      priceCents: Money.isEntered(f.priceCents) ? f.priceCents : null,
+      downPct: Money.isEntered(f.downPct) ? f.downPct : null,
+      rate: Money.isEntered(f.rate) ? f.rate : null,
+      hoaMonthlyCents: Money.isEntered(f.hoaMonthlyCents) ? f.hoaMonthlyCents : null,
+      yourRentMonthlyCents: Money.isEntered(f.yourRentMonthlyCents) ? f.yourRentMonthlyCents : null,
+      unitRentsCents: Array.isArray(f.unitRentsCents)
+        ? f.unitRentsCents.filter(function (v) { return Money.isEntered(v); }).map(function (v) { return Math.round(v); })
+        : [],
+      yearsHeld: Money.isEntered(f.yearsHeld) ? f.yearsHeld : null,
+      marginalRate: Money.isEntered(f.marginalRate) ? f.marginalRate : null,
+      appreciationRate: Money.isEntered(f.appreciationRate) ? f.appreciationRate : null
     };
   }
 
@@ -2159,9 +2174,9 @@
            would have had without the cap, so a long-running household still
            reads back a true total. Written by Spine.noteVisit on every room
            open, never by a formula, and skipped by the command log so
-           looking at a screen is not an undoable change. D-226.
+           looking at a screen is not an undoable change. D-248.
 
-           COMPATIBILITY: absent on everything saved before D-226, which
+           COMPATIBILITY: absent on everything saved before D-248, which
            reads back as { count: 0, days: [] } — "no days recorded yet",
            never "never used". visitedRooms (the undated id list) is left
            exactly as it was. */
@@ -2571,13 +2586,54 @@
       effectiveRate: rate.value, referenceVersion: rate.referenceVersion, precision: rate.precision, grossAnnualIncomeCents: gross.value
     });
   }
+  /* The income log, reached lazily the way the reference module is: the
+     engine depends on this file, so this file cannot depend on it at load. */
+  function ledgerModule() {
+    if (typeof module === 'object' && module.exports) { try { return require('../engines/ledger.js'); } catch (e) { return null; } }
+    var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
+    return g && g.SLAF && g.SLAF.Ledger ? g.SLAF.Ledger : null;
+  }
+  /** What the logged pay actually nets a month (D-246): the recurring
+   *  entries in the income log, this month, gross less tax, the way the
+   *  Income room shows them. Incomplete when nothing recurring is logged,
+   *  when an entry cannot be netted, or when the engine is not loaded, so
+   *  the estimate stands in and says so. One-time entries (a gift, a
+   *  bonus) never count: they are not what next month brings. */
+  function loggedTakeHomeMonthlyCents(household, tables, monthId) {
+    var L = ledgerModule();
+    if (!L || typeof L.month !== 'function') return Money.incomplete('The income log is not loaded on this page.', ['ledgerIncome']);
+    if (!L.hasRecurring(household)) return Money.incomplete('No recurring pay is logged yet.', ['ledgerIncome']);
+    var m = L.month(household, tables, monthId);
+    if (!Money.isOk(m)) return m;
+    var rows = (m.rows || []).filter(function (r) { return r.entry && r.entry.frequency !== 'once'; });
+    if (!rows.length) return Money.incomplete('No recurring pay lands this month.', ['ledgerIncome']);
+    if (rows.some(function (r) { return r.netCents === null; })) return Money.incomplete('A logged entry could not be netted yet.', ['ledgerIncome']);
+    var takeHome = rows.reduce(function (t, r) { return t + r.takeHomeCents; }, 0);
+    var gross = rows.reduce(function (t, r) { return t + r.grossCents; }, 0);
+    return Money.ok(takeHome, { grossCents: gross, taxCents: gross - takeHome, month: m.month, count: rows.length });
+  }
   function takeHomeAnnualCents(household, tables) {
+    /* Logged pay beats the estimate (D-246): when the income log holds the
+       recurring paychecks, this month's net is what the household actually
+       keeps, and every reading downstream should say so. */
+    var logged = loggedTakeHomeMonthlyCents(household, tables);
+    if (Money.isOk(logged)) {
+      /* The logged gross is the base, never Start Here's salary: a net
+         read off one and a gross read off the other is a made-up tax rate. */
+      var g = logged.grossCents * 12;
+      var net = logged.value * 12;
+      var taxCents = Math.max(0, g - net);
+      return Money.ok(net, {
+        source: 'logged', loggedMonthlyCents: logged.value, loggedMonth: logged.month,
+        grossAnnualIncomeCents: g, estimatedTaxCents: taxCents, effectiveRate: g > 0 ? taxCents / g : 0, referenceVersion: null
+      });
+    }
     var gross = grossAnnualIncomeCents(household);
     if (!Money.isOk(gross)) return gross;
     var tax = estimatedAnnualTaxCents(household, tables);
     if (!Money.isOk(tax)) return tax;
     return Money.ok(gross.value - tax.value, {
-      grossAnnualIncomeCents: gross.value, estimatedTaxCents: tax.value, effectiveRate: tax.effectiveRate, referenceVersion: tax.referenceVersion
+      source: 'estimate', grossAnnualIncomeCents: gross.value, estimatedTaxCents: tax.value, effectiveRate: tax.effectiveRate, referenceVersion: tax.referenceVersion
     });
   }
   function takeHomeMonthlyCents(household, tables) {
@@ -2904,7 +2960,7 @@
     var v = m[key];
     return v && typeof v === 'object' ? { at: v.at || null, expectedBy: v.expectedBy || null } : null;
   }
-  /** The visit record (D-226). Absent, malformed or legacy -> empty, never
+  /** The visit record (D-248). Absent, malformed or legacy -> empty, never
       invented: a household with no record has not been shown to be unused. */
   function createVisits(v) {
     var o = v && typeof v === 'object' ? v : {};
@@ -3131,6 +3187,7 @@
     estimatedAnnualTaxCents: estimatedAnnualTaxCents,
     takeHomeAnnualCents: takeHomeAnnualCents,
     takeHomeMonthlyCents: takeHomeMonthlyCents,
+    loggedTakeHomeMonthlyCents: loggedTakeHomeMonthlyCents,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
     FAT_NEEDS: FAT_NEEDS,

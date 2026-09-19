@@ -5,9 +5,9 @@ paths:
   - "engines/enough.js"
 ---
 # Enough (`enough`)
-File: rooms/enough.html · 278 lines
-Engines: projection, tier0, cashflow, fulfillment, hourly, enough
-Reference data: expense_categories.json
+File: rooms/enough.html · 280 lines
+Engines: projection, tier0, income, selfemployed, ledger, cashflow, fulfillment, hourly, enough
+Reference data: effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: enoughMonthly
 Reads from other owners: monthlyExpenses (expenses)
 Latest decisions:

@@ -5,7 +5,7 @@
        getProfile()            -> the household object
        updateProfile(patch)    -> merge a partial household, notify listeners
        onChange(fn)            -> subscribe; returns an unsubscribe function
-       registerRoom(id)        -> mark a room visited; notes the day (D-226)
+       registerRoom(id)        -> mark a room visited; notes the day (D-248)
        getVisitedRooms()       -> array of room ids
        noteVisit()             -> record today as a day this was opened
        visitStats()            -> { days, first, last, lastDays, streak }
@@ -1439,7 +1439,7 @@
     return getVisitedRooms();
   }
 
-  /* ---- Example numbers, and saying so (D-226) ----------------------------
+  /* ---- Example numbers, and saying so (D-248) ----------------------------
      "See it with example numbers" writes Robin Sparks's whole household
      into the spine. shared/demo-persona.js has always set meta.isDemo on
      the object it builds, but every caller copied the parts it wanted and
@@ -1468,7 +1468,7 @@
     return (h.meta.visitedRooms || []).slice();
   }
 
-  /* ---- Deliberate use (D-226) -------------------------------------------
+  /* ---- Deliberate use (D-248) -------------------------------------------
      One calendar day per entry, not one per page view: the question a
      person actually has is "have I kept this up?", and ten rooms opened in
      one sitting is one sitting. The day is the LOCAL day, because that is
@@ -1510,7 +1510,7 @@
    *   lastDays  whole days since the previous visit, null on the first
    *   streak    consecutive days ending today, 1 on a single day
    * Null-ish rather than zero when there is no record: a household saved
-   * before D-226 has an unknown history, not an empty one.
+   * before D-248 has an unknown history, not an empty one.
    */
   function visitStats(now) {
     var h = load();

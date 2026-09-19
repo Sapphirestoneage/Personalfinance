@@ -55,13 +55,25 @@
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt', 'dob', 'filingStatus'],
       order: 4,
-      title: 'Financial Snapshot',
-      blurb: 'The payoff: nine numbers read off everything you\u2019ve entered. Net worth, savings rate, runway, FIRE number, and which rung you\u2019re on.',
+      title: 'The Scorecard',
+      blurb: 'Everything you have entered, read back six ways: one score, the nine numbers, the savings rate, every ratio, five quick sums, and where you think you rank. Nothing here asks for a new figure.',
       href: 'rooms/financial-snapshot.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
       daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: [] },
       subsections: [
+        { id: 'view-the-score',       label: 'The score' },
+        { id: 'view-the-nine',        label: 'The nine numbers' },
+        { id: 'view-savings-rate',    label: 'Savings rate' },
+        { id: 'view-every-ratio',     label: 'Every ratio' },
+        { id: 'view-quick-math',      label: 'Quick math' },
+        { id: 'view-where-you-rank',  label: 'Where you rank' },
+        { id: 'out-score',            label: 'Everything, at once' },
+        { id: 'out-pillars',          label: 'What the score is made of' },
+        { id: 'out-rate',             label: 'The savings rate' },
+        { id: 'out-wealth',           label: 'The wealth ratios' },
+        { id: 'habit',                label: 'A habit, compounded' },
+        { id: 'guess',                label: 'Your guess' },
         { id: 'draftt',               label: 'DRAFTT' },
         { id: 'lenses',               label: 'Lenses' },
         { id: 'inputs',               label: 'Your numbers' },
@@ -84,7 +96,7 @@
       group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources'],
       kind: 'about-you',
       needs: [],
-      order: 3.2,
+      order: 1.2,
       title: 'Income',
       blurb: 'Everything coming in, logged as it lands — a paycheque, a gig, a gift, a dividend, the rent — each netted the way it is actually taxed.',
       href: 'rooms/income.html',
@@ -104,7 +116,7 @@
       group: 'numbers', subgroup: 'expenses', aliases: ['budget', 'buckets', 'estimate', 'plan the month'],
       kind: 'about-you',
       needs: [],
-      order: 3.4,
+      order: 1.6,
       title: 'Budget',
       blurb: 'Five buckets, estimated beside actual, read from what Income and Cash Flow logged \u2014 never typed here \u2014 and closed at the end of the month.',
       href: 'rooms/budget.html',
@@ -122,7 +134,7 @@
       group: 'numbers', subgroup: 'expenses', aliases: ['estimated', 'actual', 'over', 'under'],
       kind: 'read',
       needs: ['monthsClosed'],
-      order: 3.5,
+      order: 2.7,
       title: 'Estimated vs Actual',
       blurb: 'Every closed month read back: what you expected against what happened, bucket by bucket, and whether the guesses are getting better.',
       href: 'rooms/variance.html',
@@ -189,7 +201,7 @@
          limit live — the two figures the utilisation and credit-mix rows are
          made of. It writes nothing and owns nothing. */
       needs: ['totalDebt'],
-      order: 26.4,
+      order: 2.2,
       title: 'Your Credit File',
       blurb: 'What a score is made of, which parts this app can actually see, and the one that moves fastest. No score here \u2014 that comes from a file only the bureaus hold.',
       href: 'rooms/credit.html',
@@ -234,7 +246,7 @@
       group: 'numbers', subgroup: 'expenses', aliases: ['spending', 'expenses', 'rent', 'food', 'FAT', 'wants', 'month', 'typical month', 'split', 'categories'],
       kind: 'core',
       needs: ['monthlyExpenses'],
-      order: 3,
+      order: 1.4,
       title: 'Expenses',
       blurb: 'What a month costs you: four numbers, the yearly costs, and an optional split by category, measured against a budget.',
       href: 'rooms/expenses.html',
@@ -258,7 +270,7 @@
       group: 'numbers', subgroup: 'expenses', aliases: ['log', 'receipts', 'this month', 'flow', 'sankey', 'what is left'],
       kind: 'about-you',
       needs: [],
-      order: 3.1,
+      order: 1.5,
       title: 'Cash Flow',
       blurb: 'When the money moves: this month at a glance, every receipt logged on its date, and where it all flows.',
       href: 'rooms/cash-flow.html',
@@ -291,7 +303,7 @@
         { id: 'out-plan',        label: 'Debt-free in' },
         { id: 'out-strategies',  label: 'Which order' },
         { id: 'out-rewards',     label: 'Rewards vs. carrying' },
-        { id: 'out-timeline',    label: 'The order they fall' }
+        { id: 'out-timeline',    label: 'The order they fall, and what each frees' }
       ]
     },
     {
@@ -300,7 +312,7 @@
       group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'accounts', 'property', 'what you own'],
       kind: 'core',
       needs: ['cashSavings', 'investments', 'totalDebt'],
-      order: 5,
+      order: 1.8,
       title: 'The Statement',
       blurb: 'Everything you own in three portfolios, how sure you are of each, how fast you could reach it — and the one number underneath. The place to add a house or a car.',
       href: 'rooms/statement.html',
@@ -320,54 +332,12 @@
       ]
     },
     {
-      id: 'savings-rate',
-      group: 'scorecard', aliases: ['savings rate', 'how much saved'],
-      kind: 'read',
-      needs: ['grossAnnualIncome', 'monthlyExpenses'],
-      order: 6,
-      title: 'Savings Rate',
-      blurb: 'The share of your income that stays yours \u2014 both ways of counting it, and what one more point of it is worth.',
-      href: 'rooms/savings-rate.html',
-      tier: 0,
-      tags: ['income', 'cashflow'],
-      daite: { reads: ['expenses', 'income.grossAnnualCents'], writes: [] },
-      subsections: [
-        { id: 'out-rate',      label: 'Your rate' },
-        { id: 'breakdown',     label: 'Where it comes from' },
-        { id: 'out-benchmark', label: 'Against the benchmark' },
-        { id: 'what-if',       label: 'What one more point is worth' },
-        { id: 'reading',       label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'sleep-at-night',
-      group: 'matters', aliases: ['sleep', 'risk', 'coverage checkup', 'worry'],
-      kind: 'about-you',
-      needs: ['monthlyExpenses', 'cashSavings'],
-      order: 7,
-      title: 'Sleep At Night',
-      blurb: 'The amount of cash that stops the 3am arithmetic \u2014 your number, beside the one the maths produces.',
-      href: 'rooms/sleep-at-night.html',
-      tier: 1,
-      tags: ['cashflow'],
-      daite: { reads: ['assets.cashCents', 'expenses'], writes: ['plans.swan', 'you.cover'] },
-      subsections: [
-        { id: 'number',        label: 'Your number' },
-        { id: 'deductible',    label: 'Your highest deductible' },
-        { id: 'coverage',      label: 'Coverage checkup' },
-        { id: 'out-compare',   label: 'Yours vs. the maths' },
-        { id: 'out-gap',       label: 'Getting there' },
-        { id: 'milestones',    label: 'The usual milestones' },
-        { id: 'reading',       label: 'Reading from elsewhere' }
-      ]
-    },
-    {
       id: 'fire-lab',
       features: ['showNominal', 'sequenceRisk'],
       group: 'scorecard', aliases: ['lab', 'variants', 'lean', 'fat', 'coast', 'barista'],
       kind: 'read',
       needs: ['monthlyExpenses', 'investments'],
-      order: 8.5,
+      order: 4.5,
       title: 'FIRE Lab',
       blurb: 'Every FIRE calculation on one screen and drawn: the number, how far along you are, the six flavours side by side, the milestones, the path, and what a different withdrawal rate does to all of it.',
       href: 'rooms/fire-lab.html',
@@ -390,7 +360,7 @@
       group: 'scorecard', aliases: ['fire', 'financial independence', 'retire early', 'number'],
       kind: 'read',
       needs: ['monthlyExpenses', 'investments', 'dob'],
-      order: 8,
+      order: 4.4,
       title: 'FIRE Number',
       blurb: 'What you\u2019d need before work became optional \u2014 lean, standard, chubby, fat, coast or barista, from one formula.',
       href: 'rooms/fire.html',
@@ -399,6 +369,7 @@
       daite: { reads: ['assets.invested', 'expenses', 'you.dob'], writes: ['plans.targets'] },
       subsections: [
         { id: 'reading',    label: 'What this reads' },
+        { id: 'map',        label: 'The map' },
         { id: 'out-target', label: 'Your number' },
         { id: 'variants',   label: 'Six ways to ask it' },
         { id: 'targets',    label: 'Your targets' },
@@ -410,7 +381,7 @@
       group: 'numbers', subgroup: 'income', aliases: ['hourly', 'wage', 'commute', 'hours', 'ymoyl'],
       kind: 'about-you',
       needs: ['grossAnnualIncome'],
-      order: 9,
+      order: 4.9,
       title: 'Real Hourly Wage',
       blurb: 'What the job actually pays, once you count every hour it takes and everything it costs you to do it.',
       href: 'rooms/real-hourly-wage.html',
@@ -446,27 +417,6 @@
         { id: 'out-wage',  label: 'Against an hour of your life' },
         { id: 'presets',   label: 'Common ones' },
         { id: 'reading',   label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'quick-math',
-      group: 'decisions', subgroup: 'moves', aliases: ['quick', 'rule of thumb', 'car rule', 'back of envelope'],
-      kind: 'explore',
-      needs: [],
-      order: 11,
-      title: 'Quick Math',
-      blurb: 'Four small answers: is switching savings accounts worth it, what that thing costs per use, whether you can afford the car, and the rule of five.',
-      href: 'rooms/quick-math.html',
-      tier: 1,
-      tags: ['cashflow'],
-      daite: { reads: [], writes: [] },
-      subsections: [
-        { id: 'hysa',    label: 'Switching savings accounts' },
-        { id: 'peruse',  label: 'Cost per use' },
-        { id: 'car',     label: 'The 20/3/8 rule' },
-        { id: 'five',    label: 'The rule of five' },
-        { id: 'habit',   label: 'The $30k / $90k rule' },
-        { id: 'reading', label: 'Reading from elsewhere' }
       ]
     },
     {
@@ -514,7 +464,7 @@
       group: 'home', aliases: ['home', 'overview', 'tiles'],
       kind: 'read',
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
-      order: 15,
+      order: 3,
       title: 'The Dashboard',
       blurb: 'Home. Where you are, the next thing money should do, the next thing to learn, and the date it points to \u2014 every number opens the room it came from.',
       /* The front door since D-058: index.html renders the dashboard once
@@ -524,6 +474,7 @@
       tags: ['income', 'cashflow', 'debt'],
       daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents'], writes: [] },
       subsections: [
+        { id: 'up-next',      label: 'Up next' },
         { id: 'where',        label: 'Where you are' },
         { id: 'next',         label: 'The next thing money should do' },
         { id: 'learn',        label: 'The next thing to learn' },
@@ -537,24 +488,33 @@
       ]
     },
     /* The Ledger (18.4, 18.5; D-185): every number the app can hold, one
-       row each, in nine spheres. Reads everything, writes nothing until
-       18.1 moves entry here. */
+       row each, in nine spheres. Six ways in, one set of rows (D-230). */
     {
       id: 'ledger',
-      /* Under Upkeep beside Refresh until 18.1 makes it the place numbers
-         are entered (D-186): three doors side by side under Home was one of
-         the things that lost people. */
-      group: 'upkeep', aliases: ['ledger', 'the ledger', 'rows', 'spheres', 'progress'],
+      /* Home, not Upkeep, since D-230: three doors side by side under Home
+         was what lost people (D-186), and there is now one door. The First
+         Round, Express, Front Doors and the Walk-Through are its views. */
+      group: 'home', aliases: ['ledger', 'the ledger', 'rows', 'spheres', 'progress',
+                               'first round', 'five questions', 'quick start', 'begin',
+                               'express', 'whole form', 'all at once', 'everything',
+                               'front doors', 'arrangements', 'ways in',
+                               'walk-through', 'guided', 'tour',
+                               'refresh', 'stale', 'update numbers', 'confirm',
+                               'welcome back', 'been a while', 'comeback'],
       kind: 'about-you',
       utility: true,
       needs: [],
-      order: 98.2,
+      order: 0.5,
       title: 'The Ledger',
-      blurb: 'Every number the app can hold, one line each, in the order they matter: what is entered, what is rough, what is still to look up, and where each is read.',
+      blurb: 'Every number the app can hold, one line each. Six ways in and they all write the same rows: the six doors, five questions to start, the whole form at once, what has moved since last time, twenty arrangements, and the short route through.',
       href: 'rooms/ledger.html',
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ["assets","assets.allocation","assets.cashCents","assets.contributions.hsa","assets.contributions.pretax","assets.contributions.roth","assets.invested","assets.property","debt.items","debt.items[].minimumCents","debt.items[].plan","debt.none","expenses","expenses.floor","expenses.giving","expenses.insurance","expenses.log","expenses.months","expenses.needs.accommodation","expenses.needs.food","expenses.needs.transportation","expenses.shared","expenses.wants","expenses.wants.therapy","income.cadence","income.future","income.grossAnnualCents","income.ledger","income.sources[].benefit","income.sources[].employerMatch","income.variable","taxes.filingStatus","taxes.marginalRate","taxes.otherPreTax","taxes.state","taxes.withheld","taxes.zip","you.cover","you.dependents","you.dob","you.estate","you.partner","you.situation"], writes: [] },
+      daite: { reads: ["assets","assets.allocation","assets.cashCents","assets.contributions.hsa","assets.contributions.pretax","assets.contributions.roth","assets.invested","assets.property","debt.items","debt.items[].minimumCents","debt.items[].plan","debt.none","expenses","expenses.floor","expenses.giving","expenses.insurance","expenses.log","expenses.months","expenses.needs.accommodation","expenses.needs.food","expenses.needs.transportation","expenses.shared","expenses.wants","expenses.wants.therapy","income.cadence","income.future","income.grossAnnualCents","income.ledger","income.sources[].benefit","income.sources[].employerMatch","income.variable","taxes.filingStatus","taxes.marginalRate","taxes.otherPreTax","taxes.state","taxes.withheld","taxes.zip","you.cover","you.dependents","you.dob","you.estate","you.partner","you.situation"],
+               /* It owns none of these. Round 1, all at once and since last
+                  time each write through Ownership.write, which is the owner's
+                  own path — one record, never a second copy (D-230). */
+               writes: ["assets.cashCents","assets.invested","debt.items","expenses","income.grossAnnualCents","income.sources[].lastPay","taxes.zip","you.dob","you.situation"] },
       subsections: [
         { id: 'doors-home',   label: 'The six doors' },
         { id: 'door-D',       label: 'Debt' },
@@ -563,6 +523,11 @@
         { id: 'door-T',       label: 'Taxes' },
         { id: 'door-E',       label: 'Expenses' },
         { id: 'door-you',     label: 'You' },
+        { id: 'view-round1',  label: 'Round 1' },
+        { id: 'view-express', label: 'All at once' },
+        { id: 'view-since',   label: 'Since last time' },
+        { id: 'view-shelves', label: 'Arrangements' },
+        { id: 'view-route',   label: 'The route' },
         { id: 'spheres-fold', label: 'The nine spheres' },
         { id: 'backup',       label: 'Backup' }
       ]
@@ -575,7 +540,7 @@
          one owns four things. DECISIONS.md D-052. */
       kind: 'about-you',
       needs: ['grossAnnualIncome', 'filingStatus'],
-      order: 17,
+      order: 1.9,
       title: 'Where It Goes & how it\u2019s split',
       blurb: 'Roth, Traditional or taxable, how much a Solo 401(k) actually lets you put away \u2014 and the mix you are aiming for.',
       href: 'rooms/accounts.html',
@@ -607,27 +572,6 @@
         { id: 'spending',    label: 'What the money serves' },
         { id: 'out-compare', label: 'The two lists' },
         { id: 'out-unclaimed', label: 'Serving nothing you named' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'ratios',
-      group: 'scorecard', aliases: ['ratios', 'dti', 'emergency fund', 'benchmarks'],
-      kind: 'read',
-      needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
-      order: 14,
-      title: 'Every Ratio',
-      blurb: 'Thirty ratios people actually quote, computed from what you have already entered \u2014 with the two this app refuses to guess at named as such.',
-      href: 'rooms/ratios.html',
-      tier: 1,
-      tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents'], writes: [] },
-      subsections: [
-        { id: 'summary',     label: 'How many are answerable' },
-        { id: 'out-lending', label: 'What a lender looks at' },
-        { id: 'out-safety',  label: 'How much cushion' },
-        { id: 'out-wealth',  label: 'What you own' },
-        { id: 'out-blocked', label: 'What this cannot answer' },
         { id: 'reading',     label: 'Reading from elsewhere' }
       ]
     },
@@ -793,73 +737,57 @@
         { id: 'reading',     label: 'Reading from elsewhere' }
       ]
     },
-    {
-      id: 'windfall',
-      group: 'decisions', subgroup: 'moves', aliases: ['windfall', 'bonus', 'inheritance', 'lump sum'],
-      kind: 'explore',
-      needs: [],
-      order: 25,
-      title: 'The Windfall',
-      blurb: 'A bonus, an inheritance, a sale \u2014 all at once or spread out, and the exact condition under which spreading it wins.',
-      href: 'rooms/windfall.html',
-      tier: 1,
-      tags: ['income'],
-      daite: { reads: [], writes: [] },
-      subsections: [
-        { id: 'the-money',      label: 'The decision' },
-        { id: 'out-when',       label: 'When spreading it wins' },
-        { id: 'out-cost',       label: 'What the caution costs' },
-        { id: 'out-scenarios',  label: 'Suppose it did this instead' },
-        { id: 'out-windows',    label: 'How long you take' }
-      ]
-    },
+    /* The Cushion (D-232): four readings of one number. The Runway, Between
+       Jobs, The Quit Fund and Sleep At Night each answered how long you
+       could stop earning; the aliases carry all four so a search for any of
+       them lands, and the seven fields the last two owned are owned here. */
     {
       id: 'runway',
-      features: ['jobLossCushions'],
-      group: 'decisions', subgroup: 'moves', aliases: ['runway', 'months of cash', 'how long'],
-      kind: 'explore',
+      features: ['jobLossCushions', 'preMedicare', 'agingParents'],
+      group: 'decisions', subgroup: 'moves',
+      aliases: ['runway', 'months of cash', 'how long', 'cushion', 'emergency fund',
+                'unemployed', 'laid off', 'job loss', 'cobra', 'between jobs',
+                'quit fund', 'walk away', 'freedom fund',
+                'sleep at night', 'swan', 'coverage', '3am'],
+      kind: 'about-you',
       needs: ['cashSavings', 'monthlyExpenses'],
       order: 26,
-      title: 'The Runway',
-      blurb: 'The income stops and the bills don\u2019t \u2014 quitting, laid off, or starting something. How many months that is, and what would buy you more of them.',
+      title: 'The Cushion',
+      blurb: 'How long could you not earn? One number, four readings: plainly, while job hunting, by choice, and the amount that stops the 3am arithmetic.',
       href: 'rooms/runway.html',
       tier: 2,
       tags: ['income', 'cashflow'],
-      daite: { reads: ['assets.cashCents', 'expenses'], writes: [] },
+      daite: { reads: ['assets.cashCents', 'expenses', 'income.sources[].benefit', 'you.cover', 'you.dependents'],
+               writes: ['expenses.floor', 'plans.betweenJobs', 'plans.swan', 'you.cover'] },
       subsections: [
+        { id: 'view-how-long',    label: 'How long' },
+        { id: 'view-job-hunting', label: 'While job hunting' },
+        { id: 'view-by-choice',   label: 'By choice' },
+        { id: 'view-at-3am',      label: 'At 3am' },
         { id: 'the-plan',    label: 'The situation' },
         { id: 'out-runway',  label: 'How long the money lasts' },
         { id: 'out-path',    label: 'The drawdown' },
         { id: 'out-fix',     label: 'What would buy you more' },
         { id: 'out-compare', label: 'The same money, three exits' },
-        { id: 'reading',     label: 'Reading from elsewhere' }
-      ]
-    },
-    {
-      id: 'health',
-      group: 'scorecard', aliases: ['score', 'health', 'grade'],
-      kind: 'read',
-      needs: ['dob', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
-      order: 27,
-      title: 'The Score',
-      blurb: 'One number for the whole picture, weighted for the decade you\u2019re in \u2014 and every part of how it was arrived at.',
-      href: 'rooms/health.html',
-      tier: 1,
-      tags: ['income', 'cashflow', 'debt'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'expenses', 'income.grossAnnualCents', 'you.dob'], writes: [] },
-      subsections: [
-        { id: 'out-score',    label: 'Everything, at once' },
-        { id: 'out-pillars',  label: 'What it is made of' },
-        { id: 'out-headroom', label: 'Where the points are' },
-        { id: 'out-cohorts',  label: 'How much the weighting matters' },
-        { id: 'out-missing',  label: 'What is not in it' },
-        { id: 'reading',      label: 'Reading from elsewhere' }
+        { id: 'bj-number',   label: 'The day the cash runs out' },
+        { id: 'inputs',      label: 'The search and the floor' },
+        { id: 'months',      label: 'Months of freedom' },
+        { id: 'dates',       label: 'When you would have' },
+        { id: 'am-number',   label: 'Your number' },
+        { id: 'coverage',    label: 'Coverage checkup' },
+        { id: 'out-gap',     label: 'Getting there' },
+        { id: 'hl-reading',  label: 'Reading from elsewhere' }
       ]
     },
     {
       id: 'foo-ladder',
       features: ['matchVesting'],
-      group: 'scorecard', aliases: ['foo', 'order of operations', 'next dollar', 'ladder'],
+      /* One question at three amounts since D-231: the next $100, every
+         month from here, a lump sum. The aliases carry the two rooms that
+         became readings so a search for either still lands. */
+      group: 'scorecard', aliases: ['foo', 'order of operations', 'next dollar', 'ladder',
+                                    'next $100', 'next hundred', 'where does it go',
+                                    'windfall', 'bonus', 'inheritance', 'lump sum'],
       kind: 'read',
       /* Every shared figure the month-by-month timeline reads, so the
          footer and the timeline cannot disagree about what is missing.
@@ -867,18 +795,26 @@
          BRIEF §1.1 item 2. */
       needs: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses', 'cashSavings', 'employerMatch', 'dob',
               'highestDeductible', 'contributionPercent', 'rothContributed', 'hsaContributed'],
-      order: 23,
-      title: 'FOO Ladder',
-      blurb: 'Walk the nine steps of the Financial Order of Operations month by month, and watch the sapphire light up as each one lands.',
+      order: 4.2,
+      title: 'What The Next Dollar Does',
+      blurb: 'One question at three amounts: where the next $100 goes, what every month from here does as it walks the nine steps, and what to do with a lump sum all at once. The step number stands above all three.',
       href: 'rooms/foo-ladder.html',
       tier: 0,
       tags: ['cashflow', 'debt'],
       daite: { reads: ['assets.cashCents', 'assets.contributions.hsa', 'assets.contributions.pretax', 'assets.contributions.roth', 'expenses', 'income.grossAnnualCents', 'income.sources[].employerMatch', 'taxes.filingStatus', 'you.cover', 'you.dob'], writes: [] },
-      /* The FOO calculator sat at the repo root until D-058, so this href
-         is relative to map.html, which also lives at the root. A
-         single-view app with no stable section anchors yet; declaring none
-         is deliberate — see DECISIONS.md D-007. */
-      subsections: []
+      /* The ladder reading has no stable anchors of its own (D-007); the
+         other two readings do, and they are the old rooms' deep links. */
+      subsections: [
+        { id: 'view-next100',  label: 'The next $100' },
+        { id: 'view-ladder',   label: 'Every month from here' },
+        { id: 'view-windfall', label: 'A lump sum' },
+        { id: 'ranked',        label: 'What the numbers say' },
+        { id: 'the-money',     label: 'The lump-sum decision' },
+        { id: 'out-when',      label: 'When spreading it wins' },
+        { id: 'out-cost',      label: 'What the caution costs' },
+        { id: 'out-scenarios', label: 'Suppose it did this instead' },
+        { id: 'out-windows',   label: 'How long you take' }
+      ]
     },
     {
       id: 'what-if-life',
@@ -920,31 +856,6 @@
      A person who does not know which kind they are looking at cannot tell
      what is required from what is optional, which is most of why a suite
      this size feels like homework. See DECISIONS.md D-051.
-
-  /* A utility page: reached from the dashboard's staleness line and from
-     the room-to-room nav, never listed on the map's groups — it asks for
-     nothing new, it re-asks the figures that move (moves: true in
-     data/ledger-rows.json, D-209). It writes those
-     through the owner's own write path (Ownership.write), so it is not a
-     second editor of a second copy. DECISIONS.md D-057. */
-  ROOMS.push({
-    id: 'refresh',
-    group: 'upkeep', aliases: ['refresh', 'stale', 'update numbers', 'confirm'],
-    kind: 'core',
-    utility: true,
-    needs: ['cashSavings', 'investments', 'totalDebt'],
-    order: 99,   /* always last on the path (D-057), whatever rooms are added */
-    title: 'Refresh',
-    blurb: 'Only the numbers that move: balances, rates, spending, pay. Each pre-filled with what you gave last time, one tap to confirm, a line saying what changed since, and a snapshot taken so the dashboard can say what moved.',
-    href: 'rooms/refresh.html',
-    tier: 0,
-    tags: ['cashflow', 'debt'],
-    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets.cashCents', 'assets.invested', 'debt.items'] },
-    subsections: [
-      { id: 'fields', label: 'The numbers that move' },
-      { id: 'done',   label: 'Snapshot' }
-    ]
-  });
 
   /* The First Car Check (K10, D-219): 20/3/8 as a lens, the price that fits,
      the gap in FI days, new against used at the same budget. */
@@ -1016,7 +927,7 @@
     group: 'scorecard', aliases: ['statements', 'history of net worth', 'monthly statement'],
     kind: 'read',
     needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
-    order: 4.5,
+    order: 4.8,
     title: 'Your Statements',
     blurb: 'An income statement, a cash flow statement and a balance sheet — the three documents a company produces every quarter, for a household. Plus the same period written out in sentences.',
     href: 'rooms/statements.html',
@@ -1027,30 +938,6 @@
       { id: 'out-basis', label: 'What these are built from' },
       { id: 'out-doc',   label: 'The statements' },
       { id: 'out-how',   label: 'How each line is worked out' }
-    ]
-  });
-
-  /* Front Doors — the same rooms, arranged twenty different ways (D-153).
-     A utility like Refresh and Your Data: it is a way of MOVING through the
-     rooms, not a room with a number in it, so it stays off the numbered path
-     and out of D-051's four-room core cap. */
-  ROOMS.push({
-    id: 'doors',
-    group: 'upkeep', aliases: ['front doors', 'arrangements', 'ways in'],
-    kind: 'core',
-    utility: true,
-    needs: [],
-    order: 96,
-    title: 'Front Doors',
-    blurb: 'Twenty ways into the same rooms — by the question you came with, by what could go wrong, by how long it takes, by how often you would open it. The rooms never change; only the shelves.',
-    href: 'rooms/doors.html',
-    tier: 0,
-    tags: ['income', 'cashflow', 'debt'],
-    daite: { reads: [], writes: ['prefs.door'] },
-    subsections: [
-      { id: 'out-pick', label: 'Choose an arrangement' },
-      { id: 'out-door', label: 'The rooms' },
-      { id: 'out-why',  label: 'Why this one' }
     ]
   });
 
@@ -1075,53 +962,6 @@
       { id: 'advanced',  label: 'Advanced' },
       { id: 'backup',    label: 'Backup' }
     ]
-  });
-
-  /* The Walk-Through — the short, finishable route through the suite
-     (D-149). `utility: true` for the same reason Refresh is: it is a way of
-     moving through the rooms, not a room with a number in it, so it stays
-     off the numbered path and out of the four-room core cap (D-051). */
-  ROOMS.push({
-    id: 'walk',
-    group: 'upkeep', aliases: ['walk-through', 'guided', 'tour'],
-    kind: 'core',
-    utility: true,
-    needs: [],
-    order: 97,   /* ahead of Your Data (98) and Refresh (99), both utilities */
-    title: 'The Walk-Through',
-    blurb: 'The short route through this app: five sets of steps, only the ones that are for you, with somewhere to say when each is done.',
-    href: 'rooms/walk.html',
-    tier: 0,
-    tags: ['income', 'cashflow', 'debt'],
-    daite: { reads: [], writes: ['progress.walk'] },
-    subsections: [
-      { id: 'out-top',    label: 'Where you are' },
-      { id: 'out-stages', label: 'The five sets' }
-    ]
-  });
-
-  /* Between Jobs — the tranche rooms on the template (D-098). */
-  ROOMS.push({
-    id: 'between-jobs',
-    features: ['preMedicare', 'jobLossCushions'],
-    group: 'decisions', subgroup: 'work', aliases: ['unemployed', 'laid off', 'job loss', 'runway', 'cobra'], appliesWhen: 'situation != retired',
-    kind: 'about-you',
-    needs: ['unemployment', 'monthlyExpenses', 'cashSavings'],
-    order: 31,
-    title: 'Between Jobs',
-    blurb: 'The runway against the search: the day the cash runs out, with the benefit and severance counted, and the floor you could drop to.',
-    href: 'rooms/between-jobs.html',
-    tier: 2,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'expenses', 'income.sources[].benefit'], writes: ['expenses.floor', 'plans.betweenJobs'] },
-      subsections: [
-        { id: 'number',      label: 'The day the cash runs out' },
-        { id: 'chart',       label: 'Cash, month by month' },
-        { id: 'inputs',      label: 'The search and the floor' },
-        { id: 'amounts',     label: 'Through the lens' },
-        { id: 'assumptions', label: 'Assumptions' },
-        { id: 'reading',     label: 'What this reads' }
-      ]
   });
 
   /* Protection — the tranche rooms on the template (D-098). */
@@ -1198,24 +1038,6 @@
     ]
   });
 
-  /* The Quit Fund (K7, D-217): months of freedom on money that costs
-     nothing to reach, with cover counted, and the dates to 3, 6 and 12. */
-  ROOMS.push({
-    id: 'quit-fund',
-    group: 'decisions', subgroup: 'work', aliases: ['quit', 'quit fund', 'freedom fund', 'f-you money', 'walk away', 'laid off'],
-    appliesWhen: 'situation != retired',
-    kind: 'read',
-    needs: ['cashSavings', 'monthlyExpenses'],
-    order: 31.5,
-    title: 'The Quit Fund',
-    blurb: 'How many months you could walk away for, on money that costs nothing to reach, with the floor month and health cover counted; when you would have three, six and twelve; and what changes if you are laid off instead.',
-    href: 'rooms/quit-fund.html',
-    tier: 2,
-    tags: ['cashflow', 'income'],
-    daite: { reads: ['assets.cashCents', 'assets', 'expenses', 'expenses.floor', 'income.grossAnnualCents', 'taxes.state', 'you.dob'], writes: [] },
-    subsections: [{ id: 'months', label: 'Months of freedom' }, { id: 'dates', label: 'When you would have' }, { id: 'parts', label: 'What it is made of' }]
-  });
-
   /* Micro-Retirement Planner (K5, D-219): a planned break of 1 to 12 months,
      what it costs and what it buys on one screen. */
   ROOMS.push({
@@ -1273,7 +1095,7 @@
     group: 'numbers', subgroup: 'taxes', aliases: ['taxes', 'bracket', 'marginal', 'effective', 'refund', 'withholding'],
     kind: 'about-you',
     needs: ['grossAnnualIncome', 'filingStatus', 'state'],
-    order: 34,
+    order: 2.4,
     title: 'Tax',
     blurb: 'Federal, state and payroll tax on your income: the effective rate, the marginal bracket and the room left in it, and whether a refund or a bill is coming.',
     href: 'rooms/tax.html',
@@ -1444,6 +1266,33 @@
       ]
   });
 
+  /* The Deal — Tier 17 (D-227). Housing Decision asks whether to buy where
+     you live; this asks whether a building pays, and what living in one
+     unit of it would cost. Both sit on engines/ownership.js. */
+  ROOMS.push({
+    id: 'property',
+    group: 'decisions', subgroup: 'home',
+    aliases: ['rental', 'landlord', 'house hack', 'investment property', 'deal', 'cap rate', 'real estate'],
+    kind: 'about-you',
+    needs: [],
+    order: 40.7,
+    title: 'The Deal',
+    blurb: 'A property priced the way it actually runs: the reserves a listing leaves out, the four ways it pays, what breaks it, and what living in one unit would cost against renting.',
+    href: 'rooms/property.html',
+    tier: 2,
+    tags: ['cashflow'],
+    daite: { reads: [], writes: ['assets.property'] },
+    subsections: [
+      { id: 'deal',        label: 'The deal' },
+      { id: 'month',       label: 'What it costs a month' },
+      { id: 'letting',     label: 'Let it out' },
+      { id: 'return',      label: 'The four ways it pays' },
+      { id: 'stress',      label: 'What breaks it' },
+      { id: 'hack',        label: 'Live in one, let the rest' },
+      { id: 'assumptions', label: 'Where the rates come from' }
+    ]
+  });
+
   /* Housing Decision — the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'housing',
@@ -1514,7 +1363,7 @@
     group: 'numbers', subgroup: 'income', aliases: ['freelance', 'commission', 'irregular', 'rolling average'],
     kind: 'about-you',
     needs: ['grossAnnualIncome', 'monthlyExpenses'],
-    order: 42,
+    order: 2.5,
     title: 'Variable Income',
     blurb: 'A low month, a high month, an average: the salary to pay yourself, the buffer that smooths the gap, and how many low months it covers.',
     href: 'rooms/variable-income.html',
@@ -1703,7 +1552,7 @@
     group: 'numbers', subgroup: 'debt', aliases: ['college', 'loan forgiveness', 'idr'],
     kind: 'about-you',
     needs: ['totalDebt', 'grossAnnualIncome'],
-    order: 49,
+    order: 2.1,
     title: 'Student Loan Decision',
     blurb: 'Standard, income-driven, or aggressive: what each pays a month, when each clears, and what each costs in interest — for the loans you listed.',
     href: 'rooms/student-loans.html',
@@ -1713,6 +1562,7 @@
       subsections: [
         { id: 'number',      label: 'The plan that clears them' },
         { id: 'chart',       label: 'Three plans, side by side' },
+        { id: 'real-cost',   label: 'What the loans really cost' },
         { id: 'inputs',      label: 'The plan' },
         { id: 'amounts',     label: 'Through the lens' },
         { id: 'assumptions', label: 'Assumptions' },
@@ -1727,7 +1577,7 @@
     group: 'numbers', subgroup: 'expenses', aliases: ['calendar', 'bills', 'due', 'pay later', 'dates'],
     kind: 'about-you',
     needs: ['monthlyExpenses', 'cashSavings'],
-    order: 50,
+    order: 2.6,
     title: 'Money Calendar & Pay-Later',
     blurb: 'Paydays and bills across a month, pay-later instalments counted: the low point, and the day it lands.',
     href: 'rooms/calendar.html',
@@ -1833,78 +1683,6 @@
     ]
   });
 
-  /* The First Round (D-206): five questions, one a screen, then one insight
-     and one door. Group home, ahead of Start Here, which stays the long form. */
-  ROOMS.push({
-    id: 'first-round',
-    group: 'home', aliases: ['first round', 'five questions', 'quick start', 'begin'],
-    kind: 'core',
-    utility: true,
-    needs: [],
-    order: 0.5,
-    title: 'The First Round',
-    blurb: 'Five questions, under a minute, then one thing the numbers say and one door to open. Everything else fills in as you go.',
-    href: 'rooms/first-round.html',
-    tier: 0,
-    tags: ['income', 'cashflow'],
-    daite: { reads: ['you.dob', 'taxes.zip', 'you.situation', 'income.grossAnnualCents', 'income.sources[].lastPay', 'assets.cashCents'],
-             writes: ['you.dob', 'taxes.zip', 'you.situation', 'income.grossAnnualCents', 'income.sources[].lastPay', 'assets.cashCents'] },
-    subsections: [
-      { id: 'q-age',       label: 'Your age' },
-      { id: 'q-zip',       label: 'ZIP' },
-      { id: 'q-situation', label: 'Situation' },
-      { id: 'q-pay',       label: 'Pay' },
-      { id: 'q-cash',      label: 'Cash on hand' },
-      { id: 'insight',     label: 'The first thing the numbers say' }
-    ]
-  });
-
-  /* Express (D-208): the whole form at once, a second VIEW of the same rows,
-     grouped by door and level, every field through its owner. */
-  ROOMS.push({
-    id: 'express',
-    group: 'home', aliases: ['express', 'whole form', 'all at once', 'the long form', 'everything'],
-    kind: 'core',
-    utility: true,
-    needs: [],
-    order: 0.6,
-    title: 'Express',
-    blurb: 'Every question on one page, grouped by door and level. For anyone who already knows their numbers. The same rows the doors hold, the same owners.',
-    href: 'rooms/express.html',
-    tier: 0,
-    tags: ['income', 'cashflow', 'debt'],
-    daite: { reads: [], writes: [] },
-    subsections: [
-      { id: 'x-D',   label: 'Debt' },
-      { id: 'x-A',   label: 'Assets' },
-      { id: 'x-I',   label: 'Income' },
-      { id: 'x-T',   label: 'Taxes' },
-      { id: 'x-E',   label: 'Expenses' },
-      { id: 'x-you', label: 'You' }
-    ]
-  });
-
-  /* Your Next $100 (H3, D-211): every place the next hundred could go on
-     one scale, the return it earns or saves; guaranteed and expected kept
-     apart; the order of operations a note on each line. Reads only. */
-  ROOMS.push({
-    id: 'next-hundred',
-    group: 'scorecard', aliases: ['next 100', 'next hundred', 'next dollar', 'where to put it', 'ranked'],
-    kind: 'read',
-    needs: ['grossAnnualIncome'],
-    order: 23.5,
-    title: 'Your Next $100',
-    blurb: 'Every place the next hundred dollars could go, ranked on one scale: the return it earns or saves. Guaranteed and expected, never blended.',
-    href: 'rooms/next-hundred.html',
-    tier: 0,
-    tags: ['debt', 'cashflow'],
-    daite: { reads: ['debt.items', 'income.grossAnnualCents', 'income.sources[].employerMatch', 'assets.contributions.pretax'], writes: [] },
-    subsections: [
-      { id: 'ranked', label: 'The list' },
-      { id: 'how',    label: 'How the scale works' }
-    ]
-  });
-
   /* Reachable Money (H4, D-212): an amount and a by-when; the order to pull
      it and what each dollar costs on the way out. Reads only. */
   ROOMS.push({
@@ -1969,7 +1747,7 @@
     group: 'scorecard', aliases: ['coast', 'coast date', 'stop saving', 'coast fire date'],
     kind: 'read',
     needs: ['dob', 'investments', 'monthlyExpenses'],
-    order: 25.5,
+    order: 4.6,
     title: 'Your Coast Date',
     blurb: 'The earliest date you could stop saving for retirement and still reach the FI number by your target age, in today’s dollars; and what today’s money grows to with nothing more added.',
     href: 'rooms/coast-date.html',
@@ -1985,7 +1763,7 @@
     group: 'scorecard', aliases: ['race', '100k', 'first 100k', 'rungs', 'million'],
     kind: 'read',
     needs: ['cashSavings', 'monthlyExpenses', 'grossAnnualIncome'],
-    order: 25.9,
+    order: 4.7,
     title: 'The Race to $100K',
     blurb: 'The date your net worth reaches its next $100,000 rung, then every rung to $1 million, with what came from saving and what came from growth at each. The first $100K is the hardest; this shows why.',
     href: 'rooms/race.html',
@@ -1994,44 +1772,6 @@
     daite: { reads: ['assets', 'assets.cashCents', 'debt.items', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus'], writes: [] },
     subsections: [{ id: 'next', label: 'The next rung' }, { id: 'rungs', label: 'Every rung to $1 million' }]
   });
-  /* Where Do You Think You Rank? (I3, D-213): the guess before the survey. */
-  ROOMS.push({
-    id: 'rank-guess',
-    group: 'scorecard', aliases: ['rank', 'guess', 'percentile', 'dysmorphia', 'where do I rank'],
-    kind: 'explore',
-    needs: ['dob'],
-    order: 25.7,
-    title: 'Where Do You Think You Rank?',
-    blurb: 'Guess where your net worth sits for your age on a slider, then see the guess beside the survey band. Bands, never ranks; no shame words.',
-    href: 'rooms/rank-guess.html',
-    tier: 1,
-    tags: ['cashflow'],
-    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'you.dob'], writes: [] },
-    subsections: [{ id: 'guess', label: 'Your guess' }, { id: 'reveal', label: 'Guess beside survey' }]
-  });
-
-  /* The Comeback (J2, D-214): the first screen after 21 days away. Only the
-     moving rows, oldest first, then the earned-vs-learned strip. Not on the
-     map's groups on its own account: the front door sends people here. */
-  ROOMS.push({
-    id: 'comeback',
-    group: 'upkeep', aliases: ['comeback', 'welcome back', 'been a while'],
-    kind: 'core',
-    utility: true,
-    needs: ['cashSavings', 'investments', 'totalDebt'],
-    order: 98.9,
-    title: 'Welcome Back',
-    blurb: 'Back after a while? Here is what changed. About 2 minutes: only the numbers that move, oldest first, then what moved and what you learned.',
-    href: 'rooms/comeback.html',
-    tier: 0,
-    tags: ['cashflow', 'debt'],
-    daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses'], writes: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses'] },
-    subsections: [
-      { id: 'rows-card', label: 'The numbers that move' },
-      { id: 'since',     label: 'Since last time' }
-    ]
-  });
-
   /* The Subscription Finder (J5, D-215): repeating charges from the dated
      log, each priced a year and in hours; confirm, dismiss, or a reminder
      to cancel. Owns household.subscriptions. */
@@ -2083,11 +1823,11 @@
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
     numbers: ['debt-payoff', 'student-loans', 'cant-pay', 'credit', 'statement', 'accounts', 'rollover', 'income', 'variable-income', 'real-hourly-wage', 'tax', 'budget', 'expenses', 'cash-flow', 'variance', 'calendar'],
-    scorecard: ['financial-snapshot', 'savings-rate', 'ratios', 'health', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
-    decisions: ['career-move', 'self-employed', 'side-hustle', 'between-jobs', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'windfall', 'runway', 'decumulation', 'quick-math', 'adventure', 'what-if-life', 'timeline'],
-    matters: ['sleep-at-night', 'values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
+    scorecard: ['financial-snapshot', 'foo-ladder', 'fire', 'fire-lab', 'statements'],
+    decisions: ['career-move', 'self-employed', 'side-hustle', 'credential', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'kids', 'protection', 'estate', 'giving', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
+    matters: ['values', 'goals', 'enough', 'fulfillment', 'rerank', 'dreamline', 'week', 'buckets', 'reversibility', 'unlearning'],
     levelup: ['skill-tree', 'stacker', 'exercises'],
-    upkeep: ['data', 'refresh', 'history', 'settings', 'get-help', 'doors', 'walk']
+    upkeep: ['data', 'ledger', 'history', 'settings', 'get-help']
   };
   function groups() { return GROUPS.slice(); }
   function groupById(id) { return GROUPS.filter(function (g) { return g.id === id; })[0] || null; }
@@ -2141,9 +1881,10 @@
     'side-hustle': ['career'],
     'real-hourly-wage': ['hours'],
     hassle: ['hours'],
-    'savings-rate': ['savingsRate'],
     fire: ['savingsRate'],
-    'between-jobs': ['unemployment'],
+    /* Between Jobs became the Cushion's while-job-hunting reading (D-232),
+       which anyone may open: it reads as if the pay stopped today and says
+       so. The Cushion itself requires nothing. */
     protection: ['protection'],
     decumulation: ['decumulation'],
     tax: ['income'],

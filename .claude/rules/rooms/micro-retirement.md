@@ -4,9 +4,9 @@ paths:
   - "engines/microretirement.js"
 ---
 # Micro-Retirement Planner (`micro-retirement`)
-File: rooms/micro-retirement.html · 168 lines
-Engines: projection, tier0, hourly, countdown, microretirement
-Reference data: blocks/sabbatical.json, career_momentum.json, cobra_aca_2024.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, +3 more
+File: rooms/micro-retirement.html · 170 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly, countdown, microretirement
+Reference data: blocks/sabbatical.json, career_momentum.json, cobra_aca_2024.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, +4 more
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:

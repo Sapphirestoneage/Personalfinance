@@ -4,7 +4,7 @@
 browser on 2026-09-12, every step timestamped, with the console recording.
 The harness and its output are in the session scratchpad; the findings below
 name the screen, the number and the line of code. Facts read off the code and
-the walk on 2026-09-12 (D-001 … D-226).*
+the walk on 2026-09-12 (D-001 … D-248).*
 
 The ask this audit was written against: **be the ski lift, the lodge and the
 mountain — for the beginner on the green run and the expert on the black

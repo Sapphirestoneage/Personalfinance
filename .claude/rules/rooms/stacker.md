@@ -4,9 +4,9 @@ paths:
   - "engines/ss.js"
 ---
 # The Skill Stacker (`stacker`)
-File: rooms/stacker.html · 604 lines
-Engines: projection, tier0, foo, cashflow, statement, swan, benchmarks, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, skills
-Reference data: car_costs.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, foo_rules.json, liquidity_benchmarks.json, +3 more
+File: rooms/stacker.html · 606 lines
+Engines: projection, tier0, income, ledger, foo, cashflow, statement, swan, benchmarks, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, skills
+Reference data: car_costs.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, foo_rules.json, irs_limits_2026.json, +5 more
 Owns: practiceLedger
 Reads from other owners: grossAnnualIncome (start), capturingFullMatch (start), rerankCut (rerank), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:

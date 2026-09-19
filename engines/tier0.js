@@ -117,9 +117,12 @@
 
     var annualExpenses = monthlyExpenses.value * MONTHS_PER_YEAR;
     var savedExcludingMatch = takeHome.value - annualExpenses;
+    /* The rate's base is the gross the take-home came from (D-246): the
+       logged pay's own gross when the log drives it, Start Here's otherwise. */
+    var grossBase = takeHome.source === 'logged' && Money.isEntered(takeHome.grossAnnualIncomeCents) ? takeHome.grossAnnualIncomeCents : gross.value;
 
     var shared = {
-      grossAnnualIncomeCents: gross.value,
+      grossAnnualIncomeCents: grossBase,
       takeHomeAnnualCents: takeHome.value,
       annualExpensesCents: annualExpenses,
       estimatedTaxCents: takeHome.estimatedTaxCents,
@@ -128,7 +131,7 @@
       expenseSource: monthlyExpenses.source
     };
 
-    var excluding = Money.safeDivide(savedExcludingMatch, gross.value, {
+    var excluding = Money.safeDivide(savedExcludingMatch, grossBase, {
       denominatorName: 'grossAnnualIncome',
       zeroReason: 'A gross income of zero can’t produce a savings rate.'
     });
@@ -145,7 +148,7 @@
         ['employerMatch']);
     } else {
       var savedIncludingMatch = savedExcludingMatch + match.value;
-      including = Money.safeDivide(savedIncludingMatch, gross.value, {
+      including = Money.safeDivide(savedIncludingMatch, grossBase, {
         denominatorName: 'grossAnnualIncome',
         zeroReason: 'A gross income of zero can’t produce a savings rate.'
       });
@@ -372,9 +375,12 @@
     return Money.ok(actual.value, {
       targetMultiple: target.value,
       onTrack: actual.value >= target.value,
-      shortfallCents: actual.value >= target.value
-        ? 0
-        : Math.round((target.value - actual.value) * gross.value),
+      /* Signed, so "ahead" has a figure of its own: negative is ahead of the
+         milestone, positive is short of it. It used to collapse to 0 when on
+         track, and the Snapshot printed that zero under the label "Ahead by",
+         so everyone ahead of their age milestone was told they were ahead by
+         nothing. The room already takes the absolute value for display. */
+      shortfallCents: Math.round((target.value - actual.value) * gross.value),
       age: age,
       referenceVersion: target.referenceVersion
     });

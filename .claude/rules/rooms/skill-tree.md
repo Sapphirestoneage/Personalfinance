@@ -4,9 +4,9 @@ paths:
   - "engines/skilltree.js"
 ---
 # The Skill Tree (`skill-tree`)
-File: rooms/skill-tree.html · 611 lines
-Engines: projection, tier0, foo, skilltree
-Reference data: exercises.json, foo_rules.json, skill_links.json, skill_tree.json
+File: rooms/skill-tree.html · 613 lines
+Engines: projection, tier0, income, selfemployed, ledger, foo, skilltree
+Reference data: effective_tax_rates_2026.json, exercises.json, foo_rules.json, irs_limits_2026.json, se_tax_2026.json, skill_links.json, +1 more
 Owns: skillsDone
 Reads from other owners: grossAnnualIncome (start), monthsClosed (budget), monthlyExpenses (expenses), exercisesDone (exercises), practiceLedger (stacker)
 Latest decisions:

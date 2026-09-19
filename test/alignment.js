@@ -31,8 +31,8 @@ const TARGETS = [
   ['/rooms/debt-payoff.html', '.fold-body .debt-meta'],
   ['/rooms/fire.html', '.params'],
   ['/rooms/real-hourly-wage.html', '.grid-2'],
-  ['/rooms/quick-math.html', '.grid-2'],
-  ['/rooms/quick-math.html', '.grid-3'],
+  ['/rooms/financial-snapshot.html#quick-math', '.grid-2'],
+  ['/rooms/financial-snapshot.html#quick-math', '.grid-3'],
   ['/rooms/self-employed.html', '.grid-2'],
   ['/rooms/accounts.html', '.grid-2'],
   ['/rooms/hassle.html', '.grid-2'],
@@ -51,11 +51,11 @@ const TARGETS = [
    so the control-alignment pass skips them entirely, and a short card beside
    a tall one is exactly the unevenness this file exists to prevent. */
 const EQUAL_HEIGHT = [
-  ['/rooms/savings-rate.html', '.pair'],
+  ['/rooms/financial-snapshot.html#savings-rate', '.pair'],
   ['/', '.instruments'],
   ['/rooms/hassle.html', '.rates'],
-  ['/rooms/sleep-at-night.html', '.pair'],
-  ['/rooms/sleep-at-night.html', '.cover-grid'],
+  ['/rooms/runway.html#at-3am', '.pair'],
+  ['/rooms/runway.html#at-3am', '.cover-grid'],
   ['/rooms/financial-snapshot.html', '.three'],
   ['/rooms/rerank.html', '.rate-row'],
   ['/rooms/rerank.html', '.pair'],
@@ -65,7 +65,7 @@ const EQUAL_HEIGHT = [
   ['/rooms/stacker.html', '.three'],
   ['/rooms/values.html', '.two'],
   ['/rooms/fulfillment.html', '.quads'],
-  ['/rooms/sleep-at-night.html', '.basis']
+  ['/rooms/runway.html#at-3am', '.basis']
 ];
 (async () => {
   if (!chromium) {

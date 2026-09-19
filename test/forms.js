@@ -28,7 +28,7 @@
 /* Playwright may be installed here or globally (the dev container puts it in
    /opt/node22/lib/node_modules). Look in both rather than printing SKIPPED
    next to a browser that is sitting right there — a check that passes by not
-   running is not a check. D-226. */
+   running is not a check. D-248. */
 let chromium = null, devices = null;
 for (const where of ['playwright', '/opt/node22/lib/node_modules/playwright']) {
   try {
@@ -267,7 +267,7 @@ const CASES = [
     /* The Refresh page: every box opens holding the current figure, and
        typing over it must replace it, not append to it — a phone selects
        nothing on tap, so the case types with clearFirst. */
-    room: '/rooms/refresh.html',
+    room: '/rooms/ledger.html#since-last-time',
     container: '#fields',
     seed: 'demo',
     fields: [
@@ -289,7 +289,7 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/sleep-at-night.html',
+    room: '/rooms/runway.html#at-3am',
     container: '#coverage',
     seed: 'demo',
     fields: [
@@ -553,7 +553,7 @@ const CASES = [
   },
   {
     /* Between Jobs (D-098): the two owned boxes land on person.unemployment. */
-    room: '/rooms/between-jobs.html',
+    room: '/rooms/runway.html#job-hunting',
     container: '#room-inputs',
     seed: 'demo',
     prepare: async (page) => {
@@ -641,10 +641,11 @@ const CASES = [
        place a careless rebuild would close the keyboard mid-word. The results
        under it are rewritten on every keystroke, so if the box itself were
        ever regenerated this case would catch it. D-034, D-153. */
-    room: '/rooms/doors.html',
+    room: '/rooms/ledger.html#arrangements',
     container: '#search-host',
     seed: 'demo',
     prepare: async (page) => {
+      await page.waitForSelector('[data-layout="search"]');
       await page.tap('[data-layout="search"]');
       await page.waitForTimeout(250);
       /* Stamp the node. If any keystroke rebuilt the box, the stamp goes with
@@ -652,16 +653,16 @@ const CASES = [
          D-034 property here — focus cannot be asserted after the fact,
          because the harness deliberately blurs before expect() runs so that
          every other room's focusout commit fires (see the blur below). */
-      await page.evaluate(() => { document.getElementById('q').__stamp = 'before-typing'; });
+      await page.evaluate(() => { document.getElementById('lay-q').__stamp = 'before-typing'; });
     },
     fields: [
-      { sel: '#q', type: 'rent' }
+      { sel: '#lay-q', type: 'rent' }
     ],
     expect: async (page) => {
       const r = await page.evaluate(() => ({
-        value: document.getElementById('q').value,
-        stamp: document.getElementById('q').__stamp || '(node was replaced)',
-        hits: document.querySelectorAll('.door').length,
+        value: document.getElementById('lay-q').value,
+        stamp: document.getElementById('lay-q').__stamp || '(node was replaced)',
+        hits: document.querySelectorAll('#lay-body .door').length,
         all: document.querySelectorAll('#search-host input').length,
         wrote: (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).meta.frontDoor
       }));
@@ -727,8 +728,8 @@ const CASES = [
     /* The front page. It is the most input-heavy page in the repo and it is
        hand-built vanilla — the exact place the keyboard bug would come back
        if the build-once rule slipped. */
-    room: '/rooms/foo-ladder.html',
-    container: '.wrap',
+    room: '/rooms/foo-ladder.html#every-month',
+    container: '#view-ladder .wrap',
     seed: 'demo',
     prepare: async (page) => {
       /* The deductible is a stored fact now, owned by Sleep At Night. Give
@@ -764,8 +765,11 @@ const CASES = [
       const step1 = await page.evaluate(() =>
         document.body.innerText.includes('in cash & savings covers your')
         || document.body.innerText.includes('in cash & savings.'));
+      /* Count inside the ladder reading only: the lump-sum reading next door
+         has its own "what the waiting cash earns" box, which is a different
+         question and not a second place to enter the balance (D-231). */
       const oneCashRow = await page.evaluate(() =>
-        Array.from(document.querySelectorAll('.slaf-label'))
+        Array.from(document.querySelectorAll('#view-ladder .slaf-label'))
           .filter(l => /cash/i.test(l.textContent)).length);
       return [
         ['the prepaid goal was kept', v.goal, '20000'],
@@ -837,7 +841,7 @@ const CASES = [
     /* The Windfall stores nothing — every input is page-local. So the check
        is that what you typed is still in the box after the page has
        recomputed around it, which is the failure the guard exists for. */
-    room: '/rooms/windfall.html',
+    room: '/rooms/foo-ladder.html#a-lump-sum',
     container: '#the-money',
     seed: 'demo',
     fields: [
@@ -1185,8 +1189,8 @@ const CASES = [
     /* THE FIRST ROUND (D-206): five screens, one box each, all in the markup
        from boot; script only toggles [hidden]. Typing on each screen has to
        survive the Next tap that reveals the next one. */
-    room: '/rooms/first-round.html',
-    container: 'main',
+    room: '/rooms/ledger.html#round-1',
+    container: '#view-round1',
     seed: 'empty',
     fields: [
       { sel: '#in-age', type: '27' },
@@ -1225,7 +1229,7 @@ const CASES = [
        boxes across doors, a situation tap that hides and shows rows around
        them, and adding a card block: the keyboard must stay open through
        all of it. */
-    room: '/rooms/express.html',
+    room: '/rooms/ledger.html#all-at-once',
     container: '#xform',
     seed: 'empty',
     prepare: async (page) => { await page.waitForSelector('[data-x-row="dob"]'); },
@@ -1380,6 +1384,42 @@ const CASES = [
     expect: async (page) => {
       const n = await page.evaluate(() => document.querySelectorAll('#c-parts li').length);
       return [['three parts', n, 3]];
+    }
+  },
+  {
+    /* The Deal (D-227): eleven boxes, all built once, all writing to one
+       property record. The figures below are the hand-checked ones from
+       test/run.js, so a tap that goes astray shows up as a wrong reading
+       rather than only as a lost keystroke. */
+    room: '/rooms/property.html',
+    container: '#deal',
+    seed: 'empty',
+    fields: [
+      { sel: '#in-price', type: '320000' },
+      { sel: '#in-down', type: '20' },
+      { sel: '#in-rate', type: '6.9' }
+    ],
+    expect: async (page) => {
+      await page.tap('#in-rent'); await page.waitForTimeout(200);
+      await page.keyboard.type('2400', { delay: 15 });
+      await page.evaluate(() => document.activeElement.blur());
+      await page.waitForTimeout(400);
+      const s = await page.evaluate(() => {
+        const p = (SLAF.Spine.getProfile().property || [])[0] || {};
+        return { price: p.priceCents, down: p.downPct, rate: p.rate, rent: p.rentMonthlyCents,
+          adv: document.getElementById('adv').textContent,
+          real: document.getElementById('real').textContent,
+          monthShown: !document.getElementById('month').hidden };
+      });
+      return [
+        ['the price landed as cents', s.price, 32000000],
+        ['the down payment landed as a share', s.down, 0.2],
+        ['the rate landed as a decimal', s.rate, 0.069],
+        ['the rent landed', s.rent, 240000],
+        ['the month appeared', s.monthShown, true],
+        ['the listing figure reads $714', /714/.test(s.adv), true],
+        ['and the real one reads a loss of $481', /481/.test(s.real), true]
+      ];
     }
   }
 ];

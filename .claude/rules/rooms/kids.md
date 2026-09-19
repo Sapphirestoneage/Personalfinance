@@ -4,9 +4,9 @@ paths:
   - "engines/kids.js"
 ---
 # Kids and Tuition (`kids`)
-File: rooms/kids.html · 246 lines
-Engines: projection, tier0, kids
-Reference data: child_cost.json, childcare_by_state.json
+File: rooms/kids.html · 248 lines
+Engines: projection, tier0, income, selfemployed, ledger, kids
+Reference data: child_cost.json, childcare_by_state.json, effective_tax_rates_2026.json, se_tax_2026.json
 Owns: tuitionTarget, tuitionSaved, tuitionMonthly
 Reads from other owners: monthlyExpenses (expenses)
 Latest decisions:

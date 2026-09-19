@@ -3,9 +3,9 @@ paths:
   - "rooms/rerank.html"
 ---
 # The Rerank (`rerank`)
-File: rooms/rerank.html · 619 lines
-Engines: projection, tier0, cashflow, rerank
-Reference data: common_costs.json, expense_categories.json
+File: rooms/rerank.html · 622 lines
+Engines: projection, tier0, income, selfemployed, ledger, cashflow, rerank
+Reference data: common_costs.json, effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: rerankCut
 Reads from other owners: monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
 Latest decisions:

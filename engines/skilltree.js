@@ -132,7 +132,7 @@
   var THRESHOLD_WORDS = {
     monthsClosed: { one: 'closed month in the ledger', many: 'closed months in the ledger', href: 'budget.html#close' },
     logCount: { one: 'dated expense in the log', many: 'dated expenses in the log', href: 'cash-flow.html#log' },
-    snapshots: { one: 'snapshot frozen', many: 'snapshots frozen', href: 'refresh.html#snapshot' },
+    snapshots: { one: 'snapshot frozen', many: 'snapshots frozen', href: 'ledger.html#since-last-time' },
     exercisesDone: { one: 'exercise completed', many: 'exercises completed', href: 'exercises.html' },
     debtsPaid: { one: 'debt paid off', many: 'debts paid off', href: 'debt-payoff.html#debts' }
   };
@@ -167,11 +167,11 @@
   /* An `unlocks` entry names a room or a household number this skill
      improves. Anything else is dropped rather than drawn: an entry the chip
      row cannot address became a chip reading "#" with no label pointing at
-     `ratios.html#r-undefined`, which looks like a link and is not one. */
+     `financial-snapshot.html#r-undefined`, which looks like a link and is not one. */
   function chips(skill, roomTitle) {
     return (skill.unlocks || []).map(function (u) {
       if (u.room) return { kind: 'room', id: u.room, label: roomTitle ? roomTitle(u.room) : u.room, href: u.room + '.html' };
-      if (u.number) return { kind: 'number', id: u.number, label: NUMBER_WORDS[u.number] || u.number, href: 'ratios.html#r-' + u.number };
+      if (u.number) return { kind: 'number', id: u.number, label: NUMBER_WORDS[u.number] || u.number, href: 'financial-snapshot.html#r-' + u.number };
       return null;
     }).filter(Boolean);
   }
