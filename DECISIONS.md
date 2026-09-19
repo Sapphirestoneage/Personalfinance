@@ -14021,6 +14021,37 @@ vocabulary the owner asked for by name; they are data, not rooms.
 `node tools/context/build.js --check`. The FIRE room and the flight plan
 at 390px and 1100px with a clean console, empty and with the demo.
 
+## D-236 — Debt Payoff: where the payment goes, and what each fall frees
+
+**Why.** The owner, from the phone: a sankey of the debt money, and a
+timeline of when it is over, because "the car will be paid off pretty
+quickly, and that frees up quite a lot of money, no?" It does, the engine
+already rolled the freed minimum onto the next debt, and no screen said so.
+
+**Decision.** `engines/debt.js` `simulate()` now records, per month, what
+each debt was paid and charged (`schedule[].paid`, `.interest`), every
+minimum by id, and on each payoff the minimum it frees. Two readers over
+that, nothing simulated again: `monthFlow(plan, month)`, the month as a
+flow (minimums and extra in, each debt, interest and balance paid down
+out), and `cascade(plan)`, the plan as phases between falls, what each
+debt gets a month, what the fallen one frees and where it goes: onto the
+next target while the plan pushes, back to the household once the stop
+line (D-191) has passed or nothing is left. `rooms/debt-payoff.html`'s
+"The order they fall" fold draws the flow (`Charts.sankey`), the cascade
+(`Charts.columns`, one column a phase, a last one for the month it is all
+free) above the balances, and each payoff in the list says what it frees
+and where that goes, ending with the month the whole budget is yours.
+
+**Replaces or removes.** Nothing leaves; the fold absorbs the story
+rather than a second card. The freeze allows it: no room, screen or
+field is added, and the summary line now says the one figure people want.
+
+**Stored shape.** No change. Nothing here is stored.
+
+**Verified.** `node test/run.js` (31,186 checks), `node test/forms.js`,
+`node tools/context/build.js --check`. The room at 390px with three
+example debts: the flow, the columns, the list and a clean console.
+
 
 ---
 

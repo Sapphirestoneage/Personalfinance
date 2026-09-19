@@ -384,6 +384,7 @@
 
       /* 1. Interest. */
       var interestThisMonth = 0;
+      var interestBy = {}, paidBy = {};
       live.forEach(function (d) {
         /* Not d.rate: a promotional rate expires partway through the plan,
            and using today's rate for all sixty months is how a 0% card gets
@@ -392,6 +393,7 @@
         d.balanceCents += interest;
         interestThisMonth += interest;
         perDebtInterest[d.id] += interest;
+        interestBy[d.id] = interest; paidBy[d.id] = 0;
       });
       totalInterest += interestThisMonth;
 
@@ -407,7 +409,7 @@
       var paidThisMonth = 0;
       live.forEach(function (d) {
         var pay = Math.min(d.minPaymentCents, d.balanceCents, pot);
-        d.balanceCents -= pay; pot -= pay; paidThisMonth += pay;
+        d.balanceCents -= pay; pot -= pay; paidThisMonth += pay; paidBy[d.id] += pay;
       });
 
       /* If the minimums alone cannot cover the interest, this never ends. */
@@ -426,7 +428,7 @@
         var target = ordered[i];
         if (target.balanceCents <= 0) continue;
         var extraPay = Math.min(pot, target.balanceCents);
-        target.balanceCents -= extraPay; pot -= extraPay; paidThisMonth += extraPay;
+        target.balanceCents -= extraPay; pot -= extraPay; paidThisMonth += extraPay; paidBy[target.id] += extraPay;
       }
 
       totalPaid += paidThisMonth;
@@ -435,7 +437,10 @@
         if (d.balanceCents <= 0 && !payoffs.some(function (p) { return p.debtId === d.id; })) {
           payoffs.push({
             debtId: d.id, label: d.label, month: month,
-            interestPaidCents: perDebtInterest[d.id]
+            interestPaidCents: perDebtInterest[d.id],
+            /* The minimum this payoff frees: the snowball's next push, or
+               money back once the plan stops pushing (D-236). */
+            minPaymentCents: d.minPaymentCents
           });
         }
       });
@@ -449,7 +454,11 @@
         remainingCents: debts.reduce(function (s, d) { return s + Math.max(0, d.balanceCents); }, 0),
         /* Each debt's own balance, so a chart can draw one line per debt
            rather than one line for the lot. */
-        balances: balances
+        balances: balances,
+        /* And what each debt was paid and charged this month, so a page can
+           draw where the payment went (D-236). */
+        paid: paidBy,
+        interest: interestBy
       });
     }
 
@@ -473,6 +482,7 @@
       stopMonth: stopMonth,
       monthlyBudgetAfterStopCents: budgetAfterStop,
       minimumsCents: monthlyBudget - extra,
+      minimums: ready.value.reduce(function (m, d) { m[d.id] = d.minPaymentCents; return m; }, {}),
       extraMonthlyCents: extra,
       derivedMinimums: ready.value.filter(function (d) { return d.minimumDerived; }).map(function (d) { return d.id; }),
       extraMonthlyCents: extra,
@@ -480,6 +490,68 @@
       schedule: schedule,
       referenceVersion: rules.version
     });
+  }
+
+  /**
+   * cascade(plan) — the plan read as phases (D-236): between one payoff and
+   * the next, what goes to each debt a month on average, which debt the
+   * push is on, and at the end of the phase what the fallen debt frees and
+   * where that money goes: onto the next target while the plan pushes, or
+   * back to the household once the stop line has passed or nothing is
+   * left. The last entry is the month everything is gone and the whole
+   * budget is free. Read off the schedule; nothing is simulated again.
+   */
+  function cascade(plan) {
+    if (!Money.isOk(plan)) return plan;
+    var phases = [], from = 1;
+    var payoffs = plan.payoffs || [];
+    payoffs.forEach(function (p, i) {
+      var months = plan.schedule.filter(function (m) { return m.month >= from && m.month <= p.month; });
+      var sum = {}, n = months.length || 1;
+      months.forEach(function (m) { Object.keys(m.paid || {}).forEach(function (id) { sum[id] = (sum[id] || 0) + m.paid[id]; }); });
+      var perDebt = {};
+      Object.keys(sum).forEach(function (id) { perDebt[id] = Math.round(sum[id] / n); });
+      var next = payoffs[i + 1] || null;
+      /* The stop line is noticed the month after the last debt of its
+         class falls, so a fall in the month before it is the one that
+         stops the push: its minimum is the household's, not the next
+         debt's. */
+      var pushing = plan.stopMonth === null || p.month + 1 < plan.stopMonth;
+      phases.push({
+        fromMonth: from, toMonth: p.month, months: p.month - from + 1,
+        perDebtCents: perDebt,
+        monthlyCents: Math.round(months.reduce(function (t, m) { return t + m.paidCents; }, 0) / n),
+        fallsId: p.debtId, fallsLabel: p.label,
+        freedCents: p.minPaymentCents,
+        rollsOntoId: next && pushing ? next.debtId : null,
+        rollsOntoLabel: next && pushing ? next.label : null
+      });
+      from = p.month + 1;
+    });
+    return Money.ok(phases.length, { phases: phases, doneMonth: plan.months, freeCents: plan.monthlyBudgetCents,
+      minimumsCents: plan.minimumsCents, extraMonthlyCents: plan.extraMonthlyCents, stopMonth: plan.stopMonth });
+  }
+
+  /**
+   * monthFlow(plan, month) — one month of the plan as a flow (D-236): the
+   * minimums and the extra in, each debt in the middle, interest and
+   * balance paid down out. Every figure is the schedule's; the minimum
+   * share of a payment is the smaller of the debt's minimum and what it
+   * was paid, the rest came from the extra and the minimums freed so far.
+   */
+  function monthFlow(plan, month) {
+    if (!Money.isOk(plan)) return plan;
+    var row = plan.schedule.filter(function (m) { return m.month === (month || 1); })[0];
+    if (!row || !row.paid) return Money.incomplete('No such month in the plan.', ['month']);
+    var debts = Object.keys(row.paid).map(function (id) {
+      var paid = row.paid[id], interest = row.interest[id] || 0;
+      var fromMin = Math.min(plan.minimums[id] || 0, paid);
+      return { id: id, label: plan.debtLabels[id] || 'Debt', paidCents: paid, fromMinimumCents: fromMin, fromExtraCents: paid - fromMin,
+        interestCents: Math.min(interest, paid), principalCents: Math.max(0, paid - interest) };
+    }).filter(function (d) { return d.paidCents > 0; });
+    var tot = function (k) { return debts.reduce(function (t, d) { return t + d[k]; }, 0); };
+    return Money.ok(tot('paidCents'), { month: row.month, debts: debts, minimumsCents: tot('fromMinimumCents'), extraCents: tot('fromExtraCents'),
+      interestCents: tot('interestCents'), principalCents: tot('principalCents') });
   }
 
   /**
@@ -694,6 +766,8 @@
   }
 
   return {
+    cascade: cascade,
+    monthFlow: monthFlow,
     promoStatus: promoStatus,
     effectiveRate: effectiveRate,
     rateInMonth: rateInMonth,

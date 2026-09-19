@@ -24,6 +24,8 @@ Updated: 2026-09-19
   (`shared/upnext.js`), and which FIRE tier the pot has reached. The FIRE
   room opens with the map (`engines/journey.js`): ladder, tiers, back half,
   you are here, and four paced routes from here; the flight plan draws it too.
+- **Debt Payoff (D-236)** draws where the payment goes and what each fall
+  frees: the freed minimum rolls onto the next debt, then it is all yours.
 
 ## Freeze
 - ON, and the merge is how it is honoured: every session leaves fewer screens.

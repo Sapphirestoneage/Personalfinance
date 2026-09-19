@@ -303,7 +303,7 @@
         { id: 'out-plan',        label: 'Debt-free in' },
         { id: 'out-strategies',  label: 'Which order' },
         { id: 'out-rewards',     label: 'Rewards vs. carrying' },
-        { id: 'out-timeline',    label: 'The order they fall' }
+        { id: 'out-timeline',    label: 'The order they fall, and what each frees' }
       ]
     },
     {
