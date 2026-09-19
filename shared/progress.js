@@ -1158,9 +1158,12 @@
     var box = document.createElement('section');
     box.className = 'slaf-progress-host';
     box.id = 'slaf-progress';
-    /* Before the disclaimer if there is one, so the small print stays last. */
+    /* Before the disclaimer if there is one, so the small print stays last.
+       It has to be a CHILD of the host: a `.disclaimer` nested inside a
+       room's own section is a descendant, and insertBefore throws on it. */
     var tail = host.querySelector('.disclaimer');
-    if (tail) host.insertBefore(box, tail); else host.appendChild(box);
+    if (tail && tail.parentNode === host) host.insertBefore(box, tail);
+    else host.appendChild(box);
 
     /* The version, printed in every room's footer (D-131): version.json
        carries the same string, and the test holds the two together. */

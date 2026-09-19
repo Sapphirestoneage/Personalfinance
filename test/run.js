@@ -14207,6 +14207,40 @@ section('Every class a page names has a rule somewhere (D-226)');
 })();
 
 /* ==========================================================================
+   Every id a page writes to exists in that page (D-234)
+   ========================================================================== */
+section('Every id a page writes to exists in that page (D-234)');
+(function () {
+  /* The Scorecard wrote to el('provenance') and el('ra-provenance'), both of
+     which were lost when the rooms merged (D-233). `el` returned null, the
+     throw aborted the render three numbers early, and the catch around it
+     blamed data/ — so a room that had every input showed "—" for its
+     emergency fund, its debt-to-income and its FIRE number under a red
+     banner about a file that had loaded perfectly. Nothing failed loudly.
+     A write to an id the page does not carry is always that bug. */
+  const pages = ['index.html', 'map.html']
+    .concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
+  const misses = [];
+  pages.forEach(rel => {
+    const raw = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const ids = new Set();
+    let m;
+    const idRe = /\bid\s*=\s*["']([^"']+)["']/g;
+    while ((m = idRe.exec(raw))) ids.add(m[1]);
+    /* el('x'). — a read followed by a property is a use that will throw on
+       null. A bare el('x') that the page then null-checks is its own business. */
+    const useRe = /\bel\(\s*'([^']+)'\s*\)\s*\./g;
+    const seen = new Set();
+    while ((m = useRe.exec(raw))) {
+      if (ids.has(m[1]) || seen.has(m[1])) continue;
+      seen.add(m[1]);
+      misses.push(rel + " writes to #" + m[1] + ", which is not in its markup");
+    }
+  });
+  check('no page writes to an id its own markup does not carry', misses.join('; '), '');
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

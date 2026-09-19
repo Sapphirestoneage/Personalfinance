@@ -727,6 +727,12 @@
     <button type="button" class="slaf-btn slaf-btn--primary" id="btn-snapshot">Save a snapshot</button>
     <span class="slaf-hint" id="snapshot-note" style="align-self:center"></span>
   </div>
+
+  <!-- Where the tables behind these nine numbers come from. Lost when the
+       rooms merged (D-233); the render still wrote to it, which aborted the
+       render three numbers early. Restored, and test/run.js now fails if a
+       room writes to an id its own markup does not carry. -->
+  <p class="slaf-hint" id="provenance" style="margin-top:var(--space-4)"></p>
   </section>
 
   <!-- ============== SAVINGS RATE (was rooms/savings-rate.html) =========== -->
@@ -859,6 +865,7 @@
       Nothing is typed on this page. Every figure comes from a room that owns it.
     </p>
     <div id="ra-reading-list" style="margin-top:var(--space-3)"></div>
+    <p class="slaf-hint" id="ra-provenance" style="margin-top:var(--space-3)"></p>
   </section>
   </section>
 
