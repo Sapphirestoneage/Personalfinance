@@ -577,6 +577,19 @@
     <div class="out-detail" id="g-detail"></div>
   </section>
 
+  <!-- THE WORST PLAUSIBLE YEAR (D-308): the Statement's card, at home here
+       since the at-3am reading is the one that asks what cash has to cover. -->
+  <section class="slaf-card" id="worst-year">
+    <span class="slaf-eyebrow">The worst plausible year</span>
+    <h2 style="margin:var(--space-2) 0 0">Everything going wrong at once, priced</h2>
+    <div class="pair">
+      <div><span class="cap">It would cost</span><span class="big" id="worst-cost">—</span><span class="sub" id="worst-cost-sub"></span></div>
+      <div><span class="cap">After cash</span><span class="big" id="worst-short">—</span><span class="sub" id="worst-short-sub"></span></div>
+    </div>
+    <p class="why" id="worst-why"></p>
+    <p class="why" id="worst-caveat" style="font-size:var(--text-xs);color:var(--color-text-faint)"></p>
+  </section>
+
   <section class="slaf-card" id="am-milestones">
     <span class="slaf-eyebrow">The usual milestones</span>
     <h2 style="margin:var(--space-2) 0 0">Where the rules of thumb sit</h2>
@@ -636,6 +649,8 @@
 <script src="../engines/countdown.js"></script>
 <script src="../engines/quitfund.js"></script>
 <script src="../engines/foo.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../engines/statement.js"></script>
 <script>
 /* ---- Four readings, one number (D-232) ------------------------------------
    Which reading is on screen is read off the hash and nothing else, so every
@@ -650,7 +665,7 @@
   var VIEWS = [
     { id: 'view-job-hunting', match: /^#(job-hunting|bj-number|chart|inputs|amounts|assumptions|bj-reading|room-)/ },
     { id: 'view-by-choice',   match: /^#(by-choice|months|dates|parts|q-)/ },
-    { id: 'view-at-3am',      match: /^#(at-3am|am-|deductible|coverage|out-gap|c-|g-|m-|in-|field-|band-note)/ },
+    { id: 'view-at-3am',      match: /^#(at-3am|am-|deductible|coverage|out-gap|worst-|c-|g-|m-|in-|field-|band-note)/ },
     { id: 'view-how-long',    match: /.*/ }
   ];
   function route() {
@@ -1492,7 +1507,7 @@
     rows.push(['If you were sued', ins.umbrella === true ? 'An umbrella policy stands behind you.'
       : ins.umbrella === false ? 'No umbrella policy.' : 'Not answered.']);
     el('coverage-read').innerHTML = dl(rows)
-      + '<p class="why">The Statement prices the worst plausible year \u2014 deductible, out-of-pocket maximum, six months of essentials, less the unemployment benefit \u2014 <a href="statement.html#worst-year">from these numbers \u2192</a></p>';
+      + '<p class="why">The worst plausible year is priced below: deductible, out-of-pocket maximum, six months of essentials, less the unemployment benefit, <a href="#worst-year">from these numbers \u2192</a></p>';
   }
 
   /* ---- Rendering -------------------------------------------------------- */
@@ -1663,6 +1678,33 @@
     }).join('');
   }
 
+  /* The worst plausible year (D-308): engines/statement.js prices it, the
+     one sum the Statement used to show; this reading shows it beside the
+     cushion it has to fit inside. Every input is a Ledger row or a cover
+     fact from the coverage card above. */
+  function renderWorst(h) {
+    var St = SLAF.Statement;
+    var setW = function (id, subId, ok, text, sub) { var n = el(id); if (!n) return; n.className = 'big' + (ok ? '' : ' is-incomplete'); n.textContent = text; el(subId).innerHTML = sub || ''; };
+    if (!St) return;
+    var w = St.worstPlausibleYear(h, TABLES);
+    if (!Money.isOk(w)) {
+      var d = (w.missing || []).map(function (id) { return Ownership.FIELDS[id] ? Ownership.describe(id, h, ROOM_ID) : null; }).filter(Boolean)[0];
+      setW('worst-cost', 'worst-cost-sub', false, w.reason, d ? '<a href="' + d.href + '">Enter ' + d.label.toLowerCase() + ' \u2192</a>' : '');
+      setW('worst-short', 'worst-short-sub', false, Money.EM_DASH, '');
+      el('worst-why').textContent = ''; el('worst-caveat').textContent = '';
+      return;
+    }
+    var fmt = function (c) { return Money.formatCents(c); };
+    setW('worst-cost', 'worst-cost-sub', true, fmt(w.costCents), 'deductible ' + fmt(w.deductiblesCents) + (w.oopMaxKnown ? ' \u00b7 out-of-pocket max ' + fmt(w.oopMaxCents) : '') + ' \u00b7 ' + w.months + ' months of essentials ' + fmt(w.essentialsCents));
+    setW('worst-short', 'worst-short-sub', true, w.covered ? 'Covered' : fmt(w.value) + ' short', (w.cashKnown ? fmt(w.cashCents) + ' in cash' : 'no cash entered') + ' against ' + fmt(w.netCents) + ' net of benefit');
+    el('worst-why').textContent = (w.benefitKnown
+      ? 'Unemployment in ' + h.state + ' would pay about ' + fmt(w.benefitWeeklyCents) + ' a week for ' + w.benefitWeeks + ' weeks, ' + fmt(w.benefitCents) + '.'
+      : 'No state unemployment benefit was counted' + (h.state ? '.' : '; add your state in the Ledger.'))
+      + (w.oopMaxKnown ? '' : ' Add your health plan\u2019s out-of-pocket maximum above to price a bad health year too.')
+      + ' This replaces the rule of thumb as the cushion test once these inputs exist.';
+    el('worst-caveat').textContent = 'The benefit is an estimate from a table of state maximums that is ' + (w.benefitConfidence || 'unverified') + ' (data/ui_benefits.json); the real figure depends on your base-period wages.';
+  }
+
   function renderNow() {
     if (!TABLES) return;
     var h = Spine.getProfile();
@@ -1671,8 +1713,9 @@
     renderBand(h);
     renderCompare(h);
     renderGap(h);
+    renderWorst(h);
     renderMilestones(h);
-    el('am-reading-list').innerHTML = ['cashSavings', 'monthlyExpenses']
+    el('am-reading-list').innerHTML = ['cashSavings', 'monthlyExpenses', 'highestDeductible', 'oopMax', 'state']
       .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
   }
 
