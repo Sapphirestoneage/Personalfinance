@@ -120,8 +120,10 @@
   }
 
   var FIELDS = {
+    /* The three "you" facts, and the age computed from the first of them.
+       Settings asks them; nothing else edits them (D-234). */
     dob: {
-      label: 'Date of birth', owner: 'start', anchor: 'q-about',
+      label: 'Date of birth', owner: 'settings', anchor: 'you',
       read: function (h) {
         var p = Schema.primaryPerson(h);
         return p && p.dob ? Money.ok(p.dob) : Money.incomplete('Not set yet.', ['dob']);
@@ -133,7 +135,9 @@
       }
     },
     age: {
-      label: 'Age', owner: 'start', anchor: 'q-about',
+      /* Computed from the date of birth, so it is owned by nobody: the
+         anchor points at the box that decides it. */
+      label: 'Age', owner: 'settings', anchor: 'you',
       read: function (h) {
         var a = Schema.primaryAge(h);
         return Money.isEntered(a) ? Money.ok(a) : Money.incomplete('Not set yet.', ['dob']);
@@ -212,7 +216,7 @@
       }
     },
     employmentStatus: {
-      label: 'Working situation', owner: 'start', anchor: 'q-employment',
+      label: 'Working situation', owner: 'settings', anchor: 'you',
       read: function (h) {
         var p = Schema.primaryPerson(h);
         var v = p && p.employmentStatus;
@@ -333,7 +337,7 @@
       notApplicableBecause: 'Nobody depends on your income.'
     },
     dependents: {
-      label: 'Anyone depending on your income', owner: 'start', anchor: 'q-fine-tune',
+      label: 'Anyone depending on your income', owner: 'settings', anchor: 'you',
       read: function (h) {
         /* Stored as a list; a bare yes/no from before D-094 still reads. */
         var d = Schema.createDependents(h.dependents);

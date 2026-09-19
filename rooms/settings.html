@@ -16,14 +16,23 @@
 
   1. READS   the switch table through shared/features.js, and the
              household only to say what the situation gate has decided.
-  2. WRITES  prefs.features.<id>, per person, never the household. Flipping
-             any switch on and off leaves the household byte-identical.
-  3. SHOWS   one row a switch: label, gloss, on/off, and where it shows up
-             (the rooms whose registry entry lists it). Grouped: Accuracy,
-             Household, Horizon, Advanced. A situation-scope switch is shown
+  2. WRITES  prefs.features.<id>, per person. Flipping any switch on and
+             off leaves the household byte-identical.
+             It also OWNS the three "you" facts — date of birth, your
+             working situation, and who depends on you (D-234). They were
+             Start Here's; they are you.* rows in data/ledger-rows.json,
+             they are not money, and nothing else may edit them. `age` is
+             computed from the date of birth and is owned by nobody.
+  3. SHOWS   the About you card first, then one row a switch: label,
+             gloss, on/off, and where it shows up (the rooms whose
+             registry entry lists it). Grouped: Accuracy, Household,
+             Horizon, Advanced. A situation-scope switch is shown
              read-only with what set it.
 
-  LIVE-FORM: built once — buttons only, no text input.
+  LIVE-FORM: built once. Every switch list is rebuilt on each paint, so
+  the About you card sits OUTSIDE them, is markup rather than generated,
+  and only ever has its .value set. That is the whole reason it is not a
+  row in the Household list (D-034).
 -->
 <style>
   .sw { list-style: none; margin: 0; padding: 0; }
@@ -35,6 +44,9 @@
   .sw .where a { color: var(--color-accent-hover); text-decoration: none; }
   .sw .state { font-size: var(--text-xs); color: var(--color-text-faint); text-align: right; margin-top: 4px; }
   .paths { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-2); }
+  .you-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); }
+  .you-grid label:nth-child(n+3) { grid-column: 1 / -1; }
+  @media (max-width: 380px) { .you-grid { grid-template-columns: 1fr; } .you-grid label { grid-column: 1 / -1; } }
 </style>
 </head>
 <body class="slaf">
@@ -49,6 +61,21 @@
     <span class="slaf-eyebrow">A starting set</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">Two ways in. Beginner starts with only the switches that are on by default. FI starts with Accuracy and Horizon all on. Either way, every switch below is yours to change.</p>
     <div class="paths" id="paths"></div>
+  </section>
+  <section class="slaf-card" id="you" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">About you</span>
+    <p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Three facts the rest of the app reads and none of it can work out for itself. Asked here once; every room that needs one links back to this card.</p>
+    <div class="you-grid">
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Born</span>
+        <span class="slaf-input-shell"><select id="y-month" aria-label="Birth month"></select></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">&nbsp;</span>
+        <span class="slaf-input-shell"><select id="y-year" aria-label="Birth year"></select></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Your working situation</span>
+        <span class="slaf-input-shell"><select id="y-situation" aria-label="Working situation"></select></span></label>
+      <label class="slaf-field" style="margin:0"><span class="slaf-label">Anyone depending on your income</span>
+        <span class="slaf-input-shell"><select id="y-dependents" aria-label="How many depend on your income"></select></span></label>
+    </div>
+    <p class="slaf-hint" id="you-age" style="margin:var(--space-2) 0 0"></p>
   </section>
   <section class="slaf-card" id="accuracy" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Accuracy</span><p class="slaf-hint" id="accuracy-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="accuracy-list"></ul></section>
   <section class="slaf-card" id="household" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Household</span><p class="slaf-hint" id="household-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="household-list"></ul></section>
@@ -130,11 +157,59 @@
       + (p ? '<span class="where">Low ' + pctText(p.p25) + ' · likely ' + pctText(p.p50) + ' · high ' + pctText(p.p75) + ', as of ' + esc(bands.asOf) + '. A planning convention, not a forecast: ' + esc(bands.source) + '</span>' : '') + whereRead()
       + '</div><div><output>' + pctText(a.returnReal) + '</output><span class="state">from the table</span></div></li>';
   }
+  /* ---- About you (D-234) --------------------------------------------------
+     Four selects, built one time, never rebuilt. The month and year pair
+     writes one date of birth the way Start Here always did: day 01, so a
+     birthday is never implied from a month. */
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+                'August', 'September', 'October', 'November', 'December'];
+  var youBuilt = false;
+  function fill(id, pairs) {
+    el(id).innerHTML = pairs.map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join('');
+  }
+  function buildYou() {
+    if (youBuilt) return;
+    youBuilt = true;
+    var thisYear = new Date().getFullYear();
+    var years = [['', 'Year']];
+    for (var y = thisYear - 14; y >= thisYear - 100; y--) years.push([String(y), String(y)]);
+    fill('y-month', [['', 'Month']].concat(MONTHS.map(function (m, i) { return [String(i + 1), m]; })));
+    fill('y-year', years);
+    fill('y-situation', [['', 'Not said']].concat((SLAF.Schema.EMPLOYMENT_STATUSES || []).map(function (r) { return [r.id, r.label]; })));
+    fill('y-dependents', [['', 'Not said'], ['0', 'Nobody'], ['1', 'One'], ['2', 'Two'], ['3', 'Three'], ['4', 'Four or more']]);
+  }
+  function setSelect(id, v) {
+    var n = el(id);
+    if (!n || n === document.activeElement) return;
+    n.value = v === null || v === undefined ? '' : String(v);
+  }
+  function paintYou() {
+    buildYou();
+    var hh = h();
+    var person = SLAF.Schema.primaryPerson(hh);
+    var dob = person && person.dob ? String(person.dob) : '';
+    var m = dob.match(/^(\d{4})-(\d{2})/);
+    setSelect('y-month', m ? String(parseInt(m[2], 10)) : '');
+    setSelect('y-year', m ? m[1] : '');
+    setSelect('y-situation', person && person.employmentStatus ? person.employmentStatus : '');
+    var deps = hh.dependents;
+    setSelect('y-dependents', Array.isArray(deps) ? String(Math.min(4, deps.length)) : '');
+    var age = SLAF.Schema.primaryAge(hh);
+    el('you-age').textContent = Money.isEntered(age)
+      ? 'That makes you ' + age + '. Age is worked out from the date, never asked for.'
+      : 'Without a date of birth, every room that counts years ahead says so rather than guessing.';
+  }
+  function writeDob() {
+    var mo = el('y-month').value, yr = el('y-year').value;
+    SLAF.Ownership.write('dob', mo && yr ? yr + '-' + (mo.length === 1 ? '0' + mo : mo) + '-01' : null);
+  }
+
   var TABLES = null;
   function paintAssumptions() {
     el('assumptions-list').innerHTML = RATE_ROWS.map(rateRow).join('') + returnRow();
   }
   function paint() {
+    paintYou();
     paintAssumptions();
     Features.groups().forEach(function (g) {
       el(g.id + '-line').textContent = g.line;
@@ -145,6 +220,15 @@
       return '<button type="button" class="slaf-seed-btn" data-path="' + p + '" aria-pressed="' + (door === p) + '">' + (p === 'fi' ? 'FI' : 'Beginner') + '</button>';
     }).join('');
   }
+  document.querySelector('main').addEventListener('change', function (e) {
+    var id = e.target && e.target.id;
+    if (id === 'y-month' || id === 'y-year') { writeDob(); paint(); return; }
+    if (id === 'y-situation') { SLAF.Ownership.write('employmentStatus', e.target.value || null); paint(); return; }
+    if (id === 'y-dependents') {
+      SLAF.Ownership.write('dependents', e.target.value === '' ? null : Number(e.target.value));
+      paint();
+    }
+  });
   document.querySelector('main').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-feature]');
     if (b) { Features.set(b.getAttribute('data-feature'), !Features.on(b.getAttribute('data-feature'), h())); paint(); return; }

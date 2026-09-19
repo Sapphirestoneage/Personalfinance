@@ -4801,8 +4801,8 @@ section('Whether there is an employer at all');
     const e = Ownership.describe('employmentStatus', withStatus('notWorking'), 'map');
     checkTrue('the status reads back as set', e.isSet);
     check('shown by its short label', e.display, 'Not working');
-    check('owned by Start Here', e.ownerId, 'start');
-    checkTrue('linking to its own question', /#q-employment$/.test(e.href));
+    check('owned by Settings', e.ownerId, 'settings');
+    checkTrue('linking to its own question', /#you$/.test(e.href));
     const blank = Ownership.describe('employmentStatus', Schema.createHousehold({}), 'map');
     checkTrue('and unanswered is unanswered, not "not working"', !blank.isSet);
   }
@@ -5204,7 +5204,7 @@ section('Eleven cards');
     check('three characters are asked', Schema.TAX_CHARACTERS.map(t => t.id).join(','), 'pretax,roth,taxable');
     check('a new household has not answered about debt', Schema.createHousehold({}).meta.hasDebt, null);
     check('the demo answers every intake field', Progress.forRoom('start', Demo.build()).missing.length, 0);
-    ['contributionPercent', 'highestDeductible', 'hasDebt', 'dob', 'employerMatch'].forEach(f =>
+    ['contributionPercent', 'highestDeductible', 'hasDebt', 'employerMatch'].forEach(f =>
       check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
     /* The taxes.* facts left Start Here for the room they change: D-234. */
     ['state', 'zip', 'filingStatus'].forEach(f =>
@@ -7889,7 +7889,7 @@ section('Between jobs: the unemployed sequence');
   const alone = Schema.createHousehold({ dependents: false });
   checkTrue('term life does not apply when nobody depends on the income', !Ownership.describe('termLife', alone, 'runway').applies);
   checkTrue('… and does when someone does, or when unasked', Ownership.describe('termLife', Schema.createHousehold({ dependents: true }), 'runway').applies && Ownership.describe('termLife', Schema.createHousehold({}), 'runway').applies);
-  checkTrue('Start Here asks it, in the fine-tune drawer', /id="q-fine-tune"/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')) && /choices\('dependents'/.test(fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8')) && Registry.byId('start').subsections.some(x => x.id === 'q-fine-tune'));
+  checkTrue('Settings asks it, on the About you card (D-234)', /id="y-dependents"/.test(fs.readFileSync(path.join(ROOT, 'rooms/settings.html'), 'utf8')) && Registry.byId('settings').subsections.some(x => x.id === 'you'));
   checkTrue('the at-3am reading says so instead of asking', /Nobody depends on your income/.test(fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8')));
   checkTrue('… and unemploymentOf never returns undefined for a raw person', Schema.unemploymentOf(Schema.createHousehold({ people: [{ id: 'x', employmentStatus: 'unemployed', role: 'adult' }] })).since === null);
 })();
@@ -8309,10 +8309,22 @@ section('The one-pager (D-095): import, confidence, the drawer');
   Spine.reset();
   Spine.registerRoom('start');
 
-  /* The drawer's field is the one-pager's, optional, and not a need. */
-  check('who depends on you is owned by the one-pager', Ownership.field('dependents').owner, 'start');
-  check('… in the fine-tune drawer', Ownership.field('dependents').anchor, 'q-fine-tune');
+  /* The three "you" facts left Start Here for Settings, which is where
+     they are asked now (D-234). Age follows the date of birth. */
+  ['dob', 'employmentStatus', 'dependents', 'age'].forEach(f => {
+    check(`${f} is owned by Settings`, Ownership.field(f).owner, 'settings');
+    check(`${f} lands on the About you card`, Ownership.field(f).anchor, 'you');
+  });
   checkTrue('… and is not on the list of things Start Here needs', Registry.byId('start').needs.indexOf('dependents') === -1);
+  {
+    const st = fs.readFileSync(path.join(ROOT, 'rooms/settings.html'), 'utf8');
+    checkTrue('Settings asks all three, which is how ownership moves',
+      /id="y-month"/.test(st) && /id="y-situation"/.test(st) && /id="y-dependents"/.test(st));
+    checkTrue('and writes them through the owner path',
+      (st.match(/Ownership\.write\('(dob|employmentStatus|dependents)'/g) || []).length === 3);
+    checkTrue('the card sits outside the lists Settings repaints (D-034)',
+      st.indexOf('<section class="slaf-card" id="you"') < st.indexOf('id="accuracy-list"'));
+  }
   checkTrue('the drawer and the import are the page\'s own sections', ['q-fine-tune', 'q-import'].every(id => Registry.byId('start').subsections.some(x => x.id === id)));
 
   /* Ten at most, whoever you are. */
@@ -10612,7 +10624,11 @@ section('Feature switches: rendering and engines, never stored facts (D-180)');
   /* The Settings room. */
   const room = fs.readFileSync(path.join(ROOT, 'rooms/settings.html'), 'utf8');
   checkTrue('Settings is a registered room under Upkeep', Registry.byId('settings') && Registry.byId('settings').group === 'upkeep' && Registry.inGroup('upkeep', null).some(r => r.id === 'settings'));
-  checkTrue('...that writes only prefs', JSON.stringify(Registry.daite('settings').writes) === JSON.stringify(['prefs.features']));
+  /* Switches, plus the three "you" facts it took from Start Here (D-234).
+     Flipping a switch still leaves the household byte-identical; the About
+     you card is the only thing here that writes to it. */
+  checkTrue('...that writes the switches and the three you facts',
+    JSON.stringify(Registry.daite('settings').writes) === JSON.stringify(['prefs.features', 'you.dependents', 'you.dob', 'you.situation']));
   checkTrue('...with buttons, no text input', !/<input|<textarea/.test(room) && /role="switch"/.test(room));
   checkTrue('...reading the switches through the library', /Features\.(all|on|set|rooms|applyPath)\(/.test(room) && !/features\.json/.test(room));
 })();

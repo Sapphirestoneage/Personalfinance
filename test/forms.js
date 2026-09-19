@@ -1430,6 +1430,35 @@ const CASES = [
    is that the node survives and the choice sticks. */
 const SELECT_CASES = [
   {
+    /* SETTINGS (D-234): the About you card owns the date of birth, the
+       working situation and who depends on you. Every switch list on this
+       page is rebuilt by innerHTML on each paint, so the card sits outside
+       them; this is the check that it stays outside them. */
+    room: '/rooms/settings.html',
+    container: '#you',
+    seed: 'demo',
+    picks: [
+      ['#y-month', '4'],
+      ['#y-year', '1998'],
+      ['#y-situation', 'selfEmployed'],
+      ['#y-dependents', '2']
+    ],
+    read: () => {
+      const h = JSON.parse(localStorage.getItem('slaf.household.v2'));
+      const you = (h.people || []).filter(p => p.role === 'adult')[0] || {};
+      const dob = String(you.dob || '');
+      return {
+        'y-month': String(parseInt(dob.slice(5, 7), 10)),
+        'y-year': dob.slice(0, 4),
+        'y-situation': you.employmentStatus,
+        'y-dependents': String((h.dependents || []).length)
+      };
+    },
+    also: (stored) => [
+      ['the day is always the first, never a guessed birthday', stored['y-month'] !== 'NaN', true]
+    ]
+  },
+  {
     /* TAX (D-234): filing status and state moved here from Start Here, and
        the state list is filled from a reference table AFTER the template
        builds the control. Filling options is not rebuilding the node, and

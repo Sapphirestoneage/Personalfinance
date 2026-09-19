@@ -33,20 +33,16 @@
         "hasDebt"
       ],
       "writes": [
-        "dob",
-        "age",
         "grossAnnualIncome",
         "unemployment",
         "lastPay",
         "cashSavings",
         "investments",
-        "employmentStatus",
         "employerMatch",
         "capturingFullMatch",
         "hasDebt",
         "contributionPercent",
-        "highestDeductible",
-        "dependents"
+        "highestDeductible"
       ],
       "requires": [],
       "dashboardNumber": null,
@@ -1127,7 +1123,12 @@
       "title": "Settings",
       "file": "rooms/settings.html",
       "reads": [],
-      "writes": [],
+      "writes": [
+        "dob",
+        "age",
+        "employmentStatus",
+        "dependents"
+      ],
       "requires": [],
       "dashboardNumber": null,
       "order": 98.5

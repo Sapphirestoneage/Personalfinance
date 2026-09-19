@@ -7,7 +7,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Home (3)
 
 - **ledger** — The Ledger (utility) · 2248 lines · engines: projection, tier0, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills · D-230, D-226, D-207
-- **start** — Start Here · 1000 lines · engines: income · owns: dob, age, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-166, D-159, D-146
+- **start** — Start Here · 1000 lines · engines: income · owns: grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible · D-166, D-159, D-146
 - **dashboard** — The Dashboard · 1570 lines · no engines · DD-028, DD-026, DD-025
 
 ## Your Numbers (16)
@@ -99,7 +99,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **wrapped** — Money Wrapped · 129 lines · engines: projection, tier0, selfemployed, tax, hourly, debt, sincelast, wrapped · D-213
 - **data** — Your Data (utility) · 702 lines · engines: tax, bankcsv · D-221, D-220, D-125
 - **one-pager** — The One-Pager · 172 lines · engines: selfemployed, tax, projection, tier0, debt, cashflow, ratios, trap, onepager · D-219
-- **settings** — Settings (utility) · 181 lines · no engines · D-180
+- **settings** — Settings (utility) · 265 lines · no engines · owns: dob, age, employmentStatus, dependents · D-180
 - **progress-card** — Progress Card (utility) · 139 lines · engines: projection, tier0, tax, debt · D-212
 
 ## Files in rooms/ not in the registry (18)

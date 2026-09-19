@@ -153,6 +153,13 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `floorMonthly` — The floor, a month · **no other room mentions it**
 - `swanTarget` — Your sleep-at-night number · read by financial-snapshot
 
+## settings (4)
+
+- `dob` — Date of birth · too generic to trace
+- `age` — Age · too generic to trace
+- `employmentStatus` — Working situation · read by ledger, start, runway, tax, offer-compare, unlearning, student-loans
+- `dependents` — Anyone depending on your income · too generic to trace
+
 ## skill-tree (1)
 
 - `skillsDone` — Skills done · **no other room mentions it**
@@ -161,22 +168,18 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `practiceLedger` — Practice ledger · read by skill-tree
 
-## start (14)
+## start (10)
 
-- `dob` — Date of birth · too generic to trace
-- `age` — Age · too generic to trace
 - `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · read by ledger
 - `cashSavings` — Cash & savings · read by ledger, budget, financial-snapshot, statements, statement, dashboard, exercises, runway, cant-pay, what-if-life, protection, estate, housing, big-purchase, variable-income, reversibility, unlearning, calendar, history, wrapped, one-pager
 - `investments` — Investments + retirement · too generic to trace
-- `employmentStatus` — Working situation · read by ledger, runway, tax, offer-compare, unlearning, student-loans
 - `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, unlearning
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, wrapped
 - `hasDebt` — Any debt · read by dashboard, unlearning, student-loans
 - `contributionPercent` — Workplace contribution · read by ledger, statements, accounts, what-if-life, tax
 - `highestDeductible` — Highest deductible · read by statement, runway, protection
-- `dependents` — Anyone depending on your income · too generic to trace
 
 ## statement (7)
 
