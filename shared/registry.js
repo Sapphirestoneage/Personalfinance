@@ -92,7 +92,7 @@
     },
     {
       id: 'income',
-      features: ['equityComp', 'matchVesting'],
+      features: ['equityComp', 'matchVesting', 'askDeeper'],
       group: 'numbers', subgroup: 'income', aliases: ['pay', 'salary', 'paycheck', 'sources'],
       kind: 'about-you',
       needs: [],

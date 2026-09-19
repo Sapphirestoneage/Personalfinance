@@ -32,10 +32,27 @@
   function deps() {
     if (typeof module === 'object' && module.exports) {
       return { Money: require('./money.js'), Schema: require('./schema.js'), Ownership: require('./ownership.js'), LedgerRows: require('./ledger-rows.js'), Spine: require('./spine-v2.js'),
-        Suggest: (function () { try { return require('./suggest.js'); } catch (e) { return null; } })(), Registry: require('./registry.js') };
+        Suggest: (function () { try { return require('./suggest.js'); } catch (e) { return null; } })(), Registry: require('./registry.js'),
+        Doors: (function () { try { return require('./doors.js'); } catch (e) { return null; } })(),
+        Features: (function () { try { return require('./features.js'); } catch (e) { return null; } })() };
     }
     var S = g().SLAF || {};
-    return { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, LedgerRows: S.LedgerRows, Spine: S.Spine, Suggest: S.Suggest, Registry: S.Registry };
+    return { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, LedgerRows: S.LedgerRows, Spine: S.Spine, Suggest: S.Suggest, Registry: S.Registry, Doors: S.Doors || null, Features: S.Features || null };
+  }
+  /* The level gate (D-250): a room asks only for a row at or below the
+     level its door has reached (the lowest level with a blank row, the
+     same rule the Ledger's doors use), so "keeps paying if the job goes"
+     is not the first thing someone with no pay entered is asked. The
+     askDeeper feature switch lifts it. */
+  function askableLevel(D, household, rows, door) {
+    if (!D.Doors || typeof D.Doors.levelOf !== 'function') return 4;
+    var list = rows.filter(function (r) { return r.door === door; });
+    return D.Doors.levelOf(list, household);
+  }
+  function deeperAllowed(D, household, tables) {
+    if (!D.Features || typeof D.Features.on !== 'function') return false;
+    if (tables && tables.features && typeof D.Features.use === 'function') D.Features.use(tables.features);
+    return !!D.Features.on('askDeeper', household);
   }
   var ASKABLE_UNITS = ['cents', 'percent', 'rate', 'months', 'years', 'count', 'enum', 'bool', 'text'];
 
@@ -53,6 +70,7 @@
     return false;
   }
   function isEntered(v) { return v !== null && v !== undefined && !(typeof v === 'number' && isNaN(v)); }
+  function Money_isEntered(v) { return isEntered(v); }
   /* A row marked "not sure yet" is not asked again until the month the
      person named has come, or ever, when they named none (G2.7, D-209). */
   function parked(household, key) {
@@ -68,9 +86,14 @@
     if (!D.LedgerRows) return null;
     var rows = D.LedgerRows.rows(household, tables, { filter: 'all' });
     var byRow = {}; (sug || []).forEach(function (s) { if (!s.na) byRow[s.key] = s; });
+    var deep = deeperAllowed(D, household, tables), levelCache = {};
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       if (r.askIn !== roomId || r.kind === 'computed' || ASKABLE_UNITS.indexOf(r.unit) === -1) continue;
+      if (!deep && Money_isEntered(r.level) && r.level > 1) {
+        if (levelCache[r.door] === undefined) levelCache[r.door] = askableLevel(D, household, rows, r.door);
+        if (r.level > levelCache[r.door]) continue;
+      }
       var f = D.Ownership.FIELDS[r.id];
       if (!f || typeof f.write !== 'function') continue;
       if (r.repeat) {
@@ -271,7 +294,8 @@
   /* Load what this room does not carry, then the tables, then the card. */
   function needScript(name) {
     var S = g().SLAF || {};
-    var map = { 'levers.js': 'Levers', 'daite.js': 'Daite', 'staleness.js': 'Staleness', 'ledger-rows.js': 'LedgerRows', 'suggest.js': 'Suggest', 'tax.js': 'Tax' };
+    var map = { 'levers.js': 'Levers', 'daite.js': 'Daite', 'staleness.js': 'Staleness', 'ledger-rows.js': 'LedgerRows', 'suggest.js': 'Suggest', 'tax.js': 'Tax',
+      'prefs.js': 'Prefs', 'features.js': 'Features', 'doors.js': 'Doors' };
     return !S[map[name]];
   }
   function loadScript(src) {
@@ -291,14 +315,16 @@
     var S = g().SLAF || {};
     if (!S.Spine || !S.Ownership || !S.Reference || !S.Registry) return Promise.reject(new Error('no spine'));
     var base = (typeof location !== 'undefined' && location.pathname.indexOf('/rooms/') !== -1) ? '../' : '';
-    var order = ['levers.js', 'daite.js', 'staleness.js', 'ledger-rows.js', 'suggest.js'].filter(needScript).map(function (n) { return base + 'shared/' + n; });
+    /* prefs, features and doors carry the level gate (D-250): the switch and
+       the door's reached level. */
+    var order = ['levers.js', 'daite.js', 'staleness.js', 'ledger-rows.js', 'suggest.js', 'prefs.js', 'features.js', 'doors.js'].filter(needScript).map(function (n) { return base + 'shared/' + n; });
     if (needScript('tax.js')) order.unshift(base + 'engines/tax.js');
     var chain = Promise.resolve();
     order.forEach(function (src) { chain = chain.then(function () { return loadScript(src); }); });
     ensured = chain.then(function () {
       var S2 = g().SLAF;
-      var names = ['ledgerRows', 'staleness'].concat(S2.Suggest ? S2.Suggest.TABLES : []);
-      return S2.Reference.load(names).then(function (t) { S2.LedgerRows.use(t.ledgerRows); return t; });
+      var names = ['ledgerRows', 'staleness', 'features'].concat(S2.Suggest ? S2.Suggest.TABLES : []);
+      return S2.Reference.load(names).then(function (t) { S2.LedgerRows.use(t.ledgerRows); if (S2.Features && t.features) S2.Features.use(t.features); return t; });
     });
     return ensured;
   }
