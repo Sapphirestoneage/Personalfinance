@@ -400,7 +400,7 @@
 
   /* Upkeep, kept as a named list for the pages that ask for it directly
      (the map, the tests): the rooms a person reaches for from anywhere. */
-  /* History became The Close's over-time reading (D-271); the upkeep
+  /* History became The Close's over-time reading (D-276); the upkeep
      strip lists rooms, and it is no longer one. */
   var UPKEEP = ['data', 'ledger', 'start', 'get-help'];
 
@@ -1068,7 +1068,7 @@
      both true and the fold (D-166) and the URL-follows-you sync (D-170)
      silently do nothing — which is what all thirteen merged pages have
      done since the merges. The Statement was 6,200px on a phone with no
-     "Show the rest" on it. D-286. */
+     "Show the rest" on it. D-291. */
   function sectionHost(host) {
     var views = Array.prototype.filter.call(host.children, function (n) {
       return n.tagName === 'SECTION' && /^view-/.test(n.id || '');
@@ -1108,7 +1108,7 @@
     if (!page || page.getAttribute('data-fold') === 'own') return null;
     /* A merged page swaps readings under this. Each reading folds on its
        own terms, so a change of reading tears the old fold down and builds
-       the new one. D-286. */
+       the new one. D-291. */
     var host = sectionHost(page);
     if (host !== page && !mountFold.watching) {
       mountFold.watching = true;
@@ -1181,7 +1181,7 @@
          screen; at the very bottom, the last section on the page. */
       var line = window.innerHeight * 0.35, hit = null;
       var atEnd = window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 2;
-      /* Re-read: on a merged page the reading under this changes. D-286. */
+      /* Re-read: on a merged page the reading under this changes. D-291. */
       roomSections(host).forEach(function (sec) {
         if (sec.hidden || getComputedStyle(sec).display === 'none') return;
         var top = sec.getBoundingClientRect().top;
@@ -1313,7 +1313,7 @@
     /* Before the page's small print if there is one, so it stays last. The
        page's is a DIRECT child: a merged room carries a reading's own
        provenance line, also .disclaimer, nested inside a section, and
-       insertBefore against that throws (D-277). */
+       insertBefore against that throws (D-282). */
     var tail = null;
     for (var k = 0; k < host.children.length; k++) {
       if (host.children[k].classList && host.children[k].classList.contains('disclaimer')) { tail = host.children[k]; break; }

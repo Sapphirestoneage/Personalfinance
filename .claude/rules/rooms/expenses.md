@@ -10,7 +10,7 @@ Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_
 Owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), capturingFullMatch (start), monthlyDebtPayments (debt-payoff)
 Latest decisions:
-  - D-262 — Expenses: the month, and what repeats in it
+  - D-267 — Expenses: the month, and what repeats in it
   - D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line
   - D-199 — Expenses in three steps and one fold
   - D-196 — Expenses: the picture first, then the four numbers, then the lines you name

@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-270 (the merge).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-275 (the merge).
   Registry: cash-flow.
 
   ONE MONTH, TWO READINGS.
@@ -30,7 +30,7 @@
   1. READS   the expense log this room already shows, and what comes in.
   2. WRITES  the log, as before, and the four calendar fields — pay cadence,
              next payday, bills a month, pay-later due — whose owner moved
-             here with their boxes (D-270).
+             here with their boxes (D-275).
   3. CALLS   the engines each reading already called; no arithmetic moved.
   4. EMPTY   the dates reading names the figure it lacks rather than drawing
              a flat line. A month with nothing logged is a month with
@@ -46,7 +46,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- What moved, from rooms/cash-flow.html (D-270) ---- */
+  /* ---- What moved, from rooms/cash-flow.html (D-275) ---- */
   
   #view-what-moved .room-back:hover { text-decoration: underline; }
   
@@ -128,7 +128,7 @@
   
   #view-what-moved .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- The dates, from rooms/calendar.html (D-270) ---- */
+  /* ---- The dates, from rooms/calendar.html (D-275) ---- */
   
   #view-the-dates section[id] { scroll-margin-top: var(--space-4); }
   
@@ -313,7 +313,7 @@
 <script src="../shared/lens.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- what moved, and the dates (D-270) ----
+/* ---- what moved, and the dates (D-275) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -321,7 +321,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -376,7 +376,7 @@
 
 
 <script>
-/* ---- READING view-what-moved, from rooms/cash-flow.html (D-270) ---- */
+/* ---- READING view-what-moved, from rooms/cash-flow.html (D-275) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
@@ -751,7 +751,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-dates, from rooms/calendar.html (D-270) ---- */
+/* ---- READING view-the-dates, from rooms/calendar.html (D-275) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,

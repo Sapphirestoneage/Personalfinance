@@ -160,7 +160,7 @@ module.exports = function (t) {
   /* No dependents: incomplete, and the registry hides the room. */
   const nobody = Kids.plan(household({ dependents: [] }), T);
   checkTrue('an empty list → incomplete, says nobody depends', nobody.status === 'incomplete' && /[Nn]obody/.test(nobody.reason));
-  /* No dependents: the READING is hidden, not the room. Family (D-266)
+  /* No dependents: the READING is hidden, not the room. Family (D-271)
      exists when there is a partner OR a dependent, and each reading keeps
      the branch its room had — the router hides the hat. */
   checkTrue('… and the reading is gated on dependents', Gate.exists(household({ dependents: [] }), 'dependents') === false
@@ -194,7 +194,7 @@ module.exports = function (t) {
 
   section('Kids and Tuition — the room on the template');
 
-  /* kids is a reading of partner since D-266, so this file reads its slice of
+  /* kids is a reading of partner since D-271, so this file reads its slice of
      that page: its own markup and its own script. `slice.page` is the
      whole file, for the few facts that really are page-wide. */
   const slice = reading('rooms/partner.html', 'view-the-children', "READING view-the-children,");

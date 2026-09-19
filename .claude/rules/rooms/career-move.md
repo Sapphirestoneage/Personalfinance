@@ -15,5 +15,5 @@ Reference data: blocks/sabbatical.json, career_momentum.json, cobra_aca_2024.jso
 Owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), employmentStatus (start), employerMatch (start), marginalRate (statement), healthMonthly (protection), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:
-  - D-276 — Work: seven questions about a job
+  - D-281 — Work: seven questions about a job
 Full context: node tools/context/pack.js career-move

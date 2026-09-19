@@ -11,7 +11,7 @@ Reference data: effective_tax_rates_2026.json, estate_basics.json, protection_co
 Owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), highestDeductible (start), oopMax (runway), termLife (runway), disabilityMonthly (runway), otherAssets (statement), monthlyExpenses (expenses)
 Latest decisions:
-  - D-261 — Protection: cover, and where it goes
+  - D-266 — Protection: cover, and where it goes
   - D-103 — Protection: each need against what is held
   - D-098 — The first six tranche rooms: what each owns, before it is built
   - D-094 — One pager in, one pager out: the core

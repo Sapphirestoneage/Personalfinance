@@ -283,5 +283,5 @@
     "data/triple_d.json",
     "data/return_bands.json"
   ],
-  "note": "A question may say choicesFrom instead of choices: {table, path, label, first}. The choices are read from that reference table when the template loads (Events.resolveChoices), so the template keeps no copy of forty cities that data/col_index.json owns. D-292."
+  "note": "A question may say choicesFrom instead of choices: {table, path, label, first}. The choices are read from that reference table when the template loads (Events.resolveChoices), so the template keeps no copy of forty cities that data/col_index.json owns. D-297."
 }

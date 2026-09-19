@@ -37,7 +37,7 @@
       Schema: root.SLAF && root.SLAF.Schema,
       Tier0: root.SLAF && root.SLAF.Tier0,
       Fire: root.SLAF && root.SLAF.Fire,
-      /* the property engine, which publishes as Owning since D-275 */
+      /* the property engine, which publishes as Owning since D-280 */
       Ownership: root.SLAF && root.SLAF.Owning
     };
   }

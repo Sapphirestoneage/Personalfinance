@@ -155,7 +155,7 @@ module.exports = function (t) {
 
   section('Big Purchase — the room on the template');
 
-  /* This room carries a second reading since D-265, so these assertions
+  /* This room carries a second reading since D-270, so these assertions
      read its own slice; `page` is the whole file, for the facts that
      really are page-wide. */
   const slice = reading('rooms/big-purchase.html', 'view-one-thing', "READING view-one-thing,");

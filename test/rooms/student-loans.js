@@ -71,7 +71,7 @@ module.exports = function (t) {
   check('a ten-year term', conv.standardTermYears, 10);
   check('ten per cent of discretionary income', conv.idrShareOfDiscretionary, 0.1);
   check('a convention, not a regulation', conv.confidence, 'convention');
-  /* student-loans is a reading of debt-payoff since D-274, so this file reads its slice of
+  /* student-loans is a reading of debt-payoff since D-279, so this file reads its slice of
      that page: its own markup and its own script. `slice.page` is the
      whole file, for the few facts that really are page-wide. */
   const slice = reading('rooms/debt-payoff.html', 'view-the-loans', "READING view-the-loans,");
@@ -81,7 +81,7 @@ module.exports = function (t) {
   checkTrue('… four inputs, the room’s own', ['plan', 'extraMonthlyCents', 'idrShare', 'forgivenessYears'].every(c => new RegExp("ctl: '" + c + "'").test(page)));
   checkTrue('… writes only studentLoans.*', (page.match(/Spine\.set\('([a-zA-Z.]+)'/g) || []).every(m => /studentLoans\./.test(m)));
   check('the plan is owned here', Ownership.field('loanPlan').owner, 'debt-payoff');
-  /* The branch moved from the room to the reading (D-274): Debt requires
+  /* The branch moved from the room to the reading (D-279): Debt requires
      nothing and has not since D-061, and the loans reading carries it. */
   check('the room it lives in requires no branch', Registry.requires('debt-payoff').join(','), '');
   checkTrue('… and the loans reading declares the debt branch',

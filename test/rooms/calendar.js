@@ -96,7 +96,7 @@ module.exports = function (t) {
   const conv = T.calendarConventions;
   check('four cadences', Object.keys(conv.cadences).length, 4);
   check('fortnightly is 26 ÷ 12 paydays a month', Math.round(conv.cadences.fortnightly.paydaysPerMonth * 1000) / 1000, Math.round(26 / 12 * 1000) / 1000);
-  /* The Money Calendar is the dates reading of The Month since D-270, so
+  /* The Money Calendar is the dates reading of The Month since D-275, so
      this file reads its slice of that page. */
   const slice = reading('rooms/cash-flow.html', 'view-the-dates', 'READING view-the-dates,');
   const page = slice.html;

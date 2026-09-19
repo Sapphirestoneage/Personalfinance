@@ -12,9 +12,9 @@ Reference data: effective_tax_rates_2026.json, expense_categories.json, goal_tem
 Owns: reversibilityDecision
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:
-  - D-294 — A block that pays
-  - D-291 — What If: two scenario rooms are each other, not two block types
-  - D-287 — The Decision Room gets a second reading: the ones behind you
-  - D-278 — The Decision Room: one shell, five outputs on every block
+  - D-299 — A block that pays
+  - D-296 — What If: two scenario rooms are each other, not two block types
+  - D-292 — The Decision Room gets a second reading: the ones behind you
+  - D-283 — The Decision Room: one shell, five outputs on every block
   - D-090 — The Skill Stacker: three at a time, did or didn't, and a ledger of what each day was worth
 Full context: node tools/context/pack.js goals

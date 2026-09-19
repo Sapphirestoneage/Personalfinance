@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md
-  D-101, D-225, D-227, D-275 (the merge). Registry: housing.
+  D-101, D-225, D-227, D-280 (the merge). Registry: housing.
 
   THREE READINGS OF THE SAME PLACE.
 
@@ -48,13 +48,13 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- Rent or buy, from rooms/housing.html (D-275) ---- */
+  /* ---- Rent or buy, from rooms/housing.html (D-280) ---- */
   
   #view-rent-or-buy section[id] { scroll-margin-top: var(--space-4); }
   
   #view-rent-or-buy .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- The deposit, from rooms/down-payment.html (D-275) ---- */
+  /* ---- The deposit, from rooms/down-payment.html (D-280) ---- */
   
   #view-the-deposit .ask { display: grid; gap: var(--space-3); margin-top: var(--space-3); grid-template-columns: 1fr 1fr; }
   
@@ -78,7 +78,7 @@
   @media (max-width: 480px) { 
   #view-the-deposit .ask { grid-template-columns: 1fr; } }
 
-  /* ---- The deal, from rooms/property.html (D-275) ---- */
+  /* ---- The deal, from rooms/property.html (D-280) ---- */
   
   #view-the-deal .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); }
   @media (max-width: 420px) { 
@@ -393,7 +393,7 @@
 <script src="../engines/ownership.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- rent or buy, the deposit, the deal (D-275) ----
+/* ---- rent or buy, the deposit, the deal (D-280) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -401,7 +401,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -457,7 +457,7 @@
 
 
 <script>
-/* ---- READING view-rent-or-buy, from rooms/housing.html (D-275) ---- */
+/* ---- READING view-rent-or-buy, from rooms/housing.html (D-280) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -518,7 +518,7 @@
     part: true,
     /* shared/room.js filters its document-level listeners by root. A
        part mount without one answers the whole page, including the
-       other readings' boxes (D-277). */
+       other readings' boxes (D-282). */
     root: 'view-rent-or-buy',
     tables: ['housingConventions', 'priceToRent', 'mortgageRates', 'ratioBenchmarks', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'levers'],
     reads: ['rentMonthly', 'monthlyExpenses', 'grossAnnualIncome', 'cashSavings', 'state'],
@@ -656,7 +656,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-deposit, from rooms/down-payment.html (D-275) ---- */
+/* ---- READING view-the-deposit, from rooms/down-payment.html (D-280) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, DownPayment = SLAF.DownPayment, Blocks = SLAF.Blocks, Scenarios = SLAF.Scenarios;
@@ -701,7 +701,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-deal, from rooms/property.html (D-275) ---- */
+/* ---- READING view-the-deal, from rooms/property.html (D-280) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Own = SLAF.Owning;

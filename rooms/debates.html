@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-218, D-267 (the merge).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-218, D-272 (the merge).
   Registry: debates.
 
   TWO READINGS OF THE ADVICE.
@@ -30,7 +30,7 @@
   1. READS   what the two engines already read; nothing new.
   2. WRITES  nothing from the debate reading — a debate is a what-if — and
              unlearningDropped from the other, whose owner moved here with
-             its boxes (D-267). That reading has two inputs: a select "A rule"
+             its boxes (D-272). That reading has two inputs: a select "A rule"
              that picks which rule the second acts on, and a choice "Have
              you let it go?" that adds or removes that rule's id through
              Spine.set('unlearning.dropped', …).
@@ -45,7 +45,7 @@
   5. CONFIG  the tables each engine names.
 
   The unlearning reading is built from shared/room.js as a part of this room
-  (D-260): it shares no id with the debate reading, so it needs no prefix,
+  (D-265): it shares no id with the debate reading, so it needs no prefix,
   only `part: true` so it does not register the room a second time.
 
   THEMING: none this pass. A theme is a class on <body> and a palette in
@@ -57,7 +57,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- Which side, from rooms/debates.html (D-267) ---- */
+  /* ---- Which side, from rooms/debates.html (D-272) ---- */
   
   #view-which-side .list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
   
@@ -81,7 +81,7 @@
   @media (max-width: 480px) { 
   #view-which-side .sides { grid-template-columns: 1fr; } }
 
-  /* ---- Still applies?, from rooms/unlearning.html (D-267) ---- */
+  /* ---- Still applies?, from rooms/unlearning.html (D-272) ---- */
   
   #view-still-applies ul.rulelist { list-style: none; margin: 0; padding: 0; }
   
@@ -251,7 +251,7 @@
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- Which side, and whether it still applies (D-267) ----
+/* ---- Which side, and whether it still applies (D-272) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -259,7 +259,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -314,7 +314,7 @@
 
 
 <script>
-/* ---- READING view-which-side, from rooms/debates.html (D-267) ---- */
+/* ---- READING view-which-side, from rooms/debates.html (D-272) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Debates = SLAF.Debates, ShareCard = SLAF.ShareCard;
@@ -333,7 +333,7 @@
     var d = Debates.byId(TABLES, CURRENT);
     if (!d) return;
     /* One typed box serves the two debates that need a price; its label
-       says which price (D-295). The box is built once and only relabelled. */
+       says which price (D-300). The box is built once and only relabelled. */
     var asks = { rentVsBuy: 'The price of the place you would buy', newVsUsed: 'The price of the car, new' };
     el('d-ask').hidden = !asks[d.id];
     if (asks[d.id]) { el('d-ask').querySelector('label').textContent = asks[d.id]; el('in-price').setAttribute('aria-label', asks[d.id]); }
@@ -373,7 +373,7 @@
 </script>
 
 <script>
-/* ---- READING view-still-applies, from rooms/unlearning.html (D-267) ---- */
+/* ---- READING view-still-applies, from rooms/unlearning.html (D-272) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,

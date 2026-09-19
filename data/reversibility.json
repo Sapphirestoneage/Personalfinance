@@ -5,7 +5,7 @@
   "source": "How much a decision costs to undo, and how long it takes (BRIEF §8, Reversibility): the sunk-cost-and-search arithmetic behind 'is this a door or a one-way street'. Formulas in the life-events expression language over the household context and the room's own answers; conventions drawn from the housing, moving and re-entry tables.",
   "confidence": "convention",
   "confidenceNote": "Every undo figure is a convention for the kind of decision, never a quote: a house sells at about 8% in costs, a car loses about a fifth in its first year, a search runs a median 2.3 months.",
-  "note": "decisions: id, label, questions (id, ask, unit, default), undoCents (a formula or null), undoMonths (a formula or null), reversible: true / 'partly' / false, and why. D-101. Five more arrived with D-295 — going back to school, co-signing, starting a business, a lodger, moving home — the book’s decisions people actually weigh, each with the honest undo where there is one.",
+  "note": "decisions: id, label, questions (id, ask, unit, default), undoCents (a formula or null), undoMonths (a formula or null), reversible: true / 'partly' / false, and why. D-101. Five more arrived with D-300 — going back to school, co-signing, starting a business, a lodger, moving home — the book’s decisions people actually weigh, each with the honest undo where there is one.",
   "decisions": [
     {
       "id": "buy-a-house",

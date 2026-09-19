@@ -54,7 +54,7 @@ const EQUAL_HEIGHT = [
   ['/rooms/runway.html#at-3am', '.pair'],
   ['/rooms/runway.html#at-3am', '.cover-grid'],
   /* A merged room opens on its default reading, so a row that belongs to
-     another one has to be asked for by hash or it measures nothing (D-277). */
+     another one has to be asked for by hash or it measures nothing (D-282). */
   ['/rooms/financial-snapshot.html#the-nine', '.three'],
   ['/rooms/values.html#the-rerank', '.rate-row'],
   ['/rooms/values.html#the-rerank', '.pair'],

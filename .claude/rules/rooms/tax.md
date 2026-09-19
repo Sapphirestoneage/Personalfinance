@@ -11,7 +11,7 @@ Reference data: aca_2026.json, benefit_cliffs_2026.json, effective_tax_rates_202
 Owns: otherPreTax, withheld
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), employmentStatus (start), contributionPercent (start), marginalRate (statement)
 Latest decisions:
-  - D-296 — The cliff, as a reading of Tax
+  - D-301 — The cliff, as a reading of Tax
   - D-150 — The Account You Left Behind: four futures, one trap, one sum
   - D-142 — A room does not ask a question your situation has no answer to
   - D-129 — The ledger, revised: four ways to be taxed, three things an expense can produce, a budget of cards with presets, N/A and the what-if

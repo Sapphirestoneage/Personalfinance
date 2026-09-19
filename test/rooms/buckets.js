@@ -213,7 +213,7 @@ module.exports = function (t) {
   checkTrue('no extra is named status', !Object.keys(p).some((k, i, arr) => arr.indexOf(k) !== i));
 
   /* ---- Ownership, registry, schema ----------------------------------------------- */
-  /* Time Buckets is the decades reading of The Life since D-264, so the
+  /* Time Buckets is the decades reading of The Life since D-269, so the
      owner moved with the boxes that ask for it. */
   check('the planned total is owned by The Life', Ownership.field('bucketsPlanned').owner, 'week');
   check('… anchored at the decades reading’s inputs', Ownership.field('bucketsPlanned').anchor, 'bk-inputs');

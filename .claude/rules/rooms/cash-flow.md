@@ -10,7 +10,7 @@ Reference data: calendar_conventions.json, effective_tax_rates_2026.json, expens
 Owns: payCadence, nextPayday, billsMonthly, payLaterDue
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), rentMonthly (expenses), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
 Latest decisions:
-  - D-270 — The Month: what moved, and the dates
+  - D-275 — The Month: what moved, and the dates
   - D-253 — What hits your account, and when: the month as turns, in Cash Flow and the Calendar
   - D-192 — Expenses is what a month costs; Cash Flow is when the money moves
   - D-163 — The dead spot is the door

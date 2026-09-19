@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-268 (the merge).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-273 (the merge).
   Registry: values.
 
   FOUR READINGS OF THE SAME SPENDING.
@@ -34,7 +34,7 @@
   1. READS   the expense log, income, and the FI figures for the months-of-FI
              conversions.
   2. WRITES  rerankCut and the two giving fields, whose owners moved here
-             with their boxes (D-268). The first two readings write nothing:
+             with their boxes (D-273). The first two readings write nothing:
              a rating is page-local, as it always was.
   3. CALLS   the engines each reading already called; no arithmetic moved.
   4. EMPTY   every reading names the log it needs rather than drawing an
@@ -42,7 +42,7 @@
   5. CONFIG  the tables each engine names.
 
   THE GIVING READING is built from shared/room.js as a part of this room
-  (D-260), with a prefix and a root of its own; the other three are the
+  (D-265), with a prefix and a root of its own; the other three are the
   hand-built pages they always were, their colliding ids renamed behind a
   prefix each.
 
@@ -54,7 +54,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- Said and spent, from rooms/values.html (D-268) ---- */
+  /* ---- Said and spent, from rooms/values.html (D-273) ---- */
   
   #view-said-and-spent .room-back:hover { text-decoration: underline; }
   
@@ -141,7 +141,7 @@
   
   #view-said-and-spent .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- The joy curve, from rooms/fulfillment.html (D-268) ---- */
+  /* ---- The joy curve, from rooms/fulfillment.html (D-273) ---- */
   
   #view-the-joy-curve .room-back:hover { text-decoration: underline; }
   
@@ -216,7 +216,7 @@
   
   #view-the-joy-curve .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- The rerank, from rooms/rerank.html (D-268) ---- */
+  /* ---- The rerank, from rooms/rerank.html (D-273) ---- */
   
   #view-the-rerank .room-back:hover { text-decoration: underline; }
   
@@ -337,7 +337,7 @@
   
   #view-the-rerank .notice.is-error { border-color: #b5544d; }
 
-  /* ---- What you give, from rooms/giving.html (D-268) ---- */
+  /* ---- What you give, from rooms/giving.html (D-273) ---- */
   
   #view-what-you-give section[id] { scroll-margin-top: var(--space-4); }
   
@@ -620,7 +620,7 @@
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- Said against spent, and three ways to argue with it (D-268) ----
+/* ---- Said against spent, and three ways to argue with it (D-273) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -628,7 +628,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -685,7 +685,7 @@
 
 
 <script>
-/* ---- READING view-said-and-spent, from rooms/values.html (D-268) ---- */
+/* ---- READING view-said-and-spent, from rooms/values.html (D-273) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
@@ -931,7 +931,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-joy-curve, from rooms/fulfillment.html (D-268) ---- */
+/* ---- READING view-the-joy-curve, from rooms/fulfillment.html (D-273) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
@@ -1141,7 +1141,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-rerank, from rooms/rerank.html (D-268) ---- */
+/* ---- READING view-the-rerank, from rooms/rerank.html (D-273) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
@@ -1543,7 +1543,7 @@
 </script>
 
 <script>
-/* ---- READING view-what-you-give, from rooms/giving.html (D-268) ---- */
+/* ---- READING view-what-you-give, from rooms/giving.html (D-273) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,

@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md
-  D-052, D-219, D-263 (the merge). Registry: car.
+  D-052, D-219, D-268 (the merge). Registry: car.
 
   ONE CAR, TWO READINGS.
 
@@ -57,7 +57,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- Does it fit?, from rooms/first-car.html (D-263) ---- */
+  /* ---- Does it fit?, from rooms/first-car.html (D-268) ---- */
   
   #view-the-check .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
   
@@ -79,7 +79,7 @@
   @media (max-width: 480px) { 
   #view-the-check .ask { grid-template-columns: 1fr; } }
 
-  /* ---- What it costs, from rooms/car.html (D-263) ---- */
+  /* ---- What it costs, from rooms/car.html (D-268) ---- */
   
   #view-what-it-costs section[id] { scroll-margin-top: var(--space-4); }
   
@@ -347,7 +347,7 @@
 <script src="../shared/charts.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- Does it fit, then what it costs (D-263) ----
+/* ---- Does it fit, then what it costs (D-268) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -520,7 +520,7 @@
     part: true,
     /* shared/room.js filters its document-level listeners by root. A
        part mount without one answers the whole page, including the
-       other readings' boxes (D-277). */
+       other readings' boxes (D-282). */
     root: 'view-what-it-costs',
     tables: ['carCosts', 'effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones',
              'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states'],

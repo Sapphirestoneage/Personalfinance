@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-271 (the merge).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-276 (the merge).
   Registry: budget.
 
   ONE RECORD AT THREE LENGTHS.
@@ -32,14 +32,14 @@
   1. READS   what Income and the expense log already hold; nothing is typed
              in the first two readings at all.
   2. WRITES  monthsClosed, as before, and historyCompareTo, whose owner
-             moved here with its boxes (D-271).
+             moved here with its boxes (D-276).
   3. CALLS   the engines each reading already called; no arithmetic moved.
   4. EMPTY   no closed month is no closed month: the second reading says so
              rather than drawing an empty trend.
   5. CONFIG  the tables each engine names.
 
   THE OVER-TIME READING is built from shared/room.js as a part of this room
-  (D-260), with a prefix and a root of its own.
+  (D-265), with a prefix and a root of its own.
 
   THEMING: none this pass. A theme is a class on <body> and a palette in
   shared/theme.css.
@@ -49,7 +49,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- This month, from rooms/budget.html (D-271) ---- */
+  /* ---- This month, from rooms/budget.html (D-276) ---- */
   
   #view-this-month section[id] { scroll-margin-top: var(--space-4); }
   
@@ -218,7 +218,7 @@
   
   #view-this-month ul.months li:first-child { border-top: none; }
 
-  /* ---- Every month, from rooms/variance.html (D-271) ---- */
+  /* ---- Every month, from rooms/variance.html (D-276) ---- */
   
   #view-every-month section[id] { scroll-margin-top: var(--space-4); }
   
@@ -263,7 +263,7 @@
   #view-every-month .grid-head,
   #view-every-month .v-row { grid-template-columns: 1fr 64px 64px 80px; } }
 
-  /* ---- Over time, from rooms/history.html (D-271) ---- */
+  /* ---- Over time, from rooms/history.html (D-276) ---- */
   
   #view-over-time section[id] { scroll-margin-top: var(--space-4); }
   
@@ -445,7 +445,7 @@
 <script src="../shared/lens.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- this month, every month, over time (D-271) ----
+/* ---- this month, every month, over time (D-276) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -453,7 +453,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -509,7 +509,7 @@
 
 
 <script>
-/* ---- READING view-this-month, from rooms/budget.html (D-271) ---- */
+/* ---- READING view-this-month, from rooms/budget.html (D-276) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Budget = SLAF.Budget, Ledger = SLAF.Ledger, Presets = SLAF.Presets;
@@ -816,7 +816,7 @@
 </script>
 
 <script>
-/* ---- READING view-every-month, from rooms/variance.html (D-271) ---- */
+/* ---- READING view-every-month, from rooms/variance.html (D-276) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Variance = SLAF.Variance, Budget = SLAF.Budget, Charts = SLAF.Charts;
@@ -920,7 +920,7 @@
 </script>
 
 <script>
-/* ---- READING view-over-time, from rooms/history.html (D-271) ---- */
+/* ---- READING view-over-time, from rooms/history.html (D-276) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,

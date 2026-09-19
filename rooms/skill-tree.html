@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-269 (the merge).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-274 (the merge).
   Registry: skill-tree.
 
   THREE READINGS OF THE SAME SKILLS.
@@ -31,7 +31,7 @@
 
   1. READS   the skills done, the practice ledger, and the exercises done.
   2. WRITES  skillsDone as before, and practiceLedger and exercisesDone,
-             whose owners moved here with their boxes (D-269).
+             whose owners moved here with their boxes (D-274).
   3. CALLS   the engines each reading already called; no arithmetic moved.
   4. EMPTY   a tree with nothing done is the whole tree, not an error.
   5. CONFIG  the tables each engine names.
@@ -44,7 +44,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- The tree, from rooms/skill-tree.html (D-269) ---- */
+  /* ---- The tree, from rooms/skill-tree.html (D-274) ---- */
   /* This room is a board, not prose. The tech tree is thousands of pixels
      wide, and a 620px measure shows the rail and two rungs of it. So the
      page takes the whole window here, and every section that IS prose keeps
@@ -301,7 +301,7 @@
   #view-the-tree .serp .s-fog { border: 1px dashed var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); color: var(--color-text-faint); font-size: var(--text-sm); text-align: center; }
   }
 
-  /* ---- The three, from rooms/stacker.html (D-269) ---- */
+  /* ---- The three, from rooms/stacker.html (D-274) ---- */
   
   #view-the-three .room-back:hover { text-decoration: underline; }
   
@@ -429,7 +429,7 @@
   
   #view-the-three .notice.is-error { border-color: #b5544d; }
 
-  /* ---- The doing, from rooms/exercises.html (D-269) ---- */
+  /* ---- The doing, from rooms/exercises.html (D-274) ---- */
   
   #view-the-doing section[id] { scroll-margin-top: var(--space-4); }
   
@@ -702,7 +702,7 @@
 <script src="../engines/decumulation.js"></script>
 <script src="../engines/exercises.js"></script>
 <script>
-/* ---- the tree, the three, and the doing (D-269) ----
+/* ---- the tree, the three, and the doing (D-274) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -710,7 +710,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -766,7 +766,7 @@
 
 
 <script>
-/* ---- READING view-the-tree, from rooms/skill-tree.html (D-269) ---- */
+/* ---- READING view-the-tree, from rooms/skill-tree.html (D-274) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Registry = SLAF.Registry, Ownership = SLAF.Ownership, SkillTree = SLAF.SkillTree;
@@ -1098,7 +1098,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-three, from rooms/stacker.html (D-269) ---- */
+/* ---- READING view-the-three, from rooms/stacker.html (D-274) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
@@ -1455,7 +1455,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-doing, from rooms/exercises.html (D-269) ---- */
+/* ---- READING view-the-doing, from rooms/exercises.html (D-274) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Registry = SLAF.Registry, Ownership = SLAF.Ownership, Exercises = SLAF.Exercises;

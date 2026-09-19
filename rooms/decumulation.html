@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md
-  D-216, D-218, D-228 (the reframe), D-279 (the merge). Registry: decumulation.
+  D-216, D-218, D-228 (the reframe), D-284 (the merge). Registry: decumulation.
 
   FOUR READINGS OF COMING DOWN.
 
@@ -57,13 +57,13 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- The draw, from rooms/decumulation.html (D-279) ---- */
+  /* ---- The draw, from rooms/decumulation.html (D-284) ---- */
   
   #view-the-draw section[id] { scroll-margin-top: var(--space-4); }
   
   #view-the-draw .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- What you can reach, from rooms/reachable.html (D-279) ---- */
+  /* ---- What you can reach, from rooms/reachable.html (D-284) ---- */
   
   #view-what-you-can-reach .ask { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
   @media (max-width: 420px) { 
@@ -97,7 +97,7 @@
   
   #view-what-you-can-reach .home { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); }
 
-  /* ---- Before 59½, from rooms/middle-class-trap.html (D-279) ---- */
+  /* ---- Before 59½, from rooms/middle-class-trap.html (D-284) ---- */
   
   #view-before-59 .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
   
@@ -147,7 +147,7 @@
   @media (max-width: 480px) { 
   #view-before-59 .sides { grid-template-columns: 1fr; } }
 
-  /* ---- The price of cover, from rooms/roth-aca.html (D-279) ---- */
+  /* ---- The price of cover, from rooms/roth-aca.html (D-284) ---- */
   
   #view-the-price-of-cover .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
   
@@ -390,7 +390,7 @@
 <script src="../engines/rothaca.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- the draw, what you can reach, the wall, the price of cover (D-279) ----
+/* ---- the draw, what you can reach, the wall, the price of cover (D-284) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -398,7 +398,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -455,7 +455,7 @@
 
 
 <script>
-/* ---- READING view-the-draw, from rooms/decumulation.html (D-279) ---- */
+/* ---- READING view-the-draw, from rooms/decumulation.html (D-284) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -596,7 +596,7 @@
 </script>
 
 <script>
-/* ---- READING view-what-you-can-reach, from rooms/reachable.html (D-279) ---- */
+/* ---- READING view-what-you-can-reach, from rooms/reachable.html (D-284) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Reachable = SLAF.Reachable;
@@ -641,7 +641,7 @@
 </script>
 
 <script>
-/* ---- READING view-before-59, from rooms/middle-class-trap.html (D-279) ---- */
+/* ---- READING view-before-59, from rooms/middle-class-trap.html (D-284) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Trap = SLAF.Trap;
@@ -712,7 +712,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-price-of-cover, from rooms/roth-aca.html (D-279) ---- */
+/* ---- READING view-the-price-of-cover, from rooms/roth-aca.html (D-284) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Features = SLAF.Features,

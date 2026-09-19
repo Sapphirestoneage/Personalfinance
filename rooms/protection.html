@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-098, D-261 (the merge).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-098, D-266 (the merge).
 
   TWO READINGS OF WHAT STANDS BEHIND YOU.
 
@@ -28,13 +28,13 @@
   1. READS   spending, cash, pay, dependents, and the assets by kind.
   2. WRITES  five fields through their owners: health cover and what it costs
              (already here), and the three estate facts, whose owner moved
-             with the boxes that ask them (D-261).
+             with the boxes that ask them (D-266).
   3. CALLS   engines/protection.js and engines/estate.js.
   4. EMPTY   each reading says which figure it lacks; a blank is never a no.
   5. CONFIG  the tables each engine names.
 
   BOTH READINGS ARE BUILT FROM shared/room.js, which is why the estate one
-  carries a prefix and a root (D-260): two copies of the template on one page
+  carries a prefix and a root (D-265): two copies of the template on one page
   would otherwise write into each other's nodes.
 
   LIVE-FORM: built once. shared/room.js builds each reading's controls from
@@ -42,13 +42,13 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- Cover, from rooms/protection.html (D-261) ---- */
+  /* ---- Cover, from rooms/protection.html (D-266) ---- */
   
   #view-cover section[id] { scroll-margin-top: var(--space-4); }
   
   #view-cover .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- Where it goes, from rooms/estate.html (D-261) ---- */
+  /* ---- Where it goes, from rooms/estate.html (D-266) ---- */
   
   #view-where-it-goes section[id] { scroll-margin-top: var(--space-4); }
   
@@ -187,7 +187,7 @@
 <script src="../engines/estate.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- Cover, and where it goes (D-261) ----
+/* ---- Cover, and where it goes (D-266) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which

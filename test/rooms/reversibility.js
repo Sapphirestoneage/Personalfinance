@@ -49,7 +49,7 @@ module.exports = function (t) {
   checkTrue('… and with no spending there is no verdict, with a reason', R.undo(Schema.createHousehold({}), 'buy-a-house', { price: 30000000 }, T).verdict === null);
   checkTrue('slots sort questions by the box they need', (function () { const s = R.slots(R.byId(T, 'move-cities')); return s.choice.length === 1 && s.choice[0].id === 'distance'; })());
 
-  /* The page and the map. Can It Be Undone is not a room since D-278: the
+  /* The page and the map. Can It Be Undone is not a room since D-283: the
      two figures are fields on every block of the Decision Room, the
      catalogue is a way to START a block, and this engine is what prices it.
      Everything above still holds — the verdict rule, the table, the ten

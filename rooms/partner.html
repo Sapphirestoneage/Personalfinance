@@ -13,8 +13,8 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11. On the frozen template (D-097), twice, which is
-  why the children reading carries a prefix and a root (D-260). DECISIONS.md
-  D-216, D-266 (the merge). Registry: partner.
+  why the children reading carries a prefix and a root (D-265). DECISIONS.md
+  D-216, D-271 (the merge). Registry: partner.
 
   ONE HOUSEHOLD, THE PEOPLE IN IT.
 
@@ -31,7 +31,7 @@
 
   1. READS   what you earn, the month you spend, and the people listed.
   2. WRITES  the four partner fields as before, and the three tuition
-             fields, whose owner moved here with their boxes (D-266).
+             fields, whose owner moved here with their boxes (D-271).
   3. CALLS   the engines each reading already called; no arithmetic moved.
   4. EMPTY   neither reading invents a person or a cost.
   5. CONFIG  the tables each engine names.
@@ -52,7 +52,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- The two of you, from rooms/partner.html (D-266) ---- */
+  /* ---- The two of you, from rooms/partner.html (D-271) ---- */
   
   #view-two-of-you section[id] { scroll-margin-top: var(--space-4); }
   
@@ -99,7 +99,7 @@
   
   #view-two-of-you ul.tag-list .tag.is-ours { background: rgba(48, 164, 108, .12); }
 
-  /* ---- The children, from rooms/kids.html (D-266) ---- */
+  /* ---- The children, from rooms/kids.html (D-271) ---- */
   
   #view-the-children section[id] { scroll-margin-top: var(--space-4); }
   
@@ -266,7 +266,7 @@
 <script src="../engines/kids.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- the two of you, and the children (D-266) ----
+/* ---- the two of you, and the children (D-271) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -274,7 +274,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -329,7 +329,7 @@
 
 
 <script>
-/* ---- READING view-two-of-you, from rooms/partner.html (D-266) ---- */
+/* ---- READING view-two-of-you, from rooms/partner.html (D-271) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
@@ -394,7 +394,7 @@
     part: true,
     /* shared/room.js filters its document-level listeners by root. A
        part mount without one answers the whole page, including the
-       other readings' boxes (D-277). */
+       other readings' boxes (D-282). */
     root: 'view-two-of-you',
     tables: ['effectiveTaxRates', 'onepagerDefaults', 'retirementMilestones', 'matchDefaults', 'uiBenefits', 'fireVariants', 'irsLimits', 'hassleDefaults', 'states', 'partnerConventions', 'ratioBenchmarks'],
     reads: ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'],
@@ -532,7 +532,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-children, from rooms/kids.html (D-266) ---- */
+/* ---- READING view-the-children, from rooms/kids.html (D-271) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,

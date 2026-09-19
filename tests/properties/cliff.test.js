@@ -1,5 +1,5 @@
 'use strict';
-/* Property tests for engines/cliff.js (D-296): the four generic properties
+/* Property tests for engines/cliff.js (D-301): the four generic properties
    from _harness.js. where() takes the household, the tables and an options
    bag; with no raise and no size named it reads the household alone, which
    is the case the page opens on. fplCents() takes a table row, not a

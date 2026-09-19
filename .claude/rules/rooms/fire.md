@@ -14,7 +14,7 @@ Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_
 Owns: enoughMonthly, retireAge, coastAge
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), netWorth (statement), monthlyExpenses (expenses)
 Latest decisions:
-  - D-280 — The Number, five readings of one multiplication
+  - D-285 — The Number, five readings of one multiplication
   - D-240 — The FI date carries its range and says what it assumes
   - D-235 — The map: one road, you are here, and the routes from here
   - D-228 — You cannot size the mountain until you know how you come down it

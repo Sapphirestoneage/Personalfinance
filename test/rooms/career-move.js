@@ -157,7 +157,7 @@ module.exports = function (t) {
 
   section('Career Move — the room on the template');
 
-  /* This room carries a second reading since D-276, so these assertions
+  /* This room carries a second reading since D-281, so these assertions
      read its own slice; `page` is the whole file, for the facts that
      really are page-wide. */
   const slice = reading('rooms/career-move.html', 'view-the-offer', "READING view-the-offer,");
@@ -184,7 +184,7 @@ module.exports = function (t) {
   function situ(status) {
     return Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult', employmentStatus: status, incomeSources: [Schema.createIncomeSource({ id: 'i', personId: 'p', grossAnnualIncomeCents: 5000000 })] })] });
   }
-  /* Work is open to someone between jobs since D-276: Offers side by side,
+  /* Work is open to someone between jobs since D-281: Offers side by side,
      A degree and A break never required the career branch, and they are
      exactly what a person between jobs opens. It is still not for a retired
      one — that is the room's appliesWhen, which every room on this page

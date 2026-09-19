@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11, §12.2. DECISIONS.md D-217, D-228 (the reframe),
-  D-280 (the merge). Registry: fire.
+  D-285 (the merge). Registry: fire.
 
   FIVE READINGS OF ONE NUMBER.
 
@@ -33,7 +33,7 @@
   The Back Half, with the naive 25x beside it and one sentence on the gap.
   Today every reading here is built on spending x 25 through
   engines/tier0.js fireNumber. Changing that waits on the owner answer
-  recorded in D-228 and D-279 — whether the income floor is means-tested —
+  recorded in D-228 and D-284 — whether the income floor is means-tested —
   because it moves the number every other room shows.
 
   1. READS   what is invested, the month you spend, and the assumptions.
@@ -55,7 +55,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- The number, from rooms/fire.html (D-280) ---- */
+  /* ---- The number, from rooms/fire.html (D-285) ---- */
   
   #view-the-number .room-back:hover { text-decoration: underline; }
   
@@ -103,13 +103,13 @@
   
   #view-the-number .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- Enough, from rooms/enough.html (D-280) ---- */
+  /* ---- Enough, from rooms/enough.html (D-285) ---- */
   
   #view-enough section[id] { scroll-margin-top: var(--space-4); }
   
   #view-enough .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- Coasting, from rooms/coast-date.html (D-280) ---- */
+  /* ---- Coasting, from rooms/coast-date.html (D-285) ---- */
   
   #view-coast .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
   
@@ -119,7 +119,7 @@
   
   #view-coast .reverse { font-size: var(--text-md); margin: var(--space-2) 0 0; }
 
-  /* ---- The rungs, from rooms/race.html (D-280) ---- */
+  /* ---- The rungs, from rooms/race.html (D-285) ---- */
   
   #view-the-rungs .head-num { font-family: var(--font-display); font-size: var(--text-2xl); margin: var(--space-2) 0 0; }
   
@@ -147,7 +147,7 @@
   
   #view-the-rungs .choices { margin-top: var(--space-3); }
 
-  /* ---- The lab, from rooms/fire-lab.html (D-280) ---- */
+  /* ---- The lab, from rooms/fire-lab.html (D-285) ---- */
   
   #view-the-lab section[id] { scroll-margin-top: var(--space-4); }
 
@@ -516,7 +516,7 @@
 <script src="../shared/sharecard.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- the number, enough, coasting, the rungs, the lab (D-280) ----
+/* ---- the number, enough, coasting, the rungs, the lab (D-285) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -524,7 +524,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -582,7 +582,7 @@
 
 
 <script>
-/* ---- READING view-the-number, from rooms/fire.html (D-280) ---- */
+/* ---- READING view-the-number, from rooms/fire.html (D-285) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
@@ -935,7 +935,7 @@
 </script>
 
 <script>
-/* ---- READING view-enough, from rooms/enough.html (D-280) ---- */
+/* ---- READING view-enough, from rooms/enough.html (D-285) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry,
@@ -1087,7 +1087,7 @@
 </script>
 
 <script>
-/* ---- READING view-coast, from rooms/coast-date.html (D-280) ---- */
+/* ---- READING view-coast, from rooms/coast-date.html (D-285) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Coast = SLAF.Coast;
@@ -1127,7 +1127,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-rungs, from rooms/race.html (D-280) ---- */
+/* ---- READING view-the-rungs, from rooms/race.html (D-285) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Race = SLAF.Race, ShareCard = SLAF.ShareCard;
@@ -1187,7 +1187,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-lab, from rooms/fire-lab.html (D-280) ---- */
+/* ---- READING view-the-lab, from rooms/fire-lab.html (D-285) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,

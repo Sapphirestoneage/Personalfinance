@@ -12,5 +12,5 @@ Reference data: common_costs.json, confidence_weights.json, effective_tax_rates_
 Owns: givingPct, givingTarget, rerankCut
 Reads from other owners: grossAnnualIncome (start), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
 Latest decisions:
-  - D-268 — What Matters, four readings of one expense log
+  - D-273 — What Matters, four readings of one expense log
 Full context: node tools/context/pack.js values

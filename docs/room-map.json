@@ -2,7 +2,7 @@
   "version": 1,
   "decision": "D-229",
   "asOf": "2026-09-12",
-  "what": "The rooms the suite is merging down to, and what each one absorbs. The plan said thirty; it is thirty-one, and the extra one carries its reason in its own note (What If, D-291). Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app.",
+  "what": "The rooms the suite is merging down to, and what each one absorbs. The plan said thirty; it is thirty-one, and the extra one carries its reason in its own note (What If, D-296). Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app.",
   "howToRead": {
     "survivors": "One entry per surviving room. 'id' is its registry id and stays its id; 'title' is what it is called after the merge (the registry may still carry the old title until that merge ships).",
     "absorbs": "Registry ids that become a view, a toggle, a block type or a card inside the survivor. Every one of them ends as a redirect file, never a deleted file: the links are out in the world.",
@@ -114,7 +114,7 @@
         "refresh"
       ],
       "held": {
-        "start": "NOT an ownership question, which is what this note used to say. The 17 owners would go to the Ledger, the way every other merge moved them — the Ledger already WRITES dob, state, zip, filingStatus, grossAnnualIncome, cashSavings, investments, contributionPercent and employmentStatus through Ownership.write, so the label would simply follow the asking. The real question is which INTAKE survives. The Ledger already holds two: Round 1 (five questions, one a screen, deliberately gentle — D-230) and All at once (every question on one page, grouped by DAITE door). Start Here is a third shape: one situation gate, then only the cards that apply, every box filled with a guess shown as one and badged. Folding it in as a seventh reading would give the room three overlapping ways in, which is accumulation, not a merge — the freeze asks what a thing replaces and the honest answer is 'nothing'. What would actually help is Express gaining the situation filter and the guess badges so Start Here retires INTO it. That is a feature, not a move, and it changes the first screen every new arrival sees. Owner's call. D-291."
+        "start": "NOT an ownership question, which is what this note used to say. The 17 owners would go to the Ledger, the way every other merge moved them — the Ledger already WRITES dob, state, zip, filingStatus, grossAnnualIncome, cashSavings, investments, contributionPercent and employmentStatus through Ownership.write, so the label would simply follow the asking. The real question is which INTAKE survives. The Ledger already holds two: Round 1 (five questions, one a screen, deliberately gentle — D-230) and All at once (every question on one page, grouped by DAITE door). Start Here is a third shape: one situation gate, then only the cards that apply, every box filled with a guess shown as one and badged. Folding it in as a seventh reading would give the room three overlapping ways in, which is accumulation, not a merge — the freeze asks what a thing replaces and the honest answer is 'nothing'. What would actually help is Express gaining the situation filter and the guess badges so Start Here retires INTO it. That is a feature, not a move, and it changes the first screen every new arrival sees. Owner's call. D-296."
       },
       "note": "First Round is Round 1, Express is the all-at-once door, Welcome Back and Refresh are one 'since last time'."
     },
@@ -363,7 +363,7 @@
       "done": [
         "adventure"
       ],
-      "note": "The thirty-first, and the one room the cut list did not plan for. The plan folded What If, Life and The Long Way Round into The Decision Room as block types; they are not blocks. A block is one decision with a price and a date, and both of these are a whole life running for five years — the shell would have answered four of its five questions 'not applicable'. They ARE each other, though: the same five figures projected the same way, one event at a time or every path at once. So they are one room of two readings rather than two rooms or one block type. D-291."
+      "note": "The thirty-first, and the one room the cut list did not plan for. The plan folded What If, Life and The Long Way Round into The Decision Room as block types; they are not blocks. A block is one decision with a price and a date, and both of these are a whole life running for five years — the shell would have answered four of its five questions 'not applicable'. They ARE each other, though: the same five figures projected the same way, one event at a time or every path at once. So they are one room of two readings rather than two rooms or one block type. D-296."
     },
     {
       "n": 19,

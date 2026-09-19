@@ -4,7 +4,7 @@ module.exports = function (t) {
   const { section, check, checkTrue, ROOT, fs, path, Registry, Money, Schema, Demo } = t;
   section('The FIRE Lab (D-138): every calculation, drawn');
 
-  /* The lab is a reading of The Number since D-280: its own slice of that
+  /* The lab is a reading of The Number since D-285: its own slice of that
      page. The page beside it DOES write — The Number owns two ages — and
      the rule this file protects is that the lab stores nothing. */
   const slice = t.reading('rooms/fire.html', 'view-the-lab', 'READING view-the-lab,');
@@ -12,7 +12,7 @@ module.exports = function (t) {
   const code = slice.html.replace(/<!--[\s\S]*?-->/g, '');
 
   /* ---- It is a room, in the right place --------------------------------- */
-  /* The lab is a reading of The Number since D-280 — it expands on the
+  /* The lab is a reading of The Number since D-285 — it expands on the
      number rather than sitting beside it, which is what it always did. */
   const room = Registry.byId('fire');
   checkTrue('the lab is a reading of The Number', !Registry.byId('fire-lab')

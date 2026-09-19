@@ -10,7 +10,7 @@ Reference data: confidence_weights.json, credit_factors.json, debt_rules.json, e
 Owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), employmentStatus (start), hasDebt (start), marginalRate (statement)
 Latest decisions:
-  - D-274 — Debt: the order, the loans, the file
+  - D-279 — Debt: the order, the loans, the file
   - D-252 — Debt Payoff: the order is a preference, and the plan says when it is in effect
   - D-236 — Debt Payoff: where the payment goes, and what each fall frees
   - D-207 — Phases C, C2, D, E: the doors, the four levels, the inline ask, the line

@@ -1288,7 +1288,7 @@ const CASES = [
     }
   },
   {
-    /* THE WEDDING, as a block with a per-unit line (D-288). The room is
+    /* THE WEDDING, as a block with a per-unit line (D-293). The room is
        gone; what it did is a property of any block now, so the walk starts
        one from the template and types into the two boxes that make the
        per-guest line — the count and the price each, which must survive a
@@ -1319,7 +1319,7 @@ const CASES = [
     }
   },
   {
-    /* A BLOCK THAT PAYS (D-294). The lodger template's first line pays;
+    /* A BLOCK THAT PAYS (D-299). The lodger template's first line pays;
        typing the monthly rent and the month count must land as a count and
        as cents on a line still marked pays, and the headline must read as
        money coming in, not a cost. Tapping the toggle then flips it. */
@@ -1357,7 +1357,7 @@ const CASES = [
     }
   },
   {
-    /* THE CLIFF (D-296): a raise and a household size typed into the tax
+    /* THE CLIFF (D-301): a raise and a household size typed into the tax
        room's second reading. The size must land as a count in the reading
        only — it is never written to the household. */
     room: '/rooms/tax.html#the-cliff',
@@ -1380,7 +1380,7 @@ const CASES = [
     }
   },
   {
-    /* THE REFEREE, new or used (D-295): the one price box is relabelled
+    /* THE REFEREE, new or used (D-300): the one price box is relabelled
        for the car and the debate still answers. */
     room: '/rooms/debates.html',
     container: '#answer',
@@ -1455,7 +1455,7 @@ const CASES = [
   },
   {
     /* THE FIRST CAR CHECK (K10, D-219), now the first reading of Wheels
-       (D-263): seven boxes, in the default view, so no hash is needed. */
+       (D-268): seven boxes, in the default view, so no hash is needed. */
     room: '/rooms/car.html',
     container: '#check-inputs',
     seed: 'demo',

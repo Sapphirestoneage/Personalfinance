@@ -47,7 +47,7 @@ module.exports = function (t) {
   check('… a zero before has no share', H.change(0, 150).pct, null);
   Spine.reset();
 
-  /* history is a reading of budget since D-271, so this file reads its slice of
+  /* history is a reading of budget since D-276, so this file reads its slice of
      that page: its own markup and its own script. `slice.page` is the
      whole file, for the few facts that really are page-wide. */
   const slice = reading('rooms/budget.html', 'view-over-time', "READING view-over-time,");
@@ -58,7 +58,7 @@ module.exports = function (t) {
   checkTrue('… freeze goes through the instruments engine', /Instruments\.snapshot\(/.test(page));
   checkTrue('… writes only history.*', (page.match(/Spine\.set\('([a-zA-Z.]+)'/g) || []).every(m => /history\./.test(m)));
   check('compare-to is owned here', Ownership.field('historyCompareTo').owner, 'budget');
-  /* History is The Close's over-time reading since D-271. The room it is
+  /* History is The Close's over-time reading since D-276. The room it is
      in is an about-you room, because the reading it opens on closes a
      month; this reading still reads and freezes rather than asking. */
   check('the room it lives in is The Close', Registry.byId('budget').href, 'rooms/budget.html');

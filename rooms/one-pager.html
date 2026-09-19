@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
   ROOM SPEC — SPEC.md §11. DECISIONS.md D-095, D-212 (share the shape, not
-  the size), D-213 (Money Wrapped), D-259 (the merge).
+  the size), D-213 (Money Wrapped), D-264 (the merge).
 
   THREE THINGS TO HAND OVER. The One-Pager, the Progress Card and Money
   Wrapped were three rooms for one act: making something you can give to
@@ -41,7 +41,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- The card, from rooms/progress-card.html (D-259) ---- */
+  /* ---- The card, from rooms/progress-card.html (D-264) ---- */
   
   #view-the-card .card { border: 2px solid var(--color-accent); border-radius: var(--radius-lg, 16px); padding: var(--space-5) var(--space-4); text-align: center; background: var(--color-surface-raised); }
   
@@ -63,7 +63,7 @@
   
   #view-the-card .copied { font-size: var(--text-xs); color: var(--color-positive); }
 
-  /* ---- The year, from rooms/wrapped.html (D-259) ---- */
+  /* ---- The year, from rooms/wrapped.html (D-264) ---- */
   
   #view-the-year .wrap-card { border: 2px solid var(--color-accent); border-radius: var(--radius-lg, 16px); padding: var(--space-5) var(--space-4); background: var(--color-surface-raised); }
   
@@ -81,7 +81,7 @@
   
   #view-the-year .acts { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; margin-top: var(--space-3); }
 
-  /* ---- The whole page, from rooms/one-pager.html (D-259) ---- */
+  /* ---- The whole page, from rooms/one-pager.html (D-264) ---- */
   
   #view-the-page .row-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
   
@@ -233,7 +233,7 @@
 <script src="../engines/trap.js"></script>
 <script src="../engines/onepager.js"></script>
 <script>
-/* ---- Three cards, one page (D-259) ----
+/* ---- Three cards, one page (D-264) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which

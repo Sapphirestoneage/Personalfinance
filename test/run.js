@@ -81,7 +81,7 @@ const TABLES = {
   seTax: require(path.join(ROOT, 'data/se_tax_2026.json')),
   goalTemplates: require(path.join(ROOT, 'data/goal_templates.json')),
   /* The Decision Room prices a block started from a named decision with the
-     same table Can It Be Undone used (D-278). */
+     same table Can It Be Undone used (D-283). */
   reversibility: require(path.join(ROOT, 'data/reversibility.json')),
   healthScore: require(path.join(ROOT, 'data/health_score.json')),
   liquidityBenchmarks: require(path.join(ROOT, 'data/liquidity_benchmarks.json')),
@@ -1776,7 +1776,7 @@ function weddingHousehold() {
 })();
 
 /* ==========================================================================
-   The five outputs, on every block (D-278)
+   The five outputs, on every block (D-283)
    --------------------------------------------------------------------------
    The Decision Room asks the same five questions of anything you are
    weighing. None of them is a new formula — that is the point of a shell —
@@ -1784,7 +1784,7 @@ function weddingHousehold() {
    lack, and that the fifth is answered even for a block with no price.
    ========================================================================== */
 (function () {
-  section('The Decision Room: five outputs on every block (D-278)');
+  section('The Decision Room: five outputs on every block (D-283)');
   const demo = Demo.build();
   const block = Schema.createGoal({ name: 'A wedding', lumpTargetCents: 2500000,
     targetDate: '2027-09-01', monthlyContributionCents: 150000,
@@ -1831,7 +1831,7 @@ function weddingHousehold() {
   check('the room is The Decision Room', Registry.byId('goals').title, 'The Decision Room');
   /* And the page says so too. The map-and-registry check cannot see the
      <h1>, and two rooms shipped a whole commit under their old names
-     because of exactly that (D-272). */
+     because of exactly that (D-277). */
   checkTrue('… and the page calls itself that', /<h1>The Decision Room<\/h1>/.test(room)
     && /<title>The Decision Room/.test(room));
   checkTrue('the page renders five rows, named', (room.match(/label: 'What it costs'|label: 'What it costs you'|label: 'When it lands'|label: 'Whether it fits'|label: 'Can it be undone'/g) || []).length === 5);
@@ -1865,7 +1865,7 @@ function weddingHousehold() {
 })();
 
 /* The template library carries labels and no amounts, on purpose. A line
-   may be an object since D-288 — { label, unitLabel, unitsPerGroup } for a
+   may be an object since D-293 — { label, unitLabel, unitsPerGroup } for a
    line priced per unit — and that is still not an amount: it says a wedding
    is catered per guest and that guests arrive a table at a time, never what
    a guest costs. So the check tests the RULE, which is "no money in here",
@@ -5482,7 +5482,7 @@ section('Proposed, not taken');
     checkTrue('seed.js never touches the spine', !/Spine\.|updateProfile|upsert|localStorage/.test(seedSrc));
     checkTrue('it shows through Suggest', seedSrc.indexOf('Suggest.show(') !== -1);
     /* Quick Math is a Scorecard reading (D-233); Going Self-Employed is a
-       Work reading (D-276). The rooms are named, the readings ride along. */
+       Work reading (D-281). The rooms are named, the readings ride along. */
     ['runway', 'financial-snapshot', 'career-move'].forEach(function (room) {
       const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
       checkTrue(`${room} mounts the seed toggle`, html.indexOf('SLAF.Seed.mount(') !== -1);
@@ -5493,7 +5493,7 @@ section('Proposed, not taken');
       /* Both of these pages carry several readings now, and the rule is
          about ONE of them: The Cushion's how-long reading, which is marked
          in place, and Work's on-your-own reading, which is a labelled
-         block (D-276). The rest of each page does write, through its
+         block (D-281). The rest of each page does write, through its
          owners, and may. */
       const local = room === 'runway'
         ? html.slice(html.indexOf('---- HOW LONG:'), html.indexOf('---- end HOW LONG ----'))
@@ -5505,9 +5505,9 @@ section('Proposed, not taken');
     });
     const se = fs.readFileSync(path.join(ROOT, 'rooms/career-move.html'), 'utf8');
     checkTrue('W2 vs 1099 no longer writes the salary straight into the box', !/v\['w-salary'\] = gross\.value/.test(se));
-    /* Where It Goes is The Statement's where-it-lands reading (D-273). */
-    /* Side Hustle and Worth Learning are Work readings (D-276), Where It
-       Goes a Statement reading (D-273) — all three on two pages now. */
+    /* Where It Goes is The Statement's where-it-lands reading (D-278). */
+    /* Side Hustle and Worth Learning are Work readings (D-281), Where It
+       Goes a Statement reading (D-278) — all three on two pages now. */
     ['career-move', 'statement'].forEach(function (room) {
       const html = fs.readFileSync(path.join(ROOT, 'rooms', room + '.html'), 'utf8');
       checkTrue(`${room} proposes the federal bracket`, html.indexOf('Reference.marginalBracket(') !== -1);
@@ -5965,7 +5965,7 @@ section('What is finished');
     /* An "explore" room must never be a gate: it is optional by definition,
        so it cannot be the thing standing between you and a reading.
        Owning a field is not itself the problem — the merges put a reading
-       that writes inside a room that explores (D-267) — being the only way
+       that writes inside a room that explores (D-272) — being the only way
        to a field ANOTHER room waits on is. So: no field an explore room
        owns may appear in another room's `needs`. */
     const waitedOn = new Set();
@@ -5996,7 +5996,7 @@ section('What is finished');
     /* A room that reads nothing shared is not "incomplete" — it is never
        blocked, which is a different state and says so. */
     /* Quick Math became a Scorecard reading (D-233) and Offer Compare a
-       Work reading (D-276); The Referee reads nothing shared and is the
+       Work reading (D-281); The Referee reads nothing shared and is the
        standalone room now. */
     const solo = Progress.forRoom('debates', h);
     checkTrue('a standalone room is flagged as standalone', solo.standalone);
@@ -6188,7 +6188,7 @@ section('Facts answered once');
   {
     const OWNED = {
       /* The three account facts moved with their boxes when Where It Goes
-         became The Statement's where-it-lands reading (D-273). */
+         became The Statement's where-it-lands reading (D-278). */
       contributionPercent: 'start', rothContributed: 'statement',
       hsaContributed: 'statement', marginalRate: 'statement',
       highestDeductible: 'start'
@@ -6301,7 +6301,7 @@ section('Facts answered once');
 
   /* -- Rooms that hold facts are not "explore" rooms --------------------- */
   {
-    /* Where It Goes is The Statement's where-it-lands reading since D-273 —
+    /* Where It Goes is The Statement's where-it-lands reading since D-278 —
        where the next dollar lands moves the target (D-228), so it belongs
        to the statement rather than beside it. The rule it stood for still
        holds: the room that holds those facts is not a what-if room. */
@@ -6312,7 +6312,7 @@ section('Facts answered once');
     /* The rule from D-051, re-checked here because this change is exactly
        the kind that breaks it: an optional room cannot own a field others
        wait on. Stated as it is meant, not as "owns nothing" — the merges
-       put a reading that writes inside a room that explores (D-267), and
+       put a reading that writes inside a room that explores (D-272), and
        what would actually hurt is a field reachable ONLY through a room
        people are told they may skip. */
     Registry.ROOMS.filter(r => r.kind === 'explore').forEach(function (r) {
@@ -6684,7 +6684,7 @@ section('The Statement room');
      edited in the room that draws it on a grid, and in exactly one room
      (D-017). The Statement must therefore have no editor for it left. */
   /* Owner moved Statement → Timeline in D-152, and Timeline → Income in
-     D-290 when What Comes Next became a reading of it. */
+     D-295 when What Comes Next became a reading of it. */
   check('money that is coming is Income\'s', Ownership.field('futureIncome').owner, 'income');
   checkTrue('...and The Statement no longer edits it',
     !/data-future="/.test(html) && !/upsertFutureIncome/.test(html),
@@ -6772,7 +6772,7 @@ section('The Coverage Checkup, and how it is split');
   checkTrue('Sleep At Night redirects to the reading it became',
     /url=runway\.html#at-3am/.test(fs.readFileSync(path.join(ROOT, 'rooms/sleep-at-night.html'), 'utf8')));
   /* The title said "& how it's split"; the reading's hat says "Where it
-     lands" and its lede says the same thing in full (D-273). */
+     lands" and its lede says the same thing in full (D-278). */
   checkTrue('the where-it-lands reading says so in its lede',
     /how the next dollar is split/.test(fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8')));
   checkTrue('The Cushion lists the checkup', Registry.byId('runway').subsections.some(s => s.id === 'coverage'));
@@ -7154,7 +7154,7 @@ section('The Rerank');
   check('a rerank row defaults to not asked', JSON.stringify(Schema.createRerankRow({ id: 'x' })), '{"id":"x","miss":null,"who":null,"valueRank":null}');
   check('the household carries rerank rows', JSON.stringify(Schema.createHousehold({}).rerank), '{"rows":[]}');
   checkTrue('source may be rerank', Schema.FIELDS['expenses.entries[].source'].values.indexOf('rerank') !== -1);
-  /* The Rerank is a reading of What Matters since D-268, along with the
+  /* The Rerank is a reading of What Matters since D-273, along with the
      Joy Curve it used to sit beside. */
   const room = Registry.byId('values');
   checkTrue('The Rerank is a reading of What Matters', room && room.kind === 'about-you'
@@ -7468,7 +7468,7 @@ section('Life events: moving, on the demo');
   /* Raleigh to Austin: 103 → 110, NC's 4.25% flat tax to none. */
   const r = E.run(h, tpl, { startsOn: 0, fromCity: 'raleigh', toCity: 'austin', band: 'crossCountry' }, { tables: T, d: 'default' });
   const by = {}; r.lines.forEach(l => { by[l.id] = l; });
-  /* D-292: the move BLOCK and the move EVENT read the same city index
+  /* D-297: the move BLOCK and the move EVENT read the same city index
      through the same coalesce, so they cannot disagree about Austin. And
      the event template carries no copy of the forty cities: its choice
      lists are read from the table when it loads. */
@@ -7938,7 +7938,7 @@ section('The Skill Stacker: the catalogue, and the engine on the demo');
   check('an unknown state is read as available', Schema.createSkillState({ state: 'weird' }).state, 'available');
 
   /* The Skill Stacker is the three-at-a-time reading of The Skill Tree
-     since D-269. */
+     since D-274. */
   const room = Registry.byId('skill-tree');
   check('the room it lives in is an about-you room', room.kind, 'about-you');
   checkTrue('… and the Stacker is no longer a room of its own', !Registry.byId('stacker')
@@ -8367,13 +8367,13 @@ section('Core (D-094): the gate — exists() per situation');
   checkTrue('between jobs: no hourly wage, no savings rate, runway stays', bjRooms.indexOf('real-hourly-wage') === -1 && bjRooms.indexOf('savings-rate') === -1 && bjRooms.indexOf('runway') !== -1);
   check('employed, alone, no dependents: own work, partner, kids and variable income are gone', gone(hh('employed')), 'partner');
   checkTrue('self-employed: the 401(k) room is gone', Registry.forHousehold(hh('selfEmployed')).map(r => r.id).indexOf('accounts') === -1);
-  /* A requirement may be a key or an array of keys meaning any-of (D-266);
+  /* A requirement may be a key or an array of keys meaning any-of (D-271);
      flatten before checking that each one names a real branch. */
   checkTrue('every requires key is a branch', Object.keys(Registry.REQUIRES).every(id => [].concat.apply([], Registry.REQUIRES[id]).every(k => Gate.BRANCHES.indexOf(k) !== -1)));
   checkTrue('every requires room is a room', Object.keys(Registry.REQUIRES).every(id => !!Registry.byId(id)));
   check('byTag with a household filters the same way', Registry.byTag('all', hh('retired')).length, retiredRooms.length);
   check('byTag without one is every room', Registry.byTag('all').length, all);
-  /* The Back Half is NOT among them since D-281: three of its four
+  /* The Back Half is NOT among them since D-286: three of its four
      readings are what-ifs for people still working, and only the draw
      carries the branch. */
   check('the demo is four rooms short — no own work, alone, nobody depending', gone(Demo.build()), 'partner');
@@ -8923,7 +8923,7 @@ section('What a debt really costs (D-247): after the deduction, after inflation,
   checkTrue('the conventions carry the deduction with its note', typeof conv.interestDeduction.capDollars === 'number' && /verify/i.test(conv.interestDeduction.note));
   const dp = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
   checkTrue('Debt Payoff says what each debt really costs, on the interest line', /realCostSentence\(d\)/.test(dp) && /Really costs /.test(dp) && /studentLoanConventions/.test(dp));
-  /* The Student Loan Decision is Debt's loans reading since D-274. */
+  /* The Student Loan Decision is Debt's loans reading since D-279. */
   checkTrue('the loans reading draws the chain, the verdict and the balance in today\'s money', /id="sl-real-cost"/.test(dp) && /SLAF\.Debt\.realCost/.test(dp) && /SLAF\.Debt\.deflate/.test(dp) && /in today\\u2019s money/.test(dp));
   checkTrue('… and the registry deep-links it', Registry.byId('debt-payoff').subsections.some(x => x.id === 'sl-real-cost'));
 })();
@@ -8959,7 +8959,7 @@ section('The monthly gap by level, and the journey (D-249)');
   const page = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   checkTrue('the front page leads with the level and writes the journey', /SLAF\.Gap\.levels\(h, TABLES, ROOM_ID\)/.test(page) && /recordJourney\(h, g\)/.test(page) && /Spine\.updateProfile\(\{ journal: journal\.concat\(add\) \}\)/.test(page));
   checkTrue('… and never writes twice for one level, nor above the level reached', /journal\.some\(function \(e\) \{ return e\.kind === 'gap' && e\.level === l\.n; \}\)/.test(page) && /l\.n > g\.reachedCount\) return;/.test(page));
-  /* History is The Close's over-time reading since D-271. */
+  /* History is The Close's over-time reading since D-276. */
   const hist = fs.readFileSync(path.join(ROOT, 'rooms/budget.html'), 'utf8');
   checkTrue('The Close shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('budget').subsections.some(x => x.id === 'journey'));
 })();
@@ -9095,7 +9095,7 @@ section('Statements that open, and the FIRE statement (D-254)');
   const onlySpend = Schema.createHousehold({ expenses: { wants: { totalCents: 300000 }, entries: [] } });
   const partial = St.fireStatement(onlySpend, TABLES);
   checkTrue('with spending but nothing invested, invested today is a dash, never zero', Money.isOk(partial) && !byLabel(partial.value.standing, 'Invested today').entered);
-  /* Your Statements is The Statement's documents reading since D-273. */
+  /* Your Statements is The Statement's documents reading since D-278. */
   const room = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
   checkTrue('the reading has the fourth tab, loads the engines, and opens every line through one row function', /id: 'fire',\s+label: 'FIRE statement'/.test(room) && /engines\/fire\.js/.test(room) && /engines\/gap\.js/.test(room) && /<details class="ln">/.test(room) && /Ownership\.linkTo\(f\.owner, f\.anchor, 'statement'\)/.test(room));
   checkTrue('the export carries the tax lines and the FIRE statement', /inc\.value\.taxes/.test(room) && /section: 'FIRE statement'/.test(room));
@@ -9127,7 +9127,7 @@ section('What hits your account, and when: the month as turns, in Cash Flow and 
   checkTrue('… draws the grid and lists the turns with what caused each and what is left', /cal-grid/.test(html) && (html.match(/<li class="[^"]*"><span class="tn-when">/g) || []).length === turns.length && /after<\/span>/.test(html));
   checkTrue('an incomplete month says why, in the chart\'s empty state', /How often are you paid/.test(DayByDay.html(Cal.month(Schema.createHousehold({}), T, {}))));
   const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
-  /* The Money Calendar is The Month's dates reading since D-270: its slice of the page. */
+  /* The Money Calendar is The Month's dates reading since D-275: its slice of the page. */
   const calRoom = cf.slice(cf.indexOf('READING view-the-dates'));
   checkTrue('The Month shows it and recalculates on every render', /id="day-by-day"/.test(cf) && /engines\/calendar\.js/.test(cf) && /shared\/daybyday\.js/.test(cf) && /renderDayByDay\(h\)/.test(cf) && /DayByDay\.html\(r\)/.test(cf));
   checkTrue('the dates reading draws the same, and holds no copy of the grid', /DayByDay\.html\(/.test(calRoom) && !/cal-grid/.test(calRoom));
@@ -9252,11 +9252,11 @@ section('The room template (D-097): one shape, proven on Real Hourly Wage');
   /* The shape: the ids every template room has, and the room that proved it. */
   check('the template names its hosts', Room.IDS.join(','), 'room-number,room-chart,room-inputs,room-lens,room-amounts,room-assumptions,room-why,room-scope,reading-list');
   /* The Real Hourly Wage proved the template (D-097) and is the what-it-pays
-     reading of Income since D-272; its skeleton moved behind rhw-. */
+     reading of Income since D-277; its skeleton moved behind rhw-. */
   /* Bounded by the NEXT reading, not by the page's small print: a reading
      added after this one would otherwise be read as part of it, which is
      how "its old sections are gone" started failing when Worth the hassle
-     arrived with an out-rate of its own (D-289). */
+     arrived with an out-rate of its own (D-294). */
   const incomePage = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
   const rhwFrom = incomePage.indexOf('<section id="view-what-it-pays"');
   const rhwTo = incomePage.indexOf('<!-- =====', rhwFrom + 10);
@@ -9379,7 +9379,7 @@ section('LATER.md, built (D-100): the log across tabs, worded labels, the defaul
   check('every room is in rooms.json', rooms.length, Registry.all().length);
   checkTrue('each row has the brief\'s fields', rooms.every(r => ['id', 'title', 'file', 'reads', 'writes', 'requires', 'dashboardNumber', 'order'].every(k => k in r)));
   check('Start Here writes what ownership says', rooms.filter(r => r.id === 'start')[0].writes.join(','), Ownership.ownedBy('start').join(','));
-  /* Where It Goes is The Statement's where-it-lands reading since D-273:
+  /* Where It Goes is The Statement's where-it-lands reading since D-278:
      the branch moved from the room to the reading, so rooms.json — which
      lists rooms — carries no requirement for it, and the router does. */
   check('The Statement requires no branch', rooms.filter(r => r.id === 'statement')[0].requires.join(','), '');
@@ -9748,11 +9748,11 @@ section('Two decision sequences that cannot collide');
   checkTrue('there are D&D entries', dnd.length > 10);
 
   /* An entry heading is LEVEL 2. The check above only rejected a malformed
-     "## D..." line, so a "### D-263" slipped past it — and the index
+     "## D..." line, so a "### D-268" slipped past it — and the index
      builder, which matches "## " exactly, put twenty-one entries inside
-     D-262's line range. A whole programme of decisions was invisible to
+     D-267's line range. A whole programme of decisions was invisible to
      `pack.js` and to DECISIONS-INDEX.md, which is the only way CLAUDE.md
-     tells a session to read this file. D-283. */
+     tells a session to read this file. D-288. */
   check('every entry heading is level 2, not deeper',
     lines.map((l, i) => /^#{3,} DD?-\d{3}\s*[—–-]/.test(l) ? `line ${i + 1}: ${l.slice(0, 50)}` : null)
       .filter(Boolean).join(' | '), '');
@@ -10744,7 +10744,7 @@ section('The Timeline — periods that stack');
   check('...and caps at sixty', Timeline.months(H, { now: NOW, years: 999 }).value.length, 60 * 12 + 1);
 
   /* The reading. What Comes Next became Income's "what is coming" reading
-     in D-290: a dated period that pays you is income with a start and an
+     in D-295: a dated period that pays you is income with a start and an
      end on it, and it was two navigations from everything else coming in. */
   (function () {
     const page = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
@@ -11321,13 +11321,13 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
      First Round and Express became views of (D-230). */
   check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
-  /* Eight since D-285: The Account You Left Behind became The Statement's
+  /* Eight since D-290: The Account You Left Behind became The Statement's
      "a plan you left behind" reading, which is where an old workplace
      account belongs — something you own that landed somewhere. */
   check('...eight of them, Expenses among them since D-192', Registry.inGroup('numbers', null).length, 8);
   /* The rule is about HOUSEHOLD data: a Your Numbers room writes a DAITE
      family, not a context. `prefs.*` is not a context — it is a
-     preference, per person and per browser, and D-271 brought one into
+     preference, per person and per browser, and D-276 brought one into
      this group when History became The Close's over-time reading. It is
      named here so the exception is a decision, not a hole. */
   checkTrue('every Your Numbers room that writes at all writes a DAITE family, never a context', Registry.inGroup('numbers', null).every(r => (Registry.daite(r.id).writes || []).every(w => /^(debt|assets|income|taxes|expenses|prefs)\b/.test(w))));
@@ -11337,7 +11337,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   checkTrue('...none of them writes a DAITE family (FIRE keeps its two target ages, a plan, not a fact)', Registry.inGroup('scorecard', null).every(r => (Registry.daite(r.id).writes || []).every(w => !/^(debt|assets|income|taxes|expenses)\b/.test(w))));
   check('Decisions: five subgroups in order', Registry.inGroup('decisions', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'work,home,family,moves,years');
   check('Level Up', Registry.inGroup('levelup', null).map(r => r.id).join(','), 'skill-tree');
-  check('Upkeep, after the Ledger took navigation (D-230) and The Card took the three things you hand over (D-259)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,settings,get-help,one-pager');
+  check('Upkeep, after the Ledger took navigation (D-230) and The Card took the three things you hand over (D-264)', Registry.inGroup('upkeep', null).map(r => r.id).join(','), 'data,settings,get-help,one-pager');
   checkTrue('every room has aliases to search by', Registry.all().every(r => Array.isArray(r.aliases) && r.aliases.length >= 2));
   checkTrue('"car" finds What A Car Costs', Registry.matches(Registry.byId('car'), 'car') && Registry.matches(Registry.byId('car'), 'VEHICLE'));
   checkTrue('...and not FIRE', !Registry.matches(Registry.byId('fire'), 'car'));
@@ -11369,14 +11369,14 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   const demo = Demo.build();
   const readings = Ownership.readings(demo);
   /* Debt's dot was filled when the room owned only the five debt fields.
-     It owns the four loan-plan fields too since D-274, and the demo has
+     It owns the four loan-plan fields too since D-279, and the demo has
      entered none of them, so the room reads partly — the dot moved with
-     the fields (D-274). */
+     the fields (D-279). */
   check('a status dot: Debt partly on the demo, since it now holds the loan plan too', Progress.roomStatus('debt-payoff', readings), 'partly');
   check('...Expenses partly (therapy untracked)', Progress.roomStatus('expenses', readings), 'partly');
   /* Cash Flow owned no field since D-192 and had no dot. It is The Month
      now and holds the Calendar's four, so it has the Calendar's dot: empty
-     on a demo that has entered none of them (D-270). */
+     on a demo that has entered none of them (D-275). */
   check('...The Month, which took the Calendar\'s four fields, is empty', Progress.roomStatus('cash-flow', readings), 'empty');
   checkTrue('...and the Calendar is not a room to have a dot', !Registry.byId('calendar'));
   check('...a room that owns nothing has no dot', Progress.roomStatus('ratios', readings), null);
@@ -11883,7 +11883,7 @@ section('15.2: assumptions declared once; real by default; nominal at display ti
   check('the household is untouched by the switch', Schema.createHousehold(h).assumptions.inflation, 0.03);
 
   /* Every projection room carries the line once, at the top. The FIRE Lab
-     is a reading of The Number since D-280, so the PAGE carries it once per
+     is a reading of The Number since D-285, so the PAGE carries it once per
      reading that projects — two here, the number and the lab — and each
      mounts its own. What must not happen is a reading that projects without
      one. */
@@ -11897,7 +11897,7 @@ section('15.2: assumptions declared once; real by default; nominal at display ti
   checkTrue('The Number carries it for both readings that project',
     (fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8').match(/Horizon\.mount\(/g) || []).length === 2);
   /* What If holds two readings and BOTH project — one event over its
-     horizon, five years every way — so it carries two too (D-291). */
+     horizon, five years every way — so it carries two too (D-296). */
   checkTrue('...and What If carries it for both of its',
     (fs.readFileSync(path.join(ROOT, 'rooms/what-if-life.html'), 'utf8').match(/Horizon\.mount\(/g) || []).length === 2);
   checkTrue('prefs.js loads before features.js wherever a room loads it (the switch reads prefs)', fs.readdirSync(path.join(ROOT, 'rooms')).every(function (f) {
@@ -12135,7 +12135,7 @@ section('15.4: income by type, take-home per source, what survives a job loss (D
   checkTrue('...and writes type and survivesJobLoss through the spine', /payType: function \(v\) \{ writeSource\(INCOME_ID, \{ type: v \}\)/.test(start));
   const income = fs.readFileSync(path.join(ROOT, 'rooms/income.html'), 'utf8');
   checkTrue('the Income room shows pay source by source', income.indexOf('takeHomeBySource') > -1 && income.indexOf('id="sources"') > -1);
-  /* The Real Hourly Wage is Income's what-it-pays reading since D-272, so
+  /* The Real Hourly Wage is Income's what-it-pays reading since D-277, so
      this reads the same file — the line per source is still its own. */
   checkTrue('Real Hourly Wage paints a line per source', income.indexOf('perSource') > -1 && income.indexOf('id="per-source"') > -1);
   const runway = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
@@ -13593,7 +13593,7 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
        the askDeeper switch lets them. */
     const Features = require(path.join(ROOT, 'shared/features.js'));
     Features.use(require(path.join(ROOT, 'data/features.json')));
-    /* Estate Basics is Protection's where-it-goes reading since D-261, so
+    /* Estate Basics is Protection's where-it-goes reading since D-266, so
        the inline ask is put to the room that holds it; every row it owns
        sits at level 2 or deeper. */
     check('Protection asks nothing while the you door is at level 1', Ask.pick(h, 'protection', T, sug), null);
@@ -14110,7 +14110,7 @@ section('H4, H5, H7, H8: the waterfall, does the rule apply, the receipt, share 
   const wd = Reachable.waterfall(Demo.build(), T, {});
   checkTrue('on the demo the rates come from the tax tables: a marginal rate and a gains rate above zero', wd.rates.source === 'tax tables' && wd.rates.marginalRate > 0 && wd.rates.capitalGainsRate > 0, JSON.stringify(wd.rates));
   /* Reachable Money is The Back Half's what-you-can-reach reading since
-     D-279, and it still writes nothing — the room it is in writes only the
+     D-284, and it still writes nothing — the room it is in writes only the
      three draw fields. */
   checkTrue('the reading writes nothing, and is in every arrangement',
     !Registry.byId('reachable')
@@ -14204,7 +14204,7 @@ section('I1, I3, I4, I5: Money Wrapped, where do you think you rank, your coast 
   checkTrue('and renders from its link', /days of freedom bought/.test(ShareCard.render(ShareCard.decode(ShareCard.link(wc).split('#')[1])).line));
   const W0 = Wrapped.year(now, [], T, { year: y });
   checkTrue('a year with no earlier snapshot says what each line needs, never invents', !W0.ok && W0.lines.every(l => l.value === null || l.id === 'priciest') && W0.missing.length >= 1);
-  /* Money Wrapped is The Card's year reading since D-259; the room that
+  /* Money Wrapped is The Card's year reading since D-264; the room that
      holds it is what must be shelved, and it still writes nothing. */
   checkTrue('the reading lives in The Card, which reads only and is shelved everywhere', !Registry.byId('wrapped') && Registry.byId('one-pager').daite.writes.length === 0 && JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8')).layouts.every(l => l.groups.some(g => g.rooms.indexOf('one-pager') >= 0)));
 
@@ -14233,7 +14233,7 @@ section('I1, I3, I4, I5: Money Wrapped, where do you think you rank, your coast 
   checkTrue('the guess is a preference, never a household field', (function () { const sc = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8'); return /Prefs\.set\('rank\.guess'/.test(sc) && !/Ownership\.write|Spine\.(set|upsert)/.test(sc); })());
 
   /* -- I5: the quiz ------------------------------------------------------------------ */
-  /* Unlearning is the still-applies reading of The Referee (D-267). */
+  /* Unlearning is the still-applies reading of The Referee (D-272). */
   const uh = fs.readFileSync(path.join(ROOT, 'rooms/debates.html'), 'utf8');
   checkTrue('five questions, each skipped when the Ledger has the answer', (uh.match(/\{ id: '[a-zA-Z]+', ask: /g) || []).length === 5 && /R\[q\.id\] === null \|\| R\[q\.id\] === undefined/.test(uh));
   checkTrue('answers stay on the page: no write', /Answers stay on this page/.test(uh) && !/Spine\.set\('quiz|Ownership\.write\(/.test(uh.split('function runQuiz')[1].split('function paintRules')[0]));
@@ -14388,7 +14388,7 @@ section('J4, J5: bank CSV import on-device, the subscription finder (D-215)');
   check('a dismissed charge leaves the leak line', leak.count + ':' + leak.yearlyCents, '1:' + (1199 * 12));
   checkTrue('the Expenses door’s level 4 reads the leak line', /Subscriptions\.leak\(h, T\)/.test(fs.readFileSync(path.join(ROOT, 'shared/doors.js'), 'utf8')) && (function () { const ins = Doors.levelInsight(Spine.getProfile(), T, 'E', 4, []); return ins && /repeating charge/.test(ins.headline); })());
   checkTrue('Money Wrapped gains the leak line only when something was found', Wrapped.year(Spine.getProfile(), [], T, {}).lines.some(l => l.id === 'leak') && !Wrapped.year(Demo.build(), [], T, {}).lines.some(l => l.id === 'leak'));
-  /* The finder is a reading of Expenses since D-262. */
+  /* The finder is a reading of Expenses since D-267. */
   checkTrue('the reading never cancels anything: it writes a decision and says so', (function () { const e = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8'); return /a reminder, never an action|a note to\n?\s*yourself/.test(e) && !/cancelSubscription|fetch\(/.test(e); })());
 })();
 
@@ -14488,7 +14488,7 @@ section('J7, J8: two views of Partner, Roth conversions before 65 (D-216)');
   checkTrue('the no-cliff cap lives in the table, not the engine', T.aca.ifNoCliff.capPercent === 0.085 && !/0\.085/.test(fs.readFileSync(path.join(ROOT, 'engines/rothaca.js'), 'utf8')));
   /* the room */
   /* Roth Conversions Before 65 is The Back Half's price-of-cover reading
-     since D-279. These assertions are about that reading. */
+     since D-284. These assertions are about that reading. */
   const backHalf = fs.readFileSync(path.join(ROOT, 'rooms/decumulation.html'), 'utf8');
   const rothRoom = backHalf.split('/* ---- READING ').filter(b => b.indexOf('view-the-price-of-cover') === 0)[0]
     + backHalf.slice(backHalf.indexOf('<section id="view-the-price-of-cover"'), backHalf.indexOf('<p class="disclaimer">'));
@@ -14506,7 +14506,7 @@ section('J7, J8: two views of Partner, Roth conversions before 65 (D-216)');
   (function walk(x) { if (Array.isArray(x)) { if (x.indexOf('decumulation') > -1) shelves.push(x); x.forEach(walk); } else if (x && typeof x === 'object') Object.keys(x).forEach(k => walk(x[k])); })(layouts);
   /* It was shelved beside Drawing It Down in all twenty arrangements; it is
      inside it now, so what has to hold is that the room is still on every
-     shelf (D-279). */
+     shelf (D-284). */
   checkTrue('...and The Back Half is on every shelf', shelves.length === 20);
 })();
 
@@ -14535,7 +14535,7 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   const banded = Countdown.goalCountdown({ targetCents: 10000000, savedCents: 4800000, monthlyContributionCents: 100000, annualRate: 0.05, bands: { p25: 0.02, p50: 0.05, p75: 0.08 }, from: '2026-09' });
   checkTrue('an invested goal carries its range: the good decade lands first, the poor one last', banded.range.fastMonths < banded.months && banded.months < banded.range.slowMonths);
   /* every skin is a skin: no countdown walks its own months */
-  /* The wedding is not here since D-288: its skin was retired with its room
+  /* The wedding is not here since D-293: its skin was retired with its room
      and the shell dates the block through monthsAtCurrentContribution, which
      is the same one countdown by another name. */
   ['race', 'downpayment', 'quitfund'].forEach(function (e) {
@@ -14606,7 +14606,7 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   check('three targets: 3, 6, 12 months', quit.targets.map(t => t.months).join(','), '3,6,12');
   checkTrue('each target is that many months less the benefit, dated through the countdown from the free money', laid.targets.every(t => t.targetCents === Math.max(0, t.months * laid.monthCents - laid.benefit.totalCents)) && quit.targets.every((t, i) => i === 0 || t.date >= quit.targets[i - 1].date));
 
-  /* -- K11: the wedding, now a block with a per-unit line (D-288) ---------------------- */
+  /* -- K11: the wedding, now a block with a per-unit line (D-293) ---------------------- */
   /* engines/wedding.js is gone and so is the room. Everything it did the
      shell does: goalTotalCents sums the lines, monthsAtCurrentContribution
      IS the countdown, and marginalOf prices one more table through the same
@@ -14646,7 +14646,7 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
       && !fs.existsSync(path.join(ROOT, 'data/wedding_defaults.json')));
   }
 
-  /* -- D-294: a block that PAYS ----------------------------------------------
+  /* -- D-299: a block that PAYS ----------------------------------------------
      A lodger's rent is typed positive, flagged, counted negative; the block
      nets negative and answers the five the other way round through the
      same Lens, opposite direction. */
@@ -14669,15 +14669,15 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
   }
   checkTrue('the Race is a reading of The Number', !Registry.byId('race')
     && /url=fire\.html#the-rungs/.test(fs.readFileSync(path.join(ROOT, 'rooms/race.html'), 'utf8')));
-  checkTrue('the Down Payment Countdown is Housing\'s deposit reading now (D-275)',
+  checkTrue('the Down Payment Countdown is Housing\'s deposit reading now (D-280)',
     !Registry.byId('down-payment') && Registry.byId('housing').subsections.some(x => x.id === 'dp-inputs'));
   checkTrue('the Quit Fund is the Cushion\'s by-choice reading now (D-232)', !Registry.byId('quit-fund') && Registry.byId('runway').subsections.some(x => x.id === 'view-by-choice'));
   /* All four pairs SPEC.md asked to be shelved together have become one
      room each: Between Jobs beside The Quit Fund is The Cushion (D-232),
      Where Do You Think You Rank beside The Race is a Scorecard reading
      (D-233), Housing beside the Down Payment Countdown is one room with
-     two hats (D-275), and Family beside the Wedding Countdown is a room
-     beside a block type (D-288). Shelving a room beside itself is not a
+     two hats (D-280), and Family beside the Wedding Countdown is a room
+     beside a block type (D-293). Shelving a room beside itself is not a
      thing, so there is no pair left to check — which is the point of the
      programme, not a gap in it. What replaces it is the rule underneath:
      a shelf never names a room that is no longer there. */
@@ -14694,9 +14694,9 @@ section('K4, K6, K7, K11: one countdown, four skins (D-217)');
 })();
 
 /* ==========================================================================
-   D-295, D-296: the rows the book asked for, and the cliff
+   D-300, D-301: the rows the book asked for, and the cliff
    ========================================================================== */
-section('D-295, D-296: the rows the book asked for, and the cliff');
+section('D-300, D-301: the rows the book asked for, and the cliff');
 (function () {
   const T = {};
   const RefD270 = require(path.join(ROOT, 'shared/reference.js'));
@@ -14794,7 +14794,7 @@ section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
   checkTrue('the earliest age not trapped is found per path', by(soon, 'sepp').earliestAge === 50 && by(soon, 'ladder').earliestAge > 52);
   checkTrue('every path totals its federal tax; the bridge alone pays none on cash and basis', by(soon, 'bridge').taxCents === 0 && by(soon, 'ladder').taxCents > 0 && by(soon, 'sepp').taxCents > 0);
   checkTrue('no date of birth: incomplete, asking for it', Trap.run(Schema.createHousehold({ people: [Schema.createPerson({ id: 'p', role: 'adult' })] }), T, {}).missing[0] === 'dob');
-  /* The trap test is The Back Half's before-59 reading since D-279. */
+  /* The trap test is The Back Half's before-59 reading since D-284. */
   const backHalfPage = fs.readFileSync(path.join(ROOT, 'rooms/decumulation.html'), 'utf8');
   const trapRoom = backHalfPage.split('/* ---- READING ').filter(b => b.indexOf('view-before-59') === 0)[0]
     + backHalfPage.slice(backHalfPage.indexOf('<section id="view-before-59"'), backHalfPage.indexOf('<!-- ===== THE PRICE OF COVER'));
@@ -14803,7 +14803,7 @@ section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
 
   /* -- K3: every debate has sources for every side and a flip point ------------------ */
   const list = Debates.list(T);
-  /* Seven in D-218; nine since D-295 brought soft saving and new-against-used. */
+  /* Seven in D-218; nine since D-300 brought soft saving and new-against-used. */
   check('nine debates: seven in the starter set and two from the book', list.length, 9);
   checkTrue('every side has its best case and a source; every debate a flip point and an engine function', list.every(d => d.sides.length >= 2 && d.sides.every(s => s.case && s.source) && d.flip && d.flip.label && typeof Debates.FN[d.fn] === 'function'));
   checkTrue('no side text carries an em-dash or "you should"', list.every(d => d.sides.every(s => s.case.indexOf('—') === -1 && !/you should/i.test(s.case))));
@@ -14829,7 +14829,7 @@ section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
   /* shareable under the H8 rules */
   const card = ShareCard.make('debate', Demo.build(), T, { debate: 'rothVsTraditional', result: roth });
   checkTrue('a debate shares as its verdict only: no cents, renders from the fields alone', card.ok && ShareCard.leaks(ShareCard.link(card), Demo.build()).length === 0 && /Roth or traditional: traditional/.test(ShareCard.render(ShareCard.decode(ShareCard.encode(card))).title));
-  /* The debate reading only. The page also holds Unlearning since D-267,
+  /* The debate reading only. The page also holds Unlearning since D-272,
      which does write — the rule being protected is that a DEBATE states
      both sides and writes nothing, not that the page is read-only. */
   const debPage = fs.readFileSync(path.join(ROOT, 'rooms/debates.html'), 'utf8');
@@ -14910,7 +14910,7 @@ section('K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, 
   check('30,000 with 3,000 down over 60 months on $72,000 of pay: all three parts outside', car.parts.map(p => p.inside).join(','), 'false,false,false');
   /* The check reading only. The costs reading beside it has always coloured
      an over-budget row, and may; the 20/3/8 verdict may not. A part that is
-     outside the rule is a fact about a car, not a failing grade (D-263). */
+     outside the rule is a fact about a car, not a failing grade (D-268). */
   const carPage = fs.readFileSync(path.join(ROOT, 'rooms/car.html'), 'utf8');
   const checkView = carPage.slice(carPage.indexOf('<section id="view-the-check"'), carPage.indexOf('<section id="view-what-it-costs"'));
   const checkCss = carPage.slice(carPage.indexOf('#view-the-check'), carPage.indexOf('#view-what-it-costs'));
@@ -14921,7 +14921,7 @@ section('K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, 
   checkTrue('maintenance estimated from the AAA shares when not typed', car.maintenanceEstimated && car.maintenanceCents === Math.round((15000 + 12000) / (0.25 + 0.24) * 0.2));
   checkTrue('new against used at the same budget from the depreciation curve', car.newVsUsed.newLossCents === Math.round(3000000 * (1 - FirstCar.retained(T.carCosts, 5))) && car.newVsUsed.usedListNewCents === Math.round(3000000 / FirstCar.retained(T.carCosts, 3)));
   checkTrue('inside all three at a fitting price', FirstCar.check(demo, T, { priceCents: 1500000, downCents: 300000, termMonths: 36, loanRate: 0.06 }).insideAll);
-  /* All three are readings of Work since D-276; their engines are
+  /* All three are readings of Work since D-281; their engines are
      unchanged and tested above, and the page they live on is the room. */
   ['micro-retirement', 'offer-compare', 'degree'].forEach(function (id) {
     checkTrue(id + ' is a reading of Work', !Registry.byId(id)
@@ -14929,7 +14929,7 @@ section('K2, K5, K8, K9, K10: the One-Pager, the break, the offers, the degree, 
   });
   /* K2 and K10 are readings now, not rooms: the One-Pager opens The Card, the
      First Car Check opens Wheels. The engines behind them are unchanged and
-     still tested above; what moved is where the page lives (D-259, D-263). */
+     still tested above; what moved is where the page lives (D-264, D-268). */
   check('the One-Pager is the first reading of The Card', Registry.byId('one-pager').href, 'rooms/one-pager.html');
   checkTrue('the First Car Check is the first reading of Wheels', /id="view-the-check"/.test(fs.readFileSync(path.join(ROOT, 'rooms/car.html'), 'utf8')));
 })();
@@ -15135,7 +15135,7 @@ section('The thirty (docs/room-map.json)');
   Registry.all().forEach(r => { live[r.id] = r; });
 
   /* Thirty-one. The plan said thirty and the thirty-first, What If, carries
-     its reason in its own note on the map (D-291): a five-year scenario is
+     its reason in its own note on the map (D-296): a five-year scenario is
      not a block, and the two scenario rooms are each other rather than
      anything the Decision Room should hold. The check is not "thirty" — it
      is that the map and the registry agree, and that every room the map
@@ -15227,7 +15227,7 @@ section('The thirty (docs/room-map.json)');
      about the data files. Two pages were in exactly that state: the merge
      tool strips a room's header and small print, and both had hung a real
      element there (a print-only date, a provenance line). This is the
-     check that would have said so; the tool keeps them now (D-277). */
+     check that would have said so; the tool keeps them now (D-282). */
   fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(function (f) {
     const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
     const ids = new Set([...src.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
@@ -15253,7 +15253,7 @@ section('The thirty (docs/room-map.json)');
      is the programme's rule, old URLs redirecting rather than dying — and
      six stubs shipped without one because the tool that wrote them stripped
      the '#'. url=goals.htmlahead-of-you is a path, not an anchor, and the
-     browser lands on the default reading. D-291. */
+     browser lands on the default reading. D-296. */
   (function () {
     const live = new Set(Registry.all().map(r => r.id));
     const bad = [];
@@ -15288,7 +15288,7 @@ section('The thirty (docs/room-map.json)');
      reading MUST be matched by that reading's own regex, or scrolling
      switches the reading out from under the person. Worth the hassle did
      exactly that: one scroll past #presets and the page jumped to What
-     lands. D-289. */
+     lands. D-294. */
   fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(function (f) {
     const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
     const rows = [...src.matchAll(/\{ id: '(view-[a-z0-9-]+)', match: (\/[^\n]*?\/)(?:,|\s*\})/g)];
@@ -15323,11 +15323,11 @@ section('The thirty (docs/room-map.json)');
      moment it merged into Housing, because Housing needs three fields the
      empty household has not got and the page rounds to thousands. It was
      lossless as its own room only because that room needed nothing. So:
-     nothing may put a display-formatted figure into a .value. D-282. */
+     nothing may put a display-formatted figure into a .value. D-287. */
   fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).forEach(function (f) {
     const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
     /* Two ways a figure reaches a box: an assignment, and an input built
-       as a string with value="..." in it. The second is the one D-288
+       as a string with value="..." in it. The second is the one D-293
        found, six of them in one room, and it is the same bug — a repaint
        would put the rounded figure back and the next blur would store it. */
     const bad = [...src.matchAll(/\.value\s*=(?!=)\s*[^;\n]*Money\.formatCents\(/g)].map(m => m[0].trim())
@@ -15428,7 +15428,7 @@ section('Every class a page names has a rule somewhere (D-226)');
     'rooms/ledger.html': ['xbody'],   /* Express is a Ledger view now (D-230); the hook moved with its markup */
     'rooms/fire.html': ['why'],
     'rooms/decumulation.html': ['plain'],
-    'rooms/debates.html': ['acts']    /* Unlearning is a Referee reading now (D-267); the hook moved with its markup */
+    'rooms/debates.html': ['acts']    /* Unlearning is a Referee reading now (D-272); the hook moved with its markup */
   };
   const pages = ['index.html', 'map.html'].concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
   const orphans = [];

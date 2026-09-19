@@ -55,9 +55,9 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   const owners = Registry.inGroup('numbers', 'employed').filter(r => Ownership.ownedBy(r.id).length).length;
   check('every Your Numbers room that owns a field carries a status dot', (await page.$$eval('#slaf-menu [data-group="numbers"] [data-room] .slaf-dot', ds => ds.length)) === owners);
   check('...and no other group does', (await page.$$eval('#slaf-menu .slaf-menu-group:not([data-group="numbers"]) .slaf-dot', ds => ds.length)) === 0);
-  /* Debt owns the four loan-plan fields since D-274 and the demo names no
+  /* Debt owns the four loan-plan fields since D-279 and the demo names no
      plan, so it reads partly; the Money Calendar is The Month's dates
-     reading since D-270, and its two fields are the ones left empty. */
+     reading since D-275, and its two fields are the ones left empty. */
   check('the demo\'s Debt reads partly (the loan plan is not named)', await page.$eval('#slaf-menu [data-room="debt-payoff"] .slaf-dot', d => d.classList.contains('is-partly')));
   check('...Expenses partly (therapy is not tracked)', await page.$eval('#slaf-menu [data-room="expenses"] .slaf-dot', d => d.classList.contains('is-partly')));
   check('...and The Month empty', await page.$eval('#slaf-menu [data-room="cash-flow"] .slaf-dot', d => d.classList.contains('is-empty')));
@@ -77,7 +77,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   const visible = await page.$$eval('#slaf-menu [data-room]', as => as.filter(a => !a.hidden && !a.closest('[hidden]')).map(a => a.getAttribute('data-room')));
   check('search "car" shows What A Car Costs', visible.indexOf('car') > -1, visible.join(','));
   check('...and hides Level Up', await page.$eval('#slaf-menu [data-group="levelup"]', g => g.hidden));
-  /* Family answers to "childcare" since it took Kids (D-266), so Tax is the
+  /* Family answers to "childcare" since it took Kids (D-271), so Tax is the
      room here that has no "car" anywhere in its names. */
   check('...and hides rooms that do not match', visible.indexOf('fire') === -1 && visible.indexOf('tax') === -1, visible.join(','));
   check('...and opens the groups that match', await page.$eval('#slaf-menu [data-group="decisions"]', g => g.open && !g.hidden));

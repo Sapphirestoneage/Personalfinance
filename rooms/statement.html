@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-228, D-273 (the merge).
+  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-228, D-278 (the merge).
   Registry: statement.
 
   THREE READINGS OF WHAT YOU HOLD.
@@ -37,7 +37,7 @@
   1. READS   the assets, the debts and the household's rates.
   2. WRITES  the seven statement fields as before, and the seven account
              fields — contributions, the marginal rate, the allocation and
-             the band — whose owner moved here with their boxes (D-273). The
+             the band — whose owner moved here with their boxes (D-278). The
              documents reading writes nothing; nothing is typed in it.
   3. CALLS   the engines each reading already called; no arithmetic moved.
   4. EMPTY   nothing owned is nothing owned. No reading invents a holding.
@@ -51,7 +51,7 @@
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
-  /* ---- What you own, from rooms/statement.html (D-273) ---- */
+  /* ---- What you own, from rooms/statement.html (D-278) ---- */
   
   #view-what-you-own .room-back:hover { text-decoration: underline; }
   
@@ -197,7 +197,7 @@
   
   #view-what-you-own .future-read .fr-amt { margin-left: auto; white-space: nowrap; }
 
-  /* ---- Where it lands, from rooms/accounts.html (D-273) ---- */
+  /* ---- Where it lands, from rooms/accounts.html (D-278) ---- */
   
   #view-where-it-lands .room-back:hover { text-decoration: underline; }
   
@@ -263,7 +263,7 @@
   
   #view-where-it-lands .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
 
-  /* ---- The documents, from rooms/statements.html (D-273) ---- */
+  /* ---- The documents, from rooms/statements.html (D-278) ---- */
   
   #view-the-documents section[id] { scroll-margin-top: var(--space-4); }
 
@@ -843,7 +843,7 @@
 <script src="../engines/taxroom.js"></script>
 <script src="../shared/room.js"></script>
 <script>
-/* ---- what you own, where it lands, and the documents (D-273) ----
+/* ---- what you own, where it lands, and the documents (D-278) ----
    Which reading is on screen is read off the hash and nothing else, so every
    old deep link lands. Switching hides and shows and rebuilds nothing: a view
    that rebuilt its inputs would close the soft keyboard under a finger, which
@@ -851,7 +851,7 @@
 
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
-   so its hat is ABSENT, not greyed, when the branch is not there (D-266).
+   so its hat is ABSENT, not greyed, when the branch is not there (D-271).
    The hash still reaches it — an old link must land somewhere honest — and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
@@ -908,7 +908,7 @@
 
 
 <script>
-/* ---- READING view-what-you-own, from rooms/statement.html (D-273) ---- */
+/* ---- READING view-what-you-own, from rooms/statement.html (D-278) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
@@ -1385,7 +1385,7 @@
 </script>
 
 <script>
-/* ---- READING view-where-it-lands, from rooms/accounts.html (D-273) ---- */
+/* ---- READING view-where-it-lands, from rooms/accounts.html (D-278) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
@@ -1746,7 +1746,7 @@
 </script>
 
 <script>
-/* ---- READING view-the-documents, from rooms/statements.html (D-273) ---- */
+/* ---- READING view-the-documents, from rooms/statements.html (D-278) ---- */
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Progress = SLAF.Progress,
@@ -2038,7 +2038,7 @@
 </script>
 
 <script>
-/* ---- READING view-left-behind, from rooms/rollover.html (D-285) ---- */
+/* ---- READING view-left-behind, from rooms/rollover.html (D-290) ---- */
 (function () {
   'use strict';
   /* No SLAF.Spine handle here on purpose: this room reads the household

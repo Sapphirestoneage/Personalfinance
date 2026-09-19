@@ -12,9 +12,9 @@ Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_
 Owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, futureIncome, incomeType, paySurvives
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:
-  - D-290 — What Comes Next is income with a start and an end on it
-  - D-289 — Income takes Worth the Hassle, and eight readings got their scrolling back
-  - D-272 — Income: what lands, what it averages, what it pays
-  - D-268 — What Matters, four readings of one expense log
+  - D-295 — What Comes Next is income with a start and an end on it
+  - D-294 — Income takes Worth the Hassle, and eight readings got their scrolling back
+  - D-277 — Income: what lands, what it averages, what it pays
+  - D-273 — What Matters, four readings of one expense log
   - D-250 — Deeper questions wait for their level
 Full context: node tools/context/pack.js income
