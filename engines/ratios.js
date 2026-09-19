@@ -238,7 +238,7 @@
       compute: function (c) { return Tier0.debtToIncome(c.household); } },
 
     { id: 'housingRatio', label: 'Housing ratio (front-end)', tier: 18,
-      formula: 'housing + utilities ÷ gross monthly income',
+      formula: '(housing + utilities) ÷ gross monthly income',
       unit: 'rate', needs: 'a categorised month and your income',
       note: 'The 28% rule. Counts housing and utilities, which is how underwriters read it.',
       compute: function (c) {
@@ -475,7 +475,12 @@
       note: 'Whether this is too high depends entirely on why the cash is there — see Sleep At Night.',
       compute: function (c) { return over(c.cash, c.totalAssets, { denominatorName: 'totalAssets' }); } },
 
-    { id: 'revolvingShare', label: 'Revolving to installment debt', tier: 19,
+    /* The name said revolving ÷ installment; the code computes revolving ÷
+       TOTAL, and the band (good 0.1 / warn 0.3) is calibrated to the share
+       reading. On the demo those are 0.148 and 0.174 — a different number
+       under the same label. The code and the band were right; the label was
+       not. */
+    { id: 'revolvingShare', label: 'Revolving share of debt', tier: 19,
       formula: 'card balances ÷ total debt',
       unit: 'rate', needs: 'your itemised debts',
       compute: function (c) {
@@ -678,13 +683,22 @@
        part-time wage). Nothing drawn is a zero, not a blank. The 4%/5%
        band is the convention the Decumulation room reads too. D-096. */
     { id: 'withdrawalRate', gate: 'decumulation', label: 'Withdrawal rate', tier: 21,
-      formula: '(spending × 12 − income) ÷ investments',
+      formula: '(spending × 12 − gross income) ÷ investments',
       unit: 'rate', needs: 'your spending, income and investments',
-      note: 'The share of investments drawn each year to cover what income does not.',
+      note: 'The share of investments drawn each year to cover what income does not. Income counts before tax while spending is after it, so the draw reads a little low for anyone with a pension or a wage.',
       compute: function (c) {
         if (!decumulates(c.household)) return Money.incomplete('Not drawing down \u2014 a number for a retiree.', []);
         if (!Money.isEntered(c.monthlyExpenses)) return Money.incomplete('Add your monthly spending to see this.', ['monthlyExpenses']);
         if (!Money.isEntered(c.investments)) return Money.incomplete('Add your investments to see this.', ['investments']);
+        /* GROSS income, deliberately, and the label now says so. Spending is
+           money actually spent, so subtracting gross credits a retiree with
+           a pension or a part-time wage for dollars the IRS takes first, and
+           understates the draw — the panel raised it and it is a fair
+           reading. It is not fixed here: the definition is specified with a
+           worked example in test/run.js ($3,100 × 12 − $24,000 over
+           $420,000 = 3.14%) and reused by the Dashboard's own loop, so
+           changing it is a decision about what the number means, not a
+           defect to patch. Named rather than silently switched. */
         var income = Money.isEntered(c.grossAnnual) ? c.grossAnnual : 0;
         var draw = c.monthlyExpenses * MONTHS - income;
         if (draw <= 0) return Money.ok(0, { annualDrawCents: 0, covered: true });

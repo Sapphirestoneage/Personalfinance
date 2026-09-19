@@ -14271,6 +14271,45 @@ section('The ladder past step 4, and the order the flags come out in (D-235, D-2
 })();
 
 /* ==========================================================================
+   Three numbers that read wrong (D-239)
+   ========================================================================== */
+section('Three numbers that read wrong (D-239)');
+(function () {
+  /* A marginal rate of "the lowest bracket" for someone with nothing taxable.
+     With the standard deduction covering the whole of a $12,000 income, no
+     slice is cut and the fallback used to report ladder[0].rate — 10% — so
+     the Tax room sized the room before the next bracket off a floor that is
+     not there. The next dollar is taxed at nothing until the deduction is
+     used up. */
+  const brackets = require(path.join(ROOT, 'data/federal_brackets_2026.json'));
+  const Tax = require(path.join(ROOT, 'engines/tax.js'));
+  const small = Tax.ordinaryTax(brackets, 1200000, 'single');
+  check('nothing taxable, so nothing is cut', small.taxableIncomeCents, 0);
+  check('… and the next dollar is taxed at nothing, not at the bottom rate', small.marginalRate, 0);
+  checkTrue('… while an ordinary income still reports its real bracket',
+    Tax.ordinaryTax(brackets, 10000000, 'single').marginalRate > 0.1);
+
+  /* A label that named a different ratio than the code computed. */
+  const rows = RatiosEngine.all(h, TABLES).rows;
+  const rev = rows.filter(r => r.id === 'revolvingShare')[0];
+  check('the revolving ratio is named for what it computes', rev.label, 'Revolving share of debt');
+  check('… which is card balances over TOTAL debt, the basis its band is cut for',
+    Math.round(rev.result.value * 1000) / 1000, 0.148);
+
+  /* A formula string that parsed as housing + (utilities ÷ income). */
+  const housing = rows.filter(r => r.id === 'housingRatio')[0];
+  checkTrue('the housing formula brackets its numerator', /\(housing \+ utilities\) ÷/.test(housing.formula), housing.formula);
+
+  /* Named rather than silently switched: the withdrawal rate subtracts GROSS
+     income from after-tax spending, which reads the draw a little low. The
+     definition is specified with a worked example below and reused by the
+     Dashboard, so the note says what the basis is instead. */
+  const wd = rows.filter(r => r.id === 'withdrawalRate')[0];
+  checkTrue('the withdrawal rate says which income it subtracts',
+    /gross income/.test(wd.formula) && /before tax/.test(wd.note), wd.formula + ' | ' + wd.note);
+})();
+
+/* ==========================================================================
    Every id a page writes to exists in that page (D-234)
    ========================================================================== */
 section('Every id a page writes to exists in that page (D-234)');

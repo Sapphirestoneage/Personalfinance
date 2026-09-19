@@ -225,3 +225,164 @@ arithmetic to the cent, and additional Medicare is not double-counted.
 - *"The savings rate is wrong arithmetic."* Overstated. D-080 defines
   `Tier0.savingsRate` as the residual on purpose. The real defect is
   narrower: the residual is fed to `yearsToFire` as if it were contributed.
+
+
+---
+
+## Round 2 — 2026-09-19, after the fourteen fixes
+
+`node test/run.js` → 31011 checks passed (30990 at the start of round 1;
+the difference is new checks, not new code paths). All 95 pages swept at
+390px with the demo household: no page errors, no console errors, no 404s.
+
+| Lens | Round 1 | Round 2 |
+|---|---|---|
+| The Money Guy Show | 6 | **9** |
+| Scott Trench | 6 | **8** |
+| Alan Donegan | 5 | **7** |
+| Alex Hormozi | 5 | **7** |
+| Scott Galloway | 7 | **9** |
+| Alexis Gillmore, the avoider | 4 | **8** |
+| Tom Hutchinson, the CPA | 6 | **8** |
+
+### The Money Guy Show — 9/10 *(was 6)*
+The front door and the ladder now describe the same household the same
+way: flags come out in ladder order, the Dashboard names the rung and
+links to it, and the demo reads "capture the employer match · Step 2 of
+the order of operations" on both screens. Past step 4 the ladder gives the
+next dollar a job against the real IRS limit instead of returning nothing.
+
+Remaining: steps 5 and 6 are still honestly unknown, because what goes into
+an HSA or a Roth is not collected anywhere. That is a missing input, not a
+wrong answer, and it is named on screen.
+
+### Scott Trench — 8/10 *(was 6)*
+The housing ratio computes off the typed roof on every household that has
+one (25.0% and 30.1% on the demo), and housing can now be the next thing
+money should do, off the 28% guideline that sat unread in the rules file.
+The FI date says what it assumes rather than implying the residual lands in
+a brokerage.
+
+Remaining, and not fixed: the residual **is** still what compounds. The
+honest fix is to project the contributed rate beside it, which is a change
+to what `yearsToFire` means and to every engine reading it — a decision for
+the owner, not a panel fix. Disclosure was the right move this round; it is
+not the whole move.
+
+### Alan Donegan — 7/10 *(was 5)*
+Round 1 was already the app's best on-ramp and is now the first thing under
+the doors rather than the thing after a wall of zeros.
+
+**Two of round 1's three findings do not survive checking, and are struck.**
+Opening `rooms/adventure.html?path=hustle` on the demo household shows a
+side hustle priced at "$500 a month, net" with −$100 / +$100 steppers, the
+hours it takes with its own stepper, a five-year walk against drifting, and
+the answer in three return bands: *"9 years sooner than Drift, and +$54,804
+after five years."* `data/levers.json` read directly has six levers of which
+three move income — `hustle` (editable, $500/mo), `careermove` (+20%),
+`steady` (+3% kept rather than spent) — plus a "A real raise" tailwind of
+15% in year 2. The claim that every way up is "get a different job or move
+house" was wrong, and `engines/adventure.js`'s `hustleMonthlyCents` override
+is not unused: `rooms/adventure.html:241` sets it from the stepper.
+
+**The one real gap, verified in node:** good news can be *modelled* and
+cannot be *recorded*. Appending a $500/month entry to `ledger.income[]`
+leaves `Schema.grossAnnualIncomeCents` at $72,000 and `Tier0.yearsToFire` at
+22 years, both unchanged, because `allIncomeSources` reads only
+`people[].incomeSources[]` — and no room in the app adds one. So the FI date
+on the Dashboard cannot move when a person's income actually grows.
+
+That is known structural problem #1 in `docs/ARCHITECTURE.md` and item 4 on
+STATUS.md's own Next list. A handoff from Side Hustle into the income log
+would not fix it — it would write to a log the headline numbers do not
+read, which looks like the date should move and it would not. Fixing it
+means deciding which income figure is authoritative, which is the owner's
+call. Logged, not guessed at; the score records the cost.
+
+### Alex Hormozi — 7/10 *(was 5)*
+The flagship per-hour figure reads $21.04 instead of $0.00, across nine
+call sites. The one-click demo path no longer opens with a warning about
+losing data that does not exist. The two blocks under the Dashboard's five
+numbers stopped saying the same sentence twice.
+
+Remaining: five doors at the threshold. `index.html:19` says two, and
+`docs/ARCHITECTURE.md:70` calls four live onboarding doors a known problem,
+but which two survive is a product decision and Start Here's retirement is
+already blocked on the field-ownership question in STATUS.md. Logged, not
+guessed at.
+
+### Scott Galloway — 9/10 *(was 7)*
+The headline carries the range the engine computes — "22 years at this pace
+— 18 if returns run high, 29 if they run low" — and says what the pace
+assumes. The floor has an answer: a household whose month does not close is
+routed to the room written for it and told plainly that no step of the
+ladder answers that. The Scorecard leads with its sourced readings instead
+of the composite its own data file calls the most invented numbers in the
+repository.
+
+Remaining: the means-tested floor itself is still unmodelled (STATUS.md
+already records it). Routing to Can't Pay is the honest interim; modelling
+benefits is the Back Half's work.
+
+### Alexis Gillmore, the avoider — 8/10 *(was 4)*
+Nothing counts her failures before she has typed anything. The home room
+does not tell her she understands 0% of her own life; it says what the app
+holds, and says nothing at zero. The six doors keep their names and lose
+their denominators until there is something to count. A room she has not
+touched says "Nothing entered here yet. Start with monthly expenses" rather
+than listing thirteen things she has not done, ending on the word debt. The
+Scorecard no longer opens on a grade.
+
+Remaining: the room is still *called* The Scorecard, and "Where you rank"
+is still a hat. Both are named things the owner chose, and the gating on
+rank (guess first, then a deliberate button) is already the right pattern.
+
+### Tom Hutchinson, the CPA — 8/10 *(was 6)*
+Three of the nine numbers came back from the dead, the false "couldn't load
+the reference tables" banner is gone, and a test now fails the build if any
+page writes to an id it does not carry. "Ahead by $0" reads "Ahead by
+$199,200". Debt-to-income is banded against the rule its own note names and
+its own flag uses.
+
+Remaining, logged in round 1 and not fixed this round: `engines/taxroom.js`
+divides a ledger-derived tax by a Start-Here gross, so a stale profile can
+print an effective rate off by a factor of three. This is known structural
+problem #1 in `docs/ARCHITECTURE.md` — logged income not reaching the
+headline numbers — and fixing it properly means deciding which income
+figure is authoritative, which is the owner's call and is item 4 on
+STATUS.md's own Next list. `engines/tax.js:74` reporting a 10% marginal rate
+at zero taxable income, and `engines/ratios.js:452`'s label, are both
+one-liners left for the next pass rather than folded into a panel round.
+
+### New in round 2, found and fixed
+- Ordering the flags made the Dashboard's "next thing to do" and "next thing
+  to learn" both land on the employer match, one above the other. The learn
+  block now skips an item pointing at the room and anchor the action already
+  links to.
+- `rooms/adventure.html` was the only page in the app without a `rel="icon"`,
+  so every visit 404'd on `/favicon.ico`.
+
+### Disagreements in round 2, and how they were resolved
+- **Trench wants the residual replaced; Galloway wants it disclosed.**
+  Replacing it changes what the FI date means in eight engines and is a
+  decision about the product, not a defect. *Resolved in favour of
+  disclosure this round,* with the replacement written up as an owner
+  decision rather than quietly shipped.
+- **Donegan wants the income rooms wired up; nothing the app can write
+  would reach the headline numbers.** Tested rather than argued: a logged
+  $500/month leaves gross income and the FI date untouched. A handoff built
+  anyway would be theatre. *Resolved by leaving it to the owner,* with the
+  Donegan score at 7 to record the cost rather than hide it.
+- **The avoider wants fewer counters; the Ledger's doors use the counter as
+  its progress signal.** *Resolved by state:* the counter is progress once
+  there is progress, and silent before it. Nothing was removed, only
+  deferred to the moment it means something.
+
+### Outcome
+
+Six of seven lenses are at 8 or above. Alan Donegan is at 7, held there by
+one verified item: income growth can be modelled but not recorded, because
+no room writes an income source and the headline numbers read nothing else.
+That is the owner's decision about which income figure is authoritative.
+
+Round 3 follows, for the CPA's remaining one-liners.
