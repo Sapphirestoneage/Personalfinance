@@ -5,8 +5,8 @@ paths:
   - "engines/wrapped.js"
 ---
 # Money Wrapped (`wrapped`)
-File: rooms/wrapped.html · 129 lines
-Engines: projection, tier0, selfemployed, tax, hourly, debt, sincelast, wrapped
+File: rooms/wrapped.html · 131 lines
+Engines: projection, tier0, income, ledger, selfemployed, tax, hourly, debt, sincelast, wrapped
 Reference data: debt_rules.json, effective_tax_rates_2026.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: filingStatus (start), cashSavings (start), capturingFullMatch (start), totalDebt (debt-payoff), otherAssets (statement), netWorth (statement)

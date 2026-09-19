@@ -4,9 +4,9 @@ paths:
   - "engines/decumulation.js"
 ---
 # Drawing It Down (`decumulation`)
-File: rooms/decumulation.html · 273 lines
-Engines: projection, tier0, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation
-Reference data: confidence_weights.json, expense_categories.json, fire_variants.json, foo_rules.json, irs_limits_2026.json, ratio_benchmarks.json, +2 more
+File: rooms/decumulation.html · 276 lines
+Engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation
+Reference data: confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, irs_limits_2026.json, +4 more
 Owns: stockShare, plannedAnnualDraw, socialSecurityAt
 Reads from other owners: grossAnnualIncome (start), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:

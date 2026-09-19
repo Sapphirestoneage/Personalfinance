@@ -4,9 +4,9 @@ paths:
   - "engines/firstcar.js"
 ---
 # The First Car Check (`first-car`)
-File: rooms/first-car.html · 147 lines
-Engines: projection, tier0, hourly, quickmath, firstcar
-Reference data: car_costs.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json
+File: rooms/first-car.html · 150 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly, quickmath, firstcar
+Reference data: car_costs.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, return_bands.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: grossAnnualIncome (start)
 Latest decisions:

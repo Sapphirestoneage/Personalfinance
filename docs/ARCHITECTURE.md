@@ -54,10 +54,11 @@ render; engines never write. Undo snapshots sit under `slaf.snapshots.v1`.
 
 ## Known structural problems (confirmed in the code, 2026-09-11)
 
-1. Logged income does not reach the headline numbers. `ledger.income[]` is
-   read only by the ledger, budget, calendar and tax-room engines; savings
-   rate and the FI date (`engines/tier0.js`) read `grossAnnualIncome`, which
-   Start Here still owns. Logged pay never changes them.
+1. (Fixed, D-246.) Logged pay reaches the headline numbers: with a recurring
+   paycheck in `ledger.income[]`, `Schema.takeHomeAnnualCents` is twelve of
+   this month's logged net, on the log's own gross; the estimate stands in
+   otherwise. Ratios that read `grossAnnualIncome` directly (debt-to-income)
+   still use Start Here's salary.
 2. Start Here owns 17 core fields (the most of any room) but is meant to
    retire into the Ledger; those owners must move first.
 3. Typical versus actual is spread over four rooms: Expenses (the typical

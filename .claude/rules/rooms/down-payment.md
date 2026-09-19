@@ -4,9 +4,9 @@ paths:
   - "engines/downpayment.js"
 ---
 # Down Payment Countdown (`down-payment`)
-File: rooms/down-payment.html · 154 lines
-Engines: projection, tier0, debt, cashflow, ratios, housing, countdown, downpayment
-Reference data: blocks/home.json, confidence_weights.json, debt_rules.json, down_payment.json, expense_categories.json, housing_conventions.json, +5 more
+File: rooms/down-payment.html · 157 lines
+Engines: projection, tier0, income, selfemployed, ledger, debt, cashflow, ratios, housing, countdown, downpayment
+Reference data: blocks/home.json, confidence_weights.json, debt_rules.json, down_payment.json, effective_tax_rates_2026.json, expense_categories.json, +7 more
 Owns: nothing
 Reads from other owners: nothing traced
 Latest decisions:

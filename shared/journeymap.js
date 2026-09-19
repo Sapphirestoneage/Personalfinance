@@ -98,14 +98,20 @@
   function mount(node, map, opts) { if (node) node.innerHTML = html(map, opts); }
 
   /* One stylesheet for the two pages, injected once so the shapes cannot drift. */
-  var CSS = '.jm{display:grid;gap:var(--space-4)}'
+  var CSS = '.jm{display:grid;gap:var(--space-4);min-width:0;max-width:100%}'
+    + '.jm-stage,.jm-steps{min-width:0;max-width:100%}'
     + '.jm-cap{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--color-text-faint)}'
     + '.jm-steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--space-2)}'
-    + '.jm-step{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:32px;padding:4px 10px 4px 6px;border:1px solid var(--color-border-strong);border-radius:var(--radius-pill);text-decoration:none;color:var(--color-text-muted);font-size:var(--text-xs);background:var(--color-surface-raised)}'
+    + '.jm-step{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;min-height:32px;padding:4px 10px 4px 6px;border:1px solid var(--color-border-strong);border-radius:var(--radius-pill);text-decoration:none;color:var(--color-text-muted);font-size:var(--text-xs);background:var(--color-surface-raised)}'
     + '.jm-step i{font-style:normal;min-width:20px;height:20px;padding:0 6px;border-radius:var(--radius-pill);display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--color-border-strong);color:var(--color-text-faint);font-variant-numeric:tabular-nums}'
     + '.jm-step span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
     + '.jm-ladder .jm-step span{max-width:0;opacity:0;transition:max-width 150ms ease}'
-    + '.jm-ladder .jm-step.is-here span,.jm-ladder .jm-step:hover span,.jm-ladder .jm-step:focus span{max-width:60vw;opacity:1}'
+    + '.jm-ladder .jm-step.is-here span,.jm-ladder .jm-step:hover span,.jm-ladder .jm-step:focus span{max-width:100%;opacity:1;flex:1 1 auto;min-width:0}'
+    /* The rung you are on takes its own full line and wraps, so the name
+       and "you are here" never run past the card on a phone (D-246). */
+    + '.jm-ladder .jm-step.is-here{flex:1 1 100%;flex-wrap:wrap;width:100%;box-sizing:border-box}'
+    + '.jm-ladder .jm-step.is-here span{white-space:normal}'
+    + '.jm-step{box-sizing:border-box}'
     + '.jm-step.is-done{border-color:var(--sapphire-300)}.jm-step.is-done i{background:var(--sapphire-300);border-color:var(--sapphire-300);color:var(--color-accent-contrast);font-weight:600}'
     + '.jm-step.is-here{border-color:var(--color-accent-hover);color:var(--color-text);background:var(--color-surface-active)}.jm-step.is-here i{border-color:var(--color-accent-hover);color:var(--color-accent-hover);font-weight:600}'
     + '.jm-step.is-here::after{content:"you are here";font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--color-accent-hover);margin-left:4px;white-space:nowrap}'

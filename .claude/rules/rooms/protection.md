@@ -4,9 +4,9 @@ paths:
   - "engines/protection.js"
 ---
 # Protection (`protection`)
-File: rooms/protection.html · 267 lines
-Engines: projection, tier0, protection
-Reference data: protection_conventions.json
+File: rooms/protection.html · 270 lines
+Engines: projection, tier0, income, selfemployed, ledger, protection
+Reference data: effective_tax_rates_2026.json, protection_conventions.json, se_tax_2026.json
 Owns: healthCover, healthMonthly
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), highestDeductible (start), oopMax (runway), termLife (runway), disabilityMonthly (runway), monthlyExpenses (expenses)
 Latest decisions:

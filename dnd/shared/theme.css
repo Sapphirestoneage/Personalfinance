@@ -245,7 +245,10 @@ h3 { font-size: var(--text-md); }
 .slaf-field {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  /* Top-aligned (D-246): two boxes side by side start their labels on
+     the same line, and a long hint under one of them hangs below rather
+     than pushing the other box down to meet it. */
+  justify-content: flex-start;
   margin-bottom: var(--space-3);
 }
 

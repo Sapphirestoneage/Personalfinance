@@ -4,9 +4,9 @@ paths:
   - "engines/dreamline.js"
 ---
 # Price the Dream (`dreamline`)
-File: rooms/dreamline.html · 238 lines
-Engines: projection, tier0, hourly, dreamline
-Reference data: dreamline.json, effective_tax_rates_2026.json
+File: rooms/dreamline.html · 241 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly, dreamline
+Reference data: dreamline.json, effective_tax_rates_2026.json, se_tax_2026.json
 Owns: dreamsMonthly
 Reads from other owners: grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:

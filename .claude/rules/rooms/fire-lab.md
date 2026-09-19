@@ -3,9 +3,9 @@ paths:
   - "rooms/fire-lab.html"
 ---
 # FIRE Lab (`fire-lab`)
-File: rooms/fire-lab.html · 462 lines
-Engines: projection, tier0, cashflow, fire, hourly
-Reference data: assumptions.json, expense_categories.json, fire_variants.json
+File: rooms/fire-lab.html · 465 lines
+Engines: projection, tier0, income, selfemployed, ledger, cashflow, fire, hourly
+Reference data: assumptions.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, se_tax_2026.json
 Owns: nothing
 Reads from other owners: filingStatus (start), monthlyExpenses (expenses)
 Latest decisions:

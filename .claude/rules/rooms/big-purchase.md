@@ -4,9 +4,9 @@ paths:
   - "engines/purchase.js"
 ---
 # Big Purchase (`big-purchase`)
-File: rooms/big-purchase.html · 263 lines
-Engines: projection, tier0, hourly, quickmath, purchase
-Reference data: car_costs.json, liquidity_benchmarks.json
+File: rooms/big-purchase.html · 266 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly, quickmath, purchase
+Reference data: car_costs.json, effective_tax_rates_2026.json, liquidity_benchmarks.json, se_tax_2026.json
 Owns: purchasePrice, purchaseMonths, purchaseRate
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:

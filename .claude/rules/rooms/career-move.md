@@ -4,9 +4,9 @@ paths:
   - "engines/careermove.js"
 ---
 # Career Move (`career-move`)
-File: rooms/career-move.html · 291 lines
-Engines: projection, tier0, hourly, careermove
-Reference data: effective_tax_rates_2026.json, levers.json
+File: rooms/career-move.html · 294 lines
+Engines: projection, tier0, income, selfemployed, ledger, hourly, careermove
+Reference data: effective_tax_rates_2026.json, levers.json, se_tax_2026.json
 Owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), monthlyExpenses (expenses)
 Latest decisions:

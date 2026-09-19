@@ -4,9 +4,9 @@ paths:
   - "engines/studentloans.js"
 ---
 # Student Loan Decision (`student-loans`)
-File: rooms/student-loans.html · 267 lines
-Engines: projection, tier0, debt, studentloans, hourly
-Reference data: debt_rules.json, student_loan_conventions.json
+File: rooms/student-loans.html · 270 lines
+Engines: projection, tier0, income, selfemployed, ledger, debt, studentloans, hourly
+Reference data: debt_rules.json, effective_tax_rates_2026.json, se_tax_2026.json, student_loan_conventions.json
 Owns: loanPlan, loanExtra, idrShare, forgivenessYears
 Reads from other owners: grossAnnualIncome (start), employmentStatus (start), hasDebt (start), totalDebt (debt-payoff), monthlyDebtPayments (debt-payoff)
 Latest decisions:
