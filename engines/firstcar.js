@@ -30,19 +30,13 @@
   var MONTHS = 12, DAYS_A_MONTH = 365.25 / 12, USED_AGE_YEARS = 3, HOLD_YEARS = 5;
 
   function share(table, id) { var r = ((table && table.runningCosts) || []).filter(function (x) { return x.id === id; })[0]; return r ? r.share : null; }
-  function retained(table, years) {
-    var rows = ((table && table.depreciation) || []).slice().sort(function (a, b) { return a.year - b.year; });
-    if (!rows.length) return null;
-    for (var i = 0; i < rows.length; i++) {
-      if (rows[i].year === years) return rows[i].retainedShare;
-      if (rows[i].year > years) { var a = rows[i - 1], b = rows[i]; return a.retainedShare + (b.retainedShare - a.retainedShare) * (years - a.year) / (b.year - a.year); }
-    }
-    return rows[rows.length - 1].retainedShare;
-  }
+  /* One curve reader (D-255): engines/quickmath's, the same the Car room draws. */
+  function retained(table, years) { return QuickMath.retainedShareAt((table && table.depreciation) || [], years); }
 
   /**
    * check(household, tables, opts) → Result
-   *   opts.priceCents (REQUIRED), downCents, termMonths, loanRate, insuranceMonthlyCents, gasMonthlyCents, maintenanceMonthlyCents
+   *   opts.priceCents (REQUIRED), downCents, termMonths, loanRate, insuranceMonthlyCents, gasMonthlyCents, maintenanceMonthlyCents,
+   *   repairsMonthlyCents (set aside, D-255), ageYears (a used car's age; the drop is read from there)
    *   value   how many of the three parts sit inside
    */
   function check(household, tables, opts) {
@@ -57,8 +51,14 @@
     var sIns = share(C, 'insurance'), sFuel = share(C, 'fuel'), sMaint = share(C, 'maintenance');
     var maintEstimate = sIns !== null && sFuel !== null && sMaint !== null && (ins + gas) > 0 ? Math.round((ins + gas) / (sIns + sFuel) * sMaint) : null;
     var maint = Money.isEntered(o.maintenanceMonthlyCents) ? o.maintenanceMonthlyCents : (maintEstimate || 0);
+    var repairs = Money.isEntered(o.repairsMonthlyCents) ? o.repairsMonthlyCents : 0;
     var payment = rule.monthlyPaymentCents || 0;
-    var allIn = payment + ins + gas + maint;
+    var allIn = payment + ins + gas + maint + repairs;
+    /* What it loses while you hold it (D-255): from the car's age on the
+       curve, so a used car's drop is the flatter stretch, not year one. */
+    var age = Money.isEntered(o.ageYears) && o.ageYears > 0 ? o.ageYears : 0;
+    var holdShare = QuickMath.retainedFrom(C.depreciation, age, HOLD_YEARS);
+    var holdLoss = holdShare === null ? null : Math.round(o.priceCents * (1 - holdShare));
     var gross = Schema.grossAnnualIncomeCents(h);
     var allInShare = Money.isOk(gross) && gross.value > 0 ? allIn / (gross.value / MONTHS) : null;
     var parts = rule.checks.map(function (c) { return { key: c.key, label: c.label, inside: !!c.pass, actual: c.actual, target: c.target, shortfallCents: c.shortfallCents || null, overByCents: c.overByCents || null }; });
@@ -74,6 +74,8 @@
       priceCents: o.priceCents, parts: parts, insideAll: parts.every(function (p) { return p.inside; }),
       maxAffordablePriceCents: rule.maxAffordablePriceCents, paymentCents: payment, paymentCapCents: rule.paymentCapCents, loanCents: rule.loanCents, totalInterestCents: rule.totalInterestCents,
       insuranceCents: ins, gasCents: gas, maintenanceCents: maint, maintenanceEstimated: !Money.isEntered(o.maintenanceMonthlyCents), maintenanceEstimateCents: maintEstimate,
+      repairsCents: repairs, repairsEntered: Money.isEntered(o.repairsMonthlyCents),
+      depreciation: { ageYears: age, holdYears: HOLD_YEARS, holdLossCents: holdLoss, holdLossMonthlyCents: holdLoss === null ? null : Math.round(holdLoss / (HOLD_YEARS * MONTHS)) },
       allInMonthlyCents: allIn, allInShare: allInShare, allInInside: allInShare === null ? null : allInShare <= rule.rule.maxPaymentShareOfGross,
       gapCents: gap, gapFiDays: fiDays,
       newVsUsed: { holdYears: HOLD_YEARS, usedAgeYears: USED_AGE_YEARS, newLossCents: newLoss, usedListNewCents: usedListNew, usedLossCents: usedLoss },

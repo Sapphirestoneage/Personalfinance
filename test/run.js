@@ -8765,6 +8765,34 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
 })();
 
+section('The car: new or used, the running costs, and all in a month (D-255)');
+
+(function () {
+  const QM = require(path.join(ROOT, 'engines/quickmath.js'));
+  const FirstCar = require(path.join(ROOT, 'engines/firstcar.js'));
+  const T = Object.assign({}, TABLES, { carCosts: require(path.join(ROOT, 'data/car_costs.json')) });
+  const curve = T.carCosts.depreciation;
+  check('a new car reads the curve from the top', QM.retainedFrom(curve, 0, 3), QM.retainedShareAt(curve, 3));
+  checkTrue('a three-year-old car\'s next three years are the flatter stretch', Math.abs(QM.retainedFrom(curve, 3, 3) - QM.retainedShareAt(curve, 6) / QM.retainedShareAt(curve, 3)) < 1e-12 && QM.retainedFrom(curve, 3, 3) > QM.retainedFrom(curve, 0, 3));
+  check('a blank age is nought', QM.retainedFrom(curve, null, 3), QM.retainedFrom(curve, 0, 3));
+  check('the first-car engine reads the one curve function', FirstCar.retained(T.carCosts, 2.5), QM.retainedShareAt(curve, 2.5));
+  const demo = Demo.build();
+  const base = { priceCents: 2000000, downCents: 400000, termMonths: 36, loanRate: 0.06, insuranceMonthlyCents: 15000, gasMonthlyCents: 12000 };
+  const a = FirstCar.check(demo, T, base);
+  const b = FirstCar.check(demo, T, Object.assign({}, base, { repairsMonthlyCents: 5000 }));
+  checkTrue('repairs set aside are in the all-in figure', Money.isOk(a) && Money.isOk(b) && b.allInMonthlyCents === a.allInMonthlyCents + 5000 && b.repairsEntered && !a.repairsEntered);
+  check('… and blank repairs read as nothing, said so', a.repairsCents, 0);
+  const usedCar = FirstCar.check(demo, T, Object.assign({}, base, { ageYears: 3 }));
+  checkTrue('a used car loses less over the hold, from its age on the curve', usedCar.depreciation.ageYears === 3 && usedCar.depreciation.holdLossCents < a.depreciation.holdLossCents && a.depreciation.holdLossCents === Math.round(2000000 * (1 - QM.retainedFrom(curve, 0, FirstCar.HOLD_YEARS))));
+  checkTrue('the all-in share is measured against the same 8% the payment is', Money.isEntered(a.allInShare) && a.allInInside === (a.allInShare <= a.rule.maxPaymentShareOfGross));
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/car.html'), 'utf8');
+  checkTrue('the room asks new or used, the age, insurance, fuel, maintenance and repairs', ['condition', 'age', 'insurance', 'fuel', 'maintenance', 'repairs'].every(c => room.indexOf("ctl: '" + c + "'") > -1));
+  checkTrue('… reads the curve from the car\'s age through the one function', /QuickMath\.retainedFrom\(curve\(T\), age\(\), years\)/.test(room) && !/r\.retainedShare\b/.test(room.replace(/one\.retainedShare/g, '')));
+  checkTrue('… and shows all in a month through the first-car engine', /id="out-allin"/.test(room) && /SLAF\.FirstCar\.check\(h, T, opts\(\)\)/.test(room) && /engines\/firstcar\.js/.test(room));
+  checkTrue('the state average insurance is offered, never written', /propose: function \(h, T\) \{ var st = Schema\.stateCell\(T, h\.state, 'autoInsuranceFullCoverageAnnualCents'\)/.test(room));
+  checkTrue('the registry names the section', Registry.byId('car').subsections.some(x => x.id === 'out-allin'));
+})();
+
 section('Statements that open, and the FIRE statement (D-254)');
 
 (function () {

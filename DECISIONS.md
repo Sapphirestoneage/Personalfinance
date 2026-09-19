@@ -14577,6 +14577,39 @@ engines' figures; nothing entered refuses; a dash never a zero), lane
 2, `node tools/context/build.js --check`; every tab at 390px with the
 demo, lines opening, links resolving, clean console.
 
+## D-255 — The car: new or used, the running costs, and all in a month
+
+**Why.** The owner, on the car page: "include if you bought used or
+new, repairs or not, other related numbers as well." The page priced
+depreciation from the top of the curve and named the running costs as
+shares only, so a used car read as a new one and the monthly figure
+stayed the payment.
+
+**Decision.** `engines/quickmath.js` gains `retainedFrom(curve, age,
+years)`: the curve read from the car's age, the one function the Car
+room and `engines/firstcar.js` both use (the first-car engine's own
+curve reader is gone). `firstcar.check` takes `ageYears` and
+`repairsMonthlyCents`; the all-in figure counts repairs, and
+`depreciation` says what the hold loses from that age. `rooms/car.html`
+asks, under the template's fine-tune fold, new or used, the age,
+insurance (the state average offered, never written), fuel,
+maintenance (estimated from the AAA shares when blank, said so) and
+repairs set aside; the headline, the curve and the year-by-year list
+read from the age; a new section "What it costs all in, a month" lists
+every line, cash out against the same 8% cap the payment is tested on,
+and all in with the value lost.
+
+**Replaces or removes.** The first-car engine's private curve reader;
+the shares-only reading of running costs.
+
+**Stored shape.** No change. The car stays page state (D-052).
+
+**Verified.** `node test/run.js` (the curve from an age; repairs in the
+all-in; the used hold loses less; the room asks the six), lane 2,
+`node test/forms.js`, `node tools/context/build.js --check`; the Car
+room at 390px with the demo, new and used at three years, clean
+console.
+
 ---
 
 # The Dungeons & Dividends entries
