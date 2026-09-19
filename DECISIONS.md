@@ -14687,6 +14687,57 @@ figures link to the rooms they come from, so a number is a door.
 `node tools/context/build.js --check`; the path rooms at 390px, clean
 console.
 
+## D-259 — How many weeks the state gives, and the date they run out
+
+**Why.** The owner, on the Between jobs card: show how many weeks you get,
+and work out the end date from it. The card asked for "weeks left" as a
+number to type, and offered the state's WHOLE allowance as the guess — right
+only on the day the job ends. Nothing said how long the state pays, and
+nothing turned that into a date, though `data/ui_benefits.json` has held the
+weeks per state all along and the card already asks the month the job ended.
+
+**Decision.** `Schema.benefitTimeline(household, tables, now)`: the state's
+allowance, the whole weeks gone since the job ended, the weeks left and the
+date of the last payment. `now` is injectable so a test is not hostage to the
+day it runs. `rooms/start.html` prints one sentence under the benefit row —
+"Arizona pays up to 26 weeks. Counting from the month the job ended, that
+runs to November 30, 2026 — about 11 weeks from now" — and the suggestion in
+the Weeks left box now offers what is left, not the whole allowance.
+
+**Replaces or removes.** Removes a guess that was wrong for everyone except
+someone whose job ended this week.
+
+**Stored shape.** No change. `benefitWeeksLeft` is still typed and still
+owned by Start Here; this only computes what to suggest and what to say.
+
+**Verified.** `node test/run.js` (32,250) including the run for all 51 states,
+the exhausted case, a job that has not ended yet, and both incomplete paths —
+no state and no end date each say what is missing rather than inventing a
+date. Read in a browser at 412px for Arizona, Alabama and Alaska.
+
+## D-260 — A room that throws while rendering says so, instead of blaming data/
+
+**Why.** The owner, from the phone, on Cash Flow: "Couldn't load the
+reference tables in data/ (Ownership is not defined)." The tables had loaded
+perfectly. `rooms/cash-flow.html` used `Ownership.linkTo` three times in the
+net-flow detail and never declared `Ownership` in its IIFE, so under
+`'use strict'` it threw a ReferenceError — inside the `.then()` whose
+`.catch()` announces a data-load failure. The same mislabelling as D-238 on
+the Scorecard, and it hid the cause both times.
+
+**Decision.** `Ownership` is declared in the room's handle list beside the
+others. The whole net-flow breakdown had been silently absent whenever the
+figure computed, which is why the demo household never showed it.
+
+**Replaces or removes.** Nothing.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (32,250). A sweep of all 95 pages at 412px
+with a fully seeded household — income, spending log and all — looking for a
+visible error banner or a thrown exception: Cash Flow was the only one, and
+it is clean now. The net-flow rows render for the first time.
+
 ---
 
 # The Dungeons & Dividends entries

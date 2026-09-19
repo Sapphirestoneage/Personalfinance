@@ -318,6 +318,7 @@
         + choices('benefitStatus', BENEFIT, 'Unemployment benefit')
         + '<div class="row" data-benefit hidden style="margin-top:var(--space-3)">' + moneyInput('weekly', 'A week, before tax', 'e.g. 350', 'Weekly benefit')
         + '<label class="slaf-field"><span class="slaf-label">Weeks left' + badge('weeks') + '</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" data-ctl="weeks" placeholder="e.g. 20" aria-label="Weeks of benefit left"/></span></label></div>'
+        + '<p class="field-note" data-note="benefit" hidden></p>'
         + '<div class="row" style="margin-top:var(--space-2)">' + moneyInput('severance', 'Severance still in hand', 'e.g. 4,000') + moneyInput('lastPay', 'The last job paid, a year', 'e.g. 52,000') + '</div>';
     },
     partnerPay: function () {
@@ -483,6 +484,43 @@
     zip: function (v) { var z = String(v || '').replace(/\D/g, '').slice(0, 5); Spine.set('zip', z.length === 5 ? z : null, 'ZIP'); }
   };
   function pct(v) { var raw = String(v).replace(/[^0-9.]/g, ''); if (raw === '') return null; var n = Number(raw); return isNaN(n) ? null : n; }
+  /* ---- How long the benefit runs (D-259) ---------------------------------
+     One sentence: what the state allows, when it runs out, and where that
+     leaves you today. The allowance is a published maximum, not a promise —
+     what anyone actually draws turns on their base-period wages — so the
+     sentence says "up to" and names the state, and never hides the fact that
+     the figure is a ceiling. */
+  function longDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return '';
+    return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]))
+      .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  }
+  function stateName(code) {
+    var t = TABLES && TABLES.states && TABLES.states.states;
+    if (!t) return code;
+    for (var i = 0; i < t.length; i++) if (t[i].code === code) return t[i].name || code;
+    return code;
+  }
+  function runSource(run) {
+    return stateName(run.state) + ' pays up to ' + run.weeksAllowed + ' weeks, and '
+      + run.weeksElapsed + ' have gone since the job ended';
+  }
+  function runSentence(run, u) {
+    if (!Money.isOk(run)) return run && run.reason ? run.reason : '';
+    var ceiling = stateName(run.state) + ' pays up to ' + run.weeksAllowed + ' week'
+      + (run.weeksAllowed === 1 ? '' : 's') + '.';
+    if (run.exhausted) {
+      return ceiling + ' Counting from the month the job ended, ' + run.weeksAllowed
+        + ' weeks was up on ' + longDate(run.endsOn) + '. A maximum, not a promise \u2014 '
+        + 'what you actually get depends on what you earned before, and some states pay fewer weeks.';
+    }
+    return ceiling + ' Counting from the month the job ended, that runs to '
+      + longDate(run.endsOn) + ' \u2014 about ' + run.weeksLeft + ' week'
+      + (run.weeksLeft === 1 ? '' : 's') + ' from now. A maximum, not a promise: '
+      + 'what you actually get depends on what you earned before, and some states pay fewer weeks.';
+  }
+
   function dobFrom(m, y) { if (!m || !y) return null; return y + '-' + (m.length === 1 ? '0' + m : m) + '-01'; }
   function writeDob() {
     var dob = dobFrom(ctl('month').value, ctl('year').value);
@@ -778,7 +816,27 @@
       var hasBenefit = u.benefitStatus === 'receiving' || u.benefitStatus === 'applied';
       document.querySelector('[data-benefit]').hidden = !hasBenefit;
       if (Money.isEntered(u.benefitWeeklyCents)) setMoney('weekly', u.benefitWeeklyCents); else { setMoney('weekly', null); if (hasBenefit) propose('weekly', g.weekly, function (c) { WRITE.weekly(c / 100); render(); }); }
-      if (Money.isEntered(u.benefitWeeksLeft)) setText('weeks', u.benefitWeeksLeft); else { setText('weeks', ''); if (hasBenefit && g.weeks) propose('weeks', Object.assign({ unit: 'count' }, g.weeks), function (n) { WRITE.weeks(n); render(); }); }
+      /* How many weeks the state gives, and the date they run out (D-259).
+         The allowance and the end date were both computable all along —
+         data/ui_benefits.json holds the weeks, the card holds the month the
+         job ended — and neither was ever shown. The suggestion used to offer
+         the WHOLE allowance as "weeks left", which is only right on the day
+         the job ends; it now offers what is actually left. */
+      var run = Schema.benefitTimeline(x, TABLES);
+      if (Money.isEntered(u.benefitWeeksLeft)) setText('weeks', u.benefitWeeksLeft);
+      else {
+        setText('weeks', '');
+        var offer = Money.isOk(run)
+          ? { value: run.weeksLeft, source: runSource(run) }
+          : (g.weeks || null);
+        if (hasBenefit && offer) propose('weeks', Object.assign({ unit: 'count' }, offer), function (n) { WRITE.weeks(n); render(); });
+      }
+      var runNote = document.querySelector('[data-note="benefit"]');
+      if (runNote) {
+        var say = hasBenefit ? runSentence(run, u) : '';
+        runNote.hidden = !say;
+        runNote.textContent = say;
+      }
       setMoney('severance', u.severanceCents);
       if (Money.isEntered(u.lastGrossAnnualCents)) setMoney('lastPay', u.lastGrossAnnualCents); else { setMoney('lastPay', null); propose('lastPay', g.lastPay, function (c) { WRITE.lastPay(c / 100); render(); }); }
     }

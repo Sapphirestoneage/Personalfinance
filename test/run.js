@@ -14975,6 +14975,69 @@ section('No file carries an unresolved merge conflict (D-249)');
 })();
 
 /* ==========================================================================
+   How long the benefit runs (D-259)
+   ========================================================================== */
+section('How long the benefit runs (D-259)');
+(function () {
+  /* The card asked for "weeks left" and offered the state's WHOLE allowance
+     as the guess, which is only right on the day the job ends. Nothing said
+     how many weeks the state gives, and nothing worked out the date they run
+     out, though data/ui_benefits.json held the weeks and the card held the
+     month the job ended. */
+  const UI = { uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')) };
+  const NOW = Date.UTC(2026, 8, 19);          /* 19 September 2026, fixed */
+  const mk = (state, since) => ({ schemaVersion: 2, state: state, people: [{ id: 'p1', role: 'adult',
+    employmentStatus: 'unemployed',
+    unemployment: { since: since, benefitStatus: 'receiving', benefitWeeklyCents: 86900 } }] });
+
+  const az = Schema.benefitTimeline(mk('AZ', '2026-06-01'), UI, NOW);
+  checkTrue('a 26-week state reads its allowance off the data file', Money.isOk(az), az.reason);
+  check('… 26 weeks allowed', az.weeksAllowed, 26);
+  check('… which is the figure in data/ui_benefits.json',
+    az.weeksAllowed, UI.uiBenefits.states.AZ.weeks);
+  check('… 15 whole weeks gone since 1 June', az.weeksElapsed, 15);
+  check('… so 11 are left, not the whole 26', az.weeksLeft, 11);
+  check('… and the last week falls on', az.endsOn, '2026-11-30');
+  checkTrue('… not exhausted yet', az.exhausted === false);
+
+  /* Arithmetic, independently: 1 June + 26 × 7 days. */
+  const WEEK = 7 * 24 * 60 * 60 * 1000;
+  check('the end date is the start plus the allowance in weeks',
+    az.endsOn, new Date(Date.UTC(2026, 5, 1) + 26 * WEEK).toISOString().slice(0, 10));
+
+  /* A short state, long past. */
+  const al = Schema.benefitTimeline(mk('AL', '2025-01-01'), UI, NOW);
+  check('Alabama pays 14 weeks', al.weeksAllowed, 14);
+  check('… long gone, so nothing is left', al.weeksLeft, 0);
+  checkTrue('… and it says so', al.exhausted === true);
+  check('… the run ended on', al.endsOn, '2025-04-09');
+
+  /* A job that ends this month has not spent a week of it. */
+  const fresh = Schema.benefitTimeline(mk('AK', '2026-09-01'), UI, NOW);
+  check('two whole weeks gone since 1 September', fresh.weeksElapsed, 2);
+  check('… 24 of 26 left', fresh.weeksLeft, 24);
+
+  /* A job ending NEXT month never reads as negative weeks used. */
+  const future = Schema.benefitTimeline(mk('AK', '2026-11-01'), UI, NOW);
+  check('a job that has not ended yet has spent no weeks', future.weeksElapsed, 0);
+  check('… and the whole allowance is ahead', future.weeksLeft, 26);
+
+  /* Neither half is guessed: a date someone would plan around is not
+     invented from a missing state or a missing end date. */
+  check('no state, no allowance', Schema.benefitTimeline(mk(null, '2026-06-01'), UI, NOW).status, 'incomplete');
+  check('no end date, no end date', Schema.benefitTimeline(mk('AZ', null), UI, NOW).status, 'incomplete');
+  check('and someone in work is not between jobs',
+    Schema.benefitTimeline({ schemaVersion: 2, state: 'AZ',
+      people: [{ id: 'p1', role: 'adult', employmentStatus: 'employed' }] }, UI, NOW).status, 'incomplete');
+
+  /* Every state in the file can be read, so no household hits a blank. */
+  const codes = Object.keys(UI.uiBenefits.states);
+  check('every state in the file carries a week count', codes.length, 51);
+  const unreadable = codes.filter(c => !Money.isOk(Schema.benefitTimeline(mk(c, '2026-06-01'), UI, NOW)));
+  check('… and every one of them produces a run', unreadable.join(', '), '');
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 
