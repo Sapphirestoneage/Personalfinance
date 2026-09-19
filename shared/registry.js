@@ -387,7 +387,7 @@
                /* It owns none of these. Round 1, all at once and since last
                   time each write through Ownership.write, which is the owner's
                   own path — one record, never a second copy (D-230). */
-               writes: ["assets.cashCents","assets.invested","debt.items","expenses","income.grossAnnualCents","income.sources[].lastPay","taxes.zip","you.dob","you.situation"] },
+               writes: ["assets.cashCents","assets.invested","debt.items","expenses","income.grossAnnualCents","income.sources[].lastPay","income.takeHome","taxes.zip","you.dob","you.situation"] },
       subsections: [
         { id: 'doors-home',   label: 'The six doors' },
         { id: 'door-D',       label: 'Debt' },
@@ -396,7 +396,7 @@
         { id: 'door-T',       label: 'Taxes' },
         { id: 'door-E',       label: 'Expenses' },
         { id: 'door-you',     label: 'You' },
-        { id: 'view-round1',  label: 'Round 1' },
+        { id: 'view-round1',  label: 'The opening' },
         { id: 'view-express', label: 'All at once' },
         { id: 'view-since',   label: 'Since last time' },
         { id: 'view-shelves', label: 'Arrangements' },

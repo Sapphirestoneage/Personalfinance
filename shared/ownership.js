@@ -170,6 +170,21 @@
       applies: function (h) { return !(Schema.isUnemployed(h) && !Money.isOk(Schema.grossAnnualIncomeCents(h))); },
       notApplicableBecause: 'Between jobs — the runway is the number that matters now.'
     },
+    /* Take-home a month, typed as such in the opening (D-306). The Ledger
+       owns it: it is the one room facts are entered in, and the opening is
+       its first view. The write takes the month; ctx.per and ctx.typedCents
+       keep the figure as it was typed so the box refills the same way. */
+    takeHomeMonthly: {
+      label: 'Take-home pay, a month', owner: 'ledger', anchor: 'round-1',
+      read: function (h) { return Schema.typedTakeHomeMonthlyCents(h); },
+      format: money,
+      write: function (cents, ctx) {
+        var c = ctx || {};
+        var per = Schema.TAKE_HOME_PER.indexOf(c.per) !== -1 ? c.per : 'month';
+        var typed = Money.isEntered(c.typedCents) ? Math.round(c.typedCents) : (Money.isEntered(cents) ? Math.round(cents) : null);
+        return Spine.set('takeHome', Schema.createTakeHome({ monthlyCents: Money.isEntered(cents) ? Math.round(cents) : null, typedCents: typed, per: per }), 'Take-home pay');
+      }
+    },
     unemployment: {
       label: 'Between jobs', owner: 'start', anchor: 'q-unemployed',
       read: function (h) {
@@ -244,7 +259,10 @@
         if (m.hasDebt === false) return Money.ok(false);
         return Money.incomplete('Not answered yet.', ['hasDebt']);
       },
-      format: function (v) { return v ? 'Yes' : 'None'; }
+      format: function (v) { return v ? 'Yes' : 'None'; },
+      /* Yes or no, through the owner (D-306): a no clears nothing listed;
+         a listed debt is a yes by implication either way. */
+      write: function (v) { return Spine.set('meta.hasDebt', v === null || v === undefined ? null : !!v, 'Any debt'); }
     },
 
     /* Where It Goes owns your retirement setup. These were asked by the FOO

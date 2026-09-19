@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_oa",
+      "label": "Opening: 23, nothing invested, student debt",
+      "role": "adult",
+      "dob": "2003-03-01",
+      "employmentStatus": "employed",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [],
+      "work": {
+        "contractedHoursPerWeek": null,
+        "unpaidOvertimeHoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "prepHoursPerWeek": null,
+        "decompressHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "weeksPerYear": 48
+      }
+    }
+  ],
+  "filingStatus": "single",
+  "state": "NC",
+  "zip": null,
+  "capturingFullMatch": null,
+  "dependents": null,
+  "community": {
+    "daySchool": null
+  },
+  "assets": [
+    {
+      "id": "p_oa_cash",
+      "label": "Checking and savings",
+      "last4": null,
+      "category": "cash",
+      "valueCents": 200000,
+      "liquid": true,
+      "ownerIds": [
+        "p_oa"
+      ],
+      "taxCharacter": null,
+      "institution": null,
+      "accountType": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null,
+      "tier": null
+    },
+    {
+      "id": "p_oa_inv",
+      "label": "Brokerage",
+      "last4": null,
+      "category": "investment",
+      "valueCents": 0,
+      "liquid": false,
+      "ownerIds": [
+        "p_oa"
+      ],
+      "taxCharacter": null,
+      "institution": null,
+      "accountType": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null,
+      "tier": null
+    }
+  ],
+  "debts": [
+    {
+      "id": "p_oa_d0",
+      "label": "Student loans",
+      "institution": null,
+      "last4": null,
+      "balanceCents": 2800000,
+      "rate": 0.065,
+      "minPaymentCents": null,
+      "type": "student_loan",
+      "creditLimitCents": null,
+      "promoEndsOn": null,
+      "postPromoRate": null,
+      "emotionalTag": null,
+      "keepReasons": [],
+      "excludeFromAggressive": false,
+      "interestFree": null,
+      "archived": false,
+      "borrowedOn": null,
+      "dueOn": null,
+      "ownerIds": [
+        "p_oa"
+      ]
+    }
+  ],
+  "expenses": {
+    "needs": {
+      "food": {
+        "monthlyCents": null
+      },
+      "accommodation": {
+        "monthlyCents": null
+      },
+      "transportation": {
+        "monthlyCents": null
+      }
+    },
+    "wants": {
+      "totalCents": 300000,
+      "therapy": null
+    },
+    "entries": [],
+    "annual": []
+  },
+  "incomeBasis": "earned",
+  "retirement": {
+    "contributionPercent": null,
+    "rothContributedCents": null,
+    "hsaContributedCents": null,
+    "onHdhp": null,
+    "hsaFamilyPlan": null,
+    "has401k": null
+  },
+  "takeHome": {
+    "monthlyCents": 380000,
+    "typedCents": 380000,
+    "per": "month"
+  },
+  "insurance": {
+    "highestDeductibleCents": null,
+    "oopMaxCents": null,
+    "termLifeCents": null,
+    "disabilityMonthlyCents": null,
+    "umbrella": null,
+    "health": {
+      "type": null,
+      "monthlyCents": null
+    }
+  },
+  "worthChecks": [],
+  "ratings": {},
+  "valuesProfile": {
+    "stated": [],
+    "assignments": {}
+  },
+  "swan": {
+    "basis": null,
+    "targetCents": null,
+    "targetMonths": null,
+    "note": null,
+    "setAt": null
+  },
+  "goals": [],
+  "futureIncome": [],
+  "property": [],
+  "allocation": {
+    "stocks": null,
+    "bonds": null,
+    "cash": null,
+    "rebalanceBand": null
+  },
+  "rerank": {
+    "rows": []
+  },
+  "targets": {
+    "retireAge": null,
+    "coastAge": null
+  },
+  "scenarios": [],
+  "oneOffs": [],
+  "estate": {
+    "beneficiariesSet": null,
+    "willExists": null,
+    "poaExists": null
+  },
+  "giving": {
+    "pctOfIncome": null,
+    "annualTargetCents": null
+  },
+  "decumulation": {
+    "stockShare": null,
+    "plannedAnnualDrawCents": null,
+    "socialSecurityAt": null
+  },
+  "tax": {
+    "otherPreTaxAnnualCents": null,
+    "withheldAnnualCents": null
+  },
+  "career": {
+    "offer": {
+      "grossAnnualCents": null,
+      "hoursPerWeek": null,
+      "commuteHoursPerWeek": null,
+      "workCostsMonthlyCents": null,
+      "signOnCents": null
+    }
+  },
+  "partner": {
+    "splitMode": null,
+    "sharedMonthlyCents": null
+  },
+  "kids": {
+    "tuitionTargetCents": null,
+    "tuitionSavedCents": null,
+    "tuitionMonthlyCents": null
+  },
+  "housing": {
+    "rentMonthlyCents": null,
+    "priceCents": null,
+    "downPct": null,
+    "rate": null
+  },
+  "purchase": {
+    "priceCents": null,
+    "monthsAway": null,
+    "financeRate": null,
+    "label": null
+  },
+  "variableIncome": {
+    "bufferMonths": null,
+    "windowMonths": null
+  },
+  "enough": {
+    "monthlyCents": null,
+    "source": null
+  },
+  "designedWeek": {
+    "blocks": []
+  },
+  "timeBuckets": [],
+  "dreams": [],
+  "reversibility": {
+    "decisionId": null,
+    "given": {}
+  },
+  "unlearning": {
+    "dropped": []
+  },
+  "studentLoans": {
+    "plan": null,
+    "extraMonthlyCents": null,
+    "idrShare": null,
+    "forgivenessYears": null
+  },
+  "calendar": {
+    "cadence": null,
+    "nextPaydayDay": null,
+    "bills": [],
+    "payLater": []
+  },
+  "history": {
+    "compareTo": null
+  },
+  "journal": [],
+  "ledger": {
+    "income": [],
+    "months": [],
+    "dismissed": []
+  },
+  "budget": {
+    "estimated": {},
+    "presets": {}
+  },
+  "notApplicable": {},
+  "subscriptions": [],
+  "skills": {},
+  "skillTree": {
+    "state": {}
+  },
+  "exercises": {
+    "done": {},
+    "results": {}
+  },
+  "practiceLedger": [],
+  "assumptions": {
+    "returnReal": 0.05,
+    "inflation": 0.03,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
+    "swrRate": 0.04,
+    "humanCapitalDiscountRate": 0.02,
+    "homeEquityHaircut": 0.8,
+    "marginalRate": null
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": null,
+    "confirmedAt": {},
+    "fields": {
+      "takeHomeMonthly": {
+        "asOf": "2026-09-19",
+        "source": "typed",
+        "confidence": "roughly",
+        "room": "ledger"
+      },
+      "wantsMonthly": {
+        "asOf": "2026-09-19",
+        "source": "typed",
+        "confidence": "roughly",
+        "room": "ledger"
+      }
+    },
+    "hasDebt": true,
+    "undoStack": [],
+    "redoStack": [],
+    "guessed": {},
+    "notSure": {},
+    "reopen": null,
+    "source": {},
+    "displayUnit": null,
+    "noRent": null,
+    "walk": {
+      "startedAt": null,
+      "finishedAt": null,
+      "done": {},
+      "skipped": {}
+    },
+    "frontDoor": null,
+    "isDemo": true,
+    "name": "Opening: 23, nothing invested, student debt",
+    "story": "23, $3,800 take-home a month typed in the opening, spends $3,000, $2,000 in cash, nothing invested, $28,000 of student loans at 6.5%, saving $800 a month.",
+    "sphere": 1,
+    "lane": "the five-input opening (D-306)",
+    "known": {
+      "asOf": "2026-09-19",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 300000,
+      "fiTargetCents": 90000000,
+      "grossAnnualCents": null,
+      "effectiveRate": null,
+      "estimatedTaxCents": null,
+      "takeHomeAnnualCents": 4560000,
+      "takeHomeMonthlyCents": 380000,
+      "savingsRate": 0.2105,
+      "runwayMonths": 0.6666666666666666,
+      "runwayWholeMonths": 0,
+      "netWorthCents": -2600000,
+      "working": [
+        "take-home is typed, so there is no gross and no tax figure: incomplete on purpose",
+        "savings rate from take-home = (3,800 − 3,000) / 3,800 = 0.2105",
+        "runway = 2,000 / 3,000 = 0.67 months",
+        "net worth = 2,000 + 0 − 28,000 = −26,000",
+        "FI target at the app default 4% = 36,000 / 0.04 = 900,000; the opening reads 3.5%: 36,000 / 0.035 = 1,028,571"
+      ],
+      "opening": {
+        "stage": "early",
+        "state": "ok",
+        "firstLever": "clearDearest"
+      }
+    }
+  }
+}

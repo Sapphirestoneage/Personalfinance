@@ -21,6 +21,7 @@
           "employmentStatus",
           "state",
           "grossAnnualIncome",
+          "takeHomeMonthly",
           "lastPay",
           "cashSavings",
           "hasDebt",
@@ -30,7 +31,7 @@
           "monthlyExpenses",
           "totalDebt"
         ],
-        "minutes": 5.5
+        "minutes": 6
       },
       "unlocks": [
         "dashboard",

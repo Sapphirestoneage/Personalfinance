@@ -11614,7 +11614,8 @@ section('The lever library: get, applies, apply (D-174)');
   const before = JSON.stringify(demo);
 
   /* The table: six levers, exactly, each one line with the six facts. */
-  check('six levers, in the brief\'s order', Object.keys(table.levers).join(','), IDS.join(','));
+  /* The brief's six come first; the opening's five follow them (D-306). */
+  check('six levers, in the brief\'s order, then the opening\'s five', Object.keys(table.levers).join(','), IDS.concat(['payStep', 'spendCut', 'returnUp', 'clearDearest', 'halfRaise']).join(','));
   check('the table is unverified, because nobody measured a lever', table.confidence, 'unverified');
   checkTrue('every lever states what it moves, its hours, whether it survives a job loss, its flex and when it applies',
     IDS.every(id => { const L = table.levers[id]; return typeof L.label === 'string' && L.moves && Object.keys(L.moves).length === 1
@@ -11630,7 +11631,7 @@ section('The lever library: get, applies, apply (D-174)');
   /* get and all */
   check('get returns the lever with its id', Levers.get('hustle').id, 'hustle');
   check('an unknown id is null, not a throw', Levers.get('teleport'), null);
-  check('all lists the six', Levers.all().length, 6);
+  check('all lists the six and the opening\'s five', Levers.all().length, 11);
 
   /* applies: the phrases, read by hand against the household */
   check('the hustle always applies', Levers.applies('hustle', demo), true);
@@ -12772,7 +12773,7 @@ section('19.1: nine spheres in one file, depth gating precision, the shadow meas
   checkTrue('every sphere reports its rows and minutes', st.spheres.every(s => Array.isArray(s.rows) && Money.isEntered(s.minutesLeft)));
   const empty = Schema.createHousehold({});
   checkTrue('nothing entered: sphere 1 has its rows, all missing', Sp.state(empty, {}).spheres[0].counts.missing === Sp.state(empty, {}).spheres[0].counts.applicable && Sp.state(empty, {}).spheres[0].counts.applicable >= 6);
-  const sure = Demo.build(); sure.meta.fields = {};
+  const sure = Demo.build(); sure.meta.fields = {}; sure.takeHome = Schema.createTakeHome({ typedCents: 500000, per: 'month' });
   Prefs.set('path', 'fi');
   Sp.byOrder(1).depth.rows.forEach(id => { sure.meta.fields[id] = { asOf: new Date().toISOString(), source: 'typed', confidence: 'sure', room: 'ledger' }; });
   const st1 = Sp.state(sure, {});
@@ -12780,7 +12781,7 @@ section('19.1: nine spheres in one file, depth gating precision, the shadow meas
   check('...so the household stands at sphere 2', st1.currentOrder, 2);
   check('...complete through 1', st1.completeThrough, 1);
   check('...sharp through 1', st1.sharpThrough, 1);
-  const rough = Demo.build(); rough.meta.fields = {};
+  const rough = Demo.build(); rough.meta.fields = {}; rough.takeHome = Schema.createTakeHome({ typedCents: 500000, per: 'month' });
   Sp.byOrder(1).depth.rows.forEach(id => { rough.meta.fields[id] = { asOf: new Date().toISOString(), source: 'pasted', confidence: 'roughly', room: 'ledger' }; });
   const st2 = Sp.state(rough, {});
   checkTrue('roughly on every row is complete but not sharp', st2.spheres[0].complete && !st2.spheres[0].sharp && st2.completeThrough === 1 && st2.sharpThrough === 0);
@@ -13488,7 +13489,8 @@ section('Phase A: suggestions, derived and never stored (D-205)');
   /* ---- The registry rows carry the new fields ------------------------- */
   const rows = table.rows;
   const SugSrc = require(sugPath);
-  check('the five first-round rows, with the last pay as the pay question between jobs', rows.filter(r => r.round === 1).map(r => r.id).sort().join(','), 'cashSavings,dob,employmentStatus,grossAnnualIncome,lastPay,zip');
+  /* The opening's rows (D-306): the situation, age, take-home, spending, what is invested, cash, any debt. */
+  check('the opening\'s seven rows are round 1', rows.filter(r => r.round === 1).map(r => r.id).sort().join(','), 'cashSavings,dob,employmentStatus,hasDebt,investments,takeHomeMonthly,wantsMonthly');
   checkTrue('every row has a door in D A I T E you', rows.every(r => ['D', 'A', 'I', 'T', 'E', 'you'].indexOf(r.door) !== -1));
   checkTrue('every row has a level 1 to 4', rows.every(r => [1, 2, 3, 4].indexOf(r.level) !== -1));
   checkTrue('every row says whether it moves', rows.every(r => typeof r.moves === 'boolean'));
@@ -15955,6 +15957,101 @@ section('A yearly cost falls on its day, not the 1st (D-263)');
   checkTrue('Expenses asks for the day beside the month', /id="y-day"/.test(exp));
   checkTrue('… and only sends one when a month was chosen',
     /dayDue: month === null \? null : day/.test(exp));
+})();
+
+section('The five-input opening (D-306): the engine');
+
+(function () {
+  const Opening = require(path.join(ROOT, 'engines/opening.js'));
+  const T = Object.assign({}, TABLES, {
+    opening: require(path.join(ROOT, 'data/opening.json')),
+    levers: require(path.join(ROOT, 'data/levers.json')),
+    debtRules: require(path.join(ROOT, 'data/debt_rules.json')),
+    fireVariants: require(path.join(ROOT, 'data/fire_variants.json'))
+  });
+  const t = T.opening;
+  /* The file: the declared assumptions, once. */
+  check('the withdrawal rate is 3.5%, for fifty- and sixty-year retirements', t.withdrawalRate, 0.035);
+  check('the other two Triple D points are the 4% convention and a 3.25% floor', t.withdrawalPoints.convention + ',' + t.withdrawalPoints.floor, '0.04,0.0325');
+  check('three real returns: worst, likely, best', [t.realReturns.worst, t.realReturns.likely, t.realReturns.best].join(','), '0.03,0.05,0.07');
+  checkTrue('the stage thresholds live in the file, not the room', t.stages.length === 3 && t.stages[0].investedBelowYears === 1 && t.stages[1].investedBelowYears === 5 && t.stages[2].investedBelowYears === null);
+  checkTrue('the file is a registered table', require(path.join(ROOT, 'shared/reference.js')).TABLE_FILES.opening === 'opening.json');
+  checkTrue('the five opening levers are in the lever file, each with a room to help', ['payStep', 'spendCut', 'returnUp', 'clearDearest', 'halfRaise'].every(id => T.levers.levers[id] && typeof T.levers.levers[id].room === 'string' && typeof T.levers.levers[id].kind === 'string'));
+
+  /* The arithmetic, by hand. */
+  check('zero return: months are the gap over the saving', Math.round(Opening.monthsToFi(0, 100000, 0, 1200000)), 12);
+  check('… at any return the answer is finite', typeof Opening.monthsToFi(0, 100000, 0.05, 1200000), 'number');
+  checkTrue('zero saving, zero invested: no date', Opening.monthsToFi(0, 0, 0.05, 1200000) === null);
+  checkTrue('zero saving with a pot: growth alone gets there, eventually', Math.abs(Opening.yearsToFi(10000000, 0, 0.05, 20000000) - Math.log(2) / Math.log(1.05)) < 0.1);
+  checkTrue('negative saving: no date', Opening.monthsToFi(500000, -20000, 0.05, 1200000) === null);
+  check('already past the number: zero', Opening.monthsToFi(1300000, 100000, 0.05, 1200000), 0);
+  checkTrue('zero invested and a saving: a date', Opening.monthsToFi(0, 200000, 0.05, 12000000) > 0);
+  check('the FI number is a year of spending over the rate', Opening.fiNumberCents(300000, 0.035), 102857143);
+  checkTrue('a zero rate has no number', Opening.fiNumberCents(300000, 0) === null);
+
+  /* The four households the brief names, from the corpus. */
+  const fx = id => JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/households/' + id + '.json'), 'utf8'));
+  const a = Opening.read(fx('opening-grad-debt'), T, {});
+  check('(a) 23, nothing invested, student debt: complete', a.status, 'ok');
+  check('… the savings rate is from take-home', a.savings.basis, 'take-home');
+  checkTrue('… 21% of take-home', Math.abs(a.savings.rate - 0.2105) < 0.001);
+  check('… the FI number at 3.5%', a.fi.numberCents, 102857143);
+  checkTrue('… a band, likely between worst and best', a.band.hasDate && a.band.runs.worst.years > a.band.runs.likely.years && a.band.runs.likely.years > a.band.runs.best.years);
+  check('… the early stage: income and the rate are the outcome', a.stage.id, 'early');
+  checkTrue('… the stage line is the file\'s', a.stage.line === t.stages[0].line);
+  check('… three levers', a.levers.length, 3);
+  checkTrue('… every lever names its room', a.levers.every(l => typeof l.room === 'string' && Registry.byId(l.room)));
+  checkTrue('… return levers rank last while under a year of spending is invested', a.levers.every(l => l.kind !== 'return'));
+  check('… clearing the dearest debt is one of them', a.levers.some(l => l.id === 'clearDearest'), true);
+  check('… the state', a.state, 'ok');
+  check('… net worth is negative and the reading says so', a.negativeNetWorth, true);
+
+  const b = Opening.read(fx('opening-invested-nodebt'), T, {});
+  check('(b) 28, $150k invested, no debt: the middle stage, no line', b.stage.id + ':' + b.stage.line, 'middle:null');
+  checkTrue('… a coast date after today', Money.isOk(b.coast) && !b.coast.reachedNow && b.coast.coastAge > 28);
+  checkTrue('… no debt lever offered', !b.levers.some(l => l.id === 'clearDearest') && !b.leversAll.some(l => l.id === 'clearDearest'));
+  checkTrue('… the likely date is under twenty years at a 42% rate', b.band.runs.likely.years < 20);
+
+  const c = Opening.read(fx('opening-between-jobs'), T, {});
+  check('(c) 26, between jobs, $9k cash: no income, the runway is the number', c.state + ':' + c.incomeless, 'noIncome:true');
+  checkTrue('… 3.6 months', Math.abs(c.runway.months - 3.6) < 0.01);
+  checkTrue('… no FI date without an expected pay', !c.band.hasDate);
+  const c2 = Opening.read(fx('opening-between-jobs'), T, { expectedTakeHomeMonthlyCents: 400000 });
+  checkTrue('… with an expected take-home the FI view appears, marked as such', c2.expectedTakeHome && c2.band.hasDate);
+  checkTrue('… take-home is never counted as missing while between jobs', c.missing.indexOf('takeHomeMonthly') === -1);
+
+  const d = Opening.read(fx('opening-spending-above'), T, {});
+  check('(d) 25, spending above take-home: no date', d.state, 'noDate');
+  checkTrue('… the savings rate is negative, not blank', d.savings.rate < 0);
+  checkTrue('… the band says why', !d.band.hasDate && /nothing is being saved/.test(d.band.reason));
+  checkTrue('… the levers still rank, by the dollars they put on the right side of zero', d.levers.length === 3 && d.levers[0].id === 'payStep' && d.levers[0].monthlyGainCents === 50000);
+
+  /* A debt dearer than the expected nominal return is paid first, whatever the months say. */
+  const dear = fx('opening-grad-debt'); dear.debts[0].rate = 0.24;
+  const e = Opening.read(dear, T, {});
+  checkTrue('a 24% card beats the hoped-for return, so it ranks first', e.payFirst && e.payFirst.rate === 0.24 && e.levers[0].id === 'clearDearest');
+  const cheap = fx('opening-grad-debt'); cheap.debts[0].rate = 0.03;
+  checkTrue('a 3% loan does not', Opening.read(cheap, T, {}).payFirst === null);
+
+  /* Very high savings rate: the date is near. */
+  const rich = fx('opening-invested-nodebt'); rich.takeHome = Schema.createTakeHome({ typedCents: 3500000, per: 'month' });
+  const r = Opening.read(rich, T, {});
+  checkTrue('a 90% savings rate reaches the number in under four years', r.savings.rate > 0.89 && r.band.runs.likely.years < 4);
+  /* Already past FI. */
+  const done = fx('opening-invested-nodebt'); done.assets.filter(x => x.category === 'investment')[0].valueCents = 200000000;
+  const f = Opening.read(done, T, {});
+  check('a pot past the number: past FI, zero years', f.state + ':' + f.band.runs.likely.months, 'pastFi:0');
+
+  /* Take-home typed beats the estimate; logged pay beats both; the rate says its base. */
+  const typed = Demo.build(); typed.takeHome = Schema.createTakeHome({ typedCents: 250000, per: 'fortnight' });
+  const th = Schema.takeHomeAnnualCents(typed, TABLES);
+  checkTrue('typed take-home is what the household said lands: a fortnight\'s $2,500, twenty-six times, to the cent', th.source === 'typed' && Math.abs(th.value - 6500000) <= 12, th.source + ':' + th.value);
+  check('… the gross rides along when known', th.grossAnnualIncomeCents, Schema.grossAnnualIncomeCents(typed).value);
+  const only = Schema.createHousehold({ takeHome: { typedCents: 400000, per: 'month' }, expenses: { wants: { totalCents: 250000 }, entries: [] } });
+  const sr = Tier0.savingsRate(only, TABLES).excludingMatch;
+  check('without a gross the rate is from take-home and says so', sr.basis + ':' + Math.round(sr.value * 1000), 'take-home:375');
+  checkTrue('the Ledger owns the row and the registry agrees', Ownership.ownerOf('takeHomeMonthly').owner === 'ledger' && Ownership.ownerOf('takeHomeMonthly').agrees === true);
+  checkTrue('the D&D schema copy carries the block', fs.readFileSync(path.join(ROOT, 'dnd/shared/schema.js'), 'utf8').indexOf('createTakeHome') !== -1);
 })();
 
 /* ==========================================================================

@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 114. Traced: 105. No other room mentions it: **56**.
+Fields: 115. Traced: 106. No other room mentions it: **56**.
 
 
 ## big-purchase (4)
@@ -60,7 +60,7 @@ Fields: 114. Traced: 105. No other room mentions it: **56**.
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by cash-flow, financial-snapshot, housing, debates
-- `monthlyExpenses` — Monthly expenses · read by start, income, cash-flow, budget, statement, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
+- `monthlyExpenses` — Monthly expenses · read by ledger, start, income, cash-flow, budget, statement, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `foodMonthly` — Food, a month · read by ledger, statement
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger, statement
 - `transportationMonthly` — Getting around, a month · read by ledger, statement
@@ -71,8 +71,8 @@ Fields: 114. Traced: 105. No other room mentions it: **56**.
 ## fire (3)
 
 - `enoughMonthly` — Enough, a month · **no other room mentions it**
-- `retireAge` — Stop working at · read by statement, dashboard, skill-tree, what-if-life, decumulation, career-move, week, debates, one-pager
-- `coastAge` — Coast: arrive by · **no other room mentions it**
+- `retireAge` — Stop working at · read by ledger, statement, dashboard, skill-tree, what-if-life, decumulation, career-move, week, debates, one-pager
+- `coastAge` — Coast: arrive by · read by ledger
 
 ## goals (1)
 
@@ -95,6 +95,10 @@ Fields: 114. Traced: 105. No other room mentions it: **56**.
 - `futureIncome` — Money that is coming · read by statement
 - `incomeType` — What kind of pay · read by ledger
 - `paySurvives` — Keeps paying if the job goes · read by ledger, start
+
+## ledger (1)
+
+- `takeHomeMonthly` — Take-home pay, a month · read by cash-flow, financial-snapshot, values, goals, runway, career-move, partner, big-purchase, debates
 
 ## partner (7)
 
@@ -139,13 +143,13 @@ Fields: 114. Traced: 105. No other room mentions it: **56**.
 - `filingStatus` — Filing status · read by income, expenses, statement, debt-payoff, tax, dashboard, financial-snapshot, fire, cant-pay, decumulation, career-move, partner, one-pager
 - `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, statement, debt-payoff, tax, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
-- `lastPay` — Your last pay, a year · read by ledger
+- `lastPay` — Your last pay, a year · **no other room mentions it**
 - `cashSavings` — Cash & savings · read by ledger, income, cash-flow, budget, statement, dashboard, financial-snapshot, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, debt-payoff, tax, runway, career-move, debates
 - `employerMatch` — Employer match · read by statement, financial-snapshot, foo-ladder, career-move, debates
 - `capturingFullMatch` — Capturing the full match · read by expenses, dashboard, financial-snapshot, skill-tree, one-pager
-- `hasDebt` — Any debt · read by debt-payoff, dashboard, debates
+- `hasDebt` — Any debt · read by ledger, debt-payoff, dashboard, debates
 - `contributionPercent` — Workplace contribution · read by ledger, statement, tax, what-if-life
 - `highestDeductible` — Highest deductible · read by statement, runway, protection
 - `dependents` — Anyone depending on your income · too generic to trace

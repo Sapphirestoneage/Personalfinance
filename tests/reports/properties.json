@@ -1,8 +1,8 @@
 {
   "seed": 20260910,
   "numRuns": 100,
-  "engines": 90,
-  "files": 93,
+  "engines": 91,
+  "files": 94,
   "missingFiles": [],
   "extraFiles": [
     "blocks",
@@ -1770,6 +1770,36 @@
       ]
     },
     {
+      "engine": "opening",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (3 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "ownership",
       "notes": [],
       "properties": [
@@ -3254,6 +3284,6 @@
       ]
     }
   ],
-  "totalProperties": 416,
+  "totalProperties": 420,
   "failedProperties": 7
 }

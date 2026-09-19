@@ -8,7 +8,7 @@ File: rooms/cash-flow.html · 844 lines
 Engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar
 Reference data: calendar_conventions.json, effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: payCadence, nextPayday, billsMonthly, payLaterDue
-Reads from other owners: grossAnnualIncome (start), cashSavings (start), rentMonthly (expenses), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
+Reads from other owners: grossAnnualIncome (start), takeHomeMonthly (ledger), cashSavings (start), rentMonthly (expenses), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses)
 Latest decisions:
   - D-275 — The Month: what moved, and the dates
   - D-260 — A room that throws while rendering says so, instead of blaming data/

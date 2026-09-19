@@ -69,7 +69,7 @@
     grossAnnualIncome: 'income.grossAnnualCents', employerMatch: 'income.sources[].employerMatch', capturingFullMatch: 'income.sources[].employerMatch',
     unemployment: 'income.sources[].benefit', incomeLow: 'income.variable', incomeHigh: 'income.variable', bufferMonths: 'income.variable',
     variableWindow: 'income.variable', futureIncome: 'income.future', ledgerIncome: 'income.ledger',
-    payCadence: 'income.cadence', nextPayday: 'income.cadence',
+    payCadence: 'income.cadence', nextPayday: 'income.cadence', takeHomeMonthly: 'income.takeHome',
     /* T */
     filingStatus: 'taxes.filingStatus', state: 'taxes.state', zip: 'taxes.zip', marginalRate: 'taxes.marginalRate',
     otherPreTax: 'taxes.otherPreTax', withheld: 'taxes.withheld',

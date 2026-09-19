@@ -16261,6 +16261,57 @@ protected save with its fingerprint, the sealed file chosen back and refused
 on the wrong passphrase, then opened; every sample file dropped through the
 one intake landing in its own panel.
 
+## D-306 — The five-input opening: take-home, a band, a coast date, the levers
+
+**Why.** The owner's build prompt: the product answers one question first,
+"when can I stop needing a paycheck, and what moves that date?", for people
+in their twenties whose outcome is income and savings rate, not returns.
+Round 1 asked five things one screen at a time and answered with a runway;
+Start Here asked seventeen. Neither asked what lands.
+
+**Decision.** The Ledger's `#round-1` view is the opening: one screen, five
+inputs (age, take-home with a cadence, spending with an "I don't know",
+invested beside cash, any debt as rows), the situation as chips above them,
+and the answer under them, live. Take-home is a new Ledger row
+(`takeHomeMonthly`, `household.takeHome`, owned by the Ledger, its first
+view): `Schema.takeHomeAnnualCents` prefers logged paychecks, then the typed
+take-home, then the estimate from gross, and `Tier0.savingsRate` divides by
+take-home when no gross is known and says so (`basis`). Every write is
+stamped `roughly` until the one box marks them exact, which confirms them.
+`engines/opening.js` reads the five and returns the FI number at the
+declared 3.5% (`data/opening.json`, with 4% and 3.25% as the other Triple D
+points), years to the number at 3%, 5% and 7% real as a band with the likely
+one first, the coast date through `engines/coast.js`, the rate from
+take-home, the stage line (under a year of spending invested, returns rank
+last; over five, they rank naturally; thresholds in the file), and the three
+levers that move the likely date most, from five new entries in
+`data/levers.json` (`payStep`, `spendCut`, `returnUp`, `clearDearest`,
+`halfRaise`), a debt dearer than the expected nominal return ranked first
+whatever the months say. Between jobs or a student with nothing coming in,
+the runway is the hero and the FI view reads an expected take-home held for
+the session only; spending above take-home is "no date yet" with the next
+card on the biggest lever. Each day's band is one journal line
+(`Spine.journal`, `kind: 'band'`) so a later month can say whether it
+tightened. A disabled "Drop a paystub instead" is the hook for the parser.
+
+**Replaces or removes.** Round 1's five screens, the ZIP and gross-pay
+questions on the way in (both still asked where they change an answer). The
+paystub parser, the monthly update and the rest of section 4 of the prompt
+are not built.
+
+**Stored shape.** `household.takeHome { monthlyCents, typedCents, per }`,
+absent on older saves and read as not entered; `journal[]` entries may carry
+`band { worstMonths, likelyMonths, bestMonths }`, absent on every other kind.
+`meta.hasDebt` gains a write path through `Ownership.write('hasDebt')`.
+
+**Verified.** `node test/run.js` (33,684: the engine's edges, the four
+households of the brief from `fixtures/households/opening-*.json`, typed
+beats estimate, logged beats typed); `node test/opening.js` (each household
+reaches its answer in 6 to 10 taps and boxes at 360px, reload restores every
+box, undo and redo on an input); `test/forms.js` on the Ledger; render,
+features, sidebar, onefact, xss, comeback; the corpus and the property
+suite with `opening.test.js`.
+
 ---
 
 # The Dungeons & Dividends entries

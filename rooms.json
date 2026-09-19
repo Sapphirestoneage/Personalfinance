@@ -7,7 +7,9 @@
       "title": "The Ledger",
       "file": "rooms/ledger.html",
       "reads": [],
-      "writes": [],
+      "writes": [
+        "takeHomeMonthly"
+      ],
       "requires": [],
       "dashboardNumber": null,
       "order": 0.5
