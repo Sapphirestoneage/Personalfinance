@@ -30,6 +30,13 @@ Updated: 2026-09-19
   Shows: … Needs: …. The owner finds the house voice hard to read; new copy
   names the thing, the number and the unit. A room-by-room lede pass is
   open and the order is the owner's.
+- **The path (D-238)** is the numbers, then the dashboard, then the readings;
+  a decision room has no prev/next of its own. The owner's brief, 2026-09-19:
+  treat it as financial planning software, readable by a third grader and a
+  FIRE person alike; fewer words on the page, the rest behind an ⓘ; every
+  score says what is good, why, and what to do; deeper questions behind an
+  advanced level; a typed take-home pay; the car's used/new and running
+  costs; a running-balance chart on the month. Queued in that order.
 
 ## Freeze
 - ON, and the merge is how it is honoured: every session leaves fewer screens.

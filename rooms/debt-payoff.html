@@ -153,15 +153,18 @@
   .strategy[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
   /* Name, interest, time to clear — three columns on fixed rails, so the
      four orderings read down as a table and not as four ragged cards. */
-  .strategy-head { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); align-items: baseline; }
+  .strategy-head { display: grid; grid-template-columns: minmax(0, 1fr) 9ch 10ch; gap: var(--space-3); align-items: baseline; }
   .strategy-name { font-weight: 600; min-width: 0; }
   .strategy-figure, .strategy-when { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
   .strategy-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; min-width: 0; }
-  .strategy-cols { display: grid; grid-template-columns: minmax(0, 1fr) 8.5ch 8ch; gap: var(--space-3); padding: 0 var(--space-3) 2px; font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); white-space: nowrap; }
+  /* The caption row shares the cards' rails. Its letters are spaced less
+     than an eyebrow's so "interest" and "clear in" each fit their rail;
+     spaced wider they ran into one word on a phone. */
+  .strategy-cols { display: grid; grid-template-columns: minmax(0, 1fr) 9ch 10ch; gap: var(--space-3); padding: 0 var(--space-3) 2px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); white-space: nowrap; }
   .strategy-cols span + span { text-align: right; }
   .strategy-first { color: var(--color-text-faint); }
   @media (max-width: 420px) {
-    .strategy-head, .strategy-cols { grid-template-columns: minmax(0, 1fr) 7.5ch 7ch; gap: var(--space-2); }
+    .strategy-head, .strategy-cols { grid-template-columns: minmax(0, 1fr) 8ch 9.5ch; gap: var(--space-2); }
     .strategy-cols { padding: 0 var(--space-3); }
     .strategy-blurb { font-size: var(--text-xs); }
   }
@@ -1499,7 +1502,8 @@
         + '<span class="strategy-when">' + (ok ? monthsLabel(r.value) : Money.EM_DASH) + '</span>'
         + '</span>'
         + '<p class="strategy-blurb">' + s.blurb
-        + (ok ? ' <span class="strategy-first">First debt gone in ' + monthsLabel(r.payoffs[0].month) + '.</span>' : '')
+        + (ok ? ' <span class="strategy-first">First debt gone in ' + monthsLabel(r.payoffs[0].month) + '.</span>'
+              : ' <span class="strategy-first">Not run in this order: ' + esc((r && r.reason) || 'it could not be worked out') + '</span>')
         + '</p>'
         + '</button>';
     }).join('');

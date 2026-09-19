@@ -72,7 +72,9 @@ module.exports = function (t) {
   Object.keys(EXPECTED).forEach(function (status) {
     var h = household(status);
     var off = Registry.inOrder().filter(function (r) { return !Registry.applies(r, h); }).map(function (r) { return r.id; });
-    check(status + ': the rooms that do not apply', off.join(','), EXPECTED[status].join(','));
+    /* Membership, not order: which rooms fold is the gate's fact; where they
+       sit on the path is the registry's (D-238). */
+    check(status + ': the rooms that do not apply', off.slice().sort().join(','), EXPECTED[status].slice().sort().join(','));
     /* And every one of them can say why, in words. */
     checkTrue(status + ': … and each says why in a sentence',
       off.every(function (id) { return !!Gate.why(h, Registry.requires(id)); }));

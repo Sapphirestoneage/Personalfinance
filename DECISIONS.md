@@ -14084,6 +14084,37 @@ which is the owner's call on order (STATUS).
 `node tools/context/build.js --check`. Debt Payoff at 390px with nine
 example debts, clean console.
 
+## D-238 — The path is the numbers, then the dashboard, then the readings; a decision room is not "next"
+
+**Why.** The owner, tapping Next from the Cushion: a safety room at step
+7, then When It Won't All Get Paid, then The Account You Left Behind,
+then What If, Life, "and I don't even know my full numbers yet". The path
+order had grown by accretion and the header's prev/next walked every
+room in the registry, decisions included.
+
+**Decision.** `shared/registry.js` `order`: the facts first (Start, Income,
+Expenses, Cash Flow, Budget, Statement, Accounts, Debt, Student Loans,
+Credit, Tax, Calendar, Estimated vs Actual), then the Dashboard, then the
+readings (Scorecard, Next Dollar, FIRE, Coast, Race, Statements, Real
+Hourly Wage). `shared/progress.js` `chain(h)`: prev/next walk only rooms
+in the home, numbers and scorecard groups that are not `explore` and
+apply to this household; a decision room's way back is the Dashboard and
+its way on is the map. `data/walk_stages.json` puts the safety stage
+after where-it-goes. Also: Start Here's badge no longer breaks inside a
+word and the ordinary "you entered" badge is gone; the Debt Payoff
+comparison's captions each fit their rail and an order that could not run
+says why.
+
+**Replaces or removes.** The arbitrary neighbours a decision room used to
+show; nothing else. No room, screen or field.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (31,255 checks), `node test/forms.js`
+(619), `node tools/context/build.js --check`; every room swept at 390px
+with the demo household for overflow and console errors (Start Here's
+badge overflow found and fixed).
+
 
 ---
 

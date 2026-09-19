@@ -199,16 +199,31 @@
     return null;
   }
 
-  /** Plain path neighbours, regardless of whether they are finished. */
-  function neighbours(roomId) {
-    var path = Registry.inOrder();
+  /* The chain "next" walks (D-238): the rooms that hold or read the
+     household's numbers, in path order, for this household. A decision
+     room (a car, a wedding, a rollover) is opened because you have that
+     decision, never because it came after the last page, so it has no
+     prev and next of its own; it points at the map and the dashboard. */
+  var CHAIN_GROUPS = ['home', 'numbers', 'scorecard'];
+  function chain(household) {
+    return Registry.inOrder().filter(function (r) {
+      if (CHAIN_GROUPS.indexOf(r.group) === -1 || r.kind === 'explore') return false;
+      return household ? Registry.applies(r, household) : true;
+    });
+  }
+  /** Path neighbours on the chain, regardless of whether they are finished. */
+  function neighbours(roomId, household) {
+    var h = household;
+    if (h === undefined) { var S = spine(); h = S && S.getProfile ? S.getProfile() : null; }
+    var path = chain(h);
     var idx = -1;
     path.forEach(function (r, i) { if (r.id === roomId) idx = i; });
     return {
       prev: idx > 0 ? path[idx - 1] : null,
       next: idx >= 0 && idx < path.length - 1 ? path[idx + 1] : null,
       index: idx,
-      total: path.length
+      total: path.length,
+      onChain: idx !== -1
     };
   }
 
@@ -316,8 +331,14 @@
     if (roomId === 'dashboard') return '';
     var nb = neighbours(roomId);
     var mapHref = (atRoot(roomId) ? '' : '../') + 'map.html';
+    var homeHref = (atRoot(roomId) ? '' : '../') + 'index.html';
 
     function link(room, dir) {
+      /* Off the chain (D-238): a decision room's way back is the dashboard
+         and its way on is the map; it has no neighbours of its own. */
+      if (!room && !nb.onChain && dir === 'prev') {
+        return '<a class="slaf-hop slaf-hop--prev" href="' + homeHref + '">← The Dashboard</a>';
+      }
       if (!room) {
         return '<a class="slaf-hop slaf-hop--' + dir + '" href="' + mapHref + '">'
           + (dir === 'prev' ? '← All rooms' : 'All rooms →') + '</a>';
@@ -1286,6 +1307,7 @@
 
   return {
     mount: mount,
+    chain: chain,
     purposeHtml: purposeHtml,
     mountHeader: mountHeader, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
     mountFold: mountFold,
