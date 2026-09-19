@@ -14623,6 +14623,10 @@ from the modes' own `long` text; `hasAmounts(rows)` says whether a lens
 has a figure to read. `shared/room.js` and the strip show the toggle
 only when the room's amounts list holds an entered figure; otherwise
 the toggle and the list are empty.
+A projection room keeps a figure to read: Accounts' strip reads what
+goes into the plan this year at the contribution rate until an amount
+is typed, so the browser gate's rule (a lens on every projection room)
+and this one agree.
 
 **Replaces or removes.** The bare toggle on rooms with nothing to read.
 
