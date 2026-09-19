@@ -227,7 +227,11 @@
      the year figure and the FI date can never disagree. */
   function walk(startCents, surplusAnnual, rate, costsAnnual, fiNumberCents) {
     var rows = [], pot = startCents, fiYear = null;
-    if (Money.isEntered(fiNumberCents) && pot >= fiNumberCents) fiYear = 0;
+    /* Already at the number counts as year zero — but only while the month
+       covers itself. A month that does not is the headline, and a finish
+       date beside it would be two answers to one question; the brief is
+       explicit that a negative surplus shows no date at all. */
+    if (surplusAnnual > 0 && Money.isEntered(fiNumberCents) && pot >= fiNumberCents) fiYear = 0;
     rows.push({ year: 0, potCents: Math.round(pot), postFi: fiYear === 0 });
     for (var y = 1; y <= WALK_YEARS; y++) {
       if (fiYear === null) pot = pot * (1 + rate) + surplusAnnual;

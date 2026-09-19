@@ -31,6 +31,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": 1,
@@ -51,6 +53,7 @@
   ],
   "filingStatus": "single",
   "state": "WI",
+  "zip": null,
   "capturingFullMatch": true,
   "dependents": null,
   "community": {
@@ -70,7 +73,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_1",
@@ -85,7 +89,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [],
@@ -105,7 +110,8 @@
       "totalCents": 50000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -171,6 +177,9 @@
     "stockShare": null,
     "plannedAnnualDrawCents": null,
     "socialSecurityAt": null
+  },
+  "income": {
+    "takeHomeMonthlyCents": null
   },
   "tax": {
     "otherPreTaxAnnualCents": null,
@@ -251,6 +260,7 @@
     "presets": {}
   },
   "notApplicable": {},
+  "subscriptions": [],
   "skills": {},
   "skillTree": {
     "state": {}
@@ -263,7 +273,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -275,10 +287,13 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": false,
     "undoStack": [],
     "redoStack": [],
     "guessed": {},
+    "notSure": {},
+    "reopen": null,
     "source": {},
     "displayUnit": null,
     "noRent": null,
@@ -310,7 +325,7 @@
       "runwayWholeMonths": 3,
       "netWorthCents": 2100000,
       "working": [
-        "monthly spending = food $350 + accommodation $900 + transportation $110 + everything else $500 = $1,860",
+        "monthly spending = food $350 + accommodation $900 + transportation $110 + wants $500 = $1,860",
         "FI target = $1,860 x 12 / 0.04 = $22,320 / 0.04 = $558,000",
         "gross $62,000 single: band single up to $75,000 -> effective rate 0.19",
         "estimated tax = $62,000 x 0.19 = $11,780; take-home = $62,000 - $11,780 = $50,220 a year, $4,185 a month",

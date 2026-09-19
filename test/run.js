@@ -14218,6 +14218,189 @@ section('Every class a page names has a rule somewhere (D-226)');
 })();
 
 /* ==========================================================================
+   First Look: the front door (D-234)
+   --------------------------------------------------------------------------
+   The five households in the brief, run from fixtures/households/ on every
+   commit. Each one pins TWO things: the headline the result screen leads
+   on, and the single next step it gives. A change to the ladder that
+   quietly reorders them fails here, which is the only way "never a list,
+   always one step" stays true a year from now.
+   ========================================================================== */
+section('First Look: four to seven questions, one picture, one next step (D-234)');
+
+(function () {
+  const FL = require(path.join(ROOT, 'engines/firstlook.js'));
+  const Charts = require(path.join(ROOT, 'shared/charts.js'));
+  const html = fs.readFileSync(path.join(ROOT, 'rooms/first-look.html'), 'utf8');
+  const room = Registry.byId('first-look');
+
+  /* ---- The flow itself -------------------------------------------------- */
+  check('four situations, and no retired one: the Back Half is a better room for that',
+    FL.SITUATIONS.map(s => s.id).join(','), 'employed,unemployed,selfEmployed,student');
+  FL.SITUATIONS.forEach(function (s) {
+    const ids = FL.steps(s.id).map(x => x.id);
+    checkTrue(`${s.id}: four to seven questions`, ids.length >= 4 && ids.length <= 7, ids.join(','));
+    check(`${s.id}: the situation gate comes first`, ids[0], 'situation');
+    checkTrue(`${s.id}: every question is a section in the room`,
+      FL.steps(s.id).every(x => new RegExp('id="' + x.anchor + '"').test(html)));
+  });
+  /* The gate decides which fields EXIST. Between jobs never sees a salary
+     question, and never sees a retirement date, which is the competitor
+     opening this room was built to avoid. */
+  checkTrue('between jobs is asked what is coming in, never what the salary is',
+    FL.steps('unemployed').some(x => x.id === 'coming-in') && !FL.steps('unemployed').some(x => x.id === 'takehome'));
+  checkTrue('...and never about a match there is no employer for',
+    !FL.steps('unemployed').some(x => x.id === 'match'));
+  checkTrue('a student is asked what lands, not what they earn gross',
+    FL.steps('student').some(x => x.id === 'takehome'));
+  checkTrue('nothing anywhere in the flow asks for a retirement date or a life expectancy',
+    !/retirement date|when do you want to retire|how long do you expect to live|life expectancy/i.test(html));
+  checkTrue('a question the situation does not ask is removed from the document, not hidden or disabled',
+    /removeChild\(NODES\[id\]\)/.test(html) && !/\.disabled = true/.test(html));
+
+  /* ---- Deep links -------------------------------------------------------- */
+  FL.STEPS.forEach(function (st) {
+    checkTrue(`#/first-look/${st.id} is a real screen`, new RegExp('id="' + st.anchor + '"').test(html));
+    checkTrue(`...and the registry lists ${st.anchor}`, room.subsections.some(x => x.id === st.anchor));
+  });
+  checkTrue('the result screen is linkable too', /id="result"/.test(html) && room.subsections.some(x => x.id === 'result'));
+  checkTrue('the hash is #/first-look/<step>', /'#\/first-look\/' \+ id/.test(html) && /\^\\\/first-look\\\/\(\.\+\)\$/.test(html));
+
+  /* ---- The five households ----------------------------------------------- */
+  const T = {};
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  Object.keys(Ref.TABLE_FILES).forEach(function (k) {
+    try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* the engine says so */ }
+  });
+  const FIXTURES = ['first-look-between-jobs', 'first-look-card', 'first-look-match-unknown', 'first-look-short', 'first-look-own-work'];
+  FIXTURES.forEach(function (id) {
+    const h = JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/households', id + '.json'), 'utf8'));
+    const k = h.meta.known.firstLook;
+    const r = FirstLookResult(h);
+    checkTrue(`${id} produces a result at all`, Money.isOk(r), r.reason);
+    if (!Money.isOk(r)) return;
+    check(`${id}: the headline`, r.headline.id, k.headline);
+    check(`${id}: the one next step`, r.next.id, k.next);
+    check(`${id}: money in a year`, r.incomeAnnualCents, k.incomeAnnualCents);
+    check(`${id}: costs a year`, r.costsAnnualCents, k.costsAnnualCents);
+    check(`${id}: the surplus a month`, r.surplusMonthlyCents, k.surplusMonthlyCents);
+    check(`${id}: the FI number`, r.fiNumberCents, k.fiNumberCents);
+    if (k.savingsRate === null) checkTrue(`${id}: no savings rate, because nothing is coming in`, !Money.isOk(r.savingsRate));
+    else checkTrue(`${id}: the savings rate`, Math.abs(r.savingsRate.value - k.savingsRate) < 1e-9, String(r.savingsRate.value));
+    if (k.runwayMonths === null) check(`${id}: a surplus has no runway, it has a date`, r.runwayMonths, null);
+    else checkTrue(`${id}: the runway in months`, Math.abs(r.runwayMonths - k.runwayMonths) < 1e-6, String(r.runwayMonths));
+  });
+  function FirstLookResult(h) { return FL.result(h, T); }
+
+  /* The brief's own figures, checked against the brief's own formula. */
+  const short = JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/households/first-look-short.json'), 'utf8'));
+  const rShort = FL.result(short, T);
+  check('a short month never shows a finish date', rShort.yearsToFI, null);
+  checkTrue('...and says the gap in dollars instead', rShort.headline.valueCents === 30000);
+  const bj = FL.result(JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/households/first-look-between-jobs.json'), 'utf8')), T);
+  checkTrue('between jobs, the runway is about three months', bj.runwayMonths > 3.8 && bj.runwayMonths < 4.0);
+  const own = FL.result(JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/households/first-look-own-work.json'), 'utf8')), T);
+  /* The brief said "around $1.5M" for this household. The formula the same
+     brief gives says E / w = $54,000 / 0.03, which is $1,800,000. The
+     formula is what ships; the illustrative figure was not re-derived. */
+  check('work optional at 3%: E / w, not the brief\'s rounded aside', own.fiNumberCents, 180000000);
+  checkTrue('...and it does reach that number', Money.isEntered(own.yearsToFI) && own.yearsToFI > 0);
+
+  /* ---- Estimates are named, and carry what they came from ---------------- */
+  {
+    const h = JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/households/first-look-card.json'), 'utf8'));
+    check('an entered figure is not an estimate', FL.result(h, T).estimated.length, 0);
+    const rough = JSON.parse(JSON.stringify(h));
+    rough.meta.fields = rough.meta.fields || {};
+    rough.meta.fields.takeHomeMonthly = { asOf: '2026-09-10T00:00:00Z', source: 'typed', confidence: 'roughly', room: 'first-look', derivedFrom: 'grossAnnualIncome' };
+    rough.meta.fields.wantsMonthly = { asOf: '2026-09-10T00:00:00Z', source: 'typed', confidence: 'roughly', room: 'first-look', derivedFrom: 'takeHomeMonthly' };
+    const re = FL.result(rough, T).estimated;
+    check('a written estimate is still an estimate, and says so', re.map(e => e.fieldId).sort().join(','), 'takeHomeMonthly,wantsMonthly');
+    check('...naming what each was worked out from', re.map(e => e.derivedFrom).sort().join(','), 'grossAnnualIncome,takeHomeMonthly');
+    checkTrue('the result screen prints that list, not a generic warning', /Estimated, not entered: /.test(html));
+  }
+
+  /* ---- The estimates themselves ------------------------------------------ */
+  {
+    const h = Schema.createHousehold({ people: [Schema.createPerson({ label: 'You', role: 'adult', employmentStatus: 'employed' })] });
+    h.people[0].incomeSources.push(Schema.createIncomeSource({ grossAnnualIncomeCents: 6000000 }));
+    check('take-home with only a salary: three quarters of it, a month', FL.takeHomeMonthly(h).value, 375000);
+    checkTrue('...and it says it is rough', FL.takeHomeMonthly(h).rough === true && FL.takeHomeMonthly(h).derivedFrom === 'grossAnnualIncome');
+    check('everything else, estimated: 45% of take-home', FL.livingMonthly(h).value, Math.round(375000 * 0.45));
+    const tiny = Schema.createHousehold({ people: [Schema.createPerson({ label: 'You', role: 'adult', employmentStatus: 'employed' })] });
+    tiny.income = { takeHomeMonthlyCents: 40000 };
+    check('...with a $600 floor under it', FL.livingMonthly(tiny).value, 60000);
+  }
+
+  /* ---- The picture -------------------------------------------------------- */
+  {
+    const h = JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/households/first-look-own-work.json'), 'utf8'));
+    const r = FL.result(h, T);
+    const before = FL.flow(r, 0), after = FL.flow(r, r.yearsToFI + 1);
+    check('before the finish line the money comes from the work', before.sources.map(s => s.id).join(','), 'work');
+    check('...and goes three ways', before.outflows.map(o => o.id).join(','), 'housing,living,saving');
+    check('past it the source is the portfolio', after.sources.map(s => s.id).join(','), 'portfolio');
+    check('...and health cover appears beside the costs', after.outflows.map(o => o.id).join(','), 'housing,living,health');
+    checkTrue('dragging across the line changes the source, which is the point of the screen',
+      before.sources[0].label !== after.sources[0].label);
+    check('the health line is $7,200 a year, and labelled rough',
+      after.outflows[2].monthlyCents * 12 + ',' + after.outflows[2].rough, '720000,true');
+    checkTrue('the scrubber runs to about FI plus fifteen', FL.scrubberYears(r) === r.yearsToFI + 15);
+    checkTrue('the invested total is there for every year on it',
+      [0, 1, 5, FL.scrubberYears(r)].every(y => Money.isEntered(FL.flow(r, y).potCents)));
+    /* Between jobs: two sources, and no saving line to draw. */
+    const bjFlow = FL.flow(FL.result(JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/households/first-look-between-jobs.json'), 'utf8')), T), 0);
+    check('between jobs the cash makes up the difference', bjFlow.sources.map(s => s.id).join(','), 'cash');
+    check('...and nothing is being saved', bjFlow.outflows.map(o => o.id).join(','), 'housing,living');
+  }
+  /* A band too thin to hold a label does not get one. */
+  {
+    const svg = Charts.sankey({ height: 200,
+      nodes: [{ id: 'a', label: 'Work', column: 0 }, { id: 'sp', label: '', column: 1 }, { id: 'big', label: 'Housing', column: 2 }, { id: 'thin', label: 'A sliver', column: 2 }],
+      links: [{ from: 'a', to: 'sp', value: 1000 }, { from: 'sp', to: 'big', value: 999 }, { from: 'sp', to: 'thin', value: 1 }] });
+    checkTrue('the thick band is labelled', /Housing/.test(svg));
+    checkTrue('the thin one is not, so nothing collides', !/<text[^>]*>A sliver<\/text>/.test(svg));
+    checkTrue('...but its figure is still one tap away', /<title>[^<]*A sliver/.test(svg));
+    checkTrue('an unnamed spine draws no empty label', !/<text class="tick"[^>]*><\/text>/.test(svg));
+  }
+
+  /* ---- Never a list, never a verdict -------------------------------------- */
+  checkTrue('the next step is one thing with its reason, never a list',
+    /id="fl-next-title"/.test(html) && !/fl-next-list|<ol|recommendations/i.test(html));
+  checkTrue('and it opens exactly one room', (html.match(/id="fl-onward"/g) || []).length === 1);
+  checkTrue('no zone, no score, no colour verdict on the result screen',
+    !/is-good|is-bad|is-warn|zone:|score/i.test(html.split('<section id="result"')[1].split('</section>')[0]));
+
+  /* ---- Today's money, said out loud --------------------------------------- */
+  checkTrue('the room says every figure is today\'s money', /today’s money, if nothing else changes/.test(html) && /Today's dollars throughout/.test(html));
+  checkTrue('the assumptions panel is open to inspection and editable inline',
+    /id="fl-assumptions"/.test(html) && /id="in-return"/.test(html) && /id="in-swr"/.test(html));
+  checkTrue('...and names what is NOT modelled yet',
+    /tax in retirement, Social Security, and the luck of which decade you get/.test(html));
+  checkTrue('the two rates it edits are the household\'s own assumptions, not a private copy',
+    /setAssumptionOverride\('returnReal'/.test(html) && /setAssumptionOverride\('swrRate'/.test(html));
+  check('the real return is clamped to the brief\'s range, never silently', FL.RETURN_MIN + '-' + FL.RETURN_MAX, '0-0.12');
+
+  /* ---- The facts it writes ------------------------------------------------ */
+  checkTrue('every answer is written through its owner, never straight into the household',
+    (html.match(/Ownership\.write\(/g) || []).length >= 7 && !/Spine\.set\('(assets|expenses|people)/.test(html));
+  check('the one field it owns', Object.keys(Ownership.FIELDS).filter(f => Ownership.FIELDS[f].owner === 'first-look').join(','), 'takeHomeMonthly');
+  checkTrue('...and the Ledger has a row for it, so it counts towards a door',
+    !!require(path.join(ROOT, 'shared/ledger-rows.js')).byId('takeHomeMonthly'));
+  checkTrue('an estimate is written rough, with the field it came from',
+    /confidence: 'roughly', derivedFrom/.test(html));
+  checkTrue('re-running changes the same card rather than adding a second one', /function existingCard/.test(html));
+  checkTrue('nothing writes a default in to fill a gap: an unanswered finish line stores no rate',
+    /v === 'undecided' \? null : line\.rate/.test(html));
+
+  /* An empty household is the state this room exists for, and it says so
+     rather than drawing a picture of nothing. */
+  const empty = FL.result(Schema.createHousehold({}), T);
+  check('nothing answered: incomplete, never a zero', empty.status, 'incomplete');
+  check('...and it names the question to answer first', empty.missing.join(','), 'employmentStatus');
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

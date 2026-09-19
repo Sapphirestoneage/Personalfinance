@@ -40,12 +40,24 @@ function known(spec) {
   const w = [];
   const k = { asOf: AS_OF, tolerance: 0.01 };
   const fat = spec.fat;
-  const spend = fat ? (fat.food + fat.accommodation + fat.transportation + fat.wants + (fat.therapy || 0)) : null;
+  /* Only the buckets that were actually typed. A First Look household has
+     housing and everything-else and nothing else, because those are the
+     only two the front door asks for, and a blank bucket is absent rather
+     than zero (Schema.fat sums what is entered and says how many). */
+  const BUCKETS = ['food', 'accommodation', 'transportation', 'wants', 'therapy'];
+  const typedBuckets = fat ? BUCKETS.filter((b) => fat[b] !== null && fat[b] !== undefined) : [];
+  const spend = fat ? typedBuckets.reduce((t, b) => t + fat[b], 0) : null;
   if (fat) {
-    w.push(`monthly spending = food ${fmt(fat.food)} + accommodation ${fmt(fat.accommodation)} + transportation ${fmt(fat.transportation)} + everything else ${fmt(fat.wants)}` + (fat.therapy ? ` + therapy ${fmt(fat.therapy)}` : '') + ` = ${fmt(spend)}`);
+    w.push('monthly spending = ' + typedBuckets.map((b) => `${b} ${fmt(fat[b])}`).join(' + ') + ` = ${fmt(spend)}`
+      + (typedBuckets.length < 4 ? ` (${4 - typedBuckets.length} of the four buckets were never entered, so they are absent, not zero)` : ''));
     k.monthlySpendingCents = c(spend);
-    k.fiTargetCents = c(spend * 12 / 0.04);
-    w.push(`FI target = ${fmt(spend)} x 12 / 0.04 = ${fmt(spend * 12)} / 0.04 = ${fmt(spend * 12 / 0.04)}`);
+    /* Tier0.fireNumber reads the household's own withdrawal rate, so a
+       household that chose a finish line in First Look (D-234) is measured
+       against the rate it chose, not against the 4% default. */
+    const swr = spec.swr === undefined ? 0.04 : spec.swr;
+    k.fiTargetCents = c(spend * 12 / swr);
+    w.push(`FI target = ${fmt(spend)} x 12 / ${swr} = ${fmt(spend * 12)} / ${swr} = ${fmt(spend * 12 / swr)}`
+      + (spec.swr === undefined ? '' : ' (the withdrawal rate this household set)'));
   } else {
     k.monthlySpendingCents = null; k.fiTargetCents = null;
     w.push('monthly spending: nothing typed, so incomplete (empty is not zero)');
@@ -83,6 +95,32 @@ function known(spec) {
   } else {
     k.runwayMonths = null; k.runwayWholeMonths = null;
     w.push('runway: ' + (fat ? 'no cash balance entered' : 'no spending entered') + ', so incomplete');
+  }
+  if (spec.takeHome !== undefined) {
+    /* An entered take-home is the fact, and Schema.takeHomeMonthlyCents
+       prefers it over anything worked back from a salary (D-234). */
+    k.takeHomeMonthlyCents = c(spec.takeHome);
+    w.push(`take-home a month = ${fmt(spec.takeHome)}, entered rather than derived: what the bank actually shows`);
+  }
+  if (spec.firstLook) {
+    const f = spec.firstLook;
+    const income = spec.takeHome * 12;
+    const costs = spend * 12;
+    const surplus = income - costs;
+    const rate = spec.swr === undefined ? 0.03 : spec.swr;
+    k.firstLook = {
+      headline: f.headline, next: f.next,
+      incomeAnnualCents: c(income), costsAnnualCents: c(costs),
+      surplusMonthlyCents: c(surplus / 12),
+      savingsRate: income > 0 ? surplus / income : null,
+      withdrawalRate: rate, fiNumberCents: c(costs / rate),
+      runwayMonths: surplus < 0 ? (spec.cash * 12) / -surplus : null
+    };
+    w.push(`First Look: money in = ${fmt(spec.takeHome)} x 12 = ${fmt(income)}; costs = ${fmt(spend)} x 12 = ${fmt(costs)}; surplus = ${fmt(surplus)} a year, ${fmt(surplus / 12)} a month`);
+    w.push(`First Look: savings rate = ${fmt(surplus)} / ${fmt(income)} = ` + (income > 0 ? (surplus / income).toFixed(4) : 'no rate, nothing is coming in'));
+    w.push(`First Look: FI number = ${fmt(costs)} / ${rate} = ${fmt(costs / rate)}` + (spec.swr === undefined ? ' (no finish line chosen, so the cautious 3% is assumed)' : ''));
+    if (surplus < 0) w.push(`First Look: runway = ${fmt(spec.cash)} / ${fmt(-surplus / 12)} a month = ${((spec.cash * 12) / -surplus).toFixed(4)} months`);
+    w.push(`First Look: the headline is "${f.headline}" and the one next step is "${f.next}" -- ${f.why}`);
   }
   if (spec.nw !== undefined) {
     k.netWorthCents = c(spec.nw.value);
@@ -127,6 +165,26 @@ function fatBlock(fat) {
     entries: []
   };
 }
+/* The facts a First Look household carries beyond the archetype shape
+   (D-234): what lands in the account, the withdrawal rate a finish line
+   set, an estimate's provenance, and a match the person said they were
+   not sure about. Each goes exactly where the room writes it. */
+function firstLookExtra(spec) {
+  const out = {};
+  if (spec.takeHome !== undefined) out.income = { takeHomeMonthlyCents: c(spec.takeHome) };
+  if (spec.swr !== undefined) out.assumptionOverrides = { swrRate: spec.swr };
+  return out;
+}
+function firstLookMeta(spec) {
+  const out = {};
+  if (spec.matchUnsure) out.notSure = { employerMatch: { at: AS_OF + 'T00:00:00Z', expectedBy: null } };
+  const fields = {};
+  Object.keys(spec.estimated || {}).forEach(function (id) {
+    fields[id] = { asOf: AS_OF + 'T00:00:00Z', source: 'typed', confidence: 'roughly', room: 'first-look', derivedFrom: spec.estimated[id] };
+  });
+  if (Object.keys(fields).length) out.fields = fields;
+  return out;
+}
 function build(spec, SchemaOverride) {
   const Schema = SchemaOverride || DefaultSchema;
   seq = 0;
@@ -141,17 +199,87 @@ function build(spec, SchemaOverride) {
     dependents: spec.dependents === undefined ? null : spec.dependents,
     capturingFullMatch: spec.capturingFullMatch === undefined ? null : spec.capturingFullMatch,
     retirement: spec.retirement, insurance: spec.insurance,
-    meta: Object.assign({ isDemo: true, hasDebt: spec.hasDebt === undefined ? null : spec.hasDebt }, {
+    meta: Object.assign({ isDemo: true, hasDebt: spec.hasDebt === undefined ? null : spec.hasDebt }, firstLookMeta(spec), {
       name: spec.name, story: spec.story, sphere: spec.sphere, sphereNote: 'DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.',
       lane: 'lane2 section 1 (L-1)', known: known(spec)
     })
-  }, spec.extra || {}));
+  }, firstLookExtra(spec), spec.extra || {}));
   return h;
 }
 
 /* ---- The archetypes ------------------------------------------------------
    Ages as of 2026-09. `band` is the row read by hand from the 2026 table.  */
 const ARCHETYPES = [
+  /* ---- The five First Look households (D-234) ---------------------------
+     The front door asks four to seven questions and writes what it is told,
+     so these households are DELIBERATELY shallow: a take-home, a housing
+     line, an everything-else line, one savings figure. Food and getting
+     around are absent, not zero, because nobody was asked. Each one pins
+     the headline and the one next step the result screen must give, so a
+     change to the ladder that quietly reorders them fails here.          */
+  {
+    id: 'first-look-between-jobs', name: 'First Look: between jobs, nothing coming in', sphere: 1,
+    story: 'Laid off, nothing arriving yet, $1,400 of rent and about $900 of everything else, $9,000 they can reach.',
+    people: [{ id: 'p_fl_bj', label: 'Ari', dob: '1996-04-08', status: 'unemployed' }],
+    filingStatus: null, state: null, grossTotal: null, rate: null, band: 'no salary given: the take-home is the fact',
+    takeHome: 0,
+    assets: [{ label: 'Checking and savings', category: 'cash', value: 9000 }], cash: 9000,
+    debts: [], hasDebt: null,
+    fat: { food: null, accommodation: 1400, transportation: null, wants: 900 },
+    firstLook: { headline: 'runway', next: 'protect-the-runway',
+      why: 'nothing is coming in, so the cash IS the plan; a negative month is the definition of being between jobs, not news about it' }
+  },
+  {
+    id: 'first-look-card', name: 'First Look: working, carrying a card', sphere: 1,
+    story: '$3,200 lands, $1,450 of rent, about $1,100 of everything else, $600 saved, and a credit card with a balance on it.',
+    people: [{ id: 'p_fl_card', label: 'Bo', dob: '1997-11-02', status: 'employed' }],
+    filingStatus: null, state: null, grossTotal: null, rate: null, band: 'no salary given: the take-home is the fact',
+    takeHome: 3200,
+    assets: [{ label: 'Savings', category: 'cash', value: 600 }], cash: 600,
+    /* The card as First Look leaves it: named, with the balance still to
+       come. That is the handoff into Debt, and an unfinished debt is a
+       state the corpus should carry. */
+    debts: [{ label: 'Credit card', type: 'credit_card' }], hasDebt: true,
+    fat: { food: null, accommodation: 1450, transportation: null, wants: 1100 },
+    firstLook: { headline: 'rate', next: 'clear-the-card',
+      why: 'the card charges more than savings pay, so it comes before the cushion even though $600 is under one month of costs' }
+  },
+  {
+    id: 'first-look-match-unknown', name: 'First Look: working, match unknown', sphere: 1,
+    story: '$4,800 lands, $1,800 of rent, about $1,400 of everything else, $40,000 saved, and no idea what the employer match is.',
+    people: [{ id: 'p_fl_match', label: 'Cam', dob: '1992-08-21', status: 'employed' }],
+    filingStatus: null, state: null, grossTotal: null, rate: null, band: 'no salary given: the take-home is the fact',
+    takeHome: 4800, matchUnsure: true,
+    assets: [{ label: 'Savings and investments', category: 'cash', value: 40000 }], cash: 40000,
+    debts: [], hasDebt: null,
+    fat: { food: null, accommodation: 1800, transportation: null, wants: 1400 },
+    firstLook: { headline: 'rate', next: 'find-the-match',
+      why: 'the month covers itself and the cushion is there, so the free money nobody has checked on is the next thing' }
+  },
+  {
+    id: 'first-look-short', name: 'First Look: the month does not cover itself', sphere: 1,
+    story: '$2,600 lands, $1,500 of rent and about $1,400 of everything else, $3,000 saved. The month is $300 short.',
+    people: [{ id: 'p_fl_short', label: 'Devi', dob: '1999-02-17', status: 'employed' }],
+    filingStatus: null, state: null, grossTotal: null, rate: null, band: 'no salary given: the take-home is the fact',
+    takeHome: 2600,
+    assets: [{ label: 'Savings', category: 'cash', value: 3000 }], cash: 3000,
+    debts: [], hasDebt: null,
+    fat: { food: null, accommodation: 1500, transportation: null, wants: 1400 },
+    firstLook: { headline: 'gap', next: 'close-the-gap',
+      why: 'a negative surplus never reaches a finish date, so there is no year-count on the screen at all' }
+  },
+  {
+    id: 'first-look-own-work', name: 'First Look: working for myself, work optional', sphere: 1,
+    story: '$9,000 a month from their own work, $2,500 of housing, about $2,000 of everything else, $300,000 saved, aiming at work optional.',
+    people: [{ id: 'p_fl_own', label: 'Eli', dob: '1986-06-09', status: 'selfEmployed' }],
+    filingStatus: null, state: null, grossTotal: null, rate: null, band: 'no salary given: the take-home is the fact',
+    takeHome: 9000, swr: 0.03,
+    assets: [{ label: 'Savings and investments', category: 'cash', value: 300000 }], cash: 300000,
+    debts: [], hasDebt: null,
+    fat: { food: null, accommodation: 2500, transportation: null, wants: 2000 },
+    firstLook: { headline: 'rate', next: 'where-the-surplus-goes',
+      why: 'nothing is in the way: the month covers itself, there is no card, the cushion is years deep, and no match question was answered' }
+  },
   {
     id: 'grad-broke', name: 'Grad, broke', sphere: 2,
     story: '24, $48k, $32k of student debt, no savings, renting with roommates.',

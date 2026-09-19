@@ -3,6 +3,7 @@
   "people": [],
   "filingStatus": null,
   "state": null,
+  "zip": null,
   "capturingFullMatch": null,
   "dependents": null,
   "community": {
@@ -26,7 +27,8 @@
       "totalCents": null,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -92,6 +94,9 @@
     "stockShare": null,
     "plannedAnnualDrawCents": null,
     "socialSecurityAt": null
+  },
+  "income": {
+    "takeHomeMonthlyCents": null
   },
   "tax": {
     "otherPreTaxAnnualCents": null,
@@ -172,6 +177,7 @@
     "presets": {}
   },
   "notApplicable": {},
+  "subscriptions": [],
   "skills": {},
   "skillTree": {
     "state": {}
@@ -184,7 +190,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -196,10 +204,13 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": null,
     "undoStack": [],
     "redoStack": [],
     "guessed": {},
+    "notSure": {},
+    "reopen": null,
     "source": {},
     "displayUnit": null,
     "noRent": null,

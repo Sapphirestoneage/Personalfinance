@@ -2,11 +2,11 @@
   "schemaVersion": 2,
   "people": [
     {
-      "id": "p_zero",
-      "label": "Ash",
+      "id": "p_fl_card",
+      "label": "Bo",
       "role": "adult",
-      "dob": "2007-06-21",
-      "employmentStatus": "notWorking",
+      "dob": "1997-11-02",
+      "employmentStatus": "employed",
       "unemployment": {
         "since": null,
         "benefitStatus": null,
@@ -29,30 +29,67 @@
       }
     }
   ],
-  "filingStatus": "single",
-  "state": "FL",
+  "filingStatus": null,
+  "state": null,
   "zip": null,
   "capturingFullMatch": null,
   "dependents": null,
   "community": {
     "daySchool": null
   },
-  "assets": [],
-  "debts": [],
+  "assets": [
+    {
+      "id": "a_0",
+      "label": "Savings",
+      "category": "cash",
+      "valueCents": 60000,
+      "liquid": true,
+      "ownerIds": [],
+      "taxCharacter": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null,
+      "tier": null
+    }
+  ],
+  "debts": [
+    {
+      "id": "d_0",
+      "label": "Credit card",
+      "balanceCents": null,
+      "rate": null,
+      "minPaymentCents": null,
+      "type": "credit_card",
+      "creditLimitCents": null,
+      "promoEndsOn": null,
+      "postPromoRate": null,
+      "emotionalTag": null,
+      "keepReasons": [],
+      "excludeFromAggressive": false,
+      "interestFree": null,
+      "archived": false,
+      "borrowedOn": null,
+      "dueOn": null,
+      "ownerIds": []
+    }
+  ],
   "expenses": {
     "needs": {
       "food": {
-        "monthlyCents": 25000
+        "monthlyCents": null
       },
       "accommodation": {
-        "monthlyCents": 0
+        "monthlyCents": 145000
       },
       "transportation": {
-        "monthlyCents": 6000
+        "monthlyCents": null
       }
     },
     "wants": {
-      "totalCents": 15000,
+      "totalCents": 110000,
       "therapy": null
     },
     "entries": [],
@@ -92,21 +129,7 @@
     "setAt": null
   },
   "goals": [],
-  "futureIncome": [
-    {
-      "id": "fi_first_job",
-      "label": "First job",
-      "kind": "job",
-      "monthlyCents": 290000,
-      "startsOn": "2026-10-01",
-      "startsAtAge": null,
-      "endsOn": null,
-      "endsAtAge": null,
-      "confidence": null,
-      "inflationAdjusted": null,
-      "ownerIds": []
-    }
-  ],
+  "futureIncome": [],
   "property": [],
   "allocation": {
     "stocks": null,
@@ -138,7 +161,7 @@
     "socialSecurityAt": null
   },
   "income": {
-    "takeHomeMonthlyCents": null
+    "takeHomeMonthlyCents": 320000
   },
   "tax": {
     "otherPreTaxAnnualCents": null,
@@ -247,7 +270,7 @@
     "updatedAt": null,
     "confirmedAt": {},
     "fields": {},
-    "hasDebt": false,
+    "hasDebt": true,
     "undoStack": [],
     "redoStack": [],
     "guessed": {},
@@ -264,31 +287,45 @@
     },
     "frontDoor": null,
     "isDemo": true,
-    "name": "Zero everything",
-    "story": "19, no income, no debt, no assets, first job starts next month.",
+    "name": "First Look: working, carrying a card",
+    "story": "$3,200 lands, $1,450 of rent, about $1,100 of everything else, $600 saved, and a credit card with a balance on it.",
     "sphere": 1,
     "sphereNote": "DECIDE: the sphere is a guess at the depth these rows reach under section 19 of the master prompt; spheres.json does not exist yet.",
     "lane": "lane2 section 1 (L-1)",
     "known": {
       "asOf": "2026-09-10",
       "tolerance": 0.01,
-      "monthlySpendingCents": 46000,
-      "fiTargetCents": 13800000,
+      "monthlySpendingCents": 255000,
+      "fiTargetCents": 76500000,
       "grossAnnualCents": null,
       "effectiveRate": null,
       "estimatedTaxCents": null,
       "takeHomeAnnualCents": null,
-      "takeHomeMonthlyCents": null,
+      "takeHomeMonthlyCents": 320000,
       "savingsRate": null,
-      "runwayMonths": null,
-      "runwayWholeMonths": null,
-      "netWorthCents": null,
+      "runwayMonths": 0.23529411764705882,
+      "runwayWholeMonths": 0,
+      "firstLook": {
+        "headline": "rate",
+        "next": "clear-the-card",
+        "incomeAnnualCents": 3840000,
+        "costsAnnualCents": 3060000,
+        "surplusMonthlyCents": 65000,
+        "savingsRate": 0.203125,
+        "withdrawalRate": 0.03,
+        "fiNumberCents": 102000000,
+        "runwayMonths": null
+      },
       "working": [
-        "monthly spending = food $250 + accommodation $0 + transportation $60 + wants $150 = $460",
-        "FI target = $460 x 12 / 0.04 = $5,520 / 0.04 = $138,000",
+        "monthly spending = accommodation $1,450 + wants $1,100 = $2,550 (2 of the four buckets were never entered, so they are absent, not zero)",
+        "FI target = $2,550 x 12 / 0.04 = $30,600 / 0.04 = $765,000",
         "gross income: no income source, so take-home and the savings rate are incomplete",
-        "runway: no cash balance entered, so incomplete",
-        "net worth = no assets entered, so incomplete (an empty list is not zero; only the debt was answered as none)"
+        "runway = cash $600 / $2,550 a month = 0.2353 months (0 whole months; Runway.project stops at 60)",
+        "take-home a month = $3,200, entered rather than derived: what the bank actually shows",
+        "First Look: money in = $3,200 x 12 = $38,400; costs = $2,550 x 12 = $30,600; surplus = $7,800 a year, $650 a month",
+        "First Look: savings rate = $7,800 / $38,400 = 0.2031",
+        "First Look: FI number = $30,600 / 0.03 = $1,020,000 (no finish line chosen, so the cautious 3% is assumed)",
+        "First Look: the headline is \"rate\" and the one next step is \"clear-the-card\" -- the card charges more than savings pay, so it comes before the cushion even though $600 is under one month of costs"
       ]
     }
   }

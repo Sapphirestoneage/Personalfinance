@@ -1399,6 +1399,66 @@ const CASES = [
         ['and the real one reads a loss of $481', /481/.test(s.real), true]
       ];
     }
+  },
+  {
+    /* First Look on a phone, from nothing (D-234). The thing that could
+       break here is the screen swap: each question is its own node and the
+       ones the situation does not ask are DETACHED from the document, so a
+       careless implementation would tear down the box a finger is in.
+       Tapping through four money questions and back must leave every
+       answer where it was put. */
+    room: '/rooms/first-look.html',
+    container: '#q-housing',
+    seed: 'empty',
+    prepare: async (page) => {
+      await page.tap('[data-choices="situation"] .choice[data-value="employed"]');
+      await page.waitForTimeout(300);
+      await page.tap('#in-takehome');
+      await page.keyboard.type('3200', { delay: 15 });
+      await page.tap('#q-takehome [data-next]');
+      await page.waitForTimeout(300);
+    },
+    fields: [
+      { sel: '#in-housing', type: '1450' }
+    ],
+    expect: async (page) => {
+      await page.tap('#q-housing [data-next]'); await page.waitForTimeout(250);
+      await page.tap('#in-living'); await page.keyboard.type('1100', { delay: 15 });
+      await page.tap('#q-living [data-next]'); await page.waitForTimeout(250);
+      await page.tap('#in-saved'); await page.keyboard.type('600', { delay: 15 });
+      await page.tap('#in-card'); await page.waitForTimeout(200);
+      await page.tap('#q-savings [data-next]'); await page.waitForTimeout(250);
+      await page.tap('[data-choices="match"] .choice[data-value="unsure"]'); await page.waitForTimeout(250);
+      await page.tap('[data-choices="finish"] .choice[data-value="optional"]'); await page.waitForTimeout(500);
+      const s = await page.evaluate(() => {
+        const h = SLAF.Spine.getProfile();
+        return {
+          take: h.income.takeHomeMonthlyCents,
+          housing: h.expenses.needs.accommodation.monthlyCents,
+          living: h.expenses.wants.totalCents,
+          cash: SLAF.Schema.cashCents(h).value,
+          cards: (h.debts || []).filter(d => d.type === 'credit_card').length,
+          hash: location.hash,
+          headline: document.getElementById('fl-headline').textContent,
+          next: document.getElementById('fl-next-title').textContent,
+          bandLabels: [...document.querySelectorAll('#fl-flow text.tick')].map(t => t.textContent).join('|'),
+          /* A question this situation does not ask is not in the document. */
+          comingIn: !!document.getElementById('q-coming-in')
+        };
+      });
+      return [
+        ['what lands landed', s.take, 320000],
+        ['housing landed', s.housing, 145000],
+        ['everything else landed', s.living, 110000],
+        ['what is saved landed', s.cash, 60000],
+        ['the card was named once', s.cards, 1],
+        ['the between-jobs question is absent, not hidden', s.comingIn, false],
+        ['the result screen is where the hash says', s.hash, '#/first-look/result'],
+        ['the headline is the savings rate', /of what lands is being kept/.test(s.headline), true],
+        ['the one next step is the card, not the cushion', s.next, 'Clear the card'],
+        ['the picture names where the money goes', /Housing/.test(s.bandLabels) && /Work/.test(s.bandLabels), true]
+      ];
+    }
   }
 ];
 

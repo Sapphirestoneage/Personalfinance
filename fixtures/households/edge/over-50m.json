@@ -31,6 +31,8 @@
           "variableLowCents": null,
           "variableHighCents": null,
           "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
           "hassle": null,
           "employerMatch": {
             "matchPercent": null,
@@ -78,6 +80,7 @@
   ],
   "filingStatus": "married_joint",
   "state": "CT",
+  "zip": null,
   "capturingFullMatch": null,
   "dependents": [],
   "community": {
@@ -97,7 +100,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_1",
@@ -112,7 +116,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_2",
@@ -127,7 +132,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_3",
@@ -142,7 +148,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [],
@@ -162,7 +169,8 @@
       "totalCents": 4000000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -228,6 +236,9 @@
     "stockShare": null,
     "plannedAnnualDrawCents": null,
     "socialSecurityAt": null
+  },
+  "income": {
+    "takeHomeMonthlyCents": null
   },
   "tax": {
     "otherPreTaxAnnualCents": null,
@@ -308,6 +319,7 @@
     "presets": {}
   },
   "notApplicable": {},
+  "subscriptions": [],
   "skills": {},
   "skillTree": {
     "state": {}
@@ -320,7 +332,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -332,10 +346,13 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": false,
     "undoStack": [],
     "redoStack": [],
     "guessed": {},
+    "notSure": {},
+    "reopen": null,
     "source": {},
     "displayUnit": null,
     "noRent": null,
@@ -367,7 +384,7 @@
       "runwayWholeMonths": 20,
       "netWorthCents": 6050000000,
       "working": [
-        "monthly spending = food $5,000 + accommodation $25,000 + transportation $3,000 + everything else $40,000 = $73,000",
+        "monthly spending = food $5,000 + accommodation $25,000 + transportation $3,000 + wants $40,000 = $73,000",
         "FI target = $73,000 x 12 / 0.04 = $876,000 / 0.04 = $21,900,000",
         "gross $2,400,000 married_joint: band married_joint above $500,000 (the open top band) -> effective rate 0.33",
         "estimated tax = $2,400,000 x 0.33 = $792,000; take-home = $2,400,000 - $792,000 = $1,608,000 a year, $134,000 a month",

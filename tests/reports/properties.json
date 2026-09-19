@@ -1,8 +1,8 @@
 {
   "seed": 20260910,
   "numRuns": 100,
-  "engines": 88,
-  "files": 91,
+  "engines": 89,
+  "files": 92,
   "missingFiles": [],
   "extraFiles": [
     "blocks",
@@ -1053,6 +1053,84 @@
       ]
     },
     {
+      "engine": "firstlook",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (12 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "four to seven questions, whichever situation you are in, and the gate is always first",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "exactly one next step, and one headline, for any household it can answer",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a short month is an answer, not an error: a runway and no finish date",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a surplus has a date, not a runway",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the walk and the FI year never disagree",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "past the finish line the money comes from the portfolio, and health cover appears",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every ribbon in the picture is a positive amount, whatever the year",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "nothing is invented: an unanswered question comes back incomplete, never a zero",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "foo",
       "notes": [],
       "properties": [
@@ -1709,6 +1787,12 @@
         },
         {
           "name": "every stress is a worse day than today, never a better one",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a house hack carries the building’s reserves too, and letting more units never makes you pay more",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910
@@ -3164,6 +3248,6 @@
       ]
     }
   ],
-  "totalProperties": 403,
+  "totalProperties": 416,
   "failedProperties": 7
 }

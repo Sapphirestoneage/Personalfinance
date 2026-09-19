@@ -31,6 +31,7 @@
   ],
   "filingStatus": "single",
   "state": "IL",
+  "zip": null,
   "capturingFullMatch": null,
   "dependents": null,
   "community": {
@@ -50,7 +51,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     },
     {
       "id": "a_1",
@@ -65,7 +67,8 @@
       "costBasisCents": null,
       "hassle": null,
       "cashFlowMonthlyCents": null,
-      "accessAgeOverride": null
+      "accessAgeOverride": null,
+      "tier": null
     }
   ],
   "debts": [],
@@ -85,7 +88,8 @@
       "totalCents": 90000,
       "therapy": null
     },
-    "entries": []
+    "entries": [],
+    "annual": []
   },
   "incomeBasis": "earned",
   "retirement": {
@@ -151,6 +155,9 @@
     "stockShare": null,
     "plannedAnnualDrawCents": null,
     "socialSecurityAt": null
+  },
+  "income": {
+    "takeHomeMonthlyCents": null
   },
   "tax": {
     "otherPreTaxAnnualCents": null,
@@ -231,6 +238,7 @@
     "presets": {}
   },
   "notApplicable": {},
+  "subscriptions": [],
   "skills": {},
   "skillTree": {
     "state": {}
@@ -243,7 +251,9 @@
   "assumptions": {
     "returnReal": 0.05,
     "inflation": 0.03,
-    "expectedReturnRate": 0.07,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
     "swrRate": 0.04,
     "humanCapitalDiscountRate": 0.02,
     "homeEquityHaircut": 0.8,
@@ -255,10 +265,13 @@
     "createdAt": null,
     "updatedAt": null,
     "confirmedAt": {},
+    "fields": {},
     "hasDebt": false,
     "undoStack": [],
     "redoStack": [],
     "guessed": {},
+    "notSure": {},
+    "reopen": null,
     "source": {},
     "displayUnit": null,
     "noRent": null,
@@ -290,7 +303,7 @@
       "runwayWholeMonths": 6,
       "netWorthCents": 16200000,
       "working": [
-        "monthly spending = food $600 + accommodation $1,650 + transportation $300 + everything else $900 = $3,450",
+        "monthly spending = food $600 + accommodation $1,650 + transportation $300 + wants $900 = $3,450",
         "FI target = $3,450 x 12 / 0.04 = $41,400 / 0.04 = $1,035,000",
         "gross income: no income source, so take-home and the savings rate are incomplete",
         "runway = cash $22,000 / $3,450 a month = 6.3768 months (6 whole months; Runway.project stops at 60)",
