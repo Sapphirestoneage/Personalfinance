@@ -3,10 +3,10 @@ paths:
   - "rooms/debt-payoff.html"
 ---
 # Debt Payoff (`debt-payoff`)
-File: rooms/debt-payoff.html · 1777 lines
+File: rooms/debt-payoff.html · 1823 lines
 Engines: projection, debt
 Reference data: debt_rules.json, effective_tax_rates_2026.json, foo_rules.json, onepager_defaults.json
-Owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment
+Owns: hasDebt, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment
 Reads from other owners: grossAnnualIncome (start)
 Latest decisions:
   - D-191 — Debt Payoff: a stop line, and the payment says what it is built from

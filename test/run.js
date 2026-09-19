@@ -5174,7 +5174,15 @@ section('Eleven cards');
     const unasked = Demo.build(); unasked.meta.hasDebt = null; unasked.debts = [];
     checkTrue('unanswered still asks for debt figures', Ownership.describe('totalDebt', unasked, 'map').applies);
     checkTrue('utility pages are never "next"', Registry.inOrder().every(r => !r.utility || Registry.nextAfter(r.id, [], h) === null || Registry.nextAfter(null, Registry.inOrder().filter(x => x.id !== r.id).map(x => x.id), h).id !== r.id));
-    check('hasDebt is owned by Start Here', Ownership.field('hasDebt').owner, 'start');
+    check('hasDebt is owned by Debt (D-234)', Ownership.field('hasDebt').owner, 'debt-payoff');
+    check('… on the card that lists them', Ownership.field('hasDebt').anchor, 'debts');
+    {
+      const dp = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+      checkTrue('Debt asks it, which is how ownership moves', /data-owe="no"/.test(dp) && /data-owe="yes"/.test(dp));
+      checkTrue('and writes it through the owner path', /Ownership\.write\('hasDebt'/.test(dp));
+      checkTrue('the question sits outside the list that rebuilds (D-034)',
+        dp.indexOf('id="owe-choices"') < dp.indexOf('id="debt-list"'));
+    }
   }
 
   /* -- Capturing the match is derived ---------------------------------- */
@@ -5204,7 +5212,7 @@ section('Eleven cards');
     check('three characters are asked', Schema.TAX_CHARACTERS.map(t => t.id).join(','), 'pretax,roth,taxable');
     check('a new household has not answered about debt', Schema.createHousehold({}).meta.hasDebt, null);
     check('the demo answers every intake field', Progress.forRoom('start', Demo.build()).missing.length, 0);
-    ['contributionPercent', 'highestDeductible', 'hasDebt', 'employerMatch'].forEach(f =>
+    ['contributionPercent', 'highestDeductible', 'employerMatch'].forEach(f =>
       check(`${f} is owned by Start Here`, Ownership.field(f).owner, 'start'));
     /* The taxes.* facts left Start Here for the room they change: D-234. */
     ['state', 'zip', 'filingStatus'].forEach(f =>

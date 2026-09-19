@@ -22,6 +22,10 @@
              that turns the Financial Snapshot's single lump-sum debt record
              into real per-debt entries, which is what the Debt Calculator
              needs (SPEC.md §9 item 2).
+             It also OWNS meta.hasDebt, the answer to "do you owe
+             anything" (D-234). It was Start Here's. Nothing else edits it,
+             and "nothing owed" is an answer here, not an empty list: an
+             empty list means nobody has said yet.
   3. CALLS   engines/debt.js for every figure — simulate(),
              compareStrategies(), minimumPaymentCents(). No amortisation is
              written in this file.
@@ -34,6 +38,11 @@
   .room-back:hover { text-decoration: underline; }
   section[id] { scroll-margin-top: var(--space-4); }
   .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+
+  /* The one question this card owns, above the list it explains. Static
+     markup: #debt-list rebuilds freely, and this must not go with it. */
+  .owe { margin-top: var(--space-3); }
+  .owe .choices { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
 
   .scope { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
   .scope button { font-family: var(--font-body); font-size: var(--text-xs); border: none; background: transparent; color: var(--color-text-muted); padding: var(--space-1) var(--space-3); cursor: pointer; white-space: nowrap; }
@@ -274,6 +283,14 @@
         <button type="button" data-scope="cards" aria-pressed="false">Cards only</button>
       </div>
     </div>
+    <div class="owe" id="owe">
+      <span class="slaf-label">Do you owe anything?</span>
+      <div class="choices" id="owe-choices">
+        <button type="button" class="choice" data-owe="no">Nothing</button>
+        <button type="button" class="choice" data-owe="yes">Yes</button>
+      </div>
+      <p class="slaf-hint" id="owe-say" style="margin:var(--space-2) 0 0"></p>
+    </div>
     <div class="debt-cols" id="debt-cols" hidden><span>Debt</span><span>Owed</span><span>Rate</span><span>Min a month</span></div>
     <div id="debt-list"></div>
     <div class="debt-total" id="debt-total" hidden></div>
@@ -355,7 +372,8 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, Debt = SLAF.Debt, Charts = SLAF.Charts;
+      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, Debt = SLAF.Debt, Charts = SLAF.Charts,
+      Ownership = SLAF.Ownership;
 
   var ROOM_ID = 'debt-payoff';
   var RULES = null;
@@ -1108,6 +1126,33 @@
     render();
   }
 
+  /* ---- Do you owe anything (D-234) ---------------------------------------
+     Owned here now, and the two buttons are the box that carries the
+     ownership. "Nothing" clears the lump-sum record Start Here used to
+     write; it never touches a debt the person listed themselves. */
+  function paintOwe() {
+    var v = (Spine.getProfile().meta || {}).hasDebt;
+    Array.prototype.forEach.call(el('owe-choices').querySelectorAll('.choice'), function (b) {
+      b.setAttribute('aria-pressed', String(v === (b.getAttribute('data-owe') === 'yes')));
+    });
+    var listed = (Spine.getProfile().debts || []).filter(function (d) { return !d.archived; }).length;
+    el('owe-say').textContent = v === false
+      ? 'Nothing owed. Every room that asks about debt says so instead of asking you again.'
+      : v === true && !listed ? 'Add each one below. A debt with no rate or no minimum names itself rather than being counted as zero.'
+      : v === true ? ''
+      : 'Not answered yet, which is not the same as nothing.';
+    el('owe-say').hidden = el('owe-say').textContent === '';
+  }
+  el('owe-choices').addEventListener('click', function (evt) {
+    var b = evt.target.closest('.choice');
+    if (!b) return;
+    var yes = b.getAttribute('data-owe') === 'yes';
+    Spine.batch(yes ? 'Has debt' : 'No debt', function () {
+      Ownership.write('hasDebt', yes);
+    });
+    render();
+  });
+
   el('btn-add').addEventListener('click', function () {
     var person = Spine.ensurePrimaryPerson('You');
     Spine.upsertDebt(Schema.createDebt({ label: null, type: 'credit_card', ownerIds: [person.id] }));
@@ -1605,6 +1650,7 @@
     if (!RULES) return;
     var h = Spine.getProfile();
     debtForm.request();
+    paintOwe();
     renderArchived(h);
     /* Every ordering is run once here and shared by the three outputs. */
     var cmp = Debt.compareStrategies(scoped(h), RULES, simOpts(effectiveExtraCents(scoped(h))));

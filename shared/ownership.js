@@ -241,8 +241,10 @@
       applies: function (h) { return Schema.capturingQuestionApplies(h); },
       notApplicableBecause: 'There is no match to capture.'
     },
+    /* Debt asks "do you owe anything" now, above the list it explains
+       (D-234). False is an answer; an empty list is not. */
     hasDebt: {
-      label: 'Any debt', owner: 'start', anchor: 'q-debt',
+      label: 'Any debt', owner: 'debt-payoff', anchor: 'debts',
       read: function (h) {
         var m = (h.meta || {});
         if (m.hasDebt === true) return Money.ok(true);

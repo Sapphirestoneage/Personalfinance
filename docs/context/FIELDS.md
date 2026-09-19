@@ -47,8 +47,9 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `offerCosts` — The offer’s costs of working, a month · **no other room mentions it**
 - `offerSignOn` — Sign-on · **no other room mentions it**
 
-## debt-payoff (5)
+## debt-payoff (6)
 
+- `hasDebt` — Any debt · read by start, dashboard, unlearning, student-loans
 - `totalDebt` — Total debt · read by ledger, start, financial-snapshot, statements, statement, dashboard, credit, what-if-life, student-loans, history, wrapped
 - `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, financial-snapshot, statements, rerank, cant-pay, student-loans, calendar
 - `debtBalance` — Balance · read by ledger, start
@@ -168,7 +169,7 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 
 - `practiceLedger` — Practice ledger · read by skill-tree
 
-## start (10)
+## start (9)
 
 - `grossAnnualIncome` — Gross annual income · read by ledger, debt-payoff, expenses, cash-flow, financial-snapshot, statements, statement, real-hourly-wage, hassle, self-employed, side-hustle, dashboard, credential, accounts, stacker, skill-tree, exercises, worth, runway, car, cant-pay, rollover, what-if-life, micro-retirement, protection, decumulation, roth-aca, tax, giving, career-move, offer-compare, degree, partner, housing, big-purchase, first-car, variable-income, adventure, week, buckets, dreamline, reversibility, unlearning, student-loans, calendar, one-pager
 - `unemployment` — Between jobs · too generic to trace
@@ -177,7 +178,6 @@ Fields: 112. Traced: 103. No other room mentions it: **51**.
 - `investments` — Investments + retirement · too generic to trace
 - `employerMatch` — Employer match · read by financial-snapshot, statements, foo-ladder, offer-compare, unlearning
 - `capturingFullMatch` — Capturing the full match · read by expenses, financial-snapshot, dashboard, stacker, wrapped
-- `hasDebt` — Any debt · read by dashboard, unlearning, student-loans
 - `contributionPercent` — Workplace contribution · read by ledger, statements, accounts, what-if-life, tax
 - `highestDeductible` — Highest deductible · read by statement, runway, protection
 

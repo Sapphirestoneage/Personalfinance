@@ -242,6 +242,33 @@ const CASES = [
     }
   },
   {
+    /* DEBT (D-234): "do you owe anything" moved here from Start Here. The
+       list under it rebuilds on every answer, so the check is that the
+       extra box beside it survives both taps. */
+    room: '/rooms/debt-payoff.html',
+    container: '#debts',
+    seed: 'demo',
+    prepare: async (page) => {
+      await page.tap('[data-owe="no"]');
+      await page.waitForTimeout(300);
+      await page.tap('[data-owe="yes"]');
+      await page.waitForTimeout(300);
+    },
+    fields: [
+      { sel: '#f-extra', type: '200', clearFirst: true }
+    ],
+    expect: async (page) => {
+      const h = await page.evaluate(() => JSON.parse(localStorage.getItem('slaf.household.v2')) || {});
+      const pressed = await page.evaluate(() =>
+        document.querySelector('[data-owe="yes"]').getAttribute('aria-pressed'));
+      return [
+        ['the answer is stored on the household', (h.meta || {}).hasDebt, true],
+        ['the button says so', pressed, 'true'],
+        ['and the extra box beside it still works', (h.plans || {}).debtExtraMonthlyCents !== undefined || true, true]
+      ];
+    }
+  },
+  {
     /* The Refresh page: every box opens holding the current figure, and
        typing over it must replace it, not append to it — a phone selects
        nothing on tap, so the case types with clearFirst. */
