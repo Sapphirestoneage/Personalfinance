@@ -930,7 +930,7 @@
     needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
     order: 4.8,
     title: 'Your Statements',
-    blurb: 'An income statement, a cash flow statement and a balance sheet — the three documents a company produces every quarter, for a household. Plus the same period written out in sentences.',
+    blurb: 'An income statement, a cash flow statement, a balance sheet and a FIRE statement — the documents a company produces every quarter, for a household, plus the one FIRE people read. Every line opens to how it is worked out. Plus the same period written out in sentences.',
     href: 'rooms/statements.html',
     tier: 0,
     tags: ['income', 'cashflow', 'debt'],

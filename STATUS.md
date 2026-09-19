@@ -45,11 +45,13 @@ Updated: 2026-09-19
   it is in effect and when nothing goes beyond the minimums (D-252).
   Cash Flow and the Calendar draw the month as turns: what hits the
   account, when, and what is left, one shared picture (D-253).
+  Your Statements: every line opens to how it is worked out and where
+  to change it, tax comes off before living, and a FIRE statement sits
+  beside the balance sheet (D-254).
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
   the car's used/new and running costs;
-  the Budget month view made obvious; statements in detail, each line
-  expandable; the readings FIRE people expect; a plain-language lede pass.
+  the Budget month view made obvious; a plain-language lede pass.
 - **Boxes line up now (D-249).** Reported from a phone, third time asked:
   side-by-side controls sat 16px apart on 17 pages. Labels in a row reserve
   the same number of lines, so the boxes start level whatever a label does.

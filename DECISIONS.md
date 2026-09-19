@@ -14542,6 +14542,41 @@ per turn), `node test/forms.js`, `node tools/context/build.js --check`;
 Cash Flow and the Calendar at 390px with the demo, empty state and with
 a pay rhythm set, clean console.
 
+## D-254 — Statements that open, and the FIRE statement
+
+**Why.** The owner: "the statements need to be in way more detail, with
+expansion of each; right now income looks like cash flow; what would
+FIRE people want to see? Add them"; and "create a FIRE statement with
+the values and relevant things in there"; and "when I click on a number
+I want to be able to go to the number."
+
+**Decision.** `engines/statements.js`: every line carries `how` (one
+sentence), `parts` (what it is made of) and `field` or `room` (where
+its number lives); the income statement takes tax off between earned
+and living (the one take-home estimate every reading uses) and the
+living line opens to the four buckets; the cash flow starts at
+take-home, since the match never lands and the tax was never yours;
+the balance sheet lines open to the accounts and the debts. New
+`fireStatement`: a year of spending, the withdrawal rate, the FI
+number with lean and fat, invested today, the FI ratio, years of
+spending saved, the coast number and whether it is reached, net worth,
+the savings rate, saved in a year, the monthly gap, years to FI, the
+real return and inflation assumed, each read from the engine that owns
+it (fire, tier0, gap). `rooms/statements.html`: a fourth tab, one row
+function that opens every line to its how, its parts and "Change it in
+<room> →" through `Ownership.linkTo`.
+
+**Replaces or removes.** "Cash in from work" at gross on the cash flow
+statement; the flat, unexplained lines.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (tax off before living; the cash flow at
+take-home; the FI number, ratio and savings rate equal the owning
+engines' figures; nothing entered refuses; a dash never a zero), lane
+2, `node tools/context/build.js --check`; every tab at 390px with the
+demo, lines opening, links resolving, clean console.
+
 ---
 
 # The Dungeons & Dividends entries

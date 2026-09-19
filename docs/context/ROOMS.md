@@ -37,7 +37,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **fire-lab** — FIRE Lab · 465 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, fire, hourly · D-228, D-138
 - **coast-date** — Your Coast Date · 125 lines · engines: projection, tier0, income, selfemployed, ledger, coast · D-213
 - **race** — The Race to $100K · 158 lines · engines: projection, tier0, income, selfemployed, ledger, countdown, race · D-217
-- **statements** — Your Statements · 388 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, statements · D-156
+- **statements** — Your Statements · 467 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, fire, debt, gap, statements · D-254, D-156
 
 ## Decisions (30)
 

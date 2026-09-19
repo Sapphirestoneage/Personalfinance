@@ -2599,7 +2599,7 @@
       "notes": [],
       "properties": [
         {
-          "name": "no throw, no NaN or Infinity, on any valid household (5 functions)",
+          "name": "no throw, no NaN or Infinity, on any valid household (6 functions)",
           "ok": true,
           "numRuns": 100,
           "seed": 20260910

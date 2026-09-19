@@ -12,7 +12,7 @@ Fields: 114. Traced: 105. No other room mentions it: **53**.
 
 - `rothContributed` — Roth so far this year · **no other room mentions it**
 - `hsaContributed` — HSA so far this year · **no other room mentions it**
-- `marginalRate` — Marginal tax rate · read by statement, debt-payoff, student-loans, side-hustle, credential, rollover, roth-aca, property, debates
+- `marginalRate` — Marginal tax rate · read by statement, debt-payoff, student-loans, statements, side-hustle, credential, rollover, roth-aca, property, debates
 - `allocationStocks` — Target: stocks · **no other room mentions it**
 - `allocationBonds` — Target: bonds · **no other room mentions it**
 - `allocationCash` — Target: cash · **no other room mentions it**
@@ -83,10 +83,10 @@ Fields: 114. Traced: 105. No other room mentions it: **53**.
 
 - `rentMonthly` — Rent or mortgage, a month · read by cash-flow, calendar, housing, property, debates
 - `monthlyExpenses` — Monthly expenses · read by start, cash-flow, budget, statement, variable-income, calendar, dashboard, financial-snapshot, fire, fire-lab, statements, real-hourly-wage, fulfillment, rerank, stacker, skill-tree, exercises, values, runway, cant-pay, what-if-life, micro-retirement, protection, decumulation, giving, career-move, partner, kids, housing, big-purchase, enough, adventure, week, buckets, dreamline, reversibility, unlearning, debates, one-pager
-- `foodMonthly` — Food, a month · read by ledger
-- `accommodationMonthly` — Rent or mortgage, a month · read by ledger
-- `transportationMonthly` — Getting around, a month · read by ledger
-- `wantsMonthly` — Everything else, a month · read by ledger
+- `foodMonthly` — Food, a month · read by ledger, statements
+- `accommodationMonthly` — Rent or mortgage, a month · read by ledger, statements
+- `transportationMonthly` — Getting around, a month · read by ledger, statements
+- `wantsMonthly` — Everything else, a month · read by ledger, statements
 - `therapyMonthly` — Therapy, a month · read by ledger
 - `annualLine` — Once-a-year costs · read by ledger
 
@@ -113,7 +113,7 @@ Fields: 114. Traced: 105. No other room mentions it: **53**.
 
 ## income (3)
 
-- `ledgerIncome` — Income logged, a month · read by variable-income
+- `ledgerIncome` — Income logged, a month · read by variable-income, statements
 - `incomeType` — What kind of pay · read by ledger
 - `paySurvives` — Keeps paying if the job goes · read by ledger, start
 
