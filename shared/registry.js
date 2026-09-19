@@ -473,6 +473,7 @@
       tags: ['income', 'cashflow', 'debt'],
       daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'income.grossAnnualCents'], writes: [] },
       subsections: [
+        { id: 'up-next',      label: 'Up next' },
         { id: 'where',        label: 'Where you are' },
         { id: 'next',         label: 'The next thing money should do' },
         { id: 'learn',        label: 'The next thing to learn' },
