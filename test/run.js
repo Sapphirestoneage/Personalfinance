@@ -15139,6 +15139,45 @@ section('What you owe, by kind — and no rate asked here (D-262)');
 })();
 
 /* ==========================================================================
+   A yearly cost falls on its day, not the 1st (D-263)
+   ========================================================================== */
+section('A yearly cost falls on its day, not the 1st (D-263)');
+(function () {
+  /* The owner: "for yearly that day on the year". A yearly line carried the
+     month it is paid and nothing finer, and engines/calendar.js drew every
+     one of them on the 1st — so a renewal taken on the 28th appeared four
+     weeks early. */
+  const line = Schema.createAnnualLine({ label: 'Car registration', amountCents: 18000, monthDue: 2, dayDue: 28 });
+  check('the day is kept', line.dayDue, 28);
+  check('… and the month with it', line.monthDue, 2);
+  check('no day given stays null, never 1',
+    Schema.createAnnualLine({ amountCents: 1000, monthDue: 6 }).dayDue, null);
+  check('a day out of range is null, not clamped to a day nobody typed',
+    Schema.createAnnualLine({ amountCents: 1000, monthDue: 6, dayDue: 99 }).dayDue, null);
+  check('… and zero is not a day either',
+    Schema.createAnnualLine({ amountCents: 1000, monthDue: 6, dayDue: 0 }).dayDue, null);
+  check('a real edge day is kept', Schema.createAnnualLine({ monthDue: 1, dayDue: 31 }).dayDue, 31);
+
+  /* The engine places it. Read the source rather than driving the whole
+     projection: the placement is three lines and the rule is what matters. */
+  const cal = fs.readFileSync(path.join(ROOT, 'engines/calendar.js'), 'utf8');
+  checkTrue('the calendar reads the day instead of hardcoding the 1st',
+    /Money\.isEntered\(l\.dayDue\) \? Math\.min\(l\.dayDue, dim\) : 1/.test(cal));
+  checkTrue('… clamped to the last day of a short month, the rule a monthly log line already uses',
+    /var dim = new Date\(y, mi \+ 1, 0\)\.getDate\(\);/.test(cal));
+  checkTrue('… and the date stays estimated, so nothing about counting moves',
+    /kind: 'annual', dateKind: 'estimated'/.test(cal));
+  checkTrue('the 1st is no longer hardcoded for every yearly line',
+    !/var date = ym \+ '-01';/.test(cal));
+
+  /* The room that owns the yearly lines asks for the day. */
+  const exp = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  checkTrue('Expenses asks for the day beside the month', /id="y-day"/.test(exp));
+  checkTrue('… and only sends one when a month was chosen',
+    /dayDue: month === null \? null : day/.test(exp));
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

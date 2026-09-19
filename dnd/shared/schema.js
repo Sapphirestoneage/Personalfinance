@@ -220,6 +220,7 @@
     'expenses.annual[].bucket':                  { class: 'raw',        unit: 'enum',    values: ['food', 'accommodation', 'transportation', 'wants'], note: 'the bucket it sits inside; a twelfth joins that bucket every month. 15.5, D-181' },
     'expenses.annual[].amountCents':             { class: 'raw',        unit: 'cents',   period: 'annual', note: 'a year of it. 15.5, D-181' },
     'expenses.annual[].monthDue':                { class: 'raw',        unit: 'month',   note: '1 to 12: the month it is paid; the Money Calendar draws it there. null = spread only. 15.5, D-181' },
+    'expenses.annual[].dayDue':                  { class: 'raw',        unit: 'day',     note: '1 to 31: the day inside monthDue it is taken; the Money Calendar draws it there instead of the 1st. null = the day is not known. D-263' },
     'expenses.annual[].cadence':                 { class: 'raw',        unit: 'enum',    values: ['annual'], note: 'always annual. 15.5, D-181' },
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
@@ -1573,12 +1574,20 @@
   function createAnnualLine(fields) {
     var f = fields || {};
     var month = Money.isEntered(f.monthDue) ? Math.round(f.monthDue) : null;
+    /* The day inside that month (D-263). A yearly cost used to be drawn on
+       the 1st whatever the date on the bill, so a renewal on the 28th showed
+       up four weeks early on the calendar. Null means the day is not known:
+       the calendar falls back to the 1st and says nothing more than the
+       month, which is what it always did. Out of range is null, never
+       clamped to a day nobody typed. */
+    var day = Money.isEntered(f.dayDue) ? Math.round(f.dayDue) : null;
     return {
       id: f.id || newId('yr'),
       label: typeof f.label === 'string' && f.label ? f.label : null,
       bucket: ANNUAL_BUCKETS.indexOf(f.bucket) >= 0 ? f.bucket : 'wants',
       amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
       monthDue: month !== null && month >= 1 && month <= 12 ? month : null,
+      dayDue: day !== null && day >= 1 && day <= 31 ? day : null,
       cadence: 'annual'
     };
   }

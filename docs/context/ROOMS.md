@@ -13,7 +13,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Your Numbers (16)
 
 - **income** — Income · 786 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget · owns: ledgerIncome, incomeType, paySurvives · D-250, D-246, D-207
-- **expenses** — Expenses · 1189 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-207, D-199, D-196
+- **expenses** — Expenses · 1196 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-263, D-207, D-199
 - **cash-flow** — Cash Flow · 592 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, calendar · D-260, D-253, D-192
 - **budget** — Budget · 520 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget · owns: monthsClosed · D-257, D-130, D-129
 - **statement** — The Statement · 777 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget · owns: otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType · D-261, D-251, D-249

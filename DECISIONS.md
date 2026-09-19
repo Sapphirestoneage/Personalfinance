@@ -14807,6 +14807,43 @@ edit rather than adding a second card. In a browser at 412px on the demo:
 the two debts it already has read back into their boxes, and mortgage, car
 and consumer added on top give $271,200 across five kinds, counted once.
 
+## D-263 — A yearly cost falls on its day, not on the 1st
+
+**Why.** The owner, on giving subscriptions their dates: "for yearly that day
+on the year". `expenses.annual[]` carried `monthDue` and nothing finer, and
+`engines/calendar.js` drew every yearly line on `ym + '-01'` — so a renewal
+taken on the 28th showed up four weeks early.
+
+**Decision.** `expenses.annual[].dayDue`, 1 to 31, null when the day is not
+known. `Schema.createAnnualLine` keeps it in range and leaves anything else
+null rather than clamping to a day nobody typed. The calendar draws the line
+on that day, clamped to the last day of a short month — the rule a monthly
+log occurrence already uses — and on the 1st when there is no day, exactly as
+before. `rooms/expenses.html` asks for it beside the month.
+
+The date stays `estimated` either way. A renewal expected on the 28th is
+still expected, and `exact` is what the budget counts as having happened, so
+this changes which day a line is drawn on and nothing about counting.
+
+**Replaces or removes.** Removes the hardcoded 1st.
+
+**Stored shape.** `expenses.annual[]` gains `dayDue`. A line saved before
+this has no `dayDue`; `createAnnualLine` reads that as null and the calendar
+draws it on the 1st, which is what it did before — so an old household is
+unchanged until someone types a day. Nothing needs migrating.
+
+**Also found, and not changed.** A monthly subscription already lands on its
+own date every month: `CashFlow.logOccurrences` repeats a logged entry on its
+day-of-month, clamped to short months, and "Repeats every month" on the Cash
+Flow log is how you say so. And a voluntary purchase is already loggable —
+the log's category picker carries every `wants` category. Neither needed
+work; both needed saying.
+
+**Verified.** `node test/run.js` (32,414). In a browser: a yearly line with
+`dayDue: 28` draws on "Sep 28 · Car registration (yearly)" where it used to
+draw on the 1st. No error banner on Expenses, the Calendar or Cash Flow, and
+the alignment guard is clean on the room that gained a box.
+
 ---
 
 # The Dungeons & Dividends entries
