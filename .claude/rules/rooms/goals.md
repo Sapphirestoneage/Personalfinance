@@ -6,12 +6,13 @@ paths:
   - "engines/worth.js"
 ---
 # The Decision Room (`goals`)
-File: rooms/goals.html · 1418 lines
+File: rooms/goals.html · 1465 lines
 Engines: projection, tier0, cashflow, hourly, events, reversibility, goals, worth
 Reference data: expense_categories.json, goal_templates.json, reversibility.json, triple_d.json
 Owns: reversibilityDecision
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:
+  - D-269 — A block that pays
   - D-266 — What If: two scenario rooms are each other, not two block types
   - D-262 — The Decision Room gets a second reading: the ones behind you
   - D-253 — The Decision Room: one shell, five outputs on every block

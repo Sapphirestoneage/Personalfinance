@@ -229,6 +229,8 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/trap.js"></script>
+<script src="../engines/quickmath.js"></script>
+<script src="../engines/firstcar.js"></script>
 <script src="../engines/debates.js"></script>
 <script src="../shared/sharecard.js"></script>
 <script src="../shared/suggest.js"></script>
@@ -328,7 +330,11 @@
     el('d-list').innerHTML = list.map(function (d) { return '<button type="button" class="choice" data-debate="' + esc(d.id) + '" aria-pressed="' + (d.id === CURRENT ? 'true' : 'false') + '">' + esc(d.name) + '</button>'; }).join('');
     var d = Debates.byId(TABLES, CURRENT);
     if (!d) return;
-    el('d-ask').hidden = d.id !== 'rentVsBuy';
+    /* One typed box serves the two debates that need a price; its label
+       says which price (D-270). The box is built once and only relabelled. */
+    var asks = { rentVsBuy: 'The price of the place you would buy', newVsUsed: 'The price of the car, new' };
+    el('d-ask').hidden = !asks[d.id];
+    if (asks[d.id]) { el('d-ask').querySelector('label').textContent = asks[d.id]; el('in-price').setAttribute('aria-label', asks[d.id]); }
     el('d-name').textContent = d.name + ': ' + d.question;
     var r = Debates.run(d.id, h, TABLES, { priceCents: typed('in-price') });
     el('d-share').innerHTML = '';
@@ -358,7 +364,7 @@
   el('in-price').addEventListener('input', render);
   window.addEventListener('hashchange', function () { var id = fromHash(); if (id) { CURRENT = id; render(); } });
   Spine.onChange(render);
-  Reference.load(['debates', 'earlyAccessRules', 'federalBrackets', 'seTax', 'stateBrackets', 'aca', 'returnBands', 'effectiveTaxRates', 'priceToRent', 'fireVariants']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
+  Reference.load(['debates', 'earlyAccessRules', 'federalBrackets', 'seTax', 'stateBrackets', 'aca', 'returnBands', 'effectiveTaxRates', 'priceToRent', 'fireVariants', 'carCosts']).then(function (t) { TABLES = t; render(); }).catch(function (err) {
     var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error'; n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
   });
 })();

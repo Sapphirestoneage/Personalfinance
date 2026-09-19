@@ -1911,7 +1911,13 @@
       perUnitCents: f.perUnitCents === undefined ? null : f.perUnitCents,
       units: f.units === undefined ? null : f.units,
       unitLabel: f.unitLabel === undefined ? null : f.unitLabel,
-      unitsPerGroup: f.unitsPerGroup === undefined ? null : f.unitsPerGroup
+      unitsPerGroup: f.unitsPerGroup === undefined ? null : f.unitsPerGroup,
+      /* A line that PAYS you — rent a lodger pays, the thing you sell — is
+         typed as a positive figure and carries this flag; the sign is applied
+         where the line is summed (engines/goals.js itemAmountCents), never
+         in a box. A block whose lines net negative pays, and answers the five
+         questions the other way round. D-269. */
+      pays: f.pays === true
     };
   }
 

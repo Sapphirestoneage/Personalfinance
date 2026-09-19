@@ -47,6 +47,13 @@
   a decision people weigh (data/reversibility.json), which arrives with the
   undo question already priced where there is an honest figure for it.
 
+  A LINE CAN PAY YOU (D-269): typed positive, flagged with the "pays you"
+  toggle, counted negative. A block whose lines net negative brings money
+  in, and the five read the other way round: what it pays, the hours it
+  buys back, when it starts, what it adds to what is spare — then the undo
+  question exactly as before. That is what a lodger is, and the year at
+  home, and selling the car. Not a sixth answer either.
+
   A LINE CAN BE PRICED PER UNIT (D-263): so many guests at so much each.
   The two figures MAKE the line's amount, they do not sit beside it, and
   the room shows the product as a read-out rather than a third box — two
@@ -218,6 +225,10 @@
     .item--unit .unit-x { display: none; }
     .item--unit .unit-sum { grid-column: 1 / -1; text-align: left; }
   }
+  /* The pays-you toggle on a line (D-269). */
+  .item button.pays { font: inherit; font-size: var(--text-xs); padding: 2px var(--space-2); border: 1px solid var(--color-border); border-radius: 999px; background: transparent; color: var(--color-text-muted); cursor: pointer; white-space: nowrap; }
+  .item button.pays.is-on { border-color: var(--color-positive); color: var(--color-positive); }
+  .item--unit { grid-template-columns: 1fr 4.5rem auto 6rem auto auto auto; }
   .margin-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2);
     margin: var(--space-3) 0 0; padding-top: var(--space-3); border-top: 1px dashed var(--color-border); }
   .margin-line .margin-q { font-size: var(--text-sm); color: var(--color-text-muted); }
@@ -447,6 +458,21 @@
        the whole result came back ok. D-263. */
     var priced = p && p.priced === true;
     var full = Money.isOk(p);
+    /* A block that pays answers the first four the other way round (D-269). */
+    if (priced && p.pays) {
+      out.costs = { said: 'Pays you ' + Money.formatCents(p.paysCents)
+        + (p.costsCents > 0 ? ' after ' + Money.formatCents(p.costsCents) + ' of costs' : '') };
+      out.life = p.inLife && p.inLife.hoursDisplay
+        ? { said: 'Buys back ' + p.inLife.hoursDisplay
+              + (p.inLife.fiPushedDisplay ? ' \u00b7 ' + p.inLife.fiPushedDisplay : '') }
+        : { missing: (p.inLife && p.inLife.reason) || 'No real hourly wage yet.' };
+      out.when = p.monthsUntil && Money.isOk(p.monthsUntil)
+        ? { said: 'Starts in ' + monthsLabel(p.monthsUntil.value) }
+        : { missing: 'Add the date it starts.' };
+      out.fits = { said: 'Adds ' + Money.formatCents(p.paysCents) + ' to what you have spare' };
+      out.undone = undoRow(p.undo || {});
+      return out;
+    }
     out.costs = priced
       ? { said: Money.formatCents(p.totalCents) }
       : { missing: p.reason || 'No price on it yet.' };
@@ -526,9 +552,10 @@
     var what = m.groupOf > 1
       ? 'One more ' + (m.label === 'guest' ? 'table' : 'group') + ' of ' + m.groupOf + ' ' + m.label + 's'
       : 'One more ' + m.label;
+    if (m.pays) what += ' pays';
     var bits = [Money.formatCents(m.groupCents)];
-    if (m.hoursDisplay) bits.push(m.hoursDisplay + ' of your life');
-    if (m.fiPushedDisplay) bits.push(m.fiPushedDisplay);
+    if (m.hoursDisplay) bits.push(m.hoursDisplay + (m.pays ? ' bought back' : ' of your life'));
+    if (m.fiPushedDisplay && !m.pays) bits.push(m.fiPushedDisplay);
     return '<p class="margin-line"><span class="margin-q">' + esc(what) + '</span>'
       + '<span class="margin-a">' + esc(bits.join(' \u00b7 ')) + '</span>'
       + (m.reason && !m.hoursDisplay ? '<small>' + esc(m.reason) + '</small>' : '') + '</p>';
@@ -558,7 +585,15 @@
       + '<button type="button" class="goal-remove" data-remove="' + goal.id + '" aria-label="Remove">✕</button>'
       + '</div>');
 
-    if (Money.isOk(p)) {
+    if (Money.isOk(p) && p.pays) {
+      out.push('<div class="goal-figure">Pays ' + Money.formatCents(p.paysCents) + '</div>');
+      out.push('<p class="goal-note good">Nothing to find: this one brings money in'
+        + (p.costsCents > 0 ? ', ' + Money.formatCents(p.costsCents) + ' of costs already taken off' : '') + '.</p>');
+      if (p.itemsBlank > 0) {
+        out.push('<p class="goal-note">' + p.itemsBlank + ' item'
+          + (p.itemsBlank === 1 ? '' : 's') + ' on the checklist still blank.</p>');
+      }
+    } else if (Money.isOk(p)) {
       if (p.alreadyThere) {
         out.push('<div class="goal-figure">Funded</div>');
         out.push('<p class="goal-note good">' + Money.formatCents(p.savedCents)
@@ -660,7 +695,9 @@
             + '" data-field="perUnitCents" value="'
             + (Money.isEntered(li.perUnitCents) ? Money.forInput(li.perUnitCents) : '')
             + '" placeholder="each" aria-label="Per ' + esc(li.unitLabel) + '"/></span>'
-            + '<span class="unit-sum">' + (Money.isEntered(made) ? esc(Money.formatCents(made)) : '\u2014') + '</span>'
+            + '<span class="unit-sum">' + (Money.isEntered(made) ? esc(Money.formatCents(Math.abs(made))) : '\u2014') + '</span>'
+            + '<button type="button" class="pays' + (li.pays ? ' is-on' : '') + '" data-goal="' + goal.id + '" data-item="' + li.id
+            + '" data-field="pays" aria-pressed="' + (li.pays ? 'true' : 'false') + '" title="This line pays you rather than costing you">pays you</button>'
             + '<button type="button" data-remove-item="' + li.id + '" data-goal="' + goal.id
             + '" aria-label="Remove item">\u2715</button>'
             + '</div>');
@@ -674,6 +711,8 @@
           + '" data-field="amountCents" value="'
           + (Money.isEntered(li.amountCents) ? Money.forInput(li.amountCents) : '')
           + '" placeholder="—" aria-label="Amount"/></span>'
+          + '<button type="button" class="pays' + (li.pays ? ' is-on' : '') + '" data-goal="' + goal.id + '" data-item="' + li.id
+          + '" data-field="pays" aria-pressed="' + (li.pays ? 'true' : 'false') + '" title="This line pays you rather than costing you">pays you</button>'
           + '<button type="button" data-remove-item="' + li.id + '" data-goal="' + goal.id
           + '" aria-label="Remove item">✕</button>'
           + '</div>');
@@ -811,6 +850,7 @@
         var n = String(raw).replace(/[^0-9.]/g, '');
         copy.units = n === '' ? null : Number(n);
       } else if (field === 'perUnitCents') copy.perUnitCents = Money.parseMoney(raw);
+      else if (field === 'pays') copy.pays = raw === true;
       else copy.amountCents = Money.parseMoney(raw);
       return copy;
     });
@@ -819,6 +859,13 @@
   }
 
   document.addEventListener('click', function (evt) {
+    /* A line pays you, or costs you: a toggle, stored as a flag (D-269). */
+    var pays = evt.target.closest('button[data-field="pays"]');
+    if (pays) {
+      writeItem(pays.getAttribute('data-goal'), pays.getAttribute('data-item'), 'pays', pays.getAttribute('aria-pressed') !== 'true');
+      goalForm.force();
+      return;
+    }
     var pick = evt.target.closest('[data-template]');
     if (pick) {
       var goal = Goals.fromTemplate(TABLES.goalTemplates, pick.getAttribute('data-template'));

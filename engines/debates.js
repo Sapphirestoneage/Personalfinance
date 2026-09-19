@@ -20,15 +20,16 @@
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Tax: require('./tax.js'), Tier0: require('./tier0.js'), Trap: require('./trap.js') };
+    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Tax: require('./tax.js'), Tier0: require('./tier0.js'), Trap: require('./trap.js'),
+      Projection: require('./projection.js'), FirstCar: require('./firstcar.js') };
   } else {
     var S = root.SLAF || {};
-    deps = { Money: S.Money, Schema: S.Schema, Tax: S.Tax, Tier0: S.Tier0, Trap: S.Trap };
+    deps = { Money: S.Money, Schema: S.Schema, Tax: S.Tax, Tier0: S.Tier0, Trap: S.Trap, Projection: root.SLAF && root.SLAF.Projection, FirstCar: root.SLAF && root.SLAF.FirstCar };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Tax, deps.Tier0, deps.Trap);
+  var api = factory(deps.Money, deps.Schema, deps.Tax, deps.Tier0, deps.Trap, deps.Projection, deps.FirstCar);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Debates = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tax, Tier0, Trap) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Tax, Tier0, Trap, Projection, FirstCar) {
   'use strict';
 
   var MONTHS = 12;
@@ -167,6 +168,79 @@
     if (Money.isOk(r)) { r.debate = d; r.answerSide = r.value === 'a' ? d.sides[0].id : r.value === 'b' ? d.sides[1].id : null; }
     return r;
   }
+
+  /* ---- D-270: two debates from the book, on engines that already exist ---- */
+  /* Soft saving against the rate: the one projection loop, run at the
+     household's contribution and at half of it, judged against the age
+     FIRE owns. The flip is found by bisection over the contribution on
+     that same loop, never by a second formula. */
+  function yearsAt(h, contributionCents) {
+    var target = Tier0.fireNumber(h), inv = Schema.investmentsCents(h);
+    if (!Money.isOk(target)) return target;
+    if (!Money.isOk(inv)) return inv;
+    var a = Schema.resolveAssumptions(h);
+    return Projection.yearsToTargetCents({ startCents: inv.value, targetCents: target.value, annualRate: a.expectedReturnRate, annualContributionCents: contributionCents, fractional: true });
+  }
+  FN.softSavingVsFire = function (h, T) {
+    var sr = Tier0.savingsRate(h, T);
+    var basis = Money.isOk(sr.includingMatch) ? sr.includingMatch : sr.excludingMatch;
+    if (!Money.isOk(basis)) return basis;
+    var age = Schema.primaryAge(h);
+    var stop = h.targets && Money.isEntered(h.targets.retireAge) ? h.targets.retireAge : null;
+    if (age === null || age === undefined) return Money.incomplete('Add your date of birth in Start Here to count the years.', ['dob']);
+    if (stop === null) return Money.incomplete('Name the age you plan to stop, in The Number, to referee this.', ['retireAge']);
+    var yearsLeft = stop - age;
+    var now = yearsAt(h, basis.annualSavingsCents);
+    if (!Money.isOk(now)) return now;
+    var soft = yearsAt(h, Math.round(basis.annualSavingsCents * 0.5));
+    if (!Money.isOk(soft)) return Money.incomplete('At half the rate FI is out of reach at these assumptions.', ['savingsRate']);
+    var lo = 0, hi = 1, flipShare = null;
+    if (now.value <= yearsLeft) {
+      for (var i = 0; i < 30; i++) {
+        var mid = (lo + hi) / 2;
+        var y = yearsAt(h, Math.round(basis.annualSavingsCents * mid));
+        if (Money.isOk(y) && y.value <= yearsLeft) hi = mid; else lo = mid;
+      }
+      flipShare = hi;
+    }
+    var flipRate = flipShare === null ? null : basis.value * flipShare;
+    var answer = soft.value <= yearsLeft ? 'b' : 'a';
+    var yrs = function (v) { return (Math.round(v * 10) / 10) + ' years'; };
+    return Money.ok(answer, {
+      sides: [
+        { id: 'rate', line: 'At your ' + pct(basis.value) + ' rate FI is ' + yrs(now.value) + ' away; at half of it, ' + yrs(soft.value) + '.' },
+        { id: 'soft', line: 'You plan to stop in ' + yrs(yearsLeft) + (flipRate !== null ? '; a rate of ' + pct(flipRate) + ' still gets there in time.' : '; at these assumptions no rate gets there in time.') }
+      ],
+      range: 'Half the rate is the softening tested; the flip is found on the same projection.',
+      flip: { value: flipRate, at: basis.value, unit: 'rate', distance: flipRate === null ? null : basis.value - flipRate,
+        words: flipRate === null ? 'no savings rate lands by ' + stop + ' at these assumptions' : 'soften down to ' + pct(flipRate) + ' and still stop at ' + stop + '; your rate is ' + pct(basis.value) },
+      sentence: answer === 'b'
+        ? 'The numbers say soften it: even at half your rate FI lands in ' + yrs(soft.value) + ', inside the ' + yrs(yearsLeft) + ' to the age you named. The extra was cushion.'
+        : 'The numbers say keep the rate: half of it lands in ' + yrs(soft.value) + ', ' + yrs(soft.value - yearsLeft) + ' past the age you named.'
+    });
+  };
+  /* New against three years old at the same budget: FirstCar prices both
+     off the depreciation curve already; the referee only reads it. */
+  FN.newVsUsed = function (h, T, o) {
+    if (!FirstCar) return Money.incomplete('The car engine is not loaded.', ['firstcar']);
+    var c = FirstCar.check(h, T, { priceCents: o && o.priceCents });
+    if (!Money.isOk(c)) return c;
+    var nu = c.newVsUsed || {};
+    if (!Money.isEntered(nu.newLossCents) || !Money.isEntered(nu.usedLossCents)) return Money.incomplete('The depreciation curve is not loaded.', ['carCosts']);
+    var gap = nu.newLossCents - nu.usedLossCents;
+    var answer = gap > 0 ? 'b' : 'a';
+    return Money.ok(answer, {
+      sides: [
+        { id: 'new', line: 'New at ' + Money.formatCents(c.priceCents) + ' loses about ' + Money.formatCents(nu.newLossCents) + ' over ' + nu.holdYears + ' years.' },
+        { id: 'used', line: 'The same ' + Money.formatCents(c.priceCents) + ' buys a ' + nu.usedAgeYears + '-year-old car that listed at ' + Money.formatCents(nu.usedListNewCents) + ' and loses about ' + Money.formatCents(nu.usedLossCents) + ' over the same years.' }
+      ],
+      range: 'On the depreciation curve in data/car_costs.json, held ' + nu.holdYears + ' years.',
+      flip: { value: nu.newLossCents, at: nu.usedLossCents, unit: 'cents', distance: gap, words: 'the new one loses ' + Money.formatCents(Math.abs(gap)) + (gap > 0 ? ' more' : ' less') },
+      sentence: answer === 'b'
+        ? 'The numbers say three years old: at the same budget it loses ' + Money.formatCents(gap) + ' less over ' + nu.holdYears + ' years, and it is a nicer car.'
+        : 'The numbers say new, narrowly: on this curve the used one loses ' + Money.formatCents(-gap) + ' more.'
+    });
+  };
 
   return { LOWER_SWR: LOWER_SWR, list: list, byId: byId, run: run, FN: FN };
 });

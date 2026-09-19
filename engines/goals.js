@@ -37,6 +37,13 @@
    None of the five is a new formula. That is the point of the shell: a
    block type adds a way to FILL these, never a sixth answer.
 
+   A LINE CAN PAY YOU (D-269): rent a lodger pays, the thing you sell, the
+   rent you would not pay for a year at home. Typed positive, flagged
+   `pays`, counted negative in itemAmountCents. A block whose lines net
+   negative answers the same five questions the other way round — what it
+   pays, the hours it buys back, when it starts, what it adds — through
+   the same Lens, opposite direction. Not a sixth answer either.
+
    A LINE CAN BE PRICED PER UNIT (D-263): so many guests at so much each,
    so many nights at so much a night. `itemAmountCents` makes the line's
    figure from the two, and `marginalOf` asks what ONE MORE costs — in
@@ -85,19 +92,24 @@
      cost and the room's own read-out must never disagree about it. */
   function itemAmountCents(item) {
     if (!item) return null;
-    if (Money.isEntered(item.amountCents)) return item.amountCents;
-    if (Money.isEntered(item.perUnitCents) && Money.isEntered(item.units)) {
-      return Math.round(item.perUnitCents * item.units);
-    }
-    return null;
+    var v = null;
+    if (Money.isEntered(item.amountCents)) v = item.amountCents;
+    else if (Money.isEntered(item.perUnitCents) && Money.isEntered(item.units)) v = Math.round(item.perUnitCents * item.units);
+    if (v === null) return null;
+    /* A line that pays is typed positive and counted negative (D-269). */
+    return item.pays === true ? -Math.abs(v) : v;
   }
   function goalTotalCents(goal) {
     var items = (goal && goal.lineItems) || [];
-    var summed = Money.sumCents(items.map(itemAmountCents));
+    var amounts = items.map(itemAmountCents);
+    var summed = Money.sumCents(amounts);
     if (summed.counted > 0) {
+      var paysCents = 0, costsCents = 0;
+      amounts.forEach(function (x) { if (!Money.isEntered(x)) return; if (x < 0) paysCents -= x; else costsCents += x; });
       return Money.ok(summed.total, {
         basis: 'itemised', itemsCounted: summed.counted, itemsTotal: items.length,
-        itemsBlank: items.length - summed.counted
+        itemsBlank: items.length - summed.counted,
+        paysCents: paysCents, costsCents: costsCents
       });
     }
     if (Money.isEntered(goal && goal.lumpTargetCents)) {
@@ -188,6 +200,7 @@
     var fi = Lens ? Lens.apply(groupCents, 'pushed', household, tables) : null;
     return {
       label: line.unitLabel || 'one more',
+      pays: line.pays === true,
       perUnitCents: line.perUnitCents,
       units: Money.isEntered(line.units) ? line.units : null,
       groupOf: group,
@@ -215,6 +228,34 @@
     var saved = Money.isEntered(goal.savedCents) ? goal.savedCents : 0;
     var remaining = Math.max(0, total.value - saved);
     var months = monthsUntil(goal.targetDate, o.asOf);
+
+    /* ---- A block that PAYS (D-269) ----------------------------------------
+       Its lines net negative: a lodger's rent, the thing you sell, the year
+       at home. Nothing is to be found, so the first four answers turn
+       around — what it pays, the hours it buys back and the FI it brings
+       forward, when it starts, what it adds to what is spare — and the
+       fifth is asked exactly as before. Same Lens, opposite direction. */
+    if (total.value < 0) {
+      var gain = -total.value;
+      var hoursBack = Lens ? Lens.apply(gain, 'hours', household, tables) : null;
+      var fiSooner = Lens ? Lens.apply(gain, 'bought', household, tables) : null;
+      return Money.ok(0, {
+        goalId: goal.id, name: goal.name, pays: true, priced: true,
+        totalCents: total.value, paysCents: gain, costsCents: total.costsCents || 0,
+        basis: total.basis, itemsBlank: total.itemsBlank,
+        savedCents: saved, remainingCents: 0, requiredMonthlyCents: 0,
+        alreadyThere: false, monthsUntil: months,
+        inLife: {
+          hours: hoursBack && Money.isOk(hoursBack) ? hoursBack.value : null,
+          hoursDisplay: hoursBack && Money.isOk(hoursBack) ? hoursBack.display : null,
+          fiPushedDisplay: fiSooner && Money.isOk(fiSooner) ? fiSooner.display : null,
+          fiPushedMonths: fiSooner && Money.isOk(fiSooner) ? fiSooner.value : null,
+          reason: hoursBack && !Money.isOk(hoursBack) ? hoursBack.reason : null
+        },
+        affordability: { fitsInSurplus: true, addsCents: gain, shareOfSurplus: null, shortPerMonthCents: 0 },
+        undo: undoNow, perUnit: marginalOf(goal, household, tables)
+      });
+    }
 
     /* ---- The two outputs that are about you rather than the money ------
        Both ride on every return path below, including the already-there and
@@ -361,7 +402,8 @@
         return Schema.createGoalLineItem({
           label: line.label,
           unitLabel: line.unitLabel || null,
-          unitsPerGroup: Money.isEntered(line.unitsPerGroup) ? line.unitsPerGroup : null
+          unitsPerGroup: Money.isEntered(line.unitsPerGroup) ? line.unitsPerGroup : null,
+          pays: line.pays === true
         });
       })
     });

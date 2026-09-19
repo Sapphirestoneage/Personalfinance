@@ -5,7 +5,7 @@
   "source": "Checklists of what a goal is actually made of.",
   "confidence": "convention",
   "confidenceNote": "Line-item presets are starting points chosen for plausibility, not cost surveys.",
-  "note": "SPEC.md Section 13 asks the Dream Calculator to become the shared Goal Costing Engine 'with a template library', and makes the Wedding calc structurally identical to it. These templates carry LINE-ITEM LABELS ONLY and no amounts. Costs are wildly regional and inventing them would put a fake number in front of someone planning a real thing; the value here is the reminder that the marriage licence, the survey fee and the travel insurance exist at all. A line may be an object instead of a label when it is priced PER UNIT — { label, unitLabel, unitsPerGroup } — which still carries no amount: it says a wedding is catered per guest and that guests arrive a table at a time, not what a guest costs (D-263).",
+  "note": "SPEC.md Section 13 asks the Dream Calculator to become the shared Goal Costing Engine 'with a template library', and makes the Wedding calc structurally identical to it. These templates carry LINE-ITEM LABELS ONLY and no amounts. Costs are wildly regional and inventing them would put a fake number in front of someone planning a real thing; the value here is the reminder that the marriage licence, the survey fee and the travel insurance exist at all. A line may be an object instead of a label when it is priced PER UNIT — { label, unitLabel, unitsPerGroup } — which still carries no amount: it says a wedding is catered per guest and that guests arrive a table at a time, not what a guest costs (D-263). A line may carry pays: true — rent a lodger pays, the rent a year at home saves — typed positive and counted negative (D-269). Six more checklists arrived with D-270: fertility treatment, a surgery, a legal matter, a funeral, a move, starting a business. Still no amounts, anywhere.",
   "templates": [
     {
       "id": "wedding",
@@ -81,6 +81,128 @@
         "Tax and registration",
         "Insurance change",
         "Immediate maintenance",
+        "Contingency"
+      ]
+    },
+    {
+      "id": "lodger",
+      "label": "Take in a lodger",
+      "blurb": "A year of rent coming in, and what a room costs to let. The first block here that pays you.",
+      "lineItems": [
+        {
+          "label": "Rent they pay",
+          "unitLabel": "month",
+          "unitsPerGroup": 1,
+          "pays": true
+        },
+        "Getting the room ready",
+        "Extra utilities, a year",
+        "The insurance change",
+        "A month empty, in case"
+      ]
+    },
+    {
+      "id": "year_at_home",
+      "label": "A year at home",
+      "blurb": "Living with family for a year: the rent you would not pay, against what you put in and what it costs to get around.",
+      "lineItems": [
+        {
+          "label": "Rent you would not pay",
+          "unitLabel": "month",
+          "unitsPerGroup": 1,
+          "pays": true
+        },
+        "What you pay toward the house, a year",
+        "Getting there and back, a year",
+        "Storage for what does not fit"
+      ]
+    },
+    {
+      "id": "fertility",
+      "label": "Fertility treatment",
+      "blurb": "Priced a cycle at a time, because that is how it is billed and how the decision gets made.",
+      "lineItems": [
+        "Consultations and tests",
+        {
+          "label": "A cycle",
+          "unitLabel": "cycle",
+          "unitsPerGroup": 1
+        },
+        "Medication",
+        "Storage, a year",
+        "Travel and time off",
+        "Contingency"
+      ]
+    },
+    {
+      "id": "surgery",
+      "label": "A surgery",
+      "blurb": "The deductible is the famous number. The rest is what the bill is made of.",
+      "lineItems": [
+        "The deductible",
+        "Coinsurance, up to the out-of-pocket maximum",
+        "Time off work",
+        "Getting there and back",
+        "Aftercare and equipment",
+        "Contingency"
+      ]
+    },
+    {
+      "id": "legal",
+      "label": "A legal matter",
+      "blurb": "A retainer, then hours. The hours are the part nobody budgets for.",
+      "lineItems": [
+        "The retainer",
+        {
+          "label": "Hourly work",
+          "unitLabel": "hour",
+          "unitsPerGroup": 10
+        },
+        "Filing fees",
+        "Expert reports",
+        "Contingency"
+      ]
+    },
+    {
+      "id": "funeral",
+      "label": "A funeral",
+      "blurb": "Nobody prices this ahead of time, and then it has to be paid for in a week.",
+      "lineItems": [
+        "The service",
+        "Burial or cremation",
+        "Notices and flowers",
+        "Travel for family",
+        "Time off",
+        "Contingency"
+      ]
+    },
+    {
+      "id": "a_move",
+      "label": "A move",
+      "blurb": "The movers are the small part. The deposit, the overlap month and setting up are the rest.",
+      "lineItems": [
+        "The movers",
+        "Deposit on the new place",
+        "First month there",
+        "The overlap month",
+        "Setting up",
+        "Contingency"
+      ]
+    },
+    {
+      "id": "business",
+      "label": "Starting a business",
+      "blurb": "What it costs to open the door, and three months of keeping it open before anyone walks through it.",
+      "lineItems": [
+        "Registration and licences",
+        "Equipment",
+        "A website and a name",
+        "Insurance",
+        {
+          "label": "Running costs before it pays",
+          "unitLabel": "month",
+          "unitsPerGroup": 3
+        },
         "Contingency"
       ]
     },
