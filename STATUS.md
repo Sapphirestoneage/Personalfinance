@@ -32,7 +32,9 @@ Updated: 2026-09-19
   opens with the map and four paced routes; Debt Payoff draws where the
   payment goes and what each fall frees; every title carries Shows/Needs;
   the path is the numbers, the dashboard, then the readings; long hints
-  fold behind an ⓘ; every score pillar says what is good, why, what to do.
+  fold behind an ⓘ; every score pillar says what is good, why, what to do;
+  logged pay reaches every reading (D-246); every debt says what it really
+  costs after the deduction and inflation, and the pace to pay it (D-247).
 - **The owner's brief, 2026-09-19:** treat it as financial planning software,
   readable by a third grader and a FIRE person alike. Queued, in order:
   deeper questions behind an advanced level; a typed take-home pay; the

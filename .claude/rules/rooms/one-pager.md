@@ -6,7 +6,7 @@ paths:
 # The One-Pager (`one-pager`)
 File: rooms/one-pager.html · 174 lines
 Engines: selfemployed, tax, projection, tier0, income, ledger, debt, cashflow, ratios, trap, onepager
-Reference data: confidence_weights.json, debt_rules.json, early_access_rules_2026.json, effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, +6 more
+Reference data: confidence_weights.json, debt_rules.json, early_access_rules_2026.json, effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, +7 more
 Owns: nothing
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), netWorth (statement), retireAge (fire), monthlyExpenses (expenses)
 Latest decisions:

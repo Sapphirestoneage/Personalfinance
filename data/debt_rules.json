@@ -1,6 +1,6 @@
 {
   "id": "debt_rules",
-  "version": "1.1",
+  "version": "1.2000000000000002",
   "asOf": "2026-01-01",
   "source": "Payoff-ordering strategies and minimum-payment conventions for the Debt Calculator.",
   "confidence": "convention",
@@ -193,5 +193,23 @@
       ],
       "doNot": "Do not refinance a federal loan privately to shave the rate without first checking what protections you are giving up — they do not come back."
     }
-  ]
+  ],
+  "pace": {
+    "note": "How fast to pay a debt, read off its REAL cost (D-247): the rate after any tax deduction, then after inflation, against the real return the rest of the app assumes. Three words, in data so the threshold is not buried in a room.",
+    "slowlyAtOrBelowReal": 0.0,
+    "verdicts": {
+      "slowly": {
+        "label": "Pay slowly",
+        "why": "After tax and inflation this debt costs nothing or less than nothing: every year, the money you owe is worth less than it was. Pay the minimum and put the rest where it earns."
+      },
+      "schedule": {
+        "label": "Pay on schedule",
+        "why": "After tax and inflation this debt costs less than investing is expected to earn. Pay it as agreed, no extra, and send the extra to what earns more."
+      },
+      "fast": {
+        "label": "Pay fast",
+        "why": "After tax and inflation this debt costs more than investing is expected to earn. Every extra dollar here beats the market, guaranteed."
+      }
+    }
+  }
 }

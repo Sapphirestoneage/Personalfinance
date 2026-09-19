@@ -5,7 +5,7 @@ paths:
 # Progress Card (`progress-card`)
 File: rooms/progress-card.html · 142 lines · utility room
 Engines: projection, tier0, income, selfemployed, ledger, tax, debt
-Reference data: confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, federal_brackets_2026.json, ledger-rows.json, se_tax_2026.json, +1 more
+Reference data: confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, federal_brackets_2026.json, ledger-rows.json, se_tax_2026.json, +2 more
 Owns: nothing
 Reads from other owners: nothing traced
 Latest decisions:
