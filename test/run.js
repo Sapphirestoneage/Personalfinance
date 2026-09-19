@@ -8765,6 +8765,39 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
 })();
 
+section('Where each asset sits: the institution and the account type (D-251)');
+
+(function () {
+  const types = Schema.ACCOUNT_TYPES;
+  checkTrue('the list names the wrappers FIRE people hold: 401(k), Roth IRA, HSA, brokerage, 529', ['401k', 'roth_ira', 'hsa', 'brokerage', '529'].every(id => !!Schema.accountType(id)));
+  checkTrue('every type implies a character the schema admits, or none', types.every(t => t.taxCharacter === null || Schema.FIELDS['asset.taxCharacter'].values.indexOf(t.taxCharacter) !== -1));
+  checkTrue('every type implies a category the schema admits, or none', types.every(t => t.category === null || Schema.FIELDS['asset.category'].values.indexOf(t.category) !== -1));
+  check('the field map lists the same ids', Schema.FIELDS['asset.accountType'].values.join(','), types.map(t => t.id).join(','));
+  const a = Schema.createAsset({ label: 'Work plan', category: 'other' });
+  check('an asset starts with no institution', a.institution, null);
+  check('… and no account type', a.accountType, null);
+  const p = Schema.applyAccountType(a, 'roth_401k');
+  check('a Roth 401(k) is roth money', p.taxCharacter, 'roth');
+  check('… filed under retirement while the category was other', p.category, 'retirement');
+  const lump = Schema.applyAccountType(Schema.createAsset({ category: 'investment' }), '401k');
+  checkTrue('Start Here\'s lump keeps its category', lump.category === undefined && lump.taxCharacter === 'pretax');
+  check('several accounts in one total sets no character', Schema.applyAccountType(a, 'mixed').taxCharacter, undefined);
+  check('a blank clears the type and nothing else', JSON.stringify(Schema.applyAccountType(a, '')), '{"accountType":null}');
+  check('the sub-line reads bank · type', Schema.whereItSits({ institution: 'Example Bank', accountType: 'hysa' }), 'Example Bank \u00b7 High-yield savings');
+  check('… either half alone', Schema.whereItSits({ accountType: 'hsa' }), 'HSA');
+  check('… nothing when neither is set', Schema.whereItSits({}), '');
+  const LR = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const rows = require(path.join(ROOT, 'data/ledger-rows.json')).rows;
+  const inst = rows.filter(r => r.id === 'assetInstitution')[0], typ = rows.filter(r => r.id === 'assetAccountType')[0];
+  checkTrue('both are Statement rows on the A door, one line per asset', inst && typ && [inst, typ].every(r => r.askIn === 'statement' && r.door === 'A' && r.repeat === 'assets'));
+  check('the account type is a level-2 fact (where it sits)', typ.level, 2);
+  check('the institution is a finer point', inst.level, 4);
+  checkTrue('the item map reads both', LR.ITEM_VALUE.assetInstitution === 'institution' && LR.ITEM_VALUE.assetAccountType === 'accountType');
+  const stmt = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
+  checkTrue('the Statement shows both boxes on every card and writes through the one function', /data-field="institution"/.test(stmt) && /data-field="accountType"/.test(stmt) && /Schema\.applyAccountType\(existing/.test(stmt) && /Schema\.whereItSits\(a\)/.test(stmt));
+  checkTrue('the demo names where its savings sit', /institution: 'Example Bank'[\s\S]{0,200}applyAccountType\(\{ category: 'cash' \}, 'hysa'\)/.test(fs.readFileSync(path.join(ROOT, 'shared/demo-persona.js'), 'utf8')));
+})();
+
 section('Deeper questions wait for their level (D-250)');
 
 (function () {

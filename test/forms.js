@@ -597,20 +597,31 @@ const CASES = [
       /* The first cards are Start Here's cash and investments, whose names
          and values are read-only here; the tap on #btn-add appends ours. */
       { sel: '#asset-list .asset:last-child input[data-field="label"]', type: 'The car' },
-      { sel: '#asset-list .asset:last-child input[data-field="valueCents"]', type: '5000' }
+      { sel: '#asset-list .asset:last-child input[data-field="valueCents"]', type: '5000' },
+      /* D-251: where it is held is typed on any card, Start Here's included. */
+      { sel: '#asset-list .asset:nth-child(2) input[data-field="institution"]', type: 'Example Broker' }
     ],
     expect: async (page) => {
       /* 15.8: the pile select stores the override and moves the flag. */
       await page.selectOption('#asset-list .asset:last-child select[data-field="tier"]', 'taxable');
       await page.waitForTimeout(400);
+      /* D-251: the account type sets the tax character; the lump from
+         Start Here keeps its category. */
+      await page.selectOption('#asset-list .asset:nth-child(2) select[data-field="accountType"]', '401k');
+      await page.waitForTimeout(400);
       const a = await page.evaluate(() =>
         (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets
           .filter(x => x.category === 'real_estate' || x.category === 'vehicle').pop());
+      const lump = await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets[1]);
       return [
         ['the name was kept', a.label, 'The car'],
         ['the value was kept', a.valueCents, 500000],
         ['the pile was stored', a.tier, 'taxable'],
-        ['and the liquid flag follows it', a.liquid, true]
+        ['and the liquid flag follows it', a.liquid, true],
+        ['where it is held was stored', lump.institution, 'Example Broker'],
+        ['the account type was stored', lump.accountType, '401k'],
+        ['and set the tax character', lump.taxCharacter, 'pretax'],
+        ['without moving the lump out of its category', lump.category, 'investment']
       ];
     }
   },

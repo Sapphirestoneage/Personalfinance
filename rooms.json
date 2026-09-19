@@ -128,7 +128,9 @@
         "assetValue",
         "assetCharacter",
         "assetTier",
-        "assetCostBasis"
+        "assetCostBasis",
+        "assetInstitution",
+        "assetAccountType"
       ],
       "requires": [],
       "dashboardNumber": "netWorth",
