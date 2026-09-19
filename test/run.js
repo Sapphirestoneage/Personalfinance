@@ -15086,6 +15086,59 @@ section('One holding, more than one account (D-261)');
 })();
 
 /* ==========================================================================
+   What you owe, by kind — and no rate asked here (D-262)
+   ========================================================================== */
+section('What you owe, by kind — and no rate asked here (D-262)');
+(function () {
+  /* The owner: "Have it just be total debt dont go into rates yet. Or have
+     it be able to separate into the main kinds of debts." Both: the rate
+     question is gone from the intake, and the total can be split five ways. */
+  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('no rate is asked on the way in', !/data-ctl="debtRate"/.test(start) && !/pctInput\('debtRate'/.test(start));
+  checkTrue('the five kinds the owner named are the five offered',
+    /\['mortgage', 'Mortgage'/.test(start) && /\['student', 'Student loans'/.test(start)
+    && /\['car', 'Car'/.test(start) && /\['consumer', 'Consumer, like buy-now-pay-later'/.test(start)
+    && /\['cards', 'Credit cards'/.test(start));
+
+  /* Each kind maps to a debt.type the model already declared, so Debt
+     Payoff, the ladder and every ratio read them as what they are. Read the
+     enum out of shared/schema.js rather than restating it here. */
+  const schemaSrc = fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8');
+  const enumLine = /'debt\.type':[^\n]*values:\s*\[([^\]]*)\]/.exec(schemaSrc);
+  checkTrue('the debt.type enum is declared in shared/schema.js', !!enumLine);
+  const declared = enumLine[1].split(',').map(t => t.trim().replace(/'/g, ''));
+  ['mortgage', 'student_loan', 'auto', 'personal', 'credit_card'].forEach(t => {
+    checkTrue('the intake\u2019s "' + t + '" is a type the model already knows',
+      declared.indexOf(t) !== -1, declared.join(', '));
+  });
+  /* And the room maps its five boxes to exactly those. */
+  ['mortgage', 'student_loan', 'auto', 'personal', 'credit_card'].forEach(t => {
+    checkTrue('the room writes the type "' + t + '"', new RegExp("'" + t + "'\\]").test(start), t);
+  });
+
+  /* The money is counted once. A household that already lists a card must
+     not gain a second one because the intake offered a "Credit cards" box. */
+  const h2 = Demo.build();
+  const before = Schema.totalDebtCents(h2).value;
+  const cardsBefore = (h2.debts || []).filter(d => d.type === 'credit_card').length;
+  check('the demo lists one card', cardsBefore, 1);
+  /* Editing the kind edits THAT card, so the total moves by the difference. */
+  const card = (h2.debts || []).filter(d => d.type === 'credit_card')[0];
+  const was = card.balanceCents;
+  card.balanceCents = was + 100000;
+  check('a kind edits the debt already there, it does not add a second',
+    (h2.debts || []).filter(d => d.type === 'credit_card').length, 1);
+  check('… so the total moves by exactly the edit', Schema.totalDebtCents(h2).value, before + 100000);
+
+  checkTrue('the intake keys a kind to the type, not to a fixed id, so it finds what is already there',
+    /debtsOfType\(h\(\), k\[3\]\)/.test(start));
+  checkTrue('… and stands down when several of a kind exist, because only Debt Payoff can tell them apart',
+    /if \(mine\.length > 1\) return;/.test(start) && /box\.readOnly = r\.many/.test(start));
+  checkTrue('the lump is removed once a kind carries a figure, so nothing is counted twice',
+    /if \(any && lump\) Spine\.removeById\('debts', DEBT_ID\);/.test(start));
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

@@ -14772,6 +14772,41 @@ read $70,000, and saw Start Here replace its box with "$70,000 across 2
 accounts — Vanguard Roth, Chase Roth. Edit them in The Statement." A sweep of
 all 95 pages shows no error banner and nothing thrown.
 
+## D-262 — What you owe, by kind, and no rate asked on the way in
+
+**Why.** The owner: "Have it just be total debt dont go into rates yet. Or
+have it be able to separate into the main kinds of debts — mortgage, student
+loans, car, consumer like bnpl, credit cards." Both halves. A single
+"typical rate" across a mortgage and a card is a number that is true of
+neither, and it was being asked before anything used it.
+
+**Decision.** The rate box is gone from `rooms/start.html`. A rate is asked
+where it changes an answer — in Debt Payoff, one debt at a time — and
+`engines/foo.js` already says "add an interest rate to every debt" rather
+than guessing, so nothing downstream is worse off. Under the total sits
+"Split it by kind": five boxes, mapped to `debt.type` values the model
+already declared — mortgage, student_loan, auto, personal (which carries
+buy-now-pay-later), credit_card.
+
+A kind is keyed to the TYPE, not to a fixed id: with no debt of that type
+typing creates one, with one it edits that one wherever it was entered, and
+with two or more the box reads their sum and goes read-only, because only
+Debt Payoff can tell three cards apart. The lump stands down the moment a
+kind carries a figure. Every path counts the money once.
+
+**Replaces or removes.** Removes the rate question from the intake, and the
+choice between a lump and nothing.
+
+**Stored shape.** No change: `debts[]` is the shape it has always been, with
+`type` already carrying these five among its eight.
+
+**Verified.** `node test/run.js` (32,366), including that the five types are
+read out of the schema's own enum rather than restated, and that editing a
+kind on a household that already lists a card moves the total by exactly the
+edit rather than adding a second card. In a browser at 412px on the demo:
+the two debts it already has read back into their boxes, and mortgage, car
+and consumer added on top give $271,200 across five kinds, counted once.
+
 ---
 
 # The Dungeons & Dividends entries
