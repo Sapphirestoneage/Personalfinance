@@ -7,6 +7,27 @@ freeze asks of every request: what does it replace.
 
 Nothing has been built. The three decisions in section 4 are the owner's.
 
+## 0. Settled, 2026-09-17
+
+The owner answered. What is decided, so a later session does not reopen it:
+
+1. **Scope.** Build the three tools with no counterpart in the app
+   (Changelog, Expiring Goods Clock, Menu Auditor). The other fourteen stay
+   as work on the rooms they belong to, sequenced later. No `tools/` suite,
+   no `core/`, no second spine.
+2. **Vocabulary.** Add the FOO in, and otherwise keep the spec's own
+   vocabularies as specced. None of the three collisions in section 4.2
+   binds any of the three tools above, so nothing acts on this yet.
+3. **The thirty becomes a thirty-one.** The Expiring Goods Clock is the one
+   new room, argued on the anti-rule in `docs/room-map.json`, with a
+   decision entry saying so when it ships.
+4. **Not yet.** None of it is built until the merge is finished: the
+   Start Here ownership question first, then step 5, the Decision Room
+   shell. The book tools come back at thirty.
+
+Item 4 is the live one. Its answer is D-234, and it is being implemented
+room by room now.
+
 ## 1. Where the spec and the app disagree
 
 The spec was written as if the repo were empty. It is not, and four of its
