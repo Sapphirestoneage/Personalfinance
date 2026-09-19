@@ -338,8 +338,9 @@
         + '<div class="choices"><button type="button" class="choice" data-ctl="noDeductible">I don’t have one — I’m on someone else’s plan</button></div>';
     },
     investments: function () {
-      return '<p class="q-help">Everything invested, retirement accounts included, as one total. Split it by kind later in The Statement.</p>'
-        + moneyInput('investments', 'One total', 'e.g. 48,000', 'Investments and retirement');
+      return '<p class="q-help">Everything invested, retirement accounts included, as one total. Hold it at more than one place? Name each account in <a href="statement.html#assets">The Statement</a> and this becomes their total.</p>'
+        + moneyInput('investments', 'One total', 'e.g. 48,000', 'Investments and retirement')
+        + '<p class="field-note" data-note="investments" hidden></p>';
     },
     plan: function () {
       return '<p class="q-help">“50% of the first 6%” is 50, then 6. The most common shape is pencilled in.</p>'
@@ -852,6 +853,27 @@
     if (Money.isEntered(ded)) setMoney('deductible', ded); else { setMoney('deductible', null); propose('deductible', g.deductible, function (c) { WRITE.deductible(c / 100); render(); }); }
     ctl('noDeductible').setAttribute('aria-pressed', String(ded === 0));
     var inv = Schema.investmentsCents(x);
+    /* Once the money is named account by account in The Statement, this one
+       box would write to the FIRST account only and silently leave the rest
+       (Ownership.write('investments') edits one asset, while the total is
+       their sum). So it stands down and says where the accounts live: the
+       link goes the other way from here on (D-261). */
+    var invAccounts = Schema.aggregatableAssets(x).filter(function (a) {
+      return a.category === 'investment' || a.category === 'retirement';
+    });
+    var invNote = document.querySelector('[data-note="investments"]');
+    var invBox = ctl('investments') ? ctl('investments').closest('.slaf-field') : null;
+    var split = invAccounts.length > 1;
+    if (invBox) invBox.hidden = split;
+    if (invNote) {
+      invNote.hidden = !split;
+      invNote.innerHTML = split
+        ? esc(Money.formatCents(Money.isOk(inv) ? inv.value : 0)) + ' across '
+          + invAccounts.length + ' accounts — '
+          + invAccounts.map(function (a) { return esc(a.label || 'unnamed'); }).join(', ')
+          + '. Edit them in <a href="statement.html#assets">The Statement</a>.'
+        : '';
+    }
     if (Money.isOk(inv)) setMoney('investments', inv.value); else { setMoney('investments', null); propose('investments', g.investments, function (c) { WRITE.investments(c / 100); render(); }); }
     /* the plan */
     if (cardOn('plan')) {

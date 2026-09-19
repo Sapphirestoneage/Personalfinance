@@ -14738,6 +14738,40 @@ with a fully seeded household — income, spending log and all — looking for a
 visible error banner or a thrown exception: Cash Flow was the only one, and
 it is clean now. The net-flow rows render for the first time.
 
+## D-261 — One holding, more than one account
+
+**Why.** The owner: "I am trying to split my roth ira into the vanguard and
+chase one but when I try to edit it just takes me to investments dashboard.
+I would rather it link the other way." The Statement showed the investments
+line as a read-only chip pointing at Start Here, so the room that lists what
+you own could name the account and not value it.
+
+**Decision.** Nothing new is stored. `assets[]` has always been a list and
+`Schema.investmentsCents` has always been their sum; only Start Here's single
+box implied there could be one. `rooms/statement.html` gains `VALUED_HERE` —
+the itemised categories plus `investment` and `retirement` — so those rows
+carry an editable name and value, and a button adds an account. `OWNED` is
+untouched, so "Remove everything added here" still means the property, the
+vehicle and the something-else, never the retirement money.
+
+Start Here stands its one box down once there is more than one account, and
+says where they live: `Ownership.write('investments')` edits the FIRST
+matching asset, so with two accounts that box would move one and silently
+leave the other. With a single account it behaves exactly as before.
+
+**Replaces or removes.** Removes the dead end: a value you could only edit in
+a room that could not tell one account from another.
+
+**Stored shape.** No change. An investment asset is the same shape it has
+always been; there may simply be several.
+
+**Verified.** `node test/run.js` (32,312), including that two accounts sum to
+one total and count once each. In a browser at 412px: split the demo's
+$48,000 into Vanguard Roth $40,000 and Chase Roth $30,000, watched the total
+read $70,000, and saw Start Here replace its box with "$70,000 across 2
+accounts — Vanguard Roth, Chase Roth. Edit them in The Statement." A sweep of
+all 95 pages shows no error banner and nothing thrown.
+
 ---
 
 # The Dungeons & Dividends entries

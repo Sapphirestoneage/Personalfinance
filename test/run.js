@@ -15038,6 +15038,54 @@ section('How long the benefit runs (D-259)');
 })();
 
 /* ==========================================================================
+   One holding, more than one account (D-261)
+   ========================================================================== */
+section('One holding, more than one account (D-261)');
+(function () {
+  /* The owner: "I am trying to split my roth ira into the vanguard and chase
+     one but when I try to edit it just takes me to investments dashboard."
+     The household model always summed every investment asset; only Start
+     Here's single box implied there could be one. */
+  const one = Demo.build();
+  const inv = one.assets.filter(a => a.category === 'investment')[0];
+  checkTrue('the demo starts with one investment account', !!inv);
+
+  const split = Demo.build();
+  const first = split.assets.filter(a => a.category === 'investment')[0];
+  first.label = 'Vanguard Roth';
+  first.valueCents = 4000000;
+  split.assets.push(Object.assign({}, first, { id: 'a_chase', label: 'Chase Roth', valueCents: 3000000 }));
+
+  check('two accounts sum into the one investments figure',
+    Schema.investmentsCents(split).value, 7000000);
+  check('… and net worth counts them once each, not twice',
+    Schema.investmentsCents(split).value,
+    split.assets.filter(a => a.category === 'investment')
+      .reduce((n, a) => n + a.valueCents, 0));
+
+  /* The rooms. The Statement may name and value an investment account; the
+     "remove everything added here" sweep must still leave them alone. */
+  const stmt = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
+  checkTrue('the Statement values investment rows itself', /VALUED_HERE\s*=\s*OWNED\.concat\(\['investment', 'retirement'\]\)/.test(stmt));
+  checkTrue('… and offers a button to add an account', /id="btn-add-investment"/.test(stmt));
+  checkTrue('… while "remove everything added here" is still scoped to OWNED, never the retirement money',
+    /filter\(function \(a\) \{ return OWNED\.indexOf\(a\.category\) !== -1; \}\)/.test(stmt));
+
+  /* Start Here must NOT keep offering one box once the money is split:
+     Ownership.write('investments') edits the first matching asset only. */
+  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('Start Here stands its single box down once there is more than one account',
+    /invAccounts\.length > 1/.test(start) && /invBox\.hidden = split/.test(start));
+  checkTrue('… and points at The Statement instead', /Edit them in <a href="statement\.html#assets">/.test(start));
+
+  /* The write that would have been silent: one box, two accounts. */
+  const before = Schema.investmentsCents(split).value;
+  const firstOnly = split.assets.filter(a => a.category === 'investment')[0].valueCents;
+  checkTrue('the single box would only ever have moved the first account, which is why it stands down',
+    firstOnly < before, firstOnly + ' of ' + before);
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 
