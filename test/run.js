@@ -15616,6 +15616,209 @@ section('No file carries an unresolved merge conflict (D-249)');
 })();
 
 /* ==========================================================================
+   How long the benefit runs (D-259)
+   ========================================================================== */
+section('How long the benefit runs (D-259)');
+(function () {
+  /* The card asked for "weeks left" and offered the state's WHOLE allowance
+     as the guess, which is only right on the day the job ends. Nothing said
+     how many weeks the state gives, and nothing worked out the date they run
+     out, though data/ui_benefits.json held the weeks and the card held the
+     month the job ended. */
+  const UI = { uiBenefits: require(path.join(ROOT, 'data/ui_benefits.json')) };
+  const NOW = Date.UTC(2026, 8, 19);          /* 19 September 2026, fixed */
+  const mk = (state, since) => ({ schemaVersion: 2, state: state, people: [{ id: 'p1', role: 'adult',
+    employmentStatus: 'unemployed',
+    unemployment: { since: since, benefitStatus: 'receiving', benefitWeeklyCents: 86900 } }] });
+
+  const az = Schema.benefitTimeline(mk('AZ', '2026-06-01'), UI, NOW);
+  checkTrue('a 26-week state reads its allowance off the data file', Money.isOk(az), az.reason);
+  check('… 26 weeks allowed', az.weeksAllowed, 26);
+  check('… which is the figure in data/ui_benefits.json',
+    az.weeksAllowed, UI.uiBenefits.states.AZ.weeks);
+  check('… 15 whole weeks gone since 1 June', az.weeksElapsed, 15);
+  check('… so 11 are left, not the whole 26', az.weeksLeft, 11);
+  check('… and the last week falls on', az.endsOn, '2026-11-30');
+  checkTrue('… not exhausted yet', az.exhausted === false);
+
+  /* Arithmetic, independently: 1 June + 26 × 7 days. */
+  const WEEK = 7 * 24 * 60 * 60 * 1000;
+  check('the end date is the start plus the allowance in weeks',
+    az.endsOn, new Date(Date.UTC(2026, 5, 1) + 26 * WEEK).toISOString().slice(0, 10));
+
+  /* A short state, long past. */
+  const al = Schema.benefitTimeline(mk('AL', '2025-01-01'), UI, NOW);
+  check('Alabama pays 14 weeks', al.weeksAllowed, 14);
+  check('… long gone, so nothing is left', al.weeksLeft, 0);
+  checkTrue('… and it says so', al.exhausted === true);
+  check('… the run ended on', al.endsOn, '2025-04-09');
+
+  /* A job that ends this month has not spent a week of it. */
+  const fresh = Schema.benefitTimeline(mk('AK', '2026-09-01'), UI, NOW);
+  check('two whole weeks gone since 1 September', fresh.weeksElapsed, 2);
+  check('… 24 of 26 left', fresh.weeksLeft, 24);
+
+  /* A job ending NEXT month never reads as negative weeks used. */
+  const future = Schema.benefitTimeline(mk('AK', '2026-11-01'), UI, NOW);
+  check('a job that has not ended yet has spent no weeks', future.weeksElapsed, 0);
+  check('… and the whole allowance is ahead', future.weeksLeft, 26);
+
+  /* Neither half is guessed: a date someone would plan around is not
+     invented from a missing state or a missing end date. */
+  check('no state, no allowance', Schema.benefitTimeline(mk(null, '2026-06-01'), UI, NOW).status, 'incomplete');
+  check('no end date, no end date', Schema.benefitTimeline(mk('AZ', null), UI, NOW).status, 'incomplete');
+  check('and someone in work is not between jobs',
+    Schema.benefitTimeline({ schemaVersion: 2, state: 'AZ',
+      people: [{ id: 'p1', role: 'adult', employmentStatus: 'employed' }] }, UI, NOW).status, 'incomplete');
+
+  /* Every state in the file can be read, so no household hits a blank. */
+  const codes = Object.keys(UI.uiBenefits.states);
+  check('every state in the file carries a week count', codes.length, 51);
+  const unreadable = codes.filter(c => !Money.isOk(Schema.benefitTimeline(mk(c, '2026-06-01'), UI, NOW)));
+  check('… and every one of them produces a run', unreadable.join(', '), '');
+})();
+
+/* ==========================================================================
+   One holding, more than one account (D-261)
+   ========================================================================== */
+section('One holding, more than one account (D-261)');
+(function () {
+  /* The owner: "I am trying to split my roth ira into the vanguard and chase
+     one but when I try to edit it just takes me to investments dashboard."
+     The household model always summed every investment asset; only Start
+     Here's single box implied there could be one. */
+  const one = Demo.build();
+  const inv = one.assets.filter(a => a.category === 'investment')[0];
+  checkTrue('the demo starts with one investment account', !!inv);
+
+  const split = Demo.build();
+  const first = split.assets.filter(a => a.category === 'investment')[0];
+  first.label = 'Vanguard Roth';
+  first.valueCents = 4000000;
+  split.assets.push(Object.assign({}, first, { id: 'a_chase', label: 'Chase Roth', valueCents: 3000000 }));
+
+  check('two accounts sum into the one investments figure',
+    Schema.investmentsCents(split).value, 7000000);
+  check('… and net worth counts them once each, not twice',
+    Schema.investmentsCents(split).value,
+    split.assets.filter(a => a.category === 'investment')
+      .reduce((n, a) => n + a.valueCents, 0));
+
+  /* The rooms. The Statement may name and value an investment account; the
+     "remove everything added here" sweep must still leave them alone. */
+  const stmt = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
+  checkTrue('the Statement values investment rows itself', /VALUED_HERE\s*=\s*OWNED\.concat\(\['investment', 'retirement'\]\)/.test(stmt));
+  checkTrue('… and offers a button to add an account', /id="btn-add-investment"/.test(stmt));
+  checkTrue('… while "remove everything added here" is still scoped to OWNED, never the retirement money',
+    /filter\(function \(a\) \{ return OWNED\.indexOf\(a\.category\) !== -1; \}\)/.test(stmt));
+
+  /* Start Here must NOT keep offering one box once the money is split:
+     Ownership.write('investments') edits the first matching asset only. */
+  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('Start Here stands its single box down once there is more than one account',
+    /invAccounts\.length > 1/.test(start) && /invBox\.hidden = split/.test(start));
+  checkTrue('… and points at The Statement instead', /Edit them in <a href="statement\.html#assets">/.test(start));
+
+  /* The write that would have been silent: one box, two accounts. */
+  const before = Schema.investmentsCents(split).value;
+  const firstOnly = split.assets.filter(a => a.category === 'investment')[0].valueCents;
+  checkTrue('the single box would only ever have moved the first account, which is why it stands down',
+    firstOnly < before, firstOnly + ' of ' + before);
+})();
+
+/* ==========================================================================
+   What you owe, by kind — and no rate asked here (D-262)
+   ========================================================================== */
+section('What you owe, by kind — and no rate asked here (D-262)');
+(function () {
+  /* The owner: "Have it just be total debt dont go into rates yet. Or have
+     it be able to separate into the main kinds of debts." Both: the rate
+     question is gone from the intake, and the total can be split five ways. */
+  const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
+  checkTrue('no rate is asked on the way in', !/data-ctl="debtRate"/.test(start) && !/pctInput\('debtRate'/.test(start));
+  checkTrue('the five kinds the owner named are the five offered',
+    /\['mortgage', 'Mortgage'/.test(start) && /\['student', 'Student loans'/.test(start)
+    && /\['car', 'Car'/.test(start) && /\['consumer', 'Consumer, like buy-now-pay-later'/.test(start)
+    && /\['cards', 'Credit cards'/.test(start));
+
+  /* Each kind maps to a debt.type the model already declared, so Debt
+     Payoff, the ladder and every ratio read them as what they are. Read the
+     enum out of shared/schema.js rather than restating it here. */
+  const schemaSrc = fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8');
+  const enumLine = /'debt\.type':[^\n]*values:\s*\[([^\]]*)\]/.exec(schemaSrc);
+  checkTrue('the debt.type enum is declared in shared/schema.js', !!enumLine);
+  const declared = enumLine[1].split(',').map(t => t.trim().replace(/'/g, ''));
+  ['mortgage', 'student_loan', 'auto', 'personal', 'credit_card'].forEach(t => {
+    checkTrue('the intake\u2019s "' + t + '" is a type the model already knows',
+      declared.indexOf(t) !== -1, declared.join(', '));
+  });
+  /* And the room maps its five boxes to exactly those. */
+  ['mortgage', 'student_loan', 'auto', 'personal', 'credit_card'].forEach(t => {
+    checkTrue('the room writes the type "' + t + '"', new RegExp("'" + t + "'\\]").test(start), t);
+  });
+
+  /* The money is counted once. A household that already lists a card must
+     not gain a second one because the intake offered a "Credit cards" box. */
+  const h2 = Demo.build();
+  const before = Schema.totalDebtCents(h2).value;
+  const cardsBefore = (h2.debts || []).filter(d => d.type === 'credit_card').length;
+  check('the demo lists one card', cardsBefore, 1);
+  /* Editing the kind edits THAT card, so the total moves by the difference. */
+  const card = (h2.debts || []).filter(d => d.type === 'credit_card')[0];
+  const was = card.balanceCents;
+  card.balanceCents = was + 100000;
+  check('a kind edits the debt already there, it does not add a second',
+    (h2.debts || []).filter(d => d.type === 'credit_card').length, 1);
+  check('… so the total moves by exactly the edit', Schema.totalDebtCents(h2).value, before + 100000);
+
+  checkTrue('the intake keys a kind to the type, not to a fixed id, so it finds what is already there',
+    /debtsOfType\(h\(\), k\[3\]\)/.test(start));
+  checkTrue('… and stands down when several of a kind exist, because only Debt Payoff can tell them apart',
+    /if \(mine\.length > 1\) return;/.test(start) && /box\.readOnly = r\.many/.test(start));
+  checkTrue('the lump is removed once a kind carries a figure, so nothing is counted twice',
+    /if \(any && lump\) Spine\.removeById\('debts', DEBT_ID\);/.test(start));
+})();
+
+/* ==========================================================================
+   A yearly cost falls on its day, not the 1st (D-263)
+   ========================================================================== */
+section('A yearly cost falls on its day, not the 1st (D-263)');
+(function () {
+  /* The owner: "for yearly that day on the year". A yearly line carried the
+     month it is paid and nothing finer, and engines/calendar.js drew every
+     one of them on the 1st — so a renewal taken on the 28th appeared four
+     weeks early. */
+  const line = Schema.createAnnualLine({ label: 'Car registration', amountCents: 18000, monthDue: 2, dayDue: 28 });
+  check('the day is kept', line.dayDue, 28);
+  check('… and the month with it', line.monthDue, 2);
+  check('no day given stays null, never 1',
+    Schema.createAnnualLine({ amountCents: 1000, monthDue: 6 }).dayDue, null);
+  check('a day out of range is null, not clamped to a day nobody typed',
+    Schema.createAnnualLine({ amountCents: 1000, monthDue: 6, dayDue: 99 }).dayDue, null);
+  check('… and zero is not a day either',
+    Schema.createAnnualLine({ amountCents: 1000, monthDue: 6, dayDue: 0 }).dayDue, null);
+  check('a real edge day is kept', Schema.createAnnualLine({ monthDue: 1, dayDue: 31 }).dayDue, 31);
+
+  /* The engine places it. Read the source rather than driving the whole
+     projection: the placement is three lines and the rule is what matters. */
+  const cal = fs.readFileSync(path.join(ROOT, 'engines/calendar.js'), 'utf8');
+  checkTrue('the calendar reads the day instead of hardcoding the 1st',
+    /Money\.isEntered\(l\.dayDue\) \? Math\.min\(l\.dayDue, dim\) : 1/.test(cal));
+  checkTrue('… clamped to the last day of a short month, the rule a monthly log line already uses',
+    /var dim = new Date\(y, mi \+ 1, 0\)\.getDate\(\);/.test(cal));
+  checkTrue('… and the date stays estimated, so nothing about counting moves',
+    /kind: 'annual', dateKind: 'estimated'/.test(cal));
+  checkTrue('the 1st is no longer hardcoded for every yearly line',
+    !/var date = ym \+ '-01';/.test(cal));
+
+  /* The room that owns the yearly lines asks for the day. */
+  const exp = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  checkTrue('Expenses asks for the day beside the month', /id="y-day"/.test(exp));
+  checkTrue('… and only sends one when a month was chosen',
+    /dayDue: month === null \? null : day/.test(exp));
+})();
+
+/* ==========================================================================
    Report
    ========================================================================== */
 

@@ -12,8 +12,9 @@ Updated: 2026-09-19
   reversibility rows and two debates landed as rows; Tax has a second
   reading, The cliff. No new room. `ROADMAP.md`'s not-built list is honest
   again: six, each blocked on a dataset or an instruction.
-- **Main merged in (D-302)**: its panel rounds (D-234..D-258) land in the
-  rooms that absorbed theirs; this lane renumbered to D-264..D-301.
+- **Main merged in (D-302)**: its D-234..D-263 land in the rooms that
+  absorbed theirs; this lane renumbered to D-264..D-301. Another lane
+  works on main directly, so merge it before every push.
 - **The reframe D-228 asks for has NOT shipped**; the FI target is still
   spending ÷ the withdrawal rate, and both rooms say so in their spec.
 - **Freeze ON, and honoured**: nothing this session added a screen.

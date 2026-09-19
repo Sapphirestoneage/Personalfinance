@@ -220,6 +220,7 @@
     'expenses.annual[].bucket':                  { class: 'raw',        unit: 'enum',    values: ['food', 'accommodation', 'transportation', 'wants'], note: 'the bucket it sits inside; a twelfth joins that bucket every month. 15.5, D-181' },
     'expenses.annual[].amountCents':             { class: 'raw',        unit: 'cents',   period: 'annual', note: 'a year of it. 15.5, D-181' },
     'expenses.annual[].monthDue':                { class: 'raw',        unit: 'month',   note: '1 to 12: the month it is paid; the Money Calendar draws it there. null = spread only. 15.5, D-181' },
+    'expenses.annual[].dayDue':                  { class: 'raw',        unit: 'day',     note: '1 to 31: the day inside monthDue it is taken; the Money Calendar draws it there instead of the 1st. null = the day is not known. D-263' },
     'expenses.annual[].cadence':                 { class: 'raw',        unit: 'enum',    values: ['annual'], note: 'always annual. 15.5, D-181' },
     'expenses.entries[].amountCents':            { class: 'raw',        unit: 'cents' },
     'expenses.entries[].period':                 { class: 'raw',        unit: 'enum',    values: ['monthly', 'once'] },
@@ -504,6 +505,56 @@
     var weeks = Money.isEntered(u.benefitWeeksLeft) ? u.benefitWeeksLeft : null;
     return Money.ok(Math.round(u.benefitWeeklyCents * 52 / 12), {
       benefitStatus: u.benefitStatus, weeksLeft: weeks, months: weeks === null ? null : Math.round(weeks / (52 / 12) * 10) / 10
+    });
+  }
+
+  /**
+   * How long the benefit runs (D-259). Three things nobody was being told:
+   * how many weeks the state allows, how many of them the clock has already
+   * taken since the job ended, and the date the last payment falls.
+   *
+   * The allowance is the state's published maximum duration
+   * (data/ui_benefits.json), which is a CEILING, not a promise: what someone
+   * actually draws turns on base-period wages, and several states shorten the
+   * run when unemployment is low. Every room that shows it says so.
+   *
+   * `now` is injectable so a test is not hostage to the date it runs on.
+   * ok(weeksAllowed) with the run spelled out; incomplete when the state or
+   * the end date is missing, because either one guessed is a date someone
+   * would plan around.
+   */
+  var BENEFIT_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  function benefitTimeline(household, tables, now) {
+    if (!isUnemployed(household)) return Money.incomplete('Not between jobs.', ['employmentStatus']);
+    var h = household || {};
+    var u = unemploymentOf(h);
+    var ui = tables && tables.uiBenefits;
+    var st = h.state && ui && ui.states ? ui.states[h.state] : null;
+    if (!st || !Money.isEntered(st.weeks)) {
+      return Money.incomplete('Add your state to see how many weeks it pays.', ['state']);
+    }
+    var m = /^(\d{4})-(\d{2})/.exec(u.since || '');
+    if (!m) return Money.incomplete('Say when the job ended to see when the benefit runs out.', ['unemployment']);
+    var startMs = Date.UTC(+m[1], +m[2] - 1, 1);
+    var nowMs = now === undefined ? Date.now() : now;
+    var endMs = startMs + st.weeks * BENEFIT_WEEK_MS;
+    /* Weeks already gone. Floor, so a part-week is not counted as spent, and
+       never below zero for a job that ends next month. */
+    var elapsed = Math.max(0, Math.floor((nowMs - startMs) / BENEFIT_WEEK_MS));
+    var left = Math.max(0, st.weeks - elapsed);
+    return Money.ok(st.weeks, {
+      weeksAllowed: st.weeks,
+      weeksElapsed: elapsed,
+      weeksLeft: left,
+      exhausted: left === 0,
+      startedOn: m[1] + '-' + m[2] + '-01',
+      /* isoDayUTC, not a UTC slice of the clock: this is deliberate day
+         arithmetic in UTC, and the lint in test/run.js is right to insist the
+         difference is spelled out. */
+      endsOn: isoDayUTC(new Date(endMs)),
+      state: h.state,
+      maxWeeklyDollars: Money.isEntered(st.maxWeeklyDollars) ? st.maxWeeklyDollars : null,
+      confidence: ui.confidence || null
     });
   }
 
@@ -1523,12 +1574,20 @@
   function createAnnualLine(fields) {
     var f = fields || {};
     var month = Money.isEntered(f.monthDue) ? Math.round(f.monthDue) : null;
+    /* The day inside that month (D-263). A yearly cost used to be drawn on
+       the 1st whatever the date on the bill, so a renewal on the 28th showed
+       up four weeks early on the calendar. Null means the day is not known:
+       the calendar falls back to the 1st and says nothing more than the
+       month, which is what it always did. Out of range is null, never
+       clamped to a day nobody typed. */
+    var day = Money.isEntered(f.dayDue) ? Math.round(f.dayDue) : null;
     return {
       id: f.id || newId('yr'),
       label: typeof f.label === 'string' && f.label ? f.label : null,
       bucket: ANNUAL_BUCKETS.indexOf(f.bucket) >= 0 ? f.bucket : 'wants',
       amountCents: Money.isEntered(f.amountCents) ? f.amountCents : null,
       monthDue: month !== null && month >= 1 && month <= 12 ? month : null,
+      dayDue: day !== null && day >= 1 && day <= 31 ? day : null,
       cadence: 'annual'
     };
   }
@@ -3109,6 +3168,7 @@
     isUnemployed: isUnemployed,
     unemploymentOf: unemploymentOf,
     benefitMonthlyCents: benefitMonthlyCents,
+    benefitTimeline: benefitTimeline,
     couldHaveEmployerMatch: couldHaveEmployerMatch,
     capturingQuestionApplies: capturingQuestionApplies,
     capturingFullMatchDerived: capturingFullMatchDerived,

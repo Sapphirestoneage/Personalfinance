@@ -5,7 +5,7 @@ One line per entry in DECISIONS.md: id, title, `[start-end]` lines, `{rooms}` it
 touches. `~` marks an entry a later one supersedes. Read one with
 `node tools/context/pack.js D-123` or `sed -n START,ENDp DECISIONS.md`.
 
-## SPARKS (D-) (286)
+## SPARKS (D-) (291)
 
 - D-001 — Repo state did not match the brief's Section 0 premise [13-58] {dashboard}
 - D-002 — navy-sapphire design system, centralised as CSS custom properties [60-99]
@@ -254,75 +254,80 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-256 — The lens says what it does, and hides where nothing changes [14613-14638]
 - D-257 — Budget: the month said plainly [14640-14665] {budget}
 - D-258 — Plain words on the path: the ledes name the thing, the number and the unit [14667-14688]
-- D-264 — The Card: three things to hand over [14690-14723] {one-pager}
-- D-265 — Two readings from one template on one page: a prefix and a root [14725-14752]
-- D-266 — Protection: cover, and where it goes [14754-14777] {protection}
-- D-267 — Expenses: the month, and what repeats in it [14779-14809] {expenses}
-- D-268 — Wheels: does it fit, then what it costs [14811-14834] {car}
-- D-269 — The Life: the week, and the decades [14836-14862] {week}
-- D-270 — Big Purchase: one thing, or the whole list [14864-14891] {big-purchase}
-- D-271 — Family, and a gate that survives a merge [14893-14926] {partner}
-- D-272 — The Referee takes Unlearning [14928-14954] {debates}
-- D-273 — What Matters, four readings of one expense log [14956-14986] {income, values}
-- D-274 — The Skill Tree takes the Stacker and the Exercises [14988-15016] {skill-tree}
-- D-275 — The Month: what moved, and the dates [15018-15041] {cash-flow}
-- D-276 — The Close: this month, every month, over time [15043-15072] {budget}
-- D-277 — Income: what lands, what it averages, what it pays [15074-15117] {income}
-- D-278 — The Statement: what you own, where it lands, the documents [15119-15148] {statement}
-- D-279 — Debt: the order, the loans, the file [15150-15174] {debt-payoff}
-- D-280 — Housing: rent or buy, the deposit, the deal [15176-15221] {housing}
-- D-281 — Work: seven questions about a job [15223-15262] {career-move}
-- D-282 — What the phone walk found [15264-15312]
-- D-283 — The Decision Room: one shell, five outputs on every block [15314-15360] {goals}
-- D-284 — The Back Half, four readings of coming down [15362-15403] {decumulation}
-- D-285 — The Number, five readings of one multiplication [15405-15436] {fire}
-- D-286 — A gate on a room is not a gate on its readings [15438-15458] {decumulation}
-- D-287 — A box a person types in is not a display [15460-15483]
-- D-288 — A merged page has several readings and one display rounding [15485-15507]
-- D-289 — An entry heading is level 2, and the check now says so [15509-15529]
-- D-290 — The Statement takes the account you left behind [15531-15553] {statement}
-- D-291 — A merged page lost its fold, and nobody could see it [15555-15580]
-- D-292 — The Decision Room gets a second reading: the ones behind you [15582-15608] {goals}
-- D-293 — A block can be priced per unit, and then it can be asked what one more costs [15610-15649]
-- D-294 — Income takes Worth the Hassle, and eight readings got their scrolling back [15651-15690] {income}
-- D-295 — What Comes Next is income with a start and an end on it [15692-15719] {income}
-- D-296 — What If: two scenario rooms are each other, not two block types [15721-15770] {goals, what-if-life}
-- D-297 — The city index, read where it is owned [15772-15809]
-- D-298 — The glossary already exists; give it the names people search by [15811-15834]
-- D-299 — A block that pays [15836-15864] {goals}
-- D-300 — Rows by the handful: templates, decisions, debates [15866-15892] {debates}
-- D-301 — The cliff, as a reading of Tax [15894-15922] {tax}
-- D-302 — Two lanes meet: main's readings land where their rooms went [15924-15958]
+- D-259 — How many weeks the state gives, and the date they run out [14690-14716] {start}
+- D-260 — A room that throws while rendering says so, instead of blaming data/ [14718-14739] {cash-flow}
+- D-261 — One holding, more than one account [14741-14773] {statement}
+- D-262 — What you owe, by kind, and no rate asked on the way in [14775-14808] {start}
+- D-263 — A yearly cost falls on its day, not on the 1st [14810-14845] {expenses}
+- D-264 — The Card: three things to hand over [14846-14879] {one-pager}
+- D-265 — Two readings from one template on one page: a prefix and a root [14881-14908]
+- D-266 — Protection: cover, and where it goes [14910-14933] {protection}
+- D-267 — Expenses: the month, and what repeats in it [14935-14965] {expenses}
+- D-268 — Wheels: does it fit, then what it costs [14967-14990] {car}
+- D-269 — The Life: the week, and the decades [14992-15018] {week}
+- D-270 — Big Purchase: one thing, or the whole list [15020-15047] {big-purchase}
+- D-271 — Family, and a gate that survives a merge [15049-15082] {partner}
+- D-272 — The Referee takes Unlearning [15084-15110] {debates}
+- D-273 — What Matters, four readings of one expense log [15112-15142] {income, values}
+- D-274 — The Skill Tree takes the Stacker and the Exercises [15144-15172] {skill-tree}
+- D-275 — The Month: what moved, and the dates [15174-15197] {cash-flow}
+- D-276 — The Close: this month, every month, over time [15199-15228] {budget}
+- D-277 — Income: what lands, what it averages, what it pays [15230-15273] {income}
+- D-278 — The Statement: what you own, where it lands, the documents [15275-15304] {statement}
+- D-279 — Debt: the order, the loans, the file [15306-15330] {debt-payoff}
+- D-280 — Housing: rent or buy, the deposit, the deal [15332-15377] {housing}
+- D-281 — Work: seven questions about a job [15379-15418] {career-move}
+- D-282 — What the phone walk found [15420-15468]
+- D-283 — The Decision Room: one shell, five outputs on every block [15470-15516] {goals}
+- D-284 — The Back Half, four readings of coming down [15518-15559] {decumulation}
+- D-285 — The Number, five readings of one multiplication [15561-15592] {fire}
+- D-286 — A gate on a room is not a gate on its readings [15594-15614] {decumulation}
+- D-287 — A box a person types in is not a display [15616-15639]
+- D-288 — A merged page has several readings and one display rounding [15641-15663]
+- D-289 — An entry heading is level 2, and the check now says so [15665-15685]
+- D-290 — The Statement takes the account you left behind [15687-15709] {statement}
+- D-291 — A merged page lost its fold, and nobody could see it [15711-15736]
+- D-292 — The Decision Room gets a second reading: the ones behind you [15738-15764] {goals}
+- D-293 — A block can be priced per unit, and then it can be asked what one more costs [15766-15805]
+- D-294 — Income takes Worth the Hassle, and eight readings got their scrolling back [15807-15846] {income}
+- D-295 — What Comes Next is income with a start and an end on it [15848-15875] {income}
+- D-296 — What If: two scenario rooms are each other, not two block types [15877-15926] {goals, what-if-life}
+- D-297 — The city index, read where it is owned [15928-15965]
+- D-298 — The glossary already exists; give it the names people search by [15967-15990]
+- D-299 — A block that pays [15992-16020] {goals}
+- D-300 — Rows by the handful: templates, decisions, debates [16022-16048] {debates}
+- D-301 — The cliff, as a reading of Tax [16050-16078] {tax}
+- D-302 — Two lanes meet: main's readings land where their rooms went [16080-16117]
 
 ## Dungeons & Dividends (DD-) (30)
 
-- DD-001 — HP is measured in weeks, which is what makes §3A stop contradicting itself [15993-16045]
-- DD-002 — The eighteen scoring formulas, and why "average" means the median American [16047-16130]
-- DD-003 — Seven classes, not ten [16132-16156]
-- DD-004 — The character sheet is a sibling, not a room [16158-16233]
-- DD-005 — The character sheet lives here after all, in a folder [16235-16286] {dashboard}
-- DD-006 — The D&D tool's licence posture, and what "parody" actually constrains [16288-16324]
-- DD-007 — The D&D sheet is the form, and how that survives D-034 [16326-16392]
-- DD-008 — A monster's danger is a property of the meeting, not of the monster [16394-16523]
-- DD-009 — The free page tells you what hunts you, and is careful about what it cannot see [16525-16633] {dashboard}
-- DD-010 — Fifteen more creatures, and a mark saying which are ours [16635-16707]
-- DD-011 — Four tiers of play, and a function that refuses to place you [16709-16780]
-- DD-012 — Exhaustion is derived, statuses are declared, and both change the game [16782-16874]
-- DD-013 — Rests and pace, in the only unit HP has [16876-16963]
-- DD-014 — The card is the product, so it is drawn rather than laid out [16965-17033] {dashboard}
-- DD-015 — The file says which of itself may be believed, and a character can come home [17035-17119]
-- DD-016 — DM mode: the scenario is the URL, and it never touches your character [17121-17206]
-- DD-017 — Six types, derived from the bestiary, and a log field I said existed and did not [17208-17297]
-- DD-018 — Six abilities to buy, like D&D Beyond, and what a bought Strength is worth [17299-17377] {dashboard}
-- DD-019 — Two ways to get hurt: bills attack your armour, pitches go around it [17379-17469]
-- DD-020 — A failed save has to cost something [17471-17505]
-- DD-021 — A bleed is measured against a rest [17507-17546]
-- DD-022 — One strong save, one weak, and every save covered [17548-17585]
-- DD-023 — ASIs and feats that do something [17587-17655]
-- DD-024 — The campaign: ten rounds, a fork of your household, and advice that moves with you [17657-17797]
-- DD-025 — Creation lives in the campaign: your numbers, your six, and the receipts [17799-17918] {dashboard}
-- DD-026 — The whole run through: five questions, a build, your six, and what to do about them [17920-18082] {dashboard}
-- DD-027 — The long read: an Enneagram-shaped profile, and the one thing it refuses to do [18084-18314]
-- DD-028 — Four ways in, because one front door was asking before it gave [18316-18439] {dashboard}
-- DD-029 — HP reads the one runway function; the lump is one total, not split [18441-18459]
-- DD-030 — A sheet that looks like one, and a link that previews [18461-18554] {dashboard}
+- DD-001 — HP is measured in weeks, which is what makes §3A stop contradicting itself [16152-16204]
+- DD-002 — The eighteen scoring formulas, and why "average" means the median American [16206-16289]
+- DD-003 — Seven classes, not ten [16291-16315]
+- DD-004 — The character sheet is a sibling, not a room [16317-16392]
+- DD-005 — The character sheet lives here after all, in a folder [16394-16445] {dashboard}
+- DD-006 — The D&D tool's licence posture, and what "parody" actually constrains [16447-16483]
+- DD-007 — The D&D sheet is the form, and how that survives D-034 [16485-16551]
+- DD-008 — A monster's danger is a property of the meeting, not of the monster [16553-16682]
+- DD-009 — The free page tells you what hunts you, and is careful about what it cannot see [16684-16792] {dashboard}
+- DD-010 — Fifteen more creatures, and a mark saying which are ours [16794-16866]
+- DD-011 — Four tiers of play, and a function that refuses to place you [16868-16939]
+- DD-012 — Exhaustion is derived, statuses are declared, and both change the game [16941-17033]
+- DD-013 — Rests and pace, in the only unit HP has [17035-17122]
+- DD-014 — The card is the product, so it is drawn rather than laid out [17124-17192] {dashboard}
+- DD-015 — The file says which of itself may be believed, and a character can come home [17194-17278]
+- DD-016 — DM mode: the scenario is the URL, and it never touches your character [17280-17365]
+- DD-017 — Six types, derived from the bestiary, and a log field I said existed and did not [17367-17456]
+- DD-018 — Six abilities to buy, like D&D Beyond, and what a bought Strength is worth [17458-17536] {dashboard}
+- DD-019 — Two ways to get hurt: bills attack your armour, pitches go around it [17538-17628]
+- DD-020 — A failed save has to cost something [17630-17664]
+- DD-021 — A bleed is measured against a rest [17666-17705]
+- DD-022 — One strong save, one weak, and every save covered [17707-17744]
+- DD-023 — ASIs and feats that do something [17746-17814]
+- DD-024 — The campaign: ten rounds, a fork of your household, and advice that moves with you [17816-17956]
+- DD-025 — Creation lives in the campaign: your numbers, your six, and the receipts [17958-18077] {dashboard}
+- DD-026 — The whole run through: five questions, a build, your six, and what to do about them [18079-18241] {dashboard}
+- DD-027 — The long read: an Enneagram-shaped profile, and the one thing it refuses to do [18243-18473]
+- DD-028 — Four ways in, because one front door was asking before it gave [18475-18598] {dashboard}
+- DD-029 — HP reads the one runway function; the lump is one total, not split [18600-18618]
+- DD-030 — A sheet that looks like one, and a link that previews [18620-18713] {dashboard}

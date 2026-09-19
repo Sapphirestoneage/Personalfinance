@@ -419,6 +419,8 @@
           </div></div>
         <label class="slaf-field"><span class="slaf-label">Paid in</span>
           <span class="slaf-input-shell"><select id="y-month" aria-label="The month it is paid"><option value="">Spread only</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></span></label>
+        <label class="slaf-field"><span class="slaf-label">On the day</span>
+          <span class="slaf-input-shell"><input type="text" inputmode="numeric" id="y-day" placeholder="e.g. 28" aria-label="The day of that month it is taken"/></span></label>
         <div class="slaf-field"><span class="slaf-label">&nbsp;</span><button type="button" class="slaf-btn" id="btn-annual-add">Add the yearly cost</button></div>
       </div>
     </details>
@@ -971,7 +973,7 @@
     if (!on) return;
     var yr = Schema.annualMonthlyCents(h);
     el('annual-list').innerHTML = yr.lines.map(function (l) {
-      return '<li><span><b>' + esc(l.label || 'A yearly cost') + '</b> <small>' + esc(BUCKET_LABEL[l.bucket]) + (l.monthDue ? ' · ' + MONTH_SHORT[l.monthDue - 1] : '') + '</small></span>'
+      return '<li><span><b>' + esc(l.label || 'A yearly cost') + '</b> <small>' + esc(BUCKET_LABEL[l.bucket]) + (l.monthDue ? ' · ' + MONTH_SHORT[l.monthDue - 1] + (Money.isEntered(l.dayDue) ? ' ' + l.dayDue : '') : '') + '</small></span>'
         + '<span class="amt">' + Money.formatCents(l.amountCents, { exact: true }) + ' a year <small>' + Money.formatCents(Math.round(l.amountCents / 12), { exact: true }) + '/mo</small></span>'
         + '<button type="button" class="slaf-btn slaf-btn--quiet" data-annual-remove="' + esc(l.id) + '" aria-label="Remove ' + esc(l.label || 'this yearly cost') + '">Remove</button></li>';
     }).join('');
@@ -991,8 +993,13 @@
       if (!Money.isEntered(amount) || amount <= 0) { el('y-amount').focus(); return; }
       var bucket = (el('y-bucket').querySelector('.choice[aria-pressed="true"]') || {}).getAttribute ? el('y-bucket').querySelector('.choice[aria-pressed="true"]').getAttribute('data-value') : 'wants';
       var month = el('y-month').value ? parseInt(el('y-month').value, 10) : null;
-      Spine.upsertAnnualLine({ label: el('y-label').value.trim() || null, amountCents: amount, bucket: bucket, monthDue: month });
-      el('y-label').value = ''; el('y-amount').value = ''; el('y-month').value = '';
+      /* The day inside that month, so the Money Calendar draws the renewal
+         when it is actually taken instead of on the 1st (D-263). Out of
+         range is left null by createAnnualLine rather than clamped. */
+      var dayRaw = String(el('y-day').value || '').trim();
+      var day = dayRaw === '' ? null : parseInt(dayRaw, 10);
+      Spine.upsertAnnualLine({ label: el('y-label').value.trim() || null, amountCents: amount, bucket: bucket, monthDue: month, dayDue: month === null ? null : day });
+      el('y-label').value = ''; el('y-amount').value = ''; el('y-month').value = ''; el('y-day').value = '';
       render();
     });
     el('annual-list').addEventListener('click', function (evt) {

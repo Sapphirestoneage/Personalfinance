@@ -14687,6 +14687,162 @@ figures link to the rooms they come from, so a number is a door.
 `node tools/context/build.js --check`; the path rooms at 390px, clean
 console.
 
+## D-259 — How many weeks the state gives, and the date they run out
+
+**Why.** The owner, on the Between jobs card: show how many weeks you get,
+and work out the end date from it. The card asked for "weeks left" as a
+number to type, and offered the state's WHOLE allowance as the guess — right
+only on the day the job ends. Nothing said how long the state pays, and
+nothing turned that into a date, though `data/ui_benefits.json` has held the
+weeks per state all along and the card already asks the month the job ended.
+
+**Decision.** `Schema.benefitTimeline(household, tables, now)`: the state's
+allowance, the whole weeks gone since the job ended, the weeks left and the
+date of the last payment. `now` is injectable so a test is not hostage to the
+day it runs. `rooms/start.html` prints one sentence under the benefit row —
+"Arizona pays up to 26 weeks. Counting from the month the job ended, that
+runs to November 30, 2026 — about 11 weeks from now" — and the suggestion in
+the Weeks left box now offers what is left, not the whole allowance.
+
+**Replaces or removes.** Removes a guess that was wrong for everyone except
+someone whose job ended this week.
+
+**Stored shape.** No change. `benefitWeeksLeft` is still typed and still
+owned by Start Here; this only computes what to suggest and what to say.
+
+**Verified.** `node test/run.js` (32,250) including the run for all 51 states,
+the exhausted case, a job that has not ended yet, and both incomplete paths —
+no state and no end date each say what is missing rather than inventing a
+date. Read in a browser at 412px for Arizona, Alabama and Alaska.
+
+## D-260 — A room that throws while rendering says so, instead of blaming data/
+
+**Why.** The owner, from the phone, on Cash Flow: "Couldn't load the
+reference tables in data/ (Ownership is not defined)." The tables had loaded
+perfectly. `rooms/cash-flow.html` used `Ownership.linkTo` three times in the
+net-flow detail and never declared `Ownership` in its IIFE, so under
+`'use strict'` it threw a ReferenceError — inside the `.then()` whose
+`.catch()` announces a data-load failure. The same mislabelling as D-238 on
+the Scorecard, and it hid the cause both times.
+
+**Decision.** `Ownership` is declared in the room's handle list beside the
+others. The whole net-flow breakdown had been silently absent whenever the
+figure computed, which is why the demo household never showed it.
+
+**Replaces or removes.** Nothing.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (32,250). A sweep of all 95 pages at 412px
+with a fully seeded household — income, spending log and all — looking for a
+visible error banner or a thrown exception: Cash Flow was the only one, and
+it is clean now. The net-flow rows render for the first time.
+
+## D-261 — One holding, more than one account
+
+**Why.** The owner: "I am trying to split my roth ira into the vanguard and
+chase one but when I try to edit it just takes me to investments dashboard.
+I would rather it link the other way." The Statement showed the investments
+line as a read-only chip pointing at Start Here, so the room that lists what
+you own could name the account and not value it.
+
+**Decision.** Nothing new is stored. `assets[]` has always been a list and
+`Schema.investmentsCents` has always been their sum; only Start Here's single
+box implied there could be one. `rooms/statement.html` gains `VALUED_HERE` —
+the itemised categories plus `investment` and `retirement` — so those rows
+carry an editable name and value, and a button adds an account. `OWNED` is
+untouched, so "Remove everything added here" still means the property, the
+vehicle and the something-else, never the retirement money.
+
+Start Here stands its one box down once there is more than one account, and
+says where they live: `Ownership.write('investments')` edits the FIRST
+matching asset, so with two accounts that box would move one and silently
+leave the other. With a single account it behaves exactly as before.
+
+**Replaces or removes.** Removes the dead end: a value you could only edit in
+a room that could not tell one account from another.
+
+**Stored shape.** No change. An investment asset is the same shape it has
+always been; there may simply be several.
+
+**Verified.** `node test/run.js` (32,312), including that two accounts sum to
+one total and count once each. In a browser at 412px: split the demo's
+$48,000 into Vanguard Roth $40,000 and Chase Roth $30,000, watched the total
+read $70,000, and saw Start Here replace its box with "$70,000 across 2
+accounts — Vanguard Roth, Chase Roth. Edit them in The Statement." A sweep of
+all 95 pages shows no error banner and nothing thrown.
+
+## D-262 — What you owe, by kind, and no rate asked on the way in
+
+**Why.** The owner: "Have it just be total debt dont go into rates yet. Or
+have it be able to separate into the main kinds of debts — mortgage, student
+loans, car, consumer like bnpl, credit cards." Both halves. A single
+"typical rate" across a mortgage and a card is a number that is true of
+neither, and it was being asked before anything used it.
+
+**Decision.** The rate box is gone from `rooms/start.html`. A rate is asked
+where it changes an answer — in Debt Payoff, one debt at a time — and
+`engines/foo.js` already says "add an interest rate to every debt" rather
+than guessing, so nothing downstream is worse off. Under the total sits
+"Split it by kind": five boxes, mapped to `debt.type` values the model
+already declared — mortgage, student_loan, auto, personal (which carries
+buy-now-pay-later), credit_card.
+
+A kind is keyed to the TYPE, not to a fixed id: with no debt of that type
+typing creates one, with one it edits that one wherever it was entered, and
+with two or more the box reads their sum and goes read-only, because only
+Debt Payoff can tell three cards apart. The lump stands down the moment a
+kind carries a figure. Every path counts the money once.
+
+**Replaces or removes.** Removes the rate question from the intake, and the
+choice between a lump and nothing.
+
+**Stored shape.** No change: `debts[]` is the shape it has always been, with
+`type` already carrying these five among its eight.
+
+**Verified.** `node test/run.js` (32,366), including that the five types are
+read out of the schema's own enum rather than restated, and that editing a
+kind on a household that already lists a card moves the total by exactly the
+edit rather than adding a second card. In a browser at 412px on the demo:
+the two debts it already has read back into their boxes, and mortgage, car
+and consumer added on top give $271,200 across five kinds, counted once.
+
+## D-263 — A yearly cost falls on its day, not on the 1st
+
+**Why.** The owner, on giving subscriptions their dates: "for yearly that day
+on the year". `expenses.annual[]` carried `monthDue` and nothing finer, and
+`engines/calendar.js` drew every yearly line on `ym + '-01'` — so a renewal
+taken on the 28th showed up four weeks early.
+
+**Decision.** `expenses.annual[].dayDue`, 1 to 31, null when the day is not
+known. `Schema.createAnnualLine` keeps it in range and leaves anything else
+null rather than clamping to a day nobody typed. The calendar draws the line
+on that day, clamped to the last day of a short month — the rule a monthly
+log occurrence already uses — and on the 1st when there is no day, exactly as
+before. `rooms/expenses.html` asks for it beside the month.
+
+The date stays `estimated` either way. A renewal expected on the 28th is
+still expected, and `exact` is what the budget counts as having happened, so
+this changes which day a line is drawn on and nothing about counting.
+
+**Replaces or removes.** Removes the hardcoded 1st.
+
+**Stored shape.** `expenses.annual[]` gains `dayDue`. A line saved before
+this has no `dayDue`; `createAnnualLine` reads that as null and the calendar
+draws it on the 1st, which is what it did before — so an old household is
+unchanged until someone types a day. Nothing needs migrating.
+
+**Also found, and not changed.** A monthly subscription already lands on its
+own date every month: `CashFlow.logOccurrences` repeats a logged entry on its
+day-of-month, clamped to short months, and "Repeats every month" on the Cash
+Flow log is how you say so. And a voluntary purchase is already loggable —
+the log's category picker carries every `wants` category. Neither needed
+work; both needed saying.
+
+**Verified.** `node test/run.js` (32,414). In a browser: a yearly line with
+`dayDue: 28` draws on "Sep 28 · Car registration (yearly)" where it used to
+draw on the 1st. No error banner on Expenses, the Calendar or Cash Flow, and
+the alignment guard is clean on the room that gained a box.
 ## D-264 — The Card: three things to hand over
 
 **Why.** The One-Pager, the Progress Card and Money Wrapped were three rooms
@@ -15923,13 +16079,16 @@ raise crosses none, the first reading untouched.
 
 ## D-302 — Two lanes meet: main's readings land where their rooms went
 
-**Why.** Main carried D-234..D-258 (the panel rounds) on the room layout
-before the 93 → 32 merge; this lane carried the merge. Both numbered from
-D-234, and main had built inside five rooms this lane had already turned
-into readings of other rooms.
+**Why.** Main carried D-234..D-263 (the panel rounds, then four more that
+landed while the first merge was being finished) on the room layout before
+the 93 → 32 merge; this lane carried the merge. Both numbered from D-234,
+and main had built inside five rooms this lane had already turned into
+readings of other rooms.
 
-**Decision.** This lane's entries move up by twenty-five: D-234..D-276
-are D-264..D-301 everywhere, as the panel round was renumbered before it.
+**Decision.** This lane's entries move up by thirty: what it wrote as
+D-234..D-271 is D-264..D-301 everywhere, as the panel round was renumbered
+before it. Main is worked on directly by another lane, so a merge of main
+comes before every push from this one.
 Main's work lives where its room went: the accounts lens reads the year's
 contribution in The Statement's where-it-lands reading (D-256); the month
 as turns is The Month's dates reading, drawn by `shared/daybyday.js` with
@@ -15946,7 +16105,7 @@ read the room that holds each reading now, not the redirect.
 **Stored shape.** No change. `journal` (D-248) and the asset's
 `institution` and `accountType` (D-251) are main's shapes, unchanged.
 
-**Verified.** Every CI step, locally: `node test/run.js` (33,146),
+**Verified.** Every CI step, locally, after each merge: `node test/run.js` (33,403),
 `dnd/test/run.js`, `test/export.js`, `test/xlsx.js`, Lane 2 (`npm test`
 in `tests/`, with a property file for `engines/cliff.js`), and the eight
 browser gates: render, features, sidebar, forms (655), onefact, xss,

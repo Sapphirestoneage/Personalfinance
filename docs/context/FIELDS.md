@@ -48,7 +48,7 @@ Fields: 114. Traced: 105. No other room mentions it: **56**.
 - `totalDebt` — Total debt · read by ledger, start, budget, statement, dashboard, financial-snapshot, what-if-life, one-pager
 - `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, statement, financial-snapshot, values, cant-pay
 - `debtBalance` — Balance · read by ledger, start
-- `debtRate` — Interest rate · read by ledger, start, foo-ladder, debates
+- `debtRate` — Interest rate · read by ledger, foo-ladder, debates
 - `debtMinPayment` — Minimum payment, a month · read by ledger
 
 ## decumulation (3)

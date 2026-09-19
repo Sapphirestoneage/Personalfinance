@@ -228,6 +228,19 @@
       Ownership = SLAF.Ownership, Suggest = SLAF.Suggest, Gate = SLAF.Gate, Income = SLAF.Income, Registry = SLAF.Registry;
 
   var ROOM_ID = 'start';
+  /* The five kinds the owner asked for, in the order a household meets them.
+     Each maps to a debt.type the model already has (shared/schema.js), so
+     Debt Payoff, the FOO ladder and every ratio read them as what they are.
+     "Consumer" carries buy-now-pay-later, which is a personal loan in all
+     but name. D-262. */
+  var DEBT_KINDS = [
+    ['mortgage', 'Mortgage', 'e.g. 240,000', 'mortgage'],
+    ['student', 'Student loans', 'e.g. 18,400', 'student_loan'],
+    ['car', 'Car', 'e.g. 9,000', 'auto'],
+    ['consumer', 'Consumer, like buy-now-pay-later', 'e.g. 600', 'personal'],
+    ['cards', 'Credit cards', 'e.g. 3,200', 'credit_card']
+  ];
+  var DEBT_KIND_ID = function (k) { return 'intake_debt_' + k; };
   var INCOME_ID = 'intake_income', OWN_WORK_ID = 'intake_own_work', SECOND_JOB_ID = 'intake_second_job', PARTNER_INCOME_ID = 'intake_partner_income', DEBT_ID = 'intake_debt';
   var TABLES = null;
   var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -318,6 +331,7 @@
         + choices('benefitStatus', BENEFIT, 'Unemployment benefit')
         + '<div class="row" data-benefit hidden style="margin-top:var(--space-3)">' + moneyInput('weekly', 'A week, before tax', 'e.g. 350', 'Weekly benefit')
         + '<label class="slaf-field"><span class="slaf-label">Weeks left' + badge('weeks') + '</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" data-ctl="weeks" placeholder="e.g. 20" aria-label="Weeks of benefit left"/></span></label></div>'
+        + '<p class="field-note" data-note="benefit" hidden></p>'
         + '<div class="row" style="margin-top:var(--space-2)">' + moneyInput('severance', 'Severance still in hand', 'e.g. 4,000') + moneyInput('lastPay', 'The last job paid, a year', 'e.g. 52,000') + '</div>';
     },
     partnerPay: function () {
@@ -337,8 +351,9 @@
         + '<div class="choices"><button type="button" class="choice" data-ctl="noDeductible">I don’t have one — I’m on someone else’s plan</button></div>';
     },
     investments: function () {
-      return '<p class="q-help">Everything invested, retirement accounts included, as one total. Split it by kind later in The Statement.</p>'
-        + moneyInput('investments', 'One total', 'e.g. 48,000', 'Investments and retirement');
+      return '<p class="q-help">Everything invested, retirement accounts included, as one total. Hold it at more than one place? Name each account in <a href="statement.html#assets">The Statement</a> and this becomes their total.</p>'
+        + moneyInput('investments', 'One total', 'e.g. 48,000', 'Investments and retirement')
+        + '<p class="field-note" data-note="investments" hidden></p>';
     },
     plan: function () {
       return '<p class="q-help">“50% of the first 6%” is 50, then 6. The most common shape is pencilled in.</p>'
@@ -347,9 +362,21 @@
         + '<p class="field-note" data-note="plan"></p>';
     },
     debt: function () {
-      return '<p class="q-help">Cards, loans, a mortgage. Yes opens the door to Debt Payoff, where each one is listed; here, the total is enough.</p>'
+      /* No rate here (D-262). A rate is asked where it changes an answer —
+         in Debt Payoff, one debt at a time — and a single "typical rate"
+         across a mortgage and a card is a number that is true of neither.
+         The ladder already says "add an interest rate to every debt" rather
+         than guessing one, so nothing downstream is worse off. */
+      return '<p class="q-help">Cards, loans, a mortgage. One total is enough to start; split it by kind if you would rather. Each one is listed, and its rate asked, in <a href="debt-payoff.html#debts">Debt Payoff</a>.</p>'
         + choices('hasDebt', [['no', 'Nothing'], ['yes', 'Yes']], 'Do you owe anything?')
-        + '<div class="row three" data-debt hidden style="margin-top:var(--space-3)">' + moneyInput('debtBalance', 'Owed, all of it', 'e.g. 21,600', 'Total owed') + moneyInput('debtMinimum', 'Minimums a month', 'e.g. 305', 'Monthly minimums') + pctInput('debtRate', 'Typical rate', 'e.g. 12') + '</div>';
+        + '<div data-debt hidden style="margin-top:var(--space-3)">'
+        + '<div class="row">' + moneyInput('debtBalance', 'Owed, all of it', 'e.g. 21,600', 'Total owed') + moneyInput('debtMinimum', 'Minimums a month', 'e.g. 305', 'Monthly minimums') + '</div>'
+        + '<p class="field-note" data-note="debt" hidden></p>'
+        + '<details class="room-more" data-debt-split style="margin-top:var(--space-3)"><summary>Split it by kind</summary>'
+        + '<p class="slaf-hint" style="margin:var(--space-2) 0 0">Fill in the ones that apply. Whatever you put here becomes the total above, and each kind arrives in Debt Payoff under its own name.</p>'
+        + '<div class="room-grid" style="margin-top:var(--space-2)">'
+        + DEBT_KINDS.map(function (k) { return moneyInput('debt_' + k[0], k[1], k[2], k[1]); }).join('')
+        + '</div></details></div>';
     }
   };
   /* The fine-tune drawer: what is real for some and noise for most. */
@@ -471,7 +498,10 @@
     matchCap: function (v) { var n = pct(v); writeSource(INCOME_ID, { employerMatch: Object.assign({}, (primarySource(h()) || {}).employerMatch || {}, { matchCapPercentOfSalary: n === null ? null : n / 100 }) }); },
     contribution: function (v) { var n = pct(v); Spine.set('retirement.contributionPercent', n, 'Contribution'); },
     hasDebt: function (v) { Spine.batch(v === 'yes' ? 'Has debt' : 'No debt', function () { Spine.set('meta.hasDebt', v === 'yes' ? true : v === 'no' ? false : null); if (v === 'no') Spine.removeById('debts', DEBT_ID); }); },
-    debtBalance: function () { writeDebt(); }, debtMinimum: function () { writeDebt(); }, debtRate: function () { writeDebt(); },
+    debtBalance: function () { writeDebt(); }, debtMinimum: function () { writeDebt(); },
+    debt_mortgage: function () { writeDebtKinds(); }, debt_student: function () { writeDebtKinds(); },
+    debt_car: function () { writeDebtKinds(); }, debt_consumer: function () { writeDebtKinds(); },
+    debt_cards: function () { writeDebtKinds(); },
     sinceMonth: function () { writeSince(); }, sinceYear: function () { writeSince(); },
     benefitStatus: function (v) { writeUnemployment({ benefitStatus: v }); },
     weekly: function (v) { writeUnemployment({ benefitWeeklyCents: Money.parseMoney(v) }); },
@@ -483,6 +513,43 @@
     zip: function (v) { var z = String(v || '').replace(/\D/g, '').slice(0, 5); Spine.set('zip', z.length === 5 ? z : null, 'ZIP'); }
   };
   function pct(v) { var raw = String(v).replace(/[^0-9.]/g, ''); if (raw === '') return null; var n = Number(raw); return isNaN(n) ? null : n; }
+  /* ---- How long the benefit runs (D-259) ---------------------------------
+     One sentence: what the state allows, when it runs out, and where that
+     leaves you today. The allowance is a published maximum, not a promise —
+     what anyone actually draws turns on their base-period wages — so the
+     sentence says "up to" and names the state, and never hides the fact that
+     the figure is a ceiling. */
+  function longDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return '';
+    return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]))
+      .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  }
+  function stateName(code) {
+    var t = TABLES && TABLES.states && TABLES.states.states;
+    if (!t) return code;
+    for (var i = 0; i < t.length; i++) if (t[i].code === code) return t[i].name || code;
+    return code;
+  }
+  function runSource(run) {
+    return stateName(run.state) + ' pays up to ' + run.weeksAllowed + ' weeks, and '
+      + run.weeksElapsed + ' have gone since the job ended';
+  }
+  function runSentence(run, u) {
+    if (!Money.isOk(run)) return run && run.reason ? run.reason : '';
+    var ceiling = stateName(run.state) + ' pays up to ' + run.weeksAllowed + ' week'
+      + (run.weeksAllowed === 1 ? '' : 's') + '.';
+    if (run.exhausted) {
+      return ceiling + ' Counting from the month the job ended, ' + run.weeksAllowed
+        + ' weeks was up on ' + longDate(run.endsOn) + '. A maximum, not a promise \u2014 '
+        + 'what you actually get depends on what you earned before, and some states pay fewer weeks.';
+    }
+    return ceiling + ' Counting from the month the job ended, that runs to '
+      + longDate(run.endsOn) + ' \u2014 about ' + run.weeksLeft + ' week'
+      + (run.weeksLeft === 1 ? '' : 's') + ' from now. A maximum, not a promise: '
+      + 'what you actually get depends on what you earned before, and some states pay fewer weeks.';
+  }
+
   function dobFrom(m, y) { if (!m || !y) return null; return y + '-' + (m.length === 1 ? '0' + m : m) + '-01'; }
   function writeDob() {
     var dob = dobFrom(ctl('month').value, ctl('year').value);
@@ -532,10 +599,50 @@
     if (agesText !== null && ages.length > n) for (var j = n; j < ages.length; j++) list.push({ age: ages[j] });
     Spine.set('dependents', list, n === 0 ? 'Nobody depends on you' : n + ' depend on you');
   }
+  /* One box a kind. A kind with a figure becomes a debt of that type under
+     its own name, so Debt Payoff lists it properly; emptied, it goes away
+     again. The lump stays for anyone who never opens the drawer. D-262. */
+  /* One box a kind, over the debts the household already has (D-262).
+     A kind is not a new debt unless there is no debt of that type yet:
+     with one, the box edits it wherever it came from; with two or more,
+     Debt Payoff is the only place that can tell them apart, so the box
+     reads their sum and stands down. Otherwise typing "3,200" in Credit
+     cards beside a card already listed would count the money twice. */
+  function debtsOfType(hh, type) {
+    return (hh.debts || []).filter(function (d) { return d.type === type; });
+  }
+  function writeDebtKinds() {
+    var person = Spine.ensurePrimaryPerson('You');
+    Spine.batch('What you owe, by kind', function () {
+      var any = false;
+      DEBT_KINDS.forEach(function (k) {
+        var box = ctl('debt_' + k[0]);
+        if (!box || box.readOnly) return;
+        var cents = Money.parseMoney(Suggest.entered(box));
+        var mine = debtsOfType(h(), k[3]);
+        if (mine.length > 1) return;                 /* Debt Payoff's to hold */
+        var existing = mine[0] || null;
+        if (Money.isEntered(cents)) {
+          any = true;
+          Spine.upsertDebt(Schema.createDebt(Object.assign({}, existing || {}, {
+            id: existing ? existing.id : DEBT_KIND_ID(k[0]),
+            label: existing && existing.label ? existing.label : k[1],
+            balanceCents: cents, type: k[3], ownerIds: [person.id]
+          })));
+        } else if (existing && existing.id === DEBT_KIND_ID(k[0])) {
+          Spine.removeById('debts', existing.id);
+        }
+      });
+      /* The lump and the kinds would count the same money twice. */
+      var lump = (h().debts || []).filter(function (d) { return d.id === DEBT_ID; })[0];
+      if (any && lump) Spine.removeById('debts', DEBT_ID);
+      if (any && h().meta.hasDebt !== true) Spine.set('meta.hasDebt', true);
+    });
+  }
   function writeDebt() {
     var bal = Money.parseMoney(Suggest.entered(ctl('debtBalance')));
     var min = Money.parseMoney(Suggest.entered(ctl('debtMinimum')));
-    var rate = pct(Suggest.entered(ctl('debtRate')));
+    var rate = null;
     var existing = (h().debts || []).filter(function (d) { return d.id === DEBT_ID; })[0];
     if (!Money.isEntered(bal) && !existing) return;
     var person = Spine.ensurePrimaryPerson('You');
@@ -778,7 +885,27 @@
       var hasBenefit = u.benefitStatus === 'receiving' || u.benefitStatus === 'applied';
       document.querySelector('[data-benefit]').hidden = !hasBenefit;
       if (Money.isEntered(u.benefitWeeklyCents)) setMoney('weekly', u.benefitWeeklyCents); else { setMoney('weekly', null); if (hasBenefit) propose('weekly', g.weekly, function (c) { WRITE.weekly(c / 100); render(); }); }
-      if (Money.isEntered(u.benefitWeeksLeft)) setText('weeks', u.benefitWeeksLeft); else { setText('weeks', ''); if (hasBenefit && g.weeks) propose('weeks', Object.assign({ unit: 'count' }, g.weeks), function (n) { WRITE.weeks(n); render(); }); }
+      /* How many weeks the state gives, and the date they run out (D-259).
+         The allowance and the end date were both computable all along —
+         data/ui_benefits.json holds the weeks, the card holds the month the
+         job ended — and neither was ever shown. The suggestion used to offer
+         the WHOLE allowance as "weeks left", which is only right on the day
+         the job ends; it now offers what is actually left. */
+      var run = Schema.benefitTimeline(x, TABLES);
+      if (Money.isEntered(u.benefitWeeksLeft)) setText('weeks', u.benefitWeeksLeft);
+      else {
+        setText('weeks', '');
+        var offer = Money.isOk(run)
+          ? { value: run.weeksLeft, source: runSource(run) }
+          : (g.weeks || null);
+        if (hasBenefit && offer) propose('weeks', Object.assign({ unit: 'count' }, offer), function (n) { WRITE.weeks(n); render(); });
+      }
+      var runNote = document.querySelector('[data-note="benefit"]');
+      if (runNote) {
+        var say = hasBenefit ? runSentence(run, u) : '';
+        runNote.hidden = !say;
+        runNote.textContent = say;
+      }
       setMoney('severance', u.severanceCents);
       if (Money.isEntered(u.lastGrossAnnualCents)) setMoney('lastPay', u.lastGrossAnnualCents); else { setMoney('lastPay', null); propose('lastPay', g.lastPay, function (c) { WRITE.lastPay(c / 100); render(); }); }
     }
@@ -794,6 +921,27 @@
     if (Money.isEntered(ded)) setMoney('deductible', ded); else { setMoney('deductible', null); propose('deductible', g.deductible, function (c) { WRITE.deductible(c / 100); render(); }); }
     ctl('noDeductible').setAttribute('aria-pressed', String(ded === 0));
     var inv = Schema.investmentsCents(x);
+    /* Once the money is named account by account in The Statement, this one
+       box would write to the FIRST account only and silently leave the rest
+       (Ownership.write('investments') edits one asset, while the total is
+       their sum). So it stands down and says where the accounts live: the
+       link goes the other way from here on (D-261). */
+    var invAccounts = Schema.aggregatableAssets(x).filter(function (a) {
+      return a.category === 'investment' || a.category === 'retirement';
+    });
+    var invNote = document.querySelector('[data-note="investments"]');
+    var invBox = ctl('investments') ? ctl('investments').closest('.slaf-field') : null;
+    var split = invAccounts.length > 1;
+    if (invBox) invBox.hidden = split;
+    if (invNote) {
+      invNote.hidden = !split;
+      invNote.innerHTML = split
+        ? esc(Money.formatCents(Money.isOk(inv) ? inv.value : 0)) + ' across '
+          + invAccounts.length + ' accounts — '
+          + invAccounts.map(function (a) { return esc(a.label || 'unnamed'); }).join(', ')
+          + '. Edit them in <a href="statement.html#assets">The Statement</a>.'
+        : '';
+    }
     if (Money.isOk(inv)) setMoney('investments', inv.value); else { setMoney('investments', null); propose('investments', g.investments, function (c) { WRITE.investments(c / 100); render(); }); }
     /* the plan */
     if (cardOn('plan')) {
@@ -812,9 +960,39 @@
     var lump = (x.debts || []).filter(function (d) { return d.id === DEBT_ID; })[0];
     press('hasDebt', x.meta.hasDebt === true ? 'yes' : x.meta.hasDebt === false ? 'no' : null, g.hasDebt ? g.hasDebt.value : null);
     document.querySelector('[data-debt]').hidden = x.meta.hasDebt !== true;
+    /* A kind reads whatever the household already holds of that type, from
+       wherever it was entered. Several of a kind can only be told apart in
+       Debt Payoff, so the box shows their sum and goes read-only. D-262. */
+    var kindDebts = DEBT_KINDS.map(function (k) {
+      var of = (x.debts || []).filter(function (d) { return d.type === k[3]; });
+      var sum = Money.sumCents(of.map(function (d) { return d.balanceCents; }));
+      return { k: k, of: of, cents: of.length ? (sum.counted ? sum.total : null) : null, many: of.length > 1 };
+    });
+    var splitDebt = kindDebts.some(function (r) { return Money.isEntered(r.cents); });
+    kindDebts.forEach(function (r) {
+      setMoney('debt_' + r.k[0], r.cents);
+      var box = ctl('debt_' + r.k[0]);
+      if (!box) return;
+      box.readOnly = r.many;
+      box.title = r.many ? r.of.length + ' listed in Debt Payoff — edit them there' : '';
+    });
+    var splitHost = document.querySelector('[data-debt-split]');
+    if (splitHost && splitDebt) splitHost.open = true;
+    /* Split, the total is the sum of the kinds and is not typed here. */
+    var totalBox = ctl('debtBalance') ? ctl('debtBalance').closest('.slaf-field') : null;
+    if (totalBox) totalBox.hidden = splitDebt;
+    var debtNote = document.querySelector('[data-note="debt"]');
+    if (debtNote) {
+      var tot = Schema.totalDebtCents(x);
+      debtNote.hidden = !splitDebt;
+      debtNote.textContent = splitDebt
+        ? Money.formatCents(Money.isOk(tot) ? tot.value : 0) + ' owed, across '
+          + kindDebts.filter(function (r) { return Money.isEntered(r.cents); }).length
+          + ' kinds. Each one is listed in Debt Payoff, where its rate is asked.'
+        : '';
+    }
     setMoney('debtBalance', lump ? lump.balanceCents : null);
     setMoney('debtMinimum', lump ? lump.minPaymentCents : null);
-    setText('debtRate', lump && Money.isEntered(lump.rate) ? Math.round(lump.rate * 1000) / 10 : '');
     /* fine-tune */
     var deps = Array.isArray(x.dependents) ? x.dependents : null;
     press('dependents', deps === null ? null : String(Math.min(deps.length, 3)), '0');

@@ -514,6 +514,8 @@
     </p>
     <div id="asset-list"></div>
     <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add something you own</button>
+    <button type="button" class="slaf-btn" id="btn-add-investment" style="width:100%;margin-top:var(--space-2)">+ Add an investment or retirement account</button>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">One line a place it is held: a Roth at two brokers is two accounts. Every one of them adds into the investments total.</p>
     <div class="actions">
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Remove everything added here</button>
     </div>
@@ -918,6 +920,20 @@
   var TABLES = null;
   var OWNED = Schema.ITEMISED_ASSET_CATEGORIES;
   var CATEGORIES = [['real_estate', 'Property'], ['vehicle', 'Vehicle'], ['other', 'Something else']];
+  /* A Roth held at two brokers is two accounts, and the owner wanted to say
+     so here rather than be sent to Start Here's single box (D-261). The
+     household model already sums every investment asset, so splitting one in
+     two needs no new field — only permission to name and value the rows
+     here. Kept separate from OWNED: "Remove everything added here" still
+     means the property, the vehicle and the something-else, never the
+     retirement money. */
+  var VALUED_HERE = OWNED.concat(['investment', 'retirement']);
+  function valuedHere(a) { return VALUED_HERE.indexOf(a.category) !== -1; }
+  function investmentCount(h) {
+    return Schema.aggregatableAssets(h).filter(function (a) {
+      return a.category === 'investment' || a.category === 'retirement';
+    }).length;
+  }
 
   function el(id) { return document.getElementById(id); }
   function esc(s) {
@@ -994,7 +1010,7 @@
       var rule = rules ? Schema.assetRule(a, rules) : null;
       var access = rules ? Schema.assetAccessAge(a, rules) : null;
       var name = a.label || (CATEGORIES.filter(function (c) { return c[0] === a.category; })[0] || ['', a.category])[1];
-      var valueCell = mine
+      var valueCell = valuedHere(a)
         ? '<label class="slaf-field" style="margin:0"><span class="slaf-label">What it\'s worth</span>'
           + '<span class="slaf-input-shell"><span class="slaf-affix">$</span>'
           + '<input type="text" inputmode="decimal" data-asset="' + a.id + '" data-field="valueCents" value="'
@@ -1019,7 +1035,7 @@
             + '</select></span></div>';
       return '<div class="asset" data-asset-card="' + a.id + '">'
         + '<div class="asset-top">'
-        + '<input class="asset-name" data-asset="' + a.id + '" data-field="label" value="' + esc(a.label || '') + '" placeholder="' + esc(name) + '" aria-label="Name"' + (mine ? '' : ' readonly') + '/>'
+        + '<input class="asset-name" data-asset="' + a.id + '" data-field="label" value="' + esc(a.label || '') + '" placeholder="' + esc(name) + '" aria-label="Name"' + (valuedHere(a) ? '' : ' readonly') + '/>'
         + (mine ? '<button type="button" class="asset-remove" data-remove="' + a.id + '" aria-label="Remove">✕</button>' : '')
         + '</div>'
         + '<div class="asset-grid">'
@@ -1130,6 +1146,17 @@
   el('btn-add').addEventListener('click', function () {
     var person = Spine.ensurePrimaryPerson('You');
     Spine.upsertAsset(Schema.createAsset({ label: null, category: 'real_estate', valueCents: null, liquid: false, ownerIds: [person.id] }));
+    assetForm.force(); render();
+    var names = el('asset-list').querySelectorAll('.asset-name:not([readonly])');
+    if (names.length) names[names.length - 1].focus();
+  });
+  el('btn-add-investment').addEventListener('click', function () {
+    /* A real asset row, category 'investment', so Schema.investmentsCents
+       sums it with the rest. Nothing new is stored: the household has always
+       held a list of assets, and the investments total has always been their
+       sum — only Start Here's single box implied otherwise. */
+    var person = Spine.ensurePrimaryPerson('You');
+    Spine.upsertAsset(Schema.createAsset({ label: null, category: 'investment', valueCents: null, liquid: false, ownerIds: [person.id] }));
     assetForm.force(); render();
     var names = el('asset-list').querySelectorAll('.asset-name:not([readonly])');
     if (names.length) names[names.length - 1].focus();
