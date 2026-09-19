@@ -8765,6 +8765,33 @@ section('The monthly gap by level, and the journey (D-249)');
   checkTrue('History shows the journey', /id="journey"/.test(hist) && /what it thought, then what was/i.test(hist) && Registry.byId('history').subsections.some(x => x.id === 'journey'));
 })();
 
+section('Debt Payoff: the order is a preference, and the plan says when it is in effect (D-252)');
+
+(function () {
+  const three = Schema.createHousehold({ meta: { hasDebt: true }, debts: [
+    Schema.createDebt({ id: 'car', label: 'Car', balanceCents: 200000, rate: 0, minPaymentCents: 50000, type: 'auto' }),
+    Schema.createDebt({ id: 'card', label: 'Card', balanceCents: 600000, rate: 0.229, minPaymentCents: 15000, type: 'credit_card' }),
+    Schema.createDebt({ id: 'loan', label: 'Loan', balanceCents: 1800000, rate: 0.055, minPaymentCents: 21000, type: 'student_loan' })] });
+  const none = Debt.simulate(three, TABLES.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 0 });
+  const ph0 = Debt.pushPhases(none);
+  checkTrue('on minimums alone the first months have no target', none.schedule[0].targetId === null && none.schedule[0].pushCents === 0);
+  checkTrue('… the order comes into effect only once the car\'s minimum is freed', Money.isOk(ph0) && ph0.phases[0].inEffect === false && ph0.phases[0].toMonth === 4 && ph0.phases[1].inEffect && ph0.phases[1].targetId === 'card');
+  const push = Debt.simulate(three, TABLES.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 20000 });
+  const ph = Debt.pushPhases(push);
+  check('with an extra, avalanche is in effect from month 1 at the highest rate', ph.phases[0].inEffect + ':' + ph.phases[0].targetId + ':' + ph.phases[0].fromMonth, 'true:card:1');
+  check('… placing the extra', ph.phases[0].pushCents, 20000);
+  checkTrue('… and every month of the plan is covered, in order, without gaps', ph.phases[0].fromMonth === 1 && ph.phases[ph.phases.length - 1].toMonth === push.months && ph.phases.every((p, i) => i === 0 || p.fromMonth === ph.phases[i - 1].toMonth + 1));
+  checkTrue('… the target moves to the next debt as one falls', ph.phases.some(p => p.targetId === 'loan'));
+  check('months in effect is the sum of the on stretches', ph.monthsInEffect, ph.phases.filter(p => p.inEffect).reduce((t, p) => t + p.months, 0));
+  const stopped = Debt.simulate(three, TABLES.debtRules, { strategyId: 'avalanche', extraMonthlyCents: 20000, stopAfter: 'cards' });
+  const sp = Debt.pushPhases(stopped);
+  checkTrue('past the stop line the order is off', sp.phases[sp.phases.length - 1].inEffect === false && sp.phases[sp.phases.length - 1].fromMonth >= stopped.stopMonth);
+  checkTrue('an incomplete plan passes through', !Money.isOk(Debt.pushPhases(Money.incomplete('no', []))));
+  const room = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('the room keeps the chosen order as a preference', /Prefs\.set\('debt\.strategy', strategyId\)/.test(room) && /Prefs\.get\('debt\.strategy', null\)/.test(room));
+  checkTrue('… and lists when it is in effect, read off the engine', /id="effect"/.test(room) && /Debt\.pushPhases\(plan\)/.test(room));
+})();
+
 section('Where each asset sits: the institution and the account type (D-251)');
 
 (function () {

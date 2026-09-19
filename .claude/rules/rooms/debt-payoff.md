@@ -3,15 +3,15 @@ paths:
   - "rooms/debt-payoff.html"
 ---
 # Debt Payoff (`debt-payoff`)
-File: rooms/debt-payoff.html · 1941 lines
+File: rooms/debt-payoff.html · 1978 lines
 Engines: projection, debt
 Reference data: debt_rules.json, effective_tax_rates_2026.json, foo_rules.json, onepager_defaults.json, return_bands.json, student_loan_conventions.json
 Owns: totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), marginalRate (accounts)
 Latest decisions:
+  - D-252 — Debt Payoff: the order is a preference, and the plan says when it is in effect
   - D-236 — Debt Payoff: where the payment goes, and what each fall frees
   - D-191 — Debt Payoff: a stop line, and the payment says what it is built from
   - D-190 — Debt Payoff: the extra is always a number, estimated then realized
   - D-189 — Debt Payoff: where the interest goes, a month
-  - D-188 — Debt Payoff: three finish lines, Avalanche ranks by the rate a debt will carry, the extra is worked out
 Full context: node tools/context/pack.js debt-payoff

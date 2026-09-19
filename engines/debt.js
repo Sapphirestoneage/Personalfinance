@@ -422,12 +422,17 @@
         }
       }
 
-      /* 3. Everything left goes at the target, in strategy order. */
+      /* 3. Everything left goes at the target, in strategy order. The
+         first debt it lands on is the month's target (D-252): the order
+         is in effect only in a month that has something beyond the
+         minimums to place. */
       var ordered = orderDebts(debts, strategy, rules, month, o.asOf);
+      var pushCents = pot, targetId = null;
       for (var i = 0; i < ordered.length && pot > 0; i++) {
         var target = ordered[i];
         if (target.balanceCents <= 0) continue;
         var extraPay = Math.min(pot, target.balanceCents);
+        if (targetId === null && extraPay > 0) targetId = target.id;
         target.balanceCents -= extraPay; pot -= extraPay; paidThisMonth += extraPay; paidBy[target.id] += extraPay;
       }
 
@@ -458,7 +463,11 @@
         /* And what each debt was paid and charged this month, so a page can
            draw where the payment went (D-236). */
         paid: paidBy,
-        interest: interestBy
+        interest: interestBy,
+        /* The order in effect this month (D-252): what was placed beyond
+           the minimums and the debt it went at first; null when nothing was. */
+        pushCents: pushCents,
+        targetId: targetId
       });
     }
 
@@ -585,6 +594,28 @@
     });
     return Money.ok(phases.length, { phases: phases, doneMonth: plan.months, freeCents: plan.monthlyBudgetCents,
       minimumsCents: plan.minimumsCents, extraMonthlyCents: plan.extraMonthlyCents, stopMonth: plan.stopMonth });
+  }
+
+  /**
+   * pushPhases(plan) — when the chosen order is in effect (D-252). The
+   * schedule read as stretches: each one names the debt the money beyond
+   * the minimums went at, and how much, or says nothing was beyond the
+   * minimums (the extra is nought, or the stop line has passed), in which
+   * case the order changes nothing that month. Read off the schedule;
+   * nothing is simulated again.
+   */
+  function pushPhases(plan) {
+    if (!Money.isOk(plan)) return plan;
+    var phases = [];
+    (plan.schedule || []).forEach(function (m) {
+      var id = m.pushCents > 0 ? m.targetId : null;
+      var last = phases[phases.length - 1];
+      if (last && last.targetId === id) { last.toMonth = m.month; last.months++; return; }
+      phases.push({ fromMonth: m.month, toMonth: m.month, months: 1, targetId: id, targetLabel: id ? (plan.debtLabels[id] || 'Debt') : null,
+        pushCents: id ? m.pushCents : 0, inEffect: id !== null });
+    });
+    var on = phases.filter(function (p) { return p.inEffect; }).reduce(function (t, p) { return t + p.months; }, 0);
+    return Money.ok(on, { phases: phases, monthsInEffect: on, monthsTotal: plan.months, everInEffect: on > 0 });
   }
 
   /**
@@ -824,6 +855,7 @@
     realCost: realCost,
     deflate: deflate,
     cascade: cascade,
+    pushPhases: pushPhases,
     monthFlow: monthFlow,
     promoStatus: promoStatus,
     effectiveRate: effectiveRate,
