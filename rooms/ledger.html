@@ -88,15 +88,58 @@
   .sky-band-head .state { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: auto; }
   .sky-band-head .state.is-clear { color: var(--color-accent-hover); }
   .sky-band p.why { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
-  .sky-levels { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-  .sky-levels li { display: grid; grid-template-columns: 18px 1fr auto; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); line-height: var(--leading-normal, 1.5); }
+  .sky-tabs { display: flex; gap: var(--space-2); margin: 0 0 var(--space-3); }
+  .sky-tabs button { flex: 1; background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 8px var(--space-3); min-height: 40px; font: inherit; font-size: var(--text-sm); color: var(--color-text-muted); cursor: pointer; }
+  .sky-tabs button.is-on { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); }
+  .u-lede { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); line-height: var(--leading-loose); }
+  .u-head { font-size: var(--text-xs); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-faint); margin: var(--space-4) 0 var(--space-2); }
+  .u-first { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .u-first button { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: baseline; width: 100%; min-height: 44px; padding: var(--space-2) var(--space-2) var(--space-2) 0; background: none; border: 0; border-radius: var(--radius-sm); font: inherit; font-size: var(--text-sm); color: inherit; text-align: left; cursor: pointer; }
+  .u-first button:hover { background: var(--color-surface-active); }
+  .u-first .u-where { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .u-first .u-n { font-size: var(--text-xs); color: var(--color-accent-hover); white-space: nowrap; }
+  .u-tier { border-top: 1px solid var(--color-border); }
+  .u-tier > button { display: grid; grid-template-columns: auto 1fr auto; gap: var(--space-2); align-items: baseline; width: 100%; min-height: 44px; padding: var(--space-3) 0; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .u-tier > button .n { font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+  .u-tier > button b { font-size: var(--text-sm); font-weight: 600; }
+  .u-tier > button .c { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  .u-tier > button .c.is-all { color: var(--color-accent-hover); }
+  .u-list { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+  .u-list li { font-size: var(--text-sm); line-height: var(--leading-normal, 1.5); }
+  .u-list .u-name { color: var(--color-text); }
+  .u-list li.is-ready .u-name { color: var(--color-accent-hover); }
+  .u-list .u-needs { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: 4px; }
+  .u-list .u-needs span { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .u-list .u-needs button { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 4px var(--space-2); min-height: 32px; font: inherit; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+  .u-list .u-needs button:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  .sky-filter { display: flex; gap: var(--space-2); margin: 0 0 var(--space-2); }
+  .sky-filter button { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 6px var(--space-3); min-height: 36px; font: inherit; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+  .sky-filter button.is-on { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); }
+  .sky-levels { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .sky-levels li { border-radius: var(--radius-sm); }
+  .sky-levels li.is-open { background: var(--color-surface-active); }
+  /* Every level is a control: tap it to see what it still needs. */
+  .sky-lv { display: grid; grid-template-columns: 18px 1fr auto; gap: var(--space-2); align-items: baseline; width: 100%; min-height: 44px; padding: var(--space-2) var(--space-2) var(--space-2) 0; background: none; border: 0; border-radius: var(--radius-sm); font: inherit; font-size: var(--text-sm); line-height: var(--leading-normal, 1.5); color: inherit; text-align: left; cursor: pointer; }
+  .sky-lv:hover { background: var(--color-surface-active); }
   .sky-levels .tag { font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 600; }
-  .sky-levels .what { min-width: 0; }
-  .sky-levels .what a { color: var(--color-accent-hover); text-decoration: none; }
-  .sky-levels .what a:hover { text-decoration: underline; }
-  .sky-levels .what em { font-style: normal; color: var(--color-text-faint); font-size: var(--text-xs); display: block; }
+  .sky-levels .what { min-width: 0; color: var(--color-text); }
+  .sky-levels li.is-done .what { color: var(--color-text-muted); }
   .sky-levels .mark { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
   .sky-levels .mark.is-done { color: var(--color-accent-hover); }
+  .sky-lv-detail { padding: 0 var(--space-2) var(--space-3) calc(18px + var(--space-2)); }
+  .sky-lv-detail p { margin: 0 0 var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); line-height: var(--leading-loose); }
+  .sky-lv-detail p b { color: var(--color-text); font-weight: 600; }
+  .sky-lv-detail .d-note { color: var(--color-text-faint); }
+  .d-fields { list-style: none; margin: 0 0 var(--space-2); padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+  .d-fields li { display: flex; flex-wrap: wrap; gap: 2px var(--space-2); align-items: baseline; font-size: var(--text-xs); padding: 4px 0; border-top: 1px solid var(--color-border); }
+  .d-fields .d-name { color: var(--color-text); }
+  .d-fields li.is-in .d-name { color: var(--color-text-muted); }
+  .d-fields .d-state { color: var(--color-text-faint); margin-left: auto; white-space: nowrap; display: flex; gap: var(--space-2); align-items: baseline; }
+  .d-fields .d-go { padding-left: var(--space-2); border-left: 1px solid var(--color-border); }
+  .d-fields .d-val { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .d-fields a { color: var(--color-accent-hover); text-decoration: none; min-height: 32px; display: inline-block; }
+  .d-fields a:hover { text-decoration: underline; }
+  .d-fields .d-none { color: var(--color-text-faint); }
   .sky-next { border: 1px solid var(--color-border-active); border-radius: var(--radius-md); padding: var(--space-3); margin: 0 0 var(--space-4); }
   .sky-next .eyebrow { font-size: var(--text-xs); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-faint); }
   .sky-next b { display: block; margin: var(--space-1) 0; }
@@ -955,10 +998,17 @@
   <section id="view-sky" hidden>
   <p class="slaf-lede">Six areas of your money, ten bands deep. A band means the same depth of knowing on every planet, so band 4 on Taxes is as deep as band 4 on Debt. Nothing here is locked: a level you have not answered is simply not yet.</p>
   <p class="sky-say" id="sky-say"></p>
-  <div class="sky-next" id="sky-next" hidden></div>
-  <div class="sky-grid" id="sky-grid"></div>
-  <p class="sky-key" id="sky-key"></p>
-  <div class="sky-open" id="sky-open"></div>
+  <div class="sky-tabs" id="sky-tabs" role="group" aria-label="Two ways to read the planets">
+    <button type="button" data-tab="planets" class="is-on">The planets</button>
+    <button type="button" data-tab="unlocks">What unlocks</button>
+  </div>
+  <div id="sky-planets">
+    <div class="sky-next" id="sky-next" hidden></div>
+    <div class="sky-grid" id="sky-grid"></div>
+    <p class="sky-key" id="sky-key"></p>
+    <div class="sky-open" id="sky-open"></div>
+  </div>
+  <div id="sky-unlocks" hidden></div>
   </section>
 
 
@@ -3244,12 +3294,13 @@
 })();
 </script>
 <script>
-/* ---- The planets (D-321) ---------------------------------------------------
+/* ---- The planets (D-321, opened up in D-322) --------------------------------
    docs/SOLAR-SYSTEM.md, Part 1 and the list view of B12. Six planets down the
    side, the ten bands across, the three levels of a band in every cell, and
    what is already answered. shared/solar.js does the reading; this only draws.
-   The Sky's drawn version comes later; the list is the one that has to be
-   legible at 380px and is what a screen reader gets, so it is built first. */
+   Every level is a control: tapping one opens what it collects, which of those
+   facts are in, which are not, and where each one is entered. A level nothing
+   can collect yet says so rather than looking broken. */
 (function () {
   'use strict';
   var Solar = SLAF.Solar, Spine = SLAF.Spine, Reference = SLAF.Reference;
@@ -3257,7 +3308,9 @@
   if (!host || !Solar) return;
   var el = function (id) { return document.getElementById(id); };
   function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
-  var ready = false, open = null;
+  var ready = false, open = null, openLevel = null, only = 'all', RECIPES = {}, tab = 'planets', openTier = 1;
+
+  function minutes(m, cap) { var t = m < 1 ? 'about half a minute' : 'about ' + Math.round(m) + (m < 2 ? ' minute' : ' minutes'); return cap ? t.charAt(0).toUpperCase() + t.slice(1) : t; }
 
   function dots(band) {
     return band.rows.map(function (r) {
@@ -3275,19 +3328,19 @@
       }).join('') + '</span></div>';
     var rows = all.map(function (p) {
       return '<button type="button" class="sky-row' + (open === p.id ? ' is-open' : '') + '" data-planet="' + esc(p.id) + '" aria-expanded="' + (open === p.id ? 'true' : 'false') + '">'
-        + '<span class="sky-name"><b>' + esc(p.label) + '</b><span>' + p.done + ' of ' + p.applicable + ' answered</span></span>'
+        + '<span class="sky-name"><b>' + esc(p.label) + '</b><span>' + esc(p.done) + ' of ' + esc(p.applicable) + ' answered</span></span>'
         + '<span class="sky-cells">' + p.bands.map(function (b) {
           return '<span class="sky-cell' + (b.cleared && b.applicable ? ' is-clear' : '') + '">' + dots(b) + '</span>';
         }).join('') + '</span></button>';
     }).join('');
     var html = head + rows;
-    el('sky-grid').innerHTML = html;   /* every part is built with esc() above */
+    el('sky-grid').innerHTML = html;
   }
 
   function drawKey(all) {
     var names = all[0].bands.map(function (b) { return b.band + ' ' + b.name; }).join(', ');
     el('sky-key').innerHTML = '<b>The bands:</b> ' + esc(names) + '.<br/>'
-      + 'A filled dot is a level you have answered, a hollow one is not yet, a short line is a level that does not apply to you, so that planet is shorter. A gold cell is a band you have finished. Tap a planet to read its levels.';
+      + 'A filled dot is a level you have answered, a hollow one is not yet, a short line is a level that does not apply to you, so that planet is shorter. A gold cell is a band you have finished. Tap a planet to read its levels, then tap a level to see what it needs.';
   }
 
   function drawSay(o) {
@@ -3297,8 +3350,36 @@
     var n = o.next, box = el('sky-next');
     if (!n) { box.hidden = true; return; }
     box.hidden = false;
-    box.innerHTML = '<span class="eyebrow">Next</span><b>' + esc(n.planetLabel) + ' ' + n.level.level + ': ' + esc(n.level.prompt) + '</b>'
-      + '<p>' + esc(n.why) + ' About ' + (n.level.minutes < 1 ? 'half a minute' : Math.round(n.level.minutes) + (n.level.minutes < 2 ? ' minute' : ' minutes')) + '. ' + esc(n.level.first15) + '</p>';
+    var next = '<span class="eyebrow">Next</span><b>' + esc(n.planetLabel) + ' ' + esc(n.level.level) + ': ' + esc(n.level.prompt) + '</b>'
+      + '<p>' + esc(n.why) + ' ' + esc(minutes(n.level.minutes)) + '. ' + esc(n.level.first15) + '</p>';
+    box.innerHTML = next;
+  }
+
+  /* What one level collects, fact by fact: what is in, what is not, and where
+     each one is entered. A fact the app has nowhere to put yet says that. */
+  function detailHtml(r) {
+    var lv = r.level, out = [];
+    out.push('<p class="d-why"><b>What it gives you.</b> ' + esc(lv.checkpoint) + '</p>');
+    var gives = (lv.payoff && lv.payoff.metrics || []).map(function (id) { return RECIPES[id]; }).filter(Boolean);
+    if (gives.length) out.push('<p class="d-why"><b>Unlocks.</b> ' + esc(gives.join(', ')) + '.</p>');
+    out.push('<p class="d-why"><b>Where to find it.</b> ' + esc(lv.first15) + ' ' + esc(minutes(lv.minutes, true)) + '.</p>');
+    var live = (r.fields || []).filter(function (f) { return f.applies; });
+    if (live.length) {
+      out.push('<ul class="d-fields">');
+      live.forEach(function (f) {
+        var state = f.filled ? 'in' : 'not yet';
+        var val = f.filled && f.display ? ' <span class="d-val">' + esc(f.display) + '</span>' : '';
+        var go = f.href ? ' <a href="' + esc(f.href) + '">' + (f.filled ? 'change it' : 'enter it') + ' \u2192</a>'
+          : ' <span class="d-none">nowhere to type it yet</span>';
+        out.push('<li class="' + (f.filled ? 'is-in' : '') + '"><span class="d-name">' + esc(f.label) + '</span>'
+          + '<span class="d-state">' + esc(state) + val + '<span class="d-go">' + go + '</span></span></li>');
+      });
+      out.push('</ul>');
+    }
+    if (!live.some(function (f) { return f.href; })) {
+      out.push('<p class="d-note">Nothing on this screen can take this answer yet. It is one of the new questions, and the screen that asks it is the next step.</p>');
+    }
+    return out.join('');
   }
 
   function drawOpen(all) {
@@ -3306,34 +3387,108 @@
     if (!open) { box.innerHTML = ''; return; }
     var p = all.filter(function (x) { return x.id === open; })[0];
     if (!p) { box.innerHTML = ''; return; }
+    var left = p.applicable - p.done;
     var out = ['<h3>' + esc(p.label) + '</h3>',
-      '<p class="sky-sub">' + p.done + ' of ' + p.applicable + ' levels answered, working on band ' + p.working + ' of 10.'
-        + (p.applicable < p.rows.length ? ' ' + (p.rows.length - p.applicable) + ' levels do not apply to you, so this planet is shorter.' : '') + '</p>'];
+      '<p class="sky-sub">' + esc(p.done) + ' of ' + esc(p.applicable) + ' levels answered, working on band ' + esc(p.working) + ' of 10.'
+        + (p.applicable < p.rows.length ? ' ' + esc(p.rows.length - p.applicable) + ' levels do not apply to you, so this planet is shorter.' : '') + '</p>',
+      '<div class="sky-filter" role="group" aria-label="Which levels to show">'
+        + '<button type="button" data-only="all" class="' + (only === 'all' ? 'is-on' : '') + '">All ' + esc(p.applicable) + '</button>'
+        + '<button type="button" data-only="notYet" class="' + (only === 'notYet' ? 'is-on' : '') + '">Not done ' + esc(left) + '</button>'
+        + '</div>'];
+    var shown = 0;
     p.bands.forEach(function (b) {
       if (!b.applicable) return;
+      var rows = b.rows.filter(function (r) { return r.applies && (only === 'all' || r.state !== 'done'); });
+      if (!rows.length) return;
       var state = b.cleared ? 'finished' : b.done ? b.done + ' of ' + b.applicable : 'not yet';
-      out.push('<div class="sky-band"><div class="sky-band-head"><span class="n">Band ' + b.band + '</span><b>' + esc(b.name) + '</b>'
+      out.push('<div class="sky-band"><div class="sky-band-head"><span class="n">Band ' + esc(b.band) + '</span><b>' + esc(b.name) + '</b>'
         + '<span class="state' + (b.cleared ? ' is-clear' : '') + '">' + esc(state) + '</span></div>');
       out.push('<ul class="sky-levels">');
-      b.rows.forEach(function (r) {
-        if (!r.applies) return;
+      rows.forEach(function (r) {
+        shown++;
         var mark = r.state === 'done' ? 'answered' : r.state === 'part' ? r.filled + ' of ' + r.of : 'not yet';
-        var link = (r.fields || []).filter(function (f) { return f.href && f.applies; })[0];
-        var what = esc(r.level.prompt);
-        if (link) what = '<a href="' + esc(link.href) + '">' + what + '</a>';
-        out.push('<li><span class="tag" title="' + esc(({ E: 'Enter', C: 'Confirm', S: 'Sharpen' })[r.level.tag] || '') + '">' + esc(r.level.tag) + '</span>'
-          + '<span class="what">' + what + '<em>' + esc(r.level.checkpoint) + '</em></span>'
-          + '<span class="mark' + (r.state === 'done' ? ' is-done' : '') + '">' + esc(mark) + '</span></li>');
+        var isOpen = openLevel === r.level.id;
+        out.push('<li class="' + (r.state === 'done' ? 'is-done' : '') + (isOpen ? ' is-open' : '') + '">'
+          + '<button type="button" class="sky-lv" data-level="' + esc(r.level.id) + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '">'
+          + '<span class="tag" title="' + esc(({ E: 'Enter', C: 'Confirm', S: 'Sharpen' })[r.level.tag] || '') + '">' + esc(r.level.tag) + '</span>'
+          + '<span class="what">' + esc(r.level.prompt) + '</span>'
+          + '<span class="mark' + (r.state === 'done' ? ' is-done' : '') + '">' + esc(mark) + '</span></button>'
+          + (isOpen ? '<div class="sky-lv-detail">' + detailHtml(r) + '</div>' : '') + '</li>');
       });
       out.push('</ul></div>');
     });
-    box.innerHTML = out.join('');
+    if (!shown) out.push('<p class="sky-sub">Every level on this planet is answered.</p>');
+    var html = out.join('');
+    box.innerHTML = html;
+  }
+
+  /* ---- What finishing a level unlocks -------------------------------------
+     The other half of the screen: not what you have done, but what it buys.
+     A reading is ready when every level it needs is answered, and waiting
+     when one is not, naming which. Tapping a level it waits on opens that
+     level on the planets tab. */
+  function levelLabel(id) {
+    var lv = Solar.byId(id);
+    if (!lv) return id;
+    var p = Solar.planets().filter(function (x) { return x.id === lv.planet; })[0];
+    return (p ? p.label : lv.planet) + ' ' + lv.level;
+  }
+  function drawUnlocks(h) {
+    var box = el('sky-unlocks');
+    var all = Solar.metrics(h), tiers = Solar.tiers(h);
+    var readyN = all.filter(function (m) { return m.state === 'ready'; }).length;
+    var out = ['<p class="u-lede"><b>' + esc(readyN) + '</b> of <b>' + esc(all.length) + '</b> readings can be worked out from what you have answered. '
+      + 'Every other one names the levels it is still waiting on. Nothing is locked: a reading simply cannot exist until its facts do.</p>'];
+    var blockers = tiers.reduce(function (acc, t) { return acc.concat(t.blockers); }, [])
+      .reduce(function (acc, b) { var hit = acc.filter(function (x) { return x.id === b.id; })[0]; if (hit) hit.unlocks += b.unlocks; else acc.push({ id: b.id, unlocks: b.unlocks }); return acc; }, [])
+      .sort(function (x, y) { return y.unlocks - x.unlocks; }).slice(0, 6);
+    if (blockers.length) {
+      out.push('<p class="u-head">Do these first</p><ul class="u-first">');
+      blockers.forEach(function (b) {
+        var lv = Solar.byId(b.id);
+        if (!lv) return;
+        out.push('<li><button type="button" data-goto="' + esc(b.id) + '">'
+          + '<span>' + esc(lv.prompt) + '<span class="u-where">' + esc(levelLabel(b.id)) + ', band ' + esc(lv.band) + ', ' + esc(minutes(lv.minutes)) + '</span></span>'
+          + '<span class="u-n">unlocks ' + esc(b.unlocks) + '</span></button></li>');
+      });
+      out.push('</ul>');
+    }
+    out.push('<p class="u-head">Every reading, by band</p>');
+    tiers.forEach(function (t) {
+      var mine = all.filter(function (m) { return m.tier === t.tier; });
+      var isOpen = openTier === t.tier;
+      out.push('<div class="u-tier"><button type="button" data-tier="' + esc(t.tier) + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '">'
+        + '<span class="n">Band ' + esc(t.tier) + '</span><b>' + esc(t.name) + '</b>'
+        + '<span class="c' + (t.ready === t.total ? ' is-all' : '') + '">' + esc(t.ready) + ' of ' + esc(t.total) + ' ready</span></button>');
+      if (isOpen) {
+        out.push('<ul class="u-list">');
+        mine.forEach(function (m) {
+          var needs = m.state === 'ready' ? '<span class="u-needs"><span>Ready from what you have answered.</span></span>'
+            : '<span class="u-needs"><span>Waiting on</span>' + m.missing.map(function (id) {
+              return '<button type="button" data-goto="' + esc(id) + '">' + esc(levelLabel(id)) + '</button>';
+            }).join('') + '</span>';
+          out.push('<li class="' + (m.state === 'ready' ? 'is-ready' : '') + '"><span class="u-name">' + esc(m.label) + '</span>' + needs + '</li>');
+        });
+        out.push('</ul>');
+      }
+      out.push('</div>');
+    });
+    var html = out.join('');
+    box.innerHTML = html;
   }
 
   function paint() {
     if (!ready) return;
-    var o = Solar.overall(Spine.getProfile());
-    drawSay(o); drawGrid(o.planets); drawKey(o.planets); drawOpen(o.planets);
+    var h = Spine.getProfile();
+    var o = Solar.overall(h);
+    drawSay(o);
+    el('sky-planets').hidden = tab !== 'planets';
+    el('sky-unlocks').hidden = tab !== 'unlocks';
+    Array.prototype.forEach.call(document.querySelectorAll('#sky-tabs button'), function (b) {
+      b.classList.toggle('is-on', b.getAttribute('data-tab') === tab);
+    });
+    if (tab === 'planets') { drawGrid(o.planets); drawKey(o.planets); drawOpen(o.planets); }
+    else { drawUnlocks(h); }
   }
 
   el('sky-grid').addEventListener('click', function (e) {
@@ -3341,12 +3496,51 @@
     if (!b) return;
     var id = b.getAttribute('data-planet');
     open = open === id ? null : id;
+    openLevel = null;
     paint();
     if (open) { var o = el('sky-open'); if (o && o.scrollIntoView) o.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
   });
 
-  Reference.load(['levels']).then(function (t) {
+  el('sky-open').addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target : null;
+    if (!t) return;
+    var f = t.closest('[data-only]');
+    if (f) { only = f.getAttribute('data-only'); openLevel = null; paint(); return; }
+    var lv = t.closest('.sky-lv');
+    if (!lv) return;
+    var id = lv.getAttribute('data-level');
+    openLevel = openLevel === id ? null : id;
+    paint();
+    var still = document.querySelector('.sky-lv[data-level="' + id + '"]');
+    if (still && openLevel && still.scrollIntoView) still.scrollIntoView({ block: 'nearest' });
+  });
+
+  el('sky-tabs').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-tab]') : null;
+    if (!b) return;
+    tab = b.getAttribute('data-tab');
+    paint();
+  });
+
+  /* A level named anywhere in the unlocks tab opens on the planets tab. */
+  el('sky-unlocks').addEventListener('click', function (e) {
+    var t = e.target;
+    var tier = t.closest ? t.closest('[data-tier]') : null;
+    if (tier) { var n = Number(tier.getAttribute('data-tier')); openTier = openTier === n ? 0 : n; paint(); return; }
+    var go = t.closest ? t.closest('[data-goto]') : null;
+    if (!go) return;
+    var id = go.getAttribute('data-goto'), lv = Solar.byId(id);
+    if (!lv) return;
+    tab = 'planets'; open = lv.planet; openLevel = id; only = 'all';
+    paint();
+    var btn = document.querySelector('.sky-lv[data-level="' + id + '"]');
+    if (btn && btn.scrollIntoView) btn.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+
+  Reference.load(['levels', 'recipes']).then(function (t) {
     Solar.use(t.levels);
+    Solar.useRecipes(t.recipes);
+    (t.recipes && t.recipes.recipes || []).forEach(function (r) { RECIPES[r.id] = r.label; });
     ready = true;
     paint();
     if (Spine.onChange) Spine.onChange(paint);

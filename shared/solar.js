@@ -174,6 +174,56 @@
     };
   }
 
+  /* ---- What finishing a level unlocks (D-322) -----------------------------
+     data/recipes.json says which levels each reading needs. A reading is
+     ready when every one of them is answered, and waiting when any is not:
+     never locked, never N/A, and it always names what it is waiting on. */
+  var RECIPES = null;
+  function useRecipes(recipes) { RECIPES = recipes || null; return RECIPES; }
+  function recipes() { return RECIPES ? RECIPES.recipes.slice() : []; }
+  function answered(h) {
+    var out = {};
+    grid(h).forEach(function (p) {
+      p.rows.forEach(function (r) { if (r.applies && r.state === 'done') out[r.level.id] = true; });
+    });
+    return out;
+  }
+  /** Every reading, with what it still needs. Closest to ready first. */
+  function metrics(h, doneMap) {
+    var done = doneMap || answered(h);
+    return recipes().map(function (r) {
+      var missing = (r.needs || []).filter(function (id) { return !done[id]; });
+      return {
+        id: r.id, label: r.label, tier: r.tier, unit: r.unit, how: r.how, core: !!r.core,
+        needs: r.needs || [], missing: missing, have: (r.needs || []).length - missing.length, of: (r.needs || []).length,
+        state: missing.length ? 'waiting' : 'ready'
+      };
+    }).sort(function (a, b) {
+      if ((a.state === 'ready') !== (b.state === 'ready')) return a.state === 'ready' ? -1 : 1;
+      if (a.missing.length !== b.missing.length) return a.missing.length - b.missing.length;
+      if (a.tier !== b.tier) return a.tier - b.tier;
+      return a.label.localeCompare(b.label);
+    });
+  }
+  /** Per tier: how many readings are ready, and which levels the rest wait on. */
+  function tiers(h) {
+    var done = answered(h), all = metrics(h, done), out = [];
+    for (var t = 1; t <= 10; t++) {
+      var mine = all.filter(function (m) { return m.tier === t; });
+      var waiting = mine.filter(function (m) { return m.state === 'waiting'; });
+      var levels = {};
+      waiting.forEach(function (m) { m.missing.forEach(function (id) { levels[id] = (levels[id] || 0) + 1; }); });
+      out.push({
+        tier: t, name: (bands()[t - 1] || {}).name || ('Tier ' + t),
+        total: mine.length, ready: mine.length - waiting.length, waiting: waiting.length,
+        /* The levels the most readings are waiting on, worth doing first. */
+        blockers: Object.keys(levels).sort(function (a, b) { return levels[b] - levels[a]; })
+          .map(function (id) { return { id: id, unlocks: levels[id] }; })
+      });
+    }
+    return out;
+  }
+
   function grid(h) { return planets().map(function (p) { return planet(p.id, h); }); }
   function bandCleared(band, h) { return grid(h).every(function (p) { return (p.bands[band - 1] || {}).cleared; }); }
 
@@ -220,6 +270,7 @@
     use: use, table: table,
     planets: planets, bands: bands, levels: levels, byId: byId, forPlanet: forPlanet,
     applies: applies, levelState: levelState,
-    planet: planet, grid: grid, bandCleared: bandCleared, next: next, overall: overall
+    planet: planet, grid: grid, bandCleared: bandCleared, next: next, overall: overall,
+    useRecipes: useRecipes, recipes: recipes, answered: answered, metrics: metrics, tiers: tiers
   };
 });
