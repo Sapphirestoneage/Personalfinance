@@ -16783,6 +16783,36 @@ room offering its link and one without saying why, the unlocks tab leading
 with take-home pay at 26 readings, and a tap there opening that level on the
 planets tab. Clean console.
 
+## D-323 — A link that names a field opens to the field, not to the room
+
+**Why.** A level said where to answer a fact and the link dropped you at the
+top of a long room, sometimes with the question three screens down. The owner:
+"open it to the field, I don't want it to just be like to the screen."
+
+**Decision.** `shared/progress.js` reveals whatever the hash names, in every
+room. It waits for the box rather than the section, since most rooms draw
+their inputs from the household after load; it opens a `<details>` around the
+target; it scrolls the field under whatever the room pins to the top, measured
+rather than guessed; and it puts the cursor in the box unless the anchor names
+a whole view, with the caret after a saved figure rather than over it. `shared/theme.css` rings the row for 2.4 seconds, one clock per
+landing, held still for reduced motion. A card that draws or collapses late
+drags the field off the top, so a `ResizeObserver` puts it back in the same
+frame for six seconds, and a timer behind it covers browsers without one. The
+first wheel, touch, key or click ends the landing, and a second link takes it
+over. `rooms/start.html` gains the one missing id (`q-unemployed`).
+
+**Replaces or removes.** Nothing goes away: the same links now land on the
+question instead of the room, so the level's "where to answer" is a single tap
+rather than a hunt.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (34,938), `node test/solar.js`, the other
+suites and the six browser gates, `test/forms.js` included: landing on an
+answered question still leaves the figure intact when you type. New gate `test/anchors.js` opens all 70 field
+links in a phone-sized browser: 66 checks pass, 63 fields land near the top,
+7 are gated away for the example household. Clean console.
+
 ---
 
 # The Dungeons & Dividends entries

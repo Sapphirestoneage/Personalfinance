@@ -12,15 +12,15 @@ Updated: 2026-09-20
 - **Facts are entered in the Ledger only (D-313)**: one owner per row.
 - **New rooms**: The Bridge, Which Account, The Mix, The Documents, Left
   Behind (D-316). Worst year is the Cushion's (D-314); pay to come (D-315).
-- **From main**: a statement in (D-306); the Calendar (D-308); all three
-  intakes stay (D-309); plain words (D-310, D-311).
-- **The Solar System (D-320 to D-322)**: `docs/SOLAR-SYSTEM.md` is the spec.
-  The data layer is in (180 levels, 184 recipes, 17 moons, 98 moves, defaults,
-  benchmarks, the lexicon) and `shared/solar.js` reads it against a household.
-  The Ledger's seventh hat, Planets (`#planets`), shows six planets by ten
-  bands; every level opens to what it needs, and a second tab says what
-  finishing it unlocks (D-322). `test/solar.js` lints it.
+- **From main**: a statement in (D-306); all three intakes stay (D-309).
+- **The Solar System (D-320 to D-322)**: `docs/SOLAR-SYSTEM.md` is the spec; the
+  data layer is in (180 levels, 184 recipes, 17 moons, 98 moves, defaults,
+  benchmarks) and `shared/solar.js` reads it. The Ledger's seventh hat, Planets
+  (`#planets`), shows six planets by ten bands; every level opens to what it
+  needs, and a tab says what finishing it unlocks. `test/solar.js` lints it.
 - **No em dash on screen (D-321)**: the not-entered placeholder reads "not yet".
+- **A link opens to the field (D-323)**: an `#anchor` lands the question at the
+  top, cursor in it; `test/anchors.js` opens all 70 in a browser.
 - **D-319**: every room says how old its numbers are; the example says so.
 - **Main is worked on directly by another lane**: merge it before every push.
   The reframe D-228 asks for has NOT shipped. Freeze holds (D-313).

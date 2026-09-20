@@ -16480,6 +16480,54 @@ section('Every screen says how old its numbers are; the example says so; the lod
   }
 })();
 
+section('A link that names a field opens to the field (D-323)');
+
+(function () {
+  /* The links are already anchored: what was missing is that a room draws
+     its inputs after the page loads, so the browser has given up on the hash
+     long before the box exists. shared/progress.js waits for it. */
+  const src = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('every room reveals the hash target on load and on a hash change',
+    /revealTarget\(\);/.test(src) && /addEventListener\('hashchange', function \(\) \{ revealTarget\(\); \}\)/.test(src));
+  checkTrue('it waits for the box to be drawn rather than landing on an empty section',
+    /focusableIn\(node\)/.test(src) && /REVEAL_TRIES/.test(src) && /setTimeout\(function \(\) \{ revealTarget\(id, left - 1\); \}/.test(src));
+  checkTrue('it opens a fold around the target', /closest\('details'\)/.test(src) && /d\.open = true/.test(src));
+  checkTrue('it brings the field to the top, under whatever the room pins there',
+    /function headerOffset/.test(src) && /cs\.position !== 'sticky' && cs\.position !== 'fixed'/.test(src));
+  checkTrue('it puts the cursor in the box, but never in a whole view',
+    /function putCursor/.test(src) && /\/\^view-\/\.test\(id\)/.test(src) && /preventScroll: true/.test(src));
+  checkTrue('and the caret goes after a saved figure, never over it',
+    /setSelectionRange\(box\.value\.length, box\.value\.length\)/.test(src) && !/box\.select\(\)/.test(src));
+  checkTrue('it lands again while the room settles, because a room can rebuild a card whole',
+    /function land\(g, node, id, pass, ticket\)/.test(src) && /SETTLE_EVERY/.test(src) && /SETTLE_MS/.test(src));
+  checkTrue('a card that draws or collapses late puts the field back in the same frame',
+    /function watchLayout/.test(src) && /new g\.ResizeObserver/.test(src));
+  checkTrue('a hand on the page, or a second link, ends the landing',
+    /function watchForAHand/.test(src) && /moved = true/.test(src) && /ticketNow = \+\+landing/.test(src));
+  checkTrue('the mark is a ring that fades, never red, and honours reduced motion',
+    /slaf-landed/.test(src) && /LANDED_MS/.test(src));
+  const css = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('theme.css draws the landing ring', /\.slaf-landed \{/.test(css) && /@keyframes slaf-land/.test(css));
+  checkTrue('and holds it still for reduced motion', /prefers-reduced-motion: reduce\) \{\s*\n\s*\.slaf-landed \{ animation: none/.test(css));
+  checkTrue('the D&D copy of the stylesheet matches', fs.readFileSync(path.join(ROOT, 'dnd/shared/theme.css'), 'utf8') === css);
+
+  /* Every field a level collects names an anchor, and every anchor is a real
+     id in the room that owns it: a link that lands nowhere is the bug this
+     section exists to stop. */
+  const Levels = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/levels.json'), 'utf8'));
+  const seen = {};
+  Levels.levels.forEach(l => l.fields.forEach(f => {
+    if (!f.existing || !Ownership.FIELDS[f.key] || seen[f.key]) return;
+    seen[f.key] = true;
+    const fd = Ownership.FIELDS[f.key], room = Registry.byId(fd.owner);
+    checkTrue(`${f.key} names an anchor`, !!fd.anchor);
+    checkTrue(`${f.key} names a room that exists`, !!room, fd.owner);
+    /* Whether the anchor resolves is a question about the rendered page:
+       half these rooms build their cards from the household, so the id never
+       appears in the source. test/anchors.js walks them in a browser. */
+  }));
+})();
+
 section('No em dash anywhere the app can show one (D-321)');
 
 (function () {

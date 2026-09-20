@@ -329,7 +329,7 @@
       return '<p class="q-help">The sequence for being out of work: what is coming in, and since when. The state’s cap is pencilled in, never assumed.</p>'
         + '<span class="sub-label">The job ended in</span><div class="row">' + select('sinceMonth', '&nbsp;', monthOptions(), 'Month the job ended') + select('sinceYear', '&nbsp;', yearOptions(thisYear, thisYear - 6), 'Year the job ended') + '</div>'
         + choices('benefitStatus', BENEFIT, 'Unemployment benefit')
-        + '<div class="row" data-benefit hidden style="margin-top:var(--space-3)">' + moneyInput('weekly', 'A week, before tax', 'e.g. 350', 'Weekly benefit')
+        + '<div class="row" id="q-unemployed" data-benefit hidden style="margin-top:var(--space-3)">' + moneyInput('weekly', 'A week, before tax', 'e.g. 350', 'Weekly benefit')
         + '<label class="slaf-field"><span class="slaf-label">Weeks left' + badge('weeks') + '</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" data-ctl="weeks" placeholder="e.g. 20" aria-label="Weeks of benefit left"/></span></label></div>'
         + '<p class="field-note" data-note="benefit" hidden></p>'
         + '<div class="row" style="margin-top:var(--space-2)">' + moneyInput('severance', 'Severance still in hand', 'e.g. 4,000') + moneyInput('lastPay', 'The last job paid, a year', 'e.g. 52,000') + '</div>';
