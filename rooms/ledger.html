@@ -1009,7 +1009,7 @@
 
   <!-- ================= THE PLANETS (D-321) ============================== -->
   <section id="view-sky" hidden>
-  <p class="slaf-lede">Six areas of your money, ten bands deep. A band means the same depth of knowing on every planet, so band 4 on Taxes is as deep as band 4 on Debt. Nothing here is locked: a level you have not answered is simply not yet.</p>
+  <p class="slaf-lede" id="planets">Six areas of your money, ten bands deep. A band means the same depth of knowing on every planet, so band 4 on Taxes is as deep as band 4 on Debt. Nothing here is locked: a level you have not answered is simply not yet.</p>
   <p class="sky-say" id="sky-say"></p>
   <div class="sky-tabs" id="sky-tabs" role="group" aria-label="Two ways to read the planets">
     <button type="button" data-tab="planets" class="is-on">The planets</button>
@@ -3431,6 +3431,18 @@
       + '<span class="d-said" data-sky-said role="status"></span></div>';
   }
 
+  /* A field with a reader and no writer is worked out from others: this names
+     them in the words the person will see on their own lines. */
+  function addsUpFrom(key) {
+    var f = Ownership && Ownership.FIELDS ? Ownership.FIELDS[key] : null;
+    if (!f || typeof f.write === 'function') return null;
+    var row = LedgerRows && LedgerRows.byId ? LedgerRows.byId(key) : null;
+    var inputs = row && row.inputs ? row.inputs : [];
+    var names = inputs.map(function (id) { return (Ownership.FIELDS[id] || {}).label || id; }).filter(Boolean);
+    if (!names.length) return null;
+    return names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0];
+  }
+
   /* What one level collects, fact by fact: what is in, what is not, where the
      answer is typed, and which room holds the rest of the picture. A fact the
      app has nowhere to put yet says that. */
@@ -3450,7 +3462,11 @@
         var val = f.filled && f.display ? ' <span class="d-val">' + esc(f.display) + '</span>' : '';
         var a = answerFor(defs[f.key]);
         if (a) ASKS[a.id] = a;
-        var go = f.href ? ' <a href="' + esc(f.href) + '">' + (a ? 'the whole room' : f.filled ? 'change it' : 'enter it') + ' \u2192</a>'
+        /* A figure the app works out rather than asks for says what it adds
+           up from, instead of offering a box that would be a second copy. */
+        var adds = addsUpFrom(f.key);
+        var go = adds ? ' <span class="d-none">adds up from ' + esc(adds) + '</span>'
+          : f.href ? ' <a href="' + esc(f.href) + '">' + (a ? 'the whole room' : f.filled ? 'change it' : 'enter it') + ' \u2192</a>'
           : a ? '' : ' <span class="d-none">nowhere to type it yet</span>';
         out.push('<li class="' + (f.filled ? 'is-in' : '') + '"><span class="d-name">' + esc(f.label) + '</span>'
           + '<span class="d-state">' + esc(state) + val + (go ? '<span class="d-go">' + go + '</span>' : '') + '</span>'

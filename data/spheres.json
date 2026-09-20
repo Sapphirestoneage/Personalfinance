@@ -29,7 +29,8 @@
           "age",
           "netWorth",
           "monthlyExpenses",
-          "totalDebt"
+          "totalDebt",
+          "totalSaved"
         ],
         "minutes": 6
       },
@@ -76,9 +77,13 @@
           "incomeType",
           "employerMatch",
           "contributionPercent",
-          "capturingFullMatch"
+          "capturingFullMatch",
+          "savedMonthly",
+          "highInterestBalance",
+          "spendingIncludesDebt",
+          "spendingIncludesSaving"
         ],
-        "minutes": 17.5
+        "minutes": 18.5
       },
       "unlocks": [
         "debt-payoff",
@@ -117,7 +122,7 @@
           "splitMode",
           "sharedMonthly"
         ],
-        "minutes": 4.0
+        "minutes": 4
       },
       "unlocks": [
         "partner",
@@ -155,7 +160,8 @@
           "incomeLow",
           "incomeHigh",
           "bufferMonths",
-          "variableWindow"
+          "variableWindow",
+          "payVaries"
         ],
         "minutes": 4.5
       },
@@ -243,9 +249,10 @@
           "allocationBonds",
           "allocationCash",
           "rebalanceBand",
-          "stockShare"
+          "stockShare",
+          "refundLastYear"
         ],
-        "minutes": 15.5
+        "minutes": 16
       },
       "unlocks": [
         "accounts",
@@ -353,7 +360,7 @@
       "alreadyGood": false,
       "depth": {
         "rows": [],
-        "minutes": 0.0
+        "minutes": 0
       },
       "unlocks": [
         "week",

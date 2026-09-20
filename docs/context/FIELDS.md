@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 121. Traced: 112. No other room mentions it: **58**.
+Fields: 128. Traced: 119. No other room mentions it: **64**.
 
 
 ## big-purchase (4)
@@ -96,7 +96,7 @@ Fields: 121. Traced: 112. No other room mentions it: **58**.
 - `incomeType` — What kind of pay · read by ledger
 - `paySurvives` — Would this pay keep coming if the job ended? · read by ledger, start
 
-## ledger (21)
+## ledger (28)
 
 - `takeHomeMonthly` — Take-home pay, a month · read by cash-flow, calendar, statement, financial-snapshot, values, goals, runway, career-move, partner, big-purchase, debates
 - `rothContributed` — Roth so far this year · read by which-account
@@ -104,6 +104,13 @@ Fields: 121. Traced: 112. No other room mentions it: **58**.
 - `onHdhp` — On a high-deductible health plan · read by bridge, which-account
 - `hsaFamilyPlan` — Family coverage on that plan · read by which-account
 - `marginalRate` — Marginal tax rate · read by which-account, the-documents, debt-payoff, tax, left-behind, decumulation, career-move, housing, debates
+- `totalSaved` — Saved and invested, total · **no other room mentions it**
+- `payVaries` — Pay swings month to month · **no other room mentions it**
+- `spendingIncludesDebt` — The spending total includes debt payments · **no other room mentions it**
+- `spendingIncludesSaving` — The spending total includes saving · **no other room mentions it**
+- `savedMonthly` — Added a month · **no other room mentions it**
+- `highInterestBalance` — Owed above about 8% · read by dashboard, debates
+- `refundLastYear` — Refund last year · **no other room mentions it**
 - `allocationStocks` — Target: stocks · read by the-mix
 - `allocationBonds` — Target: bonds · read by the-mix
 - `allocationCash` — Target: cash · read by the-mix

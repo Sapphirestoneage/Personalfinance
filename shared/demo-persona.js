@@ -51,6 +51,18 @@
        so the HSA question does not apply. */
     contributionPercent: 4,                 // whole percent of salary
     rothContributedThisYear: 1500,
+
+    /* The rough answers band 1 asks (D-325). Robin's pay is steady; the
+       $3,150 month is spending only, with the $305 of debt minimums and the
+       $700 a month of saving counted separately; the credit card is the
+       $3,200 above 8%; and last year's refund was $1,240, which is a year of
+       Robin's own money held back and a real quick win. */
+    payVaries: false,
+    spendingIncludesDebt: false,
+    spendingIncludesSaving: false,
+    savedMonthly: 700,
+    highInterestBalance: 3200,
+    refundLastYear: 1240,
     onHdhp: false,
     highestDeductible: 2500,
 
@@ -193,6 +205,14 @@
       /* The Rerank's joy per line, in the one ratings store. The lines
          themselves arrive with buildSpending(). D-085. */
       ratings: { rerank: Object.assign({}, VALUES.rerankJoy) },
+      sketch: {
+        payVaries: VALUES.payVaries,
+        spendingIncludesDebt: VALUES.spendingIncludesDebt,
+        spendingIncludesSaving: VALUES.spendingIncludesSaving,
+        savedMonthlyCents: Money.toCents(VALUES.savedMonthly),
+        highInterestCents: Money.toCents(VALUES.highInterestBalance),
+        refundLastYearCents: Money.toCents(VALUES.refundLastYear)
+      },
       /* Robin has two debts, and says so: hasDebt is the answer that keeps
          Debt Payoff on the path. D-061. */
       meta: { isDemo: true, hasDebt: true }

@@ -7,10 +7,10 @@ paths:
   - "engines/layouts.js"
 ---
 # The Ledger (`ledger`)
-File: rooms/ledger.html · 3798 lines · utility room
+File: rooms/ledger.html · 3814 lines · utility room
 Engines: projection, tier0, income, ledger, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, coast, opening, benchmarks, ratios, skills
 Reference data: access_rules.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +19 more
-Owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge
+Owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, totalSaved, payVaries, spendingIncludesDebt, spendingIncludesSaving, savedMonthly, highInterestBalance, refundLastYear, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), employmentStatus (start), hasDebt (start), contributionPercent (start), partnerDob (partner), totalDebt (debt-payoff), netWorth (statement), +13 more
 Latest decisions:
   - D-324 — A level is answered where it is asked

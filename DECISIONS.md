@@ -16847,6 +16847,54 @@ and gates. LIVE-FORM: `#sky-open` is guarded with `shared/liveform.js`, and
 the room is now marked as two readings so the guard and the built-once views
 each hold where they belong.
 
+## D-325 — The six band-1 facts that had nowhere to live
+
+**Why.** Band 1 is meant to take under two minutes and light every Tier 1
+reading. Seven of its 24 facts could not be entered anywhere in the app, so
+the first two minutes ended in a dead end.
+
+**Decision.** Six of them become facts of the household, in one new block,
+`household.sketch`: whether pay swings, whether the typed spending total has
+debt payments or saving inside it, what is added a month, roughly how much is
+owed above 8%, and last year's refund. Each gets a row in
+`data/ledger-rows.json`, a reader and a writer in `shared/ownership.js` owned
+by the Ledger, a DAITE path, a sphere, and a value in the example household.
+Each replaces a guess the app was making: the cushion target inferred steady
+or variable pay from the job type, the gap assumed the spending total was
+clean, the savings rate assumed the whole gap was saved, and the high-interest
+flag needed every debt itemised first.
+
+The seventh, the rough total saved (A1), is NOT stored: `Schema.
+savedAndInvestedCents` adds cash and investments, the two parts the app
+already holds, and the Planets screen says "adds up from" rather than offering
+a box that would make a second copy of one number.
+
+A rough figure never beats the detail. Where both exist, the reader takes the
+itemised debts, the logged contributions, the tax room.
+
+An answer takes away the questions it settles. `shared/levers.js` asks
+`sketch.payVaries` before it guesses variable pay from the job type, and a
+level's field can carry its own `appliesWhen` (`shared/solar.js`
+`fieldApplies`), so saying pay is steady drops the low and high month from I3
+and the level is done with the one question that is left.
+
+**Replaces or removes.** No screen and no room. Band 1's dead end, and four
+inferences the app was making without asking.
+
+**Stored shape.** `household.sketch` is new: six keys, each `null` until
+answered, created empty by `Schema.createHousehold`. A saved household from
+before this has no `sketch` key and reads as six unanswered facts, which is
+what they are. Nothing else moved. `dnd/shared/schema.js` is re-vendored.
+
+**Verified.** `node test/run.js` (35,088), `node test/solar.js` (5,099) with
+twenty-three new lints, the D&D suite, export, xlsx, lane 2 and the browser gates.
+In a phone-sized browser on the Planets screen: A3 typed and saved, both E3
+answers tapped, the levels marking themselves answered, and A1 reading "adds
+up from Cash & savings and Investments + retirement". Band 1 is now 18 of 24
+answerable in place, the rest being the two list totals (D1, D2), gross pay
+(per income source) and the two tax confirmations, which confirm rather than
+collect.
+
 ---
 
 # The Dungeons & Dividends entries
