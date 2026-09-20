@@ -1403,6 +1403,7 @@
     var income = Schema.grossAnnualIncomeCents(h);
     if (!Money.isOk(income)) {
       var demo = Demo.build();
+      if (Spine && Spine.markDemo) Spine.markDemo(true);   /* example numbers, said so on every room (D-319) */
       Spine.updateProfile({
         people: demo.people, filingStatus: demo.filingStatus, state: demo.state,
         assets: demo.assets, debts: demo.debts, expenses: demo.expenses,

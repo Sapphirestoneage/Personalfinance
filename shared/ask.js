@@ -345,6 +345,16 @@
   function loadScript(src) {
     return new Promise(function (resolve, reject) {
       var doc = g().document;
+      /* Another mount (the age line, D-319) may have asked for the same
+         file first: share its load rather than run a second copy, which
+         would replace the first and drop the table it holds. */
+      var had = doc.querySelector('script[src="' + src + '"]');
+      if (had) {
+        if (!needScript(src.split('/').pop())) { resolve(); return; }
+        had.addEventListener('load', resolve);
+        had.addEventListener('error', function () { reject(new Error('could not load ' + src)); });
+        return;
+      }
       var s = doc.createElement('script');
       s.src = src; s.onload = resolve; s.onerror = function () { reject(new Error('could not load ' + src)); };
       doc.head.appendChild(s);

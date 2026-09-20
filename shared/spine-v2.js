@@ -479,7 +479,7 @@
      entry for a batch). Undo applies the befores, redo the afters. The
      stacks live in meta so they survive a reload and go with a reset. */
   var HISTORY_CAP = 100;
-  var HISTORY_SKIP = { 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.source': true, 'meta.fields': true, 'meta.fieldsMigratedAt': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.createdAt': true };
+  var HISTORY_SKIP = { 'meta.isDemo': true, 'meta.visits': true, 'meta.updatedAt': true, 'meta.confirmedAt': true, 'meta.source': true, 'meta.fields': true, 'meta.fieldsMigratedAt': true, 'meta.undoStack': true, 'meta.redoStack': true, 'meta.visitedRooms': true, 'meta.createdAt': true };
   var lastSaved = null;
   var applyingHistory = false;
   var batchDepth = 0, batchChanges = null, batchLabel = null;
@@ -1438,6 +1438,7 @@
   function registerRoom(roomId) {
     if (!roomId) return getVisitedRooms();
     currentRoom = roomId;
+    noteVisit();
     var h = load();
     h.meta.visitedRooms = h.meta.visitedRooms || [];
     if (h.meta.visitedRooms.indexOf(roomId) === -1) {
@@ -1451,6 +1452,66 @@
   function getVisitedRooms() {
     var h = load();
     return (h.meta.visitedRooms || []).slice();
+  }
+
+  /* ---- Example numbers, and saying so (D-319) ---------------------------
+     The demo household is the path most people take first; until now it
+     was indistinguishable from the person's own from the second screen on.
+     Set when the demo is written, cleared only by a deliberate act (the
+     person taking the example off, or a reset), never by typing over one
+     figure. */
+  function markDemo(on) {
+    var h = load();
+    if (on) h.meta.isDemo = true; else delete h.meta.isDemo;
+    save(); notify();
+    return !!h.meta.isDemo;
+  }
+  function isDemo() { var h = load(); return !!(h.meta && h.meta.isDemo === true); }
+
+  /* ---- Deliberate use (D-319) ------------------------------------------
+     One calendar day per entry, not one per page view: ten rooms opened in
+     one sitting is one sitting. The day is the local day. count is the true
+     total kept apart from the capped list. Saved, not notified, and skipped
+     by the command log: opening a screen never lands on the undo stack. */
+  var VISIT_DAYS_CAP = 400;
+  function localDay(d) {
+    var t = d || new Date();
+    return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+  }
+  function noteVisit(now) {
+    var h = load();
+    var v = h.meta.visits && typeof h.meta.visits === 'object' ? h.meta.visits : (h.meta.visits = { firstAt: null, lastAt: null, days: [], count: 0 });
+    if (!Array.isArray(v.days)) v.days = [];
+    var at = now instanceof Date ? now : (now ? new Date(now) : new Date());
+    var today = localDay(at), nowIso = at.toISOString();
+    v.lastAt = nowIso;
+    if (!v.firstAt) v.firstAt = nowIso;
+    if (v.days.indexOf(today) !== -1) { save(); return visitStats(at); }
+    v.days.push(today);
+    v.count = (typeof v.count === 'number' ? v.count : 0) + 1;
+    if (v.days.length > VISIT_DAYS_CAP) v.days = v.days.slice(v.days.length - VISIT_DAYS_CAP);
+    save();
+    return visitStats(at);
+  }
+  /** visitStats(now?) -> { days, first, last, lastDays, streak, today }: null-ish, never zero, when there is no record. */
+  function visitStats(now) {
+    var h = load();
+    var v = (h.meta && h.meta.visits) || {};
+    var days = Array.isArray(v.days) ? v.days : [];
+    if (!days.length) return { days: 0, first: v.firstAt || null, last: v.lastAt || null, lastDays: null, streak: 0, today: false };
+    var today = localDay(now instanceof Date ? now : (now ? new Date(now) : null));
+    var idx = days.indexOf(today);
+    var prev = idx === -1 ? days[days.length - 1] : (idx > 0 ? days[idx - 1] : null);
+    var lastDays = prev ? Math.round((Date.parse(today) - Date.parse(prev)) / 86400000) : null;
+    var streak = 0;
+    if (idx !== -1) {
+      streak = 1;
+      for (var i = days.length - 1; i > 0; i--) {
+        if (Math.round((Date.parse(days[i]) - Date.parse(days[i - 1])) / 86400000) === 1) streak++; else break;
+      }
+    }
+    return { days: typeof v.count === 'number' && v.count >= days.length ? v.count : days.length,
+      first: v.firstAt || days[0], last: v.lastAt || days[days.length - 1], lastDays: lastDays, streak: streak, today: idx !== -1 };
   }
 
   /* ---- Snapshots --------------------------------------------------------
@@ -1844,6 +1905,7 @@
     onChange: onChange,
     registerRoom: registerRoom,
     getVisitedRooms: getVisitedRooms,
+    noteVisit: noteVisit, visitStats: visitStats, markDemo: markDemo, isDemo: isDemo,
     ensurePrimaryPerson: ensurePrimaryPerson,
     upsertPerson: upsertPerson,
     upsertIncomeSource: upsertIncomeSource,

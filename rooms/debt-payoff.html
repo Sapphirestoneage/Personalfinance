@@ -2393,6 +2393,7 @@
     if ((h.debts || []).length
         && !window.confirm('This replaces the debts you’ve entered with the example. Continue?')) return;
     var demo = Demo.build();
+    if (Spine && Spine.markDemo) Spine.markDemo(true);   /* example numbers, said so on every room (D-319) */
     Spine.updateProfile({ debts: demo.debts });
     if (!Schema.primaryPerson(Spine.getProfile())) Spine.updateProfile({ people: demo.people });
     extraCents = 20000;
