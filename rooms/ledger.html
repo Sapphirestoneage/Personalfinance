@@ -153,6 +153,9 @@
   .d-ask .choice[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-surface-active); }
   .d-ask .d-save { min-height: 44px; padding: 0 var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); color: inherit; font: inherit; cursor: pointer; }
   .d-said { font-size: var(--text-xs); color: var(--color-text-muted); flex-basis: 100%; min-height: 16px; }
+  /* The reading's own figure, once its levels are answered (D-327). */
+  .u-val { font-variant-numeric: tabular-nums; color: var(--color-text); font-weight: 500; }
+  .u-sharp { display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; color: var(--color-text-faint); font-size: var(--text-xs); }
   .sky-next { border: 1px solid var(--color-border-active); border-radius: var(--radius-md); padding: var(--space-3); margin: 0 0 var(--space-4); }
   .sky-next .eyebrow { font-size: var(--text-xs); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-faint); }
   .sky-next b { display: block; margin: var(--space-1) 0; }
@@ -1066,6 +1069,7 @@
 <script src="../engines/subscriptions.js"></script>
 <script src="../shared/doors.js"></script>
 <script src="../shared/liveform.js"></script>
+<script src="../engines/recipes.js"></script>
 <script src="../shared/solar.js"></script>
 <script src="../shared/showmath.js"></script>
 <script src="../engines/sincelast.js"></script>
@@ -3334,6 +3338,8 @@
   'use strict';
   var Solar = SLAF.Solar, Spine = SLAF.Spine, Reference = SLAF.Reference;
   var Ownership = SLAF.Ownership, LedgerRows = SLAF.LedgerRows, Ask = SLAF.Ask, Money = SLAF.Money, LiveForm = SLAF.LiveForm;
+  var Recipes = SLAF.Recipes;
+  var TABLES = {};
   var host = document.getElementById('view-sky');
   if (!host || !Solar) return;
   var el = function (id) { return document.getElementById(id); };
@@ -3561,10 +3567,30 @@
     var p = Solar.planets().filter(function (x) { return x.id === lv.planet; })[0];
     return (p ? p.label : lv.planet) + ' ' + lv.level;
   }
+  /* A reading's own figure, in the unit data/recipes.json names for it. The
+     value comes from engines/recipes.js, which points at the function the app
+     already had wherever there was one (D-327). A reading this build cannot
+     work out yet says nothing rather than guessing. */
+  function readingValue(m, h) {
+    if (!Recipes) return '';
+    var r = Recipes.value(m.id, h, TABLES);
+    if (!r || !Money.isOk(r)) return '';
+    var u = m.unit, v = r.value;
+    var said = u === 'cents' ? Money.formatCents(v)
+      : u === 'rate' ? Money.formatRate(v, { decimals: 1 })
+      : u === 'multiple' ? Money.formatMultiple(v)
+      : u === 'flag' ? (v ? 'yes' : 'no')
+      : u === 'months' ? (v === null ? 'longer than this pace clears' : Math.round(v) + (Math.round(v) === 1 ? ' month' : ' months'))
+      : u === 'years' ? (Math.round(v * 10) / 10) + (Math.abs(v) === 1 ? ' year' : ' years')
+      : u === 'date' ? String(Math.floor(v))
+      : String(v);
+    return '<span class="u-val">' + esc(said) + '</span>';
+  }
+
   function drawUnlocks(h) {
     var box = el('sky-unlocks');
     var all = Solar.metrics(h), tiers = Solar.tiers(h);
-    var readyN = all.filter(function (m) { return m.state === 'ready'; }).length;
+    var readyN = all.filter(function (m) { return !!readingValue(m, h); }).length;
     var out = ['<p class="u-lede"><b>' + esc(readyN) + '</b> of <b>' + esc(all.length) + '</b> readings can be worked out from what you have answered. '
       + 'Every other one names the levels it is still waiting on. Nothing is locked: a reading simply cannot exist until its facts do.</p>'];
     var blockers = tiers.reduce(function (acc, t) { return acc.concat(t.blockers); }, [])
@@ -3591,11 +3617,22 @@
       if (isOpen) {
         out.push('<ul class="u-list">');
         mine.forEach(function (m) {
-          var needs = m.state === 'ready' ? '<span class="u-needs"><span>Ready from what you have answered.</span></span>'
+          /* A figure the app can already work out is shown, whether or not the
+             level that formally collects the fact has been answered: the app
+             may hold it another way (take-home estimated from gross). The
+             levels still on the list are then what SHARPENS it, rather than
+             what it waits for. */
+          var figure = readingValue(m, h);
+          var sharpen = figure && m.missing.length
+            ? '<span class="u-sharp">sharpen with ' + m.missing.slice(0, 2).map(function (id) {
+              return '<button type="button" data-goto="' + esc(id) + '">' + esc(levelLabel(id)) + '</button>';
+            }).join('') + '</span>' : '';
+          var needs = figure
+            ? '<span class="u-needs">' + figure + sharpen + '</span>'
             : '<span class="u-needs"><span>Waiting on</span>' + m.missing.map(function (id) {
               return '<button type="button" data-goto="' + esc(id) + '">' + esc(levelLabel(id)) + '</button>';
             }).join('') + '</span>';
-          out.push('<li class="' + (m.state === 'ready' ? 'is-ready' : '') + '"><span class="u-name">' + esc(m.label) + '</span>' + needs + '</li>');
+          out.push('<li class="' + (figure ? 'is-ready' : '') + '"><span class="u-name">' + esc(m.label) + '</span>' + needs + '</li>');
         });
         out.push('</ul>');
       }
@@ -3794,7 +3831,8 @@
     if (btn && btn.scrollIntoView) btn.scrollIntoView({ block: 'center', behavior: 'smooth' });
   });
 
-  Reference.load(['levels', 'recipes', 'ledgerRows', 'states']).then(function (t) {
+  Reference.load(['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates', 'stateBrackets', 'federalBrackets', 'levelsOfWealth', 'returnBands', 'fireVariants']).then(function (t) {
+    TABLES = t;
     Solar.use(t.levels);
     Solar.useRecipes(t.recipes);
     if (LedgerRows && t.ledgerRows) LedgerRows.use(t.ledgerRows);

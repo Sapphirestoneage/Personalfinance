@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 128. Traced: 119. No other room mentions it: **64**.
+Fields: 128. Traced: 119. No other room mentions it: **62**.
 
 
 ## big-purchase (4)
@@ -46,7 +46,7 @@ Fields: 128. Traced: 119. No other room mentions it: **64**.
 - `idrShare` — Income-driven share · **no other room mentions it**
 - `forgivenessYears` — Forgiveness after · **no other room mentions it**
 - `totalDebt` — Total debt · read by ledger, start, budget, statement, the-documents, dashboard, financial-snapshot, what-if-life, one-pager
-- `monthlyDebtPayments` — Monthly debt payments · read by start, expenses, cash-flow, the-documents, financial-snapshot, values, cant-pay
+- `monthlyDebtPayments` — Monthly debt payments · read by ledger, start, expenses, cash-flow, the-documents, financial-snapshot, values, cant-pay
 - `debtBalance` — Balance · read by ledger, start
 - `debtRate` — Interest rate · read by ledger, foo-ladder, debates
 - `debtMinPayment` — Minimum payment, a month · read by ledger
@@ -59,7 +59,7 @@ Fields: 128. Traced: 119. No other room mentions it: **64**.
 
 ## expenses (8)
 
-- `rentMonthly` — Rent or mortgage, a month · read by cash-flow, calendar, financial-snapshot, housing, debates
+- `rentMonthly` — Rent or mortgage, a month · read by ledger, cash-flow, calendar, financial-snapshot, housing, debates
 - `monthlyExpenses` — Monthly expenses · read by ledger, start, income, cash-flow, calendar, statement, bridge, which-account, the-documents, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `foodMonthly` — Food, a month · read by ledger, cash-flow, the-documents
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger, cash-flow, the-documents
@@ -71,7 +71,7 @@ Fields: 128. Traced: 119. No other room mentions it: **64**.
 ## fire (3)
 
 - `enoughMonthly` — Enough, a month · **no other room mentions it**
-- `retireAge` — Stop working at · read by dashboard, left-behind, skill-tree, what-if-life, decumulation, career-move, week, debates, one-pager
+- `retireAge` — Stop working at · read by ledger, dashboard, left-behind, skill-tree, what-if-life, decumulation, career-move, week, debates, one-pager
 - `coastAge` — Coast: arrive by · read by ledger
 
 ## goals (1)
@@ -87,8 +87,8 @@ Fields: 128. Traced: 119. No other room mentions it: **64**.
 
 ## income (8)
 
-- `incomeLow` — A low month · **no other room mentions it**
-- `incomeHigh` — A high month · **no other room mentions it**
+- `incomeLow` — A low month · read by ledger
+- `incomeHigh` — A high month · read by ledger
 - `bufferMonths` — Buffer, months · **no other room mentions it**
 - `variableWindow` — Rolling window · **no other room mentions it**
 - `ledgerIncome` — Income logged, a month · read by the-documents
@@ -167,7 +167,7 @@ Fields: 128. Traced: 119. No other room mentions it: **64**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by income, expenses, which-account, debt-payoff, tax, dashboard, financial-snapshot, fire, left-behind, cant-pay, decumulation, career-move, partner, one-pager
+- `filingStatus` — Filing status · read by ledger, income, expenses, which-account, debt-payoff, tax, dashboard, financial-snapshot, fire, left-behind, cant-pay, decumulation, career-move, partner, one-pager
 - `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, calendar, which-account, the-documents, debt-payoff, tax, dashboard, financial-snapshot, fire, left-behind, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · **no other room mentions it**

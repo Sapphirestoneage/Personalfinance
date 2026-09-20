@@ -365,7 +365,7 @@ section('Where a household stands in the levels, and the screen that shows it');
 
   check('the view has two tabs, the planets and what unlocks', /data-tab="planets"/.test(page) && /data-tab="unlocks"/.test(page) && /id="sky-unlocks"/.test(page));
   check('the unlocks tab leads with the levels that free the most readings', /Do these first/.test(page) && /unlocks ' \+ esc\(b\.unlocks\)/.test(page));
-  check('every reading says it is ready or names what it waits on', /Ready from what you have answered/.test(page) && /Waiting on/.test(page));
+  check('every reading says what it reads, or names what it waits on', /function readingValue/.test(page) && /Waiting on/.test(page));
   check('a level named there opens on the planets tab', /data-goto=/.test(page) && /tab = 'planets'; open = lv\.planet; openLevel = id/.test(page));
   check('the readings are grouped by band and each band opens', /data-tier=/.test(page) && /openTier === n \? 0 : n/.test(page));
   check('the unlocks tab says nothing is locked', /Nothing is locked: a reading simply cannot exist until its facts do/.test(page));
@@ -432,15 +432,100 @@ section('Where a household stands in the levels, and the screen that shows it');
   check('and the lever reads the answer before it guesses from the job',
     /var said = h && h\.sketch \? h\.sketch\.payVaries : null;/.test(fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8')));
 
+  /* D-327: the thirty readings of Tier 1, worked out. Every figure below is
+     checked by hand against the example household: gross $72,000, take-home
+     $4,860 a month after a 19% effective rate, $3,150 of spending, $305 of
+     minimums, $700 added a month, $9,500 cash, $48,000 invested, $21,600
+     owed of which $3,200 is above 8%, and a $1,240 refund. */
+  const RecipeEngine = require(path.join(ROOT, 'engines/recipes.js'));
+  const T = {
+    effectiveTaxRates: read('data/effective_tax_rates_2026.json'),
+    stateBrackets: read('data/state_brackets_2026.json'),
+    federalBrackets: read('data/federal_brackets_2026.json'),
+    levelsOfWealth: read('data/levels_of_wealth.json'),
+    returnBands: read('data/return_bands.json'),
+    fireVariants: read('data/fire_variants.json'),
+    ratioBenchmarks: RatioBenchmarks
+  };
+  const tier1 = Recipes.recipes.filter(r => r.tier === 1);
+  check('every reading of Tier 1 has a formula', tier1.every(r => RecipeEngine.IMPLEMENTED.indexOf(r.id) >= 0),
+    tier1.filter(r => RecipeEngine.IMPLEMENTED.indexOf(r.id) < 0).map(r => r.id).join(','));
+  check('and the engine claims no reading the table does not name',
+    RecipeEngine.IMPLEMENTED.every(id => Recipes.recipes.some(r => r.id === id)));
+  const got = RecipeEngine.all(demo, T);
+  const okIds = Object.keys(got).filter(id => Money325.isOk(got[id]));
+  /* Twenty-seven of the thirty. The three that are missing are the ones that
+     measure against a date Robin has not picked, and the app does not invent
+     a retirement age (D-046). */
+  check('the example household can work out twenty-seven of the thirty', okIds.length === 27, String(okIds.length));
+  check('and the three left are the ones waiting on a stop age',
+    ['coastTarget', 'pctToCoast', 'targetDateGap'].every(id => !Money325.isOk(got[id]) && got[id].missing.indexOf('retireAge') >= 0));
+  const near = (id, want, tol) => check(`${id} reads ${want}`, Math.abs(got[id].value - want) <= (tol || 0.0005),
+    got[id] && got[id].status === 'ok' ? String(got[id].value) : (got[id] || {}).reason);
+  near('gap', 140500, 0);                       /* 4,860 less 3,150 less 305 */
+  near('savingsRatePotential', 1405 / 4860);
+  near('savingsRateActual', 700 / 4860);        /* what is actually added */
+  near('leakRate', 705 / 4860);                 /* the difference is the leak */
+  near('savingsRateGross', 700 / 6000);
+  near('spendRate', 3150 / 4860);
+  near('freedomPerMonth', 700 / 3150);
+  near('netWorth', 3590000, 0);                 /* 57,500 owned less 21,600 owed */
+  near('debtToAssets', 21600 / 57500);
+  near('nwToIncome', 35900 / 72000);
+  near('yearsSaved', 57500 / (3150 * 12), 0.001);
+  near('fiNumber', 94500000, 0);                /* 3,150 a month at 4% */
+  near('pctToFI', 48000 / 945000);
+  near('currentWR', 37800 / 48000);
+  near('minimumsRate', 305 / 4860);
+  near('highInterestShare', 3200 / 21600);
+  near('shelterRate', 1500 / 4860);
+  near('frontEndDTI', 1500 / 6000);
+  near('backEndDTI', 1805 / 6000);
+  near('impliedTaxRate', 1 - 58320 / 72000);
+  near('refundShare', 1240 / (72000 - 58320), 0.001);
+  check('the high-interest flag is a yes, since $3,200 is above 8%', got.highInterestFlag.value === true);
+  check('steady pay has a swing of nothing, which is an answer rather than a blank', got.incomeVolatility.value === 0);
+  check('the rough payoff is in months and is not forever', got.payoffTimeRough.value > 0 && got.payoffTimeRough.value < 600, String(got.payoffTimeRough.value));
+  /* With a stop age named, the three that were waiting arrive. */
+  const aiming = Schema.createHousehold(Object.assign({}, Demo.build(), { targets: { retireAge: 60 } }));
+  const aimed = RecipeEngine.all(aiming, T);
+  check('naming a stop age answers the last three',
+    ['coastTarget', 'pctToCoast', 'targetDateGap'].every(id => Money325.isOk(aimed[id])));
+  check('the Coast target is the pot that grows into the FI number', aimed.coastTarget.value < aimed.fiNumber.value && aimed.coastTarget.value > 0);
+  check('and the percent to Coast is measured against it', Math.abs(aimed.pctToCoast.value - 4800000 / aimed.coastTarget.value) < 0.0005);
+  check('on track reads the years between the date you want and the date the pace gives',
+    Math.abs(aimed.targetDateGap.value - ((60 - 32) - aimed.fiDate.years)) < 0.6, String(aimed.targetDateGap.value));
+
+  /* Empty is never zero: a blank household has no readings, and each one
+     names what it is waiting for rather than reading 0%. */
+  const none = RecipeEngine.all(blank, T);
+  check('a blank household has no reading at all', Object.keys(none).every(id => !Money325.isOk(none[id])));
+  check('and every one of them names what it waits on',
+    Object.keys(none).every(id => none[id] && (none[id].missing.length > 0 || none[id].reason)));
+
+  /* One formula, one function: the readings the app already had point at it. */
+  const engineSrc = fs.readFileSync(path.join(ROOT, 'engines/recipes.js'), 'utf8');
+  check('the net worth is Tier 0\'s, not a second copy', /netWorth: function \(h\) \{ return Tier0\.netWorth\(h\); \}/.test(engineSrc));
+  check('the FI number and the progress are Tier 0\'s', /Tier0\.fireNumber\(h\)/.test(engineSrc) && /Tier0\.fireProgress\(h, t\)/.test(engineSrc));
+  check('the leverage, the income multiple and the FI date are rows of the ratios engine',
+    /ratio\(h, t, 'debtToAsset'\)/.test(engineSrc) && /ratio\(h, t, 'netWorthToIncome'\)/.test(engineSrc) && /ratio\(h, t, 'fiDate'\)/.test(engineSrc));
+  check('the wealth-accumulation ratio is the benchmarks engine\'s', /Benchmarks\.pawRatio\(h, t\)/.test(engineSrc));
+  check('the Coast target compounds with the app\'s own growth function', /Coast\.grow\(1, r, months\)/.test(engineSrc));
+  check('the month\'s spending is the clean one everywhere',
+    /cleanMonthlySpendingCents/.test(fs.readFileSync(path.join(ROOT, 'engines/tier0.js'), 'utf8')));
+  check('the screen shows the figure beside the reading it belongs to',
+    /function readingValue/.test(page) && /Recipes\.value\(m\.id, h, TABLES\)/.test(page) && /u-val/.test(page));
+  check('and names the level that would sharpen it', /sharpen with/.test(page));
+
   const skyStart = page.indexOf('The planets (D-321, opened up in D-322)');
   const skyBlock = page.slice(skyStart, page.indexOf('</script>', skyStart));
   check('a fact with an owner room links to it, and one without says so plainly', /'enter it'/.test(page) && /nowhere to type it yet/.test(page) && !/N\/A/.test(skyBlock));
   check('a level nothing can collect yet explains itself', /Nothing on this screen can take this answer yet/.test(page));
   check('the planet can be filtered to what is not done', /data-only="notYet"/.test(page) && /only === 'all' \|\| r\.state !== 'done'/.test(page));
   check('the level buttons reach the 44px tap target', /\.sky-lv \{[^}]*min-height: 44px/.test(page));
-  check('the metric labels come from the recipes table, never retyped', /Reference\.load\(\['levels', 'recipes', 'ledgerRows', 'states'\]\)/.test(page) && /RECIPES\[r\.id\] = r\.label/.test(page));
+  check('the metric labels come from the recipes table, never retyped', /Reference\.load\(\['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates'/.test(page) && /RECIPES\[r\.id\] = r\.label/.test(page));
   check('it says what is answered and what is next', /levels answered/.test(page) && /id="sky-next"/.test(page));
-  check('the room loads the engine and the tables', /shared\/solar\.js/.test(page) && /shared\/liveform\.js/.test(page) && /Reference\.load\(\['levels', 'recipes', 'ledgerRows', 'states'\]\)/.test(page));
+  check('the room loads the engine and the tables', /shared\/solar\.js/.test(page) && /shared\/liveform\.js/.test(page) && /Reference\.load\(\['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates'/.test(page));
   check('the Planets view is registered as a subsection', /view-sky/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
   check('nothing on this screen is red or says incomplete', !/is-bad|is-danger/.test(page.slice(page.indexOf('id="view-sky"'), page.indexOf('id="view-sky"') + 2000)));
 }

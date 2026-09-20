@@ -16921,6 +16921,55 @@ three HTML entities, in the same files as before.
 suite, export, xlsx, lane 2 and the seven browser gates. The check fails on a
 reintroduced escape: tried it, saw it name the file and the character.
 
+## D-327 — The thirty readings of Tier 1, worked out
+
+**Why.** The Planets screen could say a reading was ready and never say what
+it read. A person who answered band 1 got a tick, not a figure.
+
+**Decision.** `engines/recipes.js` is new: one function per reading, for the
+thirty of Tier 1. The rule it is built on is ONE FORMULA, ONE FUNCTION, so
+most of it is pointers. The net worth, the FI number and the progress toward
+it are `engines/tier0.js`. The leverage, the income multiple and the FI date
+are rows of `engines/ratios.js`. The wealth-accumulation ratio is
+`engines/benchmarks.js`. The Coast target discounts the FI number with
+`Coast.grow`, the app's one compounding function. Only the readings with no
+home anywhere are written out here, each a line of arithmetic over figures the
+app already holds: the leak rate, the spend rate, freedom bought per month,
+the refund share, years of expenses saved, the high-interest share, the rough
+payoff time and the implied and state tax rates.
+
+`Schema.cleanMonthlySpendingCents` (new) applies the E3 answer in one place:
+if the typed monthly total already had the debt payments or the saving inside
+it, they come out first. `engines/tier0.js` reads it everywhere it used to
+read the raw total, so the gap, the savings rate, the cushion and the FI
+number each count a dollar once. Unanswered, it is the total as typed, which
+is what every reader assumed before the question existed.
+
+The unlocks tab shows the figure beside the reading. A reading the app can
+work out is shown even when the level that formally collects the fact is not
+answered, because the app may hold it another way (take-home estimated from
+gross); the levels still open are then named as what SHARPENS it, rather than
+what it waits for. The example household reads 27 of the 30, and the three
+left name the stop age nobody has picked.
+
+**Replaces or removes.** Nothing. No new stored field and no new screen.
+
+**Stored shape.** No change. `dnd/engines/tier0.js` and
+`dnd/shared/schema.js` are re-vendored.
+
+**Open, for the owner.** The app's FI date is built on the gap, which is what
+COULD be saved. Band 1 now also asks what IS saved (A3), and for the example
+household the two differ by $705 a month. The FI date still uses the gap, so
+nothing moved under anyone today; whether it should use the actual figure is
+the owner's call, and it is item 1 in STATUS.
+
+**Verified.** `node test/run.js` (35,122), `node test/solar.js` (5,141) with
+every Tier 1 figure checked by hand against the example household, the D&D
+suite, export, xlsx, lane 2 with a new property file for the engine, and the
+seven browser gates. Lane 2 caught a real one: `value('valueOf')` walked the
+prototype chain and answered; it now answers null, as it does for any reading
+this file does not know.
+
 ---
 
 # The Dungeons & Dividends entries
