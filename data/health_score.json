@@ -2,10 +2,10 @@
   "id": "health_score",
   "version": "1.1",
   "asOf": "2026-01-01",
-  "source": "The pillar grouping follows the standard shape of a personal-finance review — cushion, debt, saving, retirement, housing, and how the money is held. The weights within each age cohort are a judgement about what matters most at that stage of life. No published source sets them, and none is claimed.",
+  "source": "The pillar grouping follows the standard shape of a personal-finance review, cushion, debt, saving, retirement, housing, and how the money is held. The weights within each age cohort are a judgement about what matters most at that stage of life. No published source sets them, and none is claimed.",
   "confidence": "convention",
   "confidenceNote": "These weights are the most invented numbers in this repository. They are a considered opinion about emphasis by decade, not a finding, and two sensible people would write them differently. The room shows the same household scored under every cohort so the effect of the weighting is visible rather than hidden, and every pillar's underlying ratios are listed so the score can be taken apart.",
-  "note": "SPEC.md §12.4, resolved as tunable by age cohort — see DECISIONS.md D-043. The score is a weighted average of positions against data/ratio_benchmarks.json, computed by engines/health.js. Each pillar's score is the plain mean of whichever of its ratios could be computed AND have a band; a pillar with nothing computable is ABSENT, not zero, and its weight is redistributed across the pillars that do have data. Weights within each cohort sum to 1 and test/run.js enforces that. Adding a cohort or retuning a decade is an edit to this file and no code change at all. Each pillar carries `plain` (D-245): what it measures, what good is, why it matters and what raises it, in words a child could follow. Thresholds named there are the same conventions the bands table holds.",
+  "note": "SPEC.md §12.4, resolved as tunable by age cohort, see DECISIONS.md D-043. The score is a weighted average of positions against data/ratio_benchmarks.json, computed by engines/health.js. Each pillar's score is the plain mean of whichever of its ratios could be computed AND have a band; a pillar with nothing computable is ABSENT, not zero, and its weight is redistributed across the pillars that do have data. Weights within each cohort sum to 1 and test/run.js enforces that. Adding a cohort or retuning a decade is an edit to this file and no code change at all. Each pillar carries `plain` (D-245): what it measures, what good is, why it matters and what raises it, in words a child could follow. Thresholds named there are the same conventions the bands table holds.",
   "scoring": {
     "cap": 1.0,
     "minCoverage": 0.5,
@@ -156,7 +156,7 @@
         "housing": 0.05,
         "structure": 0.1
       },
-      "note": "Debt and the saving habit carry most of the weight, because at this age they are what compounds. Retirement is barely weighted at all — the retirement multiple benchmarks start around 1x salary at 30, so scoring someone at 24 against them would mark them down for being 24."
+      "note": "Debt and the saving habit carry most of the weight, because at this age they are what compounds. Retirement is barely weighted at all, the retirement multiple benchmarks start around 1x salary at 30, so scoring someone at 24 against them would mark them down for being 24."
     },
     {
       "id": "thirties",
@@ -216,7 +216,7 @@
         "housing": 0.1,
         "structure": 0.13
       },
-      "note": "Savings rate stops being the point when the accumulation phase is ending, and how the money is held starts to be. The cushion matters again — a bad year now cannot be earned back the way it could at 30."
+      "note": "Savings rate stops being the point when the accumulation phase is ending, and how the money is held starts to be. The cushion matters again, a bad year now cannot be earned back the way it could at 30."
     }
   ]
 }

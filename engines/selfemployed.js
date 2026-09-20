@@ -1,11 +1,11 @@
 /* ==========================================================================
-   engines/selfemployed.js — SE tax, W2 vs 1099, quarterly estimates.
+   engines/selfemployed.js, SE tax, W2 vs 1099, quarterly estimates.
    --------------------------------------------------------------------------
    SPEC.md §13 flags this area twice, and both warnings shape the code:
 
      "SE tax calc (15.3% on net earnings, employer-equivalent half
       deductible) is a common source of off-by-a-factor errors"
-     "Include the safe harbor rule (pay 100-110% of prior year's liability) —
+     "Include the safe harbor rule (pay 100-110% of prior year's liability), 
       most DIY calculators skip it"
 
    So self-employment tax is computed in named steps rather than as one
@@ -51,13 +51,13 @@
    * Returns a Result whose value is the total SE tax in cents, with every
    * intermediate step in the meta so a room can show the working.
    *
-   * opts.priorWagesCents — W2 wages that have ALREADY used up part of the
+   * opts.priorWagesCents, W2 wages that have ALREADY used up part of the
    * Social Security wage base and already count toward the additional
    * Medicare threshold. Side income stacks on a salary rather than
    * replacing it, so a side hustle passes the salary here and the caps land
    * in the right place. Left out, it is zero and the profit is treated as
    * the person's only earnings, which is what a W2-vs-1099 comparison
-   * wants. One function, parameterised — SPEC.md §8.
+   * wants. One function, parameterised, SPEC.md §8.
    */
   function selfEmploymentTax(netProfitCents, filingStatus, table, opts) {
     if (!table) return Money.incomplete('Self-employment tax table is not loaded.', ['seTax']);
@@ -77,7 +77,7 @@
           the single most common error in the whole calculation. */
     var netEarnings = Math.round(netProfitCents * table.netEarningsFactor);
 
-    /* 2. Social Security stops at the wage base — and wages earned
+    /* 2. Social Security stops at the wage base, and wages earned
           elsewhere have already eaten into it. */
     var prior = (opts && Money.isEntered(opts.priorWagesCents)) ? Math.max(0, opts.priorWagesCents) : 0;
     var wageBaseCents = Math.round(table.socialSecurityWageBase * 100);
@@ -99,7 +99,7 @@
       if (over > 0) additionalMedicare = Math.round(Math.min(over, netEarnings) * addl.rate);
     }
 
-    /* 5. Half of the ordinary SE tax — not the additional Medicare — is
+    /* 5. Half of the ordinary SE tax, not the additional Medicare, is
           deductible, standing in for the half an employer would have paid. */
     var ordinary = socialSecurity + medicare;
     var deductibleHalf = Math.round(ordinary / 2);
@@ -205,7 +205,7 @@
   /* ---- Quarterly estimated tax -------------------------------------------
      §13: include the safe harbor, "most DIY calculators skip it". The
      required annual payment is the LESSER of a share of this year's
-     liability and a share of last year's — which is the whole point, since
+     liability and a share of last year's, which is the whole point, since
      last year's is a number you actually know.                           */
 
   function quarterlyEstimated(household, tables, opts) {

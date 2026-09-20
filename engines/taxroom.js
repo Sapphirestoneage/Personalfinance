@@ -1,17 +1,17 @@
 /* ==========================================================================
-   engines/taxroom.js — the Tax room's picture of a year of pay.
+   engines/taxroom.js, the Tax room's picture of a year of pay.
    DECISIONS.md D-098 (the tranche rooms on the template).
    --------------------------------------------------------------------------
    Nothing here walks a bracket ladder. The room reads one function,
    picture(h, T), which assembles what the engines that own each piece
    already compute:
 
-     engines/tax.js        Tax.estimate — ordinary federal tax, the employee
+     engines/tax.js        Tax.estimate, ordinary federal tax, the employee
                            FICA, self-employment tax (through
                            engines/selfemployed.js), the state schedule
-     shared/reference.js   Reference.marginalBracket — the bracket the next
+     shared/reference.js   Reference.marginalBracket, the bracket the next
                            ordinary dollar lands in and the room left in it
-     engines/tier0.js      Tier0.estimatedAnnualTaxCents — the blunter
+     engines/tier0.js      Tier0.estimatedAnnualTaxCents, the blunter
                            effective-rate lookup the rest of the app uses,
                            shown beside the computed figure so the two are
                            never confused
@@ -20,7 +20,7 @@
    formula: which part of gross is wages and which is self-employment
    profit (from the person's employment status and the income sources'
    types); the workplace pre-tax contribution as a share of wages
-   (contributionPercent is a whole percent — 6, not 0.06 — see
+   (contributionPercent is a whole percent, 6, not 0.06, see
    Schema.capturingFullMatchDerived); the two facts the room owns
    (household.tax.otherPreTaxAnnualCents, household.tax.withheldAnnualCents);
    the refund-or-owe difference; and the shares of a dollar of pay the
@@ -46,7 +46,7 @@
   var MONTHS = 12;
 
   /* ---- Wages or profit? ------------------------------------------------------
-     Self-employed: everything is profit, whatever the source's type says —
+     Self-employed: everything is profit, whatever the source's type says, 
      Start Here files a sole earner's pay under the ordinary pay card.
      Mixed: the sources say which is which ('1099' is the own-work card);
      with no 1099 source yet, all of it is wages and the picture says so.
@@ -56,8 +56,8 @@
     var row = Schema.householdEmployment(h);
     var status = row ? row.id : null;
     /* The ledger first (D-128): when dated income entries exist and
-       recur, the year is theirs — wages by withholding, self-employment
-       profit net of the costs logged against it — read through the one
+       recur, the year is theirs, wages by withholding, self-employment
+       profit net of the costs logged against it, read through the one
        tax engine for entries, engines/ledger.js. Households without a
        ledger read their sources exactly as before. */
     if (Ledger && Ledger.hasRecurring(h)) {
@@ -77,7 +77,7 @@
   }
 
   /**
-   * picture(household, tables) — the whole year in one Result.
+   * picture(household, tables), the whole year in one Result.
    *   value                     the effective rate, total tax ÷ gross
    *   grossCents                what came in
    *   wagesCents / selfEmploymentCents
@@ -85,7 +85,7 @@
    *   otherPreTaxCents          the room's own input (0 when blank, flagged)
    *   preTaxCents               the two together
    *   federalCents, stateCents, ficaCents, selfEmploymentTaxCents, totalTaxCents
-   *   state                     the state Result — incomplete says why
+   *   state                     the state Result, incomplete says why
    *   stateIncluded             whether stateCents is in the total
    *   taxableIncomeCents, agiCents, deductionCents
    *   bracket                   { rate, roomCents (null in the top bracket), nextRate }
@@ -119,7 +119,7 @@
     var state = est.components.state || Tax.stateTax(T.stateBrackets, h.state, est.taxableIncomeCents, h.filingStatus);
     var stateIncluded = !!est.stateIncluded;
 
-    /* The bracket the next ordinary dollar lands in — the same lookup the
+    /* The bracket the next ordinary dollar lands in, the same lookup the
        Statement's ladder and the bracketRoom ratio use, entered at AGI so
        the pre-tax money has already come off. */
     var b = Reference.marginalBracket(T.federalBrackets, est.agiCents / 100, h.filingStatus);

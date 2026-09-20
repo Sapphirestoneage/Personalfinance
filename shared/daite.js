@@ -1,7 +1,7 @@
 /* ==========================================================================
-   shared/daite.js — the five families every money number belongs to.
+   shared/daite.js, the five families every money number belongs to.
    --------------------------------------------------------------------------
-   D · A · I · T · E — debt, assets, income, taxes, expenses. Every shared
+   D · A · I · T · E, debt, assets, income, taxes, expenses. Every shared
    number a room reads or writes is declared as one of these five plus a
    child path; the registry carries the declaration per room, ownership is
    checked against it, and the dashboard shows one tile a letter.

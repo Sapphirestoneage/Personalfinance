@@ -4,7 +4,7 @@
   "asOf": "2026-09",
   "source": "Authored for Dungeons & Dividends. DD-028.",
   "confidence": "high",
-  "confidenceNote": "These are invented people, not data about anybody. The figures are chosen to teach one thing each and are internally consistent — every score you see on a pregen is derived by the same engines that read a real character, never written into the file.",
+  "confidenceNote": "These are invented people, not data about anybody. The figures are chosen to teach one thing each and are internally consistent, every score you see on a pregen is derived by the same engines that read a real character, never written into the file.",
   "note": "Each pregen is a household in the shape shared/export.js emits, so loading one is Store.importCharacter() and nothing else. `expect` is what the pregen is FOR: the test asserts the lesson still lands after any change to the scoring tables, because a retuned anchor could quietly stop making The Glass Cannon a glass cannon.",
   "pregens": [
     {
@@ -1041,7 +1041,7 @@
       "id": "level-one",
       "name": "Level One",
       "tagline": "Early, tidy, and further along than it feels.",
-      "teaches": "Almost nothing invested and a small income, but no debt and two months of cover — which is a stronger position than most people believe it is.",
+      "teaches": "Almost nothing invested and a small income, but no debt and two months of cover, which is a stronger position than most people believe it is.",
       "expect": {
         "burdenMax": 0,
         "runwayMin": 5

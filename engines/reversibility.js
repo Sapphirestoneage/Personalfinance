@@ -1,13 +1,13 @@
 /* ==========================================================================
-   engines/reversibility.js — what a decision costs to undo, and how long.
+   engines/reversibility.js, what a decision costs to undo, and how long.
    BRIEF §8 "Reversibility", DECISIONS.md D-101.
    --------------------------------------------------------------------------
    data/reversibility.json lists decisions, each with a formula for the cost
    of undoing it and the months it takes, written in the life-events
    expression language (engines/events.js) over the household context
    ("$monthlyExpensesCents"), the reference tables ({"table": ..}) and the
-   room's own answers ("@price"). This file evaluates the formula — never a
-   second copy of the arithmetic — and reads the verdict off the result:
+   room's own answers ("@price"). This file evaluates the formula, never a
+   second copy of the arithmetic, and reads the verdict off the result:
 
      a door             ≤ a month of spending AND ≤ a month to undo
      a one-way street   > six months of spending OR > a year to undo,
@@ -21,7 +21,7 @@
      byId(T, id)                      one of them
      slots(decision)                  its questions split by unit: money
                                       first, then choice, then number
-     answers(decision, given, h, T)   { answers, defaulted } — what was
+     answers(decision, given, h, T)   { answers, defaulted }, what was
                                       given, else the question's default
      verdict(cents, months, spend, r) 'a door' | 'a heavy door' |
                                       'a one-way street' | null
@@ -109,7 +109,7 @@
 
   /* ---- undo(h, id, given, T) → Result --------------------------------------------
      value: the cost to undo in cents, or null when the table has no honest
-     figure (irreversible / unpriced — the extras say which). */
+     figure (irreversible / unpriced, the extras say which). */
   function undo(household, id, given, tables) {
     var h = household || Schema.createHousehold({});
     if (!id) return Money.incomplete('Pick a decision.', ['reversibilityDecision']);

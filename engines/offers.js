@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/offers.js — Offer Compare: two to four job offers side by side.
+   engines/offers.js, Offer Compare: two to four job offers side by side.
    DECISIONS.md D-219 (K8).
    --------------------------------------------------------------------------
    Each offer is priced as what it is worth in a year, after what it costs

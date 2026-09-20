@@ -266,7 +266,7 @@ section('Dungeons & Dividends — the encounter engine');
   check('CR 3 -> DC 13', Encounter.dcFor('3', TABLES), 13);
   check('CR 8 -> DC 16', Encounter.dcFor('8', TABLES), 16);
   check('a CR range takes its lower bound', Encounter.dcFor('18–20', TABLES), Encounter.dcFor('18', TABLES));
-  check('an absent CR yields no DC', Encounter.dcFor('—', TABLES), null);
+  check('an absent CR yields no DC', Encounter.dcFor('not yet', TABLES), null);
   check('3d6 averages 10.5', Encounter.expectedDice(Encounter.parseDice('3d6')), 10.5);
   check('a malformed dice string parses to nothing', Encounter.parseDice('lots'), null);
 
@@ -1015,10 +1015,10 @@ section('Dungeons & Dividends — the share card');
     /if \(d\.hp !== null\) \{/.test(src) && /if \(d\.ac !== null\) \{/.test(src)
     && /'not measured'/.test(src));
   checkTrue('and no score slot ever prints a dash as a value',
-    !/fillText\(d\.\w+ !== null \? String\(d\.\w+\) : '—'/.test(src)
-    && !/: '—', bx \+ boxW/.test(src));
+    !/fillText\(d\.\w+ !== null \? String\(d\.\w+\) : 'not yet'/.test(src)
+    && !/: 'not yet', bx \+ boxW/.test(src));
   checkTrue('and the card never renders an em dash as a value',
-    !/Money\.EM_DASH/.test(src));
+    !/Money\.NOT_YET/.test(src));
 
   /* It grows to fit rather than leaving a slab of empty background. */
   checkTrue('the card sizes itself to its content', /MIN_H|MAX_H/.test(src));
@@ -2860,7 +2860,7 @@ section('Dungeons & Dividends — ASIs and feats that do something (DD-023)');
   checkTrue('the sheet builds an advancement select per reached level', /data-adv=/.test(src));
   checkTrue('inside the signature-guarded picker block', src.indexOf('data-adv=') > src.indexOf('function paintPickers') && src.indexOf('data-adv=') < src.indexOf('function describeExport'));
   checkTrue('and the signature includes the choices', /reached\.map\(function \(a\) \{ return a\.level/.test(src));
-  checkTrue('flavour feats say so', /Flavour — no mechanic yet/.test(src));
+  checkTrue('flavour feats say so', /Flavour, no mechanic yet/.test(src));
   checkTrue('a raised score is marked', /r\.asi \? ' ▲'/.test(src));
   checkTrue('FORMAT.md describes advancements', /advancements/.test(fs.readFileSync(path.join(ROOT, 'FORMAT.md'), 'utf8')));
 })();
@@ -2970,7 +2970,7 @@ section('Dungeons & Dividends — a bleed is measured against a rest (DD-021)');
   checkTrue('the encounter room shows what you heal', /'You heal'/.test(enc));
   checkTrue('and the net', /\['Net'/.test(enc));
   checkTrue('and when the runway is gone', /'Runway gone in'/.test(enc));
-  checkTrue('and says "never" when you out-heal it', /never — you out-heal it/.test(enc));
+  checkTrue('and says "never" when you out-heal it', /never, you out-heal it/.test(enc));
 })();
 
 section('Dungeons & Dividends — two ways to get hurt (DD-019)');

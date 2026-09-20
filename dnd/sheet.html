@@ -13,12 +13,12 @@
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  TIER 2 — the sheet IS the page, and the sheet IS the form (BRIEF §9.1).
+  TIER 2. The sheet IS the page, and the sheet IS the form (BRIEF §9.1).
 
   There is no intake form any more. Each of the five numbers is typed into the
-  box it actually feeds — income sits in Strength, cash sits in Hit Points,
+  box it actually feeds, income sits in Strength, cash sits in Hit Points,
   investments sit in Experience, spending sits in your FI number, debt sits in
-  Debt Burden — so the connection between what you type and what moves is
+  Debt Burden, so the connection between what you type and what moves is
   visible rather than explained. Optional questions are a "sharpen" toggle on
   the panel they belong to, not a second form below.
 
@@ -35,13 +35,13 @@
   the levers table) may be rebuilt freely, and are.
 
   Empty state shows the example character rendered but visibly ghosted, with
-  one line and one button. Nothing is stored until that button is pressed —
+  one line and one button. Nothing is stored until that button is pressed, 
   the demo persona still never loads by itself.
 -->
 <style>
   /* Dungeons & Dividends keeps the characterful faces the shared theme gave
      up in D-154. A game wants a display serif; a financial statement does
-     not. theme.css stays byte-identical to the SPARKS copy — this override
+     not. theme.css stays byte-identical to the SPARKS copy, this override
      lives here, in the pages that want it. */
   :root {
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
@@ -237,7 +237,7 @@
 
   <h2 class="sec">Bring one back</h2>
   <p class="note">Started on your phone and want to finish here? Open the file you saved, or paste it
-     in. This <b>replaces</b> the character on this device — one sheet, one person.</p>
+     in. This <b>replaces</b> the character on this device, one sheet, one person.</p>
   <div class="actions">
     <!-- LIVE-FORM: this input and the file picker are built here, once, and
          only ever read. Nothing repaints this block. -->
@@ -251,10 +251,10 @@
   </div>
   <div id="import-result" class="note" hidden></div>
 
-  <p class="foot"><a href="encounter.html">Weakness map — what hunts you, and what blocks it →</a></p>
-  <p class="foot"><a href="campaign.html">The campaign — play it forward, ten decisions at a time →</a></p>
-  <p class="foot"><a href="card.html">Your card — the bit you send to the group chat →</a></p>
-  <p class="foot"><a href="bestiary.html">The Bestiary — monsters, hazards and the tax authority →</a></p>
+  <p class="foot"><a href="encounter.html">Weakness map, what hunts you, and what blocks it →</a></p>
+  <p class="foot"><a href="campaign.html">The campaign, play it forward, ten decisions at a time →</a></p>
+  <p class="foot"><a href="card.html">Your card, the bit you send to the group chat →</a></p>
+  <p class="foot"><a href="bestiary.html">The Bestiary, monsters, hazards and the tax authority →</a></p>
   <p class="foot" style="color:var(--color-text-faint);font-size:var(--text-xs)">An independent parody. Not affiliated with or endorsed by Wizards of the Coast. <a href="bestiary.html#attribution">Licence &amp; attribution</a>.</p>
 </div>
 
@@ -272,11 +272,11 @@
   'use strict';
   var Money = SLAF.Money, Char = SLAF.Character, Store = DND.Store, Schema = SLAF.Schema,
       Export = DND.Export, Enc = DND.Encounter;
-  var TABLES = null, BUILT = false, DASH = Money.EM_DASH;
+  var TABLES = null, BUILT = false, DASH = Money.NOT_YET;
   var SHOWING_EXAMPLE = false;
 
   /* The example household, held in memory only. Nothing here is stored unless
-     the person presses the button — the demo persona never loads by itself. */
+     the person presses the button, the demo persona never loads by itself. */
   var EXAMPLE = {
     income: 7200000, expenses: 315000, cash: 950000, investments: 4800000,
     debt: 2160000, highInterest: true, filing: 'single', name: 'Stone',
@@ -337,7 +337,7 @@
       + '<div class="namebox"><div class="big"><input type="text" id="f-name" placeholder="Name your character"/></div>'
         + '<div class="k" style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-subtle);margin-top:4px">Character name</div>'
         + selectInput('f-filing', 'How you file (sets tax, which sets CON)', [
-            ['', '—'], ['single', 'Single'], ['married_joint', 'Married, jointly'],
+            ['', 'not yet'], ['single', 'Single'], ['married_joint', 'Married, jointly'],
             ['married_separate', 'Married, separately'], ['head_of_household', 'Head of household']])
       + '</div>'
       + '<div class="namebox"><div class="idgrid">'
@@ -363,25 +363,25 @@
           + sharpen('str', 'Sharpen',
               '<label for="f-income3">Income three years ago</label><input type="text" inputmode="decimal" id="f-income3" placeholder="e.g. 58,000"/>'
             + '<label for="f-side">Side income per year</label><input type="text" inputmode="decimal" id="f-side" placeholder="0 if none"/>'
-            + '<label for="f-readiness">A skill you could sell</label><select id="f-readiness"><option value="">—</option>'
+            + '<label for="f-readiness">A skill you could sell</label><select id="f-readiness"><option value="">not yet</option>'
               + '<option value="ready">Earning within a month</option><option value="identified">Would take time</option>'
               + '<option value="none">Nothing right now</option></select>');
       } else if (id === 'DEX') {
         extra = sharpen('dex', 'Sharpen',
-            '<label for="f-fixed">Share of spending that is fixed</label><select id="f-fixed"><option value="">—</option>'
+            '<label for="f-fixed">Share of spending that is fixed</label><select id="f-fixed"><option value="">not yet</option>'
             + [0.85, 0.75, 0.65, 0.55, 0.45, 0.35, 0.25, 0.15].map(function (v) {
                 return '<option value="' + v + '">' + Math.round(v * 100) + '%</option>'; }).join('')
             + '</select>'
             + mob.map(function (item) {
                 return '<label for="mob-' + item.id + '">' + esc(item.question) + '</label>'
-                  + '<select id="mob-' + item.id + '"><option value="">—</option>'
+                  + '<select id="mob-' + item.id + '"><option value="">not yet</option>'
                   + item.options.map(function (o, i) { return '<option value="' + i + '">' + esc(o.label) + '</option>'; }).join('')
                   + '</select>';
               }).join(''));
       } else if (id === 'CON') {
         extra = sharpen('con', 'Sharpen',
             '<label for="f-years">Years at your current savings rate</label><input type="number" min="0" max="60" id="f-years" placeholder="e.g. 3"/>'
-          + '<label for="f-disruption">Held it through a disruption?</label><select id="f-disruption"><option value="">—</option>'
+          + '<label for="f-disruption">Held it through a disruption?</label><select id="f-disruption"><option value="">not yet</option>'
             + '<option value="yes">Yes</option><option value="no">Not yet</option></select>');
       }
       return '<div class="ability" id="abcard-' + id + '"><div class="nm">' + esc(def.name) + '</div>'
@@ -412,7 +412,7 @@
           + '<div class="micro" id="v-init-why"></div><div class="panel-label">Initiative</div>'
           + sharpen('init', 'Automation',
               '<label for="f-automated">How much of your saving moves on its own?</label>'
-              + '<select id="f-automated"><option value="">—</option>'
+              + '<select id="f-automated"><option value="">not yet</option>'
               + Object.keys(initLabels).map(function (k) {
                   return '<option value="' + k + '">' + esc(initLabels[k]) + '</option>'; }).join('')
               + '</select>') + '</div>'
@@ -420,12 +420,12 @@
           + '<div class="panel-label">Armour class</div>'
           + '<div class="micro" id="v-ac-note" style="text-align:left"></div>'
           + sharpen('ac', 'Sharpen',
-              '<label for="f-health">Health insurance</label><select id="f-health"><option value="">—</option>'
+              '<label for="f-health">Health insurance</label><select id="f-health"><option value="">not yet</option>'
               + '<option value="0">None</option><option value="1">High-deductible</option>'
               + '<option value="2">Standard</option><option value="3">Low-deductible</option></select>'
-            + '<label for="f-disability">Disability insurance</label><select id="f-disability"><option value="">—</option>'
+            + '<label for="f-disability">Disability insurance</label><select id="f-disability"><option value="">not yet</option>'
               + '<option value="yes">Yes</option><option value="no">No</option></select>'
-            + '<label for="f-umbrella">Umbrella liability</label><select id="f-umbrella"><option value="">—</option>'
+            + '<label for="f-umbrella">Umbrella liability</label><select id="f-umbrella"><option value="">not yet</option>'
               + '<option value="yes">Yes</option><option value="no">No</option></select>') + '</div>'
       + '</div>'
       + '<div class="panel"><div class="kv" id="v-defences"></div><div class="panel-label">Defences</div></div>'
@@ -433,7 +433,7 @@
         + '<div class="panel"><div class="big-num" id="v-prof">' + DASH + '</div><div class="panel-label">Proficiency bonus</div></div>'
         + '<div class="panel"><div class="big-num na">' + DASH + '</div><div class="panel-label">Ability save DC</div></div>'
       + '</div>'
-      + '<div class="micro" style="text-align:left">Save DC is blank on purpose — the rulebook lists the Debt Burden save DCs as still unset (§13).</div>'
+      + '<div class="micro" style="text-align:left">Save DC is blank on purpose, the rulebook lists the Debt Burden save DCs as still unset (§13).</div>'
       + '<div class="panel"><div class="big-num na" id="v-speed">' + DASH + '</div><div class="panel-label">Speed · structural mobility</div></div>'
       + '</div>';
 
@@ -445,19 +445,19 @@
         + '<div><div class="k">Temp</div><div class="v na">' + DASH + '</div></div>'
         + '</div><div class="bar"><span id="v-hpbar" style="width:0%"></span></div>'
         + '<div class="micro" id="v-hpnote">weeks you could cover</div>'
-        + moneyInput('f-cash', 'Cash & savings — this is your HP', 'e.g. 9,500')
+        + moneyInput('f-cash', 'Cash & savings. This is your HP', 'e.g. 9,500')
         + '<div class="panel-label">Hit points</div></div>'
       + '<div class="duo">'
         + '<div class="panel"><div class="big-num na" id="v-dice">' + DASH + '</div><div class="panel-label">Hit dice</div></div>'
         + '<div class="panel">'
           + '<div class="saves-row"><span style="min-width:64px">Successes</span><span class="pip"></span><span class="pip"></span><span class="pip"></span></div>'
           + '<div class="saves-row"><span style="min-width:64px">Failures</span><span class="pip" id="dp1"></span><span class="pip" id="dp2"></span><span class="pip" id="dp3"></span></div>'
-          + '<div class="micro" style="text-align:left" id="v-death">Only rolled at 0 HP — when your liquid runway is gone.</div>'
+          + '<div class="micro" style="text-align:left" id="v-death">Only rolled at 0 HP, when your liquid runway is gone.</div>'
           + '<div class="panel-label">Death saves</div></div>'
       + '</div>'
       + '<div class="panel">'
-        + moneyInput('f-debt', 'Total debt', 'e.g. 21,600 — 0 if none')
-        + selectInput('f-highint', 'Any of it above 7.5%?', [['', '—'], ['yes', 'Yes'], ['no', 'No']])
+        + moneyInput('f-debt', 'Total debt', 'e.g. 21,600, 0 if none')
+        + selectInput('f-highint', 'Any of it above 7.5%?', [['', 'not yet'], ['yes', 'Yes'], ['no', 'No']])
         + '<div id="v-burden"></div><div class="panel-label">Debt burden</div></div>'
       + '<div class="panel"><div class="kv" id="v-prof-list"></div><div class="panel-label">Proficiencies &amp; training</div></div>'
       + '</div>';
@@ -473,7 +473,7 @@
         + '<div class="panel"><div id="v-exhaustion"></div><div class="panel-label">Exhaustion · derived from runway</div></div>'
         + '<div class="panel"><div class="statuslist">' + rules.statusEffects.map(function (st) {
             /* LIVE-FORM: built once, here, at boot. paint() only ever writes
-               .checked on these — never innerHTML on this container. */
+               .checked on these, never innerHTML on this container. */
             return '<label class="statusrow" for="st-' + esc(st.id) + '">'
               + '<input type="checkbox" id="st-' + esc(st.id) + '" data-status="' + esc(st.id) + '"/>'
               + '<span><b>' + esc(st.name) + '</b>'
@@ -688,7 +688,7 @@
       /* A bought Strength is dashed and says so (DD-018). Once real money
          reaches it the bought score stops applying, and a blank where a 15
          used to be needs a sentence, or it reads as a bug. Writing .hidden,
-         textContent and a class — never innerHTML — this card holds live
+         textContent and a class, never innerHTML, this card holds live
          inputs. */
       var superseded = !ok && !bought && Money.isEntered(boughtScores[id])
         && ['STR', 'DEX', 'CON'].indexOf(id) !== -1;
@@ -697,7 +697,7 @@
       tag.textContent = bought
         ? 'bought · until your numbers replace it'
         : superseded
-          ? 'your bought ' + boughtScores[id] + ' no longer applies — '
+          ? 'your bought ' + boughtScores[id] + ' no longer applies, '
             + (r.missing && r.missing.length ? 'finish the numbers that set this' : 'add the numbers that set this')
           : '';
       el('abcard-' + id).classList.toggle('is-bought', bought);
@@ -723,7 +723,7 @@
     initNode.textContent = Money.isOk(init) ? sign(init.value) : DASH;
     initNode.classList.toggle('na', !Money.isOk(init));
     txt('v-init-why', Money.isOk(init)
-      ? (init.automationUnknown ? 'DEX only — say how automatic your saving is'
+      ? (init.automationUnknown ? 'DEX only, say how automatic your saving is'
          : 'DEX ' + sign(init.dexMod) + ' · automation ' + sign(init.bonus))
       : '');
     var acNode = el('v-ac');
@@ -735,7 +735,7 @@
     var burdenDis = Money.isOk(s.debtBurden) && s.debtBurden.row && s.debtBurden.row.saveDisadvantage
       ? s.debtBurden.row.saveDisadvantage : [];
     html('v-ac-note', (gaps.ready
-        ? gaps.rows.length + ' creatures attack this — bills, lawsuits, lost streams. '
+        ? gaps.rows.length + ' creatures attack this, bills, lawsuits, lost streams. '
           + (gaps.landing === 0 ? 'None' : gaps.landing === gaps.rows.length ? 'All of them' : gaps.landing + ' of them')
           + ' would land more often than not. Only cover moves it.'
         : 'Bills and lawsuits attack this number; pitches go around it. It needs DEX and your cover.')
@@ -744,7 +744,7 @@
             + esc(burdenDis.join(' and ')) + ' saves.</span>' : ''));
     var def = Char.defenses(s.featuresEarned, s.subclassFeatures);
     html('v-defences', def.length
-      ? def.map(function (d) { return '<div><b>' + esc(d.kind) + '</b> — ' + esc(d.text) + '</div>'; }).join('')
+      ? def.map(function (d) { return '<div><b>' + esc(d.kind) + '</b>, ' + esc(d.text) + '</div>'; }).join('')
       : '<span class="faint">Nothing yet. Resistances arrive with class features.</span>');
     txt('v-prof', sign(s.proficiencyBonus));
     var mobSub = s.subScores.structuralMobility;
@@ -769,14 +769,14 @@
     var dead = cur === 0;
     ['dp1', 'dp2', 'dp3'].forEach(function (id) { el(id).classList.toggle('lit', dead); });
     txt('v-death', dead
-      ? 'At 0 HP. Your liquid runway is gone — this is where death saves are actually rolled.'
-      : 'Only rolled at 0 HP — when your liquid runway is gone.');
+      ? 'At 0 HP. Your liquid runway is gone. This is where death saves are actually rolled.'
+      : 'Only rolled at 0 HP, when your liquid runway is gone.');
 
     html('v-burden', Money.isOk(s.debtBurden) && s.debtBurden.value >= 1
       ? '<div class="burden' + (s.debtBurden.value >= 4 ? ' b45' : '') + '"><b>Level '
-        + s.debtBurden.value + ' — ' + esc(s.debtBurden.row.trigger) + '</b><br/>'
+        + s.debtBurden.value + ', ' + esc(s.debtBurden.row.trigger) + '</b><br/>'
         + esc(s.debtBurden.row.effect) + '</div>'
-      : (Money.isOk(s.debtBurden) ? '<div class="micro" style="text-align:left">Level 0 — nothing to triage.</div>' : ''));
+      : (Money.isOk(s.debtBurden) ? '<div class="micro" style="text-align:left">Level 0, nothing to triage.</div>' : ''));
 
     var prof = [];
     if (Money.isOk(s.armorClass)) {
@@ -821,7 +821,7 @@
     if (Money.isOk(lr)) {
       html('v-longrest', '<div class="rest">'
         + (lr.atMax
-            ? '<span class="big">At full</span><span class="sub">Nothing to recover — your runway is at its cap for this class and level.</span>'
+            ? '<span class="big">At full</span><span class="sub">Nothing to recover, your runway is at its cap for this class and level.</span>'
             : '<span class="big">' + (Math.round(lr.deficitWeeks * 10) / 10) + ' weeks</span>'
               + '<span class="sub">short of your maximum</span>')
         + '<div class="restfigs">'
@@ -832,11 +832,11 @@
         + '</div>'
         + (lr.atMax ? ''
             : lr.unreachable
-              ? '<p class="warn">At your current surplus a long rest never completes — the deficit is not closing.</p>'
+              ? '<p class="warn">At your current surplus a long rest never completes. The deficit is not closing.</p>'
               : (lr.monthsToFull === null
                   ? '<p>Add your income and filing status to see how long a full recovery takes.</p>'
                   : '<p>About ' + (Math.round(lr.monthsToFull * 10) / 10) + ' months of uninterrupted rest '
-                    + 'to reach full. The DC rises with exhaustion — the deeper the hole, the more has to go '
+                    + 'to reach full. The DC rises with exhaustion, the deeper the hole, the more has to go '
                     + 'right without interruption.</p>'))
         + '</div>');
     } else {
@@ -857,7 +857,7 @@
                     : lp.yearsToNext === null
                       ? ''
                       : '<p>About ' + (Math.round(lp.yearsToNext * 10) / 10) + ' years at what you currently '
-                        + 'save. Contributions only — no growth assumed over a single level, because '
+                        + 'save. Contributions only, no growth assumed over a single level, because '
                         + 'compounding across one hop is noise dressed as precision.</p>'))
         + '</div>');
     } else {
@@ -866,12 +866,12 @@
 
     /* --- conditions (BRIEF §9.7) ------------------------------------------
        Exhaustion is derived and repaints freely. The status checkboxes are
-       LIVE INPUTS built once in buildShell — only .checked is written here,
+       LIVE INPUTS built once in buildShell, only .checked is written here,
        never innerHTML on .statuslist, or a tap mid-list would lose the
        keyboard-less equivalent: the tap itself. D-034. */
     var exh = Char.exhaustion(s.currentHp, TABLES);
     if (Money.isOk(exh)) {
-      /* Six segments for the six levels above Rested. Level 0 lights none —
+      /* Six segments for the six levels above Rested. Level 0 lights none, 
          an earlier version prepended a seventh and lit it whenever the level
          was non-zero, which showed five lit at level 4. */
       var track = '', top = TABLES.dndRules.exhaustion.levels.length - 1;
@@ -904,7 +904,7 @@
             + '<span class="d">Duration: ' + esc(row.duration) + '</span></div>';
         }).join('')
       : '<div class="micro" style="text-align:left">'
-        + (st.asked ? 'None declared.' : 'None declared yet — tick any that apply. Nothing here is guessed from your numbers, because none of it is visible in them.')
+        + (st.asked ? 'None declared.' : 'None declared yet, tick any that apply. Nothing here is guessed from your numbers, because none of it is visible in them.')
         + '</div>');
 
     /* --- tiers of play (BRIEF §9.4) ---------------------------------------
@@ -930,7 +930,7 @@
       var band = TABLES.dndRules.levelBands.filter(function (b) {
         return tp.level >= b.minLevel && tp.level <= b.maxLevel; })[0];
       html('v-tier-now',
-        '<p class="tierline"><b>Tier ' + esc(tp.tier.id) + ' — ' + esc(tp.tier.name) + '</b>'
+        '<p class="tierline"><b>Tier ' + esc(tp.tier.id) + ', ' + esc(tp.tier.name) + '</b>'
           + esc(tp.tier.about) + '</p>'
         + '<div class="tierbar"><span style="width:' + tp.percentThroughTier + '%"></span></div>'
         + '<p class="tierline" style="margin-top:var(--space-2)"><span class="lbl">Level '
@@ -945,7 +945,7 @@
         ? '<p class="tierline"><b>There is no tier V</b>' + esc(tp.tier.endsWhen) + '</p>'
         : '<p class="tierline"><span class="lbl">This tier ends when</span>'
             + esc(tp.tier.endsWhen) + '</p>'
-          + '<p class="tierline"><b>Then: tier ' + esc(tp.next.id) + ' — ' + esc(tp.next.name) + '</b>'
+          + '<p class="tierline"><b>Then: tier ' + esc(tp.next.id) + ', ' + esc(tp.next.name) + '</b>'
             + esc(tp.next.about) + '</p>'
           + '<p class="tierline"><span class="lbl">' + tp.levelsToNext + ' level'
             + (tp.levelsToNext === 1 ? '' : 's') + ' away · what comes into range</span>'
@@ -955,7 +955,7 @@
                 : 'Nothing new.') + '</p>');
     }
 
-    /* senses + levers (no inputs inside — safe to rebuild) */
+    /* senses + levers (no inputs inside, safe to rebuild) */
     html('v-passives', Char.passives(s.subScores, TABLES).map(function (x) {
       return '<div class="row"><span></span><span class="mod' + (x.ok ? '' : ' na') + '">'
         + (x.ok ? x.value : DASH) + '</span><span>' + esc(x.label) + '</span><span></span></div>';
@@ -974,7 +974,7 @@
         + '</tbody></table>'
       : '<span class="faint">Type your numbers and the levers appear, ranked by what is moving through each.</span>');
 
-    /* class pickers — a container with SELECTS, so rebuilt only when the class
+    /* class pickers, a container with SELECTS, so rebuilt only when the class
        itself changed; otherwise its options are already right. */
     paintPickers(s, isExample);
 
@@ -999,7 +999,7 @@
           return '<div class="feat' + (isTaken ? ' taken' : '') + '"><b>' + esc(f.name) + '</b> <span class="src">' + esc(f.source)
             + (isTaken ? ' · taken' : '') + '</span><br/>' + esc(f.detail)
             + (g ? '<br/><span class="grant">' + esc(g.why) + '</span>'
-                 : '<br/><span class="faint">Flavour — no mechanic yet.</span>') + '</div>'; }).join('')
+                 : '<br/><span class="faint">Flavour, no mechanic yet.</span>') + '</div>'; }).join('')
         + s.feats.locked.map(function (f) {
             return '<div class="feat lock"><b>' + esc(f.name) + '</b> <span class="src">' + esc(f.source)
               + '</span><br/>' + esc(f.why || f.detail) + '</div>'; }).join('')
@@ -1037,14 +1037,14 @@
       out += '<span class="faint" style="font-size:var(--text-sm)">Subclass unlocks at level '
         + TABLES.dndClasses.cadence.subclassChosenAt + '.</span>';
     }
-    /* Advancements — one select per ASI level reached (DD-023). Built here in
+    /* Advancements, one select per ASI level reached (DD-023). Built here in
        the same signature-guarded block as the class pickers, so a live select
        is never replaced under a finger for nothing. */
     var cad = TABLES.dndClasses.cadence;
     if (reached.length) {
       out += '<div class="advs">' + reached.map(function (a) {
         var cur = a.choice ? (a.choice.kind === 'feat' ? 'feat:' + a.choice.feat : 'asi:' + JSON.stringify(a.choice.plus)) : '';
-        var opts = '<option value="">Level ' + a.level + ' — choose…</option>';
+        var opts = '<option value="">Level ' + a.level + ', choose…</option>';
         cad.asi.abilities.forEach(function (id) {
           var v = 'asi:' + JSON.stringify((function (o) { o[id] = cad.asi.plus; return o; })({}));
           opts += '<option value="' + esc(v) + '"' + (cur === v ? ' selected' : '') + '>+' + cad.asi.plus + ' ' + id + '</option>';
@@ -1090,11 +1090,11 @@
   }
 
   function describeExport(envelope, isExample) {
-    if (isExample) return 'Nothing to export yet — this is the example character.';
+    if (isExample) return 'Nothing to export yet. This is the example character.';
     var LABELS = { people: 'your income', filingStatus: 'how you file', assets: 'cash and investments',
       debts: 'your debt', expenses: 'your monthly spending', dndProfile: 'your character' };
     var named = (envelope.contains || []).map(function (k) { return LABELS[k] || k; });
-    if (!named.length) return 'Nothing to export yet — the file would be empty.';
+    if (!named.length) return 'Nothing to export yet. The file would be empty.';
     var last = named.pop();
     var list = named.length ? named.join(', ') + ' and ' + last : last;
     var out = 'The file carries ' + esc(list) + '.';
@@ -1137,7 +1137,7 @@
       /* The ghosted preview shows a COMPLETE character, INT/WIS/CHA included.
          Writing only the money would drop those three the instant you pressed
          the button, which reads as the example breaking. So seed the declared
-         scores too — but never over the top of a quiz someone already did. */
+         scores too, but never over the top of a quiz someone already did. */
       if (!Store.quizComplete(TABLES)) {
         Store.patchProfile({
           declaredMethod: 'standardArray',
@@ -1174,7 +1174,7 @@
       try { envelope = JSON.parse(text); }
       catch (e) {
         box.innerHTML = '<b class="bad">That is not a character file.</b> It could not be read as '
-          + 'JSON at all — make sure you copied the whole thing, starting with a brace.';
+          + 'JSON at all, make sure you copied the whole thing, starting with a brace.';
         return;
       }
       var v = Export.validate(envelope);
@@ -1185,8 +1185,8 @@
       }
       var res = Store.importCharacter(envelope);
       if (!res.ok) { box.innerHTML = '<b class="bad">Not loaded.</b> ' + esc(res.reason); return; }
-      /* Deliberately NOT a buildShell(). The shell's structure never varies —
-         only its values do — and rebuilding it would replace every input node
+      /* Deliberately NOT a buildShell(). The shell's structure never varies, 
+         only its values do, and rebuilding it would replace every input node
          for no reason, which is the one thing D-034 forbids. hydrate() writes
          the new values into the nodes that are already there. */
       hydrate(false);

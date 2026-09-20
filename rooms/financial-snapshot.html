@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-173 (DRAFTT), D-233 (the merge).
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-173 (DRAFTT), D-233 (the merge).
 
   ONE MEASURING STICK, SIX READINGS. The Financial Snapshot, The Score,
   Every Ratio, Savings Rate, Quick Math and Where Do You Think You Rank all
@@ -43,8 +43,8 @@
   number opens the room; the nine are one tap away, where they used to be
   the first thing on the screen.
 
-  LIVE-FORM: built once. Only two readings hold inputs at all — Quick Math
-  and the rank guess — and both are in the markup and never replaced.
+  LIVE-FORM: built once. Only two readings hold inputs at all, Quick Math
+  and the rank guess, and both are in the markup and never replaced.
 -->
 <style>
   .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
@@ -531,10 +531,10 @@
 
   <!-- ================= THE SCORE (was rooms/health.html) ================= -->
   <section id="view-the-score" hidden>
-  <p class="slaf-lede">One number for the whole picture, weighted for the decade you’re in — and every part of how it was arrived at.</p>
+  <p class="slaf-lede">One number for the whole picture, weighted for the decade you’re in, and every part of how it was arrived at.</p>
   <section class="slaf-card" id="out-score">
     <span class="slaf-eyebrow">Everything, at once</span>
-    <div class="big" id="score-figure">—</div>
+    <div class="big" id="score-figure">not yet</div>
     <div class="band" id="score-band" hidden></div>
     <p class="slaf-reason" id="score-reason"></p>
     <div class="flag" id="score-note" hidden></div>
@@ -546,7 +546,7 @@
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
       Each bar is how close that pillar is to where convention says it
       should be. The percentage beside it is how much of the score it
-      carries at your age — and a pillar with nothing to measure is left
+      carries at your age, and a pillar with nothing to measure is left
       out entirely rather than counted as a zero.
     </p>
     <ul class="bars" id="pillars"></ul>
@@ -568,7 +568,7 @@
     <span class="slaf-eyebrow">How much the weighting matters</span>
     <h2 style="margin:var(--space-2) 0 0">The same numbers, scored at every age</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
-      Nothing about your finances changes down this table — only the
+      Nothing about your finances changes down this table, only the
       weights do. The spread is the size of the judgement built into the
       score, shown rather than hidden.
     </p>
@@ -593,16 +593,16 @@
   <p class="slaf-lede">The payoff: nine numbers read off everything you’ve entered. Net worth, savings rate, runway, FIRE number, and which rung you’re on.</p>
   <a class="handoff-cold" id="cold-start" href="start.html" hidden>
     <span class="slaf-eyebrow">Nothing entered yet</span>
-    <strong>Start Here — a few short questions</strong>
+    <strong>Start Here, a few short questions</strong>
     <span>Answer them once and every number on this page fills itself in.</span>
   </a>
 
   <!-- DRAFTT (D-173): the one pager out. Seven shares against seven bands,
        one verdict word each, the owner a tap away. No chart. -->
   <section class="slaf-card" id="draftt">
-    <span class="slaf-eyebrow">DRAFTT — the measuring stick</span>
+    <span class="slaf-eyebrow">DRAFTT, the measuring stick</span>
     <h2 style="margin:var(--space-2) 0 var(--space-2)">Seven shares of your pay, each against a healthy band</h2>
-    <p class="slaf-hint" style="margin:0">Debt · Retirement · Accommodation · Food · Transportation · Taxes — and Therapy while you track it. Shares are of take-home pay unless the row says gross. Pick whose band each row reads; the pick is remembered on this device, not in your numbers.</p>
+    <p class="slaf-hint" style="margin:0">Debt · Retirement · Accommodation · Food · Transportation · Taxes, and Therapy while you track it. Shares are of take-home pay unless the row says gross. Pick whose band each row reads; the pick is remembered on this device, not in your numbers.</p>
     <p class="slaf-hint" id="draftt-basis" style="margin:var(--space-2) 0 0"></p>
     <ol class="draftt" id="draftt-rows"></ol>
   </section>
@@ -610,7 +610,7 @@
   <!-- Lenses (D-175): the same numbers read the way a framework would read
        them, one card a domain until you ask for more. No field is added. -->
   <section class="slaf-card" id="lenses">
-    <span class="slaf-eyebrow">Lenses — more ways to read the same numbers</span>
+    <span class="slaf-eyebrow">Lenses, more ways to read the same numbers</span>
     <h2 style="margin:var(--space-2) 0 var(--space-2)">What the well-known rules say about your numbers</h2>
     <p class="slaf-hint" style="margin:0">Each card is one rule of thumb: what it says, where you sit, and who it is for and not for. Seven cards to start; “More ways to look at this” opens the rest. Nothing here asks you to type anything.</p>
     <div id="lenses-host"></div>
@@ -621,7 +621,7 @@
     <span class="slaf-eyebrow">Your numbers</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">What this is reading</h2>
     <p class="slaf-hint" style="margin:0 0 var(--space-4)">
-      Nothing is edited here. Each figure is owned by one room — tap it to go
+      Nothing is edited here. Each figure is owned by one room, tap it to go
       to the question that produces it.
     </p>
     <div id="inputs-list"></div>
@@ -631,7 +631,7 @@
 
   <section class="slaf-card" id="out-net-worth">
     <div class="out-head"><span class="slaf-eyebrow">Net worth</span><span id="nw-basis" hidden></span></div>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <p class="slaf-deferred" id="nw-deferred"></p>
     <div data-detail></div>
@@ -642,15 +642,15 @@
     <div class="out-head"><span class="slaf-eyebrow">Savings rate</span></div>
     <div class="variant-row">
       <span class="variant-label">Excluding employer match</span>
-      <span class="variant-value" id="sr-excluding">—</span>
+      <span class="variant-value" id="sr-excluding">not yet</span>
     </div>
     <div class="variant-row">
       <span class="variant-label">Including employer match</span>
-      <span class="variant-value" id="sr-including">—</span>
+      <span class="variant-value" id="sr-including">not yet</span>
     </div>
     <div class="variant-row">
-      <span class="variant-label">Contributed — what actually went somewhere</span>
-      <span class="variant-value" id="sr-contributed">—</span>
+      <span class="variant-label">Contributed, what actually went somewhere</span>
+      <span class="variant-value" id="sr-contributed">not yet</span>
     </div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
@@ -659,11 +659,11 @@
 
   <section class="slaf-card" id="out-emergency-fund">
     <div class="out-head"><span class="slaf-eyebrow">Emergency fund coverage</span></div>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
     <!-- SPEC.md §13 Tier 2, "Zombie Apocalypse Theory of Savings": content,
-         not code — contextual copy attached to this Tier 0 output. Paired
+         not code, contextual copy attached to this Tier 0 output. Paired
          with the SWAN Number, which is the same idea made personal. -->
     <p class="slaf-hint" style="margin-top:var(--space-3)">
       This is arithmetic, not comfort. The months a spreadsheet says you have
@@ -675,21 +675,21 @@
 
   <section class="slaf-card" id="out-dti">
     <div class="out-head"><span class="slaf-eyebrow">Debt-to-income</span></div>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
   </section>
 
   <section class="slaf-card" id="out-fire">
     <div class="out-head"><span class="slaf-eyebrow">FIRE number</span></div>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
   </section>
 
   <section class="slaf-card" id="out-fire-progress">
     <div class="out-head"><span class="slaf-eyebrow">FIRE progress</span></div>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <div class="slaf-bar" style="margin-top:var(--space-3)"><span id="fire-bar" style="width:0"></span></div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
@@ -698,7 +698,7 @@
 
   <section class="slaf-card" id="out-percentile">
     <div class="out-head"><span class="slaf-eyebrow">Net worth percentile</span></div>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
     <div id="pct-chart"></div>
@@ -706,14 +706,14 @@
 
   <section class="slaf-card" id="out-retirement">
     <div class="out-head"><span class="slaf-eyebrow">Retirement benchmark</span></div>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
   </section>
 
   <section class="slaf-card" id="out-benchmarks">
     <div class="out-head"><span class="slaf-eyebrow">Three benchmarks</span></div>
-    <h2 style="margin:var(--space-2) 0 var(--space-3)">Three benchmarks, and they disagree — here’s why</h2>
+    <h2 style="margin:var(--space-2) 0 var(--space-3)">Three benchmarks, and they disagree, here’s why</h2>
     <div class="three" id="three-benchmarks"></div>
     <p class="slaf-reason" id="three-why"></p>
     <div data-detail id="benchmarks-more"></div>
@@ -721,7 +721,7 @@
 
   <section class="slaf-card" id="out-foo">
     <div class="out-head"><span class="slaf-eyebrow">Where you are on the ladder</span></div>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <ol class="ladder" id="ladder-list"></ol>
   </section>
@@ -745,7 +745,7 @@
 
   <!-- ============== SAVINGS RATE (was rooms/savings-rate.html) =========== -->
   <section id="view-savings-rate" hidden>
-  <p class="slaf-lede">The share of your pay that does not get spent, two ways — and what a different one would do.</p>
+  <p class="slaf-lede">The share of your pay that does not get spent, two ways, and what a different one would do.</p>
   <section class="slaf-card" id="out-rate">
     <span class="slaf-eyebrow">Your rate</span>
     <h2 style="margin:var(--space-2) 0 0">Two honest answers</h2>
@@ -758,12 +758,12 @@
     <div class="pair">
       <div class="lead">
         <span class="cap">Your money only</span>
-        <span class="big" id="r-ex">—</span>
+        <span class="big" id="r-ex">not yet</span>
         <span class="sub" id="r-ex-sub"></span>
       </div>
       <div>
         <span class="cap">Including the match</span>
-        <span class="big" id="r-in">—</span>
+        <span class="big" id="r-in">not yet</span>
         <span class="sub" id="r-in-sub"></span>
       </div>
     </div>
@@ -795,7 +795,7 @@
       Cutting spending raises what you put away <em>and</em> lowers the
       number you are aiming at, because the target is built from what a year
       of your life costs. That is why a point of savings rate moves the date
-      so much more than a point of return does. Nothing here is saved — it
+      so much more than a point of return does. Nothing here is saved. It
       is a look, not a change.
     </p>
     <div id="wi-body"></div>
@@ -817,7 +817,7 @@
   <p class="slaf-lede">Every ratio the app can work out, by zone, with what each one blocks until it moves.</p>
   <section class="slaf-card" id="summary">
     <span class="slaf-eyebrow">How many are answerable</span>
-    <div class="tally" id="tally">—</div>
+    <div class="tally" id="tally">not yet</div>
     <p class="why" id="tally-why"></p>
     <div class="zonebar" id="zonebar" hidden></div>
     <div class="zonekey" id="zonekey" hidden>
@@ -825,7 +825,7 @@
     </div>
     <div class="flag">
       <strong>A band is a prompt, not a verdict.</strong> These thresholds are lending
-      conventions and rules of thumb — the 28/36 mortgage rules, the 3-6 month
+      conventions and rules of thumb, the 28/36 mortgage rules, the 3-6 month
       emergency fund. Several of them are wrong for particular lives by design, and
       a ratio with no convention worth quoting is shown with no colour at all
       rather than being given a made-up one.
@@ -881,7 +881,7 @@
 
   <!-- ============== QUICK MATH (was rooms/quick-math.html) =============== -->
   <section id="view-quick-math" hidden>
-  <p class="slaf-lede">Five sums a calculator does badly, done properly — each one small enough to answer in a minute.</p>
+  <p class="slaf-lede">Five sums a calculator does badly, done properly, each one small enough to answer in a minute.</p>
   <section class="slaf-card" id="hysa">
     <span class="slaf-eyebrow">Switching savings accounts</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Is it worth moving?</h2>
@@ -900,7 +900,7 @@
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Any fee to move</span>
         <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="h-fee" placeholder="e.g. 0" aria-label="Fee to move"/></span></label>
     </div>
-    <div class="answer" id="hysa-answer">—</div>
+    <div class="answer" id="hysa-answer">not yet</div>
     <div class="out-detail" id="hysa-detail"></div>
   </section>
 
@@ -915,7 +915,7 @@
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Over</span>
         <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="u-months" placeholder="e.g. 24" aria-label="Months owned"/><span class="slaf-affix">mo</span></span></label>
     </div>
-    <div class="answer" id="use-answer">—</div>
+    <div class="answer" id="use-answer">not yet</div>
     <div class="out-detail" id="use-detail"></div>
   </section>
 
@@ -932,7 +932,7 @@
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Interest rate</span>
         <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="c-rate" placeholder="e.g. 6" aria-label="Loan interest rate"/><span class="slaf-affix">%</span></span></label>
     </div>
-    <div class="answer" id="car-answer">—</div>
+    <div class="answer" id="car-answer">not yet</div>
     <ul class="legs" id="car-legs"></ul>
     <div class="out-detail" id="car-detail"></div>
     <p class="rule-statement">20% down, paid off in 3 years, payment under 8% of gross pay.</p>
@@ -943,7 +943,7 @@
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Could you buy five?</h2>
     <label class="slaf-field"><span class="slaf-label">The thing costs</span>
       <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-price" placeholder="e.g. 2000" aria-label="Price"/></span></label>
-    <div class="answer" id="five-answer">—</div>
+    <div class="answer" id="five-answer">not yet</div>
     <div class="out-detail" id="five-detail"></div>
     <p class="rule-statement" id="five-rule"></p>
   </section>
@@ -963,12 +963,12 @@
         <span class="slaf-input-shell"><input type="text" inputmode="decimal" id="b-years" placeholder="to age 65" aria-label="Years"/><span class="slaf-affix">yrs</span></span></label>
     </div>
     <div class="two-ends" id="habit-ends" hidden>
-      <div><span class="lbl">Bigger pot needed</span><span class="val" id="habit-fire">—</span>
+      <div><span class="lbl">Bigger pot needed</span><span class="val" id="habit-fire">not yet</span>
         <span class="sub">to fund it forever</span></div>
-      <div><span class="lbl">Or invested instead</span><span class="val" id="habit-invested">—</span>
+      <div><span class="lbl">Or invested instead</span><span class="val" id="habit-invested">not yet</span>
         <span class="sub" id="habit-invested-sub"></span></div>
     </div>
-    <div class="answer" id="habit-answer">—</div>
+    <div class="answer" id="habit-answer">not yet</div>
     <div class="out-detail" id="habit-detail"></div>
     <div id="habit-bands"></div>
     <div id="habit-lens"></div>
@@ -1122,7 +1122,7 @@
   function renderScore(s) {
     var fig = el('score-figure'), band = el('score-band'), reason = el('score-reason');
     if (!Money.isOk(s)) {
-      fig.textContent = Money.EM_DASH;
+      fig.textContent = Money.NOT_YET;
       fig.classList.add('slaf-figure--incomplete');
       band.hidden = true;
       reason.innerHTML = esc(s.reason)
@@ -1138,7 +1138,7 @@
     band.className = 'band is-' + s.band.id;
     band.textContent = s.band.label;
     reason.textContent = s.band.blurb + ' Weighted for ' + s.cohort.label.toLowerCase()
-      + (Money.isEntered(s.age) ? ' — you’re ' + s.age + '.' : '.')
+      + (Money.isEntered(s.age) ? ', you’re ' + s.age + '.' : '.')
       + ' Built from ' + s.ratiosCounted + ' ratios across '
       + s.availablePillars.length + ' of ' + s.pillars.length + ' pillars.';
 
@@ -1181,7 +1181,7 @@
     var rows = s.headroom.filter(function (r) { return r.pointsAvailable >= 0.05; });
     if (!rows.length) {
       el('headroom').innerHTML = '<li><span>Every pillar that can be measured is at or past '
-        + 'its benchmark.</span><span class="pts">—</span></li>';
+        + 'its benchmark.</span><span class="pts">not yet</span></li>';
       return;
     }
     el('headroom').innerHTML = rows.map(function (r) {
@@ -1214,14 +1214,14 @@
         });
         return '<tr class="' + (row.cohort.id === across.ownCohortId ? 'is-here' : '') + '">'
           + '<td>' + esc(row.cohort.label) + '</td>'
-          + '<td>' + (ok ? r.value : Money.EM_DASH) + '</td>'
+          + '<td>' + (ok ? r.value : Money.NOT_YET) + '</td>'
           + '<td>' + esc(label) + ' ' + pct(row.cohort.weights[heaviest]) + '</td></tr>';
       }).join('');
 
     if (scores.length > 1) {
       var lo = Math.min.apply(null, scores), hi = Math.max.apply(null, scores);
       el('cohorts-why').textContent = 'The same finances score between ' + lo + ' and ' + hi
-        + ' depending only on which decade’s weights are applied — a spread of ' + (hi - lo)
+        + ' depending only on which decade’s weights are applied, a spread of ' + (hi - lo)
         + ' points. That gap is the weighting, not you. It is the reason this page shows the '
         + 'pillars above rather than only the number.';
     } else {
@@ -1245,7 +1245,7 @@
         return '<li class="is-absent"><div class="top"><span class="nm">' + esc(p.label)
           + '</span><span class="wt">' + pct(p.weight) + ' redistributed</span></div>'
           + '<div class="parts">' + (whys.length
-              ? whys.map(function (k) { return esc(k.label) + ' — ' + esc(k.why); }).join('<br/>')
+              ? whys.map(function (k) { return esc(k.label) + ', ' + esc(k.why); }).join('<br/>')
               : 'Nothing in this pillar could be computed.') + '</div></li>';
       }).join('') + '</ul>';
   }
@@ -1314,7 +1314,7 @@
 
   /* ---------- the borrowed numbers ---------------------------------------
      This room owns NOTHING. Every figure below belongs to another room and
-     renders as a link back to the question that produces it — see
+     renders as a link back to the question that produces it, see
      shared/ownership.js. That is what stopped the same number being
      typeable in three separate places.                                   */
 
@@ -1354,7 +1354,7 @@
       return '<li class="dr' + (row.verdict ? ' is-' + row.verdict : '') + '" id="dr-' + row.id + '">'
         + '<span class="dr-letter">' + row.letter + '</span>'
         + '<span class="dr-label">' + esc(row.label) + '<small>' + esc(row.sub) + (row.amountCents !== null ? ' · ' + Money.formatCents(row.amountCents) : '') + '</small></span>'
-        + '<span class="dr-share' + (ok ? '' : ' is-incomplete') + '">' + (ok ? pct(row.share.value) : esc(row.share.reason || Money.EM_DASH)) + '</span>'
+        + '<span class="dr-share' + (ok ? '' : ' is-incomplete') + '">' + (ok ? pct(row.share.value) : esc(row.share.reason || Money.NOT_YET)) + '</span>'
         + '<span class="dr-band">' + esc(bandText(row.band)) + (row.band && row.band.converted ? ' <em>(' + pct(row.band.statedHigh >= 1 ? row.band.statedLow : row.band.statedHigh, 0) + ' of ' + (row.band.statedBasis === 'gross' ? 'gross' : 'take-home') + ', converted)</em>' : '') + '</span>'
         + '<span class="dr-verdict">' + (row.verdict || '') + '</span>'
         + '<span class="dr-foot">'
@@ -1404,7 +1404,7 @@
 
     if (figure) {
       var isOk = Money.isOk(result);
-      figure.textContent = isOk ? formatter(result.value) : Money.EM_DASH;
+      figure.textContent = isOk ? formatter(result.value) : Money.NOT_YET;
       figure.classList.toggle('slaf-figure--incomplete', !isOk);
       figure.classList.toggle('slaf-figure--negative', isOk && result.value < 0);
     }
@@ -1479,7 +1479,7 @@
       .forEach(function (pair) {
         var node = el(pair[0]), res = pair[1];
         var isOk = Money.isOk(res);
-        node.textContent = isOk ? Money.formatRate(res.value, { decimals: 1 }) : Money.EM_DASH;
+        node.textContent = isOk ? Money.formatRate(res.value, { decimals: 1 }) : Money.NOT_YET;
         node.classList.toggle('is-incomplete', !isOk);
         node.title = isOk ? '' : (res.reason || '');
       });
@@ -1562,7 +1562,7 @@
       detail.innerHTML = '<p class="slaf-reason">Against households in the '
         + r.bandLabel + ' age band (SCF ' + r.referenceVersion + ').</p>';
     } else if (r.status === 'below_chart' || r.status === 'above_chart') {
-      /* Never an extrapolated percentile — say where it sits instead. */
+      /* Never an extrapolated percentile, say where it sits instead. */
       figure.textContent = r.status === 'below_chart' ? 'Below chart' : 'Above chart';
       figure.classList.add('slaf-figure--incomplete');
       figure.style.fontSize = 'var(--text-lg)';
@@ -1570,7 +1570,7 @@
       reason.textContent = r.reason;
       detail.innerHTML = '';
     } else {
-      figure.textContent = Money.EM_DASH;
+      figure.textContent = Money.NOT_YET;
       figure.classList.add('slaf-figure--incomplete');
       reason.hidden = false;
       reason.textContent = r.reason || '';
@@ -1580,8 +1580,8 @@
   }
 
   /* Your net worth against the band's breakpoints, as bars. The band comes
-     back on every result that found one — placed, above or below the
-     chart — so an off-chart figure still gets drawn where it sits. No
+     back on every result that found one, placed, above or below the
+     chart, so an off-chart figure still gets drawn where it sits. No
      band, or no net worth, and there is nothing to draw against. */
   function percentileBars(r, nw) {
     var bands = (TABLES.netWorthPercentiles && TABLES.netWorthPercentiles.bands) || [];
@@ -1624,7 +1624,7 @@
     list.innerHTML = '';
 
     if (!foo || !foo.steps.length) {
-      figure.textContent = Money.EM_DASH;
+      figure.textContent = Money.NOT_YET;
       figure.classList.add('slaf-figure--incomplete');
       reason.hidden = false;
       reason.textContent = 'Fill in your numbers above to place yourself on the ladder.';
@@ -1638,7 +1638,7 @@
       reason.hidden = false;
       reason.textContent = foo.placement.label;
     } else {
-      figure.textContent = Money.EM_DASH;
+      figure.textContent = Money.NOT_YET;
       figure.classList.add('slaf-figure--incomplete');
       reason.hidden = false;
       reason.textContent = stopped && stopped.detail
@@ -1671,7 +1671,7 @@
     function cell(cap, r, show, sub) {
       var ok = Money.isOk(r);
       return '<div class="cell"><span class="cap">' + cap + '</span>'
-        + '<span class="big' + (ok ? '' : ' is-incomplete') + '">' + (ok ? show(r) : Money.EM_DASH) + '</span>'
+        + '<span class="big' + (ok ? '' : ' is-incomplete') + '">' + (ok ? show(r) : Money.NOT_YET) + '</span>'
         + '<span class="sub">' + (ok ? sub(r) : (r.reason || '')) + '</span></div>';
     }
     el('three-benchmarks').innerHTML =
@@ -1690,7 +1690,7 @@
       B.milestones(h, TABLES).forEach(function (ms) {
         var r = ms.result;
         rows.push(['Monthly to ' + Money.formatCents(ms.targetCents) + ' by ' + m.endAge,
-          Money.isOk(r) ? (r.alreadyThere ? 'already on course' : Money.formatCents(r.value) + '/mo') : Money.EM_DASH]);
+          Money.isOk(r) ? (r.alreadyThere ? 'already on course' : Money.formatCents(r.value) + '/mo') : Money.NOT_YET]);
       });
     }
     if (Money.isOk(one)) {
@@ -1736,7 +1736,7 @@
     el('provenance').innerHTML = Reference.provenance(TABLES,
       ['netWorthPercentiles', 'retirementMilestones', 'effectiveTaxRates'])
       .map(function (p) {
-        return '<strong>' + p.id + '</strong> v' + p.version + ' (' + p.asOf + ') — '
+        return '<strong>' + p.id + '</strong> v' + p.version + ' (' + p.asOf + '), '
           + p.label + '. ' + p.note;
       }).join('<br/>');
 
@@ -1822,7 +1822,7 @@
     notice.hidden = false;
     notice.className = 'notice is-error';
     notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
-      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+      + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>
@@ -1839,8 +1839,8 @@
   var MONTHS = 12;
 
   /* SPEC.md §12.1: each surface decides which variant it leads with and says
-     so. This room leads with excluding-match — the conservative read, and
-     the one engines/foo.js already uses for the benchmark flag — but shows
+     so. This room leads with excluding-match. The conservative read, and
+     the one engines/foo.js already uses for the benchmark flag, but shows
      both at the same size because this is the room about the number. */
   var LEAD_VARIANT = 'excludingMatch';
 
@@ -1865,7 +1865,7 @@
       el(subId).textContent = sub(result);
     } else {
       node.className = 'big is-incomplete';
-      node.textContent = Money.EM_DASH;
+      node.textContent = Money.NOT_YET;
       el(subId).textContent = result.reason || '';
     }
   }
@@ -1892,7 +1892,7 @@
     }
     var gross = r.grossAnnualIncomeCents;
     var saved = r.annualSavingsCents;
-    /* Saved can be negative — spending more than you take home is a real
+    /* Saved can be negative, spending more than you take home is a real
        result, and a bar cannot show it, so the stack shows what is spent
        and the detail states the shortfall. */
     var parts = [
@@ -1905,7 +1905,7 @@
       return '<span class="' + p[0] + '" style="width:' + (shown === 0 ? 0 : p[1] / shown * 100) + '%"></span>';
     }).join('');
 
-    /* The same three figures as shares of gross — the engine's, not a
+    /* The same three figures as shares of gross, the engine's, not a
        second sum: tax + spending + saved is gross by construction. A
        shortfall has no share of a whole, so that case gets no ring; the
        sentence under the detail says what happened instead. Saved is the
@@ -1931,7 +1931,7 @@
     ]);
 
     el('b-why').textContent = saved < 0
-      ? 'That is a shortfall, not a rate — you are spending '
+      ? 'That is a shortfall, not a rate. You are spending '
         + Money.formatCents(-saved) + ' a year more than you take home. '
         + 'Everything below this line is arithmetic about a gap.'
       : 'Expenses are the ' + (r.expenseSource === 'closed'
@@ -1957,7 +1957,7 @@
     note.hidden = false;
     if (hit) {
       note.className = 'flag flag--warn';
-      note.innerHTML = '<strong>' + hit.label + '</strong> — ' + hit.guidance;
+      note.innerHTML = '<strong>' + hit.label + '</strong>, ' + hit.guidance;
     } else {
       note.className = 'flag';
       note.innerHTML = '<strong>At or above the benchmark.</strong> '
@@ -1968,7 +1968,7 @@
     el('bench-why').textContent = 'The benchmark is '
       + Money.formatRate(t.savingsRateBenchmarkLow, { decimals: 0 }) + '–'
       + Money.formatRate(t.savingsRateBenchmarkFloor, { decimals: 0 })
-      + ', from data/foo_rules.json, and it is measured on your money only — '
+      + ', from data/foo_rules.json, and it is measured on your money only, '
       + 'employer match dollars are excluded, which is the harder test.';
   }
 
@@ -1992,7 +1992,7 @@
     }
     /* A projection that never reaches the target is exactly the case where
        the rest of this table is worth seeing, so it is not a reason to stop
-       rendering — only a reason for that one row to read —. */
+       rendering, only a reason for that one row to read, . */
     var rows = [{ points: 0, label: 'Now', rate: base.value, household: h,
                   fire: Tier0.fireNumber(h), years: baseYears }];
 
@@ -2022,14 +2022,14 @@
             ? '<br><span style="font-size:var(--text-xs);color:var(--color-text-faint)">−'
               + Money.formatCents(row.monthlyCutCents) + '/mo</span>'
             : '') + '</td>'
-          + '<td>' + (Money.isEntered(row.rate) ? Money.formatRate(row.rate, { decimals: 1 }) : Money.EM_DASH) + '</td>'
-          + '<td>' + (Money.isOk(row.fire) ? Money.formatCents(row.fire.value) : Money.EM_DASH) + '</td>'
+          + '<td>' + (Money.isEntered(row.rate) ? Money.formatRate(row.rate, { decimals: 1 }) : Money.NOT_YET) + '</td>'
+          + '<td>' + (Money.isOk(row.fire) ? Money.formatCents(row.fire.value) : Money.NOT_YET) + '</td>'
           + '<td>' + (Money.isOk(row.years)
             ? years(row.years.value)
               + (saved && saved > 0.05
                 ? '<br><span class="gain">' + years(saved) + ' sooner</span>'
                 : '')
-            : Money.EM_DASH) + '</td></tr>';
+            : Money.NOT_YET) + '</td></tr>';
       }).join('') + '</tbody></table>';
 
     /* The same rows as bars. The date is the figure that moves, so the bars
@@ -2075,7 +2075,7 @@
         + years(baseYears.value - ten.years.value)
         + ', and it lowers the target by '
         + Money.formatCents(baseFire.value - ten.fire.value)
-        + ' — both from the same cut. Contributions assume the '
+        + ', both from the same cut. Contributions assume the '
         + (baseYears.contributionBasis === 'includingMatch'
           ? 'including-match figure, since those dollars really do land in the account'
           : 'your-money-only figure')
@@ -2138,7 +2138,7 @@
   var TABLES = null;
 
   /* Which list each ratio belongs in. A ratio not named here still computes
-     — it just lands in the balance-sheet list, which is the catch-all. */
+, it just lands in the balance-sheet list, which is the catch-all. */
   var LENDING = ['debtToIncome', 'housingRatio', 'backEndRatio', 'carPaymentToIncome'];
   var SAFETY = ['emergencyFundMonths', 'runwayMonths', 'liquidityRatio', 'currentRatio',
                 'burnRateCents', 'personalCashFlowRatio', 'savingsRate', 'fiRatio',
@@ -2159,7 +2159,7 @@
   }
 
   function show(row) {
-    if (!row.ok) return Money.EM_DASH;
+    if (!row.ok) return Money.NOT_YET;
     switch (row.unit) {
       case 'rate':     return Money.formatRate(row.value, { decimals: 1 });
       case 'months':   return Money.formatMonths(row.value);
@@ -2187,8 +2187,8 @@
     return aim + '. ' + (b.note || '');
   }
 
-  /* Each row: the name with its ⓘ, the figure, the formula, and — behind
-     the button — what it is, why it matters, what moves it, and a link to
+  /* Each row: the name with its ⓘ, the figure, the formula, and, behind
+     the button, what it is, why it matters, what moves it, and a link to
      every number it reads (shared/explain.js). The row's id is the ratio's,
      so the dashboard can deep-link to it. */
   function renderList(nodeId, rows) {
@@ -2283,7 +2283,7 @@
       : scored.length === 0
         ? 'None of what computed has a threshold worth quoting against it.'
         : counts.good + ' comfortable, ' + counts.watch + ' worth a look, '
-          + counts.out + ' outside the usual range — of the ' + scored.length
+          + counts.out + ' outside the usual range, of the ' + scored.length
           + ' that have a band at all. The other ' + (a.value - scored.length)
           + ' computed but carry no convention.';
 
@@ -2334,7 +2334,7 @@
     el('ra-provenance').innerHTML = Reference.provenance(TABLES,
       ['ratioBenchmarks', 'ratioExplainers', 'effectiveTaxRates', 'retirementMilestones'])
       .map(function (p) {
-        return '<strong>' + p.id + '</strong> v' + p.version + ' — ' + p.label + '. ' + p.note;
+        return '<strong>' + p.id + '</strong> v' + p.version + ', ' + p.label + '. ' + p.note;
       }).join('<br/>');
   }
 
@@ -2365,7 +2365,7 @@
   function el(id) { return document.getElementById(id); }
 
   /* Every field here belongs to the one-off question being asked, so it is
-     room state rather than household data — nothing is written to the spine. */
+     room state rather than household data. Nothing is written to the spine. */
   var v = {};
 
   function bind(id, kind) {
@@ -2396,7 +2396,7 @@
   }
 
   /* The balance you might move is the cash you already told Start Here
-     about — proposed, not taken. D-062. */
+     about, proposed, not taken. D-062. */
   var seed = SLAF.Seed.mount({
     roomId: ROOM_ID, host: el('seed-host'),
     seeds: function () {
@@ -2424,7 +2424,7 @@
   function setAnswer(id, result, text, tone) {
     var node = el(id);
     var ok = Money.isOk(result);
-    node.textContent = ok ? text : (result.reason || Money.EM_DASH);
+    node.textContent = ok ? text : (result.reason || Money.NOT_YET);
     node.className = 'answer' + (ok ? (tone ? ' ' + tone : '') : ' is-incomplete');
     return ok;
   }
@@ -2485,7 +2485,7 @@
       return;
     }
     el('car-answer').textContent = r.passesAll ? 'Passes all three'
-      : r.value + ' of 3 — ' + (3 - r.value) + ' to fix';
+      : r.value + ' of 3, ' + (3 - r.value) + ' to fix';
     el('car-answer').className = 'answer ' + (r.passesAll ? 'good' : 'bad');
 
     el('car-legs').innerHTML = r.checks.map(function (c) {
@@ -2511,8 +2511,8 @@
   function renderFive(h) {
     var r = Q.ruleOfFive(h, v['f-price']);
     var ok = setAnswer('five-answer', r,
-      Money.isOk(r) ? (r.passes ? 'Yes — you could buy ' + r.howManyYouCouldBuy
-                                : 'No — you could buy ' + r.howManyYouCouldBuy) : '',
+      Money.isOk(r) ? (r.passes ? 'Yes. You could buy ' + r.howManyYouCouldBuy
+                                : 'No. You could buy ' + r.howManyYouCouldBuy) : '',
       Money.isOk(r) && r.passes ? 'good' : 'bad');
     el('five-rule').textContent = Money.isOk(r) ? r.rule.statement : Q.RULE_OF_FIVE.statement;
     if (!ok) { el('five-detail').innerHTML = ''; return; }
@@ -2555,7 +2555,7 @@
         Money.formatCents(r.fireNumberAdditionCents) + ' more needed'],
       ['You\u2019d have paid in', Money.formatCents(r.contributedCents)],
       ['Growth on top', Money.formatCents(r.growthCents)]
-    ]) + '<p class="slaf-reason">The pot figure is exact — it falls straight out of the '
+    ]) + '<p class="slaf-reason">The pot figure is exact, it falls straight out of the '
       + 'withdrawal rate and doesn\u2019t depend on returns at all. The invested figure '
       + 'assumes ' + Money.formatRate(r.expectedReturnRate, { decimals: 0 })
       + ' a year over ' + Math.round(r.years) + ' years ('

@@ -1,20 +1,20 @@
 /* ==========================================================================
-   engines/purchase.js — one thing you are eyeing, priced in life.
+   engines/purchase.js, one thing you are eyeing, priced in life.
    DECISIONS.md D-099 (the Big Purchase room).
    --------------------------------------------------------------------------
    The room does not judge whether you should. It prices the choice four
    ways and stops:
 
-     hours     hours of your life at the real hourly wage — the lens's
+     hours     hours of your life at the real hourly wage, the lens's
                'hours' mode (shared/lens.js), absent without a wage
-     pushed    months FI moves later if the price is spent — the lens's
+     pushed    months FI moves later if the price is spent, the lens's
                'pushed' mode, the same FI arithmetic the dashboard uses
      cash      today's cash less the price, against the 3-month floor and
                the 6-month cushion (spending × 3 and × 6), and what a month
                of saving it takes to have it in N months without dipping
                under the floor
      financed  the level payment over a stated term (36 months; 60 for a
-               car) and the interest it adds — engines/projection.js's
+               car) and the interest it adds, engines/projection.js's
                levelPaymentCents, not a second amortisation
 
    Nothing here is a new formula: hours and FI come from the lens, the
@@ -129,7 +129,7 @@
       if (kind === 'car' && QuickMath) {
         /* Quick Math's 20/3/8 rule, run as if the whole price were borrowed
            (this room has no down-payment box). Only the rule's own figures
-           are carried — never a nested Result's status. */
+           are carried, never a nested Result's status. */
         var cr = QuickMath.carRule2038(household, { carPriceCents: price, downPaymentCents: 0, termMonths: term, loanRate: p.financeRate });
         if (Money.isOk(cr)) carRule = { rule: cr.rule, checks: cr.checks, passesAll: cr.passesAll, paymentCapCents: cr.paymentCapCents, monthlyGrossCents: cr.monthlyGrossCents };
       }

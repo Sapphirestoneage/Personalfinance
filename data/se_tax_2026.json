@@ -25,7 +25,7 @@
   "employeeFicaRate": 0.0765,
   "employeeFicaNote": "What a W2 employee pays. The employer pays the matching half, which is the core of the W2-vs-1099 comparison.",
   "safeHarbor": {
-    "note": "Estimated payments avoid an underpayment penalty if they cover the lesser of 90% of this year's liability or 100% of last year's — 110% when last year's AGI exceeded the high-income threshold.",
+    "note": "Estimated payments avoid an underpayment penalty if they cover the lesser of 90% of this year's liability or 100% of last year's, 110% when last year's AGI exceeded the high-income threshold.",
     "currentYearShare": 0.9,
     "priorYearShare": 1.0,
     "priorYearShareHighIncome": 1.1,

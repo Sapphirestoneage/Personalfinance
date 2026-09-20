@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/export.js — the character export, and the only thing another tool
+   shared/export.js, the character export, and the only thing another tool
    is asked to understand about this one.
    --------------------------------------------------------------------------
    See FORMAT.md for the contract this file produces. That document is the
@@ -12,7 +12,7 @@
    1. IT IS A PARTIAL HOUSEHOLD, NOT A WHOLE ONE.
       The obvious export is JSON.stringify(household). It is wrong. A SPARKS
       household also carries goals, ratings, worthChecks, a values profile and
-      a SWAN target — none of which this tool can produce, all of which would
+      a SWAN target, none of which this tool can produce, all of which would
       be present and EMPTY in a whole-household dump. An importer that applied
       that would silently wipe goals someone spent an hour entering. So the
       envelope carries only the keys this tool genuinely owns, and `contains`
@@ -21,15 +21,15 @@
 
    2. EVERY KEY IS PRESENT-OR-ABSENT, NEVER PRESENT-AND-EMPTY.
       A sheet with no debts omits `debts` rather than sending []. The two mean
-      different things — "I have no debts" versus "this tool has nothing to
-      say about debts" — and only the first should ever overwrite anything.
+      different things, "I have no debts" versus "this tool has nothing to
+      say about debts", and only the first should ever overwrite anything.
       This is the same empty-is-not-zero rule the engine runs on, applied at
       the boundary between two programs.
 
    3. THE SUMMARY IS FOR HUMANS AND IS NOT AUTHORITATIVE.
       `summary` exists so an importer can show "you are about to import The
       Earner, Level 3" before someone commits to it. It is derived, it is a
-      snapshot, and an importer must recompute rather than trust it — which
+      snapshot, and an importer must recompute rather than trust it, which
       it can, because the household inside is the real shape.
    ========================================================================== */
 (function (root, factory) {
@@ -61,7 +61,7 @@
      this list is not its business and never appears in an export. */
   var OWNED_KEYS = ['people', 'filingStatus', 'assets', 'debts', 'expenses', 'dndProfile'];
 
-  /* ---- provenance — BRIEF §9.5 -------------------------------------------
+  /* ---- provenance, BRIEF §9.5 -------------------------------------------
      The importer's real question is not "what is in this file" but "which of
      it may I write down as fact?" Money someone typed is fact. A Wisdom score
      they ROLLED is not a self-assessment, it is a dice result, and a room that
@@ -76,7 +76,7 @@
     people: { trust: 'typed', note: 'Income figures the person entered.' },
     filingStatus: { trust: 'typed', note: 'Chosen from a list; sets the tax estimate.' },
     assets: { trust: 'typed', note: 'Cash and investments as two summary records, not itemised.' },
-    debts: { trust: 'typed', note: 'One summary record. Its rate is a stand-in, not a measured APR — see FORMAT.md.' },
+    debts: { trust: 'typed', note: 'One summary record. Its rate is a stand-in, not a measured APR, see FORMAT.md.' },
     expenses: { trust: 'typed', note: 'One monthly figure, estimated by the person.' },
     dndProfile: { trust: 'mixed', note: 'Game state. See profileFields for what may be trusted.' }
   };
@@ -101,7 +101,7 @@
     quizAnswers: { trust: 'declared', note: 'Answers to behavioural questions.' },
     classOverride: { trust: 'declared', note: 'A class they picked over the suggested one.' },
     subclassId: { trust: 'declared', note: 'A subclass they picked. Available from level 3 and never assigned automatically.' },
-    declaredScores: { trust: 'varies', note: 'Depends entirely on declaredMethod — read that first.' },
+    declaredScores: { trust: 'varies', note: 'Depends entirely on declaredMethod, read that first.' },
     declaredMethod: { trust: 'declared', note: 'How the nine scores came to exist. THE key to reading declaredScores.' },
     rolledValues: { trust: 'generated', note: 'Dice. Never data.' },
     advancements: { trust: 'declared', note: 'ASI and feat choices per level, chosen by the person. Game state; never a fact about them.' }
@@ -109,7 +109,7 @@
 
   /* How much a set of declaredScores is worth, by how it was produced. */
   var METHOD_TRUST = {
-    featsOfStrength: { trust: 'declared', note: 'Answers to behavioural questions — a self-report, and the only method worth showing as a suggestion.' },
+    featsOfStrength: { trust: 'declared', note: 'Answers to behavioural questions, a self-report, and the only method worth showing as a suggestion.' },
     homebrew: { trust: 'declared', note: 'Typed in directly by the person as a self-assessment.' },
     pointBuy: { trust: 'generated', note: 'A budget spent to build a character. Says what they wanted to be, not what they are.' },
     standardArray: { trust: 'generated', note: 'A fixed set of numbers assigned to slots. Carries no information about the person.' },
@@ -137,7 +137,7 @@
   }
 
   /**
-   * A short, human-readable read of the character — for a confirmation screen
+   * A short, human-readable read of the character, for a confirmation screen
    * on the far side. Derived and non-authoritative; see the header note.
    * Anything that has not been answered is simply absent rather than nulled.
    */
@@ -177,7 +177,7 @@
 
   /**
    * Build the export envelope.
-   * `tables` is optional — without it the summary is omitted, and the payload
+   * `tables` is optional, without it the summary is omitted, and the payload
    * (the part that matters) is unaffected.
    */
   function build(household, tables) {
@@ -195,7 +195,7 @@
       format: FORMAT,
       formatVersion: FORMAT_VERSION,
       /* The household's own version if it has one, otherwise whatever Schema
-         currently mints — never a literal, so this cannot drift from the
+         currently mints, never a literal, so this cannot drift from the
          model it describes. */
       schemaVersion: Money.isEntered(h.schemaVersion)
         ? h.schemaVersion : Schema.createHousehold().schemaVersion,
@@ -209,7 +209,7 @@
     };
     /* Only describe a character when there is actually a payload to describe.
        Without this an empty sheet still reports "Debt Burden 0", because no
-       debt records reads as no debt — true of a real sheet, meaningless on an
+       debt records reads as no debt, true of a real sheet, meaningless on an
        empty one. Tying the summary to `contains` keeps the two honest. */
     if (contains.length) {
       var summary = summarise(h, tables);
@@ -221,7 +221,7 @@
   }
 
   /**
-   * What may be trusted, for the keys this file actually carries — BRIEF §9.5.
+   * What may be trusted, for the keys this file actually carries, BRIEF §9.5.
    *
    * Only describes what is present. Describing absent keys would invite an
    * importer to write defaults for things nobody answered.
@@ -245,7 +245,7 @@
       fields.declaredScores = m
         ? { trust: m.trust, method: p.declaredMethod, note: m.note }
         : { trust: 'generated', method: p.declaredMethod || null,
-            note: 'Unknown method — treat as generated, which is the safe reading.' };
+            note: 'Unknown method, treat as generated, which is the safe reading.' };
     }
     if (!isEmptyObject(fields)) out.dndProfile.profileFields = fields;
     return out;
@@ -299,7 +299,7 @@
     } else {
       var listed = envelope.contains;
       if (!Array.isArray(listed)) {
-        warnings.push('No "contains" list — fall back to the keys actually present.');
+        warnings.push('No "contains" list, fall back to the keys actually present.');
       } else {
         listed.forEach(function (k) {
           if (!(k in envelope.household)) {

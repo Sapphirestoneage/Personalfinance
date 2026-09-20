@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-098.
+  ROOM SPEC, SPEC.md §11. On the frozen template (D-097). DECISIONS.md D-098.
 
   TWO READINGS SINCE D-301.
 
@@ -31,13 +31,13 @@
              workplace contribution percent (Start Here); the working
              situation, which decides whether the payroll tax is the
              employee's FICA or both halves as self-employment tax.
-  2. WRITES  It OWNS household.tax — otherPreTaxAnnualCents (HSA, a
+  2. WRITES  It OWNS household.tax, otherPreTaxAnnualCents (HSA, a
              traditional IRA: pre-tax money beyond the workplace plan) and
              withheldAnnualCents (withheld or paid in estimates this year).
              Nothing else edits those. It does not touch income.
-  3. CALLS   engines/taxroom.js — which reads the ledger's year by method
+  3. CALLS   engines/taxroom.js, which reads the ledger's year by method
              (engines/ledger.js, D-128) when dated income entries recur,
-             else the sources — and assembles engines/tax.js
+             else the sources, and assembles engines/tax.js
              (Tax.estimate: the bracket walk, FICA, the state schedule, SE
              tax through engines/selfemployed.js), Reference.marginalBracket
              for the room left in the bracket, and Tier0's effective-rate
@@ -51,7 +51,7 @@
              data/se_tax_2026.json; data/effective_tax_rates_2026.json for
              the comparison only.
 
-  LIVE-FORM: built once — shared/room.js builds the inputs from the spec
+  LIVE-FORM: built once, shared/room.js builds the inputs from the spec
   on load and only sets .value, never under focus.
   THEMING: none this pass. A theme is a class on <body> and a palette in
   shared/theme.css.
@@ -113,7 +113,7 @@
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Pre-tax and withheld</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Your pay, filing status, state and workplace contribution come from Start Here. Leave a box blank if it does not apply — blank is none, not unanswered.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Your pay, filing status, state and workplace contribution come from Start Here. Leave a box blank if it does not apply, blank is none, not unanswered.</p>
     <div id="room-inputs"></div>
   </section>
 
@@ -174,7 +174,7 @@
 
   <p class="disclaimer">
     Educational tool, not financial advice. An estimate from bracket tables
-    that have not been verified line by line — not a return. Your numbers
+    that have not been verified line by line, not a return. Your numbers
     stay in this browser.
   </p>
 </main>
@@ -217,7 +217,7 @@
 
   function pct(rate) { return Money.formatRate(rate, { decimals: 1 }); }
   function pct0(rate) { return Money.formatRate(rate, { decimals: 0 }); }
-  /* A statutory rate, shown as written: 7.65%, 15.3% — never rounded to a tenth. */
+  /* A statutory rate, shown as written: 7.65%, 15.3%, never rounded to a tenth. */
   function pctExact(rate) { return (Math.round(rate * 10000) / 100) + '%'; }
   var strong = function (s) { return '<strong>' + s + '</strong>'; };
 
@@ -240,11 +240,11 @@
         ? Money.formatCents(p.selfEmploymentTaxCents) + ' self-employment tax' + (p.ficaCents > 0 ? ' and ' + Money.formatCents(p.ficaCents) + ' FICA' : '')
         : Money.formatCents(p.ficaCents) + ' FICA';
       var sub = strong(Money.formatCents(p.federalCents)) + ' federal · '
-        + (p.stateIncluded ? strong(Money.formatCents(p.stateCents)) + ' state' : strong('state not in') + ' — ' + (p.state && p.state.reason ? p.state.reason.replace(/\.$/, '') : 'add your state in Start Here'))
+        + (p.stateIncluded ? strong(Money.formatCents(p.stateCents)) + ' state' : strong('state not in') + ', ' + (p.state && p.state.reason ? p.state.reason.replace(/\.$/, '') : 'add your state in Start Here'))
         + ' · ' + strong(payroll) + ' on ' + Money.formatCents(p.grossCents)
         + '; marginal bracket ' + strong(pct0(p.bracket.rate))
         + (p.bracket.roomCents === null ? ', the top one' : ' with ' + strong(Money.formatCents(p.bracket.roomCents)) + ' of room before ' + pct0(p.bracket.nextRate));
-      if (p.belowDeduction) sub += '. Under the standard deduction, so no federal income tax — the rate is the payroll tax';
+      if (p.belowDeduction) sub += '. Under the standard deduction, so no federal income tax. The rate is the payroll tax';
       if (p.refundCents !== null) {
         sub += '; ' + (p.refundCents >= 0 ? 'refund about ' + strong(Money.formatCents(p.refundCents)) : 'owe about ' + strong(Money.formatCents(-p.refundCents)))
           + ' against ' + Money.formatCents(p.withheldCents) + ' withheld' + (p.stateIncluded ? '' : ' (federal only)');
@@ -299,29 +299,29 @@
       var fed = T.federalBrackets, st = T.stateBrackets, se = T.seTax, eff = T.effectiveTaxRates;
       var ok = Money.isOk(p);
       var stateRow = ok && p.stateIncluded ? (p.stateType === 'none' ? 'no income tax' : p.stateType === 'flat' ? 'flat, on federal taxable income' : 'graduated, on federal taxable income')
-        : 'not in — ' + (ok && p.state && p.state.reason ? p.state.reason : 'no state yet');
+        : 'not in, ' + (ok && p.state && p.state.reason ? p.state.reason : 'no state yet');
       var rows = [
         { label: 'Federal brackets', value: fed.taxYear + ', ' + (ok ? pct0(p.bracket.rate) + ' marginal' : 'not computed yet'), source: 'data/federal_brackets_2026.json v' + fed.version + ', as of ' + fed.asOf + ' (' + fed.confidence + ')' },
         { label: 'Standard deduction', value: ok ? Money.formatCents(p.deductionCents) + ' taken off before the ladder' : 'from the federal table', source: 'the same table; itemising is not modelled' },
-        { label: 'State', value: stateRow, source: 'data/state_brackets_2026.json v' + st.version + ' (' + st.confidence + ') — ' + st.confidenceNote.split('.')[0] + '.' },
+        { label: 'State', value: stateRow, source: 'data/state_brackets_2026.json v' + st.version + ' (' + st.confidence + '), ' + st.confidenceNote.split('.')[0] + '.' },
         { label: 'Payroll tax', value: ok && p.selfEmploymentTaxCents > 0
             ? 'both halves: ' + pctExact(se.socialSecurityRate + se.medicareRate) + ' of 92.35% of profit, Social Security capped at ' + Money.formatCents(se.socialSecurityWageBase * 100)
             : pctExact(se.employeeFicaRate) + ' employee side, Social Security capped at ' + Money.formatCents(se.socialSecurityWageBase * 100),
           source: 'data/se_tax_2026.json v' + se.version + ' (' + se.confidence + '; the wage base is the figure to re-check)' },
-        { label: 'Workplace pre-tax', value: ok && p.workplacePercent !== null ? p.workplacePercent + '% of wages = ' + Money.formatCents(p.workplacePreTaxCents) : 'not entered — nothing taken off', source: 'your workplace contribution, from Start Here, treated as pre-tax' },
+        { label: 'Workplace pre-tax', value: ok && p.workplacePercent !== null ? p.workplacePercent + '% of wages = ' + Money.formatCents(p.workplacePreTaxCents) : 'not entered, nothing taken off', source: 'your workplace contribution, from Start Here, treated as pre-tax' },
         { label: 'Other pre-tax', value: ok && p.otherPreTaxKnown ? Money.formatCents(p.otherPreTaxCents) : 'blank, so none', source: 'yours, above' }
       ];
       if (ok && p.blunt) {
         rows.push({ label: 'The blunter estimate', value: pct(p.blunt.rate) + ' (' + Money.formatCents(p.blunt.cents) + ') vs ' + pct(p.value) + ' here',
-          source: 'data/effective_tax_rates_2026.json v' + eff.version + ' (' + eff.confidence + ') — a flat lookup by income band that blends federal and FICA and ignores state, deductions and pre-tax money. Real Hourly Wage and the savings rate use it; this room computes instead, so the two differ.' });
+          source: 'data/effective_tax_rates_2026.json v' + eff.version + ' (' + eff.confidence + '), a flat lookup by income band that blends federal and FICA and ignores state, deductions and pre-tax money. Real Hourly Wage and the savings rate use it; this room computes instead, so the two differ.' });
       }
       return rows;
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, two numbers matter more than the rate: the room left in your bracket, which says what a raise or a bonus is taxed at, and the pre-tax money, which is the one lever you hold — every dollar into the plan or an HSA comes off the top at that marginal rate.',
-        selfEmployed: 'Self-employed, there is no employer paying half the payroll tax — both halves are yours, as self-employment tax, and nothing is withheld. This estimate is the size of what you set aside; the quarterly schedule is in the Self-Employed room.',
+        employed: 'Employed, two numbers matter more than the rate: the room left in your bracket, which says what a raise or a bonus is taxed at, and the pre-tax money, which is the one lever you hold, every dollar into the plan or an HSA comes off the top at that marginal rate.',
+        selfEmployed: 'Self-employed, there is no employer paying half the payroll tax, both halves are yours, as self-employment tax, and nothing is withheld. This estimate is the size of what you set aside; the quarterly schedule is in the Self-Employed room.',
         mixed: 'With a job and your own work, the job’s withholding covers the wages but not the profit. The profit adds self-employment tax on top, and the wages have already used part of the Social Security wage base.',
         student: 'A student’s pay usually sits under the standard deduction, so the federal income tax is nil and the only tax is the payroll tax on every cheque. If money was withheld anyway, that is a refund waiting for a return.',
         retired: 'Retired, withdrawals from pre-tax accounts count as ordinary income and Social Security is partly taxable. This room reads only the income in Start Here and does not model either; the bracket room it shows is still the space a Roth conversion would use.',
@@ -362,8 +362,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -423,7 +423,7 @@
     } else if (p.above) {
       say = money(r.magiCents - p.lineCents) + ' above it already.';
     } else {
-      say = money(p.distanceCents) + ' below it' + (p.crossed ? ' — <strong>the raise crosses it, and all of it goes.</strong>' : '.');
+      say = money(p.distanceCents) + ' below it' + (p.crossed ? ', <strong>the raise crosses it, and all of it goes.</strong>' : '.');
     }
     return '<li class="cl-row' + (p.applies && p.crossed ? ' is-crossed' : '') + '">'
       + '<div class="cl-top"><span class="cl-name">' + esc(p.label) + '</span>'
@@ -437,7 +437,7 @@
     var size = typedCount('cl-in-size');
     var r = Cliff.where(h, TABLES, { raiseCents: typedCents('cl-in-raise'), householdSize: size === null ? undefined : size });
     var head = el('cl-head'), sub = el('cl-sub'), list = el('cl-lines-list');
-    if (!Money.isOk(r)) { head.textContent = Money.EM_DASH; sub.textContent = r.reason; list.innerHTML = ''; return; }
+    if (!Money.isOk(r)) { head.textContent = Money.NOT_YET; sub.textContent = r.reason; list.innerHTML = ''; return; }
     /* The household's own count is proposed in the box, never written to it (D-060). */
     if (document.activeElement !== el('cl-in-size')) el('cl-in-size').placeholder = String(r.householdSize);
     head.textContent = r.raiseCents > 0
@@ -448,7 +448,7 @@
     list.innerHTML = r.programs.map(function (p) { return rowHtml(p, r); }).join('');
     el('cl-reading-list').innerHTML = ['grossAnnualIncome', 'state'].map(function (f) { return Ownership.chip(f, h, 'tax'); }).join('');
     el('cl-provenance').innerHTML = Reference.provenance(TABLES, ['benefitCliffs', 'aca']).map(function (p) {
-      return '<strong>' + esc(p.id) + '</strong> v' + esc(p.version) + ' — ' + esc(p.label) + '. ' + esc(p.note);
+      return '<strong>' + esc(p.id) + '</strong> v' + esc(p.version) + ', ' + esc(p.label) + '. ' + esc(p.note);
     }).join('<br/>');
   }
   ['cl-in-raise', 'cl-in-size'].forEach(function (id) { el(id).addEventListener('input', render); });

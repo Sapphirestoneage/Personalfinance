@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/next100.js — your next $100, ranked. DECISIONS.md D-211 (H3).
+   engines/next100.js, your next $100, ranked. DECISIONS.md D-211 (H3).
    --------------------------------------------------------------------------
    One list, one scale: the return each place earns or saves on the next
    hundred dollars. Every line is labelled GUARANTEED (paying down a debt

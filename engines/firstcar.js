@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/firstcar.js — the First Car Check.
+   engines/firstcar.js, the First Car Check.
    DECISIONS.md D-219 (K10).
    --------------------------------------------------------------------------
    The 20/3/8 rule (20% down, a loan of three years or less, the payment

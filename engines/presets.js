@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/presets.js — the Savings and Investments presets. D-129.
+   engines/presets.js, the Savings and Investments presets. D-129.
 
    A preset is a monthly figure the Budget room can stack into a bucket's
    Estimated without anyone typing a number: each one is read off a rule
@@ -11,12 +11,12 @@
      maxIra       investments   the year's IRA limit, catch-up from age 50,
                                 age from the spine's date of birth.
      emergencyFund savings      the gap to N months of spending in cash,
-                                spread over a horizon — both from
+                                spread over a horizon, both from
                                 data/savings_presets.json; spending is
                                 Schema.monthlyExpensesCents, cash is
                                 Schema.cashCents.
      max401k      investments   the year's elective 401(k) limit with its
-                                catch-up — only when an employer 401(k) is
+                                catch-up, only when an employer 401(k) is
                                 indicated (retirement.has401k === true).
                                 Otherwise ABSENT, not disabled.
 
@@ -130,9 +130,9 @@
   }
 
   /**
-   * available(household, tables, opts) — every preset, offered or not.
+   * available(household, tables, opts), every preset, offered or not.
    *   opts.now         the clock, for age
-   *   opts.notApplicable  { id: true } — the N/A set; those are `hidden`
+   *   opts.notApplicable  { id: true }, the N/A set; those are `hidden`
    *                    unless opts.hypothetical, when they show but say so
    * Each: { id, bucket, label, short, structural, offered, hidden,
    *         notApplicable, result, monthlyCents|null, reason }
@@ -155,10 +155,10 @@
   }
 
   /**
-   * stacked(household, tables, 'YYYY-MM', opts) — what is stacked into
+   * stacked(household, tables, 'YYYY-MM', opts), what is stacked into
    * each bucket for the month: { bucket: { cents, items: [{ id, label, cents }] } }.
    * A preset that is N/A, or can no longer be read, drops out of the live
-   * figure — the stored list is left alone so it comes back when it can.
+   * figure, the stored list is left alone so it comes back when it can.
    */
   function stacked(h, T, ym, opts) {
     var o = opts || {};

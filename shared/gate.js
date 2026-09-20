@@ -1,15 +1,15 @@
 /* ==========================================================================
-   shared/gate.js — the one gate, and what exists behind it.
+   shared/gate.js, the one gate, and what exists behind it.
    --------------------------------------------------------------------------
-   "What's your situation?" decides which fields exist on the one-pager —
-   not hidden, absent — and what each one is guessed at before you touch
+   "What's your situation?" decides which fields exist on the one-pager, 
+   not hidden, absent, and what each one is guessed at before you touch
    it. This file is the whole of that logic, pure, so the page, the
    dashboard and the tests read the same answer:
 
      SITUATIONS            the six, each mapped to an employment status
      situationOf(h)        which one this household chose (null until then)
-     fieldsFor(id, h)      the cards that exist for it, in order — never
-                           more than ten — each saying which controls it
+     fieldsFor(id, h)      the cards that exist for it, in order, never
+                           more than ten, each saying which controls it
                            holds and which ownership fields it writes
      guesses(id, h, T)     a sane default for every guessable field, with
                            its source, from data/onepager_defaults.json and
@@ -42,18 +42,18 @@
      table): savings rate and the FI date, owner's pay and the quarterly,
      runway in days, the loan trajectory, the withdrawal rate. */
   var SITUATIONS = [
-    { id: 'employed',     label: 'Employed — a W-2 job',        status: 'employed',     lead: 'savingsRate',    blurb: 'A paycheque, and maybe a 401(k) with a match.' },
-    { id: 'selfEmployed', label: 'Self-employed or 1099',            status: 'selfEmployed', lead: 'ownersPay',      blurb: 'Your own work. No employer, so no match — and tax is yours to set aside.' },
+    { id: 'employed',     label: 'Employed, a W-2 job',        status: 'employed',     lead: 'savingsRate',    blurb: 'A paycheque, and maybe a 401(k) with a match.' },
+    { id: 'selfEmployed', label: 'Self-employed or 1099',            status: 'selfEmployed', lead: 'ownersPay',      blurb: 'Your own work. No employer, so no match, and tax is yours to set aside.' },
     { id: 'betweenJobs',  label: 'Between jobs',                     status: 'unemployed',   lead: 'runwayDays',     blurb: 'The runway is the number now.' },
     { id: 'student',      label: 'Student',                          status: 'student',      lead: 'loanTrajectory', blurb: 'Little coming in, maybe loans, maybe family behind you.' },
     { id: 'retired',      label: 'Retired',                          status: 'retired',      lead: 'withdrawalRate', blurb: 'Money coming in from what you built.' },
-    { id: 'mixed',        label: 'Mixed — a job and my own work', status: 'both',         lead: 'savingsRate',    blurb: 'Two kinds of income; the job’s plan still counts.' }
+    { id: 'mixed',        label: 'Mixed, a job and my own work', status: 'both',         lead: 'savingsRate',    blurb: 'Two kinds of income; the job’s plan still counts.' }
   ];
 
   /* ---- exists(h, key): does this branch exist for this household? ---------
      The one check every room and every computation calls. Absent means
      absent: not rendered, not counted, not nudged. Unanswered situation:
-     everything exists — the map before the intake shows every room. */
+     everything exists, the map before the intake shows every room. */
   var BRANCHES = {
     income:        function (h, s) { return s === null || s !== 'betweenJobs' || Money.isOk(Schema.grossAnnualIncomeCents(h)); },
     retirement:    function (h, s) { return (s === null || s === 'employed' || s === 'mixed') && Schema.couldHaveEmployerMatch(h); },
@@ -169,7 +169,7 @@
                   ownership rows link to)
      label        what it asks
      fields       the ownership fields it writes
-     controls     what is on it — the page builds from this list
+     controls     what is on it, the page builds from this list
      when         a predicate on the household; absent → the card exists
   ------------------------------------------------------------------------ */
   var CARDS = {
@@ -191,7 +191,7 @@
   };
 
   /* The order per situation. Ten at most, with the partner card only when
-     there are two of you — it is the one card that appears on an answer
+     there are two of you. It is the one card that appears on an answer
      given on this page. */
   /* Spending and cash come first, ahead of everything, because together they
      are the only two answers that buy a number back straight away: cash over
@@ -217,7 +217,7 @@
       .filter(function (card) { return !card.when || card.when(h); });
   }
 
-  /** Every card any situation could show — for the page to build once. */
+  /** Every card any situation could show, for the page to build once. */
   function allCards() {
     var seen = {}, out = [];
     Object.keys(ORDER).forEach(function (s) { ORDER[s].forEach(function (k) { if (!seen[k]) { seen[k] = true; out.push(Object.assign({ key: k }, CARDS[k])); } }); });
@@ -271,7 +271,7 @@
     if (situationId === 'mixed') {
       out.ownWork = { value: Math.round(d.sideWorkAnnualDollars * 100), basis: 'annual', source: 'a typical side income, ' + Money.formatCents(Math.round(d.sideWorkAnnualDollars * 100)) + ' a year' + conf };
     }
-    /* Spending: a share of gross, floored — or, with no rent, a smaller
+    /* Spending: a share of gross, floored, or, with no rent, a smaller
        share; with nothing coming in, the floor. */
     var known = Schema.grossAnnualIncomeCents(h);
     var base = Money.isOk(known) ? known.value : grossCents;
@@ -307,7 +307,7 @@
   }
 
   /* ---- Import: pasted text or a CSV, one line a number ----------------------
-     "Salary, 62,000" / "checking $4,120" / "401k: 31k" — each line that
+     "Salary, 62,000" / "checking $4,120" / "401k: 31k", each line that
      names a thing the one-pager asks and carries an amount becomes a row.
      Pure: the page decides what to write, and writes it as one batch so
      one undo takes the whole import back. D-095. */
@@ -354,8 +354,8 @@
 
   /* ---- Standalone: a room opened by deep link with an empty spine ---------
      fillGuesses(h, T) → a COPY of the household with the intake's guesses
-     standing in for whatever is missing — a pay source, a month's
-     spending, cash, investments, the deductible — for the situation
+     standing in for whatever is missing, a pay source, a month's
+     spending, cash, investments, the deductible, for the situation
      chosen, or an employed one when none is. `meta.standalone` lists what
      was filled so the room can say "shown with guesses". Nothing is
      stored: the caller renders from the copy and the spine is untouched.
@@ -363,7 +363,7 @@
   function fillGuesses(household, tables, situation) {
     var h = JSON.parse(JSON.stringify(household || Schema.createHousehold({})));
     /* A room that exists for one situation (retired, between jobs) asks
-       for that situation to be guessed when none is chosen — its
+       for that situation to be guessed when none is chosen, its
        `guessAs`; a chosen situation always wins. D-101. */
     var sit = situationOf(h) || (byId(situation) ? situation : null) || 'employed';
     var g = guesses(sit, h, tables);

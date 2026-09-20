@@ -6,18 +6,18 @@
 <meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
-<title>Dungeons &amp; Dividends — roll up your finances</title>
+<title>Dungeons &amp; Dividends, roll up your finances</title>
 <meta name="description" content="Five questions, a character sheet for your actual money, and a game where every choice is one people really face. Nothing you type leaves your browser."/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="Dungeons &amp; Dividends"/>
-<meta property="og:title" content="Dungeons &amp; Dividends — roll up your finances"/>
+<meta property="og:title" content="Dungeons &amp; Dividends, roll up your finances"/>
 <meta property="og:description" content="Five questions, a character sheet built from your real life, then a game of situations people actually face."/>
 <meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/dnd/campaign.html"/>
 <meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="Dungeons &amp; Dividends — roll up your finances"/>
+<meta name="twitter:title" content="Dungeons &amp; Dividends, roll up your finances"/>
 <meta name="twitter:description" content="Five questions, a character sheet built from your real life, then a game of situations people actually face."/>
 <meta name="twitter:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
@@ -25,7 +25,7 @@
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  THE CAMPAIGN — DD-024.
+  THE CAMPAIGN, DD-024.
 
   The sheet says where you are. This says what you did, and what it cost.
   Six scenarios a round, one choice, ten rounds to a chapter, then a review.
@@ -38,7 +38,7 @@
 
   THE RIGHT ANSWER IS COMPUTED, NOT AUTHORED. Each option says which FOO step
   it serves; engines/foo.js says which step you are on; the engine compares
-  them. So the advice moves as you move — paying down a card is correct on
+  them. So the advice moves as you move, paying down a card is correct on
   step 3 and premature on step 1, and the same option is scored differently in
   the two places. That is the one thing a static list of tips cannot do.
 
@@ -49,7 +49,7 @@
 <style>
   /* Dungeons & Dividends keeps the characterful faces the shared theme gave
      up in D-154. A game wants a display serif; a financial statement does
-     not. theme.css stays byte-identical to the SPARKS copy — this override
+     not. theme.css stays byte-identical to the SPARKS copy, this override
      lives here, in the pages that want it. */
   :root {
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
@@ -186,7 +186,7 @@
   <div id="borrowed" class="warn" hidden style="margin-bottom:var(--space-3)"></div>
 
   <h1>Dungeons &amp; Dividends</h1>
-  <p class="note" id="lede">Five questions, then a character sheet built out of your actual life — and then
+  <p class="note" id="lede">Five questions, then a character sheet built out of your actual life, and then
      the interesting part, where you find out what you'd really do. Takes about five minutes. Nothing you
      type ever leaves this browser.</p>
 
@@ -195,7 +195,7 @@
 
   <div class="steps" id="steps" hidden></div>
 
-  <!-- FIVE QUESTIONS. Buttons only — no inputs, so these rebuild freely. -->
+  <!-- FIVE QUESTIONS. Buttons only, no inputs, so these rebuild freely. -->
   <section id="quiz-view" hidden>
     <div class="qdots" id="q-dots"></div>
     <div class="qcard">
@@ -205,7 +205,7 @@
     </div>
     <div class="actions">
       <button type="button" class="btn ghost" id="btn-q-back">Back</button>
-      <button type="button" class="btn ghost" id="btn-q-skip" hidden>Skip — I already have a character</button>
+      <button type="button" class="btn ghost" id="btn-q-skip" hidden>Skip, I already have a character</button>
     </div>
   </section>
 
@@ -221,7 +221,7 @@
       <p class="note">Your five answers, and what each one gave away.</p>
       <div id="qr-echo"></div>
     </div>
-    <p class="note faint">This is your <b>instinct</b> — the lever you reach for. It is not a measurement, and
+    <p class="note faint">This is your <b>instinct</b>, the lever you reach for. It is not a measurement, and
        it might not be where your money actually moves. Finding that out is the next bit, and the two
        disagreeing is the most useful thing this whole tool can tell you.</p>
     <div class="actions">
@@ -229,9 +229,9 @@
       <button type="button" class="btn ghost" id="btn-qr-redo">Answer again</button>
     </div>
     <p class="note" style="margin-top:var(--space-3)">There is a <a href="profile.html">much longer read on
-       this character</a> — what it wants, what it is afraid of, who it works with and who it will find
+       this character</a>, what it wants, what it is afraid of, who it works with and who it will find
        insufferable. It is characterisation rather than measurement, and it says so.</p>
-    <p class="note faint">Sending this to someone? The whole thing runs in their browser too — there is no
+    <p class="note faint">Sending this to someone? The whole thing runs in their browser too. There is no
        account, no server, and nothing to sign up to.</p>
   </section>
 
@@ -239,7 +239,7 @@
   <section id="method-view" hidden>
     <div class="panel">
       <h3>How do you want your six?</h3>
-      <p class="note">Same six abilities either way. The only question is where the numbers come from — and
+      <p class="note">Same six abilities either way. The only question is where the numbers come from, and
          you can switch later without losing anything.</p>
     </div>
     <div id="method-list"></div>
@@ -253,7 +253,7 @@
     <div class="panel">
       <h3>Take a ready-made one</h3>
       <p class="note">Four finished characters. Each is a whole person with a Level, a runway, a class and a
-         debt burden, and each one is built to show you a single thing. Play one for as long as you like —
+         debt burden, and each one is built to show you a single thing. Play one for as long as you like, 
          and swap in your own numbers whenever you want, one at a time.</p>
       <p class="note faint">These are invented people. Nothing about them is data about anybody, and the game
          will keep telling you whose numbers you are wearing.</p>
@@ -283,27 +283,27 @@
   </section>
 
 
-  <!-- STEP 1 — the five numbers. LIVE-FORM: built once at boot, only .value written. -->
+  <!-- STEP 1, the five numbers. LIVE-FORM: built once at boot, only .value written. -->
   <section id="create-basics" hidden>
     <div class="panel">
       <h3>About you</h3>
       <p class="note">Five numbers. They are what turn three of your six abilities from a guess into a
-         measurement — and none of them leaves this browser. Rough is fine; you can change any of them later.
-         <b>Leave one blank if you do not know it</b> — blank and zero are different answers and the sheet
+         measurement, and none of them leaves this browser. Rough is fine; you can change any of them later.
+         <b>Leave one blank if you do not know it</b>, blank and zero are different answers and the sheet
          treats them differently.</p>
       <div id="basics-fields"></div>
     </div>
     <div class="actions">
-      <button type="button" class="btn" id="btn-basics-next">Next — the three you decide →</button>
+      <button type="button" class="btn" id="btn-basics-next">Next, the three you decide →</button>
       <button type="button" class="btn ghost" id="btn-basics-example">Try with example numbers</button>
     </div>
   </section>
 
-  <!-- STEP 2 — point buy over the six, exactly as D&D Beyond does it. Built once. -->
+  <!-- STEP 2, point buy over the six, exactly as D&D Beyond does it. Built once. -->
   <section id="create-abilities" hidden>
     <div class="panel">
       <h3>Your six abilities</h3>
-      <p class="note">Twenty-seven points, every ability starting at 8, nothing above 15 — D&amp;D Beyond's
+      <p class="note">Twenty-seven points, every ability starting at 8, nothing above 15, D&amp;D Beyond's
          point buy, unchanged. <b>Spend them on the three nobody can measure for you</b>: Intelligence,
          Wisdom and Charisma. Spend on Strength, Dexterity or Constitution too if you like, but the moment
          your money can measure one of those it takes over, and the next screen will show you it happening.</p>
@@ -312,12 +312,12 @@
       <p class="note faint" id="pb-ladder" style="margin-top:var(--space-3)"></p>
     </div>
     <div class="actions">
-      <button type="button" class="btn" id="btn-abil-next">Next — see my character →</button>
+      <button type="button" class="btn" id="btn-abil-next">Next, see my character →</button>
       <button type="button" class="btn ghost" id="btn-abil-back">Back</button>
     </div>
   </section>
 
-  <!-- STEP 3 — the character, with its receipts. No inputs: rebuilt freely. -->
+  <!-- STEP 3, the character, with its receipts. No inputs: rebuilt freely. -->
   <section id="create-result" hidden>
     <div class="panel">
       <div class="note faint" style="margin-bottom:2px">You are</div>
@@ -327,7 +327,7 @@
     </div>
     <h2>Your six, and where each one came from</h2>
     <p class="note">Nothing here is a personality test. Every measured number is your own figure put on a
-       scale — the figure is printed next to it so you can check the working.</p>
+       scale. The figure is printed next to it so you can check the working.</p>
     <div id="res-abilities"></div>
     <div id="res-gaps"></div>
 
@@ -344,7 +344,7 @@
     <!-- Optional. LIVE-FORM: built once at boot, only shown and hidden. -->
     <div class="panel" id="res-finish" hidden>
       <h3>Finish the three your money measures</h3>
-      <p class="note">Each answer fills in exactly one thing under one ability — the page says which. None of
+      <p class="note">Each answer fills in exactly one thing under one ability. The page says which. None of
          it is required to play, and you can come back at any point.</p>
       <div id="finish-fields"></div>
     </div>
@@ -363,10 +363,10 @@
   <!-- HOW TO GET BETTER AT EACH ONE -->
   <section id="improve-view" hidden>
     <div class="panel">
-      <h3>Right — how do you actually get better?</h3>
+      <h3>Right, how do you actually get better?</h3>
       <p class="note">Every ability has three things underneath it, and every one of those has moves that
          genuinely shift it. Sorted by <b>your weakest first</b>, because that is where the cheap points are.
-         Nothing here knows your situation and none of it is advice — it is what moves the number.</p>
+         Nothing here knows your situation and none of it is advice. It is what moves the number.</p>
     </div>
     <div id="improve-list"></div>
     <div class="actions">
@@ -379,12 +379,12 @@
   <section id="focus-view" hidden>
     <div class="panel">
       <h3>Pick one to work on</h3>
-      <p class="note">You'll get situations that actually exercise it. Same game, aimed at one thing —
+      <p class="note">You'll get situations that actually exercise it. Same game, aimed at one thing, 
          and it still tells you afterwards what the sensible move would have been.</p>
     </div>
     <div id="focus-list"></div>
     <div class="actions">
-      <button type="button" class="btn ghost" id="btn-focus-any">Or just play — give me anything</button>
+      <button type="button" class="btn ghost" id="btn-focus-any">Or just play, give me anything</button>
       <button type="button" class="btn ghost" id="btn-focus-back">Back</button>
     </div>
   </section>
@@ -398,7 +398,7 @@
     </div>
     <div class="panel">
       <h3 id="pro-head">Last thing, then we play</h3>
-      <p class="note">Your six say what you're <i>capable</i> of. They don't say what to do <b>next</b> — and
+      <p class="note">Your six say what you're <i>capable</i> of. They don't say what to do <b>next</b>, and
          next is the whole game. There's an order to money stuff, and doing the right thing at the wrong time
          is how people lose years without ever making an obvious mistake.</p>
       <p class="note" id="pro-blurb"></p>
@@ -409,7 +409,7 @@
            where you are" is simply untrue. -->
       <div id="pro-nomoney" hidden>
         <div class="actions">
-          <button type="button" class="btn" id="btn-pro-numbers">Add five numbers — about a minute</button>
+          <button type="button" class="btn" id="btn-pro-numbers">Add five numbers, about a minute</button>
           <button type="button" class="btn ghost" id="btn-pro-example">Use example numbers</button>
         </div>
       </div>
@@ -419,17 +419,17 @@
         <div style="margin-bottom:var(--space-3)">
           <label for="q-match">Does your employer match pension or 401(k) contributions?</label>
           <select id="q-match">
-            <option value="">—</option>
+            <option value="">not yet</option>
             <option value="none">No match, or I have no employer</option>
-            <option value="half6">Yes — about 50% up to 6% of salary</option>
-            <option value="full3">Yes — 100% up to 3% of salary</option>
-            <option value="full6">Yes — 100% up to 6% of salary</option>
+            <option value="half6">Yes, about 50% up to 6% of salary</option>
+            <option value="full3">Yes, 100% up to 3% of salary</option>
+            <option value="full6">Yes, 100% up to 6% of salary</option>
           </select>
         </div>
         <div>
           <label for="q-capturing">Are you contributing enough to get all of it?</label>
           <select id="q-capturing">
-            <option value="">—</option>
+            <option value="">not yet</option>
             <option value="yes">Yes, all of it</option>
             <option value="no">No, or not sure</option>
           </select>
@@ -499,7 +499,7 @@
       <button type="button" class="btn ghost" id="btn-rev-train">Train something else</button>
     </div>
     <p class="note faint" style="margin-top:var(--space-2)">The sheet carries your class, your six, your runway
-       in weeks and what hunts you — never a figure you typed. It is the bit that travels.</p>
+       in weeks and what hunts you, never a figure you typed. It is the bit that travels.</p>
   </section>
 
   <p class="foot"><a href="sheet.html">Your sheet</a> &nbsp;·&nbsp; <a href="encounter.html">Weakness map</a>
@@ -565,10 +565,10 @@
     el('hud').hidden = false;
     html('hud',
         cell('Chapter', STATE.chapter, 'round ' + Math.min(STATE.round + 1, per) + ' of ' + per)
-      + cell('Level', snap.level === null ? '—' : snap.level, snap.classId ? classNameOf(snap.classId) : 'no class yet')
-      + cell('Next up', place ? 'Step ' + place.step : '—',
-             place ? (place.certain ? esc(place.label) : 'at least — ' + esc(place.label)) : 'not placed')
-      + cell('Runway', snap.currentHp === null ? '—' : snap.currentHp + ' wk',
+      + cell('Level', snap.level === null ? 'not yet' : snap.level, snap.classId ? classNameOf(snap.classId) : 'no class yet')
+      + cell('Next up', place ? 'Step ' + place.step : 'not yet',
+             place ? (place.certain ? esc(place.label) : 'at least, ' + esc(place.label)) : 'not placed')
+      + cell('Runway', snap.currentHp === null ? 'not yet' : snap.currentHp + ' wk',
              (snap.netWorthCents === null ? '' : money(snap.netWorthCents) + ' net · ') + 'cash and taxable, before tax'));
     el('progress').hidden = false;
     el('progress').firstElementChild.style.width = Math.round((STATE.round / per) * 100) + '%';
@@ -583,7 +583,7 @@
   }
   function leverNameOf(id) {
     var c = TABLES.dndClasses.classes.filter(function (k) { return k.id === id; })[0];
-    return c ? c.name + ' — ' + c.lever.toLowerCase() : id;
+    return c ? c.name + ', ' + c.lever.toLowerCase() : id;
   }
   function subName(id) {
     var m = TABLES.dndRules.subStats.filter(function (x) { return x.id === id; })[0];
@@ -591,7 +591,7 @@
   }
 
   /* ---- THE FIVE QUESTIONS ------------------------------------------------
-     Buttons, not inputs, so these rebuild freely — D-034 is about live text
+     Buttons, not inputs, so these rebuild freely, D-034 is about live text
      boxes and there are none here. One question a screen: five at once reads
      as a form, and a form is the thing this page is trying not to be. */
 
@@ -637,7 +637,7 @@
     el('qr-class').textContent = top.name;
     el('qr-lever').textContent = top.lever;
     el('qr-also').innerHTML = r.close
-      ? 'Though it was close — there is a good deal of <b>' + esc(second.name) + '</b> in you as well. '
+      ? 'Though it was close. There is a good deal of <b>' + esc(second.name) + '</b> in you as well. '
         + 'Most people are two things, and knowing which two is more useful than a clean answer would be.'
       : 'Clearly, as it happens. Your runner-up, <b>' + esc(second.name) + '</b>, was some way behind.';
     html('qr-echo', r.answers.map(function (x) {
@@ -654,16 +654,16 @@
        else; this is the only one that shows a new arrival what the tool
        actually makes before it asks them for anything. */
     { id: 'pregen', title: 'Play a ready-made one',
-      blurb: 'Somebody else’s numbers, complete and playable in one tap — a real Level, real runway, a real class. Borrowed, labelled as borrowed, and swappable for your own whenever you like.',
+      blurb: 'Somebody else’s numbers, complete and playable in one tap, a real Level, real runway, a real class. Borrowed, labelled as borrowed, and swappable for your own whenever you like.',
       worth: 'Instant · the only one that shows you a finished character' },
     { id: 'real', title: 'Use my real numbers',
-      blurb: 'Five figures about your actual life. Strength, Dexterity and Constitution get measured rather than chosen — which means they can surprise you, and the rest of the game has something true to work with.',
+      blurb: 'Five figures about your actual life. Strength, Dexterity and Constitution get measured rather than chosen, which means they can surprise you, and the rest of the game has something true to work with.',
       worth: 'The only route that can tell you something you did not know' },
     { id: 'pointBuy', title: 'Point buy',
       blurb: 'Twenty-seven points across the six, exactly as D&D Beyond does it. Everything starts at 8, nothing goes above 15, and going high costs more each step.',
       worth: 'Full control · about a minute' },
     { id: 'standardArray', title: 'Standard array',
-      blurb: 'Six fixed numbers — 15, 14, 13, 12, 10 and 8 — and you decide which ability gets which. The quickest honest route when you cannot face questions tonight.',
+      blurb: 'Six fixed numbers, 15, 14, 13, 12, 10 and 8, and you decide which ability gets which. The quickest honest route when you cannot face questions tonight.',
       worth: 'Fastest · about thirty seconds' },
     { id: 'roll', title: 'Roll for it',
       blurb: '4d6, drop the lowest, six times. You get what you get, exactly like at a table. It cannot reach 19 or 20, and that is the deal.',
@@ -726,7 +726,7 @@
   }
 
   /* THE ROLL HAS TO SURVIVE A RELOAD.
-     Six numbers you rolled are not reproducible — regenerating them on reload
+     Six numbers you rolled are not reproducible, regenerating them on reload
      would silently hand someone a different character from the one they were
      halfway through assigning, and re-rolling until the numbers are nice is
      exactly what the deterministic board elsewhere refuses to allow. */
@@ -755,13 +755,13 @@
     Store.patchProfile({ declaredMethod: ASSIGN_MODE, declaredScores: out });
   }
 
-  /* Options and text only — the selects themselves are never rebuilt. */
+  /* Options and text only, the selects themselves are never rebuilt. */
   function paintAssign() {
     var ids = TABLES.dndScoring.standardArray.over;
     var isRoll = ASSIGN_MODE === 'roll';
     el('assign-title').textContent = isRoll ? 'What you rolled' : 'Your six numbers';
     el('assign-blurb').textContent = isRoll
-      ? 'Six rolls, lowest die dropped each time. Put them where you want them — you can roll again if you hate them.'
+      ? 'Six rolls, lowest die dropped each time. Put them where you want them. You can roll again if you hate them.'
       : 'The same six numbers everyone gets. Where they go is entirely up to you.';
     el('assign-roll').hidden = !isRoll;
     if (isRoll) el('assign-rolled').textContent = 'You rolled: ' + BAG.join(' · ');
@@ -791,7 +791,7 @@
       var offer = left.slice();
       if (Money.isEntered(mine)) offer.push(mine);
       offer.sort(function (a, b) { return b - a; });
-      var seen = {}, opts = ['<option value="">—</option>'];
+      var seen = {}, opts = ['<option value="">not yet</option>'];
       offer.forEach(function (v) {
         if (seen[v]) return;
         seen[v] = 1;
@@ -805,7 +805,7 @@
 
   /* ---- READY-MADE CHARACTERS ---------------------------------------------
      A pregen is a household in this tool's own export shape, so loading one is
-     Store.importCharacter() and nothing else — no second write path, no
+     Store.importCharacter() and nothing else, no second write path, no
      parallel scoring. Everything on the card below is DERIVED by the same
      engines that read a character somebody typed; none of it is written into
      the file. That is what stops a pregen quietly becoming a place where
@@ -826,9 +826,9 @@
         + '<span class="mb">' + esc(pg.tagline) + '</span>'
         + '<span class="chips" style="margin-top:var(--space-2)">'
         + '<span class="chip' + (lvl !== null && lvl >= 5 ? ' big' : '') + '">Level '
-        + (lvl === null ? '—' : lvl) + '</span>'
+        + (lvl === null ? 'not yet' : lvl) + '</span>'
         + '<span class="chip' + (run !== null && run <= 4 ? ' partial' : '') + '">'
-        + (run === null ? '—' : run + ' wk runway') + '</span>'
+        + (run === null ? 'not yet' : run + ' wk runway') + '</span>'
         + '<span class="chip">' + esc(sheet.klass ? sheet.klass.name : 'no class') + '</span>'
         + (burden ? '<span class="chip partial">Debt burden ' + burden + '</span>' : '')
         + '</span>'
@@ -867,13 +867,13 @@
     if (!ranked.length) {
       html('improve-list', '<div class="panel"><h3>Nothing is scored yet</h3>'
         + '<p class="note">There is no honest way to rank what to work on until at least one ability has a '
-        + 'number. Go back, finish your six, and this fills in — weakest first.</p></div>');
+        + 'number. Go back, finish your six, and this fills in, weakest first.</p></div>');
       show('improve-view');
       return;
     }
     /* SIX ABILITIES TIMES NINE MOVES IS A WALL, and a wall is not advice.
        A screenshot of the first version ran to sixteen thousand pixels on a
-       phone. So: one compact row each, weakest open, the rest a tap away —
+       phone. So: one compact row each, weakest open, the rest a tap away, 
        and inside each, the quickest big wins first, because "moves it a lot"
        and "takes minutes" together is the whole reason to read on. */
     var RANK_LIFT = { big: 0, real: 1, small: 2 };
@@ -939,7 +939,7 @@
      that only .value is ever written, so a node is never replaced under a
      finger and the soft keyboard never closes on a phone (D-034). */
   /* THE ONLY PLACE THIS PAGE WRITES A REAL NUMBER.
-     Creation calls it. The play loop must never call it — everything a
+     Creation calls it. The play loop must never call it, everything a
      scenario does lands on the campaign's fork, and a test asserts that this
      is the single call site so the rule cannot quietly erode. */
   function writeBasic(f, cents) {
@@ -954,7 +954,7 @@
     el('basics-fields').innerHTML = Form.CONTEXT.map(function (f) {
       return '<div class="field"><label for="c-' + f.id + '">' + esc(f.label) + '</label>'
         + '<div class="hint">' + esc(f.hint) + '</div>'
-        + '<select id="c-' + f.id + '"><option value="">—</option>'
+        + '<select id="c-' + f.id + '"><option value="">not yet</option>'
         + f.choices.map(function (c) {
             return '<option value="' + esc(c[0]) + '">' + esc(c[1]) + '</option>'; }).join('')
         + '</select></div>';
@@ -967,7 +967,7 @@
         + (f.follow
             ? '<div style="margin-top:var(--space-2)"><label for="c-' + f.follow.id + '">'
               + esc(f.follow.label) + '</label><div class="hint">' + esc(f.follow.hint) + '</div>'
-              + '<select id="c-' + f.follow.id + '"><option value="">—</option>'
+              + '<select id="c-' + f.follow.id + '"><option value="">not yet</option>'
               + f.follow.choices.map(function (c) {
                   return '<option value="' + esc(c[0]) + '">' + esc(c[1]) + '</option>'; }).join('')
               + '</select></div>'
@@ -992,7 +992,7 @@
     BASICS_BUILT = true;
   }
 
-  /* Only ever writes .value — never rebuilds. */
+  /* Only ever writes .value, never rebuilds. */
   function fillBasics() {
     var h = Store.household();
     var read = {
@@ -1013,7 +1013,7 @@
   }
 
   /* Reading the household back out. Store owns the writes; these are the
-     matching reads, and they return null — not 0 — for "never entered". */
+     matching reads, and they return null, not 0, for "never entered". */
   function firstIncomeCents(h) {
     var p = (h.people || [])[0], src = p && (p.incomeSources || [])[0];
     return src ? src.grossAnnualIncomeCents : null;
@@ -1046,7 +1046,7 @@
     }).join('');
     el('pb-ladder').textContent = 'What a score costs: '
       + Form.ladder(rules).map(function (r) { return r.score + ' costs ' + r.cost; }).join(' · ')
-      + '. Going from 13 to 14 costs two points, not one — that is 5e’s table, not ours.';
+      + '. Going from 13 to 14 costs two points, not one. That is 5e’s table, not ours.';
     el('pb-rows').addEventListener('click', function (e) {
       var b = e.target.closest('[data-pb]');
       if (!b) return;
@@ -1068,7 +1068,7 @@
     Store.patchProfile({ declaredMethod: 'pointBuy', declaredScores: BOUGHT });
   }
 
-  /* Text and disabled flags only — the rows themselves are never rebuilt. */
+  /* Text and disabled flags only, the rows themselves are never rebuilt. */
   function paintPointBuy() {
     var rules = Form.pointBuyRules(TABLES);
     var left = Form.remaining(rules, BOUGHT);
@@ -1082,12 +1082,12 @@
       row.querySelector('[data-pb="down"]').disabled = !Form.canLower(rules, BOUGHT, id);
     });
     /* Walking past this screen without spending leaves six 8s and a character
-       that cannot be ranked or trained — a silent dead end two screens later.
+       that cannot be ranked or trained, a silent dead end two screens later.
        So the way out is closed until the points are gone. */
     var done = left === 0;
     el('btn-abil-next').disabled = !done;
     el('btn-abil-next').textContent = done
-      ? 'Next — see my character →'
+      ? 'Next, see my character →'
       : 'Spend all ' + rules.pool + ' points to carry on';
   }
 
@@ -1113,7 +1113,7 @@
     /* THE BEST SCREEN IN THE TOOL, when it fires.
        The five questions said which lever you REACH FOR. Your money says which
        one you actually pull. When those differ it is not an error to reconcile
-       — it is the single most useful thing here, and it gets said plainly. */
+. It is the single most useful thing here, and it gets said plainly. */
     var quizR = Journey.scoreQuiz(quizAnswers(), TABLES);
     var quizName = Money.isOk(quizR) ? quizR.top.name : null;
     var measured = s.klass ? s.klass.name : null;
@@ -1126,18 +1126,18 @@
       var ranked = s.suggestedClass.ranked.filter(function (r) { return r.cents > 0; });
       el('res-why').innerHTML = !ranked.length
         ? 'Nothing is moving through any lever your numbers can see yet. Add what you earn and spend and '
-          + 'a class appears — one that might not be the one you picked.'
+          + 'a class appears, one that might not be the one you picked.'
         : (quizName && measured && quizName !== measured)
-          ? 'Here is the interesting bit. You <b>play like ' + esc(quizName) + '</b> — that is the lever you '
+          ? 'Here is the interesting bit. You <b>play like ' + esc(quizName) + '</b>. That is the lever you '
             + 'reach for. But your money moves through <b>' + esc(measured) + '</b>. Neither is wrong. The gap '
             + 'between the two is where most people lose years: working one lever in their head and a '
             + 'different one in their bank account.'
           : (quizName && measured)
             ? 'And your money agrees. You reach for ' + esc(measured) + ' and that is genuinely where it '
-              + 'moves, which makes you unusually well aligned — most people are pulling one lever and '
+              + 'moves, which makes you unusually well aligned, most people are pulling one lever and '
               + 'thinking about another.'
             : 'Because that is where your money actually moves. A class here is <b>a lever you pull</b>, not a '
-              + 'temperament — a ranking of your own figures, and it changes when they do.';
+              + 'temperament, a ranking of your own figures, and it changes when they do.';
       html('res-levers', ranked.map(function (r, i) {
         return '<div class="shift"><span class="n">' + (i === 0 ? '<b>' : '') + money(r.cents)
           + (i === 0 ? '</b>' : '') + '</span><span>' + esc(leverNameOf(r.classId))
@@ -1155,21 +1155,21 @@
     html('res-abilities', ex.abilities.map(function (a) {
       var cls = a.status === 'measured' ? 'measured' : a.status === 'partial' || a.status === 'blank' ? 'partial' : '';
       return '<div class="abil">'
-        + '<div class="top"><span class="sc">' + (a.score === null ? '—' : a.score) + '</span>'
+        + '<div class="top"><span class="sc">' + (a.score === null ? 'not yet' : a.score) + '</span>'
         + '<b>' + esc(a.name) + '</b>'
         + (a.modifier === null ? '' : '<span class="md">' + (a.modifier >= 0 ? '+' : '') + a.modifier + '</span>')
         + '<span class="tag ' + cls + '">' + esc(statusWord(a.status)) + '</span></div>'
-        + '<div class="what">' + esc(a.finance || '') + (a.measures ? ' — ' + esc(a.measures) : '') + '</div>'
+        + '<div class="what">' + esc(a.finance || '') + (a.measures ? ', ' + esc(a.measures) : '') + '</div>'
         + a.parts.map(function (pt) {
             if (pt.score === null) {
-              return '<div class="part"><span class="n faint">—</span> <span class="faint">'
+              return '<div class="part"><span class="n faint">not yet</span> <span class="faint">'
                 + esc(pt.name) + ': ' + esc(pt.reason) + '</span></div>';
             }
             return '<div class="part"><span class="n"><b>' + pt.score + '</b></span> ' + esc(pt.name)
-              + (pt.from ? ' <span class="faint">— from ' + esc(pt.from) + '</span>'
-                         : pt.status === 'bought' ? ' <span class="faint">— a score you bought, standing in '
+              + (pt.from ? ' <span class="faint">, from ' + esc(pt.from) + '</span>'
+                         : pt.status === 'bought' ? ' <span class="faint">, a score you bought, standing in '
                            + 'until your money can measure it</span>'
-                         : ' <span class="faint">— you decided this</span>')
+                         : ' <span class="faint">, you decided this</span>')
               + '</div>';
           }).join('')
         + '</div>';
@@ -1183,7 +1183,7 @@
         + (thin.length === 1 ? 'It is' : 'They are')
         + ' shown as blank rather than guessed at, because a made-up ability would make everything '
         + 'built on it fiction. You can play now and finish '
-        + (thin.length === 1 ? 'it' : 'them') + ' whenever — each line above says exactly which figure '
+        + (thin.length === 1 ? 'it' : 'them') + ' whenever, each line above says exactly which figure '
         + 'it is waiting on.</div>'
       : (function () {
           /* SAY THE ACTUAL SPLIT. Announcing "three measured from your money"
@@ -1191,13 +1191,13 @@
              whole claim is that it does not tell you things it cannot see. */
           var measured = ex.abilities.filter(function (a) { return a.status === 'measured'; }).length;
           if (measured === 0) {
-            return '<div class="ok-box">All six are scored — and <b>all six are ones you chose</b>. That is a '
+            return '<div class="ok-box">All six are scored, and <b>all six are ones you chose</b>. That is a '
               + 'perfectly good character and the game plays fine. It just cannot surprise you yet: nothing '
               + 'here came from your actual life. Put your real numbers in and Strength, Dexterity and '
               + 'Constitution get <i>measured</i> instead, which is where this stops being a quiz.'
               + '</div>';
           }
-          return '<div class="ok-box">All six are scored — <b>' + measured + ' measured from your money</b> and '
+          return '<div class="ok-box">All six are scored, <b>' + measured + ' measured from your money</b> and '
             + (6 - measured) + ' you decided. That split is the whole idea: the three nobody can measure for '
             + 'you stay yours, and the three your money can speak to are not up for negotiation.</div>';
         })());
@@ -1229,7 +1229,7 @@
     if (FINISH_BUILT) return;
     var parts = Form.EXTRAS.map(function (f) {
       var control = f.choices
-        ? '<select id="x-' + f.id + '"><option value="">—</option>'
+        ? '<select id="x-' + f.id + '"><option value="">not yet</option>'
           + f.choices.map(function (c) {
               return '<option value="' + esc(c[0]) + '">' + esc(c[1]) + '</option>'; }).join('')
           + '</select>'
@@ -1244,7 +1244,7 @@
       + 'way of a hit, and how stuck you are is most of it.</div>'
       + mobilityChecklist().map(function (q) {
           return '<div style="margin-bottom:var(--space-2)"><label for="x-mob-' + q.id + '">'
-            + esc(q.question) + '</label><select id="x-mob-' + q.id + '"><option value="">—</option>'
+            + esc(q.question) + '</label><select id="x-mob-' + q.id + '"><option value="">not yet</option>'
             + q.options.map(function (o, i) {
                 return '<option value="' + i + '">' + esc(o.label) + '</option>'; }).join('')
             + '</select></div>';
@@ -1276,7 +1276,7 @@
   }
 
   /* STORE THE INDEX, NOT THE POINTS.
-     checklistScore() does `item.options[picked]` — the stored number is a
+     checklistScore() does `item.options[picked]`, the stored number is a
      position in the option list, and the points are looked up from the table.
      Writing points here instead scores silently and wrongly: a 3-point answer
      to a three-option question becomes index 3, which does not exist. */
@@ -1289,7 +1289,7 @@
     paintResult();
   }
 
-  /* Only ever writes .value — never rebuilds (D-034). */
+  /* Only ever writes .value, never rebuilds (D-034). */
   function fillFinish() {
     var p = Store.profile();
     Form.EXTRAS.forEach(function (f) {
@@ -1359,12 +1359,12 @@
       ? s.klass.name + (Money.isOk(s.level) ? ', level ' + s.level.value : '')
       : 'Your character';
 
-    /* WHY this class — the levers ranked by what actually moves through them. */
+    /* WHY this class, the levers ranked by what actually moves through them. */
     if (Money.isOk(s.suggestedClass) && s.suggestedClass.ranked) {
       var ranked = s.suggestedClass.ranked.filter(function (r) { return r.cents > 0; });
       el('pro-why').innerHTML = ranked.length
-        ? 'You are ' + esc(s.klass ? s.klass.name : '—') + ' because that is where the money actually moves. '
-          + 'Nothing chose it for you and nothing about it is a personality test — it is a ranking of your own figures.'
+        ? 'You are ' + esc(s.klass ? s.klass.name : 'not yet') + ' because that is where the money actually moves. '
+          + 'Nothing chose it for you and nothing about it is a personality test. It is a ranking of your own figures.'
         : 'No class yet: nothing is moving through any lever that the sheet can see.';
       html('pro-levers', ranked.map(function (r, i) {
         return '<div class="shift"><span class="n">' + (i === 0 ? '<b>' : '') + money(r.cents) + (i === 0 ? '</b>' : '') + '</span>'
@@ -1402,7 +1402,7 @@
     var place = Camp.fooStepOf(h, TABLES);
     var need = Camp.needs(h, TABLES);
 
-    /* NO NUMBERS AT ALL is a completely legitimate way to arrive here — you can
+    /* NO NUMBERS AT ALL is a completely legitimate way to arrive here. You can
        roll a character and play. What was not legitimate was the screen
        pretending otherwise: it asked somebody who had entered nothing about
        their employer's pension match, and told them "your numbers already work
@@ -1421,7 +1421,7 @@
         + 'first step</b>, so when it tells you what the stronger move would have been, it will be generic '
         + 'rather than about you.';
       el('pro-placement').innerHTML = 'Five numbers is what turns this from a quiz into something that knows '
-        + 'where you actually are. It takes about a minute and none of it leaves this browser — or skip it and '
+        + 'where you actually are. It takes about a minute and none of it leaves this browser, or skip it and '
         + 'play anyway, because the situations are exactly the same.';
       el('btn-begin').disabled = false;
       el('btn-begin').textContent = 'Play anyway →';
@@ -1432,12 +1432,12 @@
     el('btn-begin').disabled = !place;
     el('pro-blurb').innerHTML = 'Your numbers already work out most of where you are. <b>Two answers finish '
       + 'it.</b> These two, because free money from an employer beats almost everything else you could do '
-      + 'with a pound — it is a pay rise you have already been offered and just have not collected.';
+      + 'with a pound. It is a pay rise you have already been offered and just have not collected.';
     el('pro-placement').innerHTML = place
       ? (place.certain
-          ? 'You are on <b>step ' + place.step + '</b> — ' + esc(place.label) + '. That is what the game will '
+          ? 'You are on <b>step ' + place.step + '</b>, ' + esc(place.label) + '. That is what the game will '
             + 'hold you to, and every choice gets judged against it.'
-          : 'You are <b>at least at step ' + place.step + '</b> — ' + esc(place.label) + '. We cannot see '
+          : 'You are <b>at least at step ' + place.step + '</b>, ' + esc(place.label) + '. We cannot see '
             + 'further yet: ' + esc((place.detail || '').replace(/^Steps? /, 'steps ')) + ' '
             + 'That is still enough to judge your choices against, and the game will say so rather than '
             + 'pretending to know more than it does.')
@@ -1449,7 +1449,7 @@
   function paintBoard() {
     var place = Camp.fooStepOf(STATE.household, TABLES);
     var per = Camp.rules(TABLES).roundsPerChapter;
-    el('board-title').textContent = 'Round ' + (STATE.round + 1) + ' of ' + per + ' — pick your fight';
+    el('board-title').textContent = 'Round ' + (STATE.round + 1) + ' of ' + per + ', pick your fight';
     var cards = Camp.board(STATE, TABLES);
     var training = STATE.focusSubStats && STATE.focusSubStats.length
       ? (TABLES.dndRules.subStats.filter(function (m) {
@@ -1464,12 +1464,12 @@
         });
       });
     }).length;
-    el('board-note').innerHTML = 'Six things are in front of you. You get to face <b>one</b> — and which '
+    el('board-note').innerHTML = 'Six things are in front of you. You get to face <b>one</b>, and which '
       + 'one you pick is itself the decision.'
       + (training
           ? (onTarget === 0
               ? ' You have now seen every situation here that trains <b>' + esc(statMeta(training).name)
-                + '</b>, so these are the rest. Still worth playing — just not aimed any more.'
+                + '</b>, so these are the rest. Still worth playing, just not aimed any more.'
               : ' ' + onTarget + ' of these train <b>' + esc(statMeta(training).name) + '</b>.')
           : '')
       + (place ? ' You are on step ' + place.step + (place.certain ? '' : ' or past it') + '.' : '');
@@ -1480,7 +1480,7 @@
          explained itself read as a random draw; it is not one. */
       var why = !place ? 'A tier ' + tier + ' situation.'
         : s.fooStep === place.step ? 'Bang on where you are. This is your fight.'
-        : s.fooStep < place.step ? 'Ground you have already covered — which does not stop it biting.'
+        : s.fooStep < place.step ? 'Ground you have already covered, which does not stop it biting.'
         : 'This one is ' + (s.fooStep - place.step) + ' step' + ((s.fooStep - place.step) === 1 ? '' : 's')
           + ' ahead of you. Tempting early is exactly how people get out of order.';
       return '<button type="button" class="card" data-scenario="' + esc(s.id) + '">'
@@ -1501,7 +1501,7 @@
     el('sc-prompt').textContent = s.prompt;
     /* WHAT EACH CHOICE TRAINS, SHOWN BEFORE YOU PICK.
        Hiding this made the board feel arbitrary: you were choosing between
-       three sentences with no visible consequence. It gives nothing away —
+       three sentences with no visible consequence. It gives nothing away, 
        which ability a move exercises is not the same as whether it is the
        right move now, and the ladder's verdict still waits until after. */
     html('sc-options', s.options.map(function (o) {
@@ -1512,7 +1512,7 @@
       if (o.lever) trains.push('pulls ' + esc(classNameOf(o.lever)) + '’s lever');
       return '<button type="button" class="opt" data-option="' + esc(o.id) + '">' + esc(o.label)
         + (trains.length ? '<div class="trains">Practises ' + trains.join(' · ') + '</div>'
-                         : '<div class="trains faint">Practises nothing — it is a way of not deciding</div>')
+                         : '<div class="trains faint">Practises nothing. It is a way of not deciding</div>')
         + '</button>';
     }).join(''));
     show('scenario-view');
@@ -1523,13 +1523,13 @@
                 incomeAnnual: 'Income (year)', monthlyExpenses: 'Spending (month)' };
 
   function paintOutcome(rec) {
-    el('out-title').textContent = rec.title + ' — ' + rec.label;
+    el('out-title').textContent = rec.title + ', ' + rec.label;
     el('out-outcome').textContent = rec.outcome;
 
     var keys = Object.keys(rec.deltas).filter(function (k) { return rec.deltas[k]; });
     html('out-deltas', keys.length
       ? '<div style="margin-bottom:var(--space-3)">' + keys.map(function (k) {
-          /* Debt going UP is bad and going down is good — the opposite of the
+          /* Debt going UP is bad and going down is good, the opposite of the
              others, so the colour has to be per-field, not per-sign. */
           var v = rec.deltas[k], good = k === 'debt' || k === 'monthlyExpenses' ? v < 0 : v > 0;
           return '<div class="shift"><span class="n ' + (good ? 'good' : 'bad') + '">' + signed(v) + '</span>'
@@ -1540,7 +1540,7 @@
     var verdict = rec.followedFoo
       ? '<div class="ok-box"><b>Nice. That is the move.</b><br/>' + esc(rec.shouldHave.why) + '</div>'
       : '<div class="warn"><b>The stronger move was: ' + esc(rec.shouldHave.label) + '</b><br/>'
-        + esc(rec.shouldHave.why) + '<br/><span class="faint">Not a telling-off. It is about order — doing '
+        + esc(rec.shouldHave.why) + '<br/><span class="faint">Not a telling-off. It is about order, doing '
         + 'your choice <i>later</i> is usually fine. Doing it <i>instead</i> is what costs you.</span></div>';
     html('out-verdict', verdict);
 
@@ -1559,7 +1559,7 @@
   /* ---- the chapter review ------------------------------------------------ */
   function paintReview() {
     var r = Camp.chapterReview(STATE, TABLES);
-    el('rev-title').textContent = 'Chapter ' + r.chapter + ' — how it went';
+    el('rev-title').textContent = 'Chapter ' + r.chapter + ', how it went';
     el('rev-lede').innerHTML = 'You made the strongest move <b>' + r.followedFoo + ' times out of '
       + r.rounds + '</b>. Here is what that did to you.';
 
@@ -1577,13 +1577,13 @@
 
     var shifts = r.statShifts.map(function (x) {
       return '<div class="shift"><span class="n ' + (x.delta > 0 ? 'good' : 'bad') + '">'
-        + (x.delta > 0 ? '+' : '') + x.delta + '</span><span>' + esc(x.stat) + ' — ' + x.from + ' → ' + x.to + '</span></div>';
+        + (x.delta > 0 ? '+' : '') + x.delta + '</span><span>' + esc(x.stat) + ', ' + x.from + ' → ' + x.to + '</span></div>';
     }).join('') + r.subShifts.slice(0, 6).map(function (x) {
       return '<div class="shift"><span class="n faint">' + (x.delta > 0 ? '+' : '') + x.delta + '</span>'
-        + '<span class="faint">' + esc(subName(x.subStat)) + ' — ' + x.from + ' → ' + x.to + '</span></div>';
+        + '<span class="faint">' + esc(subName(x.subStat)) + ', ' + x.from + ' → ' + x.to + '</span></div>';
     }).join('');
     /* Scores that stopped being bought are not losses and must not be shown
-       beside real movement — the number changed because the game finally had
+       beside real movement, the number changed because the game finally had
        something to measure. */
     var became = (r.becameReal || []).length
       ? '<div class="ok-box" style="margin-top:var(--space-2)"><b>'
@@ -1596,30 +1596,30 @@
     /* "No ability moved" beside two that plainly did is a contradiction, so
        the empty-state only shows when there is genuinely nothing to report. */
     var nothing = !shifts && !became
-      ? '<p class="note faint">No ability moved this chapter. Ten rounds is not always long enough — a '
+      ? '<p class="note faint">No ability moved this chapter. Ten rounds is not always long enough, a '
         + 'score here is built from your numbers, not from intentions.</p>'
       : '';
     html('rev-shifts', shifts + nothing + became);
 
     html('rev-order', r.missedFoo.length
       ? r.missedFoo.map(function (m) {
-          return '<div class="row"><b>' + esc(m.title) + '</b> — you took <i>' + esc(m.label) + '</i>'
+          return '<div class="row"><b>' + esc(m.title) + '</b>. You took <i>' + esc(m.label) + '</i>'
             + '<br/><span class="faint">Stronger: ' + esc(punct(m.shouldHave.label)) + ' '
             + esc(m.shouldHave.why) + '</span></div>';
         }).join('')
       : '<div class="ok-box">Every choice this chapter was the strongest move on the board. That is rarer '
-        + 'than it sounds — the whole difficulty of the order is that each individual step looks optional.</div>');
+        + 'than it sounds, the whole difficulty of the order is that each individual step looks optional.</div>');
 
     var st = r.stacking;
     var body = st.warnings.map(function (w) { return '<div class="warn">' + esc(w.text) + '</div>'; }).join('');
     if (!body) {
-      body = '<div class="ok-box">No single lever ran away with the chapter. That is what you want — the '
+      body = '<div class="ok-box">No single lever ran away with the chapter. That is what you want, the '
         + 'things that come for you go straight at whatever you never practised.</div>';
     }
     if (st.untouchedLevers.length) {
       body += '<p class="note faint" style="margin-top:var(--space-2)">Never pulled this chapter: '
         + st.untouchedLevers.map(function (l) { return esc(classNameOf(l)); }).join(', ')
-        + '. Not a fault — a lever you are not on is a lever you do not need yet.</p>';
+        + '. Not a fault, a lever you are not on is a lever you do not need yet.</p>';
     }
     html('rev-stacking', body);
     show('review-view');
@@ -1631,7 +1631,7 @@
     var box = el('borrowed');
     if (!pg) { box.hidden = true; return; }
     box.hidden = false;
-    box.innerHTML = '<b>You are playing ' + esc(pg.name) + ' — these are not your numbers.</b> '
+    box.innerHTML = '<b>You are playing ' + esc(pg.name) + '. These are not your numbers.</b> '
       + 'Everything below is derived from an invented person. '
       + '<button type="button" class="btn ghost" id="btn-unborrow" style="margin-top:var(--space-2)">'
       + 'Put my own numbers in instead</button>';
@@ -1645,11 +1645,11 @@
     el('lede').hidden = !!STATE;
     if (!STATE) {
       /* Mid-creation, stay where the visitor is. Otherwise pick the first
-         step that is not done yet — so a reload resumes rather than restarts,
+         step that is not done yet, so a reload resumes rather than restarts,
          and someone who already has a character skips straight to playing. */
       if (STEP) { goStep(STEP); return; }
       /* Resume where the visitor got to. The five questions come first
-         because they cost nothing and give something back immediately —
+         because they cost nothing and give something back immediately, 
          asking for someone's income before they know why is how you lose
          them on the first screen. */
       /* A door on the front page can ask for a specific step. Only honoured
@@ -1694,7 +1694,7 @@
     el('btn-next-chapter').addEventListener('click', function () {
       save(Camp.nextChapter(STATE, TABLES)); route();
     });
-    /* Leaving the board for the advice screens must not throw the run away —
+    /* Leaving the board for the advice screens must not throw the run away, 
        STEP is cleared on the way back so route() returns to the game. */
     el('btn-board-improve').addEventListener('click', function () { goStep('improve'); });
     el('btn-rev-train').addEventListener('click', function () { goStep('focus'); });
@@ -1764,7 +1764,7 @@
       var b = e.target.closest('[data-focus]');
       if (!b) return;
       FOCUS = b.getAttribute('data-focus');
-      /* A run already going cannot change what it is aimed at halfway — the
+      /* A run already going cannot change what it is aimed at halfway. The
          board is dealt from what you have already seen. Say so and let the
          player decide, rather than silently doing nothing or silently
          throwing their chapter away. */
@@ -1838,7 +1838,7 @@
     var n = el('load-notice');
     n.hidden = false;
     n.textContent = 'Couldn’t load the game data (' + err.message + '). If you opened this file '
-      + 'directly it needs to be served over http — try the published link instead.';
+      + 'directly it needs to be served over http, try the published link instead.';
   });
 })();
 </script>

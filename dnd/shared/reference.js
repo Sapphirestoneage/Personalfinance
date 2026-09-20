@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/reference.js — loader + lookups for the versioned tables in data/.
+   shared/reference.js, loader + lookups for the versioned tables in data/.
    --------------------------------------------------------------------------
    SPEC.md §7: reference tables are config, never inline in a calculator.
    SPEC.md §6: every computed output records WHICH VERSION of a table it
@@ -11,8 +11,8 @@
 
    Results use the Money Result contract, plus two extra statuses that only
    a bounded lookup table can produce:
-       'below_chart' — the value sits under the table's lowest breakpoint
-       'above_chart' — the value sits over the table's highest breakpoint
+       'below_chart'. The value sits under the table's lowest breakpoint
+       'above_chart'. The value sits over the table's highest breakpoint
    Neither is an error and neither is an extrapolated fake percentile.
    ========================================================================== */
 (function (root, factory) {
@@ -28,7 +28,7 @@
   var TABLE_FILES = {
     /* TRIMMED FROM THE SOURCE REPO. load() with no arguments fetches every
        table named here, so this list must match what this product actually
-       ships — the SLAF original registers a dozen more that do not exist
+       ships, the SLAF original registers a dozen more that do not exist
        here and would 404 on boot. Everything else in this file is verbatim. */
     effectiveTaxRates: 'effective_tax_rates_2026.json',
     retirementMilestones: 'retirement_milestones.json',
@@ -70,7 +70,7 @@
   }
 
   /**
-   * Load the named tables (default: all). Browser only — resolves with
+   * Load the named tables (default: all). Browser only, resolves with
    * { effectiveTaxRates, retirementMilestones, … }.
    * `basePath` is optional; omit it and the path is derived from where
    * shared/reference.js itself was served from.
@@ -200,7 +200,7 @@
 
     if (netWorthDollars < 0) {
       return outOfRange('below_chart',
-        'Below the chart — a negative net worth is not ranked by this table.', meta);
+        'Below the chart, a negative net worth is not ranked by this table.', meta);
     }
     if (netWorthDollars < pts[0].netWorth) {
       return outOfRange('below_chart',
@@ -225,7 +225,7 @@
 
   /* ---- Liquidity band ---------------------------------------------------
      Which conventional coverage band a number of months of expenses falls
-     in. Context for a self-reported SWAN Number, never a verdict on it —
+     in. Context for a self-reported SWAN Number, never a verdict on it, 
      see data/liquidity_benchmarks.json. SPEC.md §13, Tier 1.5.          */
 
   function lookupLiquidityBand(table, months) {
@@ -266,7 +266,7 @@
      This exists because the alternative is what a placeholder data layer
      does by default: return a plausible number with no way for anything
      downstream to know it was invented. A believable wrong answer is worse
-     than a missing one — see DECISIONS.md D-036.                                 */
+     than a missing one, see DECISIONS.md D-036.                                 */
 
   var CONFIDENCE_LEVELS = ['sourced', 'convention', 'unverified'];
 
@@ -293,7 +293,7 @@
   /**
    * The provenance of the named tables, weakest first, so a room can lead
    * with the figure a reader should trust least. Pass the loaded tables and
-   * the names the room actually used — not everything it happened to load.
+   * the names the room actually used, not everything it happened to load.
    */
   function provenance(tables, names) {
     var rank = { unverified: 0, convention: 1, sourced: 2 };

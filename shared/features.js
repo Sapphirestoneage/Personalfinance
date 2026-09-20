@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/features.js — the switches: what a room renders, asks, or applies.
+   shared/features.js, the switches: what a room renders, asks, or applies.
    --------------------------------------------------------------------------
    Every phenomenon in the master prompt's sections 15 and 16 is a switch in
    data/features.json. The schema always carries the shape; the switch

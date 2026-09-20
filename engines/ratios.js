@@ -1,16 +1,16 @@
 /* ==========================================================================
-   engines/ratios.js — every ratio in one registry. SPEC.md §13, Tiers 18-19.
+   engines/ratios.js, every ratio in one registry. SPEC.md §13, Tiers 18-19.
    --------------------------------------------------------------------------
    The Ratio Glossary is mostly assembly: the household already holds what
    these need, and engines/tier0.js already computes several of them. So the
-   rule here is the same as everywhere else — one calculation lives in one
+   rule here is the same as everywhere else, one calculation lives in one
    place. Where Tier 0 already owns a ratio, this file CALLS it rather than
    re-deriving it, and a test asserts the two agree.
 
    Each entry declares:
      id, label, formula   what it is, in words a person can check
      unit                 'rate' | 'months' | 'multiple' | 'years'
-     compute(ctx)         a Money Result — never a bare number
+     compute(ctx)         a Money Result, never a bare number
      needs                what it wants, for the "why is this blank" line
 
    Bands live in data/ratio_benchmarks.json, not here, and a null band means
@@ -23,7 +23,7 @@
    the household does not hold them; Life Insurance Needs compares against
    coverage nobody has entered. Both are listed by `unavailable()` with what
    they would need, rather than computed from a stand-in. A believable wrong
-   answer is worse than a missing one — DECISIONS.md D-036.
+   answer is worse than a missing one, DECISIONS.md D-036.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -57,7 +57,7 @@
   'use strict';
 
   /* The skills engine is optional and, in a browser, may be loaded after
-     this file — so it is looked up when a ratio asks, not when this runs. */
+     this file, so it is looked up when a ratio asks, not when this runs. */
   function skillsEngine() {
     if (SkillsDep) return SkillsDep;
     return (typeof self !== 'undefined' && self.SLAF && self.SLAF.Skills) || null;
@@ -66,7 +66,7 @@
   var MONTHS = 12;
   var MS_PER_DAY = 86400000;
   var DAYS_PER_YEAR = 365.25;
-  /* Two readings count as a year apart at eleven months — a snapshot taken
+  /* Two readings count as a year apart at eleven months, a snapshot taken
      "about a year later" rarely lands on the day. BRIEF §4.3. */
   var YEAR_APART_DAYS = 335;
 
@@ -118,7 +118,7 @@
     c.realEstate = realEstate;
 
     /* For the shadow runway: a Roth's contributions come out any time, and
-       a home is worth something in a hurry — at a haircut. D-081. */
+       a home is worth something in a hurry, at a haircut. D-081. */
     var rothBasis = 0;
     Schema.aggregatableAssets(household).forEach(function (a) {
       if (!Money.isEntered(a.valueCents)) return;
@@ -146,7 +146,7 @@
     /* Credit utilisation counts only the cards whose limit is known, on BOTH
        sides of the division. A card with a balance and no limit entered
        would otherwise inflate the numerator against a denominator it never
-       contributed to — the single easiest way to make this ratio lie. How
+       contributed to, the single easiest way to make this ratio lie. How
        many were left out comes back with the answer. DECISIONS.md D-045. */
     var limit = 0, limitedBalance = 0, limitedCards = 0, unlimitedCards = 0;
     c.debts.forEach(function (d) {
@@ -182,7 +182,7 @@
        FAT, which Schema.rentMonthlyCents reads with no log required. Housing
        is the biggest line in most budgets and the ratio against it is the one
        decision-relevant number a renter can act on, so it is not made to wait
-       on a month of transactions. Accommodation only — utilities are not
+       on a month of transactions. Accommodation only, utilities are not
        split out of it, and the Result says so. */
     if (!c.spend) {
       var roof = Schema.rentMonthlyCents(household);
@@ -192,7 +192,7 @@
   }
 
   /* ---- Reading a snapshot back ---------------------------------------------
-     `fields` holds every owned reading at the time — a bare number or a
+     `fields` holds every owned reading at the time, a bare number or a
      {status, value} Result. The most recent snapshot at least eleven months
      before `now` is "then". */
   function stored(bucket, id) {
@@ -234,7 +234,7 @@
     { id: 'debtToIncome', label: 'Debt-to-income', tier: 18,
       formula: 'monthly debt payments ÷ gross monthly income',
       unit: 'rate', needs: 'your debts and your income',
-      note: 'Gross, not net — the 28/36 thresholds are calibrated to gross.',
+      note: 'Gross, not net, the 28/36 thresholds are calibrated to gross.',
       compute: function (c) { return Tier0.debtToIncome(c.household); } },
 
     { id: 'housingRatio', label: 'Housing ratio (front-end)', tier: 18,
@@ -247,7 +247,7 @@
             return Money.incomplete('Add what the roof costs in Expenses to see this.', ['expenseEntries']);
           }
           return withBasis(over(c.housingTypedCents, c.monthlyGross, { denominatorName: 'grossAnnualIncome' }),
-            'accommodation', 'Accommodation only — utilities are not split out of it. Categorise a month in Expenses to include them.');
+            'accommodation', 'Accommodation only, utilities are not split out of it. Categorise a month in Expenses to include them.');
         }
         return withBasis(over(c.housingMonthly, c.monthlyGross, { denominatorName: 'grossAnnualIncome' }),
           'categorised', null);
@@ -265,7 +265,7 @@
         var nonMortgage = c.monthlyDebtPayments - (Money.isEntered(c.mortgagePayment) ? c.mortgagePayment : 0);
         return withBasis(over(housing + nonMortgage, c.monthlyGross, { denominatorName: 'grossAnnualIncome' }),
           c.spend ? 'categorised' : 'accommodation',
-          c.spend ? null : 'Accommodation only — utilities are not split out of it. Categorise a month in Expenses to include them.');
+          c.spend ? null : 'Accommodation only, utilities are not split out of it. Categorise a month in Expenses to include them.');
       } },
 
     { id: 'savingsRate', gate: 'savingsRate', label: 'Savings rate', tier: 18,
@@ -283,11 +283,11 @@
     { id: 'creditUtilization', label: 'Credit utilisation', tier: 18,
       formula: 'card balances ÷ total credit limit',
       unit: 'rate', needs: 'a credit limit on at least one card',
-      note: 'Only the cards you have given a limit for are counted, on both sides — mixing a card with a known limit into the balance while leaving its limit out would overstate the figure. Add the limit in Debt Payoff.',
+      note: 'Only the cards you have given a limit for are counted, on both sides, mixing a card with a known limit into the balance while leaving its limit out would overstate the figure. Add the limit in Debt Payoff.',
       compute: function (c) {
         if (c.revolvingLimit === null) {
           return unavailable(
-            'This needs the credit limit on at least one card. Add it in Debt Payoff — '
+            'This needs the credit limit on at least one card. Add it in Debt Payoff, '
               + 'guessing a limit would produce a number people act on.',
             ['creditLimitTotal']);
         }
@@ -311,7 +311,7 @@
           /* Someone who answered "nothing" has answered. Telling them to
              add the input they just gave is the empty-vs-zero rule leaking
              out through the copy. DECISIONS.md D-048. */
-          zeroReason: 'A gross income of zero can’t produce a net-worth multiple — '
+          zeroReason: 'A gross income of zero can’t produce a net-worth multiple, '
             + 'your net worth is what it is, there is just nothing to divide it by.'
         });
       } },
@@ -358,7 +358,7 @@
       unit: 'rate', needs: 'an auto debt and your income',
       compute: function (c) {
         if (!Money.isEntered(c.autoPayment)) {
-          return Money.incomplete('No auto loan entered — add one in Debt Payoff to see this.', ['debts']);
+          return Money.incomplete('No auto loan entered, add one in Debt Payoff to see this.', ['debts']);
         }
         return over(c.autoPayment, c.monthlyGross, { denominatorName: 'grossAnnualIncome' });
       } },
@@ -410,7 +410,7 @@
     /* --- Tier 19, the ones computable from what the household holds ------- */
     { id: 'safeWithdrawalRate', gate: 'decumulation', label: 'Safe withdrawal rate', tier: 19,
       formula: 'your assumption, adjustable in the FIRE room',
-      unit: 'rate', needs: 'nothing — it is an assumption',
+      unit: 'rate', needs: 'nothing. It is an assumption',
       compute: function (c) { return Money.ok(c.assumptions.swrRate); } },
 
     { id: 'loanToValue', label: 'Loan to value', tier: 19,
@@ -433,7 +433,7 @@
     { id: 'debtPayoffVelocity', label: 'Debt payoff velocity', tier: 19,
       formula: 'a year of payments ÷ total debt',
       unit: 'rate', needs: 'your debts',
-      note: 'How much of the balance a year of minimums clears — before interest, so the real figure is lower.',
+      note: 'How much of the balance a year of minimums clears, before interest, so the real figure is lower.',
       compute: function (c) {
         var yearOfPayments = Money.isEntered(c.monthlyDebtPayments) ? c.monthlyDebtPayments * MONTHS : null;
         return over(yearOfPayments, c.totalDebt, {
@@ -472,12 +472,12 @@
     { id: 'cashDrag', label: 'Cash drag', tier: 19,
       formula: 'cash ÷ total assets',
       unit: 'rate', needs: 'your cash and your assets',
-      note: 'Whether this is too high depends entirely on why the cash is there — see Sleep At Night.',
+      note: 'Whether this is too high depends entirely on why the cash is there, see Sleep At Night.',
       compute: function (c) { return over(c.cash, c.totalAssets, { denominatorName: 'totalAssets' }); } },
 
     /* The name said revolving ÷ installment; the code computes revolving ÷
        TOTAL, and the band (good 0.1 / warn 0.3) is calibrated to the share
-       reading. On the demo those are 0.148 and 0.174 — a different number
+       reading. On the demo those are 0.148 and 0.174, a different number
        under the same label. The code and the band were right; the label was
        not. */
     { id: 'revolvingShare', label: 'Revolving share of debt', tier: 19,
@@ -519,7 +519,7 @@
         return over(c.realEstate, c.totalAssets, { denominatorName: 'totalAssets' });
       } },
 
-    /* --- BRIEF §4.3 — the numbers T3 unlocked (D-081) --------------------- */
+    /* --- BRIEF §4.3, the numbers T3 unlocked (D-081) --------------------- */
     { id: 'incomeConcentration', label: 'Income concentration', tier: 21,
       formula: 'largest income source ÷ household income',
       unit: 'rate', needs: 'your income sources',
@@ -542,7 +542,7 @@
     { id: 'liquidityLadder', label: 'Reachable within a year', tier: 21,
       formula: 'assets reachable within a year ÷ all assets',
       unit: 'rate', needs: 'your assets, each in its pile (cash, taxable, retirement, property, other) on The Statement',
-      note: 'The four rungs — cash today, taxable within a month, retirement within a year once its age is reached, property and other things slowly through a sale or a loan, gated money never — come back with the figure.',
+      note: 'The four rungs, cash today, taxable within a month, retirement within a year once its age is reached, property and other things slowly through a sale or a loan, gated money never, come back with the figure.',
       compute: function (c) {
         if (!Statement) return unavailable('The Statement engine is not loaded.', ['statement']);
         var l = Statement.liquidityLadder(c.household, c.tables.accessRules);
@@ -581,7 +581,7 @@
 
     { id: 'automationRatio', label: 'Automation ratio', tier: 21,
       formula: 'automated savings ÷ all savings',
-      unit: 'rate', needs: 'which contributions are automated — asked by the Skill Stacker',
+      unit: 'rate', needs: 'which contributions are automated, asked by the Skill Stacker',
       note: 'The Skill Stacker asks which active skills run without you; the ratio is their annual value over every active skill\'s. D-090.',
       compute: function (c) {
         var Skills = skillsEngine();
@@ -693,7 +693,7 @@
         /* GROSS income, deliberately, and the label now says so. Spending is
            money actually spent, so subtracting gross credits a retiree with
            a pension or a part-time wage for dollars the IRS takes first, and
-           understates the draw — the panel raised it and it is a fair
+           understates the draw, the panel raised it and it is a fair
            reading. It is not fixed here: the definition is specified with a
            worked example in test/run.js ($3,100 × 12 − $24,000 over
            $420,000 = 3.14%) and reused by the Dashboard's own loop, so
@@ -725,7 +725,7 @@
 
   /* ---- Verdicts ----------------------------------------------------------
      A band says which way is healthier and where the edges are. Missing band
-     means no convention worth quoting — the ratio still computes, it just
+     means no convention worth quoting. The ratio still computes, it just
      gets no colour.                                                       */
   function verdict(id, value, table) {
     var band = table && table.bands ? table.bands[id] : null;
@@ -788,11 +788,11 @@
    * Anything without a band is left off rather than given an invented axis.
    */
   /**
-   * radar(household, tables, opts) — the banded ratios as a shape.
+   * radar(household, tables, opts), the banded ratios as a shape.
    *
    * `opts.applies(branch)` decides whether a ratio that belongs to a gate
    * branch is drawn at all. Without it the radar plotted a retiree's FI
-   * ratio in red and their savings rate beside it — two numbers that have
+   * ratio in red and their savings rate beside it, two numbers that have
    * stopped meaning anything for them (D-143). The engine stays pure: it
    * asks the predicate it is handed and never imports shared/gate.js.
    *
@@ -813,7 +813,7 @@
         position: position(r.value, r.verdict.band)
       };
     }).filter(function (p) { return p.position !== null; });
-    /* What is not on the chart, and why — so the caption can stop implying
+    /* What is not on the chart, and why, so the caption can stop implying
        the drawn set is the whole set. */
     var notYours = banded.length - forYou.length;
     var notYet = forYou.filter(function (r) { return !r.ok; })
@@ -848,7 +848,7 @@
     var rows = RATIOS.map(function (r) {
       /* Every compute is supposed to return a Result. One that does not used
          to throw here on `result.unavailable`, and the dashboard's own catch
-         reported it as "couldn't load the reference tables in data/" — so a
+         reported it as "couldn't load the reference tables in data/", so a
          single broken ratio blanked every panel and blamed the wrong thing.
          Twenty-one other ratios were fine. A row that breaks its contract is
          now one unavailable row, named, and the page keeps its head. D-143. */
@@ -862,12 +862,12 @@
         id: r.id, label: r.label, tier: r.tier, formula: r.formula,
         /* The gate branch this ratio belongs to, or null for one that means
            the same thing in every situation. Named as data, so this engine
-           stays pure and never imports shared/gate.js — the caller asks the
+           stays pure and never imports shared/gate.js, the caller asks the
            gate. A retiree was being shown an FI ratio in red. D-143. */
         gate: r.gate || null,
         unit: r.unit, note: r.note || null, needs: r.needs,
         /* What it is, why it matters, what moves it, and which owned
-           fields it reads — data/ratio_explainers.json, when loaded. */
+           fields it reads, data/ratio_explainers.json, when loaded. */
         explain: (explainers && explainers.ratios && explainers.ratios[r.id]) || null,
         result: result,
         value: v,
@@ -884,7 +884,7 @@
     });
   }
 
-  /** The subset that has a band, for the radar chart — SPEC.md §13 Tier 20. */
+  /** The subset that has a band, for the radar chart, SPEC.md §13 Tier 20. */
   function scored(household, tables, opts) {
     var a = all(household, tables, opts);
     return Money.ok(a.value, {

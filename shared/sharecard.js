@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/sharecard.js — share progress, not balances. DECISIONS.md D-212 (H8).
+   shared/sharecard.js, share progress, not balances. DECISIONS.md D-212 (H8).
    --------------------------------------------------------------------------
    A shareable card carries only ratios, percentages and time: "FI date
    moved 14 months closer", "savings rate up to 22%", "debt-free date:

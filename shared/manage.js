@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/manage.js — hide, set aside, restore: the sources panel the Income
+   shared/manage.js, hide, set aside, restore: the sources panel the Income
    room and the expense log share. DECISIONS.md D-128 (7).
    --------------------------------------------------------------------------
    Two states, deliberately different:
@@ -32,7 +32,7 @@
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   /**
-   * panel(items, state) — the chips and the rows for one state.
+   * panel(items, state), the chips and the rows for one state.
    * items: [{ id, label, meta, hidden, active }]
    */
   function panel(items, state) {
@@ -55,7 +55,7 @@
       + '<ul class="slaf-manage-list">' + rows + '</ul>';
   }
 
-  /** bind(container, onChip, onAct) — once per container. */
+  /** bind(container, onChip, onAct), once per container. */
   function bind(container, onChip, onAct) {
     if (!container || container.__manageBound) return;
     container.__manageBound = true;
@@ -68,7 +68,7 @@
   }
 
   /**
-   * suggestArchive(items, isMonthClosed, dismissed) — one-time items whose
+   * suggestArchive(items, isMonthClosed, dismissed), one-time items whose
    * month has closed and that nobody has answered for yet.
    */
   function suggestArchive(items, isMonthClosed, dismissed) {

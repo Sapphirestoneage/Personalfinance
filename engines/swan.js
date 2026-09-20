@@ -1,12 +1,12 @@
 /* ==========================================================================
-   engines/swan.js — the SWAN Number. SPEC.md §13, Tier 1.5.
+   engines/swan.js, the SWAN Number. SPEC.md §13, Tier 1.5.
    --------------------------------------------------------------------------
    "SWAN" is sleep well at night: the amount of liquid cash that stops the
    3am arithmetic. It is a SELF-REPORT, and this file is careful about what
    that means:
 
      • It is stored standalone (household.swan) and is never written by any
-       calculation. Emergency Fund Coverage — cash ÷ monthly expenses — is
+       calculation. Emergency Fund Coverage, cash ÷ monthly expenses, is
        computed in engines/tier0.js and stays there. The two are shown side
        by side and neither overwrites the other. That separation is the
        whole point of the tool.
@@ -18,7 +18,7 @@
 
      • Nothing here grades the number. data/liquidity_benchmarks.json gives
        the conventional 3/6/12-month bands so the figure has context, but a
-       band is context, never a verdict — see that file's note.
+       band is context, never a verdict, see that file's note.
 
    Every output is a Money Result. Nothing here coerces a missing input to
    zero: with no expenses entered, a months-based target has no dollar value
@@ -53,7 +53,7 @@
     return Schema.createSwanTarget((household && household.swan) || {});
   }
 
-  /** Has a target been named at all? A months-basis target of zero counts —
+  /** Has a target been named at all? A months-basis target of zero counts, 
    *  "I sleep fine with nothing set aside" is an answer, not a blank. */
   function isSet(household) {
     var s = swanOf(household);
@@ -78,7 +78,7 @@
       var expenses = Schema.monthlyExpensesCents(household);
       if (!Money.isOk(expenses)) {
         return Money.incomplete(
-          'You’ve asked for ' + s.targetMonths + ' months of cover — add your monthly '
+          'You’ve asked for ' + s.targetMonths + ' months of cover, add your monthly '
             + 'expenses and that becomes a dollar figure.',
           ['monthlyExpenses']);
       }
@@ -149,7 +149,7 @@
       cashCents: cash.value,
       gapCents: shortfall,
       metTarget: shortfall <= 0,
-      /* Computed Emergency Fund Coverage, untouched — the other half of the
+      /* Computed Emergency Fund Coverage, untouched, the other half of the
          side-by-side. Carried through as its own Result so an incomplete
          one still reads as incomplete rather than as zero months. */
       computedMonths: computed,
@@ -159,7 +159,7 @@
 
   /**
    * How long the gap takes to close at a given monthly saving rate.
-   * Cash, so no growth is assumed — a HYSA rate would change this by less
+   * Cash, so no growth is assumed, a HYSA rate would change this by less
    * than the honesty of the estimate is worth.
    */
   function timeToTarget(gapCents, monthlySavingCents) {
@@ -189,7 +189,7 @@
   /**
    * The conventional coverage milestones in dollars, and whether the cash
    * on hand and the stated number each clear them. Context for a
-   * self-reported figure — see data/liquidity_benchmarks.json.
+   * self-reported figure, see data/liquidity_benchmarks.json.
    */
   function milestones(household, table) {
     if (!table) return Money.incomplete('Liquidity benchmark table is not loaded.',
@@ -219,7 +219,7 @@
     });
   }
 
-  /** Which band the stated number sits in — context, not a grade. */
+  /** Which band the stated number sits in, context, not a grade. */
   function band(household, table) {
     var months = targetMonths(household);
     if (!Money.isOk(months)) return months;

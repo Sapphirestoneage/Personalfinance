@@ -1,9 +1,9 @@
 /* ==========================================================================
-   engines/opening.js — the five-input opening. DECISIONS.md D-312.
+   engines/opening.js, the five-input opening. DECISIONS.md D-312.
    --------------------------------------------------------------------------
    One question first: "When can I stop needing a paycheck, and what moves
-   that date?" Five facts answer it — age, take-home, spending, what is
-   invested and in cash, any debt — and this engine turns them into:
+   that date?" Five facts answer it, age, take-home, spending, what is
+   invested and in cash, any debt, and this engine turns them into:
 
      the FI number       a year of spending over the withdrawal rate
      the band            years to FI at the worst, likely and best real

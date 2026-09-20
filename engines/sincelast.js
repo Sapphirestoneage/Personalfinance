@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/sincelast.js — earned vs learned. DECISIONS.md D-211 (H2).
+   engines/sincelast.js, earned vs learned. DECISIONS.md D-211 (H2).
    --------------------------------------------------------------------------
    Comparing now to the last snapshot, every change is one of two kinds:
 

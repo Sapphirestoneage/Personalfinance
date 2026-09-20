@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/horizon.js — today's money, declared once per screen (15.2).
+   shared/horizon.js, today's money, declared once per screen (15.2).
    --------------------------------------------------------------------------
    Every engine output is real: today's money, a real return from
    data/return_bands.json, inflation and real wage growth declared once in

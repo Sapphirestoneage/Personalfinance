@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/merchants.js — the unique lines in a statement, and the slope.
+   engines/merchants.js, the unique lines in a statement, and the slope.
    DECISIONS.md D-306.
    --------------------------------------------------------------------------
    A bank or card statement is a few hundred lines from a few dozen places.

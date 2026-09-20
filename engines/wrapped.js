@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/wrapped.js — Money Wrapped. DECISIONS.md D-213 (I1).
+   engines/wrapped.js, Money Wrapped. DECISIONS.md D-213 (I1).
    --------------------------------------------------------------------------
    A year-end card from the year's snapshots, four lines, no amounts:
 

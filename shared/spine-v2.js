@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/spine-v2.js — the storage spine every room shares.
+   shared/spine-v2.js, the storage spine every room shares.
    --------------------------------------------------------------------------
    API surface (stable, per SPEC.md §1):
        getProfile()            -> the household object
@@ -18,7 +18,7 @@
 
    Do not hand updateProfile() flat keys. Use the shaped helpers below
    (upsertPerson, upsertIncomeSource, upsertAsset, upsertDebt,
-   setMonthlyExpenses, setAssumptionOverride) — they write to the one
+   setMonthlyExpenses, setAssumptionOverride), they write to the one
    canonical location for each field, which is what keeps rooms from
    drifting apart.
 
@@ -46,7 +46,7 @@
 
   /* ---- Storage adapter --------------------------------------------------
      localStorage throws in some privacy modes. Fall back to memory so a
-     room still works — it just won't persist across a reload.           */
+     room still works, it just won't persist across a reload.           */
 
   var memoryStore = {};
 
@@ -70,7 +70,7 @@
   function writeRaw(key, value) {
     if (!useLocal) { memoryStore[key] = value; return; }
     try { localStorage.setItem(key, value); }
-    catch (e) { memoryStore[key] = value; }   /* quota exceeded — degrade, don't throw */
+    catch (e) { memoryStore[key] = value; }   /* quota exceeded, degrade, don't throw */
   }
 
   function removeRaw(key) {
@@ -130,7 +130,7 @@
         if (parsed && typeof parsed === 'object' && parsed.schemaVersion === undefined) {
           return migrateLegacy(parsed);
         }
-      } catch (e) { /* unparseable legacy blob — ignore it */ }
+      } catch (e) { /* unparseable legacy blob, ignore it */ }
     }
     return null;
   }
@@ -296,7 +296,7 @@
         return cache;
       }
 
-      /* Unparseable. Keep it — a truncated blob is sometimes recoverable by
+      /* Unparseable. Keep it, a truncated blob is sometimes recoverable by
          hand, and it is never ours to throw away. */
       quarantine(raw, 'corrupt', null);
       cache = Schema.createHousehold({ meta: { createdAt: new Date().toISOString() } });
@@ -320,8 +320,8 @@
   /* ---- The clock ----------------------------------------------------------
      Every owned field carries the moment its value was last set or
      re-confirmed, in meta.confirmedAt[fieldId]. The spine cannot know what
-     the fields ARE — that map lives in shared/ownership.js, which loads
-     after this file — so ownership registers a reader here, and save()
+     the fields ARE, that map lives in shared/ownership.js, which loads
+     after this file, so ownership registers a reader here, and save()
      diffs the readings before and after each write. A room never stamps
      anything itself; it just writes, as before. DECISIONS.md D-056.      */
 
@@ -390,7 +390,7 @@
     lastReadings = current;
   }
 
-  /** "Yes, still $9,500" — re-stamp a field without changing its value:
+  /** "Yes, still $9,500", re-stamp a field without changing its value:
       as of now, and sure (Confirm, in the Ledger's three verbs). */
   function confirm(fieldId) {
     var h = load();
@@ -465,7 +465,7 @@
     return n;
   }
 
-  /** ISO timestamp of the last set/confirm, or null when never stamped —
+  /** ISO timestamp of the last set/confirm, or null when never stamped, 
    *  which every household saved before D-056 is, for every field. */
   function confirmedAt(fieldId) {
     var h = load();
@@ -475,7 +475,7 @@
 
   /* ---- The command log (D-094) ----------------------------------------------
      Every save diffs the household against the last one saved and records
-     what changed — path, before, after — as one undo entry (or one grouped
+     what changed, path, before, after, as one undo entry (or one grouped
      entry for a batch). Undo applies the befores, redo the afters. The
      stacks live in meta so they survive a reload and go with a reset. */
   var HISTORY_CAP = 100;
@@ -532,14 +532,14 @@
         var id = ids[i];
         if (!same(beforeReadings[id], afterReadings[id])) {
           var f = labels[id];
-          var fmt = function (v) { return v === null || v === undefined ? '—' : (f.format ? f.format(v) : String(v)); };
+          var fmt = function (v) { return v === null || v === undefined ? 'not yet' : (f.format ? f.format(v) : String(v)); };
           return f.label + ' ' + fmt(beforeReadings[id]) + ' → ' + fmt(afterReadings[id]);
         }
       }
     }
     if (!changes.length) return '';
     /* No owned field moved: name the part of the household that did, in
-       words — "an asset", "a debt" — rather than a dot path. D-100. */
+       words, "an asset", "a debt", rather than a dot path. D-100. */
     var tops = {};
     changes.forEach(function (c) { tops[String(c.path).split('.')[0]] = true; });
     var keys = Object.keys(tops);
@@ -588,7 +588,7 @@
     lastSaved = clone(cache);
     if (!storage.writable) {
       /* Something we could not read is sitting in that key. The session
-         still works — it just does not persist, which is the correct cost
+         still works, it just does not persist, which is the correct cost
          of not destroying whatever is already there. */
       memoryStore[STORAGE_KEY] = JSON.stringify(cache);
       return;
@@ -599,11 +599,11 @@
 
   /**
    * What happened when this session's data was loaded:
-   *   ok / fresh / migrated / legacy  — normal, and writable
-   *   ahead        — saved by a newer build; left untouched
-   *   no-migration — a version bump shipped without a migration step
-   *   corrupt      — unparseable blob, kept aside
-   *   unversioned  — an object with no schemaVersion at all
+   *   ok / fresh / migrated / legacy, normal, and writable
+   *   ahead, saved by a newer build; left untouched
+   *   no-migration, a version bump shipped without a migration step
+   *   corrupt, unparseable blob, kept aside
+   *   unversioned, an object with no schemaVersion at all
    * Everything but the first four is read-only for the session, and the
    * original blob is preserved under the quarantine key.
    */
@@ -642,14 +642,14 @@
     };
   }
 
-  /* Another tab wrote — drop the cache so the next read is fresh, then tell
+  /* Another tab wrote, drop the cache so the next read is fresh, then tell
      this tab's listeners. Keeps two open rooms from diverging. */
   if (typeof window !== 'undefined' && window.addEventListener) {
     window.addEventListener('storage', function (evt) {
       if (evt.key !== STORAGE_KEY) return;
       /* Reload rather than just drop: the command log diffs against the
          last thing SAVED, and that is now the other tab's. Both tabs read
-         one stack, so an undo here takes back the other tab's write too —
+         one stack, so an undo here takes back the other tab's write too, 
          one log, whichever tab holds the button. D-100. */
       cache = null; lastSaved = null; lastReadings = null;
       load();
@@ -659,7 +659,7 @@
 
   /* ---- Public read ------------------------------------------------------
      Returns a deep copy. A room cannot mutate shared state by holding onto
-     the returned object — SPEC.md §5 rule 4, "no local state that can drift
+     the returned object, SPEC.md §5 rule 4, "no local state that can drift
      from the registry."                                                  */
 
   function getProfile() {
@@ -709,7 +709,7 @@
   /**
    * Merge a partial household. Top-level scalars overwrite; `expenses`,
    * `assumptions`, `assumptionOverrides` and `meta` merge one level deep;
-   * arrays (people/assets/debts) REPLACE wholesale — element-wise merging
+   * arrays (people/assets/debts) REPLACE wholesale, element-wise merging
    * of an array of records is ambiguous, so use the upsert helpers instead.
    */
   /* A journal line (D-248, D-312): a record of a reading, never an input.
@@ -830,7 +830,7 @@
   function canRedo() { return !!peekRedo(); }
   function historySize() { var m = load().meta; return { undo: (m.undoStack || []).length, redo: (m.redoStack || []).length, cap: HISTORY_CAP }; }
 
-  /* ---- Shaped helpers — the call sites rooms should actually use --------- */
+  /* ---- Shaped helpers, the call sites rooms should actually use --------- */
 
   function upsertIn(list, record) {
     for (var i = 0; i < list.length; i++) {
@@ -931,7 +931,7 @@
 
   /**
    * Write monthly essential expenses.
-   * SPEC.md §12.3 — a tracked figure NEVER overwrites the estimate. Both are
+   * SPEC.md §12.3, a tracked figure NEVER overwrites the estimate. Both are
    * stored; `source` records which one is current.
    */
   /* ---- Expenses: FAT, wants, therapy (D-172) ---------------------------
@@ -1224,7 +1224,7 @@
 
   /**
    * Mark one step. `state` is 'done', 'skipped', or null to un-mark it.
-   * A room is never in both maps — Schema.createWalk enforces that, and so
+   * A room is never in both maps, Schema.createWalk enforces that, and so
    * does this, deliberately in both places: the schema for anything that
    * arrives from storage or an import, here for anything this session does.
    */
@@ -1254,7 +1254,7 @@
     return h.meta.walk.finishedAt;
   }
 
-  /** Clear every mark and start again. The FIGURES are untouched — this
+  /** Clear every mark and start again. The FIGURES are untouched, this
    *  resets the checklist, never the household. */
   function resetWalk() {
     var h = walkState();
@@ -1268,7 +1268,7 @@
    * Choose which arrangement of the rooms to browse by (D-153). A layout id
    * from data/layouts.json, or null to go back to the order the app ships.
    * This is the only write the front-door room makes, and it touches no
-   * figure — it is a preference about shelves.
+   * figure. It is a preference about shelves.
    */
   function setFrontDoor(id) {
     var h = load();
@@ -1327,7 +1327,7 @@
 
   /**
    * The stated values, in the order they were named. Replaces the list
-   * wholesale — a ranking is one answer, not a set of independent ones.
+   * wholesale. A ranking is one answer, not a set of independent ones.
    * SPEC.md §13 Tier 2.
    */
   function setStatedValues(ids) {
@@ -1340,7 +1340,7 @@
 
   /**
    * Say which value one spending category serves. `valueId` of null is an
-   * explicit "nothing I named" — stored, and distinct from a category that
+   * explicit "nothing I named", stored, and distinct from a category that
    * has never been looked at. Passing undefined removes the assignment and
    * puts the category back to unlooked-at.
    */
@@ -1356,7 +1356,7 @@
 
   /**
    * One 1-10 rating, in the single ratings store. A null value REMOVES the
-   * rating rather than storing a zero — there is no zero on this scale, and
+   * rating rather than storing a zero. There is no zero on this scale, and
    * "not rated" has to stay distinct from "rated low". See
    * shared/rating.js, which owns the scale itself.
    */
@@ -1396,7 +1396,7 @@
       var merged = Object.assign({}, w, patch);
       merged.predictedAt = w.predictedAt;
       merged.ratedAt = w.ratedAt;
-      /* Stamped once, when the rating first appears — a later revision of
+      /* Stamped once, when the rating first appears, a later revision of
          the same rating is a change of mind, not a new prediction. */
       if (Money.isEntered(patch.predictedRating) && !Money.isEntered(w.predictedRating)) {
         merged.predictedAt = new Date().toISOString();
@@ -1423,7 +1423,7 @@
   }
 
   /** A persisted user override of an Assumption-class field. A "what if"
-   *  a room is only previewing must NOT come through here — pass it as a
+   *  a room is only previewing must NOT come through here, pass it as a
    *  local override to the calculator instead. SPEC.md §12.2. */
   function setAssumptionOverride(name, value) {
     var h = load();
@@ -1574,7 +1574,7 @@
        snapshotDelta(id, current)  how `id` has moved since it
      `id` may be a field id (compared against `fields`) or a computed-output
      id (compared against `computedOutputs`). A stored output may be a bare
-     number or a {status, value} Result — both are read. DECISIONS.md D-056. */
+     number or a {status, value} Result, both are read. DECISIONS.md D-056. */
 
   function latestSnapshot() {
     var all = listSnapshots();
@@ -1674,12 +1674,12 @@
   }
 
   /**
-   * importJSON(text) — REPLACES the stored household and snapshots. The
+   * importJSON(text), REPLACES the stored household and snapshots. The
    * caller shows the confirm; this does the write. Older schemas migrate
    * on the reload that follows, through the same path a stored blob takes.
    */
   /**
-   * mergeImport(text) — ADDS a file to the household here instead of
+   * mergeImport(text), ADDS a file to the household here instead of
    * replacing it: records the lists lack, blank scalars, snapshots not
    * already held. shared/importer.js decides what "adds" means; this is
    * the write. One command-log entry, so one undo takes it back. D-125.
@@ -1794,7 +1794,7 @@
     });
   }
 
-  /** Promise<object> — the export object the code carries, or a rejection. */
+  /** Promise<object>, the export object the code carries, or a rejection. */
   function fromShareCode(code) {
     var c = String(code || '').trim();
     if (!c) return Promise.reject(new Error('Empty share code.'));
@@ -1822,7 +1822,7 @@
   }
 
   /**
-   * sendToDevice() — the phone's own share sheet (D-200): the export as a
+   * sendToDevice(), the phone's own share sheet (D-200): the export as a
    * file where the browser can share files (mail, messages, a drive, a
    * nearby device), else the link. Promise<{ how: 'file' | 'link' }>;
    * rejects with name 'AbortError' when the person closes the sheet, and
@@ -1886,7 +1886,7 @@
     return getProfile();
   }
 
-  /** Drop the cache and read storage again — what a page load does. The
+  /** Drop the cache and read storage again, what a page load does. The
    *  tests use it to prove the command log survives one. */
   function _reload() {
     cache = null;

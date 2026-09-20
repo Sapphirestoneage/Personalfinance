@@ -5,7 +5,7 @@
    Both are self-hosted from vendor/fonts/ rather than pulled from Google
    Fonts, so a room has no runtime network dependency, renders identically
    offline, and makes no third-party request on a visitor's behalf. Each is
-   the latin variable-weight cut — 37KB and 22KB respectively.
+   the latin variable-weight cut, 37KB and 22KB respectively.
 
    Licensed under the SIL Open Font License 1.1; see vendor/fonts/OFL.txt.
    ========================================================================== */

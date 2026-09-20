@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  SETTINGS — the feature switches (D-180).
+  SETTINGS, the feature switches (D-180).
 
   1. READS   the switch table through shared/features.js, and the
              household only to say what the situation gate has decided.
@@ -24,7 +24,7 @@
              Household, Horizon, Advanced. A situation-scope switch is shown
              read-only with what set it.
 
-  LIVE-FORM: built once — buttons only, no text input.
+  LIVE-FORM: built once, buttons only, no text input.
 -->
 <style>
   /* The row used to be `minmax(0,1fr) auto`, and the control cell held a whole
@@ -136,7 +136,7 @@
       ? 'Shows up in ' + rooms.map(function (r) { return '<a href="../' + esc(r.href) + '">' + esc(r.title) + '</a>'; }).join(', ') + '.'
       : 'Not shown anywhere yet.';
     /* One shape for both: a track and a knob. A switch the situation set is
-       the same switch, not a different-looking chip — it just does not move,
+       the same switch, not a different-looking chip, it just does not move,
        and the words say what decided it. The sentence that says so lives with
        the rest of the words, not in the control column, which is what used to
        crush the label. D-303. */

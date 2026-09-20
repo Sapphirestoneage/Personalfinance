@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/bankintake.js — one door for a bank or card statement.
+   shared/bankintake.js, one door for a bank or card statement.
    DECISIONS.md D-306 (the widget), D-215 (the import it drives).
    --------------------------------------------------------------------------
    The same intake in Your Data and in Expenses, built once per host: pick

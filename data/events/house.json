@@ -1,6 +1,6 @@
 {
   "id": "house",
-  "title": "Buying a place — or a house hack",
+  "title": "Buying a place, or a house hack",
   "blurb": "A price proposed from your rent, the payment with tax, insurance and upkeep, units you would rent out, and what you could not undo in year two.",
   "version": "1.0",
   "asOf": "2026-01-01",
@@ -52,7 +52,7 @@
           ]
         }
       },
-      "hint": "Proposed at 18× a year of your rent — a national ratio."
+      "hint": "Proposed at 18× a year of your rent, a national ratio."
     },
     {
       "id": "downPct",

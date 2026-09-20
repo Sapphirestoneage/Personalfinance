@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/unlearning.js — which advice still applies to you, and what you
+   engines/unlearning.js, which advice still applies to you, and what you
    have let go of. BRIEF §8, DECISIONS.md D-101.
    --------------------------------------------------------------------------
    Every line in data/unlearning.json names a piece of advice and when it
@@ -7,11 +7,11 @@
    step (engines/foo.js) and your banded ratios (engines/ratios.js) it
    sorts into four columns:
 
-     applies   — your step is inside the range and the ratio is in the zone
-     stop      — you are past it (step above the range, or the ratio has
+     applies, your step is inside the range and the ratio is in the zone
+     stop. You are past it (step above the range, or the ratio has
                  left the zone): the thing to stop believing
-     notYet    — you are before it (step below the range)
-     unknown   — nothing to judge by: no placement, or the ratio does not
+     notYet. You are before it (step below the range)
+     unknown, nothing to judge by: no placement, or the ratio does not
                  compute yet
 
    No model call: each rule is a range and the reasons are the ranges. The
@@ -20,7 +20,7 @@
    applies or is not yet due is flagged "let go early" rather than hidden.
 
    The dashboard's learn/unlearn block (engines/advice.js, D-096) is the
-   top line of this ladder — one item, restated for the household's
+   top line of this ladder, one item, restated for the household's
    numbers. This file is the whole ladder and does not repeat its items.
    ========================================================================== */
 (function (root, factory) {
@@ -62,7 +62,7 @@
     var step = null, range = null;
     if (foo.placement && Money.isEntered(foo.placement.step)) { step = foo.placement.step; range = [step, step]; }
     else if (foo.stoppedAt && foo.stoppedAt.status === 'unknown' && tables && tables.fooRules) {
-      /* Stopped on a step it could not judge: you are at least there — but
+      /* Stopped on a step it could not judge: you are at least there, but
          only if a step below it was met. Unknown at step 0 is nothing known. */
       var ladder = tables.fooRules.ladder || [];
       for (var i = 0; i < ladder.length; i++) if (ladder[i].key === foo.stoppedAt.key && ladder[i].step > FIRST_STEP) { range = [ladder[i].step, LAST_STEP]; break; }
@@ -115,7 +115,7 @@
 
   /**
    * Every rule sorted, with the counts. The value is the number of rules
-   * that no longer apply — marked stop believing and not yet let go of.
+   * that no longer apply, marked stop believing and not yet let go of.
    * Incomplete (with the rows still attached, so a chart can draw the
    * empty columns) when nothing at all can be judged.
    */

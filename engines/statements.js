@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/statements.js — the three statements, and the year in review.
+   engines/statements.js, the three statements, and the year in review.
    --------------------------------------------------------------------------
    A household running for years has no equivalent of the documents a company
    produces every quarter. This builds them:
@@ -14,14 +14,14 @@
    THE BASIS IS PART OF THE ANSWER. Every statement comes back with a
    `basis`, and it is never decoration:
 
-     'recorded' — built from dated entries over a period that actually
+     'recorded', built from dated entries over a period that actually
                   happened. This is a record.
-     'standing' — built from the figures you keep current, annualised. This
+     'standing', built from the figures you keep current, annualised. This
                   is an ESTIMATE OF A TYPICAL YEAR, not a record of one, and
                   every caller must say so. A company would not file it.
 
-   A statement whose basis is 'standing' is still useful — most people have
-   standing figures long before they have twelve closed months — but calling
+   A statement whose basis is 'standing' is still useful, most people have
+   standing figures long before they have twelve closed months, but calling
    it a record would be a lie, and the whole app is built on not telling
    that kind of lie.
 
@@ -80,7 +80,7 @@
       kind: o.kind || 'in',
       indent: !!o.indent,
       /* What the line opens to (D-254): one sentence on how it is worked
-         out, the parts it is made of, and where its number lives — an
+         out, the parts it is made of, and where its number lives, an
          ownership field id, or a room and anchor. The page builds the link. */
       how: o.how || null,
       parts: o.parts || null,
@@ -110,7 +110,7 @@
    * The period a statement covers.
    *   { basis, months, label, closed }
    * 'recorded' needs closed months in the ledger. Everything else is
-   * 'standing' — and says so.
+   * 'standing', and says so.
    */
   function period(household, opts) {
     var o = opts || {};
@@ -144,7 +144,7 @@
     var monthlySpend = Schema.monthlyExpensesCents(h);
 
     if (!Money.isOk(gross)) {
-      return Money.incomplete('Nothing to report yet — no income has been entered.',
+      return Money.incomplete('Nothing to report yet, no income has been entered.',
         ['grossAnnualIncome'], { basis: p.basis, period: p });
     }
 
@@ -218,7 +218,7 @@
   }
 
   /* ---- Cash flow statement ------------------------------------------------
-     Operating, investing, financing — the three sections a real cash flow
+     Operating, investing, financing, the three sections a real cash flow
      statement has, mapped onto a household without stretching the metaphor.
      Operating is living. Investing is what you put away. Financing is debt. */
 
@@ -253,7 +253,7 @@
     financing.push(line('Debt paid down', Money.isOk(dp) ? Math.round(dp.value * months) : null, {
       kind: 'out', field: 'monthlyDebtPayments',
       how: 'The minimums in Debt Payoff, times the months.',
-      note: 'Shown again here because a payment is both a cost and a transfer — '
+      note: 'Shown again here because a payment is both a cost and a transfer, '
         + 'it leaves your account and it reduces what you owe.'
     }));
     var finTotal = sum(financing);
@@ -265,7 +265,7 @@
       investing: investing, investingTotal: invTotal,
       financing: financing, financingTotal: finTotal,
       /* Change in cash is operating less what left cash for investments. The
-         debt line is NOT subtracted again — it is already inside living
+         debt line is NOT subtracted again. It is already inside living
          costs. Double-counting it is the classic error here, so it is stated
          rather than summed. */
       netChange: (opTotal.complete && invTotal.complete)
@@ -308,7 +308,7 @@
     ];
     /* "Nothing else owned" is a real answer, not a missing one. Listing it as
        a blank line made the whole assets side incomplete and the net worth
-       refuse — while the dashboard, reading Schema.totalAssetsCents, showed
+       refuse, while the dashboard, reading Schema.totalAssetsCents, showed
        $35,900 quite happily. The total therefore comes from that same
        function (one formula, one function) and the itemised lines are a
        BREAKDOWN of it, shown only where entered. */
@@ -335,7 +335,7 @@
       netWorth: net,
       netWorthComplete: assetsTotal.complete && liabTotal.complete,
       /* What share of what you own is actually yours rather than borrowed
-         against — a company would call it equity ratio. */
+         against. A company would call it equity ratio. */
       equityRate: (net !== null && assetsTotal.cents > 0) ? net / assetsTotal.cents : null
     });
   }
@@ -351,7 +351,7 @@
     var spend = Schema.monthlyExpensesCents(h);
     var inv = Schema.investmentsCents(h);
     if (!Money.isOk(spend) && !Money.isOk(inv)) {
-      return Money.incomplete('Nothing to report yet — add a month of spending and what is invested.', ['monthlyExpenses', 'investments']);
+      return Money.incomplete('Nothing to report yet, add a month of spending and what is invested.', ['monthlyExpenses', 'investments']);
     }
     var A = Schema.resolveAssumptions ? Schema.resolveAssumptions(h) : {};
     var annual = Money.isOk(spend) ? spend.value * MONTHS : null;
@@ -400,7 +400,7 @@
 
   /* ---- The year in review -------------------------------------------------
      The same period, said in sentences. Every card is derived from a figure
-     above — nothing here is a new calculation, and nothing is invented when
+     above, nothing here is a new calculation, and nothing is invented when
      a figure is missing: the card is simply not produced. */
 
   function review(household, tables, opts) {
@@ -453,7 +453,7 @@
       }
     }
 
-    /* Movement needs two readings. With one, there is nothing to compare —
+    /* Movement needs two readings. With one, there is nothing to compare, 
        and inventing a starting point would make up a whole year of history. */
     var snaps = (o.snapshots || []).slice().sort(function (a, b) {
       return String(a.takenAt || '').localeCompare(String(b.takenAt || ''));
@@ -476,7 +476,7 @@
          you have not recorded is a different document. */
       caveat: p.basis === 'recorded' ? null
         : 'These are not a record of a year that happened. They are what a year '
-          + 'looks like at the figures you keep current — close some months in '
+          + 'looks like at the figures you keep current, close some months in '
           + 'Budget and this becomes a real statement.'
     }, { basis: p.basis });
   }

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/upnext.js — the readings a person wants, the least each needs,
+   shared/upnext.js, the readings a person wants, the least each needs,
    which are open, and the cheapest one to open next.
    --------------------------------------------------------------------------
    Every room already says what it is missing (shared/progress.js reads a
@@ -12,8 +12,8 @@
    exact field in its owner room) and the engine that produces it. Nothing
    is computed here: `read` is a call into Tier0, Fire or Foo, and the
    Result comes back as they made it. A reading the situation rules out
-   (a retiree's savings rate) is absent, not locked — D-055's "not
-   applicable is not missing" — through the same gate branch the
+   (a retiree's savings rate) is absent, not locked, D-055's "not
+   applicable is not missing", through the same gate branch the
    instruments use.
 
      UpNext.READINGS             the list, in the order they are worth having

@@ -4,7 +4,7 @@
   "asOf": "2026-09",
   "source": "Authored for Dungeons & Dividends. DD-026.",
   "confidence": "medium",
-  "confidenceNote": "These are the moves that actually shift each sub-stat, written plainly. They are directionally sound and deliberately not personalised — nothing here knows your situation, and none of it is advice. The effort and lift labels are honest rough estimates, not measurements.",
+  "confidenceNote": "These are the moves that actually shift each sub-stat, written plainly. They are directionally sound and deliberately not personalised, nothing here knows your situation, and none of it is advice. The effort and lift labels are honest rough estimates, not measurements.",
   "note": "Keyed by sub-stat id. `lift` is how much the move typically moves that one sub-stat: small, real, or big. `effort` is what it costs you: minutes, a weekend, or months. A move that is big AND minutes is rare and always listed first.",
   "moves": {
     "incomePower": [
@@ -53,7 +53,7 @@
       { "do": "Point one windfall at it and finish the job", "how": "A bonus, a refund, a birthday. This is the one thing a windfall is unambiguously good at.", "lift": "big", "effort": "minutes" }
     ],
     "taxLiteracy": [
-      { "do": "Find out your actual effective rate", "how": "Not the top band — the real share of everything you earned. Almost everyone is surprised.", "lift": "real", "effort": "minutes" },
+      { "do": "Find out your actual effective rate", "how": "Not the top band, the real share of everything you earned. Almost everyone is surprised.", "lift": "real", "effort": "minutes" },
       { "do": "Learn the accounts your country lets you use, and their limits", "how": "There is a short list. Knowing it is worth more per hour than almost anything else on this page.", "lift": "big", "effort": "a weekend" },
       { "do": "Check whether you are leaving an allowance unused this year", "how": "Most allowances do not roll over. They expire quietly and nobody writes to tell you.", "lift": "big", "effort": "minutes" }
     ],
@@ -68,7 +68,7 @@
       { "do": "Learn what happens to each of them if you need the money in a hurry", "how": "Penalty, delay, or loss. Three very different answers and most people do not know which is which.", "lift": "real", "effort": "a weekend" }
     ],
     "scenarioForesight": [
-      { "do": "Write down what you would do if your income stopped on Friday", "how": "Three lines. The writing is the exercise — a plan you have never said out loud is not a plan.", "lift": "big", "effort": "minutes" },
+      { "do": "Write down what you would do if your income stopped on Friday", "how": "Three lines. The writing is the exercise, a plan you have never said out loud is not a plan.", "lift": "big", "effort": "minutes" },
       { "do": "Price the thing you are quietly dreading", "how": "Dread survives on vagueness. A number is almost always less frightening than the fog was.", "lift": "real", "effort": "minutes" },
       { "do": "Ask what has to be true for this to go wrong, before you commit", "how": "Cheaper to ask beforehand. Considerably.", "lift": "real", "effort": "minutes" }
     ],

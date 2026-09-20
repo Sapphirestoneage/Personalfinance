@@ -1,12 +1,12 @@
 /* ==========================================================================
-   engines/giving.js — a share of income given, in dollars and in life.
+   engines/giving.js, a share of income given, in dollars and in life.
    DECISIONS.md D-098 (the Giving room).
    --------------------------------------------------------------------------
    One plan: a year's giving is the typed target when there is one, else
    gross × the share. From that, a month, the share of gross (derived when
    a target was typed over it), the conventions in dollars for this income
    (read from data/giving_conventions.json, never literals), and the price
-   in life through the lens — months FI moves later, hours at the real
+   in life through the lens, months FI moves later, hours at the real
    hourly wage. Nothing here is a second formula: the FI arithmetic is the
    lens's, the wage is the hourly engine's, and what was actually given
    last month is the ratios engine's giving rate read back.
@@ -39,7 +39,7 @@
 
   /**
    * The conventions in dollars for this income. `rows[i].cents` is null
-   * when there is no gross to apply the share to — the share still shows.
+   * when there is no gross to apply the share to. The share still shows.
    */
   function conventions(grossCents, tables) {
     var t = table(tables);
@@ -72,8 +72,8 @@
    *   share         the share of gross: as typed, or derived target ÷ gross
    *   monthlyCents  the year over twelve
    *   conventions   [{ id, pct, label, note, cents }] for this income
-   *   pushed        Lens.apply(annual, 'pushed') — months FI moves later
-   *   hours         Lens.apply(annual, 'hours')  — hours of life at the real wage
+   *   pushed        Lens.apply(annual, 'pushed'), months FI moves later
+   *   hours         Lens.apply(annual, 'hours'), hours of life at the real wage
    * Incomplete when nothing is entered, or a share is entered with no
    * income to apply it to (a target still works with no income at all).
    */
@@ -91,7 +91,7 @@
       mode = 'target';
       effective = grossCents !== null && grossCents > 0 ? annual / grossCents : null;
     } else if (share !== null) {
-      if (grossCents === null) return Money.incomplete('Add your income to turn a share into dollars — or type a year’s target instead.', ['grossAnnualIncome']);
+      if (grossCents === null) return Money.incomplete('Add your income to turn a share into dollars, or type a year’s target instead.', ['grossAnnualIncome']);
       annual = Math.round(grossCents * share);
       mode = 'share';
       effective = share;

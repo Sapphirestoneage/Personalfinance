@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/timeline.js — a life laid out in months, and what lands in each.
+   engines/timeline.js, a life laid out in months, and what lands in each.
    --------------------------------------------------------------------------
    "Add jobs in the future for periods of time… plan an entire life and stack
    it all and calculate income as things get closer."
@@ -13,7 +13,7 @@
                         each one saying plainly what it could not resolve
      months(h, opts)    the grid itself: one row a month, the total, and
                         the parts that make it up
-     summary(h, opts)   the three facts worth a sentence — what today is,
+     summary(h, opts)   the three facts worth a sentence, what today is,
                         the next month anything changes, and where the gaps
                         and the overlaps are
 
@@ -52,7 +52,7 @@
      A month is an integer: year * 12 + monthIndex. Every comparison in this
      file is then an integer comparison, which is the whole reason the grid
      can be built without a single Date in the loop. Dates only appear at
-     the two edges — parsing in, labelling out. */
+     the two edges, parsing in, labelling out. */
 
   function monthOf(y, m) { return y * 12 + m; }
 
@@ -76,7 +76,7 @@
   }
 
   /* The month the primary adult turns `age`. Null when there is no date of
-     birth to count from — which is a reason to say so, not to guess. */
+     birth to count from, which is a reason to say so, not to guess. */
   function monthAtAge(household, age, opts) {
     var p = Schema.primaryPerson(household || {});
     var born = parseMonth(p && p.dob);
@@ -131,7 +131,7 @@
   }
 
   /** Every future period, resolved. Order: placeable ones by start, then the
-   *  rest — an unplaceable row is not "first", it is waiting. */
+   *  rest, an unplaceable row is not "first", it is waiting. */
   function periods(household, opts) {
     var rows = ((household || {}).futureIncome || []).map(function (r) {
       return resolve(household, r, opts);
@@ -157,11 +157,11 @@
    *   { month, label, cents, parts: [{ id, label, kind, cents }], count }
    *
    * `cents` is the sum of every period live in that month. A month with no
-   * live period is 0 with `count: 0` — and that IS a real zero here, because
+   * live period is 0 with `count: 0`, and that IS a real zero here, because
    * it means "nothing you have listed pays you then", which is exactly the
    * gap this room exists to show. It is not the `|| 0` the rules forbid:
    * that one hides a missing input, and a missing input never reaches this
-   * loop — it was filtered out by `placeable` and named in `unplaced`.
+   * loop. It was filtered out by `placeable` and named in `unplaced`.
    */
   function months(household, opts) {
     var all = periods(household, opts);
@@ -171,7 +171,7 @@
     if (!placed.length) {
       return Money.incomplete(
         unplaced.length
-          ? 'Nothing on the timeline can be placed yet — each one is missing a date or an amount.'
+          ? 'Nothing on the timeline can be placed yet, each one is missing a date or an amount.'
           : 'Nothing is listed yet.',
         ['futureIncome'], { unplaced: unplaced, rows: [] });
     }
@@ -199,7 +199,7 @@
   /**
    * { today, nextChange, gaps, overlaps, peak, unplaced }
    *
-   * `gaps` are runs of months with nothing coming in — the thing a stack of
+   * `gaps` are runs of months with nothing coming in, the thing a stack of
    * jobs is actually for. `overlaps` are runs where two or more pay at once.
    * Both are returned as runs rather than counts, because "four months from
    * next March" is a fact you can act on and "12 months" is not.

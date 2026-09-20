@@ -6,7 +6,7 @@
   "confidence": "sourced",
   "confidenceNote": "Federal Reserve Survey of Consumer Finances, 2022 wave. Refresh when the next wave publishes.",
   "precision": "medians are as published; the p10/p25/p75/p90 breakpoints are approximations for banding and should be refreshed against the published distribution before this is presented as authoritative.",
-  "note": "Age-banded. A negative net worth is reported as 'below chart' — never extrapolated into a fake percentile (SPEC.md Section 6). Refresh when the next SCF wave publishes.",
+  "note": "Age-banded. A negative net worth is reported as 'below chart', never extrapolated into a fake percentile (SPEC.md Section 6). Refresh when the next SCF wave publishes.",
   "unit": "US dollars of household net worth",
   "bands": [
     {

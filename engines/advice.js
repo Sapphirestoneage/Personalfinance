@@ -1,13 +1,13 @@
 /* ==========================================================================
-   engines/advice.js — the Advice Translator.
+   engines/advice.js, the Advice Translator.
    DECISIONS.md D-096.
    --------------------------------------------------------------------------
    A piece of advice people hear, restated for this household's numbers,
    and marked "learn" (take it, here is what it means for you) or "unlearn"
    (drop it, here is why for you). The catalogue is data/advice_translator.json;
    this file evaluates each item's predicates against the household and
-   fills the tokens in the winner's body. pick() returns exactly one item —
-   the dashboard's third block — and list() returns every item that applies,
+   fills the tokens in the winner's body. pick() returns exactly one item, 
+   the dashboard's third block, and list() returns every item that applies,
    in order, for a room that wants the whole translation.
 
    Nothing here is a formula of its own: every number is read from the
@@ -92,34 +92,34 @@
     var m = Money.formatCents;
     var spend = Money.isOk(f.spending) ? f.spending.value : null;
     var t = {
-      spending: spend !== null ? m(spend) : '—',
-      cash: Money.isOk(f.cash) ? m(f.cash.value) : '—',
-      cashMonths: f.cashMonths !== null ? Money.formatMonths(f.cashMonths) : '—',
-      threeMonths: spend !== null ? m(spend * 3) : '—',
-      cashGap: spend !== null && Money.isOk(f.cash) ? m(Math.max(0, spend * 3 - f.cash.value)) : '—',
-      cashExcess: spend !== null && Money.isOk(f.cash) ? m(Math.max(0, f.cash.value - spend * 6)) : '—',
-      savingsRate: Money.isOk(f.savingsRate) ? Money.formatRate(f.savingsRate.value, { decimals: 1 }) : '—',
+      spending: spend !== null ? m(spend) : 'not yet',
+      cash: Money.isOk(f.cash) ? m(f.cash.value) : 'not yet',
+      cashMonths: f.cashMonths !== null ? Money.formatMonths(f.cashMonths) : 'not yet',
+      threeMonths: spend !== null ? m(spend * 3) : 'not yet',
+      cashGap: spend !== null && Money.isOk(f.cash) ? m(Math.max(0, spend * 3 - f.cash.value)) : 'not yet',
+      cashExcess: spend !== null && Money.isOk(f.cash) ? m(Math.max(0, f.cash.value - spend * 6)) : 'not yet',
+      savingsRate: Money.isOk(f.savingsRate) ? Money.formatRate(f.savingsRate.value, { decimals: 1 }) : 'not yet',
       floor: Money.formatRate(f.floor, { decimals: 0 }),
-      gapMonthly: Money.isOk(f.savingsRate) && Money.isOk(f.gross) ? m(Math.max(0, Math.round((f.floor - f.savingsRate.value) * f.gross.value / MONTHS))) : '—',
-      matchGap: f.matchFlag && f.matchFlag.detail ? m(f.matchFlag.detail.annualMatchCents || 0) : '—',
-      matchCap: f.matchCap !== null ? Money.formatRate(f.matchCap, { decimals: 0 }) : '—',
-      withdrawalRate: Money.isOk(f.withdrawal) ? Money.formatRate(f.withdrawal.value, { decimals: 1 }) : '—',
-      annualDraw: Money.isOk(f.withdrawal) ? m(f.withdrawal.annualDrawCents || 0) + ' a year' : '—',
+      gapMonthly: Money.isOk(f.savingsRate) && Money.isOk(f.gross) ? m(Math.max(0, Math.round((f.floor - f.savingsRate.value) * f.gross.value / MONTHS))) : 'not yet',
+      matchGap: f.matchFlag && f.matchFlag.detail ? m(f.matchFlag.detail.annualMatchCents || 0) : 'not yet',
+      matchCap: f.matchCap !== null ? Money.formatRate(f.matchCap, { decimals: 0 }) : 'not yet',
+      withdrawalRate: Money.isOk(f.withdrawal) ? Money.formatRate(f.withdrawal.value, { decimals: 1 }) : 'not yet',
+      annualDraw: Money.isOk(f.withdrawal) ? m(f.withdrawal.annualDrawCents || 0) + ' a year' : 'not yet',
       highInterestBalance: m(f.highDebtCents),
-      loanYear: f.loanYear !== null ? String(f.loanYear) : '—',
+      loanYear: f.loanYear !== null ? String(f.loanYear) : 'not yet',
       hundred: m(10000),
-      gross: Money.isOk(f.gross) ? m(f.gross.value) : '—',
-      income: Money.isOk(f.gross) ? m(Math.round(f.gross.value / MONTHS)) : '—',
-      investments: Money.isOk(f.investments) ? m(f.investments.value) : '—',
-      investmentYears: Money.isOk(f.investments) && spend !== null && spend > 0 ? (Math.round(f.investments.value / (spend * MONTHS) * 10) / 10) + ' years' : '—',
-      tax: Money.isOk(f.tax) ? m(f.tax.estimatedTaxCents) : '—',
-      taxMonthly: Money.isOk(f.tax) ? m(Math.round(f.tax.estimatedTaxCents / MONTHS)) : '—',
-      effectiveRate: Money.isOk(f.tax) ? Money.formatRate(f.tax.effectiveRate, { decimals: 0 }) : '—',
-      fiYear: Money.isOk(f.fiYear) ? (f.fiYear.alreadyThere ? 'now' : String(new Date(f.nowMs + f.fiYear.value * 365.25 * MS_PER_DAY).getFullYear())) : '—',
-      wage: Money.isOk(f.wage) ? m(f.wage.value) + '/h' : '—',
+      gross: Money.isOk(f.gross) ? m(f.gross.value) : 'not yet',
+      income: Money.isOk(f.gross) ? m(Math.round(f.gross.value / MONTHS)) : 'not yet',
+      investments: Money.isOk(f.investments) ? m(f.investments.value) : 'not yet',
+      investmentYears: Money.isOk(f.investments) && spend !== null && spend > 0 ? (Math.round(f.investments.value / (spend * MONTHS) * 10) / 10) + ' years' : 'not yet',
+      tax: Money.isOk(f.tax) ? m(f.tax.estimatedTaxCents) : 'not yet',
+      taxMonthly: Money.isOk(f.tax) ? m(Math.round(f.tax.estimatedTaxCents / MONTHS)) : 'not yet',
+      effectiveRate: Money.isOk(f.tax) ? Money.formatRate(f.tax.effectiveRate, { decimals: 0 }) : 'not yet',
+      fiYear: Money.isOk(f.fiYear) ? (f.fiYear.alreadyThere ? 'now' : String(new Date(f.nowMs + f.fiYear.value * 365.25 * MS_PER_DAY).getFullYear())) : 'not yet',
+      wage: Money.isOk(f.wage) ? m(f.wage.value) + '/h' : 'not yet',
       coffee: m(COFFEE_CENTS),
-      coffeeTime: Money.isOk(f.wage) ? Money.formatAsTime(COFFEE_CENTS, f.wage.value) : '—',
-      rentTime: Money.isOk(f.wage) && spend !== null ? Money.formatAsTime(spend, f.wage.value) + ' a month' : '—'
+      coffeeTime: Money.isOk(f.wage) ? Money.formatAsTime(COFFEE_CENTS, f.wage.value) : 'not yet',
+      rentTime: Money.isOk(f.wage) && spend !== null ? Money.formatAsTime(spend, f.wage.value) + ' a month' : 'not yet'
     };
     return t;
   }

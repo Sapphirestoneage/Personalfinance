@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>The Referee · SPARKS</title>
-<meta name="description" content="Debates people have about money, both sides stated fairly and run on your numbers — and the advice everyone hears, sorted by whether it still applies to you."/>
+<meta name="description" content="Debates people have about money, both sides stated fairly and run on your numbers, and the advice everyone hears, sorted by whether it still applies to you."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-218, D-272 (the merge).
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-101, D-218, D-272 (the merge).
   Registry: debates.
 
   TWO READINGS OF THE ADVICE.
@@ -29,7 +29,7 @@
   because it answers something; the other reading asks.
 
   1. READS   what the two engines already read; nothing new.
-  2. WRITES  nothing from the debate reading — a debate is a what-if — and
+  2. WRITES  nothing from the debate reading. A debate is a what-if, and
              unlearningDropped from the other, whose owner moved here with
              its boxes (D-272). That reading has two inputs: a select "A rule"
              that picks which rule the second acts on, and a choice "Have
@@ -127,7 +127,7 @@
 
   <!-- ===== WHICH SIDE (was rooms/debates.html) ===== -->
   <section id="view-which-side">
-  <p class="slaf-lede">Debates people already have about money, both sides stated fairly, run on your numbers — what they say, the one figure the answer turns on, and where it would flip.</p>
+  <p class="slaf-lede">Debates people already have about money, both sides stated fairly, run on your numbers, what they say, the one figure the answer turns on, and where it would flip.</p>
   <section class="slaf-card" id="pick">
     <span class="slaf-eyebrow">Pick a debate</span>
     <div class="list" id="d-list"></div>
@@ -149,7 +149,7 @@
 
   <!-- ===== STILL APPLIES? (was rooms/unlearning.html) ===== -->
   <section id="view-still-applies" hidden>
-  <p class="slaf-lede">The advice everyone hears, sorted by whether it still applies to you — and the rules you have let go of.</p>
+  <p class="slaf-lede">The advice everyone hears, sorted by whether it still applies to you, and the rules you have let go of.</p>
   <div class="room-standalone" id="room-standalone" hidden></div>
 
   <section class="slaf-card" id="number">
@@ -261,7 +261,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -280,8 +280,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -493,11 +493,11 @@
       parts.push(k.applies + ' still ' + (k.applies === 1 ? 'applies' : 'apply'));
       parts.push(k.notYet + ' not yet');
       if (k.unknown) parts.push(k.unknown + ' unknown');
-      if (c.next) parts.push('the next to drop: <strong>' + esc(quote(c.next.advice)) + '</strong> — ' + esc(c.next.why));
-      else parts.push('<strong>nothing left to drop</strong> — every rule you are past, you have let go of');
+      if (c.next) parts.push('the next to drop: <strong>' + esc(quote(c.next.advice)) + '</strong>, ' + esc(c.next.why));
+      else parts.push('<strong>nothing left to drop</strong>, every rule you are past, you have let go of');
       var sub = parts.join(' · ');
       if (c.letGoEarly.length) {
-        sub += '. <strong>Let go early:</strong> ' + c.letGoEarly.map(function (r) { return esc(quote(r.advice)) + ' — ' + (r.status === 'applies' ? 'it still applies' : 'it is not due yet') + ' (' + esc(r.why) + ')'; }).join('; ');
+        sub += '. <strong>Let go early:</strong> ' + c.letGoEarly.map(function (r) { return esc(quote(r.advice)) + ', ' + (r.status === 'applies' ? 'it still applies' : 'it is not due yet') + ' (' + esc(r.why) + ')'; }).join('; ');
       }
       return { label: label, value: String(c.value), sub: sub, zone: c.zone, result: c };
     },
@@ -545,7 +545,7 @@
       var rows = [
         { label: 'The rules', value: u.rules.length + ' rules, v' + u.version, source: u.source + ' (' + u.confidence + ')' },
         { label: 'A rule’s step range', value: 'a judgement', source: u.confidenceNote },
-        { label: 'Your step', value: where, source: 'engines/foo.js against data/foo_rules.json v' + foo.version + ' — ' + foo.source + ' (' + foo.confidence + ')' + (c.range && c.step === null ? '. The ladder stopped on a step it could not judge, so rules are sorted against the range you could be in' : '') },
+        { label: 'Your step', value: where, source: 'engines/foo.js against data/foo_rules.json v' + foo.version + ', ' + foo.source + ' (' + foo.confidence + ')' + (c.range && c.step === null ? '. The ladder stopped on a step it could not judge, so rules are sorted against the range you could be in' : '') },
         { label: 'Your bands', value: zoneIds.length ? zoneIds.map(function (id) { return id + ' ' + c.zones[id]; }).join(', ') : 'no ratio has a verdict yet', source: 'engines/ratios.js against data/ratio_benchmarks.json v' + bands.version + ' (' + bands.confidence + '). ' + bands.confidenceNote },
         { label: 'The dashboard’s learn/unlearn line', value: pick && Money.isOk(pick) ? pick.item.headline + ' (' + pick.item.kind + ')' : 'nothing to translate yet',
           source: 'engines/advice.js + data/advice_translator.json' + (adv ? ' v' + adv.version : '') + ' (D-096): one piece of advice restated for your numbers. It is the top line of this ladder; this room sorts the whole table and does not repeat its items. Home → the third block.' }
@@ -555,11 +555,11 @@
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, most of what you were told was told to someone on a different step. The ladder places you; the rules you are past are the ones to stop paying for — a starter fund kept growing, a debt prepaid over a match.',
+        employed: 'Employed, most of what you were told was told to someone on a different step. The ladder places you; the rules you are past are the ones to stop paying for, a starter fund kept growing, a debt prepaid over a match.',
         selfEmployed: 'Self-employed, the rules were written for a paycheque: “take the match” has no match to take, and “six months of cash” means six months of a lumpier income. The step still sorts them; the source column says who was talking.',
         mixed: 'With a job and your own work, the job’s ladder is the one the rules are judged on. What applies to the paycheque side applies; what the own-work side would change is the buffer, not the order.',
-        student: 'At a student’s stage most of the list is not yet: the ladder has not started, so the rules for the middle of it are for later. What applies now is the short list at the top — no balance carried, and a first fund.',
-        retired: 'Retired, the ladder is behind you and most of the list is past you: save first, take the match, build the fund. What is left is the handful of rules that never expire. The rest is the point of this room — the rule was true once, for someone on that step.',
+        student: 'At a student’s stage most of the list is not yet: the ladder has not started, so the rules for the middle of it are for later. What applies now is the short list at the top, no balance carried, and a first fund.',
+        retired: 'Retired, the ladder is behind you and most of the list is past you: save first, take the match, build the fund. What is left is the handful of rules that never expire. The rest is the point of this room. The rule was true once, for someone on that step.',
         betweenJobs: 'Between jobs the ladder pauses where it was; the rules you were past stay past, and “six months of cash” stops being advice and becomes the runway. Sort by what applies to the step you are holding, not the one you fear.'
       }[situation] || 'Every rule here was true for someone on some step. This room sorts them by whether that step is yours.';
     },

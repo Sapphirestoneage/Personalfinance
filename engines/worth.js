@@ -1,8 +1,8 @@
 /* ==========================================================================
-   engines/worth.js — Prospective Worth and Retroactive Worth, one engine.
+   engines/worth.js, Prospective Worth and Retroactive Worth, one engine.
    --------------------------------------------------------------------------
-   SPEC.md §13, Tier 1: "Prospective Worth calc — before buying, estimate
-   cost per use / cost per hour of enjoyment" and "Retroactive Worth calc —
+   SPEC.md §13, Tier 1: "Prospective Worth calc, before buying, estimate
+   cost per use / cost per hour of enjoyment" and "Retroactive Worth calc, 
    after the fact, what a purchase actually returned, rated 1-10", with the
    note that the two are "designed as a before/after pair; Prospective's
    prediction should be storable and later compared against Retroactive's
@@ -10,7 +10,7 @@
 
    They are the same arithmetic pointed at two different tenses, so this is
    one engine and one stored record (Schema.createWorthCheck) with two
-   ratings on it — see the comment there for why not two records.
+   ratings on it, see the comment there for why not two records.
 
    What it computes, and what it refuses to:
 
@@ -18,7 +18,7 @@
      • Cost per point of worth. A $400 thing rated 8 costs $50 a point; a
        $40 thing rated 2 costs $20 a point. This is the number that stops
        "it was expensive" from being the whole verdict.
-     • The price in hours of your life, from engines/hourly.js — never a
+     • The price in hours of your life, from engines/hourly.js, never a
        second wage calculation (SPEC.md §8).
      • The gap between what you predicted and what it turned out to be.
        Across enough entries that gap has a direction, and the direction is
@@ -27,7 +27,7 @@
 
    It does NOT score a purchase, rank your taste, or tell you what to buy.
    Every rating here is a self-report, and a self-report averaged into a
-   single "purchase quality index" would be false precision — the same
+   single "purchase quality index" would be false precision, the same
    reasoning as the Fulfillment Curve and the Values audit.
 
    The Regret calculator (SPEC.md §13, Tier 4) is not a separate tool: it is
@@ -55,7 +55,7 @@
   'use strict';
 
   /* The rating scope, for anchors and the shared control. Both ratings on a
-     worth check use it — "worth every penny" reads the same before and
+     worth check use it, "worth every penny" reads the same before and
      after, which is the point of comparing them. */
   var SCOPE = 'worth';
 
@@ -91,7 +91,7 @@
   }
 
   /**
-   * Cost per hour of use. Incomplete — never zero — when either half is
+   * Cost per hour of use. Incomplete, never zero, when either half is
    * missing, because "I don't know how much I used it" and "I used it for
    * no hours" are different answers and only one of them is a number.
    */
@@ -105,7 +105,7 @@
     }
     return Money.safeDivide(c.costCents, c.hoursSpent, {
       denominatorName: 'hoursSpent',
-      zeroReason: 'Zero hours of use has no cost-per-hour — that is the finding, not a number.'
+      zeroReason: 'Zero hours of use has no cost-per-hour. That is the finding, not a number.'
     });
   }
 
@@ -131,8 +131,8 @@
    * One worth check, fully worked out.
    *   evaluate(household, tables, check)
    *
-   * The result's value is the cost per point of the rating that exists —
-   * actual if it has been lived, predicted if it has not — and `basis` says
+   * The result's value is the cost per point of the rating that exists, 
+   * actual if it has been lived, predicted if it has not, and `basis` says
    * which, so a room never has to guess what it is showing.
    *
    * The price in hours of life comes from engines/hourly.js and is allowed
@@ -183,7 +183,7 @@
     };
 
     if (!headline) {
-      return Money.incomplete('Rate this 1 to 10 — before or after, either works.',
+      return Money.incomplete('Rate this 1 to 10, before or after, either works.',
         ['predictedRating', 'actualRating']);
     }
     if (!Money.isOk(headline)) {
@@ -198,7 +198,7 @@
     return checks.map(function (c) {
       var r = evaluate(household, tables, c);
       /* An unrated, un-costed row still has to render, so the raw fields
-         come back either way — the Result says whether there is a reading,
+         come back either way. The Result says whether there is a reading,
          the row says what is in the record. */
       return {
         id: c.id,
@@ -237,7 +237,7 @@
       var need = MIN_CALIBRATION - pairs.length;
       return Money.incomplete(
         'Rate ' + need + ' more thing' + (need === 1 ? '' : 's')
-          + ' you predicted first — with fewer than ' + MIN_CALIBRATION
+          + ' you predicted first, with fewer than ' + MIN_CALIBRATION
           + ' before-and-afters this is one bad week, not a pattern.',
         ['worthChecks']);
     }
@@ -267,7 +267,7 @@
   }
 
   /**
-   * The Regret view (SPEC.md §13, Tier 4). Not a new calculation — the same
+   * The Regret view (SPEC.md §13, Tier 4). Not a new calculation, the same
    * records, filtered to the ones that turned out badly, with what they cost
    * added up. Only things actually RATED low count; a thing you never rated
    * is not a regret, it is an unanswered question.
@@ -307,7 +307,7 @@
   /**
    * Everything a room needs in one call: the rows, the calibration, the
    * regret view, and the best and worst value for money among rated things.
-   * Each part is its own Result — one missing piece never blanks the page.
+   * Each part is its own Result, one missing piece never blanks the page.
    */
   function summarise(household, tables) {
     var all = rows(household, tables);

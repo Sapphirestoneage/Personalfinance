@@ -59,7 +59,7 @@ terms.forEach((e) => {
   check(label + ' is one sentence', sentences === 1, e.plain);
   const words = e.plain.split(/\s+/).length;
   check(label + ' is under 40 words', words < 40, words + ' words');
-  check(label + ' has no em dash', e.plain.indexOf('—') === -1);
+  check(label + ' has no em dash', e.plain.indexOf('\u2014') === -1);
 });
 
 /* Flesch-Kincaid grade over the whole file, with a plain syllable counter. */
@@ -135,7 +135,7 @@ MUST.forEach((m) => check('where row for "' + m + '"', labels.some((l) => l.inde
   check(label + ' is a lookup row with a path and a letter', r.kind === 'lookup' && typeof r.path === 'string' && /^[DAITE]$/.test(r.letter));
   ['where', 'ifMissing', 'roughly'].forEach((k) => check(label + ' has ' + k, typeof r[k] === 'string' && r[k].length > 10));
   check(label + ' where is one or two sentences', r.where.split(/(?<=[.!?])\s+(?=[A-Z])/).length <= 2, r.where);
-  check(label + ' has no em dash', JSON.stringify(r).indexOf('—') === -1);
+  check(label + ' has no em dash', JSON.stringify(r).indexOf('\u2014') === -1);
 });
 
 /* ---- 4. The lens copy --------------------------------------------------------------- */
@@ -151,7 +151,7 @@ L.lenses.forEach((l) => {
   ['forWhom', 'notForWhom'].forEach((k) => {
     check(l.id + ' ' + k + ' is one sentence', typeof c[k] === 'string' && c[k].length > 10 && c[k].split(/(?<=[.!?])\s+(?=[A-Z])/).length === 1, c[k]);
     check(l.id + ' ' + k + ' has no hedging word', !HEDGE.test(c[k]), c[k]);
-    check(l.id + ' ' + k + ' has no em dash', c[k].indexOf('—') === -1);
+    check(l.id + ' ' + k + ' has no em dash', c[k].indexOf('\u2014') === -1);
   });
   check(l.id + ' source has a kind, a title and a url', c.source && c.source.kind && c.source.title && typeof c.source.url === 'string');
 });

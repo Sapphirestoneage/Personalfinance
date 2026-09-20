@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/campaign.js — the campaign. DD-024.
+   engines/campaign.js, the campaign. DD-024.
    --------------------------------------------------------------------------
    A character sheet says where you are. A campaign says what you did, and
    what it cost. Each round offers a board of scenarios; you resolve one; the
@@ -17,7 +17,7 @@
       and the engine compares that against your LIVE placement from
       engines/foo.js. The advice therefore moves as you move: paying down a
       card is right on step 3 and premature on step 1, and the same option
-      scores differently in the two places. Nothing here re-derives the FOO —
+      scores differently in the two places. Nothing here re-derives the FOO, 
       Foo.evaluate() owns it, as it owns it for the rest of the suite.
    ========================================================================== */
 (function (root, factory) {
@@ -53,7 +53,7 @@
   function clone(v) { return JSON.parse(JSON.stringify(v)); }
 
   /* A small deterministic PRNG. The board must be the same board when you
-     reload the page mid-round — a reshuffle on refresh would let someone roll
+     reload the page mid-round, a reshuffle on refresh would let someone roll
      for a hand they liked better, which is not the game. */
   function rng(seed) {
     var s = seed >>> 0;
@@ -75,7 +75,7 @@
    *
    * Foo.evaluate() gives a PLACEMENT only for a step it can judge and finds
    * unmet. Above step 4 it needs contribution figures this tool does not
-   * collect, and honestly reports `unknown` rather than guessing — so a
+   * collect, and honestly reports `unknown` rather than guessing, so a
    * well-organised character would get no placement at all.
    *
    * But a walk that stopped at step 6 established every step below it as MET.
@@ -102,7 +102,7 @@
     return null;
   }
 
-  /** The step number alone, or null — for the callers that only rank. */
+  /** The step number alone, or null, for the callers that only rank. */
   function stepNumber(household, tables) {
     var p = fooStepOf(household, tables);
     return p ? p.step : null;
@@ -110,7 +110,7 @@
 
   /**
    * What the ladder still needs before it can place you. The campaign's
-   * prologue asks for exactly this and nothing more — a form that asks for
+   * prologue asks for exactly this and nothing more, a form that asks for
    * what it does not use is how people stop filling in forms.
    */
   function needs(household, tables) {
@@ -127,13 +127,13 @@
   }
 
   /** Everything a review compares. Each figure is a Result or null, never a
-      guessed number — an unmeasurable one stays unmeasurable. */
+      guessed number, an unmeasurable one stays unmeasurable. */
   function snapshot(household, tables) {
     var sheet = Character.sheet(household, tables);
     var nw = Tier0.netWorth(household);
     /* The score AND where it came from. Without the second half a rolled 17
        being replaced by a measured 8 is indistinguishable from a real drop of
-       nine — see the bought/measured handling in chapterReview(). */
+       nine, see the bought/measured handling in chapterReview(). */
     var subs = {}, bought = {};
     Object.keys(sheet.subScores || {}).forEach(function (k) {
       var r = sheet.subScores[k];
@@ -163,7 +163,7 @@
   /**
    * One delta, in cents. Three shapes so a scenario fits any character:
    * `cents` absolute, `months` x monthly expenses, `pctIncome` x gross annual.
-   * A shape whose basis cannot be read returns null — the option is then
+   * A shape whose basis cannot be read returns null. The option is then
    * unresolvable and the board will not offer it.
    */
   function deltaCents(spec, household) {
@@ -279,17 +279,17 @@
     var top = ranked[0];
     var why;
     if (step === null) {
-      why = 'The ladder cannot place you yet, so this is ranked on what it costs and returns alone — '
+      why = 'The ladder cannot place you yet, so this is ranked on what it costs and returns alone, '
           + 'not on order. Answer the two questions in the prologue and this becomes real advice.';
     } else if (top.option.serves === null) {
       why = 'Nothing here advances step ' + step + ', so the one that costs you least is the one to take.';
     } else if (top.option.serves === step) {
       why = 'It serves step ' + step + ', which is the step you are on.';
     } else if (top.option.serves < step) {
-      why = 'It shores up step ' + top.option.serves + ', which you have already passed — sound housekeeping.';
+      why = 'It shores up step ' + top.option.serves + ', which you have already passed, sound housekeeping.';
     } else {
       why = 'Everything here is ahead of step ' + step + '; this is the least premature. Order is the '
-          + 'whole point of the ladder — a clever move made too early is still too early.';
+          + 'whole point of the ladder, a clever move made too early is still too early.';
     }
     return { option: top.option, why: why, ranked: ranked };
   }
@@ -307,8 +307,8 @@
   }
 
   /**
-   * The scenarios offered this round. Relevance first — a scenario about your
-   * own step beats one three steps away — then deterministic shuffle, so the
+   * The scenarios offered this round. Relevance first, a scenario about your
+   * own step beats one three steps away, then deterministic shuffle, so the
    * same round always shows the same board.
    */
   function board(state, tables) {
@@ -338,7 +338,7 @@
 
     var fresh = pool.filter(function (s) { return seen.indexOf(s.id) === -1; });
 
-    /* PREFERENCE, NOT A FILTER — and this ordering is the whole point.
+    /* PREFERENCE, NOT A FILTER, and this ordering is the whole point.
        Narrowing the pool to the focus outright looked right and dealt repeats
        within a single chapter: a tier's worth of cards that train one ability
        is smaller than a tier, and the moment fewer than a board's worth are
@@ -363,7 +363,7 @@
     return usable.map(function (s) {
       var distance = step === null ? 0 : Math.abs(s.fooStep - step);
       /* On a focused run, training the thing you asked to train outranks
-         being near your step — otherwise the top-up cards, which are often
+         being near your step, otherwise the top-up cards, which are often
          closer to your position, crowd out the ones you came for. */
       var miss = (want && !trains(s)) ? 1000 : 0;
       return { s: s, k: miss + distance * 10 + r() * 9 };   /* relevance, then jitter */
@@ -392,7 +392,7 @@
   }
 
   /**
-   * Resolve one scenario. Returns the new state and the round's record —
+   * Resolve one scenario. Returns the new state and the round's record, 
    * including what the other options would have done, which is only honest
    * to show AFTER the choice is made.
    */
@@ -444,7 +444,7 @@
      The warning the whole review exists for. Practising one lever is how you
      get good at it; practising ONLY one lever is how a character becomes
      unable to answer anything else, and the bestiary is built to find exactly
-     that. Counted over the chapter, never over a lifetime — a chapter spent
+     that. Counted over the chapter, never over a lifetime, a chapter spent
      on debt when you are on step 3 is correct, not a fault.               */
 
   function stacking(records, tables) {
@@ -512,7 +512,7 @@
        A character built by roll or point buy holds bought scores for STR, DEX
        and CON. The moment a scenario moves any real money, boughtFallback
        hands that ability over to measurement and the bought number stops
-       applying — so a rolled 17 becomes a measured 8. Reporting that as
+       applying, so a rolled 17 becomes a measured 8. Reporting that as
        "Income Power −9" told the player they had done something disastrous
        when all that changed was which of the two numbers counts. These are
        pulled out of the shifts and reported as what they are. */

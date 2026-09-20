@@ -1,12 +1,12 @@
 /* ==========================================================================
-   engines/fire.js — one calculateFIRE(), parameterised by variant.
+   engines/fire.js, one calculateFIRE(), parameterised by variant.
    --------------------------------------------------------------------------
    SPEC.md §8 is explicit: "calculateFIRE() parameterized by variant instead
-   of five copies". So there is exactly one formula here —
+   of five copies". So there is exactly one formula here, 
 
        target = annual expenses × expenseFactor / withdrawal rate
 
-   — and the variants differ only in what they feed it and what they do with
+, and the variants differ only in what they feed it and what they do with
    the answer:
 
      standard / lean / chubby / fat   change expenseFactor
@@ -18,7 +18,7 @@
                                       expenses the pot has to cover
 
    The factors live in data/fire_variants.json, so adding a flavour is a data
-   edit. Projection uses engines/projection.js — the same loop Tier 0 uses.
+   edit. Projection uses engines/projection.js, the same loop Tier 0 uses.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -125,7 +125,7 @@
     };
 
     /* Coast: the standard target, discounted back to today. You still have to
-       cover your own costs until the target age — this is not "retire now". */
+       cover your own costs until the target age. This is not "retire now". */
     if (variant.mode === 'coast') {
       var age = Schema.primaryAge(household);
       if (!Money.isEntered(age)) {
@@ -166,7 +166,7 @@
       return Money.incomplete('Add your investment balance to see progress.', ['investments']);
     }
     if (target.value === 0) {
-      /* A target of zero means a month of spending is zero — you need
+      /* A target of zero means a month of spending is zero, you need
          nothing to stop working, so you are already there. It still has to
          carry `yearsAway`: every caller reads it, and leaving it undefined
          propagated a non-Result through bridgeGap into Ratios.all and took
@@ -198,7 +198,7 @@
     });
   }
 
-  /** Every variant at once — the comparison that makes the flavours mean
+  /** Every variant at once, the comparison that makes the flavours mean
    *  something. Each carries its own Result, so one being incomplete (Barista
    *  without a part-time income) never blocks the others. */
   function allVariants(household, tables, opts) {

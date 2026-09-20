@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/rankguess.js — the money dysmorphia test. DECISIONS.md D-213 (I3).
+   engines/rankguess.js, the money dysmorphia test. DECISIONS.md D-213 (I3).
    --------------------------------------------------------------------------
    Before the percentile is shown, the person guesses where they rank for
    their age on a slider; then the guess sits beside the real band from

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/cliff.js — the benefits cliff: what a raise takes away.
+   engines/cliff.js, the benefits cliff: what a raise takes away.
    DECISIONS.md D-301.
    --------------------------------------------------------------------------
    A means-tested benefit ends at a multiple of the poverty line, and a raise

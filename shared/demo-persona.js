@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/demo-persona.js — the one demo household, defined once.
+   shared/demo-persona.js, the one demo household, defined once.
    --------------------------------------------------------------------------
    SPEC.md §5.1. Every room's "Try with example numbers" action fills from
    THIS persona, so the example salary a visitor sees in one room is the same
@@ -7,7 +7,7 @@
    their own demo numbers.
 
    These are the values logged in DECISIONS.md (D-005). Changing one here
-   changes it everywhere — update that entry too.
+   changes it everywhere, update that entry too.
 
    This repo is public. Robin Sparks is fictional; every figure below is
    invented for demonstration.
@@ -25,7 +25,7 @@
 })(typeof self !== 'undefined' ? self : null, function (Money, Schema) {
   'use strict';
 
-  /* Plain-dollar figures — the numbers a person would type into the form.
+  /* Plain-dollar figures, the numbers a person would type into the form.
      Rooms read these to populate their inputs; build() converts to cents. */
   var VALUES = {
     label: 'Robin Sparks',
@@ -38,13 +38,13 @@
     incomeType: 'w2',
     employerMatchPercent: 0.5,              // matches 50 cents on the dollar
     employerMatchCapPercentOfSalary: 0.06,  // up to the first 6% of salary
-    capturingFullMatch: false,              // deliberately NOT capturing it —
+    capturingFullMatch: false,              // deliberately NOT capturing it, 
                                             // makes the demo surface a real flag
 
     cashSavings: 9500,
     investmentsAndRetirement: 48000,
 
-    /* Retirement setup and the deductible — the facts the FOO ladder's
+    /* Retirement setup and the deductible, the facts the FOO ladder's
        timeline reads. 4% into the plan against a 6% match cap is exactly
        why capturingFullMatch is false above: the demo leaves match on the
        table, and the ladder should say so. Not on a high-deductible plan,
@@ -81,7 +81,7 @@
     },
 
 
-    /* What Robin actually spends, by category — the Cash Flow room's example.
+    /* What Robin actually spends, by category, the Cash Flow room's example.
        Deliberately NOT equal to the $3,150 estimate above: the essential
        categories here total $2,805, so the demo shows a real −$345 divergence
        between what Robin guessed and what Robin spends (SPEC.md §12.3).
@@ -174,7 +174,7 @@
         wants: { totalCents: Money.toCents(VALUES.fat.wants), therapy: null },
         /* Left empty here on purpose. The categorised breakdown is the Cash
            Flow room's example, loaded by buildSpending() when that room asks
-           for it — so every other room's demo still opens on the estimate,
+           for it, so every other room's demo still opens on the estimate,
            which is the state a first-time visitor is actually in. */
         entries: []
       },

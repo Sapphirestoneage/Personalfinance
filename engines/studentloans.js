@@ -1,12 +1,12 @@
 /* ==========================================================================
-   engines/studentloans.js — the Student Loan Decision.
+   engines/studentloans.js, the Student Loan Decision.
    DECISIONS.md D-101 (the room), on the frozen template (D-097).
    --------------------------------------------------------------------------
    Three shapes of repayment for the student loans alone, side by side:
 
-     standard        the minimums as listed — or, for a loan with no
+     standard        the minimums as listed, or, for a loan with no
                      minimum, the level payment over the standard term at
-                     its rate (Projection.levelPaymentCents) — run through
+                     its rate (Projection.levelPaymentCents), run through
                      Debt.simulate, exactly as Debt Payoff would run them
      aggressive      the standard plan plus a fixed extra a month, through
                      the same Debt.simulate with extraMonthlyCents
@@ -17,9 +17,9 @@
 
    The first two are not a second amortisation: they are the debt engine on
    a household copy holding only the loans. The third is the one shape
-   debt.js does not have — a payment set by income rather than by the
+   debt.js does not have, a payment set by income rather than by the
    balance, that may sit below the interest (negative amortisation: the
-   balance grows, and what is forgiven can exceed what was borrowed) — so
+   balance grows, and what is forgiven can exceed what was borrowed), so
    it is the one loop here, incomeDriven(), documented beside the code.
 
    Every figure that is not the person's comes from
@@ -55,7 +55,7 @@
   /**
    * The student loans this room reads: every aggregatable debt typed
    * student_loan. When none is typed but the one-pager's lump exists and
-   * the person is a student, that lump is the loans — Start Here files a
+   * the person is a student, that lump is the loans, Start Here files a
    * student's "what you owe" as the loans, and a lump typed before the
    * situation was chosen may still carry type 'other'. `lump` says so, so
    * the room can tell the person what it is reading.
@@ -71,7 +71,7 @@
   }
 
   /* A household copy holding only the loans, so Debt.simulate sees nothing
-     else — the same filtered-view idea as Debt.creditCardsOnly. */
+     else, the same filtered-view idea as Debt.creditCardsOnly. */
   function loansOnly(household, loans) {
     var copy = JSON.parse(JSON.stringify(household || {}));
     copy.debts = loans.map(function (d) { return Object.assign({}, d); });
@@ -131,8 +131,8 @@
    *   1. interest accrues on every live loan: round(balance × rate ÷ 12)
    *   2. the flat payment goes at the loans, highest rate first, never
    *      more than a loan owes
-   * When the payment is below the month's interest the balance grows —
-   * negative amortisation — and the loop still runs to the horizon, so a
+   * When the payment is below the month's interest the balance grows, 
+   * negative amortisation, and the loop still runs to the horizon, so a
    * forgiven amount can exceed what was borrowed. That is the finding,
    * not an error. With no horizon (forgivenessMonths null) the loop runs
    * to maxMonths and a plan that never clears says so instead of a number.

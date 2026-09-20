@@ -13,20 +13,20 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. A UTILITY, off the path like Refresh (D-057).
+  ROOM SPEC, SPEC.md §11. A UTILITY, off the path like Refresh (D-057).
   DECISIONS.md D-125.
 
   1. READS   The whole household, to export it; the snapshot list, to
              carry it; a pasted text or a loaded file, to sort it.
   2. WRITES  It OWNS nothing. A pasted line becomes a record in the list
-             it belongs to — a debt (Debt Payoff's list), an asset (The
+             it belongs to, a debt (Debt Payoff's list), an asset (The
              Statement's), a monthly expense line (Cash Flow's), an income
-             source (Start Here's) — through the same spine helpers those
+             source (Start Here's), through the same spine helpers those
              rooms use, in one batch with one undo. A loaded file either
              REPLACES the household (Spine.importJSON, D-059) or is ADDED
              to it (Spine.mergeImport): the person chooses which, and is
              told what each does before it happens.
-  3. CALLS   shared/importer.js — classify, plan, apply, merge. Nothing
+  3. CALLS   shared/importer.js, classify, plan, apply, merge. Nothing
              here parses a line itself.
   4. EMPTY   With nothing entered the export still works (an empty
              household is a valid file), paste shows its preview, and the
@@ -35,8 +35,8 @@
              data/expense_categories.json (the category keywords).
 
   LIVE-FORM: built once. The paste box and the buttons are markup. The
-  preview's selects are built when "Sort it out" is tapped — a rebuild the
-  person asked for — and are only read after that, never rebuilt on change.
+  preview's selects are built when "Sort it out" is tapped, a rebuild the
+  person asked for, and are only read after that, never rebuilt on change.
   THEMING: none this pass.
 -->
 <style>
@@ -587,7 +587,7 @@
       var subs = subOptions(r.kind);
       return '<li class="' + (r.kind === 'skip' ? 'is-skip' : '') + '" data-li="' + i + '">'
         + '<span class="pl-line">' + esc(r.label || r.line) + '</span>'
-        + '<span class="pl-amt">' + (Money.isEntered(r.cents) ? esc(Money.formatCents(r.cents)) + (r.monthly ? '/mo' : '') : '—') + '</span>'
+        + '<span class="pl-amt">' + (Money.isEntered(r.cents) ? esc(Money.formatCents(r.cents)) + (r.monthly ? '/mo' : '') : 'not yet') + '</span>'
         + '<span class="pl-why">' + esc(r.line) + (r.why ? ' · ' + esc(r.why) : '') + '</span>'
         + (Money.isEntered(r.cents)
             ? '<span class="pl-ctl">' + select('kind', i, Object.keys(KIND_LABEL).map(function (k) { return [k, KIND_LABEL[k]]; }), r.kind)
@@ -612,7 +612,7 @@
       var subs = subOptions(r.kind);
       r.sub = subs.length ? (subs.some(function (o) { return o[0] === r.sub; }) ? r.sub : subs[0][0]) : null;
       if (r.kind === 'income' && r.monthly) r.sub = 'monthly';
-      /* Only the detail box changes — the kind select the finger is on stays. */
+      /* Only the detail box changes, the kind select the finger is on stays. */
       var host = document.querySelector('[data-sub="' + i + '"]');
       if (host) host.innerHTML = subs.length ? select('sub', i, subs, r.sub) : '';
       var li = document.querySelector('[data-li="' + i + '"]');
@@ -814,7 +814,7 @@
     jumpToHash();
   }).catch(function (err) {
     var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
-    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/charts.js — the one way a number becomes a picture.
+   shared/charts.js, the one way a number becomes a picture.
    --------------------------------------------------------------------------
    Every chart in the suite is drawn here, as an SVG string, from figures an
    engine already produced: an area chart for anything over time, a donut
@@ -27,7 +27,7 @@
   /* The palette. Named for what a series usually IS, so a room reaches
      for "growth" rather than for a hex value. */
   var COLORS = {
-    growth: '#F26D6D',      /* the line that compounds — the red PFC draws it in */
+    growth: '#F26D6D',      /* the line that compounds, the red PFC draws it in */
     contributed: '#5AA9FF', /* what you put in */
     target: '#4CC38A',      /* the line to cross: FI, the floor, the target */
     spend: '#E8B84B',       /* what goes out */
@@ -89,11 +89,11 @@
 
   /**
    * opts.series: [{ id, label, color, points: [[x, y], …], fill: bool,
-   *                 dash: bool, width }]  — the first filled series is the
+   *                 dash: bool, width }], the first filled series is the
    *                 one the chart is about.
    * opts.x: { label, format }   opts.y: { format, min, max }
    * opts.hLines: [{ y, label, color }]   opts.vLines: [{ x, label, faint?, title? }]
-   * opts.bands: [{ points: [[x, low, high], …], color }] — a shaded range
+   * opts.bands: [{ points: [[x, low, high], …], color }], a shaded range
    *              drawn BEHIND the lines (the Triple D band, D-176).
    * opts.width/height: the viewBox (default 360 × 220).
    * Returns HTML: a .slaf-chart with the svg and a legend.
@@ -190,7 +190,7 @@
   /* ---- 2. Donut ------------------------------------------------------------------- */
 
   /**
-   * opts.slices: [{ label, value, color, note }] — values in any one unit;
+   * opts.slices: [{ label, value, color, note }], values in any one unit;
    * zero and negative slices are listed, not drawn.
    * opts.center: { big, small }  opts.format: value → text (default money)
    */
@@ -258,7 +258,7 @@
       return '<div class="row' + (v === null ? ' is-empty' : '') + '">'
         + '<span class="lbl">' + esc(r.label) + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</span>'
         + '<span class="track">' + zones + (v === null ? '' : '<i style="left:' + left + '%;width:' + w + '%;background:' + color + '"></i>') + marker + '</span>'
-        + '<span class="val">' + (v === null ? esc(r.empty || '—') : esc(format(v))) + '</span></div>';
+        + '<span class="val">' + (v === null ? esc(r.empty || 'not yet') : esc(format(v))) + '</span></div>';
     }).join('');
     return '<div class="slaf-chart slaf-bars' + (anyNeg ? ' has-negative' : '') + '">' + html + '</div>';
   }

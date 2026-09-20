@@ -87,7 +87,7 @@
       "key": "dti_above_ceiling",
       "severity": "warning",
       "label": "Debt-to-income above 36%",
-      "guidance": "Above the range most lenders treat as comfortable. It does not mean anything is wrong today — it does narrow your options."
+      "guidance": "Above the range most lenders treat as comfortable. It does not mean anything is wrong today. It does narrow your options."
     },
     {
       "key": "savings_rate_below_benchmark",

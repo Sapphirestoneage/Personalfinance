@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/roomexport.js — every room, on its own, as a file you can keep.
+   shared/roomexport.js, every room, on its own, as a file you can keep.
    --------------------------------------------------------------------------
    Your Data (rooms/data.html) exports the whole household. That is the right
    thing for a backup and the wrong thing for everything else: nobody wants to
@@ -14,7 +14,7 @@
      provide(roomId, fn)         a room adds its OWN rows to the default set
 
    WHAT AN EXPORT IS ALLOWED TO CONTAIN. Only what the room already shows on
-   screen. An export is not a back door to figures a room does not display —
+   screen. An export is not a back door to figures a room does not display, 
    if a number is not in the room, it is not in the room's file.
 
    EMPTY IS NOT ZERO, IN THE FILE TOO. A field that is not entered exports as
@@ -24,8 +24,8 @@
    the world for that to happen.
 
    IT ALSO SAYS WHAT IT IS. Every file carries the room, the date, the app
-   version, and — for anything the intake guessed rather than the person
-   entering it — a `guessed` flag, because a figure's confidence has to
+   version, and, for anything the intake guessed rather than the person
+   entering it, a `guessed` flag, because a figure's confidence has to
    survive leaving the app or the export is worse than useless.
 
    NOTHING LEAVES THE BROWSER. The file is built in memory and handed to the
@@ -54,7 +54,7 @@
 })(typeof self !== 'undefined' ? self : null, function (Money, Registry, Ownership, Schema) {
   'use strict';
 
-  /* A room may register extra rows of its own — a debt schedule, a set of
+  /* A room may register extra rows of its own, a debt schedule, a set of
      statement lines. Keyed by room id so a page cannot leak rows into
      another room's file. */
   var extra = {};
@@ -64,7 +64,7 @@
    * What this room is reading, one row per figure.
    *   { label, value, cents, status, owner, guessed, section }
    *
-   * `status` is 'entered', 'guessed', 'not entered' or 'not applicable' —
+   * `status` is 'entered', 'guessed', 'not entered' or 'not applicable', 
    * four states a spreadsheet cell cannot express on its own, which is
    * precisely why the column exists.
    */
@@ -91,7 +91,7 @@
         label: d.label,
         value: d.isSet ? String(d.display) : '',
         /* The machine-readable amount lives on the result, not on the
-           describe row itself — reading a `raw` that was never there left
+           describe row itself, reading a `raw` that was never there left
            the whole column blank, which is exactly the sort of silently
            empty spreadsheet cell this module exists to prevent. */
         cents: d.isSet && d.result && Money.isEntered(d.result.value) ? d.result.value : null,
@@ -216,7 +216,7 @@
   }
 
   /* `download` was exported only as `_download`, and the One-Pager called it
-     by its plain name — so its save button threw a TypeError and handed the
+     by its plain name, so its save button threw a TypeError and handed the
      person nothing at all. Exported under both names; the underscore stays
      because other callers use it. D-303. */
   return { rows: rows, csv: csv, json: json, mount: mount, provide: provide, download: download, _download: download };

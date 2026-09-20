@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/lens.js — the one toggle every room has.
+   shared/lens.js, the one toggle every room has.
    BRIEF "Lens function", DECISIONS.md D-094.
    --------------------------------------------------------------------------
    Four ways to read the same dollars:
@@ -10,7 +10,7 @@
      pushed   months FI moves later if this amount is spent
    Core provides it; rooms never reimplement it. The FI arithmetic is the
    projection engine's years-to-target with the real return, the FI number
-   and this year's savings — the same three the dashboard's Distance uses.
+   and this year's savings, the same three the dashboard's Distance uses.
    The chosen mode is per session (sessionStorage), never a household fact.
    ========================================================================== */
 (function (root, factory) {
@@ -120,7 +120,7 @@
   /** The string, or the em dash with the reason on the Result. */
   function format(cents, mode, household, tables) {
     var r = apply(cents, mode, household, tables);
-    return Money.isOk(r) ? r.display : Money.EM_DASH;
+    return Money.isOk(r) ? r.display : Money.NOT_YET;
   }
 
   /* ---- The chosen mode, this session ---------------------------------------- */

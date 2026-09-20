@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/hassle.js — Return on Hassle. SPEC.md §13, Tier 1.
+   engines/hassle.js, Return on Hassle. SPEC.md §13, Tier 1.
    --------------------------------------------------------------------------
    "Dollars saved vs. time/effort. Defaultable hassle-score-by-activity-type
    is a small reference table worth building early." The table is
@@ -7,11 +7,11 @@
 
    Three readings, in order of how much they assume:
 
-     1. Plain rate — dollars saved ÷ hours spent. Assumes nothing.
-     2. Against your real hourly wage — the rate from engines/hourly.js, so
+     1. Plain rate, dollars saved ÷ hours spent. Assumes nothing.
+     2. Against your real hourly wage, the rate from engines/hourly.js, so
         the comparison is against what an hour of your life actually earns
         after work costs and unpaid time, not against your salary ÷ 2080.
-     3. Hassle-adjusted rate — the plain rate divided by a weight derived
+     3. Hassle-adjusted rate, the plain rate divided by a weight derived
         from the 1-10 rating. That weight is a CONVENTION and the data file
         says so: a 10-out-of-10 hour counts as two hours, linearly. It
         exists so the rating can enter the arithmetic rather than sit beside
@@ -55,7 +55,7 @@
 
   /**
    * The hassle weight for a rating, per the convention in the data file.
-   * Unrated returns 1 — no rating means no adjustment, never an assumed one.
+   * Unrated returns 1, no rating means no adjustment, never an assumed one.
    */
   function weightFor(table, score) {
     var w = (table && table.weighting) || { minWeight: 1, maxWeight: 2 };
@@ -87,7 +87,7 @@
         missing.map(function (m) { return m === 'saving' ? 'savingCents' : 'hours'; }));
     }
     if (o.hours <= 0) {
-      return Money.incomplete('Hours need to be more than zero — a saving that '
+      return Money.incomplete('Hours need to be more than zero, a saving that '
         + 'costs no time has no rate to work out.', ['hours']);
     }
 
@@ -119,14 +119,14 @@
       hassleRated: w.rated,
       weightingConvention: w.convention,
       /* Adjusted rate. With no rating the weight is 1, so this equals the
-         plain rate — an unrated chore is not silently penalised. */
+         plain rate, an unrated chore is not silently penalised. */
       adjustedPerHourCents: Math.round(annualPerHour / w.weight)
     });
   }
 
   /**
    * The same chore against what an hour of your life actually earns.
-   * Uses engines/hourly.js — SPEC.md §8: there is one real-hourly-wage
+   * Uses engines/hourly.js, SPEC.md §8: there is one real-hourly-wage
    * calculation in this codebase and this is not a second one.
    */
   function versusWage(household, tables, opts) {
@@ -152,7 +152,7 @@
       beatsWage: r.adjustedPerHourCents > wage.value,
       differenceCents: r.adjustedPerHourCents - wage.value,
       /* How long the chore has to save for before it matches an hour of
-         work. Useful when the answer is "not worth it" — it says by how far. */
+         work. Useful when the answer is "not worth it". It says by how far. */
       breakEvenSavingCents: Math.round(wage.value * r.annualHours * r.hassleWeight)
     });
   }

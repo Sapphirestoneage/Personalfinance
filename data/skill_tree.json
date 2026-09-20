@@ -2,7 +2,7 @@
   "id": "skill_tree",
   "version": "3.0.0",
   "asOf": "2026-09-06",
-  "source": "FI Skill Tree v6.3.1 — 25 trees, 25 levels each — extracted by scripts/extract-v63.mjs, plus this app’s own skills from scripts/skill_tree_app.json. Each level carries what it is, what it does for you, where it fits, and the check that levels it.",
+  "source": "FI Skill Tree v6.3.1, 25 trees, 25 levels each, extracted by scripts/extract-v63.mjs, plus this app’s own skills from scripts/skill_tree_app.json. Each level carries what it is, what it does for you, where it fits, and the check that levels it.",
   "confidence": "convention",
   "confidenceNote": "A curriculum, not a measurement. The tiers are the author’s ranking of leverage, not a claim about any particular life.",
   "note": "Levels 1-25 land on the five bands five at a time, which is what the source’s own FOUNDATION..ENDGAME legend describes. Within a tree, each level lists the one before it as its prerequisite. The trees after the curriculum’s twenty-five are this app’s own.",

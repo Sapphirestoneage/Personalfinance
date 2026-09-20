@@ -13,14 +13,14 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-010 (why two ladder engines
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-010 (why two ladder engines
   exist), D-231 (the merge).
 
   1. READS   the household through engines/next100.js (the ranked scale),
              foo-ladder.js's own month-by-month waterfall (when each step
              lands) and engines/windfall.js (all at once against spread out).
              The step line above the hats is Instruments.compute().byId
-             .fooStep — the SAME number the dashboard prints, never a second
+             .fooStep, the SAME number the dashboard prints, never a second
              reading of the ladder.
   2. WRITES  nothing. Every box on the lump-sum reading is page-local; the
              ladder's own inputs have no home in the schema yet (D-010).
@@ -234,7 +234,7 @@
 
   <section class="slaf-card" id="out-when">
     <span class="slaf-eyebrow">When spreading it wins</span>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div class="flag" id="when-note" hidden></div>
   </section>
@@ -242,7 +242,7 @@
   <section class="slaf-card" id="out-cost">
     <span class="slaf-eyebrow">What the caution costs</span>
     <h2 style="margin:var(--space-2) 0 0">If the market does what you assumed</h2>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div id="cost-bands"></div>
     <div id="cost-lens"></div>
@@ -256,7 +256,7 @@
     <span class="slaf-eyebrow">Suppose it did this instead</span>
     <h2 style="margin:var(--space-2) 0 0">The same decision, five different years</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
-      These are not forecasts and they carry no odds — working out how
+      These are not forecasts and they carry no odds, working out how
       likely each one is would take return data this app does not have and
       will not make up. They are here for the shape: spreading loses a
       little in every good year and saves a lot in the bad ones.
@@ -368,7 +368,7 @@
   }
   window.addEventListener('hashchange', route);
   route();
-  /* The room registers and mounts once, here — foo-ladder.js is one of its
+  /* The room registers and mounts once, here, foo-ladder.js is one of its
      three readings now, not a room of its own (D-231). */
   Spine.registerRoom('foo-ladder');
   if (SLAF.Progress) SLAF.Progress.mount('foo-ladder');
@@ -429,7 +429,7 @@
   function setFigure(sectionId, text, why) {
     var f = el(sectionId).querySelector('[data-figure]');
     var r = el(sectionId).querySelector('[data-reason]');
-    f.textContent = text === null ? Money.EM_DASH : text;
+    f.textContent = text === null ? Money.NOT_YET : text;
     f.classList.toggle('slaf-figure--incomplete', text === null);
     r.textContent = why || '';
     r.hidden = !why;
@@ -545,7 +545,7 @@
     var note = el('when-note');
     note.hidden = false;
     note.innerHTML = '<strong>That threshold is your cash rate, exactly.</strong> '
-      + 'Money waiting to be invested is not sitting still — it is earning '
+      + 'Money waiting to be invested is not sitting still. It is earning '
       + esc(Money.formatRate(r.cashAnnualRate, { decimals: 1 }))
       + ' in the account it is waiting in. So spreading a lump sum is just a blend of '
       + 'the market and your savings account, and a blend beats the pure thing exactly '
@@ -576,7 +576,7 @@
       Money.formatCents(Math.abs(r.gapCents)),
       (ahead ? 'What waiting costs you' : 'What waiting gains you')
         + ', if the market returns exactly the ' + Money.formatRate(r.annualRate, { decimals: 1 })
-        + ' you assumed — ' + Money.formatRate(Math.abs(r.gapShare), { decimals: 2 })
+        + ' you assumed, ' + Money.formatRate(Math.abs(r.gapShare), { decimals: 2 })
         + ' of the money, or about ' + Money.formatCents(Math.abs(r.gapPerMonthCents))
         + ' a month of the window.');
 
@@ -586,7 +586,7 @@
 
   function renderPath(r) {
     /* The two routes start from the same dollar, so the picture is drawn
-       from the amount up rather than from zero — from zero, a few hundred
+       from the amount up rather than from zero, from zero, a few hundred
        dollars of difference on a five-figure sum is a single flat line. */
     var lows = r.path.map(function (p) { return Math.min(p.lumpCents, p.spreadCents); });
     var bottom = Math.min.apply(null, lows.concat([r.amountCents]));
@@ -605,8 +605,8 @@
 
     el('path-desc').textContent = 'Both lines end the window with every dollar invested; only the '
       + 'route differs. On average across the ' + r.months + ' months, spreading leaves '
-      + Money.formatCents(r.averageWaitingCents) + ' out of the market — '
-      + Math.round((1 - r.averageExposure) * 100) + '% of the money — which is the whole of why '
+      + Money.formatCents(r.averageWaitingCents) + ' out of the market, '
+      + Math.round((1 - r.averageExposure) * 100) + '% of the money, which is the whole of why '
       + 'the two lines separate.';
   }
 
@@ -647,7 +647,7 @@
           + '<td>' + Money.formatCents(r.averageWaitingCents) + '</td></tr>';
       }).join('');
     el('windows-why').textContent = 'The longer the window, the more of the money sits out '
-      + 'of the market and the more the caution costs — at the assumed return. The threshold '
+      + 'of the market and the more the caution costs, at the assumed return. The threshold '
       + 'in the first card does not move: it is your cash rate whatever window you pick.';
   }
 

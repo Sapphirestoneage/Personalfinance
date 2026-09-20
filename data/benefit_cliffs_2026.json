@@ -4,7 +4,7 @@
   "asOf": "2026-01-01",
   "source": "Federal poverty guidelines via data/aca_2026.json (HHS, 2026 plan year); SNAP gross income test 130% FPL (7 CFR 273.9) with broad-based categorical eligibility up to 200% in most states (USDA FNS BBCE list); Medicaid expansion at 138% FPL (ACA §2001) and the non-expansion states as of 2025 (KFF status tracker); the marketplace subsidy schedule from data/aca_2026.json.",
   "confidence": "unverified",
-  "confidenceNote": "The federal lines are statutory and stable. The two state lists — which states use BBCE above 130% and which have not expanded Medicaid — were recalled, not fetched, and change by legislative session; each row says so and the page says so. Children’s Medicaid and CHIP run far above these lines and vary by state; they are not modelled, on purpose, rather than modelled wrong.",
+  "confidenceNote": "The federal lines are statutory and stable. The two state lists, which states use BBCE above 130% and which have not expanded Medicaid, were recalled, not fetched, and change by legislative session; each row says so and the page says so. Children’s Medicaid and CHIP run far above these lines and vary by state; they are not modelled, on purpose, rather than modelled wrong.",
   "note": "Read by engines/cliff.js (D-301). Each program is a multiple of the poverty line for the household size, and a kind: cliff (all of it goes at the line) or slope (help falls as income rises, then stops). The ACA row reads its multiple and schedule from data/aca_2026.json so the two tables cannot disagree.",
   "programs": [
     {
@@ -25,7 +25,7 @@
         "WI",
         "WY"
       ],
-      "nonExpansionNote": "As of 2025. In these ten states adults without children mostly cannot get Medicaid at any income, and below 100% of the line there is no marketplace help either — the coverage gap."
+      "nonExpansionNote": "As of 2025. In these ten states adults without children mostly cannot get Medicaid at any income, and below 100% of the line there is no marketplace help either, the coverage gap."
     },
     {
       "id": "snap",

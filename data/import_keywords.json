@@ -2,7 +2,7 @@
   "id": "import_keywords",
   "version": "1.0",
   "asOf": "2026-09-05",
-  "source": "Words that place a pasted line — 'Chase Visa 2,300', 'checking 4,120', 'rent 1,500/mo', 'salary 62,000' — into the household list it belongs in: a debt of a type, an asset of a category, a monthly expense line, or an income. Written for this app from how people name these things on a statement or in a note to themselves.",
+  "source": "Words that place a pasted line, 'Chase Visa 2,300', 'checking 4,120', 'rent 1,500/mo', 'salary 62,000', into the household list it belongs in: a debt of a type, an asset of a category, a monthly expense line, or an income. Written for this app from how people name these things on a statement or in a note to themselves.",
   "confidence": "convention",
   "confidenceNote": "A word list, not a model. Every match is shown before it is taken, with the kind and the detail changeable, and a line no word matches is shown as skipped rather than guessed. First match wins in the order listed; 'mortgage' with a monthly amount is a housing expense, without one it is the loan.",
   "note": "Config, not code (SPEC.md §7). shared/importer.js reads this; the Your Data room shows the result and writes it in one batch. Expense lines also use the keywords on each category in data/expense_categories.json. `monthlyMeansExpense` maps a debt type to the expense category its monthly payment line belongs in, or null to keep it a debt with that minimum.",

@@ -5,7 +5,7 @@
   "source": "Dungeons & Dividends rulebook Draft v1, §4 and §8A–8G. Transcribed, not interpreted.",
   "confidence": "convention",
   "confidenceNote": "A house game system. The seven classes are levers that move an FI number, not asset categories and not advice.",
-  "note": "§7 of the rulebook says 'each of the ten classes' — a leftover from an earlier draft. §4 and the §8A–8G tables both give exactly seven. Seven is authoritative here; see DECISIONS.md DD-003.",
+  "note": "§7 of the rulebook says 'each of the ten classes', a leftover from an earlier draft. §4 and the §8A–8G tables both give exactly seven. Seven is authoritative here; see DECISIONS.md DD-003.",
   "cadence": {
     "subclassChosenAt": 3,
     "subclassFeatureLevels": [
@@ -35,7 +35,7 @@
         "WIS",
         "CHA"
       ],
-      "note": "DD-023. At each ASI level you take +2 to one ability or +1 to two — 5e's rule — or a feat instead. Only INT, WIS and CHA can be raised: they are the abilities you decide, and levelling is exactly when you get to decide again. STR, DEX and CON are measured from money; decreeing +2 income is fiction."
+      "note": "DD-023. At each ASI level you take +2 to one ability or +1 to two, 5e's rule, or a feat instead. Only INT, WIS and CHA can be raised: they are the abilities you decide, and levelling is exactly when you get to decide again. STR, DEX and CON are measured from money; decreeing +2 income is fiction."
     }
   },
   "classes": [
@@ -72,17 +72,17 @@
         {
           "level": 4,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 5,
           "feature": "The Promotion",
-          "detail": "First real title/pay jump — a visible power spike; permanent STR increase"
+          "detail": "First real title/pay jump, a visible power spike; permanent STR increase"
         },
         {
           "level": 6,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 7,
@@ -92,7 +92,7 @@
         {
           "level": 8,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 9,
@@ -102,7 +102,7 @@
         {
           "level": 10,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 11,
@@ -112,7 +112,7 @@
         {
           "level": 12,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 13,
@@ -122,7 +122,7 @@
         {
           "level": 14,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 15,
@@ -132,7 +132,7 @@
         {
           "level": 16,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 17,
@@ -142,7 +142,7 @@
         {
           "level": 18,
           "feature": "Subclass Capstone",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 19,
@@ -162,23 +162,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Org Chart — advantage on CHA checks navigating internal politics for promotion"
+              "feature": "The Org Chart, advantage on CHA checks navigating internal politics for promotion"
             },
             {
               "level": 6,
-              "feature": "Equity Compensation — RSUs/options as a high-variance resource"
+              "feature": "Equity Compensation, RSUs/options as a high-variance resource"
             },
             {
               "level": 10,
-              "feature": "The Executive Track — STR growth rate exceeds typical raises"
+              "feature": "The Executive Track, STR growth rate exceeds typical raises"
             },
             {
               "level": 14,
-              "feature": "Golden Parachute — a severance buffer functioning as temporary HP on job loss"
+              "feature": "Golden Parachute, a severance buffer functioning as temporary HP on job loss"
             },
             {
               "level": 18,
-              "feature": "The C-Suite — top-of-ladder STR ceiling reached"
+              "feature": "The C-Suite, top-of-ladder STR ceiling reached"
             }
           ]
         },
@@ -188,23 +188,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Niche — advantage on Negotiation because you're hard to replace"
+              "feature": "The Niche, advantage on Negotiation because you're hard to replace"
             },
             {
               "level": 6,
-              "feature": "The Rate Card — set and defend a rate rather than accepting a posted salary"
+              "feature": "The Rate Card, set and defend a rate rather than accepting a posted salary"
             },
             {
               "level": 10,
-              "feature": "The Referral Network — Network converts directly into new engagements"
+              "feature": "The Referral Network, Network converts directly into new engagements"
             },
             {
               "level": 14,
-              "feature": "The 1099 Bridge — move fluidly between W-2 and 1099 without losing progress"
+              "feature": "The 1099 Bridge, move fluidly between W-2 and 1099 without losing progress"
             },
             {
               "level": 18,
-              "feature": "The Named Expert — reputation alone generates inbound opportunities"
+              "feature": "The Named Expert, reputation alone generates inbound opportunities"
             }
           ]
         },
@@ -214,23 +214,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Pension Track — begins accruing a pension (a Fixed-Income-adjacent resource)"
+              "feature": "The Pension Track, begins accruing a pension (a Fixed-Income-adjacent resource)"
             },
             {
               "level": 6,
-              "feature": "Loan Forgiveness Eligibility — qualifying payments count toward forgiveness"
+              "feature": "Loan Forgiveness Eligibility, qualifying payments count toward forgiveness"
             },
             {
               "level": 10,
-              "feature": "Job Security Ward — significant resistance to the Unemployed status effect triggering at all"
+              "feature": "Job Security Ward, significant resistance to the Unemployed status effect triggering at all"
             },
             {
               "level": 14,
-              "feature": "The Full Pension Vest — an inflation-protected income floor locks in"
+              "feature": "The Full Pension Vest, an inflation-protected income floor locks in"
             },
             {
               "level": 18,
-              "feature": "The Guaranteed Floor — retirement income floor locked regardless of market performance"
+              "feature": "The Guaranteed Floor, retirement income floor locked regardless of market performance"
             }
           ]
         }
@@ -258,15 +258,15 @@
         "Optionality Achieved"
       ],
       "sideQuests": [
-        "The Negotiation — a raise or signing bonus using a competing offer",
-        "The Portable Skill — a certification that raises Hustle Capacity or Structural Mobility",
-        "The Full Vest — stay long enough to fully vest a match or pension",
-        "The Sabbatical — an intentional break without the Unemployed status penalty"
+        "The Negotiation, a raise or signing bonus using a competing offer",
+        "The Portable Skill, a certification that raises Hustle Capacity or Structural Mobility",
+        "The Full Vest, stay long enough to fully vest a match or pension",
+        "The Sabbatical, an intentional break without the Unemployed status penalty"
       ],
       "mentor": {
         "name": "Loom the Chronicler",
         "motto": "You don't need to be the best at one thing. You need to be good enough at four things nobody bothered to combine.",
-        "signature": "Disciples of Loom's path treat The Portable Skillset (Level 9) as arriving early — stacked skills transfer faster than a single deep one."
+        "signature": "Disciples of Loom's path treat The Portable Skillset (Level 9) as arriving early, stacked skills transfer faster than a single deep one."
       },
       "savesRulebook": [
         "STR",
@@ -291,7 +291,7 @@
         {
           "level": 1,
           "feature": "Track Every Dollar",
-          "detail": "Full visibility into spending; proficiency bonus begins — you can't cut what you haven't measured"
+          "detail": "Full visibility into spending; proficiency bonus begins. You can't cut what you haven't measured"
         },
         {
           "level": 2,
@@ -306,7 +306,7 @@
         {
           "level": 4,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 5,
@@ -316,7 +316,7 @@
         {
           "level": 6,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 7,
@@ -326,7 +326,7 @@
         {
           "level": 8,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 9,
@@ -336,7 +336,7 @@
         {
           "level": 10,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 11,
@@ -346,27 +346,27 @@
         {
           "level": 12,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 13,
           "feature": "The Negotiated Bill",
-          "detail": "CHA-based check to lower a recurring fixed cost — insurance, rent, subscriptions"
+          "detail": "CHA-based check to lower a recurring fixed cost, insurance, rent, subscriptions"
         },
         {
           "level": 14,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 15,
           "feature": "The Lean Number Achieved",
-          "detail": "A genuinely low, sustainable baseline — since Level is a percentage of 25× annual expenses, cutting this lever directly shrinks your own target"
+          "detail": "A genuinely low, sustainable baseline, since Level is a percentage of 25× annual expenses, cutting this lever directly shrinks your own target"
         },
         {
           "level": 16,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 17,
@@ -376,7 +376,7 @@
         {
           "level": 18,
           "feature": "Subclass Capstone",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 19,
@@ -396,23 +396,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Declutter — inventories and sheds unused possessions; a one-time HP boost from freed-up cash"
+              "feature": "The Declutter, inventories and sheds unused possessions; a one-time HP boost from freed-up cash"
             },
             {
               "level": 6,
-              "feature": "The One-In-One-Out Rule — prevents future accumulation without an active tradeoff decision"
+              "feature": "The One-In-One-Out Rule, prevents future accumulation without an active tradeoff decision"
             },
             {
               "level": 10,
-              "feature": "Possession Immunity — resistance to Lifestyle-Inflation Imp damage from 'keeping up' purchases specifically"
+              "feature": "Possession Immunity, resistance to Lifestyle-Inflation Imp damage from 'keeping up' purchases specifically"
             },
             {
               "level": 14,
-              "feature": "The Capsule System — minimalism applied systematically across a full category at once"
+              "feature": "The Capsule System, minimalism applied systematically across a full category at once"
             },
             {
               "level": 18,
-              "feature": "The Empty Room — spending reduced far enough past 'enough' that further cuts stop yielding real tradeoffs"
+              "feature": "The Empty Room, spending reduced far enough past 'enough' that further cuts stop yielding real tradeoffs"
             }
           ]
         },
@@ -422,23 +422,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Cost Map — INT check comparing cost-of-living across viable locations before committing"
+              "feature": "The Cost Map, INT check comparing cost-of-living across viable locations before committing"
             },
             {
               "level": 6,
-              "feature": "The Remote Anchor — income stays fixed to a higher-cost market while expenses drop to a lower one"
+              "feature": "The Remote Anchor, income stays fixed to a higher-cost market while expenses drop to a lower one"
             },
             {
               "level": 10,
-              "feature": "The Border Play — crosses a state or national line for tax/cost advantages"
+              "feature": "The Border Play, crosses a state or national line for tax/cost advantages"
             },
             {
               "level": 14,
-              "feature": "The Reversible Move — relocation structured so it can be undone without penalty"
+              "feature": "The Reversible Move, relocation structured so it can be undone without penalty"
             },
             {
               "level": 18,
-              "feature": "The Permanent Arbitrage — locks in a lower cost-of-living base permanently, shrinking the FI Number for the rest of the build"
+              "feature": "The Permanent Arbitrage, locks in a lower cost-of-living base permanently, shrinking the FI Number for the rest of the build"
             }
           ]
         },
@@ -448,23 +448,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The First Repair — completes a DIY task that would normally be outsourced"
+              "feature": "The First Repair, completes a DIY task that would normally be outsourced"
             },
             {
               "level": 6,
-              "feature": "The Skill Swap — trades a skill directly with another person instead of paying cash"
+              "feature": "The Skill Swap, trades a skill directly with another person instead of paying cash"
             },
             {
               "level": 10,
-              "feature": "The Home Kitchen — food expenses drop meaningfully via cooking/growing over restaurant/delivery"
+              "feature": "The Home Kitchen, food expenses drop meaningfully via cooking/growing over restaurant/delivery"
             },
             {
               "level": 14,
-              "feature": "The Teaching Loop — begins teaching the skill to others, generating income or reciprocal trades"
+              "feature": "The Teaching Loop, begins teaching the skill to others, generating income or reciprocal trades"
             },
             {
               "level": 18,
-              "feature": "The Self-Sufficient Household — most formerly-outsourced services handled in-house without costing more time than they saved"
+              "feature": "The Self-Sufficient Household, most formerly-outsourced services handled in-house without costing more time than they saved"
             }
           ]
         }
@@ -496,10 +496,10 @@
         "The Enough Line"
       ],
       "sideQuests": [
-        "The Subscription Purge — cancel every unused recurring charge in one sitting",
-        "The Negotiated Bill — lower a fixed recurring cost",
-        "The One-Month Experiment — a temporary radical cut, measured against actual life impact",
-        "The Enough List — write down, concretely, what 'enough' spending looks like"
+        "The Subscription Purge, cancel every unused recurring charge in one sitting",
+        "The Negotiated Bill, lower a fixed recurring cost",
+        "The One-Month Experiment, a temporary radical cut, measured against actual life impact",
+        "The Enough List, write down, concretely, what 'enough' spending looks like"
       ],
       "mentor": {
         "name": "Ashgrove the Spare",
@@ -544,7 +544,7 @@
         {
           "level": 4,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 5,
@@ -554,7 +554,7 @@
         {
           "level": 6,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 7,
@@ -564,7 +564,7 @@
         {
           "level": 8,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 9,
@@ -574,7 +574,7 @@
         {
           "level": 10,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 11,
@@ -584,7 +584,7 @@
         {
           "level": 12,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 13,
@@ -594,7 +594,7 @@
         {
           "level": 14,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 15,
@@ -604,7 +604,7 @@
         {
           "level": 16,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 17,
@@ -614,7 +614,7 @@
         {
           "level": 18,
           "feature": "Subclass Capstone",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 19,
@@ -624,7 +624,7 @@
         {
           "level": 20,
           "feature": "The Exit",
-          "detail": "Capstone: sell for a lump-sum windfall, or keep it running as a fully passive machine — the player's choice"
+          "detail": "Capstone: sell for a lump-sum windfall, or keep it running as a fully passive machine, the player's choice"
         }
       ],
       "subclasses": [
@@ -634,23 +634,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "Full Margin — keep the entire margin per sale; advantage on CON saves tracking business vs personal finances"
+              "feature": "Full Margin, keep the entire margin per sale; advantage on CON saves tracking business vs personal finances"
             },
             {
               "level": 6,
-              "feature": "The Pivot — change offer/niche once per Long Rest without losing accumulated Network progress"
+              "feature": "The Pivot, change offer/niche once per Long Rest without losing accumulated Network progress"
             },
             {
               "level": 10,
-              "feature": "Personal Brand Ward — resistance to 'guru' pitches selling a shortcut"
+              "feature": "Personal Brand Ward, resistance to 'guru' pitches selling a shortcut"
             },
             {
               "level": 14,
-              "feature": "Solo Systemization — Level 7's Systemize triggers automatically"
+              "feature": "Solo Systemization, Level 7's Systemize triggers automatically"
             },
             {
               "level": 18,
-              "feature": "The One-Person Empire — revenue scales without proportional time increase"
+              "feature": "The One-Person Empire, revenue scales without proportional time increase"
             }
           ]
         },
@@ -660,23 +660,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Roster — take multiple simultaneous clients without a Hustle Capacity penalty"
+              "feature": "The Roster, take multiple simultaneous clients without a Hustle Capacity penalty"
             },
             {
               "level": 6,
-              "feature": "Retainer Model — project income converts toward Recurring Revenue early, at reduced scale"
+              "feature": "Retainer Model, project income converts toward Recurring Revenue early, at reduced scale"
             },
             {
               "level": 10,
-              "feature": "Team Leverage — hires independently generate revenue, not just support it"
+              "feature": "Team Leverage, hires independently generate revenue, not just support it"
             },
             {
               "level": 14,
-              "feature": "Referral Engine — Network converts directly into new client acquisition"
+              "feature": "Referral Engine, Network converts directly into new client acquisition"
             },
             {
               "level": 18,
-              "feature": "The Agency Machine — revenue scale requires the full Management Team feature to sustain"
+              "feature": "The Agency Machine, revenue scale requires the full Management Team feature to sustain"
             }
           ]
         },
@@ -686,23 +686,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "Proven Playbook — reduced risk on the Level 5 milestone; de-risked by the franchisor's track record"
+              "feature": "Proven Playbook, reduced risk on the Level 5 milestone; de-risked by the franchisor's track record"
             },
             {
               "level": 6,
-              "feature": "Territory Rights — protected market area; resistance to a competitor undercutting you"
+              "feature": "Territory Rights, protected market area; resistance to a competitor undercutting you"
             },
             {
               "level": 10,
-              "feature": "Multi-Unit Discount — each additional location requires a lower STR/CHA floor"
+              "feature": "Multi-Unit Discount, each additional location requires a lower STR/CHA floor"
             },
             {
               "level": 14,
-              "feature": "Franchisor Support Network — access to a shared companion pool other subclasses don't get"
+              "feature": "Franchisor Support Network, access to a shared companion pool other subclasses don't get"
             },
             {
               "level": 18,
-              "feature": "The Regional Operator — run multiple locations as a portfolio"
+              "feature": "The Regional Operator, run multiple locations as a portfolio"
             }
           ]
         }
@@ -737,10 +737,10 @@
         "The Exit"
       ],
       "sideQuests": [
-        "The First Hire — retain one for 6+ months",
-        "The No-Spend Launch — reach the first dollar debt-free",
-        "The Systemized Week — take a week off and have it run without you",
-        "The Raise — negotiate better vendor/client terms"
+        "The First Hire, retain one for 6+ months",
+        "The No-Spend Launch, reach the first dollar debt-free",
+        "The Systemized Week, take a week off and have it run without you",
+        "The Raise, negotiate better vendor/client terms"
       ],
       "mentor": {
         "name": "Kestrel Vane, the Leap-Taker",
@@ -785,17 +785,17 @@
         {
           "level": 4,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 5,
           "feature": "Compounding Begins",
-          "detail": "A visible power spike — passive growth becomes noticeable; +1 to Max HP retroactively per level from here on"
+          "detail": "A visible power spike, passive growth becomes noticeable; +1 to Max HP retroactively per level from here on"
         },
         {
           "level": 6,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 7,
@@ -805,7 +805,7 @@
         {
           "level": 8,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 9,
@@ -815,7 +815,7 @@
         {
           "level": 10,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 11,
@@ -825,7 +825,7 @@
         {
           "level": 12,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 13,
@@ -835,7 +835,7 @@
         {
           "level": 14,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 15,
@@ -845,7 +845,7 @@
         {
           "level": 16,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 17,
@@ -855,7 +855,7 @@
         {
           "level": 18,
           "feature": "Subclass Capstone",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 19,
@@ -876,23 +876,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "Three-Fund Portfolio — advantage on WIS saves against 'hot tip' temptation monsters"
+              "feature": "Three-Fund Portfolio, advantage on WIS saves against 'hot tip' temptation monsters"
             },
             {
               "level": 6,
-              "feature": "Set and Forget — frees up time this class would spend managing, redirectable to STR or CHA actions"
+              "feature": "Set and Forget, frees up time this class would spend managing, redirectable to STR or CHA actions"
             },
             {
               "level": 10,
-              "feature": "Low-Cost Ward — resistance to Commission Churn-Wraith damage; near-zero expense ratio gives it nothing to grab"
+              "feature": "Low-Cost Ward, resistance to Commission Churn-Wraith damage; near-zero expense ratio gives it nothing to grab"
             },
             {
               "level": 14,
-              "feature": "Total Market Immunity — advantage on INT saves related to picking individual winners or losers"
+              "feature": "Total Market Immunity, advantage on INT saves related to picking individual winners or losers"
             },
             {
               "level": 18,
-              "feature": "The Unshaken Current — immune to the WIS save during a Market Crash Elemental encounter; automatically continues buying through the crash"
+              "feature": "The Unshaken Current, immune to the WIS save during a Market Crash Elemental encounter; automatically continues buying through the crash"
             }
           ]
         },
@@ -903,23 +903,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "Research Ritual — advantage on the INT check made before adding a new position"
+              "feature": "Research Ritual, advantage on the INT check made before adding a new position"
             },
             {
               "level": 6,
-              "feature": "Conviction — once per Long Rest, size up a high-conviction position without an emotional-decision WIS save"
+              "feature": "Conviction, once per Long Rest, size up a high-conviction position without an emotional-decision WIS save"
             },
             {
               "level": 10,
-              "feature": "Diversification Discipline — a self-imposed cap on max % in one position, functioning as built-in damage reduction"
+              "feature": "Diversification Discipline, a self-imposed cap on max % in one position, functioning as built-in damage reduction"
             },
             {
               "level": 14,
-              "feature": "Read the Filings — immunity to Commission Churn-Wraith and Timeshare Charm-Caster deception"
+              "feature": "Read the Filings, immunity to Commission Churn-Wraith and Timeshare Charm-Caster deception"
             },
             {
               "level": 18,
-              "feature": "Alpha Seeker — real (rare) chance at outsized returns beyond the market average; the highest-variance capstone in the class"
+              "feature": "Alpha Seeker, real (rare) chance at outsized returns beyond the market average; the highest-variance capstone in the class"
             }
           ]
         },
@@ -930,23 +930,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "Income Stream — a small recurring HP-regen source independent of job income, triggers every Short Rest"
+              "feature": "Income Stream, a small recurring HP-regen source independent of job income, triggers every Short Rest"
             },
             {
               "level": 6,
-              "feature": "Dividend Aristocrat Bond — resistance to the Market Crash Elemental's WIS-save panic"
+              "feature": "Dividend Aristocrat Bond, resistance to the Market Crash Elemental's WIS-save panic"
             },
             {
               "level": 10,
-              "feature": "Reinvestment Engine — the DRIP mechanic: passive HP regen scales up automatically each level"
+              "feature": "Reinvestment Engine, the DRIP mechanic: passive HP regen scales up automatically each level"
             },
             {
               "level": 14,
-              "feature": "Living Off Dividends — passive income approaches covering baseline expenses"
+              "feature": "Living Off Dividends, passive income approaches covering baseline expenses"
             },
             {
               "level": 18,
-              "feature": "The Perpetual Cashflow Machine — passive dividend income alone exceeds full expenses; principal never needs to be touched again"
+              "feature": "The Perpetual Cashflow Machine, passive dividend income alone exceeds full expenses; principal never needs to be touched again"
             }
           ]
         }
@@ -970,7 +970,7 @@
       "traits": {
         "bond": "I watched a parent panic-sell everything in 2008 and I promised myself I never would.",
         "flaw": "I check my portfolio compulsively, even at 2am.",
-        "ideal": "Time in the market beats timing the market — I actually believe this, not just say it."
+        "ideal": "Time in the market beats timing the market, I actually believe this, not just say it."
       },
       "mainQuest": [
         "Open the Account",
@@ -981,10 +981,10 @@
         "Reach the Safe Withdrawal Threshold"
       ],
       "sideQuests": [
-        "The Backdoor — execute a Backdoor Roth for the first time",
-        "The Harvest — tax-loss harvest in a down year without panic-selling the position",
-        "Rebalance Under Fire — rebalance during a 20%+ drawdown instead of freezing",
-        "The Concentrated Bet — Stock Pickers only: hold a high-conviction position through a full market cycle"
+        "The Backdoor, execute a Backdoor Roth for the first time",
+        "The Harvest, tax-loss harvest in a down year without panic-selling the position",
+        "Rebalance Under Fire, rebalance during a 20%+ drawdown instead of freezing",
+        "The Concentrated Bet, Stock Pickers only: hold a high-conviction position through a full market cycle"
       ],
       "mentor": {
         "name": "Mora Stillwater, the Undertow",
@@ -1029,17 +1029,17 @@
         {
           "level": 4,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 5,
           "feature": "First Acquisition",
-          "detail": "Closes on the first property — a visible power spike; unlocks Real Estate-exclusive feats"
+          "detail": "Closes on the first property, a visible power spike; unlocks Real Estate-exclusive feats"
         },
         {
           "level": 6,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 7,
@@ -1049,7 +1049,7 @@
         {
           "level": 8,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 9,
@@ -1059,7 +1059,7 @@
         {
           "level": 10,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 11,
@@ -1069,17 +1069,17 @@
         {
           "level": 12,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 13,
           "feature": "Depreciation Mastery",
-          "detail": "Annual INT save bonus reducing tax damage — real depreciation as a shield"
+          "detail": "Annual INT save bonus reducing tax damage, real depreciation as a shield"
         },
         {
           "level": 14,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 15,
@@ -1089,7 +1089,7 @@
         {
           "level": 16,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 17,
@@ -1099,7 +1099,7 @@
         {
           "level": 18,
           "feature": "Subclass Capstone",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 19,
@@ -1119,23 +1119,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "Live-In Advantage — access to owner-occupied financing (lower down payment, better rates)"
+              "feature": "Live-In Advantage, access to owner-occupied financing (lower down payment, better rates)"
             },
             {
               "level": 6,
-              "feature": "Unit Shuffle — convert a unit's use between living space and rental without a big penalty"
+              "feature": "Unit Shuffle, convert a unit's use between living space and rental without a big penalty"
             },
             {
               "level": 10,
-              "feature": "Graduated Landlord — moving out converts the house hack into a pure rental without losing original terms"
+              "feature": "Graduated Landlord, moving out converts the house hack into a pure rental without losing original terms"
             },
             {
               "level": 14,
-              "feature": "House Hack Chain — acquire the next house hack while keeping the prior property"
+              "feature": "House Hack Chain, acquire the next house hack while keeping the prior property"
             },
             {
               "level": 18,
-              "feature": "The Free Rent Engine — living expenses reduced to near zero permanently"
+              "feature": "The Free Rent Engine, living expenses reduced to near zero permanently"
             }
           ]
         },
@@ -1145,23 +1145,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "Landlord's Eye — advantage on the INT check screening tenants"
+              "feature": "Landlord's Eye, advantage on the INT check screening tenants"
             },
             {
               "level": 6,
-              "feature": "Cash Flow Positive — a guaranteed minimum HP-regen each Short Rest once stabilized"
+              "feature": "Cash Flow Positive, a guaranteed minimum HP-regen each Short Rest once stabilized"
             },
             {
               "level": 10,
-              "feature": "Portfolio Scaling — reduced DEX floor for each acquisition after the third"
+              "feature": "Portfolio Scaling, reduced DEX floor for each acquisition after the third"
             },
             {
               "level": 14,
-              "feature": "Property Manager Synergy — the Level 17 base feature becomes available 3 levels early"
+              "feature": "Property Manager Synergy, the Level 17 base feature becomes available 3 levels early"
             },
             {
               "level": 18,
-              "feature": "The Perpetual Landlord — rent increases automatically track inflation"
+              "feature": "The Perpetual Landlord, rent increases automatically track inflation"
             }
           ]
         },
@@ -1171,23 +1171,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Rehab Estimate — advantage on the INT check estimating renovation cost/timeline"
+              "feature": "The Rehab Estimate, advantage on the INT check estimating renovation cost/timeline"
             },
             {
               "level": 6,
-              "feature": "Hard Money Access — short-term, high-interest financing; fast capital, higher risk"
+              "feature": "Hard Money Access, short-term, high-interest financing; fast capital, higher risk"
             },
             {
               "level": 10,
-              "feature": "Under Budget — reduced chance of a cost-overrun trap triggering mid-project"
+              "feature": "Under Budget, reduced chance of a cost-overrun trap triggering mid-project"
             },
             {
               "level": 14,
-              "feature": "The Flip Cycle — reduced turnaround time between projects"
+              "feature": "The Flip Cycle, reduced turnaround time between projects"
             },
             {
               "level": 18,
-              "feature": "The Six-Month Turn — consistently fast buy-rehab-sell cycles; the highest-variance capstone in the class"
+              "feature": "The Six-Month Turn, consistently fast buy-rehab-sell cycles; the highest-variance capstone in the class"
             }
           ]
         }
@@ -1215,10 +1215,10 @@
         "Free and Clear"
       ],
       "sideQuests": [
-        "The Screen — place a tenant cleanly",
-        "The Vacancy — survive a full vacancy month without missing a mortgage payment",
-        "The 1031 — execute a first exchange",
-        "The BRRRR Loop — complete one full cycle"
+        "The Screen, place a tenant cleanly",
+        "The Vacancy, survive a full vacancy month without missing a mortgage payment",
+        "The 1031, execute a first exchange",
+        "The BRRRR Loop, complete one full cycle"
       ],
       "mentor": {
         "name": "Cobb Ironroof",
@@ -1263,7 +1263,7 @@
         {
           "level": 4,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 5,
@@ -1273,7 +1273,7 @@
         {
           "level": 6,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 7,
@@ -1283,17 +1283,17 @@
         {
           "level": 8,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 9,
           "feature": "The Buffer Complete",
-          "detail": "Reserve Depth reaches a full target — a defensive, not growth, milestone"
+          "detail": "Reserve Depth reaches a full target, a defensive, not growth, milestone"
         },
         {
           "level": 10,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 11,
@@ -1303,7 +1303,7 @@
         {
           "level": 12,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 13,
@@ -1313,7 +1313,7 @@
         {
           "level": 14,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 15,
@@ -1323,7 +1323,7 @@
         {
           "level": 16,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 17,
@@ -1333,7 +1333,7 @@
         {
           "level": 18,
           "feature": "Subclass Capstone",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 19,
@@ -1353,23 +1353,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Rungs — stagger maturities across time horizons, reducing single-point rate risk"
+              "feature": "The Rungs, stagger maturities across time horizons, reducing single-point rate risk"
             },
             {
               "level": 6,
-              "feature": "Roll Forward — matured rungs automatically reinvest at current rates"
+              "feature": "Roll Forward, matured rungs automatically reinvest at current rates"
             },
             {
               "level": 10,
-              "feature": "Ladder Extension — extend total duration without sacrificing the Level 15 Bridge feature"
+              "feature": "Ladder Extension, extend total duration without sacrificing the Level 15 Bridge feature"
             },
             {
               "level": 14,
-              "feature": "Rate-Cycle Mastery — advantage on Rate Awareness across a full interest-rate cycle"
+              "feature": "Rate-Cycle Mastery, advantage on Rate Awareness across a full interest-rate cycle"
             },
             {
               "level": 18,
-              "feature": "The Permanent Ladder — sustains itself indefinitely"
+              "feature": "The Permanent Ladder, sustains itself indefinitely"
             }
           ]
         },
@@ -1379,23 +1379,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Chase — advantage on finding and moving to the best available rate"
+              "feature": "The Chase, advantage on finding and moving to the best available rate"
             },
             {
               "level": 6,
-              "feature": "No Lock-In — retains full Liquidity Agility while earning near-ladder yields"
+              "feature": "No Lock-In, retains full Liquidity Agility while earning near-ladder yields"
             },
             {
               "level": 10,
-              "feature": "The Rate Alert — automatically flags a better available rate"
+              "feature": "The Rate Alert, automatically flags a better available rate"
             },
             {
               "level": 14,
-              "feature": "Yield Stacking — combines multiple high-yield vehicles without complexity penalty"
+              "feature": "Yield Stacking, combines multiple high-yield vehicles without complexity penalty"
             },
             {
               "level": 18,
-              "feature": "The Liquid Fortress — maximum yield achievable with same-day liquidity"
+              "feature": "The Liquid Fortress, maximum yield achievable with same-day liquidity"
             }
           ]
         },
@@ -1405,23 +1405,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Direct Purchase — buy short-term treasuries directly, avoiding fund-level fees"
+              "feature": "The Direct Purchase, buy short-term treasuries directly, avoiding fund-level fees"
             },
             {
               "level": 6,
-              "feature": "State-Tax Shield — treasury interest becomes exempt from state income tax"
+              "feature": "State-Tax Shield, treasury interest becomes exempt from state income tax"
             },
             {
               "level": 10,
-              "feature": "The Rollover — treasuries roll into new issues automatically at maturity"
+              "feature": "The Rollover, treasuries roll into new issues automatically at maturity"
             },
             {
               "level": 14,
-              "feature": "Duration Precision — maturities timed with unusual precision against known expenses"
+              "feature": "Duration Precision, maturities timed with unusual precision against known expenses"
             },
             {
               "level": 18,
-              "feature": "The Sovereign Guard — held in the most creditworthy instrument available"
+              "feature": "The Sovereign Guard, held in the most creditworthy instrument available"
             }
           ]
         }
@@ -1444,7 +1444,7 @@
       "traits": {
         "bond": "I grew up in a house where one bad month meant real fear.",
         "flaw": "I keep too much in cash even when the math says I shouldn't.",
-        "ideal": "Boring money is still money — the reserve is what lets everything else take a real risk."
+        "ideal": "Boring money is still money. The reserve is what lets everything else take a real risk."
       },
       "mainQuest": [
         "Open the Reserve",
@@ -1454,10 +1454,10 @@
         "The Unbreakable Floor"
       ],
       "sideQuests": [
-        "The Rate Switch — move idle cash to a meaningfully better rate",
-        "The Ladder Build — construct a first working ladder",
-        "The Inflation Check — recalculate real returns",
-        "The Bridge Test — fund a real gap entirely from reserve"
+        "The Rate Switch, move idle cash to a meaningfully better rate",
+        "The Ladder Build, construct a first working ladder",
+        "The Inflation Check, recalculate real returns",
+        "The Bridge Test, fund a real gap entirely from reserve"
       ],
       "mentor": {
         "name": "Perrin Vaultwarden",
@@ -1502,7 +1502,7 @@
         {
           "level": 4,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 5,
@@ -1512,7 +1512,7 @@
         {
           "level": 6,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 7,
@@ -1522,7 +1522,7 @@
         {
           "level": 8,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 9,
@@ -1532,7 +1532,7 @@
         {
           "level": 10,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 11,
@@ -1542,7 +1542,7 @@
         {
           "level": 12,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 13,
@@ -1552,7 +1552,7 @@
         {
           "level": 14,
           "feature": "Subclass Feature",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 15,
@@ -1562,7 +1562,7 @@
         {
           "level": 16,
           "feature": "ASI or Feat",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 17,
@@ -1572,7 +1572,7 @@
         {
           "level": 18,
           "feature": "Subclass Capstone",
-          "detail": "—"
+          "detail": "not yet"
         },
         {
           "level": 19,
@@ -1592,23 +1592,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "Cold Storage — self-custody mastery; resistance to Identity Thief attacks on this holding"
+              "feature": "Cold Storage, self-custody mastery; resistance to Identity Thief attacks on this holding"
             },
             {
               "level": 6,
-              "feature": "The Cycle Read — advantage on WIS saves tied to known cyclical volatility patterns"
+              "feature": "The Cycle Read, advantage on WIS saves tied to known cyclical volatility patterns"
             },
             {
               "level": 10,
-              "feature": "Stablecoin Bridge — park gains in a stable-value instrument without fully exiting"
+              "feature": "Stablecoin Bridge, park gains in a stable-value instrument without fully exiting"
             },
             {
               "level": 14,
-              "feature": "On-Chain Literacy — sees through obviously predatory tokens before entering"
+              "feature": "On-Chain Literacy, sees through obviously predatory tokens before entering"
             },
             {
               "level": 18,
-              "feature": "The Believer's Discipline — the highest-variance capstone in the entire system, by design"
+              "feature": "The Believer's Discipline, the highest-variance capstone in the entire system, by design"
             }
           ]
         },
@@ -1618,23 +1618,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Authenticator — INT check verifying authenticity/condition before purchase"
+              "feature": "The Authenticator, INT check verifying authenticity/condition before purchase"
             },
             {
               "level": 6,
-              "feature": "Storage & Insurance — proper preservation and coverage function as AC specific to this holding"
+              "feature": "Storage & Insurance, proper preservation and coverage function as AC specific to this holding"
             },
             {
               "level": 10,
-              "feature": "The Network Buyer — Network converts into better acquisition and resale opportunities"
+              "feature": "The Network Buyer, Network converts into better acquisition and resale opportunities"
             },
             {
               "level": 14,
-              "feature": "Provenance Mastery — documented history increases resale value, reduces future authentication risk"
+              "feature": "Provenance Mastery, documented history increases resale value, reduces future authentication risk"
             },
             {
               "level": 18,
-              "feature": "The Curator — the collection becomes a recognized, appreciating body of work"
+              "feature": "The Curator. The collection becomes a recognized, appreciating body of work"
             }
           ]
         },
@@ -1644,23 +1644,23 @@
           "features": [
             {
               "level": 3,
-              "feature": "The Underwriting Check — INT feature evaluating a borrower/deal's real risk before committing"
+              "feature": "The Underwriting Check, INT feature evaluating a borrower/deal's real risk before committing"
             },
             {
               "level": 6,
-              "feature": "Illiquidity Premium — a multi-year lockup in exchange for meaningfully higher yield"
+              "feature": "Illiquidity Premium, a multi-year lockup in exchange for meaningfully higher yield"
             },
             {
               "level": 10,
-              "feature": "Diversified Note Book — spreads capital across multiple loans, reducing single-default damage"
+              "feature": "Diversified Note Book, spreads capital across multiple loans, reducing single-default damage"
             },
             {
               "level": 14,
-              "feature": "Workout Experience — resistance gained from handling one default without panic"
+              "feature": "Workout Experience, resistance gained from handling one default without panic"
             },
             {
               "level": 18,
-              "feature": "The Private Lender — a mature, diversified book functioning like a personal Fixed-Income class at higher yield and risk"
+              "feature": "The Private Lender, a mature, diversified book functioning like a personal Fixed-Income class at higher yield and risk"
             }
           ]
         }
@@ -1684,7 +1684,7 @@
       "traits": {
         "bond": "I got in on one really good call once and it's made me overconfident about the next one.",
         "flaw": "I check the price more often than any other asset I own.",
-        "ideal": "Small, capped, honest bets on genuine upside are fine — it's the sizing that separates investing from gambling."
+        "ideal": "Small, capped, honest bets on genuine upside are fine, it's the sizing that separates investing from gambling."
       },
       "mainQuest": [
         "The First Position",
@@ -1694,10 +1694,10 @@
         "The Disciplined Speculator"
       ],
       "sideQuests": [
-        "The Cap Hold — survive a full hype cycle without breaching the sizing rule",
+        "The Cap Hold, survive a full hype cycle without breaching the sizing rule",
         "The Cold Storage Setup",
-        "The First Harvest — take real profit on the way up",
-        "The Authentication — catch a fake before buying"
+        "The First Harvest, take real profit on the way up",
+        "The Authentication, catch a fake before buying"
       ],
       "mentor": {
         "name": "Zephyr Quicksilver, the Long Shot",

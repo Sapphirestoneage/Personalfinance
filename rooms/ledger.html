@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE LEDGER. DECISIONS.md D-185 (18.4, 18.5).
+  ROOM SPEC, SPEC.md §11. THE LEDGER. DECISIONS.md D-185 (18.4, 18.5).
 
   1. READS   the rows table (shared/ledger-rows.js) (every number, one row) and
              data/spheres.json (the nine spheres, in order) through
@@ -53,6 +53,54 @@
   under a finger, which is D-034.
 -->
 <style>
+  /* ---- The planets (D-321): six planets down the side, ten bands across,
+     three levels in every cell. No live input here, so this view is drawn
+     from scratch on every change (D-034 does not apply). */
+  .sky-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); }
+  .sky-say b { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .sky-grid { display: flex; flex-direction: column; gap: 2px; margin: 0 0 var(--space-3); }
+  .sky-head, .sky-row { display: grid; grid-template-columns: 92px 1fr; gap: var(--space-2); align-items: center; }
+  .sky-head { font-size: var(--text-xs); color: var(--color-text-faint); padding: 0 0 2px; }
+  .sky-head .sky-bands { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; text-align: center; }
+  .sky-head .sky-bands span { font-variant-numeric: tabular-nums; }
+  .sky-head .sky-bands span.is-clear { color: var(--color-accent-hover); font-weight: 600; }
+  .sky-row { width: 100%; background: none; border: 0; border-radius: var(--radius-sm); padding: var(--space-2) 2px; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .sky-row:hover, .sky-row.is-open { background: var(--color-surface-active); }
+  .sky-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .sky-name b { font-size: var(--text-sm); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sky-name span { font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+  .sky-cells { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; }
+  .sky-cell { display: flex; gap: 2px; justify-content: center; align-items: center; min-height: 20px; border-radius: 3px; }
+  .sky-cell.is-clear { background: color-mix(in srgb, var(--color-accent) 16%, transparent); }
+  .sky-dot { width: 5px; height: 5px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+  .sky-dot.is-done { background: var(--color-accent); box-shadow: none; }
+  .sky-dot.is-part { background: var(--color-border-active); box-shadow: none; }
+  .sky-dot.is-absent { width: 5px; height: 1px; border-radius: 0; background: var(--color-border); box-shadow: none; }
+  .sky-key { font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-loose); margin: 0 0 var(--space-4); }
+  .sky-key b { color: var(--color-text-muted); font-weight: 500; }
+  .sky-open { margin: 0 0 var(--space-4); }
+  .sky-open h3 { margin: 0 0 var(--space-1); font-size: var(--text-lg); }
+  .sky-open .sky-sub { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); }
+  .sky-band { border-top: 1px solid var(--color-border); padding: var(--space-3) 0 var(--space-2); }
+  .sky-band-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+  .sky-band-head b { font-size: var(--text-sm); font-weight: 600; }
+  .sky-band-head .n { font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+  .sky-band-head .state { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: auto; }
+  .sky-band-head .state.is-clear { color: var(--color-accent-hover); }
+  .sky-band p.why { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  .sky-levels { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+  .sky-levels li { display: grid; grid-template-columns: 18px 1fr auto; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); line-height: var(--leading-normal, 1.5); }
+  .sky-levels .tag { font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 600; }
+  .sky-levels .what { min-width: 0; }
+  .sky-levels .what a { color: var(--color-accent-hover); text-decoration: none; }
+  .sky-levels .what a:hover { text-decoration: underline; }
+  .sky-levels .what em { font-style: normal; color: var(--color-text-faint); font-size: var(--text-xs); display: block; }
+  .sky-levels .mark { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  .sky-levels .mark.is-done { color: var(--color-accent-hover); }
+  .sky-next { border: 1px solid var(--color-border-active); border-radius: var(--radius-md); padding: var(--space-3); margin: 0 0 var(--space-4); }
+  .sky-next .eyebrow { font-size: var(--text-xs); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-faint); }
+  .sky-next b { display: block; margin: var(--space-1) 0; }
+  .sky-next p { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0; }
   .target-wrap { position: sticky; top: 0; z-index: 3; background: var(--color-bg); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
   .target { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
   .target svg { width: 150px; height: 150px; flex: none; }
@@ -522,7 +570,7 @@
     background: none; border: 0; cursor: pointer; padding: 0; min-height: 32px; text-decoration: underline; }
 
   /* ---- Search mode ------------------------------------------------------ */
-  /* Written into the markup, hidden when unused — NEVER regenerated (D-034). */
+  /* Written into the markup, hidden when unused, NEVER regenerated (D-034). */
   
   #view-shelves #search-host { margin-top: var(--space-3); }
   
@@ -614,7 +662,7 @@
   <header class="slaf-room-head">
     <span class="slaf-eyebrow">Home</span>
     <h1>The Ledger</h1>
-    <p class="slaf-lede">Every number the app can hold. Six ways in; they all write the same rows.</p>
+    <p class="slaf-lede">Every number the app can hold. Seven ways in; they all write the same rows.</p>
   </header>
 
   <nav class="slaf-hats" id="hats" aria-label="Ways into the same rows">
@@ -624,6 +672,7 @@
     <a href="#since-last-time" data-view="view-since">Since last time</a>
     <a href="#arrangements"    data-view="view-shelves">Arrangements</a>
     <a href="#route"           data-view="view-route">The route</a>
+    <a href="#planets"         data-view="view-sky">Planets</a>
   </nav>
 
   <div class="notice" id="load-notice" hidden></div>
@@ -764,8 +813,8 @@
     <p class="slaf-bands op-band" id="op-band"></p>
     <p class="op-tighten" id="op-tighten"></p>
     <div class="op-pair">
-      <div class="op-cell"><p class="op-eyebrow">Coast FI</p><div class="big is-blank" id="op-coast">—</div><div class="sub" id="op-coast-sub"></div></div>
-      <div class="op-cell"><p class="op-eyebrow">Savings rate</p><div class="big is-blank" id="op-rate">—</div><div class="sub" id="op-rate-sub"></div></div>
+      <div class="op-cell"><p class="op-eyebrow">Coast FI</p><div class="big is-blank" id="op-coast">not yet</div><div class="sub" id="op-coast-sub"></div></div>
+      <div class="op-cell"><p class="op-eyebrow">Savings rate</p><div class="big is-blank" id="op-rate">not yet</div><div class="sub" id="op-rate-sub"></div></div>
     </div>
     <div id="op-lens" style="margin-top:var(--space-3)"></div>
     <p class="op-eyebrow" style="margin-top:var(--space-4)" id="op-levers-cap">What moves the date most, for you</p>
@@ -827,7 +876,7 @@
   <!-- ====== SINCE LAST TIME (was rooms/refresh.html + comeback.html) ==== -->
   <section id="view-since" hidden>
   <h2 class="since-head" id="since-head" hidden>Welcome back.</h2>
-  <p class="slaf-lede" id="since-lede">Only the numbers that move: balances, rates, spending, pay — oldest first. Each box holds the last number you gave. Tap Still true, or type the new one.</p>
+  <p class="slaf-lede" id="since-lede">Only the numbers that move: balances, rates, spending, pay, oldest first. Each box holds the last number you gave. Tap Still true, or type the new one.</p>
 
   <section class="slaf-card" id="fields">
     <span class="slaf-eyebrow">The numbers that move</span>
@@ -844,7 +893,7 @@
     <p class="strip" id="strip">Finish the rows and this line says what moved and what you learned.</p>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
       One snapshot carrying every dashboard instrument, so the next time you
-      open it the panel can say what moved since today — not just what it is.
+      open it the panel can say what moved since today, not just what it is.
     </p>
     <div class="actions">
       <span class="done-note" id="done-note" style="margin:0"></span>
@@ -855,7 +904,7 @@
 
   <!-- ================= ARRANGEMENTS (was rooms/doors.html) ============== -->
   <section id="view-shelves" hidden>
-  <p class="slaf-lede">Twenty ways into the same rooms. The rooms never change — only the shelves. Pick whichever matches how you actually think about money; you can change it back any time.</p>
+  <p class="slaf-lede">Twenty ways into the same rooms. The rooms never change. Only the shelves do. Pick whichever matches how you actually think about money; you can change it back any time.</p>
   <section class="slaf-card" id="out-pick">
     <span class="slaf-eyebrow">How would you like these arranged?</span>
     <div class="picker" id="picker"></div>
@@ -864,7 +913,7 @@
   <section class="slaf-card" id="out-door" style="margin-top:var(--space-4)">
     <div class="lay-head" id="lay-head"></div>
     <div id="search-host" hidden>
-      <input type="search" id="lay-q" autocomplete="off" placeholder="Type anything — rent, retire, car, behind on bills" aria-label="Search every room"/>
+      <input type="search" id="lay-q" autocomplete="off" placeholder="Type anything, rent, retire, car, behind on bills" aria-label="Search every room"/>
       <p class="hits" id="hits"></p>
     </div>
     <div id="lay-body"></div>
@@ -878,7 +927,7 @@
 
   <!-- ================= THE ROUTE (was rooms/walk.html) ================== -->
   <section id="view-route" hidden>
-  <p class="slaf-lede">This app has a lot of rooms. This is the short route through the ones that matter for you — five sets, in order, with an end.</p>
+  <p class="slaf-lede">This app has a lot of rooms. This is the short route through the ones that matter for you, five sets, in order, with an end.</p>
   <section class="slaf-card top" id="out-top"></section>
   <div id="out-stages"></div>
 
@@ -888,7 +937,7 @@
       <p>Nothing in this app is locked behind this list. Every room is open
       from the map at any time, in any order, whether you use this or not.
       This is a suggested route with somewhere to tick things off.</p>
-      <p>A step is done when <em>you</em> say it is — not when the room has a
+      <p>A step is done when <em>you</em> say it is, not when the room has a
       number in every box. Those are different things. A room can be full of
       figures you do not trust yet, and a room can be finished the moment you
       have decided it does not change anything.</p>
@@ -901,6 +950,17 @@
     </div>
   </details>
   </section>
+
+  <!-- ================= THE PLANETS (D-321) ============================== -->
+  <section id="view-sky" hidden>
+  <p class="slaf-lede">Six areas of your money, ten bands deep. A band means the same depth of knowing on every planet, so band 4 on Taxes is as deep as band 4 on Debt. Nothing here is locked: a level you have not answered is simply not yet.</p>
+  <p class="sky-say" id="sky-say"></p>
+  <div class="sky-next" id="sky-next" hidden></div>
+  <div class="sky-grid" id="sky-grid"></div>
+  <p class="sky-key" id="sky-key"></p>
+  <div class="sky-open" id="sky-open"></div>
+  </section>
+
 
   <p class="disclaimer">Not financial advice. Nothing here is sent anywhere; every figure stays in this browser.</p>
 </main>
@@ -942,6 +1002,7 @@
 <script src="../engines/hourly.js"></script>
 <script src="../engines/subscriptions.js"></script>
 <script src="../shared/doors.js"></script>
+<script src="../shared/solar.js"></script>
 <script src="../shared/showmath.js"></script>
 <script src="../engines/sincelast.js"></script>
 <script src="../engines/selfemployed.js"></script>
@@ -1222,6 +1283,7 @@
     { id: 'view-since',   hash: '#since-last-time',  match: /^#since-last-time/ },
     { id: 'view-shelves', hash: '#arrangements',     match: /^#arrangements/ },
     { id: 'view-route',   hash: '#route',            match: /^#route/ },
+    { id: 'view-sky',     hash: '#planets',          match: /^#(planets|sky)/ },
     { id: 'view-doors',   hash: '#doors-home',       match: /.*/ }
   ];
   function routeView() {
@@ -1501,7 +1563,7 @@
   }
 
   /* ---- The answer --------------------------------------------------------------- */
-  function years(y) { return y === null ? '—' : (Math.round(y * 10) / 10) + (Math.round(y * 10) / 10 === 1 ? ' year' : ' years'); }
+  function years(y) { return y === null ? 'not yet' : (Math.round(y * 10) / 10) + (Math.round(y * 10) / 10 === 1 ? ' year' : ' years'); }
   function yearOf(y) { return y === null ? '' : String(new Date().getFullYear() + Math.round(y)); }
   function ageAt(a) { return a === null ? '' : ' at ' + Math.round(a); }
   function bandHtml(b) {
@@ -1549,7 +1611,7 @@
     var m = r.model, t = (TABLES && TABLES.opening) || Opening.FALLBACK;
     var rows = [
       'Withdrawal rate <b>' + esc(pct(m.withdrawalRate, 1)) + '</b>: a year of spending over this is the FI number. The 4% convention was fitted to thirty-year retirements; at 3.5% a fifty- or sixty-year one holds up. The other two Triple D points: at 4% the number is '
-        + esc(r.fi ? money(r.fi.points.convention.numberCents) : '—') + ', at 3.25% ' + esc(r.fi ? money(r.fi.points.floor.numberCents) : '—') + '. Source: data/opening.json.',
+        + esc(r.fi ? money(r.fi.points.convention.numberCents) : 'not yet') + ', at 3.25% ' + esc(r.fi ? money(r.fi.points.floor.numberCents) : 'not yet') + '. Source: data/opening.json.',
       'Real returns, after inflation: worst plausible <b>' + esc(pct(m.returns.worst, 0)) + '</b>, likely <b>' + esc(pct(m.returns.likely, 0)) + '</b>, best plausible <b>' + esc(pct(m.returns.best, 0)) + '</b>. Below data/return_bands.json’s planning bands on purpose; the spread is the point.',
       'Coast age <label>the number by age <input type="text" inputmode="numeric" id="op-coast-age" value="' + esc(String(m.coastTargetAge)) + '" aria-label="Coast age"/></label>, tried here only; The Number stores the age you intend to stop.',
       'Savings rate is from take-home. Pretax retirement contributions are not counted until the Ledger holds the workplace plan; then they raise it.',
@@ -1617,13 +1679,13 @@
       else if (c.neverAtThisPace) { el('op-coast').textContent = 'Not yet'; el('op-coast-sub').textContent = 'At this pace the pot never coasts to the number by ' + m.coastTargetAge + '.'; }
       else { el('op-coast').textContent = 'Age ' + Math.round(c.coastAge); el('op-coast-sub').textContent = 'Then stop saving and still land on the number by ' + m.coastTargetAge + '.'; }
       el('op-coast').className = 'big';
-    } else { el('op-coast').textContent = '—'; el('op-coast').className = 'big is-blank'; el('op-coast-sub').textContent = c ? c.reason : ''; }
+    } else { el('op-coast').textContent = 'not yet'; el('op-coast').className = 'big is-blank'; el('op-coast-sub').textContent = c ? c.reason : ''; }
     if (r.savings && r.savings.rate !== null) {
       el('op-rate').textContent = pct(r.savings.rate, 0) + ' from take-home';
       el('op-rate').className = 'big';
       el('op-rate-sub').textContent = (r.savings.monthlyCents < 0 ? money(-r.savings.monthlyCents) + ' a month short' : money(r.savings.monthlyCents) + ' a month saved') + '. Pretax contributions not counted yet.';
       el('op-rate-sub').className = 'sub' + (r.savings.monthlyCents < 0 ? ' is-short' : '');
-    } else { el('op-rate').textContent = '—'; el('op-rate').className = 'big is-blank'; el('op-rate-sub').textContent = r.incomeless ? 'No income right now, so no rate.' : 'Take-home and spending give the rate.'; el('op-rate-sub').className = 'sub'; }
+    } else { el('op-rate').textContent = 'not yet'; el('op-rate').className = 'big is-blank'; el('op-rate-sub').textContent = r.incomeless ? 'No income right now, so no rate.' : 'Take-home and spending give the rate.'; el('op-rate-sub').className = 'sub'; }
 
     el('op-levers-cap').textContent = r.state === 'noDate' ? 'What gets a dollar on the right side of zero' : 'What moves the date most, for you';
     el('op-levers').innerHTML = r.levers.map(function (l) { return leverLine(l, r); }).join('');
@@ -2582,7 +2644,7 @@
    wrote through the same owners; the only difference was the order of the
    rows and which of the two lines each drew. One view now: the moving rows,
    oldest first, each carrying what it read last time, and one snapshot at
-   the end. No word here names a lapse — a month not visited is not a gap,
+   the end. No word here names a lapse, a month not visited is not a gap,
    a failure or a broken streak (D-214). */
 (function () {
   'use strict';
@@ -2779,7 +2841,7 @@
 
   /* Sent here after a gap rather than having come looking: the same rows,
      the warmer opening (D-214, kept through the merge in D-230). Nothing in
-     either wording names a lapse — a month not visited is not a failure, a
+     either wording names a lapse, a month not visited is not a failure, a
      gap or a broken streak, and test/comeback.js holds the copy to that. */
   (function () {
     var sent = /[?&]comeback=1(&|$)/.test(location.search);
@@ -2860,7 +2922,7 @@
   }
 
   /* ---- Modes ---------------------------------------------------------------
-     Every mode renders the SAME built layout — they differ only in how much
+     Every mode renders the SAME built layout, they differ only in how much
      of it is on screen at once. */
 
   function renderBays() { return current.groups.map(bayHtml).join(''); }
@@ -2895,7 +2957,7 @@
     if (turn < 0) turn = 0;
     var g = qs[turn];
     var out = ['<p class="slaf-hint" style="margin:var(--space-3) 0 0">Question ' + (turn + 1)
-      + ' of ' + qs.length + '. Nothing is hidden — you can walk the whole thing.</p>'];
+      + ' of ' + qs.length + '. Nothing is hidden. You can walk the whole thing.</p>'];
     out.push(bayHtml(g));
     out.push('<div class="flow-nav">');
     if (turn > 0) out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-turn="' + (turn - 1) + '">← Back</button>');
@@ -2923,7 +2985,7 @@
     if (term) {
       if (!hits.length) {
         return '<p class="slaf-reason" style="margin-top:var(--space-3)">Nothing matches that. '
-          + 'Try a plainer word — “rent”, “car”, “behind”, “retire” — or clear the box to see everything.</p>';
+          + 'Try a plainer word, “rent”, “car”, “behind”, “retire”, or clear the box to see everything.</p>';
       }
       return '<div class="bay"><div class="bay-h"><span class="nm">Matches</span>'
         + '<span class="ct">' + hits.length + '</span></div>'
@@ -2933,7 +2995,7 @@
   }
 
   /* ---- Paint ---------------------------------------------------------------
-     Head, body and drawer are containers of links and buttons — no inputs —
+     Head, body and drawer are containers of links and buttons, no inputs, 
      so they are rewritten freely. The search box is NOT in any of them. */
 
   function paint() {
@@ -2944,7 +3006,7 @@
       el('lay-body').innerHTML = '<p class="slaf-reason">That arrangement could not be loaded.</p>';
       return;
     }
-    if (current.id !== id) branch = null;      /* fell back — reset the drill */
+    if (current.id !== id) branch = null;      /* fell back, reset the drill */
 
     Array.prototype.forEach.call(el('picker').querySelectorAll('[data-layout]'), function (b) {
       b.setAttribute('aria-pressed', b.getAttribute('data-layout') === current.id ? 'true' : 'false');
@@ -2975,7 +3037,7 @@
       '<p><strong>Reads well.</strong> ' + esc(current.readsWell) + '</p>'
       + '<p><strong>What it costs.</strong> ' + esc(current.costs) + '</p>'
       + '<p class="slaf-hint">Sheet ' + esc(current.code) + ' of the drawing set. '
-      + 'Which shelf a room sits on is an opinion in <code>data/layouts.json</code> — '
+      + 'Which shelf a room sits on is an opinion in <code>data/layouts.json</code>, '
       + 'it changes nothing about what any room says or computes.</p>';
   }
 
@@ -3001,7 +3063,7 @@
     if (t) { turn = Number(t.getAttribute('data-turn')) || 0; paint(); }
   });
 
-  /* Only the RESULTS are rewritten as you type — the box itself is untouched,
+  /* Only the RESULTS are rewritten as you type, the box itself is untouched,
      so focus and the soft keyboard survive every keystroke (D-034). */
   el('lay-q').addEventListener('input', function () {
     if (current && current.mode === 'search') el('lay-body').innerHTML = renderSearch(el('lay-q').value);
@@ -3067,7 +3129,7 @@
     var out = [];
 
     if (!p.total) {
-      return '<p class="say">The walk could not be built — <code>data/walk_stages.json</code> '
+      return '<p class="say">The walk could not be built, <code>data/walk_stages.json</code> '
         + 'did not load. Every room is still reachable from the map.</p>';
     }
     if (!started) {
@@ -3082,7 +3144,7 @@
       out.push('<div class="big">All ' + p.total + ' done</div>');
       out.push('<p class="sub">' + p.done + ' finished'
         + (p.skipped ? ', ' + p.skipped + ' set aside' : '')
-        + '. Nothing here is ever really finished — but this part is. Come back to <a href="#since-last-time">Since last time</a> when the numbers move.</p>');
+        + '. Nothing here is ever really finished, but this part is. Come back to <a href="#since-last-time">Since last time</a> when the numbers move.</p>');
       out.push('<div class="track is-done"><i style="width:100%"></i></div>');
       out.push('<div class="top-acts">'
         + '<a class="slaf-btn slaf-btn--primary" href="../index.html">See the dashboard →</a></div>');
@@ -3164,7 +3226,7 @@
       return;
     }
     if (e.target.id === 'btn-reset') Spine.resetWalk();
-    /* Opening the first step IS starting the walk — that is what makes the
+    /* Opening the first step IS starting the walk. That is what makes the
        strip appear on the room you land on. */
     if (e.target.id === 'btn-begin') Spine.startWalk();
   });
@@ -3181,5 +3243,118 @@
   });
 })();
 </script>
+<script>
+/* ---- The planets (D-321) ---------------------------------------------------
+   docs/SOLAR-SYSTEM.md, Part 1 and the list view of B12. Six planets down the
+   side, the ten bands across, the three levels of a band in every cell, and
+   what is already answered. shared/solar.js does the reading; this only draws.
+   The Sky's drawn version comes later; the list is the one that has to be
+   legible at 380px and is what a screen reader gets, so it is built first. */
+(function () {
+  'use strict';
+  var Solar = SLAF.Solar, Spine = SLAF.Spine, Reference = SLAF.Reference;
+  var host = document.getElementById('view-sky');
+  if (!host || !Solar) return;
+  var el = function (id) { return document.getElementById(id); };
+  function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+  var ready = false, open = null;
+
+  function dots(band) {
+    return band.rows.map(function (r) {
+      var cls = !r.applies ? 'is-absent' : r.state === 'done' ? 'is-done' : r.state === 'part' ? 'is-part' : '';
+      var says = !r.applies ? 'does not apply to you' : r.state === 'done' ? 'answered' : r.state === 'part' ? 'part answered' : 'not yet';
+      return '<i class="sky-dot ' + cls + '" title="' + esc(r.level.id + ': ' + says) + '"></i>';
+    }).join('');
+  }
+
+  function drawGrid(all) {
+    var head = '<div class="sky-head"><span>Planet</span><span class="sky-bands">'
+      + all[0].bands.map(function (b) {
+        var clear = all.every(function (p) { return p.bands[b.band - 1].cleared; });
+        return '<span class="' + (clear ? 'is-clear' : '') + '">' + b.band + '</span>';
+      }).join('') + '</span></div>';
+    var rows = all.map(function (p) {
+      return '<button type="button" class="sky-row' + (open === p.id ? ' is-open' : '') + '" data-planet="' + esc(p.id) + '" aria-expanded="' + (open === p.id ? 'true' : 'false') + '">'
+        + '<span class="sky-name"><b>' + esc(p.label) + '</b><span>' + p.done + ' of ' + p.applicable + ' answered</span></span>'
+        + '<span class="sky-cells">' + p.bands.map(function (b) {
+          return '<span class="sky-cell' + (b.cleared && b.applicable ? ' is-clear' : '') + '">' + dots(b) + '</span>';
+        }).join('') + '</span></button>';
+    }).join('');
+    var html = head + rows;
+    el('sky-grid').innerHTML = html;   /* every part is built with esc() above */
+  }
+
+  function drawKey(all) {
+    var names = all[0].bands.map(function (b) { return b.band + ' ' + b.name; }).join(', ');
+    el('sky-key').innerHTML = '<b>The bands:</b> ' + esc(names) + '.<br/>'
+      + 'A filled dot is a level you have answered, a hollow one is not yet, a short line is a level that does not apply to you, so that planet is shorter. A gold cell is a band you have finished. Tap a planet to read its levels.';
+  }
+
+  function drawSay(o) {
+    var say = '<b>' + esc(o.done) + '</b> of <b>' + esc(o.applicable) + '</b> levels answered. '
+      + (o.rings ? 'Ring <b>' + esc(o.rings) + '</b> of 10 cleared on every planet.' : 'No ring cleared on all six planets yet.');
+    el('sky-say').innerHTML = say;
+    var n = o.next, box = el('sky-next');
+    if (!n) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = '<span class="eyebrow">Next</span><b>' + esc(n.planetLabel) + ' ' + n.level.level + ': ' + esc(n.level.prompt) + '</b>'
+      + '<p>' + esc(n.why) + ' About ' + (n.level.minutes < 1 ? 'half a minute' : Math.round(n.level.minutes) + (n.level.minutes < 2 ? ' minute' : ' minutes')) + '. ' + esc(n.level.first15) + '</p>';
+  }
+
+  function drawOpen(all) {
+    var box = el('sky-open');
+    if (!open) { box.innerHTML = ''; return; }
+    var p = all.filter(function (x) { return x.id === open; })[0];
+    if (!p) { box.innerHTML = ''; return; }
+    var out = ['<h3>' + esc(p.label) + '</h3>',
+      '<p class="sky-sub">' + p.done + ' of ' + p.applicable + ' levels answered, working on band ' + p.working + ' of 10.'
+        + (p.applicable < p.rows.length ? ' ' + (p.rows.length - p.applicable) + ' levels do not apply to you, so this planet is shorter.' : '') + '</p>'];
+    p.bands.forEach(function (b) {
+      if (!b.applicable) return;
+      var state = b.cleared ? 'finished' : b.done ? b.done + ' of ' + b.applicable : 'not yet';
+      out.push('<div class="sky-band"><div class="sky-band-head"><span class="n">Band ' + b.band + '</span><b>' + esc(b.name) + '</b>'
+        + '<span class="state' + (b.cleared ? ' is-clear' : '') + '">' + esc(state) + '</span></div>');
+      out.push('<ul class="sky-levels">');
+      b.rows.forEach(function (r) {
+        if (!r.applies) return;
+        var mark = r.state === 'done' ? 'answered' : r.state === 'part' ? r.filled + ' of ' + r.of : 'not yet';
+        var link = (r.fields || []).filter(function (f) { return f.href && f.applies; })[0];
+        var what = esc(r.level.prompt);
+        if (link) what = '<a href="' + esc(link.href) + '">' + what + '</a>';
+        out.push('<li><span class="tag" title="' + esc(({ E: 'Enter', C: 'Confirm', S: 'Sharpen' })[r.level.tag] || '') + '">' + esc(r.level.tag) + '</span>'
+          + '<span class="what">' + what + '<em>' + esc(r.level.checkpoint) + '</em></span>'
+          + '<span class="mark' + (r.state === 'done' ? ' is-done' : '') + '">' + esc(mark) + '</span></li>');
+      });
+      out.push('</ul></div>');
+    });
+    box.innerHTML = out.join('');
+  }
+
+  function paint() {
+    if (!ready) return;
+    var o = Solar.overall(Spine.getProfile());
+    drawSay(o); drawGrid(o.planets); drawKey(o.planets); drawOpen(o.planets);
+  }
+
+  el('sky-grid').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.sky-row') : null;
+    if (!b) return;
+    var id = b.getAttribute('data-planet');
+    open = open === id ? null : id;
+    paint();
+    if (open) { var o = el('sky-open'); if (o && o.scrollIntoView) o.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  });
+
+  Reference.load(['levels']).then(function (t) {
+    Solar.use(t.levels);
+    ready = true;
+    paint();
+    if (Spine.onChange) Spine.onChange(paint);
+  })['catch'](function (err) {
+    el('sky-say').textContent = 'The planets could not be loaded (' + err.message + '). Everything else on this page still works.';
+  });
+})();
+</script>
+
 </body>
 </html>

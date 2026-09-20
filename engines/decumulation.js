@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/decumulation.js — how a retiree draws, and how long it lasts.
+   engines/decumulation.js, how a retiree draws, and how long it lasts.
    DECISIONS.md D-098 (the Decumulation room).
    --------------------------------------------------------------------------
      plan(household, tables, opts) → one Result with everything the room
@@ -11,9 +11,9 @@
                                      paths the chart draws.
 
    Nothing here is a second copy of a formula that exists elsewhere:
-     • the withdrawal rate is engines/ratios.js's `withdrawalRate` row —
+     • the withdrawal rate is engines/ratios.js's `withdrawalRate` row, 
        (spending × 12 − income) ÷ investments, `covered` when income
-       covers spending — read through Ratios.all, never re-derived;
+       covers spending, read through Ratios.all, never re-derived;
      • the verdict is Ratios.verdict against the 4%/5% band in
        data/ratio_benchmarks.json;
      • years until empty is Projection.yearsUntilEmptyCents, the loop the
@@ -23,8 +23,8 @@
        the VPW path is Vpw.plan, the same loop the VPW calculator runs.
 
    The one loop that is new is the planned-draw path for the chart, and it
-   is a replay of yearsUntilEmptyCents's arithmetic — balance × (1 + r) −
-   draw, once a year — so the dot where the line hits zero is the same
+   is a replay of yearsUntilEmptyCents's arithmetic, balance × (1 + r) −
+   draw, once a year, so the dot where the line hits zero is the same
    year the headline says.
 
    A planned draw, when entered, replaces the computed one; the rate is
@@ -33,7 +33,7 @@
    No Social Security amount is invented: engines/ss.js estimates from a
    working salary and a retiree's income here is already the pension or
    benefit, so the room only notes that the draw runs until that age.
-   No tax on withdrawals is modelled — every figure is pre-tax.
+   No tax on withdrawals is modelled, every figure is pre-tax.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -61,7 +61,7 @@
 
   function clamp01(v) { return Math.max(0, Math.min(1, v)); }
 
-  /** The withdrawal-rate row from the ratio registry — the ONE place the
+  /** The withdrawal-rate row from the ratio registry, the ONE place the
    *  rate is computed. Returns the row ({ ok, result, value, verdict }). */
   function withdrawalRow(household, tables, opts) {
     var all = Ratios.all(household, tables, { now: opts && Money.isEntered(opts.now) ? opts.now : undefined });
@@ -78,7 +78,7 @@
   }
 
   /** The planned-draw path: the balance at the start of each year, drawing
-   *  `drawCents` at the end of every year and growing at `rate` — the same
+   *  `drawCents` at the end of every year and growing at `rate`, the same
    *  arithmetic as Projection.yearsUntilEmptyCents. Stops at the first zero. */
   function drawPath(startCents, drawCents, rate, years) {
     var rows = [{ year: 0, balanceCents: Math.round(startCents) }];

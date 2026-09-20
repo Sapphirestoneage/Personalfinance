@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/countdown.js — one countdown, many skins.
+   engines/countdown.js, one countdown, many skins.
    DECISIONS.md D-217 (Phase K).
    --------------------------------------------------------------------------
    Every "when can I afford it" in the suite is the same question: a target,

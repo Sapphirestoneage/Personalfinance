@@ -5,7 +5,7 @@
   "source": "Thirty-three ways to read the same numbers, each a published rule of thumb or one of Eli's own, stated as a rule, a band and three sentences. 50/30/20 (Elizabeth Warren), the Money Guy Show's 25% and rate-by-age, Ramit Sethi's conscious spending, Your Money or Your Life (Robin and Dominguez), Die With Zero (Bill Perkins), the Bogleheads three-fund portfolio, the bucket strategy, the 20/3/8 car rule, Mr. Money Mustache's Shockingly Simple Math, the FOO (the Money Guy Show's Financial Order of Operations) and the DRAFTT letters. Each lens re-reads DAITE numbers already in the household; no lens adds a field.",
   "confidence": "convention",
   "confidenceNote": "Rules of thumb, not findings. A lens says what a well-known framework would say about your numbers, in one sentence, and then says who it is for and who it is not for. The second pair is the advice translator: a lens without it does not ship.",
-  "note": "Read by shared/lenses.js (SLAF.Lenses — the name Lens is the four-way $ / hours / bought / pushed toggle, D-094). Each domain shows its `default` lens; the rest render only behind the \"More ways to look at this\" toggle, off by default. `band` is on the measure's own basis (the `measure` note says which); null means the lens states a number and has one verdict sentence. `verdict` is [under, in, over] for a banded lens, [sentence] for the rest; {tokens} are filled by the library from the measure. `plain` is the header when the showFrameworkNames preference is off. D-175.",
+  "note": "Read by shared/lenses.js (SLAF.Lenses, the name Lens is the four-way $ / hours / bought / pushed toggle, D-094). Each domain shows its `default` lens; the rest render only behind the \"More ways to look at this\" toggle, off by default. `band` is on the measure's own basis (the `measure` note says which); null means the lens states a number and has one verdict sentence. `verdict` is [under, in, over] for a banded lens, [sentence] for the rest; {tokens} are filled by the library from the measure. `plain` is the header when the showFrameworkNames preference is off. D-175.",
   "domains": [
     {
       "id": "budgeting",
@@ -62,7 +62,7 @@
         "high": 0.5
       },
       "verdict": [
-        "Needs take {share} of take-home — under half, with room to spare.",
+        "Needs take {share} of take-home, under half, with room to spare.",
         "Needs take {share} of take-home: {amount} a month on food, a roof and getting around, inside half.",
         "Needs take {share} of take-home, over half: the three lines leave little for wants or saving."
       ],
@@ -87,7 +87,7 @@
       },
       "verdict": [
         "{share} of take-home is left after spending, under the 20 the rule wants.",
-        "{share} of take-home is left after spending — the 20 is met.",
+        "{share} of take-home is left after spending. The 20 is met.",
         "{share} of take-home is left after spending, well past the 20."
       ],
       "forWhom": "Someone starting out who wants three numbers and no spreadsheet.",
@@ -134,7 +134,7 @@
         "high": 0.35
       },
       "verdict": [
-        "Wants are {share} of take-home: under the 20 Ramit says to spend on purpose — the plan may be too tight to keep.",
+        "Wants are {share} of take-home: under the 20 Ramit says to spend on purpose. The plan may be too tight to keep.",
         "Wants are {share} of take-home, inside the 20 to 35 the plan allows.",
         "Wants are {share} of take-home, over the 35: pick the one line that is your rich life and be ruthless on the rest."
       ],
@@ -155,7 +155,7 @@
       "measure": "hours of life a month of spending costs",
       "band": null,
       "verdict": [
-        "A month of spending is {hours} hours of your life at {wage} an hour — about {hoursWeek} hours a week of work."
+        "A month of spending is {hours} hours of your life at {wage} an hour, about {hoursWeek} hours a week of work."
       ],
       "forWhom": "Anyone who has filled in Real Hourly Wage and wonders whether a line is worth it.",
       "notForWhom": "Retired or between jobs: with no wage there are no hours to price in.",
@@ -219,7 +219,7 @@
       },
       "verdict": [
         "No debt above the line.",
-        "Nothing above {threshold}: minimums and invest — the avalanche has no target here.",
+        "Nothing above {threshold}: minimums and invest. The avalanche has no target here.",
         "{top} at {rate} first: it is above the {threshold} line, and every spare dollar there saves the most interest."
       ],
       "forWhom": "Anyone who can keep paying a plan without seeing a balance disappear.",
@@ -239,7 +239,7 @@
       "measure": "the smallest balance and how fast its minimum clears it",
       "band": null,
       "verdict": [
-        "Smallest first: {label} at {balance} — about {months} at its minimum alone, sooner with anything extra. Its rate is {rate}, so it costs {costNote}."
+        "Smallest first: {label} at {balance}, about {months} at its minimum alone, sooner with anything extra. Its rate is {rate}, so it costs {costNote}."
       ],
       "forWhom": "Someone with several debts who needs one gone to believe the rest can go.",
       "notForWhom": "One big debt at a high rate: there is nothing to snowball; see the avalanche.",
@@ -349,7 +349,7 @@
       "id": "threefund",
       "domain": "investments",
       "name": "Three-fund check",
-      "plain": "Stocks, world stocks, bonds — and roughly how much bond",
+      "plain": "Stocks, world stocks, bonds, and roughly how much bond",
       "rule": "A total-market fund, an international fund and a bond fund, with bonds somewhere between a tenth and four-tenths while you are still earning.",
       "reads": [
         "allocation.bonds",
@@ -361,7 +361,7 @@
         "high": 0.4
       },
       "verdict": [
-        "Bonds at {share}: lighter than most three-fund mixes — fine if you can sit through a fall without selling.",
+        "Bonds at {share}: lighter than most three-fund mixes, fine if you can sit through a fall without selling.",
         "Bonds at {share}, in the usual range; stocks at {stocks}.",
         "Bonds at {share}: heavier than most three-fund mixes for someone still earning."
       ],
@@ -409,9 +409,9 @@
         "high": 1
       },
       "verdict": [
-        "At a {marginal} marginal rate, pre-tax is {share} of your retirement money ({roth} Roth, {taxable} taxable): light for the bracket — pre-tax would take the deduction now.",
+        "At a {marginal} marginal rate, pre-tax is {share} of your retirement money ({roth} Roth, {taxable} taxable): light for the bracket, pre-tax would take the deduction now.",
         "At a {marginal} marginal rate, pre-tax is {share} of your retirement money, Roth {roth}, taxable {taxable}: a reasonable mix for the bracket.",
-        "At a {marginal} marginal rate, pre-tax is {share} of your retirement money ({roth} Roth, {taxable} taxable): heavy for the bracket — Roth would lock in today's lower rate."
+        "At a {marginal} marginal rate, pre-tax is {share} of your retirement money ({roth} Roth, {taxable} taxable): heavy for the bracket, Roth would lock in today's lower rate."
       ],
       "forWhom": "Anyone whose accounts say how they are taxed, in the Statement.",
       "notForWhom": "An account entered as one total: say how it is taxed first.",
@@ -433,9 +433,9 @@
         "high": 0.9
       },
       "verdict": [
-        "Stocks at {share}: {progress} of the way to the target suggests about {suggested} — you are lighter than that.",
+        "Stocks at {share}: {progress} of the way to the target suggests about {suggested}. You are lighter than that.",
         "Stocks at {share}: {progress} of the way to the target suggests about {suggested}, and you are near it.",
-        "Stocks at {share}: {progress} of the way to the target suggests about {suggested} — a fall now would cost more than it needs to."
+        "Stocks at {share}: {progress} of the way to the target suggests about {suggested}, a fall now would cost more than it needs to."
       ],
       "forWhom": "Anyone with a FIRE number, an investment balance and a target mix.",
       "notForWhom": "Money with a date on it: a glide path is for the long pot only.",
@@ -459,7 +459,7 @@
         "high": 100
       },
       "verdict": [
-        "{invested} of the {coast} coast number: {share} of the way. Not at coast yet — contributions still do the work until {target}.",
+        "{invested} of the {coast} coast number: {share} of the way. Not at coast yet, contributions still do the work until {target}.",
         "Past coast: what you have grows to the full number by {target} on its own.",
         "Past coast: what you have grows to the full number by {target} on its own."
       ],
@@ -472,7 +472,7 @@
       "domain": "transportation",
       "name": "Total cost of ownership",
       "plain": "Getting around, a month",
-      "rule": "The whole line — payment, fuel, insurance, upkeep, parking, transit — under a tenth of take-home.",
+      "rule": "The whole line, payment, fuel, insurance, upkeep, parking, transit, under a tenth of take-home.",
       "reads": [
         "expenses.needs.transportation",
         "income.takeHome"
@@ -501,7 +501,7 @@
         "expenses.needs.transportation",
         "income.grossAnnualCents"
       ],
-      "measure": "the whole getting-around line, a share of gross a month — strict by design, since the rule is for the payment alone",
+      "measure": "the whole getting-around line, a share of gross a month, strict by design, since the rule is for the payment alone",
       "band": {
         "low": 0,
         "high": 0.08
@@ -509,7 +509,7 @@
       "verdict": [
         "Under.",
         "Getting around is {share} of gross, inside the 8: at your income the rule allows a car of about {maxPrice} on a three-year loan.",
-        "Getting around is {share} of gross, over the 8 — and that is the whole line, not just a payment. The rule allows about {maxPrice} of car."
+        "Getting around is {share} of gross, over the 8, and that is the whole line, not just a payment. The rule allows about {maxPrice} of car."
       ],
       "forWhom": "Anyone about to finance a car.",
       "notForWhom": "Someone paying cash for a car they will keep ten years: the rule is about loans.",
@@ -551,7 +551,7 @@
       "measure": "the bar any hassle has to clear: your real hourly wage",
       "band": null,
       "verdict": [
-        "An hour of your life earns {wage} after tax and the costs of working. A cheaper way to get around that costs you an hour a week must save more than {weekly} a week — about {monthly} a month — to be worth it."
+        "An hour of your life earns {wage} after tax and the costs of working. A cheaper way to get around that costs you an hour a week must save more than {weekly} a week, about {monthly} a month, to be worth it."
       ],
       "forWhom": "Anyone weighing the bus, a longer drive, a cheaper car or fixing it yourself.",
       "notForWhom": "No wage yet: the bar is not set until Real Hourly Wage is.",
@@ -611,7 +611,7 @@
       "domain": "accommodation",
       "name": "House hack",
       "plain": "Cut the biggest line by sharing it",
-      "rule": "A housemate, a smaller place or a cheaper town cuts the accommodation line by 40% — the lever's figure, read from the lever library.",
+      "rule": "A housemate, a smaller place or a cheaper town cuts the accommodation line by 40%, the lever's figure, read from the lever library.",
       "reads": [
         "expenses.needs.accommodation",
         "assets.property",
@@ -620,7 +620,7 @@
       "measure": "what the house-hack lever is worth on your line, a month and an hour",
       "band": null,
       "verdict": [
-        "The house hack would take about {gain} a month off your {line} line — about {hourly} an hour for the {hours} hours a week it costs. {applies}"
+        "The house hack would take about {gain} a month off your {line} line, about {hourly} an hour for the {hours} hours a week it costs. {applies}"
       ],
       "forWhom": "Anyone with a property, or a price typed in Housing Decision.",
       "notForWhom": "A lease with no room to share and no move in sight: the lever does not apply yet.",
@@ -638,7 +638,7 @@
       "measure": "the round trip: buying and selling costs on the price you are weighing",
       "band": null,
       "verdict": [
-        "On {price}, the round trip — closing costs in, agent and closing costs out — is about {roundTrip}. Under five years, appreciation rarely covers it; rent if a move is likely."
+        "On {price}, the round trip, closing costs in, agent and closing costs out, is about {roundTrip}. Under five years, appreciation rarely covers it; rent if a move is likely."
       ],
       "forWhom": "Anyone weighing a price in Housing Decision.",
       "notForWhom": "Someone who has already owned the place for years: the costs are sunk.",
@@ -685,7 +685,7 @@
         "You keep {share} of what you earn: {takeHome} a month from {gross}, after about {tax} a year of tax. Every share in this room is of the {takeHome}."
       ],
       "forWhom": "Everyone with an income and a filing status.",
-      "notForWhom": "Nobody — but self-employed take-home here is before quarterly estimates you set aside yourself.",
+      "notForWhom": "Nobody, but self-employed take-home here is before quarterly estimates you set aside yourself.",
       "source": "data/effective_tax_rates_2026.json"
     },
     {
@@ -693,7 +693,7 @@
       "domain": "income",
       "name": "Real Hourly Wage",
       "plain": "What an hour of your life really earns",
-      "rule": "Pay after tax and the costs of working, over every hour the job takes — commute, prep and unwinding included.",
+      "rule": "Pay after tax and the costs of working, over every hour the job takes, commute, prep and unwinding included.",
       "reads": [
         "income.realHourlyWage"
       ],
@@ -723,7 +723,7 @@
         "high": 1
       },
       "verdict": [
-        "You save {share} of gross, under 15: the FI date is far, and the rate — not the return — is what moves it.",
+        "You save {share} of gross, under 15: the FI date is far, and the rate, not the return, is what moves it.",
         "You save {share} of gross: past 15, and every point moves the date.",
         "You save {share} of gross: past 15, and every point moves the date."
       ],
@@ -766,14 +766,14 @@
         "Your average rate is about {effective}; the next dollar is taxed at {marginal}. A raise is taxed at the second, your life at the first."
       ],
       "forWhom": "Everyone with an income and a filing status.",
-      "notForWhom": "Nobody — but a self-employed picture adds the self-employment tax the table already includes.",
+      "notForWhom": "Nobody, but a self-employed picture adds the self-employment tax the table already includes.",
       "source": "data/federal_brackets_2026.json"
     },
     {
       "id": "fourbuckets",
       "domain": "taxes",
       "name": "The four buckets",
-      "plain": "Pre-tax, Roth, taxable, HSA — which is empty",
+      "plain": "Pre-tax, Roth, taxable, HSA, which is empty",
       "rule": "Four places to hold money, taxed four ways. Most people have one; the flexibility later comes from having several.",
       "reads": [
         "assets[].taxCharacter",

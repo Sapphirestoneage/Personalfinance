@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/csv.js — the one CSV reader and the one loose number reader.
+   shared/csv.js, the one CSV reader and the one loose number reader.
    DECISIONS.md D-221 (the CSV round trip made resilient).
    --------------------------------------------------------------------------
    Every spreadsheet writes CSV a little differently: Excel adds a byte-order
@@ -124,7 +124,7 @@
   }
 
   /* ---- Numbers, any way they come ---------------------------------------- */
-  var BLANK_WORDS = /^(-{1,3}|—|–|n\/?a|none|null|nil|\?+|tbd|tba|unknown|not sure|blank|empty|skip|leave)$/i;
+  var BLANK_WORDS = /^(-{1,3}|, |–|n\/?a|none|null|nil|\?+|tbd|tba|unknown|not sure|blank|empty|skip|leave)$/i;
   function isBlankWord(s) { return s === '' || BLANK_WORDS.test(s); }
   /**
    * number(text, opts) → { value, blank, bad, percent, decimals, negative }
@@ -148,7 +148,7 @@
     s = s.replace(/^\+/, '');
     var neg = false;
     if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
-    s = s.replace(/^[−–—]/, '-');
+    s = s.replace(/^[−–, ]/, '-');
     if (/^-/.test(s)) { neg = !neg; s = s.slice(1); }
     if (/^[$€£¥₹]+/.test(s) && /^[$€£¥₹]+-/.test(s)) { neg = !neg; s = s.replace(/^([$€£¥₹]+)-/, '$1'); }   /* $-5 */
     if (/-$/.test(s)) { neg = !neg; s = s.slice(0, -1); }          /* 1234- (some banks) */

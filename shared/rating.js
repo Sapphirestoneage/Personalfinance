@@ -1,9 +1,9 @@
 /* ==========================================================================
-   shared/rating.js — THE 1-10 rating control. One of them, not four.
+   shared/rating.js, THE 1-10 rating control. One of them, not four.
    --------------------------------------------------------------------------
    SPEC.md §13, Tier 1.5: "The 1-10 rating mechanism is shared infrastructure
    with Category Tracker Engine, Dating Cost Calculator, and Retroactive
-   Worth calc — build one reusable rating component, not four."
+   Worth calc, build one reusable rating component, not four."
 
    So this file owns the whole idea:
 
@@ -12,12 +12,12 @@
      • reading a rating off the household, for any scope
      • the control markup every room renders, and the dot readout beside it
 
-   Ratings live in `household.ratings[scope][itemId]` — see
+   Ratings live in `household.ratings[scope][itemId]`, see
    Schema.createRatings(). A scope is just a name: 'joy' for the Fulfillment
    Curve, 'hassle' for Return on Hassle, and so on. Rooms never invent their
    own storage shape for a rating, and never re-implement the control.
 
-   There is deliberately NO zero. A missing key is "not rated", full stop —
+   There is deliberately NO zero. A missing key is "not rated", full stop. 
    it can never be read as "rated it nothing", which is the failure mode a
    0-10 scale walks straight into.
 
@@ -82,7 +82,7 @@
 
   /**
    * How much of a list has been rated. Rooms use this to decide between
-   * "here is your reading" and "rate a few more first" — and to say how
+   * "here is your reading" and "rate a few more first", and to say how
    * many are left rather than showing a chart built from two points.
    */
   function coverage(household, scope, itemIds) {
@@ -103,7 +103,7 @@
   /**
    * The average rating across a list, weighted by whatever the caller says
    * each item is worth (dollars, usually). Unrated items are SKIPPED, not
-   * counted as zero — and how many were skipped comes back with the answer.
+   * counted as zero, and how many were skipped comes back with the answer.
    * Pass items as [{ id, weight }].
    */
   function weightedAverage(household, scope, items) {
@@ -149,7 +149,7 @@
    * The select every rating in the app is entered through.
    *   opts = { scope, itemId, value, label, slot, name }
    * `label` names the thing being rated, for the accessible name.
-   * A change event on it carries the scope and item in data attributes —
+   * A change event on it carries the scope and item in data attributes, 
    * read them with readTarget() rather than parsing them in the room.
    *
    * `slot` is for the one case where a single item carries MORE THAN ONE
@@ -163,7 +163,7 @@
     var o = opts || {};
     var a = anchors(o.scope);
     var current = isValid(o.value) ? o.value : null;
-    var options = ['<option value=""' + (current === null ? ' selected' : '') + '>—</option>'];
+    var options = ['<option value=""' + (current === null ? ' selected' : '') + '>not yet</option>'];
     for (var n = MIN; n <= MAX; n++) {
       options.push('<option value="' + n + '"' + (current === n ? ' selected' : '') + '>'
         + n + (n === MIN ? ' · ' + a.low : n === MAX ? ' · ' + a.high : '') + '</option>');
@@ -180,7 +180,7 @@
    * Pull { scope, itemId, slot, value } off a change event's target, or null
    * if the event did not come from a rating control. The room's whole
    * handler is then three lines. `slot` is null unless the control declared
-   * one — see controlHtml().
+   * one, see controlHtml().
    */
   function readTarget(node) {
     if (!node || !node.getAttribute) return null;

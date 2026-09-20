@@ -5,7 +5,7 @@
   "source": "A general-purpose values vocabulary for the Values vs. Spending Audit, with a DEFAULT mapping onto the categories in data/expense_categories.json. The vocabulary is deliberately small and plain; it is not drawn from any particular psychological instrument and does not claim to be one.",
   "confidence": "convention",
   "confidenceNote": "A plain values vocabulary with a default mapping; not drawn from any psychological instrument.",
-  "note": "SPEC.md Section 13, Tier 2. The default mapping below is a starting point, not a claim — whether groceries serve Health or Home is a question about a person's life, not a fact, so the room lets them reassign every category and stores their answer. Each category appears under AT MOST ONE value: shares have to add up, and a category counted under two values would double-count the money. test/run.js asserts that disjointness and that every category in expense_categories.json is either mapped here or deliberately left out.",
+  "note": "SPEC.md Section 13, Tier 2. The default mapping below is a starting point, not a claim, whether groceries serve Health or Home is a question about a person's life, not a fact, so the room lets them reassign every category and stores their answer. Each category appears under AT MOST ONE value: shares have to add up, and a category counted under two values would double-count the money. test/run.js asserts that disjointness and that every category in expense_categories.json is either mapped here or deliberately left out.",
   "unassignedLabel": "Not claimed by anything you named",
   "values": [
     {
@@ -41,7 +41,7 @@
     {
       "id": "freedom",
       "label": "Freedom & future options",
-      "blurb": "Money that buys choices later — including the choice to stop.",
+      "blurb": "Money that buys choices later, including the choice to stop.",
       "defaultCategoryIds": [
         "retirement",
         "investments"

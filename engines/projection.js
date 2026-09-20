@@ -1,13 +1,13 @@
 /* ==========================================================================
-   engines/projection.js — compound growth with contributions.
+   engines/projection.js, compound growth with contributions.
    --------------------------------------------------------------------------
    Extracted so there is ONE of these, per SPEC.md §8. Tier 0's time-to-FIRE
    and every FIRE variant now call the same loop; before this, Tier 0 had it
    inline and the FIRE variants would have grown a second copy.
 
    Deliberately a year-by-year loop rather than a closed form. It has to stay
-   correct when the contribution is zero or negative — a closed form quietly
-   returns a complex or negative number there — and it is the same shape the
+   correct when the contribution is zero or negative, a closed form quietly
+   returns a complex or negative number there, and it is the same shape the
    debt amortisation uses.
 
    Cents in, cents out. Rates are decimal fractions.
@@ -66,11 +66,11 @@
 
   /**
    * Years until `startCents` reaches `targetCents`, contributing annually.
-   * Returns an incomplete Result — never a number — when it never gets there.
+   * Returns an incomplete Result, never a number, when it never gets there.
    * Whole years by default (the first year-end at or past the target);
    * `fractional: true` interpolates inside the crossing year so a small
    * change in the start moves the answer by a small amount instead of not
-   * at all — the lens's "months bought / pushed" needs that resolution.
+   * at all, the lens's "months bought / pushed" needs that resolution.
    */
   function yearsToTargetCents(opts) {
     var o = opts || {};
@@ -122,7 +122,7 @@
    * Years until `startCents`, growing at `annualRate` and drawn down by
    * `annualDrawCents` at the end of each year, is gone. The retiree's date:
    * the one drawdown loop the dashboard and the Decumulation room share.
-   * Nothing drawn, or growth covering the draw, never empties — an ok
+   * Nothing drawn, or growth covering the draw, never empties, an ok
    * Result with `never: true` rather than a number. D-096.
    */
   function yearsUntilEmptyCents(opts) {
@@ -149,8 +149,8 @@
   /**
    * Balance after `months` of MONTHLY compounding with a contribution added
    * at the end of each month. The annual version above is right for a yearly
-   * savings figure; this is right for a habit — a subscription, a coffee, a
-   * payment — which is monthly by nature and compounds monthly too.
+   * savings figure; this is right for a habit, a subscription, a coffee, a
+   * payment, which is monthly by nature and compounds monthly too.
    */
   function futureValueMonthlyCents(opts) {
     var o = opts || {};
@@ -180,7 +180,7 @@
    * year, growing at `annualRate` with `monthlyContributionCents` added each
    * month until `contributeYears`, then `withdrawAnnualCents` a year taken
    * out (a twelfth a month) until `years`. This is the compound loop every
-   * growth chart draws — the FIRE room's line to retirement and past it —
+   * growth chart draws, the FIRE room's line to retirement and past it, 
    * so it lives here with the other one, rather than once per room.
    * Returns { years: [{ year, ageOrYear, balanceCents, contributedCents }] }.
    */
@@ -209,7 +209,7 @@
 
   /* ---- Level-payment loans ----------------------------------------------
      A fixed payment over a fixed term with no extra payments HAS a closed
-     form, and using it here is correct — unlike the payoff simulation in
+     form, and using it here is correct, unlike the payoff simulation in
      engines/debt.js, where a freed-up minimum rolls onto the next debt and
      no closed form exists. Both live in the codebase on purpose; this is the
      simple case and that is the general one.                              */

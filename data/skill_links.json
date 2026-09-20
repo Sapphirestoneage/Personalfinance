@@ -2,7 +2,7 @@
   "id": "skill_links",
   "version": "3.0.0",
   "asOf": "2026-09-06",
-  "source": "FI Skill Tree v6.3.1 cross-links — the shortcut lanes between trees, extracted by scripts/extract-v63.mjs.",
+  "source": "FI Skill Tree v6.3.1 cross-links, the shortcut lanes between trees, extracted by scripts/extract-v63.mjs.",
   "confidence": "convention",
   "confidenceNote": "A curriculum, not a measurement. The tiers are the author’s ranking of leverage, not a claim about any particular life.",
   "note": "A lane means finishing `from` opens `to` in another tree without walking that tree’s ladder up to it. The FOO mappings below are this app’s own and are not in the source.",

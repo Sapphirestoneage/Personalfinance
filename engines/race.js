@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/race.js — the Race to $100K.
+   engines/race.js, the Race to $100K.
    DECISIONS.md D-217 (K4).
    --------------------------------------------------------------------------
    The old line: the first $100,000 is the hardest. This file dates the

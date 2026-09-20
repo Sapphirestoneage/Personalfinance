@@ -1,8 +1,8 @@
 /* ==========================================================================
-   shared/bands.js — Triple D: every projected number three ways.
+   shared/bands.js, Triple D: every projected number three ways.
    --------------------------------------------------------------------------
    A single expected return is a guess dressed as a fact. Wherever a room
-   projects a number forward it shows it three ways — low, likely, high —
+   projects a number forward it shows it three ways, low, likely, high, 
    from the one table (data/return_bands.json, real returns at the 25th, 50th
    and 75th percentile of ten-year outcomes), so every room disagrees with
    itself by the same amount. The likely line is the headline; the other two
@@ -54,8 +54,8 @@
   }
   function pct(rate) { return (Math.round(rate * 1000) / 10) + '%'; }
   function shown(res, fmt) {
-    if (res === null || res === undefined) return Money.EM_DASH;
-    if (typeof res === 'object' && res.status) return Money.isOk(res) ? fmt(res.value, res) : Money.EM_DASH;
+    if (res === null || res === undefined) return Money.NOT_YET;
+    if (typeof res === 'object' && res.status) return Money.isOk(res) ? fmt(res.value, res) : Money.NOT_YET;
     return fmt(res, null);
   }
 

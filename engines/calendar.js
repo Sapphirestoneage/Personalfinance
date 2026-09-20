@@ -1,11 +1,11 @@
 /* ==========================================================================
-   engines/calendar.js — the Money Calendar & Pay-Later room's month.
+   engines/calendar.js, the Money Calendar & Pay-Later room's month.
    DECISIONS.md D-101 (the LATER.md rooms on the template).
    --------------------------------------------------------------------------
    One month, drawn a day at a time from what the person said:
 
      start        today's cash (Start Here's cash & savings) is the balance
-                  on day one — nothing in a bank is read
+                  on day one, nothing in a bank is read
      paydays      take-home a month (engines/tier0.js's takeHomeMonthlyCents,
                   the effective-rate table, never a second lookup) ÷ the
                   paydays a month for the cadence (data/calendar_conventions
@@ -17,7 +17,7 @@
                   every 7 / 14 days after it. A day past the month's end
                   (the 31st in a 30-day month) is the last day.
      bills        each listed bill is drawn on its day, the first time that
-                  day comes round from today — this month if the day is
+                  day comes round from today, this month if the day is
                   still ahead, otherwise next month, inside the window.
                   A pay-later instalment is a bill due on its day; one with
                   no instalments left is ignored.
@@ -27,9 +27,9 @@
      the window   31 days, today included.
 
    The ledger and the log (D-130, MONEY-MAP.md Q5): when Income has
-   entries landing in the window, THEY are the paydays — each landing
+   entries landing in the window, THEY are the paydays, each landing
    drawn on its day for the cash it actually brings (net of what was
-   withheld) — and the cadence above is not needed. Every dated entry
+   withheld), and the cadence above is not needed. Every dated entry
    in the expense log is drawn on its day as a bill; a recurring one on
    its day each month. A date that is only estimated is drawn and
    counted; one that is only potential is drawn, never counted. Bills
@@ -63,7 +63,7 @@
   var DAYS_PER_MONTH = 365.25 / 12;       /* the dashboard's constant (shared/instruments.js) */
   var HORIZON_DAYS = 31;                   /* the default, the table can say otherwise */
   var WRAP_DAYS = 30;                      /* the semimonthly pair lives inside 1–30 */
-  var RENT_SHARE_OF_GROSS = 0.30;          /* the 30% rule — the Housing room's proposal, a convention */
+  var RENT_SHARE_OF_GROSS = 0.30;          /* the 30% rule, the Housing room's proposal, a convention */
   var RENT_ID = 'rent';
 
   /* ---- small helpers ------------------------------------------------------- */
@@ -200,7 +200,7 @@
     var nextDay = validDay(cal.nextPaydayDay) ? Math.round(cal.nextPaydayDay) : null;
 
     var cash = Schema.cashCents(h);
-    if (!Money.isOk(cash)) return Money.incomplete('Add your cash & savings in Start Here — today’s cash is where the month starts.', cash.missing || ['cashSavings']);
+    if (!Money.isOk(cash)) return Money.incomplete('Add your cash & savings in Start Here, today’s cash is where the month starts.', cash.missing || ['cashSavings']);
     var spend = Schema.monthlyExpensesCents(h);
     if (!Money.isOk(spend)) return Money.incomplete(spend.reason, spend.missing);
     /* 15.5: the yearly lines are drawn on their month (the 1st), not spread:
@@ -353,8 +353,8 @@
 
   /* The month as a grid: the window's days in rows of seven, each row
      starting on Sunday, the first row padded with blanks so a day sits
-     under its weekday. Each cell carries what the day does — a payday,
-     the bills and pay-later instalments drawn, the spread — and where the
+     under its weekday. Each cell carries what the day does, a payday,
+     the bills and pay-later instalments drawn, the spread, and where the
      balance stands, so a page can draw a calendar rather than a line. */
   var WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   /* What one day does, in two lists (the one place this is assembled; the

@@ -26,7 +26,7 @@
   "documents": {
     "will":          "A will says who gets what passes through your estate, and who settles it; without one the state's rules decide.",
     "beneficiaries": "A beneficiary form on each retirement account, life-insurance policy and payable-on-death bank account passes that money directly, ahead of the will.",
-    "poa":           "A power of attorney names someone to act for you — pay bills, sign, decide — while you are alive but cannot; it ends at death."
+    "poa":           "A power of attorney names someone to act for you, pay bills, sign, decide, while you are alive but cannot; it ends at death."
   },
 
   "guardian": "A will is also where a guardian for minor children is named. Without one, a court chooses.",

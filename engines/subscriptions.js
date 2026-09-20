@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/subscriptions.js — the subscription finder. DECISIONS.md D-215 (J5).
+   engines/subscriptions.js, the subscription finder. DECISIONS.md D-215 (J5).
    --------------------------------------------------------------------------
    From the dated entries in the expense log (a bank import, or lines
    logged by hand): charges that repeat on a regular rhythm at a similar

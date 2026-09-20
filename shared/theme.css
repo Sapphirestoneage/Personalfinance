@@ -1,13 +1,13 @@
 /* ==========================================================================
-   SPARKS / SLAF — navy-sapphire design system
+   SPARKS / SLAF, navy-sapphire design system
    --------------------------------------------------------------------------
    The single source of truth for colour and type across every room.
    Rooms must reference these custom properties. Never hardcode a hex value
-   in a room file — see SPEC.md Section 0.5 and DECISIONS.md entry D-002.
+   in a room file, see SPEC.md Section 0.5 and DECISIONS.md entry D-002.
 
    Type: the platform's own UI face, at two weights, with tabular figures.
    No display serif (D-154). shared/fonts.css still ships Fraunces and Space
-   Grotesk because dnd/ overrides these tokens back to them — the game wants
+   Grotesk because dnd/ overrides these tokens back to them, the game wants
    character; a financial statement wants none.
    ========================================================================== */
 
@@ -17,7 +17,7 @@
   color-scheme: dark;
   /* ---- Ground -----------------------------------------------------------
      Graphite with a cool cast, not saturated navy. The old ground was
-     #081833 — blue enough that every surface, border and line of text sat
+     #081833, blue enough that every surface, border and line of text sat
      in the same hue, which is what made a page of figures read as a
      children's chart rather than a statement. Colour is now something the
      page spends, not something it is made of. D-154. */
@@ -45,8 +45,8 @@
   --color-surface: rgba(124, 140, 166, 0.06);
   --color-surface-raised: rgba(124, 140, 166, 0.10);
   --color-surface-active: rgba(47, 107, 224, 0.16);
-  /* OPAQUE. Anything that floats over the page — the menu drawer, a native
-     select's popup, a chart panel — must be solid, because a tint composites
+  /* OPAQUE. Anything that floats over the page, the menu drawer, a native
+     select's popup, a chart panel, must be solid, because a tint composites
      the content behind it and you end up reading two screens at once. The
      surface tokens above are for surfaces ON the page; this one is for
      surfaces OVER it. D-157. */
@@ -58,7 +58,7 @@
   /* ---- Semantic text ---------------------------------------------------
      Neutral, not blue. Every value below was measured against the three
      grounds it can sit on (bg, surface, raised) and clears AA 4.5:1 with
-     margin — the weakest is --color-text-faint at 5.25:1 on a raised card.
+     margin. The weakest is --color-text-faint at 5.25:1 on a raised card.
      That keeps the D-144 commitment while dropping the blue cast. */
   --color-text: #E6E9EE;
   --color-text-muted: #A6B0BD;
@@ -99,14 +99,14 @@
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
     'Liberation Mono', monospace;
 
-  --text-xs: 0.6875rem;   /* 11px — eyebrow / meta */
-  --text-sm: 0.8125rem;   /* 13px — secondary */
-  --text-base: 0.875rem;  /* 14px — body / UI default */
+  --text-xs: 0.6875rem;   /* 11px, eyebrow / meta */
+  --text-sm: 0.8125rem;   /* 13px, secondary */
+  --text-base: 0.875rem;  /* 14px, body / UI default */
   --text-md: 1rem;        /* 16px */
   --text-lg: 1.1875rem;   /* 19px */
   --text-xl: 1.5rem;      /* 24px */
-  --text-2xl: 2rem;       /* 32px — hero figure */
-  --text-3xl: 2.5rem;     /* 40px — the one number a room leads with */
+  --text-2xl: 2rem;       /* 32px, hero figure */
+  --text-3xl: 2.5rem;     /* 40px, the one number a room leads with */
 
   --leading-tight: 1.15;
   --leading-normal: 1.45;
@@ -216,7 +216,7 @@ h2 { font-size: var(--text-lg); }
 h3 { font-size: var(--text-md); }
 
 /* The one figure a room leads with. Set tight, tabular, and heavier than the
-   text around it — the way a terminal or a brokerage sets a headline number. */
+   text around it, the way a terminal or a brokerage sets a headline number. */
 .room-number, .slaf-figure, .headline-figure {
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-figure);
@@ -283,7 +283,7 @@ h3 { font-size: var(--text-md); }
 
 /* Two boxes side by side must START LEVEL (D-249).
    A control's top is its field's top plus the label above it and nothing
-   else — hints and sources come after the control, so they never move it.
+   else, hints and sources come after the control, so they never move it.
    So the labels are what has to match: one that wraps to two lines used to
    shove its own box 16px below its neighbour's, which is what "still not
    even" meant. Every label in a row of fields therefore reserves two lines
@@ -338,7 +338,7 @@ h3 { font-size: var(--text-md); }
 
 .slaf-input-shell > input::placeholder { color: var(--color-text-faint); }
 
-/* Suggested values — shown, not taken. A dashed, muted figure the app
+/* Suggested values, shown, not taken. A dashed, muted figure the app
    proposed; the household does not hold it until the person taps "use
    this" or types. DECISIONS.md D-060. */
 .slaf-input-shell.is-suggested { border-style: dashed; }
@@ -358,7 +358,7 @@ h3 { font-size: var(--text-md); }
 
 /* ---- A switch that looks like a switch (D-303) ---------------------------
    Settings drew every switch as a grey pill reading "On" or "Off" and styled
-   the on state off [aria-pressed], which a role="switch" never carries — so
+   the on state off [aria-pressed], which a role="switch" never carries, so
    an on switch and an off switch were the same grey pill and the only
    difference was two letters. A person scanning the page could not tell what
    was on. This is a track and a knob: position and colour say the state
@@ -377,7 +377,7 @@ h3 { font-size: var(--text-md); }
 .slaf-switch[aria-disabled="true"] .slaf-switch-track { opacity: .6; }
 @media (prefers-reduced-motion: reduce) { .slaf-switch-knob, .slaf-switch-track { transition: none; } }
 
-/* Hide number spinners — they invite scroll-wheel edits on a money field. */
+/* Hide number spinners, they invite scroll-wheel edits on a money field. */
 .slaf-input-shell > input[type="number"]::-webkit-outer-spin-button,
 .slaf-input-shell > input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none; margin: 0;
@@ -385,12 +385,12 @@ h3 { font-size: var(--text-md); }
 .slaf-input-shell > input[type="number"] { -moz-appearance: textfield; }
 
 /* `hidden` must actually hide. A bare [hidden] is display:none in the UA
-   sheet, which loses to any class that sets display — .slaf-field is flex,
-   .slaf-btn is flex — so a hidden field stayed on screen. Every room had
+   sheet, which loses to any class that sets display, .slaf-field is flex,
+   .slaf-btn is flex, so a hidden field stayed on screen. Every room had
    worked around it with its own copy of this rule; it belongs here once. */
 [hidden] { display: none !important; }
 
-/* The one 1-10 rating control — shared/rating.js. Every rating in SPARKS
+/* The one 1-10 rating control, shared/rating.js. Every rating in SPARKS
    renders through these two classes, so a second scale cannot appear. */
 .slaf-rating { min-width: 0; }
 .slaf-rating > select { font-variant-numeric: normal; }
@@ -442,10 +442,10 @@ h3 { font-size: var(--text-md); }
 
 .slaf-btn--primary {
   /* D-137 solved a contrast failure by LIGHTENING the fill and keeping a
-     dark label — correct then, but it made the primary action a bright pill,
+     dark label, correct then, but it made the primary action a bright pill,
      which is most of why the app read as a toy. D-154 goes the other way:
      a deep, solid blue with a white label. White on --sapphire-600 measures
-     6.70:1, and on the hover fill 4.88:1, so both clear AA — and a saturated
+     6.70:1, and on the hover fill 4.88:1, so both clear AA, and a saturated
      rectangle reads as a button in a financial product rather than a sticker.
      --color-accent itself is untouched: it is a border and chip colour in a
      hundred places where it carries no text. */
@@ -514,7 +514,7 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 /* ---- Borrowed values ----------------------------------------------------
    A number shown in a room that does NOT own it. Always a link, always to
    the question that produces it. See shared/ownership.js.
-   Styled to read as a value with a destination — not as an input, so nobody
+   Styled to read as a value with a destination, not as an input, so nobody
    tries to type in it, and not as a plain link, so the number stays the
    thing you notice first.                                                 */
 
@@ -735,7 +735,7 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .slaf-legend.is-table .val { font-variant-numeric: tabular-nums; color: var(--color-text); text-align: right; }
 /* `min-width: 3em` on a right-hand column, inside a flex row whose left
    column already fills the space, is 4px of sideways page scroll at 1080 in
-   the FIRE Lab — small, and the page still moves. The column keeps its
+   the FIRE Lab, small, and the page still moves. The column keeps its
    alignment and gives up the floor. D-146. */
 .slaf-legend.is-table .pct { font-variant-numeric: tabular-nums; color: var(--color-text-faint); text-align: right; flex: 0 0 auto; }
 
@@ -913,7 +913,7 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
 .slaf-sankey .tick.small { fill: rgba(147, 197, 253, 0.6); font-size: 8.5px; }
 
 /* ==========================================================================
-   The menu (D-135) — upkeep and every room, one pull from anywhere.
+   The menu (D-135), upkeep and every room, one pull from anywhere.
    Injected by shared/progress.js into <body>, so it is never inside a room's
    live-input container and nothing can clip it.
    ========================================================================== */
@@ -1003,7 +1003,7 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
   width: min(272px, 84vw);
   /* Solid, not a translucent surface token: a drawer you can read the page
      through is not a drawer. This pointed at --navy-850 until D-154 deleted
-     the navy scale, and an undefined var resolves to nothing — which is
+     the navy scale, and an undefined var resolves to nothing, which is
      exactly how the menu became see-through on a real phone. */
   background: var(--color-panel);
   border-right: 1px solid var(--color-border-strong);
@@ -1072,7 +1072,7 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
 
 /* The rooms are written to one narrow measure because most of them are
    things you read. On a desktop that leaves a ribbon in a field of navy,
-   so the column grows — still a comfortable line length, just not a
+   so the column grows, still a comfortable line length, just not a
    phone's. A room that sets its own wider measure keeps it. */
 @media (min-width: 1080px) {
   :root { --measure: 620px; }
@@ -1086,8 +1086,8 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
    ========================================================================== */
 
 /* A bar row's third column is a figure, so it never wraps. When the row has
-   no figure it carries a REASON instead — "needs monthly debt payments,
-   gross annual income" — and nowrap pushed that 69px past the right edge of
+   no figure it carries a REASON instead, "needs monthly debt payments,
+   gross annual income", and nowrap pushed that 69px past the right edge of
    a phone, scrolling the whole page sideways. A reason is a sentence and
    wraps like one; a figure is still a figure. */
 .slaf-bars .row > * { min-width: 0; }
@@ -1096,7 +1096,7 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
 /* Touch targets. A finger is not a cursor: the suggestion chip was 19px
    tall, a checkbox 16px, a summary 25px. Only on a coarse pointer, so a
    mouse keeps the compact controls these were designed as. Inline links
-   inside a sentence are deliberately left alone — padding them to 36px
+   inside a sentence are deliberately left alone, padding them to 36px
    would tear paragraphs apart, and they are not the primary control. */
 /* The undo/redo pair is fixed to the bottom-right, which is where every
    value in the dashboard panel scrolls past. Measured at 320px it covered
@@ -1120,14 +1120,14 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
   label input[type="checkbox"], label input[type="radio"] { width: 20px; height: 20px; }
   /* The ⓘ is a 20px circle and the room tells you to tap it, 45 times on the
      ratios page. An invisible ::after hit area was tried first and did not
-     actually take the tap — something paints over it — so the button itself
+     actually take the tap, something paints over it, so the button itself
      grows on a coarse pointer. A mouse keeps the 20px circle. */
   .slaf-info { width: 30px; height: 30px; font-size: 14px; }
   .slaf-manage-toggle { min-height: 32px; display: inline-flex; align-items: center; }
   /* The floor, applied to the controls rather than to a list of class names
      one room at a time. test/responsive.js found 44 targets under it across
-     18 rooms — segmented filters at 17px, a remove button at 20px, preset
-     rows at 17px — every one of them a thing a finger has to hit. The ⓘ is
+     18 rooms, segmented filters at 17px, a remove button at 20px, preset
+     rows at 17px, every one of them a thing a finger has to hit. The ⓘ is
      the one deliberate exception at 30px (D-136) and names itself. D-146. */
   button, select, .pill, [role="button"] { min-height: 32px; }
   /* `min-height` alone, NOT `display: inline-flex`. Making every button a
@@ -1137,7 +1137,7 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
      it on the very next run, which is the argument for having the suite.
      Buttons that need centring say so themselves. */
   .slaf-info { min-height: 0; }
-  /* NOT display:flex — that drops `list-item` and Chromium then paints no
+  /* NOT display:flex, that drops `list-item` and Chromium then paints no
      ::marker at all, so on a phone the drawer lost its triangle entirely.
      Take the height from padding instead. */
   summary { min-height: 44px; display: list-item; padding-block: var(--space-2); }
@@ -1160,7 +1160,7 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
    a picture of a control rather than one you are touching.
 
    One easing, two durations, applied to the properties that actually change.
-   Never `transition: all` — that animates layout too and makes a page lurch.
+   Never `transition: all`, that animates layout too and makes a page lurch.
    The reduced-motion block above already cuts every duration to nothing, so
    this costs a person who asked for stillness exactly nothing.
    ========================================================================== */
@@ -1205,7 +1205,7 @@ a.slaf-card:hover, button.slaf-card:hover {
    Measured every text node in every room against WCAG AA. 57 failed, and 33
    of those were one bug: the theme never gave a bare <a> a colour, so any
    link a component did not style itself fell back to the browser default
-   #0000EE — pure blue on navy, 1.88:1, effectively invisible. "Load it
+   #0000EE, pure blue on navy, 1.88:1, effectively invisible. "Load it
    below", "Your Data →" and "The Score" were all unreadable on the front
    page. A default link colour costs one rule and can never happen again.
    ========================================================================== */
@@ -1238,7 +1238,7 @@ a:hover { color: var(--sapphire-100); }
 
 /* ---- The Walk-Through (D-149) --------------------------------------------
    A strip under the header hops on every room that is a step, once the walk
-   has begun — and on nothing at all before that. It holds buttons only, no
+   has begun, and on nothing at all before that. It holds buttons only, no
    inputs, so it is free to repaint on every change without going near the
    live-form rule (D-034). */
 .slaf-walk { max-width: var(--measure); margin: 0 auto var(--space-4);
@@ -1261,7 +1261,7 @@ a:hover { color: var(--sapphire-100); }
 .slaf-walk-acts { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 /* min-width: 0 so a long room title in "Next: ..." wraps inside the strip
    instead of pushing the page sideways. A flex item will not shrink below
-   its content without it — the same trap that cost 26px in D-146. */
+   its content without it, the same trap that cost 26px in D-146. */
 .slaf-walk-acts > * { min-width: 0; }
 .slaf-walk-said { font-size: var(--text-sm); color: var(--color-positive); font-weight: 600; }
 @media (max-width: 480px) {
@@ -1354,7 +1354,7 @@ a.slaf-btn[data-backup="pdf"] { display: inline-flex; align-items: center; }
 .slaf-a2hs { margin: 0 0 var(--space-4); font-size: var(--text-xs); color: var(--color-text-muted); line-height: var(--leading-loose); }
 
 /* Print is an export too. On paper nobody needs the navigation, the undo
-   pair or the export buttons themselves — they need the figures. */
+   pair or the export buttons themselves, they need the figures. */
 @media print {
   body.slaf { background: #fff; color: #111; }
   .slaf-hops-host, .slaf-menu, .slaf-undo, .slaf-export, .slaf-walk,

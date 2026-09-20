@@ -13,28 +13,28 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. Built on the frozen template (D-097). D-148.
+  ROOM SPEC, SPEC.md §11. Built on the frozen template (D-097). D-148.
 
   1. READS   Take-home pay a month (engines/cashflow.js, which uses the same
              effective-rate tax lookup as everything else) and what goes out
              a month (Schema.monthlyExpensesCents, or the categorised month
              where one has been tracked). Debt minimums come along inside
              the categorised month, as a derived category owned by Debt
-             Payoff. Read only — nothing here is editable.
+             Payoff. Read only, nothing here is editable.
   2. WRITES  Nothing about the household. This room owns no field in
-             shared/ownership.js and never calls Spine.updateProfile — the
+             shared/ownership.js and never calls Spine.updateProfile, the
              only trace it leaves is the visit every room records through
              Spine.registerRoom(). Someone opening it is having the worst
              money day of their year; it does not also ask them to fill in
              a form.
-  3. CALLS   engines/cashflow.js — monthlySurplusCents(), which is already
+  3. CALLS   engines/cashflow.js, monthlySurplusCents(), which is already
              the one place in this app that asks "what is actually free each
              month", and netMonthlyIncomeCents() for the money-in side. The
              gap is that surplus with the sign turned round. No second
              definition of "left over" is invented here (SPEC.md §8).
   4. EMPTY   The important case. With a COMPLETELY empty household the gap
              section says which two figures are missing and links to the
-             rooms that own them — and nothing else changes. The order to
+             rooms that own them, and nothing else changes. The order to
              pay in, the calls and the free help are the content of this
              room and they do not need a single number to be useful. A
              made-up shortfall on this page would be cruel (SPEC.md §5), so
@@ -45,20 +45,20 @@
              Nothing on this page is written in the markup.
 
   NOT ADVICE. The table's own confidenceNote says consequences vary by state
-  and by contract, and that is surfaced at the top of the order — not buried
+  and by contract, and that is surfaced at the top of the order, not buried
   in the drawer. Where the data says to call, the advice IS to call: this
   room does not know anyone's lease, loan terms or state rules.
 
   NEVER BORROW. data/bill_triage.json carries an explicit `neverBorrow`
   entry and it is rendered, in full, at the point where the temptation
-  actually lands — under the gap.
+  actually lands, under the gap.
 
   THE SHAPE (shared/room.js, frozen): one number, the four sections the
   registry names as anchors, the assumptions drawer with sources, why this
   matters at your stage, one out-of-scope line to Get Help. The ids below
   are the deep links: out-gap, out-order, out-calls, out-help, reading.
 
-  LIVE-FORM: built once — and there is nothing to build. This room has no
+  LIVE-FORM: built once, and there is nothing to build. This room has no
   form controls of any kind. It reads the household and writes nothing, so
   there is no container of live controls to rebuild and no soft keyboard to
   close. If a control is ever added here it must be built once from a spec
@@ -176,7 +176,7 @@
     advice, and it is not about your situation: it is a general ordering,
     and what actually happens when a bill is missed depends on your state,
     your lease and your contract. Where it says to call, calling is the
-    advice — the people on the other end are the ones who know your terms.
+    advice, the people on the other end are the ones who know your terms.
     There is nothing to type here and nothing to fill in: the room reads what
     the rest of the app already knows, changes none of it, and adds no figure
     of its own. Your numbers stay in this browser.
@@ -215,8 +215,8 @@
     });
   }
   /* The only clickable thing in this room, and the only external link in the
-     whole suite: a phone number. `tel:` sends no referrer and loads no page —
-     nothing leaves this browser — and on a phone it dials, which is the whole
+     whole suite: a phone number. `tel:` sends no referrer and loads no page. 
+     nothing leaves this browser, and on a phone it dials, which is the whole
      point at the moment someone is reading this. Web addresses stay as plain
      text on purpose: that would be a real outbound link, and that is a
      decision about the whole app rather than one this room gets to make.
@@ -268,7 +268,7 @@
     return {
       known: true,
       inCents: moneyIn.value,
-      /* What has to go out is money in less what is left over — so the two
+      /* What has to go out is money in less what is left over, so the two
          sides always agree with the one number, whichever basis it used. */
       outCents: moneyIn.value - surplus.value,
       surplusCents: surplus.value,
@@ -280,7 +280,7 @@
   }
 
   /* The figures the gap is built from, and who owns each. Nothing is
-     invented for a missing one — it is named, and linked. */
+     invented for a missing one. It is named, and linked. */
   var NEEDED = ['grossAnnualIncome', 'filingStatus', 'monthlyExpenses'];
   function missingFor(h) {
     return NEEDED.map(function (f) { return Ownership.describe(f, h, 'cant-pay'); })
@@ -303,7 +303,7 @@
         + '</ul>');
       out.push('<p class="gap-note">Both figures are the ones already in this app for a <em>typical</em> month'
         + (g.basis === 'monthlyTotal'
-          ? ', and the month going out counts the essentials you have entered only — anything else you spend is on top of it.'
+          ? ', and the month going out counts the essentials you have entered only, anything else you spend is on top of it.'
           : ', built from the spending you have categorised, debt minimums included.')
         + ' A month with something unusual in it is not a typical month, so treat this as a starting point and not as your balance.</p>');
     } else if (!g.missing.length) {
@@ -313,7 +313,7 @@
       out.push('<p class="gap-note">This room will not guess at a shortfall. '
         + (g.missing.length === 1 ? 'One figure is missing:' : 'These are missing:') + '</p>');
       out.push('<ul class="gap-missing">' + g.missing.map(function (d) {
-        return '<li>' + esc(d.label) + ' — <a href="' + esc(d.href) + '">'
+        return '<li>' + esc(d.label) + ', <a href="' + esc(d.href) + '">'
           + esc(d.ownerTitle) + ' owns this →</a></li>';
       }).join('') + '</ul>');
       out.push('<p class="gap-note">Everything below works without them. The order to pay in, the calls '
@@ -367,7 +367,7 @@
         + '<p>' + esc(first.why) + '</p></div>');
     }
     out.push('<p class="rule">Who to ring, and what to ask for, in the same order. Nothing here knows your '
-      + 'contract — that is exactly why the answer is a call and not a rule.</p>');
+      + 'contract. That is exactly why the answer is a call and not a rule.</p>');
     var rows = [];
     eachBill(T, function (k) {
       if (!k.callFirst) return;
@@ -399,7 +399,7 @@
   }
 
   /* Paint each section only when its markup actually changes. Three of the
-     four never change at all — they are the table — so after the first
+     four never change at all. They are the table, so after the first
      render this is four string comparisons and no DOM work. */
   var lastHtml = {};
   function put(id, html) {
@@ -424,7 +424,7 @@
           label: 'On the figures already in this app',
           value: null,
           reason: g.missing.length === 1
-            ? 'Not known — ' + g.missing[0].label.toLowerCase() + ' is missing.'
+            ? 'Not known, ' + g.missing[0].label.toLowerCase() + ' is missing.'
             : 'Not known yet, and not guessed.'
         };
       }
@@ -457,18 +457,18 @@
       var rows = [
         { label: 'The order to pay in',
           value: p ? tiers(T).length + ' tiers, ' + count + ' kinds of bill' : 'not loaded',
-          source: p ? 'data/bill_triage.json v' + p.version + ' (' + p.asOf + ') — ' + p.source + ' — ' + p.label : '' },
+          source: p ? 'data/bill_triage.json v' + p.version + ' (' + p.asOf + '), ' + p.source + ', ' + p.label : '' },
         { label: 'How much it varies',
           value: 'By state, and by contract',
           source: p && p.note ? p.note : 'consequences differ by where you live and what you signed' },
         { label: 'Why the order is the order',
           value: 'What you lose, not what it costs',
-          source: 'an unrecoverable loss outranks a larger recoverable one — that single rule is what puts '
+          source: 'an unrecoverable loss outranks a larger recoverable one, that single rule is what puts '
             + 'the rent above the card however much bigger the card bill is (data/bill_triage.json)' },
         { label: 'Coming in, a month',
           value: g.known ? Money.formatCents(g.inCents) + ' after tax' : 'not known, and not guessed',
           source: g.known
-            ? 'gross pay less a flat effective-rate tax estimate, over twelve — the same lookup the rest of '
+            ? 'gross pay less a flat effective-rate tax estimate, over twelve, the same lookup the rest of '
               + 'the app uses, never a second one (engines/cashflow.js, data/effective_tax_rates_2026.json v'
               + g.referenceVersion + ', ' + Math.round(g.effectiveRate * 1000) / 10 + '% effective)'
             : 'add your pay and filing status in Start Here and this fills itself in' },
@@ -483,7 +483,7 @@
         { label: 'What is not counted',
           value: 'Arrears, one-offs, this month’s surprises',
           source: 'this room reads a typical month. Money already owed from previous months, and anything '
-            + 'unusual in this one, are not in either figure — you know those and this app does not' },
+            + 'unusual in this one, are not in either figure, you know those and this app does not' },
         { label: 'What this room stores',
           value: 'Nothing of yours',
           source: 'it owns no field in shared/ownership.js and changes no figure in your household. The only '
@@ -498,13 +498,13 @@
         + 'all keep. This month is about the order things get paid in, and the calls that are still worth '
         + 'making while an account is current.';
       return {
-        betweenJobs: 'Between jobs, the gap is expected rather than surprising — which makes the calls more '
+        betweenJobs: 'Between jobs, the gap is expected rather than surprising, which makes the calls more '
           + 'useful, not less: a hardship programme agreed in the first short month is a different '
           + 'conversation from one asked for in the fourth. ' + common,
         selfEmployed: 'On your own work a short month is a cash-flow event, not a catastrophe, and the same '
           + 'order applies. Set aside tax separately from this; missed tax is not on the list below and '
           + 'behaves differently from every bill that is. ' + common,
-        student: 'Federal student loans are the most flexible debt on the list below — an income-driven '
+        student: 'Federal student loans are the most flexible debt on the list below, an income-driven '
           + 'payment can legitimately be zero, and zero counts as paid. That is the first call, not the last. '
           + common,
         retired: 'On a fixed income the gap is rarely about one month; it is about the draw. Protect the same '

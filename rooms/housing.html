@@ -13,22 +13,22 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md
+  ROOM SPEC, SPEC.md §11. On the frozen template (D-097). DECISIONS.md
   D-101, D-225, D-227, D-280 (the merge). Registry: housing.
 
   THREE READINGS OF THE SAME PLACE.
 
     #rent-or-buy   this place, this rate: the monthly cost of each, the
                    price-to-rent ratio, and the years to a deposit
-    #the-deposit   four ways in, each with its date — 3.5%, 5%, 10% and
-                   20% down — and what each costs a month once you are in
+    #the-deposit   four ways in, each with its date, 3.5%, 5%, 10% and
+                   20% down, and what each costs a month once you are in
     #the-deal      a property priced the way it actually runs: the
                    reserves a listing leaves out, the four ways it pays,
                    and the things that break it
 
   All three are the same building at the same price and rate, asked
   differently: should I buy it, can I get in, and does it pay. Rule 1 of
-  D-229 — and the map named The Deal here the day it arrived on main, which
+  D-229, and the map named The Deal here the day it arrived on main, which
   is what the map is for. The house hack (D-225) already ships inside this
   room and never became a room of its own.
 
@@ -207,7 +207,7 @@
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">The place</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">A place you are weighing, at today's price and today's rate. If Start Here says you pay no rent, leave the rent blank to weigh owning against nothing — or type a rent to weigh it against a place you would rent instead.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">A place you are weighing, at today's price and today's rate. If Start Here says you pay no rent, leave the rent blank to weigh owning against nothing, or type a rent to weigh it against a place you would rent instead.</p>
     <div id="room-inputs"></div>
   </section>
 
@@ -403,7 +403,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -423,8 +423,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -473,7 +473,7 @@
   function noRent(h) { return !!(h && h.meta && h.meta.noRent === true); }
   function grossMonthly(h) { var g = Schema.grossAnnualIncomeCents(h); return Money.isOk(g) && g.value > 0 ? g.value / MONTHS : null; }
 
-  /* The rent this room would propose: 30% of gross a month — never when
+  /* The rent this room would propose: 30% of gross a month, never when
      Start Here says there is no rent to pay. */
   function rentGuess(h) {
     if (noRent(h)) return null;
@@ -505,13 +505,13 @@
     var share = Money.formatRate(Math.abs(L.moves['expenses.needs.accommodation']), { decimals: 0 });
     var src = 'data/levers.json v' + T.levers.version + ' (' + (T.levers.confidence || 'unverified') + ')';
     if (!SLAF.Levers.applies('househack', h)) {
-      return [{ label: 'The house hack', value: 'housing down ' + share + ' — not weighed yet', source: 'a lever for a place you own or a price you have typed above; ' + src }];
+      return [{ label: 'The house hack', value: 'housing down ' + share + ', not weighed yet', source: 'a lever for a place you own or a price you have typed above; ' + src }];
     }
     var gain = SLAF.Levers.monthlyGainCents('househack', h);
     var hourly = SLAF.Levers.impliedHourlyCents('househack', h);
     return [{ label: 'The house hack', value: 'housing down ' + share + (Money.isOk(gain) ? ', about ' + Money.formatCents(gain.value) + ' a month on your line' : ''),
       source: (Money.isOk(hourly) ? 'about ' + Money.formatCents(hourly.value, { decimals: 2 }) + ' an hour for the ' + L.hoursPerWeek + ' hours a week it takes; ' : Money.isOk(gain) ? '' : gain.reason + ' ')
-        + 'a housemate, a smaller place or a cheaper town — ' + src }];
+        + 'a housemate, a smaller place or a cheaper town, ' + src }];
   }
 
   Room.mount({
@@ -545,7 +545,7 @@
       if (r.yearsReason && !r.neverAtThisPace) notes.push(r.yearsReason);
       if (r.cashAfterCents !== null) {
         notes.push('After the down payment and ' + money(r.closingCents) + ' of closing costs, cash would be ' + money(r.cashAfterCents)
-          + (r.floorCents !== null ? (r.belowFloor ? ' — under the ' + r.floorMonths + '-month floor of ' + money(r.floorCents) : ', above the ' + r.floorMonths + '-month floor of ' + money(r.floorCents)) : ''));
+          + (r.floorCents !== null ? (r.belowFloor ? ', under the ' + r.floorMonths + '-month floor of ' + money(r.floorCents) : ', above the ' + r.floorMonths + '-month floor of ' + money(r.floorCents)) : ''));
       }
       if (r.principalCents === 0) notes.push('With the whole price down there is no mortgage: owning is tax, insurance and upkeep alone');
       if (notes.length) sub += '. ' + notes.join('. ') + '.';
@@ -615,7 +615,7 @@
 
     assumptions: function (h, T) {
       var c = T.housingConventions || {}, m = T.mortgageRates || {}, ptr = T.priceToRent || {}, b = T.ratioBenchmarks || {};
-      var src = 'data/housing_conventions.json v' + c.version + ' — ' + (c.confidence || 'unverified');
+      var src = 'data/housing_conventions.json v' + c.version + ', ' + (c.confidence || 'unverified');
       var band = b.bands && b.bands.housingRatio;
       var ptrBands = ptr.bands || {};
       var pct = function (v) { return Money.formatRate(v, { decimals: 1 }); };
@@ -629,23 +629,23 @@
         { label: 'Insurance', value: pct(c.insuranceRate) + ' of price a year', source: 'a national rule of thumb (' + src + ')' },
         { label: 'Maintenance', value: pct(c.maintenanceRate) + ' of price a year', source: 'the "1% rule" (' + src + ')' },
         { label: 'Closing costs', value: pct(c.closingCostRate) + ' of price', source: 'a national rule of thumb (' + src + ')' },
-        { label: 'The term', value: Money.isEntered(c.termMonths) ? (c.termMonths / MONTHS) + ' years, fixed' : '—', source: 'the 30-year convention (' + src + ')' },
-        { label: 'The rate proposed', value: Money.formatRate(m.thirtyYearFixed, { decimals: 2 }), source: 'the 30-year average as of ' + m.asOf + ' — data/mortgage_rates.json v' + m.version + ' (' + (m.confidence || 'unverified') + '). Rates move weekly; yours is the one to type.' },
+        { label: 'The term', value: Money.isEntered(c.termMonths) ? (c.termMonths / MONTHS) + ' years, fixed' : 'not yet', source: 'the 30-year convention (' + src + ')' },
+        { label: 'The rate proposed', value: Money.formatRate(m.thirtyYearFixed, { decimals: 2 }), source: 'the 30-year average as of ' + m.asOf + ', data/mortgage_rates.json v' + m.version + ' (' + (m.confidence || 'unverified') + '). Rates move weekly; yours is the one to type.' },
         { label: 'Price-to-rent bands', value: 'under ' + ptrBands.buyingFavouredBelow + ' buying favoured, over ' + ptrBands.rentingFavouredAbove + ' renting favoured', source: 'data/price_to_rent.json v' + ptr.version + ' (' + (ptr.confidence || 'unverified') + '); the price proposed is ' + ptr.ratio + '× a year of rent' },
-        { label: 'The housing ratio', value: band ? 'good to ' + Money.formatRate(band.good, { decimals: 0 }) + ', watch to ' + Money.formatRate(band.warn, { decimals: 0 }) : '—', source: 'the 28% front-end rule — data/ratio_benchmarks.json v' + b.version + ' (' + (b.confidence || 'convention') + '), the band the Ratios room reads' },
+        { label: 'The housing ratio', value: band ? 'good to ' + Money.formatRate(band.good, { decimals: 0 }) + ', watch to ' + Money.formatRate(band.warn, { decimals: 0 }) : 'not yet', source: 'the 28% front-end rule, data/ratio_benchmarks.json v' + b.version + ' (' + (b.confidence || 'convention') + '), the band the Ratios room reads' },
         { label: 'The down payment', value: '20% proposed', source: 'the 20% convention: the share at which a lender stops asking for mortgage insurance' },
-        { label: 'The cash floor', value: c.guardrails ? c.guardrails.emergencyFundMonths + ' months of spending' : '—', source: 'the emergency-fund floor after closing (' + src + ')' },
+        { label: 'The cash floor', value: c.guardrails ? c.guardrails.emergencyFundMonths + ' months of spending' : 'not yet', source: 'the emergency-fund floor after closing (' + src + ')' },
         { label: 'Years to the down payment', value: 'shortfall ÷ a year of savings', source: 'a year of savings is the lens’s basis (engines/tier0.js savingsRate, the match counted when known); no growth on the cash, no rise in the price' },
-        { label: 'Prices and rents', value: 'held still', source: 'the price does not change and the rent does not rise — this is one month, weighed today, not a forecast' }
+        { label: 'Prices and rents', value: 'held still', source: 'the price does not change and the rent does not rise. This is one month, weighed today, not a forecast' }
       ].concat(leverRow(h, T));
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the question is usually whether the payment fits — the 28% rule is a lender’s rule as much as a planner’s — and whether the down payment leaves a cushion behind it. Owning is not a cost you can cut in a bad month; the unrecoverable part is what you are really paying for the roof.',
+        employed: 'Employed, the question is usually whether the payment fits, the 28% rule is a lender’s rule as much as a planner’s, and whether the down payment leaves a cushion behind it. Owning is not a cost you can cut in a bad month; the unrecoverable part is what you are really paying for the roof.',
         selfEmployed: 'Self-employed, the arithmetic is the same and the lender is not: expect to show two years of tax returns, and expect the rate proposed here to be the optimistic end. A down payment that empties the cushion is a bigger risk when the income is your own.',
         mixed: 'With a job and your own work, the job’s pay is what a lender counts first and the own-work income is what they discount. Size the payment on the pay you can prove, and treat the rest as what pays the maintenance line.',
-        student: 'A student’s stage almost always favours renting: the price-to-rent ratio is only half of it — closing and selling costs together run near a tenth of the price, and a move in two years eats that whole. The down-payment line is the one to watch; the rest can wait.',
+        student: 'A student’s stage almost always favours renting: the price-to-rent ratio is only half of it, closing and selling costs together run near a tenth of the price, and a move in two years eats that whole. The down-payment line is the one to watch; the rest can wait.',
         retired: 'Retired, a paid-off house is the "no rent" answer in Start Here, and this room then weighs a new place against nothing. Owning still costs tax, insurance and upkeep every month; whether to carry a mortgage at all is a decumulation question as much as a housing one.',
         betweenJobs: 'Between jobs is not the moment to buy, said plainly: a lender wants income to count, and the cushion is what the runway is made of. This room is for looking at what the place would cost once the pay is back.'
       }[situation] || 'A place to rent and a place to buy each cost something every month; only part of what owning costs buys you anything. This room puts the two side by side.';
@@ -893,7 +893,7 @@
     paint();
   }).catch(function (err) {
     var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
-    n.textContent = 'Couldn’t load data/housing_conventions.json (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+    n.textContent = 'Couldn’t load data/housing_conventions.json (' + err.message + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>

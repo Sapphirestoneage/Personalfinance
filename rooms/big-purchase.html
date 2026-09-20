@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>Big Purchase · SPARKS</title>
-<meta name="description" content="One thing you are eyeing, priced in hours of your life and months of financial independence — and the same arithmetic run over every thing you want, for the monthly income the whole list would take."/>
+<meta name="description" content="One thing you are eyeing, priced in hours of your life and months of financial independence, and the same arithmetic run over every thing you want, for the monthly income the whole list would take."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097), twice, which is
+  ROOM SPEC, SPEC.md §11. On the frozen template (D-097), twice, which is
   why the dream reading carries a prefix and a root (D-265). DECISIONS.md
   D-101, D-270 (the merge). Registry: big-purchase.
 
@@ -96,7 +96,7 @@
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">The purchase</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave the months blank if there is no date yet — it is priced as if today. Leave the rate blank if you would pay cash; type 0 for a 0% loan.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave the months blank if there is no date yet. It is priced as if today. Leave the rate blank if you would pay cash; type 0 for a 0% loan.</p>
     <div id="room-inputs"></div>
   </section>
 
@@ -109,7 +109,7 @@
   <details class="room-drawer" id="assumptions">
     <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
     <div class="room-assumptions-body" id="room-assumptions"></div>
-    <p class="room-drawer-links">The small rules this leans on — cost per use, the 20/3/8 car rule, the rule of five — live in <a href="quick-math.html">Quick Math →</a>. The wage behind the hours is set in <a href="real-hourly-wage.html">Real Hourly Wage →</a>.</p>
+    <p class="room-drawer-links">The small rules this leans on, cost per use, the 20/3/8 car rule, the rule of five, live in <a href="quick-math.html">Quick Math →</a>. The wage behind the hours is set in <a href="real-hourly-wage.html">Real Hourly Wage →</a>.</p>
   </details>
 
   <p class="room-why" id="room-why" hidden></p>
@@ -141,7 +141,7 @@
 
   <section class="slaf-card" id="dl-inputs" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">The dreams</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Price each one as what it would cost a month — a trip saved for over the year, a course by its instalments, a place by its rent. Leave a slot blank and it is simply not a dream yet, not a dream of nothing.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Price each one as what it would cost a month, a trip saved for over the year, a course by its instalments, a place by its rent. Leave a slot blank and it is simply not a dream yet, not a dream of nothing.</p>
     <div id="dl-room-inputs"></div>
   </section>
 
@@ -267,12 +267,12 @@
     var bits = ['<strong>' + Money.formatCents(r.priceCents) + '</strong>' + (r.kind ? ' for ' + esc(kindName(r.kind)) : '')];
     if (r.hours !== null && r.fiDisplay) bits.push(esc(r.fiDisplay));
     if (r.cashAfterCents !== null && r.floorCents !== null) {
-      var after = r.financed ? 'cash stays at <strong>' + Money.formatCents(r.cashAfterCents) + '</strong> — nothing leaves up front'
+      var after = r.financed ? 'cash stays at <strong>' + Money.formatCents(r.cashAfterCents) + '</strong>. Nothing leaves up front'
         : 'cash after: <strong>' + Money.formatCents(r.cashAfterCents) + '</strong>, ' + (r.cashShortOfFloor ? 'under' : 'above') + ' the ' + r.cushion.floorMonths + '-month floor of ' + Money.formatCents(r.floorCents);
       bits.push(after);
       if (r.affordToday) bits.push('you can afford it today and stay above the floor');
       else if (r.monthlySavingCents !== null) bits.push('or <strong>' + Money.formatCents(r.monthlySavingCents) + ' a month</strong> for ' + r.monthsAway + ' months to have it without dipping under');
-      else if (!r.financed) bits.push(Money.formatCents(r.needCents) + ' more than the cash above the floor — add months until you buy to see the monthly');
+      else if (!r.financed) bits.push(Money.formatCents(r.needCents) + ' more than the cash above the floor, add months until you buy to see the monthly');
     } else if (r.cashReason || r.spendReason) {
       bits.push(esc(r.cashReason || r.spendReason));
     }
@@ -354,8 +354,8 @@
       var a = Schema.resolveAssumptions(h);
       return [
         { label: 'The cushion', value: Purchase.CUSHION.floorMonths + ' months of spending is the floor, ' + Purchase.CUSHION.fullMonths + ' the full fund', source: 'the 3–6 month convention in mainstream guidance and the FOO’s emergency-fund rung; data/liquidity_benchmarks.json draws the same bands (convention)' },
-        { label: 'Finance term', value: Purchase.termFor(p.label) + ' months', source: (p.label === 'car' ? 'a car loan runs about five years' : 'a personal loan or store credit runs about three') + ' — an assumption this room makes, not a quote (convention). Interest is the level payment × the term, less the price, from engines/projection.js' },
-        { label: 'When it is paid', value: !Money.isEntered(p.monthsAway) ? 'no date yet — priced as if today' : p.monthsAway === 0 ? 'today, in one go' : 'in ' + p.monthsAway + ' months, saved from the cash above the floor', source: 'the monthly is the shortfall ÷ the months, rounded up to the cent; paid in cash means the whole price leaves at once' },
+        { label: 'Finance term', value: Purchase.termFor(p.label) + ' months', source: (p.label === 'car' ? 'a car loan runs about five years' : 'a personal loan or store credit runs about three') + ', an assumption this room makes, not a quote (convention). Interest is the level payment × the term, less the price, from engines/projection.js' },
+        { label: 'When it is paid', value: !Money.isEntered(p.monthsAway) ? 'no date yet, priced as if today' : p.monthsAway === 0 ? 'today, in one go' : 'in ' + p.monthsAway + ' months, saved from the cash above the floor', source: 'the monthly is the shortfall ÷ the months, rounded up to the cent; paid in cash means the whole price leaves at once' },
         { label: 'Hours of life', value: Money.isOk(r) && r.wageCents !== null ? Money.formatCents(r.wageCents, { decimals: 2 }) + ' an hour, your real rate' : 'no wage in this situation', source: 'Real Hourly Wage: pay after tax and the costs of working, over every hour the job takes (engines/hourly.js)' },
         { label: 'Real return, for the FI lens', value: Money.formatRate(a.returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
       ];
@@ -364,11 +364,11 @@
     why: function (h, T, situation) {
       return {
         employed: 'With a paycheque the question is rarely whether you can pay for it; it is how many hours it takes and how far the floor drops. This prices both, and says whether the cash after is still three months of spending.',
-        selfEmployed: 'Your own work has slow months, and the floor is what carries you through them. A purchase that leaves the cash under three months of spending is a bet that the next quarter is a good one — this says how big the bet is.',
+        selfEmployed: 'Your own work has slow months, and the floor is what carries you through them. A purchase that leaves the cash under three months of spending is a bet that the next quarter is a good one. This says how big the bet is.',
         mixed: 'Two kinds of income, one floor. The job steadies the cushion; the own-work side is what a slow month tests. Price the thing in hours here, and keep the cash after above the floor.',
         student: 'At this stage the hours lens is the whole point: a price in hours of a part-time job is the truest reading of what a thing costs. The floor still matters, but the hours are the number to sit with.',
-        retired: 'Retired, the purchase comes from income or from the reserve. There is no wage to read it in hours, so the number is months of FI pushed or months of spending — and the floor is the reserve that has to last.',
-        betweenJobs: 'Between jobs, the cash is the runway, and a purchase from it is days of runway gone. Said plainly: unless it is the thing that gets the next job, it waits — or it comes from somewhere other than the runway.'
+        retired: 'Retired, the purchase comes from income or from the reserve. There is no wage to read it in hours, so the number is months of FI pushed or months of spending, and the floor is the reserve that has to last.',
+        betweenJobs: 'Between jobs, the cash is the runway, and a purchase from it is days of runway gone. Said plainly: unless it is the thing that gets the next job, it waits, or it comes from somewhere other than the runway.'
       }[situation] || 'Any purchase costs money, hours and months of FI at once. This room prices all three and shows what the cash looks like after.';
     },
 
@@ -403,7 +403,7 @@
       write: function (v) { writeSlot(i, { monthlyCents: v === null || v <= 0 ? null : v }); } };
   }
   function kindInput(i) {
-    return { ctl: 'kind' + i, label: 'Dream ' + i + ' is', kind: 'select', options: [['', '—']].concat(Engine.KINDS),
+    return { ctl: 'kind' + i, label: 'Dream ' + i + ' is', kind: 'select', options: [['', 'not yet']].concat(Engine.KINDS),
       read: function (h) { var d = Engine.slot(h, i); return d ? d.label : null; },
       write: function (v) { writeSlot(i, { label: v }); } };
   }
@@ -429,10 +429,10 @@
       parts.push('spending ' + Money.formatCents(t.expensesCents));
       parts.push('× ' + t.bufferMultiplier);
       if (Money.isOk(g)) parts.push('you take home ' + Money.formatCents(g.takeHomeMonthlyCents) + ': <strong>' + Money.formatCents(Math.abs(g.value)) + (g.short ? ' short' : ' to spare') + '</strong>');
-      else parts.push('take-home is not in yet — ' + esc(g.reason));
+      else parts.push('take-home is not in yet, ' + esc(g.reason));
       var sub = parts.join(' · ');
       if (Money.isOk(hrs)) sub += '. <strong>' + hours(hrs.value) + ' hours a week</strong> at ' + perHour(hrs.wageCents) + ' (' + wageLink() + '), ' + hours(hrs.hoursNow) + ' now';
-      else sub += '. To see it in hours a week: ' + esc(hrs.reason) + ' — in ' + wageLink();
+      else sub += '. To see it in hours a week: ' + esc(hrs.reason) + ', in ' + wageLink();
       return { label: 'Target monthly income', value: Money.formatCents(p.value), sub: sub, zone: p.zone, result: p };
     },
 
@@ -469,20 +469,20 @@
       var d = T.dreamline || {}, tax = T.effectiveTaxRates || {};
       var p = Engine.picture(h, T);
       var hrs = Money.isOk(p) ? p.hours : null, g = Money.isOk(p) ? p.gap : null;
-      var tableSource = 'data/dreamline.json v' + (d.version || '?') + ' — ' + (d.source || '') + ' (' + (d.confidence || 'convention') + ')';
+      var tableSource = 'data/dreamline.json v' + (d.version || '?') + ', ' + (d.source || '') + ' (' + (d.confidence || 'convention') + ')';
       return [
-        { label: 'The pad', value: '× ' + Engine.buffer(T), source: tableSource + (d.confidenceNote ? ' — ' + d.confidenceNote : '') },
+        { label: 'The pad', value: '× ' + Engine.buffer(T), source: tableSource + (d.confidenceNote ? ', ' + d.confidenceNote : '') },
         { label: 'The horizon', value: Money.formatMonths(Engine.horizonMonths(T)), source: 'the timeline the exercise is written for; each dream is also shown as what it costs over it (convention, data/dreamline.json)' },
-        { label: 'Real hourly wage', value: hrs && Money.isOk(hrs) ? perHour(hrs.wageCents) + ', ' + hours(hrs.hoursNow) + ' h a week now' : 'not in yet' + (hrs && hrs.reason ? ' — ' + hrs.reason : ''), source: 'Real Hourly Wage, with its own assumptions: the flat tax estimate, weeks a year, and every hour the job takes counted as work' },
-        { label: 'Take-home', value: g && Money.isOk(g) ? Money.formatCents(g.takeHomeMonthlyCents) + ' a month at ' + Money.formatRate(g.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + (tax.version || '?') + ' — ' + (tax.source || '') + ' (' + (tax.confidence || '') + ')' },
+        { label: 'Real hourly wage', value: hrs && Money.isOk(hrs) ? perHour(hrs.wageCents) + ', ' + hours(hrs.hoursNow) + ' h a week now' : 'not in yet' + (hrs && hrs.reason ? ', ' + hrs.reason : ''), source: 'Real Hourly Wage, with its own assumptions: the flat tax estimate, weeks a year, and every hour the job takes counted as work' },
+        { label: 'Take-home', value: g && Money.isOk(g) ? Money.formatCents(g.takeHomeMonthlyCents) + ' a month at ' + Money.formatRate(g.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + (tax.version || '?') + ', ' + (tax.source || '') + ' (' + (tax.confidence || '') + ')' },
         { label: 'Weeks in a month', value: String(Math.round(Engine.WEEKS_PER_MONTH * 100) / 100), source: '52 ÷ 12: a monthly figure over a weekly rate (convention)' }
       ];
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the salary is fixed and the dreams feel like a someday. Priced a month and turned into hours a week at the rate the job really pays, a dream becomes a number of Tuesdays — and the gap between the target and what you take home is the size of the raise, the side income, or the cut in spending that closes it.',
-        selfEmployed: 'Self-employed, the target monthly income is the number to set your rate and your hours against. Priced this way, a dream is so many billable hours a week at what you actually keep — and the pad is the slack a variable income needs to fund a dream without missing a month.',
+        employed: 'Employed, the salary is fixed and the dreams feel like a someday. Priced a month and turned into hours a week at the rate the job really pays, a dream becomes a number of Tuesdays, and the gap between the target and what you take home is the size of the raise, the side income, or the cut in spending that closes it.',
+        selfEmployed: 'Self-employed, the target monthly income is the number to set your rate and your hours against. Priced this way, a dream is so many billable hours a week at what you actually keep, and the pad is the slack a variable income needs to fund a dream without missing a month.',
         mixed: 'With a job and your own work, the target is what the two together need to bring in a month. The hours here are at the job’s real rate; if your own work keeps more per hour, the dreams cost fewer of them, and that is a reason to lean that way.',
         student: 'At a student’s stage the dreams are cheap to price and dear in hours: a part-time rate turns a modest dream into a large slice of the week. That is the honest arithmetic of the next few years, and a reason to price the dream now and time it for later.',
         betweenJobs: '', retired: ''

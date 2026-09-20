@@ -16705,6 +16705,46 @@ new fields and the four value states; the migration keeps every Ledger row.
 `node tools/context/build.js --check`. Benchmark figures are as quoted in the
 prompt, unverified against their sources, and the file says so.
 
+## D-321 — No em dash anywhere the app can show one, and the planets get a screen
+
+**Why.** The owner audited `rooms/ledger.html#arrangements` and saw nothing
+new, which was true: D-320 was the Solar System's data step and adds no
+screen, and the arrangements view is a layout picker nothing recent touched.
+They asked for two things: replace every em dash, and a screen for the
+planets with the bands, the levels inside them, and what is already done.
+
+**Decision.** The em dash is gone from everything that ships. The
+not-entered placeholder is the words the spec asks for: `Money.NOT_YET`
+is "not yet" and `EM_DASH` is no more. In prose the dash became the
+punctuation it stood in for, a comma before a conjunction or an aside and a
+full stop before an independent clause, across 305 app files and the D&D
+tool. `test/run.js` lints every shipped file so it stays gone. DECISIONS.md,
+`docs/` and `tools/` keep theirs: the log's heading grammar is a parsed
+format, not copy, and its reader still accepts the old separator.
+
+`shared/solar.js` reads data/levels.json against a household: the situation
+gate, whether each level is answered, each planet's bands and the one it is
+working on, which rings are cleared on all six, and what to do next. It
+computes no money and writes nothing. The Ledger gains a seventh hat,
+Planets (`#planets`): six planets down the side, the ten bands across, the
+three levels of a band as three marks in every cell, and a tap opens a
+planet to its bands with every level named, its state, and a link to the
+room that owns the number.
+
+**Replaces or removes.** Nothing yet. This is the list view the Sky's own
+gate (B12) requires to exist and agree with it; the drawn Sky replaces the
+Ledger's 45-cell target when it lands, per docs/SOLAR-SYSTEM.md 0.4.
+
+**Stored shape.** No change. Levels whose fields are the app's own read as
+answered the day this ships, which is the migration the spec asks for; the
+Solar System's own fields will sit under `levels.<planet>.<key>` in step 3.
+
+**Verified.** `node test/run.js` (34,675), `node test/solar.js` (5,030),
+`node dnd/test/run.js`, export, spreadsheet, lane 2 and the six browser
+gates. The Planets view at 390px with the example numbers: 17 of 161
+answered, six rows of ten bands, Assets opened to its bands and levels,
+clean console.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -4,7 +4,7 @@
   "asOf": "2026-09-06",
   "source": "Depreciation curves follow the shape every major used-car guide publishes: steepest in year one, flattening after year five. The ownership-cost shares follow the AAA 'Your Driving Costs' breakdown. The 20/3/8 guidance is a lender-and-counsellor convention, not a law.",
   "confidence": "convention",
-  "confidenceNote": "Every figure here is a shape, not a prediction about a particular car. Depreciation depends on the model, the mileage and the year you sell; insurance depends on you. Treat the totals as an order of magnitude — the point is that the sticker price is not the cost.",
+  "confidenceNote": "Every figure here is a shape, not a prediction about a particular car. Depreciation depends on the model, the mileage and the year you sell; insurance depends on you. Treat the totals as an order of magnitude. The point is that the sticker price is not the cost.",
   "note": "`retainedShare` is the fraction of the purchase price a typical car is still worth after that many years. The gap between two rows is the depreciation you paid to own it over that stretch.",
   "depreciation": [
     { "year": 0, "retainedShare": 1.00, "note": "What you paid." },
@@ -31,7 +31,7 @@
     "maxShareOfGrossMonthly": 0.08,
     "what": "Put 20% down, borrow for no more than three years, and keep the payment under 8% of what you earn in a month before tax.",
     "why": "It is not a rule about cars. It is a test of whether the car fits the life: if you cannot pass it, the car is more expensive than the household can carry, whatever the monthly figure says.",
-    "note": "Seven- and eight-year loans are now ordinary. They pass no version of this test — they make the monthly figure small by keeping you in debt past the point the car is worth what you owe."
+    "note": "Seven- and eight-year loans are now ordinary. They pass no version of this test, they make the monthly figure small by keeping you in debt past the point the car is worth what you owe."
   },
   "underwater": {
     "what": "Owing more than the car is worth",
@@ -40,7 +40,7 @@
   },
   "leaseVsBuy": [
     { "id": "lease", "label": "Leasing", "suits": "A short, known period; a fixed monthly cost; no interest in what it is worth at the end.", "costs": "You pay the steepest part of the depreciation curve and own nothing at the end of it. Mileage caps and wear charges are real money." },
-    { "id": "buyNew", "label": "Buying new", "suits": "Keeping a car a long time — past year seven the early depreciation stops mattering much.", "costs": "You buy the whole first-year drop, which is the most expensive year a car ever has." },
+    { "id": "buyNew", "label": "Buying new", "suits": "Keeping a car a long time, past year seven the early depreciation stops mattering much.", "costs": "You buy the whole first-year drop, which is the most expensive year a car ever has." },
     { "id": "buyUsed", "label": "Buying at one to three years old", "suits": "Almost everyone, on the arithmetic.", "costs": "Someone else has taken the first-year hit. You take a shorter warranty and an unknown history, which an inspection is for." }
   ]
 }

@@ -13,14 +13,14 @@
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  REFERENCE PAGE — rulebook sections 3B, 8H, 9, 9A, 9B.
+  REFERENCE PAGE, rulebook sections 3B, 8H, 9, 9A, 9B.
 
   1. READS   nothing from the household. This room is pure reference and takes
-             no input at all — it is the rulebook's back half, rendered.
+             no input at all. It is the rulebook's back half, rendered.
   2. WRITES  nothing. It never touches the profile.
   3. CALLS   no engine. Everything on the page comes straight out of
              data/dnd_rules.json; there is no logic to get wrong here yet.
-  4. EMPTY   not possible — the tables are always fully populated. If the data
+  4. EMPTY   not possible. The tables are always fully populated. If the data
              files fail to load the page says so rather than rendering blank.
   5. CONFIG  data/dnd_rules.json.
 
@@ -28,7 +28,7 @@
   current HP and AC, not Level, and that check is deliberately NOT built yet:
   it would need the character sheet's HP to be more than a snapshot. When it is
   built it hooks in here, reading Character.sheet().currentHp / .armorClass.
-  Monster damage is denominated in weeks, the same unit as HP — DD-001.
+  Monster damage is denominated in weeks, the same unit as HP, DD-001.
 
   This page has NO form controls of any kind and no stored state. It renders
   once, from data, and never rebuilds.
@@ -36,7 +36,7 @@
 <style>
   /* Dungeons & Dividends keeps the characterful faces the shared theme gave
      up in D-154. A game wants a display serif; a financial statement does
-     not. theme.css stays byte-identical to the SPARKS copy — this override
+     not. theme.css stays byte-identical to the SPARKS copy, this override
      lives here, in the pages that want it. */
   :root {
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
@@ -83,7 +83,7 @@
   <div class="skin-bar" id="skin-bar"></div>
   <a class="room-back" href="index.html">← Your character</a>
   <h1>The Bestiary</h1>
-  <p class="room-lede">Everything in Dungeons &amp; Dividends that can happen <em>to</em> you, and the three feat trees that exist to stop it. Reference only — nothing here reads your numbers yet.</p>
+  <p class="room-lede">Everything in Dungeons &amp; Dividends that can happen <em>to</em> you, and the three feat trees that exist to stop it. Reference only, nothing here reads your numbers yet.</p>
   <nav class="toc">
     <a href="#monsters">Monster Manual</a>
     <a href="#hazards">Hazards</a>
@@ -100,7 +100,7 @@
 
   <section id="monsters">
     <h2>The Monster Manual</h2>
-    <p class="sec-note">Monsters are people and institutions whose incentives don't run with yours — whether or not they mean you harm. Some are predators. Some are entirely well-meaning and still bad for you, which is the harder category to see coming. A creature that <b>attacks AC</b> is a bill or a lawsuit — it comes at your insurance, and insurance is what stops it. One that forces a <b>save</b> is a pitch or a panic — it goes around your cover and targets your judgment, because no policy stops you buying a timeshare. Names marked <span class="ext">+</span> were written for this build; the rest came from the rulebook as supplied.</p>
+    <p class="sec-note">Monsters are people and institutions whose incentives don't run with yours, whether or not they mean you harm. Some are predators. Some are entirely well-meaning and still bad for you, which is the harder category to see coming. A creature that <b>attacks AC</b> is a bill or a lawsuit. It comes at your insurance, and insurance is what stops it. One that forces a <b>save</b> is a pitch or a panic. It goes around your cover and targets your judgment, because no policy stops you buying a timeshare. Names marked <span class="ext">+</span> were written for this build; the rest came from the rulebook as supplied.</p>
     <div class="tablewrap"><table><thead><tr>
       <th>Monster</th><th>CR</th><th>Type</th><th>Save</th><th>Damage</th><th>Notes</th>
     </tr></thead><tbody id="monster-rows"></tbody></table></div>
@@ -108,7 +108,7 @@
 
   <section id="hazards">
     <h2>Hazards</h2>
-    <p class="sec-note">Hazards aren't people — they're events, closer to weather than to an adversary. Nobody's incentives are against you here. They sort by where they originate: the environment around you, your relationships, or your own body. Names marked <span class="ext">+</span> were written for this build.</p>
+    <p class="sec-note">Hazards aren't people, they're events, closer to weather than to an adversary. Nobody's incentives are against you here. They sort by where they originate: the environment around you, your relationships, or your own body. Names marked <span class="ext">+</span> were written for this build.</p>
     <div class="tablewrap"><table><thead><tr>
       <th>Hazard</th><th>Category</th><th>CR</th><th>Save</th><th>Damage</th><th>Notes</th>
     </tr></thead><tbody id="hazard-rows"></tbody></table></div>
@@ -130,7 +130,7 @@
 
   <section id="statuses">
     <h2>Status Effects</h2>
-    <p class="sec-note">Conditions, not stat changes. A Disabled character's INT, WIS and CHA are untouched — what changes is which actions, feats and multiclass options are available, the same way being Charmed doesn't lower your Wisdom, it just stops you acting on it freely.</p>
+    <p class="sec-note">Conditions, not stat changes. A Disabled character's INT, WIS and CHA are untouched, what changes is which actions, feats and multiclass options are available, the same way being Charmed doesn't lower your Wisdom, it just stops you acting on it freely.</p>
     <div class="tablewrap"><table><thead><tr>
       <th>Status</th><th>Trigger</th><th>Grants</th><th>Restricts</th><th>Duration</th>
     </tr></thead><tbody id="status-rows"></tbody></table></div>
@@ -145,7 +145,7 @@
   <section id="attribution">
     <h2>Licence &amp; attribution</h2>
     <p class="sec-note">This work includes material from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.</p>
-    <p class="sec-note">What is borrowed is mechanics — the 8–20 scale and its modifier
+    <p class="sec-note">What is borrowed is mechanics, the 8–20 scale and its modifier
        formula, proficiency bonus, saving throws, hit dice, death saves, the alignment grid,
        point-buy costs and 4d6-drop-lowest. No stat block, artwork, creature or setting name
        is reproduced. Every monster below is either invented here or a public-domain figure
@@ -173,7 +173,7 @@
   /* A creature written for this build is marked, in the data and on the page.
      The rulebook is someone else's work and the extension is not, so a reader
      must be able to tell which is which without opening the JSON. Escape the
-     name first, then add the marker — never the other way round. */
+     name first, then add the marker, never the other way round. */
   function nameCell(c) {
     return '<td class="mname">' + esc(c.name)
       + (c.origin === 'extension' ? ' <span class="ext" title="Written for this build, not in the rulebook">+</span>' : '')
@@ -202,7 +202,7 @@
     el('guild-neutral').textContent = g.neutralGround;
     el('guild-standing').textContent = g.standing;
     el('guild-allies').innerHTML = g.allies.map(function (a) {
-      return '<li><b>' + esc(a.name) + '</b> — ' + esc(a.detail) + '</li>';
+      return '<li><b>' + esc(a.name) + '</b>, ' + esc(a.detail) + '</li>';
     }).join('');
 
     el('status-rows').innerHTML = rules.statusEffects.map(function (s) {
@@ -216,7 +216,7 @@
         + (t.formerly ? '<div class="formerly">formerly ' + esc(t.formerly) + '</div>' : '')
         + '<p class="sec-note">' + esc(t.blurb) + '</p><ul>'
         + t.feats.map(function (f) {
-            return '<li><b>' + esc(f.name) + '</b> — ' + esc(f.detail) + '</li>';
+            return '<li><b>' + esc(f.name) + '</b>, ' + esc(f.detail) + '</li>';
           }).join('')
         + '</ul></div>';
     }).join('');

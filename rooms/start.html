@@ -13,18 +13,18 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. THE ONE-PAGER. DECISIONS.md D-094, D-095.
+  ROOM SPEC, SPEC.md §11. THE ONE-PAGER. DECISIONS.md D-094, D-095.
 
   1. READS   nothing it does not own, except the states list, the median
              figures in data/onepager_defaults.json, the milestone multiples,
-             the most common match and the state benefit caps — all to guess
+             the most common match and the state benefit caps, all to guess
              with, never to store.
   2. WRITES  It OWNS the household's facts: who is here and how they are
              paid, born and where, filing, what goes out, cash and the
              deductible, investments, the 401(k) match and contribution, what
              is owed, between-jobs facts, who depends on you, a one-off
              coming, a second job.
-  3. SHOWS   one gate — what's your situation — and then only the cards that
+  3. SHOWS   one gate, what's your situation, and then only the cards that
              exist for that answer (shared/gate.js decides; never more than
              ten). A card that does not exist is not in the page at all.
              Every box is filled with a guess shown as one, and every stored
@@ -36,7 +36,7 @@
   5. DEMO    the dashboard's "see it with example numbers" loads the demo
              persona; this page has no example button of its own.
 
-  LIVE-FORM: built once — every card and control is built from Gate.CARDS
+  LIVE-FORM: built once, every card and control is built from Gate.CARDS
   the first time the page loads and only ever has its .value set, never while
   it has focus. A card that stops applying is detached from the page (not
   hidden) and re-attached when it applies again; that only ever happens on
@@ -91,12 +91,12 @@
   .card .q-help { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0 0 var(--space-3); }
   /* minmax(0, 1fr), not 1fr: a grid track's implicit minimum is its content,
      so a cell holding a select with long option text refuses to shrink and
-     pushes the whole grid past its container. That is what made this page —
-     the first one anyone opens — scroll 142px sideways at 390px, with no
+     pushes the whole grid past its container. That is what made this page, 
+     the first one anyone opens, scroll 142px sideways at 390px, with no
      single element visibly out of place. D-146. */
   .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); align-items: start; }
   /* Three lines, not the usual two (D-249). A label in this room can carry
-     a provenance chip — "from The Dashboard", "you entered" — and a
+     a provenance chip, "from The Dashboard", "you entered", and a
      label that has one stands a line taller than a label that does not,
      which drops its own box 16px below its neighbour's. Reserving the
      chip's line in every label in the row keeps the boxes level whether
@@ -184,7 +184,7 @@
   </details>
 
   <details class="drawer import" id="q-import">
-    <summary>Paste numbers in <small>A line each — “salary 62,000”, “checking $4,120”, “401k 31k”. Or a CSV. One undo takes the whole import back.</small></summary>
+    <summary>Paste numbers in <small>A line each, “salary 62,000”, “checking $4,120”, “401k 31k”. Or a CSV. One undo takes the whole import back.</small></summary>
     <textarea id="import-text" aria-label="Numbers to import, one a line" placeholder="salary 62,000&#10;rent 1,500/mo&#10;checking 4,120&#10;401k 31k&#10;credit card 2,300"></textarea>
     <div class="choices" style="margin-top:var(--space-2)">
       <button type="button" class="slaf-btn slaf-btn--primary" id="btn-import">Import</button>
@@ -246,7 +246,7 @@
   var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var FILING = [['single', 'Single'], ['married_joint', 'Married, filing jointly'], ['married_separate', 'Married, filing separately'], ['head_of_household', 'Head of household']];
   var BENEFIT = [['receiving', 'Getting it'], ['applied', 'Applied, waiting'], ['notApplied', 'Haven’t applied'], ['ineligible', 'Not eligible']];
-  /* Which owned field each box writes — for the badge beside it. */
+  /* Which owned field each box writes, for the badge beside it. */
   var CTL_FIELD = { month: 'dob', year: 'dob', state: 'state', filing: 'filingStatus', pay: 'grossAnnualIncome', pay2: 'grossAnnualIncome', secondJob: 'grossAnnualIncome',
     partnerPay: 'grossAnnualIncome', spending: 'monthlyExpenses', cash: 'cashSavings', deductible: 'highestDeductible', investments: 'investments',
     matchPercent: 'employerMatch', matchCap: 'employerMatch', contribution: 'contributionPercent', debtBalance: 'totalDebt', debtMinimum: 'monthlyDebtPayments',
@@ -291,7 +291,7 @@
   var BODY = {
     about: function () {
       var thisYear = new Date().getFullYear();
-      return '<p class="q-help">Born and where — for the benchmarks and the tax. Then who is here.</p>'
+      return '<p class="q-help">Born and where, for the benchmarks and the tax. Then who is here.</p>'
         + '<div class="row three">' + select('month', 'Born', monthOptions(), 'Birth month') + select('year', '&nbsp;', yearOptions(thisYear - 14, thisYear - 100), 'Birth year') + select('state', 'State', [['', 'State']], 'State') + '</div>'
         + '<p class="field-note is-warn" data-note="dob" hidden></p>'
         + choices('household', [['one', 'Just me'], ['two', 'Two of us']], 'Who is here')
@@ -310,7 +310,7 @@
         + '<div class="row">' + moneyInput('pay2', 'It brings in', 'e.g. 1,000', 'What your own work brings in') + select('basis2', 'How often', basisOptions(), 'How often, for your own work') + '</div>';
     },
     retiredPay: function () {
-      return '<p class="q-help">Pension, Social Security, an annuity, what you draw down — all of it, together.</p>'
+      return '<p class="q-help">Pension, Social Security, an annuity, what you draw down, all of it, together.</p>'
         + '<div class="row">' + moneyInput('pay', 'Coming in', 'e.g. 3,500', 'What comes in') + select('basis', 'How often', basisOptions(), 'How often') + '</div>'
         + '<div data-paytype style="margin-top:var(--space-2)">' + choices('payType', Schema.INCOME_TYPES.filter(function (t) { return t !== 'equity'; }).map(function (t) { return [t, Schema.INCOME_TYPE_LABELS[t]]; }), 'What kind of pay is this?')
         + choices('paySurvives', [['no', 'It stops'], ['yes', 'It keeps paying']], 'If the job went, this pay…') + '</div>'
@@ -341,14 +341,14 @@
         + '<div class="row">' + moneyInput('partnerPay', 'They are paid', 'e.g. 4,200', 'What the other person is paid') + select('partnerBasis', 'How often', basisOptions(), 'How often they are paid') + '</div>';
     },
     spending: function () {
-      return '<p class="q-help">Rent, food, bills, the lot — a typical month. Guessed from your pay until you say.</p>'
+      return '<p class="q-help">Rent, food, bills, the lot, a typical month. Guessed from your pay until you say.</p>'
         + moneyInput('spending', 'A month', 'e.g. 2,800', 'Monthly spending')
-        + choices('noRent', [['no', 'I pay rent or a mortgage'], ['yes', 'No rent — with family, or paid off']], 'Housing');
+        + choices('noRent', [['no', 'I pay rent or a mortgage'], ['yes', 'No rent, with family, or paid off']], 'Housing');
     },
     cash: function () {
       return '<p class="q-help">What you could spend tomorrow, and the largest single excess it would have to cover.</p>'
         + '<div class="row">' + moneyInput('cash', 'Cash & savings', 'e.g. 9,500', 'Cash and savings') + '<span id="q-deductible">' + moneyInput('deductible', 'Highest deductible', 'e.g. 1,500', 'Highest deductible') + '</span></div>'
-        + '<div class="choices"><button type="button" class="choice" data-ctl="noDeductible">I don’t have one — I’m on someone else’s plan</button></div>';
+        + '<div class="choices"><button type="button" class="choice" data-ctl="noDeductible">I don’t have one, I’m on someone else’s plan</button></div>';
     },
     investments: function () {
       return '<p class="q-help">Everything invested, retirement accounts included, as one total. Hold it at more than one place? Name each account in <a href="ledger.html#x-A">the Ledger</a> and this becomes their total.</p>'
@@ -362,8 +362,8 @@
         + '<p class="field-note" data-note="plan"></p>';
     },
     debt: function () {
-      /* No rate here (D-262). A rate is asked where it changes an answer —
-         in Debt Payoff, one debt at a time — and a single "typical rate"
+      /* No rate here (D-262). A rate is asked where it changes an answer, 
+         in Debt Payoff, one debt at a time, and a single "typical rate"
          across a mortgage and a card is a number that is true of neither.
          The ladder already says "add an interest rate to every debt" rather
          than guessing one, so nothing downstream is worse off. */
@@ -515,8 +515,8 @@
   function pct(v) { var raw = String(v).replace(/[^0-9.]/g, ''); if (raw === '') return null; var n = Number(raw); return isNaN(n) ? null : n; }
   /* ---- How long the benefit runs (D-259) ---------------------------------
      One sentence: what the state allows, when it runs out, and where that
-     leaves you today. The allowance is a published maximum, not a promise —
-     what anyone actually draws turns on their base-period wages — so the
+     leaves you today. The allowance is a published maximum, not a promise, 
+     what anyone actually draws turns on their base-period wages, so the
      sentence says "up to" and names the state, and never hides the fact that
      the figure is a ceiling. */
   function longDate(iso) {
@@ -681,7 +681,7 @@
     Suggest.show(n, { value: guess.value, display: typeof guess.value === 'number' && guess.unit !== 'count' && guess.unit !== 'pct' ? Money.formatCents(guess.value) : String(guess.value), source: guess.source, onUse: onUse });
   }
   /* The badge beside a box: guessed, you entered, or from the room that
-     wrote it. A box still showing a proposal has no badge — the chip says. */
+     wrote it. A box still showing a proposal has no badge. The chip says. */
   function paintBadges(x) {
     Array.prototype.forEach.call(document.querySelectorAll('[data-badge]'), function (b) {
       var name = b.getAttribute('data-badge');
@@ -697,7 +697,7 @@
     });
   }
 
-  /* The cards that exist, in order — attached; the rest are not in the page.
+  /* The cards that exist, in order, attached; the rest are not in the page.
      Reconciled only when the set changes, so a box being typed in is never
      moved under the finger. */
   function placeCards(live) {
@@ -861,7 +861,7 @@
       var payTypeBox = document.querySelector('#cards [data-paytype]'); if (payTypeBox) payTypeBox.hidden = !!basis.noPay;
       var gross = Schema.grossAnnualIncomeCents(x);
       var payNote = document.querySelector('#cards [data-note="pay"]');
-      if (payNote) payNote.textContent = basis.noPay ? 'A deliberate zero — different from leaving it blank.'
+      if (payNote) payNote.textContent = basis.noPay ? 'A deliberate zero, different from leaving it blank.'
         : Money.isOk(gross) ? 'That is ' + Money.formatCents(gross.value) + ' a year, all sources.' : (basis.note || '');
     }
     if (cardOn('ownWork')) {
@@ -886,9 +886,9 @@
       document.querySelector('[data-benefit]').hidden = !hasBenefit;
       if (Money.isEntered(u.benefitWeeklyCents)) setMoney('weekly', u.benefitWeeklyCents); else { setMoney('weekly', null); if (hasBenefit) propose('weekly', g.weekly, function (c) { WRITE.weekly(c / 100); render(); }); }
       /* How many weeks the state gives, and the date they run out (D-259).
-         The allowance and the end date were both computable all along —
+         The allowance and the end date were both computable all along, 
          data/ui_benefits.json holds the weeks, the card holds the month the
-         job ended — and neither was ever shown. The suggestion used to offer
+         job ended, and neither was ever shown. The suggestion used to offer
          the WHOLE allowance as "weeks left", which is only right on the day
          the job ends; it now offers what is actually left. */
       var run = Schema.benefitTimeline(x, TABLES);
@@ -937,7 +937,7 @@
       invNote.hidden = !split;
       invNote.innerHTML = split
         ? esc(Money.formatCents(Money.isOk(inv) ? inv.value : 0)) + ' across '
-          + invAccounts.length + ' accounts — '
+          + invAccounts.length + ' accounts, '
           + invAccounts.map(function (a) { return esc(a.label || 'unnamed'); }).join(', ')
           + '. Edit them in <a href="ledger.html#x-A">the Ledger</a>.'
         : '';
@@ -974,7 +974,7 @@
       var box = ctl('debt_' + r.k[0]);
       if (!box) return;
       box.readOnly = r.many;
-      box.title = r.many ? r.of.length + ' listed in Debt Payoff — edit them there' : '';
+      box.title = r.many ? r.of.length + ' listed in Debt Payoff, edit them there' : '';
     });
     var splitHost = document.querySelector('[data-debt-split]');
     if (splitHost && splitDebt) splitHost.open = true;
@@ -1024,7 +1024,7 @@
 
   /* The gate: one batch, so one undo brings back the status AND every
      field the change removed. What no longer exists is removed, not
-     hidden — no employer, no match, no contribution, no capture. D-094. */
+     hidden, no employer, no match, no contribution, no capture. D-094. */
   el('gate').addEventListener('click', function (evt) {
     var b = evt.target.closest('[data-situation]');
     if (!b) return;
@@ -1119,7 +1119,7 @@
   if (typeof window.TextDetector !== 'function') el('photo-label').title = 'Needs a browser that can read text in pictures; otherwise paste the text.';
 
   /* "See my dashboard": every guess still standing goes in as one, and is
-     flagged so every room shows it as a guess until it is replaced — one
+     flagged so every room shows it as a guess until it is replaced, one
      batch, one undo. D-094. */
   var GUESS_FIELDS = { pay: ['grossAnnualIncome'], pay2: ['grossAnnualIncome'], spending: ['monthlyExpenses'], cash: ['cashSavings'], deductible: ['highestDeductible'],
     investments: ['investments'], matchPercent: ['employerMatch'], matchCap: ['employerMatch'], contribution: ['contributionPercent'], weekly: ['unemployment'], weeks: ['unemployment'], lastPay: ['unemployment'] };
@@ -1180,7 +1180,7 @@
     var notice = el('load-notice');
     notice.hidden = false;
     notice.className = 'notice is-error';
-    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>
