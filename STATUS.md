@@ -18,9 +18,10 @@ Updated: 2026-09-19
   The Documents (tier 2), Left Behind (a plan tagged `old_401k` proposes its
   balance, D-316). The worst plausible year is the Cushion's (D-314). The pay
   still to come sits beside net worth, on a switch on by default under 40 (D-315).
-- **From main this session**: a bank or card statement in, every place money
-  went, the slope of a month (D-306); the Calendar with your own dates
-  (D-308); all three intakes stay (D-309); plain words everywhere (D-310, D-311).
+- **From main**: the bank statement intake (D-306), the Calendar (D-308),
+  all three intakes stay (D-309), plain words everywhere (D-310, D-311).
+- **A card's annual fee and the day it posts (D-317)**, asked on the Debt
+  card's fold, warned 45 days out; a dealt walk step folds to one line.
 - **Main is worked on directly by another lane**: merge it before every push.
   The reframe D-228 asks for has NOT shipped. Freeze: five rooms added, each
   replacing a reading or a card the Statement lost; screens unchanged (D-313).
@@ -34,7 +35,7 @@ Updated: 2026-09-19
    opening. `data/benefit_cliffs_2026.json` is still `unverified`.
 
 ## Known open
-- Nothing. Every CI step is clean on this tree, browser gates included.
+- Nothing: every CI step is clean, browser gates included.
 
 ## Panel notes
-- Galloway: the floor, item 2. Hormozi: the opening is the one screen in front of the library. Donegan: the pay still to come is the figure that matters at 25.
+- Galloway: the floor, item 2. Hormozi: the opening is the one screen in front of the library.

@@ -804,8 +804,22 @@
     var dealt = at.state !== 'open';
     var out = [];
 
-    out.push('<div class="slaf-walk' + (dealt ? ' is-dealt' : '') + '" id="slaf-walk">');
-    out.push('<div class="slaf-walk-line">');
+    /* A step already dealt with folds to one line (D-317): the tick, the
+       step, and the way on. The person can open it for the bar, the
+       stage, Undo and the hub; the room underneath is what they came for. */
+    if (dealt) {
+      out.push('<details class="slaf-walk is-dealt" id="slaf-walk"' + (walkOpen ? ' open' : '') + '>');
+      out.push('<summary class="slaf-walk-fold"><span class="slaf-walk-where">'
+        + (at.state === 'done' ? '\u2713 Step ' + at.step + ' of ' + at.total + ' done' : 'Step ' + at.step + ' of ' + at.total + ' set aside') + '</span>'
+        + (at.next
+            ? '<a class="slaf-walk-next" href="' + hrefFrom(roomId, at.next.href) + '">Next: ' + escapeHtml(at.next.title) + ' \u2192</a>'
+            : '<a class="slaf-walk-next" href="' + hub + '">That was the last one \u2192</a>')
+        + '</summary>');
+      out.push('<div class="slaf-walk-body">');
+    } else {
+      out.push('<div class="slaf-walk" id="slaf-walk">');
+    }
+    out.push('<div class="slaf-walk-line">'); 
     out.push('<span class="slaf-walk-where">Step ' + at.step + ' of ' + at.total
       + ' <span class="slaf-walk-stage">' + escapeHtml(at.stage ? at.stage.title : '') + '</span></span>');
     out.push('<a class="slaf-walk-hub" href="' + hub + '">All ' + p.total + ' steps</a>');
@@ -827,16 +841,15 @@
         + '</span>');
       out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-walk="open">Undo</button>');
     }
-    if (at.next) {
-      out.push('<a class="slaf-btn' + (dealt ? ' slaf-btn--primary' : ' slaf-btn--quiet') + '" href="'
-        + hrefFrom(roomId, at.next.href) + '">Next: ' + escapeHtml(at.next.title) + ' →</a>');
-    } else if (dealt) {
-      out.push('<a class="slaf-btn slaf-btn--primary" href="' + hub + '">That was the last one →</a>');
+    if (at.next && !dealt) {
+      out.push('<a class="slaf-btn slaf-btn--quiet" href="' + hrefFrom(roomId, at.next.href) + '">Next: ' + escapeHtml(at.next.title) + ' →</a>');
     }
     out.push('</div>');
-    out.push('</div>');
+    out.push(dealt ? '</div></details>' : '</div>');
     return out.join('');
   }
+  /* Whether the folded strip is open, kept across repaints for the session. */
+  var walkOpen = false;
 
   /* A room's registry href is written from the site root ("rooms/x.html").
      From inside rooms/ that needs the "../" stripped off the front. */
@@ -862,6 +875,7 @@
       var fresh = box.firstChild;
       if (have) have.parentNode.replaceChild(fresh, have);
       else nav.parentNode.insertBefore(fresh, nav.nextSibling);
+      if (fresh.tagName === 'DETAILS') fresh.addEventListener('toggle', function () { walkOpen = fresh.open; });
       wire(fresh);
       return fresh;
     }
