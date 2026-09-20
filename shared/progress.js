@@ -235,7 +235,12 @@
      (the dashboard, since D-058) and links without the ../ prefix. */
   function atRoot(roomId) {
     var room = Registry.byId(roomId);
-    return !!(room && room.href && room.href.indexOf('rooms/') !== 0);
+    if (room && room.href) return room.href.indexOf('rooms/') !== 0;
+    /* A page that is no room at all (the map, a redirect stub) still carries
+       the menu since D-322, and its links have to climb out of rooms/ when
+       that is where it sits. The registry cannot say; the path can. */
+    if (typeof location !== 'undefined') return String(location.pathname || '').indexOf('/rooms/') === -1;
+    return true;
   }
 
   function href(path, roomId) {
@@ -345,6 +350,13 @@
        on the path at all, and they read as instructions. The menu and the
        walk-through are the ways in from here. D-169. */
     if (roomId === 'dashboard') return '';
+    /* A page that is no room has no neighbours to walk to, and inventing two
+       would read as instructions (the D-169 objection). One way home. D-322. */
+    if (!Registry.byId(roomId)) {
+      return '<nav class="slaf-hops" aria-label="Where to next">'
+        + '<a class="slaf-hop slaf-hop--prev" href="' + (atRoot(roomId) ? '' : '../') + 'index.html">\u2190 The Dashboard</a>'
+        + '</nav>';
+    }
     var nb = neighbours(roomId);
     var mapHref = (atRoot(roomId) ? '' : '../') + 'map.html';
     var homeHref = (atRoot(roomId) ? '' : '../') + 'index.html';
@@ -1176,13 +1188,31 @@
        loaded; the room's own later call is then a no-op. D-170. */
     var have = document.querySelector('.slaf-hops-host');
     if (have) return have;
-    var back = document.querySelector('.room-back, .back');
-    if (!back) return null;
     var nav = document.createElement('div');
     nav.className = 'slaf-hops-host';
     nav.innerHTML = returnHtml(roomId) + headerNavHtml(roomId);
-    back.parentNode.replaceChild(nav, back);
+    var back = document.querySelector('.room-back, .back');
+    if (back) { back.parentNode.replaceChild(nav, back); }
+    else {
+      /* No back-link to stand in for: the menu is navigation, and navigation
+         is on every page of the app, so the strip goes at the top rather than
+         not at all. This is what kept the map page without a way out. D-322.
+         ABOVE the page's own header, because a menu button below the title
+         is a menu button nobody finds: the top left is where it is looked
+         for on every other page. */
+      var header = document.querySelector('body > header');
+      if (header) { header.parentNode.insertBefore(nav, header); }
+      else {
+        var host = document.querySelector('main') || document.querySelector('.slaf-wrap') || document.querySelector('.wrap') || document.body;
+        if (!host) return null;
+        host.insertBefore(nav, host.firstChild);
+      }
+    }
     mountMenu(roomId, nav);
+    /* Everything below is a room's own furniture: the purpose line, the
+       situation notice, the walk strip, the doors, the fold. A page that is
+       not a room takes the navigation and none of it. D-322. */
+    if (!Registry.byId(roomId)) return nav;
     mountPurpose(roomId);
     mountSituation(roomId);
     mountWalk(roomId, nav);
@@ -1557,8 +1587,11 @@
      A room that dies halfway still has its menu and its way out. D-170. */
   if (typeof document !== 'undefined' && typeof location !== 'undefined') {
     document.addEventListener('DOMContentLoaded', function () {
-      var id = roomIdFromLocation();
-      if (id && !document.querySelector('.slaf-hops-host')) mountHeader(id);
+      if (document.querySelector('.slaf-hops-host')) return;
+      /* A redirect stub is a doorway, not a page: it is gone before a menu
+         would be read, and mounting one there flashes. D-322. */
+      if (document.querySelector('meta[http-equiv="refresh"]')) return;
+      mountHeader(roomIdFromLocation());
     });
   }
 

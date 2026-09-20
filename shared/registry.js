@@ -1104,7 +1104,11 @@
      labels, never links. DRAFTT and the map are links into pages that are
      not rooms; they ride in `links`. ---- */
   var GROUPS = [
-    { id: 'home',      label: 'Home' },
+    { id: 'home',      label: 'Home',
+      /* The twenty arrangements were reachable from one line of text on the
+         map page and nowhere else; the menu is on every page, so they are
+         too. D-322. */
+      links: [{ after: 'start', title: 'Twenty ways to arrange these rooms', href: 'rooms/ledger.html#arrangements', aliases: ['arrangements', 'layouts', 'views', 'ways in', 'shelves', 'twenty'] }] },
     { id: 'numbers',   label: 'Your Numbers', note: 'the owners; everything else reads from here',
       subgroups: [{ id: 'debt', label: 'Debt' }, { id: 'assets', label: 'Assets' }, { id: 'income', label: 'Income' }, { id: 'taxes', label: 'Taxes' }, { id: 'expenses', label: 'Expenses' }] },
     { id: 'scorecard', label: 'Scorecard', note: 'read-only',

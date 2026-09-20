@@ -6,28 +6,23 @@ Updated: 2026-09-20
 - **93 → 37 rooms**: the 32 of the merge programme with the Calendar back
   (D-308), plus the five readings the Statement gave up in D-313, each a room
   that reads the Ledger and writes nothing. `docs/room-map.json` is the cut list.
-- **The calendar, redrawn (D-318)**: a phone calendar, one grid for both
-  readings. **The phone walk, round two (D-317)**: Comfortable or Compact,
-  the menu's dots explained, the ask rests or retires, the gap as a chip.
 - **The five-input opening (D-312)**: `rooms/ledger.html#round-1` is one
-  screen, five inputs, the FI date as a band, a coast date, the savings rate
-  from take-home, three levers, a next card; four synthetic households reach
-  the answer in 6 to 10 taps and boxes (`test/opening.js`).
+  screen, five inputs, the FI date as a band, a coast date, the savings rate,
+  three levers; 6 to 10 taps and boxes (`test/opening.js`).
 - **Facts are entered in the Ledger only (D-313)**: every per-account fact,
-  the Roth and HSA contributions and switches, the marginal rate and the
-  target mix are Ledger rows with one owner. The Statement is four sections
-  and forwards every old anchor from its head; the stubs follow their readings.
-- **New rooms**: The Bridge, Which Account (every box a what-if), The Mix,
-  The Documents (tier 2), Left Behind (a plan tagged `old_401k` proposes its
-  balance, D-316). The worst plausible year is the Cushion's (D-314). The pay
-  still to come sits beside net worth, on a switch on by default under 40 (D-315).
+  the contributions, the marginal rate and the target mix are Ledger rows
+  with one owner. The Statement is four sections and forwards every old anchor.
+- **New rooms**: The Bridge, Which Account, The Mix, The Documents, Left
+  Behind (D-316). Worst plausible year is the Cushion's (D-314); the pay still
+  to come sits beside net worth, on a switch on under 40 (D-315).
+- **This session**: a card's annual fee and the day it posts, warned 45 days
+  out, and a dealt walk step folded to one line (D-320); the radar is on the
+  Scorecard's Every ratio reading, one drawing (D-321); the menu is on every
+  page with the twenty arrangements in it (D-322).
 - **From main**: the bank statement intake (D-306), the Calendar (D-308,
   D-318), all three intakes stay (D-309), plain words (D-310, D-311), the
   phone walk round two (D-317), every screen says how old its numbers are
   and the example says so (D-319).
-- **A card's annual fee and the day it posts (D-320)**, asked on the Debt
-  card's fold, warned 45 days out; a dealt walk step folds to one line. The
-  radar is on the Scorecard's Every ratio reading too, one drawing (D-321).
 - **Main is worked on directly by another lane**: merge it before every push.
   The reframe D-228 asks for has NOT shipped. Freeze holds (D-313).
 

@@ -15594,6 +15594,36 @@ section('The CSV round trip made resilient (D-221)');
    while it is still live in the registry — which is the failure that would
    otherwise let the map read as finished work that nobody did.
    ========================================================================== */
+section('The menu is on every page (D-322)');
+
+(function () {
+  const Prog = require(path.join(ROOT, 'shared/progress.js'));
+  const src = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('the header no longer needs a back-link to stand in for',
+    /var back = document\.querySelector\('\.room-back, \.back'\);\s*\n\s*if \(back\)/.test(src) && !/if \(!back\) return null;/.test(src));
+  checkTrue('a page with its own header takes the strip above it, where the button is looked for',
+    /body > header/.test(src));
+  checkTrue('a page that is no room takes the navigation and none of a room\u2019s furniture',
+    /if \(!Registry\.byId\(roomId\)\) return nav;/.test(src));
+  checkTrue('a redirect stub takes none of it: it is a doorway, not a page',
+    /meta\[http-equiv="refresh"\]/.test(src));
+  checkTrue('the auto-mount no longer refuses a page the registry does not name',
+    /mountHeader\(roomIdFromLocation\(\)\);/.test(src));
+  /* The map sits at the root and the rooms do not; the menu's links have to
+     climb out of rooms/ from a page the registry cannot place. */
+  checkTrue('the path decides when the registry cannot', /indexOf\('\/rooms\/'\) === -1/.test(src));
+  const home = Registry.groups().filter(g => g.id === 'home')[0];
+  const views = (home.links || []).filter(l => /arrangements/.test(l.href))[0];
+  checkTrue('the twenty arrangements are a link in the menu, from every page', !!views);
+  check('...pointing at the Ledger\u2019s arrangements door', views.href, 'rooms/ledger.html#arrangements');
+  checkTrue('...and findable by the words for it', ['layouts', 'views', 'ways in'].every(w => (views.aliases || []).indexOf(w) >= 0));
+  /* map.html is the page that had no way out: it is not a registry room, so
+     nothing but this rule puts a menu on it. */
+  checkTrue('the map is still not a room, and still has no back-link of its own',
+    !Registry.all().some(r => r.href === 'map.html') && !/room-back|class="back"/.test(fs.readFileSync(path.join(ROOT, 'map.html'), 'utf8')));
+  checkTrue('shared/progress.js exports the mount the pages rely on', typeof Prog.mountHeader === 'function');
+})();
+
 section('The thirty (docs/room-map.json)');
 
 (function () {

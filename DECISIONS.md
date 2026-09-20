@@ -16723,6 +16723,36 @@ the shared one.
 call the one function); the features gate on the Scorecard and the front
 page; render.
 
+## D-322 — The menu is on every page, and the arrangements are in it
+
+**Why.** On the map page there was no way out: no menu, no rooms list, no
+route anywhere except the links in the body. The menu mounted by replacing
+a page's back-link, and the map is the one page in the app without one, so
+it silently got nothing. The twenty arrangements had the same problem in
+reverse: reachable from one line of text on that page and nowhere else.
+
+**Decision.** `shared/progress.js` `mountHeader` no longer requires a
+back-link: with one it replaces it as before, without one it inserts the
+strip above the page's own `<header>`, where the button is looked for.
+The auto-mount on `DOMContentLoaded` runs for a page the registry cannot
+name; a redirect stub is skipped, being a doorway rather than a page. A
+page that is not a registry room takes the navigation and none of a room's
+furniture (no purpose line, no situation notice, no walk strip, no doors,
+no fold), and its hops are one way home rather than two invented
+neighbours. `atRoot` falls back to the path when the registry cannot place
+the page, so the menu's links climb out of `rooms/` correctly.
+`shared/registry.js`: the Home group gains a link to the Ledger's
+arrangements, so the twenty views are one tap away from anywhere.
+
+**Replaces or removes.** The map page's dead end. The line of text offering
+the arrangements stays where it is; it is no longer the only way to them.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`; `node test/sidebar.js` (the three bars,
+the full room list and the arrangements on the map, the front page and a
+room; the map's single hop; no room furniture on it); render and features.
+
 ---
 
 # The Dungeons & Dividends entries
