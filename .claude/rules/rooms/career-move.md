@@ -13,7 +13,7 @@ File: rooms/career-move.html · 2006 lines
 Engines: projection, tier0, income, selfemployed, ledger, hourly, careermove, offers, sidehustle, credential, degree, countdown, microretirement
 Reference data: blocks/sabbatical.json, career_momentum.json, cobra_aca_2024.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, +6 more
 Owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn
-Reads from other owners: filingStatus (start), grossAnnualIncome (start), employmentStatus (start), employerMatch (start), marginalRate (statement), healthMonthly (protection), retireAge (fire), monthlyExpenses (expenses)
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), takeHomeMonthly (ledger), employmentStatus (start), employerMatch (start), marginalRate (ledger), healthMonthly (protection), retireAge (fire), +1 more
 Latest decisions:
   - D-281 — Work: seven questions about a job
 Full context: node tools/context/pack.js career-move

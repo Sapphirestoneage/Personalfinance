@@ -101,16 +101,19 @@
   function savingsRate(household, tables) {
     var gross = Schema.grossAnnualIncomeCents(household);
     var monthlyExpenses = Schema.monthlyExpensesCents(household);
+    /* Take-home minus spending - never gross minus spending. The one
+       take-home figure is shared/schema.js's (D-171). Typed take-home
+       (D-312) stands without a gross: the rate is then "from take-home",
+       and says so, until a gross arrives. */
+    var takeHome = Schema.takeHomeAnnualCents(household, tables);
+    var typedOnly = Money.isOk(takeHome) && takeHome.source === 'typed' && !Money.isOk(gross);
 
-    if (!Money.isOk(gross)) {
+    if (!Money.isOk(gross) && !typedOnly) {
       return { excludingMatch: gross, includingMatch: gross };
     }
     if (!Money.isOk(monthlyExpenses)) {
       return { excludingMatch: monthlyExpenses, includingMatch: monthlyExpenses };
     }
-    /* Take-home minus spending - never gross minus spending. The one
-       take-home figure is shared/schema.js's (D-171). */
-    var takeHome = Schema.takeHomeAnnualCents(household, tables);
     if (!Money.isOk(takeHome)) {
       return { excludingMatch: takeHome, includingMatch: takeHome };
     }
@@ -119,9 +122,12 @@
     var savedExcludingMatch = takeHome.value - annualExpenses;
     /* The rate's base is the gross the take-home came from (D-246): the
        logged pay's own gross when the log drives it, Start Here's otherwise. */
-    var grossBase = takeHome.source === 'logged' && Money.isEntered(takeHome.grossAnnualIncomeCents) ? takeHome.grossAnnualIncomeCents : gross.value;
+    var grossBase = takeHome.source === 'logged' && Money.isEntered(takeHome.grossAnnualIncomeCents) ? takeHome.grossAnnualIncomeCents
+      : Money.isOk(gross) ? gross.value : takeHome.value;
 
     var shared = {
+      /* 'gross' or 'take-home': what the rate divides by (D-312). */
+      basis: Money.isOk(gross) || takeHome.source === 'logged' ? 'gross' : 'take-home',
       grossAnnualIncomeCents: grossBase,
       takeHomeAnnualCents: takeHome.value,
       annualExpensesCents: annualExpenses,

@@ -149,54 +149,72 @@
   #view-since .moved.is-down { color: var(--color-caution); }
   #view-shelves section[id] { scroll-margin-top: var(--space-4); }
 
-  /* ---- Round 1, from rooms/first-round.html (D-230) ---------------------- */
-  
+  /* ---- The opening, in place of Round 1 (D-312) ---------------------------
+     Five inputs on one screen, the answer under them, live. The card of
+     inputs is drawn once (D-034); the debt rows are the one list, and they
+     redraw only when a row comes or goes. Everything reads at 360px: a
+     two-up row folds to one column under 400px, and nothing is wider than
+     its box. */
   #view-round1 main { max-width: 560px; }
-  
-  #view-round1 .screen { padding: var(--space-4) 0 var(--space-6); }
-  
-  #view-round1 .screen h2 { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.15; margin: var(--space-2) 0 var(--space-3); }
-  
-  #view-round1 .screen .why { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0 0 var(--space-4); line-height: var(--leading-loose); }
-  
-  #view-round1 .big .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
-  
-  #view-round1 .big input { font-family: var(--font-display); font-size: var(--text-2xl); min-height: 64px; width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); color: var(--color-text); }
-  
-  #view-round1 .big .affix { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-text-faint); }
-  
-  #view-round1 .choices.tall .choice { flex: 1 1 100%; min-height: 60px; font-size: var(--text-md); padding: var(--space-3) var(--space-4); }
-  
-  #view-round1 .choices.tall .choice small { display: block; font-size: var(--text-xs); color: inherit; opacity: .8; font-weight: 400; margin-top: 2px; }
-  
-  #view-round1 .nav { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; margin-top: var(--space-5); }
-  
-  #view-round1 .nav .slaf-btn--primary { min-height: 56px; min-width: 160px; font-size: var(--text-md); }
-  
-  #view-round1 .steps { font-size: var(--text-xs); color: var(--color-text-faint); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
-  
-  #view-round1 .alt { margin-top: var(--space-3); font-size: var(--text-sm); }
-  
-  #view-round1 .alt summary { cursor: pointer; color: var(--color-accent-hover); }
-  
-  #view-round1 .alt .row { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
-  
-  #view-round1 .alt select,
-  #view-round1 .alt input { font-size: var(--text-md); min-height: 48px; padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
-  
-  #view-round1 .insight .slaf-figure { font-size: var(--text-3xl, 2.4rem); margin: var(--space-2) 0; }
-  
-  #view-round1 .insight .line { color: var(--color-text-muted); line-height: var(--leading-loose); }
-  
-  #view-round1 .insight .rough { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-2); }
-  
-  #view-round1 .insight .door { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
-  
-  #view-round1 .insight .door p { margin: 0 0 var(--space-3); font-size: var(--text-md); }
-  
-  #view-round1 .insight .door .slaf-btn--primary { min-height: 56px; font-size: var(--text-md); }
-  
-  #view-round1 .insight .needs { color: var(--color-text-muted); }
+  #view-round1 .op-card { padding: var(--space-4); }
+  #view-round1 .op-q { margin-top: var(--space-4); }
+  #view-round1 .op-q:first-of-type { margin-top: var(--space-3); }
+  #view-round1 .op-n { font-size: var(--text-xs); color: var(--color-text-faint); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+  #view-round1 .op-q .slaf-label { display: block; font-size: var(--text-sm); margin: 2px 0 var(--space-1); }
+  #view-round1 .op-q .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
+  #view-round1 .op-q input, #view-round1 .op-q select { font-family: var(--font-display); font-size: var(--text-xl); min-height: 56px; width: 100%; min-width: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
+  #view-round1 .op-q select { font-size: var(--text-md); font-family: var(--font-body); }
+  #view-round1 .op-q input:disabled { color: var(--color-text-muted); background: var(--color-surface); }
+  #view-round1 .op-q .affix { font-family: var(--font-display); font-size: var(--text-lg); color: var(--color-text-faint); }
+  #view-round1 .op-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); }
+  #view-round1 .op-row.is-take { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+  @media (max-width: 400px) { #view-round1 .op-row, #view-round1 .op-row.is-take { grid-template-columns: 1fr; } }
+  #view-round1 .op-hint { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; line-height: var(--leading-normal); }
+  #view-round1 .op-hint a { color: var(--color-accent-hover); }
+  #view-round1 .op-hint:empty { display: none; }
+  #view-round1 .choices .choice { flex: 1 1 auto; min-height: 44px; font-size: var(--text-sm); }
+  #view-round1 .choices .choice[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+  #view-round1 .op-mini { font: inherit; font-size: var(--text-xs); min-height: 32px; padding: 0 var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); background: var(--color-surface-raised); color: var(--color-text-muted); cursor: pointer; white-space: nowrap; }
+  #view-round1 .op-mini:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  #view-round1 .op-mini:disabled { opacity: .5; cursor: not-allowed; border-style: dashed; }
+  #view-round1 .op-debt { margin-top: var(--space-2); padding: var(--space-2) 0 0; border-top: 1px dashed var(--color-border); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, .8fr) auto; gap: var(--space-2); align-items: end; }
+  @media (max-width: 480px) { #view-round1 .op-debt { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } #view-round1 .op-debt .op-debt-x { grid-column: 2; justify-self: end; } }
+  #view-round1 .op-debt label { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  #view-round1 .op-debt input, #view-round1 .op-debt select { font-size: var(--text-md); min-height: 44px; font-family: var(--font-body); }
+  #view-round1 .op-exact { display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-4); font-size: var(--text-sm); color: var(--color-text-muted); }
+  #view-round1 .op-exact input { width: 20px; height: 20px; margin: 0; }
+  /* The answer. */
+  #view-round1 .op-answer { margin-top: var(--space-4); }
+  #view-round1 .op-eyebrow { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); margin: 0; }
+  #view-round1 .op-stage { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-loose); border-left: 3px solid var(--color-accent); padding-left: var(--space-3); }
+  #view-round1 .op-stage:empty { display: none; }
+  #view-round1 .op-headline { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.15; margin: var(--space-3) 0 0; }
+  #view-round1 .op-headline b { color: var(--color-accent-hover); }
+  #view-round1 .op-sub { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-size: var(--text-sm); line-height: var(--leading-loose); }
+  #view-round1 .op-sub:empty, #view-round1 .op-band:empty, #view-round1 .op-tighten:empty { display: none; }
+  #view-round1 .op-tighten { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+  #view-round1 .op-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-4); }
+  @media (max-width: 400px) { #view-round1 .op-pair { grid-template-columns: 1fr; } }
+  #view-round1 .op-cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); min-width: 0; }
+  #view-round1 .op-cell .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-1); }
+  #view-round1 .op-cell .big.is-blank { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text-faint); }
+  #view-round1 .op-cell .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+  #view-round1 .op-cell .sub.is-short { color: var(--color-caution); }
+  #view-round1 .op-levers { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+  #view-round1 .op-levers li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: baseline; }
+  #view-round1 .op-levers li:first-child { border-top: none; }
+  #view-round1 .op-levers .lv-moves { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-positive); }
+  #view-round1 .op-levers .lv-note { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); }
+  #view-round1 .op-levers a { color: var(--color-accent-hover); }
+  #view-round1 .op-next { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+  #view-round1 .op-next .un-say { margin: var(--space-2) 0 0; font-size: var(--text-base); line-height: var(--leading-loose); }
+  #view-round1 .op-next .un-say strong { color: var(--color-text); }
+  #view-round1 .op-next .un-say a, #view-round1 .op-next .un-more a { color: var(--color-accent-hover); }
+  #view-round1 .op-next .un-more { margin: var(--space-2) 0 0; padding: 0; list-style: none; font-size: var(--text-sm); color: var(--color-text-muted); }
+  #view-round1 .op-next .un-more li { display: inline; }
+  #view-round1 .op-next .un-more li + li::before { content: ' · '; }
+  #view-round1 .op-assume { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; padding-left: 1.2em; line-height: var(--leading-loose); }
+  #view-round1 .op-assume input { width: 5em; font: inherit; min-height: 36px; padding: 0 var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface-raised); color: var(--color-text); }
 
   /* ---- All at once, from rooms/express.html as it stood at D-303/D-304: the
      walk, the levels as folds with a Done badge, lines named and grouped by
@@ -600,7 +618,7 @@
 
   <nav class="slaf-hats" id="hats" aria-label="Ways into the same rows">
     <a href="#doors-home"      data-view="view-doors">The doors</a>
-    <a href="#round-1"         data-view="view-round1">Round 1</a>
+    <a href="#round-1"         data-view="view-round1">The opening</a>
     <a href="#all-at-once"     data-view="view-express">All at once</a>
     <a href="#since-last-time" data-view="view-since">Since last time</a>
     <a href="#arrangements"    data-view="view-shelves">Arrangements</a>
@@ -651,82 +669,116 @@
 
   <!-- ================= ROUND 1 (was rooms/first-round.html) ============= -->
   <section id="view-round1" hidden>
-  <p class="slaf-lede">Five questions. Under a minute. Then one thing the numbers say.</p>
-  <section class="screen slaf-card" id="q-age">
-    <span class="steps">1 of 5</span>
-    <h2>How old are you?</h2>
-    <p class="why">Every age-based figure starts here: the buffer target, the milestones, the FI date.</p>
-    <div class="slaf-field big">
-      <label class="slaf-label" for="in-age">Age</label>
-      <span class="slaf-input-shell"><input id="in-age" type="text" inputmode="numeric" placeholder="e.g. 34" autocomplete="off"/></span>
+  <p class="slaf-lede" id="round-1">Five numbers, one screen. Then the date work becomes optional, and what moves it.</p>
+
+  <!-- THE FIVE INPUTS (D-312). Drawn once and never redrawn, like the rest
+       of this page: the debt rows below are the one list, and they are
+       redrawn only when a row is added or removed, on that gesture, never
+       while a finger is in one (D-034). Every box writes through its owner
+       the moment it changes; a value the Ledger already holds is shown and
+       not asked again. -->
+  <section class="slaf-card op-card" id="op-inputs">
+    <p class="op-eyebrow">Right now, you are</p>
+    <div class="choices" data-choices="situation" role="group" aria-label="Situation" style="margin-top:var(--space-2)">
+      <button type="button" class="choice" data-situation="employed" aria-pressed="false">Working</button>
+      <button type="button" class="choice" data-situation="selfEmployed" aria-pressed="false">Self-employed</button>
+      <button type="button" class="choice" data-situation="both" aria-pressed="false">A mix</button>
+      <button type="button" class="choice" data-situation="unemployed" aria-pressed="false">Between jobs</button>
+      <button type="button" class="choice" data-situation="student" aria-pressed="false">Student</button>
+      <button type="button" class="choice" data-situation="retired" aria-pressed="false">Retired</button>
     </div>
-    <details class="alt" id="alt-dob">
-      <summary>Know the month and year? Use those instead.</summary>
-      <div class="row">
-        <select id="in-month" aria-label="Birth month"><option value="">Month</option><option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select>
-        <input id="in-year" type="text" inputmode="numeric" placeholder="Year, e.g. 1992" aria-label="Birth year"/>
+
+    <div class="op-q slaf-field">
+      <span class="op-n">1 of 5</span>
+      <label class="slaf-label" for="in-age">Your age</label>
+      <span class="slaf-input-shell"><input id="in-age" type="text" inputmode="numeric" placeholder="e.g. 27" autocomplete="off" aria-label="Age"/></span>
+    </div>
+
+    <div class="op-q slaf-field">
+      <span class="op-n">2 of 5</span>
+      <label class="slaf-label" for="in-take" id="op-take-label">Take-home pay</label>
+      <div class="op-row is-take">
+        <span class="slaf-input-shell"><span class="affix">$</span><input id="in-take" type="text" inputmode="decimal" placeholder="e.g. 3,800" autocomplete="off" aria-label="Take-home pay"/></span>
+        <select id="in-per" aria-label="Per">
+          <option value="month">a month</option>
+          <option value="week">a week</option>
+          <option value="fortnight">every two weeks</option>
+          <option value="halfMonth">twice a month</option>
+        </select>
       </div>
+      <p class="op-hint" id="op-take-hint"></p>
+      <!-- HOOK for a later package: a parsed paystub fills this box and part
+           of input 4. The control is here so the layout is settled; it does
+           nothing yet and says so. Do not wire it in this package. -->
+      <p class="op-hint"><button type="button" class="op-mini" id="op-paystub" disabled title="Coming in a later package">Drop a paystub instead</button> <span>Coming later.</span></p>
+    </div>
+
+    <div class="op-q slaf-field">
+      <span class="op-n">3 of 5</span>
+      <label class="slaf-label" for="in-spend">Monthly spending, roughly</label>
+      <div class="op-row is-take">
+        <span class="slaf-input-shell"><span class="affix">$</span><input id="in-spend" type="text" inputmode="decimal" placeholder="e.g. 3,000" autocomplete="off" aria-label="Monthly spending"/></span>
+        <button type="button" class="op-mini" id="op-spend-unknown">I don’t know</button>
+      </div>
+      <p class="op-hint" id="op-spend-hint"></p>
+    </div>
+
+    <div class="op-q slaf-field">
+      <span class="op-n">4 of 5</span>
+      <span class="slaf-label">Total invested, roughly, plus cash</span>
+      <div class="op-row">
+        <div>
+          <label class="op-hint" for="in-inv" style="margin:0 0 4px">Invested</label>
+          <span class="slaf-input-shell"><span class="affix">$</span><input id="in-inv" type="text" inputmode="decimal" placeholder="e.g. 12,000" autocomplete="off" aria-label="Total invested"/></span>
+        </div>
+        <div>
+          <label class="op-hint" for="in-cash" style="margin:0 0 4px">Cash</label>
+          <span class="slaf-input-shell"><span class="affix">$</span><input id="in-cash" type="text" inputmode="decimal" placeholder="e.g. 3,000" autocomplete="off" aria-label="Cash"/></span>
+        </div>
+      </div>
+      <p class="op-hint" id="op-inv-hint"></p>
+    </div>
+
+    <div class="op-q slaf-field">
+      <span class="op-n">5 of 5</span>
+      <span class="slaf-label">Any debt?</span>
+      <div class="choices" data-choices="debt" role="group" aria-label="Any debt">
+        <button type="button" class="choice" data-debt="yes" aria-pressed="false">Yes</button>
+        <button type="button" class="choice" data-debt="no" aria-pressed="false">No</button>
+      </div>
+      <div id="op-debts" hidden></div>
+      <p class="op-hint" id="op-debt-hint"><button type="button" class="op-mini" id="op-debt-add" hidden>+ Another debt</button></p>
+    </div>
+
+    <label class="op-exact"><input type="checkbox" id="op-exact"/> These are exact figures, not rough ones</label>
+  </section>
+
+  <!-- THE ANSWER, live as they type. Every number here is engines/opening.js's;
+       nothing on this card is typed in. -->
+  <section class="slaf-card op-card op-answer" id="op-answer" aria-live="polite">
+    <p class="op-eyebrow" id="op-cap">When work becomes optional</p>
+    <p class="op-stage" id="op-stage"></p>
+    <p class="op-headline" id="op-headline">Five numbers, and a date appears here.</p>
+    <p class="op-sub" id="op-sub"></p>
+    <p class="slaf-bands op-band" id="op-band"></p>
+    <p class="op-tighten" id="op-tighten"></p>
+    <div class="op-pair">
+      <div class="op-cell"><p class="op-eyebrow">Coast FI</p><div class="big is-blank" id="op-coast">—</div><div class="sub" id="op-coast-sub"></div></div>
+      <div class="op-cell"><p class="op-eyebrow">Savings rate</p><div class="big is-blank" id="op-rate">—</div><div class="sub" id="op-rate-sub"></div></div>
+    </div>
+    <div id="op-lens" style="margin-top:var(--space-3)"></div>
+    <p class="op-eyebrow" style="margin-top:var(--space-4)" id="op-levers-cap">What moves the date most, for you</p>
+    <ul class="op-levers" id="op-levers"></ul>
+    <p class="op-hint" id="op-payfirst"></p>
+    <div class="op-next" id="op-next">
+      <p class="op-eyebrow">Next</p>
+      <p class="un-say" id="op-next-big"></p>
+      <ul class="un-more" id="op-next-more"></ul>
+    </div>
+    <details class="room-drawer" id="op-assumptions">
+      <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+      <ul class="op-assume" id="op-assumptions-body"></ul>
     </details>
-    <div class="nav"><span></span><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-zip">Next →</button></div>
-  </section>
-
-  <section class="screen slaf-card" id="q-zip" hidden>
-    <span class="steps">2 of 5</span>
-    <h2>Your ZIP code?</h2>
-    <p class="why">It suggests your state, which sets state tax and the unemployment cap. Nothing leaves this browser.</p>
-    <div class="slaf-field big">
-      <label class="slaf-label" for="in-zip">ZIP</label>
-      <span class="slaf-input-shell"><input id="in-zip" type="text" inputmode="numeric" placeholder="e.g. 12203" maxlength="5" autocomplete="postal-code"/></span>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-age">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-situation">Next →</button></div>
-  </section>
-
-  <section class="screen slaf-card" id="q-situation" hidden>
-    <span class="steps">3 of 5</span>
-    <h2>Right now, you are…</h2>
-    <p class="why">This decides which rows apply to you at all. Nothing that does not apply is ever asked.</p>
-    <div class="choices tall" data-choices="situation" role="group" aria-label="Situation">
-      <button type="button" class="choice" data-situation="employed" aria-pressed="false">Working<small>A paycheque from an employer</small></button>
-      <button type="button" class="choice" data-situation="unemployed" aria-pressed="false">Between jobs<small>The runway is the number now</small></button>
-      <button type="button" class="choice" data-situation="selfEmployed" aria-pressed="false">Self-employed<small>Your own work, no employer</small></button>
-      <button type="button" class="choice" data-situation="both" aria-pressed="false">A mix<small>A job and your own work</small></button>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-zip">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-pay">Next →</button></div>
-  </section>
-
-  <section class="screen slaf-card" id="q-pay" hidden>
-    <span class="steps">4 of 5</span>
-    <h2 id="pay-heading">Pay, a year?</h2>
-    <p class="why" id="pay-why">Before tax. A rough figure is fine; it can be sharpened later.</p>
-    <div class="slaf-field big">
-      <label class="slaf-label" for="in-pay" id="pay-label">Gross pay, a year</label>
-      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-pay" type="text" inputmode="decimal" placeholder="e.g. 62,000" autocomplete="off"/></span>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-situation">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="q-cash">Next →</button></div>
-  </section>
-
-  <section class="screen slaf-card" id="q-cash" hidden>
-    <span class="steps">5 of 5</span>
-    <h2>Cash on hand?</h2>
-    <p class="why">Checking, savings, anything you could spend this week. Not investments.</p>
-    <div class="slaf-field big">
-      <label class="slaf-label" for="in-cash">Cash and savings</label>
-      <span class="slaf-input-shell"><span class="affix">$</span><input id="in-cash" type="text" inputmode="decimal" placeholder="e.g. 3,000" autocomplete="off"/></span>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-pay">← Back</button><button type="button" class="slaf-btn slaf-btn--primary" data-next="insight" id="btn-finish">See what the numbers say →</button></div>
-  </section>
-
-  <section class="screen slaf-card insight" id="insight" hidden aria-live="polite">
-    <span class="steps">The first thing the numbers say</span>
-    <p class="slaf-figure" id="ins-headline">…</p>
-    <p class="line" id="ins-line"></p>
-    <p class="rough" id="ins-rough" hidden></p>
-    <div class="door">
-      <p id="ins-door"></p>
-      <a class="slaf-btn slaf-btn--primary" id="ins-open" href="ledger.html">Open the door →</a>
-      <a class="slaf-btn slaf-btn--quiet" href="#doors-home">Or see every door</a>
-    </div>
-    <div class="nav"><button type="button" class="slaf-btn slaf-btn--quiet" data-back="q-cash">← Back</button><span></span></div>
   </section>
   </section>
 
@@ -867,6 +919,7 @@
 <script src="../shared/progress.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
+<script src="../shared/lens.js"></script>
 <script src="../engines/projection.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/income.js"></script>
@@ -897,6 +950,9 @@
 <script src="../engines/foo.js"></script>
 <script src="../engines/cashflow.js"></script>
 <script src="../engines/fire.js"></script>
+<script src="../engines/coast.js"></script>
+<script src="../engines/opening.js"></script>
+<script src="../shared/upnext.js"></script>
 <script src="../engines/benchmarks.js"></script>
 <script src="../engines/ratios.js"></script>
 <script src="../engines/skills.js"></script>
@@ -1160,7 +1216,7 @@
      old link keeps landing where it meant to. Switching hides and shows;
      it never rebuilds, because four of the six hold live inputs. */
   var VIEWS = [
-    { id: 'view-round1',  hash: '#round-1',          match: /^#round-1/ },
+    { id: 'view-round1',  hash: '#round-1',          match: /^#(round-1|opening|op-|in-)/ },
     { id: 'view-express', hash: '#all-at-once',      match: /^#(all-at-once|x-)/ },
     { id: 'view-since',   hash: '#since-last-time',  match: /^#since-last-time/ },
     { id: 'view-shelves', hash: '#arrangements',     match: /^#arrangements/ },
@@ -1181,6 +1237,15 @@
     var view = routeView();
     var m = /^#door-(D|A|I|T|E|you)$/.exec(location.hash || '');
     showDoor(view === 'view-doors' && m ? m[1] : null);
+    /* A deep link into a view the browser could not scroll to while it was
+       hidden: every room links here for a row now (D-313), so the target
+       is opened and brought to the top once its view is on. Only the door
+       hashes (#x-A) are reached this way; a row's own hash is not a link. */
+    var target = /^#x-(D|A|I|T|E|you)$/.test(location.hash || '') ? el(location.hash.slice(1)) : null;
+    if (target) {
+      for (var p = target; p; p = p.parentElement) { if (p.tagName === 'DETAILS') p.open = true; }
+      if (target.scrollIntoView) target.scrollIntoView({ block: 'start' });
+    }
     if (!m && location.hash === '#doors-home') { try { history.replaceState(null, '', location.pathname); } catch (e) { /* fine */ } }
   }
 
@@ -1237,139 +1302,383 @@
 <script>
 (function () {
   'use strict';
+  /* ---- The opening (D-312): five inputs on one screen, the answer under them.
+     Writes go through Ownership.write, each to its owner; nothing here is a
+     second store. The answer is engines/opening.js's, repainted on every
+     change of the household. */
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Reference = SLAF.Reference,
-      LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Doors = SLAF.Doors;
+      LedgerRows = SLAF.LedgerRows, Suggest = SLAF.Suggest, Opening = SLAF.Opening, UpNext = SLAF.UpNext, Registry = SLAF.Registry,
+      Lens = SLAF.Lens;
   var TABLES = null;
-  var ORDER = ['q-age', 'q-zip', 'q-situation', 'q-pay', 'q-cash', 'insight'];
+  /* Session-only: an expected take-home while between jobs, and a coast age
+     tried in the drawer. Neither is a fact, so neither is stored. */
+  var SESSION = { expectedTakeHomeMonthlyCents: null, coastTargetAge: null };
+  var DEBT_TYPES = [['student_loan', 'Student loans'], ['credit_card', 'A card'], ['auto', 'A car'], ['other', 'Other']];
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function h() { return Spine.getProfile(); }
+  function money(c) { return Money.formatCents(c); }
+  function pct(r, d) { return Money.formatRate(r, { decimals: d === undefined ? 0 : d }); }
   function situation() { var p = Schema.primaryPerson(h()); return p ? p.employmentStatus : null; }
+  function incomeless() { var s = situation(); return s === 'unemployed' || s === 'student'; }
+  function forBox(cents) { return Money.forInput(cents).replace(/^\$/, ''); }
+  function confidence() { return el('op-exact').checked ? 'sure' : 'roughly'; }
+  function tag() { if (Spine.tagWrite) Spine.tagWrite({ source: 'typed', confidence: confidence() }); }
+  function opts() { return { expectedTakeHomeMonthlyCents: incomeless() ? SESSION.expectedTakeHomeMonthlyCents : null, coastTargetAge: SESSION.coastTargetAge }; }
 
-  /* ---- Screens: one at a time, never rebuilt ------------------------------ */
-  function show(id) {
-    ORDER.forEach(function (s) { el(s).hidden = s !== id; });
-    if (id === 'insight') paintInsight();
-    if (id === 'q-pay') paintPayLabel();
-    /* The hash names the VIEW first and the screen second, because the
-       Ledger is one page now and the hash has to say which hat it is
-       wearing. Only write it while this view is the one on screen —
-       prefilling at boot must not drag a reader off the doors. */
-    if (!document.getElementById('view-round1').hidden) {
-      try { history.replaceState(null, '', '#round-1' + (id === 'q-age' ? '' : '-' + id)); } catch (e) { /* fine */ }
-      window.scrollTo(0, 0);
-    }
-  }
-  function paintPayLabel() {
-    var between = situation() === 'unemployed';
-    el('pay-heading').textContent = between ? 'Your last pay, a year?' : 'Pay, a year?';
-    el('pay-label').textContent = between ? 'Your last pay, a year' : 'Gross pay, a year';
-    el('pay-why').textContent = between ? 'Before tax, from the last job. It sets the benefit estimate and the tax rate.' : 'Before tax. A rough figure is fine; it can be sharpened later.';
-  }
-
-  /* ---- Writes: each through its owner's path -------------------------------- */
+  /* ---- Writes: each through its owner's path ---------------------------------- */
   function writeAge() {
-    var m = el('in-month').value, y = String(el('in-year').value || '').replace(/\D/g, '');
-    var dob = null;
-    if (m && y.length === 4) dob = y + '-' + m + '-01';
-    else {
-      var raw = String(el('in-age').value || '').replace(/\D/g, '');
-      if (raw !== '') {
-        var n = Number(raw);
-        if (n >= 1 && n <= 120) { var now = new Date(); dob = Schema.localDay(new Date(now.getFullYear() - n, now.getMonth(), 1)); }
-      }
-    }
-    var p = Schema.primaryPerson(h());
-    if ((p && p.dob) !== dob && (dob || (p && p.dob))) Ownership.write('dob', dob);
-  }
-  function writeZip() {
-    var z = String(el('in-zip').value || '').replace(/\D/g, '').slice(0, 5);
-    if ((h().zip || null) !== (z.length === 5 ? z : null)) Ownership.write('zip', z);
+    var raw = String(el('in-age').value || '').replace(/\D/g, '');
+    if (raw === '') return;
+    var n = Number(raw);
+    if (!(n >= 1 && n <= 120)) return;
+    var cur = Schema.primaryAge(h());
+    if (cur === n) return;
+    var now = new Date();
+    var dob = Schema.localDay(new Date(now.getFullYear() - n, now.getMonth(), 1));
+    tag(); Ownership.write('dob', dob);
   }
   function writeSituation(v) {
     if (situation() !== v) Ownership.write('employmentStatus', v);
-    Array.prototype.forEach.call(document.querySelectorAll('[data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === v ? 'true' : 'false'); });
-    paintPayLabel();
+    paintSituation();
+    paintTakeLabel();
   }
-  function writePay() {
-    var cents = Money.parseMoney(el('in-pay').value);
-    var between = situation() === 'unemployed';
-    var current = between ? Schema.unemploymentOf(h()).lastGrossAnnualCents : (Money.isOk(Schema.grossAnnualIncomeCents(h())) ? Schema.grossAnnualIncomeCents(h()).value : null);
-    if (cents === current || (cents === null && current === null)) return;
-    if (cents === null && current !== null && String(el('in-pay').value).trim() === '') return;   /* a blank never erases */
+  function writeTakeHome() {
+    var typed = Money.parseMoney(el('in-take').value);
+    var per = el('in-per').value || 'month';
+    if (typed === null) return;
+    var monthly = Math.round(typed * Schema.PAYCHECKS_A_MONTH[per]);
+    if (incomeless()) {
+      /* What it would look like once income is back: a what-if, not a fact. */
+      SESSION.expectedTakeHomeMonthlyCents = monthly > 0 ? monthly : null;
+      render();
+      return;
+    }
+    var cur = Schema.typedTakeHomeMonthlyCents(h());
+    if (Money.isOk(cur) && cur.value === monthly && cur.per === per) return;
+    tag(); Ownership.write('takeHomeMonthly', monthly, { per: per, typedCents: typed });
+  }
+  function writeSpending() {
+    var cents = Money.parseMoney(el('in-spend').value);
     if (cents === null) return;
-    Ownership.write(between ? 'lastPay' : 'grossAnnualIncome', cents);
+    var cur = Schema.monthlyExpensesCents(h());
+    if (Money.isOk(cur) && cur.value === cents) return;
+    el('op-spend-hint').textContent = '';
+    tag(); Ownership.write('wantsMonthly', cents);
+  }
+  function spendUnknown() {
+    var t = Schema.takeHomeMonthlyCents(h(), TABLES);
+    var take = Money.isOk(t) ? t.value : (incomeless() ? SESSION.expectedTakeHomeMonthlyCents : null);
+    if (!Money.isEntered(take) || take <= 0) { el('op-spend-hint').textContent = 'Type take-home first: the guess is a share of it.'; return; }
+    var share = (TABLES && TABLES.opening && TABLES.opening.unknownSpendingShare) || Opening.FALLBACK.unknownSpendingShare;
+    var cents = Math.round(take * share);
+    el('in-spend').value = forBox(cents);
+    if (Spine.tagWrite) Spine.tagWrite({ source: 'suggested', confidence: 'roughly' });
+    Ownership.write('wantsMonthly', cents);
+    el('op-spend-hint').textContent = 'Rough: ' + Math.round(share * 10) + ' tenths of take-home stands in. Change it any time; Expenses splits it into food, a roof and getting around.';
+  }
+  function writeInvested() {
+    var cents = Money.parseMoney(el('in-inv').value);
+    if (cents === null) return;
+    var cur = Schema.investmentsCents(h());
+    if (Money.isOk(cur) && cur.value === cents) return;
+    tag(); Ownership.write('investments', cents);
   }
   function writeCash() {
     var cents = Money.parseMoney(el('in-cash').value);
     if (cents === null) return;
     var cur = Schema.cashCents(h());
     if (Money.isOk(cur) && cur.value === cents) return;
-    Ownership.write('cashSavings', cents);
+    tag(); Ownership.write('cashSavings', cents);
   }
-  var SAVE = { 'q-age': writeAge, 'q-zip': writeZip, 'q-pay': writePay, 'q-cash': writeCash };
+  function writeHasDebt(v) {
+    var want = v === 'yes';
+    var cur = Ownership.FIELDS.hasDebt.read(h());
+    if (!(Money.isOk(cur) && cur.value === want)) Ownership.write('hasDebt', want);
+    if (want && !Schema.aggregatableDebts(h()).length) addDebt();
+    paintDebtChips();
+  }
+  function addDebt() {
+    Ownership.addItem('debt', { type: 'student_loan', label: null });
+    /* The add is two saves (the yes, then the line), so the tag on the
+       first is spent before the line lands: the line's rows are stamped
+       with the opening's confidence by hand, the way the spine would. */
+    if (Spine.setFieldMeta && !el('op-exact').checked) ['debtBalance', 'debtRate', 'debtMinPayment'].forEach(function (id) { Spine.setFieldMeta(id, { source: 'typed', confidence: 'roughly', room: 'ledger' }); });
+    renderDebts();
+  }
+  function writeDebt(id, field, raw) {
+    if (field === 'balance') { var c = Money.parseMoney(raw); if (c === null) return; tag(); Ownership.write('debtBalance', c, { itemId: id }); }
+    else if (field === 'rate') { var n = Number(String(raw).replace(/[^\d.]/g, '')); if (!isFinite(n) || raw === '') return; tag(); Ownership.write('debtRate', n > 1 ? n / 100 : n, { itemId: id }); }
+    else if (field === 'type') { Ownership.setItemFields('debt', id, { type: raw }); }
+  }
+  function removeDebt(id) { Ownership.removeItem('debt', id); renderDebts(); }
 
-  /* ---- The insight ---------------------------------------------------------- */
-  function paintInsight() {
-    if (!TABLES) { el('ins-headline').textContent = 'One moment…'; return; }
-    var ins = Doors.firstInsight(h(), TABLES);
-    var door = Doors.byId(ins.door.door);
-    if (!ins.ok) {
-      el('ins-headline').textContent = 'Nearly there';
-      el('ins-line').innerHTML = '<span class="needs">' + esc(ins.reason) + '</span>';
-      el('ins-rough').hidden = true;
-    } else {
-      el('ins-headline').textContent = ins.headline;
-      el('ins-line').textContent = ins.line;
-      el('ins-rough').hidden = !ins.rough;
-      el('ins-rough').textContent = ins.rough ? 'Rough: it leans on ' + ins.usedSuggestions.length + (ins.usedSuggestions.length === 1 ? ' guess' : ' guesses') + ' you can confirm or change behind the doors.' : '';
+  /* ---- Prefill: what the Ledger already holds is shown, not asked again ------ */
+  function paintSituation() {
+    var s = situation();
+    Array.prototype.forEach.call(document.querySelectorAll('#op-inputs [data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === s ? 'true' : 'false'); });
+  }
+  function paintTakeLabel() {
+    var between = incomeless();
+    el('op-take-label').textContent = between ? 'Expected take-home, once income is back (optional)' : 'Take-home pay';
+    if (between) {
+      el('op-take-hint').textContent = 'Nothing coming in right now, so this is a what-if for the FI view. It is not stored.';
+      if (SESSION.expectedTakeHomeMonthlyCents) el('in-take').value = forBox(SESSION.expectedTakeHomeMonthlyCents);
+      return;
     }
-    el('ins-door').textContent = ins.door.reason;
-    el('ins-open').textContent = 'Open ' + (door ? door.label : 'the door') + ' →';
-    el('ins-open').href = '#door-' + ins.door.door;
+    var typed = Schema.typedTakeHomeMonthlyCents(h());
+    if (Money.isOk(typed)) {
+      el('in-per').value = typed.per || 'month';
+      el('in-take').value = forBox(Money.isEntered(typed.typedCents) ? typed.typedCents : typed.value);
+      el('op-take-hint').textContent = 'After tax, as it lands. Logged paychecks in Income will take over when you log them.';
+      return;
+    }
+    var est = Schema.takeHomeMonthlyCents(h(), TABLES);
+    if (Money.isOk(est)) {
+      el('in-take').placeholder = forBox(est.value);
+      el('op-take-hint').innerHTML = 'A guess from your gross pay: <b>' + esc(money(est.value)) + ' a month</b>' + (est.source === 'logged' ? ', from the paychecks you logged' : '') + '. Type what actually lands.';
+    } else {
+      el('op-take-hint').textContent = 'After tax, as it lands in your account.';
+    }
   }
-
-  /* ---- Boot: prefill once, wire once ------------------------------------------ */
+  function paintDebtChips() {
+    var cur = Ownership.FIELDS.hasDebt.read(h());
+    var v = Money.isOk(cur) ? (cur.value ? 'yes' : 'no') : null;
+    Array.prototype.forEach.call(document.querySelectorAll('#op-inputs [data-debt]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-debt') === v ? 'true' : 'false'); });
+    el('op-debts').hidden = v !== 'yes';
+    el('op-debt-add').hidden = v !== 'yes';
+  }
+  /* The rows are redrawn only when the set of debts changed, and never
+     while one of their boxes has the focus: a redraw under a finger closes
+     the keyboard (D-034). A value typed into a row is written through its
+     owner and read back on the next structural redraw. */
+  var DEBT_IDS = null;
+  function renderDebts(force) {
+    var list = Schema.aggregatableDebts(h());
+    var ids = list.map(function (d) { return d.id; }).join(',');
+    var inside = document.activeElement && el('op-debts').contains(document.activeElement);
+    if (!force && ids === DEBT_IDS) return;
+    if (inside && !force) return;
+    DEBT_IDS = ids;
+    el('op-debts').innerHTML = list.map(function (d) {
+      return '<div class="op-debt" data-debt-id="' + esc(d.id) + '">'
+        + '<div><label for="dt-' + esc(d.id) + '">What it is</label><select id="dt-' + esc(d.id) + '" data-debt-field="type" aria-label="Kind of debt">'
+        + DEBT_TYPES.map(function (t) { return '<option value="' + t[0] + '"' + (d.type === t[0] ? ' selected' : '') + '>' + esc(t[1]) + '</option>'; }).join('') + '</select></div>'
+        + '<div><label for="db-' + esc(d.id) + '">Balance</label><span class="slaf-input-shell"><span class="affix">$</span><input id="db-' + esc(d.id) + '" type="text" inputmode="decimal" data-debt-field="balance" value="' + (Money.isEntered(d.balanceCents) ? esc(forBox(d.balanceCents)) : '') + '" placeholder="e.g. 8,000" aria-label="Balance"/></span></div>'
+        + '<div><label for="dr-' + esc(d.id) + '">Rate</label><span class="slaf-input-shell"><input id="dr-' + esc(d.id) + '" type="text" inputmode="decimal" data-debt-field="rate" value="' + (Money.isEntered(d.rate) ? esc(String(Math.round(d.rate * 10000) / 100)) : '') + '" placeholder="e.g. 6.5" aria-label="Interest rate, percent"/><span class="affix">%</span></span></div>'
+        + '<button type="button" class="op-mini op-debt-x" data-debt-remove aria-label="Remove this debt">Remove</button>'
+        + '</div>';
+    }).join('');
+  }
   function prefill() {
-    var hh = h(), p = Schema.primaryPerson(hh);
+    var hh = h();
     var age = Schema.primaryAge(hh);
     if (Money.isEntered(age)) el('in-age').value = String(age);
-    if (p && p.dob && /^\d{4}-\d{2}/.test(p.dob)) { el('in-month').value = p.dob.slice(5, 7); el('in-year').value = p.dob.slice(0, 4); }
-    if (hh.zip) el('in-zip').value = hh.zip;
-    var s = situation();
-    if (s) Array.prototype.forEach.call(document.querySelectorAll('[data-situation]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-situation') === s ? 'true' : 'false'); });
-    var pay = s === 'unemployed' ? Schema.unemploymentOf(hh).lastGrossAnnualCents : (Money.isOk(Schema.grossAnnualIncomeCents(hh)) ? Schema.grossAnnualIncomeCents(hh).value : null);
-    if (Money.isEntered(pay)) el('in-pay').value = Money.forInput(pay).replace(/^\$/, '');
-    var cash = Schema.cashCents(hh);
-    if (Money.isOk(cash)) el('in-cash').value = Money.forInput(cash.value).replace(/^\$/, '');
-    paintPayLabel();
+    paintSituation();
+    paintTakeLabel();
+    var spend = Schema.monthlyExpensesCents(hh);
+    if (Money.isOk(spend)) {
+      el('in-spend').value = forBox(spend.value);
+      /* Split in Expenses, or read from closed months: the total is theirs. */
+      if (spend.source === 'closed' || (spend.source === 'fat' && spend.entered > 1)) {
+        el('in-spend').disabled = true;
+        el('op-spend-unknown').hidden = true;
+        el('op-spend-hint').innerHTML = (spend.source === 'closed' ? 'Read from the months you closed. ' : 'Split into its parts already. ')
+          + '<a href="' + esc(Ownership.linkTo('expenses', 'spending', 'ledger')) + '">Change it in Expenses →</a>';
+      }
+    }
+    var inv = Schema.investmentsCents(hh), cash = Schema.cashCents(hh);
+    if (Money.isOk(inv)) el('in-inv').value = forBox(inv.value);
+    if (Money.isOk(cash)) el('in-cash').value = forBox(cash.value);
+    var n = Schema.aggregatableAssets(hh).filter(function (a) { return a.category === 'investment' || a.category === 'retirement'; }).length;
+    if (n > 1) {
+      el('in-inv').disabled = true;
+      el('op-inv-hint').innerHTML = 'Across ' + n + ' accounts. <a href="' + esc(Ownership.linkTo('ledger', 'x-A', 'ledger')) + '">Change them in the Ledger →</a>';
+    }
+    paintDebtChips();
+    renderDebts(true);
   }
-  document.addEventListener('click', function (ev) {
-    var t = ev.target.closest ? ev.target.closest('[data-next],[data-back],[data-situation]') : null;
+
+  /* ---- The answer --------------------------------------------------------------- */
+  function years(y) { return y === null ? '—' : (Math.round(y * 10) / 10) + (Math.round(y * 10) / 10 === 1 ? ' year' : ' years'); }
+  function yearOf(y) { return y === null ? '' : String(new Date().getFullYear() + Math.round(y)); }
+  function ageAt(a) { return a === null ? '' : ' at ' + Math.round(a); }
+  function bandHtml(b) {
+    if (!b.hasDate || b.alreadyThere) return '';
+    var r = b.runs;
+    var one = function (id, label) {
+      var run = r[id];
+      return '<span class="slaf-band slaf-band--' + id + '"><b>' + esc(run.months === null ? 'past ' + esc(String(60)) + ' yrs' : years(run.years)) + '</b> <small>' + esc(label) + ' (' + esc(pct(run.returnReal, 0)) + ' real)</small></span>';
+    };
+    return '<span class="slaf-bands-lead">Three ways, after inflation:</span> ' + one('worst', 'worst plausible') + '<span class="slaf-bands-sep"> · </span>' + one('likely', 'likely') + '<span class="slaf-bands-sep"> · </span>' + one('best', 'best plausible');
+  }
+  function leverLine(l, r) {
+    var moves;
+    if (r.state === 'noDate') moves = l.givesADate ? 'gives you a date' : (l.monthlyGainCents ? '+' + money(l.monthlyGainCents) + ' a month' : '');
+    else moves = l.monthsSaved === null ? '' : l.monthsSaved <= 0 ? 'no sooner' : Money.formatMonths(l.monthsSaved) + ' sooner';
+    var room = l.room && Registry.byId(l.room) ? Registry.byId(l.room) : null;
+    var href = room ? Ownership.linkTo(l.room, l.anchor || null, 'ledger') : null;
+    return '<li><span>' + esc(l.label) + (href ? ' · <a href="' + esc(href) + '">' + esc(room.title) + ' →</a>' : '') + '</span>'
+      + '<span class="lv-moves">' + esc(moves) + '</span>'
+      + (l.note ? '<span class="lv-note">' + esc(l.note) + '</span>' : '') + '</li>';
+  }
+  function nextCard(r) {
+    var hh = h();
+    var plan = UpNext && TABLES ? UpNext.plan(hh, TABLES, 'ledger') : null;
+    var big = '';
+    if (r.state === 'noDate' && r.levers.length) {
+      var top = r.levers[0], room = top.room && Registry.byId(top.room);
+      big = 'First: <strong>' + esc(top.label) + '</strong>. ' + (top.monthlyGainCents ? esc(money(top.monthlyGainCents)) + ' a month on the right side of zero. ' : '')
+        + (room ? '<a href="' + esc(Ownership.linkTo(top.room, top.anchor || null, 'ledger')) + '">Open ' + esc(room.title) + ' →</a>' : '');
+    } else if (plan && plan.next) {
+      var n = plan.next;
+      big = 'Up next: <strong>' + esc(n.label) + '</strong>, ' + esc(n.say) + '.'
+        + (n.missing.length ? ' <span class="dim">' + n.missing.length + (n.missing.length === 1 ? ' answer' : ' answers') + ' away:</span> '
+            + n.missing.map(function (m) { return '<a href="' + esc(m.href) + '">' + esc(String(m.label).toLowerCase()) + '</a>'; }).join(', ') + '.'
+          : ' <a href="' + esc(n.href) + '">Open ' + esc(n.roomTitle) + ' →</a>');
+    } else if (plan) {
+      big = 'Every reading is open. <a href="' + esc(Ownership.linkTo('ledger', 'doors-home', 'ledger')) + '">The doors →</a>';
+    }
+    el('op-next-big').innerHTML = big;
+    el('op-next-more').innerHTML = plan ? plan.locked.slice(r.state === 'noDate' ? 0 : 1, r.state === 'noDate' ? 2 : 3).map(function (e) {
+      return '<li>Then ' + esc(e.label) + ', ' + e.cost + (e.cost === 1 ? ' answer' : ' answers') + ' away' + (e.missing.length ? ': ' + e.missing.map(function (m) { return '<a href="' + esc(m.href) + '">' + esc(String(m.label).toLowerCase()) + '</a>'; }).join(', ') : '') + '</li>';
+    }).join('') : '';
+  }
+  function assumptions(r) {
+    var m = r.model, t = (TABLES && TABLES.opening) || Opening.FALLBACK;
+    var rows = [
+      'Withdrawal rate <b>' + esc(pct(m.withdrawalRate, 1)) + '</b>: a year of spending over this is the FI number. The 4% convention was fitted to thirty-year retirements; at 3.5% a fifty- or sixty-year one holds up. The other two Triple D points: at 4% the number is '
+        + esc(r.fi ? money(r.fi.points.convention.numberCents) : '—') + ', at 3.25% ' + esc(r.fi ? money(r.fi.points.floor.numberCents) : '—') + '. Source: data/opening.json.',
+      'Real returns, after inflation: worst plausible <b>' + esc(pct(m.returns.worst, 0)) + '</b>, likely <b>' + esc(pct(m.returns.likely, 0)) + '</b>, best plausible <b>' + esc(pct(m.returns.best, 0)) + '</b>. Below data/return_bands.json’s planning bands on purpose; the spread is the point.',
+      'Coast age <label>the number by age <input type="text" inputmode="numeric" id="op-coast-age" value="' + esc(String(m.coastTargetAge)) + '" aria-label="Coast age"/></label>, tried here only; The Number stores the age you intend to stop.',
+      'Savings rate is from take-home. Pretax retirement contributions are not counted until the Ledger holds the workplace plan; then they raise it.',
+      'Debt payments are counted inside spending. A debt dearer than the expected nominal return (' + esc(pct(m.returns.likely + (m.inflation || 0), 0)) + ') is paid first, whatever the months say. Debt has the full plan.',
+      'Save half of every raise assumes raises of <b>' + esc(pct(m.raiseRateReal, 0)) + '</b> a year over inflation. The $500 step, the 10% cut and the one-point return are the file’s stand-ins, not findings.',
+      (m.spendingRough ? 'Spending is marked rough, so every date here is rough. ' : '') + 'Every input can be marked exact with the box above; until then it is stored as roughly.'
+    ];
+    el('op-assumptions-body').innerHTML = rows.map(function (x) { return '<li>' + x + '</li>'; }).join('');
+    var ca = el('op-coast-age');
+    if (ca) ca.addEventListener('change', function () { var n = Number(ca.value); SESSION.coastTargetAge = isFinite(n) && n > 0 ? n : null; render(); });
+  }
+  /* The band, kept: one journal line a day when it moves, so a later
+     month can say whether the range is tightening (D-312). The journal is
+     a record of a reading, never an input. */
+  function recordBand(r) {
+    if (!r.band.hasDate || r.band.alreadyThere) return;
+    var hh = h(), runs = r.band.runs;
+    var band = { worstMonths: runs.worst.months === null ? null : Math.round(runs.worst.months), likelyMonths: Math.round(runs.likely.months), bestMonths: Math.round(runs.best.months) };
+    var j = (hh.journal || []).filter(function (e) { return e.kind === 'band'; });
+    var last = j[j.length - 1];
+    if (last && last.band && last.band.likelyMonths === band.likelyMonths && last.band.worstMonths === band.worstMonths && last.band.bestMonths === band.bestMonths) return;
+    /* Same day, different band: the day's line is replaced, not stacked. */
+    var sameDay = last && last.at && Schema.localDay(last.at) === Schema.localDay(new Date());
+    Spine.journal(Schema.createJournalEntry({ id: sameDay ? last.id : undefined, at: new Date().toISOString(), kind: 'band', cents: r.fi.numberCents, basis: 'opening', band: band }));
+  }
+  function render() {
+    if (!TABLES) return;
+    var r = Opening.read(h(), TABLES, opts());
+    var m = r.model, b = r.band;
+    var head = '', sub = '', cap = 'When work becomes optional';
+    el('op-stage').textContent = r.stage && r.stage.line ? r.stage.line : '';
+    if (r.state === 'noIncome') {
+      cap = 'The runway';
+      head = r.runway ? 'About <b>' + esc(Money.formatMonths(Math.round(r.runway.months * 10) / 10)) + '</b> of runway' : 'Cash and spending give the runway.';
+      sub = r.runway ? esc(money(r.runway.cashCents)) + ' of cash over ' + esc(money(r.runway.spendingMonthlyCents)) + ' a month. ' : '';
+      if (r.expectedTakeHome && b.hasDate) sub += 'Once income is back at ' + esc(money(m.takeHomeMonthlyCents)) + ' a month: FI in about <b>' + esc(years(b.runs.likely.years)) + '</b>' + esc(ageAt(b.runs.likely.age)) + ', a rough what-if.';
+      else sub += 'Type an expected take-home above to see what it looks like once income is back.';
+    } else if (r.status === 'incomplete' && !b.hasDate) {
+      head = 'Five numbers, and a date appears here.';
+      sub = 'Still needed: ' + r.missing.map(function (id) { var f = Ownership.FIELDS[id]; return esc(f ? f.label.toLowerCase() : id); }).join(', ') + '.';
+    } else if (r.state === 'noDate') {
+      head = 'No date yet.';
+      sub = 'The first job is getting one dollar on the right side of zero. Spending is ' + esc(money(m.spendingMonthlyCents - m.takeHomeMonthlyCents)) + ' a month above take-home.';
+    } else if (r.state === 'pastFi') {
+      head = 'Past your FI number already.';
+      sub = esc(money(m.investedCents)) + ' invested against a number of ' + esc(money(r.fi.numberCents)) + '. Work is optional on paper; The Back Half is the room now.';
+    } else if (b.hasDate) {
+      var L = b.runs.likely;
+      head = 'FI in about <b>' + esc(years(L.years)) + '</b>' + esc(ageAt(L.age)) + (L.years !== null ? ', around ' + esc(yearOf(L.years)) : '');
+      sub = 'The number is ' + esc(money(r.fi.numberCents)) + ', a year of spending at ' + esc(pct(m.withdrawalRate, 1)) + '. Saving ' + esc(money(r.savings.monthlyCents)) + ' a month on ' + esc(money(m.investedCents)) + ' invested.';
+      if (r.state === 'pastCoast') sub += ' <b>Past Coast FI:</b> left alone, what is invested reaches the number by ' + esc(String(m.coastTargetAge)) + '. Most people never get told that.';
+    } else {
+      head = 'No date within ' + esc(String(m.horizonYears)) + ' years at this pace.';
+      sub = esc(b.reason || '');
+    }
+    el('op-cap').textContent = cap;
+    el('op-headline').innerHTML = head;
+    el('op-sub').innerHTML = sub;
+    el('op-band').innerHTML = r.state === 'noIncome' && !r.expectedTakeHome ? '' : bandHtml(b);
+    el('op-tighten').textContent = b.hasDate && !b.alreadyThere ? 'This range tightens every time you update your numbers.' : '';
+
+    var c = r.coast;
+    if (c && Money.isOk(c)) {
+      if (c.reachedNow) { el('op-coast').textContent = 'Past it'; el('op-coast-sub').textContent = 'What is invested reaches the number by ' + m.coastTargetAge + ' on its own.'; }
+      else if (c.neverAtThisPace) { el('op-coast').textContent = 'Not yet'; el('op-coast-sub').textContent = 'At this pace the pot never coasts to the number by ' + m.coastTargetAge + '.'; }
+      else { el('op-coast').textContent = 'Age ' + Math.round(c.coastAge); el('op-coast-sub').textContent = 'Then stop saving and still land on the number by ' + m.coastTargetAge + '.'; }
+      el('op-coast').className = 'big';
+    } else { el('op-coast').textContent = '—'; el('op-coast').className = 'big is-blank'; el('op-coast-sub').textContent = c ? c.reason : ''; }
+    if (r.savings && r.savings.rate !== null) {
+      el('op-rate').textContent = pct(r.savings.rate, 0) + ' from take-home';
+      el('op-rate').className = 'big';
+      el('op-rate-sub').textContent = (r.savings.monthlyCents < 0 ? money(-r.savings.monthlyCents) + ' a month short' : money(r.savings.monthlyCents) + ' a month saved') + '. Pretax contributions not counted yet.';
+      el('op-rate-sub').className = 'sub' + (r.savings.monthlyCents < 0 ? ' is-short' : '');
+    } else { el('op-rate').textContent = '—'; el('op-rate').className = 'big is-blank'; el('op-rate-sub').textContent = r.incomeless ? 'No income right now, so no rate.' : 'Take-home and spending give the rate.'; el('op-rate-sub').className = 'sub'; }
+
+    el('op-levers-cap').textContent = r.state === 'noDate' ? 'What gets a dollar on the right side of zero' : 'What moves the date most, for you';
+    el('op-levers').innerHTML = r.levers.map(function (l) { return leverLine(l, r); }).join('');
+    el('op-payfirst').textContent = r.payFirst ? 'Pay this first: ' + r.payFirst.label + ' costs ' + pct(r.payFirst.rate, 1) + ', more than the ' + pct(r.payFirst.nominalReturn, 0) + ' the pot is expected to earn.' : '';
+    nextCard(r);
+    assumptions(r);
+    lens.repaint();
+    recordBand(r);
+  }
+  var lens = Lens.mountStrip('op-lens', function (hh, T) {
+    if (!T) return [];
+    var r = Opening.read(hh, T, opts());
+    var rows = [];
+    if (r.fi) rows.push({ label: 'The FI number', cents: r.fi.numberCents });
+    if (r.savings && r.savings.monthlyCents > 0) rows.push({ label: 'Saved a month', cents: r.savings.monthlyCents });
+    if (Money.isEntered(r.model.investedCents)) rows.push({ label: 'Invested', cents: r.model.investedCents });
+    return rows;
+  }, function () { return TABLES; }) || { repaint: function () {} };
+
+  /* ---- Wiring, once ---------------------------------------------------------------- */
+  var SAVE = { 'in-age': writeAge, 'in-take': writeTakeHome, 'in-per': writeTakeHome, 'in-spend': writeSpending, 'in-inv': writeInvested, 'in-cash': writeCash };
+  Object.keys(SAVE).forEach(function (id) { el(id).addEventListener('change', SAVE[id]); });
+  el('op-spend-unknown').addEventListener('click', spendUnknown);
+  /* Marked exact: every opening figure already entered is confirmed as
+     sure, as of now, without changing a value (the Ledger's confirm verb). */
+  el('op-exact').addEventListener('change', function () {
+    if (!el('op-exact').checked || !Spine.confirm) return;
+    ['dob', 'takeHomeMonthly', 'wantsMonthly', 'investments', 'cashSavings', 'debtBalance', 'debtRate'].forEach(function (id) {
+      var f = Ownership.FIELDS[id];
+      if (f && Money.isOk(f.read(h()))) Spine.confirm(id);
+    });
+  });
+  el('op-debt-add').addEventListener('click', addDebt);
+  el('op-inputs').addEventListener('click', function (ev) {
+    var t = ev.target.closest ? ev.target.closest('[data-situation],[data-debt],[data-debt-remove]') : null;
     if (!t) return;
     if (t.hasAttribute('data-situation')) { writeSituation(t.getAttribute('data-situation')); return; }
-    var from = t.closest('.screen');
-    if (t.hasAttribute('data-next') && from && SAVE[from.id]) SAVE[from.id]();
-    show(t.getAttribute('data-next') || t.getAttribute('data-back'));
+    if (t.hasAttribute('data-debt')) { writeHasDebt(t.getAttribute('data-debt')); return; }
+    if (t.hasAttribute('data-debt-remove')) { var row = t.closest('[data-debt-id]'); if (row) removeDebt(row.getAttribute('data-debt-id')); }
   });
-  ['in-age', 'in-zip', 'in-pay', 'in-cash', 'in-year', 'in-month'].forEach(function (id) {
-    el(id).addEventListener('change', function () { var s = el(id).closest('.screen'); if (s && SAVE[s.id]) SAVE[s.id](); });
+  el('op-debts').addEventListener('change', function (ev) {
+    var n = ev.target, row = n.closest ? n.closest('[data-debt-id]') : null;
+    if (!row || !n.hasAttribute('data-debt-field')) return;
+    writeDebt(row.getAttribute('data-debt-id'), n.getAttribute('data-debt-field'), n.value);
   });
   prefill();
-  var start = (/^#round-1-(.+)$/.exec(location.hash || '') || [])[1] || 'q-age';
-  show(ORDER.indexOf(start) !== -1 ? start : 'q-age');
-  window.addEventListener('hashchange', function () {
-    var m = /^#round-1(?:-(.+))?$/.exec(location.hash || '');
-    if (!m) return;
-    var want = m[1] || 'q-age';
-    if (ORDER.indexOf(want) !== -1 && el(want).hidden) show(want);
+  Spine.onChange(function () {
+    paintSituation(); paintDebtChips(); renderDebts(false);
+    render();
   });
-  Reference.load(Suggest.TABLES.concat(['effectiveTaxRates', 'staleness'])).then(function (t) {
+  Reference.load(Suggest.TABLES.concat(['opening', 'levers', 'debtRules', 'fireVariants', 'returnBands', 'effectiveTaxRates', 'staleness', 'fooRules', 'onepagerDefaults'])).then(function (t) {
     TABLES = t;
     LedgerRows.use(t.ledgerRows);
-    if (!el('insight').hidden) paintInsight();
+    paintTakeLabel();
+    render();
   });
-  Spine.onChange(function () { if (!el('insight').hidden) paintInsight(); });
 })();
 </script>
 
@@ -1385,7 +1694,8 @@
   var TABLES = null;
   var NODES = {};        /* rowId or rowId:itemId → { row, el, input, sug, saved } */
   var LISTS = { debts: { kind: 'debt', rows: ['debtBalance', 'debtRate', 'debtMinPayment'], label: 'Debts', level: 2, door: 'D' },
-                assets: { kind: 'asset', rows: ['assetValue', 'assetCharacter', 'assetTier', 'assetCostBasis'], label: 'Accounts and things owned', level: 2, door: 'A' },
+                /* The account layer (D-313): every per-account fact the Statement used to edit, entered here and nowhere else. */
+                assets: { kind: 'asset', rows: ['assetValue', 'assetAccountType', 'assetCharacter', 'assetTier', 'assetConfidence', 'assetCostBasis', 'assetCashFlow', 'assetHassle', 'assetAccessAge'], label: 'Accounts and things owned', level: 2, door: 'A' },
                 incomeSources: { kind: 'incomeSource', rows: ['grossAnnualIncome', 'incomeType', 'paySurvives'], label: 'Sources of pay', level: 1, door: 'I' },
                 annualLines: { kind: 'annualLine', rows: ['annualLine'], label: 'Once-a-year costs', level: 3, door: 'E' } };
   var ITEM_ROWS = {};
@@ -1399,6 +1709,7 @@
   function itemValue(row, item) {
     if (row.id === 'debtBalance') return item.balanceCents; if (row.id === 'debtRate') return item.rate; if (row.id === 'debtMinPayment') return item.minPaymentCents;
     if (row.id === 'assetValue') return item.valueCents; if (row.id === 'assetCharacter') return item.taxCharacter; if (row.id === 'assetTier') return item.tier; if (row.id === 'assetCostBasis') return item.costBasisCents;
+    if (row.id === 'assetAccountType') return item.accountType; if (row.id === 'assetConfidence') return item.confidence; if (row.id === 'assetCashFlow') return item.cashFlowMonthlyCents; if (row.id === 'assetHassle') return item.hassle; if (row.id === 'assetAccessAge') return item.accessAgeOverride;
     if (row.id === 'grossAnnualIncome') return item.grossAnnualIncomeCents; if (row.id === 'incomeType') return item.type; if (row.id === 'paySurvives') return item.survivesJobLoss;
     if (row.id === 'annualLine') return item.amountCents;
     return null;
@@ -1426,7 +1737,7 @@
   /* ---- Building a control, once ----------------------------------------------- */
   function enumValues(row) {
     if (row.id === 'state') return (TABLES.states.states || []).map(function (s) { return { v: s.code, l: s.code + ' ' + s.name }; });
-    var labels = Ask.ENUM_LABELS[row.id] || {};
+    var labels = Ask.ENUM_LABELS[row.id] || (row.id === 'assetAccountType' ? Schema.ACCOUNT_TYPE_LABELS : null) || {};
     var vals = row.values || Object.keys(labels);
     return vals.map(function (v) { return { v: v, l: labels[v] || v }; });
   }
@@ -1457,9 +1768,14 @@
   /* The two states besides blank (G2.7): "Not sure yet", with the month they
      expect to know by, and "from memory" on the next save. Only on rows a
      person types, never on a computed one. */
+  /* The rows a household may mark Not applicable (D-130): no workplace plan
+     at all, no HSA whatever the plan. The mark lives on the row here since
+     the Statement stopped asking (D-313); every room reads it as a chip. */
+  var NA_ROWS = ['contributionPercent', 'hsaContributed'];
   function statesHtml(row) {
     if (row.kind === 'computed') return '';
-    return '<div class="xstates"><span class="slaf-state" data-x-state></span>'
+    var na = NA_ROWS.indexOf(row.id) >= 0 ? Ownership.naButton(row.id, h(), row.id === 'contributionPercent' ? { off: 'No plan at all: N/A', on: 'No plan ✓' } : { off: 'No HSA at all: N/A', on: 'No HSA ✓' }) : '';
+    return '<div class="xstates"><span class="slaf-state" data-x-state></span>' + na
       + '<button type="button" class="slaf-btn slaf-btn--quiet slaf-btn--small" data-x-notsure>Not sure yet</button>'
       + '<label class="x-memory"><input type="checkbox" data-x-memory/> from memory</label></div>'
       + '<div class="x-when" data-x-when hidden><label>Expect to know by <input type="month" data-x-expected aria-label="Expected month"/></label> <button type="button" class="slaf-btn slaf-btn--small" data-x-notsure-save>Mark it</button></div>'
@@ -1467,7 +1783,8 @@
   }
   function rowHtml(row, key, item) {
     var f = Ownership.FIELDS[row.id];
-    var owner = f ? SLAF.Registry.byId(f.owner) : null;
+    /* A row the Ledger itself owns has no second door to name. */
+    var owner = f && f.owner !== 'ledger' ? SLAF.Registry.byId(f.owner) : null;
     /* WHAT THIS ONE IS FOR. the rows table (shared/ledger-rows.js) gives every row an
        `unlocks` line saying what answering it makes possible, and Express
        had never shown it: the label alone told you the name of a number, not
@@ -1991,6 +2308,16 @@
       if (t.hasAttribute('data-x-use')) {
         var key = t.getAttribute('data-x-use'), s = SUG[key], n2 = NODES[key];
         if (s && n2) write(n2, s.value, 'suggested');
+        return;
+      }
+      if (t.hasAttribute('data-na-field')) {
+        /* Toggled in place: the button is rewritten, nothing around it is. */
+        var naId = t.getAttribute('data-na-field');
+        Spine.setNotApplicable(naId, t.getAttribute('aria-pressed') !== 'true');
+        var fresh = document.createElement('span');
+        fresh.innerHTML = Ownership.naButton(naId, h(), naId === 'contributionPercent' ? { off: 'No plan at all: N/A', on: 'No plan ✓' } : { off: 'No HSA at all: N/A', on: 'No HSA ✓' });
+        t.replaceWith(fresh.firstChild);
+        paintApplies(); paintBar();
         return;
       }
       if (t.hasAttribute('data-x-add-btn')) {

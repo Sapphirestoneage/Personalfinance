@@ -712,6 +712,18 @@
    * arrays (people/assets/debts) REPLACE wholesale — element-wise merging
    * of an array of records is ambiguous, so use the upsert helpers instead.
    */
+  /* A journal line (D-248, D-312): a record of a reading, never an input.
+     Appended, or replaced when an entry with the same id is already there;
+     saved without an undo snapshot, because there is nothing a person typed
+     to undo. The one way a page writes the journal. */
+  function journal(entry) {
+    var h = load();
+    if (!entry || !entry.id) return null;
+    var list = (h.journal || []).filter(function (e) { return e.id !== entry.id; });
+    h.journal = list.concat([entry]);
+    save({ record: false }); notify();
+    return entry;
+  }
   function updateProfile(patch) {
     if (!patch || typeof patch !== 'object') return getProfile();
     var next = load();
@@ -1828,6 +1840,7 @@
     getProfile: getProfile,
     householdAt: householdAt,
     updateProfile: updateProfile,
+    journal: journal,
     onChange: onChange,
     registerRoom: registerRoom,
     getVisitedRooms: getVisitedRooms,

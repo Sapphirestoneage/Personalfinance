@@ -2,7 +2,7 @@
   "version": 1,
   "decision": "D-229",
   "asOf": "2026-09-12",
-  "what": "The rooms the suite is merging down to, and what each one absorbs. The plan said thirty; it is thirty-one, and the extra one carries its reason in its own note (What If, D-296). Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app.",
+  "what": "The rooms the suite is merging down to, and what each one absorbs. The plan said thirty; it is thirty-one, and the extra one carries its reason in its own note (What If, D-296). Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app. Thirty-seven since D-313: the Statement gave up four readings to become four sections, and each reading became a room that reads the Ledger and writes nothing.",
   "howToRead": {
     "survivors": "One entry per surviving room. 'id' is its registry id and stays its id; 'title' is what it is called after the merge (the registry may still carry the old title until that merge ships).",
     "absorbs": "Registry ids that become a view, a toggle, a block type or a card inside the survivor. Every one of them ends as a redirect file, never a deleted file: the links are out in the world.",
@@ -206,17 +206,9 @@
       "id": "statement",
       "title": "The Statement",
       "group": "facts",
-      "absorbs": [
-        "accounts",
-        "statements",
-        "rollover"
-      ],
-      "done": [
-        "accounts",
-        "statements",
-        "rollover"
-      ],
-      "note": "rooms/net-worth.html is already a redirect here and is not in the registry. Accounts merges upward because where the next dollar lands moves the target (D-228)."
+      "absorbs": [],
+      "done": [],
+      "note": "rooms/net-worth.html is already a redirect here and is not in the registry. Held four readings from D-278 to D-313; since D-313 it is four sections and nothing to type, and the readings it held are rooms of their own (n 33 to 37) so that facts are entered in the Ledger only. Accounts, Your Statements and the old Rollover room follow their readings: see which-account, the-documents and left-behind."
     },
     {
       "n": 10,
@@ -550,6 +542,63 @@
       "absorbs": [],
       "note": "Reinstated by the owner (D-308). Rule 2 of D-229 folded it into The Month; what brought it back is a thing The Month does not hold: a date that is not money in or out. Apply for a card, cancel a renewal, a form due. The picture is The Month's, shared; only the list of your own dates is this room's.",
       "done": []
+    },
+    {
+      "n": 33,
+      "id": "bridge",
+      "title": "The Bridge",
+      "group": "facts",
+      "absorbs": [],
+      "done": [],
+      "note": "Carved from the Statement (D-313): its bridge card and the read-only Money that is coming list. The sources that reach before 59½, counted where the Ledger holds the figure and explained where it does not."
+    },
+    {
+      "n": 34,
+      "id": "which-account",
+      "title": "Which Account",
+      "group": "facts",
+      "absorbs": [
+        "accounts"
+      ],
+      "done": [
+        "accounts"
+      ],
+      "note": "Carved from the Statement (D-313): the where-it-lands reading that was Where It Goes (D-278). Every box is a what-if prefilled from the Ledger; the facts (contributions, the marginal rate, the HSA switches) are Ledger rows now."
+    },
+    {
+      "n": 35,
+      "id": "the-mix",
+      "title": "The Mix",
+      "group": "facts",
+      "absorbs": [],
+      "done": [],
+      "note": "Carved from the Statement (D-313): the target mix and the band, read from the Ledger. There was no investing room to fold it into; the anti-rule keeps a reading about a target out of the Scorecard."
+    },
+    {
+      "n": 36,
+      "id": "left-behind",
+      "title": "Left Behind",
+      "group": "decisions",
+      "absorbs": [
+        "rollover"
+      ],
+      "done": [
+        "rollover"
+      ],
+      "note": "Carved from the Statement (D-313): the plan-you-left-behind reading that was Rollover (D-290). A what-if room; it surfaces from the Statement when an account is tagged as a plan at a former employer."
+    },
+    {
+      "n": 37,
+      "id": "the-documents",
+      "title": "The Documents",
+      "group": "facts",
+      "absorbs": [
+        "statements"
+      ],
+      "done": [
+        "statements"
+      ],
+      "note": "Carved from the Statement (D-313): the three documents and the period in words that were Your Statements (D-278). Standalone and off the beginner path (tier 2)."
     }
   ]
 }

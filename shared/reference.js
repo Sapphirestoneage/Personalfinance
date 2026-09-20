@@ -77,6 +77,7 @@
     returnBands: 'return_bands.json',
     bands: 'bands.json',
     levers: 'levers.json',
+    opening: 'opening.json',
     lenses: 'lenses.json',
     features: 'features.json',
     /* Scenario blocks: one expansion table a type (D-178). */

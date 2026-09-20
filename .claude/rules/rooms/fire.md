@@ -4,7 +4,6 @@ paths:
   - "engines/journey.js"
   - "engines/fulfillment.js"
   - "engines/enough.js"
-  - "engines/coast.js"
   - "engines/race.js"
 ---
 # The Number (`fire`)

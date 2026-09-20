@@ -1,0 +1,342 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "p_od",
+      "label": "Opening: 25, spending above take-home",
+      "role": "adult",
+      "dob": "2001-03-01",
+      "employmentStatus": "employed",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [],
+      "work": {
+        "contractedHoursPerWeek": null,
+        "unpaidOvertimeHoursPerWeek": null,
+        "commuteHoursPerWeek": null,
+        "prepHoursPerWeek": null,
+        "decompressHoursPerWeek": null,
+        "workCostsMonthlyCents": null,
+        "weeksPerYear": 48
+      }
+    }
+  ],
+  "filingStatus": "single",
+  "state": "NC",
+  "zip": null,
+  "capturingFullMatch": null,
+  "dependents": null,
+  "community": {
+    "daySchool": null
+  },
+  "assets": [
+    {
+      "id": "p_od_cash",
+      "label": "Checking and savings",
+      "last4": null,
+      "category": "cash",
+      "valueCents": 50000,
+      "liquid": true,
+      "ownerIds": [
+        "p_od"
+      ],
+      "taxCharacter": null,
+      "institution": null,
+      "accountType": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null,
+      "tier": null
+    },
+    {
+      "id": "p_od_inv",
+      "label": "Brokerage",
+      "last4": null,
+      "category": "investment",
+      "valueCents": 100000,
+      "liquid": false,
+      "ownerIds": [
+        "p_od"
+      ],
+      "taxCharacter": null,
+      "institution": null,
+      "accountType": null,
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null,
+      "tier": null
+    }
+  ],
+  "debts": [],
+  "expenses": {
+    "needs": {
+      "food": {
+        "monthlyCents": null
+      },
+      "accommodation": {
+        "monthlyCents": null
+      },
+      "transportation": {
+        "monthlyCents": null
+      }
+    },
+    "wants": {
+      "totalCents": 340000,
+      "therapy": null
+    },
+    "entries": [],
+    "annual": []
+  },
+  "incomeBasis": "earned",
+  "retirement": {
+    "contributionPercent": null,
+    "rothContributedCents": null,
+    "hsaContributedCents": null,
+    "onHdhp": null,
+    "hsaFamilyPlan": null,
+    "has401k": null
+  },
+  "takeHome": {
+    "monthlyCents": 300000,
+    "typedCents": 300000,
+    "per": "month"
+  },
+  "insurance": {
+    "highestDeductibleCents": null,
+    "oopMaxCents": null,
+    "termLifeCents": null,
+    "disabilityMonthlyCents": null,
+    "umbrella": null,
+    "health": {
+      "type": null,
+      "monthlyCents": null
+    }
+  },
+  "worthChecks": [],
+  "ratings": {},
+  "valuesProfile": {
+    "stated": [],
+    "assignments": {}
+  },
+  "swan": {
+    "basis": null,
+    "targetCents": null,
+    "targetMonths": null,
+    "note": null,
+    "setAt": null
+  },
+  "goals": [],
+  "futureIncome": [],
+  "property": [],
+  "allocation": {
+    "stocks": null,
+    "bonds": null,
+    "cash": null,
+    "rebalanceBand": null
+  },
+  "rerank": {
+    "rows": []
+  },
+  "targets": {
+    "retireAge": null,
+    "coastAge": null
+  },
+  "scenarios": [],
+  "oneOffs": [],
+  "estate": {
+    "beneficiariesSet": null,
+    "willExists": null,
+    "poaExists": null
+  },
+  "giving": {
+    "pctOfIncome": null,
+    "annualTargetCents": null
+  },
+  "decumulation": {
+    "stockShare": null,
+    "plannedAnnualDrawCents": null,
+    "socialSecurityAt": null
+  },
+  "tax": {
+    "otherPreTaxAnnualCents": null,
+    "withheldAnnualCents": null
+  },
+  "career": {
+    "offer": {
+      "grossAnnualCents": null,
+      "hoursPerWeek": null,
+      "commuteHoursPerWeek": null,
+      "workCostsMonthlyCents": null,
+      "signOnCents": null
+    }
+  },
+  "partner": {
+    "splitMode": null,
+    "sharedMonthlyCents": null
+  },
+  "kids": {
+    "tuitionTargetCents": null,
+    "tuitionSavedCents": null,
+    "tuitionMonthlyCents": null
+  },
+  "housing": {
+    "rentMonthlyCents": null,
+    "priceCents": null,
+    "downPct": null,
+    "rate": null
+  },
+  "purchase": {
+    "priceCents": null,
+    "monthsAway": null,
+    "financeRate": null,
+    "label": null
+  },
+  "variableIncome": {
+    "bufferMonths": null,
+    "windowMonths": null
+  },
+  "enough": {
+    "monthlyCents": null,
+    "source": null
+  },
+  "designedWeek": {
+    "blocks": []
+  },
+  "timeBuckets": [],
+  "dreams": [],
+  "reversibility": {
+    "decisionId": null,
+    "given": {}
+  },
+  "unlearning": {
+    "dropped": []
+  },
+  "studentLoans": {
+    "plan": null,
+    "extraMonthlyCents": null,
+    "idrShare": null,
+    "forgivenessYears": null
+  },
+  "calendar": {
+    "cadence": null,
+    "nextPaydayDay": null,
+    "bills": [],
+    "payLater": []
+  },
+  "history": {
+    "compareTo": null
+  },
+  "journal": [],
+  "ledger": {
+    "income": [],
+    "months": [],
+    "dismissed": []
+  },
+  "budget": {
+    "estimated": {},
+    "presets": {}
+  },
+  "notApplicable": {},
+  "subscriptions": [],
+  "skills": {},
+  "skillTree": {
+    "state": {}
+  },
+  "exercises": {
+    "done": {},
+    "results": {}
+  },
+  "practiceLedger": [],
+  "assumptions": {
+    "returnReal": 0.05,
+    "inflation": 0.03,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
+    "swrRate": 0.04,
+    "humanCapitalDiscountRate": 0.02,
+    "homeEquityHaircut": 0.8,
+    "marginalRate": null
+  },
+  "assumptionOverrides": {},
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": null,
+    "confirmedAt": {},
+    "fields": {
+      "takeHomeMonthly": {
+        "asOf": "2026-09-19",
+        "source": "typed",
+        "confidence": "roughly",
+        "room": "ledger"
+      },
+      "wantsMonthly": {
+        "asOf": "2026-09-19",
+        "source": "typed",
+        "confidence": "roughly",
+        "room": "ledger"
+      }
+    },
+    "hasDebt": false,
+    "undoStack": [],
+    "redoStack": [],
+    "guessed": {},
+    "notSure": {},
+    "reopen": null,
+    "source": {},
+    "displayUnit": null,
+    "noRent": null,
+    "walk": {
+      "startedAt": null,
+      "finishedAt": null,
+      "done": {},
+      "skipped": {}
+    },
+    "frontDoor": null,
+    "isDemo": true,
+    "name": "Opening: 25, spending above take-home",
+    "story": "25, $3,000 take-home a month, spends $3,400, $1,000 invested, $500 cash, no debt. No date: the first job is one dollar on the right side of zero.",
+    "sphere": 1,
+    "lane": "the five-input opening (D-312)",
+    "known": {
+      "asOf": "2026-09-19",
+      "tolerance": 0.01,
+      "monthlySpendingCents": 340000,
+      "fiTargetCents": 102000000,
+      "grossAnnualCents": null,
+      "effectiveRate": null,
+      "estimatedTaxCents": null,
+      "takeHomeAnnualCents": 3600000,
+      "takeHomeMonthlyCents": 300000,
+      "savingsRate": -0.1333,
+      "runwayMonths": 0.14705882352941177,
+      "runwayWholeMonths": 0,
+      "netWorthCents": 150000,
+      "working": [
+        "savings rate = (3,000 − 3,400) / 3,000 = −0.1333, a negative rate, not an incomplete one",
+        "runway = 500 / 3,400 = 0.15 months",
+        "net worth = 1,500"
+      ],
+      "opening": {
+        "stage": "early",
+        "state": "noDate",
+        "firstLever": "payStep"
+      }
+    }
+  }
+}

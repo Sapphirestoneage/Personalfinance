@@ -1448,7 +1448,7 @@
     SLAF.Lens.mountStrip('lab-lens', function (h) {
       var p = Fire.progressToward(h, TABLES, opts());
       if (!Money.isOk(p)) return [];
-      return [{ label: 'The number', cents: p.targetCents }, { label: 'Invested now', cents: p.investmentsCents, href: Ownership.linkTo('statement', 'portfolios', ROOM_ID) },
+      return [{ label: 'The number', cents: p.targetCents }, { label: 'Invested now', cents: p.investmentsCents, href: Ownership.linkTo('statement', 'net-worth', ROOM_ID) },
               { label: 'Still to go', cents: Math.max(0, p.targetCents - p.investmentsCents) }];
     }, function () { return TABLES; });
     render();

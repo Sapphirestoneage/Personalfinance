@@ -157,6 +157,9 @@
     'incomeSource.hoursPerWeek':                 { class: 'raw',        unit: 'hours',   period: 'weekly', note: 'hourly pay only' },
     'incomeSource.monthsWorked':                 { class: 'raw',        unit: 'months',  note: 'how much of the last 12 months this job covered; absent means all of it' },
     'incomeSource.ongoing':                      { class: 'raw',        unit: 'bool',    note: 'still the job \u2014 drives the run-rate figure beside the earned one' },
+    'household.takeHome.monthlyCents':           { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'take-home pay a month, typed as such in the opening. Logged paychecks beat it; it beats the estimate from gross. Owned by the Ledger. D-312' },
+    'household.takeHome.typedCents':             { class: 'raw',        unit: 'cents',   note: 'the figure as typed, per the cadence in `per`, so the box refills as it was filled. D-312' },
+    'household.takeHome.per':                    { class: 'raw',        unit: 'enum',    values: ['month', 'week', 'fortnight', 'halfMonth'], note: 'what typedCents is per. D-312' },
     'household.incomeBasis':                     { class: 'raw',        unit: 'enum',    values: ['earned', 'runRate'], note: 'which of the two annual figures feeds the model. DECISIONS.md D-047' },
     'retirement.contributionPercent':            { class: 'raw',        unit: 'percent', note: 'what you put into the workplace plan, as a % of salary. Owned by Where It Goes' },
     'retirement.rothContributedCents':           { class: 'raw',        unit: 'cents',   period: 'annual', note: 'into a Roth IRA so far this year' },
@@ -184,7 +187,7 @@
     'asset.cashFlowMonthlyCents':                { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'net monthly cash the asset throws off; null for one that does not' },
     'asset.accessAgeOverride':                   { class: 'raw',        unit: 'years',   note: 'overrides the access age derived from access_rules (e.g. a rule-of-55 plan). null = derived' },
     'asset.institution':                         { class: 'raw',        unit: 'text',    note: 'the bank, broker or plan that holds it, as the person names it. null = not typed. D-251' },
-    'asset.accountType':                         { class: 'raw',        unit: 'enum',    values: ['checking', 'savings', 'hysa', 'money_market', 'cd', 'brokerage', 'stock_plan', 'crypto', '401k', 'roth_401k', '403b', '457b', 'tsp', 'pension', 'traditional_ira', 'roth_ira', 'sep_ira', 'simple_ira', 'hsa', '529', 'daf', 'mixed', 'other'], note: 'the account type on its statement (Schema.ACCOUNT_TYPES). Choosing one sets taxCharacter and, where the category is still other, the category, through Schema.applyAccountType; the character stays editable. null = not asked. D-251' },
+    'asset.accountType':                         { class: 'raw',        unit: 'enum',    values: ['checking', 'savings', 'hysa', 'money_market', 'cd', 'brokerage', 'stock_plan', 'crypto', '401k', 'roth_401k', '403b', '457b', 'tsp', 'old_401k', 'pension', 'traditional_ira', 'roth_ira', 'sep_ira', 'simple_ira', 'hsa', '529', 'daf', 'mixed', 'other'], note: 'the account type on its statement (Schema.ACCOUNT_TYPES). Choosing one sets taxCharacter and, where the category is still other, the category, through Schema.applyAccountType; the character stays editable. null = not asked. D-251' },
     'futureIncome.monthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'a pension, Social Security, an annuity, an inheritance you would rather not count. Owned by the Statement' },
     'futureIncome.confidence':                   { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4] },
     'property.rentMonthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'gross rent. The value itself lives on the linked real_estate asset — one number, one owner' },
@@ -1358,7 +1361,13 @@
       cents: Money.isEntered(f.cents) ? f.cents : null,
       basis: typeof f.basis === 'string' ? f.basis : null,
       month: typeof f.month === 'string' ? f.month : null,
-      note: typeof f.note === 'string' ? f.note : null
+      note: typeof f.note === 'string' ? f.note : null,
+      /* The opening's FI date band on the day it was read (D-312): months
+         to the number at the worst, likely and best return. Absent on
+         every entry written before this, and on every other kind. */
+      band: f.band && typeof f.band === 'object'
+        ? { worstMonths: Money.isEntered(f.band.worstMonths) ? f.band.worstMonths : null, likelyMonths: Money.isEntered(f.band.likelyMonths) ? f.band.likelyMonths : null, bestMonths: Money.isEntered(f.band.bestMonths) ? f.band.bestMonths : null }
+        : null
     };
   }
   function createHistoryPlan(fields) {
@@ -1440,6 +1449,9 @@
     { id: '403b',            label: '403(b)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
     { id: '457b',            label: '457(b)',                taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
     { id: 'tsp',             label: 'TSP',                   taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
+    /* A plan left at a former employer (D-313): the same pre-tax money, tagged
+       so Left Behind can find it and the Statement can point at it. */
+    { id: 'old_401k',        label: 'A plan at a former employer', taxCharacter: 'pretax', category: 'retirement', group: 'Work retirement' },
     { id: 'pension',         label: 'Pension',               taxCharacter: 'pretax',  category: 'retirement', group: 'Work retirement' },
     { id: 'traditional_ira', label: 'Traditional IRA',       taxCharacter: 'pretax',  category: 'retirement', group: 'IRA' },
     { id: 'roth_ira',        label: 'Roth IRA',              taxCharacter: 'roth',    category: 'retirement', group: 'IRA' },
@@ -2220,6 +2232,28 @@
   /* Every field here is null-when-unanswered, never zero. A contribution of
      0% is a real answer ("I contribute nothing") and must stay separable
      from "I have not said". */
+  /* Take-home pay as typed (D-312): the opening asks what lands, not what
+     is withheld, because that is the number this audience knows. A month
+     is stored; the typed figure and its cadence sit beside it so the box
+     refills as it was filled. */
+  var TAKE_HOME_PER = ['month', 'week', 'fortnight', 'halfMonth'];
+  var PAYCHECKS_A_MONTH = { month: 1, week: 52 / 12, fortnight: 26 / 12, halfMonth: 2 };
+  function createTakeHome(fields) {
+    var f = fields || {};
+    var per = TAKE_HOME_PER.indexOf(f.per) !== -1 ? f.per : 'month';
+    var typed = Money.isEntered(f.typedCents) ? Math.round(f.typedCents) : null;
+    var monthly = Money.isEntered(f.monthlyCents) ? Math.round(f.monthlyCents)
+      : (typed !== null ? Math.round(typed * PAYCHECKS_A_MONTH[per]) : null);
+    return { monthlyCents: monthly, typedCents: typed, per: per };
+  }
+  function takeHomeOf(household) { return createTakeHome((household || {}).takeHome); }
+  /** The typed take-home a month, or incomplete. */
+  function typedTakeHomeMonthlyCents(household) {
+    var t = takeHomeOf(household);
+    return Money.isEntered(t.monthlyCents) ? Money.ok(t.monthlyCents, { per: t.per, typedCents: t.typedCents })
+      : Money.incomplete('Not entered yet.', ['takeHomeMonthly']);
+  }
+
   function createRetirement(fields) {
     var f = fields || {};
     return {
@@ -2311,6 +2345,7 @@
          so the same question was asked twice and forgotten twice.
          Owned by Where It Goes. DECISIONS.md D-052. */
       retirement: createRetirement(f.retirement),
+      takeHome: createTakeHome(f.takeHome),
       /* Your largest insurance deductible: the first thing a cash cushion
          has to cover, which is why Sleep At Night owns it. */
       insurance: createInsurance(f.insurance),
@@ -2838,6 +2873,20 @@
       });
     }
     var gross = grossAnnualIncomeCents(household);
+    /* Typed take-home beats the estimate (D-312): what the opening was
+       told lands is a fact; gross minus a table's rate is a guess at it.
+       The gross, when known, still rides along for anything that reads
+       the tax; when it is not, the tax is honestly unknown, not zero. */
+    var typed = typedTakeHomeMonthlyCents(household);
+    if (Money.isOk(typed)) {
+      var net = typed.value * 12;
+      var g0 = Money.isOk(gross) ? gross.value : null;
+      var t0 = g0 !== null ? Math.max(0, g0 - net) : null;
+      return Money.ok(net, {
+        source: 'typed', typedMonthlyCents: typed.value, per: typed.per,
+        grossAnnualIncomeCents: g0, estimatedTaxCents: t0, effectiveRate: g0 !== null && g0 > 0 ? t0 / g0 : null, referenceVersion: null
+      });
+    }
     if (!Money.isOk(gross)) return gross;
     var tax = estimatedAnnualTaxCents(household, tables);
     if (!Money.isOk(tax)) return tax;
@@ -3260,6 +3309,9 @@
     createRatings: createRatings,
     createWorthCheck: createWorthCheck,
     createRetirement: createRetirement,
+    createTakeHome: createTakeHome,
+    TAKE_HOME_PER: TAKE_HOME_PER,
+    PAYCHECKS_A_MONTH: PAYCHECKS_A_MONTH,
     createInsurance: createInsurance,
     createFutureIncome: createFutureIncome,
     createProperty: createProperty,
@@ -3386,6 +3438,7 @@
     takeHomeAnnualCents: takeHomeAnnualCents,
     takeHomeMonthlyCents: takeHomeMonthlyCents,
     loggedTakeHomeMonthlyCents: loggedTakeHomeMonthlyCents,
+    typedTakeHomeMonthlyCents: typedTakeHomeMonthlyCents,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
     FAT_NEEDS: FAT_NEEDS,

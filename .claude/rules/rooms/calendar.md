@@ -8,7 +8,7 @@ File: rooms/calendar.html · 169 lines
 Engines: projection, tier0, income, selfemployed, ledger, cashflow, calendar
 Reference data: effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: nothing
-Reads from other owners: grossAnnualIncome (start), cashSavings (start), rentMonthly (expenses), monthlyExpenses (expenses)
+Reads from other owners: grossAnnualIncome (start), takeHomeMonthly (ledger), cashSavings (start), rentMonthly (expenses), monthlyExpenses (expenses)
 Latest decisions:
   - D-308 — The Calendar comes back, with your own dates on it
   - D-275 — The Month: what moved, and the dates

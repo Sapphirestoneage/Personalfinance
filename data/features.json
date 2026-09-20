@@ -37,6 +37,15 @@
       "label": "Show net worth after deferred tax",
       "gloss": "A 401(k) dollar is not a whole dollar. Show what's left after the tax you'll owe on it."
     },
+    "humanCapital": {
+      "default": "on",
+      "defaultWhen": "primary adult is under 40",
+      "scope": "user",
+      "group": "horizon",
+      "section": "D-313",
+      "label": "Value the pay still to come",
+      "gloss": "At your age the biggest thing you own is usually the pay still ahead of you. Show it beside your net worth, never added to it. On by default under 40."
+    },
     "showNominal": {
       "default": "off",
       "scope": "user",

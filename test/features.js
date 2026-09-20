@@ -25,7 +25,7 @@ const rooms = require(path.join(ROOT, 'rooms.json')).rooms;
 const Registry = require(path.join(ROOT, 'shared/registry.js'));
 
 /* Rooms that project money forward: the lens strip and the band line. */
-const PROJECTION = ['fire', 'fire-lab', 'savings-rate', 'windfall', 'quick-math', 'financial-snapshot', 'accounts', 'what-if-life', 'adventure'];
+const PROJECTION = ['fire', 'fire-lab', 'savings-rate', 'windfall', 'quick-math', 'financial-snapshot', 'accounts', 'which-account', 'what-if-life', 'adventure'];
 /* Rooms that fold on their own terms (Start Here's cards, the dashboard's panel). */
 const OWN_FOLD = ['start', 'dashboard'];
 const FOLD_KEEP = 4;
@@ -67,7 +67,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
        notice (D-142); the eight promises are checked on the room as shown. */
     try { const any = await page.$('#slaf-showanyway'); if (any) { await any.tap(); await page.waitForTimeout(200); } } catch (e) { /* fine */ }
     /* A one-off calculator projects nothing until it is given a figure. */
-    const PREPARE = { accounts: [['[data-setup="marginalRate"]', '24'], ['#a-amount', '7000'], ['#a-years', '30'], ['#a-later', '22']], windfall: [['[data-in="amount"]', '25000']], 'quick-math': [['#b-amount', '100']] };
+    const PREPARE = { accounts: [['[data-setup="marginalRate"]', '24'], ['#a-amount', '7000'], ['#a-years', '30'], ['#a-later', '22']], 'which-account': [['#a-amount', '7000'], ['#a-now', '24']], windfall: [['[data-in="amount"]', '25000']], 'quick-math': [['#b-amount', '100']] };
     for (const [sel, val] of (PREPARE[room.id] || [])) {
       /* Set the value and fire the events the room listens for, whether or
          not the input is on screen yet - it may sit in the folded tail. */

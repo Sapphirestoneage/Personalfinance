@@ -21,16 +21,16 @@
 (function (root, factory) {
   var node = typeof module === 'object' && module.exports;
   var deps = node
-    ? { Prefs: require('./prefs.js'), Registry: require('./registry.js') }
-    : { Prefs: root.SLAF && root.SLAF.Prefs, Registry: root.SLAF && root.SLAF.Registry };
+    ? { Prefs: require('./prefs.js'), Registry: require('./registry.js'), Schema: require('./schema.js') }
+    : { Prefs: root.SLAF && root.SLAF.Prefs, Registry: root.SLAF && root.SLAF.Registry, Schema: root.SLAF && root.SLAF.Schema };
   function scenarios() {
     if (node) { try { return require('./scenarios.js'); } catch (e) { return null; } }
     return root.SLAF && root.SLAF.Scenarios ? root.SLAF.Scenarios : null;
   }
-  var api = factory(deps.Prefs, deps.Registry, scenarios);
+  var api = factory(deps.Prefs, deps.Registry, scenarios, deps.Schema);
   if (node) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Features = api; }
-})(typeof self !== 'undefined' ? self : null, function (Prefs, Registry, scenarios) {
+})(typeof self !== 'undefined' ? self : null, function (Prefs, Registry, scenarios, Schema) {
   'use strict';
 
   var TABLE = null;
@@ -91,6 +91,12 @@
     if (f.scope === 'situation') return !!situationSays(id, household);
     var stored = Prefs ? Prefs.get(prefKey(id), null) : null;
     if (stored === true || stored === false) return stored;
+    /* A default that depends on the household (D-313): the one fixed phrase
+       so far. Once the person toggles the switch, their choice wins. */
+    if (f.defaultWhen === 'primary adult is under 40') {
+      var age = Schema && Schema.primaryAge ? Schema.primaryAge(household || {}) : null;
+      return age === null || age === undefined ? f['default'] === 'on' : age < 40;
+    }
     return f['default'] === 'on';
   }
   /** User scope only. `value` true/false, or null to go back to the default. */

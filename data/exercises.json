@@ -220,7 +220,7 @@
       "id": "run-bridge",
       "title": "The bridge to 59½",
       "compute": "bridge",
-      "room": "statement.html#bridge",
+      "room": "bridge.html#bridge",
       "requires": [
         "investments",
         "monthlyExpenses",
@@ -242,7 +242,7 @@
       "id": "run-worst-year",
       "title": "The worst plausible year",
       "compute": "worstYear",
-      "room": "statement.html#worst-year",
+      "room": "runway.html#worst-year",
       "requires": [
         "monthlyExpenses",
         "cashSavings"

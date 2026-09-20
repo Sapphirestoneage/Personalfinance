@@ -115,6 +115,9 @@
     filingStatus: { single: 'Single', married_joint: 'Married, joint', married_separate: 'Married, separate', head_of_household: 'Head of household' },
     assetCharacter: { cash: 'Cash', taxable: 'Taxable', pretax: 'Pre-tax (401k, IRA)', roth: 'Roth', hsa: 'HSA', '529': '529', daf: 'Donor-advised', property: 'Property', business: 'Business', other: 'Other', unknown: 'Not sure' },
     assetTier: { cash: 'Cash', taxable: 'Taxable', retirement: 'Retirement', property: 'Property', other: 'Other' },
+    /* The confidence scale is data/access_rules.json confidenceScale, said the same way here. */
+    assetConfidence: { 1: 'Guaranteed', 2: '85% or better', 3: 'Real, but don’t count on it', 4: 'Probably zero' },
+    assetHassle: { 1: 'Easy', 2: 'Moderate', 3: 'Annoying' },
     incomeType: { w2: 'W-2 job', '1099': '1099 / own work', passive: 'Passive', benefit: 'A benefit', pension: 'Pension', socialSecurity: 'Social Security', equity: 'Equity' },
     loanPlan: { standard: 'Standard', income_driven: 'Income-driven', aggressive: 'Aggressive' },
     splitMode: { equal: 'Equal halves', proportional: 'In proportion to income', pooled: 'One pool' },

@@ -1,0 +1,427 @@
+{
+  "schemaVersion": 2,
+  "people": [
+    {
+      "id": "demo_person_robin",
+      "label": "Robin Sparks",
+      "role": "adult",
+      "dob": "1994-04-12",
+      "employmentStatus": "employed",
+      "unemployment": {
+        "since": null,
+        "benefitStatus": null,
+        "benefitWeeklyCents": null,
+        "benefitWeeksLeft": null,
+        "severanceCents": null,
+        "lastGrossAnnualCents": null,
+        "expectedSearchMonths": null,
+        "floorMonthlyCents": null
+      },
+      "incomeSources": [
+        {
+          "id": "demo_income_primary",
+          "personId": "demo_person_robin",
+          "source": "Day job",
+          "institution": null,
+          "grossAnnualIncomeCents": 7200000,
+          "frequency": "annual",
+          "rateCents": null,
+          "hoursPerWeek": null,
+          "monthsWorked": null,
+          "ongoing": true,
+          "variableLowCents": null,
+          "variableHighCents": null,
+          "type": "w2",
+          "survivesJobLoss": null,
+          "passiveTreatment": null,
+          "hassle": null,
+          "employerMatch": {
+            "matchPercent": 0.5,
+            "matchCapPercentOfSalary": 0.06
+          }
+        }
+      ],
+      "work": {
+        "contractedHoursPerWeek": 40,
+        "unpaidOvertimeHoursPerWeek": 3,
+        "commuteHoursPerWeek": 5,
+        "prepHoursPerWeek": 2.5,
+        "decompressHoursPerWeek": 2.5,
+        "workCostsMonthlyCents": 40000,
+        "weeksPerYear": 48
+      }
+    }
+  ],
+  "filingStatus": "single",
+  "state": "NC",
+  "zip": null,
+  "capturingFullMatch": false,
+  "dependents": [],
+  "community": {
+    "daySchool": null
+  },
+  "assets": [
+    {
+      "id": "demo_asset_cash",
+      "label": "Savings account",
+      "last4": null,
+      "category": "cash",
+      "valueCents": 950000,
+      "liquid": true,
+      "ownerIds": [
+        "demo_person_robin"
+      ],
+      "taxCharacter": "cash",
+      "institution": "Example Bank",
+      "accountType": "hysa",
+      "liquidity": null,
+      "confidence": null,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null,
+      "tier": null
+    },
+    {
+      "id": "demo_asset_invest",
+      "label": "Example Roth",
+      "last4": null,
+      "category": "investment",
+      "valueCents": 4800000,
+      "liquid": false,
+      "ownerIds": [
+        "demo_person_robin"
+      ],
+      "taxCharacter": "roth",
+      "institution": "Example Broker",
+      "accountType": "roth_ira",
+      "liquidity": null,
+      "confidence": 2,
+      "costBasisCents": 2100000,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null,
+      "tier": "retirement"
+    },
+    {
+      "id": "a_snapshot_house",
+      "label": "The flat",
+      "last4": null,
+      "category": "real_estate",
+      "valueCents": 32000000,
+      "liquid": false,
+      "ownerIds": [
+        "demo_person_robin"
+      ],
+      "taxCharacter": null,
+      "institution": null,
+      "accountType": null,
+      "liquidity": null,
+      "confidence": 3,
+      "costBasisCents": null,
+      "hassle": 2,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null,
+      "tier": null
+    },
+    {
+      "id": "a_snapshot_old",
+      "label": "Old job 401(k)",
+      "last4": null,
+      "category": "retirement",
+      "valueCents": 1900000,
+      "liquid": false,
+      "ownerIds": [
+        "demo_person_robin"
+      ],
+      "taxCharacter": "pretax",
+      "institution": "Example Plan Co",
+      "accountType": "old_401k",
+      "liquidity": null,
+      "confidence": 1,
+      "costBasisCents": null,
+      "hassle": null,
+      "cashFlowMonthlyCents": null,
+      "accessAgeOverride": null,
+      "tier": null
+    }
+  ],
+  "debts": [
+    {
+      "id": "demo_debt_0",
+      "label": "Student loan",
+      "institution": null,
+      "last4": null,
+      "balanceCents": 1840000,
+      "rate": 0.055,
+      "minPaymentCents": 21000,
+      "type": "student_loan",
+      "creditLimitCents": null,
+      "promoEndsOn": null,
+      "postPromoRate": null,
+      "emotionalTag": null,
+      "keepReasons": [],
+      "excludeFromAggressive": false,
+      "interestFree": null,
+      "archived": false,
+      "borrowedOn": null,
+      "dueOn": null,
+      "ownerIds": [
+        "demo_person_robin"
+      ]
+    },
+    {
+      "id": "demo_debt_1",
+      "label": "Credit card",
+      "institution": null,
+      "last4": null,
+      "balanceCents": 320000,
+      "rate": 0.229,
+      "minPaymentCents": 9500,
+      "type": "credit_card",
+      "creditLimitCents": null,
+      "promoEndsOn": null,
+      "postPromoRate": null,
+      "emotionalTag": null,
+      "keepReasons": [],
+      "excludeFromAggressive": false,
+      "interestFree": null,
+      "archived": false,
+      "borrowedOn": null,
+      "dueOn": null,
+      "ownerIds": [
+        "demo_person_robin"
+      ]
+    }
+  ],
+  "expenses": {
+    "needs": {
+      "food": {
+        "monthlyCents": 71000
+      },
+      "accommodation": {
+        "monthlyCents": 150000
+      },
+      "transportation": {
+        "monthlyCents": 22000
+      }
+    },
+    "wants": {
+      "totalCents": 72000,
+      "therapy": null
+    },
+    "entries": [],
+    "annual": []
+  },
+  "incomeBasis": "earned",
+  "retirement": {
+    "contributionPercent": 4,
+    "rothContributedCents": 300000,
+    "hsaContributedCents": 120000,
+    "onHdhp": true,
+    "hsaFamilyPlan": false,
+    "has401k": null
+  },
+  "takeHome": {
+    "monthlyCents": null,
+    "typedCents": null,
+    "per": "month"
+  },
+  "insurance": {
+    "highestDeductibleCents": 250000,
+    "oopMaxCents": null,
+    "termLifeCents": null,
+    "disabilityMonthlyCents": null,
+    "umbrella": null,
+    "health": {
+      "type": null,
+      "monthlyCents": null
+    }
+  },
+  "worthChecks": [],
+  "ratings": {
+    "rerank": {
+      "housing": 4,
+      "groceries": 8,
+      "utilities": 5,
+      "transportation": 4,
+      "insurance": 3,
+      "dining_out": 8,
+      "subscriptions": 8,
+      "entertainment": 9,
+      "debt_minimums": 1
+    }
+  },
+  "valuesProfile": {
+    "stated": [],
+    "assignments": {}
+  },
+  "swan": {
+    "basis": null,
+    "targetCents": null,
+    "targetMonths": null,
+    "note": null,
+    "setAt": null
+  },
+  "goals": [],
+  "futureIncome": [],
+  "property": [],
+  "allocation": {
+    "stocks": 0.7,
+    "bonds": 0.2,
+    "cash": 0.1,
+    "rebalanceBand": 0.05
+  },
+  "rerank": {
+    "rows": []
+  },
+  "targets": {
+    "retireAge": null,
+    "coastAge": null
+  },
+  "scenarios": [],
+  "oneOffs": [],
+  "estate": {
+    "beneficiariesSet": null,
+    "willExists": null,
+    "poaExists": null
+  },
+  "giving": {
+    "pctOfIncome": null,
+    "annualTargetCents": null
+  },
+  "decumulation": {
+    "stockShare": null,
+    "plannedAnnualDrawCents": null,
+    "socialSecurityAt": null
+  },
+  "tax": {
+    "otherPreTaxAnnualCents": null,
+    "withheldAnnualCents": null
+  },
+  "career": {
+    "offer": {
+      "grossAnnualCents": null,
+      "hoursPerWeek": null,
+      "commuteHoursPerWeek": null,
+      "workCostsMonthlyCents": null,
+      "signOnCents": null
+    }
+  },
+  "partner": {
+    "splitMode": null,
+    "sharedMonthlyCents": null
+  },
+  "kids": {
+    "tuitionTargetCents": null,
+    "tuitionSavedCents": null,
+    "tuitionMonthlyCents": null
+  },
+  "housing": {
+    "rentMonthlyCents": null,
+    "priceCents": null,
+    "downPct": null,
+    "rate": null
+  },
+  "purchase": {
+    "priceCents": null,
+    "monthsAway": null,
+    "financeRate": null,
+    "label": null
+  },
+  "variableIncome": {
+    "bufferMonths": null,
+    "windowMonths": null
+  },
+  "enough": {
+    "monthlyCents": null,
+    "source": null
+  },
+  "designedWeek": {
+    "blocks": []
+  },
+  "timeBuckets": [],
+  "dreams": [],
+  "reversibility": {
+    "decisionId": null,
+    "given": {}
+  },
+  "unlearning": {
+    "dropped": []
+  },
+  "studentLoans": {
+    "plan": null,
+    "extraMonthlyCents": null,
+    "idrShare": null,
+    "forgivenessYears": null
+  },
+  "calendar": {
+    "cadence": null,
+    "nextPaydayDay": null,
+    "bills": [],
+    "payLater": []
+  },
+  "history": {
+    "compareTo": null
+  },
+  "journal": [],
+  "ledger": {
+    "income": [],
+    "months": [],
+    "dismissed": []
+  },
+  "budget": {
+    "estimated": {},
+    "presets": {}
+  },
+  "notApplicable": {},
+  "subscriptions": [],
+  "skills": {},
+  "skillTree": {
+    "state": {}
+  },
+  "exercises": {
+    "done": {},
+    "results": {}
+  },
+  "practiceLedger": [],
+  "assumptions": {
+    "returnReal": 0.05,
+    "inflation": 0.03,
+    "expectedReturnRate": 0.05,
+    "realWageGrowth": 0.01,
+    "returnBands": "return_bands.json",
+    "swrRate": 0.04,
+    "humanCapitalDiscountRate": 0.02,
+    "homeEquityHaircut": 0.8,
+    "marginalRate": null
+  },
+  "assumptionOverrides": {
+    "marginalRate": 0.22
+  },
+  "meta": {
+    "visitedRooms": [],
+    "createdAt": null,
+    "updatedAt": null,
+    "confirmedAt": {},
+    "fields": {},
+    "hasDebt": true,
+    "undoStack": [],
+    "redoStack": [],
+    "guessed": {},
+    "notSure": {},
+    "reopen": null,
+    "source": {},
+    "displayUnit": null,
+    "noRent": null,
+    "walk": {
+      "startedAt": null,
+      "finishedAt": null,
+      "done": {},
+      "skipped": {}
+    },
+    "frontDoor": null,
+    "isDemo": true,
+    "note": "fixtures/snapshots/pre-d313.household.json: a demo household as the Statement stored it before D-313. Demo values only."
+  }
+}

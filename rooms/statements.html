@@ -7,30 +7,30 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Your Statements · SPARKS</title>
-<meta name="description" content="Your Statements is the documents reading of The Statement now."/>
+<meta name="description" content="Your Statements is The Documents now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  REDIRECT — Your Statements is a reading of The Statement (rooms/statement.html#the-documents, DECISIONS.md D-278).
+  REDIRECT — Your Statements became a reading of The Statement (D-278) and is The Documents since D-313 (rooms/the-documents.html).
   Where the next dollar lands moves the target (D-228), so it is part of
   the statement rather than a decision beside it. Rules 1 and 4 of D-229.
   The file stays so every link already out in the world keeps landing, hash
   included. LIVE-FORM: built once. No inputs.
 -->
-<meta http-equiv="refresh" content="0; url=statement.html#the-documents"/>
+<meta http-equiv="refresh" content="0; url=the-documents.html#out-basis"/>
 </head>
 <body class="slaf">
 <main class="slaf-wrap">
-  <p style="color:var(--color-text-muted)">Your Statements is the documents reading of The Statement now.
-    <a href="statement.html#the-documents" id="go">Open it →</a></p>
+  <p style="color:var(--color-text-muted)">Your Statements is The Documents now.
+    <a href="the-documents.html#out-basis" id="go">Open it →</a></p>
 </main>
 <script>
   /* Carry the section hash across so a deep link still lands. */
   (function () {
     var map = {};
     var hash = location.hash || '';
-    var target = 'statement.html' + (map[hash] || '#the-documents');
+    var target = 'the-documents.html' + (map[hash] || hash || '#out-basis');
     document.getElementById('go').setAttribute('href', target);
     location.replace(target);
   })();

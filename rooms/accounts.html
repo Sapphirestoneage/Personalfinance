@@ -7,30 +7,31 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <title>Where It Goes · SPARKS</title>
-<meta name="description" content="Where It Goes is the where-it-lands reading of The Statement now."/>
+<meta name="description" content="Where It Goes is Which Account now."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  REDIRECT — Where It Goes is a reading of The Statement (rooms/statement.html#where-it-lands, DECISIONS.md D-278).
+  REDIRECT — Where It Goes became a reading of The Statement (D-278) and is Which Account since D-313 (rooms/which-account.html).
   Where the next dollar lands moves the target (D-228), so it is part of
   the statement rather than a decision beside it. Rules 1 and 4 of D-229.
   The file stays so every link already out in the world keeps landing, hash
   included. LIVE-FORM: built once. No inputs.
 -->
-<meta http-equiv="refresh" content="0; url=statement.html#where-it-lands"/>
+<meta http-equiv="refresh" content="0; url=which-account.html#compare"/>
 </head>
 <body class="slaf">
 <main class="slaf-wrap">
-  <p style="color:var(--color-text-muted)">Where It Goes is the where-it-lands reading of The Statement now.
-    <a href="statement.html#where-it-lands" id="go">Open it →</a></p>
+  <p style="color:var(--color-text-muted)">Where It Goes is Which Account now.
+    <a href="which-account.html#compare" id="go">Open it →</a></p>
 </main>
 <script>
   /* Carry the section hash across so a deep link still lands. */
   (function () {
-    var map = { '#reading': '#ac-reading', '#reading-list': '#ac-reading-list' };
+    var map = { '#reading': '#reading', '#reading-list': '#reading', '#setup': 'ledger.html#x-A', '#allocation': 'the-mix.html#allocation' };
     var hash = location.hash || '';
-    var target = 'statement.html' + (map[hash] || '#where-it-lands');
+    var to = map[hash] || '#compare';
+    var target = to.indexOf('.html') > 0 ? to : 'which-account.html' + to;
     document.getElementById('go').setAttribute('href', target);
     location.replace(target);
   })();
