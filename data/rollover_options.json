@@ -11,7 +11,7 @@
     "mandatoryWithholding": 0.2,
     "indirectRolloverDays": 60,
     "ruleOfFiftyFiveAge": 55,
-    "note": "The rates the prose below names, as numbers, so no calculator has to hold them inline (SPEC.md \u00a77). The penalty-free age itself \u2014 59\u00bd \u2014 is NOT repeated here: it is data/access_rules.json byTaxCharacter.pretax.accessAge, so there is one copy of it in the repo. ruleOfFiftyFiveAge is the age you must TURN in the calendar year you leave, not the age on the day you leave."
+    "note": "The rates the prose below names, as numbers, so no calculator has to hold them inline (SPEC.md \u00a77). The penalty-free age itself, 59\u00bd, is NOT repeated here: it is data/access_rules.json byTaxCharacter.pretax.accessAge, so there is one copy of it in the repo. ruleOfFiftyFiveAge is the age you must TURN in the calendar year you leave, not the age on the day you leave."
   },
   "options": [
     {

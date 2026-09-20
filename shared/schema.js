@@ -151,13 +151,13 @@
     'person.work.workCostsMonthlyCents':         { class: 'raw',        unit: 'cents',   period: 'monthly' },
     'person.work.weeksPerYear':                  { class: 'assumption', unit: 'weeks',   default: WORK_DEFAULTS.weeksPerYear },
     'computed.realHourlyWageCents':              { class: 'computed',   unit: 'cents',   note: 'per hour of life the job actually costs' },
-    'person.employmentStatus':                   { class: 'raw',        unit: 'enum',    values: ['employed', 'selfEmployed', 'both', 'notWorking', 'retired'], note: 'null means not asked. Decides whether an employer match is even a question \u2014 see EMPLOYMENT_STATUSES and DECISIONS.md D-055' },
-    'incomeSource.grossAnnualIncomeCents':       { class: 'raw',        unit: 'cents',   period: 'annual', note: 'THE annual figure every room reads. Derived from rateCents x frequency when those are set \u2014 see engines/income.js and DECISIONS.md D-047' },
-    'incomeSource.frequency':                    { class: 'raw',        unit: 'enum',    values: ['annual', 'monthly', 'semimonthly', 'fortnightly', 'weekly', 'hourly'], note: 'how the person is actually paid; semimonthly is 24 a year and fortnightly is 26 \u2014 they are not the same' },
+    'person.employmentStatus':                   { class: 'raw',        unit: 'enum',    values: ['employed', 'selfEmployed', 'both', 'notWorking', 'retired'], note: 'null means not asked. Decides whether an employer match is even a question, see EMPLOYMENT_STATUSES and DECISIONS.md D-055' },
+    'incomeSource.grossAnnualIncomeCents':       { class: 'raw',        unit: 'cents',   period: 'annual', note: 'THE annual figure every room reads. Derived from rateCents x frequency when those are set, see engines/income.js and DECISIONS.md D-047' },
+    'incomeSource.frequency':                    { class: 'raw',        unit: 'enum',    values: ['annual', 'monthly', 'semimonthly', 'fortnightly', 'weekly', 'hourly'], note: 'how the person is actually paid; semimonthly is 24 a year and fortnightly is 26, and they are not the same' },
     'incomeSource.rateCents':                    { class: 'raw',        unit: 'cents',   note: 'pay at `frequency`. Null means the annual figure was entered directly' },
     'incomeSource.hoursPerWeek':                 { class: 'raw',        unit: 'hours',   period: 'weekly', note: 'hourly pay only' },
     'incomeSource.monthsWorked':                 { class: 'raw',        unit: 'months',  note: 'how much of the last 12 months this job covered; absent means all of it' },
-    'incomeSource.ongoing':                      { class: 'raw',        unit: 'bool',    note: 'still the job \u2014 drives the run-rate figure beside the earned one' },
+    'incomeSource.ongoing':                      { class: 'raw',        unit: 'bool',    note: 'still the job, which drives the run-rate figure beside the earned one' },
     'household.takeHome.monthlyCents':           { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'take-home pay a month, typed as such in the opening. Logged paychecks beat it; it beats the estimate from gross. Owned by the Ledger. D-312' },
     'household.takeHome.typedCents':             { class: 'raw',        unit: 'cents',   note: 'the figure as typed, per the cadence in `per`, so the box refills as it was filled. D-312' },
     'household.takeHome.per':                    { class: 'raw',        unit: 'enum',    values: ['month', 'week', 'fortnight', 'halfMonth'], note: 'what typedCents is per. D-312' },
@@ -180,7 +180,7 @@
     'retirement.hsaFamilyPlan':                  { class: 'raw',        unit: 'bool',    note: 'family HSA coverage, which changes the limit' },
     'retirement.has401k':                        { class: 'raw',        unit: 'bool',    note: 'does an employer 401(k) exist to contribute to. null = not asked; the Max 401(k) preset is absent, not disabled, unless true. Asked once, by Budget. D-129' },
     'insurance.highestDeductibleCents':          { class: 'raw',        unit: 'cents',   note: 'the largest single deductible a cash cushion has to cover. Owned by Sleep At Night' },
-    'assumptions.marginalRate':                  { class: 'assumption', unit: 'rate',    default: null, note: 'NO default \u2014 asked once, never derived from the effective-rate table' },
+    'assumptions.marginalRate':                  { class: 'assumption', unit: 'rate',    default: null, note: 'NO default: asked once, never derived from the effective-rate table' },
     'incomeSource.type':                         { class: 'raw',        unit: 'enum',    values: ['w2', '1099', 'passive', 'benefit', 'pension', 'socialSecurity', 'equity'], note: 'what kind of pay it is; decides the tax rules and whether it survives a job loss. 15.4, D-181' },
     'incomeSource.survivesJobLoss':              { class: 'raw',        unit: 'bool',    note: 'keeps paying if the job goes. null = derived from the type (everything but a W-2 job survives); true/false is the person saying otherwise. Read through Schema.survivesJobLoss. 15.4, D-181' },
     'incomeSource.passiveTreatment':             { class: 'raw',        unit: 'enum',    values: ['ordinary', 'qualified'], note: 'passive income only: ordinary (rent, interest) or qualified (dividends, long-term gains). null reads as ordinary. 15.4, D-181' },
@@ -224,7 +224,7 @@
     'debt.dueOn':                                { class: 'raw',        unit: 'iso-date', note: 'when it is due back in full. On a family loan with no monthly amount, the minimum is the balance over the months left. D-124' },
     'debt.keepReasons[]':                        { class: 'raw',        unit: 'enum',    values: ['low_rate', 'tax_favoured', 'appreciating', 'building_credit', 'subsidised'], note: 'why this debt might be fine to carry on purpose - the rational axis, independent of emotionalTag. A list: more than one can apply, and an empty list is "no particular reason to keep it". Suggested from the debt\'s own type and rate at entry time, stored only when confirmed. Never changes the payoff order by itself. Owned by Debt Payoff. D-132' },
     'debt.excludeFromAggressive':                { class: 'raw',        unit: 'bool',    note: 'the household\'s decision that this debt is kept on purpose: the payoff plan orders it last and sends it only its minimum. The keep reasons inform this and never set it. Owned by Debt Payoff. D-132' },
-    'debt.creditLimitCents':                     { class: 'raw',        unit: 'cents',   note: 'revolving debt only \u2014 the limit the balance is a share of. Owned by Debt Payoff. DECISIONS.md D-045' },
+    'debt.creditLimitCents':                     { class: 'raw',        unit: 'cents',   note: 'revolving debt only: the limit the balance is a share of. Owned by Debt Payoff. DECISIONS.md D-045' },
     'debt.promoEndsOn':                          { class: 'raw',        unit: 'iso-date', note: 'when a 0%/promotional rate ends. Null means the rate is not promotional' },
     'debt.postPromoRate':                        { class: 'raw',        unit: 'rate',    period: 'annual', note: 'the rate the balance reverts to when the promo ends' },
     'expenses.monthlyEssential.estimatedValueCents': { class: 'raw',    unit: 'cents',   period: 'monthly', source: 'estimated', note: 'LEGACY, unread since D-172: migrated into wants.totalCents on load, kept for round-trip' },
@@ -447,11 +447,11 @@
    *
    * This exists because the app was asking everybody about their employer
    * match. If you are between jobs, self-employed, or retired, there is no
-   * employer, so that question has no true answer \u2014 and worse, leaving it
+   * employer, so that question has no true answer, and worse, leaving it
    * blank left the room permanently reading "1 thing left".
    *
-   *   earning    \u2014 is money expected to be coming in from work
-   *   hasEmployer\u2014 is there a company that could match contributions
+   *   earning:     is money expected to be coming in from work
+   *   hasEmployer: is there a company that could match contributions
    *
    * `hasEmployer: false` does not mean "no retirement plan". A self-employed
    * person has a solo 401(k) with no match; a retiree may be drawing from
@@ -464,12 +464,12 @@
       short: 'Employed',      earning: true,  hasEmployer: true },
     { id: 'selfEmployed', label: 'Self-employed or freelance',
       short: 'Self-employed', earning: true,  hasEmployer: false },
-    { id: 'both',         label: 'Both \u2014 a job and my own work',
+    { id: 'both',         label: 'Both, a job and my own work',
       short: 'Both',          earning: true,  hasEmployer: true },
     /* Between jobs is its own answer, not a shade of "not working": it
        has a sequence of its own, benefits, severance, a runway against a
        search, and the income question stops being the gate. D-092. */
-    { id: 'unemployed',   label: 'Unemployed \u2014 looking for work',
+    { id: 'unemployed',   label: 'Unemployed, looking for work',
       short: 'Unemployed',    earning: false, hasEmployer: false, seeking: true },
     /* On disability: not working, and the benefit is income. It goes on
        the income card like a pension does. D-092. */
@@ -493,7 +493,7 @@
   }
 
   /**
-   * householdEmployment(h) \u2014 the primary person's status, as a row.
+   * householdEmployment(h), the primary person's status, as a row.
    * Returns null when it has not been answered. A caller that treats null
    * as "no employer" is wrong: unanswered is not an answer, and the whole
    * point of this field is that the two are different.
@@ -584,7 +584,7 @@
   /**
    * Could this household have an employer match at all?
    *
-   * UNANSWERED COUNTS AS YES, deliberately \u2014 every household saved before
+   * UNANSWERED COUNTS AS YES, deliberately, since every household saved before
    * this field existed has no status, and silently deciding they have no
    * employer would hide a question they have already answered. So does an
    * already-entered match, whatever the status now says: a figure someone

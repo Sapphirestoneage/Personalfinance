@@ -16537,7 +16537,12 @@ section('No em dash anywhere the app can show one (D-321)');
      anything that ships. DECISIONS.md, docs/ and tools/ are the archive and
      its reader: the log's own heading grammar still accepts the old
      separator, so old entries keep parsing and nothing rewrites history. */
+  /* Both spellings: the character itself, and the \u2014 escape that a string
+     literal can hide it behind. The first sweep (D-321) only looked for the
+     character, so ten rooms and eight tables kept showing one. D-326. */
   const EM = '—';
+  const ESCAPED = '\\u2014';
+  const HTML_ENTITIES = ['&mdash;', '&#8212;', '&#x2014;'];
   const dirs = ['rooms', 'shared', 'engines', 'data', 'dnd', 'dnd/rooms', 'dnd/shared', 'dnd/engines', 'dnd/data'];
   const files = ['index.html'];
   dirs.forEach(function (d) {
@@ -16558,10 +16563,15 @@ section('No em dash anywhere the app can show one (D-321)');
   let clean = 0;
   files.forEach(function (rel) {
     const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
-    const at = src.indexOf(EM);
+    const spellings = [EM, ESCAPED].concat(HTML_ENTITIES);
+    let at = -1, found = '';
+    spellings.forEach(function (sp) {
+      const i = src.indexOf(sp);
+      if (i !== -1 && (at === -1 || i < at)) { at = i; found = sp; }
+    });
     if (at === -1) { clean++; return; }
     checkTrue(rel + ' carries no em dash', false,
-      'first at character ' + at + ': ' + JSON.stringify(src.slice(Math.max(0, at - 45), at + 45)));
+      'first ' + JSON.stringify(found) + ' at character ' + at + ': ' + JSON.stringify(src.slice(Math.max(0, at - 45), at + 45)));
   });
   checkTrue('every shipped file is clean of the em dash (' + clean + ' files)', clean === files.length);
   checkTrue('the not-entered placeholder is the words "not yet"', Money.formatCents(null) === 'not yet' && Money.formatRate(null) === 'not yet');

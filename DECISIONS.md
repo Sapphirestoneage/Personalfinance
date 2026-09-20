@@ -16895,6 +16895,32 @@ answerable in place, the rest being the two list totals (D1, D2), gross pay
 (per income source) and the two tax confirmations, which confirm rather than
 collect.
 
+## D-326 — The em dash the first sweep could not see
+
+**Why.** D-321 promised no em dash anywhere the app can show one, and its
+check read every shipped file for the character. A string literal can spell
+the same character `\u2014`, and sixty-one of them did: "Not drawing down
+— a number for a retiree", "Both — a job and my own work", the
+unemployment run-out line, the Runway's four health and life lines, the
+Career Move bracket note, and eight reference tables.
+
+**Decision.** Every one is rewritten the way D-321 rewrote the rest: the mark
+becomes a comma, a colon or a full stop, and punctuation attaches to the word
+before it. Three placeholders that WERE an em dash now read the app's own
+words: the Goals room's blank figure and its empty note use `Money.NOT_YET`,
+the Ledger's level badge starts empty and is filled by `paintLevels`, and a
+field marked not applicable shows a middle dot rather than a dash. The check
+in `test/run.js` now looks for the character, the `\u2014` escape and the
+three HTML entities, in the same files as before.
+
+**Replaces or removes.** Nothing. This is the rest of D-321.
+
+**Stored shape.** No change. `dnd/shared/schema.js` is re-vendored.
+
+**Verified.** `node test/run.js` (35,094), `node test/solar.js`, the D&D
+suite, export, xlsx, lane 2 and the seven browser gates. The check fails on a
+reintroduced escape: tried it, saw it name the file and the character.
+
 ---
 
 # The Dungeons & Dividends entries

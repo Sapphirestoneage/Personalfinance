@@ -541,11 +541,11 @@
       + (run.weeksAllowed === 1 ? '' : 's') + '.';
     if (run.exhausted) {
       return ceiling + ' Counting from the month the job ended, ' + run.weeksAllowed
-        + ' weeks was up on ' + longDate(run.endsOn) + '. A maximum, not a promise \u2014 '
+        + ' weeks was up on ' + longDate(run.endsOn) + '. A maximum, not a promise: '
         + 'what you actually get depends on what you earned before, and some states pay fewer weeks.';
     }
     return ceiling + ' Counting from the month the job ended, that runs to '
-      + longDate(run.endsOn) + ' \u2014 about ' + run.weeksLeft + ' week'
+      + longDate(run.endsOn) + ', about ' + run.weeksLeft + ' week'
       + (run.weeksLeft === 1 ? '' : 's') + ' from now. A maximum, not a promise: '
       + 'what you actually get depends on what you earned before, and some states pay fewer weeks.';
   }
@@ -797,7 +797,7 @@
     btn.hidden = !folded || extra === 0;
     if (folded) {
       btn.textContent = 'The other ' + extra + ' question' + (extra === 1 ? '' : 's')
-        + ' \u2014 they feed the rooms after this one';
+        + ', which feed the rooms after this one';
     }
   }
 

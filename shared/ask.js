@@ -262,7 +262,7 @@
     card.className = 'slaf-card slaf-ask';
     card.id = 'slaf-ask';
     card.setAttribute('data-ask-row', p.row.id);
-    var q = p.item ? p.row.label + ' \u2014 ' + itemLabel(p.item) : p.row.label;
+    var q = p.item ? p.row.label + ', ' + itemLabel(p.item) : p.row.label;
     var more = p.item && p.remaining > 1 ? ' (' + (p.remaining - 1) + ' more ' + (p.remaining - 1 === 1 ? 'asks' : 'ask') + ' the same after this)' : '';
     card.innerHTML = '<span class="slaf-eyebrow">One question this room needs</span>'
       + '<p class="ask-q">' + esc(q) + '<span class="ask-why"> · unlocks ' + esc(p.row.unlocks) + esc(more) + '</span></p>'
